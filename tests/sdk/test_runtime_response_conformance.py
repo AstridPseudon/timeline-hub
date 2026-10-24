@@ -124,18 +124,26 @@ def _client(case: str) -> tuple[WorkspaceClient, list[tuple[str, str, bytes | No
     return client, calls
 
 
-def _sent_the_recorded_request(case: str, calls: list, **ids: str) -> None:
+def _sent_the_recorded_request(case: str, calls: list, *, exact_request: bool = False, **ids: str) -> None:
     recorded = _concrete(fixture(case)["request"], **ids)
     method, path, body = calls[-1]
     assert method == recorded["method"]
     sent_path, _, sent_query = path.partition("?")
     recorded_path, _, recorded_query = recorded["path"].partition("?")
-    assert sent_path == recorded_path
-    assert set(recorded_query.split("&")) - {""} <= set(sent_query.split("&"))  # Astrid may add defaults (limit)
+    if exact_request:
+        assert path == recorded["path"]
+    else:
+        assert sent_path == recorded_path
+        assert set(recorded_query.split("&")) - {""} <= set(sent_query.split("&"))  # Astrid may add defaults (limit)
     if recorded["body"] is not None:
         sent = json.loads(body)
-        assert {k: v for k, v in sent.items() if k in recorded["body"] and k != "project"} == {
-            k: v for k, v in recorded["body"].items() if k != "project"}
+        expected = _concrete(recorded["body"], **ids)
+        if exact_request:
+            assert sent == expected
+        else:
+            # Legacy task admission adds generated fields and uses ``project`` as its scope key.
+            assert {k: v for k, v in sent.items() if k in expected and k != "project"} == {
+                k: v for k, v in expected.items() if k != "project"}
 
 
 def test_task_admission_201_parses_to_data_and_receipt() -> None:
@@ -205,18 +213,19 @@ def test_validation_error_422_maps_to_validation_error() -> None:
     assert calls[-1][:2] == ("POST", "/v1/tasks")
 
 
-def test_publish_conflict_409_maps_to_conflict_and_keeps_its_details() -> None:
+def test_commit_conflict_409_maps_to_conflict_and_keeps_its_details() -> None:
     """The recorded conflict is returned by the canonical timeline commit route."""
     client, calls = _client("publish_conflict_409")
     recorded = fixture("publish_conflict_409")
     request = _concrete(recorded["request"]["body"], project_id="project-1")
+    idempotency_key = "commit-conflict-409"
     with pytest.raises(WorkspaceClientError) as raised:
-        client.commit_timeline("project-1", "main", request, idempotency_key="k")
+        client.commit_timeline("project-1", "main", request, idempotency_key=idempotency_key)
     error = raised.value
     assert (error.status, error.code) == (409, "conflict")
     assert error.details == recorded["body"]["details"] and error.request_id == "<request_id>"
     assert _SERVICE_ERROR_CLASSES[error.code] is ServiceConflictError
-    _sent_the_recorded_request("publish_conflict_409", calls, project_id="project-1")
+    _sent_the_recorded_request("publish_conflict_409", calls, exact_request=True, project_id="project-1")
 
 
 def test_invalid_cursor_400_keeps_its_status_and_code() -> None:
