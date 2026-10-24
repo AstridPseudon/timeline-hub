@@ -1,0 +1,60 @@
+{
+  "schema": "timeline.agent-full-terminal-census-manifest.v1",
+  "task": "agt-F-full9758-census-1052",
+  "source_log_sha256": "2dc9007b4aa2c2c3ac4b594ba0f920286dddfc6bc2267870a747849c1c54c7e7",
+  "source_snapshot": {
+    "commit": "ba55ac1e9e70156f03f7e31cc1b1ef040bb75b84",
+    "tree": "c13d368666e710bb911ff448b86251b516867c03"
+  },
+  "counts": {
+    "terminal_bad_total": 276,
+    "terminal_unique_total": 276,
+    "terminal_duplicates": 0,
+    "original_closed_observed_bad": 64,
+    "original_open_observed_bad": 3,
+    "original_open_unknown": 1,
+    "original_not_listed_bad_unknown": 200,
+    "original_open_unknown_is_subset_of_not_listed_unknown": true,
+    "new_or_different_terminal_bad": 209,
+    "partition_check": true,
+    "original_partition_check": true,
+    "terminal_status_counts": {
+      "failed": 231,
+      "error": 45
+    },
+    "new_or_different_status_counts": {
+      "failed": 167,
+      "error": 42
+    },
+    "closed_bad_status_counts": {
+      "failed": 61,
+      "error": 3
+    },
+    "open_bad_status_counts": {
+      "failed": 3
+    }
+  },
+  "artifacts": {
+    "agent-full-1024095047-9758-census.json": {
+      "bytes": 2480743,
+      "sha256": "a22e87f2d13a4e317acdac1b64106a0eb37e6879de36d4a7f29ff36d80ec26ff"
+    },
+    "agent-full-1024095047-9758-terminal.csv": {
+      "bytes": 104562,
+      "sha256": "4678ca294e776a5d471c0b60d6281def724d7bb05e20458b0a043c60a0fcafce"
+    },
+    "agent-full-1024095047-9758-terminal-node-ids.txt": {
+      "bytes": 34288,
+      "sha256": "f720052effc6fef82f85b75943ff3125dcd332e9937b334565abb7fe0ac0f42d"
+    },
+    "agent-D32-H30-corrected-original-node-ids.txt": {
+      "bytes": 30724,
+      "sha256": "92187234a428abf1514d4276b35c4427b5643a10551af6a45d479ce6cbd5a8f9"
+    },
+    "agent-full-1024095047-9758-tracebacks.txt": {
+      "bytes": 3462902,
+      "sha256": "6d10d2f622eb4386f7400937e71e54baf7bac7cc70403aa019f777ef214fadcd"
+    },
+    "manifest-self-sha256-note": "Manifest self hash intentionally omitted; all other artifact hashes are complete."
+  }
+}
