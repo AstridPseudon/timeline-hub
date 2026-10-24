@@ -242,6 +242,10 @@ export function playwrightLaunchEnv({ suite, suiteName, output, junit, stage, ba
   };
   delete env.D66_RUNTIME_LOG_DIR;
   if (suite.retainRuntimeLogs && stage === suiteName) env.D66_RUNTIME_LOG_DIR = path.join(output, 'runtime-private');
+  if (stage === suiteName) {
+    env.D79_HUNG_STACK_EVIDENCE_DIR = path.join(output, 'hung-request-stacks');
+    env.D79_HUNG_STACK_RUN_ID = `${suiteName}-${stage}`;
+  }
   return env;
 }
 
