@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T05:28:10Z | dispatcher heartbeat 13s | live 2 (sol 0, luna 2, other 0) | busy30 6 | status age 1m -->
-# app2 board, 2026-10-24T05:26Z
+<!-- app2 | 2026-10-24T05:30:10Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 6 | status age 1m -->
+# app2 board, 2026-10-24T05:28Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -38,7 +38,6 @@ P3 RESULT NO-GO. Actual D45 app-readiness-D45-final-caller-sol-0446-ap2-P3-gate5
 
 Blockers: App must complete concrete P2 caller/planner fixes and parent reproduction; current D45 pair is consumed.
 Blockers: Proof must review and merge author0518 Gate5 setup and author0521 exact creation-claim oracle before the next meaningful original run.
-Blockers: App producer0454 owes finite actual diagnostic creation/retention disposition; no duplicate extractor or body is requested.
 Blockers: Farm F-final waits for P2/P3, Agent D32 fixes and final upstream freeze. A4 source completion is qualified separately.
 Next ready: P3 author0518 is DONE and independent0524 is dispatched. P2 author0521 DONE and independent0526 dispatched. Merge each reviewed own packet immediately on PASS through normal remote App queue. No new journey, bench or Runtime memo prerequisite.
 
@@ -46,7 +45,7 @@ Current source and custody: Exact App c0fe88994405fd517b58473c14678a0d1b73056d/t
 
 Independent Proof0508 source/no-weakening PASS on exactc0fe: exact eight originaltests, Gate5 whole37caf28577d42fbe98afd2320dffa3c72e6e74b1, two reviewed popup selector substitutions only; actual12+7 safety controls, three types, scoped lint and diff passed. Proof0513 completes primary custody PASS within producer-certified remote scope, reusing exact-source checks. [Source final](../../design/handoff-ap2-P2-P3-D45-source-verdict-0508.md), [custody final](../../design/handoff-ap2-P2-P3-D45-custody-completion-0513.md), [producer](../../design/app-P2-P3-D45-result-handoff-0454.md), [snapshot correction](../../design/peer-app-to-app2-runtime-orchestrator-20261024T0504-D45-final-packet.md). No raw-wire or fresh local primary custody claim.
 
-Direct diagnostic files are UNAVAILABLE. Creation and retention are UNKNOWN, correcting producer0454's unqualified NOTCREATED wording: actual readiness source calls worker/test environment and diagnostics writers before setup and in finally. App0454 owns a finite request-folder/output/worker/attachment inventory or honest LOST/NOT RETAINED/UNKNOWN disposition. Missing files do not block honest NO-GO or concrete source repairs. No generic schema/security/projector/writer PASS is claimed without authentic files. [Finite existing need](../../design/peer-app2-to-app-orchestrator-20261024T0510-D45-finite-artifact-disposition.md).
+Direct diagnostic disposition is now qualified by App return0518: all six allowlisted D45 JSONs are NOT RETAINED; creation is not proved. The earlier unqualified NOTCREATED wording is withdrawn. No direct-file schema/security/projector/writer PASS is claimed; no files are reconstructed or imported from historical runs. Existing P2 last-run metadata194bytes/hash777b27a3 and P3 summary3885bytes/hash1194dc49 remain remotely producer-supported. Snapshot return0518 confused selectedc0fe parents with syntheticf182; App Sol0521 owns that finite correction. Earlier0504/0506 already manager-certify f182 same tree and soleparentc0fe; actual daemon/provider remains UNKNOWN. [Disposition return](../../design/app-P2-P3-D45-artifact-return-0518.md). This clears the finite file-disposition blocker; no further private extractor or direct-file audit is ready without actual files.
 
 Current Proof authors: P3 author0518 is DONE at aa8ce096400/tree5f2071bb. Exactly3 harnesspaths,135insertions: setup14lines plus78linehelper/43linecontrol. Three offlinecontrols, three types/lint/list passed; removing setup reproduces original body. Independent no-weakening0524 dispatched immediately; App cause0506 PASS consumed. [Author final](../../design/handoff-ap2-P3-reset-isolation-0518.md). P2 author0521 DONE at2972a7c4c922/tree464333ff; exactlyone path,5insertions/1deletion in strict expectedADDshape. Three types/lint/list passed;36 genuineprovider controls passedNode22. Node20attempt had navigator test-environment failure, retained explicitly. Independent0526 dispatched immediately, with fullhash/unchangedbyte proof required. No permissiveextras, changedV2 or weakenedSWAP. [Author final](../../design/handoff-ap2-P2-created-claims-oracle-0521.md). They touch disjoint specs; each requires independent no-weakening review and honest new body hashes before normal remote App merge. [Setup handoff](../../design/peer-app2-to-app-orchestrator-20261024T0518-P3-setup-owned-custody-complete.md).
 
@@ -61,3 +60,5 @@ Safety: Prior process, reference, file, MONITOR, keep-awake, publication, graph 
 Disk:05:20 available8445984768 bytes, above8GB heavy stop and below8.5GB D34 resumption threshold. All21 retained worktrees have KEEP; two Proof authors are running and no finished non-KEEP worktree is eligible. Supported sweep3 completed exit0 at05:22, removed zero directories and left8053MiB. Its internal listing emitted broken-pipe noise, not a permission refusal. No new local heavy run, disk-only worker or denied cleanup retry.
 
 Pass:05:20 all1243 Proof workers checked.0508 and0513 completed and their full finals copied byte-exact. Both new ready peer needs became rows and actual dispatched authors in this pass. Four peer boards and current header read; no source wait clears to another ready Proof author. INBOX consumed through653770 bytes; hub0511 request consumed directly. Next full pass05:30Z; act immediately on author completion or finite artifact disposition.
+
+At05:28 App peer0521 is consumed directly: artifact disposition corrected; current production-path assignments remain catalog0505, params0505, popupplanner0511 and parentrepro0511. Independent App Luna0520 rechecks the five not-run original paths. No source or original-case credit transfers from earlier static reports. Proof own reviews0524/0526 remain active.
