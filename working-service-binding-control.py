@@ -42,6 +42,20 @@ def recipe() -> dict:
             ["git", "-C", str(RECIPE_REPO), "show", f"{RECIPE_COMMIT}:current-service-inputs.json"],
             text=True,
         ))
+    # The historical recipe is evidence for the immutable bench inputs only.
+    # Source identity is refreshed from the current clean integration roots;
+    # the adapter then authenticates it against its frozen D59 tuple.
+    for role, checkout in (("app", "/home/user/work/app"), ("agent", "/home/user/work/agent"), ("runtime", "/home/user/work/runtime")):
+        head = subprocess.check_output(["git", "-C", checkout, "rev-parse", "HEAD"], text=True).strip()
+        tree = subprocess.check_output(["git", "-C", checkout, "show", "-s", "--format=%T", head], text=True).strip()
+        parents = subprocess.check_output(["git", "-C", checkout, "show", "-s", "--format=%P", head], text=True).strip().split()
+        value["source"][role] = {
+            **value["source"][role],
+            "ref": "tl/integration",
+            "head": head,
+            "tree": tree,
+            "parents": parents,
+        }
     value["environment"] = {
         "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-remotion.env",
         "ASTRID_REMOTION_PROJECT_DIR": "/home/user/work/runtimes/agent-remotion",
@@ -76,9 +90,44 @@ def assert_refusal(binding, mutated: dict, stage: str, template: str, label: str
     raise AssertionError(f"negative control unexpectedly accepted: {label}")
 
 
+def assert_template_refusal(binding, base: dict, mutated: str, stage: str, label: str) -> None:
+    try:
+        binding.adapt_environment_block(mutated, stage=stage, recipe=base)
+    except binding.BindingError:
+        return
+    raise AssertionError(f"negative control unexpectedly accepted: {label}")
+
+
 def ensure(condition: bool, message: str) -> None:
     if not condition:
         raise AssertionError(message)
+
+
+def assert_launch_bindings(binding, result: dict[str, object], stage: str) -> None:
+    """Exercise the named interpreter substitutions without starting a service."""
+
+    values = result["bindings"]
+    if not isinstance(values, dict):
+        raise AssertionError(f"P{stage}: bindings are not a mapping")
+    shell = "\n".join(
+        (
+            "set -eu",
+            f'CPY={shlex.quote(values["agent_python"])}',
+            f'RCPY={shlex.quote(values["runtime_python"])}',
+            'ASTRID_AGENT_PYTHON="$CPY"',
+            'ASTRID_RUNTIME_PYTHON="$RCPY"',
+            "export ASTRID_AGENT_PYTHON ASTRID_RUNTIME_PYTHON",
+            'test "$ASTRID_AGENT_PYTHON" = "$CPY"',
+            'test "$ASTRID_RUNTIME_PYTHON" = "$RCPY"',
+            'test "$("$ASTRID_AGENT_PYTHON" -c \'import os,sys; assert os.environ["ASTRID_AGENT_PYTHON"] == sys.executable; print(sys.executable)\')" = "$CPY"',
+            'test "$("$ASTRID_RUNTIME_PYTHON" -c \'import os,sys; assert os.environ["ASTRID_RUNTIME_PYTHON"] == sys.executable; print(sys.executable)\')" = "$RCPY"',
+            'if test "$ASTRID_RUNTIME_PYTHON" = "$CPY"; then exit 91; fi',
+            'test "${ASTRID_AGENT_PYTHON:?}" = "$CPY"',
+            'test "${ASTRID_RUNTIME_PYTHON:?}" = "$RCPY"',
+        )
+    )
+    checked = subprocess.run(["bash", "-c", shell], text=True, capture_output=True, check=False)
+    ensure(checked.returncode == 0, f"P{stage}: interpreter argv/export/failure control failed: {checked.stderr}")
 
 
 def main() -> int:
@@ -90,6 +139,9 @@ def main() -> int:
         stage = "2" if name == binding.P2_TEMPLATE else "3"
         result = binding.adapt_environment_block(template, stage=stage, recipe=base)
         start, end = binding._region(template, stage)
+        approval = binding._TEMPLATE_APPROVALS[stage]
+        ensure(hashlib.sha256(template.encode()).hexdigest() == approval["source_sha256"], f"{name}: unapproved source template")
+        ensure(start == approval["start"] and end == approval["end"], f"{name}: boundary moved")
         candidate = result["body"]
         ensure(candidate[:start] == template[:start], f"{name}: protected prefix changed")
         replacement_end = start + result["environment_region_bytes"]
@@ -97,6 +149,10 @@ def main() -> int:
         ensure("original-body-NOTRUN" in candidate and "following-stages-NOTRUN" in candidate, f"{name}: failure guards changed")
         ensure("readiness" in candidate.lower() and "native" in candidate.lower(), f"{name}: protected readiness/native region changed")
         ensure("P2_ALLOCATED_PORT" in candidate or "P3_ALLOCATED_PORT" in candidate, f"{name}: allocated-port stage changed")
+        ensure('ASTRID_AGENT_PYTHON="$CPY"' in candidate, f"{name}: Agent interpreter binding is not consumed")
+        ensure('ASTRID_RUNTIME_PYTHON="$RCPY"' in candidate, f"{name}: Runtime interpreter binding is not consumed")
+        ensure(result["launch_bindings"] == {"Agent": "CPY", "Runtime": "RCPY"}, f"{name}: launch binding contract changed")
+        assert_launch_bindings(binding, result, stage)
         ensure("childvenv-" not in candidate[start:replacement_end] and "CHILD_PATH" not in candidate[start:replacement_end], f"{name}: child binding leaked")
         ensure(hashlib.sha256(template[:start].encode()).hexdigest() == result["protected_prefix_sha256"], f"{name}: prefix hash changed")
         ensure(hashlib.sha256(template[end:].encode()).hexdigest() == result["protected_suffix_sha256"], f"{name}: suffix hash changed")
@@ -125,16 +181,45 @@ def main() -> int:
         mutated = copy.deepcopy(base)
         mutated[path[0]][path[1]][path[2]] = "0" * 40
         assert_refusal(binding, mutated, "2", p2, "stale source/ref/tree")
+    for role in ("agent", "runtime", "app"):
+        mutated = copy.deepcopy(base)
+        mutated["source"][role]["parents"] = list(reversed(mutated["source"][role]["parents"]))
+        assert_refusal(binding, mutated, "2", p2, f"wrong parent order: {role}")
+        mutated = copy.deepcopy(base)
+        mutated["source"][role]["parents"][0] = "0" * 40
+        assert_refusal(binding, mutated, "2", p2, f"stale parent: {role}")
+        mutated = copy.deepcopy(base)
+        mutated["source"][role]["ref"] = "origin/main"
+        assert_refusal(binding, mutated, "2", p2, f"wrong source ref: {role}")
     for section, key in (("client_contract", "schema_digest"), ("composition", "file_map_sha256"), ("remotion", "current_agent_remotion_tree")):
         mutated = copy.deepcopy(base)
         mutated[section][key] = "0" * (64 if key.endswith("digest") or key == "file_map_sha256" else 40)
         assert_refusal(binding, mutated, "2", p2, f"stale {section}.{key}")
+    for name in binding._CLIENT_FILES:
+        mutated = copy.deepcopy(base)
+        mutated["client_contract"]["files"][name] = "0" * 64
+        assert_refusal(binding, mutated, "2", p2, f"arbitrary client digest: {name}")
+    for name in binding._RUNTIME_ARTIFACTS:
+        mutated = copy.deepcopy(base)
+        mutated["client_contract"]["runtime_artifacts"][name] = "0" * 64
+        assert_refusal(binding, mutated, "2", p2, f"arbitrary Runtime artifact digest: {name}")
+    mutated = copy.deepcopy(base)
+    mutated["source"]["agent"]["head"] = "9b055a93ff15fce0a2e80f2647d47743b1fc4c33"
+    assert_refusal(binding, mutated, "2", p2, "intermediate Agent source is not final integration head")
     mutated = copy.deepcopy(base)
     mutated["environment"]["ASTRID_NODE_EXECUTABLE"] = "/tmp/stale-node"
     assert_refusal(binding, mutated, "2", p2, "stale node origin")
     mutated = copy.deepcopy(base)
     mutated["remotion"]["historical_source_commit_marker"] = mutated["source"]["agent"]["head"]
     assert_refusal(binding, mutated, "2", p2, "historical child as current")
+    for name, (_outer, template) in template_rows.items():
+        stage = "2" if name == binding.P2_TEMPLATE else "3"
+        marker = f'if test -n "$P{stage}FAIL"; then'
+        assert_template_refusal(binding, base, template.replace(marker, marker + "\n" + marker, 1), stage, f"duplicate {marker} boundary")
+        assert_template_refusal(binding, base, template.replace("STORE_ROOT=", marker + "\nSTORE_ROOT=", 1), stage, f"injected earlier {marker} boundary")
+        assert_template_refusal(binding, base, template.replace(f"$P{stage}FAIL", f"$P{stage}FAIL $P{stage}FAIL", 1), stage, f"duplicate P{stage}FAIL marker")
+        assert_template_refusal(binding, base, "X" + template[1:], stage, f"protected prefix mutation: {name}")
+        assert_template_refusal(binding, base, template[:-1] + "X", stage, f"protected suffix mutation: {name}")
 
     print(json.dumps({"status": "PASS", "controls": reports, "live_execution": "NOT_RUN"}, indent=2, sort_keys=True))
     return 0

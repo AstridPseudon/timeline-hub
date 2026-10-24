@@ -21,13 +21,87 @@ P3_TEMPLATE = "ap2-P3-gate5-h6-0348"
 _HEX40 = re.compile(r"^[0-9a-f]{40}$")
 _HEX64 = re.compile(r"^[0-9a-f]{64}$")
 
-# These are the reviewed recipe's identity facts, not a new source route.  A
-# caller with a different tuple must be re-qualified before this seam is used.
+# These are the reviewed current integration identities, not a new source
+# route.  A caller with a different tuple must be re-qualified before this
+# seam is used.
+_EXPECTED_SOURCES = {
+    "app": {
+        "checkout": "/home/user/work/app",
+        "ref": "tl/integration",
+        "head": "971a29e198c3e384795731f79e39c096abd58845",
+        "tree": "349691b03229d6e1f11a164997e29f49dae9f381",
+        "parents": (
+            "6ab5938d34d75fe9f90f4c21f2518dfd1b6e847d",
+            "c11d1b31ad39dc1603b147e538b7f618820fa4aa",
+        ),
+    },
+    "agent": {
+        "checkout": "/home/user/work/agent",
+        "ref": "tl/integration",
+        "head": "47b744dfe908dba1b9b09251d7fa2da3eb0530a6",
+        "tree": "68a7300422373c66b6d314a8b6ba917d0fbddd65",
+        "parents": (
+            "3db4af43ca4676584a53a9eaed93c02bb04a2ec5",
+            "04a4841aeedbc3156009a73988a4dc49e126c44e",
+        ),
+    },
+    "runtime": {
+        "checkout": "/home/user/work/runtime",
+        "ref": "tl/integration",
+        "head": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+        "tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89",
+        "parents": (
+            "46eb068c5adf663270512aca8a4bdd62c1488e6d",
+            "c021f13afb655225570e3f0323f00a55132e8643",
+        ),
+    },
+}
+
+_CLIENT_FILES = {
+    "astrid_runtime_client/__init__.py": "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2",
+    "astrid_runtime_client/generated.py": "e3f51c05342088bc34a562e17997cbf8ff8065c3df795da1cb6cd374216b51b7",
+    "astrid_runtime_client/contract_metadata.py": "51e8ce94a7149f6b3160a6e5e66bafe17c7f94cfd3beb6733bbf8abd63125ab6",
+    "astrid_runtime_client/timeline_commit_types.py": "88c67d9eb650b445b8ad04c9011c1f44f1ec5e9f72a4a733050515de7ec0b616",
+}
+
+_RUNTIME_ARTIFACTS = {
+    "/home/user/work/runtime/contract/artifacts.json": "2f3d56b6f83834b4529ecb86657e2a5948bce072342bf46f9a2ab983cae369c3",
+    "/home/user/work/runtime/contract/component-manifest.json": "1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5",
+    "/home/user/work/runtime/contract/schemas/timeline-config.schema.json": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+    "/home/user/work/runtime/runtime_protocol/schemas/timeline-commit-bundle.json": "b6a1550487dad7c83970d88f26ec3e8a74852cf8c57c20f3cd021847a075b39c",
+}
+
+# The suite rows are approved byte-for-byte.  The only mutable span is the
+# old child environment block.  Offsets and hashes are deliberately fixed so
+# an injected earlier/duplicate marker cannot move the boundary.
+_TEMPLATE_APPROVALS = {
+    "2": {
+        "source_sha256": "f6042b33d35229f47fe74cbd2a575b5984422d2209ed664b996fe1b590656d43",
+        "start": 5787,
+        "end": 23160,
+        "prefix_sha256": "3b530ab9bd3dcf74354913fbb7b22f12f723a71d5c00d152bb2cbacd6effe92c",
+        "suffix_sha256": "2e7d6e669d5dd6a9825aa4b3a2e99f3989ab96038d1c199addcc9f6a7e7a462c",
+        "body_sha256": "af272f0dd955a454a3c277e399da104e0e3dbc2ff17999338d639d6ac212d4d7",
+        "environment_sha256": "83ddd27d5dfc224179eb4141f9e5353ef0cd6db46d085a7fdbc511faf2a36a1d",
+        "environment_bytes": 2181,
+    },
+    "3": {
+        "source_sha256": "6366048bf89533fa450a4575288ac2de004696bab49db6d32f1869783ae493f3",
+        "start": 6420,
+        "end": 22880,
+        "prefix_sha256": "3d4e7a9478dc6ad4ad75c52121617f7d7f5829b25a95ac3a935f7388f5f1ca4c",
+        "suffix_sha256": "accaafd0928a5a18c29d3a952306112886262a41dda785b768e527f739a4260d",
+        "body_sha256": "2ea490595e2489e619f5752b3fed32d180c2bb7d05ae2249fae2537f8ee3a844",
+        "environment_sha256": "7a6a35dcdcc51fca1666c3a2df1b6321e49733c044917c476f830f2ddd2ce70f",
+        "environment_bytes": 2181,
+    },
+}
+
 _QUALIFIED = {
-    "app_head": "bbed290db3a062fc9282940f580c14cf701cfbf8",
-    "app_tree": "e68346571bc405e21ed05e037728a60d52885d9b",
-    "agent_head": "cba425b61958f380f25b7bdea83d23c92f627761",
-    "agent_tree": "d19ce2e55ce9f29e18a504fb9c97178764272bbe",
+    "app_head": "971a29e198c3e384795731f79e39c096abd58845",
+    "app_tree": "349691b03229d6e1f11a164997e29f49dae9f381",
+    "agent_head": "47b744dfe908dba1b9b09251d7fa2da3eb0530a6",
+    "agent_tree": "68a7300422373c66b6d314a8b6ba917d0fbddd65",
     "runtime_head": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
     "runtime_tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89",
     "agent_python": "/home/user/work/venv-agent/bin/python",
@@ -81,12 +155,10 @@ def _source(recipe: Mapping[str, Any], role: str) -> dict[str, Any]:
         _fail(f"missing source facts: {role}")
     value = dict(sources[role])
     value["checkout"] = _absolute(value.get("checkout"), f"source.{role}.checkout")
+    value["ref"] = _text(value.get("ref"), f"source.{role}.ref")
     value["head"] = _digest(value.get("head"), f"source.{role}.head", 40)
     value["tree"] = _digest(value.get("tree"), f"source.{role}.tree", 40)
     parents = value.get("parents")
-    if parents is None:
-        parent = value.get("parent")
-        parents = [parent] if isinstance(parent, str) else None
     if not isinstance(parents, list) or not parents or any(_HEX40.fullmatch(str(p)) is None for p in parents):
         _fail(f"invalid source parents: {role}")
     value["parents"] = tuple(str(parent) for parent in parents)
@@ -129,10 +201,10 @@ def _recipe_bindings(recipe: Mapping[str, Any]) -> dict[str, str]:
     artifacts = client.get("runtime_artifacts")
     if not isinstance(files, Mapping) or not files or not isinstance(artifacts, Mapping) or not artifacts:
         _fail("generated client/runtime artifact inventory is incomplete")
-    for name, digest in files.items():
-        _digest(digest, f"client_contract.files.{name}", 64)
-    for name, digest in artifacts.items():
-        _digest(digest, f"client_contract.runtime_artifacts.{name}", 64)
+    if dict(files) != _CLIENT_FILES:
+        _fail("generated client file mapping is not the reviewed current mapping")
+    if dict(artifacts) != _RUNTIME_ARTIFACTS:
+        _fail("Runtime artifact mapping is not the reviewed current mapping")
 
     remotion = recipe.get("remotion")
     composition = recipe.get("composition")
@@ -140,8 +212,8 @@ def _recipe_bindings(recipe: Mapping[str, Any]) -> dict[str, str]:
     if not isinstance(remotion, Mapping) or not isinstance(composition, Mapping) or not isinstance(environment, Mapping):
         _fail("ordinary Remotion, graph, and environment facts are required")
     historical = _text(remotion.get("historical_source_commit_marker"), "remotion.historical_source_commit_marker")
-    if historical == agent["head"]:
-        _fail("historical Remotion marker must not be relabeled as current Agent source")
+    if historical != "079580ca46af77e0292d49dc34386b25c8391f99":
+        _fail("Remotion historical marker is not the approved bench marker")
     values = {
         "agent_checkout": agent["checkout"],
         "agent_head": agent["head"],
@@ -169,8 +241,12 @@ def _recipe_bindings(recipe: Mapping[str, Any]) -> dict[str, str]:
     for key, expected in _QUALIFIED.items():
         if values.get(key) != expected:
             _fail(f"authenticated fact is not the reviewed current input: {key}")
-    if app["checkout"] != "/home/user/work/app" or agent["checkout"] != "/home/user/work/agent" or runtime["checkout"] != "/home/user/work/runtime":
-        _fail("source checkout is not the qualified normal integration checkout")
+    for role, expected in _EXPECTED_SOURCES.items():
+        source = {"app": app, "agent": agent, "runtime": runtime}[role]
+        actual = {key: source[key] for key in ("checkout", "ref", "head", "tree")}
+        actual["parents"] = source["parents"]
+        if actual != expected:
+            _fail(f"source identity is not the reviewed current {role} integration input")
     if client.get("contract_version") != "0.2.14" or client.get("schema_digest") != "sha256:4118b1e26d30be43cb1a01649df0065fed6e55a528b8956364df8f4eedb413d2":
         _fail("generated client/schema identity is stale")
     if composition.get("package") != "@banodoco/timeline-composition" or composition.get("version") != "0.0.14":
@@ -191,11 +267,24 @@ def authenticated_bindings(recipe: Mapping[str, Any]) -> dict[str, str]:
 def _region(template: str, stage: str) -> tuple[int, int]:
     if stage not in {"2", "3"}:
         _fail(f"unsupported preflight stage: {stage}")
+    approval = _TEMPLATE_APPROVALS[stage]
+    if hashlib.sha256(template.encode()).hexdigest() != approval["source_sha256"]:
+        _fail(f"{stage} template is not the approved retained source")
     start = template.find("STORE_ROOT=")
     end_marker = f'if test -n "$P{stage}FAIL"; then'
     end = template.find(end_marker, start)
-    if start < 0 or end < 0 or template.find("STORE_ROOT=", start + 1) >= 0:
+    if (
+        start != approval["start"]
+        or end != approval["end"]
+        or template.count("STORE_ROOT=") != 1
+        or template.find(end_marker, start) != approval["end"]
+    ):
         _fail(f"{stage} child environment boundary is not unique")
+    if (
+        hashlib.sha256(template[:start].encode()).hexdigest() != approval["prefix_sha256"]
+        or hashlib.sha256(template[end:].encode()).hexdigest() != approval["suffix_sha256"]
+    ):
+        _fail(f"{stage} protected template boundary is not approved")
     if "childvenv-" not in template[start:end] and "CHILD_PATH" not in template[start:end]:
         _fail(f"{stage} template is not the historical child-only region")
     return start, end
@@ -217,6 +306,8 @@ def _ordinary_region(stage: str, values: Mapping[str, str]) -> str:
             f"GRAPH={_shell(values['graph'])}",
             f"CPY={_shell(values['agent_python'])}",
             f"RCPY={_shell(values['runtime_python'])}",
+            'ASTRID_AGENT_PYTHON="$CPY"',
+            'ASTRID_RUNTIME_PYTHON="$RCPY"',
             f"test \"$P{p}AG\" = {_shell(values['agent_checkout'])} || p{stage}fail Agent-working-venv-checkout",
             f"test \"$P{p}RT\" = {_shell(values['runtime_checkout'])} || p{stage}fail Runtime-working-venv-checkout",
             f"test \"$P{p}A\" = {_shell(values['agent_head'])} || p{stage}fail Agent-current-source",
@@ -247,6 +338,13 @@ def adapt_environment_block(template: str, *, stage: str, recipe: Mapping[str, A
     start, end = _region(template, stage)
     replacement = _ordinary_region(stage, values)
     body = template[:start] + replacement + template[end:]
+    approval = _TEMPLATE_APPROVALS[stage]
+    if (
+        len(replacement.encode()) != approval["environment_bytes"]
+        or hashlib.sha256(replacement.encode()).hexdigest() != approval["environment_sha256"]
+        or hashlib.sha256(body.encode()).hexdigest() != approval["body_sha256"]
+    ):
+        _fail(f"{stage} binding substitution is not the approved allowed environment change")
     return {
         "body": body,
         "stage": stage,
@@ -256,6 +354,7 @@ def adapt_environment_block(template: str, *, stage: str, recipe: Mapping[str, A
         "environment_region_bytes": len(replacement.encode()),
         "protected_prefix_sha256": hashlib.sha256(template[:start].encode()).hexdigest(),
         "protected_suffix_sha256": hashlib.sha256(template[end:].encode()).hexdigest(),
+        "launch_bindings": {"Agent": "CPY", "Runtime": "RCPY"},
         "bindings": values,
         "seam": f"caller-publication.py rebind() -> adapt_environment_block(body, stage='{stage}', recipe=facts)",
     }
