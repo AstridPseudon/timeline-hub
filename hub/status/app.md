@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T03:35:27Z | dispatcher heartbeat 10s | live 5 (sol 0, luna 5, other 0) | busy30 17 | status age 3m -->
-# app board, 2026-10-24T03:35Z
+<!-- app | 2026-10-24T03:38:16Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 18 | status age 1m -->
+# app board, 2026-10-24T03:37Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -23,7 +23,7 @@
 | P3 | Original Gate-5 journey | App service; Proof verdict | D42 reviewed fix and caller | doing | Test3362; Runtime0322 and App0325 | FAIL exit2/147s at outbox readiness. Gate5 not run. No repeat. | Fixed App804 |
 | A2-parent-media-closure | Preserve untouched child closure | Sol; Luna review | Resolved | merged | app-A2-parent-media-integrated-0035 | [299 tests, types, lint and external producer passed.](/home/user/timeline-hub/hub/design/app-A2-parent-media-integrated-0035.md) | 1b0428db7d |
 | A2-image-created | Declare genuine image creations | Sol; Luna review | Review 0133 PASS | merged | app-A2-image-created-sol-0126 | Independent 261 tests and producer 28, three types and lint passed. Clip and new authored registry alias claims match provider. Joined proof 0150 passed 448 tests, three types and lint. | b3a84dea71 / 1c5cc47bf6 |
-| A4-image-live | Complete source-bound image witness | Luna producer; Agent fixture | New authentic input and deadline | doing | app-A4-image-producer-standby-0320 | Producer is running and watching for new READY input until about 03:39. Expired0248 remains closed; Agent notified. | Fixed 1c5cc47bf6 |
+| A4-image-live | Complete source-bound image witness | Luna producer; Agent fixture | Actual new input0330 | doing | app-A4-image-producer-standby-0320 | Producer generated actual output from new input d6f4. Waiting full FINAL for byte-exact manager handoff; deadline03:55:31. | Fixed 1c5cc47bf6 |
 | A2-video-caller | Normalized video duplication | Sol; Luna review | Resolved | merged | app-A2-video-integrated-2350 | 217 integrated tests and three typechecks passed. Agent provider is merged; no old raw-positive parity claim. | a714a4cc11 |
 | U3b-draft | Final upstream composition | Sol; Luna review | P2/P3 and final freeze | gated:freeze | app-U3b-current-join-2053 | Reviewed branch stays isolated. Refresh live upstream refs at freeze; do not merge during pinned proof. | Branch only |
 | F-App-full | Full suite before retirement | Test service; Luna review | Resolved for historical head | merged | app-F-D19-current-full-1230 | 18,819 tests passed on exact 12ef. A final qualification follows actual retirement and freeze. | 12ef320545 |
@@ -55,7 +55,7 @@ Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-han
 
 | A4-reachable-census | Check current fallback writer reachability | Luna | Current merged cuts | merged | app-A4-current-reachable-census-0300 | One reachable element adapter writer found; Sol0306 assigned. Executor and legacy protocol paths have no production value caller. | Current integration |
 
-| A2-element-writer | Move registered element saves to A2 | Sol; Luna review | Author 0314 complete | review | app-A2-element-review-0335 | [221 tests, three types and lint passed; independent review queued.](../../design/app-A2-element-handoff-sol-0314.md) | tl/app-A2-element-handoff-sol-0314 |
+| A2-element-writer | Move registered element saves to A2 | Sol; Luna review | Independent 0335 PASS | merging | app-A2-element-handoff-sol-0314 | [Independent 221 tests, three types and lint passed. Normal merge requested.](../../design/app-A2-element-review-0335.md) | 2c786c161f |
 | A4-protocol-joined | Qualify merged protocol packets | Luna | Three reviewed merges | merged | app-A4-protocol-joined-proof-0306 | Exact a645 passed 139 tests, three typechecks, lint and donor identities. Remaining 35 original declarations unchanged; failed packets unmerged. | a64587176d |
 
 | P2-P3-result-handoff | Publish same-ID changed-pair evidence | Luna | Actual terminal artifacts | merged | app-P2-P3-D41-result-handoff-0307 | Terminal P2 three failed, five not run; P3 Gate5 not run. Full producer and three qualified P3 safe files published for Proof. | App804 / Agent079 / Runtime37eb |
@@ -66,15 +66,15 @@ Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-han
 
 | P2-gesture-causes | Classify three actual gesture failures | Luna | Review 0327 complete | merged | app-P2-gesture-review-0327 | [Source classification PASS with corrected mounted save citation. Exact triggers remain unknown.](../../design/app-P2-gesture-review-0327.md) | Report only |
 
-| readiness-D42-trace | Correlate retained request and close times | Sol; Luna review | Author 0325 complete | review | app-readiness-D42-trace-review-0332 | [P3 reads do not overlap; two P2 pairs overlap. Generation clock join unknown.](../../design/app-readiness-D42-trace-sol-0325.md) | Fixed App804 artifacts |
+| readiness-D42-trace | Correlate retained request and close times | Sol; Luna review | Independent review complete | merged | app-readiness-D42-trace-review-0332 | [All eight timings verified; causal link insufficient. Sent before03:50.](../../design/app-readiness-D42-trace-review-0332.md) | Report only |
 | readiness-D42-coalesce | Reuse same-head pending basis read | Luna; independent review | D42 | doing | app-readiness-D42-coalesce-0325 | Author is testing actual cleanup and restart. Runtime owns main verification memo; no new run. | Pinned App804 branch |
 
 
 Integration: a64587176d. Current recovery packet passed 106 tests, three types and lint before its exact merge. Exports and lifecycle joined proof passed 108 plus 105 tests, three types, lint and governance. Historical joined proof 0150 remains bound to 1c5cc47bf6.
 
-| readiness-whole-path | Independently investigate client to server | Sol | Second fix did not clear gate | doing | app-readiness-whole-path-sol-0332 | Compare passing P1 and P2 readiness with failing P3. Read-only; no duplicate fix or run. | Fixed source and retained artifacts |
+| readiness-whole-path | Independently investigate client to server | Sol; Luna review | Author0332 complete | review | app-readiness-whole-path-review-0336 | [Production path mapped; exact unresolved await and cancellation trigger unknown.](../../design/app-readiness-whole-path-sol-0332.md) | Fixed retained source |
 
-Blockers: Runtime — D42 verification memo0322 and proof-pin backport remain active; App coalescing0325 is independent. No further P2/P3 run now.
+Blockers: Runtime — Complete-input memo0330 and proof-pin backport remain active. App coalescing0325 is independent; no new P2/P3 run.
 Blockers: Freeze — U3b waits P2/P3 and final freeze.
 Next ready: Review diagnostics0318 and element0314, qualify pending coalescing, and publish independent trace timing before03:50.
-Disk: Three finished worktrees recycled this pass. Sweep3 running. About11GB free before cleanup. Prior dirty U3 recycle and compact refusals stand; no retry.
+Disk: Three finished worktrees recycled. Sweep3 completed with zero eligible directories. Current free10.93GB; freed bytes were not measured separately. Prior dirty U3 and compact refusals stand.
