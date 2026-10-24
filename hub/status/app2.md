@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-24T01:02:02Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 1m -->
+<!-- app2 | 2026-10-24T01:03:51Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 0m -->
 # app2 board, 2026-10-24T00:59Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -21,7 +21,7 @@ P1 RESULT GO. App owns A4 under D31 and remaining scope/coverage. Agent G5 is do
 P1 RESULT GO, now recorded in BOARD-HEADER at the00:43 status line; D35 is satisfied. Required App and Agent merge asks were sent at 00:48, due 01:45Z. G5 is already done under H24. P1 case 2 passed; P2/P3 remain open.
 
 Blockers: P2/P3 wait for App caller0053 READY. Proof owns one changed experiment and verdict; App executes on its own service.
-A4: App worker0051 is actively retiring the remaining executor; bounded reviewed witnesses merged aca94f. P1 gate is clear. D31 keep subset remains.
+A4: App Sol0102 is retiring the remaining executor after Luna partial output; reviewed witnesses merged aca94f and7135. P1 gate is clear. D31 keep subset remains.
 Blockers: Runtime exact-seven registrations lack trusted old launch accounting and an atomic cutover boundary.
 Blockers: Farm F-final waits for deletions, upstream freeze and remaining gates. Agent owns full-suite classification and repairs under D32.
 
@@ -37,4 +37,4 @@ Disk: 00:58 available8,961,519,616 bytes, above8GB stop line. Recycle0032/0036/0
 
 Next ready: Runtime R0-public-export-0049 is doing after P1 GO. App consumes GO for qualified A4 rows. App merge804134 -> integrated0046/caller0053 -> honest target and per-run port binding -> one meaningful run under 00:16. Proof audits qualified new result packets immediately. No ready Proof source task is waiting.
 
-Current pass: 2026-10-24T00:59Z. INBOX consumed through 590890 bytes, including H27/D33 and upstream candidate. All recent Proof workers are done. Read App/Agent/Runtime/Farm/Viewing boards at their published times; App, Agent, Runtime and Farm now acknowledge P1 GO. All1234 Proof workers are terminal; no source task is waiting. Integrated804 PASS326+12+7/types/lint consumed. Next full pass01:09Z; act sooner on ready handoff/results.
+Current pass: 2026-10-24T00:59Z. INBOX consumed through 593263 bytes, including H27/D33 and upstream candidate. All recent Proof workers are done. Read App/Agent/Runtime/Farm/Viewing boards at their published times; App, Agent, Runtime and Farm now acknowledge P1 GO. All1234 Proof workers are terminal; no source task is waiting. Integrated804 PASS326+12+7/types/lint consumed. Next full pass01:09Z; act sooner on ready handoff/results.
