@@ -4,30 +4,37 @@ The immutable parent composition's `config.app.visualSeamContract` carries
 authored seam policy. Publish changes through `publish_parent_composition`
 with `expected_head`; never rewrite pinned child revisions in storage.
 
-Picture is inferred from the track and clip type; no declaration is needed.
-Any clip type on a visual output lane counts as picture, including a custom
-renderer's opaque types, except known overlay/effect types and effect, animation
-or transition element references. Built-in picture types also count on a lane
-that `continuityTracks` or a canonical occurrence names. Source and audio
-lanes, disabled clips and text cannot satisfy child picture coverage. The
-metadata analyser does not execute custom renderers or verify their pixels. A
-legacy `pictureTracks` key in a stored policy is ignored; it is preserved
-byte-for-byte and never read.
+Picture presence and full-frame coverage answer different questions. Any clip
+on a visual output lane can establish child picture presence, including custom
+renderers, except known auxiliary/effect types and effect, animation or
+transition element references. Source/audio lanes and inactive clips do not
+supply child picture. Empty-child and child-picture-gap diagnostics check the
+union of those picture spans; custom renderer pixels are never inspected.
 
-`continuityTracks` selects lanes requiring strict gap/overlap checks. Picture
-coverage is the union of a child's active picture spans, independent of this
-selection. For a composition whose parent shot lane is `picture` and whose
-custom layered child picture is on `plate`, a policy can use:
+Only opaque full-frame clips participate in continuity gap/overlap findings.
+The rule mirrors the App's `coversFrame`: a visual non-source track, media,
+video or image with an asset (or a clip on an explicit `pictureTracks` lane),
+clip and track opacity at least 1, and no width/height smaller than the output
+resolution. Missing dimensions mean full-frame media. Custom elements of
+unknown geometry do not qualify without the explicit picture-track opt-in.
+The normalized `coversFrame` flag retains this decision, using the same
+parent-first track definitions as render materialization, for nested clips too.
 
-```json
-{"continuityTracks": ["picture"]}
-```
+`continuityTracks` selects which full-frame lanes receive gap/overlap checks;
+when absent, lanes are inferred only from full-frame picture clips. An
+occurrence participates on its parent lane only when it contains a full-frame
+picture. Declared transition overlaps and exact authored pauses remain exempt.
+Opaque overlay elements neither activate a warning nor appear as opaque risk
+at a picture cut. Clip-local effects inherit their picture owner's coverage;
+known disclosed timing cues remain available independently.
 
-Custom picture timing remains opaque in the report. Its cut represents its
-activation; independent auxiliary activations and known motion/phase/source
-cues still require acknowledgement. Store boundary declarations in `intents`,
-keyed by the decimal frame. Use the report's `canonicalContext`, the current
-`disclosureVersion` as `contextVersion`, and the intended `kind`. Hard cuts and
-transitions carry no cue acknowledgement. `synchronized` acknowledges only
-the exact named `canonicalCueIds` in `participants`; relevant edits invalidate
-the context. No intent exempts structural gaps or overlaps.
+Negative starts, invalid occurrences and empty/gapped child picture diagnostics
+remain. Owner-overhang diagnostics apply only to full-frame picture: clipping
+an overlay at its occurrence edge is a composition choice. Reports advise and
+never prevent publication or rendering; invalid closure/timing data still
+raises normally.
+
+The App and Runtime both run the single set of timelines and expected findings
+in `conformance/fixtures/visual-seam-cases-v1.json`. Runtime pytest reads it
+locally; App Vitest reads it from `ASTRID_RUNTIME_CHECKOUT`, the existing
+cross-repository test convention. No fixture is copied into the App.
