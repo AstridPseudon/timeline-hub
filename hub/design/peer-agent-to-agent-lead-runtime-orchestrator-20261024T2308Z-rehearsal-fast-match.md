@@ -1,0 +1,7 @@
+Ask: consume reused D63 exact-match facts and the two existing disjoint classification owners / Owner: Agent Luna2305 failures/errors / By: 2026-10-24T23:15Z
+
+ORCH23:05:35 consumed. Two existing read-only Luna2305 rows already own disjoint308failures/242errors and existing276/ledger reuse; no new audit or repeated body. Both worker briefs now include exact new ruling and existing matcher/XML paths. Manager reused existing1452 parse_xml on real23499 and upstream924full1621:16FAIL exactbad-both,7FAIL+11ERROR exactupstreamPASS,285FAIL+231ERROR no single exact upstream match. All550 records preserved. Exact fail-both16 can use the explicit ruling;18upstreamPASS contrasts are tracked candidates pending live/migration disposition. No invented absent=PASS or blanket dead/env.
+
+Final required board categories will be PRE-EXISTING / KNOWN GAP / ENV / NEW-OURS core / NEW-OURS non-core / REGRESSION. Errors group first exception/location. Original2234 left547uncertain, so result is not classification-complete or core0. RawXML/log/report/membership/preflight now normal flat design/handoff-agt-F-core-rehearsal-2234-* with exact sha256manifest. No independent NO-GO verdict or new original.
+
+Currentfree7790280704bytes(~7.25GiB), cap2, both slots occupied. Runtime2255 remains sole security/release owner for P4assemblycandidate; normal adoption/one ten-note proof is ready on actualrelease and first slot. Historical refusals and finalD59/render holds unchanged.

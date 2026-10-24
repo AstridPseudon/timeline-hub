@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T23:05:46Z | dispatcher heartbeat 1s | live 2 (sol 0, luna 2, other 0) | busy30 4 | status age 0m -->
+<!-- agent | 2026-10-24T23:08:50Z | dispatcher heartbeat 3s | live 2 (sol 0, luna 2, other 0) | busy30 4 | status age 1m -->
 # agent board, 2026-10-24T23:05:34Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -154,9 +154,9 @@ Tuple: Agentc2a63 /Runtime732c /App5fcb9ad5cf /Composition635f captured once wit
 Evidence: [Current XML](../../design/handoff-agt-D84a-29429-five.xml), [log](../../design/handoff-agt-D84a-29429-service.log), [tuple](../../design/handoff-agt-D84a-29429-tuple.manifest), [timings](../../design/handoff-agt-D84a-29429-outcomes.tsv), [report](../../design/agt-P4-R2-D84a-five-2214.md). All published byte-exact. Prior6749/1960 evidence and31062 zero-body setup remain immutable.
 D69/D72: Exact 47 restored membership and 178 audit retained; named family proofs complete. D60 upstream 924 full remains FAIL: 12396 pass, 91 fail, 14 errors. Exact 276 accounting, D67 environment gap and both D23 deferrals stay separate.
 Admission: Historical safety, access and cleanup refusals remain stopped. No denied pin release, fabricated installed tuple, child, Farm or schema route. E2 and D79 paused until after ZIP.
-Disk: 8079163392 bytes free at23:04,7.52 GiB; cap4 then. Two Luna classification workers dispatched; new trees may lower cap. No eligible ended clean non-KEEP tree before2234 ended. Sweep3/compact freed0. Refused pins and dirty G2 untouched.
+Disk: 7790280704 bytes free at23:06,7.25 GiB; cap2. Two Luna classification workers running. No eligible ended clean non-KEEP tree before2234 ended. Sweep3/compact freed0. Refused pins and dirty G2 untouched.
 Blockers: Runtime P4 source — security2255 owns final candidatebad9 qualification/normal apply. No released successor yet. Ten-note45.314s FAIL retained; next meaningful original waits only release/adoption.
 Blockers: Final cut — final pinned P1–P5 and core proofs plus genuine installed render remain D59 gated. Current rehearsal adds550 bad outcomes;547 categories incomplete.
 Next ready: Classification first-return -> ready critical core/regression repair rows. Runtime qualified release -> normal adoption and ten-note-only body. Final cut remains unselected.
-live 2 / cap 4; ready-undispatched 0. Luna2305 failures and errors complete missing D54a classification on disjoint XML slices. Service23499 terminal; no repeated body or extra verdict. Runtime2255 independent security active.
-Inbox consumed through 1139498 bytes. Pass 2026-10-24T23:05:34Z: Read Runtime2255 source-active peer; no new release. Published exact2234 terminal/report/XML/log and membership bytes normally. Original worker left547 uncertain; immediately dispatched two disjoint classification continuations. Every550 outcome remains visible; no core0 or pre-existing/dead claim inferred.
+live 2 / cap 2; ready-undispatched 0. Luna2305 failures and errors complete missing D54a classification on disjoint XML slices. Service23499 terminal; no repeated body or extra verdict. Runtime2255 independent security active.
+Inbox consumed through 1140593 bytes. Pass 2026-10-24T23:05:34Z: Read Runtime2255 source-active peer; no new release. Published exact2234 terminal/report/XML/log and membership bytes normally. Original worker left547 uncertain; immediately dispatched two disjoint classification continuations. ORCH23:05 fast reuse consumed; existing matcher gives16exact fail-both,18upstreamPASS contrasts,516no-single-match. Full categories still pending; no core0.
