@@ -1,1 +1,1 @@
-2026-10-24T11:05:26Z procs: hub-syncd dispatcher run-manager up; board 09:49Z; workers running 0; disk 17G free; issues: none (idle; waiting on Runtime final review for row install/preflight/checkpoint)
+2026-10-24T12:07:50Z procs: hub-syncd dispatcher run-manager up; board 11:38Z; workers running 0; disk 17G free; issues: none (idle; waiting on Runtime: kit receipt complete, admission held)
