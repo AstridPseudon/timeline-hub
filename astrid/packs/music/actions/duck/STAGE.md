@@ -16,31 +16,30 @@ refuses an ambiguous bed, including multiple clips on the music track.
 `voice_tracks` defaults to `["vo"]`. The analysis uses current timeline
 placements and source spans, including each voice clip's placement, source
 in-point, duration, speed, volume, and fades. The helper requires a
-project-scoped client and timeline slug or ID, and passes those placements and
-digest-verified media in the local action's required `snapshot` ZIP input. The
-action itself accepts that snapshot plus the numeric controls below.
+project-scoped client and timeline slug or ID. It writes the snapshot ZIP,
+imports it with `client.media.import_file(project=..., path=...,
+idempotency_key=...)`, and passes the returned managed digest as the action's
+`snapshot` input.
 
-The declared controls are `bed_lu` (the target voice-minus-music loudness gap),
-`cap_lu` (the minimum momentary voice-minus-music gap during voiced moments),
-`slew_db_per_s` (maximum gain change rate), `smooth_s` (gain-curve smoothing
-window), `floor_db` (maximum attenuation floor), and `merge_gap_s` (merge
-nearby voice activity across gaps). Defaults are `bed_lu=8`, `cap_lu=4`,
-`slew_db_per_s=2.0`, `smooth_s=1.0`, `floor_db=-12.0`, and `merge_gap_s=1.2`.
-In particular, `cap_lu=4` caps the music level at `VO_I - 4 LU` for a 400 ms
-moment; it does not mean “at most 4 dB of gain reduction.”
+The single public numeric control is `bed_lu` (default `8`), the target
+voice-minus-music loudness gap. The implementation fixes the voiced-moment cap
+at 4 LU, gain slew at 2 dB/s, Hann smoothing at 1 s, attenuation floor at
+-12 dB, and voice-span merge gap at 1.2 s. The 4 LU cap limits music to
+`VO_I - 4 LU` for a voiced 400 ms moment; it does not mean “at most 4 dB of
+gain reduction.”
 
 The analyzer evaluates voice energy per line, uses 400 ms K-weighted moments at
-10 ms timeline steps, and derives a gain curve subject to the cap, floor, and
-slew-rate limits. The slew limit is measured per timeline second; the
+10 ms timeline steps, and derives a gain curve subject to the fixed cap, floor,
+and slew-rate limits. The slew limit is measured per timeline second; the
 source-time control step scales with playback speed. It applies forward and
-backward rate limiting, then a 1 s Hann smoothing window. The report records
-requested and achieved ducking, including any overshoot caused by smoothing and
-rate limits. Gain is authored in source clock and mapped through each clip's
-playback speed onto the timeline.
+backward rate limiting, then Hann smoothing. The report records requested and
+achieved ducking, including excess caused by smoothing and rate limits. Gain is
+authored in source clock and mapped through each clip's playback speed onto the
+timeline.
 
-Outputs are a WAV (`music.wav`), `duck.json`, and the universal
-`manifest.json`. The managed output ports are `music` (primary WAV) and `duck`
-(the analysis report); the manifest describes the run. The WAV retains the
+The managed output ports are `music` (primary WAV), `duck` (the analysis
+report), and `manifest` (the managed run manifest at
+`artifacts/manifest.json`). The WAV retains the
 source sample rate, channel count, integer PCM or IEEE float sample format, and
 exact frame count. Its dither is deterministic, so repeating a run against the
 same source and timeline evidence gives the same output bytes.
@@ -76,11 +75,14 @@ print(f"Review run {result.run_id} and its managed music/duck outputs before ado
 ```
 
 Supply `clip` when the timeline contains more than one music clip, and pass
-`voice_tracks` or `DuckParameters` only when their defaults do not fit the
-edit. Inspect the `duck` managed output before adopting `music`. For direct
-`sdk.invoke("music.duck", kind="action", ...)` calls, supply the snapshot file
-produced by the helper; the action has no timeline input or ambient Runtime
-connection.
+`voice_tracks` only when the default voice track does not fit the edit. The
+direct helper API is
+`duck_timeline(client, project, timeline, *, clip=None, voice_tracks=None,
+bed_lu=8, wait=True)`. Inspect the `duck` managed output before adopting
+`music`. For direct `sdk.invoke("music.duck", kind="action", ...)` calls,
+first import the snapshot ZIP through `client.media.import_file(...)` and pass
+its returned managed digest as the `snapshot` input. The action has no timeline
+input or ambient Runtime connection.
 
 ## Tagged reruns
 
