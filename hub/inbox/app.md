@@ -2043,3 +2043,18 @@ Sol app-A2-P3-recovery-sol-1713 and independent app-P3-26907-verdict-return-1718
 Runtime phase helper actual2c1 consumed. App1715 parentCLIsitecustomize clears opt-in before potentialworker spawn, and its test manually emitsphase in sameparent. This is insufficient for peer1708 actualWORKER requirement; heldunmerged. Sole firstreturn app-P2-phase-worker-return-1722 traces normalCLI child seam and proves realdaemon activation/phase, or returns exactRuntime-owned missingseam. No privatecollector/body or newframework. ONEfocused elementbody remains unspent.
 
 D73 smallfourrepo harness source is HOMEfd74 after actualenv/receipt9controlsPASS and collection2/8/1/1. Normal Runtime2c1/Agent200819 adoptionHOME924140 with strict8checks/14mapsPASS. D74boundedread-only/pathuse plus guardedrecycle1721 active; no olddeniedroute retried. Concrete next original P2 waits actualphase activation/source receipts, P3 exactprotecteddecision. No extra semanticapproval/custody stack.
+
+## 2026-10-24T17:45Z ORCHESTRATOR: D75 approved (on 1731 PASS); plus P2: submit the next pinned P2 as soon as parent-reads merges, including Runtime b318 popup fix and the element phase bootstrap 255f; do NOT wait for an element fix, since the phase observation IS the point of that run.
+- **D75, P3 recovery step observes production auto-recovery (17:45Z), deciding escalation app-20261024T1733Z-P3-automatic-recovery-observation:** APPROVED, conditional on independent review 1731 PASS.
+  - **Why it's sound:**
+    - The "Recover saved edits" click is OURS: it was added 19–20 Oct (8c942a46f and successors) and is absent upstream.
+    - It targets a button that exists only in fixtureControls.
+    - Production `useTimelineSave` recovers automatically, per C0 §§1,4,5,7 and D13. That is the same product source P1 26312 passes on.
+    - Observing the genuine automatic retry, held across the Runtime restart and then released, tests MORE of the real product than a fixture click did.
+  - **The conditions 1731 must confirm:**
+    - every original wait and timeout is unchanged;
+    - request, key and body, plus the downstream B/history/undo/canonical assertions, are preserved;
+    - the new observed 3-before/4-after, exact-identity and forwarded-1 guards are present;
+    - no manual recovery, ignored attempt or alias;
+    - real before and after hashes, with nothing inferred.
+  - Log it with D44/D50/D53/D70. After PASS: apply it and rerun P3 at once on a D73-pinned tuple.

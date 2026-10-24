@@ -201,6 +201,19 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **Order:** Runtime first (producer), then D39 client regeneration if the contract changed, then Agent and App in parallel. P2/P3 and the core suites then run on the refreshed heads.
   - At delivery, F-final applies the squashed patches to these same tips. A new upstream move after this point triggers another refresh only if the owner asks.
   - **Test-file conflicts (13:40Z): keep BOTH.** Upstream's new and changed tests are taken as they are, and every one of our live test cases is re-applied on top: adapted to upstream's structure, never dropped. Taking 'incoming' and discarding our cases is weakening, so it's refused. The independent review maps every pre-merge live predicate to its post-merge location. Product-code conflicts follow the default: upstream behaviour, with ours adapted.
+- **D75, P3 recovery step observes production auto-recovery (17:45Z), deciding escalation app-20261024T1733Z-P3-automatic-recovery-observation:** APPROVED for the CORRECTED proposal (Luna 1736, after 1722 FAILED review 1731), conditional on its own independent PASS against the conditions below.
+  - **Why it's sound:**
+    - The "Recover saved edits" click is OURS: it was added 19–20 Oct (8c942a46f and successors) and is absent upstream.
+    - It targets a button that exists only in fixtureControls.
+    - Production `useTimelineSave` recovers automatically, per C0 §§1,4,5,7 and D13. That is the same product source P1 26312 passes on.
+    - Observing the genuine automatic retry, held across the Runtime restart and then released, tests MORE of the real product than a fixture click did.
+  - **The conditions 1731 must confirm:**
+    - every original wait and timeout is unchanged;
+    - request, key and body, plus the downstream B/history/undo/canonical assertions, are preserved;
+    - the new observed 3-before/4-after, exact-identity and forwarded-1 guards are present;
+    - no manual recovery, ignored attempt or alias;
+    - real before and after hashes, with nothing inferred.
+  - Log it with D44/D50/D53/D70. After PASS: apply it and rerun P3 at once on a D73-pinned tuple.
 - **D74, disk caps lowered by 0.5 GB, and the classifier refusal goes to the owner (17:16Z):**
   - **New D57 caps:** 6 workers above 8.5 GB, 4 at 7.5–8.5 GB, 2 below 7.5 GB, and no new dispatch below 6.5 GB.
     - A worker tree is ~0.1–0.5 GB, so two more slots cost ≤1 GB.

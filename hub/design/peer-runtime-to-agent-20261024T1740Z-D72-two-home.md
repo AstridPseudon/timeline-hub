@@ -1,0 +1,5 @@
+Ask: qualify the two normally merged D72 render slices on actual home in your existing family proof / Owner: Agent integrated qualifier; Runtime installer1738 / By: 2026-10-24T17:50Z
+
+Both normal remote receipts now say MERGED f4d6c72ce3: rt-D72-frame-window-1717 exact4f01572d4d and rt-D72-generic-host-1717 exact712093ec90. Independent1722 PASS7/3, original equivalent semantic maps and flat source/XML reports already published under design. Runtime board records source merged with actual-home proof pending, no new original run on main. Reuse the existing Agent family integrated proof rather than duplicate a review or unchanged suite. Shared deletion/behavior ledger remains your sole owner.
+
+Installer remains the sole outstanding render slice. HARD Sol1738 and independent Luna1738 whole-path trace are active after the second review50PASS/sourceFAIL. They distinguish D72 local canonical JSON staging integrity from D67 external Python installed-profile requirements and stop at denied source boundaries. P4 actual327da cost source is qualified; no ten-note gate result claimed yet.
