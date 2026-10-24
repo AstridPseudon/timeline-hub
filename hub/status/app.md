@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T02:25:23Z | dispatcher heartbeat 14s | live 2 (sol 2, luna 0, other 0) | busy30 19 | status age 1m -->
-# app board, 2026-10-24T02:23Z
+<!-- app | 2026-10-24T02:27:58Z | dispatcher heartbeat 1s | live 4 (sol 2, luna 2, other 0) | busy30 20 | status age 2m -->
+# app board, 2026-10-24T02:25Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -16,7 +16,7 @@
 | A4-dormant-scope | Record dormant raw and track subsets | Luna | D37 applied | merged | app-A4-D37-wording-0222 | Both exact worker records copied into existing App and combined ledgers. Implementations and tests unchanged. | Documentation only |
 | A4-reviewed-stack | Ports and mounted witnesses | Luna | Review 0105 and integrated 0115 PASS | merged | app-A4-mounted-fixture-return-0059 | Independent and integrated 111 plus 33 tests passed on exact93d487. Types/lint passed; mocked authority limit retained. | 93d48799a2 |
 | A2-bootstrap-fix | Restart cancelled bootstrap | Sol; Luna review | Resolved | merged | app-A2-basis-cancel-repro-sol-0029 | [326 tests, three typechecks and lint passed.](/home/user/timeline-hub/hub/design/app-A2-bootstrap-integrated-0046.md) | 804134d747 |
-| readiness-after-bootstrap | Adopt qualified Runtime history fix | Sol; Luna review | Runtime proof 0210 PASS | doing | app-readiness-runtime45-caller-sol-0222 | Runtime 45c3 passed 145 integrated tests. Exact backend checked out; normal child and Remotion requests queued. Historical cause unknown. | App 804; Runtime 45c3 |
+| readiness-after-bootstrap | Adopt qualified Runtime history fix | Sol; Luna review | Compatible backend client | blocked:runtime | Runtime peer 0225; App caller Sol 0222 | Runtime 45c3 passed 145 tests, but Agent 079 child refused changed client bytes. Runtime owns compatible source. Historical cause unknown. | App 804; failed backend 45c3 |
 | P-door-port-alloc | Allocate door port per run | Luna; D21 | Resolved | merged | app-P2-P3-door-allocation-0039 | [Node 20 allocation, shared stage value and failure checks passed.](/home/user/timeline-hub/hub/design/app-P2-P3-door-allocation-0039.md) | Harness rows only |
 | readiness-upstream-check | Check f38e candidate | Sol; Luna review | Review 0057 PASS | merged | App Sol 0046; Luna 0057 | No census or attempt-root signature supports attribution. Exact patch is unavailable locally; historical cause remains unknown. | Report only |
 | P2 | Eight original gesture cases | App service; Proof verdict | Caller and new backend receipts | doing | Caller Sol 0222 | Prior 10973: exit 2, 189 seconds; all eight NOT RUN. Prepare one changed run with Runtime 45c3; no new request yet. | App 804134d747 |
@@ -34,7 +34,7 @@
 
 | A4-media-wrappers | Retire unused media executor wrappers | Luna | Reviewed packet PASS | merged | app-A4-media-wrappers-current-packet-0205 | Four exact reviewed blobs; 108 tests, three typechecks and governance passed. | 7987a0b0dc / 9e5d1bb791 |
 
-| A4-owner-recovery-tests | Move explicit owner recovery cases | Luna | First return 0210 complete | review | app-A4-owner-recovery-final-review-0222 | Author reports 105 tests passed with genuine outbox exclusive-lock acquisition. Independent cumulative review active. | Return branch only |
+| A4-owner-recovery-tests | Move explicit owner recovery cases | Luna | First return 0210 complete | review | app-A4-owner-current-packet-0226 | Independent review 0222 passed 105 tests, three types and lint. Current own-only packet 0226 is being qualified. | d7d39df574 held for packet |
 
 | A4-public-executor | Remove executor value exports | Luna | Review 0208 PASS | merged | app-A4-exports-lifecycle-current-0213 | 108 tests, three typechecks and governance passed. Exact reviewed exports copied; test-only runner remains. | b7261d56fd / 5ad7907e86 |
 | readiness-client-confirmation | Compare history cardinality and wait | Sol; Luna review | Existing 0121 and 0128 PASS | merged | App Sol 0121; Luna 0128 | Both histories have two entries; full child closure and seed command count differ. Browser request count unknown. Reply 0200 published. | Report only |
@@ -46,11 +46,12 @@ Delivery legacy subset: Keep transcriptAssociateCapture.ts and its unchanged 397
 Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-handoff-0029.md), [image review](/home/user/timeline-hub/hub/design/app-A2-image-created-review-0133.md), [A4 cut map](/home/user/timeline-hub/hub/design/app-A4-current-cut-census-0042.md).
 
 | A2-recovery-basis | Preserve seven dependent recovery guards | Sol; Luna review | Original seven cases fail current path | doing | app-A2-recovery-basis-sol-0224 | Test migration found dependent stored basis unchecked after accepted prefix. Seven original expectations retained; bounded source repair active. | Current base 5ad7907e86 |
-| readiness-backend-bench | Exact Runtime 45c3 child and graph receipts | Dispatcher; App caller | Qualified backend checkout | doing | Child and Remotion requests 0222 | Normal makers requested exact Agent 079 plus Runtime 45c3. Reuse Remotion tree through supported route; no old child relabel. | Runtime 45c3a7f47 |
+| A4-remaining-protocol | Map remaining legacy protocol cases | Luna | Current exports and lifecycle merged | doing | app-A4-remaining-protocol-map-0226 | Read-only mapping to current save APIs; excludes owned recovery tests and retained dormant subsets. | Current 5ad7907e86 |
+| readiness-backend-bench | Exact Runtime 45c3 child and graph receipts | Dispatcher; App caller | Compatible backend source | blocked:runtime | Runtime peer 0225 | Remotion reuse authenticated. New child refused canonical client mismatch; no retry or guard waiver. | Failed child 0222 |
 
 Blockers: U3b awaits P2/P3 and the final freeze.
-Blockers: App caller awaits normal exact-backend child and Remotion receipts. Runtime source and integrated proof are complete.
+Blockers: Runtime owns a compatible history-cost source for Agent 079. Child 0222 refused canonical client bytes mismatch; no new journey or failed-child retry.
 
-Next ready: Consume owner recovery review, finish seven basis guards, bind new backend receipts and qualify one changed P2/P3 experiment.
+Next ready: Merge the qualified owner packet, finish seven basis guards, map remaining protocol cases and consume Runtime compatibility handback.
 Integration: 5ad7907e8676553133f9a77cc6e9a541f1364c42. Exports and lifecycle joined proof passed 108 plus 105 tests, three types, lint and governance. Historical joined proof 0150 remains bound to 1c5cc47bf6.
-Disk: 11.22 GB available. Five finished worker trees were already recycled; this pass freed 0 GB. Active, pinned, freeze and historically refused paths retained. Sweep is running; prior compact refusal stands.
+Disk: Sweep removed nine old temporary directories and freed 735 MiB. Five finished worker trees were already recycled, freeing 0 GB. Active, pinned, freeze and refused paths retained; prior compact refusal stands.

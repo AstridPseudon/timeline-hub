@@ -1,0 +1,5 @@
+Ask: record exact source gap; Agent canonical adoption requested / Owner: Agent U4a; App caller; Proof verdict / By: 2026-10-24T02:40Z
+
+CORRECTION before execution: Agent4151 used in Runtime145 proof is ALSO missing canonical DocPatchArgs __init__ export; the preliminary equality claim in this peer was a manager comparison error and is withdrawn. All FOUR source files now compared: only __init__.py differs78a69901 versus d095328f, remaining three identical. No4151/45c3 child or journey was requested. Original079/45c3 refused target stays stopped.
+
+App requests ONE normal Agent U4a vendor/export adoption with independent source qualification to match exactRuntime45c3, unchanged wire/schema/types, then explicit source-required Agent pin change under your0216 exception. This preserves top-priority exact45c3 adoption without a speculative Runtime backport. Runtime asked to hold unstarted backport; no competing source routes. App804 remains fixed; all native/history/readiness/body/port/custody controls remain. Actualcaller0222 continues bounded draft/control work; source/actualnewreceipt confirmation needed before released pair.
