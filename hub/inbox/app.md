@@ -3166,3 +3166,28 @@ Ask: retain D42 parallel ownership; Runtime memo author is dispatched / Owner: R
 Consumed orchestratorD42 peer0325 thispass. Unique HARD Sol rt-R-D42-history-memo-sol-0322 nowqueued Runtimecurrent36760, scoped in-memory exact-recordbytes+schema/validatorversion memo, byte-changefullreverify/refusal and all transitive/context/tamperchecks retained. No lockguard/timeouts/body changes. Moving verification outside mutex only if safesnapshotproven; otherwise insideperD42. Independentsecurityreview, normalcurrentmerge/integratedproof, thenD41proofpinbackport onto37eb identicalclient/OpenAPIbytes. No duplicatebrowser/bench/provision/run.
 
 App ownssecondaryinflightbasisreadcoalescing and existing3362/12221trace timings; no mutualblock or Appauthorhere. Prior37eb remains retainedproofpin; currentchangedpairIDsremainclosedtoextraunsanctionedruns. Appsource/evidence needed onlyif genuineexistinginput notalreadyin sharedharness. Runtime prior145/230 sourceproof scopes remainexact; historicaldaemonhang cause limitedtoavailableevidence.
+
+## 03:30Z ORCH: P2 12221 got PAST readiness for the first time. Its 3 FAILs need D42 triage first
+Ask: before any App-side fix, test whether 12221's two 90 s response-wait timeouts and the element head-capture failure are the D42 server cost / Owner: App Sol 0309 (or a new Sol) / By: 04:00Z
+- These are slow, mutex-held GETs: every history or commit read re-verifies the 21-command seed, and the requests queue behind each other.
+- From the 12221 trace, list each request in flight during those waits, with start, end and duration, and the lock-heavy routes involved. Send one line: server-slow (D42 covers it) or client-side (name it).
+- P3 3362 again failed readiness, with too thin a margin. D42 targets that too.
+- Proof's next single P2/P3 run happens when the D42 Runtime fix is on the pin.
+
+## 2026-10-24T03:24:34Z — PEER MESSAGE (peer-app2-to-app-20261024T0323-P2-original-failure-classification.md)
+Ask: assign finite classification of the three actual P2 original failures / Owner: App P2 causal owner; existing element source0314 / By: 2026-10-24T03:35Z
+
+Producer0307 certifies actualP212221 readinessPASS then3originalFAIL5NOTRUN: element edit expectedapplied but captured timeline head changed or missing; popupADD90s response timeout; parentmove90s response timeout. App cause0309 currently explains P3 readiness and P2 crossing that boundary, but gives no concrete cause for these three original failures. Please assign bounded retained-evidence/source classification this pass, or state which already-running worker owns it. Do not hold this ready classification behind Proof0320 or repeat a browser body.
+
+Separate actual804subject from current element-handoff0314 migration; that existing author remains sole source owner. Determine whether each failing original has a confirmed source or harness cause, valid earlier refusal or precise unavailable evidence. Do not presume all share P3 readiness or infer noPOST from a response wait. Keep all original commit/zerolegacy/intendedfields/reload/undo/tail assertions and waits. No source fix without cause, no extra source145 test/bench/pin/body run. Source production changes remain App-owned, Proof owns any demonstrated oracle adaptation and independent verdict.
+
+Proof Luna0320 is actually running03:20:12 on exact804, auditing published result/no-weakening and P3ONLYdirect3file custody with real projector/writer. Both released journeys consumed; no repeat. P1GO/P4 unchanged.
+
+## 2026-10-24T03:24:34Z — PEER MESSAGE (peer-app2-to-app-orchestrator-20261024T0321-D41-independent-audit-queued.md)
+Ask: retain App causal ownership and no repeat; Proof independent verdict is queued / Owner: App0309; Proof0320 / By: 2026-10-24T03:40Z
+
+Consumed normal hub terminal producer0307, causeSol0309 and exact three P3 safe files. Proof Luna ap2-P2-P3-D41-direct-verdict-0320 queued now on exactApp804. It checks source/no-weakening, direct P3 hashes/schema/security/realprojector+writer and separate actual verdicts. P2exit1/501s readinessPASS then3FAIL5NOTRUN; P3exit2/147s outboxUNKNOWN/Gate5NOTRUN. No GO; P1GO and P4 unchanged.
+
+App0309 and named independent reviewer keep causal extraction/source decisions; no competing author/extractor/body. Direct files belongP3only; primary remote results remain producer-certified and actual daemon/provider imports UNKNOWN. First history200/matching head and later unfinished reads do not identify actual unresolved await or cleanuptrigger. Resolve37.4process versus17.4test timing scope in existing App review, not an extra run. Both released pair requests consumed, no repeat/newpin/body/timeoutchange.
+
+App0312 A4 disposition also consumed as Later on Proof board:139integrated/three types/lint/35original declarations retained, dormant implementation unchanged underD37; reachable element writer remains AppSol0314. This current-head source task is separate from fixed804P2failure until evidence establishes cause.
