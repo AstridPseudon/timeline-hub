@@ -14,7 +14,7 @@ import pytest
 
 from astrid_runtime_client import WorkspaceClient
 from runtime_protocol.daemon import RuntimeDaemon
-from runtime_protocol.errors import ConflictError, ValidationError
+from runtime_protocol.errors import RetiredRouteError, ValidationError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit_port import digest, route_path
@@ -210,8 +210,11 @@ def test_legacy_visual_publisher_cannot_seed_retained_speed_shapes(tmp_path, sco
         else:
             publication["internal_timeline_revisions"][0]["payload"]["clips"][0]["speed"] = speed
         before, cas = tuple(service.store.conn.iterdump()), _cas_bytes(service)
-        with pytest.raises((ValidationError, ConflictError), match="speed"):
+        with pytest.raises(RetiredRouteError) as error:
             service.publish_parent_composition(project, "main", publication, idempotency_key="public-speed-refusal")
+        assert error.value.status == 410
+        assert error.value.code == "retired_route"
+        assert error.value.details["reason"] == "timeline_commit_required"
         assert tuple(service.store.conn.iterdump()) == before
         assert _cas_bytes(service) == cas
     finally:
