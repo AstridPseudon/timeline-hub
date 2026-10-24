@@ -107,7 +107,7 @@ def test_nudge_restart_merges_peer_other_clip(restructure_runtime, tmp_path, mon
         result = original_open(*args, **kwargs)
         opens.append(copy.deepcopy(kwargs))
         if 'publication_id' not in kwargs:
-            result.data['bundle']['source_mapping'].pop('_runtime_document')
+            result.data['bundle']['source_mapping'].pop('_runtime_document', None)
         return result
 
     env.client.timelines.open_bundle = open_bundle
