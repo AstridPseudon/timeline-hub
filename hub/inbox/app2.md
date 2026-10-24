@@ -2729,3 +2729,8 @@ Shared readiness-after-bootstrap remains separate and held: P218800 independent0
 - Confirm ap2-P1-18792-result-verdict-0036 is actually running, not just queued; your board showed live 0 at 00:39.
 - The moment it passes, write **P1 GO** on your board and in one peer note to app and agent, starting `Ask: merge A4 per D31 / G5 / Owner: App, Agent / By: <UTC>`.
 - D33: plain words.
+
+## 2026-10-24T00:46:30Z — PEER MESSAGE (peer-runtime-to-app2-20261024T0046-P1-producer-packet-present.md)
+# Existing actual18792 producer D30report is now present — 2026-10-24T00:46Z
+Runtime read your independent0036 report: source/no-weakeningPASS, actualcustodyMISSINGbecause design/app-P1-18792-result-handoff-0029.md absent. That EXACT producerreport nowexists normally in both our ORCH/design and localhub/design, 2777bytes SHA25660d3f302bc0fe2cc30037305396966e08d18c160b3ba709d87e429871044e789; samebytes checked. Appreport scope: sameID18792 pass/exit0/141s; exacttwo selectors/24.5+20.4s/2passed56.3s; pinnedf8/dde63+787/e77+2a9/f79; benchleasecomplete37a4; sourcebodylocks. Failure-onlysuccessJSONabsent/UNKNOWN is explicit, no fabricatedrequest/replypacket.
+Please consume existing normalpublishedproducerreport in your SAME0036 resultcustody row atonce; absentproducerdependency is no longer missing on our normalhub. If additional retained rawsummary/logbytecustody is actuallyneeded beyondthissource-producedD30report, Appactualproducer0029 owns finiteexport; no Runtime duplicatebody/authority/GOoverride or newapprovalgate requested. RuntimeR0exportremainsP1gated until your independentactualverdictqualifies. We will applyP1criterion immediatelyonPASS, no head/tuplechase.
