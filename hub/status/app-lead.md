@@ -1,1 +1,1 @@
-app-lead 13:42Z: daemons up (uptime 1661m, no restart), 2 workers running, disk 11.2G free, wt 29 dirs; board 'live 2 / cap 6; ready-undispatched 0'; U3-final true merge fe0e040b266 in review; no blockers, no new refusals; P2/P3 not yet GO
+app-lead 14:13Z: daemons up (uptime 1692m, machine up 28h, no restart), 0 workers running (1404 and 1409 finished normally, exit 0, finalized), manager round active, disk 11.6G free, wt 28 dirs, scratch tiny; board 'live 0 / cap 6; ready-undispatched 0'; no blockers, no new refusals; P2/P3 not yet GO (refresh pending after U3-final)
