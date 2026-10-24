@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T23:38:59Z | dispatcher heartbeat 4s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 1m -->
-# app board, 2026-10-24T23:38Z
+<!-- app | 2026-10-24T23:42:23Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 2m -->
+# app board, 2026-10-24T23:41Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -106,36 +106,36 @@
 
 | P2-placement-8259 | Attribute placement response timeout | Luna | Retained actual8259 | merged | app-A3-placement-8259-cause-2313 | Exact missing wiring proven: mounted generic handleFileDrop/dropAsset never reaches occurrenceAddMediaPort.97 controls/types PASS; no source change. | Evidence only |
 
-| P2-popup-ADD-current | Qualify exact canonical popup ADD | Luna; service | Import fix home bcb6536f | doing | app-P2-popup-import-fixed-submit-2337 | One meaningful ADD preparation. Actual5217 readiness PASS then helper import failure; no math or later assertion credit. | App bcb6536f; Runtime732 |
+| P2-popup-ADD-current | Qualify exact canonical popup ADD | Luna; service | Preflight6298 PASS | doing | App2337; actual22240 | Submitted23:38:32 on exact bcb/039f/732/635f. Wait sameID. Pinned helper bootstrap qualified; no result yet. | App bcb6536f |
 
 | P2-popup-7872 | Exact parent canonical expectation | Luna independent | Independent2309 PASS | merged | app-P2-popup-parent-oracle-review-2309 | Normal merge32036; exact raw-before parent wrappers. Whole document/reload/undo strict; 2 Node, 3 types/lint PASS; ledger logged. | Home32036b3cc0 |
 
 | P2-asset-current | Qualify reviewed asset cleanup | Luna; service | Home7d53 /039f /732 /635f | doing | app-A3-asset-reviewed-original-2307 | NO-GO281s; readiness PASS; same original response149/497 timed out90s. Producer retains exact POST disposition; no tail credit. | App7d53; Runtime732 |
 
-| P2-parent-8232 | Strict full request envelope | Luna | Main original8232 terminal | ready | Author2323; continuation2338 next slot | Envelope PASS10/3types/lint; resume same branch for single10376 and bulk2773 before one independent review. | Base32036 |
+| P2-parent-8232 | Strict full request envelope | Luna | Main three originals terminal | doing | app-P2-tour-batched-return-2338 | Same branch2323 resumed for initial/Undo full envelope, single10376 intent and bulk2773 attribution. One independent batch review follows. | Saved2323 branch |
 
 | P2-main-SWAP | Runtime command comparison refusal | Runtime Luna | Actual25174 terminal | doing | rt-P2-swap-source-2308 | Readiness PASS; response431 refused invalid_records: provider executed a different command. Runtime owns finite exact-field attribution; no duplicate App body. | Appbceb; Runtime732 |
 
-| A3-mounted-drop | Wire actual file drop to semantic save | Sol; Luna independent | Author a470 controls PASS | review | app-A3-mounted-drop-review-2331 | Two source files route row preview/prepared media into existing A2.219 related and15 mounted controls/types/lint PASS; independent review active. | Candidatea47074b650 |
+| A3-mounted-drop | Wire actual file drop to semantic save | Sol; Luna independent | Independent2331 PASS | merged | Author2319; review2331 | Independent219 controls/types/lint/protected6 PASS. Real parent and occurrence drop paths use A2; mounted browser proof owed. | Home def3fb17ae |
 
-| P2-main-single | Exact transition step intent | Luna | Main actual10376 terminal | doing | Tour author2323; continuation if needed | Readiness PASS; strict step377 expects generic save intent, actual is specific clear action. Batch with parent8232; no relaxed intent union. | Appbceb; Runtime732 |
+| P2-main-single | Exact transition step intent | Luna | Main actual10376 terminal | doing | Tour batch2338 | Exact mounted action label/intent correction shares parent oracle owner. All step fields/assertions retained. | Saved2323 branch |
 
 | P2-popup-path | Bind parent hash helper to pinned Python source | Luna harness | Actual5217 import failure | merged | app-P2-popup-python-path-return-2327 | Real extracted helper old import RED/new GREEN with PYTHONPATH unset; 3 controls/types/lint PASS. Assertions unchanged. | Home bcb6536fab |
 
 | A3-SWAP-claim | Declare newly created occurrence asset | Luna | Runtime2308 exact attribution | blocked:runtime | Runtime2308 followup requested2334 | App provider866 omits commands1.created; Agent allocates alias. Use conditional ADD pattern, preserve strict Runtime guard; one core review. | Appbceb; Runtime732 |
-| P2-main-bulk | Attribute None display and sentinel | Luna | Main actual2773 terminal | ready | Same tour batch as2323 | UI displays __none__ while expected None. Cause unproved; inspect source plus real retained selection before any exact expectation change. | Appbceb; Runtime732 |
+| P2-main-bulk | Attribute None display and sentinel | Luna | Main actual2773 terminal | doing | Tour batch2338 | Source and retained selection attribution first. Product display defects cannot be waived by expectation change. | Saved2323 branch |
 
-Integration: App bcb6536fab8b5cb6fca7657ead574765d63cab07 includes independently reviewed parent oracle32036 and author-tested pinned Python import fix2327. Source repair a470 remains held in independent mounted-drop review2331. Runtime release remains732; candidate7627 is not released.
+Integration: App def3fb17ae normally merges independently reviewed mounted repair a470 over import fix bcb6536f and strict parent oracle32036. ADD22240 stays fixed on earlier bcb; newer integration does not invalidate it. Runtime release remains732; candidate7627 is not released.
 
-core open: All eight P2 isolated gestures remain unqualified. Element7131 applied status5s failure has unknown eventual outcome. ADD5217 reached the exact parent helper and failed importing pinned Runtime; minimum bootstrap is now home. Asset8419 and placement8259 sent no intended commit POST; one shared mounted repair is under review. Parent8232 full envelope, single10376 intent and bulk2773 display are one protected tour batch. SWAP25174 allocation claim is exclusively offered to Runtime main capacity; no competing App writer.
+core open: All eight P2 isolated gestures remain unqualified. Element7131 applied status5s failure has unknown eventual outcome. ADD5217 reached the exact parent helper and failed importing pinned Runtime; minimum bootstrap is now home. Asset8419 and placement8259 sent no intended commit POST; the shared mounted repair is independently reviewed and HOME; new browser proof follows ADD terminal. Parent8232 full envelope, single10376 intent and bulk2773 display are one protected tour batch. SWAP25174 allocation claim is exclusively offered to Runtime main capacity; no competing App writer.
 regressions: No browser closure claimed for source-only drop controls. D69 restoration is complete at its recorded source. P1 actual31083 and P3 actual15493 remain GO only on their recorded tuples.
 
 Blockers: Final cut — all8 isolated P2 plus one App full tour, final pinned P1–P5/core, D69 and genuine installed render. Runtime coordinates matrix and ZIP.
-Next ready: Tour continuation2338 on saved2323 branch at next source slot; one independent review covers parent/single/bulk. Drop review2331 PASS triggers normal merge then meaningful mounted asset/placement. ADD2337 reports authentic body ID then frees worker slot. No P3, D79 or E work.
+Next ready: One independent review after tour2338 completes. Mounted asset/placement original launcher is gated on ADD22240 terminal; App body sequence stays singular. SWAP exclusively owned by Runtime peer2334. No P3, D79 or E work.
 
-live 2 / cap 2; ready-undispatched 1 (tour batch, cap full). D85 cap6 requires above6.5GB; current5.81GB. One App body at a time; none active yet at this board update.
+live 1 / cap 2; ready-undispatched 0. One central App body22240 active plus source tour2338. Next body is gated on22240 terminal. D85 cap6 requires above6.5GB; current5.48GB.
 Capacity: Scanned every ended clean non-KEEP local worker tree; zero eligible. Stale pins remain guarded by D74a; current tuple pins and all run evidence retained. Existing orphan, dirty U3, compact and other refused targets stay stopped.
-Disk: 5.812GB at23:36. App critical source/gate floor5.2GB, stop4.5GB non-element first; heavy one body at a time below7.5GB. Noncritical work keeps7.5GB floor.
+Disk: 5.476GB at23:40 during ADD build. App critical source/gate floor5.2GB, stop4.5GB non-element first; heavy one body at a time below7.5GB. Noncritical work keeps7.5GB floor.
 Safety: No new safety or permission refusal. First2337 dispatch had ordinary missing relative brief path; corrected to absolute path through same normal request, no worker/body started on rejected command.
 Inbox consumed through1804748 bytes. Read PLAN/common, C0 relevant request/reply/undo/history sections, current headerD85/D86 and actual Runtime board. Runtime SWAP allocation handoff peer2334 remains exclusive there. Final review/security source release still owed by Runtime; no duplicate service bodies.
 Evidence: [Import return2327](../../workers/app-P2-popup-python-path-return-2327/report.md), [mounted author2319](../../workers/app-A3-mounted-drop-return-sol-2319/report.md), [tour author2323](../../workers/app-P2-parent-8232-envelope-2323/report.md), [main four findings](../../design/runtime-P2-main-four-report-2250.md).

@@ -1,0 +1,3 @@
+D74a mechanical release: app-pin-32036b3c and app-pin-7d53ba28 were clean detached checkouts for completed5217 and8419, neither a current lane head nor a pending/running test, queue entry or lease. Process-use check had zero unreadable processes and zero matches outside this manager's checker/ancestors. Earlier broad check matched this manager's own prompt, so preserved until exact use check distinguished it. No guard or classifier refused either target.
+
+Removed the two named KEEP markers, then normal bin/recycle succeeded for each. Branches and all test outputs retained. Previously refused dirtyU3, orphan, compact and other cleanup targets untouched. Free5590077440bytes after release at about23:41Z.
