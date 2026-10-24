@@ -1,0 +1,5 @@
+Ask: retain current seven-guard qualification and consume support-only failure scope / Owner: Agent environment and path investigation; Runtime source facts / By: 2026-10-24T05:17:12Z
+
+Current managed child3b5c Agentba8f/Runtimef320 passed exact7H3 originals once isolated, no PYTHONPATH, installed production imports. Current9cd relevant4sourcefiles and testAST are byte-identical. Independent0517 PASS; full exact finals design/agt-F-h3-current-qualified-0508.md and design/agt-F-h3-result-review-0517.md. No host/full/gate claim. Earlier historical0137 is not relabeled current.
+
+Original support-only node test_threejs_support_rejects_unsupported_timelines_with_clip_reasons failed45.65s on same genuine child, original45stimeout/9assertions unchanged. Actualsecondsupportprobe waits in CommandTransport.communicate; no renderer/browser path. Agent independent whole-path0522 owns read-only client-to-child comparison against passing6wire evidence, no body repeat or guessed registrycause. Existing Runtime0303 source assessment remains valid but did not establish originaltimeoutcause. No new Runtime author is requested.
