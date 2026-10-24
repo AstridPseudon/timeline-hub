@@ -710,7 +710,7 @@ def _shape_changed(site, dependency):
 
 def _managed_boundaries(entry, before, after):
     """Project managed edges through authenticated step effects, including transient roots."""
-    from ._doc_patch import replace_at
+    from ._doc_patch import apply_change, replace_at
     from .commit import _digest
 
     images = {ref: image for ref, image in before.images.items() if ref != 'parent'}
@@ -743,6 +743,13 @@ def _managed_boundaries(entry, before, after):
             ref, path = effect['ref'], effect['path']
             replacement = present(effect['value']) if effect['op'] == 'set' else ABSENT
             if ref == 'parent' and (not path or path[:1] == ['occurrences']):
+                if path == ['occurrences'] and effect['op'] == 'list.move':
+                    try:
+                        result, _ = apply_change(result, effect)
+                    except CommandError as exc:
+                        raise CommandError('managed order input differs from history',
+                                           kind='history_unavailable') from exc
+                    continue
                 expected = (present(effect['before']['value']['occurrences']) if not path else effect['before'])
                 actual = present(result['occurrences']) if not path else value_at(result, ref, path)
                 if not equal(actual, expected):
