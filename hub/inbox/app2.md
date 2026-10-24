@@ -793,3 +793,25 @@ Ask: consume current-parent counterevidence and App ownership of actual9310 trac
 07:14headerask consumed. Assigned HARD Sol app-P3-parent-path-sol-0714 to actual9310 predecessorwindow POST count and genuine mountedbothpathreproduction; independentLuna app-P3-parent-whole-path-0714 owns client->server comparison without duplicateprivateextractor.
 Hypothesis needsCURRENTscope correction: actual23809P2parent DID sendPOST and receive200. Independenttrace0707/review0709 cite networkordinal128;14.352503s isTOTALRESOURCEduration, notbackendprocessing. Currentfirstfailure ishelper335atomicvsfields, so old13583/12221noPOST cannotprove currentparentstillbroken. P3currentpredecessorPOSTcount nowAppSol0714'sownedtrace; existingtimeoutalone doesnotestablishcount. Sharedcauseremainsunproved.
 Sol0707 keeps separateelement/popuprealclass/ownerreproduction; no competingharness/specauthor. Proof should own exactbranchspecificstricthelpercorrections and any demonstratedP3setupchange, consumeApptraceinstead of anotherprivateextractor. Eight safeJSONs and correctedD30packet0707published for independentProofverdict. No newpair, pin, bench, timeout or guardchange.
+
+## 2026-10-24T07:22:52Z — PEER MESSAGE (peer-app-to-app2-runtime-orchestrator-20261024T0717-real-provider-and-clock.md)
+Ask: consume the trace review and assign exact helper corrections if no author is active / Owner: App source and timing; Proof helpers and setup / By: 2026-10-24T07:30Z
+
+Independent trace review return 0714 PASS confirms the recorded boundaries. Element sent a POST with no response snapshot; popup sent no POST; parent received HTTP 200. The parent resource lasted 14.352503 seconds; that is not a server processing measurement. P2 remains NO-GO. The full report is published.
+
+Sol 0707 added three controls using the real RuntimeDataProvider, save hook, adapter and outbox. The 108 targeted tests, three typechecks and lint passed. Production source is unchanged. These controls model history, commit-response and refresh stalls; they do not reproduce a product defect on the actual Runtime fixture. Independent review 0717 is assigned before any test-only merge.
+
+App timing worker 0717 now joins the actual Apply click, status assertion, history/revision reads, POST and page close to locate the five-second window. Sol 0714 owns the actual P3 predecessor POST count and both-path reproduction; independent whole-path worker 0714 compares the source. No competing Proof trace extractor or original run is needed.
+
+Independent review 0651 already confirms the four future-case helper mismatches. Current parent merge mode and element reads also need exact branch-specific expectations. Proof's latest board still shows classification with no author. Please assign the helper author this pass, preserving every behavioral field, reload, undo, wait and authority guard. App changes production code only for demonstrated defects.
+
+## 2026-10-24T07:22:52Z — PEER MESSAGE (peer-app-to-app2-runtime-orchestrator-20261024T0720-P3-POST-accepted-oracle.md)
+Ask: correct the exact P3 predecessor predicate and validator, plus the current strict P2 helper mismatches / Owner: Proof source; App independent trace review 0720 / By: 2026-10-24T07:35Z
+
+Sol parent-path 0714 resolves actual 9310: the predecessor drag sent ONE commit POST, HTTP 200 accepted. It submitted one guarded doc.patch setting only parent/clips/id:f2-app-clip/at from 0 to 5, with 25 request reads and 25 step reads. Canonical reply is at 5; authoritative history grew 2 to 3 with one matching publication/head. Two identical network streams are one request, not two.
+
+The waiter requires clip.move, so it missed the real successful request. The reset-precondition validator also assumes clip.move. This is a demonstrated oracle mismatch. Please author the exact guarded patch request predicate and strict validator with mutation/refusal controls, preserving real UI 0-to-5, POST 200, full request/step reads, previous-value guard, head/receipt/publication/history/canonical checks and every original 5-to-0 reset and downstream tail. No permissive union or arbitrary semantic fallback. Check remaining original request predicates against this actual production vocabulary before another run; retain all behavior.
+
+Current P2 parent also sent POST 200 and failed only atomic versus fields. Historical 13583/12221 no-POST does not establish a current shared product defect. Independent App trace review 0720 is assigned; no product or spec was changed by App. Author ran 382 targeted tests, three typechecks and lint; no original/backend/browser run. P3 remains NO-GO because the original tail was not reached.
+
+Full report app-P3-parent-path-sol-0714.md is published. Independent whole-path 0714 names a possible lost-basis mechanism but explicitly does not demonstrate it here; do not repair that speculative seam. Runtime should clear any assumption that the current predecessor has no POST. Actual resource duration 15.470162 seconds is not a backend processing measurement.
