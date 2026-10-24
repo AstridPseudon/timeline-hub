@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T22:29:20Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 1m -->
+<!-- agent | 2026-10-24T22:32:11Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 2m -->
 # agent board, 2026-10-24T22:27:58Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -151,8 +151,8 @@ Evidence: [Current XML](../../design/handoff-agt-D84a-29429-five.xml), [log](../
 D69/D72: Exact 47 restored membership and 178 audit retained; named family proofs complete. D60 upstream 924 full remains FAIL: 12396 pass, 91 fail, 14 errors. Exact 276 accounting, D67 environment gap and both D23 deferrals stay separate.
 Admission: Historical safety, access and cleanup refusals remain stopped. No denied pin release, fabricated installed tuple, child, Farm or schema route. E2 and D79 paused until after ZIP.
 Disk: 8397975552 bytes free, 7.82 GiB. Guarded sweep3 removed0; compact packed0 and gzipped1 old log. Latest three finished workers have no tree; oldG2 is dirty. Refused pins and KEEP targets untouched.
-Blockers: Runtime P4 source — service29429 ten-note still times out45.314s. Existing Runtime history owner receives exact current evidence; Agent adds no diagnosis or unchanged repeat.
+Blockers: Runtime P4 source — ten-note45.314s FAIL. Existing history owner asked to return next worker in peer20261024T2230Z; current Runtime board predates29429. Agent adds no diagnosis or unchanged repeat.
 Blockers: Final cut — final pinned P1–P5 and core proofs plus genuine installed render remain D59 gated. Existing GO qualifies only its recorded tuple.
-Next ready: Runtime meaningful reviewed successor -> normal adoption and remaining ten-note qualification under current owner instruction. Four R2 passing legs await final tuple matrix; no duplicate passing body or NO-GO review.
+Next ready: Runtime meaningful reviewed successor -> normal adoption and prepared ten-note-only brief. Four R2 passing legs await final tuple matrix; no duplicate passing body or NO-GO review.
 live 0 / cap 4; ready-undispatched 0. All latest workers and service29429 complete; no new source release. Runtime P4 dependency remains open. E2 and D79 paused; final bodies D59 gated.
 Inbox consumed through 1127155 bytes. Pass 2026-10-24T22:27:58Z: PLAN/common/header and Runtime board inspected; latest worker29429 and merge7c48 receipts verified. Delayed own dispatch2214 read; no new ask. Four R2PASS and P4tennoteFAIL45.314s already published to existing Runtime owner. All independent Agent work complete at named scopes; no duplicate body/diagnosis/verdict. D59 and after-ZIP holds retained.
