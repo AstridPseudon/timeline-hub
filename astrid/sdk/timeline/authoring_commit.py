@@ -87,6 +87,7 @@ def authoring_commit_request(
     from ._command_state import equal
     from .emitter import _diff, emit_document_commands
     from .native_media_admission import registry_selections
+    from .native_occurrence_delete import capture_occurrence_delete
 
     if compilation is None:
         compilation = compile_authoring_candidate(candidate)
@@ -97,17 +98,53 @@ def authoring_commit_request(
     work['base_parent'].setdefault('publication_id', base['base_parent']['publication_id'])
     work['source_mapping'].setdefault('_runtime_document', copy.deepcopy(base['source_mapping']['_runtime_document']))
     placements = work['placements']
-    if ([row['occurrence_id'] for row in placements] != [row['occurrence_id'] for row in base['placements']]
-            or any(row['shot_id'] != old['shot_id'] for row, old in zip(placements, base['placements']))):
+    original = {row['occurrence_id']: row for row in base['placements']}
+    if any(row['occurrence_id'] not in original
+           or row['shot_id'] != original[row['occurrence_id']]['shot_id'] for row in placements):
         raise AuthoringBundleError('closure membership edits require registered semantic commands')
+    retained = {row['occurrence_id'] for row in placements}
+    placed_shots = {row['shot_id'] for row in placements}
+    removed = [row for row in base['placements'] if row['occurrence_id'] not in retained]
+    # Detached local copies are not publication roots. Restore only omitted
+    # removal baselines from the authenticated closure; supplied pins still
+    # pass through the emitter's exact provenance checks.
+    unplaced = set(work['shots']) - set(base['shots']) - placed_shots
+    for local in unplaced:
+        work['shots'].pop(local)
+        work['source_mapping']['shots'].pop(local, None)
+    for identity, row in list(work['source_mapping']['placements'].items()):
+        if identity not in original and row['shot_id'] in unplaced:
+            work['source_mapping']['placements'].pop(identity)
+    for row in removed:
+        identity, local = row['occurrence_id'], row['shot_id']
+        work['source_mapping']['placements'].setdefault(identity, copy.deepcopy(base['source_mapping']['placements'][identity]))
+        if local not in placed_shots:
+            work['shots'].setdefault(local, copy.deepcopy(base['shots'][local]))
+            work['source_mapping']['shots'].setdefault(local, copy.deepcopy(base['source_mapping']['shots'][local]))
     placement_changes: list[dict[str, Any]] = []
-    for old, row in zip(base['placements'], placements):
+    # Move complete physical occurrence rows before applying keyed field edits.
+    # Runtime's list.move checks both the previous item and collection order.
+    source_rows = base['source_mapping']['_runtime_document']['parent_revision']['payload']['occurrences']
+    ordered = list(source_rows)
+    target_order = [row['occurrence_id'] for row in placements] + [row['occurrence_id'] for row in removed]
+    for index, identity in enumerate(target_order):
+        ids = [row['occurrence_id'] for row in ordered]
+        if ids[index] != identity:
+            item = ordered.pop(ids.index(identity))
+            placement_changes.append({'op': 'list.move', 'ref': 'parent', 'path': ['occurrences'],
+                'id': identity, 'before': {'state': 'present', 'value': copy.deepcopy(item)},
+                'order_before': ids, 'after_id': target_order[index - 1] if index else None})
+            ordered.insert(index, item)
+    for row in placements:
+        old = original[row['occurrence_id']]
         _diff(old, row, 'parent', ('occurrences', 'occurrence_id:' + row['occurrence_id']), placement_changes)
     work['placements'] = copy.deepcopy(base['placements'])
     commands = emit_document_commands(base, work)
     if placement_changes:
         commands.append({'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
                          'args': {'changes': placement_changes}})
+    for row in removed:
+        commands.append(capture_occurrence_delete(base, 'occurrence:' + row['occurrence_id']))
     if not commands:
         # Republishing an unchanged checkout still needs Runtime's replay/CAS
         # boundary. A guarded equal-value set preserves the authored config
@@ -120,7 +157,8 @@ def authoring_commit_request(
     inputs = [{'pin': copy.deepcopy(pin)} for pin in compilation.publication['dependency_manifest']['media']
               if pin not in source['dependency_manifest']['media']]
     old_selections = list(registry_selections(base))
-    for association in registry_selections(candidate):
+    selected_work = {**work, 'shots': {key: value for key, value in work['shots'].items() if key in placed_shots}}
+    for association in registry_selections(selected_work):
         if association in old_selections:
             continue
         selected = response_data(writer.get_project_media_selection(candidate['project_id'],

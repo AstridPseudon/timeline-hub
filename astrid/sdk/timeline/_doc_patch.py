@@ -210,6 +210,12 @@ class Closure:
         return sites
 
     def install(self, ctx, physical, path, replacement):
+        if physical == 'parent' and path == ['occurrences']:
+            # Only list.move reaches this site. Preserve the recorder's local
+            # shot links and let State enforce an exact row permutation.
+            current = {row['occurrence_id']: row for row in self.bundle['placements']}
+            ctx.write('parent', path, [current[row['occurrence_id']] for row in replacement['value']])
+            return
         if not path:
             before = self.payload(physical)
             after = replacement['value']
@@ -322,7 +328,7 @@ def validate_submitted_change(change):
     ref, path, op = change['ref'], change['path'], change['op']
     if (not path and (op != 'set' or change['before'] == ABSENT)
             or ref.startswith('shot') and path[:1] == ['internal_timeline_revision_id']
-            or ref == 'parent' and path[:1] == ['occurrences'] and (len(path) < 2
+            or ref == 'parent' and path[:1] == ['occurrences'] and (len(path) < 2 and op != 'list.move'
                 or len(path) == 2 and op == 'remove'
                 or len(path) > 2 and path[2] in ('occurrence_id', 'shot_id', 'shot_revision_id', 'revision_id'))):
         raise CommandError('closure membership and edges require semantic commands',
@@ -407,7 +413,8 @@ def apply_change(root, change, *, physical=None):
                         root[mirror] = copy.deepcopy(config[mirror])
                     else:
                         root.pop(mirror, None)
-    if not equal(managed_edges(physical, old_root), managed_edges(physical, root)):
+    order_only = physical == 'parent' and path == ['occurrences'] and op == 'list.move'
+    if not order_only and not equal(managed_edges(physical, old_root), managed_edges(physical, root)):
         raise CommandError('replacement changes provider-managed edges', kind='managed_closure_write', ref=ref, path=path)
     validate_payload(physical, root)
     return root, before
