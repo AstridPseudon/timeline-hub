@@ -12,6 +12,7 @@ import {
   AstridBridgeTransport,
   BridgeRouteError,
   BridgeTransportFailure,
+  classifyRouteError,
   type BridgeRequestInit,
 } from './transport';
 
@@ -79,6 +80,74 @@ describe('Astrid bridge transport boundary', () => {
       // `rate_limited` is an Astrid wire code, not one of Astrid App's public
       // recovery categories; preserve it without relabeling as conflict.
       if (code === 'rate_limited') expect(error).toMatchObject({ category: 'unknown' });
+    } finally {
+      await close(server);
+    }
+  });
+
+  it('maps the Runtime readiness refusal to capability_unavailable, not a stale-version conflict', async () => {
+    expect(classifyRouteError(409, 'unavailable')).toBe('capability_unavailable');
+    expect(classifyRouteError(409, 'conflict')).toBe('conflict');
+    expect(classifyRouteError(409, 'lease_fenced')).toBe('conflict');
+
+    const nextAction = 'fix: gpu_not_configured; run `astrid doctor --json`, then retry';
+    const server = createServer((_request, response) => {
+      response.writeHead(409, { 'Content-Type': 'application/json' });
+      response.end(JSON.stringify({
+        code: 'unavailable',
+        message: 'capability is not ready for admission',
+        details: {
+          capability_id: 'acceptance.gpu',
+          status: 'unavailable',
+          reason: 'gpu_not_configured',
+          next_action: nextAction,
+        },
+      }));
+    });
+    const baseUrl = await listen(server);
+    try {
+      const transport = new AstridBridgeTransport({ baseUrl });
+      const error = await transport.requestJson(
+        '/v1/projects/demo-project/tasks',
+        { method: 'POST', body: {} },
+        z.object({ ok: z.boolean() }),
+        'admit task',
+      ).catch((cause: unknown) => cause);
+
+      expect(error).toBeInstanceOf(BridgeRouteError);
+      expect(error).toMatchObject({
+        status: 409,
+        code: 'unavailable',
+        category: 'capability_unavailable',
+        detail: 'capability is not ready for admission',
+        nextAction,
+      });
+      expect((error as Error).message).toBe(
+        `Astrid bridge admit task failed: capability is not ready for admission Next: ${nextAction}`,
+      );
+    } finally {
+      await close(server);
+    }
+  });
+
+  it('keeps the plain message when the Runtime names no next action', async () => {
+    const server = createServer((_request, response) => {
+      response.writeHead(409, { 'Content-Type': 'application/json' });
+      response.end(JSON.stringify({ code: 'conflict', message: 'stale version', details: { next_action: '   ' } }));
+    });
+    const baseUrl = await listen(server);
+    try {
+      const transport = new AstridBridgeTransport({ baseUrl });
+      const error = await transport.requestJson(
+        '/v1/projects/demo-project/tasks',
+        { method: 'POST', body: {} },
+        z.object({ ok: z.boolean() }),
+        'admit task',
+      ).catch((cause: unknown) => cause);
+
+      expect(error).toBeInstanceOf(BridgeRouteError);
+      expect(error).toMatchObject({ category: 'conflict', nextAction: undefined });
+      expect((error as Error).message).toBe('Astrid bridge admit task failed: stale version');
     } finally {
       await close(server);
     }
