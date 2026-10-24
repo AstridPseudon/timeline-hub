@@ -10,7 +10,6 @@ from astrid.core.receipts.canonical import canonical_json
 from astrid.packs.timeline import cli as timeline_cli
 from astrid.sdk.contracts import DomainResult, ErrorObject
 from astrid.sdk.timeline import store as timeline_store
-from astrid.sdk.timeline.commit import bundle_from_document
 from astrid.sdk.timeline_checkout import Checkout
 from tests.sdk.test_timeline_commit_provider import runtime_abi  # noqa: F401
 from tests.sdk.test_timeline_public_command import public_session  # noqa: F401
@@ -31,8 +30,12 @@ def test_publish_still_requires_a_revision_message() -> None:
 def normal_commit(public_session, tmp_path):  # noqa: F811 - imported fixture
     """Run the normal timeline CLI commit against the public fixture closure."""
     opened, realm, sent, client, _ = public_session
-    document = copy.deepcopy(realm.documents[realm.head["revision_id"]])
-    candidate = bundle_from_document(document)
+    # Detached files carry the public checkout projection.  The authenticated
+    # canonical document is captured privately by TimelineSession at commit
+    # time; serializing bundle_from_document here would leak that private
+    # capture back into the fixture and make the current provenance guard see
+    # a false closure change.
+    candidate = copy.deepcopy(opened.bundle)
     candidate["base_parent"]["publication_id"] = realm.head["publication_id"]
     path = tmp_path / "timeline.json"
     path.write_text(json.dumps(candidate), encoding="utf-8")
