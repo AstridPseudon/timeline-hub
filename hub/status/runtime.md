@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T22:03:24Z | dispatcher heartbeat 15s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 0m -->
-# runtime board, 2026-10-24T22:02:56Z
+<!-- main | 2026-10-24T22:06:28Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 9 | status age 1m -->
+# runtime board, 2026-10-24T22:04:56Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -180,14 +180,14 @@
 
 | D83-schema-churn | Preserve stopped setup experiment | HARD Sol | D84 supersedes micro-gains | gated:D84 | rt-D83-schema-churn-sol-2141 stopping | Checkpoint WIP retained. No new source or gate credit; do not import into structural author. | Held |
 
-| D84-structural-history | Reuse replay proof within one request | Sol / Luna | Reviewed source exact apply | review | Author2145; releaseLuna2202 | Independentsecurity243+13PASS;author1038PASS. N2fullreplay21->3,wall0.645->0.242s. [Proof](../../design/runtime-D84-measurements-2145.md) | beb1dafbd |
+| D84-structural-history | Reuse replay proof within one request | Sol / Luna | Normal apply complete | merged | Author2145; release2202 | Security243+13 pass; author1038 pass. Ten new attacks pass on candidate. [Release](../../design/runtime-D84a-release-2205.md) | beb1dafbd /732c48c6f |
 | R-P2-parent-runtime | Attribute parent historical validation | HARD Sol | Structural history correction | doing | D84a Sol2145 | Actual837 ordinal3 pending in lookup/verify/historical Recorder path. App102 controls PASS; no App fix proved. | Captured dc55 |
 
-| D84-lock-placement | Test head-only CAS authority limit | HARD Sol | One shared security review | review | rt-D84-lock-placement-sol-2147 | No product patch. Nine same-head attacks plus control10PASS;union527PASS. [Report](../../design/runtime-D84-lock-placement-2147.md) | Test-only candidate |
+| D84-lock-placement | Test head-only CAS authority limit | Sol / Luna | Exact candidate tests passed | merged | Author2147; release2202 | Ten tests pass on memo candidate. No product lock change; head-only CAS insufficient. [Proof](../../design/runtime-D84-lock-placement-2147.md) | 746d745478 /61a16a221 |
 
 | D84-False-stacks | Capture actual False case at30s and44s | HARD Sol | Actual source unchanged | merged | rt-D84-False-stacks-sol-2151 | Both samples schema computation;12.149CPU/14.002wall. Original45.008FAIL retained. [Report](../../design/runtime-D84-False-stacks-2151.md) | Evidence only |
 
-Runtime producer: Normal7aa603d13762b499af2279e4c1340b31b6eda5a2, tree daa9efc4a158e9bc4f6fe2186dd28ffd00800405. All product bytes equal security2122-PASS bc04/1fa23066f. Canonical15/schema867f unchanged. RELEASED21:29; new schema and lock work do not gate existing receiving-lane adoption or meaningful originals.
+Runtime producer: RELEASED732c48c6f5a9441a65c61b24595d454a1cd3e180, tree7ed0559c6f0a05954427cc668e303b6cd2f51586. Allthreeproducthashes match independentsecurityPASS; request-scopedreplayD84a only. Canonical15/schema867f unchanged. Actualnormalrelease published immediately; receivingnormaladoption/originalsREADY.
 
 core open: Two Runtime original boundaries: P4 ten-note45s and full native-seed/element outcome. Agent retains five historical home scopes; all remain open. Source and reduced-control results do not close originals. Final Runtime core suite owed.
 regressions: D77a genuine installed final render remains cut-blocking. Legacy ABI expectation is now independently reviewed and merged;75 targeted PASS and every product blob exactbc04.
@@ -209,7 +209,7 @@ Later: E1/E3 and Agent E2 designs retained; further E/D79 paused untilZIP. D47me
 Admission: D56Farm/schema access stopped. Original403/accessrefusals and historical denied cleanup/process/retirement targets untouched. D67D13envgap unchanged; AppdirtyU3guardrefusals stopped.
 Disk:8622317568available bytes at last read,8.03GiB,cap4. Scan found no eligible ended clean nonKEEP Runtime tree; three old dirty trees untouched. Guarded sweep3 removed0; compact packed0scratch/0testdirs and gzipped7logs. No prior refused target retried;15GB target not reached.
 
-live1 / cap4; ready-undispatched0. Solschema2141 dispatched from current7aa603; Lunalock2143 dispatched from retained2135 branch. E/D79 paused.
+live0 / cap4; ready-undispatched0. Solschema2141 dispatched from current7aa603; Lunalock2143 dispatched from retained2135 branch. E/D79 paused.
 Pass2026-10-24T21:43:00Z:Consumed cost2126 no-gain return, lock2135 failed sequential setup and legacyreview2135 PASS/normal apply. Published exact reports and existing-ledger entry, dispatched both ready continuations, sent separate peers to Agent/App/orchestrator to clear stale metadata release waits. Inbox consumed through573709bytes. No original rerun or denied route retried.
 
 Pass 2026-10-24T21:42:20Z: New D84 consumed immediately. Stopped micro-gain author2141 and dispatched sole HARD Sol2142 structural owner, outside-lock verification/CAS first, narrow prefix memo only if insufficient. Parent837 finite input attached owned row; App asset/placement remain App-owned per D84. No decision escalation needed: explicit owner instruction covers the structural scope.
@@ -227,3 +227,5 @@ Lock-source handback: No product lock movement retained; head-pair CAS cannot in
 App source update2153 consumed: failed asset source stays held; first-return2150 active. Placement strict two-selector proposal independent2152 owns apply/log onPASS. Runtime adds no App author; App disk6.011GB/sourcecap2 and prior refusals retained.
 
 Current D84a source: Author2145 complete atbeb1dafbd. Existing INDEPENDENT security reviewer243PASS/final13PASS covers exactthreeproducthashes. Luna2202 dispatched immediately for provenance/hashqualification, new10lockcounterexamples oncandidate and normalapply/release; no secondsemanticsecurityaudit or repeatedunion. Author1038PASS,13scope/3ABA and63percentN2CPUgain qualified atsourceonly. Originalbudgets stillopen.
+
+Pass 2026-10-24T22:04:56Z: D84a normalmerge732 verified exactsource/securityhashes and realreceipts, tenlockcounterexamplesPASS oncandidate. RELEASED immediately through separateAgent/App/ORCHpeers2205. No extrareviewstage or sourceapproval remains. Currentoriginals are receiving-lane READY; alloriginalbudgets/finalcutstillopen.

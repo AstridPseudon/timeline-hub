@@ -32,6 +32,14 @@ mail=""; for f in $O/design/peer-*-to-$A-lead-*.md; do [ -f "$f" ] || continue; 
 if [ "$A" = runtime ]; then esc=""; for f in $O/escalations/*.md $O/design/peer-*-to-orchestrator-*.md; do [ -f "$f" ] || continue; case "$f" in *.resolved*) continue;; esac; b=$(basename "$f")   # 02:17Z, LOOPS #41: surface decisions owed to the orchestrator at once
   grep -qxF "$b" $O/.orch-seen 2>/dev/null && continue; echo "$b" >> $O/.orch-seen; esc="$esc $b"; done
   [ -n "$esc" ] && mgr="$mgr ORCH OWED (read):$esc"; fi
+# 22:10Z 24 Oct (LOOPS #75): surface an under-used lane within minutes, not at the next hourly check. On main only: a lane whose
+# D57 line reads ready-undispatched K>0 with live<cap, or live 0, on two consecutive passes (about 4 min) is reported once per state.
+if [ "$1" = runtime ]; then for a in runtime app agent; do f=/home/user/timeline-hub/hub/status/$a.md; [ -f $f ] || continue
+  l=$(grep -oE "live [0-9]+ / cap [0-9]+; ready-undispatched [0-9]+" $f | tail -1); [ -n "$l" ] || continue
+  set -- $l; n=$2; c=${5%;}; k=$7; st=$O/.idle-$a; bad=""
+  { [ "$k" -gt 0 ] && [ "$n" -lt "$c" ]; } && bad="ready $k with live $n/$c"; [ "$n" -eq 0 ] && bad="${bad:-live 0/$c}"
+  if [ -n "$bad" ]; then if [ -f $st ] && [ "$(cat $st)" = "pending:$bad" ]; then echo "told:$bad" > $st; mgr="$mgr LANE IDLE $a ($bad)";
+    elif ! grep -qxF "told:$bad" $st 2>/dev/null; then echo "pending:$bad" > $st; fi; else rm -f $st; fi; done; set -- runtime; fi
 [ -f $O/HUB-SYNC-STUCK ] && mgr="$mgr HUB-SYNC STUCK (a non-orchestrator file conflicts; resolve it in the hub clone): $(cat $O/HUB-SYNC-STUCK)"
 # hourly read-only upstream fetch (01:45Z, LOOPS #39): lanes need origin/main current for U-drafts and D32 pre-existing checks. Fetch only; never push.
 if [ -z "$(find $O/.upstream-fetch-$A -mmin -60 2>/dev/null)" ]; then touch $O/.upstream-fetch-$A
