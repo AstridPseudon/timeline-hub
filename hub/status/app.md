@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T01:22:13Z | dispatcher heartbeat 10s | live 3 (sol 2, luna 1, other 0) | busy30 23 | status age 1m -->
-# app board, 2026-10-24T01:22Z
+<!-- app | 2026-10-24T01:24:39Z | dispatcher heartbeat 4s | live 4 (sol 2, luna 2, other 0) | busy30 24 | status age 0m -->
+# app board, 2026-10-24T01:25Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -8,9 +8,10 @@
 | A2 | Production save funnel | Sol; Luna review | C0 and U3 | merged | app-A2-final-composed-review-r7 | Original P1 chain passed on pinned f8. Latest bootstrap fix is listed below. | 9eda8e907 |
 | A3 | Popup, placement and asset saves | Sol; Luna review | A2 | merged | App and Proof workers | Source qualifications passed. P2 live gesture proof remains pending. | See linked proofs |
 | P1 | Original mixed chain | App runner; Proof review | Resolved | merged | Test 18792; Proof 0036 and 0040 | GO at 00:43. Both cases passed; exit 0, 141 seconds. Fixed App f8 / Agent 787 / Runtime 2a9. | f8b15af0a6 |
-| A4 | Executor and capture retirement | Sol; Luna review | P1 GO: resolved | doing | Sol 0112; Luna 0116 | Scalar cut independently passed384 and merged a7d41. Preview and five protocol cases are migrating; remaining capture and goldens stay. | 84330da5fd branch |
+| A4 | Executor and capture retirement | Sol; Luna review | P1 GO: resolved | doing | Preview review0120; session review0123; staged Sol0122 | Scalar cut merged and integrated384 PASS. Prepared-preview review152 PASS and merge queued. Five protocol cases are in review; staged caller and history migrations are active. | 84330da5fd branch |
 | A2-staged-caller | Move staged generation onto current save | Sol | Existing prepared-media carrier | doing | app-A2-staged-caller-sol-0122 | Remove production dryRun/apply caller while preserving Runtime selection and staged placement behavior. | Branch pending |
-| A4-session-tests | Move five protocol tests to current save | Luna | Scalar cut reviewed | doing | app-A4-session-test-migration-0116 | Preserve exact restart request and projection guards; no source behavior change. | Branch pending |
+| A4-history | Retire history runner execution | Luna | Preview cut reviewed | doing | app-A4-history-retirement-0125 | Keep actual guarded Runtime undo and existing local history behavior; no snapshot overwrite of remote edits. | Branch pending |
+| A4-session-tests | Move five protocol tests to current save | Luna | Author57 PASS | review | app-A4-session-test-review-0123 | Five current-save protocol cases authored; independent no-weakening review active. | Worker branch |
 | A4-dormant-scope | Preserve dormant raw and track assertions | Orchestrator | Scope decision | blocked:orchestrator | Escalation 0116 | Same-order track write and raw-birth positives have no production caller. Tests and implementations stay unchanged. | No change |
 | A4-reviewed-stack | Ports and mounted witnesses | Luna | Review 0105 and integrated 0115 PASS | merged | app-A4-mounted-fixture-return-0059 | Independent and integrated 111 plus 33 tests passed on exact93d487. Types/lint passed; mocked authority limit retained. | 93d48799a2 |
 | A2-bootstrap-fix | Restart cancelled bootstrap | Sol; Luna review | Resolved | merged | app-A2-basis-cancel-repro-sol-0029 | [326 tests, three typechecks and lint passed.](/home/user/timeline-hub/hub/design/app-A2-bootstrap-integrated-0046.md) | 804134d747 |
