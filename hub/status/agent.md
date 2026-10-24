@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T07:57:49Z | dispatcher heartbeat 10s | live 1 (sol 1, luna 0, other 0) | busy30 29 | status age 0m -->
+<!-- agent | 2026-10-24T08:00:23Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 29 | status age 0m -->
 # agent board, 2026-10-24T07:57:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -122,7 +122,7 @@
 
 | F-count persistence delta | Restore restart, close writer and challenge docs | Sol | Complete exact results published | doing | Sol0750; independent0759 | Candidate262/5 includes+restart,+writer,-currentdocs. Full267 preserved;122mappings and rawXMLabsence retained. Not officialbeforePASS. | Census286047a5 |
 
-| U2 snapshot row review | Check real service serialization and snapshot | Luna | Corrected staged row | review | Return0747; independent0752 | Exactsource/directparent snapshot plus treehash; source and Runtimeguardspreserved. Independent0752PASS; exact reviewedrowinstalled and meaningful changedrowservice requested. | a704b8fb rowhash |
+| U2 snapshot row review | Check real service serialization and snapshot | Luna | Corrected staged row | review | Return0747; independent0752 | Exactsource/directparent snapshot plus treehash; source and Runtimeguardspreserved. Service31491 executed136:135PASS1FAIL atduckseedmirrorconsistency. Rowworks; Sol0801source/fixturecauseowned. | a704b8fb rowhash |
 | D39 fixture review | Verify complete canonical conflict scenario | Luna | Meaningful corrected scenario PASS | review | Author0747; newauthor0752; review0757 | Review0752 authored extra strict assertions and rename. Its PASS is author evidence; fresh readonly0757 reviews fullcandidate before anymerge. | 82ca21469d |
 | F-farm CSV custody | Restore all96 Farm tuples in CSV | Sol | Second Luna serialization failure | doing | agt-F-farm96-csv-sol-0752 | Only288 losttuplecells; oldFarmtuple and priorproof scopes remain distinct. Full package review follows. | Base856de |
 | F-farm whole path | Audit export to published evidence | Luna | Independent second-failure investigation | doing | agt-F-farm96-whole-path-0752 | Compare passed187packet; no source/body/full or authoroverlap. | Read only |
@@ -134,6 +134,11 @@
 
 | F-count new package review | Validate complete262/5 candidate package | Luna | Complete original and challenge evidence | review | agt-F-count-persistence-review-0759 | Full267membership, allpriorproofs and exact3-node delta; no credituntilPASS. | Five files |
 | F-farm final custody review | Verify all31field CSV/JSON mappings | Luna | Sol384-cell correction complete | review | agt-F-farm96-custody-review-0759 | All96IDs, genuinepriorproofs, source tuples/citations and limited80/1/15classification. | Three files |
+
+| U2 duck seed | Restore faithful canonical seed before workflow | Sol | Actual135pass1fail managed result | doing | agt-U2-duck-seed-sol-0801 | Seedpublish refuses contradictory parent mirrors; originalscenario assertions untouched. Cause before anyfixturechange. | Sourceccf87 |
+| U2 duck whole path | Classify seed consistency and public free edits | Luna | Independent second-failure investigation | doing | agt-U2-duck-whole-path-0801 | Compare passingnormalpublication and strictmirrorrefusal. No duplicateauthor or body. | Read only |
+| D39 wire idempotency | Assert actual transmitted stable key | Sol | Independent0757FAIL missingwitness | doing | agt-D39-idempotency-sol-0801 | Actualtransportheaders discarded bytesthelper; canonicalsource/path/body/errorchecks pass. Narrowtestonly fix. | Base2c55 |
+| D39 whole path | Compare actual client and passing wire witness | Luna | Independent second-failure investigation | doing | agt-D39-whole-path-0801 | Source to actualrequestheader/errorassertions; no generation or productchange. | Read only |
 
 P1: GO recorded. P4 and P5 done. G5 merged under H24. App and Proof retain P2/P3 ownership.
 Integration: 3f7e63b0cf adds reviewed persistence fixture848b above the exact d566 harness union. Runtime two-original home0733 and result0736 PASS; exact count mapping0750 active, no credit inferred from merge. Harness integrated0706 remains scoped staticPASS.
