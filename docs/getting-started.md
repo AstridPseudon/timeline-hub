@@ -38,7 +38,7 @@ or install Git and Node.js 20.19 or newer in the Node 20 release line and run:
 ```sh
 git clone https://github.com/banodoco/astrid-app.git
 cd astrid-app
-npm ci
+npx -y npm@11 ci
 npm run dev:local
 ```
 
@@ -52,7 +52,7 @@ The `astrid-app` clone is your editor's code. Edit it while the server runs to
 see changes. Start later with `npm run dev:local` in that folder. Stop with
 Ctrl+C; an already running installed Runtime keeps running. To update, stop
 the editor, save or commit source changes, then run `git pull --ff-only origin main`,
-`npm ci`, and `npm run dev:local`. If Git reports a conflict or divergence,
+`npx -y npm@11 ci`, and `npm run dev:local`. If Git reports a conflict or divergence,
 keep your changes and resolve it before continuing. Update the Runtime and
 agent with the [official update command](setup/troubleshooting.md#update-astrid),
 then restart the editor. See the

@@ -39,7 +39,7 @@ Use Git and Node.js 20.19 or newer in the Node 20 release line:
 ```sh
 git clone https://github.com/banodoco/astrid-app.git
 cd astrid-app
-npm ci
+npx -y npm@11 ci
 npm run dev:local
 ```
 
@@ -56,7 +56,7 @@ Tell the user where the clone lives. Source edits appear through Vite's normal
 development workflow. To start later, run `npm run dev:local` in the clone.
 Ctrl+C stops the editor, its proxy, and any Runtime it started; a Runtime it
 attached to keeps running. To update the editor, stop it, save or commit local
-changes, then run `git pull --ff-only origin main`, `npm ci`, and
+changes, then run `git pull --ff-only origin main`, `npx -y npm@11 ci`, and
 `npm run dev:local`. Resolve Git conflicts without discarding the user's work.
 Update the Runtime and agent through the official installer with `--update`,
 then restart the editor. Follow the
