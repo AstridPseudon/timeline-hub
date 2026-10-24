@@ -135,6 +135,19 @@ test('D73 service recipe carries full SHA/tree and all four exact checkout paths
   }, preflight: true }), `${recipe} --preflight`);
 });
 
+test('D78 service recipes select the Runtime watchdog only for the intended P2 route', () => {
+  const pins = {
+    app: { head: 'a'.repeat(40), tree: '1'.repeat(40) }, agent: { head: 'b'.repeat(40), tree: '2'.repeat(40) },
+    runtime: { head: 'c'.repeat(40), tree: '3'.repeat(40) }, composition: { head: 'd'.repeat(40), tree: '4'.repeat(40) },
+  };
+  const checkouts = { app: '/snapshot/app', agent: '/snapshot/agent', runtime: '/snapshot/runtime', composition: '/snapshot/composition' };
+  const watchdog = (name) => serviceRecipe({ name, pins, checkouts }).match(/ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='([^']*)'/)?.[1];
+  assert.equal(watchdog('p2-element'), '2');
+  assert.equal(watchdog('p2'), '20');
+  assert.equal(watchdog('p1'), '');
+  assert.equal(watchdog('p3'), '');
+});
+
 function runGit(directory, ...args) {
   return execFileSync('git', ['-C', directory, ...args], { encoding: 'utf8' }).trim();
 }

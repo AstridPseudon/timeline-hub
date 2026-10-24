@@ -8,12 +8,26 @@ from __future__ import annotations
 
 import atexit
 import importlib.util
+import math
 import os
 import sys
 from pathlib import Path
 
 
 _capture = None
+
+
+def _watchdog_options() -> dict[str, float]:
+    value = os.environ.get("ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS", "").strip()
+    if not value:
+        return {}
+    try:
+        seconds = float(value)
+    except ValueError as exc:
+        raise ValueError("P2 Runtime watchdog seconds must be finite and positive") from exc
+    if not math.isfinite(seconds) or seconds <= 0:
+        raise ValueError("P2 Runtime watchdog seconds must be finite and positive")
+    return {"watchdog_seconds": seconds}
 
 
 def _is_runtime_cli_start() -> bool:
@@ -42,7 +56,7 @@ def _start_capture() -> None:
         raise SystemExit("P2 Runtime phase helper could not be loaded")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    _capture = module.P2CommitPhaseCapture(Path(sink_name), enabled=True)
+    _capture = module.P2CommitPhaseCapture(Path(sink_name), enabled=True, **_watchdog_options())
     _capture.start()
     atexit.register(_capture.stop)
     # Do not propagate the opt-in into any child worker the Runtime may start;
@@ -51,6 +65,7 @@ def _start_capture() -> None:
         "ASTRID_P2_COMMIT_PHASE_CAPTURE",
         "ASTRID_P2_COMMIT_PHASE_CAPTURE_SINK",
         "ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER",
+        "ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS",
     ):
         os.environ.pop(key, None)
 
