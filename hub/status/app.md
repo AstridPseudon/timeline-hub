@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T07:47:47Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 19 | status age 1m -->
-# app board, 2026-10-24T07:46Z
+<!-- app | 2026-10-24T07:51:00Z | dispatcher heartbeat 5s | live 3 (sol 0, luna 3, other 0) | busy30 18 | status age 1m -->
+# app board, 2026-10-24T07:49Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -22,25 +22,27 @@
 | P3-parent-path | Prove actual predecessor dispatch | Sol; independent Luna | Independent 0720 PASS | merged | Sol 0714; review 0720 | One POST 200 accepted; guarded doc.patch moves 0 to 5 with 25 request/step reads. Canonical 5 and history 2 to 3. | Report only |
 | P2-element-clock | Locate original Apply window | Luna; independent Luna | Independent 0724 PASS | merged | Timing 0717; review 0724 | 420 ms before POST and 4609 ms after POST. Reads completed before Apply. No response or page-close event captured. | Report only |
 | P2-element-response | Classify retained error | Luna; independent Luna | Independent 0738 PASS | merged | Error audit 0726; review 0738 | ACP chat 503 is unrelated. Commit response, abort and failure completion absent. Backend outcome unknown. | Report only |
-| P2-runtime-cost | Assess mutation response source | Runtime source | Retained timing and source facts | blocked:runtime | Runtime peer requested 0726 | Source assessment only; no benchmark, memo, new producer or historical server attribution. Runtime board has not named an owner yet. | Runtime 37eb |
+| P2-runtime-cost | Assess mutation response source | Runtime Luna | Current source report | blocked:runtime | rt-R-commit-response-source-0745 | Explicit Runtime owner dispatched. Source assessment only; no benchmark, memo, new producer or historical server attribution. | Runtime 37eb |
 | P2-popup-pending | Locate real pre-transport refusal | Luna; independent Luna | Independent 0745 PASS | merged | Author 0733; review 0745 | Same-case alert maps uniquely to local placement preview guard before applyEdit/capture/flush. Exact inner null cause still unknown. | Source 9b810 |
-| A3-popup-placement | Reproduce local placement refusal | Luna | Independently qualified guard | doing | app-A3-popup-placement-repro-0745 | Reproduce actual inputs through production service. Minimal repair only for demonstrated valid-input defect; no original journey. | Current integration |
+| A3-popup-placement | Reproduce local placement refusal | Luna; independent review | Valid-input witness review | review | Author 0745; review 0748 | Valid-input planner succeeds; 42 existing tests pass, no product change. Independent review checks captured versus assumed inputs. | Current integration |
 | P2-four-helper-oracles | Correct strict request expectations | Proof Luna; independent review | Original source evidence | blocked:app2 | Transition and semantic reviews 0730 | Parent, catalog/params and readiness branches also need exact reads, metadata and scoped owner controls. No permissive matching. | Proof packets held |
 | P3-current-setup | Match predecessor patch exactly | Proof source; independent review | Actual accepted patch evidence | blocked:app2 | Proof source return 0730 | Preserve real UI 0 to 5, POST 200, exact 25 reads, owner, history and canonical checks. Original reset and tail stay protected. | Proof packet held |
 | P3-protected-tail | Resolve exact created expectation | Proof source; orchestrator | Explicit protected-tail decision | blocked:app2 | Proof escalation 0733 | Proof owns the decision request and any author. No App tail edit or duplicate escalation. Ordinary source work continues. | No change |
-| U3b-refresh | Draft current upstream merge | Sol; Luna review | Final independent qualification | review | Sol 0731; Luna 0738 | Author passed 695 plus 249 plus 2 plus 12, types/lint. Independent 695/12/2 and wiring controls pass; final checks running. | cd29ff2642 held |
+| U3b-refresh | Draft current upstream merge | Sol; Luna review | Independent 0738 PASS | gated:freeze | Sol 0731; Luna 0738 | Independently 695 tests, 12 Gate5, 2 renderer and 72 wiring pass; three types, lint and conformance pass. Header P2/P3 GO gates home merge. | cd29ff2642 held |
 | U3b-home | Merge reviewed freeze draft | Manager merge queue | Header P2/P3 GO | gated:freeze | Final draft review 0738 | Upstream 2a288 included. Refresh live upstream at actual merge; do not merge before header condition. | Draft branch only |
 | U4p-D39 | Adopt final generated tuple | Luna | U3b home and exact producer | gated:freeze | Dispatch after U3b | Producer becfe6 inventory ready. Normal generated-client tooling; no manual type/pin edit or old consumer compatibility claim. | Producer becfe6 |
-| F-final-host-prep | Prepare final App host commands | Luna | Final producer ready | doing | app-F-final-host-prep-0744 | Exact existing routes and missing inputs only. Final Agent SHA pending; no new registration, child, tuple or run claimed. | Report preparation |
+| F-final-host-prep | Prepare final App host commands | Luna; independent review | Exact route qualification | review | Author 0744; review 0748 | Recipe complete; independent review challenges actual commands, suite rows and mappings. Final Agent SHA pending. No tuple or registration claimed. | Report preparation |
 | F-App-final | Full suite on final App head | App test service | Final tuple and freeze | gated:freeze | App service; Runtime FREEZE | D49 venue accepted. Historical 12ef full passed 18,819; current final qualification is still required. | Final head pending |
+
+| A3-popup-inputs | Compare actual asset and planner inputs | Luna | Valid-input fixture succeeds | doing | app-A3-popup-input-closure-0748 | Read-only comparison of retained inputs, exact seed and real caller. No duplicated tests or speculative product diagnostics. | Report preparation |
 
 Integration: HOME 38b29b5e295f0ef0c6cee6af598812021d7105aa, tree 4561b53e00, equals independently reviewed provider-controls tree 2056c7c0. It adds one test file to 9b810; production source and original specs remain exact selected 663. Product tree 9a37265f0286128df7e6240a9df9877d959474af remains the pinned journey subject.
 
 Blockers: App — actual element completion is unknown; faithful popup local-placement reproduction 0745 is active.
-Blockers: Runtime — bounded mutation-cost source assessment requested 0726 needs an explicit owner; no new run or memo work requested.
+Blockers: Runtime — bounded mutation-cost report is owned by Luna0745; no new run or memo work requested.
 Blockers: Proof — strict helper/setup packets and independent no-weakening reviews must pass before another original pair. Proof owns its protected-tail decision request.
 Blockers: Freeze — App U3b home waits header P2/P3 GO, then D39 adoption and actual final tuple qualification. Runtime coordinates FREEZE.
-Next ready: Review popup reproduction and final U3b checks immediately on completion. Final host preparation is dispatched. No new original pair is released.
+Next ready: Review popup inputs and final-host recipe as workers finish. U3b draft independently passed and waits header P2/P3 GO. Proof packets remain held. No new original pair released.
 
 Later: Final P1–P5 run on App service with Proof verdict after final tuple qualification, then D49 full suites and Farm F-final/ZIP. No duplicate farm or Proof run. D47 memo/capsule stays deferred and held unmerged. D46 U2c draft stays closed. D14/D23 deferred relational timing cases retain their original assertions and failures.
 
@@ -55,3 +57,5 @@ Disk: About 11 GB free. No current finished unprotected unrecycled App worktrees
 Evidence: [joined 690](../../design/app-A2-A3-corrected-integrated-0629.md), [real provider integrated](../../design/app-A3-provider-integrated-0724.md), [actual predecessor review](../../design/app-P3-parent-trace-review-0720.md), [element clock](../../design/app-P2-element-clock-review-0724.md), [element error review](../../design/app-P2-element-error-review-0738.md), [popup cause review](../../design/app-P2-popup-cause-review-0745.md), [lifecycle review](../../design/app-P2-P3-lifecycle-review-0741.md), [IMAGE](../../design/agt-A4-image-result-review-0636.md).
 
 Pass 2026-10-24T07:46Z: PLAN, COMMON, header and new handoffs checked. Independent lifecycle0741 and elementerror0738 PASS published; no evidence rewritten. Popup localguard0733 independently0745 PASS, faithful reproduction0745 running. Final U3b0738 is qualifying all targeted/static checks on isolated draft. Runtime0740 final-host request is owned by worker0744. No speculative product repair, new original pair or final tuple claimed.
+
+Pass 07:48Z: Independent U3b0738 PASS published and draft held for GO. Valid-input popup0745 passes42/no repair; independent0748 and disjoint input audit0748 dispatched. Host0744 complete, independent0748 dispatched. Runtime peer0745 supplies named source owner; stale unowned blocker cleared. Current parent POST200 kept distinct from historical zero-POST failures.
