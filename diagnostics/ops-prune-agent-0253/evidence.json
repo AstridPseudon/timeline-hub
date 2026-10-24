@@ -7,6 +7,27 @@
     "source": "design/agent-OPS-ABA-row-0245.txt"
   },
   "base_runtime_integration": "f3208b26b",
+  "board_snapshot": {
+    "captured_utc": "2026-10-24T03:03:46.866834Z",
+    "files": {
+      "agent_status": {
+        "bytes": 13348,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md",
+        "sha256": "82bbb96050203a93e0b7f074fbee8784cd6dc3228cf7ac2ffe962a28dcdfd679"
+      },
+      "board_header": {
+        "bytes": 26814,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/BOARD-HEADER.md",
+        "sha256": "dede06b7afc38415454c89a72e4bd26a55e9759d913684aca3c9f799fc3ad900"
+      },
+      "runtime_status": {
+        "bytes": 16830,
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/STATUS.md",
+        "sha256": "636f2f0beb56ab8ca300cff6c5cf331b0a755a0d13def268f3ac79c14c049610"
+      }
+    },
+    "scope": "read-only content hashes captured at packet-build time; boards may change afterward"
+  },
   "classifications": {
     "agent-remotion-0013": {
       "active_rows": [],
@@ -53,15 +74,17 @@
         130,
         133
       ],
-      "current": "not selected by current full-current-v3 requester",
-      "disposition": "HELD; no row comments",
+      "current": "not selected by current full-current-v3-1229 requester",
+      "disposition": "UNKNOWN; historical-only pending an explicit current/final requester citation; retain rows and env",
       "evidence": [
-        "agent-main95bd-final-current-qualification.md records the exact passing qualification",
-        "frozen proof/final-gate scope must remain runnable with exact custody"
+        "agent-main95bd-final-current-qualification.md records an exact historical/frozen passing qualification",
+        "current full handoff selects full-current-v3-1229 and excludes the main95bd profile",
+        "current P1 evidence cites Runtime 2a9e347f and does not establish unrelated main95bd recipe use",
+        "no current/final requester chain proving this registration is needed was supplied"
       ],
-      "final": "frozen Main014 qualification remains custody evidence",
-      "gate": "frozen gate1/D13/WC6 rows remain runnable",
-      "provision": "held by agent-remotion-main95bd-nodes at line 123 and env-bound rows"
+      "final": "historical/frozen Main014 qualification remains custody evidence only",
+      "gate": "historical/frozen gate1/D13/WC6 rows remain runnable; no current requester chain was cited",
+      "provision": "registered by agent-remotion-main95bd-nodes at line 123 and env-bound rows; current use is not established"
     },
     "published14-091aa23e": {
       "active_rows": [
@@ -70,15 +93,17 @@
         134,
         136
       ],
-      "current": "not selected by current full-current-v3 requester",
-      "disposition": "HELD; no row comments",
+      "current": "not selected by current full-current-v3-1229 requester",
+      "disposition": "UNKNOWN; historical-only pending an explicit current/final requester citation; retain rows and env",
       "evidence": [
-        "agent-published14-main497-final-review.md approves the exact frozen publication proof",
-        "public/final scope remains protected despite not being the current full requester"
+        "agent-published14-main497-final-review.md approves an exact historical/frozen publication proof",
+        "current full handoff selects full-current-v3-1229 and excludes the published14 profile",
+        "current P1 evidence cites Runtime 2a9e347f and does not establish unrelated published14 recipe use",
+        "no current/final requester chain proving this registration is needed was supplied"
       ],
-      "final": "published Main014/Main497 final review is retained evidence",
-      "gate": "frozen public/integration proof rows remain runnable",
-      "provision": "held by published14 nodes/full rows"
+      "final": "historical/frozen published Main014/Main497 final review is retained evidence only",
+      "gate": "historical/frozen public/integration proof rows remain runnable; no current requester chain was cited",
+      "provision": "registered by published14 nodes/full rows; current use is not established"
     }
   },
   "guard_scan": {
@@ -95,6 +120,8 @@
       "main95bd": 1,
       "published14-091aa23e": 1
     },
+    "fully_unreferenced_target_count": 0,
+    "fully_unreferenced_targets": [],
     "retirement_eligibility": "not claimed; lead must run normal guarded retirement after review"
   },
   "snapshot": {
@@ -107,7 +134,7 @@
   "source_documents": {
     "agent_status": {
       "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md",
-      "sha256": "c3851b674e7d2620ae88b4f6e31f091585e4d22692a20eee6f2e7418d23fdc55"
+      "sha256": "82bbb96050203a93e0b7f074fbee8784cd6dc3228cf7ac2ffe962a28dcdfd679"
     },
     "board_header": {
       "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/BOARD-HEADER.md",
@@ -131,7 +158,7 @@
     },
     "runtime_status": {
       "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/STATUS.md",
-      "sha256": "945e24ca3bcb30f4ba1466ebcba409e606ac96b3ccd6e7ca32f12a080553c359"
+      "sha256": "636f2f0beb56ab8ca300cff6c5cf331b0a755a0d13def268f3ac79c14c049610"
     }
   }
 }

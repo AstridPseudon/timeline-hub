@@ -40,6 +40,8 @@
   },
   "env_sha256_verified": true,
   "protected_outside_bytes": true,
+  "fully_unreferenced_targets": [],
+  "fully_unreferenced_target_count": 0,
   "actual_disk_freed_gb": 0,
   "product_tests": "not run; source-only operational packet",
   "forbidden_actions_not_taken": [
@@ -50,5 +52,26 @@
     "product/schema/client/pin/kit/tuple/Git writes",
     "deletion of live targets"
   ],
-  "evidence_path": "evidence.json"
+  "evidence_path": "evidence.json",
+  "board_snapshot": {
+    "captured_utc": "2026-10-24T03:03:46.866834Z",
+    "scope": "read-only content hashes captured at packet-build time; boards may change afterward",
+    "files": {
+      "agent_status": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md",
+        "bytes": 13348,
+        "sha256": "82bbb96050203a93e0b7f074fbee8784cd6dc3228cf7ac2ffe962a28dcdfd679"
+      },
+      "runtime_status": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/STATUS.md",
+        "bytes": 16830,
+        "sha256": "636f2f0beb56ab8ca300cff6c5cf331b0a755a0d13def268f3ac79c14c049610"
+      },
+      "board_header": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/BOARD-HEADER.md",
+        "bytes": 26814,
+        "sha256": "dede06b7afc38415454c89a72e4bd26a55e9759d913684aca3c9f799fc3ad900"
+      }
+    }
+  }
 }

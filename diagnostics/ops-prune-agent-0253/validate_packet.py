@@ -8,6 +8,7 @@ import hashlib
 import json
 import subprocess
 import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -136,6 +137,29 @@ def build() -> None:
         "main95bd_frozen": source_path / "scratchpad/orch/design/agent-main95bd-final-current-qualification.md",
         "published14_frozen": source_path / "scratchpad/orch/design/agent-published14-main497-final-review.md",
     }
+    board_bytes = {
+        name: path.read_bytes()
+        for name, path in {
+            "agent_status": source_docs["agent_status"],
+            "runtime_status": source_docs["runtime_status"],
+            "board_header": source_docs["board_header"],
+        }.items()
+    }
+    board_captured_utc = datetime.now(timezone.utc).isoformat().replace(
+        "+00:00", "Z"
+    )
+    board_snapshot = {
+        "captured_utc": board_captured_utc,
+        "scope": "read-only content hashes captured at packet-build time; boards may change afterward",
+        "files": {
+            name: {
+                "path": str(source_docs[name]),
+                "bytes": len(data),
+                "sha256": digest(data),
+            }
+            for name, data in board_bytes.items()
+        },
+    }
     evidence = {
         "base_runtime_integration": "f3208b26b",
         "snapshot": {
@@ -156,6 +180,7 @@ def build() -> None:
             name: {"path": str(path), "sha256": digest(path.read_bytes())}
             for name, path in source_docs.items()
         },
+        "board_snapshot": board_snapshot,
         "classifications": {
             "agent-remotion-0013": {
                 "active_rows": [],
@@ -185,26 +210,30 @@ def build() -> None:
             },
             "main95bd": {
                 "active_rows": [8, 19, 123, 125, 126, 127, 128, 129, 130, 133],
-                "current": "not selected by current full-current-v3 requester",
-                "gate": "frozen gate1/D13/WC6 rows remain runnable",
-                "final": "frozen Main014 qualification remains custody evidence",
-                "provision": "held by agent-remotion-main95bd-nodes at line 123 and env-bound rows",
-                "disposition": "HELD; no row comments",
+                "current": "not selected by current full-current-v3-1229 requester",
+                "gate": "historical/frozen gate1/D13/WC6 rows remain runnable; no current requester chain was cited",
+                "final": "historical/frozen Main014 qualification remains custody evidence only",
+                "provision": "registered by agent-remotion-main95bd-nodes at line 123 and env-bound rows; current use is not established",
+                "disposition": "UNKNOWN; historical-only pending an explicit current/final requester citation; retain rows and env",
                 "evidence": [
-                    "agent-main95bd-final-current-qualification.md records the exact passing qualification",
-                    "frozen proof/final-gate scope must remain runnable with exact custody",
+                    "agent-main95bd-final-current-qualification.md records an exact historical/frozen passing qualification",
+                    "current full handoff selects full-current-v3-1229 and excludes the main95bd profile",
+                    "current P1 evidence cites Runtime 2a9e347f and does not establish unrelated main95bd recipe use",
+                    "no current/final requester chain proving this registration is needed was supplied",
                 ],
             },
             "published14-091aa23e": {
                 "active_rows": [14, 132, 134, 136],
-                "current": "not selected by current full-current-v3 requester",
-                "gate": "frozen public/integration proof rows remain runnable",
-                "final": "published Main014/Main497 final review is retained evidence",
-                "provision": "held by published14 nodes/full rows",
-                "disposition": "HELD; no row comments",
+                "current": "not selected by current full-current-v3-1229 requester",
+                "gate": "historical/frozen public/integration proof rows remain runnable; no current requester chain was cited",
+                "final": "historical/frozen published Main014/Main497 final review is retained evidence only",
+                "provision": "registered by published14 nodes/full rows; current use is not established",
+                "disposition": "UNKNOWN; historical-only pending an explicit current/final requester citation; retain rows and env",
                 "evidence": [
-                    "agent-published14-main497-final-review.md approves the exact frozen publication proof",
-                    "public/final scope remains protected despite not being the current full requester",
+                    "agent-published14-main497-final-review.md approves an exact historical/frozen publication proof",
+                    "current full handoff selects full-current-v3-1229 and excludes the published14 profile",
+                    "current P1 evidence cites Runtime 2a9e347f and does not establish unrelated published14 recipe use",
+                    "no current/final requester chain proving this registration is needed was supplied",
                 ],
             },
         },
@@ -223,6 +252,8 @@ def build() -> None:
                 for target in sorted(EXPECTED_TARGETS)
             },
             "retirement_eligibility": "not claimed; lead must run normal guarded retirement after review",
+            "fully_unreferenced_targets": [],
+            "fully_unreferenced_target_count": 0,
         },
     }
     (PACKET / "evidence.json").write_text(
@@ -272,6 +303,8 @@ def build() -> None:
         },
         "env_sha256_verified": True,
         "protected_outside_bytes": True,
+        "fully_unreferenced_targets": [],
+        "fully_unreferenced_target_count": 0,
         "actual_disk_freed_gb": 0,
         "product_tests": "not run; source-only operational packet",
         "forbidden_actions_not_taken": [
@@ -283,6 +316,7 @@ def build() -> None:
             "deletion of live targets",
         ],
         "evidence_path": "evidence.json",
+        "board_snapshot": board_snapshot,
     }
     (PACKET / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
 
@@ -343,6 +377,21 @@ def validate() -> None:
     assert evidence["classifications"]["agent-remotion-0013"]["disposition"].startswith("UNKNOWN")
     assert evidence["guard_scan"]["comments_are_references"] is True
     assert evidence["guard_scan"]["retirement_eligibility"].startswith("not claimed")
+    assert evidence["guard_scan"]["fully_unreferenced_target_count"] == 0
+    assert evidence["guard_scan"]["fully_unreferenced_targets"] == []
+    assert manifest["fully_unreferenced_target_count"] == 0
+    assert manifest["fully_unreferenced_targets"] == []
+    assert manifest["actual_disk_freed_gb"] == 0
+    board_snapshot = evidence["board_snapshot"]
+    assert board_snapshot["captured_utc"].endswith("Z")
+    assert "may change afterward" in board_snapshot["scope"]
+    assert board_snapshot["files"] == manifest["board_snapshot"]["files"]
+    assert evidence["classifications"]["main95bd"]["disposition"].startswith(
+        "UNKNOWN; historical-only"
+    )
+    assert evidence["classifications"]["published14-091aa23e"]["disposition"].startswith(
+        "UNKNOWN; historical-only"
+    )
     candidate_guard_counts = {
         target: sum(target in line.decode() for line in candidate.splitlines())
         for target in sorted(EXPECTED_TARGETS)
