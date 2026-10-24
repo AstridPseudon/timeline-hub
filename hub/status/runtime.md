@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T17:32:49Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 20 | status age 4m -->
-# runtime board, 2026-10-24T17:28:26Z
+<!-- main | 2026-10-24T17:35:57Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 17 | status age 0m -->
+# runtime board, 2026-10-24T17:33:28Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -78,7 +78,7 @@
 | F-D52-occurrence-delete | Qualify 19 live delete cases | Luna | Exact integrated source proof | merged | Author1139; independent1141 PASS | Exact Agent7e258 and Runtimebecfe:19PASS6.43s; bodies and params unchanged. [Review](../../design/runtime-D52-occurrence-review-1141.md) | Agent7e258 unchanged |
 | F-D52-core-five | Map five named actual home outcomes | Luna | Authentic XML and map verified | merged | Receipt 1418 PASS | All five named cases PASS on actual47b/becfe. Current four fork failures are distinct. [Receipt](../../design/rt-F-D52-core-five-receipt-1418.md) | Agent 47b |
 | U1-D69-test-audit | Preserve upstream test predicates | Luna | Seven restorations before cut | merged | rt-U1-D69-test-audit-1603 | Missing16:9 mapped,7 restore. Changed129:75 clear,54 cited. Two skip markers cited;12 dynamic scopes explicit. [Audit](../../design/rt-U1-D69-test-audit-1603.md) | Source facts only |
-| R-P4-history-cost | Reduce historical validation cost | Sol / Luna | Integrated focused proof | doing | Security1720 PASS; integrated1728 | Normal327da after175 PASS; same56 fresh checks. FiniteCPU comparison improved; actual45s P4 still OPEN. [Review](../../design/rt-P4-resolver-final-review-1720.md) | 327da207e /24c61fe |
+| R-P4-history-cost | Reduce historical validation cost | Sol / Luna | Agent actual P4 proof | merged | Security1720; integrated1728 PASS | Actual327da passed35 in3.035s; reviewed source exact. Security175 passed; original45s P4 remains OPEN. [Proof](../../design/rt-P4-resolver-integrated-1728.md) | 327da207e /24c61fe |
 | R-P2-popup-422 | Project genuine fork-created shot roots | Luna | App current P2 proof | merged | Security1658; integrated1704 PASS | Actualb318:4 PASS0.16s, exact reviewedsource; forgedowner/sibling/source refused. App original stillpending. [Proof](../../design/rt-P2-popup-integrated-1704.md) | b318a8ec4 /88b9cf6 |
 | R-P2-popup-observation | Attribute popup physical observation refusal | Luna | Source finding complete | merged | rt-P2-popup-observation-1638 | Runtime created-child projection lacks fork-created shot roots.2Runtime+8Agent comparators PASS; source cause only. | Source unchanged |
 | R-P2-element-docpatch-hang | Observe actual server request phases | Sol / Luna | App actual worker activation | blocked:app | Phase1700; integrated1708 | Helper04de HOME2c1; mounted8 PASS1.03s. App owns CLIworker activation; actual25943 phases UNKNOWN. [Helper](../../design/rt-P2-element-phase-1700.md) | 2c1bf0877 /04de |
@@ -111,9 +111,9 @@
 | F-final-D68-assess | Check fresh upstream packaging | Luna | Source assessment complete | merged | rt-F-final-D68-assess-1543 | Stale builder hash found. Proposed refresh moves frozen integration; correction assigned1546. [Facts](../../workers/rt-F-final-D68-assess-1543/evidence/source-assessment.md) | Evidence only |
 | F-final-D68 | Preserve fresh upstream in staging | Luna | Source and private caller qualified | gated:D59-cut | Author1546; review1554; wire1601 | Exact fda independent PASS; caller1601 synthetic service path PASS, extras and overlap receipts retained. No live install or build. | fda54be4 held |
 | D72-frame-window | Preserve native frame window assertions | Luna | Agent normal home | merging | Review1722 PASS; remote request | Reviewed7 PASS; exact native/legacy coverage. Author typecheck claim withdrawn: dedicated interpreter absent, inherited14 diagnostics. | 4f01572d4 |
-| D72-installer-schema | Fix staging canonical schema source | Luna | Product correction after review FAIL | doing | Review1722; return1727 | ActualBackend.stage still installs absent external schema, masked byfixture. Boundedlocal-source correction and stronger graph guards active. | 3b61e8e held |
+| D72-installer-schema | Fix staging canonical schema source | Luna | Independent corrected-source review | review | Return1727; review1735 | Author50 PASS. Live stage uses verified local canonical JSON; no fabricated external package. Prior review failure retained. | Source1727 held |
 | D72-generic-host | Migrate requester publication fixture | Luna | Agent normal home | merging | Review1722 PASS; remote request | Independent3 PASS; actual requester CAS/producer/idempotency route and alloriginal assertions retained. Typecheck env limit explicit. | 712093ec9 |
-| F-final-D73 | Capture proof tuple once at submit | Luna | Final tuple and D59 cut | gated:D59-cut | rt-F-final-D73-prep-1707 PASS | Private submit-once four-SHA route/stubs passed. Old84 plusTS retained; popup added, P4newtests qualificationpending. No live install or body. | Private candidate |
+| F-final-D73 | Capture proof tuple once at submit | Luna | Final tuple and D59 cut | gated:D59-cut | Source1728; receipt1735 | Private87Python+TS candidate preserves D73 submit order. Current qualification references refreshed1735; no live install or body. | Private candidate |
 | F-final-D72 | Document retired CLI migration | Luna | Installed renderer and byte checks passed | merged | rt-F-final-D72-docs-1704 PASS | Actual docs installed171108 with backups; help, renderer, exactD65/D67/D62 preservation PASS. [Proof](../../design/rt-F-final-D72-docs-1704.md) | Installed docs |
 | F-final-D67 | Document genuine post-install D13 check | Luna | Exact source and installed render PASS | merged | Inputs1528; install1533 PASS | Installed README13env/7keys and original selector; D62 known gap in both docs. Actual renderer and exact-byte/mode checks PASS. | Installed docs |
 | F-final-D65 | Include authentic manifest release order | Luna | Actual installed renderer passed | merged | rt-F-final-D65-complete-1546 | Installed f992 README and8cda notes; actual command and vendor rebind precondition. D67 appendix exact. [Proof](../../design/rt-F-final-D65-complete-1546.md) | Installed docs |
@@ -151,18 +151,18 @@ D65 delivery: owner Runtime merge, Agent merge, authentic App update-manifest wi
 
 Blockers: App popup proof — Runtime normal b318 merged after security1658 PASS; exact reviewed tree. Integrated focused1704 active; App owns meaningful P2. No wire change or regeneration.
 Blockers: App element activation — helper04de HOME2c1 and mounted8 PASS. App must activate it in actual worker subprocess for next meaningful P2; peer1708 sent. Historical phase UNAVAILABLE, no backend cause claimed.
-Blockers: Agent P4 proof — Runtime actual327da after independent175 PASS. Normal adoption/D73 meaningful original requestedpeer1728; original45s still OPEN. Runtime focusedintegrated1728 active.
+Blockers: Agent P4 proof — Runtime actual327da after independent175 PASS. Normal adoption/D73 meaningful original requestedpeer1728; original45s still OPEN. Runtime integrated1728 PASS35; current source qualified.
 Blockers: App — changed P34858 intent correction and stable current sources owned. P1 recordedGO; no duplicate P2/P3. Runtime1700 owns safe next-run phase capture; App owns normal launch wiring.
 Blockers: Final delivery — all active lanes need core0/regressions0 plus current P2/P3 and D69 completion. Agent newly reports39 restored-node failures; four classifiers own them. No cut/proofs/build/ZIP.
-Next ready: consume installerreturn1727 for independentreview; exactRuntimeintegrated1728 andprivatecandidate refresh1728. Agent owns two D72 remote merges/P4; App owns focused element wiring/body.
+Next ready: consume installer independent review1735 and private receipt refresh1735. Agent owns two queued D72 remote merges and meaningful P4; App owns focused element wiring/body.
 
 Later: D47 memo and proof pins remain post-delivery; nine state attacks open. V4 cut; D14/D23 deferred unchanged. D34 broader cleanup remains held. D62 submit completeness is an explicit known gap in the Runtime behavior-change ledger.
 
 Admission: D56 stops Farm and schema-access work. Exact403 and automatic access refusal stay stopped; no alternate source/child/overlay/acquisition route. Kit6de installed/publication/Agent receipt allPASS; no new input or child authority inferred. Prior denied cleanup/process/retirement targets stay stopped. D67 D13 is an env known gap, not an owner-action or permission blocker.
 
-Disk: about8.3GB, above main8GB heavy floor. Sweep3 freed0; compact packed0/compressed0. Finished worktrees automatically recycle; no old refused target retried.
+Disk: about8.2GB. Sweep3 removed0; compact packed0 and compressed3 old logs. Three abandoned v1 trees refused as dirty and remain untouched; no alternate deletion. Finished current trees automatically recycle.
 
-live 3 / cap 4; ready-undispatched 0. Luna1727 installer correction,1728 Runtime integrated proof and final candidate source refresh. Two D72 remote requests await Agent queue. No guarded refusals retried.
+live 2 / cap 4; ready-undispatched 0. Luna1735 installer independent review and private D73 receipt refresh. Two D72 remote requests await Agent queue. No denied pin targets retried.
 
 Pass 2026-10-24T16:57:06Z: New Agent actual49 failures consumed with its four disjoint source classifiers. Popup author88b9 complete -> independent security1658 dispatched. D69 review1647 FAIL only citations -> return1658 dispatched. P4Sol1652 active; element phase still UNKNOWN pending App-host input. Source remains5c1 and no originals duplicated.
 
@@ -177,3 +177,5 @@ Pass 2026-10-24T17:17:15Z: Agentpeer1706 threeindependentreadyD72families consum
 Pass 2026-10-24T17:22:23Z: AllthreeD72authors completed7/6/1+3PASS -> independentframe/installer/generic1722dispatchedsamepass. P4return24c61 complete31+144/strictlintPASS -> finalsecurity1720. Exactphasehelpercallable+foregroundCLIactivationfact returnedApp1720, no secondobserverauthor or body. FourreviewsactiveunderD74cap4.
 
 Pass 2026-10-24T17:28:26Z: P4finalsecurity1720PASS175 -> normal327da -> exactfocusedintegrated1728 andAgentcurrentproducerhandback. Frame/generic1722PASS -> two normalremote requestsimmediately; authenticflatevidencepublished. Installer1722FAILactualstagingseam -> firstreturn1727, noexternalacquisition. FinalD73candidate source-refresh1728 active. AllreadyrowsdispatchedunderD74cap4.
+
+Pass 2026-10-24T17:33:28Z: Integrated1728 PASS35 on actual327da; exact report/XML published and Agent notified. Installer1727 author50PASS -> independent1735. Relative brief dispatch1732 rejected as missing file; corrected absolute path1735 launched. Private source1728 ready -> truthful current receipt refresh1735. No cut or gate outcome inferred.
