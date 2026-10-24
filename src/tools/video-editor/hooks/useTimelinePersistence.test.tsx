@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { act, render, renderHook } from '@testing-library/react';
+import { act, fireEvent, render, renderHook } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB, resetFakeIndexedDB } from 'fake-indexeddb';
@@ -42,6 +42,17 @@ import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/
 import { createCommitOutbox, toOutboxJson } from '../commands/commitOutbox.ts';
 import { createLocalSaveSession } from '../commands/localSaveSession.ts';
 import { createTimelineLocalSaveHandoff, type TimelineLocalSaveHandoff } from './timelineLocalSaveHandoff.ts';
+
+import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
+import { json, runtimeFixture } from '@/test/fakeWorkspaceRuntime.ts';
+import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '../contexts/VideoEditorRuntimeContext.tsx';
+import { useTimelineSave } from './useTimelineSave.ts';
+import { useTimelineTrackManagement } from './useTimelineTrackManagement.ts';
+import { useDragCoordinator } from './useDragCoordinator.ts';
+import { useClipDrag } from './useClipDrag.ts';
+import { buildTimelineRowLayout } from '../lib/timeline-row-layout.ts';
+import { publishTimelineRowLayout } from '../lib/drop-position.ts';
+import type { CommitRequest } from '@/integrations/runtime/timeline-commit-types.ts';
 
 const contractFixture = vi.hoisted(() => ({ digest: 'sha256:unsupported-test-fixture' }));
 
@@ -2677,4 +2688,212 @@ describe('useTimelinePersistence — recovery draft gated by persistence', () =>
     expect(vi.mocked(saveTimelineDraft).mock.calls[0][0]).toBe('timeline-1');
     expect(await loadTimelineDraft('timeline-1')).not.toBeNull();
   });
+});
+
+describe('useTimelinePersistence — mounted pointer to outbox', () => {
+  const projectId = 'project-commit';
+  const timelineId = 'timeline-1';
+  const head = { projectId, timelineId, headRevisionId: 'r0', headPublicationId: 'publication-current' };
+  const queries = { timelineQuery: { data: undefined, isLoading: false }, assetRegistryQuery: { data: undefined } };
+  const config = createDefaultTimelineConfig();
+  config.clips = [
+    { id: 'f2-app-clip', at: 0, track: 'V1', clipType: 'media', hold: 3, from: 0, to: 8, speed: 1,
+      opaqueClip: { keep: null, ordered: [false, 0, ''] } },
+    { id: 'f2-transition-clip', at: 15, track: 'V1', hold: 3 },
+  ] as unknown as TimelineData['config']['clips'];
+  // This helper supplies only the initial read closure. No commit is acknowledged.
+  const originalDocument = acceptedCommit({ revision_id: 'r0', publication_id: head.headPublicationId },
+    { revision_id: 'r0', publication_id: head.headPublicationId }, { timelineId, children: true }).data.canonical_document;
+  originalDocument.parent_revision.payload = { ...originalDocument.parent_revision.payload,
+    config: JSON.parse(JSON.stringify(config)), clips: structuredClone(config.clips), registry: { assets: {} } };
+  originalDocument.parent_revision.content_digest = fixtureDigest(originalDocument.parent_revision.payload);
+  const fixture = {
+    parent: { ...originalDocument.parent_revision, project_id: projectId, timeline_id: timelineId,
+      dependency_manifest: originalDocument.dependency_manifest },
+    shot: { ...originalDocument.shot_revisions[0], project_id: projectId, timeline_id: 'child-timeline' },
+    internal: { ...originalDocument.internal_timeline_revisions[0], project_id: projectId },
+    history: { head: { revision_id: 'r0', publication_id: head.headPublicationId }, items: [], next_cursor: null },
+  };
+
+  const drain = async () => { await act(async () => { for (let i = 0; i < 50; i++) await Promise.resolve(); }); };
+  const advance = async (ms: number) => { await act(async () => { await vi.advanceTimersByTimeAsync(ms); }); await drain(); };
+  function changedPaths(before: unknown, after: unknown, path = ''): string[] {
+    if (JSON.stringify(before) === JSON.stringify(after)) return [];
+    if (before && after && typeof before === 'object' && typeof after === 'object') {
+      return [...new Set([...Object.keys(before), ...Object.keys(after)])].flatMap(key => changedPaths(before[key], after[key], `${path}/${key}`));
+    }
+    return [path];
+  }
+  function gate() {
+    let resolve!: () => void;
+    const promise = new Promise<void>(done => { resolve = done; });
+    return { promise, resolve };
+  }
+  function rect(left: number, top: number, width: number, height: number): DOMRect {
+    return { x: left, y: top, left, top, right: left + width, bottom: top + height, width, height, toJSON: () => ({}) };
+  }
+
+  afterEach(() => { vi.clearAllTimers(); vi.useRealTimers(); vi.unstubAllGlobals(); });
+
+  it.each(['ready', 'pending-original-read', 'pending-identity'] as const)(
+    'mounted 0→5 parent pointer/save boundary: %s', async mode => {
+      vi.useFakeTimers();
+      contractFixture.digest = 'sha256:35c2d9c5e0b51ab8d8b7a4f4dbafbdfcb13d232d7bd22fff21cf73e250398d4c';
+      resetFakeIndexedDB();
+      vi.stubGlobal('indexedDB', createFakeIndexedDB());
+      Object.defineProperty(navigator, 'locks', { configurable: true, value: {
+        request: async (_name: string, _options: unknown, work: (lock: object) => Promise<unknown>) => work({}),
+      } });
+      const diagnostics: Array<Record<string, unknown>> = [];
+      const observe = (event: Event) => diagnostics.push((event as CustomEvent).detail);
+      Object.assign(window, { __timelineSaveDiagnosticsEnabled: true });
+      window.addEventListener('timeline:save-diagnostic', observe);
+      const originalRead = gate();
+      const identity = gate();
+      const fixtureRuntime = runtimeFixture({ projectId, timelineId, headRevisionId: 'r0' });
+      const sends: Array<{ request: CommitRequest; key: string }> = [];
+      // Every transport call is in-memory. A dispatched mutation stays pending: no fake ACK.
+      const provider = new RuntimeDataProvider({ projectId, transport: async (method, path, headers, body) => {
+        if (method === 'POST' && path.endsWith('/commit')) {
+          sends.push({ request: JSON.parse(new TextDecoder().decode(body)), key: headers['Idempotency-Key'] });
+          return new Promise(() => {});
+        }
+        let value;
+        if (path.includes('/commits?')) { if (mode === 'pending-original-read') await originalRead.promise; value = fixture.history; }
+        else if (path.includes('/composition-revisions/')) value = fixture.parent;
+        else if (path.includes('/shots/') && path.includes('/revisions/')) value = fixture.shot;
+        else if (path.includes('/revisions/')) value = fixture.internal;
+        if (value) return { status: 200, headers: {}, body: json(value) };
+        return fixtureRuntime.transport(method, path, headers, body);
+      } });
+      // Explicit offline identity-read gate; the actual provider identity implementation still runs.
+      const readIdentity = provider.getRecoverableIdentity.bind(provider);
+      if (mode === 'pending-identity') provider.getRecoverableIdentity = async () => { await identity.promise; return readIdentity(); };
+      const legacySave = vi.spyOn(provider, 'saveTimeline');
+      const legacyHeadSave = vi.spyOn(provider, 'saveTimelineAtHead');
+      const loaded = await provider.loadTimeline(timelineId);
+      const registry = await provider.loadAssetRegistry(timelineId);
+      const data = await buildTimelineData(loaded.config, registry,
+        async file => file, loaded.configVersion, undefined, loaded.head);
+      expect(data.config.clips.find(clip => clip.id === 'f2-app-clip')?.at).toBe(0);
+      expect(data.config.clips.find(clip => clip.id === 'f2-transition-clip')?.at).toBe(15);
+      expect(fixture.parent.payload.occurrences).toHaveLength(2);
+      const store = createTimelineStore();
+      const interaction = { current: createInteractionState() };
+      const selected = { current: new Set(['f2-app-clip']) };
+      const wrapperNode = document.createElement('div');
+      wrapperNode.className = 'timeline-wrapper';
+      wrapperNode.getBoundingClientRect = () => rect(0, 0, 1000, 200);
+      const editArea = document.createElement('div');
+      editArea.className = 'timeline-canvas-edit-area';
+      editArea.dataset.timelineRowLayout = 'managed';
+      editArea.getBoundingClientRect = () => rect(0, 0, 1000, 200);
+      const clipNode = document.createElement('div');
+      clipNode.className = 'clip-action';
+      clipNode.dataset.clipId = 'f2-app-clip';
+      clipNode.dataset.rowId = 'V1';
+      clipNode.getBoundingClientRect = () => rect(144, 0, 96, 36);
+      editArea.appendChild(clipNode); wrapperNode.appendChild(editArea); document.body.appendChild(wrapperNode);
+      const wrapperRef = { current: wrapperNode };
+      const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+      const runtime = { provider, timelineId, project: { projectId }, assetResolver: null,
+        shots: { shots: undefined, isLoading: false, error: null, refetchShots: async () => {} },
+      } as unknown as VideoEditorRuntimeContextValue;
+      const wrapper = ({ children }: { children: React.ReactNode }) => (
+        <QueryClientProvider client={queryClient}><VideoEditorRuntimeProvider value={runtime}>
+          <TimelineStoreProvider store={store}>{children}</TimelineStoreProvider>
+        </VideoEditorRuntimeProvider></QueryClientProvider>
+      );
+      const hook = renderHook(() => {
+        const save = useTimelineSave(queries, provider, interaction, store, data);
+        const management = useTimelineTrackManagement({ dataRef: save.dataRef, resolvedConfig: save.data?.resolvedConfig ?? null,
+          selectedClipId: save.selectedClipId, setSelectedTrackId: save.setSelectedTrackId, applyEdit: save.applyEdit });
+        const drag = useDragCoordinator({ dataRef: save.dataRef, scale: 5, scaleWidth: 160, startLeft: 144, rowHeight: 36 });
+        React.useLayoutEffect(() => {
+          drag.editAreaRef.current = editArea;
+          const state = store.getState();
+          state.syncSlices({ data: { ...state.data, data: save.data, dataRef: save.dataRef, interactionStateRef: interaction,
+            selectedClipIdsRef: selected, additiveSelectionRef: { current: false }, timelineWrapperRef: wrapperRef,
+            deviceClass: 'desktop', interactionMode: 'select', gestureOwner: 'none', coordinator: drag.coordinator, scale: 5, scaleWidth: 160 },
+            ops: { ...state.ops, ...management, applyEdit: save.applyEdit,
+              setGestureOwner: () => {}, setInputModalityFromPointerType: () => 'mouse', selectClip: () => {}, selectClips: () => {} } });
+          return publishTimelineRowLayout(editArea, buildTimelineRowLayout({ tracks: save.data!.tracks, mediaRowHeight: 36 }), save.dataRef.current);
+        }, [save.data, management, drag.coordinator]);
+        return save;
+      }, { wrapper });
+      const pointer = renderHook(() => useClipDrag(), { wrapper });
+      // Default spy is call-through: observe authentic capture promises without replacing the seam.
+      const captures = vi.spyOn(hook.result.current.localDocumentSave!, 'capture');
+      const schedules: Array<{ gesture: string | undefined; changed: string[] }> = [];
+      const unsubscribe = hook.result.current.eventBus.on('scheduleSave', (next, options) => {
+        schedules.push({ gesture: options?.gestureBasis?.kind, changed: changedPaths(data.config, next.config) });
+      });
+      try {
+        // Settle the genuine initial draft read before selecting the owner/read timing.
+        await act(async () => { await loadTimelineDraft(timelineId); }); await drain();
+        if (mode === 'ready') {
+          await vi.waitFor(() => expect(diagnostics.some(row => row.phase === 'handoff-ready')).toBe(true));
+        } else if (mode === 'pending-identity') {
+          await vi.waitFor(() => expect(diagnostics.some(row => row.phase === 'basis-ready')).toBe(true));
+          expect(diagnostics.some(row => row.phase === 'session-created')).toBe(false);
+        }
+        fireEvent.pointerDown(clipNode, { button: 0, pointerId: 77, pointerType: 'mouse', clientX: 181, clientY: 18 });
+        fireEvent.pointerMove(window, { pointerId: 77, pointerType: 'mouse', clientX: 341, clientY: 18 });
+        expect(pointer.result.current.dragSessionRef.current?.moveReadBasis?.kind).toBe('move');
+        fireEvent.pointerUp(window, { pointerId: 77, pointerType: 'mouse', clientX: 341, clientY: 18 });
+        await drain();
+        expect(hook.result.current.dataRef.current?.config.clips.find(clip => clip.id === 'f2-app-clip')?.at).toBe(5);
+        expect(diagnostics.some(row => row.phase === 'schedule' && row.gestureKind === 'move')).toBe(true);
+        expect(diagnostics.some(row => row.phase === 'capture-called' && row.gestureKind === 'move')).toBe(true);
+        const scope = { ...await readIdentity(), projectId, timelineId };
+        if (mode !== 'ready') {
+          expect(sends).toHaveLength(0);
+          expect(await createCommitOutbox().list(scope)).toHaveLength(0);
+          await act(async () => { originalRead.resolve(); identity.resolve(); }); await drain(); await advance(100);
+        }
+        await act(async () => { await Promise.allSettled(captures.mock.results.map(result => result.value)); });
+        await advance(6000);
+        const records = await createCommitOutbox().list(scope);
+        expect(legacySave).not.toHaveBeenCalled();
+        expect(legacyHeadSave).not.toHaveBeenCalled();
+        if (mode === 'pending-original-read') {
+          expect(diagnostics.some(row => row.phase === 'owner-error' && row.errorCode === 'owner-original-read-invalidated')).toBe(true);
+          expect(diagnostics.some(row => row.phase === 'capture-rejected' && row.errorCode === 'owner-original-read-invalidated')).toBe(true);
+          expect(records).toHaveLength(0);
+          expect(sends).toHaveLength(0);
+        } else {
+          // The genuine causal move reaches the outbox once, including after owner initialization.
+          expect(diagnostics.some(row => row.phase === 'capture-resolved')).toBe(true);
+          expect(captures).toHaveBeenCalledTimes(1);
+          expect(captures.mock.calls[0][1]).toMatchObject({ kind: 'move', config: data.config, registry: data.registry });
+          expect(schedules).toEqual([{ gesture: 'move', changed: ['/clips/0/at'] }]);
+          expect(sends).toHaveLength(1);
+          expect(records).toHaveLength(1);
+          expect(records[0].intents).toHaveLength(1);
+          expect(records[0].intents[0].payload).toMatchObject({ after: {
+            shot_revisions: originalDocument.shot_revisions,
+            internal_timeline_revisions: originalDocument.internal_timeline_revisions,
+            dependency_manifest: originalDocument.dependency_manifest,
+          } });
+          expect(records[0].pending?.request.key).toBe(sends[0].key);
+          expect(JSON.parse(records[0].pending!.request.body)).toEqual(sends[0].request);
+          expect(sends[0].request).toMatchObject({ api_version: 1, project_id: projectId, timeline_id: timelineId,
+            base_revision_id: head.headRevisionId, base_publication_id: head.headPublicationId, dry_run: false,
+            merge: 'fields', source: { via: 'app' }, label: 'Edit timeline',
+            commands: [{ op: 'doc.patch', args: { changes: [expect.objectContaining({ op: 'set', ref: 'parent',
+              path: ['clips', 'id:f2-app-clip', 'at'], before: { state: 'present', value: 0 }, value: 5 })] } }] });
+          expect(sends[0].request.steps).toEqual([expect.objectContaining({ id: expect.any(String), label: 'Edit timeline',
+            intent: 'Move f2-app-clip on V1', tags: [], command_ordinals: [0], patch: expect.any(Array), reads: expect.any(Array) })]);
+          expect(sends[0].request.reads?.length).toBeGreaterThan(0);
+          expect(sends[0].request.steps[0].reads.length).toBeGreaterThan(0);
+        }
+      } finally {
+        pointer.unmount(); hook.unmount(); wrapperNode.remove(); queryClient.clear();
+        unsubscribe();
+        captures.mockRestore();
+        contractFixture.digest = 'sha256:unsupported-test-fixture';
+        window.removeEventListener('timeline:save-diagnostic', observe);
+        Object.assign(window, { __timelineSaveDiagnosticsEnabled: false });
+      }
+    });
 });

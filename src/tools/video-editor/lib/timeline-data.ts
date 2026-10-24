@@ -282,6 +282,7 @@ export const rowsToConfig = (
   const actionMap = new Map<string, TimelineAction>();
   const trackActionIds: Record<string, string[]> = Object.fromEntries(tracks.map((track) => [track.id, []]));
   const authoredClips = new Map((extras?.clips ?? []).map((clip) => [clip.id, clip] as const));
+  const retainedClips = new Map<string, TimelineClip>();
 
   for (const row of rows) {
     for (const action of row.actions) {
@@ -319,6 +320,21 @@ export const rowsToConfig = (
       const roundedEnd = roundTimelineTime(snapToFrameGrid(action.end, fps));
 
       const authoredClip = authoredClips.get(clipId);
+      if (authoredClip) {
+        const originalMeta = getDefaultClipMeta(authoredClip);
+        const unchangedMeta = (Object.keys(originalMeta) as (keyof ClipMeta)[]).every((field) =>
+          field === 'label' || field === 'track'
+          || canonicalJsonStringify({ value: originalMeta[field] }) === canonicalJsonStringify({ value: clipMeta[field] }));
+        if (unchangedMeta && roundTimelineTime(action.end - action.start) === roundTimelineTime(getClipDurationSeconds(authoredClip))) {
+          // Rows are a display projection. A move must carry the raw clip,
+          // including opaque fields and absent/null source values, unchanged.
+          retainedClips.set(clipId, {
+            ...structuredClone(authoredClip),
+            at: action.start === authoredClip.at ? authoredClip.at : roundedStart,
+            track: track.id,
+          });
+        }
+      }
       const nextClip: Partial<TimelineClip> = {
         id: clipId,
         at: roundedStart,
@@ -411,7 +427,11 @@ export const rowsToConfig = (
   if (pinnedShotGroups && pinnedShotGroups.length > 0) {
     config.pinnedShotGroups = clonePinnedShotGroups(pinnedShotGroups);
   }
-  return serializeTimelineConfigSnapshot(config).config;
+  const serialized = serializeTimelineConfigSnapshot(config).config;
+  return {
+    ...serialized,
+    clips: serialized.clips.map((clip) => retainedClips.get(clip.id) ?? clip),
+  };
 };
 
 /**

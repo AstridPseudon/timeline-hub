@@ -1034,7 +1034,11 @@ export function useTimelinePersistence({
     return scheduledSave;
   }, [configVersionRef, headRevisionRef, provider, session, timelineId]);
 
-  const scheduleSave = useCallback<ScheduleSaveFn>((nextData, options) => {
+  const scheduleSaveWithCapture = useCallback((
+    nextData: TimelineData,
+    options?: Parameters<ScheduleSaveFn>[1],
+    captured?: ScheduledSave,
+  ) => {
     emitTimelineSaveDiagnostic('schedule', () => ({ timelineId, owner: diagnosticOwner ?? session.identity,
       mounted: getDataRef().current, source: nextData, gesture: options?.gestureBasis,
       clipId: options?.gestureBasis?.clipId ?? selectedClipIdRef.current,
@@ -1059,7 +1063,9 @@ export function useTimelinePersistence({
     // debounce, interaction gate, or network attempt. Draft writes are
     // serialized so an older IndexedDB transaction cannot land after a newer
     // mutation, and each receipt can compare-and-delete only its own slot.
-    const scheduledSave = createScheduledSave(nextData, editSeqRef.current, options?.gestureBasis);
+    // Interaction end resumes the original capture, including its source/head
+    // and causal reads. Capturing the same edit again would lose that basis.
+    const scheduledSave = captured ?? createScheduledSave(nextData, editSeqRef.current, options?.gestureBasis);
 
     if (reloadInProgressRef.current) {
       // A user edit made while canonical Reload is pending supersedes that
@@ -1153,6 +1159,10 @@ export function useTimelinePersistence({
       void doSave(scheduledSave);
     }, SAVE_DEBOUNCE_MS);
   }, [armWatchdog, createScheduledSave, disarmWatchdog, doSave, editSeqRef, getInteractionStateRef, isConflictExhausted, persistenceEnabled, schemaIncompatible, recoveryPendingRef, recoveryActiveRef]);
+
+  const scheduleSave = useCallback<ScheduleSaveFn>((nextData, options) => {
+    scheduleSaveWithCapture(nextData, options);
+  }, [scheduleSaveWithCapture]);
 
   const resumeDeferredRecoverySave = useCallback(() => {
     if (recoveryPendingRef?.current || recoveryActiveRef?.current) return;
@@ -1331,9 +1341,9 @@ export function useTimelinePersistence({
         return;
       }
       deferredSaveRef.current = null;
-      scheduleSave(deferred.save.data, { preserveStatus: deferred.preserveStatus });
+      scheduleSaveWithCapture(deferred.save.data, { preserveStatus: deferred.preserveStatus }, deferred.save);
     });
-  }, [getInteractionStateRef, scheduleSave]);
+  }, [getInteractionStateRef, scheduleSaveWithCapture]);
 
   const reloadFromServer = useCallback((options?: { clearDraft?: boolean; preserveDraft?: boolean }) => {
     // Recovery Retry may still be in its asynchronous read/build phase, outside
