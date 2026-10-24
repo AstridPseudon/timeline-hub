@@ -8,6 +8,7 @@ const clips = [
 ];
 const original = { schema_version: 1, project_id: 'p', timeline_id: 't', parent_revision: { payload: { config: { clips, tracks: [{ id: 'V1', kind: 'visual' }] } } } };
 const base = { revision_id: 'r0', publication_id: 'p0' };
+const elementRef = { id: 'am-burst', kind: 'effect', packId: 'astrid_motion', revision: 'sha256:f4b453923da74f104d41baf34ab9760bc7474d53d7ce034e11e0ec0197babf29' };
 
 function post(branch, changes, reads, created = [], intent = branch === 'catalog' ? 'timeline.apply_element' : 'timeline.update_element') {
   return { key: 'k1', body: {
@@ -26,32 +27,59 @@ const catalogReads = [
 ];
 
 test('document oracle accepts exact catalog and params shapes', () => {
-  const catalog = post('catalog', [{ op: 'list.insert', ref: 'parent', path: ['clips'], id: 'new', before: { state: 'absent' }, value: { id: 'new', elementRef: { id: 'am-burst', kind: 'effect', packId: 'astrid_motion' } }, order_before: ['f2-app-clip', 'f2-transition-clip'], after_id: 'f2-transition-clip' }], catalogReads, ['parent/clip:new']);
+  const overlay = { id: 'element-am-burst-0', at: 0, track: 'V1', clipType: 'am-burst', hold: 2, elementRef };
+  const catalog = post('catalog', [{ op: 'list.insert', ref: 'parent', path: ['clips'], id: overlay.id, before: { state: 'absent' }, value: overlay, order_before: ['f2-app-clip', 'f2-transition-clip'], after_id: 'f2-transition-clip' }], catalogReads, [`parent/clip:${overlay.id}`]);
   assert.doesNotThrow(() => assertCatalogDocumentPatch(catalog, base, original, 'f2-app-clip'));
 
-  const paramsBase = { schema_version: 1, project_id: 'p', timeline_id: 't', parent_revision: { payload: { config: { clips: [...clips, { id: 'new', elementRef: { id: 'am-burst', kind: 'effect', packId: 'astrid_motion' } }], tracks: [{ id: 'V1', kind: 'visual' }] } } } };
+  const paramsBase = { schema_version: 1, project_id: 'p', timeline_id: 't', parent_revision: { payload: { config: { clips: [...clips, overlay], tracks: [{ id: 'V1', kind: 'visual' }] } } } };
   const paramsReads = [
-    { kind: 'collection', ref: 'parent', path: ['config', 'clips'], members: ['f2-app-clip', 'f2-transition-clip', 'new'].sort(), order: ['f2-app-clip', 'f2-transition-clip', 'new'] },
+    { kind: 'collection', ref: 'parent', path: ['config', 'clips'], members: ['f2-app-clip', 'f2-transition-clip', 'element-am-burst-0'].sort(), order: ['f2-app-clip', 'f2-transition-clip', 'element-am-burst-0'] },
     ...['id'].map((key) => ({ kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:f2-app-clip', key], state: { state: 'present', value: 'f2-app-clip' } })),
     ...['id'].map((key) => ({ kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:f2-transition-clip', key], state: { state: 'present', value: 'f2-transition-clip' } })),
-    { kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:new', 'id'], state: { state: 'present', value: 'new' } },
-    { kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:new', 'elementRef'], state: { state: 'present', value: paramsBase.parent_revision.payload.config.clips[2].elementRef } },
-    { kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:new', 'params'], state: { state: 'absent' } },
+    { kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:element-am-burst-0', 'id'], state: { state: 'present', value: 'element-am-burst-0' } },
+    { kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:element-am-burst-0', 'elementRef'], state: { state: 'present', value: elementRef } },
+    { kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:element-am-burst-0', 'params'], state: { state: 'absent' } },
   ];
-  const params = post('params', [{ op: 'set', ref: 'parent', path: ['clips', 'id:new', 'params', 'bob'], before: { state: 'absent' }, value: 12 }], paramsReads);
-  assert.doesNotThrow(() => assertParamsDocumentPatch(params, base, paramsBase, 'new'));
+  const params = post('params', [{ op: 'set', ref: 'parent', path: ['clips', 'id:element-am-burst-0', 'params', 'bob'], before: { state: 'absent' }, value: 12 }], paramsReads);
+  assert.doesNotThrow(() => assertParamsDocumentPatch(params, base, paramsBase, 'element-am-burst-0'));
 });
 
 test('document oracle refuses missing, extra, reordered, and forged branch claims', () => {
-  const change = { op: 'list.insert', ref: 'parent', path: ['clips'], id: 'new', before: { state: 'absent' }, value: { id: 'new', elementRef: { id: 'am-burst', kind: 'effect', packId: 'astrid_motion' } }, order_before: ['f2-app-clip', 'f2-transition-clip'], after_id: 'f2-transition-clip' };
+  const change = { op: 'list.insert', ref: 'parent', path: ['clips'], id: 'element-am-burst-0', before: { state: 'absent' }, value: { id: 'element-am-burst-0', at: 0, track: 'V1', clipType: 'am-burst', hold: 2, elementRef }, order_before: ['f2-app-clip', 'f2-transition-clip'], after_id: 'f2-transition-clip' };
   for (const mutate of [
     (value) => { value.body.reads = value.body.reads.slice(1); value.body.steps[0].reads = value.body.reads; },
     (value) => { value.body.reads.push({ kind: 'scope', ref: 'parent', path: [] }); value.body.steps[0].reads = value.body.reads; },
     (value) => { value.body.commands[0].created = []; },
     (value) => { value.body.commands[0].args.changes[0].order_before = ['f2-transition-clip', 'f2-app-clip']; },
     (value) => { value.body.steps[0].intent = 'wrong'; },
+    (value) => { value.body.reads[1].state.value = 'wrong'; value.body.steps[0].reads = value.body.reads; },
+    (value) => { value.body.reads[1].path = ['wrong']; value.body.steps[0].reads = value.body.reads; },
+    (value) => { value.body.reads[1].state = { state: 'absent' }; value.body.steps[0].reads = value.body.reads; },
+    (value) => { value.body.reads = structuredClone(value.body.reads); value.body.reads[1].state.value = 'wrong'; },
+    (value) => { value.body.reads = structuredClone(value.body.reads); value.body.reads[1].path = ['wrong']; },
+    (value) => { value.body.reads = structuredClone(value.body.reads); value.body.reads[1].state = { state: 'absent' }; },
+    (value) => { value.body.steps[0].reads = structuredClone(value.body.steps[0].reads); value.body.steps[0].reads[1].state.value = 'wrong'; },
+    (value) => { value.body.steps[0].reads = structuredClone(value.body.steps[0].reads); value.body.steps[0].reads[1].path = ['wrong']; },
+    (value) => { value.body.steps[0].reads = structuredClone(value.body.steps[0].reads); value.body.steps[0].reads[1].state = { state: 'absent' }; },
+    (value) => { value.body.merge = 'fields'; },
+    (value) => { value.body.base_revision_id = 'wrong'; },
+    (value) => { value.body.label = 'wrong'; },
+    (value) => { value.body.commands[0].op = 'wrong'; },
+    (value) => { value.body.commands[0].version = 'wrong'; },
+    (value) => { value.body.extra = true; },
+    (value) => { value.body.commands[0].args.extra = true; },
+    (value) => { value.body.commands[0].extra = true; },
+    (value) => { value.body.commands[0].select = 'parent'; },
+    (value) => { value.body.steps[0].extra = true; },
+    (value) => { value.body.source.extra = true; },
+    (value) => { value.body.source = { via: 'app', detail: 'forged' }; },
+    (value) => { value.body.commands[0].args.changes[0].value.extra = true; },
+    (value) => { value.body.commands[0].args.changes[0].value.elementRef.revision = 'wrong'; },
+    (value) => { value.body.commands[0].args.changes[0].value = { id: 'element-am-burst-0', elementRef }; },
+    (value) => { value.body.steps[0].patch = [{}]; },
   ]) {
     const value = post('catalog', [structuredClone(change)], catalogReads, ['parent/clip:new']);
+    value.body.commands[0].created = ['parent/clip:element-am-burst-0'];
     mutate(value);
     assert.throws(() => assertCatalogDocumentPatch(value, base, original, 'f2-app-clip'));
   }
@@ -70,6 +98,14 @@ test('inverse oracle requires full v2 fields metadata and no reads', () => {
     (item) => { item.body.reads = []; },
     (item) => { item.body.steps[0].patch = [{}]; },
     (item) => { item.body.commands[0].args.publications = ['other']; },
+    (item) => { item.body.base_revision_id = 'wrong'; },
+    (item) => { item.body.label = 'wrong'; },
+    (item) => { item.body.commands[0].op = 'wrong'; },
+    (item) => { item.body.commands[0].extra = true; },
+    (item) => { item.body.commands[0].args.extra = true; },
+    (item) => { item.body.steps[0].extra = true; },
+    (item) => { item.body.source.extra = true; },
+    (item) => { item.body.source = { via: 'app', detail: 'forged' }; },
   ]) {
     const copy = structuredClone(value);
     mutate(copy);
