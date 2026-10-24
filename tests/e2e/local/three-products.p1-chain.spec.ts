@@ -2,7 +2,7 @@
 import { expect, type Page, type Route } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
 import type { CommitRequest } from '../../../src/integrations/runtime/timeline-commit-types.ts';
-import { APP_ENTRY_ROUTE, commandOutboxes, expectConnected, firstTrackName, test as appTest } from './support/app.ts';
+import { APP_ENTRY_ROUTE, commandOutboxes, expectConnected, firstTrackName, openSeededTimeline, test as appTest } from './support/app.ts';
 import { ASTRID_PYTHON, AstridCli } from './support/astrid.ts';
 import { harnessUnavailableReason, PRODUCT_ACTOR, type DirectHarness } from './support/harness.ts';
 import {
@@ -1523,7 +1523,7 @@ test('P1 split -> trim new clip: accepted split, merged trim after Agent edit, l
   });
   await page.reload();
   await expectConnected(page);
-  await expect(firstTrackName(page)).toBeVisible();
+  await openSeededTimeline(page, harness);
   await expect.poll(() => !!heldRetry, CEILING).toBe(true);
   expect(traffic.posts).toHaveLength(3);
   expect(retryPost).toBe(traffic.posts[2]);
