@@ -21,7 +21,7 @@
 | local | Local rendering elements pack — authored Remotion visual effect elements and immutable assets. | `astrid/packs/local/docs/SKILL.md` |
 | media | Media pack — lossless clip extraction, GIF and sticker search, and weak-mic speech repair for downstream timeline and... | `astrid/packs/media/docs/SKILL.md` |
 | moirae | Moirae pack — renders YAML screenplays into terminal-as-cinema videos via asciinema, agg, and ffmpeg.  External pack ... | `astrid/packs/moirae/docs/SKILL.md` |
-| music | Analyze imported music alignment, used-span EBU R128 loudness, and beat grids for timeline editing. | `astrid/packs/music/docs/SKILL.md` |
+| music | Analyze imported music alignment, loudness and beat grids, and bake speech-keyed music ducking for timeline editing. | `astrid/packs/music/docs/SKILL.md` |
 | pixel | Turn generated images into true pixel-art sprites: pixel.sprites cuts a generated sheet into pieces at the density it... | `astrid/packs/pixel/docs/SKILL.md` |
 | rendering | Author, inspect, edit, preview, render, and open runtime-owned Astrid timelines, including Remotion output, explorabl... | `astrid/packs/rendering/docs/SKILL.md` |
 | runpod | RunPod pack — provision GPU pods, execute scripts remotely, pull artifacts, and tear down, including a guaranteed-cle... | `astrid/packs/runpod/docs/SKILL.md` |
