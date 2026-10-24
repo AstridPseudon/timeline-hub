@@ -1008,6 +1008,194 @@ def _inverse_stage_inherited(source_step, source_commands, source_records, publi
     return list(reversed(partitions))
 
 
+def _inverse_stage_shared_source(entry, step, commands):
+    """Recover a retained shared input from its accepted copy effects and pins."""
+    bindings = [binding for ordinal in step["command_ordinals"]
+                for binding in commands[ordinal]["bindings"]
+                if binding.get("key") == "commit.materialization"]
+    if not any(len(binding.get("owners", [])) > 1 for binding in bindings):
+        return None
+    if len(commands) != 1 or commands[0]["command"]["op"] != "occurrence.swap-media":
+        return None
+    # This representation has one copy boundary. Other stage shapes retain the
+    # ordinary turnover checks; a shared owner list alone grants no projection.
+    require(len(commands) == 1 and step["command_ordinals"] == [0]
+            and len(entry["records"]["steps"]) == 1 and len(bindings) == 2
+            and not commands[0].get("derived_writes"),
+            "shared inverse source has no unique copy boundary")
+    result = entry["receipt"]["result"]
+    document = result["canonical_document"]
+    require(result["document_digest"] == digest(document), "shared inverse source document digest differs")
+    output = images(document)
+    source = copy.deepcopy(output)
+    roots = [effect for effect in step["patch"] if effect["ref"] != "parent"]
+    edges = [effect for effect in step["patch"] if effect["ref"] == "parent"]
+    owner = bindings[0].get("owner")
+    require(isinstance(owner, str) and re.fullmatch(r"occurrence:[^/]+/shot", owner)
+            and len(roots) == len(edges) == 2 and len(step["patch"]) == 4,
+            "shared inverse source copy effects are malformed")
+    occurrence = owner.removeprefix("occurrence:").removesuffix("/shot")
+    owner_path = ["occurrences", "occurrence_id:" + occurrence]
+    require([effect["path"] for effect in edges] ==
+            [[*owner_path, "shot_id"], [*owner_path, "shot_revision_id"]],
+            "shared inverse source copy edges differ from its owner")
+    for effect in step["patch"]:
+        require(effect["op"] == "set" and effect["ref"] in output
+                and value_equal(location(output[effect["ref"]]["payload"], effect["path"]),
+                                {"state": "present", "value": effect["value"]}),
+                "shared inverse source effect differs from its accepted output")
+        if effect["ref"] == "parent":
+            require(effect["before"]["state"] == "present", "shared inverse source owner is absent")
+            source["parent"]["payload"] = project_observation(
+                source["parent"]["payload"], effect["path"], effect["before"])
+        else:
+            require(not effect["path"] and effect["before"] == {"state": "absent"},
+                    "shared inverse source root is not a copy birth")
+            source.pop(effect["ref"])
+    parent_pins = [pin for pin in commands[0]["bindings"] if pin.get("key") == "commit.effect"
+                   and pin.get("physical_ref") == "parent" and pin.get("boundary", {}).get("side") == "before"]
+    require(parent_pins and all(pin.get("revision_id") == entry["previous"]["revision_id"]
+                               and pin.get("content_digest") == digest(source["parent"]["payload"])
+                               for pin in parent_pins),
+            "shared inverse source input parent differs from its accepted pin")
+    source["parent"]["revision_id"] = entry["previous"]["revision_id"]
+    source["parent"]["content_digest"] = digest(source["parent"]["payload"])
+    pairs = []
+    for binding in bindings:
+        old, new = binding.get("physical_ref"), binding.get("successor")
+        require(isinstance(old, str) and isinstance(new, str) and old != new
+                and old in source and old in output and new in output and new not in source
+                and binding.get("ref") == old and binding.get("owner") == owner
+                and binding.get("step_id") == step["id"]
+                and binding.get("policy") == "fixed" and binding.get("dependencies") == []
+                and binding.get("boundary") == {
+                    "base_revision_id": result["base_revision_id"],
+                    "base_publication_id": result["base_publication_id"],
+                    "evaluated_head": entry["previous"], "step_id": step["id"],
+                    "command_ordinal": 0, "phase": "input"},
+                "shared inverse source materialization attribution differs from history")
+        owners = ["occurrence:" + row["occurrence_id"] + "/shot"
+                  for row in source["parent"]["payload"]["occurrences"]
+                  if old == "shot-revision:" + row["shot_revision_id"]
+                  or old == "internal-revision:" + str(source[
+                      "shot-revision:" + row["shot_revision_id"]]["internal_timeline_revision_id"])]
+        require(binding.get("owners") == owners and owner in owners and len(owners) > 1
+                and binding.get("revision_id") == source[old]["revision_id"]
+                and binding.get("content_digest") == source[old]["content_digest"]
+                and source[old]["content_digest"] == digest(source[old]["payload"]),
+                "shared inverse source owner or image pin differs from history")
+        sibling = [item for item in bindings if item is not binding]
+        require(len(sibling) == 1 and binding.get("edge_before") == sibling[0].get("physical_ref")
+                and binding.get("edge_after") == sibling[0].get("successor"),
+                "shared inverse source sibling edge differs from history")
+        pins = [pin for pin in commands[0]["bindings"] if pin.get("key") == "commit.effect"
+                and pin.get("physical_ref") == new and pin.get("boundary", {}).get("side") == "after"]
+        require(len(pins) == 1 and pins[0].get("owners") == [owner]
+                and pins[0].get("revision_id") == output[new]["revision_id"]
+                and pins[0].get("content_digest") == output[new]["content_digest"]
+                and output[new]["content_digest"] == digest(output[new]["payload"]),
+                "shared inverse source copy pin differs from history")
+        pairs.append((old, new))
+    shot_pairs = [(old, new) for old, new in pairs if old.startswith("shot-revision:")]
+    internal_pairs = [(old, new) for old, new in pairs if old.startswith("internal-revision:")]
+    require(len(shot_pairs) == len(internal_pairs) == 1, "shared inverse source copy roots are malformed")
+    old_shot, new_shot = shot_pairs[0]
+    old_internal, new_internal = internal_pairs[0]
+    require([effect["ref"] for effect in roots] == [new_internal, new_shot],
+            "shared inverse source copy roots are reordered")
+    before_row = location(source["parent"]["payload"], owner_path)["value"]
+    after_row = location(output["parent"]["payload"], owner_path)["value"]
+    require(isinstance(before_row, dict) and isinstance(after_row, dict),
+            "shared inverse source consumer is malformed")
+    assert isinstance(before_row, dict) and isinstance(after_row, dict)
+    project, timeline = document["project_id"], document["timeline_id"]
+    require(before_row["shot_revision_id"] == old_shot.partition(":")[2]
+            and after_row["shot_revision_id"] == new_shot.partition(":")[2]
+            and source[old_shot]["shot_id"] == before_row["shot_id"]
+            and output[new_shot]["shot_id"] == after_row["shot_id"]
+            and after_row["shot_id"] == _authoring_identity(
+                "shot-placement", project, timeline, occurrence, before_row["shot_id"])
+            and source[old_shot]["internal_timeline_revision_id"] == old_internal.partition(":")[2]
+            and output[new_shot]["internal_timeline_revision_id"] == new_internal.partition(":")[2],
+            "shared inverse source copy differs from its accepted owner edges")
+    mapping = {}
+    localized = copy.deepcopy(source)
+    payload = localized[old_shot]["payload"]
+    for item in payload.get("items", []):
+        identity = item.get("item_id")
+        require(isinstance(identity, str) and identity and identity not in mapping,
+                "shared inverse source item identity is ambiguous")
+        mapping[identity] = _authoring_identity(
+            "shot-item-placement", project, timeline, occurrence, after_row["shot_id"], identity)
+    for item in payload.get("items", []):
+        item["item_id"] = mapping[item["item_id"]]
+        descriptor = item.get("metadata")
+        if not isinstance(descriptor, dict):
+            descriptor = item
+        for field in ("source_item_id", "source_item"):
+            if isinstance(descriptor.get(field), str):
+                descriptor[field] = mapping.get(descriptor[field], descriptor[field])
+    restored = copy.deepcopy(localized)
+    mapped_writes = []
+    for write in commands[0]["writes"]:
+        projected = copy.deepcopy(write)
+        if write["ref"] == owner and write["path"][:2] == ["payload", "items"]:
+            path = write["path"]
+            require(len(path) == 4 and path[2].startswith("item_id:")
+                    and path[2].removeprefix("item_id:") in mapping and path[3] == "media_id",
+                    "shared inverse source item capture is not a mapped media leaf")
+            projected["path"][2] = "item_id:" + mapping[path[2].removeprefix("item_id:")]
+        ref, path = native_site(localized, projected["ref"], projected["path"])
+        require(ref in (old_shot, old_internal)
+                and value_equal(location(localized[ref]["payload"], path), write["before"]),
+                "shared inverse source native input differs from history")
+        localized[ref]["payload"] = project_observation(localized[ref]["payload"], path, write["after"])
+        mapped_writes.append({**projected, "before": write["after"], "after": write["before"]})
+    localized[old_shot]["payload"]["internal_timeline_revision_id"] = new_internal.partition(":")[2]
+    require(value_equal(localized[old_shot]["payload"], output[new_shot]["payload"])
+            and value_equal(localized[old_internal]["payload"], output[new_internal]["payload"]),
+            "shared inverse source native captures do not cover its accepted copy")
+    inverse_effects = [{**effect, "before": {"state": "present", "value": effect["value"]},
+                        "value": effect["before"]["value"]} for effect in edges]
+    inverse_effects.extend({"op": "remove", "ref": effect["ref"], "path": [],
+                            "before": {"state": "present", "value": effect["value"]}}
+                           for effect in reversed(roots))
+    return {"source": source, "output": output, "restored": restored, "pairs": pairs,
+            "owner_path": owner_path, "writes": list(reversed(mapped_writes)), "effects": inverse_effects}
+
+
+def _inverse_stage_restore_shared(native_image, before, after, shared):
+    """Restore only the accepted consumer; retained sibling images stay sealed."""
+    owner_path = shared["owner_path"]
+    require(value_equal(location(before["parent"]["payload"], owner_path),
+                        location(shared["output"]["parent"]["payload"], owner_path))
+            and value_equal(location(after["parent"]["payload"], owner_path),
+                            location(shared["source"]["parent"]["payload"], owner_path)),
+            "shared inverse consumer differs from its accepted source edges")
+    for old, new in shared["pairs"]:
+        require(old in before and old in after and new in before and new not in after
+                and value_equal(before[old], shared["source"][old])
+                and value_equal(after[old], before[old])
+                and value_equal(before[new], shared["output"][new]),
+                "shared inverse physical images differ from accepted history")
+        expected = copy.deepcopy(shared["restored"][old]["payload"])
+        if old.startswith("shot-revision:"):
+            expected["internal_timeline_revision_id"] = before[new]["internal_timeline_revision_id"]
+        require(value_equal(native_image[new]["payload"], expected)
+                and value_equal(native_image[old], before[old]),
+                "shared inverse native writes change a retained image")
+        native_image.pop(new)
+    for row in before["parent"]["payload"]["occurrences"]:
+        path = ["occurrences", "occurrence_id:" + row["occurrence_id"]]
+        if path != owner_path:
+            require(value_equal(location(after["parent"]["payload"], path),
+                                {"state": "present", "value": row}),
+                    "shared inverse changes an untouched consumer")
+    native_image["parent"]["payload"] = project_observation(
+        native_image["parent"]["payload"], owner_path,
+        location(shared["source"]["parent"]["payload"], owner_path))
+
+
 def _inverse_stage_history(records, history):
     """Return the authenticated source stages named by an inverse record."""
     publications = records.get("undo_of")
@@ -1065,13 +1253,16 @@ def _inverse_stage_history(records, history):
                 expected.extend({"publication_id": publication, "step_id": source_step["id"],
                                  "command_ordinals": ordinals, **partition} for partition in inherited)
                 continue
+            shared = _inverse_stage_shared_source(entry, source_step, commands)
             native_sites = [(write["ref"], write["path"]) for command in reversed(source_commands)
                             for write in reversed([*command.get("writes", []),
                                 *(write for write in command.get("derived_writes", [])
                                   if write.get("ref", "").startswith("parent/clip:")
                                   and write.get("path") in (["at"], ["hold"]))])]
             expected.append({"publication_id": publication, "step_id": source_step["id"],
-                             "command_ordinals": ordinals, "native_sites": native_sites})
+                             "command_ordinals": ordinals,
+                             "native_sites": ([(write["ref"], write["path"]) for write in shared["writes"]]
+                                              if shared is not None else native_sites), "shared": shared})
     return expected
 
 
@@ -1154,6 +1345,10 @@ def _inverse_stage_ranges(step, records, history=None):
                 require(value_equal(effect["before"], source_after)
                         and value_equal(after, source_effect["before"]),
                         "inherited inverse effects differ from authenticated source images")
+        if source_stage.get("shared") is not None:
+            require(value_equal(record["writes"][native_start:native_end], source_stage["shared"]["writes"])
+                    and value_equal(step["patch"][effect_start:effect_end], source_stage["shared"]["effects"]),
+                    "shared inverse native captures differ from authenticated history")
         # A recorder may observe the exact canonical stage effects directly or
         # retain the source's finer native captures in reverse execution order.
         # Neither representation permits extra sites or mere ancestor overlap.
@@ -1306,6 +1501,10 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
         # source records an authenticated physical turnover.  In that case,
         # reverse the source materialization edges; never infer a new root or
         # copy an arbitrary stage image.
+        shared = stage["source_stage"].get("shared")
+        if shared is not None:
+            _inverse_stage_restore_shared(native_image, stage_before, stage_after, shared)
+            source_bindings = []
         transitions = []
         for binding in source_bindings:
             assert source_step is not None
