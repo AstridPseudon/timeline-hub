@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T16:28:03Z | dispatcher heartbeat 8s | live 2 (sol 0, luna 2, other 0) | busy30 16 | status age 0m -->
-# agent board, 2026-10-24T16:27:51Z
+<!-- agent | 2026-10-24T16:30:58Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 14 | status age 0m -->
+# agent board, 2026-10-24T16:30:27Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -113,20 +113,20 @@
 
 | P4 CLI default | Preserve ordinary parser namespace | Luna | Actual current P4 proof | merged | Author1613; review1617 PASS36 | One-line default reviewed; retired flag rejected, P4 originals unchanged. [Review](../../workers/agt-P4-native-default-review-1617/report.md) | 4de7cdbc53 |
 | P4 ten-note cause | Qualify historical validation hot path | Luna / Runtime | Runtime source owner | blocked:runtime | Whole path1613; peer1619 | First redo reaches repeated canonical-document validation in Runtime historical capture. Budget45 retained; exact finer timing not yet qualified. | Home9502 /8b32 |
-| D69 owed assertions | Restore two terminal-line predicates | Luna | Normal merge | merging | Author1617; review1622 PASS | Both predicates and all47 successor records independently exact. Behavior pending. [Review](../../workers/agt-F-D69-two-assertions-review-1622/report.md) | f2c9a3bfc7 |
+| D69 owed assertions | Restore two terminal-line predicates | Luna | Behavior proof | merged | Author1617; review1622 PASS | Both predicates and all47 successor records independently exact. Behavior pending. [Review](../../workers/agt-F-D69-two-assertions-review-1622/report.md) | 9a781a38f7 |
 
-| U4a root-auth successor | Bind qualified Runtime provenance | Luna | Runtime bc227 merged | doing | agt-U4a-root-auth-rebind-1630 | Normal vendor tools only; actual tree equals independently reviewed760269. No original body yet. | Runtime bc227de072 |
+| U4a root-auth successor | Bind qualified Runtime provenance | Luna | Normal merge | merging | agt-U4a-root-auth-rebind-1630 PASS | Lock-only tool update; 15 mappings unchanged, vendor/artifact checks PASS. [Report](../../workers/agt-U4a-root-auth-rebind-1630/report.md) | 3ed8bb54a7 |
 
 Integration: Agent 4de7cdbc53 includes true upstream924, normal Runtime8b32 adoption, reviewed recorder consumer, 47 unchanged upstream test restorations and reviewed P4 parser default. Runtime root-auth successor is actual local normal bc227 with exact reviewed tree1d410 and expected parents. Normal provenance adoption1630 dispatched.
 core open: 3 tracked pending integrated original proof: Runtime inverse, P4 single edit, P4 ten-note timeout. Parser source is now merged, with 36 independent controls passed; original P4 confirmation remains owed. Prior six-original proof has five PASS and one FAIL; strict54 PASS.
 regressions: 0 currently open at qualified scope. Order181 repaired and actual d27b PASS16. Restored47 behavior proof is pending; any failure gets a product owner under D69. Other upstream PASS contrasts need cut confirmation.
 D60 baseline: Upstream924 full1621 terminal FAIL: 12396 passed, 91 failed, 14 errors, 16 skips, 566 subtests. Exact276:199 NEW-OURS and77 counterparts. Mutable external Runtime scope remains disclosed.
-D66 reverse:137 ledgered,178 present-changed,47 restored,0 renamed. Original47 ASTs exact924 at3d67. Durable service installation1622 active. D69 audit:167 cleared,9 cited,2 restored in candidate f2c9; independent review1622 active.
+D66 reverse:137 ledgered,178 present-changed,47 restored,0 renamed. Original47 ASTs exact924 at3d67. Durable service installation1622 active. D69 audit:167 cleared,9 cited,2 restored at home9a781 after independent1622 PASS. Behavior proof pending.
 Gates: P1/P2/P3 App; P4 Agent; P5 and Composition Runtime. Original P4 service29577 FAIL2/PASS1. Next P4 run needs current source rebind and meaningful ten-note correction. Final-core body still owed.
 Admission: D56 ends Farm/schema venue work. Prior access and safety refusals stay stopped. D67 D13 remains unchanged visible environment known gap with no owner action. D23 timing remains deferred.
 Disk: About8.9GiB free after recycling completed clean launch investigator1554. Sweep3 running; prior refused targets stay stopped. Cap4 while below9GiB.
 
 Blockers: Runtime — P4 ten-note first redo hits repeated canonical-document validation and times out45s. Peer1619 requests source owner; budget and original expectations retained.
 Next ready: Consume protected review1622 and merge two assertions on PASS; request one restored47 behavior proof after durable row is ready. Consume Runtime actual-home receipt, dispatch normal provenance rebind and one inverse original proof.
-live 2 / cap 4; ready-undispatched 0. Luna service installation1622 active; provenance adoption1630 queued. Protected review1622 finished PASS. No local Sol.
+live 2 / cap 4; ready-undispatched 0. Luna service installation1622 active; provenance adoption1630 PASS and merge queued. Protected review1622 finished PASS. No local Sol.
 Inbox consumed through Runtime1617 security PASS. Runtime actual normal successor bc227 verified locally by tree and parents; stale source wait cleared. Pass 2026-10-24T16:26:38Z.
