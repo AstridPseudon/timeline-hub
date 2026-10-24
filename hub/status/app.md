@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T05:20:34Z | dispatcher heartbeat 2s | live 7 (sol 3, luna 4, other 0) | busy30 18 | status age 0m -->
-# app board, 2026-10-24T05:17Z
+<!-- app | 2026-10-24T05:23:47Z | dispatcher heartbeat 14s | live 3 (sol 1, luna 2, other 0) | busy30 18 | status age 0m -->
+# app board, 2026-10-24T05:21Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -23,7 +23,7 @@
 | P3 | Original Gate-5 journey | App service; Proof verdict | D45 source and caller READY | doing | Test4065; producer0454 | FAIL exit1/277s. Readiness passed in16.7s; original Gate5 ran and failed. Sol0501 owns diagnosis; prior3362 retained. | c0fe889944 |
 | A2-parent-media-closure | Preserve untouched child closure | Sol; Luna review | Resolved | merged | app-A2-parent-media-integrated-0035 | [299 tests, types, lint and external producer passed.](/home/user/timeline-hub/hub/design/app-A2-parent-media-integrated-0035.md) | 1b0428db7d |
 | A2-image-created | Declare genuine image creations | Sol; Luna review | Review 0133 PASS | merged | app-A2-image-created-sol-0126 | Independent 261 tests and producer 28, three types and lint passed. Clip and new authored registry alias claims match provider. Joined proof 0150 passed 448 tests, three types and lint. | b3a84dea71 / 1c5cc47bf6 |
-| A4-image-live | Complete source-bound image witness | Luna producer; Agent witness | Qualified forwarding source | doing | app-A4-image-producer-standby-0520 | Standby launched; actual PREPARED window awaited before Agent starts fresh realm. Closed 0441 remains incomplete. | Fixed source 1c5cc |
+| A4-image-live | Complete source-bound image witness | Luna producer; Agent witness | Qualified forwarding source | doing | app-A4-image-producer-standby-0520 | RUNNING and PREPARED 05:20:44 to 05:45:44. Agent asked for one fresh input; no attempt yet. Closed 0441 stays incomplete. | Fixed source 1c5cc |
 | A2-video-caller | Normalized video duplication | Sol; Luna review | Resolved | merged | app-A2-video-integrated-2350 | 217 integrated tests and three typechecks passed. Agent provider is merged; no old raw-positive parity claim. | a714a4cc11 |
 | U3b-draft | Final upstream composition | Sol; Luna review | P2/P3 and final freeze | gated:freeze | app-U3b-current-join-2053 | Reviewed branch stays isolated. Refresh live upstream refs at freeze; do not merge during pinned proof. | Branch only |
 | F-App-full | Full suite before retirement | Test service; Luna review | Resolved for historical head | merged | app-F-D19-current-full-1230 | 18,819 tests passed on exact 12ef. A final qualification follows actual retirement and freeze. | 12ef320545 |
@@ -71,7 +71,7 @@
 
 | P3-D45-original-cause | Classify actual Gate5 failure | Sol; independent Luna | Independent0506 PASS | merged | app-P3-D45-original-cause-sol-0501 | Confirmed reset5-to0 against fresh clip0; zero POSTs. Proof owns setup correction; all later original stages unrun. | c0fe /079 /37eb |
 
-| A3-catalog-capture | Capture real catalog Apply turn | Luna; independent review | Author complete; mounted save unproved | review | app-A3-catalog-review-0518 | Author 29 tests passed. Real staging probe refused gesture basis before dispatch; independent review checks full caller acceptance. | Branch only |
+| A3-catalog-capture | Capture real catalog Apply turn | Luna first return | Independent 0518 FAIL | doing | app-A3-catalog-mounted-return-0524 | Real panel still refused basis before outbox. First return owns panel and staging proof; shared handoff stays with Sol 0505. | Branch only |
 | A2-element-params | Preserve parameter edit ownership basis | Sol | Independent0459 source finding | doing | app-A2-element-params-sol-0505 | Faithful callback RED required before fix. Separate files from catalog capture; no ownership waiver. | Currentc0fe base |
 | P2-D45-popup-shape | Classify popup command assertion | Luna; independent Luna | Review 0511 PASS | merged | app-P2-D45-popup-parent-cause-review-0511 | Absent V3 is confirmed planner defect. Occupied V2 valid under provider. Created-claim oracle is a separate Proof need. | Report only |
 | P2-D45-parent-cause | Classify actual parent move timeout | Sol; independent Luna | Review 0511 PASS | merged | app-P2-D45-popup-parent-cause-review-0511 | Local move 0 to 5 and zero POSTs confirmed. Internal boundary unknown; mounted reproduction 0511 active. | Report only |
@@ -81,7 +81,7 @@
 | A2-parent-mounted-repro | Reproduce real move scheduling boundary | Sol | Parent internal boundary unknown | doing | app-A2-parent-mounted-repro-sol-0511 | Offline production pointer and owner/capture/session path. No existing source edit or new original. | Currentc0fe |
 | P2-popup-created-oracle | Assert exact required created claims | Proof Luna | C0 claims and popup cause0505 | blocked:app2 | Proof owner requested0511 | Keep all original command, media, closure and undo assertions; independent no-weakening required. | Request only |
 
-| P2-five-current-paths | Recheck five original never-run paths | Luna | Orchestrator 05:15 | doing | app-P2-five-current-path-review-0520 | Current exact journey callers and ownership checked read only; prior static 0357 reused where unchanged. | Current c0fe |
+| P2-five-current-paths | Recheck five original never-run paths | Luna | Current source map complete | review | app-P2-five-current-path-review-0520 | Five actual callers mapped. No new source defect confirmed; dynamic upload, binding, POST, reload and undo remain unknown. | Current c0fe |
 
 Safety: Historical cleanup, graph and publication denials stand. Managers write boards, briefs and shared reports; workers own product changes.
 Delivery legacy subset: Keep transcriptAssociateCapture.ts and its unchanged 397-line, 40-assertion test, plus required helpers, under D31.
@@ -90,8 +90,8 @@ Integration: c0fe889944 contains all reviewed App fixes. Joined0438 passed523 te
 Later: Runtime D42 remains security held. The D45 pair is consumed; no new pair is released. No unsafe memo adoption.
 Blockers: Freeze — U3b waits P2/P3 and final freeze.
 Next ready: Catalog review 0518 and artifact return 0518 queued. Params 0505, popup planner 0511 and parent reproduction 0511 active. Proof owns reset and created-claim oracle corrections.
-Disk: About 11 GB available. Recycled finished caller 0446 through bin/recycle. Sweep 3 active. Historical dirty U3 and compact refusals remain stopped.
+Disk: About 11 GB available. Recycled finished caller 0446 through bin/recycle. Sweep 3 removed zero directories; freed 0 GB. Historical dirty U3 and compact refusals remain stopped.
 
 Lead: D45 pair is terminal: P213583 failed3 with5 not run; P34065 failed original Gate5 after readiness passed. Full packet and causal owners are in peer0504.
-Blockers: Agent — next image witness waits for actual App producer PREPARED readiness; standby 0520 launched.
+Blockers: Agent — image producer 0520 is prepared until 05:45:44; next genuine input is awaited.
 Blockers: Proof — Gate5 requires a real 5-second precondition. Proof owns setup correction and independent no-weakening; App review 0506 passed.
