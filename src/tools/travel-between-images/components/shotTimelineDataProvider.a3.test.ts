@@ -282,6 +282,76 @@ describe('shot popup A3 save ingress', () => {
     }
   });
 
+  it('uses the registered occurrence media carrier for an unshared child ADD', async () => {
+    const h = harness();
+    const asset = h.config.clips[0].asset;
+    h.config.registry[asset] = { ...h.config.registry[asset], generationId: 'generation-old', variantId: 'variant-old' };
+    const selection = { asset, generation_id: 'generation-old', variant_id: 'variant-old',
+      object_id: `sha256:${'1'.repeat(64)}`, catalog_digest: `sha256:${'2'.repeat(64)}` };
+    h.transport.getProjectMediaSelection = vi.fn(async (query: MediaSelectionQuery) => ({ ...query,
+      object_id: selection.object_id, catalog_digest: selection.catalog_digest }));
+    let captured!: OutboxRecord;
+    h.send.mockImplementation(async (request, key) => {
+      [captured] = await h.records();
+      return JSON.parse(JSON.stringify(h.reply(request, key, savedDocument(captured))));
+    });
+    const provider = h.mount();
+    try {
+      await expect(provider.saveTimeline('popup-timeline', h.add(), 1)).resolves.toBe(2);
+      expect(h.transport.getProjectMediaSelection).toHaveBeenCalledWith({ asset,
+        generation_id: 'generation-old', variant_id: 'variant-old' });
+      const [request] = h.send.mock.calls[0];
+      expect(request).toMatchObject({ base_revision_id: h.initial.head.revisionId, base_publication_id: 'pub-0',
+        source: { via: 'app' }, label: 'Edit shot timeline', merge: 'fields', dry_run: false,
+        commands: [{ schema_version: 1, op: 'occurrence.add-media', version: '1', select: 'occurrence:occ-3',
+          intent: { ownership: 'occurrence' }, created: ['occurrence:occ-3/clip:popup-added-a3'] }] });
+      expect(request.commands).toHaveLength(1);
+      expect(request.commands[0].args).toEqual({ row: expect.objectContaining({ id: 'popup-added-a3', asset,
+        clipType: 'media' }), media: selection });
+      expect(request.commands[0].args.row).not.toHaveProperty('asset_id');
+      expect(request.steps).toEqual([expect.objectContaining({ label: 'Edit shot timeline', command_ordinals: [0], patch: [] })]);
+      expect(captured.intents[0].payload).toMatchObject({ commands: request.commands });
+      expect((await provider.loadTimeline('popup-timeline')).config.clips).toHaveLength(h.config.clips.length);
+      expect(h.published).toHaveBeenCalledWith(expect.objectContaining({ headRevisionId: 'rev-a3-accepted' }), 0,
+        fixture.primary_timeline.head.revision_id);
+    } finally {
+      await provider.dispose();
+    }
+  });
+
+  it('claims a newly registered asset before the added occurrence clip in Agent order', async () => {
+    const h = harness();
+    const asset = 'popup-new-asset';
+    const entry = { file: asset, type: 'image', generationId: 'generation-new', variantId: 'variant-new' };
+    const selection = { asset, generation_id: 'generation-new', variant_id: 'variant-new',
+      object_id: `sha256:${'3'.repeat(64)}`, catalog_digest: `sha256:${'4'.repeat(64)}` };
+    h.transport.getProjectMediaSelection = vi.fn(async (query: MediaSelectionQuery) => ({ ...query,
+      object_id: selection.object_id, catalog_digest: selection.catalog_digest }));
+    let captured!: OutboxRecord;
+    h.send.mockImplementation(async (request, key) => {
+      [captured] = await h.records();
+      return JSON.parse(JSON.stringify(h.reply(request, key, savedDocument(captured))));
+    });
+    const provider = h.mount();
+    const added = h.add();
+    const next = { ...added, clips: added.clips.map((clip) => clip.id === 'popup-added-a3'
+      ? { ...clip, asset } : clip) };
+    const registry = await provider.loadAssetRegistry('popup-timeline');
+    const nextRegistry = { ...registry, assets: { ...registry.assets, [asset]: entry } };
+    try {
+      await expect(provider.saveTimeline('popup-timeline', next, 1, nextRegistry)).resolves.toBe(2);
+      const [request] = h.send.mock.calls[0];
+      expect(request.commands[0]).toMatchObject({ op: 'occurrence.add-media', created: [
+        'occurrence:occ-3/asset:popup-new-asset', 'occurrence:occ-3/clip:popup-added-a3',
+      ] });
+      expect(h.transport.getProjectMediaSelection).toHaveBeenCalledWith({ asset,
+        generation_id: 'generation-new', variant_id: 'variant-new' });
+      expect(captured.intents[0].payload).toMatchObject({ commands: request.commands });
+    } finally {
+      await provider.dispose();
+    }
+  });
+
   it.each(['add', 'swap'] as const)('forks a shared occurrence before the existing media %s command in one durable request', async (kind) => {
     const before = canonicalDocument();
     const parent = before.parent_revision.payload;
@@ -314,6 +384,9 @@ describe('shot popup A3 save ingress', () => {
       intent: { ownership: 'occurrence' }, created: [expect.stringMatching(/^shot:shot-fork-/)] });
     expect(request.commands[1]).toMatchObject({ select: kind === 'add' ? 'occurrence:occ-3' : 'occurrence:occ-3/clip:alpha-video-b',
       intent: { ownership: 'occurrence' } });
+    if (kind === 'add') expect(request.commands[1].created).toEqual([
+      `occurrence:occ-3/clip:popup-added-a3`,
+    ]);
     expect(captured.intents[0].payload).toMatchObject({ commands: request.commands });
     expect(h.transport.getProjectMediaSelection).toHaveBeenCalled();
     await provider.dispose();
