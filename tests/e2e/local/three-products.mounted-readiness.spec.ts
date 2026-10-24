@@ -6,7 +6,7 @@
 import { expect, type Page, type TestInfo } from '@playwright/test';
 import { writeFileSync } from 'node:fs';
 import { harnessUnavailableReason, runtimePython, startDirectHarness, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
-import { bootstrapMountedBaseline, commandOutboxes, expectConnected, openApp, openSeededTimeline, test as appTest, UI } from './support/app.ts';
+import { bootstrapMountedBaseline, commandOutboxes, expectConnected, installMountedBootstrapDiagnostics, openApp, openSeededTimeline, test as appTest, UI } from './support/app.ts';
 import { hasFreshSettledOwner, isFreshlyConnected, readExistingReadonly, readMountedBootstrapFailure, type MountedBootstrapFailure, type ReadonlyOutboxRead } from './mounted-readiness-safety.ts';
 import { createD21Environment, observeD21Harness, observeD21Page, persistD21Environment, recordD21Error, recordD21Readiness, recordD21Stage, type D21EnvironmentArtifact } from './d21-environment.ts';
 
@@ -239,6 +239,10 @@ function attachRouteStatusErrors(page: Page, diagnostics: MountedReadinessDiagno
     });
   });
 }
+
+appTest.beforeEach(async ({ context }, testInfo) => {
+  await installMountedBootstrapDiagnostics(context, testInfo);
+});
 
 async function snapshot(
   page: Page,
