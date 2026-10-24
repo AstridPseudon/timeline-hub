@@ -204,7 +204,8 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
 - **D86, main hosts Agent family authors (23:35Z).** Agent's 424 core rehearsal nodes map to 57 families, and at 6 parallel authors on the Agent machine that is many hours. Main has about 8 GB free, idle Runtime slots and a current Agent clone (/home/user/work/agent at home 5d4ae93c83).
   - **The split:**
     - **Agent manager:** picks the families for main: disjoint files, source-only, nothing reserved by peer 2310. It writes them as rows in `design/agt-D86-main-families.md`: family, nodes, files, brief.
-    - **Runtime manager:** dispatches up to 4 Luna "agt-" workers on main from that list, as long as no critical Runtime row is ready.
+    - **Runtime manager:** dispatches up to 4 Luna "agt-" workers on main from that list (raised to 6 at 23:38Z, because the Agent machine is at 6.7 GB), as long as no critical Runtime row is ready.
+    - **Batched rerun moved to main (23:38Z):** Agent's batched rerun of the affected nodes may run on MAIN's test service (it qualifies fixes; it is not the D59 gate). The D59 final core suite stays on Agent's service.
     - **Each worker:** a faithful D72 migration with genuine bootstrap and every assertion kept, or a product fix.
     - **Finished branches:** go through `bin/request-merge-remote agent <worker>`. The Agent manager reviews and merges them normally, as with any other remote merge.
   - That makes about 10 parallel family authors in total. The batched node rerun stays on Agent's service.
