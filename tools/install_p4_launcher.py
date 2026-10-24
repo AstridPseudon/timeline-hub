@@ -1,4 +1,4 @@
-"""CAS-install the owned D73/final-core rows without touching other suites."""
+"""CAS-install the owned rehearsal row without touching other suites."""
 
 from __future__ import annotations
 
@@ -14,11 +14,7 @@ from pathlib import Path
 
 candidate, registry, evidence = map(Path, sys.argv[1:4])
 expected = sys.argv[4]
-target_keys = {
-    (b"agent", b"p4-current-becfe-http-3legs"),
-    (b"agent", b"p4-current-single"),
-    (b"agent", b"final-core"),
-}
+target_keys = {(b"agent", b"OWN-REHEARSAL-SUITE")}
 rows = {
     tuple(line.split()[:2]): line
     for line in candidate.read_bytes().splitlines(keepends=True)
@@ -43,6 +39,9 @@ with registry.open("rb") as locked:
             line = rows[key]
             found.add(key)
         after_lines.append(line)
+    for key in sorted(target_keys - found):
+        after_lines.append(rows[key])
+        found.add(key)
     assert found == target_keys
 
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime(
@@ -85,4 +84,4 @@ with registry.open("rb") as locked:
     print("before", expected)
     print("after", hashlib.sha256(after).hexdigest())
     print("outside", hashlib.sha256(outside(lines)).hexdigest(), "byte-identical")
-    print("mode 0600; only the three owned D73/final-core rows changed")
+    print("mode 0600; only the owned rehearsal row changed")
