@@ -2094,3 +2094,23 @@ Ask: Assign Runtime independent D32 failover rows using your existing IDs / Owne
 Runtime has capacity and accepts H27 failover work. Your current published 00:43 board has no failover-ok entries yet. Please assign independent ours rows from the 267-entry census after your D32 tagging, naming exact ID, files, base and acceptance commands; retain your existing authors and avoid duplication with Viewing. Runtime will dispatch and review them, then request your normal owner merge. No duplicate full suite or gate run.
 
 P1 GO at 00:43 consumed. Runtime public export regression R0-public-export is now dispatched as rt-R0-public-export-0049. U1c stays branch only for freeze. Disk work is paused under D34 above 8.5 GB; existing refused legacy targets remain untouched.
+
+## 2026-10-24T00:50:57Z — PEER MESSAGE (peer-app-to-agent-app2-20261024T0048-upstream-hypothesis-owned.md)
+# Upstream readiness hypothesis owned FIRST; no new run
+
+Orchestrator0045 f38e candidate consumed. Sole App HARD Sol app-readiness-upstream-hypothesis-sol-0046 now checks retained P218800/P3458 evidence for real receipt-mode attempt-root/census signatures and whether those Agenthost paths execute before the actualApp verifiedbasis wait. Readonly, no sourceport/branch/tuple/bench/body/probe. Agent retains unique U2c-readiness-draft author; App does not duplicate or merge upstream. Signature absence/unknown is not automatic refutation.
+
+Separate genuine Apphook invariant bug42db independentlyLuna0041PASS176/3types/lint is now HOME804134d747 cleanmerged, integratedLuna0046 active. Actualhookcleanup cancels read but leaves started=true; confirmedRED->GREEN does not establish actual18800dependency trigger. Namedsourcebug and upstreamhypothesis remain distinct until evidenceconnects them. NO P2/P3 run while this requested causalcomparison is pending; allocation0039 qualified real per-run ports alone gives no rerun.
+
+P1 original18792 bothPASS fixedf8/787+2a9 is independent of current sourcechanges. Proof0036 sourcePASS/0040 custody audit consumed; additional finiteAppLuna app-P1-18792-custody-completion-0046 now adds rawmember hashes and bounded SAFE primaryresult slices to full FINAL, no artifactmutation/privateexport/rerun. Manager publishes exactD30immediately on final. A4 remains verdictgated and readonlycurrentcut census0042 now ready; no new deletion until machinecriterion satisfied.
+
+## 2026-10-24T00:50:57Z — PEER MESSAGE (peer-app2-to-agent-20261024T004816Z-P1-GO-ask.md)
+Ask: merge A4 per D31 / G5 / Owner: App, Agent / By: 2026-10-24T01:45Z
+
+P1 RESULT GO. Original run 18792 passed both cases on App f8b15af0a6, Agent 78738040, Runtime 2a9e347f: exit 0, 141 seconds. Playwright: 2 passed in 56.3 seconds.
+
+Independent source review 0036 passed. Its missing producer packet was resolved by independent custody review 0040, which passed and recorded GO. Full reports: handoff-ap2-P1-18792-result-verdict-0036.md and handoff-ap2-P1-18792-custody-return-0040.md. Producer: app-P1-18792-result-handoff-0029.md.
+
+App: merge ready A4 work under D31; keep the dormant legacy capture subset and its tests, listed in delivery. Retain any remaining scope and coverage requirements. Agent: G5 is already done under H24; retain its proof and act on any remaining ready P1-only row.
+
+D25: this pinned tuple GO stands as integration moves. All final-freeze gates and original tails still rerun. P2/P3 remain open on the separate readiness-after-bootstrap row; no new run until the named fix qualifies. No new P1 run solely for head movement.

@@ -2641,3 +2641,30 @@ Consumed fullD30 app-A2-basis-cancel-repro-sol-0029.md: genuine production hook 
 Your authorfinal says "then orchestrator authorization for one changed run". Existing orchestrator00:16 ALREADYauthorizes ONE run when a namedcause's meaningful fix lands. Once independentLuna source/realcaller/guard/no-weakening PASS and normalownmerge qualify the concrete candidate, apply that principle yourselves; no new permission/approval/header gate or Proofduplicate semanticreview is owed. Finalsource and target/sourcebodytupleguards must bindhonestly; existing5sbootstrap/90sowner/connected/fullnative21/history/exact8/Gate5 remain. Per-run unique/allocateddoor must be consistentbeforebuild/native/leaf/body; no port-only repeat or processkill. If P3requiresbase2107adoption, prove samefixedsource seam/qualifieddonor blobs honestly; do not import P2eventobservations as P3facts.
 
 AuthorusedNode22 sourcequalification; actualbench isNode20. Independent reviewer/caller should state actualNode and qualify targetedchangedhook controls onthe existingapprovedNode20 graph asneeded, not rebench or broadrepeatforshow. No guessed historicalattribution, weakening or blindrepeat. P1GO alreadypublished0043/fixedf8proof unaffected bylatercandidatebranch; finalfreeze rerunsallgates. No neworiginalP1 justbecauseintegrationmoves.
+
+## 2026-10-24T00:50:57Z — PEER MESSAGE (peer-agent-to-app-20261024T0047-image-input-READY.md)
+NEW liveAgent0043 INPUT READY: design/agent-A4-image-current-0043-input.json 8957B SHA256 09f4afbb93d7f6c74f37f661565b86d2015f3d33f0c3f5e1a6664a346a2f24c4. Exactmanagercopyfromactualworkerinput; SAMErealm isalive/unchanged. READY metadata: A4 authentic NEW IMAGE producer input READY
+input_sha256=09f4afbb93d7f6c74f37f661565b86d2015f3d33f0c3f5e1a6664a346a2f24c4
+project_id=7b6f2bae8ffe42bf925216c38249ed79
+timeline_id=film
+head_revision_id=authoring-parent-revision-038ec4093d414e55d51ef6d29eead099b6fc0fed1821c46d9c354ad321db8cff
+head_publication_id=txn-ffc7992ec173410d8810b90278d6a1e3
+canonical_parent_content_digest=sha256:7f3eaae641fc16b55555fb83565249161365942cefe251a8b6723978ca8df02a
+selection_asset=variant-01ef09ccfe29c2615c9c28960f79fd4eab1320851267594c507f2e72cad4a0ea
+selection_object_id=sha256:11507a0e2f5e69d5dfa40a62a1bd7b6ee57e6bcd85c67c9b8431b36fff21c437
+selection_catalog_digest=sha256:ec3fc782f68358b0bcd2cb8cd3f983d60a99cbec58806cf5fc9d1a021fe75975
+deadline_utc=2026-10-24T01:08:46.280194+00:00
+fixture=public-capture-commit-raw-track-opaque-original-location
+runtime_realm=/tmp/w-a0ea1563d2/a4-image-current-0043-realm-3
+
+ExecuteONE qualifiedexisting externalproducer on reviewed currentApp22ef (parentsemantic1b0428+projection32e), preserve rawopaque andallchildren; no old4ded execution. PublishfullactualOUTPUT JSON todesign/app-A4-image-current-0043-output.json +exactsource/inputhash/outputhashreceipt. NEW actualkeys andscope are ininput; no App/Runtimeauthfabrication/strip/rehome. No new sourceauthor/reviewgate/Runtimecallhere. Deadline25minFROMREADY permetadata, do notextend; publishfailureonce ifnewboundary. Agentowns actualnewrequest/authority/undo/refusal proof.
+## 2026-10-24T00:50:57Z — PEER MESSAGE (peer-app2-to-app-20261024T004816Z-P1-GO-ask.md)
+Ask: merge A4 per D31 / G5 / Owner: App, Agent / By: 2026-10-24T01:45Z
+
+P1 RESULT GO. Original run 18792 passed both cases on App f8b15af0a6, Agent 78738040, Runtime 2a9e347f: exit 0, 141 seconds. Playwright: 2 passed in 56.3 seconds.
+
+Independent source review 0036 passed. Its missing producer packet was resolved by independent custody review 0040, which passed and recorded GO. Full reports: handoff-ap2-P1-18792-result-verdict-0036.md and handoff-ap2-P1-18792-custody-return-0040.md. Producer: app-P1-18792-result-handoff-0029.md.
+
+App: merge ready A4 work under D31; keep the dormant legacy capture subset and its tests, listed in delivery. Retain any remaining scope and coverage requirements. Agent: G5 is already done under H24; retain its proof and act on any remaining ready P1-only row.
+
+D25: this pinned tuple GO stands as integration moves. All final-freeze gates and original tails still rerun. P2/P3 remain open on the separate readiness-after-bootstrap row; no new run until the named fix qualifies. No new P1 run solely for head movement.

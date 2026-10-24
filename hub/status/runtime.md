@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T00:50:57Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 1m -->
+<!-- main | 2026-10-24T00:53:08Z | dispatcher heartbeat 8s | live 2 (sol 0, luna 2, other 0) | busy30 8 | status age 1m -->
 # runtime board, 2026-10-24T00:49:59Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -6,7 +6,7 @@
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client 34eac; schema 35c2; producer d5f98. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | 34eac0041; 62c454ac0 |
 | U1/U1b | Upstream and schema 32 | Luna / Sol | Upstream baseline | merged | U1b review 1005; service 32328 | Integrated 456 passed; 12 skipped and 2 configured exclusions are recorded. | 27f0306b9; 4e56253c6 |
 | U1c-draft | Refresh draft to latest upstream | Luna | Freeze before integration | doing | rt-U1c-live-refresh-0051 | Prior 0138 independently passed. Refresh to 795379a67 is branch only; integration stays held. | 0138e3af6 |
-| R0-public-export | Export DocPatchArgs at package root | Luna | P1 GO | doing | rt-R0-public-export-0049 | Original full-suite failure retained. Generator and normal import fix now authorised. | pending |
+| R0-public-export | Export DocPatchArgs at package root | Luna | P1 GO | review | rt-R0-public-export-0049; review 0052 | Author: original failure fixed; 144 passed, generation and Ruff passed, zero new type diagnostics. Independent review pending. | source complete |
 | F-runtime-full | Full suite after prior fixes | Luna / service | Public export fix | blocked:runtime | Service 9458; author 0049 | 6,237 passed; sole DocPatchArgs failure. No current full-suite pass. | a01e9d806 |
 | R2r | History attribution and native authority | Luna / Sol | C0 and U1 | merged | Prior independent reviews | All source-specific results retained in [evidence](../../design/runtime-prior-proof-evidence-0051.md). | 21482a416 and later |
 | R2r-atomic-native-birth | Sequential births in atomic scope | Sol / Luna | Integrated proof | merged | Author 1546; review 1554; service 14107 | 338 passed on the recorded integrated head. No guard relaxation. | 2593942df |
