@@ -331,11 +331,16 @@ export const rowsToConfig = (
         if (unchangedMeta && roundTimelineTime(action.end - action.start) === roundTimelineTime(getClipDurationSeconds(authoredClip))) {
           // Rows are a display projection. A move must carry the raw clip,
           // including opaque fields and absent/null source values, unchanged.
-          retainedClips.set(clipId, {
+          const retained = {
             ...structuredClone(authoredClip),
             at: action.start === authoredClip.at ? authoredClip.at : roundedStart,
             track: track.id,
-          });
+          };
+          if (Object.prototype.hasOwnProperty.call(authoredClip, 'label')
+            && clipMeta.label === undefined && clipMeta.displayName === authoredClip.label) {
+            delete retained.label;
+          }
+          retainedClips.set(clipId, retained);
         }
       }
       const nextClip: Partial<TimelineClip> = {
@@ -374,11 +379,13 @@ export const rowsToConfig = (
         keyframes: clipMeta.keyframes,
       };
 
-      // `meta.label` is the display projection and may be derived from asset
-      // provenance. Keep the authored label from the raw config when this clip
-      // already exists, including an absent or opaque value. Newly materialized
-      // clips have no raw carrier yet, so their supplied metadata is authored.
-      if (authoredClip && Object.prototype.hasOwnProperty.call(authoredClip, 'label')) {
+      // A raw label equal to the current display name is a legacy derived
+      // value; do not resurrect it after the assembly policy has healed it.
+      const legacyDerivedLabel = authoredClip
+        && Object.prototype.hasOwnProperty.call(authoredClip, 'label')
+        && clipMeta.label === undefined
+        && clipMeta.displayName === authoredClip.label;
+      if (authoredClip && Object.prototype.hasOwnProperty.call(authoredClip, 'label') && !legacyDerivedLabel) {
         nextClip.label = authoredClip.label;
       } else if (!authoredClip && clipMeta.label !== undefined) {
         nextClip.label = clipMeta.label;
