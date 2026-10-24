@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T11:03:39Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 5m -->
-# agent board, 2026-10-24T10:43:48Z
+<!-- agent | 2026-10-24T11:06:34Z | dispatcher heartbeat 6s | live 8 (sol 1, luna 7, other 0) | busy30 20 | status age 1m -->
+# agent board, 2026-10-24T11:05:17Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -162,10 +162,16 @@
 | OPS received kit | Verify installed verifier receipt | Luna | Both receipt reviews passed | merged | Agent1036; Runtime route1035 PASS | Four actual received/live/hub/committed scripts match. Archive443977 and prior67-wheel custody retained. Kit dependency cleared; admission held. | Sourceab6d |
 
 | F checkpoint census | Reconcile all276 bad results | Luna | Independent result review | review | Author1052; independent1058 | Author found276 bad IDs;64 historical closed are bad here. Exact causes and parser119/157 limits await review; no officialcount change. | Evidence pending |
-| F checkpoint setup | Classify all45 setup errors | Luna | Terminal9758 | doing | agt-F-full9758-setup-1052 | Exact retained causes and supported owner inputs; no installs or body repeats. Due11:15Z. | Evidence pending |
-| R2 checkpoint sources | Attribute core inverse failures | HARD Sol | Terminal9758; currentR2d83 | doing | agt-R2-full9758-source-sol-1052 | Compare observedba55 with currentc2b and67/244 proofs before any source fix. Strict guards and original tests retained. Due11:20Z. | Currentc2b |
+| F checkpoint setup | Classify all45 setup errors | Luna | Independent source review | review | Author1052; reviewer1105 | Author finds3 symlink loops and42 artifact mismatches from staleprofile. Qualified819acf candidate is preparing; no install/full. | Evidence pending |
+| R2 checkpoint sources | Attribute60 core failures | Sol / Luna | Independent review and current11 | review | Source1052; review1105 | 15 historicalcodec and45 fixture cases. Four currentcodec nodes passed67; eleven need meaningful currentqualification. No newproductfix proven. | Currentc2b |
 
-| F checkpoint other causes | Classify remaining failure families | Luna | Terminal9758 | doing | agt-F-full9758-other-causes-1054 | All failed nodes outside six reserved R2 files; no45 setup errors. Retained evidence only, no duplicate bodies. Due11:15Z. | Evidence pending |
+| F checkpoint other causes | Classify171 other failures | Luna | Independent source review | review | Author1054; review1105 | Author labels70 fixture,61 environment,29 product,5 version,6 unknown. Productlabels and false ba55-absence claim are challenged. | Evidence pending |
+
+| R2 fixture step | Restore14 original undo scenarios | Luna | Authentic acceptedboundary setup | doing | agt-R2-fixture-step-1105 | Fixture/helpers only; all original bodies and guards retained. Meaningful changed-fixture proof then independent review. | Basec2b |
+| R2 fixture m1 | Restore25 exact recipe redo cases | Luna | Production closure builder | doing | agt-R2-fixture-m1-1105 | One fixture file; preserve complete rows/order/container shapes and original bodies. No guard waiver or product edits. | Basec2b |
+| R2 fixture redo | Restore6 native replay cases | Luna | Authentic closure/materialization | doing | agt-R2-fixture-redo-1105 | Two fixture helpers only; no invented private authority or changed original assertions. | Basec2b |
+| F full profile | Prepare exact qualified profile row | Luna | Setup review1105 | doing | agt-F-full-profile-candidate-1105 | One-row candidate using existing819acf profile; preserve all tests and outside rows. No installation or duplicate full. | Preparation only |
+| R1 full tamper | Classify5 retained guard failures | HARD Sol | Valid current production witness | doing | agt-R1-full-tamper-sol-1105 | Nativeorder and publicpair/foreign/digest refusals remain strict. Smallest source fix only after legitimate currentcause. | Basec2b |
 
 P1: Historical GO recorded. P4 and P5 retain their named scopes; final freeze reruns all gates. App and Proof own P2/P3.
 Integration: c2b1f7e5a3 merges reviewed rationale18bb above capture support7ba6 and qualifiedR2d83. Source review1011 and integrated1017 passed67 plus strict static gates; 244 neighbors retained. No original credit.
@@ -182,7 +188,7 @@ D49 venue: Existing Agent own-service full9758 on working venv-agent is running.
 Safety: Prior Farm, monitor, publication, bench and cleanup refusals remain stopped. No denied action retried.
 Disk: About9.1GB free, up from7.7GB. Eight more finished clean worktrees recycled, preserving branches and reports. Sweep3 removed zero dirs; compact packed zero dirs and compressed five old logs. No new heavy run below8.5GB; existing full9758 may finish. Prior denied targets stay stopped.
 Later: D31/D37 dormant implementations and tests unchanged. V4 and D14/D23 remain cut or deferred. D46 U2c closed and folded into the freeze; relay and remote providers stay deferred and fail-closed. D47 memo held.
-Next ready: Rationale is qualified on unchanged homec2b by1045 PASS. Capture export1055 resumes saved1040 WIP after repeated output-limit failures; Viewing owns terminal3783 verdict. Kit received1036 and Runtime route1035 PASS; existing admission hold remains. Full9758 is99percent. No ready task waits.
+Prior next ready: Rationale is qualified on unchanged homec2b by1045 PASS. Capture export1055 resumes saved1040 WIP after repeated output-limit failures; Viewing owns terminal3783 verdict. Kit received1036 and Runtime route1035 PASS; existing admission hold remains. Full9758 is99percent. No ready task waits.
 Evidence: [D39 review](../../design/agt-D39-header-review-0809.md), [ABA review](../../design/agt-F-ABA-cumulative-review-0809.md), [wheel input](../../design/agt-OPS-real-wheel-qualify-0810.md), [Farm checkpoint](../../design/farm-agent-full-checkpoint-20261024T0555Z.md).
 
 Pass10:34Z: All eight DONE orphans finalized through request-stop; no live processes were found. Independent capture preparation1027 passed21 and exact one-row custody; normal stacked merge7ba6 completed. Rationale review and row installer dispatched immediately.
@@ -194,3 +200,7 @@ Pass10:45Z correction:1038 unexpectedly changed one rationale explanation despit
 Pass10:52Z: Local full9758 terminalFAIL:17673passed,231failed,45errors,4skips,566subtests. Three independent bounded follow-ups dispatched immediately: exactcensus,45setupcauses and HARD coreR2source classification. No new full, officialcountdelta or inferred closures.
 
 Pass10:58Z: Census1052 produced276 exactbadIDs and64 historical-closed overlaps; independent1058 challenges originalmapping and119retained/157missing traceback parser claims. No officialcount edit or causal regression credit. Core/setup causes finishing; noncore1054 active.
+
+Next ready: Eight scoped workers1105 dispatched for three result reviews, three fixture families, one profile candidate and one R1 guard assessment. Capture export1055 PASS is with Viewing1045. No new full/child or unassigned ready family.
+
+Pass11:05Z: Runtime1045 withdrew the conditional child request; both lanes retain existing owner admission hold. Kit receipts are complete. Core and noncore source assessments have independent reviews, not automatic closures or productdefect credit.
