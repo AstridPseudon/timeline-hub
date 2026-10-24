@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T13:39:49Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 2m -->
-# runtime board, 2026-10-24T13:31:54Z
+<!-- main | 2026-10-24T13:42:42Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 1m -->
+# runtime board, 2026-10-24T13:41:17Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -79,7 +79,7 @@
 | F-D52-core-five | Qualify retained redo at Agent home | Luna / Agent | Agent null mirrors and home proof | blocked:agent | Mapping1250;1256; Agent1258/1304 | Both redo originals independently PASS on held e5fa; other3 retain prior scope. Two nullmirror failures block home. [Review](../../design/agt-R2-cumulative-security-review-1258.md) | e5fa held scoped PASS |
 | U1d-final | Join final owner upstream | Luna | D60 exactd4f496 | doing | rt-U1d-final-1329 | Incoming18 files; contract delta checked first. Targeted proof and review pending. | Basebecfe; upstreamd4f496 |
 | U1d-visual-source | Resolve visual policy and source | Luna | Independent union review | review | Author1331; review1333 | Focused17 and shared10 passed; old broader37 failures remain unqualified. | Own source committed |
-| U1d-visual-tests | Restore both live FPS test cases | Luna | First protected review failed | doing | First return1338; review1333 | Missing rational and invalid FPS cases identified. Source union passes; all incoming tests retained. | e938 first return |
+| U1d-visual-tests | Restore both live FPS test cases | Luna | Final joined port and review | review | First return1338; review1333 | Incoming41 preserved plus2 restored FPS cases;8 exact cases passed. Final join must retain v2 fixture migration. | 640db1049 |
 | U1d-visual-review | Check both source and protected tests | Luna | Exact source and test union | review | rt-U1d-visual-review-1333 | SOURCE PASS; TEST FAIL for two omitted live FPS cases. First return active. | Read only |
 | FREEZE | Reach final tuple cut | Runtime manager | D59 cut | doing | Lane owners; main benches1244 | Runtime0core/0regressions; Agent51core at refresh1254; App9gate cases,36regression repairs home awaiting proof. Cut requires all lanes0/0 plus current P2/P3 PASS. | Runtime becfe6db8 |
 | F-final | Main delivery build and ZIP | Luna | D59 cut and final proofs | doing | Builder1233; docs1229; service1244 | Builder and v2 prose installed. Durable service helper repair active; live-main refresh and final build wait qualified cut and proofs. | No delivery artifact |
@@ -137,14 +137,14 @@ Blockers: D60 — Runtime U1d joins final upstreamd4f496 first; exact contract d
 Blockers: Final delivery — D59 cut requires every active lane0core/0regressions plus current P2/P3 PASS, then required final proofs and D51 live-main refresh.
 Blockers: App — existing Agent service-input handback1305 is complete. Actual App-host current caller/bench qualification remains App-owned; installed-child identity stays UNKNOWN, no new provision inferred.
 Blockers: Agent — two nullmirror positives remain red before home. Independent1258 and exact named1304 qualify both retainedredo nodes on held e5fa only; current-home proof remains owed.
-Next ready: Join exact visual source/test blobs as workers finish; independent custody/protected review then merge U1d. Contract or OpenAPI delta triggers D39 regeneration before consumer handback.
+Next ready: Finish main1329 targeted proof, preserve its v2 fixture and port only restored FPS functions from640db. Independent full join review then merge; final contract delta determines D39 handback.
 
 Later: D47 memo and proof-pin work stay post-delivery; nine state attacks open. D34 broader cleanup held above8.5GB or until delivery. Prior denied cleanup, process, retirement and publication targets remain stopped. V4 cut; D14/D23 deferred unchanged. D52 removals require caller proof; live tests stay strict.
 
 Disk: About8.5GB free, above main8GB heavy floor. Five old v1 trees refused recycle as dirty; no forced removal. Sweep3 removed0. Compaction packed0 and compressed0 logs; no refused target retried.
 
-Pass 2026-10-24T13:31:54Z: D60 received and acted on immediately. Exactd4f496 merge-forward has5conflicts. Main Luna owns daemon/manifest/join; two parallel Luna own visual source/policy and protected test union. Early delta source inventory active. Sweep3freed0; no deniedtarget retried.
+Pass 2026-10-24T13:41:17Z: D60 keep-both test rule consumed. Independent1333 passedsource but failedtwo omittedliveFPS tests. Firstreturn1338 restoredboth and passed8cases. Main1329 migratedvisualfixture via v2 and passed87visualcases; fulltargetedrerunactive. No cut or merge yet.
 
-live 3 / cap 4; ready-undispatched 0. Dispatcher header: <!-- main | 2026-10-24T13:30:55Z | dispatcher heartbeat 1s | live 3 (sol 0, luna 3, other 0) | busy30 7 | status age 0m -->
+live 1 / cap 4; ready-undispatched 0. Dispatcher header: <!-- main | 2026-10-24T13:39:49Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 2m -->
 
 Sol exception: All three live Runtime workers are Luna. Semantic core conflict would justify HARD Sol only if a precise nonmechanical conflict is established.
