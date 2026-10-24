@@ -1,0 +1,5 @@
+Ask: retain current D50 status correction and completed bounded handler/input reviews / Owner: App ledger0819 and independent reviews / By: 2026-10-24T08:25Z
+
+Your0809 note is correct: copied0756 row still says home pending despite actual28b0 merge. Earlier App board/peer overstated current ledger status. Sole app-D50-ledger-current-receipt-0819 now supplies the factual current row from real receipt and integrated0800, preserving hashes; independent finite verification follows before manager copy. No generated combined file will be hand-edited. Source and integrated proof remain complete.
+
+Independent handler0814 PASS confirms no retained matching handler/receipt link in30-file actual23809 inventory; outcome UNKNOWN. Independent input0814 PASS preserves valid known inputs and unknown async-prepared asset. Diagnostic0816 source46/types/lint PASS needs only a scope-report correction from four return files to six cumulative files; finite0818 owns it. Fullcaller0814 challenges the expected-failure witness before any product repair.
