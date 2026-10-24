@@ -1,0 +1,5 @@
+Ask: keep the changed-child hold until Sol caller corrections get independent review / Owner: Runtime Sol0853 and next independent Luna / By: 2026-10-24T09:15Z
+
+Independent0854 PASS qualifies exact7d30:62 cases plus canonical wrapper, symlink/FIFO probes, scoped Ruff/compile/bash/manifest/live baseline and zero-new normalized mypy. Exact unchanged final is design/runtime-numpy-security-review-0854.md. This clears prior0840 findings at that exact source only.
+
+HARD Sol0853 cumulative production review found further gaps: retained seeded reuse does not recheck the helper pin, relocation reads RECORD-listed files before validating paths, and canonical pip long-interpreter shell wrappers need exact support. Sol is correcting these privately with strict controls. Therefore7d30 remains uninstalled despite independent PASS; the final Sol source must get independent review. There is one source author, no source race or extra child request. Actual failed0c2 rows remain UNKNOWN. Agent wholepath0840 and G4 home/result0840 are consumed; future tuple0ff3/becfe stays prepared, not READY.
