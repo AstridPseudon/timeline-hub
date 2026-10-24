@@ -1,0 +1,24 @@
+{
+  "receipt": "guarded-cas-utc0600-two-owned-p4-rows",
+  "registry": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+  "backup": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D73-live-submit-1740/evidence/d73-exact-submit/suites.conf.pre-20261024T174018.816745Z.bak",
+  "backup_mode": "0o600",
+  "registry_mode": "0o600",
+  "targets": [
+    "p4-current-becfe-http-3legs",
+    "p4-current-single"
+  ],
+  "pre_sha256": "acfd6c8931a4c3b805c7700320f70ecc0dedfc54cf24675f79a22956bd3cee21",
+  "post_sha256": "d19666fe880bae375de6b0255e5d3cbb47e993e4cbd6914f10f7a4b04a64c11a",
+  "outside_rows_sha256": "6f60f8e6493062292335ea296bf4bfd753adf8a489ea8cf177f37c93da0602ad",
+  "outside_rows_post_sha256": "6f60f8e6493062292335ea296bf4bfd753adf8a489ea8cf177f37c93da0602ad",
+  "outside_rows_byte_identical": true,
+  "row_sha256": {
+    "p4-current-becfe-http-3legs": "d619dbb07ab86a7484cba9f86f34df2eb53c7d4e29adb4ef6afb70e54ab00c68",
+    "p4-current-single": "294a7b255837736a4fe3f807cd4e27261feff22c83e55e7aacb44632359da4b4"
+  },
+  "row_bytes": {
+    "p4-current-becfe-http-3legs": 1142,
+    "p4-current-single": 867
+  }
+}

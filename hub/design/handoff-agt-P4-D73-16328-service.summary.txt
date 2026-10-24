@@ -1,0 +1,64 @@
+test agent-p4-current-becfe-http-3legs-1024174105-16328: fail exit=1 in 68s — p4-current-becfe-http-3legs on integration:agent (agent tree 5d328a24dd64fb216ae527b6c05f51d99d7c564e)
+cmd: env -i HOME=/root LANG=C.UTF-8 LC_ALL=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 P4_D73_MANIFEST=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D73-live-submit-1740/evidence/d73-exact-submit/tuple.env P4_D73_EVIDENCE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-D73-live-submit-1740/evidence/d73-exact-submit P4_D73_REQUEST_ID=p4-current-becfe-http-3legs /bin/bash --noprofile --norc -c 'set -eu; exec /home/user/work/wt/agt-pin-f4d6c72c/tools/p4-d73-pinned-launch.sh "$P4_D73_MANIFEST" run -- -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 -m integration --junitxml="$P4_D73_EVIDENCE/p4-current-becfe-http-3legs.xml" tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py::test_cli_sheet_v2_runtime_preserves_document_and_reads_back tests/editing_conformance/test_p4_ten_note_v2_runtime.py::test_http_ten_note_commit_per_step_inverse_and_redo tests/editing_conformance/test_p4_note_rerun_v2_runtime.py::test_http_note_conflict_reruns_public_function_from_verified_peer_document'
+counts: 1 failed, 2 passed in 63.58s (0:01:03) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1024174105-16328/log.txt ---
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:296: in properties
+    yield from validator.descend(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = Draft202012Validator(schema={'additionalProperties': True, 'description': 'Authored out...ng semantics.', 'properties'....}}, 'type': 'object'}, {'items': {'type': 'number'}, 'type': 'array'}]}, ...}, 'type': 'object'}, format_checker=None)
+instance = {'denominator': 1001, 'numerator': 30000}
+schema = {'anyOf': [{'type': 'number'}, {'type': 'string'}, {'additionalProperties': True, 'properties': {'denominator': {'type': 'number'}, 'numerator': {'type': 'number'}}, 'type': 'object'}, {'items': {'type': 'number'}, 'type': 'array'}]}
+path = 'fps', schema_path = 'fps'
+resolver = <runtime_protocol.timeline_commit_validation._reuse_schema_resolution.<locals>.Resolver object at 0x7f922160eee0>
+
+    def descend(
+        self,
+        instance,
+        schema,
+        path=None,
+        schema_path=None,
+        resolver=None,
+    ):
+        if schema is True:
+            return
+        elif schema is False:
+            yield exceptions.ValidationError(
+                f"False schema does not allow {instance!r}",
+                validator=None,
+                validator_value=None,
+                instance=instance,
+                schema=schema,
+            )
+            return
+    
+        if self._ref_resolver is not None:
+            evolved = self.evolve(schema=schema)
+        else:
+            if resolver is None:
+                resolver = self._resolver.in_subresource(
+                    specification.create_resource(schema),
+                )
+            evolved = self.evolve(schema=schema, _resolver=resolver)
+    
+        for k, v in applicable_validators(schema):
+            validator = evolved.VALIDATORS.get(k)
+            if validator is None:
+                continue
+    
+            errors = validator(evolved, v, instance, schema) or ()
+>           for error in errors:
+                         ^^^^^^
+E           Failed: Timeout (>45.0s) from pytest-timeout.
+
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: Failed
+=========================== short test summary info ============================
+FAILED tests/editing_conformance/test_p4_ten_note_v2_runtime.py::test_http_ten_note_commit_per_step_inverse_and_redo
+1 failed, 2 passed in 63.58s (0:01:03)

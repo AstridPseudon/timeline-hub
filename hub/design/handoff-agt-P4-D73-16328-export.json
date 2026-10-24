@@ -1,0 +1,98 @@
+[
+  {
+    "source": "workers/agt-P4-D73-live-submit-1740/evidence/d73-exact-submit/tuple.env",
+    "published": "design/handoff-agt-P4-D73-16328-tuple.env",
+    "bytes": 1729,
+    "sha256": "be8760dfdf3574b3079e53e8b65998ef02c1175e1af02d2054898cba40c101ca"
+  },
+  {
+    "source": "workers/agt-P4-D73-live-submit-1740/evidence/d73-exact-submit/install-receipt.json",
+    "published": "design/handoff-agt-P4-D73-16328-install-receipt.json",
+    "bytes": 1221,
+    "sha256": "d8c5262a8a0a02f34098c44c6dbd9a432dd82430631f93747e4160934d77a770"
+  },
+  {
+    "source": "workers/agt-P4-D73-live-submit-1740/evidence/d73-exact-submit/p4-current-becfe-http-3legs.xml",
+    "published": "design/handoff-agt-P4-D73-16328-p4-current-becfe-http-3legs.xml",
+    "bytes": 26434,
+    "sha256": "f4a5ddb8acfa9b8de208a2f9f319c97ee93f2210fd62ec20a7ac9ce2de44f581"
+  },
+  {
+    "source": "workers/agt-P4-D73-live-submit-1740/evidence/d73-exact-submit/p4-current-becfe-http-3legs.command",
+    "published": "design/handoff-agt-P4-D73-16328-p4-current-becfe-http-3legs.command",
+    "bytes": 626,
+    "sha256": "efd249d962452a1e2a9238ee6587a9d9b05a2997ac3b58587785b703cadaef5a"
+  },
+  {
+    "source": "workers/agt-P4-D73-live-submit-1740/evidence/d73-exact-submit/p4-current-becfe-http-3legs.manifest",
+    "published": "design/handoff-agt-P4-D73-16328-p4-current-becfe-http-3legs.manifest",
+    "bytes": 1729,
+    "sha256": "be8760dfdf3574b3079e53e8b65998ef02c1175e1af02d2054898cba40c101ca"
+  },
+  {
+    "source": "workers/agt-P4-D73-live-submit-1740/evidence/d73-exact-submit/p4-current-becfe-http-3legs.runmanifest",
+    "published": "design/handoff-agt-P4-D73-16328-p4-current-becfe-http-3legs.runmanifest",
+    "bytes": 632,
+    "sha256": "86cb935c22f76dccd2e4499ff5db61ae85e98358e014d95e2ff38d5fae5d65ca"
+  },
+  {
+    "source": "workers/agt-P4-D73-live-submit-1740/evidence/d73-exact-submit/p4-current-becfe-http-3legs.body.exit",
+    "published": "design/handoff-agt-P4-D73-16328-p4-current-becfe-http-3legs.body.exit",
+    "bytes": 2,
+    "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+  },
+  {
+    "source": "workers/agt-P4-D73-live-submit-1740/evidence/d73-exact-submit/p4-current-becfe-http-3legs.body.log",
+    "published": "design/handoff-agt-P4-D73-16328-p4-current-becfe-http-3legs.body.log",
+    "bytes": 26839,
+    "sha256": "5edd0d34644d582d21495d444bd24d837c0f70fba543f81d81858dc3b6c946da"
+  },
+  {
+    "source": "workers/agt-P4-D73-live-submit-1740/evidence/d73-exact-submit/service.log.txt",
+    "published": "design/handoff-agt-P4-D73-16328-service.log.txt",
+    "bytes": 26839,
+    "sha256": "5edd0d34644d582d21495d444bd24d837c0f70fba543f81d81858dc3b6c946da"
+  },
+  {
+    "source": "workers/agt-P4-D73-live-submit-1740/evidence/d73-exact-submit/service.summary.txt",
+    "published": "design/handoff-agt-P4-D73-16328-service.summary.txt",
+    "bytes": 4287,
+    "sha256": "33dcec2f9de6e1442773b9fb1d5c891b8fa7b11ab0c0dbdcdd93942975964cd1"
+  },
+  {
+    "source": "workers/agt-P4-D73-live-submit-1740/evidence/d73-exact-submit/service.exit",
+    "published": "design/handoff-agt-P4-D73-16328-service.exit",
+    "bytes": 2,
+    "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+  },
+  {
+    "source": "workers/agt-P4-D73-live-submit-1740/evidence/d73-exact-submit/service.snap",
+    "published": "design/handoff-agt-P4-D73-16328-service.snap",
+    "bytes": 114,
+    "sha256": "1f1a0de744fc1584d18fbe5d1d1e211932962a6c352a40c698bc522ee8507dda"
+  },
+  {
+    "source": "workers/agt-P4-D73-live-submit-1740/evidence/d73-exact-submit/service.request",
+    "published": "design/handoff-agt-P4-D73-16328-service.request",
+    "bytes": 120,
+    "sha256": "239c16e25707f13d1de14220399b700deaa9ee7f361dfa4205ee0671a95e2e49"
+  },
+  {
+    "source": "workers/agt-P4-D73-live-submit-1740/evidence/d73-exact-submit/service.ext",
+    "published": "design/handoff-agt-P4-D73-16328-service.ext",
+    "bytes": 157,
+    "sha256": "816fa4809bdc4a4b7d724a0cb3e73be4c053b6cd61e355cba0296ff036bd23ce"
+  },
+  {
+    "source": "workers/agt-P4-D73-live-submit-1740/evidence/d73-exact-submit/service.status",
+    "published": "design/handoff-agt-P4-D73-16328-service.status",
+    "bytes": 5,
+    "sha256": "2056a28ea38a000f3a3328cb7fabe330638d3258affe1a869e3f92986222d997"
+  },
+  {
+    "source": "workers/agt-P4-D73-live-submit-1740/evidence/d73-exact-submit/service-artifacts.sha256",
+    "published": "design/handoff-agt-P4-D73-16328-service-artifacts.sha256",
+    "bytes": 758,
+    "sha256": "0fd39f80cce99ebf073f00ac3bf081bbf054ce1e86c4ee06be5f6e3496e75c25"
+  }
+]
