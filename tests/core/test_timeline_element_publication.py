@@ -83,7 +83,9 @@ def setup_owner(monkeypatch, configured=None):
     def commit(project, timeline, body, **kwargs):
         plan = execute(bundle, body['commands'], schema_inputs=inputs, realm_id='realm')
         data = {'accepted_revision_id': 'committed', 'canonical_document': {
-            'parent_revision': {'payload': plan.bundle['parent']}}}
+            'parent_revision': {'payload': plan.bundle['parent']},
+            'shot_revisions': [], 'internal_timeline_revisions': []}}
+        owner.last_commit_data = data
         receipt = CommandReceipt('accepted-receipt', 'timeline.commit', kwargs['idempotency_key'],
                                  'hash', project, (1, 1), (), data, '2026-10-20T00:00:00Z')
         return DomainResult.success(data, receipt=receipt, idempotency_key=kwargs['idempotency_key'])
@@ -343,13 +345,19 @@ def test_same_selected_hold_retains_raw_target_and_selection_guards(monkeypatch,
     assert bundle == original
 
 
-def test_d69_upstream_sameclip_exacthead_publication_preserves_closure_and_user_params(monkeypatch):
-    owner,bundle,ref=setup_owner(monkeypatch)
+# D72 authorized caller migration for this restored group: the removed resolver
+# and direct publication transport are represented by the admitted document read
+# and current TimelineSession commit seam; old transport predicates are retained
+# at that seam, with canonical_document carrying the committed closure.
+def test_d69_upstream_sameclip_exacthead_publication_preserves_closure_and_user_params(monkeypatch, configured):
+    owner,bundle,ref=setup_owner(monkeypatch, configured)
+    bundle['parent']['config']['app']['elements']={}
     result=update_parent_element(owner,'project','timeline',realm='realm',clip_id='effect',element=ref,expected_head='head',duration=6,params={'chaos':.8})
     assert result.ok, result.error
-    publication=owner._typed.call_args.args[3]
-    parent=publication['parent_composition']
-    assert publication['expected_head']=='head'
+    body=owner.commit.call_args.args[2]
+    document=owner.last_commit_data['canonical_document']
+    parent=document['parent_revision']['payload']
+    assert body['base_revision_id']=='head' and body['base_publication_id']=='publication'
     assert parent['clips'][0]['id']=='effect' and parent['clips'][0]['hold']==6
     assert parent['clips'][0]['params']=={'color':'#ff6b6b','seed':15,'chaos':.8}
     assert parent['clips'][1]==bundle['parent']['clips'][1]
@@ -357,34 +365,37 @@ def test_d69_upstream_sameclip_exacthead_publication_preserves_closure_and_user_
     assert parent['config']['app']=={'elements':{},'other':'keep'}
     assert parent['config']['bundle']==bundle['parent']['config']['bundle']
     assert parent['registry']==bundle['parent']['registry']
-    assert publication['shot_revisions']==[] and publication['internal_timeline_revisions']==[]
+    assert document['shot_revisions']==[] and document['internal_timeline_revisions']==[]
     assert bundle['parent']['clips'][0]['hold']==2
     assert result.data['new_head'] and result.data['clip_id']=='effect'
 
 
-def test_d69_upstream_stale_head_and_concurrent_cas_reject_without_rebase(monkeypatch):
-    owner,_,ref=setup_owner(monkeypatch)
+def test_d69_upstream_stale_head_and_concurrent_cas_reject_without_rebase(monkeypatch, configured):
+    owner,_,ref=setup_owner(monkeypatch, configured)
     stale=update_parent_element(owner,'project','timeline',realm='realm',clip_id='effect',element=ref,expected_head='stale')
     assert not stale.ok
-    owner._typed.assert_not_called()
-    owner._typed.return_value=DomainResult.failure(ErrorObject('conflict','CAS rejected',{}))
-    owner._typed.side_effect=None
+    owner.commit.assert_not_called()
+    owner.commit.return_value=DomainResult.failure(ErrorObject('conflict','CAS rejected',{}))
+    owner.commit.side_effect=None
     rejected=update_parent_element(owner,'project','timeline',realm='realm',clip_id='effect',element=ref,expected_head='head',duration=6)
     assert not rejected.ok and rejected.error.code=='conflict'
-    assert owner._typed.call_count==1
+    assert owner.commit.call_count==1
 
 
 @pytest.mark.parametrize('duration',[0,-1,float('inf'),float('nan')])
-def test_d69_upstream_bad_duration_never_publishes(monkeypatch,duration):
-    owner,_,ref=setup_owner(monkeypatch)
+def test_d69_upstream_bad_duration_never_publishes(monkeypatch, configured, duration):
+    owner,_,ref=setup_owner(monkeypatch, configured)
     result=update_parent_element(owner,'project','timeline',realm='realm',clip_id='effect',element=ref,expected_head='head',duration=duration)
     assert not result.ok
-    owner._typed.assert_not_called()
+    owner.commit.assert_not_called()
 
 
-def test_d69_upstream_unadmitted_owner_and_sourceclip_reject(monkeypatch):
-    owner,_,ref=setup_owner(monkeypatch)
-    monkeypatch.setattr('astrid.sdk.timeline_elements.resolve_admitted_element',Mock(side_effect=ValueError('not admitted')))
+def test_d69_upstream_unadmitted_owner_and_sourceclip_reject(monkeypatch, configured):
+    owner,bundle,ref=setup_owner(monkeypatch, configured)
+    result=update_parent_element(owner,'project','timeline',realm='realm',clip_id='effect',element={**ref,'packId':'unadmitted'},expected_head='head')
+    assert not result.ok
+    owner.commit.assert_not_called()
+    bundle['parent']['clips'][0]['asset']='source'
     result=update_parent_element(owner,'project','timeline',realm='realm',clip_id='effect',element=ref,expected_head='head')
     assert not result.ok
-    owner._typed.assert_not_called()
+    owner.commit.assert_not_called()
