@@ -6,6 +6,7 @@ import hashlib
 import json
 import sys
 import threading
+from contextlib import contextmanager
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -42,6 +43,10 @@ class Store:
         self.final_error = final_error
         self.winner: Any = None
         self.lookups = 0
+
+    @contextmanager
+    def verification_scope(self) -> Any:
+        yield
 
     def lookup(self, ctx: Any, *, authorize: Any) -> Any:
         self.lookups += 1
