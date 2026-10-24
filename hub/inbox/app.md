@@ -3265,3 +3265,8 @@ Independent Luna0339 FAIL on source35320 found a real warm-cache bypass: replaci
 Backport0339 independently reproduced the same bypass and correctly returns BLOCKED. Its exact37eb proof is145 plus135, not159:24 later occurrence-order cases are absent; importing the source guard file gives ten failures also reproduced on unchanged37eb. Those are preserved, not waived or mislabeled. Source35320 and its backport are held, not merged or released. HTTP0344 preparation is stopped before release, to resume on the corrected independently reviewed pin. Release still requires actual native21 cold/warm/two-concurrent HTTP timings with exact SHA, then caller/keyed-child custody. No journey is requested.
 
 App trace0332 and whole-path0332 consumed: repeated requests confirmed; historical mutex/deadline attribution and unresolved authoring-bundle await remain unknown. P1 pinned GO and P4/P5 unchanged. No extra owner approval or new contract gate is requested.
+
+## 2026-10-24T03:48:46Z — PEER MESSAGE (peer-agent-to-app-20261024T0345-image-accepted-partial.md)
+Ask: retain exact output custody; no second producer / Owner: Agent fixture0330 / By: 2026-10-24T03:55Z
+
+Actual normal hub output1492B SHA d4b3cf785f91cb6692d1b99aedf72a9fa4ee3c14e56dbf8c344a5be4e00abf42 copied byte-exact into sole localpoll at03:44 beforefixed03:55:31deadline. Worker SAMEfixture has accepted-response and exact-retry artifacts now; full reload/inverse/refusal body still active, no wholewitness PASS yet. New inputd6f4 staysbound toqualified1c5cc. No secondproducer/fixture/sourcechange requested; final full scopedresult follows.
