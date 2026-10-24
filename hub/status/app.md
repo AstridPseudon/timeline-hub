@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T10:56:42Z | dispatcher heartbeat 4s | live 3 (sol 1, luna 2, other 0) | busy30 25 | status age 2m -->
-# app board, 2026-10-24T10:54Z
+<!-- app | 2026-10-24T10:59:50Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 24 | status age 0m -->
+# app board, 2026-10-24T10:58Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -21,7 +21,7 @@
 | P2-P3-D41-caller | Prepare source-required Agent backport inputs | Sol; independent Luna | Actual custody1020 | review | Cumulative1035 | Actual333b/37eb child1016 and maker receipts bound. P2-only preparation preserves current P3; final App pure source and caller binding pending. | Prepared artifact branch |
 | P2-element-diagnostic | Retain Apply transport and UI stages | Luna; independent Luna | Independent1018 and1029 PASS | merged | Clean1025; joined1036 | Exact three reviewed blobs merged normally; actual joined qualification1036 running. Original P2 body unchanged. | 01ea81395a / HOME d6ed8cbda1 |
 | P3-solo | Qualify P3-only current caller | Luna; independent Luna | Review1023 and install1028 PASS | merged | Actual3896; producer1040 | Actual single-row installation and original execution completed. No repeat authorized; current original gate failed separately. | 28039b59c2 |
-| U3b-D39-early | Stack current fixes and D39 on branch | Sol; Luna review | H36 branch checkpoint | doing | Sol1022; strict identity1035 | Caller repair772PASS clears43 failures; one old literal collection guard has tiny current-producer refresh1035. Cumulative review then full checkpoint. | Early branch only |
+| U3b-D39-early | Stack current fixes and D39 on branch | Sol; Luna review | H36 branch checkpoint | review | Final cumulative1058 | Real current join finalizede8a;700+183 tests,30+11 controls,types/lint/toolsPASS. Keep authenticated upstream readiness wait; independent review precedes full. | e8a593e1d3 branch only |
 | P2-P3-current-packet | Publish same-ID terminal evidence | Luna; Proof review | Actual retained files | merged | Producer return 0707; Proof 0717 | Eight safe files published byte-exact with origin paths and hashes. Actual daemon and P2 synthetic snapshot identity remain unknown. | Source 663 |
 | P2-P3-lifecycle-custody | Verify retained lifecycle bytes | Luna; independent Luna | Independent 0741 PASS | merged | Producer 0733; review 0741 | Originals, copies and attachments are 224 bytes with LF. Exact selected writer matches. Prior 225/no-LF claim contradicted. | Same immutable files |
 | P3-parent-path | Prove actual predecessor dispatch | Sol; independent Luna | Independent 0720 PASS | merged | Sol 0714; review 0720 | One POST 200 accepted; guarded doc.patch moves 0 to 5 with 25 request/step reads. Canonical 5 and history 2 to 3. | Report only |
@@ -53,7 +53,7 @@
 | P2-element-handler | Check retained completion attribution | Luna; independent Luna | Independent0814 PASS | merged | Author0808; review0814 | Actual30-file inventory has no matching handler or receipt link. One POST remains unresolved; outcome UNKNOWN. No new collection. | Report only |
 
 | P3-lost-ack | Classify lost-ACK attempt order | Sol; independent Luna | Actual3896 terminal | review | Sol1040; independent1046 | Retained second POST is exact retry A before B pointerdown.72 tests/types/lintPASS; no product defect demonstrated. Strict fault-order repair is Proof-owned. | Actual82cb/079/37eb |
-| P3-terminal-current | Correct terminal stages and safe inventory | Luna; Proof verdict | Producer1033 terminal | doing | Return1040 | Same-ID only. Correct broad NOTRUN statements, static hashes and actual snapshot; retain immutable primary facts and private boundaries. | Actual3896 |
+| P3-terminal-current | Qualify terminal cause and safe custody | Luna; Proof verdict | Independent1046 PASS | review | Proof same-ID verdict requested | Exact retry A confirmed.6 safe files published with actual origins/full hashes; setup/reset and ACK retry reached; B drop/restart/undo not reached. | Actual3896 |
 | P2-current-join | Qualify pure joined product target | Luna | Reviewed popup and diagnostic home | merged | Pure integrated1036 PASS | 695 plus67 tests,30 controls including20 Gate5,11 diagnostics,three types and lint PASS; all protected blobs exact. Pure execution target only. | d6ed8cbda1 |
 | U4p-D39-test-identity | Refresh strict current producer identity | Luna | Sol1022 caller repair | doing | Identity1035 | Change only one stale digest literal to exact approved D39 producer; all original semantic assertions remain. Cumulative independent review follows. | Earlyfreeze only |
 
@@ -64,7 +64,7 @@ Integration: HOME d6ed8cbda1 includes independently reviewed own-only popup84b08
 
 Blockers: App — sole P2 caller return1054 fixes recycled-target admission using actual exact detached receipt. Pure source1036 and custody1035 PASS; independent review and installation follow.
 Blockers: Proof — exact retry A confirmed by Sol1040. Peer1046 asks strict Gate5 fault-order repair; App independent1046 qualifies same-ID cause/custody before safe publication. No repeat.
-Blockers: Freeze — home U3b waits P2/P3 GO. Current early branch1045 received conflict-free d6ed merge-forward; cumulative review then D49 branch full checkpoint follow.
+Blockers: Freeze — home U3b waits P2/P3 GO. Current earlybranch e8a has sole independent cumulative1058; ONE D49 App-service full checkpoint follows PASS.
 Next ready: Caller return1054 and earlyfreeze currentjoin1045 are active; independent cumulative reviews dispatch on completion. ActualP3 cause/custody1046 review active; Proof fault-order owner requested.
 
 Later: Final P1–P5 run on App service with Proof verdict after final tuple qualification, then D49 full suites and Farm F-final/ZIP. No duplicate farm or Proof run. D47 memo/capsule stays deferred and held unmerged. D46 U2c draft stays closed. D14/D23 deferred relational timing cases retain their original assertions and failures.
@@ -104,3 +104,5 @@ Pass10:44Z: joined1036 PASS695+67+30+11/types/lint/protected identities; actual 
 Pass10:47Z: normal strict identity1035 finalizeda432,15tests/types/lintPASS; early currentjoinSol1045 dispatched and sanctioned d6ed merge-forward completed conflict-free. Final P2 caller1043 active. Sol1040 actual trace confirms retry A exactkey/body/reply before Bpointerdown;72tests/types/lintPASS, no product defect. Proof peer1046 owns strict fault-boundary correction; independent App1046 reviews actual cause/custody. Exact finished reports published byte-for-byte.
 
 Pass10:54Z: caller1043 source binding/60guards passed but correctly refused recycledproof1036 path. Supported exact Appd6ed detachedKEEP receipt created. Sole Luna return1054 recovers only two worker-authored1043 artifacts while normal finalization is pending, authenticates existing proofmeta/ref plus actual checkout and preserves wrong-artifact refusals. No row install or original. Cleanup recycled4 more finished clean worktrees; Sweep3 removed0. Free disk about11GB; refused routes untouched.
+
+Pass10:58Z: INBOX consumed1455554 bytes including Proof1047; all asks already owned. Earlyfreeze real merge finalizede8a/treec94; independent cumulative1058 dispatched immediately. Authenticated upstream readiness wait is retained as ordinary U3 acceptance, no scope decision owed. Independent1046 source/cause/custodyPASS;6 safe JSONs copied byte-exact with600 mode and origin map. Proof1056 peer supplies terminal inputs and strict fault-order ownership. Actual P2 caller source return1054 active; no original request or homefreeze merge.
