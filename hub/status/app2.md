@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-24T07:00:33Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 1m -->
+<!-- app2 | 2026-10-24T07:02:49Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 3 | status age 1m -->
 # app2 board, 2026-10-24T06:58Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -34,7 +34,7 @@
 | P2/P3-preflight-facts | Retain failed source admission facts | App Luna producer | Actual 20674 and 10144 terminal | merged | app-P2-P3-corrected-result-handoff-0634 | Both exit 2 in 6 seconds at source guard. All original cases and prior stages not run. Current direct-file custody is bounded. | Wrong artifact d545 refused |
 | P2-element-current | Diagnose repeated real element failure | App Sol; independent whole path | Actual 23809 element failed | doing | App cause0654; whole path0654 | Readiness passed in 19.5 seconds; element failed in 18.4 seconds. Exact assertion and cause still pending; current pair continues. | Pinned source 663 |
 | P2-five-oracle | Review candidate strict expectation mismatches | App independent Luna; Proof if confirmed | Source precheck 0647 complete | doing | app-P2-five-oracle-review-0651 | Candidate claims only. Current pair remains unchanged; no test edit until independent classification. | Report only |
-| F-final-gate-map | Map preserved P1 to P5 final proof routes | Luna | D48 and D49 header authority | doing | ap2-P1-P5-final-gate-map-0657 | Report only. Identify exact originals, supported App service routes and genuine missing owner inputs. No gate run. | Current source 663 |
+| F-final-gate-map | Map preserved P1 to P5 final proof routes | Luna; independent Luna | D48 and D49 header authority | review | Map0657; independent review0702 | Source map returned. Reviewer checks actors, exact original nodes, suite routes and missing P4/P5 App service entry. No gate run. | Current source 663 |
 | F-final-gates | Rerun P1 to P5 on the final tuple | App service; Proof verdict | Final tuple qualification under D48 | gated:freeze | App service; Proof final reviewers | Venue is App service under D49. Current pinned proofs do not replace final tuple results. | Final heads pending |
 
 P1 RESULT GO. Header records GO at00:43Z. Original app-P1-reviewed-leaves-caller-sol-0013-ap2-P1-chain-h6-1024002459-18792 passed both cases, exit0 in141 seconds. Pinned Appf8b15af0a66ed14e7711a4bb7f1ed5b62b4988b5 / Agent78738040d72ce74c42ddf7731221aecb06f9246d / Runtime2a9e347ff0e1df1dedff5ab7b59ddb27dfe3129d. Independent source0036 and custody0040 PASS. P4 DONE remains scoped to its recorded CLI, Python, sheet and conflict rerun proofs. Final freeze reruns every gate and complete original tail on final heads.
