@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T15:13:11Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 2m -->
-# app board, 2026-10-24T15:11Z
+<!-- app | 2026-10-24T15:16:33Z | dispatcher heartbeat 2s | live 3 (sol 1, luna 2, other 0) | busy30 10 | status age 2m -->
+# app board, 2026-10-24T15:15Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -14,7 +14,7 @@
 | A4-D52 | Delete dormant parent and track pairs | Luna; review | Current caller census | merged | Author1118; review1121 | Four deletions qualified by exact tree identity and85 neighboring tests/types. | 2e3c8f65a8 |
 | A4-session | Preserve live session behavior | Luna; review | Review1155 finding | merged | Restore1201; review1210 | Five live tests and shared module restored. Whole tree equals602f; no deletion merged. | 018bd527fc |
 | A4-transcript | Remove exclusive dormant capture pair | Luna; review | Census1205 and review1217 | merged | Author1210; integrated1232 | Exact two-file deletion.50 live neighbors and three types PASS; current worker ledger copied1233. | cca3deb361 |
-| P1-current-caller | Prepare current P1 service caller | Luna; custody review | Return1459 complete | review | Author1459; cumulative1507 | Stable paths, complete consumed guards and per-stage files claim PASS. Independent second review underway; no install or original. | 8bbae64e21 |
+| P1-current-caller | Prepare current P1 service caller | HARD Sol; Luna whole path | Second review1507 FAIL | doing | Sol1514; wholepath1514 | Actual lock,bench,schema and dist consumption gaps. Sol repairs after two Luna failures; independent whole path compares passing P1. | Base8bbae64e21 |
 | P1 | Original mixed chain | App service; Proof | Historical tuple | merged | Actual18792; reviews0036/0040 | Historical GO. Final integrated tuple rerun remains required. | Appf8;Agent787;Runtime2a9 |
 | IMAGE | Genuine image acceptance and undo | Agent; independent Luna | Reviewed forwarding repair | merged | 0554; review0636 | Direct RuntimeService witness passed. No HTTP or broader final gate credit. | App1c5cc;Agent2007 |
 | P2 | Eight original gesture tour | App service; Luna verdict | Actual service launch repair | blocked:app | Actual 12541; verdict 1438 | FAIL exit 2 in 1 second at environment guard. All 8 originals NOTRUN; no product failure inferred. Sol 1437 owns launch repair. | be98aac54e |
@@ -43,7 +43,7 @@
 | P3-current-verdict | Judge same-ID preflight failure | Luna | Producer 1435 terminal | merged | Verdict 1438 NO-GO | Exact 1689: exit 2 in 1 second; 0 PASS, 0 product FAIL, Gate5 NOTRUN. All original stages unrun; source matches pure target. | Current be98 |
 | F-node-current | Verify prior Node regressions | Luna | Refreshed home tree | merged | Node1345 PASS36; ENV2 | 33 verifier,marker guard and both release nodes pass. Two extension SSH setup failures remain explicit. | d24ed69dcd |
 | F-visual-seam | Qualify shared upstream seam fixture | Luna | Final Runtime fixture identity | merged | Fixture1356 PASS; exact e68 blob | All10 cases pass on App d24. Actual Runtime e68 fixture equals qualified f69 blob; no copies or source edits. | App d24; Runtime e68 |
-| F-install-schema | Align installer schema compatibility | Luna | Actual8158 failure | doing | Author1507 | Exact existing schema assertion fails. Preserve guard/test; use normal tools and compare upstream before classifying regression. | Base be98 |
+| F-install-schema | Align installer schema compatibility | Luna; release owner | Actual release target decision | blocked:orchestrator | Source1507; escalation1514 | Caused regression: upstream3605 accepted, current client4118 with installer3605. No e68 release tag; no fabricated pin or guard widening. | No source delta |
 | F-current-full | Full checkpoint on refreshed source | Luna; App service | Actual be98 pure source | merged | Producer1446; actual8158 FAIL | Exit1/1203s. Vitest19256 PASS/1 FAIL installer schema. Node NOTRUN after Vitest short-circuit. Source and full parents verified. | be98aac54e |
 | F-App-full | Corrected App checkpoint terminal | App service; Luna producer | Same actual16138 | merged | Terminal producer1227 | FAIL exit1/1665s. Vitest19251PASS;Node257PASS38FAIL26SKIP. Final full GO remains open. | 5a9ff97cf0 |
 | F-core-map | Map App core suites and old failures | Luna | D54/D54a | merged | Return1233 | Historical19570 groups fixed or D52 removed. Home upstream behavior UNKNOWN; no false pre-existing claim. | cca3deb361 |
@@ -60,11 +60,12 @@ live 2 / cap 6; ready-undispatched 0. Copied dispatcher header: <!-- app | 2026-
 
 core open:9 final App gate cases unqualified:8P2 and1P3. Installer/schema compatibility failure is non-core release scope but cannot be a known gap without allowed category proof; author1507 fixes it.
 
-regressions:1 candidate installer/schema mismatch from refreshed8158; upstream comparison pending1507, no known-gap credit. Historical Node36 repaired/2SSH env; current Node NOTRUN because Vitest failed.
+regressions:1 confirmed installer/schema mismatch (upstream3605 accepted; ours current4118 excludes installer3605). Authentic release decision escalated1514; no known-gap credit. Current Node NOTRUN; historical36PASS/2SSHenv retained.
 
 Blockers: App — P2/P3 require launch custody1505 and worker-only install; installer schema failure owned1507 must be fixed or qualified. All latest originals NOTRUN.
+Blockers: Orchestrator — choose authentic installer Runtime release target/publication owner or explicit compatible delivery alternative; escalation app-20261024T1514Z-installer-runtime-release.md.
 Blockers: Owner admission — historical 403 and automatic access refusal remain stopped. No alternate schema, child, overlay or receipt route.
-Next ready: Launch custody1505 PASS permits worker-only two-row install/readback then one corrected P2/P3. P1 cumulative1507 and schema author1507 proceed independently; no duplicate full or gate queued.
+Next ready: Launch custody1505 PASS allows guarded worker-only install then one corrected P2/P3; P1 Sol1514 and wholepath1514 proceed in parallel. Installer compatibility awaits concrete release decision. No duplicate full or gate.
 
 Historical signals: P2 actual11933 exit1/469s,0PASS3FAIL5NOTRUN; native/history/readiness passed. Actual element request was pending with no observed response or terminal outcome. P3 actual3896 exit1/268s reached predecessor/reset,A acceptance,ACK loss and exact A retry; B/restart/undo tail not reached. P226414 was stale-source preflight-only,all originalsNOTRUN. Earlier source-admission20674/10144 and D45/D41 failures retain their original limits. No signal is relabeled final GO.
 
