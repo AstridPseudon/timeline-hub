@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T05:21:09Z | dispatcher heartbeat 2s | live 3 (sol 0, luna 3, other 0) | busy30 24 | status age 1m -->
+<!-- agent | 2026-10-24T05:23:43Z | dispatcher heartbeat 2s | live 3 (sol 0, luna 3, other 0) | busy30 23 | status age 0m -->
 # agent board, 2026-10-24T05:17:27Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -27,7 +27,7 @@
 | F-render-startup | Avoid unused transition-catalog scans | Luna | Source cause 0045 | merged | agt-F-transition-fixture-integrated-0126 | Actual 940b: 116 controls passed. Exact reviewed source retained both catalog authority guards. | 2b2c1a02f |
 | F-external-roots | Consume authenticated external source bytes | Sol / Luna | Original installed positive | merged | Security0330; integrated32254 | Home4745 integrated32 passed in137s. Source custody is qualified; original installed external-pack positive still needs a genuine candidate environment. | 4745f956a3 |
 | F-env-86 | Original installed-child cohort | Luna | External pack fix | blocked:agent | Services 11789 and 19627 | 69 cases passed, then 16 supported source invocations passed. One external-pack positive remains open. | c36 scope |
-| F-render-21 | Diagnose original support timeout | Luna | Current original failed unchanged | doing | Qualified0509 FAIL; path0522 | Current child3b5c: one support original failed45.65s in second CommandTransport probe. Independent whole-path comparison active; no render or duplicate body. | Current2007; installedba8f |
+| F-render-21 | Diagnose original support timeout | Luna | Whole-path0522 complete; cause unknown | doing | Original0509 FAIL; diagnostic0530 | One source-derived transition support call captures child timing and output. Original timeout and predicates unchanged; no render or repeated body. | Current2007; installedba8f |
 | F-env-misc | D13, installers and bootstrap | Luna | Exact installed inputs | merged | agt-F-D13-wheel-input-0039 | Three original environment cases plus D13 passed. Exact c36 wheel matched installed payloads; wheel itself was temporary. | harness only |
 | F-CLI | CLI census, generation and motion fixture | Luna | G5 | merged | agt-F-CLI-integrated-0012 | Eight integrated cases and 32 subtests passed; reviewed generation and fixture changes only. | 43bbb / ff5dd |
 | F-observer | Nested pytest plugin isolation | Luna | G5 full | merged | agt-F-observer-harness-2355 | 25 original guard cases passed. Test bodies remain unchanged. | c8459e9f8 |
@@ -57,7 +57,7 @@
 | F-retired-callers | Retained native, CLI and scene scenarios | Luna / Sol | Integrated joined qualification complete | merged | Independent0444; integrated0500 PASS53 | Actual9cd all53 retained controls passed. Exact30 original nodes; three track-label mappings remain separate. Count reconciliation follows proof, no full-suite claim. | 9cd3dbe865 |
 | F-inverse22 evidence | Match retained inverse proof to originals | Luna | Existing R2 proof | doing | agt-F-inverse22-evidence-0526 | Read-only exact22 mapping against existing source receipts. No body or full run; count credit waits independent review. | Source2007 unchanged |
 | F-count | Reconcile exact original closures | Luna | Next exact qualified delta | doing | Author0509; review0519 PASS; delta0524 | Official172 closed and95 open. Exactly30 retained callers closed; current H3 and source-copy mapping assigned next. | Evidence only |
-| F-D40-installed | Genuine installed external positive | Luna | Independent result review | review | Qualified0520 PASS1; review0526 | Actual current support2007 and installedba8f/f320: original passed3.32s with origin maps and subprocess result. No body rerun. | 2007cf7aaf |
+| F-D40-installed | Genuine installed external positive | Luna | Exact observer custody recovery | doing | Original0520 PASS1; review0526 caveat; return0533 | Original3 assertions pass; observer source was temporary and output value inferred. Recover literal retained logger before credit; no body rerun. | 2007cf7aaf |
 | U2c identity diagnostic | Exact identity refusal detail | Luna | D46 | closed: D46, folded into the freeze U-merge | Author0439; independent0444 PASS | Reviewed WIP retained only. No activation rerun or early merge. | 30f033046b held |
 | U2c RunPod child | Provider child custody | Luna | D46 | closed: D46, folded into the freeze U-merge | No active worker | Owner-deferred remote provider scope. No new custody backend; guards stay strict. | a181136220 held |
 | F-source-copy guards | Qualify current source-copy originals | Sol / Luna | Independent result review passed | merged | Sol0502; result review0511 PASS | Actual9cd/Runtime2b49: two originals passed20.90s,54guards and four accepted inverses. Capture and authentication limits retained. | Source9cd unchanged |
@@ -65,7 +65,7 @@
 
 P1: GO recorded. Original18792 passed both cases; independent0036/0040 passed. P4 and P5 done. G5 merged under H24. App and Proof own P2/P3 failures and next actions.
 Integration: 2007cf7aaf joins reviewed D40 test support119850 plus014db above9cd3. Headless and ABA forwarding stack and sheet assertions remain integrated with0500 PASS71+5+53. No pending Viewing source merge.
-Blockers: Agent — ABA11466 undo ambiguity, complete IMAGE witness and support timeout remain open. D40 actual positive passed and awaits independent result review; no full retry.
+Blockers: Agent — ABA11466 undo ambiguity, complete IMAGE witness and support timeout remain open. D40 original passed with incomplete logger custody under recovery; no full retry.
 Blockers: Viewing — consume ABA11466 whole-path0507 and own next bounded source or capture step. Three track-label mappings remain separate.
 Blockers: App — reserve an actual fresh unchanged image producer before Agent creates its next fixture. Old0441 is closed; successor forwarding source is now qualified.
 Blockers: Farm — one D43 checkpoint is queued on its existing full-farm row. No Agent duplicate full run.
