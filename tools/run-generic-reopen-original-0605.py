@@ -1,8 +1,8 @@
 """Custody runner for the one generic-host harvest/reopen qualification.
 
-The default mode is a fail-closed preflight.  ``run-original`` is deliberately
-explicit and requires an independently reviewed harness digest; it is the only
-mode that starts the unchanged pytest body.  Production imports are resolved
+The default mode is a fail-closed preflight. Normal manager enqueue and bench
+leases authorize execution. ``run-original`` also checks the reviewed digest
+to catch accidental calls; this is the only mode that starts the unchanged pytest body.  Production imports are resolved
 by the managed child interpreter, with no ``PYTHONPATH`` or installed-tree
 overlay.
 """
@@ -11,16 +11,18 @@ from __future__ import annotations
 
 import argparse
 import ast
-import base64
-import csv
 import hashlib
+import importlib.util
+import io
 import json
 import os
-import shlex
+import signal
 import subprocess
 import sys
+import tarfile
 import time
-from pathlib import Path, PurePosixPath
+from contextlib import ExitStack
+from pathlib import Path
 from typing import Any
 from xml.etree import ElementTree as ET
 
@@ -60,6 +62,15 @@ EXPECTED_TEST_IDENTITY = {
     "body_bytes": 4870,
 }
 SCRIPT = Path(__file__).resolve()
+ORCH = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch")
+SOURCE_ROOT = Path("/home/user/work/wt/agt-pin-bb50a43c")
+RUNTIME_ROOT = Path("/home/user/work/wt/rt-pin-f3208b26")
+STORE_ROOT = Path("/home/user/work/bench-store")
+CHILD_NAME = "venv-agent-child-generic-bb50-f320-0638"
+SAFE_ENV_KEYS = (
+    "PYTHONPATH", "PYTHONNOUSERSITE", "ASTRID_RUNTIME_CHECKOUT",
+    "ASTRID_HOST_EXECUTION_PROFILE", "ASTRID_REMOTION_PROJECT_DIR", "ASTRID_NODE_EXECUTABLE",
+)
 
 
 class PreflightFailure(RuntimeError):
@@ -76,12 +87,15 @@ def file_digest(path: Path) -> str:
 
 def write_json(path: Path, value: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    write_bytes(path, (json.dumps(value, indent=2, sort_keys=True) + "\n").encode())
 
 
 def write_bytes(path: Path, data: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(data)
+    with path.open("wb") as stream:
+        stream.write(data)
+        stream.flush()
+        os.fsync(stream.fileno())
 
 
 def require_file(path: Path, label: str) -> Path:
@@ -136,7 +150,7 @@ def source_identity(root: Path) -> dict[str, Any]:
     return identity
 
 
-def git_identity(root: Path) -> dict[str, Any]:
+def git_identity(root: Path, expected: str = SOURCE_COMMIT) -> dict[str, Any]:
     try:
         head = subprocess.check_output(
             ["git", "rev-parse", "HEAD"], cwd=root, text=True, stderr=subprocess.STDOUT
@@ -148,176 +162,133 @@ def git_identity(root: Path) -> dict[str, Any]:
         cwd=root,
         text=True,
     ).strip()
-    if head != SOURCE_COMMIT:
-        raise PreflightFailure(f"source HEAD is {head}, expected reviewed bb50 source {SOURCE_COMMIT}")
+    if head != expected:
+        raise PreflightFailure(f"source HEAD is {head}, expected reviewed source {expected}")
     if changed:
         raise PreflightFailure(f"source tree is modified: {changed}")
     return {"head": head, "source_tree_status": "clean"}
 
 
-def parse_kv_receipt(path: Path) -> dict[str, str]:
-    values: dict[str, str] = {}
-    for line in path.read_text(encoding="utf-8", errors="strict").splitlines():
-        if "=" in line:
-            key, value = line.split("=", 1)
-            values[key] = value
-    return values
+def client_identity() -> dict[str, str]:
+    paths = subprocess.check_output(
+        ["git", "ls-tree", "-r", "--name-only", RUNTIME_COMMIT, "packages/python/astrid_runtime_client/"],
+        cwd=RUNTIME_ROOT, text=True,
+    ).splitlines()
+    if not paths:
+        raise PreflightFailure("fixed Runtime pin has no generated client")
+    return {path: sha256(subprocess.check_output(
+        ["git", "show", f"{RUNTIME_COMMIT}:{path}"], cwd=RUNTIME_ROOT,
+    )) for path in paths}
 
 
-def verify_record(site: Path, dist: Path, stem: str) -> dict[str, Any]:
-    record = require_file(dist / "RECORD", f"{stem} RECORD")
-    record_relative = record.relative_to(site).as_posix()
-    rows: dict[str, Any] = {}
-    try:
-        with record.open(encoding="utf-8", newline="") as record_file:
-            parsed_rows = csv.reader(record_file, strict=True)
-            record_rows = list(parsed_rows)
-        for row in record_rows:
-            if len(row) != 3:
-                raise PreflightFailure(f"malformed {stem} RECORD row")
-            relative, encoded_digest, encoded_size = row
-            pure = PurePosixPath(relative)
-            if (
-                not relative
-                or pure.is_absolute()
-                or "\\" in relative
-                or str(pure) != relative
-                or relative in rows
-            ):
-                raise PreflightFailure(f"unsafe or duplicate {stem} RECORD path: {relative!r}")
-            installed = site / relative
-            resolved = installed.resolve()
-            if not installed.is_file() or installed.is_symlink() or not resolved.is_relative_to(site.resolve()):
-                raise PreflightFailure(f"missing or escaping {stem} RECORD file: {relative}")
-            content = installed.read_bytes()
-            if not encoded_digest and not encoded_size:
-                if relative != record_relative:
-                    raise PreflightFailure(f"unhashed non-RECORD {stem} row: {relative}")
-            else:
-                if not encoded_digest.startswith("sha256=") or not encoded_size.isdigit():
-                    raise PreflightFailure(f"malformed {stem} RECORD digest/size: {relative}")
-                digest = base64.urlsafe_b64encode(hashlib.sha256(content).digest()).decode().rstrip("=")
-                if encoded_digest != f"sha256={digest}" or int(encoded_size) != len(content):
-                    raise PreflightFailure(f"{stem} RECORD bytes mismatch: {relative}")
-            rows[relative] = {
-                "sha256": sha256(content),
-                "record_digest": encoded_digest,
-                "bytes": len(content),
-            }
-    except UnicodeDecodeError as exc:
-        raise PreflightFailure(f"{stem} RECORD is not UTF-8") from exc
-    if not rows:
-        raise PreflightFailure(f"{stem} RECORD is empty")
-    return rows
+def bench_store() -> Any:
+    spec = importlib.util.spec_from_file_location("bench_store", ORCH / "bin/bench_store.py")
+    if spec is None or spec.loader is None:
+        raise PreflightFailure("normal bench-store helper unavailable")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module.Store(STORE_ROOT, ORCH / "tests")
 
 
-def managed_custody(root: Path, child: Path, receipt: Path) -> dict[str, Any]:
-    owner_path = require_file(child / ".bench-owner.json", "managed child owner record")
-    owner = json.loads(owner_path.read_text(encoding="utf-8"))
-    identity = owner.get("identity")
-    if owner.get("component") != "child" or not isinstance(identity, dict):
-        raise PreflightFailure("managed child owner record is not a child identity")
-    if identity.get("agent_sha") != SOURCE_COMMIT:
-        raise PreflightFailure("managed child owner agent SHA does not bind bb50 source")
-    if identity.get("backend_sha") != RUNTIME_COMMIT:
-        raise PreflightFailure("managed child owner runtime SHA does not bind f320 backend")
-
-    marker_values: dict[str, str] = {}
-    for name, expected in (
-        (".astrid-source-commit", SOURCE_COMMIT),
-        (".astrid-runtime-source-commit", RUNTIME_COMMIT),
+def managed_custody() -> dict[str, Any]:
+    """Use normal manager-owned registration, projection and immutable verifier."""
+    store = bench_store()
+    entries = store.registration_entries(CHILD_NAME)
+    children = [entry for entry in entries if entry["component"] == "child"]
+    expected: dict[str, Any] = {"agent_sha": SOURCE_COMMIT, "backend_sha": RUNTIME_COMMIT,
+                "client_tuple": client_identity()}
+    if len(children) != 1 or children[0]["identity"] != expected:
+        raise PreflightFailure("normal registration does not bind the exact bb50/f320/client tuple")
+    entry = children[0]
+    child = real_child(Path(entry["path"]))
+    report = require_file(ORCH / "tests/provision" / (CHILD_NAME + ".txt"), "normal provision report")
+    report_bytes = report.read_bytes()
+    if report_bytes != require_file(child / ".provision-report", "retained provision report").read_bytes():
+        raise PreflightFailure("normal projected/retained provision reports differ")
+    lines = report_bytes.decode().splitlines()
+    client = "\n".join(f"{key}={value}" for key, value in expected["client_tuple"].items())
+    for marker, expected_value in ((".astrid-source-commit", SOURCE_COMMIT),
+                                   (".astrid-runtime-source-commit", RUNTIME_COMMIT),
+                                   (".astrid-runtime-client-identity", client)):
+        if require_file(child / marker, marker).read_text().rstrip("\n") != expected_value:
+            raise PreflightFailure(f"normal child source/client marker mismatch: {marker}")
+    for key, value in {
+        "status": "passed", "agent_sha": SOURCE_COMMIT, "runtime_sha": RUNTIME_COMMIT,
+        "requirements_path": "requirements/proof.lock",
+        "requirements_lock_sha256": file_digest(SOURCE_ROOT / "requirements/proof.lock"),
+        "runtime_client_identity_sha256": sha256(client.encode()),
+    }.items():
+        if [line for line in lines if line.startswith(key + "=")] != [key + "=" + value]:
+            raise PreflightFailure(f"normal provision report identity mismatch: {key}")
+    for section, end, marker in (
+        ("installed_import_origins:", "installed_distribution_metadata:", ".astrid-import-origins"),
+        ("installed_distribution_metadata:", "pip_freeze:", ".astrid-distribution-metadata"),
     ):
-        path = require_file(child / name, name)
-        value = path.read_text(encoding="utf-8").strip()
-        if value != expected:
-            raise PreflightFailure(f"{name} is {value!r}, expected {expected}")
-        marker_values[name] = value
-
-    origin_marker = require_file(child / ".astrid-import-origins", "installed origin marker")
-    distribution_marker = require_file(child / ".astrid-distribution-metadata", "distribution marker")
-    metadata = parse_kv_receipt(distribution_marker)
-    if metadata.get("astrid_name") != "astrid" or metadata.get("astrid_version") != "0.1.0":
-        raise PreflightFailure("distribution marker has the wrong Agent identity")
-    if metadata.get("astrid-runtime_name") != "astrid-runtime" or metadata.get("astrid-runtime_version") != "0.1.0":
-        raise PreflightFailure("distribution marker has the wrong Runtime identity")
-    if metadata.get("astrid_provenance") != "directory" or metadata.get("astrid-runtime_provenance") != "directory":
-        raise PreflightFailure("distribution marker does not require directory provenance")
-
-    receipt = require_file(receipt, "managed child provision receipt")
-    receipt_text = receipt.read_text(encoding="utf-8", errors="strict")
-    expected_receipt_parts = {
-        "status=passed",
-        f"agent_sha={SOURCE_COMMIT}",
-        f"runtime_sha={RUNTIME_COMMIT}",
-        f"{child}",
-    }
-    missing_receipt_parts = sorted(part for part in expected_receipt_parts if part not in receipt_text)
-    if missing_receipt_parts:
-        raise PreflightFailure(
-            "managed provision receipt does not bind this source/runtime/child: "
-            + ", ".join(missing_receipt_parts)
-        )
-
-    site = child / "lib" / "python3.13" / "site-packages"
-    if not site.is_dir() or site.is_symlink():
-        raise PreflightFailure(f"managed child site-packages is missing or symlinked: {site}")
-    distributions: dict[str, Any] = {}
-    source_roots = sorted(child.glob(".child-venv-source-*/"))
-    if len(source_roots) != 1 or any(path.is_symlink() for path in source_roots):
-        raise PreflightFailure("managed child must have exactly one non-symlink source snapshot")
-    source_root = source_roots[0]
-    expected_sources = {"astrid": source_root / "agent", "astrid_runtime": source_root / "runtime"}
-    for name, source in expected_sources.items():
-        if not source.is_dir() or source.is_symlink() or not source.resolve().is_relative_to(source_root.resolve()):
-            raise PreflightFailure(f"{name} canonical source root is missing or escapes child custody")
-    expected_direct_urls = {name: source.resolve().as_uri() for name, source in expected_sources.items()}
-    for stem in ("astrid", "astrid_runtime"):
-        dist_infos = sorted(site.glob(stem + "-*.dist-info"))
-        if len(dist_infos) != 1:
-            raise PreflightFailure(f"expected one {stem} dist-info directory, found {len(dist_infos)}")
-        dist = dist_infos[0]
-        record = require_file(dist / "RECORD", f"{stem} RECORD")
-        direct = require_file(dist / "direct_url.json", f"{stem} direct_url")
-        direct_value = json.loads(direct.read_text(encoding="utf-8"))
-        if direct_value.get("url") != expected_direct_urls[stem]:
-            raise PreflightFailure(f"{stem} direct URL is not its canonical child source root")
-        if direct_value.get("dir_info", {}).get("editable") is not False:
-            raise PreflightFailure(f"{stem} direct URL is editable or lacks non-editable provenance")
-        if "archive_info" in direct_value:
-            raise PreflightFailure(f"{stem} direct URL uses archive provenance")
-        if metadata.get(f"{stem.replace('_', '-')}_direct_url") != direct_value["url"]:
-            raise PreflightFailure(f"{stem} distribution marker does not match direct_url.json")
-        record_rows = verify_record(site, dist, stem)
-        distributions[stem] = {
-            "dist_info": str(dist),
-            "record": {
-                "path": str(record),
-                "sha256": file_digest(record),
-                "rows": record_rows,
-            },
-            "direct_url": {
-                "path": str(direct),
-                "sha256": file_digest(direct),
-                "value": direct_value,
-            },
-        }
-
-    return {
-        "child": str(child),
-        "owner": owner,
-        "markers": marker_values,
-        "origin_marker": {"path": str(origin_marker), "sha256": file_digest(origin_marker)},
-        "distribution_marker": {
-            "path": str(distribution_marker),
-            "sha256": file_digest(distribution_marker),
-            "value": metadata,
-        },
-        "receipt": {"path": str(receipt), "sha256": file_digest(receipt), "kv": parse_kv_receipt(receipt)},
-        "site_packages": str(site),
-        "source_roots": {name: str(path.resolve()) for name, path in expected_sources.items()},
-        "distributions": distributions,
-        "authority": "managed child owner + source/runtime markers + provision receipt + canonical direct URLs + complete RECORDs",
-    }
+        if lines.count(section) != 1 or lines.count(end) != 1:
+            raise PreflightFailure("normal provision report sections missing or duplicated")
+        if lines[lines.index(section) + 1:lines.index(end)] != (child / marker).read_text().splitlines():
+            raise PreflightFailure(f"normal provision report marker mismatch: {marker}")
+    # This is the normal maker's read-only verifier, not a build or reuse request.
+    # It checks sealed sources against git archives, complete RECORD byte/ownership
+    # coverage, directory provenance, interpreter and canonical generated client.
+    maker = require_file(ORCH / "bin/make-child-venv", "normal child maker").read_text()
+    begin, end = "# STORE_VERIFY_BEGIN\n", "# STORE_VERIFY_END"
+    if maker.count(begin) != 1 or maker.split(begin)[1].count(end) != 1:
+        raise PreflightFailure("normal maker verifier boundary is ambiguous")
+    verifier = maker.split(begin)[1].split(end)[0]
+    result = subprocess.run(
+        [sys.executable, "-I", "-", str(child), client, str(SOURCE_ROOT), SOURCE_COMMIT,
+         str(RUNTIME_ROOT), RUNTIME_COMMIT, "/home/user/work", "python3.13"],
+        input=verifier, text=True, capture_output=True, check=False,
+    )
+    if result.returncode:
+        raise PreflightFailure(f"normal immutable source/RECORD verifier failed: {result.stderr}")
+    identity_begin = "\nIDENTITY_SCRIPT=" + "'"
+    identity_end = "'\nrun_stage"
+    if maker.count(identity_begin) != 1:
+        raise PreflightFailure("normal freeze identity verifier unavailable")
+    identity_script = maker.split(identity_begin)[1].split(identity_end)[0]
+    snapshots = list(child.glob(".child-venv-source-*"))
+    if len(snapshots) != 1:
+        raise PreflightFailure("normal child source snapshots are ambiguous")
+    freeze = subprocess.run(
+        [str(child / "bin/python"), "-B", "-I", "-c", identity_script,
+         str(child / ".provision-report"), str(child), str(snapshots[0] / "agent"),
+         str(snapshots[0] / "runtime"), SOURCE_COMMIT, RUNTIME_COMMIT],
+        text=True, capture_output=True, check=False,
+    )
+    if freeze.returncode:
+        raise PreflightFailure(f"normal installed distribution/freeze identity failed: {freeze.stderr}")
+    # Also validate hash/size consistency for every dependency distribution. Only
+    # Agent/Runtime/client RECORDs have immutable-source authority from the maker.
+    record_check = (
+        "import base64,csv,hashlib,pathlib,sys; root=pathlib.Path(sys.argv[1]); "
+        "site=root/'lib/python3.13/site-packages'; count=0\n"
+        "for record in site.glob('*.dist-info/RECORD'):\n"
+        " seen=set()\n"
+        " for rel,encoded,size in csv.reader(record.open()):\n"
+        "  path=site/rel; resolved=path.resolve(); pure=pathlib.PurePosixPath(rel)\n"
+        "  assert str(pure)==rel and rel and rel not in seen and not pure.is_absolute() and '\\\\' not in rel\n"
+        "  assert resolved.is_relative_to(root) and path.is_file() and not path.is_symlink()\n"
+        "  seen.add(rel); data=path.read_bytes()\n"
+        "  if not encoded and not size:\n"
+        "   assert path==record or (rel.endswith('.pyc') and '__pycache__' in pure.parts)\n"
+        "  else:\n"
+        "   assert encoded=='sha256='+base64.urlsafe_b64encode(hashlib.sha256(data).digest()).decode().rstrip('=')\n"
+        "   assert size==str(len(data))\n"
+        " count+=1\n"
+        "assert count; print(count)\n"
+    )
+    checked = subprocess.run([sys.executable, "-I", "-c", record_check, str(child)],
+                             text=True, capture_output=True, check=False)
+    if checked.returncode:
+        raise PreflightFailure(f"dependency RECORD verification failed: {checked.stderr}")
+    return {"child": str(child), "entry": entry, "registration": CHILD_NAME,
+            "graph": entries, "receipt": {"path": str(report), "sha256": sha256(report_bytes)},
+            "maker_verifier_sha256": sha256(verifier.encode()),
+            "distribution_records_checked": int(checked.stdout),
+            "authority": "normal bench-store projection + maker immutable source/RECORD/client verifier"}
 
 
 def profile_inputs(profile: Path, node: Path) -> dict[str, Any]:
@@ -325,9 +296,9 @@ def profile_inputs(profile: Path, node: Path) -> dict[str, Any]:
         raise PreflightFailure(f"profile root is not the approved 819acf profile: {profile}")
     if node != EXPECTED_NODE:
         raise PreflightFailure(f"Node executable is not the approved Node20 path: {node}")
-    if not profile.is_dir() or profile.is_symlink():
+    if profile.resolve() != profile or not profile.is_dir() or profile.is_symlink():
         raise PreflightFailure(f"profile root is missing or symlinked: {profile}")
-    if not node.is_file() or node.is_symlink():
+    if node.resolve() != node or not node.is_file() or node.is_symlink():
         raise PreflightFailure(f"profile Node executable is missing or symlinked: {node}")
     locks = []
     for name, expected in EXPECTED_PROFILE_FILES.items():
@@ -337,6 +308,8 @@ def profile_inputs(profile: Path, node: Path) -> dict[str, Any]:
             raise PreflightFailure(f"approved profile {name} is {actual}, expected {expected}")
         locks.append({"path": str(path), "sha256": actual, "bytes": path.stat().st_size})
     package = json.loads(require_file(profile / "package.json", "profile package manifest").read_text(encoding="utf-8"))
+    if package.get("engines") != {"node": "=20.19.4", "npm": "=10.8.2"}:
+        raise PreflightFailure("profile engine requirements changed")
     dependency_spec = {
         **package.get("dependencies", {}),
         **package.get("devDependencies", {}),
@@ -377,6 +350,112 @@ def profile_inputs(profile: Path, node: Path) -> dict[str, Any]:
     )
     if composition_manifest.get("version") != "0.0.14":
         raise PreflightFailure("installed Composition package is not version 0.0.14")
+    composition_root = node_modules / "@banodoco/timeline-composition"
+    archive_files: dict[str, str] = {}
+    with tarfile.open(fileobj=io.BytesIO(archive.read_bytes()), mode="r:gz") as packed:
+        for member in packed:
+            if member.isdir():
+                continue
+            relative = Path(member.name)
+            if not member.isfile() or relative.parts[0] != "package" or ".." in relative.parts:
+                raise PreflightFailure("unsafe Composition archive member")
+            stream = packed.extractfile(member)
+            if stream is None:
+                raise PreflightFailure("unreadable Composition archive member")
+            rel = str(relative.relative_to("package"))
+            if rel in archive_files:
+                raise PreflightFailure("duplicate Composition archive member")
+            installed_file = require_file(composition_root / rel, "installed Composition file")
+            digest = sha256(stream.read())
+            if file_digest(installed_file) != digest:
+                raise PreflightFailure(f"installed Composition differs from approved archive: {rel}")
+            archive_files[rel] = digest
+    actual_files = {str(path.relative_to(composition_root)) for path in composition_root.rglob("*") if path.is_file()}
+    if actual_files != set(archive_files):
+        raise PreflightFailure("installed Composition file set differs from approved archive")
+    # Validate the full locked install and ask Node for actual dependency/peer
+    # resolution from each installed package (including Composition).
+    installed_tree: dict[str, Any] = {}
+    edges = [[str(profile / "package.json"), name, str(node_modules / name)] for name in sorted(dependency_spec)]
+    def installed_packages(folder: Path) -> set[str]:
+        result = set()
+        for item in folder.iterdir():
+            if item.name.startswith("."):
+                continue
+            packages = list(item.iterdir()) if item.name.startswith("@") else [item]
+            for package_path in packages:
+                if package_path.is_symlink() or not package_path.is_dir():
+                    raise PreflightFailure(f"unsafe installed package path: {package_path}")
+                result.add(str(package_path.relative_to(profile)))
+                nested = package_path / "node_modules"
+                if nested.exists():
+                    result.update(installed_packages(nested))
+        return result
+    extras = installed_packages(node_modules) - set(lock_packages)
+    if extras:
+        raise PreflightFailure(f"installed packages outside approved lock: {sorted(extras)}")
+    for key, locked in sorted(lock_packages.items()):
+        if not key:
+            if dependency_spec != {**locked.get("dependencies", {}), **locked.get("devDependencies", {})}:
+                raise PreflightFailure("profile manifest dependency set differs from approved lock")
+            continue
+        path = profile / key
+        if not path.exists() and (locked.get("optional") or locked.get("os") or locked.get("cpu")):
+            continue
+        if not path.is_dir() or path.is_symlink() or not path.resolve().is_relative_to(node_modules):
+            raise PreflightFailure(f"locked package missing or escaping profile: {key}")
+        manifest = require_file(path / "package.json", "locked package manifest")
+        value = json.loads(manifest.read_text())
+        if value.get("version") != locked.get("version"):
+            raise PreflightFailure(f"locked transitive package version differs: {key}")
+        for field in ("dependencies", "optionalDependencies", "peerDependencies", "peerDependenciesMeta"):
+            if value.get(field, {}) != locked.get(field, {}):
+                raise PreflightFailure(f"installed dependency graph differs from lock: {key}/{field}")
+        installed_tree[key] = {"manifest_sha256": file_digest(manifest), "version": value.get("version")}
+        dependencies = {**locked.get("dependencies", {}), **locked.get("optionalDependencies", {}),
+                        **locked.get("peerDependencies", {})}
+        for name in sorted(dependencies):
+            parent = path
+            resolved = None
+            while parent.is_relative_to(profile):
+                candidate = parent / "node_modules" / name
+                if candidate.is_dir():
+                    resolved = candidate
+                    break
+                parent = parent.parent
+            optional = name in locked.get("optionalDependencies", {}) or locked.get("peerDependenciesMeta", {}).get(name, {}).get("optional")
+            if resolved is None:
+                if optional:
+                    continue
+                raise PreflightFailure(f"required dependency/peer absent: {key}/{name}")
+            resolved_key = str(resolved.relative_to(profile))
+            if resolved_key not in lock_packages:
+                raise PreflightFailure(f"dependency/peer resolved outside lock: {key}/{name}")
+            edges.append([str(manifest), name, str(resolved.resolve())])
+    resolution_probe = r"""
+const fs = require('node:fs'); const path = require('node:path');
+const {createRequire} = require('node:module');
+const edges = JSON.parse(fs.readFileSync(0, 'utf8'));
+for (const [manifest, name, expected] of edges) {
+  const local = createRequire(manifest);
+  let entry;
+  try { entry = local.resolve(name + '/package.json'); }
+  catch { entry = local.resolve(name); }
+  let directory = path.dirname(entry);
+  while (directory !== path.dirname(directory)) {
+    const candidate = path.join(directory, 'package.json');
+    if (fs.existsSync(candidate) && JSON.parse(fs.readFileSync(candidate, 'utf8')).name === name) break;
+    directory = path.dirname(directory);
+  }
+  if (fs.realpathSync(directory) !== expected) throw Error('dependency/peer resolution mismatch: ' + manifest + '/' + name);
+}
+process.stdout.write(JSON.stringify(edges));
+"""
+    resolution = subprocess.run([str(node), "-e", resolution_probe], input=json.dumps(edges),
+                                text=True, capture_output=True, check=False,
+                                env={"PATH": f"{node.parent}:/usr/bin:/bin"})
+    if resolution.returncode:
+        raise PreflightFailure(f"actual Node dependency/peer resolution failed: {resolution.stderr}")
     version = subprocess.check_output([str(node), "--version"], text=True, stderr=subprocess.STDOUT).strip()
     if version != EXPECTED_NODE_VERSION:
         raise PreflightFailure(f"profile Node is {version}, expected {EXPECTED_NODE_VERSION}")
@@ -386,7 +465,9 @@ def profile_inputs(profile: Path, node: Path) -> dict[str, Any]:
         "node_version": version,
         "locks": locks,
         "composition_archive": {"path": str(archive), "sha256": archive_sha256},
-        "node_modules": {"path": str(node_modules), "required": installed},
+        "node_modules": {"path": str(node_modules), "required": installed, "locked_tree": installed_tree,
+                         "actual_resolution": json.loads(resolution.stdout)},
+        "installed_composition_files": archive_files,
     }
 
 
@@ -432,13 +513,19 @@ def child_probe(child: Path, root: Path, env: dict[str, str]) -> dict[str, Any]:
     except json.JSONDecodeError as exc:
         raise PreflightFailure(f"installed child import probe was not JSON: {result.stdout!r}") from exc
     site = (child / "lib" / "python3.13" / "site-packages").resolve()
+    if Path(value.get("prefix", "")).resolve() != child:
+        raise PreflightFailure("import probe used a different interpreter prefix")
     origins = {}
     for name, filename in value.get("modules", {}).items():
         if not isinstance(filename, str):
             raise PreflightFailure(f"module has no file origin: {name}")
         resolved = Path(filename).resolve()
-        if not resolved.is_relative_to(site):
+        if resolved != site / name / "__init__.py":
             raise PreflightFailure(f"production module escaped managed site-packages: {name} -> {resolved}")
+        carrier = SOURCE_ROOT if name in ("astrid", "astrid_runtime_client") else RUNTIME_ROOT
+        expected_digest = file_digest(carrier / name / "__init__.py")
+        if file_digest(resolved) != expected_digest:
+            raise PreflightFailure(f"installed origin bytes differ from fixed source pin: {name}")
         origins[name] = {"file": filename, "realpath": str(resolved), "sha256": file_digest(resolved)}
     if set(origins) != set(PREFIXES):
         raise PreflightFailure(f"installed origin probe omitted modules: {set(PREFIXES) - set(origins)}")
@@ -450,208 +537,185 @@ def child_probe(child: Path, root: Path, env: dict[str, str]) -> dict[str, Any]:
     }
 
 
-def source_after_check(root: Path, before: dict[str, Any]) -> dict[str, Any]:
-    after = source_identity(root)
-    if after != before:
-        raise PreflightFailure("target source/function identity changed during run")
-    return after
-
-
-def preflight(args: argparse.Namespace, evidence: Path) -> dict[str, Any]:
-    root = args.source_root.resolve()
-    child = real_child(args.child_root)
-    source = source_identity(root)
-    git = git_identity(root)
-    profile = profile_inputs(args.profile_root.resolve(), args.node.resolve())
-    receipt = args.provision_receipt.resolve()
-    custody = managed_custody(root, child, receipt)
-    scratch = Path(args.tmpdir).resolve() if args.tmpdir else Path(os.environ.get("TMPDIR", "/tmp")).resolve()
-    scratch.mkdir(parents=True, exist_ok=True)
-    env = controlled_env(child, profile, scratch)
-    forbidden = sorted(set(env) & {"PYTHONPATH", "PYTHONHOME", "PYTHONUSERBASE", "VIRTUAL_ENV", "LD_PRELOAD", "LD_LIBRARY_PATH", "NODE_PATH"})
-    if forbidden:
-        raise PreflightFailure(f"forbidden overlay environment keys: {forbidden}")
-    origins = child_probe(child, root, env)
-    record = {
-        "status": "PASS",
-        "body_runs": 0,
-        "source": {"root": str(root), "git": git, "identity": source},
-        "child": custody,
-        "profile": profile,
-        "production_origin_map": origins,
-        "environment_keys": sorted(env),
-        "environment_overlay_keys": forbidden,
-        "checks": [
-            "source HEAD and unchanged target test bind bb50",
-            "owner, source/runtime markers and provision receipt bind the managed child",
-            "astrid and astrid_runtime RECORD/direct_url are present and non-editable",
-            "runtime_protocol and production modules import from managed site-packages under child -P",
-            "Node20/profile lock inputs are present and hashed",
-            "no PYTHONPATH or installed overlay is used",
-        ],
-    }
-    write_json(evidence / "preflight.json", record)
-    write_json(evidence / "source-before.json", {"git": git, "identity": source})
-    write_json(evidence / "production-origins-before.json", origins)
-    write_json(evidence / "profile-inputs-before.json", profile)
-    write_json(evidence / "invocation-preflight.json", {"argv": sys.orig_argv, "cwd": str(Path.cwd())})
-    return {"root": root, "child": child, "profile": profile, "env": env, "source": source}
-
-
-def suite_row(junit: Path, nodeid: str, exit_code: int) -> dict[str, Any]:
-    result: dict[str, Any] = {"nodeid": nodeid, "exit_code": exit_code, "junit": str(junit)}
+def suite_row(junit: Path, exit_code: int, started: bool) -> dict[str, Any]:
+    result: dict[str, Any] = {"nodeid": f"{TEST_RELATIVE}::{TEST_FUNCTION}",
+                              "exit_code": exit_code, "junit": None, "outcome": "NOTRUN"}
+    if not started:
+        return result
+    result.update(junit=str(junit), outcome="no-junit")
     if not junit.is_file():
-        result["outcome"] = "no-junit"
         return result
     root = ET.parse(junit).getroot()
-    testcases = list(root.iter("testcase"))
-    if len(testcases) != 1:
-        result["outcome"] = "unexpected-testcase-count"
-        result["testcase_count"] = len(testcases)
+    cases = list(root.iter("testcase"))
+    if len(cases) != 1:
+        result.update(outcome="unexpected-testcase-count", testcase_count=len(cases))
         return result
-    case = testcases[0]
-    result.update({"name": case.attrib.get("name"), "classname": case.attrib.get("classname")})
-    result["outcome"] = "failed" if case.find("failure") is not None else "error" if case.find("error") is not None else "skipped" if case.find("skipped") is not None else "passed"
+    case = cases[0]
+    result.update(name=case.get("name"), classname=case.get("classname"))
+    if case.get("name") != TEST_FUNCTION or case.get("classname") != "tests.test_generic_host":
+        result["outcome"] = "unexpected-testcase-identity"
+    elif any(case.find(kind) is not None for kind in ("failure", "error", "skipped")):
+        result["outcome"] = "failed"
+    elif exit_code:
+        result["outcome"] = "failed"
+    else:
+        result["outcome"] = "passed"
     return result
-
-
-def run_original(args: argparse.Namespace, evidence: Path) -> int:
-    script_digest = file_digest(SCRIPT)
-    if args.reviewed_script_sha256 != script_digest:
-        raise PreflightFailure("run-original requires the independently reviewed harness SHA")
-    prepared = preflight(args, evidence)
-    root = prepared["root"]
-    child = prepared["child"]
-    env = prepared["env"]
-    target = f"{TEST_RELATIVE.as_posix()}::{TEST_FUNCTION}"
-    junit = evidence / "junit.xml"
-    command = [
-        str(child / "bin/python"),
-        "-P",
-        "-m",
-        "pytest",
-        "--import-mode=importlib",
-        "-q",
-        "-oaddopts=",
-        "-p",
-        "no:cacheprovider",
-        target,
-        f"--junitxml={junit}",
-    ]
-    write_json(evidence / "invocation.json", {"argv": command, "cwd": str(root), "environment_keys": sorted(env)})
-    write_bytes(
-        evidence / "command.sh",
-        ("env -i " + shlex.join([f"{k}={env[k]}" for k in sorted(env)] + command) + "\n").encode(),
-    )
-    write_json(evidence / "source-before.json", {"identity": prepared["source"], "script_sha256": script_digest})
-    start = time.time()
-    stdout: bytes = b""
-    stderr: bytes = b""
-    exit_code = 125
-    try:
-        completed = subprocess.run(
-            command,
-            cwd=root,
-            env=env,
-            text=False,
-            capture_output=True,
-            timeout=args.timeout,
-            check=False,
-        )
-        stdout, stderr, exit_code = completed.stdout, completed.stderr, completed.returncode
-    except subprocess.TimeoutExpired as exc:
-        stdout = exc.stdout or b""
-        stderr = exc.stderr or b""
-        exit_code = 124
-        write_json(evidence / "timeout.json", {"timeout_seconds": args.timeout})
-    except OSError as exc:
-        write_json(evidence / "launch-error.json", {"error_type": type(exc).__name__, "error": str(exc)})
-    finally:
-        write_json(evidence / "timing.json", {"elapsed_seconds": time.time() - start})
-    write_bytes(evidence / "stdout.txt", stdout)
-    write_bytes(evidence / "stderr.txt", stderr)
-    write_json(evidence / "exit.json", {"returncode": exit_code})
-    try:
-        after = source_after_check(root, prepared["source"])
-        source_error = None
-    except PreflightFailure as exc:
-        try:
-            after = source_identity(root)
-        except PreflightFailure as after_exc:
-            after = {"error": str(after_exc)}
-        source_error = str(exc)
-    write_json(evidence / "source-after.json", {"identity": after, "error": source_error})
-    try:
-        origins_after = child_probe(child, root, env)
-    except PreflightFailure as exc:
-        origins_after = {"error": str(exc)}
-    write_json(evidence / "production-origins-after.json", origins_after)
-    try:
-        profile_after = profile_inputs(Path(prepared["profile"]["root"]), Path(prepared["profile"]["node"]))
-    except PreflightFailure as exc:
-        profile_after = {"error": str(exc)}
-    write_json(evidence / "profile-inputs-after.json", profile_after)
-    row = suite_row(junit, target, exit_code)
-    write_json(evidence / "suite-row.json", row)
-    if source_error:
-        return 2
-    return exit_code
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("mode", choices=("preflight", "run-original"), nargs="?", default="preflight")
-    parser.add_argument("--source-root", type=Path, default=Path(__file__).resolve().parents[1])
-    parser.add_argument("--child-root", type=Path, required=True)
-    parser.add_argument("--provision-receipt", type=Path, required=True)
-    parser.add_argument("--profile-root", type=Path, default=Path("/home/user/work/runtimes/agent-remotion-v3-819acf-1110"))
-    parser.add_argument("--node", type=Path, default=Path("/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node"))
+    parser.add_argument("--source-root", type=Path, required=True)
+    parser.add_argument("--child-name", choices=(CHILD_NAME,), required=True)
     parser.add_argument("--evidence", type=Path, required=True)
-    parser.add_argument("--tmpdir", type=Path)
-    parser.add_argument("--timeout", type=int, default=30)
+    parser.add_argument("--tmpdir", type=Path, required=True)
     parser.add_argument("--reviewed-script-sha256")
     args = parser.parse_args()
-    evidence = args.evidence.resolve()
-    evidence.mkdir(parents=True, exist_ok=True)
-    write_json(evidence / "harness.json", {"path": str(SCRIPT), "sha256": file_digest(SCRIPT), "mode": args.mode})
-    try:
-        if args.mode == "preflight":
-            preflight(args, evidence)
-            print(json.dumps({"status": "PASS", "body_runs": 0, "evidence": str(evidence)}, indent=2))
-            return 0
-        if not args.reviewed_script_sha256:
-            raise PreflightFailure("--reviewed-script-sha256 is required for run-original")
-        status = run_original(args, evidence)
-        print(json.dumps({"status": "BODY-RAN", "exit_code": status, "evidence": str(evidence)}, indent=2))
-        return status
-    except Exception as exc:  # noqa: BLE001 - durable failure evidence is contractual.
-        failure = {
-            "status": "PREFLIGHT-FAILED" if isinstance(exc, PreflightFailure) else "HARNESS-FAILED",
-            "body_runs": 0,
-            "error_type": type(exc).__name__,
-            "error": str(exc),
-            "argv": sys.orig_argv,
-            "cwd": str(Path.cwd()),
-            "script_sha256": file_digest(SCRIPT),
-            "source_root": str(args.source_root.resolve()),
-            "child_root": str(args.child_root.resolve()),
-        }
+    evidence = args.evidence.absolute()
+    # A fresh directory prevents stale JUnit/results from qualifying a new run.
+    evidence.mkdir(parents=True, exist_ok=False)
+    started_at = time.time()
+    leases = ExitStack()
+    before: dict[str, Any] = {}
+    after: dict[str, Any] = {}
+    for name in ("source", "body", "provision", "profile", "origins"):
+        before[name] = {"status": "NOTRUN", "reason": "not reached"}
+        after[name] = {"status": "NOTRUN", "reason": "body not started"}
+    env = controlled_env(Path("/unused"), {"node": str(EXPECTED_NODE), "root": str(EXPECTED_PROFILE)}, args.tmpdir)
+    invocation = {"argv": sys.orig_argv, "cwd": str(Path.cwd()),
+                  "safe_environment": {key: os.environ.get(key) for key in SAFE_ENV_KEYS},
+                  "body_safe_environment": {key: env.get(key) for key in SAFE_ENV_KEYS},
+                  "source_root": str(args.source_root), "runtime_root": str(RUNTIME_ROOT),
+                  "registration": CHILD_NAME, "script_sha256": file_digest(SCRIPT),
+                  "body_argv": None, "body_cwd": str(SOURCE_ROOT)}
+    write_json(evidence / "invocation-before.json", invocation)
+    write_json(evidence / "before.json", before)
+    body_started = False
+    body_exit: int | None = None
+    exit_code = 2
+    failure: dict[str, str] | None = None
+    stdout = b""
+    stderr = b""
+    body_start: float | None = None
+    body_end: float | None = None
+    child: Path | None = None
+
+    def check(name: str, fn: Any, destination: dict[str, Any], phase: str) -> Any:
         try:
-            failure["source_identity"] = source_identity(args.source_root.resolve())
-        except Exception as source_exc:  # noqa: BLE001 - retain the primary failure.
-            failure["source_identity_error"] = f"{type(source_exc).__name__}: {source_exc}"
-        write_json(evidence / "failure.json", failure)
-        write_json(
-            evidence / "suite-row.json",
-            {
-                "nodeid": f"{TEST_RELATIVE.as_posix()}::{TEST_FUNCTION}",
-                "outcome": "preflight-refused",
-                "exit_code": 2,
-                "body_runs": 0,
-            },
-        )
-        print(json.dumps(failure, indent=2), file=sys.stderr)
-        return 2
+            value = fn()
+            destination[name] = {"status": "PASS", "value": value}
+        except Exception as exc:  # noqa: BLE001 - persist partial custody on every failure.
+            destination[name] = {"status": "FAIL", "error_type": type(exc).__name__, "error": str(exc)}
+            raise
+        finally:
+            write_json(evidence / f"{phase}.json", destination)
+        return value
+
+    def sources() -> dict[str, Any]:
+        if args.source_root != SOURCE_ROOT or SOURCE_ROOT.resolve() != SOURCE_ROOT or RUNTIME_ROOT.resolve() != RUNTIME_ROOT:
+            raise PreflightFailure("explicit source carrier must be the approved physical bb50 path")
+        return {"agent": git_identity(SOURCE_ROOT), "runtime": git_identity(RUNTIME_ROOT, RUNTIME_COMMIT)}
+
+    def provision() -> dict[str, Any]:
+        leases.enter_context(bench_store().acquire([CHILD_NAME]))
+        return managed_custody()
+
+    try:
+        if args.mode == "run-original" and args.reviewed_script_sha256 != file_digest(SCRIPT):
+            raise PreflightFailure("run-original requires the reviewed harness SHA")
+        check("source", sources, before, "before")
+        check("body", lambda: source_identity(SOURCE_ROOT), before, "before")
+        custody = check("provision", provision, before, "before")
+        child = Path(custody["child"])
+        profile = check("profile", lambda: profile_inputs(EXPECTED_PROFILE, EXPECTED_NODE), before, "before")
+        args.tmpdir.mkdir(parents=True, exist_ok=True)
+        env = controlled_env(child, profile, args.tmpdir.resolve())
+        check("origins", lambda: child_probe(child, SOURCE_ROOT, env), before, "before")
+        if args.mode == "run-original":
+            # Accidental-call check only. Execution authorization is the normal
+            # manager enqueue/test-service lease; this digest is not source authority.
+            if args.reviewed_script_sha256 != file_digest(SCRIPT):
+                raise PreflightFailure("run-original requires the reviewed harness SHA")
+            command = [str(child / "bin/python"), "-P", "-m", "pytest", "--import-mode=importlib",
+                       "-q", "-oaddopts=", "-p", "no:cacheprovider",
+                       f"{TEST_RELATIVE}::{TEST_FUNCTION}", f"--junitxml={evidence / 'junit.xml'}"]
+            invocation.update(body_argv=command, body_safe_environment={key: env.get(key) for key in SAFE_ENV_KEYS})
+            write_json(evidence / "invocation-before.json", invocation)
+            body_start = time.time()
+            write_json(evidence / "body-start.json", {"started_at": body_start, "argv": command,
+                                                       "cwd": str(SOURCE_ROOT), "timeout_seconds": 30})
+            try:
+                with subprocess.Popen(command, cwd=SOURCE_ROOT, env=env, stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE, start_new_session=True) as process:
+                    body_started = True
+                    try:
+                        stdout, stderr = process.communicate(timeout=30)
+                        body_exit = process.returncode
+                    except subprocess.TimeoutExpired:
+                        os.killpg(process.pid, signal.SIGKILL)
+                        stdout, stderr = process.communicate()
+                        body_exit = 124
+            finally:
+                body_end = time.time()
+            exit_code = body_exit if body_exit is not None else 2
+        else:
+            exit_code = 0
+    except Exception as exc:  # noqa: BLE001 - durable diagnostics must survive setup/launch failures.
+        failure = {"error_type": type(exc).__name__, "error": str(exc)}
+        exit_code = 2
+    finally:
+        # Recheck every boundary, even if another postcheck fails. Before-body
+        # failures retain explicit NOTRUN observations rather than invented data.
+        if body_started and child is not None:
+            checks = (("source", sources), ("body", lambda: source_identity(SOURCE_ROOT)),
+                      ("provision", managed_custody),
+                      ("profile", lambda: profile_inputs(EXPECTED_PROFILE, EXPECTED_NODE)),
+                      ("origins", lambda: child_probe(Path(child), SOURCE_ROOT, env)))
+            for name, fn in checks:
+                try:
+                    value = check(name, fn, after, "after")
+                    if value != before[name].get("value"):
+                        raise PreflightFailure(f"{name} custody changed during body")
+                except Exception as exc:  # noqa: BLE001 - attempt all independent postchecks.
+                    after[name] = {"status": "FAIL", "error_type": type(exc).__name__, "error": str(exc)}
+                    exit_code = 2
+        write_json(evidence / "after.json", after)
+        try:
+            row = suite_row(evidence / "junit.xml", body_exit or 0, body_started)
+        except Exception as exc:  # noqa: BLE001 - malformed JUnit fails qualification.
+            row = {"outcome": "invalid-junit", "error": str(exc)}
+            exit_code = 2
+        if body_started and row["outcome"] != "passed":
+            exit_code = exit_code or 2
+        row.update(body_exit_code=body_exit, exit_code=exit_code,
+                   body_outcome=row["outcome"])
+        if body_started and exit_code and row["outcome"] == "passed":
+            row["outcome"] = "custody-failed"
+        result = {"status": "NOTRUN" if not body_started else "PASS" if exit_code == 0 else "FAIL",
+                  "mode": args.mode, "body_runs": int(body_started), "exit_code": exit_code,
+                  "body_exit_code": body_exit, "failure": failure, "suite": row,
+                  "preflight_status": "PASS" if all(item["status"] == "PASS" for item in before.values()) else "FAIL"}
+        write_bytes(evidence / "stdout.txt", stdout)
+        write_bytes(evidence / "stderr.txt", stderr)
+        write_json(evidence / "exit.json", {"returncode": exit_code, "body_returncode": body_exit})
+        write_json(evidence / "timing.json", {"started_at": started_at, "finished_at": time.time(),
+                                              "body_started_at": body_start, "body_finished_at": body_end,
+                                              "elapsed_seconds": time.time() - started_at})
+        invocation_after = {**invocation, "argv": sys.orig_argv, "cwd": str(Path.cwd()),
+                            "safe_environment": {key: os.environ.get(key) for key in SAFE_ENV_KEYS},
+                            "script_sha256": file_digest(SCRIPT)}
+        if invocation_after["script_sha256"] != invocation["script_sha256"]:
+            exit_code = 2
+            result.update(exit_code=exit_code, status="FAIL", failure={"error": "harness bytes changed"})
+            row.update(exit_code=exit_code, outcome="custody-failed")
+            write_json(evidence / "exit.json", {"returncode": exit_code, "body_returncode": body_exit})
+        write_json(evidence / "invocation-after.json", invocation_after)
+        write_json(evidence / "suite-row.json", row)
+        write_json(evidence / "result.json", result)
+        leases.close()
+    print(json.dumps(result, indent=2))
+    return exit_code
 
 
 if __name__ == "__main__":
