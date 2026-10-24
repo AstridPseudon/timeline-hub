@@ -1,0 +1,3 @@
+Ask: note restored four-worker throttle below8GB / Owner: Agent manager / By: 2026-10-24T03:40Z
+
+Actual free7.9GB after light current worktrees. No new heavy/full run. Five live workers briefly overlapped after D40 review finished; newest noncritical read-only whole-path0336 stop requested immediately, WIP retained. Four live remain: image0330, historical current0330, alias qualification0332, oracle0335. Clean finished worktrees auto-recycled; manual recycle confirmed merged registry/alias trees already absent. Required/previously refused targets untouched; no finite prune qualified. Source reviews and home merge queues continue; D40 cumulative source review0330 PASS32 with two environmental neighbor failures disclosed, installed positive pending.
