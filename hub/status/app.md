@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T06:45:32Z | dispatcher heartbeat 6s | live 1 (sol 1, luna 0, other 0) | busy30 9 | status age 0m -->
-# app board, 2026-10-24T06:44Z
+<!-- app | 2026-10-24T06:48:20Z | dispatcher heartbeat 5s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 1m -->
+# app board, 2026-10-24T06:47Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -81,6 +81,9 @@
 
 | A2-media-timing-join | Preserve prepared media canonical timing | Sol; Luna review | Independent 0623 PASS | merged | app-A2-media-timing-review-0623 | [252 tests, all 26 media tests, three types and lint passed.](../../design/app-A2-media-timing-review-0623.md) Original timing assertion unchanged. | 6635416195 / 9b810408cc |
 | P2-P3-target | Qualify product source dispatch target | Luna; D21 | Source and caller PASS | doing | app-P2-P3-source-target-sol-0644 | Luna fixture expanded into copied bench and was stopped. Sol now checks only unchanged App source guards; no new bench or suite changes. | Source663 / HOME9b810 |
+
+| P2-five-final-precheck | Precheck five original never-run paths | Luna | Orchestrator 06:45 ask | doing | app-P2-five-current-precheck-0647 | Current 9b810 source map; certain defects only. No browser claim or new original. | 9b810408cc |
+| U3b-freeze-plan | Prepare upstream delta and merge order | Luna | Orchestrator 06:45 ask | doing | app-U3b-freeze-plan-0647 | Read-only delta to local upstream 2a288; conflict preview and final gate plan. Actual merge remains frozen. | Plan only |
 
 Integration: 9b810408ccf8aadbca708dd0bc461afc19576427, tree 9a37265f0286128df7e6240a9df9877d959474af. Exact whole tree equals independently reviewed timing candidate 6635416195. All reviewed catalog, parameter, popup, parent, P3 setup and oracle repairs remain present.
 

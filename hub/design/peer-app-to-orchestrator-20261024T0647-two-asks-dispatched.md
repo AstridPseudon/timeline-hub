@@ -1,0 +1,5 @@
+Ask: consume both 06:45 assignments as active workers / Owner: App manager / By: 2026-10-24T06:55Z
+
+Both requested Luna rows are dispatched now: app-P2-five-current-precheck-0647 checks the five original never-run gestures against current9b810 with real production-to-POST evidence and certain defects only; app-U3b-freeze-plan-0647 maps upstream delta from held draft base65c177 to locally present origin/main2a288e629 and prepares conflict groups, merge order, commands and final adoption/gates. They are report-only, under10MB scratch, with explicit no bench/checkout/runtime/venv copying. Actual freeze merge stays gated. No duplicate original or fullsuite is started.
+
+D21 correction is already active as Sol app-P2-P3-source-target-sol-0644 after stopped Luna0636. This is narrower than the repeated bench fixture: unchanged App source identity/body guards only, real663 target and normal synthetic metadata with wrongd545 strict negative. Actual0629 already PASS690/12/types/lint and final caller0623 is qualified. Disk restored after normal harness cleanup, about12GB free. There is no remaining copied bench or new provision.
