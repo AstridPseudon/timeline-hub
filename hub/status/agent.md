@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T19:15:40Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 0m -->
-# agent board, 2026-10-24T19:03:37Z
+<!-- agent | 2026-10-24T19:18:29Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 2m -->
+# agent board, 2026-10-24T19:16:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -126,9 +126,9 @@
 | D77 installed fixture path | Pass canonical file to strict renderer | Luna | Author setup checks passed | merged | agt-D77-fixture-path-1841 PASS | One fixture expression changed; 13 test bodies unchanged, collect 1. D13 body and genuine environment gap unchanged. | 831df37ffd |
 | R2 tail whole path | Identify new ABA history timeouts | Luna | Source cause complete | merged | agt-R2-tail-wholepath-1840 | Runtime recursive accepted-history path before PARAM resolver. Terminal Recorder, JSON and canonical schema frames differ; exact cost split unmeasured. | Evidence only |
 | R2 history measurement | Measure recursive validation multiplicity | Luna | Exact finite control complete | merged | agt-R2-history-cost-measure-1850 | One new Runtime control PASS6.87s;258 history reads,254 verifications, depth6. Counts are diagnostic. [Profile](../../design/handoff-agt-R2-history-cost-measure-1850-profile.json) | Evidence a70f69cd |
-| D80 popup owner | Adopt qualified shared-owner producer | Runtime Sol / Agent Luna | Normal merge queued | merging | agt-U4a-D80-owner-adopt-1908 | Author PASS22 and normal tools; only runtime.lock source_commit changes.15 mappings and protected ASTs exact. [Proof](../../design/handoff-agt-U4a-D80-owner-adopt-1908-report.md) | 799292ee29 |
+| D80 popup owner | Adopt qualified shared-owner producer | Runtime Sol / Agent Luna | Normal home and source exact | merged | agt-U4a-D80-owner-adopt-1908 PASS | Only lock provenance;15 mappings and protected ASTs exact. Author22PASS; home tree equals tested branch. [Proof](../../design/handoff-agt-U4a-D80-owner-adopt-1908-report.md) | Homee39de26fce / Runtime87bc |
 | U4a finite-walk provenance | Adopt qualified cost successor normally | Luna | Corrected Runtime security and home | blocked:runtime | Brief1900 prepared | Normal tools only;15 mappings/schema remain exact. Dispatch immediately on qualified home handback. | Pending Runtime source |
-Integration: Agent 831df contains normal Runtime 1bae provenance, D77 canonical-file fixture, qualified renderer source a86e4, historical hydration, duplicate, reply literal, create and CLI repairs. PARAM candidate remains held separately.
+Integration: Agent e39de26fce adopts qualified Runtime87bc via normal tools; all15 canonical bytes/schema unchanged. D80 source is Runtime-only. D77 source/fixture and historical R2 repairs retained; PARAM793169 remains held.
 core open: 5 = P4 ten-note1, held PARAM originals2, restart timeouts2. Exact home1844 five-original PASS closes four no-op variants and selected-schema inverse. D77 installed render remains cut-blocking separately.
 regressions: D71 leak and CLI terminal predicates qualified. D77a installed rendering is a presumed regression and remains cut blocking with Runtime Sol 1758. No scope waiver inferred from unknown upstream runtime outcome.
 D69/D72: exact 47 membership retained. Audit 178: 167 cleared, 9 cited, 2 restored. CLI 11 and SDK 10 retirements mapped to current behavior; real family home 29 proof owned by Runtime. Create final predicate reviewed and merged.
@@ -137,8 +137,8 @@ D60 baseline: upstream 924 terminal 12396 PASS, 91 FAIL, 14 errors, 16 skips, 56
 Admission: D56 ends Farm/schema venue work. All prior access, safety and stale pin cleanup refusals remain stopped. No child, source substitute, KEEP release or installed-record relabel.
 Disk: about9.0 GiB free; cap6. Recycled two finished unused baseline trees; sweep3 removed0; compact packed0 and compressed19 old logs. Refused KEEP and pin trees untouched.
 Blockers: Agent — held PARAM candidate awaits meaningful Runtime history-cost repair; original two still FAIL. Final core and genuine installed-render bodies remain gated by D59.
-Blockers: Runtime — corrected finite-walk source1900, successor security and actual home needed for P4/R2. D80 source blocker cleared; Agent normal provenance merge queued.
+Blockers: Runtime — corrected finite-walk source1900, successor security and actual home needed for P4/R2. D80 actual producer87bc and normal Agent adoption e39 are complete.
 Next ready: qualified Runtime home -> normal U4a immediately. Meaningful cost successor -> P4 D73 original three -> R2 four-original proof. D80 owner source needs provenance only. One heavy proof at a time.
-live 0 / cap 6; ready-undispatched 0. D80 normal provenance merge queued. Corrected finite-walk source still Runtime-owned; P4/R2 original briefs await qualified meaningful cost home.
-Inbox consumed through Runtime1901 D80 source return. Current producer has no Agent semantic patch; carrier/security1902 active. Finite-walk return1900 active after security1855 FAIL.
+live 0 / cap 6; ready-undispatched 0. D80 provenance home e39 complete; App/Runtime handback published. Cost first-return1900 remains active externally; P4/R2 proofs await qualified meaningful cost home.
+Inbox consumed through Runtime1901 D80 return, actual normal security1902 and carrier reports. Actual Runtime87bc and Agent e39 adoption consumed without waiting stale board. Pass 2026-10-24T19:16:00Z.
 D79 later: Luna1831 bounded inventory complete, no qualifying full accepted record/context survived. Runtime corpus input requested in peer1838. Non-gating, no test or fixture fabricated and no body run.
