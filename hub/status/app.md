@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T03:48:57Z | dispatcher heartbeat 10s | live 1 (sol 1, luna 0, other 0) | busy30 18 | status age 2m -->
-# app board, 2026-10-24T03:46Z
+<!-- app | 2026-10-24T03:51:40Z | dispatcher heartbeat 5s | live 3 (sol 3, luna 0, other 0) | busy30 20 | status age 1m -->
+# app board, 2026-10-24T03:50Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -8,7 +8,7 @@
 | A2 | Production save funnel | Sol; Luna review | C0 and U3 | merged | app-A2-final-composed-review-r7 | Original P1 chain passed on pinned f8. Latest bootstrap fix is listed below. | 9eda8e907 |
 | A3 | Popup, placement and asset saves | Sol; Luna review | A2 | merged | App and Proof workers | Source qualifications passed. P2 live gesture proof remains pending. | See linked proofs |
 | P1 | Original mixed chain | App runner; Proof review | Resolved | merged | Test 18792; Proof 0036 and 0040 | GO at 00:43. Both cases passed; exit 0, 141 seconds. Fixed App f8 / Agent 787 / Runtime 2a9. | f8b15af0a6 |
-| A4 | Executor and capture retirement | Luna; Sol author | Reachable element cut and final proof | doing | Element0314; review0335 | Dormant subsets listed under D37. Last reachable element writer migration is in independent review. | Integration a64587176d |
+| A4 | Executor and capture retirement | Sol; Luna review | Popup fallback remains reachable | doing | app-A2-popup-wrapper-sol-0349 | Independent census found scoped popup saveTimeline fallback. Element cut remains merged and qualified; dormant originals retained. | f90e708b37 |
 | A2-staged-caller | Move staged generation onto current save | Sol; Luna review | Review 0133 PASS | merged | app-A2-staged-caller-sol-0122 | Independent 279 tests, three types and lint passed. Integrated joined proof 0150 passed 448 tests, three types and lint. | 9969949827 / e9bce18bea |
 | A4-state | Retire state transaction runner API | Luna | Review 0142 PASS | merged | app-A4-state-runner-retirement-0135 | Independent 175 tests, three types and lint passed. Integrated source follow-up will include current media-wrapper cut. | ce7a48e137 / 1f4b30a51b |
 | A4-history | Retire history runner execution | Luna | Review 0131 PASS | merged | app-A4-history-retirement-0125 | Independent 95 tests, three types and lint passed. Mounted guarded Runtime undo retained; joined proof 0150 passed 448 tests, three types and lint. | b2a546f535 / 0a0f95efc7 |
@@ -62,12 +62,12 @@ Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-han
 
 | readiness-D41-cause | Classify changed-pair readiness failure | Sol; Luna review | Actual retained artifacts | doing | app-readiness-D41-cause-sol-0309 | Independent0309 PASS with corrections: P3 outbox unknown before connected/fresh-owner checks. First history 3.56 seconds; exact later await and trigger unknown. | App804 / Agent079 / Runtime37eb |
 
-| readiness-phase-diagnostics | Report validated read completion truthfully | Sol; Luna review | First return0339 complete | review | app-readiness-cumulative-review-0345 | Return109 tests plus22 and12 safety, three types/lint passed. Original faulty donor remains held; cumulative review active. | ee77ea8e8a on dee99 |
+| readiness-phase-diagnostics | Report validated read completion truthfully | Sol; Luna review | Cumulative0345 PASS | merging | app-readiness-phase-return-sol-0339 | Independent109 tests plus22 and12 safety, three types/lint passed. Both stack commits reviewed; normal merge requested. | ee77ea8e8a plus dee99 |
 
 | P2-gesture-causes | Classify three actual gesture failures | Luna | Review 0327 complete | merged | app-P2-gesture-review-0327 | [Source classification PASS with corrected mounted save citation. Exact triggers remain unknown.](../../design/app-P2-gesture-review-0327.md) | Report only |
 
 | readiness-D42-trace | Correlate retained request and close times | Sol; Luna review | Independent review complete | merged | app-readiness-D42-trace-review-0332 | [All eight timings verified; causal link insufficient. Sent before03:50.](../../design/app-readiness-D42-trace-review-0332.md) | Report only |
-| readiness-D42-coalesce | Reuse same-head pending basis read | Luna; independent review | Independent0338 PASS | review | Cumulative0345 before merge | Independent181 tests plus22 and12 safety, three types/lint passed. Coalescing unchanged in corrected diagnostic packet. | dee99fc4cb |
+| readiness-D42-coalesce | Reuse same-head pending basis read | Luna; independent review | Independent0338 and0345 PASS | merging | Composed return0339 | Pending-only coalescing preserved in cumulative corrected packet. Each stack commit independently reviewed. | dee99fc4cb |
 
 
 Integration: a64587176d. Current recovery packet passed 106 tests, three types and lint before its exact merge. Exports and lifecycle joined proof passed 108 plus 105 tests, three types, lint and governance. Historical joined proof 0150 remains bound to 1c5cc47bf6.
@@ -79,4 +79,7 @@ Blockers: Freeze — U3b waits P2/P3 and final freeze.
 Next ready: Merge corrected coalescing packet after cumulative review; close A4 on independent zero-writer review. Bind D42 caller when Runtime publishes qualified proof pin.
 Disk: Three finished worktrees recycled; sweep3 removed0 directories. Free11.36GB at03:41. Separate freed-byte count unavailable. Prior dirty U3 and compact refusals stand.
 
-| A4-final-census | Verify zero reachable legacy writers | Luna; independent review | Census0340 PASS | review | app-A4-final-census-review-0345 | Zero reachable fallback writers reported; retained dormant blobs and ledger entries verified. Independent challenge active. | f90e708b37 |
+| A4-final-census | Verify zero reachable legacy writers | Luna; independent review | Review0345 FAIL | doing | Popup source0349 assigned | [Original zero-writer claim withdrawn; actual scoped popup fallback identified.](../../design/app-A4-final-census-review-0345.md) | Report only |
+
+| A2-popup-wrapper | Move scoped popup saves onto A2 outbox | Sol; Luna review | Independent live path0345 | doing | app-A2-popup-wrapper-sol-0349 | Migrate mounted scoped provider without losing child authority, projection, closure or original assertions. | Base f90e708b37 |
+| readiness-D42-caller | Prepare qualified D42 caller | Sol | Exact App merge and Runtime backport | doing | app-readiness-D42-caller-sol-0348 | Prepare guarded rows now; no install or run before exact source and keyed receipts. Runtime backport0339 active. | Agent079 retained |
