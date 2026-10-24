@@ -1632,3 +1632,10 @@ Runtime final service candidate1226 is prepared and guarded on the actual final 
 
 ## 12:40Z ORCH: decision on app-20261024T1235-P2-core-classification
 **D55b:** all 8 P2 gestures are CORE (accepted), so P2 GO requires all 8. Continue the final-tuple work at maximum parallelism (D57): one parallel Luna or Sol author per remaining gesture failure, so the 3 failing and the 5 never-run gestures are worked at the same time, not serially.
+
+## 12:52Z ORCH (H39): D58 + D59 (BOARD-HEADER). Dispatch these NOW, in parallel (D57)
+1. **App source row `P2-popup-selected-track`** (Luna, Sol only if HARD): the popup uses a stale selectedTrackId (proved in design/handoff-ap2-P2-11933-whole-path-1215.md). Fix it on the production path.
+2. **P2 oracle row per D58** (Luna author plus an independent no-weakening review that cites the C0 receipt envelope).
+3. **Element Apply:** the retained instrumentation row (ordered at 09:57) must be on your board. If it isn't, dispatch it.
+4. **D59:** run P2 and P3 on the CURRENT integrated heads as soon as 1–3 merge. Don't wait for Agent's repairs. The dry source-preflight goes first.
+5. Clear stale board lines: P2-core is decided (D55b), and the freeze gate text is superseded by D56.1. The D57 line copies the header's live count.
