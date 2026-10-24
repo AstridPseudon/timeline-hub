@@ -1,5 +1,5 @@
-import { forwardRef, Fragment, useCallback, useEffect, useImperativeHandle, useRef, useState, type KeyboardEvent } from 'react';
-import { Check, ChevronDown, ChevronRight, Copy, Plus } from 'lucide-react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState, type KeyboardEvent } from 'react';
+import { Check, ChevronDown, ChevronRight, Plus } from 'lucide-react';
 import { Command, CommandGroup, CommandItem, CommandList } from '@/shared/components/ui/command.tsx';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/components/ui/popover.tsx';
 import { cn } from '@/shared/components/ui/contracts/cn';
@@ -9,10 +9,10 @@ import { ChatUpdateNeeded, isChatUpdateError } from './ChatUpdateNeeded.tsx';
 import { AGENT_IDS, AgentIcon, agentAvailability, agentNames } from './agentIdentity.tsx';
 import { readModelThoughtSelections, readNewChatChoice, rememberModelThoughtSelection, rememberNewChatChoice, type NewChatChoice } from './newChatThinkingSelection.ts';
 import { NewChatModels, type NewChatAgentModels } from './NewChatModels.tsx';
+import { CommandLine } from './CommandLine.tsx';
 
 export type { NewChatAgentModels, NewChatModelChoice } from './NewChatModels.tsx';
 
-const KEYCAP = 'select-all rounded border border-border px-1 font-mono text-[10px]';
 const SPLIT_BUTTON = 'inline-flex h-6 items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-60 [@media(pointer:coarse)]:h-8';
 
 export interface NewChatMenuHandle {
@@ -46,27 +46,6 @@ interface NewChatMenuProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-function AgentLine({ agent, line, copiedCommands, onCopy }: { agent: LocalAgentId; line: string; copiedCommands: Set<string>; onCopy: (command: string, index: number) => void }) {
-  return <>{line.split(/`([^`]+)`/g).map((part, index) => {
-    if (index % 2 === 0) return part;
-    const commandIndex = (index - 1) / 2;
-    const isCopied = copiedCommands.has(`${agent}:${commandIndex}`);
-    const Icon = isCopied ? Check : Copy;
-    return (
-      <Fragment key={index}>
-        <code className={KEYCAP}>{part}</code>
-        <button type="button" tabIndex={0} aria-label="Copy command" title="Copy command"
-          className="ml-1 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-background/40 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          onPointerDown={(event) => { event.preventDefault(); event.stopPropagation(); }}
-          onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') event.stopPropagation(); }}
-          onClick={(event) => { event.preventDefault(); event.stopPropagation(); onCopy(part, commandIndex); }}>
-          <Icon className="h-3.5 w-3.5" aria-hidden="true" />
-        </button>
-      </Fragment>
-    );
-  })}</>;
-}
-
 /**
  * The chat header's new-chat split button, like a split Merge button: + starts a chat, and ▾ opens a chooser for what + starts
  * (an agent, → drills into that agent's models and thinking levels). The chooser never starts a chat itself.
@@ -83,8 +62,6 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
   ) as Record<LocalAgentId, Record<string, string>>);
   const [highlighted, setHighlighted] = useState('');
   const [query, setQuery] = useState('');
-  const [copiedCommands, setCopiedCommands] = useState<Set<string>>(() => new Set());
-  const copyTimeouts = useRef(new Map<string, number>());
   const root = useRef<HTMLDivElement>(null);
   const search = useRef<HTMLInputElement>(null);
   const landOnModel = useRef(false);
@@ -140,34 +117,6 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
     if (source?.thoughtLevel === undefined) onNewChat(source?.agent, source?.model);
     else onNewChat(source.agent, source.model, source.thoughtLevel);
   };
-  const copyLine = async (id: LocalAgentId, command: string, index: number) => {
-    try {
-      await navigator.clipboard.writeText(command);
-    } catch {
-      const input = document.createElement('textarea');
-      input.value = command;
-      input.style.position = 'fixed';
-      input.style.opacity = '0';
-      document.body.append(input);
-      input.select();
-      const copiedText = document.execCommand?.('copy') ?? false;
-      input.remove();
-      if (!copiedText) return;
-    }
-    const key = `${id}:${index}`;
-    const existingTimeout = copyTimeouts.current.get(key);
-    if (existingTimeout !== undefined) window.clearTimeout(existingTimeout);
-    setCopiedCommands(currentCopied => new Set(currentCopied).add(key));
-    copyTimeouts.current.set(key, window.setTimeout(() => {
-      setCopiedCommands(currentCopied => {
-        const next = new Set(currentCopied);
-        next.delete(key);
-        return next;
-      });
-      copyTimeouts.current.delete(key);
-    }, 1_500));
-  };
-
   // Back from a model list: keep focus in the menu, and land on the agent once cmdk has re-filtered and picked its first row.
   useEffect(() => {
     if (open && !browsing && wasBrowsing.current && root.current && !root.current.contains(document.activeElement)) root.current.focus();
@@ -248,7 +197,7 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
               {state.usable ? model ?? 'Ready' : state.state === 'sign-in' ? 'Sign in' : 'Not installed'}
             </span>
           </span>
-          {state.line && <span className="text-[11px] text-muted-foreground"><AgentLine agent={id} line={state.line} copiedCommands={copiedCommands} onCopy={(command, index) => void copyLine(id, command, index)} /></span>}
+          {state.line && <span className="text-[11px] text-muted-foreground"><CommandLine line={state.line} /></span>}
         </span>
         {canBrowse(id) && (
           <button type="button" tabIndex={-1} aria-label={`Choose a ${agentNames[id]} model`} title="Choose a model (→)"
@@ -301,7 +250,7 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
                   setLevelSelections(selections => ({ ...selections, [browsing]: { ...selections[browsing], [modelId]: value } }));
                 }}
                 footer={browsing === 'astrid' && astridSignInLine && (
-                  <p className="px-2 py-1.5 text-[11px] text-muted-foreground">More models: <AgentLine agent="astrid" line={astridSignInLine} copiedCommands={copiedCommands} onCopy={(command, index) => void copyLine('astrid', command, index)} /></p>
+                  <p className="px-2 py-1.5 text-[11px] text-muted-foreground">More models: <CommandLine line={astridSignInLine} /></p>
                 )} />
             ) : (
               <CommandGroup heading="Use for new chats" className={PICKER_GROUP}>
