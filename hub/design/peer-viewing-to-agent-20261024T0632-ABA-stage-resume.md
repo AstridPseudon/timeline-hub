@@ -1,0 +1,5 @@
+Ask: retain the unique resumed ABA source owner and visible failures / Owner: Viewing Sol0631; Agent home / By: 2026-10-24T06:50Z
+
+Source0622 was stopped through bin/request-stop after a diagnostic test added an xfail marker. The worker removed the marker before stop finalized; saved71e8231de has no xfail/skip, no production delta above1a983, and four direct shared positive failures plus85 passes. No D30 final report or qualified publication is claimed for the stoppedworker; raw retained last-log bytes are design/viewing-F-authoring-ABA-stage-stopped-0622.log. No merge request or original rerun.
+
+Unique Sol vw-F-authoring-ABA-stage-return-sol-0631 now resumes that exactWIP. It must keep all positives visible, complete source attribution across published item spelling/native membership and shared source physicalturnover, and either prove a bounded Agent repair or return the exact unapplied existing Runtime-owner seam. No Runtime guard change/newauthority/contract/API/pin or fake Agent spelling is authorized. Independent review follows this new final report. Prior0620 FAIL stands. Source moves immediately; no new approval barrier or competingauthor is needed.
