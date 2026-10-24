@@ -136,16 +136,31 @@ def _native_mirror_partition(record, step, nested):
     writes = record.get('derived_writes', [])
     relevant = [write for write in record['writes'] if write['ref'].startswith('parent/clip:')
                 or (write['ref'] == 'parent' and write['path'] in (['clips'], ['config', 'clips']))]
+    def projection(payload):
+        return {key: copy.deepcopy(payload[key]) for key in ('clips', 'config') if key in payload}
+
+    first_effect = next((effect for effect in step['patch'] if effect['ref'] == 'parent'
+                         and (not effect['path'] or effect['path'] == ['clips']
+                              or effect['path'][:1] == ['config'])), None)
+    root_input = (first_effect is not None and not first_effect['path']
+                  and first_effect['before'].get('state') == 'present'
+                  and isinstance(first_effect['before'].get('value'), dict))
     first = relevant[0]
-    initial = (writes[0]['before'] if first['ref'].startswith('parent/clip:') and writes
-               else first['before'])
-    if initial.get('state') != 'present' or not isinstance(initial.get('value'), list):
-        raise CommandError('nested inverse mirror input is unavailable', kind='history_unavailable')
-    state = State({'parent': {'clips': copy.deepcopy(initial['value']),
-                             'config': {'clips': copy.deepcopy(initial['value'])}}})
+    if root_input:
+        # A canonical root effect captures physical storage, including an absent
+        # mirror. Prove it against every native write and the landing effect.
+        state = State({'parent': projection(first_effect['before']['value'])})
+        initial = state.get('parent', ['clips'])
+    else:
+        initial = (writes[0]['before'] if first['ref'].startswith('parent/clip:') and writes
+                   else first['before'])
+        if initial.get('state') != 'present' or not isinstance(initial.get('value'), list):
+            raise CommandError('nested inverse mirror input is unavailable', kind='history_unavailable')
+        state = State({'parent': {'clips': copy.deepcopy(initial['value']),
+                                 'config': {'clips': copy.deepcopy(initial['value'])}}})
     config = next((write for write in record['writes'] if write['ref'] == 'parent'
                    and write['path'] == ['config']), None)
-    if config is not None and (record['writes'].index(config) < record['writes'].index(first)
+    if not root_input and config is not None and (record['writes'].index(config) < record['writes'].index(first)
             or (record['writes'].index(config) < nested[0]['boundary']['native_write_range'][1]
                 and config['before'].get('state') == 'present'
                 and isinstance(config['before'].get('value'), dict)
@@ -186,9 +201,6 @@ def _native_mirror_partition(record, step, nested):
                 continue
             if not effect['path']:
                 root_effect = True
-                def projection(payload):
-                    return {key: copy.deepcopy(payload[key]) for key in ('clips', 'config') if key in payload}
-
                 if (effect['op'] != 'set' or effect['before'].get('state') != 'present'
                         or not equal(image, projection(effect['before']['value']))):
                     raise CommandError('nested inverse mirror effects differ from history',
@@ -214,6 +226,8 @@ def _native_mirror_partition(record, step, nested):
                 raise CommandError('nested inverse native mirror input differs from history',
                                    kind='history_unavailable')
             state.set(write['ref'], write['path'], write['after'])
+            if aggregate:
+                state.parent_clip_path = State(state.bundle).parent_clip_path
             if write['ref'] == 'parent' and write['path'] == ['config']:
                 mirrored = equal(state.get('parent', ['config', 'clips']), state.get('parent', ['clips']))
             if leaf:

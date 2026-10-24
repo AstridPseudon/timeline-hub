@@ -837,6 +837,9 @@ def _stage_restoration_orders(records, record):
         return result_orders
     result = []
     for image in images:
+        if image == ABSENT:
+            result.append(None)
+            continue
         if image.get('state') != 'present' or not isinstance(image.get('value'), list):
             raise CommandError('inverse stage order is unavailable', kind='history_unavailable')
         result.append(order(State({'parent': {'clips': image['value'],
@@ -995,13 +998,19 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
                 from ._collections import order
 
                 for (owner, kind), (_, expected) in stage_orders.items():
-                    if order(ctx.state, owner, kind) != expected:
+                    actual = (None if owner == 'parent' and kind == 'clip'
+                              and ctx.state.get('parent', ['clips']) == ABSENT and expected is None
+                              else order(ctx.state, owner, kind))
+                    if actual != expected:
                         raise CommandError('inverse stage membership/order changed',
                                            kind='selection_changed', ref=owner)
             for write in reversed([*record['writes'], *caches.get(id(record), [])]):
                 with _recording_storage(ctx, write['ref'], write['path'], records):
                     _restore_write(ctx, write)
             for (owner, kind), (original, _) in stage_orders.items():
+                if original is None:
+                    guard(ctx.state, 'parent', ['clips'], ABSENT, kind='history_unavailable')
+                    continue
                 if ctx.state.entity(owner, optional=True) is not None:
                     arrange(ctx.state, owner, kind, original)
             arrange_restored(ctx.state, record, root_orders.get(id(record)))
