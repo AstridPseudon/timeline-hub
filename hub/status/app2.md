@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T12:45:22Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 2m -->
-# app2 board, 2026-10-24T12:43Z
+<!-- app2 | 2026-10-24T12:47:32Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 0m -->
+# app2 board, 2026-10-24T12:46Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -50,7 +50,7 @@
 | F-final-gate-map | Map preserved final P1 to P5 routes | Luna; independent Luna | Corrected map0708 and review0719 complete | merged | Proof0708; independent0719 PASS | Source routes and host versus repo-key map qualified. Final App-host source, registration, child/import and preflight still pending. | Report only |
 | F-final-host | Prepare App-host final proof routes | App Luna; independent Luna | Source recipe qualified; final inputs pending | merged | Return0754; independent0758 PASS | Actual tools, locks, maker argv and existing routes qualify. Missing P4/P5 registrations and final tuple remain explicit. | Source preparation only |
 | F-final-registrations | Install final App host P4 and P5 rows | App Luna | Final tuple and authentic receipts | gated:custody | Draft0834; review0838; App caller1222 | Source-only3+14+24 preparation passed. Actual child, graph, origins, imports and receipts remain required; no installation. | Draft only |
-| F-App-early | Track branch D49 App checkpoint | App service; Luna | Same actual16138; final home has same tree | doing | App producer1227 | App board12:35 confirms5a9ff tree3311 equals homed993. Same16138 still running; no duplicate full or final GO. | 5a9ff / HOMEd993 |
+| F-App-early | Track D49 App checkpoint | App service; Luna | Same actual16138 terminal | blocked:app | App producer1227 | FAIL exit1 in1665s: Vitest19251 pass; Node257 pass,38 fail,26 skip. App owns categories and repairs; no final GO. | Tree3311 / HOMEd993 |
 | F-final-gates | Rerun final P1 to P5 | App; independent verdicts | Final integrated tuple and actual callers | blocked:app | App caller1222; Runtime FREEZE | App U3b/D39 now HOME d993. Final P1 to P5 and core suites precede Runtime main final build and ZIP. Farm stood down. | Final tuple custody pending |
 | A4-source | Zero reachable legacy film writers | App; independent Luna | Census0438 and review0444 | merged | App0438 and0444 | Source-only end state qualified; D31/D37 retained subset unchanged. Same head523 tests, three types and lint passed. | c0fe |
 
@@ -90,7 +90,7 @@ Historical23809/9310 remain separate NO-GO: P2 exit1/463 seconds,three failed/fi
 
 D45 six older diagnostics are NOT RETAINED; creation/loss unproved. Synthetic P3 f182af and current3896 synthetic1bc3 are same-tree authorized snapshots; P2 historical synthetic identity and actual daemon attribution stay UNKNOWN. Source-preflight20674/10144 were wrong artifact targets, each exit2/6 seconds and all originalsNOTRUN. No failed run was relabelled or resubmitted.
 
-Final gates: App board12:35 confirms reviewed U3b/D39 normally merged HOME d993, exact tree equal checkpoint5a9ff. Actual16138 continues with App producer1227. Final caller1222 prepares source/target/registration and authentic final custody. Final P4/P5 registrations0834/0838 remain PREPARED, gated:custody. Runtime FREEZE coordinates tuple; final P1 to P5 and core suites still required. Farm stands down; Runtime on main owns F-final/ZIP. D51 current snapshot holds until one live-main refresh at delivery.
+Final gates: App U3b/D39 normally merged HOME d993, exact tree equal checkpoint5a9ff. Actual16138 is terminal FAIL exit1/1665seconds: Vitest19251 passed; Node257 passed,38 failed,26 skipped. Producer1227 supplies bounded categories; upstream comparisons remain UNKNOWN. App owns existing offline-verifier, quality and release workers. No final full-suite GO. Final caller1222 prepares source/target/registration and authentic final custody. Final P4/P5 registrations0834/0838 remain PREPARED, gated:custody. Runtime FREEZE coordinates tuple; final P1 to P5 and core suites still required. Farm stands down; Runtime on main owns F-final/ZIP. D51 current snapshot holds until one live-main refresh at delivery.
 
 Blockers: App under D56.4 — actual11933 NO-GO. Completed1215 proves popup selection source defect and parent receipt oracle defect; adopt authors/reviews and existing element owner1214.
 Blockers: App under D56.4 — caller47ca independent1213 PASS; final tuple rebind and actual final P3 remain. Source602f and ledger PASS; old-tuple conditional superseded.
@@ -101,9 +101,9 @@ Later: D34 legacy accounting remains UNKNOWN; no duplicate audit owed. D47 memo/
 
 Safety: Prior process/reference/file/MONITOR/keep-awake/publication/graph/locked-v1/compact refusals remain stopped; no alternate cleanup or publication route. Managers make no product/test/generated/pin or Git mutation. Worker reports are copied byte-exact under D30. No weakened tests, upstream push or raw credential export.
 
-Disk: 8293322752 bytes free at 2026-10-24T12:43Z. All 1313 Proof workers are done; zero running markers. No finished non-KEEP worktree remains; three KEEP trees remain untouched. Prior cleanup and compact refusals remain stopped. No worker or heavy run launched.
+Disk: 8291995648 bytes free at 2026-10-24T12:46Z. All 1313 Proof workers are done; zero running markers. No finished non-KEEP worktree remains; three KEEP trees remain untouched. Prior cleanup and compact refusals remain stopped. No worker or heavy run launched.
 
-Pass 2026-10-24T12:43Z: Read new inbox tail, header D55b and full D57; all 1313 workers remain done. Inbox unchanged at790277bytes. D55b decides all eight P2 gestures CORE; final GO requires all eight. App U3b/D39 HOME d993, final caller first return1231 and same full16138 producer1227 remain App-owned. Runtime12:37 confirms builder/docs installed and final service first return1236 active. Rechecked every blocked Proof row against owner boards; final custody, source repairs and final proof remain open. No new Proof work, duplicate handoff or original run under D56.4.
+Pass 2026-10-24T12:46Z: Read PLAN, common rules, unchanged inbox and full header through D57/D56.4. Rechecked all blocked rows against normal hub App12:36 and Runtime12:39 boards. Actual full16138 is now terminal FAIL; producer1227 qualifies source tree3311, Vitest19251 PASS and Node38 failures. App owns failure classification and repair; no duplicate Proof audit or dispatch. Caller1231 actual decoded P2 source guard passed only; all child/import/native/build/browser/backend/provision/schema/HTTP/original phases remain NOTRUN. Runtime final service1236 remains active. Final custody, repairs and final proof remain open; no blocker cleared by a partial guard. D55b all eight P2 gestures CORE remains binding. The single handoff is complete; no new peer note or old-tuple run under D56.4.
 
 Inbox read through 790277 bytes; no new item since the completed handoff. Manager harness restarts from saved STATUS and INBOX after this bounded monitoring round; D56.4 lane stand-down remains in force.
 
