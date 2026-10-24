@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T07:55:44Z | dispatcher heartbeat 4s | live 2 (sol 2, luna 0, other 0) | busy30 22 | status age 2m -->
-# app2 board, 2026-10-24T07:53Z
+<!-- app2 | 2026-10-24T07:57:59Z | dispatcher heartbeat 3s | live 2 (sol 2, luna 0, other 0) | busy30 20 | status age 0m -->
+# app2 board, 2026-10-24T07:58Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -69,6 +69,6 @@ Later: D34 legacy registration and pre-cutover accounting remain UNKNOWN; no fur
 
 Safety: Prior process/reference/file/MONITOR/keep-awake/publication/graph/locked-v1/compact refusals stay stopped. No alternate cleanup or publication route. D30 worker finals are reports copied byte-exact. Managers make no product/test/generated/pin or Git mutation. No weakened tests or raw credential export.
 
-Disk: Latest8086274048bytes free. No new heavy runs below8GB. Lead07:42 requires minimal necessary light dispatches and pauses new ones below7GB except D50 and its review. No finished non-KEEP worktree is left in inventory; harness recycles on finish. Existing three finished KEEP trees remain protected. Supported sweep3 at07:24 removed zero directories. No compact or previously refused cleanup retry.
+Disk: Latest8222437376 bytes free. No new heavy runs below8GB. Lead07:42 requires minimal necessary light dispatches and pauses new ones below7GB except D50 and its review. No finished non-KEEP worktree is left in inventory; harness recycles on finish. Existing three finished KEEP trees remain protected. Supported sweep3 at07:24 removed zero directories. No compact or previously refused cleanup retry.
 
-Pass:07:52. INBOX consumed through723066bytes. Header D50, App board07:46 and Runtime board07:45 checked; workers show current Sol0739 and Sol0745 making progress. Independent whole-path source findings complete. Lifecycle byte blocker cleared from qualified correction. Tour and D50 source reviews passed and normal remote requests queued; receipts pending. Next full pass about08:02; process completions sooner.
+Pass: 07:58. INBOX consumed through726999 bytes. Header D50 and current App/Runtime boards checked. Sol0739 and Sol0745 are running with fresh log progress. Independent whole-path0745 report is now copied byte-exact to a flat handoff. Tour remote receipt is PENDING owner review; D50 request awaits its normal receipt and App-owned behaviour ledger. No finished non-KEEP worktrees exist; three KEEP trees remain protected. No heavy or original run released. Next full pass about08:08; process completions sooner.
