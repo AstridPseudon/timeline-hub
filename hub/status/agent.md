@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T14:24:23Z | dispatcher heartbeat 8s | live 3 (sol 0, luna 3, other 0) | busy30 14 | status age 3m -->
-# agent board, 2026-10-24T14:21:24Z
+<!-- agent | 2026-10-24T14:27:23Z | dispatcher heartbeat 4s | live 4 (sol 0, luna 4, other 0) | busy30 15 | status age 0m -->
+# agent board, 2026-10-24T14:25:11Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -65,7 +65,7 @@
 | F D60 baseline row | Bind final upstream comparison | Luna / Service | Exact upstream 924 | doing | Snapshot1342; review1349; Service1621 | Custody PASS. One meaningful upstream full1621 running; prior16315 was zero-body setup failure. No duplicate. | Upstream924437716 |
 | F current core159 | Qualify exact core checkpoint nodes | Luna | Actual home equivalence | review | Core1408; home custody1415 | Refreshed acf/e68 has152 PASS,6 FAIL,1 D13 UNKNOWN. Two FAIL are explicitD23. All159 ASTs and137 core source hashes exact47b. | acf87bd / e68cf |
 
-| R1 core fork remainder | Consume authenticated recorder ABI | HARD Sol / Luna | D61 Runtime history authority | doing | Sol1417 continues1354 | D61 resolves authority: authenticated Runtime history recorder_abi. Consumer starts now; full rewrite must refuse under abi2, genuine legacy remains. | Base e32a8a87c9 |
+| R1 core fork remainder | Consume authenticated recorder ABI | HARD Sol / Luna | D61 Runtime authority qualification | review | Sol1417; security1424; port1425 | Author249+17+46+134 PASS, full rewrite refuses. Independent cumulative security active; exact two-blob current port prepares. Producer hold retained. | d373386bc6 |
 
 | F core receipt rollup | Reconcile276 with new core proof | Luna | Exact current XML and D23 | merged | Return1343 PASS |162 PASS112 open2 deferred. Current FAIL overrides earlier PASS for98/99; historical164 claim superseded explicitly. | Evidence1343 |
 | F core held inputs | Bind timing deferrals and D13 input | Luna | Existing decisions inspected | merged | agt-F-core-held-inputs-1338 | Exact D23 covers170 and213. D13 requires missing existing7-key binding carrier and current native-tool tuple; UNKNOWN retained. | Evidence only |
@@ -76,8 +76,8 @@
 
 | Runtime five receipts | Publish actual home XML and map | Luna / Manager | Existing authentic1330 files | merged | Original home1330; handoff1409 | Two authentic files copied byte-exact to normal design publication, with full hashes. Runtime can qualify named membership without rerun. | Evidence only |
 
-| R2 proposal inverse | Emit complete inverse stage bindings | Luna | Whole path1415 source-cause PASS | doing | Author1421 | Authentic legacy producer request emits inverse.stage without physical effect bindings. Narrow Agent emitter fix active; strict Runtime validation retained. | Base5492fc8041 |
-| P4 D60 home binding | Bind actual refreshed service source | Luna | U2 and D39 home | doing | Bind1415 | Refresh existing row only, collect original3 and verify actual home/core1408 source equivalence. No body until single heavy slot clears. | Current home pending receipt |
+| R2 proposal inverse | Emit complete inverse stage bindings | Luna | Independent core and security review | review | Author1421; review1426 | Narrow emitter fix passes original1,new6,neighbor6 and static/vendor/artifact checks. Missing/duplicate/wrong-side/effect/source bindings refuse. | Author1421 candidate |
+| P4 D60 home binding | Bind actual refreshed service source | Luna | Pending D61 source and heavy slot | gated:source | Bind1415 prepared | Candidate317c binds5492/e68 and collected3; central row untouched. Normal guarded installation refreshes once final D61 source/client qualified. | Candidate317cc0c403 |
 
 | F D60 comparison | Compare exact276 against upstream924 | Luna / Service | Terminal service1621 XML | doing | Compare1420 | Prepares lossless exact-selector comparison while sole full runs. Missing or nonidentical evidence stays UNKNOWN; no duplicated body. | Upstream924 |
 
@@ -86,12 +86,12 @@ core open: 6 tracked:5 checkpoint cases and1 distinct proposal inverse failure. 
 regressions: 0 proven; env78,deferred2,pre-existing0,dead-scope0,unproven196. Missing upstream comparisons are not known gaps. D60 fixed baseline924; no upstream chase.
 Current receipts:162 PASS,112 open,2 approved deferred of276 at47b scope. Core152 PASS,5 open,2 deferred; noncore10 PASS107 open. Original full9758 stays terminal FAIL:17673 passed,231 failed,45 errors,4 skips,566 subtests. Historical267 stays263 closed/4 open, separate.
 D59 cut rows: Frozen6 source repairs merged. Four remaining fork originals use D61 Runtime-derived recorder_abi; unique HARD Sol1417 continues now, independent security review follows. No unsafe compatibility candidate merges. D13 genuine seven-key binding carrier/tool tuple remains missing and UNKNOWN.
-Gates and venues: Current integrated heads; D41 retired. P1/P2/P3 App service and verdicts; P4 Agent service; P5 and Composition main. P4 refreshed home binding1415 active; body waits single heavy slot. App U3b/D39 was merged at12:20Z.
+Gates and venues: Current integrated heads; D41 retired. P1/P2/P3 App service and verdicts; P4 Agent service; P5 and Composition main. P4 candidate1415 collected3, central installation pending final D61 source/client; body waits sole heavy slot. App U3b/D39 was merged at12:20Z.
 Admission: D56 drops Farm venue/source access. Historical403 and automatic refusal remain stopped. No alternate source,child,installed overlay or reconstruction requested.
 Disk: 9.54GB free before new workers. Recycled finished capture-export1055. G2-open-commit recycle refused DIRTY; left untouched. Sweep3 removed0; compaction packed0 and compressed2 old logs through existing helpers. Target15GB where reachable; no new heavy below8.5GB.
 Blockers: Runtime — publish D61 authenticated history recorder_abi exact field/slot and source qualification. Consumer Sol1417 proceeds in parallel; no orchestrator decision remains owed.
 Blockers: Agent — upstream full1621 running is the sole heavy body; exact D54 comparison and final full follow its actual terminal result. D13 input remains UNKNOWN under existing admission hold.
 Next ready: P4 home binding1415, proposal inverse author1421 and baseline comparison1420. Baseline1621 sole heavy body continues. D61 consumer Sol1417 proceeds alongside Runtime producer; no independent ready row waits.
-live 3 / cap 6; ready-undispatched 0. Dispatcher14:17:48Z reports1 Sol/2 Luna; comparison1420 and author1421 dispatched after, wholepath1415 finished. HARD Sol1417 is D61 authenticated custody after securityFAIL.
+live 3 / cap 6; ready-undispatched 0. Dispatcher14:24:23Z reports3 Luna/0 Sol; legacy author1421 finished and review1426 dispatched. All ready independent work assigned; no live Sol.
 Evidence: [Rollup](../../design/agt-F-d54-current-rollup-return-1343.json), [U2 author](../../workers/agt-U2-final-amend-1336/report.md), [ABI whole path](../../workers/agt-R2-ABI-whole-path-1354/report.md).
 Inbox read through App1404 adoption ask and ORCH D61. App ask answered by actual5492 receipt1419; D61 decision cleared immediately and consumer1417 active. Both asks have owned rows; no dependency waits unassigned. Last pass 2026-10-24T14:06:44Z.
