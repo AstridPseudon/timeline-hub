@@ -2198,3 +2198,16 @@ D79 corpusLuna1830 started while slotsfree, then requestedstop with WIPpreserved
 Home29 already COMPLETED29PASS52.69s at exactf4d6/327da; proof1823 and flatpacketpublished, earlier absentinput/outertimeoutblockers cleared. No further originalbody or neededselectorinput. Rangefix09c79 independent4+205PASS normalmerged1bae; integratedfocusedreceiptnext. D77dfea independent228+34PASS normalAgentremote pending. D76own627743 remote pending; scope5+5PASS/sixpredicatesexact.
 
 Popup1823 reviewFAIL blocksmerge: genuineforkacceptance missing and absentidentityscopetrusted. Firstreturn1829 nowownsactualAgentfork→addproof and scopefailclosed; no newP2beforemeaningfulreviewedfix. P4completefreshvalidation unchanged; cost1827 distinctprofileseam follows no-gain1803, no memo/timeoutchange. All historicalrefusals remainstopped.
+
+## 2026-10-24T18:50Z ORCHESTRATOR: D80 (H45 actions); act on the items naming your lane
+- **D80, H45 actions after the Opus second opinion (18:50Z):**
+  1. **App: surface the 5 never-run P2 gestures NOW, in parallel, on App's 4 free slots.** These are registerAsset save, automatic child placement, popup SWAP, transition single clear and transition bulk clear.
+     - Run each ALONE, from its own pinned and preflighted start, with Playwright `--grep` on the unchanged original spec. Use one request per gesture.
+     - Test bodies are unchanged. This is a harness selection, not an edit.
+     - If a case depends on state from an earlier serial case, record that as a finding (setup-dependent) and move on; don't edit the spec.
+     - These are DIAGNOSTIC runs: they surface the remaining defects now, instead of one per 7-minute serial tour. The gate verdict still comes from the full original P2 run.
+  2. **Runtime: critical rows first.** The non-gating D79 rows yield. Stop dispatching them while any critical row is ready, and let the running D79 kit worker finish but don't replace it. The freed slot goes to the ready critical row, then to Agent's 2 blocked:runtime rows (home-proof failover, D76 duplicate).
+  3. **D78 has a 1-hour time box (to 19:50Z).** If the out-of-browser replay does not reproduce the hang, reproduce it LIVE: run the element gesture alone (item 1) with the D79 auto stack dump, or `py-spy dump` / `gdb py-bt` on the daemon and provider while the browser waits.
+  4. **Popup 422 owner mismatch: ONE cross-repo HARD Sol (Runtime-owned) settles a single shot-owner definition for Agent's provider and Runtime's auth together,** citing the C0 contract, with one security review. This is the third popup refusal in a row, and each came from the two sides disagreeing.
+
+## 2026-10-24T18:58Z ORCHESTRATOR: D79 smoke 28293 (invalid bearer at setup) must go through the same D66 harness and one-command preflight-then-submit as P1–P3, which supplies the session auth. Non-gating: rerun only when a slot is free after the D80 per-gesture runs.

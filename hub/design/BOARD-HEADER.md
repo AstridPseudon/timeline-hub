@@ -201,6 +201,15 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **Order:** Runtime first (producer), then D39 client regeneration if the contract changed, then Agent and App in parallel. P2/P3 and the core suites then run on the refreshed heads.
   - At delivery, F-final applies the squashed patches to these same tips. A new upstream move after this point triggers another refresh only if the owner asks.
   - **Test-file conflicts (13:40Z): keep BOTH.** Upstream's new and changed tests are taken as they are, and every one of our live test cases is re-applied on top: adapted to upstream's structure, never dropped. Taking 'incoming' and discarding our cases is weakening, so it's refused. The independent review maps every pre-merge live predicate to its post-merge location. Product-code conflicts follow the default: upstream behaviour, with ours adapted.
+- **D80, H45 actions after the Opus second opinion (18:50Z):**
+  1. **App: surface the 5 never-run P2 gestures NOW, in parallel, on App's 4 free slots.** These are registerAsset save, automatic child placement, popup SWAP, transition single clear and transition bulk clear.
+     - Run each ALONE, from its own pinned and preflighted start, with Playwright `--grep` on the unchanged original spec. Use one request per gesture.
+     - Test bodies are unchanged. This is a harness selection, not an edit.
+     - If a case depends on state from an earlier serial case, record that as a finding (setup-dependent) and move on; don't edit the spec.
+     - These are DIAGNOSTIC runs: they surface the remaining defects now, instead of one per 7-minute serial tour. The gate verdict still comes from the full original P2 run.
+  2. **Runtime: critical rows first.** The non-gating D79 rows yield. Stop dispatching them while any critical row is ready, and let the running D79 kit worker finish but don't replace it. The freed slot goes to the ready critical row, then to Agent's 2 blocked:runtime rows (home-proof failover, D76 duplicate).
+  3. **D78 has a 1-hour time box (to 19:50Z).** If the out-of-browser replay does not reproduce the hang, reproduce it LIVE: run the element gesture alone (item 1) with the D79 auto stack dump, or `py-spy dump` / `gdb py-bt` on the daemon and provider while the browser waits.
+  4. **Popup 422 owner mismatch: ONE cross-repo HARD Sol (Runtime-owned) settles a single shot-owner definition for Agent's provider and Runtime's auth together,** citing the C0 contract, with one security review. This is the third popup refusal in a row, and each came from the two sides disagreeing.
 - **D79, three cheap robustness rows, in parallel and NON-gating (18:30Z, owner asked for robustness without bureaucracy or slowdown).** Luna only, one row each, author tests only (no review gate), never on the critical path, and never preempting a critical-path slot. Promote one to a gate only if it is green and I decide so.
   1. **App: live-edit smoke (1 Playwright case on the D66 plain stack, pinned + preflighted).** Open the editor, have the Agent CLI commit an edit to the same timeline, and assert:
      - (a) the open timeline shows the Agent's edit, after the turn completes, within 10 s;
@@ -314,6 +323,7 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - The ZIP README lists it as a post-install check, with the exact env vars to set.
   - Agent's core-open target is therefore 6 (4 fork + 2 forward), all on D62 / forward-created auth.
   - This is not a permission-refusal case, so no owner action is needed.
+- **H45 (18:55Z):** ETA ~12:00Z 25 Oct (06Z 25 Oct to 04Z 26 Oct). Gates: P1 GO current (26312/1616); P2 22847 0/3/5; P3 NO-GO (D75b applied); P4 ten-note 45 s FAIL. Critical path: D80 per-gesture diagnostics plus the D78 element hang, then a full P2 rerun.
 - **H43 (16:45Z) gates:** P2 25943 NO-GO (0 pass / 3 fail / 5 notrun: element doc.patch hang -> Runtime Sol; popup 422 physical observation -> Runtime whole-path, D54a check vs 8b32/bc227; parent reads present -> App 1625). P3 10033 NO-GO on the history oracle missing recorder_abi (App fix done). P1 current control 13564 fails its initial split (App Sol1600). Agent core open 3 (inverse proof pending on bc227; P4 single edit; P4 ten-note timeout). Reverse diff done: 47 restored, 178 audited (167/9/2).
 - **H42 (15:40Z):** ETA ~08:00Z 25 Oct (03-22Z). Critical path: App plain-launch boot (D66) -> P2/P3 parallel; Runtime D62 bundle -> one regen -> Agent 4 fork + 2 forward proofs -> manifest pin -> cut.
 - **D66, H42 cuts after the Opus second opinion (15:35Z):**

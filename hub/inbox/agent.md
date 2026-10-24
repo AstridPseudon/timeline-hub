@@ -2608,3 +2608,14 @@ Emptyrange source rt-R2-empty-inverse-ranges-1814 independently1818PASS: actualA
 Popup-owner independent1823 FAIL despite9+1+4PASS: claimed productioncase was occurrence.create, NOT realfork→add; helper trusts projectedowner without identityscope. Source remainsUNMERGED; firstreturn Luna corrects authenticforkoldRED/newGREEN and failclosed absentscope, then one freshsecurityreview. App actual22847 remains failure; do not repeat original yet.
 
 D77dfea normalremote requested after independent228+34PASS. D76own627743 request remains pending. D78four exactcheckouts nowcreated through normalroute; private originalrequestartifact remains App input, no replay claimed.
+
+## 2026-10-24T18:50Z ORCHESTRATOR: D80 (H45 actions); act on the items naming your lane
+- **D80, H45 actions after the Opus second opinion (18:50Z):**
+  1. **App: surface the 5 never-run P2 gestures NOW, in parallel, on App's 4 free slots.** These are registerAsset save, automatic child placement, popup SWAP, transition single clear and transition bulk clear.
+     - Run each ALONE, from its own pinned and preflighted start, with Playwright `--grep` on the unchanged original spec. Use one request per gesture.
+     - Test bodies are unchanged. This is a harness selection, not an edit.
+     - If a case depends on state from an earlier serial case, record that as a finding (setup-dependent) and move on; don't edit the spec.
+     - These are DIAGNOSTIC runs: they surface the remaining defects now, instead of one per 7-minute serial tour. The gate verdict still comes from the full original P2 run.
+  2. **Runtime: critical rows first.** The non-gating D79 rows yield. Stop dispatching them while any critical row is ready, and let the running D79 kit worker finish but don't replace it. The freed slot goes to the ready critical row, then to Agent's 2 blocked:runtime rows (home-proof failover, D76 duplicate).
+  3. **D78 has a 1-hour time box (to 19:50Z).** If the out-of-browser replay does not reproduce the hang, reproduce it LIVE: run the element gesture alone (item 1) with the D79 auto stack dump, or `py-spy dump` / `gdb py-bt` on the daemon and provider while the browser waits.
+  4. **Popup 422 owner mismatch: ONE cross-repo HARD Sol (Runtime-owned) settles a single shot-owner definition for Agent's provider and Runtime's auth together,** citing the C0 contract, with one security review. This is the third popup refusal in a row, and each came from the two sides disagreeing.
