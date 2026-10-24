@@ -2,6 +2,7 @@ import type {ResolvedTimelineConfig} from '@/tools/video-editor/types/index.ts';
 import {boundaryReport, type BoundaryDisclosure} from '../../../../vendor/astrid-browser/astrid/packs/local/rendering/elements/boundary';
 import {cueIdentity, intentContext, relevantIntentOwners, opaqueActivationCues, type IntentOwner, type SeamIntent} from '../../../../vendor/astrid-browser/astrid/packs/local/rendering/elements/seam-intent';
 import {timelineClipDurationMs} from './shotCompositionTiming.ts';
+import {coversFrame} from './visualSeamCoverage.ts';
 
 type Json = Record<string, unknown>;
 const record = (v: unknown): Json => v && typeof v === 'object' && !Array.isArray(v) ? v as Json : {};
@@ -94,6 +95,14 @@ export function visualSeamOwners(config: ResolvedTimelineConfig, metadataOnly = 
   }
   for (const cue of opaqueActivationCues(owners, frames)) {
     owners.find(o => o.path === cue.path)!.disclosure.cues.push(cue);
+  }
+  // The persisted portable intent and diagnostic analysis must see the same
+  // cues: an opaque overlay's start is not a picture-change risk.
+  const fullFrameClips = new Set(config.clips.filter(clip => coversFrame(clip, tracks.get(clip.track), config)).map(clip => clip.id));
+  for (const owner of owners) {
+    if (owner.disclosure.opaque.length > 0 && !fullFrameClips.has(owner.clipId)) {
+      owner.disclosure = {...owner.disclosure, cues: owner.disclosure.cues.filter(cue => cue.kind !== 'activation')};
+    }
   }
   return owners;
 }
