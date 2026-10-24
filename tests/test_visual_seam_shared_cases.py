@@ -38,3 +38,7 @@ def test_shared_visual_seam_cases():
                 "clips": [path[-1] for path in paths],
             })
         assert actual == case["expected"], case["name"]
+        expected_warnings = case.get("expectedWarnings")
+        if expected_warnings is not None:
+            assert sum(cue["kind"] == "activation" for cue in report["cues"]) == expected_warnings["activation"], case["name"]
+            assert len(report["opaqueElements"]) == expected_warnings["opaque"], case["name"]

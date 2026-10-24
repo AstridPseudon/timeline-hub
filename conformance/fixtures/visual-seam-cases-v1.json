@@ -5,7 +5,7 @@
       "name": "overlapping sprites on an overlay track",
       "timeline": {
         "output": {"resolution": "1920x1080", "fps": 30, "file": "case.mp4"},
-        "tracks": [{"id": "overlay", "kind": "visual", "role": "overlay", "label": "Sprites"}],
+        "tracks": [{"id": "overlay", "kind": "visual", "role": "output", "label": "Sprites"}],
         "clips": [
           {"id": "sprite-a", "clipType": "am-sprite", "track": "overlay", "at": 0, "hold": 2},
           {"id": "sprite-b", "clipType": "am-sprite", "track": "overlay", "at": 1, "hold": 2}
@@ -20,7 +20,7 @@
         "output": {"resolution": "1920x1080", "fps": 30, "file": "case.mp4"},
         "tracks": [
           {"id": "picture", "kind": "visual", "label": "Picture"},
-          {"id": "overlay", "kind": "visual", "role": "overlay", "label": "Sprites"}
+          {"id": "overlay", "kind": "visual", "role": "output", "label": "Sprites"}
         ],
         "clips": [
           {"id": "base", "clipType": "media", "asset": "base", "track": "picture", "at": 0, "hold": 2,
@@ -37,7 +37,7 @@
       "name": "gap on an overlay track",
       "timeline": {
         "output": {"resolution": "1920x1080", "fps": 30, "file": "case.mp4"},
-        "tracks": [{"id": "overlay", "kind": "visual", "role": "overlay", "label": "Icons"}],
+        "tracks": [{"id": "overlay", "kind": "visual", "role": "output", "label": "Icons"}],
         "clips": [
           {"id": "icon-a", "clipType": "am-icon", "track": "overlay", "at": 0, "hold": 1},
           {"id": "icon-b", "clipType": "am-icon", "track": "overlay", "at": 2, "hold": 1}
@@ -49,7 +49,7 @@
       "name": "overlapping full-frame media on the base track",
       "timeline": {
         "output": {"resolution": "1920x1080", "fps": 30, "file": "case.mp4"},
-        "tracks": [{"id": "picture", "kind": "visual", "role": "base", "label": "Picture"}],
+        "tracks": [{"id": "picture", "kind": "visual", "role": "output", "label": "Picture"}],
         "clips": [
           {"id": "base-a", "label": "Base A", "clipType": "media", "asset": "a", "track": "picture", "at": 0, "hold": 2},
           {"id": "base-b", "label": "Base B", "clipType": "media", "asset": "b", "track": "picture", "at": 1, "hold": 2}
@@ -62,7 +62,7 @@
       "name": "gap in the base picture",
       "timeline": {
         "output": {"resolution": "1920x1080", "fps": 30, "file": "case.mp4"},
-        "tracks": [{"id": "picture", "kind": "visual", "role": "base", "label": "Picture"}],
+        "tracks": [{"id": "picture", "kind": "visual", "role": "output", "label": "Picture"}],
         "clips": [
           {"id": "base-a", "label": "Base A", "clipType": "media", "asset": "a", "track": "picture", "at": 0, "hold": 1},
           {"id": "base-b", "label": "Base B", "clipType": "media", "asset": "b", "track": "picture", "at": 2, "hold": 1}
@@ -75,7 +75,7 @@
       "name": "declared transition overlap",
       "timeline": {
         "output": {"resolution": "1920x1080", "fps": 30, "file": "case.mp4"},
-        "tracks": [{"id": "picture", "kind": "visual", "role": "base", "label": "Picture"}],
+        "tracks": [{"id": "picture", "kind": "visual", "role": "output", "label": "Picture"}],
         "clips": [
           {"id": "base-a", "label": "Base A", "clipType": "media", "asset": "a", "track": "picture", "at": 0, "hold": 2},
           {"id": "base-b", "clipType": "media", "asset": "b", "track": "picture", "at": 1.8, "hold": 2,
@@ -88,7 +88,7 @@
       "name": "sub-frame and translucent media do not establish an opaque base overlap",
       "timeline": {
         "output": {"resolution": "1920x1080", "fps": 30, "file": "case.mp4"},
-        "tracks": [{"id": "picture", "kind": "visual", "role": "base", "label": "Picture"}],
+        "tracks": [{"id": "picture", "kind": "visual", "role": "output", "label": "Picture"}],
         "clips": [
           {"id": "base-a", "clipType": "media", "asset": "a", "track": "picture", "at": 0, "hold": 2},
           {"id": "short", "clipType": "media", "asset": "b", "track": "picture", "at": 1, "hold": 1, "height": 540},
@@ -110,6 +110,42 @@
       },
       "expected": [{"code": "boundary/overlap", "frame": 30, "clips": ["plate-a", "plate-b"]}],
       "expectedLabels": ["Plate A", "Plate B"]
+    },
+    {
+      "name": "canonical asset_id media overlap",
+      "timeline": {
+        "output": {"resolution": "1920x1080", "fps": 30, "file": "case.mp4"},
+        "tracks": [{"id": "picture", "kind": "visual", "role": "output", "label": "Picture"}],
+        "clips": [
+          {"id": "asset-a", "label": "Asset A", "clipType": "media", "asset_id": "a", "track": "picture", "at": 0, "hold": 2},
+          {"id": "asset-b", "label": "Asset B", "clipType": "media", "asset_id": "b", "track": "picture", "at": 1, "hold": 2}
+        ]
+      },
+      "expected": [{"code": "boundary/overlap", "frame": 30, "clips": ["asset-a", "asset-b"]}],
+      "expectedLabels": ["Asset A", "Asset B"],
+      "expectedWarnings": {"activation": 0, "opaque": 0}
+    },
+    {
+      "name": "occurrence-wide opaque overlay effect does not warn",
+      "occurrence": {"id": "occ-effect", "start_ms": 0, "duration_ms": 2000, "track": "picture"},
+      "timeline": {
+        "output": {"resolution": "1920x1080", "fps": 30, "file": "case.mp4"},
+        "tracks": [
+          {"id": "picture", "kind": "visual", "role": "output", "label": "Picture"},
+          {"id": "overlay", "kind": "visual", "role": "output", "label": "Overlay"}
+        ],
+        "clips": [
+          {"id": "base", "clipType": "media", "asset_id": "base", "track": "picture", "at": 0, "hold": 2,
+            "app": {"canonical": {"occurrenceId": "occ-effect", "sourceClipId": "base"},
+              "canonicalTiming": {"occurrenceStartMs": 0, "occurrenceDurationMs": 2000},
+              "canonicalEffects": {"localCount": 0, "timeline": [{"id": "wide-overlay", "type": "am-overlay", "at": 0.5, "hold": 1, "track": "overlay"}]}}}
+        ],
+        "effects": [
+          {"id": "wide-overlay", "type": "am-overlay", "at": 0.5, "hold": 1, "track": "overlay"}
+        ]
+      },
+      "expected": [],
+      "expectedWarnings": {"activation": 0, "opaque": 0}
     }
   ]
 }

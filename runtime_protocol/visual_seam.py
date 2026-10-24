@@ -205,6 +205,15 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
         duration = clip_seconds(clip, (bound[1] - offset) * clip["speed"] if bound else 0, speed=clip["speed"])
         track = clip.get("track", inherited_track or "video")
         definition = (track_definitions if track_definitions is not None else tracks).get(track, {})
+        # Canonical child clips may carry the schema's asset_id spelling. Resolve
+        # that reference before coverage classification so media aliases retain
+        # the same full-frame semantics as clips already normalized to asset.
+        asset_key = clip.get("asset")
+        if not isinstance(asset_key, str) or not asset_key.strip():
+            asset_id = clip.get("asset_id")
+            if isinstance(asset_id, str) and asset_id.strip():
+                asset_key = asset_id
+                clip["asset"] = asset_id
         primary = render and (track in picture_lanes or definition.get("kind") == "visual") and picture_clip(clip, definition)
         covered = render and covers_frame(clip, definition, config)
         if not authored_continuity and primary and covered:
@@ -233,7 +242,6 @@ def normalize_closure(parent, shots, internal, *, timeline_id, materialize=False
         if "to" in clip or "to_ms" in clip:
             clip["to"] = seconds(raw, "to") + source_offset
             clip.pop("to_ms", None)
-        asset_key = clip.get("asset", clip.get("asset_id"))
         asset = (registry.get("assets") or {}).get(asset_key, {})
         source = next((asset[k] for k in ("content_sha256", "object_id", "media_id", "digest", "file") if isinstance(asset.get(k), str)), None)
         disclosure = boundary_report({"clip": clip, "params": clip.get("params", {}), "fps": fps, "startFrame": start, "endFrame": end,
