@@ -200,34 +200,29 @@ export function elementApplyUiScript(): string {
   })();`;
 }
 
-function applyButtonState(terminal: ElementApplyTerminal): UiApplyButton {
-  try {
-    const button = (globalThis as { __timelineP2ElementApplyButton?: unknown }).__timelineP2ElementApplyButton;
-    if (!button || typeof button !== 'object' || typeof (button as { closest?: unknown }).closest !== 'function') return 'unknown';
-    const dialog = document.querySelector('[role="dialog"]');
-    const owner = (button as { closest(selector: string): unknown }).closest('[role="dialog"]');
-    if (!dialog || owner !== dialog) return 'unknown';
-    if (terminal === 'accepted') return 'applied';
-    if (terminal === 'failed' || terminal === 'aborted') return 'refused';
-    return (button as { disabled?: unknown }).disabled === true ? 'applying' : 'idle';
-  } catch {
-    return 'unknown';
-  }
-}
-
 export function readElementApplyUiState(terminal: ElementApplyTerminal = 'unknown'): ElementApplyUiState {
   try {
+    const unknownUi: ElementApplyUiState = { stage: 'unknown', connection: 'unknown', dialog: 'unknown', status: 'unknown', applyButton: 'unknown' };
     const connectionNode = document.querySelector('[data-testid="runtime-connection-status"]');
     const connectionValue = connectionNode?.getAttribute('data-state');
     const connection: UiConnection = connectionValue === 'connected' ? 'connected' : connectionValue === 'disconnected' ? 'disconnected' : 'unknown';
     const dialog = document.querySelector('[role="dialog"]');
-    const applyButton = applyButtonState(terminal);
+    const button = (globalThis as { __timelineP2ElementApplyButton?: unknown }).__timelineP2ElementApplyButton;
+    let applyButton: UiApplyButton = 'unknown';
+    if (button && typeof button === 'object' && typeof (button as { closest?: unknown }).closest === 'function') {
+      const owner = (button as { closest(selector: string): unknown }).closest('[role="dialog"]');
+      if (dialog && owner === dialog) {
+        applyButton = terminal === 'accepted' ? 'applied'
+          : terminal === 'failed' || terminal === 'aborted' ? 'refused'
+            : (button as { disabled?: unknown }).disabled === true ? 'applying' : 'idle';
+      }
+    }
     const status: UiStatus = applyButton === 'applied' ? 'applied'
       : applyButton === 'applying' ? 'pending'
         : applyButton === 'refused' ? 'failed' : 'unknown';
     return { stage: 'retained', connection, dialog: dialog ? 'present' : 'absent', status, applyButton };
   } catch {
-    return UNKNOWN_UI;
+    return { stage: 'unknown', connection: 'unknown', dialog: 'unknown', status: 'unknown', applyButton: 'unknown' };
   }
 }
 

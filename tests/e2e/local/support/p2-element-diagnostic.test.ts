@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, statSync } from 'node:fs';
 import { test } from 'node:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { runInNewContext } from 'node:vm';
 import type { Request, Response } from '@playwright/test';
 import { ElementApplyDiagnosticCollector, closeElementApplyDiagnosticContext, elementApplyDiagnosticPageFixture, installElementApplyDiagnostic, readElementApplyUiState, retainElementApplyDiagnostic, serializeElementApplyDiagnostic, type ElementApplyDiagnosticArtifact } from './p2-element-diagnostic.ts';
 
@@ -205,6 +206,36 @@ test('the retained writer keeps real allowlisted page state and redacts maliciou
   const serialized = readFileSync(output, 'utf8');
   assert.doesNotMatch(serialized, /Bearer secret|private DOM text|authorization|domText/);
   assert.match(serialized, /"connection":"connected"/);
+});
+
+test('the actual evaluated UI sampler is self-contained and only returns bounded state', () => {
+  const dialog = { textContent: 'Applied private DOM text', dataset: { secret: 'private data' } };
+  const button: { disabled: boolean; textContent: string; closest: () => typeof dialog | null } = { disabled: false, textContent: 'Apply private text', closest: () => dialog };
+  const document = {
+    querySelector(selector: string) {
+      if (selector === '[data-testid="runtime-connection-status"]') return { getAttribute: () => 'connected' };
+      if (selector === '[role="dialog"]') return dialog;
+      throw new Error('unexpected selector');
+    },
+  };
+  const context = { document, __timelineP2ElementApplyButton: button };
+  const readInBrowser = runInNewContext(`(${readElementApplyUiState.toString()})`, context) as (terminal?: string) => unknown;
+  const readState = (terminal?: string) => JSON.parse(JSON.stringify(readInBrowser(terminal))) as Record<string, string>;
+
+  assert.deepEqual(readState(), { stage: 'retained', connection: 'connected', dialog: 'present', status: 'unknown', applyButton: 'idle' });
+  button.disabled = true;
+  assert.deepEqual(readState('pending'), { stage: 'retained', connection: 'connected', dialog: 'present', status: 'pending', applyButton: 'applying' });
+  button.disabled = false;
+  assert.deepEqual(readState('accepted'), { stage: 'retained', connection: 'connected', dialog: 'present', status: 'applied', applyButton: 'applied' });
+  assert.deepEqual(readState('failed'), { stage: 'retained', connection: 'connected', dialog: 'present', status: 'failed', applyButton: 'refused' });
+  assert.deepEqual(readState('unexpected'), { stage: 'retained', connection: 'connected', dialog: 'present', status: 'unknown', applyButton: 'idle' });
+  button.closest = () => null;
+  assert.deepEqual(readState('accepted'), { stage: 'retained', connection: 'connected', dialog: 'present', status: 'unknown', applyButton: 'unknown' });
+  assert.doesNotMatch(JSON.stringify(readState('accepted')), /private|text|data|secret/);
+
+  const malformedContext = { document: { querySelector: () => { throw new Error('malformed document'); } } };
+  const readMalformed = runInNewContext(`(${readElementApplyUiState.toString()})`, malformedContext) as () => unknown;
+  assert.deepEqual(JSON.parse(JSON.stringify(readMalformed())), { stage: 'unknown', connection: 'unknown', dialog: 'unknown', status: 'unknown', applyButton: 'unknown' });
 });
 
 test('the collector caps retained events at its bound', () => {
