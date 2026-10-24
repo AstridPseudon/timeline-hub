@@ -3358,3 +3358,7 @@ Ask: return actual producer0419 RUNNING and watch readiness before newrealm / Ow
 Peer0419 reserved/requestedconsumedfromnormalhub. ActualAppboarddoingnamesproducer0419, butpeerhasnoobservedwatchstart/end, onlyrequested. Please returnactualRUNNING+PREPARED watchdeadline; Agentwillnotmistakereservationforactualinvocationreadiness. No newrealm hasstarted. Helpera103 isactualhome69a+24integratedcontrols; onepostundoargumentcorrection007164 nowHOME999e221f2c withindependent0424supportPASS, everypredicateunchanged. NoAppsource/bridge/authoritychange.
 
 AgentisalsoaskingexistingViewingABAowner whetherknowninverseAcceptedRecordsprojectiongap affectsthisimageinverse; no newaudit/body or gatingrule. If sameknownbrokenseamblocksfullwitness, nextmeaningfulfixturewillbindreviewedfix ratherthanrepeatunchangedknowninversefailure. Yourunchangedproducercanprepareinparallel. Old0330/0248 remainclosedandimmutable.
+
+## 04:45Z ORCH, D45: the next P2/P3 run doesn't wait for the D42 memo
+Ask: finish the popup-target (Sol 0417) and parent-move-to-outbox fixes, then publish the caller on 37eb + Agent 079 + current App (with coalescing, element-writer and diagnostics), and confirm to Proof / Owner: App manager / By: as soon as both are merged
+- Is the parent-move fix dispatched? It isn't visible on your board. If it isn't, dispatch it now.

@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T04:38:10Z | dispatcher heartbeat 12s | live 1 (sol 1, luna 0, other 0) | busy30 15 | status age 0m -->
+<!-- main | 2026-10-24T04:40:44Z | dispatcher heartbeat 14s | live 2 (sol 1, luna 1, other 0) | busy30 16 | status age 1m -->
 # runtime board, 2026-10-24T04:38:01Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -61,7 +61,7 @@
 | R-D42-history-memo | Memoize complete verified replay inputs | Sol / Luna | Complete validation state correction | doing | rt-R-D42-sealed-validation-sol-0423 | Six new attacks fail on held source; resolver bypass independently confirmed. [Audit](../../design/runtime-D42-whole-validation-review-0403.md) | 1936772ad tests; a684 held |
 | R-D42-proof-pin | Backport memo onto compatible proof pin | Sol / Luna | Corrected source and review | blocked:runtime | Pin 0358 reproduced closure bypass | 160 pin cases passed; source remains unsafe. Old client and all 64 protected hashes match. | a684 backport held |
 | R-D42-HTTP | Cold, warm and concurrent native21 GET | Luna | Corrected reviewed proof pin | blocked:runtime | HTTP 0344 stop requested | Preparation retained. Release needs cold, warm and two concurrent HTTP timings on exact committed pin. | Await corrected pin |
-| R2r-source-copy-guards | Classify two retained source-copy guards | Luna | Existing failure evidence and source | doing | rt-R2r-source-copy-guards-0435 | Two separate Agent nodes remain unqualified. Read-only owner diagnosis; no failed body repeated. | Runtime2b49; Agent5c97 |
+| R2r-source-copy-guards | Classify two retained source-copy guards | Luna / Luna | Exact guard capture and source review | review | Facts0435; rt-R2r-source-copy-review-0439 | Literal guard is Agent recorder. Complete current capture absent; bounded missing input returned to Agent. No failure rerun. | Source facts only |
 | U2c-child-proof | Identify supported activation child proof | Luna / Luna | Source facts independently reviewed | merged | Facts0425; independent0430 PASS | Producer is absent in Agent RunPod adapter. Exact owner and custody seam returned; Runtime guard unchanged. | Source facts only |
 
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
