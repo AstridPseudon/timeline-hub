@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T10:54:48Z | dispatcher heartbeat 11s | live 2 (sol 0, luna 2, other 0) | busy30 2 | status age 1m -->
-# app2 board, 2026-10-24T10:54Z
+<!-- app2 | 2026-10-24T10:57:02Z | dispatcher heartbeat 10s | live 2 (sol 0, luna 2, other 0) | busy30 2 | status age 0m -->
+# app2 board, 2026-10-24T10:56Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -9,7 +9,7 @@
 | P4 | CLI, Python, sheet, ten notes and rerun | Sol; Luna; service | Complete on recorded tuple | merged | 17739;28012;11615 | Ten notes in one commit, per-step undo/redo, restart, show/history and200-409-200 conflict rerun passed. | Agent543d andf6cda / Runtimea5d |
 | readiness-after-bootstrap | Qualify mounted readiness | App service; Proof review | D45 and current leaves passed | merged | D45; current23809 and9310 | D45 readiness passed. Current producer reports P2 readiness19.5 seconds and P3 readiness41.4 seconds; downstream failures remain. | App663 / Agent079 / Runtime37eb |
 | P2 | Eight original gestures | App service; Proof verdict | Final caller1043 and independent review | blocked:app | Historical23809; final caller1043 | Prior NO-GO remains. Current d6ed pure source PASS695+67 and actual333b custody1035 PASS; final P2-only binding active. | HOME d6ed;333b;37eb |
-| P3 | Original Gate5 journey | App service; independent Luna | Producer1040 packet received | review | Actual3896; Proof verdict1053 | Exit1 in268 seconds. Readiness, predecessor and reset passed. Same A retry precedes B; later restart/undo tail not run. Verdict worker queued. | HOME82cb; old079 and37eb |
+| P3 | Original Gate5 journey | App service; independent Luna | Strict fault-order source1053 | doing | Actual3896; verdict1053 NO-GO | Independent NO-GO. Exit1/268 seconds at attempts1 versus2. Predecessor/reset and exact A retry reached; B and restart/undo tail not run. | HOME82cb; old079 and37eb |
 | P2-source-repairs | Real catalog, parameter, parent and popup callers | App Sol; independent Luna | Source reviews and home receipts | merged | App0603;0554;0547;0536;0545 | Exact am-burst, form ownership, raw V2 and parent preservation source qualified. Current browser credit remains separate. | Catalogb238 / paramse42 / popup79cd / parent7551 |
 | P2-oracle-baseline | Exact popup rendered targets and ADD claims | Luna; independent Luna | Reviews0418 and0526 | merged | Proof0413 and0521; home receipts | Two rendered selectors and exact asset-then-clip creation claims reviewed. All original downstream predicates retained. | c768 and5f43 |
 | P2-media-timing | Preserve prepared media canonical timing | App Sol; independent Luna | Independent0623 and joined0629 PASS | merged | Author0616; review0623; join0629 | Unchanged positive was pre-parent green, joined red, repaired green. Exact27-file union690, Gate5controls12, three types and lint passed. | 6635416195 / HOME9b810 |
@@ -64,7 +64,7 @@ All eight current safe JSON hashes, schemas, bounds, security and correlations p
 D48/D49 final map0708 and independent0719 PASS establish existing source routes and App-host venue, not READY final execution. Runtime FREEZE coordinates final joins and D39 adoption. App host recipe0754 and independent0758 qualify preparation only. Actual App draft0834 and cumulative0838 now qualify source preparation for missing P4/P5 registrations; actual install is gated by final tuple/receipts. Exact final Agent source, actual registration installation, authenticated child/import custody and preflight remain pending. App U3b integration remains gated on P2/P3 GO. Final P1–P5, full venues and Farm F-final/ZIP follow qualified final heads.
 
 Blockers: App — final P2-only caller1043, independent review and installation precede ONE P2. Pure-product1036 and custody1035 PASS clear those waits.
-Blockers: Proof — verdict1053 and strict fault-order source1053 are dispatched on actual3896. No new original P3; protected-byte proposal needs a concrete decision if required.
+Blockers: Proof — strict fault-order source1053 is running after independent actual3896 NO-GO. Full actual snapshot identity and direct safe-file custody remain unqualified.
 
 Blockers: Freeze — final tuple, actual App host inputs, final gates and D49 full checkpoints precede Farm F-final and ZIP.
 Next ready: Review strict fault-order source1053 when complete. App final P2-only caller1043 is active; source1036 and custody1035 waits are clear.
@@ -78,3 +78,5 @@ Safety: Prior process/reference/file/MONITOR/keep-awake/publication/graph/locked
 Disk: Latest8432926720 bytes free. New completed read-only0951 worktree recycled normally after orphan finalization; branch and report retained. All other finished worktrees are KEEP or recycled. Supported10:44 sweep3 exit0 removed zero directories. No new heavy below8GB; minimal light below8GB and pause below7GB except D50/review. Prior compact and other refused cleanup remain stopped.
 
 Pass: 2026-10-24T10:54Z. Read NEW normal hub peer1044 and actual producer1040, authorSol1040 and independent whole-path1040. Exact retry A is confirmed by same key/body/reply hashes; B pointerdown follows it. No product defect or early B inferred. Dispatched independent same-ID terminal verdict1053 and sole strict fault-order author1053 on exact82cb. Author may change helper implementation only while every original assertion and protected test byte stays exact, otherwise returns a concrete protected-scope proposal. No new original P3 is released. Pure joined1036 PASS695+67+30+11/types/lint and actual P2 custody1035 PASS clear blocked waits; App finalcaller1043 remains active. Reports copied byte-exact from normal hub. No duplicate trace collector or unchanged suite. Supported sweep3 exit0 removed zero directories; prior cleanup refusals remain stopped. Final freeze and P1/P4 scopes unchanged.
+
+Evidence current: [P3 actual3896 independent verdict1053](../../design/handoff-ap2-P3-solo-result-verdict-1053.md). Source/custody qualification FAIL at explicit missing full snapshot and direct-file limits; journey independently NO-GO. Hash5ede is actual lines1608–1741 and body0deda lines1534–1704. Later facd label not reproducible; no source difference inferred. Original source remains unchanged.
