@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T04:08:08Z | dispatcher heartbeat 3s | live 3 (sol 1, luna 2, other 0) | busy30 17 | status age 0m -->
+<!-- app | 2026-10-24T04:10:52Z | dispatcher heartbeat 1s | live 3 (sol 1, luna 2, other 0) | busy30 18 | status age 0m -->
 # app board, 2026-10-24T04:10Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -54,10 +54,10 @@
 | A4-final-census | Verify zero reachable legacy writers | Luna; independent review | Review0345 FAIL | doing | Popup source0349 assigned | Original zero-writer claim withdrawn. Actual scoped popup fallback identified; independent element proof remains valid. | Report only |
 | A2-popup-wrapper | Move scoped popup saves onto A2 outbox | Sol; Luna review | Author 0349 complete | review | app-A2-popup-wrapper-review-0408 | Author 340 tests, three types and lint passed. Genuine mounted path and missing-authority refusal covered; independent review active. | 6efdb11993 |
 | readiness-D42-caller | Prepare qualified D42 caller | Sol | Qualified Runtime memo proof pin | blocked:runtime | app-readiness-D42-caller-sol-0348 | Draft24+28+4 and4 extra controls passed; exact old receipts checked. Shared rows unchanged; final pin and keyed child required. | Draft only |
-| P2-parent-outbox | Reproduce parent move dispatch boundary | Sol | Existing source controls | doing | app-P2-parent-transition-sol-0401 | Mirrored parent passes; child and top-level forms reproduce preappend refusals. Original historical trigger remains unknown. | Held controls |
+| P2-parent-outbox | Reproduce parent move dispatch boundary | Sol | Existing source controls | doing | app-P2-parent-transition-resume-sol-0411 | Mirrored parent passes; child and top-level forms reproduce preappend refusals. Original historical trigger remains unknown. | Held controls |
 | P2-popup-target | Correct rendered popup target lookup | Luna; Proof review | Independent 0359 PASS | blocked:app2 | Proof request 0408 | Real projector proves occurrence-prefixed ID. Proof owns only rendered selector change; raw command and canonical assertions stay. | Report only |
-| P2-five-static | Check five original not-run gestures | Luna; independent review | Review 0357 PASS | merged | app-P2-five-review-0357 | Static review finds transition clears and single-occurrence placement gaps. Authors 0401 and 0410 assigned. Asset and swap still need live proof. | Report only |
-| P2-parent-transition | Preserve closure on parent and transition edits | Sol | Wrapper 6efdb joined by manager | doing | app-P2-parent-transition-sol-0401 | Conflict-free dependency merge prepared. Parent moves and both transition clears retain verified child closure; review follows. | Work in progress |
+| P2-five-static | Check five original not-run gestures | Luna; independent review | Review 0357 PASS | merged | app-P2-five-review-0357 | Static review finds transition clears and single-occurrence placement gaps. Authors 0411 and 0410 assigned. Asset and swap still need live proof. | Report only |
+| P2-parent-transition | Preserve closure on parent and transition edits | Sol | Wrapper 6efdb joined by manager | doing | app-P2-parent-transition-resume-sol-0411 | Committed wrapper dependency delivered. Parent moves and both transition clears retain verified child closure; review follows. | Work in progress |
 
 | P2-single-child-placement | Use occurrence carrier for child placement | Luna | Committed wrapper 6efdb | doing | app-A3-single-child-placement-0410 | Genuine single-occurrence path emits patch while original requires occurrence.add-media. Provider-only scope; parent worker owns handoff. | Work in progress |
 Safety: Historical cleanup, graph and publication denials stand. Managers write boards, briefs and shared reports; workers own product changes.
@@ -66,6 +66,6 @@ Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-han
 Integration: e492d963ba; joined 332 and independent 108 tests, three types and lint passed. Element migration is integrated; original old804 element failure is not directly reproduced.
 Blockers: Runtime — D42 corrected source review0357, proof pin0358, independent proof and HTTP release remain required before caller custody.
 Blockers: Freeze — U3b waits P2/P3 and final freeze.
-Next ready: Wrapper review0408; parent and transition author0401; child placement0410; Proof popup lookup request0408. Qualify D42 caller once Runtime pin and HTTP release arrive. No repeat now.
+Next ready: Wrapper review0408; parent and transition author0411; child placement0410; Proof popup lookup request0408. Qualify D42 caller once Runtime pin and HTTP release arrive. No repeat now.
 Disk: 11.06 GiB available before this pass cleanup. No finished non-KEEP clean worktree remains. Prior dirty U3 and compact refusals stand; sweep3 running. Freed bytes pending.
 Blockers: Agent — Image helper0348 must qualify before a future producer reservation. Actual0330 output and partial acceptance remain immutable.
