@@ -13,6 +13,8 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import shutil
+import signal
 import subprocess
 import tempfile
 
@@ -31,9 +33,9 @@ OLD_ROW_SHA256 = {
     "v2-auth-current-integration": "e5c6c4ccd2c2e05d19a8bfae7147ca07a7e0a6e1cdcc20bb29c70c747b25ef9a",
 }
 NEW_ROW_SHA256 = {
-    "core-v2-final-integration": "c93c84a88dd9425ef28e7f636c1f1c38a70a2319a2c45fbebe40663be822263e",
-    "delivery-v2-final": "625e90f3b1b1b64884c19081f440677862768c879b2c358d92614175fb34b3b6",
-    "delivery-v2-dryrun": "31950de6338707d02502c0b8e4bb322361d618cc3ad81915ba1922755734a39e",
+    "core-v2-final-integration": "09a2a5cf4ddca2622d37702be9925d9c48205cf5b8883459b77352761a30ad10",
+    "delivery-v2-final": "8d2b8f38a543bd6ffa001672d88955c1767640f83398596174cd947f8ae69633",
+    "delivery-v2-dryrun": "f6309353f3657286435702f215775a2db301ee543d370c97273c8974b3d08846",
 }
 NEW_NAMES = {
     "core-v2-final-integration",
@@ -128,6 +130,18 @@ def git_value(root: Path, *args: str) -> str:
         raise ValueError(f"cannot inspect source tuple repository {root}: {exc}") from exc
 
 
+def git_parents(root: Path, ref: str) -> list[str]:
+    value = git_value(root, "rev-list", "--parents", "-n", "1", ref)
+    values = value.split()
+    if not values or values[0] != git_value(root, "rev-parse", ref):
+        raise ValueError(f"cannot establish commit identity for {root}")
+    return values[1:]
+
+
+def git_subject(root: Path, ref: str) -> str:
+    return git_value(root, "show", "-s", "--format=%s", ref)
+
+
 def git_status(root: Path) -> str:
     try:
         return subprocess.check_output(
@@ -149,18 +163,91 @@ def validate_source_tuple(path: Path) -> dict[str, dict[str, str]]:
     for name, item in value.items():
         if not isinstance(item, dict) or set(item) != {"root", "sha", "tree"}:
             raise ValueError(f"final source tuple entry {name} must contain root, sha, tree")
-        root = Path(item["root"]).resolve()
+        if not isinstance(item["root"], str) or not Path(item["root"]).is_absolute():
+            raise ValueError(f"final source tuple {name}.root must be an absolute path")
+        declared_root = Path(item["root"])
+        if declared_root.is_symlink():
+            raise ValueError(f"final source tuple {name}.root must not be a symlink")
+        root = declared_root.resolve()
         sha = item["sha"]
         tree = item["tree"]
         if not isinstance(sha, str) or len(sha) != 40 or any(c not in "0123456789abcdef" for c in sha):
             raise ValueError(f"final source tuple {name}.sha is not a lowercase Git SHA")
         if not isinstance(tree, str) or len(tree) != 40 or any(c not in "0123456789abcdef" for c in tree):
             raise ValueError(f"final source tuple {name}.tree is not a lowercase Git tree")
-        if git_value(root, "HEAD") != sha or git_value(root, "HEAD^{tree}") != tree:
-            raise ValueError(f"final source tuple does not match current {name} source: {root}")
+        if git_value(root, "--is-inside-work-tree") != "true":
+            raise ValueError(f"final source tuple root is not a Git worktree: {root}")
+        actual_head = git_value(root, "HEAD")
+        actual_tree = git_value(root, "HEAD^{tree}")
+        if actual_tree != tree:
+            raise ValueError(f"final source tuple tree drift for {name}: {actual_tree} != {tree}")
+        if actual_head != sha:
+            # bin/test-run creates an authenticated synthetic commit with the
+            # exact tested tree and the selected source commit as its only
+            # parent.  The packet records that original source parent, not the
+            # service-owned snapshot commit, so HEAD must not be required to
+            # equal the packet SHA in this one approved form.
+            parents = git_parents(root, "HEAD")
+            if (
+                len(parents) != 1
+                or parents[0] != sha
+                or not git_subject(root, "HEAD").startswith("test snapshot ")
+            ):
+                raise ValueError(f"final source tuple commit drift for {name}: {actual_head} != {sha}")
         if git_status(root):
             raise ValueError(f"final source tuple source is dirty: {root}")
     return value
+
+
+def _owned_tmp_root(service_tmp: Path) -> Path:
+    service_tmp = service_tmp.absolute()
+    if not service_tmp.is_dir() or service_tmp.is_symlink():
+        raise ValueError(f"service TMPDIR must be a real directory: {service_tmp}")
+    return Path(tempfile.mkdtemp(prefix="timeline-delivery-", dir=service_tmp))
+
+
+def _remove_owned_tmp(root: Path, service_tmp: Path) -> None:
+    root = root.absolute()
+    service_tmp = service_tmp.absolute()
+    if root.parent != service_tmp or root.is_symlink() or not root.is_dir():
+        raise RuntimeError(f"refusing to clean non-owned delivery TMPDIR: {root}")
+    shutil.rmtree(root)
+
+
+def run_private_command(
+    command: list[str],
+    *,
+    service_tmp: Path | None = None,
+    timeout_seconds: int = 30 * 60,
+    kill_grace_seconds: int = 45,
+) -> int:
+    """Run a delivery builder under an owned TMPDIR and clean only that root."""
+    if not command or any(not isinstance(value, str) or not value for value in command):
+        raise ValueError("private delivery command must be a non-empty argv")
+    if timeout_seconds <= 0 or kill_grace_seconds < 0:
+        raise ValueError("private delivery timeout values must be positive")
+    service_tmp = Path(os.environ.get("TMPDIR", tempfile.gettempdir())) if service_tmp is None else service_tmp
+    service_tmp = service_tmp.absolute()
+    root = _owned_tmp_root(service_tmp)
+    env = os.environ.copy()
+    env.update(TMPDIR=str(root), TMP=str(root), TEMP=str(root))
+    process: subprocess.Popen[bytes] | None = None
+    result = 1
+    try:
+        process = subprocess.Popen(command, env=env, start_new_session=True)
+        try:
+            result = process.wait(timeout=timeout_seconds)
+        except subprocess.TimeoutExpired:
+            os.killpg(process.pid, signal.SIGTERM)
+            try:
+                result = process.wait(timeout=kill_grace_seconds)
+            except subprocess.TimeoutExpired:
+                os.killpg(process.pid, signal.SIGKILL)
+                result = process.wait()
+            result = 124
+        return result if result >= 0 else 128 - result
+    finally:
+        _remove_owned_tmp(root, service_tmp)
 
 
 def install(registry: Path, candidate: Path, backup: Path) -> None:
@@ -206,23 +293,33 @@ def install(registry: Path, candidate: Path, backup: Path) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--registry", type=Path, required=True)
-    parser.add_argument("--candidate", type=Path, required=True)
-    parser.add_argument("--builder", type=Path, required=True)
+    parser.add_argument("--registry", type=Path)
+    parser.add_argument("--candidate", type=Path)
+    parser.add_argument("--builder", type=Path)
     parser.add_argument("--builder-sha", default=REVIEWED_BUILDER_SHA256)
-    parser.add_argument("--source-tuple", type=Path, required=True)
-    parser.add_argument("--backup", type=Path, required=True)
+    parser.add_argument("--source-tuple", type=Path)
+    parser.add_argument("--backup", type=Path)
     parser.add_argument("--install", action="store_true", help="atomically install after every guard passes")
+    parser.add_argument("--run-private", nargs=argparse.REMAINDER, metavar="COMMAND")
     args = parser.parse_args()
+
+    if args.run_private is not None:
+        command = args.run_private[1:] if args.run_private[:1] == ["--"] else args.run_private
+        return run_private_command(command)
+
+    if any(value is None for value in (args.registry, args.candidate, args.builder)):
+        parser.error("--registry, --candidate, and --builder are required")
 
     raw = args.registry.read_bytes()
     candidate = args.candidate.read_bytes()
     validate_registry(raw, candidate)
     validate_builder(args.builder, args.builder_sha)
-    validate_source_tuple(args.source_tuple)
     if not args.install:
         print("candidate and release guards PASS; no installation requested")
         return 0
+    if args.source_tuple is None or args.backup is None:
+        parser.error("--source-tuple and --backup are required with --install")
+    validate_source_tuple(args.source_tuple)
     install(args.registry, args.candidate, args.backup)
     print(f"installed {args.candidate} into {args.registry}; predecessor backup {args.backup}")
     return 0
