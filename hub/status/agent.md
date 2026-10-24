@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T09:29:00Z | dispatcher heartbeat 12s | live 1 (sol 1, luna 0, other 0) | busy30 9 | status age 0m -->
-# agent board, 2026-10-24T09:29:01Z
+<!-- agent | 2026-10-24T09:31:30Z | dispatcher heartbeat 11s | live 1 (sol 1, luna 0, other 0) | busy30 10 | status age 0m -->
+# agent board, 2026-10-24T09:31:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -148,8 +148,8 @@ Integration: ba55ac1e9e adds only reviewed offline transport tests, integrated09
 Count: Official263 closed /4 open of267 restored after independent current-repair0904 and causal0914 PASS. Exactly123 mappings remain; census e13d65ba unchanged. Farm giant was an already repaired original, so no duplicate closure or new census artifact.
 Open originals: discovery support; generic harvest/reopen; D23 helper word-second; D23 moved-head restart. All original records and historical challenges retained.
 Farm: Checkpoint 26511 remains 17,335 passed, 288 failed, 187 setup errors and 4 skips on Agent 9cd / Runtime 45c3. Independently reviewed 96-node packet: 80 environment, 1 docs regression and 15 unknown. Setup packet: 140 environment and 47 tuple mismatches. No new Farm pass credit.
-Blockers: Farm and Runtime — full preflight refuses shared schema; Farm0925 physical listing confirms astrid_runtime is present; schema and xdist are not listed. Agent source-input0918 and independent0922 PASS are returned. Runtime distributions0913 owns normal maker implementation; original wheel custody stays unknown.
-Blockers: Runtime private verifier — child failed installed NumPy RECORD. First correction49c9 failed independent0840 on containment, grammar and stale baseline; return0848 active. No child retry before clean review and install.
+Blockers: Farm and Runtime — full preflight refuses shared schema; Farm0925 physical listing confirms astrid_runtime is present; schema and xdist are not listed. Agent source-input0918 and independent0922 PASS are returned. Runtime distributions0913 requires authentic schema242f checkout; lead fetch0918 owns it. Original wheel custody stays unknown.
+Blockers: Runtime private verifier — final0903 found foreign package and unowned executable accepted despite84 passes. Sol inventory0923 owns correction. No child retry before clean cumulative review and install.
 Runtime: Producer becfe is independently qualified and all 15 Agent mappings now match. Shared authority is qualified on 460c and its exact-auth descendant becfe. Runtime has all 36 original failures closed at recorded scopes.
 App: Complete IMAGE 0554 and independent 0636 PASS retained at direct RuntimeService scope. No additional producer or realm; no inferred original-node credit.
 D48: Upstream 25359 merged via reviewed source ccf87 and normal d01. Restored predicates retained. D18 loader merged after independent PASS; duck scenario remains open under unique G4 source owner 0814.
@@ -158,5 +158,5 @@ D49 venue: Agent final full on Farm after a zero-setup-error checkpoint. Fallbac
 Safety: Prior Farm, monitor, publication, bench and cleanup refusals remain stopped. No denied action retried.
 Disk: About11 GB free. Fresh read-only check found one remaining finished non-KEEP Agent tree; it is dirty. No eligible clean merged tree to recycle. Prior cleanup refusals remain stopped; light work proceeds.
 Later: D31/D37 dormant implementations and tests unchanged. V4 and D14/D23 remain cut or deferred. D46 U2c closed and folded into the freeze; relay and remote providers stay deferred and fail-closed. D47 memo held.
-Next ready: Schema input independently0922 PASS and returned; R1 popup classification0922 confirms current-source failure; HARD Sol0928 queued. Transport home0916 passed17. Runtime owns ABA diagnosis0915, verifier final0903 and distribution0913. No ready Agent task waits.
+Next ready: Schema input independently0922 PASS and returned; R1 popup classification0922 confirms current-source failure; HARD Sol0928 queued. Transport home0916 passed17. Runtime owns ABA diagnosis0915, inventory repair0923 and authentic schema source0918. No ready Agent task waits.
 Evidence: [D39 review](../../design/agt-D39-header-review-0809.md), [ABA review](../../design/agt-F-ABA-cumulative-review-0809.md), [wheel input](../../design/agt-OPS-real-wheel-qualify-0810.md), [Farm checkpoint](../../design/farm-agent-full-checkpoint-20261024T0555Z.md).
