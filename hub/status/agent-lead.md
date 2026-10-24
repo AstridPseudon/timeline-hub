@@ -1,1 +1,1 @@
-2026-10-24T10:26:02Z agent lead: daemons up, heartbeat fresh, 6 marked live (5 are finished-but-unfinalized, manager nudged), board 10:24Z (3 doing/16 review/0 ready), last merge 10:16Z, DISK 8.1G (reported), tip 25359ed68 unchanged
+2026-10-24T11:00:19Z agent lead: daemons up, heartbeat fresh, 5 live workers, board 10:58Z (4 doing/18 review/0 ready), last merge 10:36Z, full9758 terminal (analysis workers running), earlier stuck-DONE workers finalized, disk 8.7G, tip 25359ed68 unchanged
