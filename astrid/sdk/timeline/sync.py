@@ -338,12 +338,16 @@ class TimelineSession:
         options = {"label": label, "steps": steps, "merge": merge}
         if reads is not None:
             options["reads"] = copy.deepcopy(reads)
-        self._stage(lambda state: execute(
+        runtime_capture = any(command['op'] == 'occurrence.place-shared'
+                              and 'source_ref' in command['args'] for command in commands)
+        # Foreign child authority is available only inside Runtime's request port.
+        # Freeze the submitted intent; its ordinary provider captures every guard.
+        self._stage(lambda state: copy.deepcopy(commands) if runtime_capture else execute(
                         self._bundle(state, commands), commands, verified_media=verified_media
                     ).commands,
                     lambda pending: len(pending) == len(commands) and all(
                         all(equal(saved.get(key), value) for key, value in command.items() if key != "intent")
-                        and all(equal(saved["intent"].get(key), value)
+                        and all(equal(saved.get("intent", {}).get(key), value)
                                 for key, value in command.get("intent", {}).items())
                         for saved, command in zip(pending, commands)), base=base)
         with self.outbox.locked():
