@@ -52,7 +52,7 @@ const runtime = vi.hoisted(() => ({
   internalTimelineRevisions: [] as Array<Record<string, unknown>>,
   publishes: [] as string[],
   commits: [] as Array<{ body: unknown; key: string }>,
-  /** Runs once, before the next publish is checked: simulates a sibling publish. */
+  /** Runs once after a basis read, before local authoring: simulates a sibling publish. */
   beforePublish: null as null | (() => void),
 }));
 
@@ -159,15 +159,17 @@ vi.mock('@/integrations/runtime/dataProvider', () => ({
     }
     async loadTimelineCommandBasis() {
       const document = canonicalDocument();
-      return { head: { revisionId: runtime.head, publicationId: `pub-${runtime.head}` }, canonicalDocument: document, graph: {} };
+      const basis = { head: { revisionId: runtime.head, publicationId: `pub-${runtime.head}` }, canonicalDocument: document, graph: {} };
+      // Sibling publication after this immutable read, before local authoring.
+      const hook = runtime.beforePublish;
+      runtime.beforePublish = null;
+      hook?.();
+      return basis;
     }
     async getRecoverableIdentity() {
       return { realmId: 'realm', actorId: 'actor' };
     }
     async commitTimeline(request: any, key: string) {
-      const hook = runtime.beforePublish;
-      runtime.beforePublish = null;
-      hook?.();
       runtime.commits.push({ body: structuredClone(request), key });
       if (request.base_revision_id !== runtime.head) {
         throw new ApiError(409, 'conflict', 'intervening_write', '', { status: 'conflict' });

@@ -16,6 +16,7 @@ const SHOT = 'shot-1';
 
 const runtime = vi.hoisted(() => ({
   head: 'rev-1',
+  basisLoads: 0,
   config: null as unknown,
   registry: { assets: {} } as unknown,
   publishes: [] as string[],
@@ -24,7 +25,8 @@ const runtime = vi.hoisted(() => ({
   loseAck: false,
   mergeNext: false,
   nextFailure: null as null | 'refused' | 'invalid' | 'transport',
-  /** Runs once, before the next publish is checked — simulates a sibling publish. */
+  commitFailure: null as ApiError | null,
+  /** Runs once after a basis read, before local authoring — simulates a sibling publish. */
   beforePublish: null as null | (() => void),
 }));
 
@@ -71,18 +73,22 @@ vi.mock('@/integrations/runtime/dataProvider', () => ({
       return structuredClone(runtime.registry);
     }
     async loadTimelineCommandBasis() {
-      return { head: { revisionId: runtime.head, publicationId: `pub-${runtime.head}` }, canonicalDocument: canonicalDocument(), graph: {} };
+      runtime.basisLoads++;
+      const basis = { head: { revisionId: runtime.head, publicationId: `pub-${runtime.head}` }, canonicalDocument: canonicalDocument(), graph: {} };
+      // Sibling publication after this immutable read, before local authoring.
+      const hook = runtime.beforePublish;
+      runtime.beforePublish = null;
+      hook?.();
+      return basis;
     }
     async getRecoverableIdentity() {
       return { realmId: 'realm', actorId: 'actor' };
     }
     async commitTimeline(request: any, key: string) {
-      const hook = runtime.beforePublish;
-      runtime.beforePublish = null;
-      hook?.();
       runtime.requests.push({ body: JSON.stringify(request), key });
       const replay = runtime.replies.get(key);
       if (replay) return replay;
+      if (runtime.commitFailure) throw runtime.commitFailure;
       const failure = runtime.nextFailure;
       runtime.nextFailure = null;
       if (failure === 'refused') {
@@ -155,6 +161,7 @@ async function loadService() {
 describe('placementService under Workspace v1', () => {
   beforeEach(() => {
     runtime.head = 'rev-1';
+    runtime.basisLoads = 0;
     runtime.config = createDefaultTimelineConfig();
     runtime.registry = { assets: {} };
     runtime.publishes = [];
@@ -163,6 +170,7 @@ describe('placementService under Workspace v1', () => {
     runtime.loseAck = false;
     runtime.mergeNext = false;
     runtime.nextFailure = null;
+    runtime.commitFailure = null;
     runtime.beforePublish = null;
     vi.stubGlobal('indexedDB', createFakeIndexedDB());
     vi.stubGlobal('navigator', { locks: { request: async (_name: string, _options: unknown, work: (lock: object) => Promise<unknown>) => work({}) } });
@@ -228,6 +236,84 @@ describe('placementService under Workspace v1', () => {
       .rejects.toThrow('unacknowledged');
     expect(runtime.requests).toHaveLength(1);
     expect(runtime.publishes).toHaveLength(0);
+  });
+
+  it.each(['dependency_changed', 'binding_changed', 'value_conflict', 'selection_changed',
+    'atomic_scope_changed', 'stale_head'] as const)('retains the actual handoff %s conflict and original guards on recovery', async (reason) => {
+    installV1Fetch();
+    const { placeGeneration } = await loadService();
+    const base = { revision_id: 'rev-1', publication_id: 'pub-rev-1' };
+    // Runtime tests/test_timeline_commit_input_integration.py:312-320 uses
+    // status=conflict for a definitive dependency failure even at the SAME head.
+    const details = { status: 'conflict', reason, base, current: base,
+      conflicts: [{ kind: reason, ref: 'parent/clip:music-bed', path: ['at'],
+        base: { state: 'present', value: 99 }, theirs: { state: 'present', value: 0.25 },
+        ours: { state: 'absent' }, choices: [] }] };
+    runtime.commitFailure = new ApiError(409, 'conflict', 'original authored guard changed', '', details);
+    const request = { projectSlug: PROJECT, shotId: SHOT, generationId: 'gen-1' };
+
+    await expect(placeGeneration(request)).rejects.toThrow('unacknowledged');
+    expect(runtime.requests).toHaveLength(1);
+    expect(runtime.publishes).toHaveLength(0);
+    const scope = { realmId: 'realm', actorId: 'actor', projectId: PROJECT, timelineId: TIMELINE };
+    const outboxes = createCommitOutbox();
+    const owners = await outboxes.list(scope);
+    expect(owners).toHaveLength(1);
+    const retained = await outboxes.recover(scope, owners[0]!.ownerId, (box) => box.read());
+    expect(retained.intents).toHaveLength(1);
+    expect(retained.pending).toMatchObject({ outcome: { kind: 'rejected', error: { kind: 'conflict', details } } });
+    expect(retained.pending!.request.body).toBe(runtime.requests[0]!.body);
+    expect(retained.pending!.request.key).toBe(runtime.requests[0]!.key);
+
+    // Removing the injected failure cannot silently replace a refused intent.
+    runtime.commitFailure = null;
+    await expect(placeGeneration(request)).rejects.toThrow('unacknowledged');
+    expect(runtime.requests).toHaveLength(1);
+    expect(runtime.publishes).toHaveLength(0);
+    const recovered = await outboxes.recover(scope, owners[0]!.ownerId, (box) => box.read());
+    expect(recovered.intents).toEqual(retained.intents);
+    expect(recovered.pending).toEqual(retained.pending);
+    expect(recovered.accepted).toBeUndefined();
+  });
+
+  it('retries local document staleness before authoring exactly one durable placement', async () => {
+    installV1Fetch();
+    const { placeGeneration } = await loadService();
+    runtime.beforePublish = () => {
+      runtime.head = 'rev-sibling';
+      runtime.config = { ...(runtime.config as object), sibling: { preserved: true } };
+    };
+
+    await placeGeneration({ projectSlug: PROJECT, shotId: SHOT, generationId: 'gen-1' });
+
+    expect(runtime.basisLoads).toBe(4); // Two read pairs, only the second is stable.
+    expect(runtime.requests).toHaveLength(1);
+    expect(JSON.parse(runtime.requests[0]!.body).base_revision_id).toBe('rev-sibling');
+    expect(runtime.publishes).toHaveLength(1);
+    expect((runtime.config as Record<string, unknown>).sibling).toEqual({ preserved: true });
+    const outboxes = createCommitOutbox();
+    const scope = { realmId: 'realm', actorId: 'actor', projectId: PROJECT, timelineId: TIMELINE };
+    const owners = await outboxes.list(scope);
+    expect(owners).toHaveLength(1);
+    const record = await outboxes.recover(scope, owners[0]!.ownerId, (box) => box.read());
+    expect(record.intents).toEqual([]);
+    expect(record.pending).toBeUndefined();
+    expect(record.accepted?.head.revisionId).toBe(runtime.publishes[0]);
+  });
+
+  it('bounds local read retries without creating any durable intent', async () => {
+    installV1Fetch();
+    const { placeGeneration } = await loadService();
+    const bump = () => { runtime.head += 'x'; runtime.beforePublish = bump; };
+    runtime.beforePublish = bump;
+
+    await expect(placeGeneration({ projectSlug: PROJECT, shotId: SHOT, generationId: 'gen-1' }))
+      .rejects.toThrow('changed before placement authoring');
+    expect(runtime.basisLoads).toBe(4);
+    expect(runtime.requests).toEqual([]);
+    expect(runtime.publishes).toEqual([]);
+    expect(await createCommitOutbox().list({ realmId: 'realm', actorId: 'actor', projectId: PROJECT, timelineId: TIMELINE }))
+      .toEqual([]);
   });
 
   it('retries an unknown acknowledgement with the exact durable request and key', async () => {
