@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T10:33:52Z | dispatcher heartbeat 5s | live 2 (sol 0, luna 2, other 0) | busy30 20 | status age 6m -->
-# agent board, 2026-10-24T10:27:15Z
+<!-- agent | 2026-10-24T10:37:07Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 21 | status age 1m -->
+# agent board, 2026-10-24T10:34:42Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -118,7 +118,7 @@
 | OPS received kit | Verify kit receipt and jaraco facts | Luna | Independent finite result review | merged | Independent 0814 PASS | New helper b8b5 and maker e4c0 match live, normal publication and committed hub. Requester and Store unchanged. | Evidence only |
 | G4 media admission | Connect ordinary publish to verified inputs | Luna | Existing authentic admission path | merged | Source 0823 PASS; home 0832 PASS20 | Authoritative public admission, retry and foreign no-write work on integrated home; original managed duck remains separate. | 0ff3d103fb |
 | F joined source | Qualify U2, D39, D18 and ABA together | Luna | Reviewed normal home merges | merged | Joined 0816; independent 0823 PASS | 123 cases, all 15 mappings, 50 auth blobs, Ruff2145 and mypy1902 pass on exact home 0c2c. | 0c2c28da4f |
-| F ABA managed row | Attach reviewed completion capture and retain packet | Luna / Luna | First-return candidate review | review | Author1004; FAIL1014; return1019 | Return now has actual candidate and install manifest;21 offline pass. Normal finalization saves new tests before independent review. Original held. | Support546d; return pending |
+| F ABA managed row | Attach completion capture | Luna / Luna | Independent preparation passed | merging | Return1019; review1027 PASS21; installer1035 | Capture support merged7ba6. Installer changes one guarded row only. Original stays held until installed receipt. | 7ba6dc1d8e |
 | OPS wheel result review | Verify actual input and new kit receipt | Luna | Reviewed b330 helper | merged | agt-OPS-real-wheel-review-0814 PASS | All 67 original wheels and all four received kit files independently verified. Bootstrap unverified. | Lock 236d unchanged |
 
 | F count giant home | Credit one exact qualified original | Sol | Independent result 0814 PASS | merged | Author 0818; independent 0827 PASS | Official 263 closed / 4 open. All 266 other records unchanged; 123 mappings. | e13d65ba |
@@ -149,30 +149,34 @@
 
 | F provider undo | Classify six existing source failures | Luna / Luna | Causal review passed | merged | Author0952; independent0959 PASS | Authenticated historical inverse scratch is compared to accepted fork source. Six existing failures; outside267 census. R2 Sol0959 owns repair. | Evidence only |
 
-| F local checkpoint | Qualify D49 fallback on existing service | Service | H36 owner instruction | doing | agent-full-1024095047-9758 | One full queued on working venv-agent registration; running. Exact ba55 snapshot, current Runtime and existing renderer profile. | Home ba55 |
+| F local checkpoint | Qualify D49 on existing service | Service | H36 instruction | doing | agent-full-1024095047-9758 | One full is running, about89 percent. Exactba55 snapshot and existing venv/profile. No duplicate request. | Homeba55 |
 
-| R2 historical source | Restore authenticated prior item mapping during undo | Sol / Luna | Rationale guard correction | doing | Integrated1017 PASS67; structure1023 FAIL | Actual d83 behavior and static gates pass. Inverse grew1166 to1208, requiring one missing rationale entry; docs-only1026 assigned. | Home d83e8de3a1 |
+| R2 historical source | Restore authenticated historical item mapping | Sol / Luna | Structure rationale | merged | Source1011 PASS; integrated1017 PASS67 | Actuald83 passes67 and strict static gates; 244 controls retained. Structure correction has its own row. | d83e8de3a1 |
 
 | OPS five-wheel receipt | Verify genuine received bootstrap and test inputs | Luna / Luna | Actual received input independently passed | merged | Author1004; independent1011 PASS | Archive443977 and all10 members, five wheelhashes, roles, lock and committed artifact match. No ORCH sidecar; no install or child claim. | Input only |
 
 | OPS shared schema source | Preserve declared schema authority | Runtime / owner | Orchestrator10:16 disposition | blocked:runtime | Runtime acquisition0955 stopped | Exact declared source HTTP403; automatic access request refused. No alternate route. Installed provenance0918/0922 stays scoped. | Source242f unknown |
 
-| R2 structure rationale | Register newly over-threshold inverse file | Luna / Luna | Source d83, structure1023 FAIL | doing | agt-R2-rationale-1026 | Add only exact1208-line rationale entry; all38 prior entries and original test unchanged. Independent review and integrated proof follow. Due10:40Z. | Base d83 |
+| R2 structure rationale | Register inverse file rationale | Luna / Luna | Independent review | review | Author1026; review1035 | Exact1208-line entry39; original passed once. Prior38 entries unchanged. Review due10:55Z. | 18bbd5e6a8 |
+
+| OPS received kit | Verify installed verifier receipt | Luna | Normal publication | doing | agt-OPS-received-kit-review-1036 | Runtime source1006 passed security; installer1023 reports installed. Actual Agent receipt and Runtime1027 are checked separately. No child release. | Sourceab6d |
 
 P1: Historical GO recorded. P4 and P5 retain their named scopes; final freeze reruns all gates. App and Proof own P2/P3.
-Integration: d83e8de3a1 normally merges reviewed R2 historical-source fix1c917 above3c3 opt-in capturehelper and qualified R1homef91. Actual R2 integrated67 worker1017 is assigned; source/security independent1011 passed67 plus244. No original-node credit.
+Integration: 7ba6dc1d8e merges reviewed capture support546d and return controlsde5 above qualifiedR2d83. Source review1011 and integrated1017 passed67 plus strict static gates; 244 neighbors retained. No original credit.
 Count: Official263 closed /4 open of267 restored after independent current-repair0904 and causal0914 PASS. Exactly123 mappings remain; census e13d65ba unchanged. Farm giant was an already repaired original, so no duplicate closure or new census artifact.
 Open originals: discovery support; generic harvest/reopen; D23 helper word-second; D23 moved-head restart. All original records and historical challenges retained.
 Farm: Checkpoint 26511 remains 17,335 passed, 288 failed, 187 setup errors and 4 skips on Agent 9cd / Runtime 45c3. Independently reviewed 96-node packet: 80 environment, 1 docs regression and 15 unknown. Setup packet: 140 environment and 47 tuple mismatches. No new Farm pass credit.
 Blockers: Runtime and owner — exact schema acquisition returned HTTP403 and the access request was refused by automatic review. Orchestrator10:16 keeps child admission held; no Agent action is owed. All alternate routes stay stopped. Impact: [refusal](../../escalations/agent-20261024T1008Z-schema-source-refusal.md).
-Blockers: Runtime private verifier — whole-root foreign-file attack remains accepted after106 controls. Runtime HARD Sol0951 and cumulative security review own it; no installation or child request before clean review and received-kit proof.
+Blockers: Runtime installed kit — installer1023 reports installed; independent1027 and Agent received-kit1036 remain owed. Source1006 passed140 plus79 attacks. Schema admission stays held.
 Runtime: Producer becfe is independently qualified and all 15 Agent mappings now match. Shared authority is qualified on 460c and its exact-auth descendant becfe. Runtime has all 36 original failures closed at recorded scopes.
 App: Complete IMAGE 0554 and independent 0636 PASS retained at direct RuntimeService scope. No additional producer or realm; no inferred original-node credit.
 D48: Upstream 25359 merged via reviewed source ccf87 and normal d01. Restored predicates retained. D18 loader merged after independent PASS; duck scenario remains open under unique G4 source owner 0814.
 D39: Canonical adoption is integrated-qualified on exact 0c2 with all 15 mappings. Actual wire-key negative controls remain strict. Final three-lane tuple and gate proofs remain unqualified.
 D49 venue: Existing Agent own-service full9758 on working venv-agent is running. The orchestrator selected this primary venue pending the owner after schema access refusal. Farm remains held; zero-setup and final-gate qualification are unproven.
 Safety: Prior Farm, monitor, publication, bench and cleanup refusals remain stopped. No denied action retried.
-Disk: About9GB free after sweep-tmp3 recovered4GB, eleven finished clean trees recycled, and compact-scratch compressed5 old logs. Full9758 space fluctuates; no new heavy run below8GB. Prior denied targets remain stopped.
+Disk: About8.6GB free, up from7.7GB. Eight more finished clean worktrees recycled, preserving branches and reports. Sweep3 is running. No new heavy run below8.5GB; existing full9758 may finish. Prior denied targets stay stopped.
 Later: D31/D37 dormant implementations and tests unchanged. V4 and D14/D23 remain cut or deferred. D46 U2c closed and folded into the freeze; relay and remote providers stay deferred and fail-closed. D47 memo held.
-Next ready: R2 merged d83; integrated1017 is assigned. ABA attachment source review1014 active. Five-wheel actual receipt independentlyPASS returned. App owns exact333b gate custody; full9758 continues on originalba55. No new heavy run or original released.
+Next ready: Rationale review1035 and guarded ABA row installer1035 are dispatched. Capture support is merged7ba6. App owns qualified333b custody. Full9758 continues onba55. No unassigned ready task or original released.
 Evidence: [D39 review](../../design/agt-D39-header-review-0809.md), [ABA review](../../design/agt-F-ABA-cumulative-review-0809.md), [wheel input](../../design/agt-OPS-real-wheel-qualify-0810.md), [Farm checkpoint](../../design/farm-agent-full-checkpoint-20261024T0555Z.md).
+
+Pass10:34Z: All eight DONE orphans finalized through request-stop; no live processes were found. Independent capture preparation1027 passed21 and exact one-row custody; normal stacked merge7ba6 completed. Rationale review and row installer dispatched immediately.
