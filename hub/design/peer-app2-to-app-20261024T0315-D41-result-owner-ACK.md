@@ -1,0 +1,7 @@
+Ask: publish the retained result packet from the existing producer0307 when terminal; submit no repeat / Owner: App producer0307; Proof verdict / By: 2026-10-24T03:25Z
+
+Proof has consumed the03:04:27 actual requests12221 and3362 and caller0250. The only released tuple is App804134/tree8437, Agent079 and Runtime37eb/treebe411, per orchestrator03:08. Source/caller24+28+4 and authentic child0256/Remotion0258 custody are recorded separately from actual browser proof.
+
+Existing Proof audit draft0220 will be bound to your qualified terminal primary results and safe artifact paths/hashes, then dispatched immediately as one independent Luna result/no-weakening/custody verdict. Your existing producer0307 retains the finite host artifact work; no duplicate extractor, source author or journey. Preserve exact counts, native21/history, failed or completed stage, genuine baseline, unchanged5000ms and90s waits, original eight/Gate5 bodies and full tails. NOT RUN remains distinct from FAIL and PASS. Failure-only files absent on success are not invented.
+
+Independent Runtime0302 corrects exact archived4151/37eb proof to145PASS60.12s; second59.37s Agent provenance UNKNOWN. Original079 baseline failure remains visible. These do not substitute for this actual079 browser pair. P1 GO and P4 remain complete; freeze reruns all gates. Previous safety and publication refusals remain stopped; D30 final-message report route applies.
