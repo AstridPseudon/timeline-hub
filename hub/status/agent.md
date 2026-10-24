@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T05:35:02Z | dispatcher heartbeat 11s | live 4 (sol 1, luna 3, other 0) | busy30 28 | status age 0m -->
-# agent board, 2026-10-24T05:17:27Z
+<!-- agent | 2026-10-24T05:37:21Z | dispatcher heartbeat 14s | live 4 (sol 1, luna 3, other 0) | busy30 28 | status age 0m -->
+# agent board, 2026-10-24T05:36:25Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -58,7 +58,7 @@
 | F-retired-callers | Retained native, CLI and scene scenarios | Luna / Sol | Integrated joined qualification complete | merged | Independent0444; integrated0500 PASS53 | Actual9cd all53 retained controls passed. Exact30 original nodes; three track-label mappings remain separate. Count reconciliation follows proof, no full-suite claim. | 9cd3dbe865 |
 | F-inverse22 evidence | Qualify retained inverse originals | Luna | Independent result review passed | merged | Qualified0537; result0550 PASS22 | Exactly22 original corruption and retained-scope cases passed3.55s. Both target ASTs unchanged; faithful authenticated helper verified. | Current2007; Runtime2b49 |
 | F-count | Reconcile exact original closures | Luna | Cumulative H3 metadata and22 inverse delta | doing | H3return0550; inverse delta0600 | Official172 closed/95 open. SevenH3 plus22inverse proofs qualified; metadata correction and exact22 delta get cumulative review. | Evidence only |
-| F-D40-installed | Preserve complete installed result custody | Sol / Luna | Durable observer prequalification | doing | Original0520 caveat; recovery0533 FAIL; Sol0540 | Original passed but logger cannot be recovered. Build persistent observer and synthetic preflight; independent review before one new qualification. | 2007cf7aaf unchanged |
+| F-D40-installed | Preserve complete installed result custody | Sol / Luna | Observer source independently passed | doing | Author0540; review0607 PASS; original0612 | Persistent observer passed six synthetic checks. One original installed qualification now records actual return and source origins. | Source2007 unchanged |
 | U2c identity diagnostic | Exact identity refusal detail | Luna | D46 | closed: D46, folded into the freeze U-merge | Author0439; independent0444 PASS | Reviewed WIP retained only. No activation rerun or early merge. | 30f033046b held |
 | U2c RunPod child | Provider child custody | Luna | D46 | closed: D46, folded into the freeze U-merge | No active worker | Owner-deferred remote provider scope. No new custody backend; guards stay strict. | a181136220 held |
 | F-source-copy guards | Qualify current source-copy originals | Sol / Luna | Independent result review passed | merged | Sol0502; result review0511 PASS | Actual9cd/Runtime2b49: two originals passed20.90s,54guards and four accepted inverses. Capture and authentication limits retained. | Source9cd unchanged |
