@@ -22,6 +22,7 @@ import { deflateSync } from 'node:zlib';
 import { DIST_DIR, RUNTIME_CHECKOUT, ffmpegUnavailableReason } from '../../../../config/testing/skipConditions.mjs';
 import { EDITOR_TOUR_VERSION } from '../../../../src/shared/lib/editorTourVersion.ts';
 import { loadQuickDescriptor, type QuickDescriptor } from './quick-descriptor.ts';
+import { attachPlaywrightRuntimeLifecycle, HungRequestStackCapture, linuxProcessInspector, type StackTarget } from './hung-request-stack.ts';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(here, '../../../..');
@@ -554,6 +555,8 @@ export class DirectHarness {
   private phaseCaptureDirectory?: string;
   private phaseCaptureLaunchOrdinal = 0;
   private seedInitialized = false;
+  private hungStackCapture?: HungRequestStackCapture;
+  private hungStackRunId?: string;
   private seedHead?: { revisionId: string; publicationId: string };
 
   /** The hosted site's extension release config: on by default, as deployed; a case sets 'missing' to see the closed posture. */
@@ -626,6 +629,12 @@ export class DirectHarness {
         mkdirSync(this.supportDir, { recursive: true, mode: 0o700 });
         this.realmId = await this.createRealm();
         this.phaseCaptureDirectory = prepareP2CommitPhaseCapture(process.env.D66_RUNTIME_LOG_DIR);
+        const d66Output = process.env.D66_OUTPUT_DIR?.trim();
+        const hungEvidence = process.env.D79_HUNG_STACK_EVIDENCE_DIR?.trim() || (d66Output ? path.join(d66Output, 'hung-request-stacks') : undefined);
+        if (hungEvidence) {
+          this.hungStackRunId = process.env.D79_HUNG_STACK_RUN_ID?.trim() || (d66Output ? path.basename(path.resolve(d66Output)) : path.basename(hungEvidence));
+          this.hungStackCapture = new HungRequestStackCapture({ runId: this.hungStackRunId, evidenceDir: hungEvidence });
+        }
         await this.startRuntime();
         // The door listens from the start and answers `runtime_unavailable` until the product credential exists.
         this.productToken = await this.provisionCredential(PRODUCT_ACTOR, path.basename(this.credentialPath));
@@ -753,6 +762,30 @@ export class DirectHarness {
   }
 
   get runtimeRunning() { return Boolean(this.runtime && this.runtime.child.exitCode === null); }
+
+  get runtimePid(): number | undefined { return this.runtime?.child.pid; }
+
+  get hungStackTargets(): StackTarget[] {
+    const pid = this.runtime?.child.pid;
+    const runId = this.hungStackRunId;
+    if (!pid || !runId) return [];
+    const incarnation = linuxProcessInspector(pid);
+    return incarnation ? [{ role: 'runtime-daemon', pid, incarnation, runId, owned: true, supervised: true }] : [];
+  }
+
+  /** Attach D79 to real Playwright request lifecycle events; no URL or request payload is retained. */
+  installHungRequestCapture(page: Parameters<typeof attachPlaywrightRuntimeLifecycle>[0]['page']): () => void {
+    if (!this.hungStackCapture) return () => {};
+    return attachPlaywrightRuntimeLifecycle({
+      page,
+      capture: this.hungStackCapture,
+      source: 'app-runtime',
+      targets: () => this.hungStackTargets,
+      isRuntimeRequest: (request) => {
+        try { return new URL((request as { url(): string }).url()).pathname.startsWith(`${this.doorPrefix}/v1/`); } catch { return false; }
+      },
+    });
+  }
 
   get lifecycleObservation(): RuntimeLifecycleObservation | undefined {
     return this.runtimeLifecycle ? { ...this.runtimeLifecycle, failure: this.runtimeLifecycle.failure && { ...this.runtimeLifecycle.failure } } : undefined;
@@ -1370,6 +1403,7 @@ print(json.dumps({'revisionId': data['accepted_revision_id'], 'publicationId': r
     if (this.stopped) return;
     this.stopped = true;
     let cleanupError: unknown;
+    this.hungStackCapture?.abortAll();
     const runtimeLogDir = process.env.D66_RUNTIME_LOG_DIR?.trim();
     const runtime = this.runtime;
     if (!this.attachment) await stopGroup(runtime).catch((error) => { cleanupError ??= error; });

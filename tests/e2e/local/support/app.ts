@@ -64,7 +64,7 @@ function resolveChromium(): string | undefined {
   return candidate && existsSync(candidate) ? candidate : undefined;
 }
 
-export const test = base.extend<object, { harness: DirectHarness; browser: Browser }>({
+export const test = base.extend<{ hungStackLifecycle: undefined }, { harness: DirectHarness; browser: Browser }>({
   // Playwright reads fixture dependencies from the destructuring pattern, so the empty pattern is required.
   // eslint-disable-next-line no-empty-pattern
   harness: [async ({}, use) => {
@@ -87,6 +87,10 @@ export const test = base.extend<object, { harness: DirectHarness; browser: Brows
     try { await use(context); } finally { await closeElementApplyDiagnosticContext(context); }
   },
   page: elementApplyDiagnosticPageFixture,
+  hungStackLifecycle: [async ({ page, harness }, use) => {
+    const detach = harness.installHungRequestCapture(page);
+    try { await use(undefined); } finally { detach(); }
+  }, { auto: true }],
 });
 
 export async function currentHead(harness: DirectHarness): Promise<string> {
