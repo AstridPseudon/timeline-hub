@@ -33,6 +33,25 @@ def reopen(editing):
     editing.service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
 
 
+@pytest.fixture(autouse=True)
+def _route_retained_cases_through_runtime(request, monkeypatch):
+    if 'retained' not in request.fixturenames:
+        return
+
+    case = request.getfixturevalue('retained')
+    from runtime_protocol.timeline_commit_port import route_path
+
+    def commit_timeline(body, key, authorize=lambda: None):
+        result = case.service.commit_timeline(
+            case.project, 'film', body, idempotency_key=key, publisher='timing-editor',
+            invocation_path=route_path(case.project, 'film'), authorize=authorize)
+        document = result['data']['canonical_document']
+        case.documents[document['parent_revision']['revision_id']] = document
+        return result
+
+    monkeypatch.setattr(case, 'submit', commit_timeline)
+
+
 @pytest.mark.parametrize('kind', ['image', 'video'])
 def test_pristine_init_first_birth_reload_undo_and_missing_word_source(tmp_path, monkeypatch, kind):
     use_runtime()
