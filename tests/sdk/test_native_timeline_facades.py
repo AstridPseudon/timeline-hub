@@ -239,9 +239,11 @@ def test_remote_open_composition_uses_runtime_inspection_authority() -> None:
     )]
 
 
-def test_remote_open_composition_is_renderer_free(request) -> None:
+def test_remote_open_composition_raw_projection_is_renderer_free(request) -> None:
     request.getfixturevalue("no_renderer")
-    result = RemoteTimelines(_NativeTransport()).open_composition("project-1", "main")
+    result = RemoteTimelines(_NativeTransport()).open_composition(
+        "project-1", "main", _raw_projection=True,
+    )
 
     assert result.ok
     assert result.data["summary"]["revision_id"] == "rev-7"
@@ -252,6 +254,42 @@ def test_remote_open_composition_is_renderer_free(request) -> None:
         "shot_id": "shot-1",
         "track": "picture",
     }]
+
+
+def test_remote_open_composition_retains_public_timing_enrichment() -> None:
+    class _TimedNativeTransport(_NativeTransport):
+        def inspect_timeline(self, project, timeline, *, options):
+            data = super().inspect_timeline(project, timeline, options=options)
+            clip = data["selected"][0]["clips"][0]
+            authored = {
+                "id": "clip-1", "clipType": "media", "at": 0, "hold": 1,
+                "track": "picture", "effects": {"fade_in": 0.25},
+                "transition": {"id": "fade"},
+                "params": {"sourceSegments": [{"at": 0, "sourceStart": 0}]},
+            }
+            clip.update(
+                authored_fields=authored,
+                render_timing={key: authored[key] for key in ("id", "clipType", "at", "hold", "track")},
+            )
+            data["render_timing_context"] = {
+                "status": "complete", "fps": 30,
+                "tracks": [{"id": "picture", "kind": "visual"}],
+                "clips": [clip["render_timing"]],
+            }
+            return data
+
+    result = RemoteTimelines(_TimedNativeTransport()).open_composition("project-1", "main")
+
+    assert result.ok
+    clip = result.data["clips"][0]
+    assert clip["compositor_dispatch"]["status"] == "resolved"
+    assert clip["timing_projection"]["mounted"] == {
+        "start_frame": 0, "end_frame": 30, "start": [0, 1], "end": [1, 1],
+    }
+    assert clip["timed_changes"]
+    assert clip["timing_unknowns"] == []
+    assert clip["transition_projection"]["status"] == "unresolved"
+    assert clip["source_clock"] == "source playback segments use a separate media clock"
 
 
 def test_remote_show_is_canonical_current_head_alias() -> None:

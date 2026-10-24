@@ -1132,7 +1132,9 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
         return self._typed("create_timeline_view", str(project_ref), timeline_id, options=options)
 
     @staticmethod
-    def _native_projection(data: Mapping[str, Any], *, project, ref) -> dict[str, Any]:
+    def _native_projection(
+        data: Mapping[str, Any], *, project, ref, enrich_timing: bool = True,
+    ) -> dict[str, Any]:
         """Adapt native inspection rows to the established show shape.
 
         This is result-shape adaptation only: closure expansion, selection,
@@ -1196,6 +1198,12 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
                         "element_ref": item.get("element_ref"),
                         "addressable": True,
                     })
+        if enrich_timing:
+            from astrid.packs.rendering.actions.timeline_visualize.readable_timing import (
+                project_readable_timing,
+            )
+
+            clips = project_readable_timing(clips, data.get("render_timing_context"))
         selectors = data.get("selectors") if isinstance(data.get("selectors"), Mapping) else {}
         projection = {
             "kind": "timeline-inspection",
@@ -1243,6 +1251,7 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
         range_value=None,
         detail=False,
         neighbors=0,
+        _raw_projection=False,
     ):
         """Open one bounded, read-only composition projection.
 
@@ -1283,7 +1292,10 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
         if not inspected.ok or not isinstance(inspected.data, Mapping):
             return inspected
         projection = self._native_projection(
-            inspected.data, project=resolved_project, ref=resolved_ref
+            inspected.data,
+            project=resolved_project,
+            ref=resolved_ref,
+            enrich_timing=not _raw_projection,
         )
         return DomainResult.success(
             projection,
