@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T04:24:55Z | dispatcher heartbeat 8s | live 4 (sol 1, luna 3, other 0) | busy30 18 | status age 0m -->
-# app board, 2026-10-24T04:24Z
+<!-- app | 2026-10-24T04:27:47Z | dispatcher heartbeat 15s | live 3 (sol 0, luna 3, other 0) | busy30 17 | status age 0m -->
+# app board, 2026-10-24T04:27Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -52,10 +52,10 @@
 | readiness-D42-coalesce | Reuse same-head pending basis read | Sol; Luna review | Independent0355 PASS | merged | app-readiness-element-join-sol-0351 | Exact reviewed tree integrated; joined332 tests and independent108, three types/lint passed. No live run claimed. | e492d963ba |
 | readiness-whole-path | Independently investigate client to server | Sol; Luna review | Review0336 PASS | merged | app-readiness-whole-path-review-0336 | [Source path and causal limits independently verified; missing clock and await joins remain.](../../design/app-readiness-whole-path-review-0336.md) | Report only |
 | A4-final-census | Verify zero reachable legacy writers | Luna; independent review | Review0345 FAIL | doing | Popup source0349 assigned | Original zero-writer claim withdrawn. Actual scoped popup fallback identified; independent element proof remains valid. | Report only |
-| A2-popup-wrapper | Bind scoped popup saves to verified source | Sol; Luna review | Review 0408 FAIL | doing | app-A2-popup-binding-return-sol-0417 | Context and missing source-head guards require repair. Original wrapper held; cumulative independent review follows first return. | 6efdb11993 held |
+| A2-popup-wrapper | Bind scoped popup saves to verified source | Sol; Luna review | First return 0417 complete | review | app-A2-popup-binding-review-0427 | Author 351 tests, three types and lint passed. Forged context and missing head reproduced then refused; cumulative independent review active. | 0267ed4f03 held |
 | readiness-D42-caller | Prepare qualified D42 caller | Sol | Qualified Runtime memo proof pin | blocked:runtime | app-readiness-D42-caller-sol-0348 | Draft24+28+4 and4 extra controls passed; exact old receipts checked. Shared rows unchanged; final pin and keyed child required. | Draft only |
 | P2-parent-outbox | Reproduce parent move dispatch boundary | Sol; Luna review | Source reproduction complete | review | app-P2-parent-transition-review-0422 | Parent author adds verified physical source path. Original historical trigger remains unknown; no live credit. | See author 0411 |
-| P2-popup-target | Correct rendered popup target lookup | Luna; Proof review | Independent 0359 PASS | doing | ap2-P2-popup-rendered-target-0413 | Real projector proves occurrence-prefixed ID. Proof owns only rendered selector change; raw command and canonical assertions stay. | Report only |
+| P2-popup-target | Correct rendered popup target lookup | Luna; Proof review | Proof 0418 PASS | merging | ap2-P2-popup-rendered-target-0413 | Two selector lines only; all other bytes retained. Remote normal queue submitted; local branch delivery awaited. | adf39c533 |
 | P2-five-static | Check five original not-run gestures | Luna; independent review | Review 0357 PASS | merged | app-P2-five-review-0357 | Static review finds transition clears and single-occurrence placement gaps. Authors 0411 and 0410 assigned. Asset and swap still need live proof. | Report only |
 | P2-parent-transition | Preserve closure on parent and transition edits | Sol; Luna review | Author 0411 complete | review | app-P2-parent-transition-review-0422 | Author 292 tests, three types and lint passed. Sixteen positives kept; child and unrelated changes refused. Unsafe wrapper ancestry held. | See author 0411 |
 
