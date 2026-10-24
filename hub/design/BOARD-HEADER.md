@@ -270,6 +270,10 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
     - no manual recovery, ignored attempt or alias;
     - real before and after hashes, with nothing inferred.
   - Log it with D44/D50/D53/D70. After PASS: apply it and rerun P3 at once on a D73-pinned tuple.
+- **D74a, critical-path runs get a lower floor (19:40Z):** the P1–P5 gate runs and the D78 live element run may be SUBMITTED down to **6.0 GB** free, one at a time. Everything else keeps D74: no new dispatch below 7.5 GB for non-critical work, and none at all below 6.5 GB except those runs.
+  - **Release stale trees by the principles route.** KEEP pins whose SHA is not a current lane head, a running or queued request, or an in-flight P-run's D73 tuple: confirm nothing uses them, remove KEEP, then bin/recycle.
+  - Dirty old U3b trees: first save `git diff > $ORCH/archive-v1/<name>.patch`, then recycle.
+  - If the classifier or a guard refuses, stop and report.
 - **D74, disk caps lowered by 0.5 GB, and the classifier refusal goes to the owner (17:16Z):**
   - **New D57 caps:** 6 workers above 8.5 GB, 4 at 7.5–8.5 GB, 2 below 7.5 GB, and no new dispatch below 6.5 GB.
     - A worker tree is ~0.1–0.5 GB, so two more slots cost ≤1 GB.
