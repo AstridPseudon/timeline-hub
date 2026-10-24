@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T11:27:07Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 0m -->
-# app2 board, 2026-10-24T11:26Z
+<!-- app2 | 2026-10-24T11:29:32Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 0m -->
+# app2 board, 2026-10-24T11:28Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -8,7 +8,7 @@
 | P1-corpus | Real document roundtrip and merge | Luna | Complete | merged | Corpus1348 | 49 passed with15 fixtures and11 inputs. Direct provider scope; mounted proof is separate. | e6 and9729 |
 | P4 | CLI, Python, sheet, ten notes and rerun | Sol; Luna; service | Complete on recorded tuple | merged | 17739;28012;11615 | Ten notes in one commit, per-step undo/redo, restart, show/history and200-409-200 conflict rerun passed. | Agent543d andf6cda / Runtimea5d |
 | readiness-after-bootstrap | Qualify mounted readiness | App service; Proof review | D45 and current leaves passed | merged | D45; current23809 and9310 | D45 readiness passed. Current producer reports P2 readiness19.5 seconds and P3 readiness41.4 seconds; downstream failures remain. | App663 / Agent079 / Runtime37eb |
-| P2 | Eight original gestures | App service; Proof verdict | Caller1103 PASS; install1115 active | doing | App installer1115 and service | Prior NO-GO remains. Source1036 and new child1035 PASS. One released P2 follows actual worker installation and readback. | HOME d6ed;333b;37eb |
+| P2 | Eight original gestures | App service; Proof verdict | Caller1103 and installation1115 PASS | doing | Actual26414; App producer1119 | One no-cache original submitted11:19:09 on exactd6ed/333b/37eb. All eight retained. Wait sameID; independent verdict follows terminal packet. | HOME d6ed;333b;37eb |
 | P3 | Original Gate5 journey | App service; independent Luna | Strict fault-order source1053 | doing | Actual3896; verdict1053 NO-GO | Independent NO-GO. Exit1/268 seconds at attempts1 versus2. Predecessor/reset and exact A retry reached; B and restart/undo tail not run. | HOME82cb; old079 and37eb |
 | P2-source-repairs | Real catalog, parameter, parent and popup callers | App Sol; independent Luna | Source reviews and home receipts | merged | App0603;0554;0547;0536;0545 | Exact am-burst, form ownership, raw V2 and parent preservation source qualified. Current browser credit remains separate. | Catalogb238 / paramse42 / popup79cd / parent7551 |
 | P2-oracle-baseline | Exact popup rendered targets and ADD claims | Luna; independent Luna | Reviews0418 and0526 | merged | Proof0413 and0521; home receipts | Two rendered selectors and exact asset-then-clip creation claims reviewed. All original downstream predicates retained. | c768 and5f43 |
@@ -67,7 +67,7 @@ All eight current safe JSON hashes, schemas, bounds, security and correlations p
 
 D48/D49 final map0708 and independent0719 PASS establish existing source routes and App-host venue, not READY final execution. Runtime FREEZE coordinates final joins and D39 adoption. App host recipe0754 and independent0758 qualify preparation only. Actual App draft0834 and cumulative0838 now qualify source preparation for missing P4/P5 registrations; actual install is gated by final tuple/receipts. Exact final Agent source, actual registration installation, authenticated child/import custody and preflight remain pending. App U3b integration remains gated on P2/P3 GO. Final P1–P5, full venues and Farm F-final/ZIP follow qualified final heads.
 
-Blockers: App — worker installation1115 and actual readback precede ONE released P2; independent caller1103 PASS clears the source-admission wait.
+Blockers: App service — same P2 actual26414 and sole terminal packet1119 precede independent Proof verdict. Source1036, custody1035, caller1103 and install1115 passed.
 Blockers: Proof — D53 clean application1123, independent final review, normal home merge and integrated proof precede a new P3 caller or release.
 
 Blockers: Freeze — final tuple, actual App host inputs, final gates and D49 full checkpoints precede Farm F-final and ZIP.
@@ -102,3 +102,5 @@ D51/D52: Keep current freeze snapshot; final delivery owns one live-main refresh
 Pass11:21Z: D53 read directly in header: exact retry accounting APPROVED. Independent1115 FINAL passes unprotected architecture and concrete proposal; loseAck already waits for the single held retry, no additional setup call needed.23 controls,three types,lint,list15,identity/lifecycle attacks and reverse-removal PASS; no live credit. Report copied byte-exact. Dispatched sole Luna1123 on exact current home d6ed for clean three-path composition, approved guard, actual full hashes and worker-authored D53 ledger line. No failed donor ancestry, original Gate5 body/reset/tail change or original run. Cleared orchestrator blocker this pass. Kit automatically recycled completed review tree. Sweep3 exit0 removed zero directories.
 
 Pass 2026-10-24T11:26Z: Completed Luna1123 exact2357 is one owncommit over HOME d6ed, three paths, no donor ancestry. Author23 controls/three types/lint/list15 and reverse-removal PASS. Actual fullspec26c1 to95d9; original Gate5 body, reset, canonical5ede tail and downstream tail unchanged. Worker-authored D53 ledger row remains pending home/integrated status, not manager prose. Independent final1126 dispatched immediately on exact2357. Final report copied byte-exact. App new1117 peer repeats historical1100 FAIL; existing D53 and cumulative1115 already supersede that stale wait. Prior candidate32ba remains unmerged. No new P3 run.
+
+Pass 2026-10-24T11:28Z: Actual sole P2 request app-P2-final-pure-integrated-1036-full-e2e-three-products-1024111909-26414 consumed from App1119. Pure d6ed/tree542,Agent333b/Runtime37eb,newchild1016/key188546,Remotion0258/819acf. Actual P2 row11b2eebf, unchanged P3 row23226c and247outsiders9acf qualified by App installation1115. D52 source1118 confirms all five previously unreached cases are live; all eight originals retained. SameID producer1119 owns terminal and retained Apply facts. No duplicate body or speculative result. Final D53 review1126 remains active; source merge waits active P2 terminal.
