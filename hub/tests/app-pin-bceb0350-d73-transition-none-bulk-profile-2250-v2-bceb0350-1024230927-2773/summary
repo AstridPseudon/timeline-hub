@@ -1,0 +1,64 @@
+test app-pin-bceb0350-d73-transition-none-bulk-profile-2250-v2-bceb0350-1024230927-2773: fail exit=1 in 238s — d73-transition-none-bulk-profile-2250-v2-bceb0350 on app-pin-bceb0350 (app tree 46ad4dde505a376e22026c3377615a5fca05a55e)
+cmd: D66_APP_SHA='bceb0350326f22beefdde5c5ba275412bb09b419' D66_APP_TREE='46ad4dde505a376e22026c3377615a5fca05a55e' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-bceb0350' D66_AGENT_SHA='039ff2c2187d02b723074a8a6dfcbc6a70544c19' D66_AGENT_TREE='4e40d897bb1bbbcb8e7ec63f9916c5600deae8cd' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-039ff2c2' D66_RUNTIME_SHA='732c48c6f5a9441a65c61b24595d454a1cd3e180' D66_RUNTIME_TREE='7ed0559c6f0a05954427cc668e303b6cd2f51586' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-732c48c6' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx '/home/user/work/wt/rt-P2-main-dependency-2250/scripts/testing/d66-plain-stack-profile.mjs' 'p2-transition-none-bulk'
+counts:   1 passed (27.4s)   1 failed 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-bceb0350-d73-transition-none-bulk-profile-2250-v2-bceb0350-1024230927-2773/log.txt ---
+
+
+  1) tests/e2e/local/three-products.p2-tour.spec.ts:770:1 › P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByText('Transition', { exact: true }).locator('xpath=following::*[@role="combobox"][1]')
+    Expected substring: [32m"[7mN[27mone"[39m
+    Received string:    [31m"[7m__n[27mone[7m__[27m"[39m
+    Timeout: 5000ms
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByText('Transition', { exact: true }).locator('xpath=following::*[@role="combobox"][1]')[22m
+    [2m    14 × locator resolved to <button tabindex="0" type="button" role="combobox" id="base-ui-:r4n:" aria-expanded="false" aria-haspopup="listbox" data-select-trigger="true" class="flex w-full items-center justify-between rounded-md px-3 py-2 text-base lg:text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 relative border border-input bg-background focus:ring-2 focus:ring-ring focus:ring-offset-2 [&>span]:line-clamp-1 h-10">…</button>[22m
+    [2m       - unexpected value "__none__"[22m
+
+
+      652 |   await (await transitionSelect(page)).click();
+      653 |   await page.getByRole('option', { name: 'None', exact: true }).click();
+    > 654 |   await expect(await transitionSelect(page)).toContainText('None');
+          |                                              ^
+      655 | }
+      656 |
+      657 | async function proveGestureAndUndo(
+        at clearTransitionBulk (/home/user/work/wt/rt-P2-main-dependency-2250/tests/e2e/local/three-products.p2-tour.spec.ts:654:46)
+        at commitFromGesture (/home/user/work/wt/rt-P2-main-dependency-2250/tests/e2e/local/three-products.p2-tour.spec.ts:126:3)
+        at proveGestureAndUndo (/home/user/work/wt/rt-P2-main-dependency-2250/tests/e2e/local/three-products.p2-tour.spec.ts:673:16)
+        at /home/user/work/wt/rt-P2-main-dependency-2250/tests/e2e/local/three-products.p2-tour.spec.ts:782:3
+
+    Error: page.waitForResponse: Target page, context or browser has been closed
+
+      123 |
+      124 | async function commitFromGesture(page: Page, wire: TourWire, action: () => Promise<void>): Promise<CommitPost> {
+    > 125 |   const responsePromise = page.waitForResponse((response) => response.request().method() === 'POST' && COMMITS.test(new URL(response.url()).pathname), CEILING);
+          |                                ^
+      126 |   await action();
+      127 |   const response = await responsePromise;
+      128 |   const request = response.request();
+        at commitFromGesture (/home/user/work/wt/rt-P2-main-dependency-2250/tests/e2e/local/three-products.p2-tour.spec.ts:125:32)
+        at proveGestureAndUndo (/home/user/work/wt/rt-P2-main-dependency-2250/tests/e2e/local/three-products.p2-tour.spec.ts:673:22)
+        at /home/user/work/wt/rt-P2-main-dependency-2250/tests/e2e/local/three-products.p2-tour.spec.ts:782:9
+
+    Error Context: ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-bceb0350-d73-transition-none-bulk-profile-2250-v2-bceb0350-1024230927-2773/d66/p2-transition-none-bulk/three-products.p2-tour-P2--917c4-elds-order-and-guarded-Undo/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-bceb0350-d73-transition-none-bulk-profile-2250-v2-bceb0350-1024230927-2773/d66/p2-transition-none-bulk/three-products.p2-tour-P2--917c4-elds-order-and-guarded-Undo/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../../../../tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-bceb0350-d73-transition-none-bulk-profile-2250-v2-bceb0350-1024230927-2773/d66/p2-transition-none-bulk/three-products.p2-tour-P2--917c4-elds-order-and-guarded-Undo/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests/e2e/local/three-products.p2-tour.spec.ts:770:1 › P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo 
+
+No test passed in this run: a run where everything was skipped or failed is not a green run.
+
+Declare each skip in config/testing/skipRegistry.mjs and use tests/e2e/support/declaredSkip.ts; fix the earlier failure for NOT RUN tests.
+D66 manifest: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-bceb0350-d73-transition-none-bulk-profile-2250-v2-bceb0350-1024230927-2773/d66/manifest.json

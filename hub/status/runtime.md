@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T23:10:24Z | dispatcher heartbeat 12s | live 3 (sol 1, luna 2, other 0) | busy30 8 | status age 0m -->
+<!-- main | 2026-10-24T23:13:45Z | dispatcher heartbeat 1s | live 2 (sol 1, luna 1, other 0) | busy30 8 | status age 1m -->
 # runtime board, 2026-10-24T23:05:06Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -193,13 +193,15 @@
 | F-final-rehearsal | Prepare exact shallow source input | Luna | Author controls passed; real build gated | gated:heavy-disk | rt-F-rehearsal-input-2257 PASS | Private source-view controls PASS; real view below8.5GB stays pending. No build or ZIP. [Report](../../design/runtime-final-rehearsal-input-2257.md) | Private candidate only |
 | F-final-matrix | Join exact Agent venue handoff | Luna | Durable author controls passed | merged | rt-F-matrix-Agent-2252 PASS | Ten venues and final three P4 selectors verified; exact inherited hashes, stub once/poison zero, pending refuses. [Report](../../design/runtime-final-matrix-Agent-2252.md) | Private candidate only |
 
-| P2-spare-venue | Run four assigned main diagnostics | Luna / main service | Main profile corrected | doing | rt-P2-main-dependency-2250 | Parent8232 fails strict envelope; SWAP25174 running. Single and bulk next; fixedtuple and no App case duplicate. | Exact diagnostic tuple |
+| P2-spare-venue | Run four assigned main diagnostics | Luna / main service | Main profile corrected | doing | rt-P2-main-dependency-2250 | Parent8232 envelope FAIL; SWAP25174 refused; single10376 intent FAIL. Bulk2773 running. App attribution and Runtime2308 read only. | Exact diagnostic tuple |
 
 | P4-D84a-distinct | Repair deferred replay freshness | HARD Sol / Luna | Independent2255 FAIL | doing | rt-R2-assembly-return-sol-2304 | Metadata mutation callback returns stale history onbad9. Bad9 held; first return repairs fresh boundary with linear assembly. [Review](../../design/runtime-R2-assembly-security-2255.md) | Released732; bad9 held |
 
 | P2-popup-digest | Preserve exact raw canonical digest | App Luna / independent | App source and controls complete | merged | Author2233; review2239; return2246 | App63d7 preserves numeric spelling; canonical and opaque mutation controls PASS. New ADD7872 remains App owned; old5083 stays failed. | App63d7c74b6d |
 | P2-parent-envelope | Attribute actual parent request shape | App Luna requested | Actual8232 retained source and trace | blocked:app | App owner via peer2303 | Strict request equality sees additional label/steps. C0 attribution and independent exact correction requested; no product cause inferred. | App source unchanged |
 | P2-swap-command | Attribute exact SWAP command refusal | Luna read only | Actual25174 original reached | doing | rt-P2-swap-source-2308 | Strict status431 fails invalid_records: provider executed a different command. Exact differing field and owner pending; no guard change. | Fixedbceb/039f/732/635f |
+| P2-popup-canonical | Qualify complete canonical expectation | App Luna | ADD7872 raw digest passed | blocked:app | app-P2-popup-7872-exact-expectation-2301 | Strict full equality860 differs in parent revision identity/digest. App owns retained-data attribution and exact correction; no Runtime source request. | App63d7 / Runtime732 |
+| P2-transition-intent | Qualify exact clear step intent | App source requested | Single10376 original reached | blocked:app | Existing tour oracle owner via peer2313 | Strict step377 expects generic intent; actual clear action emits specific intent. Batch with parent envelope in one protected file; bulk2773 pending. | Fixedbceb/039f/732/635f |
 
 Runtime producer: RELEASED 732c48c6f5a9441a65c61b24595d454a1cd3e180, tree 7ed0559c6f0a05954427cc668e303b6cd2f51586. Canonical 15 files and schema867f unchanged. [Release](../../design/runtime-D84a-release-2205.md).
 
@@ -236,3 +238,7 @@ H6 2026-10-24T23:05Z: App board confirms raw canonical digest source63d7 merged 
 Intake 2026-10-24T23:08Z: actualSWAP25174 strict invalid_records refusal became row and Luna2308 dispatch immediately. Single10376 is live; bulk remains2250 exclusive. No speculative sharedcause or duplicatebody.
 
 Artifact custody 2026-10-24T23:10Z: rehearsal2257 temporary worktree was recycled. Exact two committed worker-authored Python files exported read-only from tl/rt-F-rehearsal-input-2257 to durable worker evidence; no new code authored or source modified. Original report retained byte-exact.
+
+H6 2026-10-24T23:10Z: App2303 received; ADD7872 raw digest passed and now strict full canonical860 differs in parent revision fields. New canonical row names existingApp2301 worker, no stale digest blocker or speculativeRuntimefix. App assetfinalguard2301 and placement source allocation remain App owned. Inbox through606757 bytes.
+
+Intake 2026-10-24T23:13Z: single10376 specificintent versus genericexpectation became App-owned row and peer2313 attached to parenttour oracle. Bulk2773 is sole remainingmainbody. No assertion or source changed by manager.
