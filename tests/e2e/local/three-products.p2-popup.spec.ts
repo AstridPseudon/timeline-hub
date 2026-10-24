@@ -8,8 +8,10 @@
  * adding a second product caller here.
  */
 import { expect, type Page, type Request, type Response } from '@playwright/test';
+import { execFileSync } from 'node:child_process';
 import {
   makePng,
+  RUNTIME_CHECKOUT,
   sha256Hex,
   THREE_PRODUCTS_REFERENCE_AT,
   type DirectHarness,
@@ -59,6 +61,7 @@ interface PopupSeed extends ThreeProductsSeed {
 interface CommitPost {
   request: Request;
   response: Response;
+  responseBody: string;
   body: CommitRequest;
   json: unknown;
   key: string;
@@ -345,15 +348,24 @@ async function commitFromGesture(page: Page, wire: PopupWire, gesture: () => Pro
   await gesture();
   const response = await responsePromise;
   const request = response.request();
+  const responseBody = await response.text();
   const post: CommitPost = {
     request,
     response,
+    responseBody,
     body: request.postDataJSON() as CommitRequest,
-    json: await response.json(),
+    json: JSON.parse(responseBody),
     key: request.headers()['idempotency-key'] ?? '',
   };
   wire.posts.push(post);
   return post;
+}
+
+function authoritativeDocumentDigest(post: CommitPost): string {
+  return execFileSync(ASTRID_PYTHON, ['-c',
+    'import json, sys; sys.path.insert(0, sys.argv[1]); from runtime_protocol.timeline_commit_validation import digest; print(digest(json.load(sys.stdin)["data"]["canonical_document"]))',
+    RUNTIME_CHECKOUT], { input: post.responseBody, encoding: 'utf8',
+    env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' }, timeout: 30_000 }).trim();
 }
 
 function assertFullRequest(post: CommitPost, before: HeadPin, seed: PopupSeed, harness: DirectHarness): void {
@@ -449,7 +461,9 @@ function accepted(post: CommitPost, before: HeadPin): CommitAcceptedMutation {
     if (Object.prototype.hasOwnProperty.call(post.body, key)) expect(result.data[key]).toBe(post.body[key]);
   }
   expect(result.data.canonical_document.parent_revision.revision_id).toBe(result.data.accepted_revision_id);
-  expect(result.data.document_digest).toBe(digest(result.data.canonical_document));
+  // Preserve Runtime's numeric spelling (for example, 12000.0 vs 12000)
+  // from the raw reply; JSON.parse cannot retain that distinction.
+  expect(result.data.document_digest).toBe(authoritativeDocumentDigest(post));
   expect(result.receipt.result).toEqual(result.data);
   return result;
 }
