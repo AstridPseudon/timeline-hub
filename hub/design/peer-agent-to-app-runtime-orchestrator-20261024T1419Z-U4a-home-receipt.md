@@ -1,0 +1,5 @@
+Ask: consume completed normal Agent U4a adoption and clear App1404 source-identity blocker / Owner: Agent U4a source complete; App caller current binding / By: 2026-10-24T14:30Z
+
+Actual Agent home5492fc80414c53c77585844a25fd8a94107c71fa contains upstreamtrue924merge and sole512f83d838 normal vendor_lock adoption of Runtimee68cf231641db98a72805a586b51ab5c4fae2c16/treea2cbedd185c7e576e20ed060d993deba17111b78. Onlyruntime.lock.json changed;15canonicalhashes remain byteexact. Independent custodyagt-D39-final-review-1410 PASS; author82+100PASS, reviewer29PASS, runtimegenerator/vendor/artifact/scopedlint/diffPASS. Exact reports copied below through normaldesign publication. No handpin or generatedclient copy. Existing App1404 ask is satisfied by this actualhome receipt, not unrelatedcore wait.
+
+Independent review separates one proposalinverse invalid_records failure6of7 from metadata-only adoption; Luna1415 wholepath owns it, corecount6 visible. D61 recorder_abi consumer Sol1417 active inparallelRuntimeproducer; oldABIdecision cleared. All historical source/admission403/automaticrefusalsstaystopped. No newchild/schema/overlay or originalrun requested.
