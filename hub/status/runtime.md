@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T12:07:43Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 0m -->
-# runtime board, 2026-10-24T12:07:25Z
+<!-- main | 2026-10-24T12:10:49Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 2m -->
+# runtime board, 2026-10-24T12:08:49Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -74,7 +74,7 @@
 | F-helper-originals | Qualify fourteen retained helper rows | Luna | Settled D23 child-word scope | gated:D23 | Author 0622; review 0627; Agent 0640 | Thirteen passed. Remaining child-word case is D23 deferred, unchanged and open; no fixture binding or timing backend invented. | Agent bb50 unchanged |
 | F-R2-root-originals | Qualify nine retained root cases | Luna | Independent exact result review passed | merged | Author0622; review0625 PASS | Nine originals passed; source only. Pre/post capture limit disclosed. [Review](../../design/runtime-R2-root-review-0625.md) | Agent bb50 unchanged |
 | R2r-shared-inverse-auth | Verify shared inverse source identities | Sol / Luna | Integrated source proof passed | merged | Author 0647; review 0701; integrated 0711 | Actual460c passed177 plus six shared/source-copy controls on exact Agent d33fe archive. No original ABA or HTTP credit. | 460c2d397 / 35764ce10 |
-| F-D52-shot-set | Preserve 17 live shot-set cases | Luna | Actual Agent home proof | doing | Author1139; independent1143 PASS | Normal homeaff339 received; Agent integrated1156 active. Independent17 assigned and61 file PASS retained. | 3b8dc8a345 / aff3391061 |
+| F-D52-shot-set | Preserve 17 live shot-set cases | Luna | Actual Agent home proof PASS | merged | Author1139; review1143; home1156 | Actualaff339 passed61 in4.04s; durable XML and original14 test ASTs exact. All17 assigned cases included. | 3b8dc8a345 / aff3391061 |
 | F-D52-occurrence-delete | Qualify 19 live delete cases | Luna | Exact integrated source proof | merged | Author1139; independent1141 PASS | Exact Agent7e258 and Runtimebecfe:19PASS6.43s; bodies and params unchanged. [Review](../../design/runtime-D52-occurrence-review-1141.md) | Agent7e258 unchanged |
 | F-D52-core-five | Qualify five current inverse and fork cases | Luna | Agent assignment1200 | doing | rt-F-D52-core-five-1207 | Caller and relevant source change first; four exclusive test files, every original body unchanged. | Base Agentd411 |
 | FREEZE | Coordinate final tuple and proofs | Runtime manager | D48 and D49 | doing | Runtime 0727; Agent checkpoint 9758; App owners | Runtime and Agent upstream/D39 are home. Agent repairs active; App branch full19570 failed and sources are owned. App home adoption waits P2/P3 GO. | Runtime becfe6db8 |
@@ -128,4 +128,4 @@ Later: D47 memo and proof-pin work remain held until after delivery; nine state 
 
 Disk: 9031442432 bytes free. Sweep3 removed zero directories; compaction packed zero and compressed two old logs. All four new finished worker trees were automatically recycled after clean finalization. Previously refused or dirty historical targets were not retried. D34 broader cleanup remains gated; main stays above its8GB heavy-run floor.
 
-Pass 2026-10-24T12:07:25Z: New Agent1200 exact five-node failover discovered on normalhub and dispatched immediately as Luna1207. Four exclusive fixture files; currentcaller/relevantpostfullsource first, no product edit. Agent confirms shot-set homeaff339 and integrated1156 active; occurrence19 complete. Recycled four finished new Runtime trees through supported route, all were already absent. Header/owner boards rechecked; Farm stale source blocker cleared. Admission hold remains.
+Pass 2026-10-24T12:07:25Z: New Agent1200 exact five-node failover discovered on normalhub and dispatched immediately as Luna1207. Four exclusive fixture files; currentcaller/relevantpostfullsource first, no product edit. Agent confirms actual homeaff339 integrated1156 PASS61 in4.04s; occurrence19 complete. Recycled four finished new Runtime trees through supported route, all were already absent. Header/owner boards rechecked; Farm stale source blocker cleared. Admission hold remains.
