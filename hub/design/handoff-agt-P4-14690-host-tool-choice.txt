@@ -1,0 +1,11 @@
+utc_ns=1792871486736317204
+pid=17160
+PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/local/bin:/usr/bin:/bin
+command_v_py_spy=
+named_path=/usr/local/bin/py-spy absent-or-not-executable
+named_path=/usr/bin/py-spy absent-or-not-executable
+named_path=/home/user/work/venv-agent/bin/py-spy absent-or-not-executable
+choice=cProfile
+status=SELECTED
+body=continue
+reason=py-spy-absent-on-actual-service-host

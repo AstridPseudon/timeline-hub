@@ -1,0 +1,490 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="3" time="60.863" timestamp="2026-10-24T19:51:27.762339+00:00" hostname="vm"><testcase classname="tests.editing_conformance.test_p4_cli_sheet_v2_runtime" name="test_cli_sheet_v2_runtime_preserves_document_and_reads_back" time="2.821" /><testcase classname="tests.editing_conformance.test_p4_ten_note_v2_runtime" name="test_http_ten_note_commit_per_step_inverse_and_redo" time="45.407"><failure message="Failed: Timeout (&gt;45.0s) from pytest-timeout.">runtime = namespace(calls=[(b'{"api_version":1,"project_id":"0a6897b623a24d5a89e6eaf14e7aad69","timeline_id":"film","base_revisi...80d4b13833c903c6cc1687b'}, path=PosixPath('/tmp/pytest-of-root/pytest-18/test_http_ten_note_commit_per_0/outbox.json'))
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-18/test_http_ten_note_commit_per_0')
+capsys = &lt;_pytest.capture.CaptureFixture object at 0x7fe16bca1090&gt;
+
+    def test_http_ten_note_commit_per_step_inverse_and_redo(runtime, tmp_path, capsys):
+        seeded = _seed_original(runtime)
+        opened = timeline.open(
+            runtime.project, "film", client=runtime.client(),
+            outbox_path=tmp_path / "ten-note-open.json",
+        )
+        original = copy.deepcopy(opened.bundle)
+        assert _note_values(original) == {}
+        assert len(original["placements"]) == 2
+        assert "_runtime_document" not in original["source_mapping"]
+        base_head = {
+            "revision_id": seeded["data"]["accepted_revision_id"],
+            "publication_id": seeded["receipt"]["receipt_id"],
+        }
+        assert opened.head == base_head
+        base_read = runtime.client().timelines.open_bundle(
+            runtime.project, "film", revision_id=base_head["revision_id"],
+            publication_id=base_head["publication_id"],
+        )
+        assert base_read.ok
+        authenticated_base = base_read.data["bundle"]
+        canonical = authenticated_base["source_mapping"]["_runtime_document"]
+        assert authenticated_base == {
+            **original,
+            "source_mapping": {**original["source_mapping"], "_runtime_document": canonical},
+            "base_parent": {**original["base_parent"], "publication_id": base_head["publication_id"]},
+        }
+        assert base_read.data["project_id"] == runtime.project
+        assert base_read.data["timeline_id"] == "film"
+        assert base_read.data["revision_id"] == base_head["revision_id"]
+        assert base_read.data["is_current_head"] is True
+        assert canonical["parent_revision"]["revision_id"] == base_head["revision_id"]
+        assert set(canonical) == {
+            "schema_version", "project_id", "timeline_id", "parent_revision",
+            "shot_revisions", "internal_timeline_revisions", "dependency_manifest",
+        }
+        assert canonical["schema_version"] == 1
+        assert canonical["project_id"] == runtime.project
+        assert canonical["timeline_id"] == "film"
+        canonical_parent = canonical["parent_revision"]
+        physical_occurrences = canonical_parent["payload"]["occurrences"]
+        assert [(row["occurrence_id"], row["shot_id"], row["shot_revision_id"])
+                for row in physical_occurrences] == [
+            ("occ-a", "chapter-shot", "shot-1"),
+            ("occ-b", "chapter-shot", "shot-1"),
+        ]
+        source_fixture = document_fixture(shared=True)
+        source_parent = source_fixture["parent_revision"]["payload"]
+        source_shot = source_fixture["shot_revisions"][0]["payload"]
+        source_internal = source_fixture["internal_timeline_revisions"][0]["payload"]
+        assert physical_occurrences == source_parent["occurrences"]
+        assert canonical_parent["payload"]["unknown"] == source_parent["unknown"]
+        assert canonical_parent["payload"]["config"]["opaque"] == source_parent["config"]["opaque"]
+    
+        physical_shots = canonical["shot_revisions"]
+        physical_internals = canonical["internal_timeline_revisions"]
+        assert [(row["shot_id"], row["revision_id"])
+                for row in physical_shots] == [("chapter-shot", "shot-1")]
+        assert [(row["timeline_id"], row["revision_id"])
+                for row in physical_internals] == [("chapter-1", "internal-1")]
+        physical_shot = physical_shots[0]
+        physical_internal = physical_internals[0]
+        assert physical_shot["internal_timeline_revision_id"] == "internal-1"
+        assert physical_shot["payload"]["internal_timeline_revision_id"] == "internal-1"
+        assert physical_shot["payload"]["items"][0]["item_id"] == "item-1"
+        assert physical_shot["payload"]["unknown"] == source_shot["unknown"]
+        assert physical_internal["payload"]["unknown"] == source_internal["unknown"]
+        assert physical_internal["payload"]["source_window"] == source_internal["source_window"]
+        media_refs = [
+            canonical_parent["payload"]["registry"]["assets"]["picture"]["media_id"],
+            physical_shot["payload"]["items"][0]["media_id"],
+            physical_internal["payload"]["registry"]["assets"]["picture"]["media_id"],
+        ]
+        assert len(set(media_refs)) == 1
+        media_id = media_refs[0]
+        assert canonical["dependency_manifest"]["media"] == [
+            {"media_id": media_id, "content_digest": media_id}
+        ]
+        assert canonical_parent["content_digest"] == _digest(canonical_parent["payload"])
+        assert physical_shot["content_digest"] == _digest(physical_shot["payload"])
+        assert physical_internal["content_digest"] == _digest(physical_internal["payload"])
+        assert canonical["dependency_manifest"]["shots"] == [{
+            "shot_id": "chapter-shot", "revision_id": "shot-1",
+            "internal_timeline_revision_id": "internal-1",
+            "content_digest": physical_shot["content_digest"],
+        }]
+        assert canonical["dependency_manifest"]["internal_timelines"] == [{
+            "timeline_id": "chapter-1", "revision_id": "internal-1",
+            "content_digest": physical_internal["content_digest"],
+        }]
+    
+        source_mapping = original["source_mapping"]
+        working_aliases = [placement["shot_id"] for placement in original["placements"]]
+        assert len(working_aliases) == len(set(working_aliases)) == 2
+        assert set(source_mapping["placements"]) == {
+            row["occurrence_id"] for row in physical_occurrences
+        }
+        assert set(source_mapping["shots"]) == set(working_aliases)
+        for physical_occurrence, placement in zip(physical_occurrences, original["placements"]):
+            assert source_mapping["placements"][physical_occurrence["occurrence_id"]] == placement
+            source = source_mapping["shots"][placement["shot_id"]]
+            assert (source["shot_id"], source["revision_id"]) == (
+                physical_occurrence["shot_id"], physical_occurrence["shot_revision_id"]
+            )
+            assert (source["internal_timeline_id"], source["internal_timeline_revision_id"]) == (
+                physical_internal["timeline_id"], physical_shot["internal_timeline_revision_id"]
+            )
+            assert source["content_digest"] == physical_shot["content_digest"]
+            assert source["internal_timeline_content_digest"] == physical_internal["content_digest"]
+        assert next(row for row in original["parent"]["clips"] if row["id"] == "clip-b")["at"] == 5
+    
+        for note in _notes():
+            before = copy.deepcopy(opened.bundle)
+            after = copy.deepcopy(before)
+            for clips in (after["parent"]["clips"], after["parent"]["config"]["clips"]):
+                clip = next(row for row in clips if row["id"] == "clip-a")
+                clip["app"]["org.example"]["p4_note"][note["id"]] = note["text"]
+            commands = emit_document_commands(before, after)
+            assert len(commands) == 1
+            assert commands[0]["args"]["changes"] == [{
+                "op": "set", "ref": "parent", "path": [*NOTE_PATH_PREFIX, note["id"]],
+                "before": {"state": "absent"}, "value": note["text"],
+            }]
+            opened.command(
+                commands[0], label=note["id"], intent=note["text"], tags=["review"], reads=[]
+            )
+    
+        result = opened.commit("Add ten review notes", merge="fields", reads=[],
+                               idempotency_key="p4-ten-note-commit")
+        data = result["data"]
+        receipt = result["receipt"]
+        assert data["status"] == "accepted"
+        assert len(runtime.calls) == 1
+        request = json.loads(runtime.calls[0][0])
+        assert runtime.calls[0][1] == "p4-ten-note-commit"
+        assert request["api_version"] == 1
+        assert {key: request[key] for key in (
+            "project_id", "timeline_id", "base_revision_id", "base_publication_id",
+        )} == {
+            "project_id": runtime.project,
+            "timeline_id": "film",
+            "base_revision_id": original["base_parent"]["revision_id"],
+            "base_publication_id": seeded["receipt"]["receipt_id"],
+        }
+        assert len(request["commands"]) == len(request["steps"]) == 10
+        assert request["label"] == "Add ten review notes"
+        assert request["merge"] == "fields"
+        assert request["reads"] == []
+        assert request["dry_run"] is False
+        assert request["source"] == {"via": "python"}
+        for command, step, note in zip(request["commands"], request["steps"], _notes()):
+            assert command["op"] == "doc.patch"
+            assert step == {
+                "id": f"step-{note['ordinal'] + 1}", "label": note["id"], "intent": note["text"],
+                "tags": ["review"], "command_ordinals": [note["ordinal"]],
+                "patch": command["args"]["changes"], "reads": [],
+            }
+    
+        expected_plan = execute(
+            bundle_from_document(canonical), request["commands"],
+            commit_request=request, evaluated_head=base_head,
+        )
+        assert expected_plan.bundle["source_mapping"] == authenticated_base["source_mapping"]
+        assert data["canonical_document"] == document_from_bundle(expected_plan.bundle)
+    
+        assert data["merge_mode"] == "fields"
+        for key in (
+            "canonical_document", "document_digest", "accepted_revision_id", "commands",
+            "id_map", "steps", "merge_mode", "previous_revision_id",
+            "previous_publication_id", "rebased_onto", "publisher",
+            "provider_version", "compiler_version",
+        ):
+            assert key in data
+        assert data["document_digest"] == _digest(data["canonical_document"])
+        assert data["accepted_revision_id"] == data["canonical_document"]["parent_revision"]["revision_id"]
+        assert data["accepted_publication_id"] == receipt["receipt_id"]
+        assert data["previous_revision_id"] == base_head["revision_id"]
+        assert data["previous_publication_id"] == base_head["publication_id"]
+        assert data["id_map"] == {}
+        assert data["rebased_onto"] is None
+        assert data["publisher"]
+        assert data["commands"] == [record["command"] for record in expected_plan.records]
+        for submitted, record in zip(request["commands"], expected_plan.records):
+            assert {key: record["command"][key] for key in submitted} == submitted
+        assert data["steps"] == expected_plan.steps
+        assert len(data["steps"]) == 10
+        for step, note in zip(data["steps"], _notes()):
+            _assert_step_patch(step, note)
+        assert receipt["receipt_id"]
+        assert receipt["command_kind"] == "timeline.commit"
+        landed = bundle_from_document(data["canonical_document"])
+        assert landed["source_mapping"] == {
+            **original["source_mapping"], "_runtime_document": data["canonical_document"],
+        }
+        assert _note_values(landed) == {note["id"]: note["text"] for note in _notes()}
+        assert _without_notes(landed) == _without_notes(original)
+    
+        show_code, shown = _run_cli(
+            runtime, capsys, "show", "film", "--published",
+            "--revision-id", data["accepted_revision_id"],
+        )
+        assert show_code == 0 and shown["ok"] is True
+        assert any(row["clip_id"] == "clip-a" and row["start"] == 1 for row in shown["data"]["rows"])
+        history_code, history = _run_cli(runtime, capsys, "history", "film", "--limit", "50")
+        assert history_code == 0 and history["ok"] is True
+        revision = next(
+            item for item in history["data"]["revisions"]
+            if item["id"] == data["accepted_revision_id"]
+        )
+        assert revision["message"] == "Add ten review notes"
+        raw_history = runtime.client().timelines.history(runtime.project, "film", limit=50)
+        assert raw_history.ok
+        stored = next(item for item in raw_history.data["items"] if item["publication_id"] == receipt["receipt_id"])
+        assert stored["label"] == "Add ten review notes"
+        assert stored["publisher"]
+        assert stored["merge_mode"] == "fields"
+        assert stored["records"]["schema_version"] == 1
+        assert stored["records"]["commands"] == expected_plan.records
+        assert stored["records"]["steps"] == expected_plan.steps
+        assert stored["records"]["label"] == expected_plan.label
+        assert stored["records"]["merge_mode"] == expected_plan.merge_mode
+        assert stored["records"]["undo_of"] == []
+        assert stored["records"]["restored_from"] is None
+        assert stored["records"]["undo_steps"] is None
+        assert len(stored["steps"]) == 10
+        for step, note in zip(stored["steps"], _notes()):
+            _assert_step_patch(step, note)
+    
+        runtime.restart()
+        reloaded = timeline.open(
+            runtime.project, "film", client=runtime.client(),
+            outbox_path=tmp_path / "ten-note-reloaded.json",
+        )
+        assert "_runtime_document" not in reloaded.bundle["source_mapping"]
+        for note in _notes():
+            step_id = f"step-{note['ordinal'] + 1}"
+            session = reloaded.session
+&gt;           undo = session.undo(
+                [receipt["receipt_id"]],
+                steps={receipt["receipt_id"]: [step_id]},
+                idempotency_key=f"p4-ten-note-undo-{note['id']}",
+            )
+
+tests/editing_conformance/test_p4_ten_note_v2_runtime.py:431: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+astrid/sdk/timeline/sync.py:462: in undo
+    return self._flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via, prepare=prepare)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/sync.py:556: in _flush
+    result = _response(self.client.timelines.commit(
+astrid/sdk/_remote_timeline.py:248: in commit
+    return self._typed(
+astrid/sdk/remote.py:356: in _typed
+    value = self._client.commit_timeline(*args, **kwargs)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/workspace_client.py:494: in commit_timeline
+    return self._call_generated(
+astrid/sdk/workspace_client.py:290: in _call_generated
+    value = generated(*args, **kwargs)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid_runtime_client/generated.py:965: in commit_timeline
+    return self._commit_response(self._request("POST", f"/v1/projects/{_path_part(project_id)}/timelines/{_path_part(timeline_id)}/commit", body=body, headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2], preview=request.get("dry_run", False))
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid_runtime_client/generated.py:656: in _request
+    status, response_headers, response_body = self._transport(method, path, request_headers, body)
+                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/editing_conformance/test_native_batch_ingress.py:76: in transport
+    RuntimeHandler(sock, ('127.0.0.1', 1), server)
+/usr/lib/python3.13/socketserver.py:766: in __init__
+    self.handle()
+/usr/lib/python3.13/http/server.py:451: in handle
+    self.handle_one_request()
+/usr/lib/python3.13/http/server.py:439: in handle_one_request
+    method()
+../rt-pin-e89eb8c7/runtime_protocol/server.py:1238: in do_POST
+    self._dispatch()
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-actual-profile-submit-1948/evidence/p4_live_profile.py:102: in measured
+    return profile.runcall(original, handler, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/cProfile.py:113: in runcall
+    return func(*args, **kw)
+           ^^^^^^^^^^^^^^^^^
+../rt-pin-e89eb8c7/runtime_protocol/server.py:1203: in _dispatch
+    self._route()
+../rt-pin-e89eb8c7/runtime_protocol/server.py:523: in _route
+    return self._timeline_commit(path[2], path[4], path)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-e89eb8c7/runtime_protocol/server.py:311: in _timeline_commit
+    return self._send(200, commit(
+../rt-pin-e89eb8c7/runtime_protocol/service.py:2444: in commit_timeline
+    return self._execute_timeline_commit(
+../rt-pin-e89eb8c7/runtime_protocol/service.py:2499: in _execute_timeline_commit
+    outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-e89eb8c7/runtime_protocol/timeline_commit_execution.py:105: in execute
+    raise error
+../rt-pin-e89eb8c7/runtime_protocol/timeline_commit_execution.py:87: in execute
+    outcome = detached(provider.commit(provider_context, port))
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/commit.py:1331: in commit
+    original = execute(bundle, execution_calls, inverse_records=inverse_records,
+astrid/sdk/timeline/commands.py:308: in execute
+    return metadata.finish(Plan(candidate, records))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/_commit_patch.py:592: in finish
+    after = inverse_closure(self.outputs[step['id']], self.inverse_sources.get(ordinal, []),
+astrid/sdk/timeline/_commit_patch.py:256: in inverse_closure
+    return Closure(bundle, source_bundles=sources, inverse_records=inverse_records)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/_doc_patch.py:124: in __init__
+    self.document = document_from_bundle(
+astrid/sdk/timeline/commit.py:385: in document_from_bundle
+    removals = _inverse_media_removals(inverse_records, bundle)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/commit.py:189: in _inverse_media_removals
+    before, after = records.load_boundary(entry)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/commit.py:1280: in load_boundary
+    _history(port, pin, previous, CommitRejected, base)
+astrid/sdk/timeline/commit.py:666: in _history
+    page = port.history(through, after_publication_id=after["publication_id"] if after else None,
+../rt-pin-e89eb8c7/runtime_protocol/timeline_commit_port.py:254: in history
+    return self._read(read)
+           ^^^^^^^^^^^^^^^^
+../rt-pin-e89eb8c7/runtime_protocol/timeline_commit_port.py:215: in _read
+    return copy.deepcopy(call())
+                         ^^^^^^
+../rt-pin-e89eb8c7/runtime_protocol/timeline_commit_port.py:250: in read
+    if self._ancestor(through["publication_id"])["revision_id"] != through["revision_id"]:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-e89eb8c7/runtime_protocol/timeline_commit_port.py:233: in _ancestor
+    entry = self.__store.history_entry(self.__project, self.__timeline, current["publication_id"])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-e89eb8c7/runtime_protocol/timeline_commit_store.py:460: in history_entry
+    self._verify_accepted(ledger, row, allow_archived=allow_archived)
+../rt-pin-e89eb8c7/runtime_protocol/timeline_commit_store.py:261: in _verify_accepted
+    replay_request, prepared, sequential = self._historical_sequential(
+../rt-pin-e89eb8c7/runtime_protocol/timeline_commit_store.py:362: in _historical_sequential
+    return request, prepared, validate_sequential_capture(
+../rt-pin-e89eb8c7/runtime_protocol/timeline_commit_auth.py:2497: in validate_sequential_capture
+    _capture_records(records, prepared["records"], request)
+../rt-pin-e89eb8c7/runtime_protocol/timeline_commit_auth.py:2372: in _capture_records
+    validate_commit_value(records, "Recorder")
+../rt-pin-e89eb8c7/runtime_protocol/timeline_commit_validation.py:141: in validate_commit_value
+    _validator(definition).validate(value)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:449: in validate
+    for error in self.iter_errors(*args, **kwargs):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:383: in iter_errors
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:296: in properties
+    yield from validator.descend(
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:78: in items
+    yield from validator.descend(
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:296: in properties
+    yield from validator.descend(
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:78: in items
+    yield from validator.descend(
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:296: in properties
+    yield from validator.descend(
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:355: in oneOf
+    errs = list(validator.descend(instance, subschema, schema_path=index))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:296: in properties
+    yield from validator.descend(
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:340: in anyOf
+    errs = list(validator.descend(instance, subschema, schema_path=index))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:78: in items
+    yield from validator.descend(
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:340: in anyOf
+    errs = list(validator.descend(instance, subschema, schema_path=index))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:44: in additionalProperties
+    yield from validator.descend(instance[extra], aP, path=extra)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:340: in anyOf
+    errs = list(validator.descend(instance, subschema, schema_path=index))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:44: in additionalProperties
+    yield from validator.descend(instance[extra], aP, path=extra)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:340: in anyOf
+    errs = list(validator.descend(instance, subschema, schema_path=index))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:421: in descend
+    specification.create_resource(schema),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.13/site-packages/referencing/_core.py:169: in create_resource
+    return Resource(contents=contents, specification=self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;[AttributeError("'referencing._core.Resource' object has no attribute 'contents'") raised in repr()] Resource object at 0x7fe16b08a910&gt;
+contents = {'type': ['null', 'boolean', 'number', 'string']}
+specification = &lt;Specification name='draft2020-12'&gt;
+
+    def __init__(self, contents, specification):
+&gt;       _setattr = _cached_setattr_get(self)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: Timeout (&gt;45.0s) from pytest-timeout.
+
+&lt;attrs generated methods referencing._core.Resource&gt;:30: Failed</failure></testcase><testcase classname="tests.editing_conformance.test_p4_note_rerun_v2_runtime" name="test_http_note_conflict_reruns_public_function_from_verified_peer_document" time="9.630" /></testsuite></testsuites>

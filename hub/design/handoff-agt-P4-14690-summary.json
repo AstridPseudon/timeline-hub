@@ -1,0 +1,1778 @@
+{
+  "scope": "actual RuntimeHandler._dispatch calls during original ten-note call",
+  "test_protocol_wall_seconds": 46.80448643799173,
+  "original_timeout_seconds": 45,
+  "reports": [
+    {
+      "phase": "setup",
+      "outcome": "passed",
+      "seconds": 0.6244826359907165
+    },
+    {
+      "phase": "call",
+      "outcome": "failed",
+      "seconds": 44.400677093013655
+    },
+    {
+      "phase": "teardown",
+      "outcome": "passed",
+      "seconds": 0.3816619210119825
+    }
+  ],
+  "handler_count": 54,
+  "calls": {
+    "history_entry": 71,
+    "_verify_accepted": 64,
+    "accept_calls": 1,
+    "commit_timeline_calls": 2
+  },
+  "top10_cumulative": [
+    {
+      "file": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/server.py",
+      "line": 1171,
+      "function": "_dispatch",
+      "primitive_calls": 54,
+      "total_calls": 57,
+      "self_seconds": 0.0015185790000000004,
+      "cumulative_seconds": 42.070978879
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/server.py",
+      "line": 408,
+      "function": "_route",
+      "primitive_calls": 54,
+      "total_calls": 54,
+      "self_seconds": 0.001444616,
+      "cumulative_seconds": 42.048654241
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/timeline_commit_store.py",
+      "line": 202,
+      "function": "_verify_accepted",
+      "primitive_calls": 64,
+      "total_calls": 64,
+      "self_seconds": 0.069124181,
+      "cumulative_seconds": 37.854424312000006
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/server.py",
+      "line": 294,
+      "function": "_timeline_commit",
+      "primitive_calls": 2,
+      "total_calls": 2,
+      "self_seconds": 6.3341e-05,
+      "cumulative_seconds": 37.542158239
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/timeline_commit_store.py",
+      "line": 442,
+      "function": "history_entry",
+      "primitive_calls": 71,
+      "total_calls": 71,
+      "self_seconds": 0.068386215,
+      "cumulative_seconds": 37.508153991
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/service.py",
+      "line": 2435,
+      "function": "commit_timeline",
+      "primitive_calls": 2,
+      "total_calls": 2,
+      "self_seconds": 0.000106193,
+      "cumulative_seconds": 37.494422916000005
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/service.py",
+      "line": 2450,
+      "function": "_execute_timeline_commit",
+      "primitive_calls": 2,
+      "total_calls": 2,
+      "self_seconds": 0.000312555,
+      "cumulative_seconds": 37.483851291
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/timeline_commit_execution.py",
+      "line": 69,
+      "function": "execute",
+      "primitive_calls": 2,
+      "total_calls": 2,
+      "self_seconds": 0.0007714560000000001,
+      "cumulative_seconds": 37.459442776
+    },
+    {
+      "file": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/commit.py",
+      "line": 1160,
+      "function": "commit",
+      "primitive_calls": 2,
+      "total_calls": 2,
+      "self_seconds": 0.0007036750000000001,
+      "cumulative_seconds": 36.381040489
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/timeline_commit_port.py",
+      "line": 210,
+      "function": "_read",
+      "primitive_calls": 40,
+      "total_calls": 41,
+      "self_seconds": 0.0017767110000000003,
+      "cumulative_seconds": 33.330365282
+    }
+  ],
+  "boundaries": [
+    {
+      "event": "handler_end",
+      "sequence": 1,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/health",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0001.prof",
+      "profiled_handler_wall_seconds": 0.000939286983339116,
+      "capture_seconds_excluding_end_event": 0.001599088020157069,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 2,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "POST",
+      "path": "/v1/handshake",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0002.prof",
+      "profiled_handler_wall_seconds": 0.0018007880134973675,
+      "capture_seconds_excluding_end_event": 0.0027111189847346395,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 3,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines?limit=50",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0003.prof",
+      "profiled_handler_wall_seconds": 0.0024117760185617954,
+      "capture_seconds_excluding_end_event": 0.0029249810031615198,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 4,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "POST",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines/film/inspect",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0004.prof",
+      "profiled_handler_wall_seconds": 0.00789790999260731,
+      "capture_seconds_excluding_end_event": 0.0029526969883590937,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 5,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines?limit=50",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0005.prof",
+      "profiled_handler_wall_seconds": 0.0020726719812955707,
+      "capture_seconds_excluding_end_event": 0.0020007900311611593,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 6,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines/film/commits?limit=1",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0006.prof",
+      "profiled_handler_wall_seconds": 0.011648918007267639,
+      "capture_seconds_excluding_end_event": 0.0028344769962131977,
+      "error_type": null,
+      "calls": {
+        "history_entry": 2,
+        "_verify_accepted": 1,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 7,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines?limit=50",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0007.prof",
+      "profiled_handler_wall_seconds": 0.0021915159886702895,
+      "capture_seconds_excluding_end_event": 0.0022510600101668388,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 8,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "POST",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines/film/inspect",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0008.prof",
+      "profiled_handler_wall_seconds": 0.006452333997003734,
+      "capture_seconds_excluding_end_event": 0.0030385020072571933,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 9,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines/film/composition-revisions/p4-ten-note-baseline",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0009.prof",
+      "profiled_handler_wall_seconds": 0.002101507008774206,
+      "capture_seconds_excluding_end_event": 0.002040685008978471,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 10,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/shots/chapter-shot/revisions/shot-1",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0010.prof",
+      "profiled_handler_wall_seconds": 0.0020347550162114203,
+      "capture_seconds_excluding_end_event": 0.002004008973017335,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 11,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines/chapter-1/revisions/internal-1",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0011.prof",
+      "profiled_handler_wall_seconds": 0.002106744999764487,
+      "capture_seconds_excluding_end_event": 0.0020481289830058813,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 12,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines?limit=50",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0012.prof",
+      "profiled_handler_wall_seconds": 0.0021022850123699754,
+      "capture_seconds_excluding_end_event": 0.0020675679843407124,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 13,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines/film/commits?limit=100",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0013.prof",
+      "profiled_handler_wall_seconds": 0.011028943001292646,
+      "capture_seconds_excluding_end_event": 0.0024544479965697974,
+      "error_type": null,
+      "calls": {
+        "history_entry": 2,
+        "_verify_accepted": 1,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 14,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/health",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0014.prof",
+      "profiled_handler_wall_seconds": 0.000518069980898872,
+      "capture_seconds_excluding_end_event": 0.0010446800442878157,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 15,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "POST",
+      "path": "/v1/handshake",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0015.prof",
+      "profiled_handler_wall_seconds": 0.001177089987322688,
+      "capture_seconds_excluding_end_event": 0.0013101600052323192,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 16,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines?limit=50",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0016.prof",
+      "profiled_handler_wall_seconds": 0.0013724849850405008,
+      "capture_seconds_excluding_end_event": 0.001586469035828486,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 17,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "POST",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines/film/inspect",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0017.prof",
+      "profiled_handler_wall_seconds": 0.003976380015956238,
+      "capture_seconds_excluding_end_event": 0.0018217370088677853,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 18,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines/film/composition-revisions/p4-ten-note-baseline",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0018.prof",
+      "profiled_handler_wall_seconds": 0.001371912017930299,
+      "capture_seconds_excluding_end_event": 0.001502948987763375,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 19,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/shots/chapter-shot/revisions/shot-1",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0019.prof",
+      "profiled_handler_wall_seconds": 0.0012947169889230281,
+      "capture_seconds_excluding_end_event": 0.0012238930212333798,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 20,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines/chapter-1/revisions/internal-1",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0020.prof",
+      "profiled_handler_wall_seconds": 0.001230487017892301,
+      "capture_seconds_excluding_end_event": 0.0011883469996973872,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 21,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines?limit=50",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0021.prof",
+      "profiled_handler_wall_seconds": 0.001419434993294999,
+      "capture_seconds_excluding_end_event": 0.0014272100233938545,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 22,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines/film/commits?limit=100",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0022.prof",
+      "profiled_handler_wall_seconds": 0.006948207999812439,
+      "capture_seconds_excluding_end_event": 0.0015874119999352843,
+      "error_type": null,
+      "calls": {
+        "history_entry": 2,
+        "_verify_accepted": 1,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 23,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines?limit=50",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0023.prof",
+      "profiled_handler_wall_seconds": 0.0015968370134942234,
+      "capture_seconds_excluding_end_event": 0.0013610869646072388,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 24,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "POST",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines/film/commit",
+      "idempotency_key": "p4-ten-note-commit",
+      "shared_note_count": 10,
+      "profile": "handler-0024.prof",
+      "profiled_handler_wall_seconds": 3.5527212519955356,
+      "capture_seconds_excluding_end_event": 0.00870401700376533,
+      "error_type": null,
+      "calls": {
+        "history_entry": 5,
+        "_verify_accepted": 6,
+        "accept_calls": 1,
+        "commit_timeline_calls": 1
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 25,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/health",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0025.prof",
+      "profiled_handler_wall_seconds": 0.0007123620016500354,
+      "capture_seconds_excluding_end_event": 0.0016707080067135394,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 26,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "POST",
+      "path": "/v1/handshake",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0026.prof",
+      "profiled_handler_wall_seconds": 0.0013679940020665526,
+      "capture_seconds_excluding_end_event": 0.0016473949945066124,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 27,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines?limit=50",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0027.prof",
+      "profiled_handler_wall_seconds": 0.0015895079995971173,
+      "capture_seconds_excluding_end_event": 0.0020857169874943793,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 28,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "POST",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines/film/inspect",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0028.prof",
+      "profiled_handler_wall_seconds": 0.004183809011010453,
+      "capture_seconds_excluding_end_event": 0.001913619984406978,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 29,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines/film/composition-revisions/authoring-parent-revision-8cea3199dccd0139cd74296190a027759f4a555ac6424673e31271f788322ca0",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0029.prof",
+      "profiled_handler_wall_seconds": 0.0014372440055012703,
+      "capture_seconds_excluding_end_event": 0.0013419959868770093,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 30,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/shots/chapter-shot/revisions/shot-1",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0030.prof",
+      "profiled_handler_wall_seconds": 0.0013616799842566252,
+      "capture_seconds_excluding_end_event": 0.001408640993759036,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 31,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines/chapter-1/revisions/internal-1",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0031.prof",
+      "profiled_handler_wall_seconds": 0.0013818959996569902,
+      "capture_seconds_excluding_end_event": 0.001201106992084533,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 32,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/health",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0032.prof",
+      "profiled_handler_wall_seconds": 0.0007608669984620064,
+      "capture_seconds_excluding_end_event": 0.0013441199844237417,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 33,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "POST",
+      "path": "/v1/handshake",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0033.prof",
+      "profiled_handler_wall_seconds": 0.0017926440050359815,
+      "capture_seconds_excluding_end_event": 0.00153469797805883,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 34,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines?limit=50",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0034.prof",
+      "profiled_handler_wall_seconds": 0.0014319820038508624,
+      "capture_seconds_excluding_end_event": 0.0017099919787142426,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 35,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines/film/commits?limit=50",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0035.prof",
+      "profiled_handler_wall_seconds": 1.1445788319979329,
+      "capture_seconds_excluding_end_event": 0.004019546991912648,
+      "error_type": null,
+      "calls": {
+        "history_entry": 3,
+        "_verify_accepted": 2,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 36,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/health",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0036.prof",
+      "profiled_handler_wall_seconds": 0.0006160729972179979,
+      "capture_seconds_excluding_end_event": 0.0011228860239498317,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 37,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "POST",
+      "path": "/v1/handshake",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0037.prof",
+      "profiled_handler_wall_seconds": 0.0013375160051509738,
+      "capture_seconds_excluding_end_event": 0.001265747006982565,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 38,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines?limit=50",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0038.prof",
+      "profiled_handler_wall_seconds": 0.0015471270016860217,
+      "capture_seconds_excluding_end_event": 0.0013483689981512725,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 39,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "187a00d835c14742b9bbee336341dd9f",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines/film/commits?limit=50",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0039.prof",
+      "profiled_handler_wall_seconds": 1.0983125229831785,
+      "capture_seconds_excluding_end_event": 0.00344466301612556,
+      "error_type": null,
+      "calls": {
+        "history_entry": 3,
+        "_verify_accepted": 2,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 40,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "3d947a433a0e4b018f61aef84f425bba",
+      "method": "GET",
+      "path": "/v1/health",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0040.prof",
+      "profiled_handler_wall_seconds": 0.0006910189986228943,
+      "capture_seconds_excluding_end_event": 0.0010037339816335589,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 41,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "3d947a433a0e4b018f61aef84f425bba",
+      "method": "POST",
+      "path": "/v1/handshake",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0041.prof",
+      "profiled_handler_wall_seconds": 0.0013223610003478825,
+      "capture_seconds_excluding_end_event": 0.00133864299277775,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 42,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "3d947a433a0e4b018f61aef84f425bba",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines?limit=50",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0042.prof",
+      "profiled_handler_wall_seconds": 0.00175373800448142,
+      "capture_seconds_excluding_end_event": 0.0015614620060659945,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 43,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "3d947a433a0e4b018f61aef84f425bba",
+      "method": "POST",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines/film/inspect",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0043.prof",
+      "profiled_handler_wall_seconds": 0.005304809019435197,
+      "capture_seconds_excluding_end_event": 0.0019708459731191397,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 44,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "3d947a433a0e4b018f61aef84f425bba",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines?limit=50",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0044.prof",
+      "profiled_handler_wall_seconds": 0.0014400449872482568,
+      "capture_seconds_excluding_end_event": 0.001564495003549382,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 45,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "3d947a433a0e4b018f61aef84f425bba",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines/film/commits?limit=1",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0045.prof",
+      "profiled_handler_wall_seconds": 1.080547629011562,
+      "capture_seconds_excluding_end_event": 0.003589428000850603,
+      "error_type": null,
+      "calls": {
+        "history_entry": 2,
+        "_verify_accepted": 1,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 46,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "3d947a433a0e4b018f61aef84f425bba",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines?limit=50",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0046.prof",
+      "profiled_handler_wall_seconds": 0.0017149299965240061,
+      "capture_seconds_excluding_end_event": 0.0016210850153584033,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 47,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "3d947a433a0e4b018f61aef84f425bba",
+      "method": "POST",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines/film/inspect",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0047.prof",
+      "profiled_handler_wall_seconds": 0.004053824988659471,
+      "capture_seconds_excluding_end_event": 0.0021379840036388487,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 48,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "3d947a433a0e4b018f61aef84f425bba",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines/film/composition-revisions/authoring-parent-revision-8cea3199dccd0139cd74296190a027759f4a555ac6424673e31271f788322ca0",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0048.prof",
+      "profiled_handler_wall_seconds": 0.0014042179973330349,
+      "capture_seconds_excluding_end_event": 0.0012836669920943677,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 49,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "3d947a433a0e4b018f61aef84f425bba",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/shots/chapter-shot/revisions/shot-1",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0049.prof",
+      "profiled_handler_wall_seconds": 0.0013281550200190395,
+      "capture_seconds_excluding_end_event": 0.00140307197580114,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 50,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "3d947a433a0e4b018f61aef84f425bba",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines/chapter-1/revisions/internal-1",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0050.prof",
+      "profiled_handler_wall_seconds": 0.0017625280015636235,
+      "capture_seconds_excluding_end_event": 0.0017093569913413376,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 51,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "3d947a433a0e4b018f61aef84f425bba",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines?limit=50",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0051.prof",
+      "profiled_handler_wall_seconds": 0.0015572299889754504,
+      "capture_seconds_excluding_end_event": 0.001467444992158562,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 52,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "3d947a433a0e4b018f61aef84f425bba",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines/film/commits?limit=100",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0052.prof",
+      "profiled_handler_wall_seconds": 1.1018460850173142,
+      "capture_seconds_excluding_end_event": 0.0038521989772561938,
+      "error_type": null,
+      "calls": {
+        "history_entry": 3,
+        "_verify_accepted": 2,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 53,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "3d947a433a0e4b018f61aef84f425bba",
+      "method": "GET",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines?limit=50",
+      "idempotency_key": "",
+      "shared_note_count": null,
+      "profile": "handler-0053.prof",
+      "profiled_handler_wall_seconds": 0.0015794149949215353,
+      "capture_seconds_excluding_end_event": 0.0021116140123922378,
+      "error_type": null,
+      "calls": {
+        "history_entry": 0,
+        "_verify_accepted": 0,
+        "accept_calls": 0,
+        "commit_timeline_calls": 0
+      }
+    },
+    {
+      "event": "handler_end",
+      "sequence": 54,
+      "pid": 17243,
+      "thread_id": 140606206079104,
+      "daemon_instance": "3d947a433a0e4b018f61aef84f425bba",
+      "method": "POST",
+      "path": "/v1/projects/0a6897b623a24d5a89e6eaf14e7aad69/timelines/film/commit",
+      "idempotency_key": "p4-ten-note-undo-note-01",
+      "shared_note_count": null,
+      "profile": "handler-0054.prof",
+      "profiled_handler_wall_seconds": 33.992499378015054,
+      "capture_seconds_excluding_end_event": 0.008453664981061593,
+      "error_type": "Failed",
+      "calls": {
+        "history_entry": 49,
+        "_verify_accepted": 48,
+        "accept_calls": 0,
+        "commit_timeline_calls": 1
+      }
+    }
+  ],
+  "per_note_undo_redo": {
+    "note-01": {
+      "undo": {
+        "sequence": 54,
+        "calls": {
+          "history_entry": 49,
+          "_verify_accepted": 48,
+          "accept_calls": 0,
+          "commit_timeline_calls": 1
+        },
+        "profiled_handler_wall_seconds": 33.992499378015054,
+        "error_type": "Failed"
+      }
+    }
+  },
+  "module_origins_after": {
+    "runtime_protocol.errors": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/errors.py",
+      "sha256": "f10518c992c28d5836fdd7916337679f0ba92b9722dacc1dd94fe408a22a49f4"
+    },
+    "runtime_protocol": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/__init__.py",
+      "sha256": "4e4064e1d9b80c6637576490150f44f3c710fabc520af1e640abf2493dcbb0d2"
+    },
+    "runtime_protocol.cancellation": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/cancellation.py",
+      "sha256": "73ac8d169ae8c77922a83f7606f0f36104efcdce0df3a73217793bfe620d4096"
+    },
+    "runtime_protocol.platform": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/platform.py",
+      "sha256": "091d4c04ba63f233d1c1a6e4f3e7ee06d2e5ce5dd52721785225300c1e45a7e5"
+    },
+    "astrid.sdk.timeline": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/__init__.py",
+      "sha256": "6c249c62db888e4d01de16ea893f859bba07221733202d286437d5d2b39d6a0a"
+    },
+    "astrid.sdk.timeline._common": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/_common.py",
+      "sha256": "f05689fda870353180f01aed0f1bf17371e90359fdc282c23028748d271b8b12"
+    },
+    "astrid.sdk.timeline._command_state": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/_command_state.py",
+      "sha256": "689c59d323aca2d508d152f5d5513beed094edf2f6fd9b8ef93f12f475104c39"
+    },
+    "astrid.sdk.timeline.capture": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/capture.py",
+      "sha256": "d96af5fb7b20e61671e17e23ac3c259c85c3c2da906b2af8751ad92ad7883af7"
+    },
+    "astrid.sdk.timeline._collections": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/_collections.py",
+      "sha256": "c9f4bb22dab33cf393c4eab2aba604766c3ea6509a5912c029fbacf1e11f9c5e"
+    },
+    "astrid.sdk.timeline._recording": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/_recording.py",
+      "sha256": "85aefe0328a7c9787a18c2b7e19eb8b3e4220a1c53627d1e16102b42b29c8b43"
+    },
+    "astrid.sdk.timeline.commands": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/commands.py",
+      "sha256": "b89798a439daace286e6702647c670c532a21575719e4df1bda87607b855ee96"
+    },
+    "astrid.sdk.timeline.commit": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/commit.py",
+      "sha256": "6c2fc6c8dcfc228c87a285e0869b803a034b9e41c7b2e643ee500b78605b6437"
+    },
+    "astrid.sdk.timeline.outbox": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/outbox.py",
+      "sha256": "768eacddae74cc7bb18feebb862636b25e6fd631d1e4cb20423578286b9aac1b"
+    },
+    "astrid_runtime_client.contract_metadata": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid_runtime_client/contract_metadata.py",
+      "sha256": "b42c58a36fff3e3136824492382eb05e983c247e5ca0656b35836e1a4e9ee72b"
+    },
+    "astrid_runtime_client.timeline_commit_types": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid_runtime_client/timeline_commit_types.py",
+      "sha256": "6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417"
+    },
+    "astrid_runtime_client.generated": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid_runtime_client/generated.py",
+      "sha256": "952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b"
+    },
+    "astrid_runtime_client": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid_runtime_client/__init__.py",
+      "sha256": "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2"
+    },
+    "astrid.sdk.timeline.sync": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/sync.py",
+      "sha256": "e0b9aa8815623299aaf24547f0f6bcff9178c2db59ed5cc178a1bdc18a58c254"
+    },
+    "astrid.sdk.timeline_intent": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline_intent.py",
+      "sha256": "7d4cdf012c0924c34c1a38df69a1e87192e32644a2e6dbaa27f46a34d147e30b"
+    },
+    "astrid.sdk.timeline.units": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/units.py",
+      "sha256": "41ae64ab7c5c687f44c8420017718a27c59b2aaaf11bd8434eea88829dd40c6f"
+    },
+    "astrid.sdk.timeline.look": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/look.py",
+      "sha256": "723df10be6b02fa4198db1a9b1d92c175c17970065534b1b5389766bfdc6903e"
+    },
+    "astrid.sdk.timeline.doc": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/doc.py",
+      "sha256": "d7821531e807c085787e00fe8ca15df1e7332ba359f69f49402fc20bef7940fb"
+    },
+    "astrid.sdk.timeline.store": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/store.py",
+      "sha256": "e1bb20da211dd9573b38d63a0b1acab7ab0d2f6c3d085bc97e3184ba012ee029"
+    },
+    "astrid.sdk.timeline.selection": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/selection.py",
+      "sha256": "d3020d608e04bc401f2ca4462117e6eafd754c087197f90ca42157ccbdcd1c28"
+    },
+    "astrid.sdk.timeline.model": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/model.py",
+      "sha256": "40579679913fc29229852ffa947ccee39da3c57820e76404c34213682f925707"
+    },
+    "astrid.sdk.timeline.journal": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/journal.py",
+      "sha256": "52daf04ff30b869eefb126232fa9fdcd1a26b023655d9ada731af01a99f84614"
+    },
+    "astrid.sdk.timeline.check": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/check.py",
+      "sha256": "2c82dfe31c09d5dbd237f94956d1cbae4a538c30d2c54a698e3ae1d58ff86928"
+    },
+    "astrid.sdk.timeline.edits": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/edits.py",
+      "sha256": "58bd92963a39dce6764399a247b49133d02013328743d83fd75ff13a94ac25a9"
+    },
+    "astrid.sdk.timeline.lookup": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/lookup.py",
+      "sha256": "bd3ea841988dd4fc92f1b1132a5314dd115c81be9af9ccb2f45d3e59f6293f09"
+    },
+    "astrid.sdk.timeline_transcripts": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline_transcripts.py",
+      "sha256": "36868a1e0937c067d1f06cdf589841ef59647a5e81bfe076e89a6fcae36a6281"
+    },
+    "astrid.sdk.timeline.authoring_commit": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/authoring_commit.py",
+      "sha256": "6a03a0030a02c58fefe99e6f07f620f401a7a673259920c4086a3dab6615feac"
+    },
+    "astrid.sdk.timeline.publish": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/publish.py",
+      "sha256": "cf13cf1bc25249be133d317a924c2fb4ab5628df19827374375e754bd8b9dd6b"
+    },
+    "astrid.sdk.timeline.reflow": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/reflow.py",
+      "sha256": "12df819bffb139f476c74237162aec6786582c1cebee424b7ce16432c5bcdf3d"
+    },
+    "astrid.sdk.timeline.transaction": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/transaction.py",
+      "sha256": "a468173f103cbc8d6cd4f8fc399caee7a3f3010277cab5e66600d93683ebaa3f"
+    },
+    "astrid.sdk.timeline.checkout": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/checkout.py",
+      "sha256": "37cefb817b6074268b86aff636b44b75579bfdeae380616410a013308ba0c2bb"
+    },
+    "astrid.sdk.timeline_checkout": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline_checkout.py",
+      "sha256": "df26607e2b9973333f01c6a384bc7b493bb43c6ceb49ea23f2d5260172ab1de8"
+    },
+    "astrid.sdk.timeline_sheet": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline_sheet.py",
+      "sha256": "092d87302a53db46677ea6a139e970af9828acd7e6273695d9b27a5237ed44fe"
+    },
+    "tests.helpers.runtime": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/tests/helpers/runtime.py",
+      "sha256": "4d084450df4d8e9dbdef934bf19ab9d909a8caecdd2646a21b758955e07a883f"
+    },
+    "tests.editing_conformance.test_native_batch_ingress": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/tests/editing_conformance/test_native_batch_ingress.py",
+      "sha256": "1c6cbd9b10d452b1a4893600a4dbaa68517adc8868c140a4441a819cd9e18669"
+    },
+    "astrid.sdk.timeline._scalar_commands": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/_scalar_commands.py",
+      "sha256": "6b5c1a0db9fcf78533f16ca14d9ab14d96ca31ce19875c062b0470954488b34c"
+    },
+    "astrid.sdk.timeline._step_undo": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/_step_undo.py",
+      "sha256": "a38bb078ecd2579399f131fa0a08a9bedd339226f92b9d8ac27de2b6d27827a6"
+    },
+    "astrid.sdk.timeline._root_inverse": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/_root_inverse.py",
+      "sha256": "217735ed42e2d483674a54e2c6e29a8387c56791fc7f9419be1be771ea6f6f0d"
+    },
+    "astrid.sdk.timeline.inverse": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/inverse.py",
+      "sha256": "0702cda4d096589e34485295cb40ffe00b0f11692bbb01fbfa5228daa1da69d4"
+    },
+    "astrid.sdk.timeline.rebase": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/rebase.py",
+      "sha256": "883e48d4b3475e984dbb9cc9af2575f6d211a4404567ddd15b3e2644f08c970e"
+    },
+    "astrid.sdk.timeline.emitter": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/emitter.py",
+      "sha256": "c399e4d9522f9c43c10f23d039c0211d5f3dd11f9bb7edffb06da07151c1e48a"
+    },
+    "runtime_protocol.dirfd": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/dirfd.py",
+      "sha256": "1eacc8aeb2acf558cb4cf6356cb5cb8d020bb92aed3bf31ad0ef2bb0276410d9"
+    },
+    "runtime_protocol.cas": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/cas.py",
+      "sha256": "a926a79b31ee313cdfb4cd07ad919f94c1ace099f8aaa5c15d704cbfb0d34bc8"
+    },
+    "runtime_protocol.util": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/util.py",
+      "sha256": "07b41da1f3815120818fdc9114986666346ea7fd0dc865641551697ec94b9ae2"
+    },
+    "runtime_protocol.backup": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/backup.py",
+      "sha256": "d68470bc66595dc64ff9267cc244a01dbac641401c059cb4db5fe7acf2705ff5"
+    },
+    "runtime_protocol.timeline_commit_validation": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/timeline_commit_validation.py",
+      "sha256": "c4b2143f151db766738eebd330983a8037a9a9fc8627b93303f26a59bbc53115"
+    },
+    "runtime_protocol.timeline_commit_inputs": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/timeline_commit_inputs.py",
+      "sha256": "bf04dc5d26fd6e6283ae11c7d0fa55fa5730c45f19e1c55bda529062cab696e4"
+    },
+    "runtime_protocol.canonical_schema": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/canonical_schema.py",
+      "sha256": "ad3a316aa60d2fd475327a2156373f77384f327bc96cccea1ee939bac7049d7f"
+    },
+    "runtime_protocol.snapshot_refs": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/snapshot_refs.py",
+      "sha256": "cdbb9efc5cb46e4174b53a80d87203befe945eaa82bb0bcc27d8d2552afeb461"
+    },
+    "runtime_protocol.sqlite_uri": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/sqlite_uri.py",
+      "sha256": "01ca1369432aa6ef8cf52d90bca355d030b1f71fc6f475179c91782ae2bbec71"
+    },
+    "runtime_protocol.visual_boundary": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/visual_boundary.py",
+      "sha256": "0175b0cde60a122380fc5f10ab46dee07ab4ffb6f721e3e058c0f64a718283a5"
+    },
+    "runtime_protocol.seam_intent": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/seam_intent.py",
+      "sha256": "f0f56f7ea7c07912012c9434e384747914e919fd3037824c49558ec351003586"
+    },
+    "runtime_protocol.visual_seam": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/visual_seam.py",
+      "sha256": "52de571a667a53e8f60deda7cdd7b27abfab753af67a2d4f2156739ac7341aa4"
+    },
+    "runtime_protocol.idempotency": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/idempotency.py",
+      "sha256": "0f2913c8f1c407dbdb3d1984ec066dbd945effccf6810abcc22cd1a230db8900"
+    },
+    "runtime_protocol.store": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/store.py",
+      "sha256": "4bb37ed4a77b36ffe66d367388c75ae00c2ce09cb223be6c7e398fab132da2c0"
+    },
+    "runtime_protocol.contract_metadata": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/contract_metadata.py",
+      "sha256": "b8fd89ea7a8bbafb1adf73fde7ff2c44b74b259de0a5e28592d857bc942a1f60"
+    },
+    "runtime_protocol.timeline_materialization": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/timeline_materialization.py",
+      "sha256": "92ec9b7f105d5e0fd1c5f9e9f2a4602ee3dd005365a570e7ba91a573bb8b31fb"
+    },
+    "runtime_protocol.timeline_commit_store": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/timeline_commit_store.py",
+      "sha256": "a2db29e4dbb5ef781d818690647e888b4eb02550c93a3e3d962df161d610d4cd"
+    },
+    "runtime_protocol.shot_dependencies": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/shot_dependencies.py",
+      "sha256": "c03fbf21e440ef711e8c691fdaf997bc59eb27cf56550bace18b1e693cd540b9"
+    },
+    "runtime_protocol.asset_identity": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/asset_identity.py",
+      "sha256": "123b9d0292dfc0388048ac3cdac81d8ed70f3743110532a77b82a1ba39709688"
+    },
+    "runtime_protocol.managed_render_snapshot": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/managed_render_snapshot.py",
+      "sha256": "0bf62eb8295e5745ae77d25d0005e46b46c9da0d14f6b0571a4ca25892e78102"
+    },
+    "runtime_protocol.timeline_inspection": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/timeline_inspection.py",
+      "sha256": "3c66340b7c14faa2cf1d9d5af3cec0f88002bdacaab982e6a4d89795d3ff9ec9"
+    },
+    "runtime_protocol.timeline_view": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/timeline_view.py",
+      "sha256": "d6ba261ee4a31aa60a31394d93800c5d6a7d6ce72eaf4a587385c14969dafb59"
+    },
+    "runtime_protocol.service": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/service.py",
+      "sha256": "94591ec2924b940eccb8deb87ec8c8d3913d803399b1a9737108eee78d0f542c"
+    },
+    "runtime_protocol.server": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/server.py",
+      "sha256": "aa82d81b772edd8edbf76895e8198383a6a34412ab437630024b39aa43b55c52"
+    },
+    "runtime_protocol.auth": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/auth.py",
+      "sha256": "f45941cfee9dbda8262163b7e5fcabbe457a62f4beab8a1521292f7cdfb2246a"
+    },
+    "runtime_protocol.catalog": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/catalog.py",
+      "sha256": "2d58fdb7b2451bf889bbf280fd373f8c49bc2d8c98192629c0e9f97aef2d268e"
+    },
+    "runtime_protocol.door": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/door.py",
+      "sha256": "af0926886f3933d535c8d1db0636cfc278ea1b426b313d00a118cf002450312f"
+    },
+    "runtime_protocol.daemon": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/daemon.py",
+      "sha256": "3dd152c1c3b2744287cedc5fc6b51e39676b3870bae3577cbc555b8d21d8e9fb"
+    },
+    "runtime_protocol.timeline_commit_provider": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/timeline_commit_provider.py",
+      "sha256": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf"
+    },
+    "runtime_protocol.local_execution_handoff": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/local_execution_handoff.py",
+      "sha256": "001108c07f71d4f76a727cabef90b00fb6a27ec08a882f8ae7f194f49012a3d9"
+    },
+    "runtime_protocol.timeline_commit_port": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/timeline_commit_port.py",
+      "sha256": "0d44b5a5e1e0374239df461cb5094ff4fe5bb70761233efd4e3a65c2b29b0859"
+    },
+    "runtime_protocol.timeline_commit_types": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/timeline_commit_types.py",
+      "sha256": "6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417"
+    },
+    "runtime_protocol.timeline_commit_producer": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/timeline_commit_producer.py",
+      "sha256": "12bc59c54e47db5a950dd8e4828609931fabf481fce760d7d6fe794d72f7b33b"
+    },
+    "runtime_protocol.timeline_commit": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/timeline_commit.py",
+      "sha256": "f60abe96c8e21e9a43cd0962f4c2511b02b36f557c4d18e68dee7f8b5e539c13"
+    },
+    "runtime_protocol.timeline_commit_execution": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/timeline_commit_execution.py",
+      "sha256": "2b0c256757f1bf0b3ab3124840250d2d8ef5dbec31a259c4b1e924e295619dd6"
+    },
+    "runtime_protocol.timeline_catalog": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/timeline_catalog.py",
+      "sha256": "4fcc2bd80f6e2bac13931dc2ddf14fb8251364ade8886283052177b8e5eeec56"
+    },
+    "runtime_protocol.timeline_commit_baseline": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/timeline_commit_baseline.py",
+      "sha256": "36076f4a0ffa26e6544ec9704000a22a6bd46370cacb6577ea9f5dadac346e31"
+    },
+    "runtime_protocol.timeline_commit_reference_projection": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/timeline_commit_reference_projection.py",
+      "sha256": "8143e69bc50775ab045d77977a3824923b37affc44eb8dd35930ab9927449370"
+    },
+    "astrid.sdk.timeline.native_source_inputs": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/native_source_inputs.py",
+      "sha256": "e985af62bca9728436b04f64bef59f3c11cce9943254eccc8eff3ffc05a7bedc"
+    },
+    "astrid.sdk.timeline_address": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline_address.py",
+      "sha256": "14ce2107a59ec0edac63907179c25c2b8390d06278a34cad00fddcc9788986cc"
+    },
+    "astrid.sdk.timeline._clip_scalar_commands": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/_clip_scalar_commands.py",
+      "sha256": "131ba969cd5fa04ce4af85de5700db57ba27f0917ccc9b2a446980ae5d85f869"
+    },
+    "astrid.sdk.timeline._trim_commands": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/_trim_commands.py",
+      "sha256": "24103da402b410d4373efc00d0362b82559cd6bbb3d3f4bf36f57822eac4eb83"
+    },
+    "astrid.sdk.timeline.compiler": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/compiler.py",
+      "sha256": "148e496685c7a70e8c9a6f6f02ed666e7d85663ad2a2cd888069f94a44c05fc6"
+    },
+    "astrid.sdk.timeline.native_word_anchor": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/native_word_anchor.py",
+      "sha256": "771d833188de33556a1853e95e84703e7ce5b36e2a6b2d2c55cb975f93f36744"
+    },
+    "astrid.sdk.timeline.producer": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/producer.py",
+      "sha256": "420d44af09fef5f793d34fa0eeddb111bc94b750f58c7466f4d28690268be32f"
+    },
+    "astrid.sdk.timeline._doc_patch": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/_doc_patch.py",
+      "sha256": "15cc750407eb3b057900befd95cd2bd30c28f41acda9bb2f31e5c2f48f5ad00f"
+    },
+    "astrid.sdk.timeline._commit_patch": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/_commit_patch.py",
+      "sha256": "05a1ebc6b251c75f4d5dc272598adc295ce5bf5a8c4596ad08497de6676264be"
+    },
+    "astrid.sdk.timeline._clip_commands": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/_clip_commands.py",
+      "sha256": "50a0164ddcc7686e3d13aa90f43ccbec044a975809c4aa0a6fb9e8dc49fe080e"
+    },
+    "astrid.sdk.timeline._delete_commands": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/_delete_commands.py",
+      "sha256": "cddd2c344dbb0841e93c1ae7b7df28f9f9301eb37b5a67b6101f8c87607f695d"
+    },
+    "astrid.sdk.timeline._shot_commands": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/_shot_commands.py",
+      "sha256": "acc15628aa48ca4b7efcabbc2b0aad6f8830c736d41cd71ee113d8e04775ad94"
+    },
+    "astrid.sdk.timeline._split_commands": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/_split_commands.py",
+      "sha256": "7ce58cbc538ec87658094b2f87fb435a8b8b28414c947c6068a604881a869450"
+    },
+    "astrid.sdk.timeline.native_initialize": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/native_initialize.py",
+      "sha256": "9ba19ebc1212cca4fbde005728a410e68a128297abb4e39ccf3f2abd2e39df82"
+    },
+    "astrid.sdk.timeline.native_media_admission": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/native_media_admission.py",
+      "sha256": "39e22a0385b9701e94006fcb4052ab2ec9adeddb60abdd93942d7ca3a326a60a"
+    },
+    "astrid.sdk.timeline.native_occurrence_duplicate": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/native_occurrence_duplicate.py",
+      "sha256": "f2936a59859e2069169b6371669e2faf2cdc6def3a2c067a8bf08fa452986f86"
+    },
+    "astrid.sdk.timeline.native_occurrence_create": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/native_occurrence_create.py",
+      "sha256": "962016ffdba404dfd88ed4fbf62bd4882e96e42038a0548549a0cf727ef25d22"
+    },
+    "astrid.sdk.timeline.native_occurrence_delete": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/native_occurrence_delete.py",
+      "sha256": "fea3a2352d66dae9156f5daaa526c1185f26130ccad31732066fa4b76a7f5886"
+    },
+    "astrid.sdk.timeline.native_occurrence_fork": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/native_occurrence_fork.py",
+      "sha256": "bb129592203eb0e8bd6353c804d335ce13dca1441813ad266451016d7c7a0d7d"
+    },
+    "astrid.sdk.timeline._media_inputs": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/_media_inputs.py",
+      "sha256": "5309f3b47699932089580bea65615e3f10c4866ca88e6719ba709a1be113b29d"
+    },
+    "astrid.sdk.timeline.native_occurrence_media_commands": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/native_occurrence_media_commands.py",
+      "sha256": "419149d2092e271e8a2f82754843f381e1e70b5a892b9f8fe13820f04effac4c"
+    },
+    "astrid.sdk.timeline.native_timeline_duplicate": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/native_timeline_duplicate.py",
+      "sha256": "c51409007bde2241682c86da37254524b6b5d201b3e335ba3e81b1c1d75f900f"
+    },
+    "astrid.sdk.timeline.native_occurrence_shared": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/native_occurrence_shared.py",
+      "sha256": "931a9c6ce96b1655660c2c0c3452480e56fa56d1d9097d93d123508d4b7a1840"
+    },
+    "astrid.sdk.timeline.native_parent_media_commands": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/native_parent_media_commands.py",
+      "sha256": "673643ab9dd0f094c57da49f78c581fba5f08e7b00c7b364a41e20a0a13d5964"
+    },
+    "astrid.sdk.timeline.native_placement_commands": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/native_placement_commands.py",
+      "sha256": "4ee48519ad712ea20042b3d1903d6dd8d866ca56a3500b30aab19505211720fd"
+    },
+    "astrid.sdk.timeline.native_restructure": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/native_restructure.py",
+      "sha256": "800247535bbe034777fe84beb0612d96ea11992f8d77ad52ba7503dff56afb43"
+    },
+    "astrid.sdk.timeline.native_shot_pool_commands": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/native_shot_pool_commands.py",
+      "sha256": "b87d614a8a49b31a3ba039818738ca2c16d9bef67b411e6aeb082d11443f453c"
+    },
+    "astrid.sdk.timeline.native_text_binding": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/native_text_binding.py",
+      "sha256": "19476d6eaba2e9ce8ee379db52e180da10364cd2a5bcfbd119a445b5d64f736d"
+    },
+    "astrid.sdk.timeline._doc_patch_materialize": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/_doc_patch_materialize.py",
+      "sha256": "68b7494031f739344826d21d690fcf22836c5bcfe5295f736432552fcd86ad2f"
+    },
+    "astrid.sdk.timeline.validation": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/validation.py",
+      "sha256": "65524a27d75469422fe0bd7d2759eb2e8cec0a4b861422b670de57a6ec129d8c"
+    },
+    "astrid.sdk.timeline._timing_evaluators": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/_timing_evaluators.py",
+      "sha256": "a3f6247434b2bb5258ce044fa7e0391d9405ad36d33749e49365eb7c5db79749"
+    },
+    "astrid.sdk.timeline._commit_timing_validation": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/_commit_timing_validation.py",
+      "sha256": "16d25ca8f9e4b5cf64362c8c9810633340157fd9a77c4a8c8f911be1881029d5"
+    },
+    "astrid.sdk.timeline._commit_preview": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/_commit_preview.py",
+      "sha256": "9380dd2e3eb9c041b8515e20d979e2cce4aa0ca9cbfeed81f40c315357f77c36"
+    },
+    "runtime_protocol.timeline_commit_auth": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/timeline_commit_auth.py",
+      "sha256": "75f5141cadebafc9f887f5968f39f0ff030d1b2e6c724c24de0bd10b94cde2f0"
+    },
+    "runtime_protocol.timeline_commit_producer_checkpoint": {
+      "path": "/home/user/work/wt/rt-pin-e89eb8c7/runtime_protocol/timeline_commit_producer_checkpoint.py",
+      "sha256": "7ce299ffd987462f0fefa7dc7973e9f8515d10e3945bdc5677b5b19f77205795"
+    },
+    "astrid.sdk.timeline.revisions": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/revisions.py",
+      "sha256": "e71e2440c4bf37d3b67a00c2db7fa08a82fb961fcbb8b294632da0f74ea6ac58"
+    },
+    "astrid.sdk.timeline_cuts": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline_cuts.py",
+      "sha256": "bfa767a43ce944fec7905b38a07ca3f0cf1ddb60cd69889bf51e67ed9f4d8887"
+    },
+    "astrid.sdk.timeline_views": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline_views.py",
+      "sha256": "b8db93a2a1440f2f5b43825140ac6de7bb164359a0fed12842b51b87747c1a10"
+    },
+    "astrid.sdk.timeline_restructure": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline_restructure.py",
+      "sha256": "842850e1e867eaf2a8c003897b6624bb040a2b7c8f910eecad1d5aa8c9f851ee"
+    },
+    "astrid.sdk.timeline.commit_session": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/commit_session.py",
+      "sha256": "69b3468956cadc9549a495ac8a7aae6cf98ced0db0bcb0b33e63175addbd3503"
+    },
+    "astrid.sdk.timeline._selected_param_authority": {
+      "path": "/home/user/work/wt/agt-pin-3b2db4bd/astrid/sdk/timeline/_selected_param_authority.py",
+      "sha256": "38d30e8fca3566fdf6526e84e538d2f5be5a5d159c8b3ad18c560eb58d85e19b"
+    }
+  },
+  "limitations": [
+    "cProfile overhead is uncalibrated; no uninstrumented latency claim",
+    "handler profiles cover the calling thread only",
+    "accept/commit counts are entries, not proof of durable acceptance",
+    "initial ten-note commit is shared; do not invent per-note allocation",
+    "test protocol wall includes fixtures; profiles exclude client-only work",
+    "hard process exit may leave a begin without an end/profile"
+  ]
+}

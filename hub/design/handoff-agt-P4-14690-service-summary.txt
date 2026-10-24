@@ -1,0 +1,64 @@
+test agent-p4-current-becfe-http-3legs-1024195121-14690: fail exit=1 in 64s — p4-current-becfe-http-3legs on integration:agent (agent tree c84907010418e1c0a9ca0d46900c106ba771736e)
+cmd: env -i HOME=/root LANG=C.UTF-8 PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/home/user/work/wt/rt-pin-e89eb8c7" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/local/bin:/usr/bin:/bin ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-e89eb8c7 ASTRID_RUNTIME_SOURCE_ROOT=/home/user/work/wt/rt-pin-e89eb8c7 ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-v3-819acf-1110 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-v3-819acf-1110/node_modules ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages P4_D73_MANIFEST=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-finite-walk-submit-1933/evidence/tuple.env P4_D73_EVIDENCE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-finite-walk-submit-1933/evidence P4_D73_REQUEST_ID=p4-current-becfe-http-3legs-1933 /bin/bash --noprofile --norc /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-P4-actual-profile-submit-1948/evidence/p4-profile-service-recipe.sh
+counts: 1 failed, 2 passed in 60.88s (0:01:00) 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1024195121-14690/log.txt ---
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:340: in anyOf
+    errs = list(validator.descend(instance, subschema, schema_path=index))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:44: in additionalProperties
+    yield from validator.descend(instance[extra], aP, path=extra)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:340: in anyOf
+    errs = list(validator.descend(instance, subschema, schema_path=index))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:44: in additionalProperties
+    yield from validator.descend(instance[extra], aP, path=extra)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:275: in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:431: in descend
+    for error in errors:
+                 ^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py:340: in anyOf
+    errs = list(validator.descend(instance, subschema, schema_path=index))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.13/site-packages/jsonschema/validators.py:421: in descend
+    specification.create_resource(schema),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../venv-agent/lib/python3.13/site-packages/referencing/_core.py:169: in create_resource
+    return Resource(contents=contents, specification=self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <[AttributeError("'referencing._core.Resource' object has no attribute 'contents'") raised in repr()] Resource object at 0x7fe16b08a910>
+contents = {'type': ['null', 'boolean', 'number', 'string']}
+specification = <Specification name='draft2020-12'>
+
+    def __init__(self, contents, specification):
+>       _setattr = _cached_setattr_get(self)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: Timeout (>45.0s) from pytest-timeout.
+
+<attrs generated methods referencing._core.Resource>:30: Failed
+=========================== short test summary info ============================
+FAILED tests/editing_conformance/test_p4_ten_note_v2_runtime.py::test_http_ten_note_commit_per_step_inverse_and_redo
+1 failed, 2 passed in 60.88s (0:01:00)
