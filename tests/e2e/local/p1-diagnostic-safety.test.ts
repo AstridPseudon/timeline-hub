@@ -244,9 +244,12 @@ test('P1 authentic producer reaches the registered failure artifact after later 
     }).outputText;
     const source = readFileSync(new URL('./three-products.p1-chain.spec.ts', import.meta.url), 'utf8');
     const safetySource = readFileSync(new URL('./p1-diagnostic-safety.ts', import.meta.url), 'utf8');
+    const mountedReadinessSource = readFileSync(new URL('./mounted-readiness-safety.ts', import.meta.url), 'utf8');
     const sources = new Map([
       ['./support/app.ts', transpile(readFileSync(new URL('./support/app.ts', import.meta.url), 'utf8'))],
       ['./p1-diagnostic-safety.ts', transpile(safetySource)],
+      ['../p1-diagnostic-safety.ts', transpile(safetySource)],
+      ['../mounted-readiness-safety.ts', transpile(mountedReadinessSource)],
       ['./three-products.p1-chain.spec.ts', transpile(source)],
     ]);
     const hooks = new Map<string, (...args: any[]) => Promise<void>>();
@@ -270,7 +273,7 @@ test('P1 authentic producer reaches the registered failure artifact after later 
       const module = { exports: {} };
       modules.set(name, module);
       runInNewContext(moduleSource, {
-        exports: module.exports, module, require: load, process, URL, TextEncoder, TextDecoder,
+        exports: module.exports, module, require: load, process, URL, TextEncoder, TextDecoder, Buffer,
         setTimeout, clearTimeout, console: { log: () => {} }, indexedDB: { databases: () => [] },
         window, CustomEvent: TestCustomEvent,
       }, { filename: name });
@@ -536,6 +539,8 @@ test('P1 registered failure hook retains the real outbox caller artifact and ori
   const sources = new Map([
     ['./support/app.ts', transpile(readFileSync(new URL('./support/app.ts', import.meta.url), 'utf8'))],
     ['./p1-diagnostic-safety.ts', transpile(readFileSync(new URL('./p1-diagnostic-safety.ts', import.meta.url), 'utf8'))],
+    ['../p1-diagnostic-safety.ts', transpile(readFileSync(new URL('./p1-diagnostic-safety.ts', import.meta.url), 'utf8'))],
+    ['../mounted-readiness-safety.ts', transpile(readFileSync(new URL('./mounted-readiness-safety.ts', import.meta.url), 'utf8'))],
     ['./three-products.p1-chain.spec.ts', transpile(readFileSync(new URL('./three-products.p1-chain.spec.ts', import.meta.url), 'utf8'))],
   ]);
 
@@ -652,7 +657,7 @@ test('P1 registered failure hook retains the real outbox caller artifact and ori
       const module = { exports: {} };
       modules.set(name, module);
       runInNewContext(source, {
-        exports: module.exports, module, require: load, process, URL, TextEncoder, TextDecoder,
+        exports: module.exports, module, require: load, process, URL, TextEncoder, TextDecoder, Buffer,
         setTimeout, clearTimeout,
         console: { log: (line: string) => { lines.push(line); } },
         indexedDB: { databases: () => readBoundary('indexedDB.databases') },
