@@ -481,7 +481,7 @@ def installed_dependency_fixture(
         }
     site.mkdir(parents=True)
     root.joinpath("bin").mkdir()
-    root.joinpath("bin/python").write_bytes(b"python")
+    root.joinpath("bin/python").write_bytes(Path(sys.executable).resolve().read_bytes())
     generated = (
         f"#!{root / 'bin/python'}\n"
         "import sys\n"
@@ -1073,3 +1073,145 @@ def test_real_request_keeps_exact_source_checks(tmp_path: Path, changed: str) ->
     result = subprocess.run([str(MAKER), *args], env=env, text=True, capture_output=True, check=False)
     assert result.returncode == 2
     assert "dirty" in result.stdout
+
+
+@pytest.mark.parametrize("mutation", ["foreign-distribution", "foreign-package", "foreign-launcher"])
+def test_complete_inventory_is_faithful_oldred_newgreen(tmp_path: Path, mutation: str) -> None:
+    helper, root, data = installed_dependency_fixture(tmp_path)
+    site = root / "lib/python3.13/site-packages"
+    if mutation == "foreign-distribution":
+        write_record(site, "foreign-1.0.dist-info", {
+            "foreign-1.0.dist-info/METADATA": b"Name: foreign\nVersion: 1.0\n",
+            "foreign/__init__.py": b"FOREIGN = True\n",
+        })
+        distributions = helper.md.distributions(path=[str(site)])
+        helper.md.distributions = lambda path: [*distributions, helper.md.PathDistribution(site / "foreign-1.0.dist-info")]
+    elif mutation == "foreign-package":
+        (site / "foreign").mkdir()
+        (site / "foreign/__init__.py").write_text("FOREIGN = True\n")
+    else:
+        (root / "bin/foreign-launcher").write_text("#!/bin/sh\nexit 0\n")
+        (root / "bin/foreign-launcher").chmod(0o755)
+    base = tmp_path / "parent-verifier.py"
+    base.write_bytes(subprocess.check_output([
+        "git", "show", "ffb92658995e10d3a55dac8bd60946ebe7a55899:ops-handoff/child-dependency-reuse/candidate/verify_dependency_seed.py",
+    ]))
+    old = load_helper("pre_inventory_verifier", base)
+    old.installed_integrity(root, {"seedpkg-1.0.0-py3-none-any.whl": data})
+    with pytest.raises(SystemExit, match="unowned installed"):
+        helper.installed_integrity(root, {"seedpkg-1.0.0-py3-none-any.whl": data})
+
+
+@pytest.mark.parametrize("mutation", [
+    "pip", "setuptools", "wheel", "interpreter", "alias", "activation",
+    "empty-package", "hidden-file", "bin-directory", "directory-link", "hardlink",
+])
+def test_inventory_bootstrap_allowlist_is_narrow(tmp_path: Path, mutation: str) -> None:
+    helper, root, data = installed_dependency_fixture(tmp_path)
+    site = root / "lib/python3.13/site-packages"
+    expected = "unowned installed"
+    if mutation in {"pip", "setuptools", "wheel"}:
+        metadata = f"{mutation}-99.0.dist-info"
+        write_record(site, metadata, {f"{metadata}/METADATA": f"Name: {mutation}\nVersion: 99.0\n".encode()})
+        distributions = helper.md.distributions(path=[str(site)])
+        helper.md.distributions = lambda path: [*distributions, helper.md.PathDistribution(site / metadata)]
+        expected = f"missing authenticated original bootstrap wheel: {mutation}==99.0"
+    elif mutation == "interpreter":
+        (root / "bin/python").write_bytes(b"forged interpreter")
+        expected = "child interpreter differs"
+    elif mutation == "alias":
+        (root / "bin/python3").write_bytes(b"forged alias")
+        expected = "child interpreter differs"
+    elif mutation == "activation":
+        (root / "bin/activate").write_text("arbitrary shell code\n")
+    elif mutation == "empty-package":
+        (site / "foreign").mkdir()
+    elif mutation == "hidden-file":
+        (site / ".foreign.pth").write_text("import foreign\n")
+    elif mutation == "bin-directory":
+        (root / "bin/foreign").mkdir()
+    elif mutation == "directory-link":
+        (site / "foreign").symlink_to(site / "seedpkg", target_is_directory=True)
+        expected = "symlinked or foreign"
+    else:
+        os.link(root / "bin/python", root / "bin/foreign")
+        expected = "not a regular file"
+    with pytest.raises(SystemExit, match=expected):
+        helper.installed_integrity(root, {"seedpkg-1.0.0-py3-none-any.whl": data})
+
+
+def test_inventory_does_not_exempt_bootstrap_record_additions(tmp_path: Path) -> None:
+    helper, root, data = installed_dependency_fixture(tmp_path)
+    site = root / "lib/python3.13/site-packages"
+    import base64
+    content = b"unowned pip bootstrap file\n"
+    target = site / "pip/foreign.py"
+    target.parent.mkdir()
+    target.write_bytes(content)
+    with (site / "seedpkg-1.0.0.dist-info/RECORD").open("a") as output:
+        digest = base64.urlsafe_b64encode(hashlib.sha256(content).digest()).decode().rstrip("=")
+        output.write(f"pip/foreign.py,sha256={digest},{len(content)}\n")
+    with pytest.raises(SystemExit, match="unowned installed dependency file"):
+        helper.installed_integrity(root, {"seedpkg-1.0.0-py3-none-any.whl": data})
+
+
+@pytest.mark.parametrize("alias", ["python3", "python3.13"])
+def test_bootstrap_interpreter_copy_is_byte_authenticated(tmp_path: Path, alias: str) -> None:
+    helper, root, data = installed_dependency_fixture(tmp_path)
+    (root / "bin" / alias).write_bytes(Path(sys.executable).resolve().read_bytes())
+    helper.installed_integrity(root, {"seedpkg-1.0.0-py3-none-any.whl": data})
+
+
+def run_source_ownership_verifier(env: dict[str, str], args: list[str]) -> subprocess.CompletedProcess[str]:
+    root = Path(env["CHILD_VENV_WORK_ROOT"]) / args[0]
+    source = MAKER.read_text().split("# STORE_VERIFY_BEGIN\n", 1)[1].split("# STORE_VERIFY_END", 1)[0]
+    return subprocess.run([
+        sys.executable, "-B", "-I", "-", str(root),
+        (root / ".astrid-runtime-client-identity").read_text().rstrip("\n"),
+        args[3], args[1], args[4], args[5], env["CHILD_VENV_WORK_ROOT"], env["CHILD_VENV_PYTHON"],
+    ], input=source, text=True, capture_output=True, check=False)
+
+
+def test_committed_local_ownership_composes_with_wheel_inventory(tmp_path: Path) -> None:
+    env, args, wheelhouse = retained_fixture(tmp_path, managed=False)
+    result = run_source_ownership_verifier(env, args)
+    assert result.returncode == 0, result.stderr
+    helper = load_helper("local_ownership_inventory", VERIFY)
+    # Earlier fixtures replace the shared metadata discovery function.
+    site = Path(env["CHILD_VENV_WORK_ROOT"]) / args[0] / "lib/python3.13/site-packages"
+    helper.md.distributions = lambda path: [helper.md.PathDistribution(p) for p in site.glob("*.dist-info")]
+    artifact = next(wheelhouse.glob("*.whl"))
+    helper.installed_integrity(
+        Path(env["CHILD_VENV_WORK_ROOT"]) / args[0], {artifact.name: artifact.read_bytes()},
+        interpreter=Path(env["CHILD_VENV_PYTHON"]),
+        local_inventory={k: set(v) for k, v in json.loads(result.stdout).items()},
+    )
+
+
+@pytest.mark.parametrize("mutation", ["foreign-package", "foreign-launcher", "metadata", "installer"])
+def test_source_record_cannot_launder_inventory_additions(tmp_path: Path, mutation: str) -> None:
+    import base64
+
+    env, args, _ = retained_fixture(tmp_path, managed=False)
+    root = Path(env["CHILD_VENV_WORK_ROOT"]) / args[0]
+    site = root / "lib/python3.13/site-packages"
+    record = site / "astrid-1.0.dist-info/RECORD"
+    rel = {
+        "foreign-package": "foreign/__init__.py",
+        "foreign-launcher": "../../../bin/foreign-launcher",
+        "metadata": "astrid-1.0.dist-info/foreign-metadata",
+        "installer": "astrid-1.0.dist-info/INSTALLER",
+    }[mutation]
+    target = site / rel
+    target.parent.chmod(0o755) if target.parent.exists() else site.chmod(0o755)
+    target.parent.mkdir(exist_ok=True)
+    target.write_bytes(b"arbitrary payload\n")
+    record.chmod(0o644)
+    digest = base64.urlsafe_b64encode(hashlib.sha256(target.read_bytes()).digest()).decode().rstrip("=")
+    with record.open("a") as output:
+        output.write(f"{rel},sha256={digest},{target.stat().st_size}\n")
+    for path in [root, *root.rglob("*")]:
+        path.chmod(path.stat().st_mode & ~0o222)
+    result = run_source_ownership_verifier(env, args)
+    assert result.returncode != 0
+    assert "unowned local distribution" in result.stderr or "unexpected local installer" in result.stderr

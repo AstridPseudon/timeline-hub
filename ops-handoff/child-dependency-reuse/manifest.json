@@ -10,10 +10,10 @@
   "candidate_sha256": {
     "candidate/bench_store.py": "ba31adcf5dfbad179dfe08b048c48052cee2083026ec62790659c8cdbbc903bd",
     "candidate/make-child-venv.baseline": "e4c0a9cb09f2e938c880970dcbc054eb0aa866e12af499d258e1d450589bc978",
-    "candidate/make-child-venv": "2911b2f71e6d4ad8c9a67137b722617e9c95f7ff2a18b9014878c30d857c7031",
+    "candidate/make-child-venv": "c5c5c208e91463d29526351f1e2c1b92f7e898543fd526540e3c3e3a5ba0a683",
     "candidate/request-child-venv": "08f1b00a716456ba328ff42ee96f3df60d0dfa5470b36eeafb5d299b3df22fde",
-    "candidate/verify_dependency_seed.py": "d45cddba5f4ccea455ee4461b73b82cfcc7f7427f9d7fccd44421f30c6279d6a",
-    "tests/test_dependency_reuse.py": "e9b85a46f6af0ed3759c3e4f6ffbebe84ee718870ead661fd9db4de9372bfcf6",
-    "README.md": "2db6dc424f115c4e1761c7be92fc9a6b88fc961938a8d406d0b1bd5296714a87"
+    "candidate/verify_dependency_seed.py": "fac14467f10f55ef4ce9fbe186c64ecd7b407f8fe4fb951d7c0d96ca6d6b7ef0",
+    "tests/test_dependency_reuse.py": "6bb219e1ad9a924448c631dc6154bdba799e9cdaa21c3768ce3f7358d3d8d88a",
+    "README.md": "37dcf905d3cec509c9dfb145cc51cbcba3c7ee498c889cac4c7b21f2bc8d42db"
   }
 }

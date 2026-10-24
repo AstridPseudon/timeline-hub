@@ -13,6 +13,7 @@ import io
 import marshal
 import os
 import re
+import shutil
 import stat
 import subprocess
 import sys
@@ -242,7 +243,13 @@ def child_file(root: Path, path: Path) -> None:
         fail("installed dependency path is not a regular file")
 
 
-def installed_integrity(root: Path, artifacts: dict[str, bytes]) -> None:
+def installed_integrity(
+    root: Path,
+    artifacts: dict[str, bytes],
+    *,
+    interpreter: Path | None = None,
+    local_inventory: dict[str, set[str]] | None = None,
+) -> None:
     """Compare installed bytes to authenticated original wheels, not RECORD claims."""
     if not root.is_absolute() or root != root.resolve() or root.stat().st_uid != os.getuid():
         fail("installed child root is not physical or owned")
@@ -262,7 +269,24 @@ def installed_integrity(root: Path, artifacts: dict[str, bytes]) -> None:
         record_path = validated_record_path(root, site, dist, str(dist_path.relative_to(site) / "RECORD"), "installed")
         child_file(root, record_path)
         child_file(root, dist_path / "METADATA")
+    # Only the maker's committed-source verifier can supply local ownership.
+    # This is deliberately not an on-disk/CLI allowlist or a package exemption.
+    local_inventory = local_inventory or {}
+    if set(local_inventory) - {"astrid", "astrid-runtime"}:
+        fail("unsupported local distribution ownership")
     owned: set[str] = set()
+    expected_distributions: set[object] = set()
+    for dist in distributions:
+        name = canonicalize_name(dist.metadata.get("Name", ""))
+        if name in local_inventory:
+            expected_distributions.add(getattr(dist, "_path", None))
+            for rel in local_inventory[name]:
+                path = site / rel
+                child_file(root, path)
+                physical = str(path.resolve().relative_to(root))
+                if physical in owned:
+                    fail("overlapping local distribution ownership")
+                owned.add(physical)
     for filename, data in artifacts.items():
         name, version, _, _ = parse_wheel_filename(filename)
         matches = [dist for dist in distributions
@@ -270,6 +294,7 @@ def installed_integrity(root: Path, artifacts: dict[str, bytes]) -> None:
         if len(matches) != 1 or matches[0].version != str(version):
             fail(f"missing or ambiguous installed dependency: {name}")
         dist = matches[0]
+        expected_distributions.add(getattr(dist, "_path", None))
         records = [str(item) for item in dist.files or [] if str(item).endswith(".dist-info/RECORD")]
         if len(records) != 1:
             fail(f"missing installed dependency RECORD: {name}")
@@ -417,6 +442,49 @@ def installed_integrity(root: Path, artifacts: dict[str, bytes]) -> None:
                     fail(f"unowned dependency package file: {path.name}")
         owned.update(physical_rows)
 
+    # Reconcile every installed file, including metadata not discovered by
+    # importlib and executables outside active package prefixes.
+    for dist in distributions:
+        if getattr(dist, "_path", None) not in expected_distributions:
+            name = canonicalize_name(dist.metadata.get("Name", ""))
+            if name in {"pip", "setuptools", "wheel"}:
+                fail(f"missing authenticated original bootstrap wheel: {name}=={dist.version}")
+            fail(f"unowned installed distribution: {name}")
+    maker = (interpreter or Path(sys.executable)).resolve()
+    if maker.is_relative_to(root):
+        fail("maker interpreter must be outside the installed child")
+    maker_bytes = captured_bytes(maker)
+    aliases = {"python", "python3"}
+    if re.fullmatch(r"python3\.[0-9]+", maker.name):
+        aliases.add(maker.name)
+    for alias in aliases:
+        path = root / "bin" / alias
+        if path.exists() or path.is_symlink():
+            child_file(root, path)
+            if captured_bytes(path) != maker_bytes:
+                fail("child interpreter differs from maker interpreter")
+            physical = str(path.relative_to(root))
+            if physical in owned:
+                fail("dependency RECORD overlaps bootstrap interpreter")
+            owned.add(physical)
+    if "bin/python" not in owned:
+        fail("missing bootstrap interpreter: bin/python")
+    for directory in (site, root / "bin"):
+        allowed_dirs = {directory}
+        for rel in owned:
+            path = root / rel
+            if path.is_relative_to(directory):
+                allowed_dirs.update(path.parents)
+        for path in directory.rglob("*"):
+            info = path.lstat()
+            if stat.S_ISDIR(info.st_mode):
+                if info.st_uid != os.getuid() or path not in allowed_dirs:
+                    fail(f"unowned installed directory: {path.relative_to(root)}")
+                continue
+            child_file(root, path)
+            if str(path.relative_to(root)) not in owned:
+                fail(f"unowned installed file: {path.relative_to(root)}")
+
 
 def install_snapshot(wheelhouse: Path, requirements: bytes, flags: list[str]) -> None:
     # pip rechecks every wheel hash against a kernel-sealed lock. Parent rename
@@ -438,8 +506,18 @@ def install_snapshot(wheelhouse: Path, requirements: bytes, flags: list[str]) ->
         os.close(lock_fd)
 
 
-def main() -> int:
+def main(*, local_inventory: dict[str, set[str]] | None = None) -> int:
     args = sys.argv[1:]
+    interpreter = None
+    if "--maker-python" in args:
+        index = args.index("--maker-python")
+        if len(args) <= index + 1:
+            fail("maker interpreter path is missing")
+        executable = shutil.which(args[index + 1])
+        if executable is None:
+            fail("maker interpreter is unavailable")
+        interpreter = Path(executable)
+        args = args[:index] + args[index + 2:]
     committed_lock = None
     if "--committed-lock" in args:
         index = args.index("--committed-lock")
@@ -526,7 +604,7 @@ def main() -> int:
         fail("missing compatible wheel for: " + ", ".join(missing))
     artifacts = {path.name: data for path, data in matched.values()}
     if installed is not None:
-        installed_integrity(installed, artifacts)
+        installed_integrity(installed, artifacts, interpreter=interpreter, local_inventory=local_inventory)
     if install_flags is not None:
         install_snapshot(wheelhouse, requirements_bytes, install_flags)
     if snapshot is not None:
