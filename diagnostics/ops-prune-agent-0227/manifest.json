@@ -1,0 +1,439 @@
+{
+  "format_version": 2,
+  "task": "OPS-suites-prune-agent-source-0227",
+  "decision": "proposal-only; no source apply, product merge, install, retirement, or deletion",
+  "base_commit": "45c3a7f47",
+  "remote_snapshot": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agent-OPS-suites-snapshot-0218.json",
+    "machine": "vm",
+    "captured_utc": "2026-10-24T02:18Z",
+    "bytes": 119687,
+    "sha256": "8708f05c55c4223aa9096a45f0d8ea92cb6fe989f6fdcfa6f7ad048d8b2c8833",
+    "protected": [
+      "agent-remotion-current",
+      "agent-remotion-v3-819acf-1110"
+    ],
+    "current_boards": "managers/agent/STATUS.md; registered final and gate rows must remain"
+  },
+  "source": {
+    "path": "Agent tests/suites.conf",
+    "snapshot_path": "remote-snapshot.json",
+    "baseline_path": "baseline-suites.conf",
+    "candidate_path": "candidate-suites.conf",
+    "baseline_bytes": 110798,
+    "baseline_sha256": "5175381ee16327ec214a0f7c49b4081d920a2d7801b87b014349358d5245b8a3",
+    "candidate_bytes": 110798,
+    "candidate_sha256": "5175381ee16327ec214a0f7c49b4081d920a2d7801b87b014349358d5245b8a3",
+    "active_rows": 140,
+    "unique_active_keys": 140
+  },
+  "patch": {
+    "path": "agent-source.patch",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "hunks": 0,
+    "comment_stamp": "No row qualified for a safe comment in the exact remote snapshot."
+  },
+  "protected_outside_bytes": true,
+  "env_sha256_verified": true,
+  "env_files": {
+    "tests/agent-remotion-0010.env": {
+      "bytes": 528,
+      "sha256": "943c0f49bc896097af0589b84c4dd4df06058fbe22e0c6fd999bcbf40f9a38a0"
+    },
+    "tests/agent-remotion-0012.env": {
+      "bytes": 528,
+      "sha256": "be340c6b77684d2438d1c46a674746188b851cbb23abec0c6dcf21a0742fd03a"
+    },
+    "tests/agent-remotion-0013.env": {
+      "bytes": 528,
+      "sha256": "e03e177251a99e37820c001f6fe6f88f2f503d1f939a5f67eed6ed59eeca2d07"
+    },
+    "tests/agent-remotion-composition14-255b6856.env": {
+      "bytes": 546,
+      "sha256": "b6a5d593ecdb01c3d061a47e4fafdd552833957d8ab313d44fe7fb43bb76d5e6"
+    },
+    "tests/agent-remotion-current.env": {
+      "bytes": 531,
+      "sha256": "7faf606e9780385d7a32c053367b2a63e1b58246c52f14d14c226dbf9b20fa6c"
+    },
+    "tests/agent-remotion-f4ed-0013.env": {
+      "bytes": 533,
+      "sha256": "0ff3f3402321e596a8d4cf3650f86fa15d5271783504d0f17c742eecaa9e01fc"
+    },
+    "tests/agent-remotion-main95bd.env": {
+      "bytes": 532,
+      "sha256": "245f4f265d23b7704433d5dcd7c88c3eb5eab695ccac2d6370c67ec62f26639a"
+    },
+    "tests/agent-remotion-published14-091aa23e.env": {
+      "bytes": 544,
+      "sha256": "9df35fe8bbc5537209d1d201f1f0bc51eac75ebc5bf5e0806cc7b9b4fa6d2aa8"
+    },
+    "tests/agent-remotion-v3-819acf-1110.env": {
+      "bytes": 538,
+      "sha256": "8e86a46fe6388975909e94ff28b2ea335a2095935ba4f898ff8a2ee854df801a"
+    },
+    "tests/agent-remotion.env": {
+      "bytes": 523,
+      "sha256": "e53a69a465e05976dcf7a781f420b1c7def64a13691f7a5f387f6a0609a6da02"
+    }
+  },
+  "target_census": {
+    "agent-remotion-0013": {
+      "env_path": "tests/agent-remotion-0013.env",
+      "env_sha256": "e03e177251a99e37820c001f6fe6f88f2f503d1f939a5f67eed6ed59eeca2d07",
+      "active_row_count": 0,
+      "active_rows": [],
+      "disposition": "UNREFERENCED-ENV-ONLY; no row to comment; do not infer retirement from old-name or old-refusal evidence",
+      "no_use_citations": [
+        "Exact snapshot tests/suites.conf active-row census: zero rows contain agent-remotion-0013.",
+        "Current queue has no pending/running registration row for this target; historical done/refused records are not used as unused proof.",
+        "No current/final board row names this target; protected names remain agent-remotion-current and agent-remotion-v3-819acf-1110."
+      ],
+      "old_refusal_not_proof": true
+    },
+    "composition14-255b6856": {
+      "env_path": "tests/agent-remotion-composition14-255b6856.env",
+      "env_sha256": "b6a5d593ecdb01c3d061a47e4fafdd552833957d8ab313d44fe7fb43bb76d5e6",
+      "active_row_count": 4,
+      "active_rows": [
+        {
+          "line": 21,
+          "repo": "agent",
+          "suite": "full",
+          "sha256": "6188756f6a859bb8ae1d7f185c1efcb8715d5c1188f78e7daa4f289c2eb5fbbb",
+          "bytes": 909,
+          "target_refs": [
+            "composition14-255b6856"
+          ],
+          "project_dir": "/home/user/work/runtimes/agent-remotion-composition14-255b6856",
+          "test_node_modules": "/home/user/work/runtimes/agent-remotion-composition14-255b6856/node_modules",
+          "runtime_checkout": "/home/user/work/runtime"
+        },
+        {
+          "line": 23,
+          "repo": "agent",
+          "suite": "targeted",
+          "sha256": "18cde24470b53a7f5ded11de2ccb7e785b24e3247c612f1c021d620dab8b5e69",
+          "bytes": 919,
+          "target_refs": [
+            "composition14-255b6856"
+          ],
+          "project_dir": "/home/user/work/runtimes/agent-remotion-composition14-255b6856",
+          "test_node_modules": "/home/user/work/runtimes/agent-remotion-composition14-255b6856/node_modules",
+          "runtime_checkout": "/home/user/work/runtime"
+        },
+        {
+          "line": 141,
+          "repo": "agent",
+          "suite": "agent-remotion-composition14-255b6856-nodes",
+          "sha256": "91ab55a7c6c7affcbceb42cb5c7fea584eb3c314ae33b7397954af8c60b0766c",
+          "bytes": 756,
+          "target_refs": [
+            "composition14-255b6856"
+          ],
+          "project_dir": "/home/user/work/runtimes/agent-remotion-composition14-255b6856",
+          "test_node_modules": null,
+          "runtime_checkout": "/home/user/work/runtime"
+        },
+        {
+          "line": 142,
+          "repo": "agent",
+          "suite": "composition14-runtime-import-integration-1153",
+          "sha256": "d37ce32121da181e03e42c4be351280f93746043bff09b804fe983f36060bef0",
+          "bytes": 5877,
+          "target_refs": [
+            "composition14-255b6856"
+          ],
+          "project_dir": "/home/user/work/runtimes/agent-remotion-composition14-255b6856",
+          "test_node_modules": null,
+          "runtime_checkout": "/home/user/work/runtime"
+        }
+      ],
+      "disposition": "HELD; target still has required references",
+      "held_citations": [
+        "tests/suites.conf:21,23 generic full/targeted registrations use this project and node_modules.",
+        "tests/suites.conf:141 approved -nodes registration remains available.",
+        "tests/suites.conf:142 exact composition14-runtime-import-integration-1153 gate/test row remains required."
+      ],
+      "proposed_comments": []
+    },
+    "main95bd": {
+      "env_path": "tests/agent-remotion-main95bd.env",
+      "env_sha256": "245f4f265d23b7704433d5dcd7c88c3eb5eab695ccac2d6370c67ec62f26639a",
+      "active_row_count": 10,
+      "active_rows": [
+        {
+          "line": 8,
+          "repo": "agent",
+          "suite": "gate1-retained-transcript-sdk-read-main95bd",
+          "sha256": "9dadb61cb8f5473cd9664aeae556712e9829fd89a054b10bdea82ac7a34fb3e7",
+          "bytes": 735,
+          "target_refs": [
+            "main95bd"
+          ],
+          "project_dir": null,
+          "test_node_modules": null,
+          "runtime_checkout": "/home/user/work/wt/rt-pin-95bd3c5f"
+        },
+        {
+          "line": 19,
+          "repo": "agent",
+          "suite": "main95bd-real-fixture-qualification",
+          "sha256": "b4a96d877c1f3eb97313eb01e1f2fe4f698bf496b0aa2a56374116f6c1541acd",
+          "bytes": 1737,
+          "target_refs": [
+            "main95bd"
+          ],
+          "project_dir": "/home/user/work/runtimes/agent-remotion-main95bd",
+          "test_node_modules": "/home/user/work/runtimes/agent-remotion-main95bd/node_modules",
+          "runtime_checkout": "/home/user/work/wt/rt-pin-95bd3c5f"
+        },
+        {
+          "line": 123,
+          "repo": "agent",
+          "suite": "agent-remotion-main95bd-nodes",
+          "sha256": "2374a3f8fa94a78981e69f937699bf2138e4db8224cff2e266412078375ab67f",
+          "bytes": 728,
+          "target_refs": [
+            "main95bd"
+          ],
+          "project_dir": "/home/user/work/runtimes/agent-remotion-main95bd",
+          "test_node_modules": null,
+          "runtime_checkout": "/home/user/work/runtime"
+        },
+        {
+          "line": 125,
+          "repo": "agent",
+          "suite": "main95bd-added-gates-integration",
+          "sha256": "bb52ad9d7e4c7f11b9e42ab0d0c688fdb1d20b7b0173f13a1a84b3da32569fe0",
+          "bytes": 1175,
+          "target_refs": [
+            "main95bd"
+          ],
+          "project_dir": "/home/user/work/runtimes/agent-remotion-main95bd",
+          "test_node_modules": "/home/user/work/runtimes/agent-remotion-main95bd/node_modules",
+          "runtime_checkout": "/home/user/work/wt/rt-pin-95bd3c5f"
+        },
+        {
+          "line": 126,
+          "repo": "agent",
+          "suite": "gate1-connected-occurrence-source-main95bd",
+          "sha256": "79a1b686d6a40178e84cb4bcdd1439a2b6bf45e1a110c5f08674020c458b8417",
+          "bytes": 1195,
+          "target_refs": [
+            "main95bd"
+          ],
+          "project_dir": "/home/user/work/runtimes/agent-remotion-main95bd",
+          "test_node_modules": "/home/user/work/runtimes/agent-remotion-main95bd/node_modules",
+          "runtime_checkout": "/home/user/work/wt/rt-pin-95bd3c5f"
+        },
+        {
+          "line": 127,
+          "repo": "agent",
+          "suite": "gate1-word-anchor-native-ingress-main95bd",
+          "sha256": "65c8e38345b50850d98013f64e6b0701c2c71cc7bfec20a137f7060fe882f259",
+          "bytes": 1213,
+          "target_refs": [
+            "main95bd"
+          ],
+          "project_dir": null,
+          "test_node_modules": null,
+          "runtime_checkout": "/home/user/work/wt/rt-pin-95bd3c5f"
+        },
+        {
+          "line": 128,
+          "repo": "agent",
+          "suite": "gate1-word-anchor-native-ingress-main95bd-seed80973",
+          "sha256": "4d2f0d80bb1520683cebb0cea05ca703f6846cd25e69c099073d72ace9e4a4e0",
+          "bytes": 1232,
+          "target_refs": [
+            "main95bd"
+          ],
+          "project_dir": null,
+          "test_node_modules": null,
+          "runtime_checkout": "/home/user/work/wt/rt-pin-95bd3c5f"
+        },
+        {
+          "line": 129,
+          "repo": "agent",
+          "suite": "gate1-word-anchor-native-ingress-main95bd-defaultseed",
+          "sha256": "2a3d1ee439757ad5b2e0e712353df4748f294f11d9daadad8504a92707ea26ae",
+          "bytes": 1158,
+          "target_refs": [
+            "main95bd"
+          ],
+          "project_dir": null,
+          "test_node_modules": null,
+          "runtime_checkout": "/home/user/work/wt/rt-pin-95bd3c5f"
+        },
+        {
+          "line": 130,
+          "repo": "agent",
+          "suite": "d13-native-positive-render-integration",
+          "sha256": "5005438fad17069d8471951f3b5bf18e0f00b1f7acddcec5cc18321b622286a8",
+          "bytes": 1053,
+          "target_refs": [
+            "main95bd"
+          ],
+          "project_dir": "/home/user/work/runtimes/agent-remotion-main95bd",
+          "test_node_modules": "/home/user/work/runtimes/agent-remotion-main95bd/node_modules",
+          "runtime_checkout": "/home/user/work/wt/rt-pin-95bd3c5f"
+        },
+        {
+          "line": 133,
+          "repo": "agent",
+          "suite": "wc6-exact95-http-env-qualification-integration",
+          "sha256": "2ea0cfce30637fe20de2ba356b72089c8af78ae6e8dc1048b92e29a31bd4b678",
+          "bytes": 1041,
+          "target_refs": [
+            "main95bd"
+          ],
+          "project_dir": "/home/user/work/runtimes/agent-remotion-main95bd",
+          "test_node_modules": "/home/user/work/runtimes/agent-remotion-main95bd/node_modules",
+          "runtime_checkout": "/home/user/work/wt/rt-pin-95bd3c5f"
+        }
+      ],
+      "disposition": "HELD; target still has required current/final/gate references",
+      "held_citations": [
+        "tests/suites.conf:8 gate1-retained-transcript-sdk-read-main95bd.",
+        "tests/suites.conf:19 main95bd-real-fixture-qualification.",
+        "tests/suites.conf:123 approved -nodes registration.",
+        "tests/suites.conf:125-130 main95bd added-gate and gate1/D13 rows.",
+        "tests/suites.conf:133 wc6 exact95 HTTP qualification."
+      ],
+      "proposed_comments": []
+    },
+    "published14-091aa23e": {
+      "env_path": "tests/agent-remotion-published14-091aa23e.env",
+      "env_sha256": "9df35fe8bbc5537209d1d201f1f0bc51eac75ebc5bf5e0806cc7b9b4fa6d2aa8",
+      "active_row_count": 4,
+      "active_rows": [
+        {
+          "line": 14,
+          "repo": "agent",
+          "suite": "published014-scene-real-public-summary-rle",
+          "sha256": "daa24253bff6c04d2da14e1bff7a9a33b30a52e8873b60aadf2dfc87ea6454fe",
+          "bytes": 974,
+          "target_refs": [
+            "published14-091aa23e"
+          ],
+          "project_dir": "/home/user/work/runtimes/agent-remotion-published14-091aa23e",
+          "test_node_modules": "/home/user/work/runtimes/agent-remotion-published14-091aa23e/node_modules",
+          "runtime_checkout": "/home/user/work/wt/rt-pin-95bd3c5f"
+        },
+        {
+          "line": 132,
+          "repo": "agent",
+          "suite": "agent-remotion-published14-091aa23e-nodes",
+          "sha256": "9c59243aabf789f3102567ac263a814ae5ba6d82cd1ad5d2dcd4b30ee124c2d9",
+          "bytes": 752,
+          "target_refs": [
+            "published14-091aa23e"
+          ],
+          "project_dir": "/home/user/work/runtimes/agent-remotion-published14-091aa23e",
+          "test_node_modules": null,
+          "runtime_checkout": "/home/user/work/runtime"
+        },
+        {
+          "line": 134,
+          "repo": "agent",
+          "suite": "published014-integration-nodes",
+          "sha256": "527d6ebaed73ed061fac5c3eacb143ca6496b73e1eac781f0b2e1a1d318d45df",
+          "bytes": 785,
+          "target_refs": [
+            "published14-091aa23e"
+          ],
+          "project_dir": "/home/user/work/runtimes/agent-remotion-published14-091aa23e",
+          "test_node_modules": "/home/user/work/runtimes/agent-remotion-published14-091aa23e/node_modules",
+          "runtime_checkout": "/home/user/work/wt/rt-pin-95bd3c5f"
+        },
+        {
+          "line": 136,
+          "repo": "agent",
+          "suite": "venv-agent-child-published14-b9797941-full",
+          "sha256": "2b317a57e4f6acd5e290c384a4a0f7585a329d0c10a92de9cc3beb71951dd788",
+          "bytes": 1005,
+          "target_refs": [
+            "published14-091aa23e"
+          ],
+          "project_dir": "/home/user/work/runtimes/agent-remotion-published14-091aa23e",
+          "test_node_modules": "/home/user/work/runtimes/agent-remotion-published14-091aa23e/node_modules",
+          "runtime_checkout": "/home/user/work/runtime"
+        }
+      ],
+      "disposition": "HELD; target still has required current/final/public references",
+      "held_citations": [
+        "tests/suites.conf:14 published014-scene-real-public-summary-rle.",
+        "tests/suites.conf:132 approved -nodes registration.",
+        "tests/suites.conf:134 published014 integration nodes.",
+        "tests/suites.conf:136 published14 full integration."
+      ],
+      "proposed_comments": []
+    }
+  },
+  "protected_outside_bytes": true,
+  "protected_names": [
+    "agent-remotion-current",
+    "agent-remotion-v3-819acf-1110"
+  ],
+  "active_pending_workers_tests": "No pending/running target registration was found in current queue facts; active source rows above remain protected regardless.",
+  "hub_facts": {
+    "agent_status": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md",
+      "sha256": "e4c495673a0c0c5cb44b74a7d81d3be7c34d71630e147cdaf33337d1b097bbae",
+      "lines": {
+        "61": "OPS-suites-prune row says exact suites/env bytes published; current and final-gate rows protected."
+      }
+    },
+    "runtime_status": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/STATUS.md",
+      "sha256": "0d6134714bee9609036cd67c75a0e96213d803553b899ce7256a27be3516540a",
+      "lines": {
+        "61": "Exact Agent snapshot received; remote four-target packet authoring; no live edits or retirement.",
+        "66": "OPS-suites-prune resumes under 02:08 instruction; local six-row packet separate.",
+        "68": "Independent review before exact registration apply or lead retirement; current and final-gate rows stay protected."
+      }
+    },
+    "board_header": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/BOARD-HEADER.md",
+      "sha256": "af9b9cfc0c2b8dbac59434967a429ed00f86ec8ff8d10f9278ee1b7419db2b94",
+      "lines": {
+        "90": "D32 final full-suite gate; no skip/deselect/xfail.",
+        "93": "D35 gate opens only when the header records it.",
+        "92": "D34 disk work resumes only below 8.5 GB or after delivery."
+      }
+    },
+    "disk_note": "Current Agent disk about 7.6 GB; main is not authority for remote quiescence."
+  },
+  "validation_scope": [
+    "source-only JSON validation",
+    "private patch dry-run/apply/replay",
+    "unique active (repo,suite) keys",
+    "protected outside bytes",
+    "environment SHA-256",
+    "git diff --check"
+  ],
+  "validation_results": {
+    "snapshot_json": "PASS",
+    "source_bytes_and_sha": "PASS",
+    "active_row_syntax": "PASS (140 rows)",
+    "unique_active_keys": "PASS (140)",
+    "private_patch_dry_run": "PASS (no-op patch)",
+    "private_patch_apply": "PASS (replay equality)",
+    "protected_outside_bytes": "PASS (candidate equals baseline)",
+    "env_sha256": "PASS (10 exact env files)",
+    "diff_check": "PASS",
+    "product_tests": "NOT RUN by design"
+  },
+  "actual_disk_freed_gb": 0,
+  "product_tests": "not run; source-only registration packet",
+  "forbidden_actions_not_taken": [
+    "proc/liveness probe",
+    "locks/config/live edits",
+    "retire/request/daemon/provision/bench/kit",
+    "old-refusal retry",
+    "git write/merge/checkout"
+  ],
+  "next_step": "Independent review may consume this packet; any apply would require fresh source identity and a new decision after held references clear."
+}
