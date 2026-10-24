@@ -208,9 +208,48 @@ def test_mounted_http_commit_route_and_provider_are_observed(service, tmp_path):
     for phase in ("handler_entry", "authorization", "coordinator_admission", "coordinator_lock",
                   "provider", "accept", "receipt", "http_response"):
         assert phases[phase]["status"] == "observed", (phase, summaries)
+    for phase in ("coordinator_admission", "coordinator_lock"):
+        assert phases[phase]["count"] == 1
+        assert phases[phase]["end_ms"] is not None
     assert summaries[0]["last_phase"] == "http_response"
     serialized = (tmp_path / "mounted-phase.jsonl").read_text()
     assert body["project_id"] not in serialized
     assert "mounted-phase" not in serialized
     assert "phase-token" not in serialized
     assert capture.failures == 0
+
+
+def test_dispatch_scope_expires_after_deferred_response_before_handler_reuse(service):
+    body = commit_request(service, commands=[{
+        "schema_version": 1,
+        "op": "clip.move",
+        "version": "1",
+        "select": "parent/clip:clip-1",
+        "args": {"on": 2},
+    }])
+    handler = _handler(service, body, key="dispatch-scope")
+    capture = P2CommitPhaseCapture(enabled=True)
+    capture.start()
+    try:
+        handler._dispatch()
+        assert handler.wfile.getvalue()
+        assert capture._handler_requests == {}
+        assert capture._thread_requests == {}
+
+        # Reuse the handler and thread for unrelated traffic after the real
+        # deferred response has been flushed.
+        handler.command = "GET"
+        handler.path = "/v1/health"
+        handler.headers = {}
+        handler.rfile = io.BytesIO()
+        handler.wfile = io.BytesIO()
+        handler._dispatch()
+    finally:
+        capture.stop()
+
+    summaries = _summary(capture)
+    assert len(summaries) == 1
+    phases = summaries[0]["phases"]
+    assert phases["http_response"]["count"] == 2
+    assert capture._handler_requests == {}
+    assert capture._thread_requests == {}
