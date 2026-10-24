@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T08:41:47Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
-# viewing board, 2026-10-24T08:40:00Z
+<!-- viewing | 2026-10-24T08:43:25Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# viewing board, 2026-10-24T08:44:00Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna | H0 | merged | Inventory and acceptance reviews | Four copies and drift checks independently passed. No product change. | 6c4d934; 7a95a40 |
@@ -22,7 +22,7 @@
 | F-retired-callers | Qualify retained caller scenarios | Luna | Integrated source proof | merged | Review 0444 and Agent 0500 | Actual Agent 9cd passed 53 controls; exact 30 originals retained. Three label mappings recorded separately. | 0712aadf6; home 9cd3dbe865 |
 | F-track-label mapping | Map three label scenarios | Luna | Exact source comparison | merged | Mapping 0544 and review 0547 | Unicode, empty and clear mappings passed. Existing CLI receipt retained; Agent owns census credit. | Base 9cd3dbe865 |
 | F-D32-render-wire | Classify six missing SDK result files | Luna | Qualified installed child | merged | Viewing 0116 and 0117; service 27934 | Agent reports six originals passed on child c886 and Runtime 8ea. Classification independently passed. | No product change |
-| F-authoring-ABA | Complete original undo and ABA | Sol and Luna | Integrated source and runner qualified | doing | Agent service 26998; Viewing verdict next | Original 11466 remains failed. New single original service 26998 is queued on Agent 0c2c and Runtime becfe after source 123 and runner review PASS. | Agent 0c2c28da4; Runtime 460c |
+| F-authoring-ABA | Complete original undo and ABA | Sol and Luna | Corrected pytest environment in managed row | blocked:agent | Agent Sol 0839; independent whole path 0839 | Service 26998 exited 4 before collection: pytest lacked preflight environment. No original body ran; original 11466 remains failed. | Agent 0c2c28da4; Runtime 460c |
 | F-authoring-ABA storage | Merge current item storage source | Sol and Luna | Integrated source proof passed | merged | Agent integrated proof 0816 | Actual current joined source passed 123, including all 95 diagnostics. Runtime becfe auth matches repaired 460c; static and normal mappings passed. | ca8915f23d; home 0c2c28da4 |
 | F-ABA diagnostics | Merge reviewed diagnostic import | Luna | Integrated source proof passed | merged | Viewing 0805; Agent home proof 0816 | Exact diagnostic blob and 59 original assertions retained. Actual joined source passed 123 with zero failures, errors or skips. | d3595fa139; Agent 35f462a27 |
 | F-authoring-ABA ownership | Resolve source ownership | Sol and Luna | Runtime authority repair | merged | Whole path 0638 and joined 0719 | Runtime repair passed 177 plus six controls. Old review 0643 died without report; no PASS claimed for it. | Runtime 35764; Agent donor d33fe |
@@ -35,10 +35,12 @@ V1 and V3 are done on their recorded integrated proofs. Composition source is 63
 
 Original ABA service 11466 failed at undo before lost ACK, retaining all 59 assertions. No original private packet was retained. The genuine offline item-path source controls, current Agent storage correction and Runtime authority repair are separately qualified; no synthetic packet is called original custody. Agent owns actual integrated source qualification and the one existing managed original run using repaired Runtime authority; Viewing owns its finite result verdict.
 
+08:44Z: Agent peer 0839 reports service 26998 exited4 in2seconds before collection. Preflight passed, but pytest ran outside the env-i command and could not import runtime_protocol. Agent Sol0839 owns the bounded row repair and independent whole-path0839 compares registry to passing execution. No product failure, original body or new realm is claimed; no unchanged retry is authorized.
+
 D49 venue: Viewing test service. Checkpoint composition-full-1024074900-23379 passed 86 with zero skips on actual compiled source. Installed shared App package 0.0.13 versus tracked 0.0.14 was disclosed by independent readiness review; source checkpoint does not qualify that consumer graph. Final full runs after Runtime coordinates the final tuple and gate reruns. No graph mutation or duplicate full is requested.
 
 Evidence: [current Viewing review](../../design/viewing-F-ABA-current-review-0805.md), [diagnostic review](../../design/viewing-F-ABA-diagnostics-review-0748.md), [original ABA verdict](../../design/viewing-F-authoring-ABA-original-review-0513.md), [whole path verdict](../../design/viewing-F-authoring-ABA-whole-path-review-0638.md), [Composition checkpoint](../../design/viewing-FREEZE-composition-checkpoint-0750.md), [earlier evidence](../../design/viewing-evidence-before-D33-20261024T0053.md).
 
-Blockers: None for Viewing. Agent service 26998 is queued; its terminal packet will make the finite Viewing result review ready.
+Blockers: Agent — fix managed row environment scope after service 26998 setup exit 4, independently qualify the full service path, then send one meaningful original result.
 Later: Image inverse peer 0455 predates forwarding source 0df7. Agent owns any next image witness; no new Viewing body. V4 cut and deferred timing remain unchanged. Earlier permission refusals stay stopped.
-Next ready: Original ABA result review on terminal packet for agt-F-final-source-join-0816-authoring-current-becfe-nodes-1024083505-26998. Source and runner dependencies are clear. No ready Viewing source task is waiting.
+Next ready: Original ABA result review after corrected Agent row 0839 reaches the body. Service 26998 was setup only; source remains qualified by 123 integrated cases. No ready Viewing source task is waiting.
