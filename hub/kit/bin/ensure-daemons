@@ -44,7 +44,11 @@ fi
 dead=""; fin=""
 for d in $O/workers/*/; do
   [ -f $d/running ] && [ -f $d/meta ] || continue
-  [ -f $d/ended ] || [ -f $d/exit ] && continue   # finished, but its running marker not yet cleared: not a death (18:42Z farm)
+  if [ ! -f $d/ended ] && [ -f $d/exit ]; then   # finished; normally the wrapper clears running within seconds
+    w0=$(basename $d); if ! ps -eo args | grep -E -- "bin/dispatch $w0( |$)" | grep -qv grep && [ -n "$(find $d/exit -mmin +5 2>/dev/null)" ]; then
+      $O/bin/stop-worker $w0 "wrapper died after exit marker; finalized by ensure-daemons (LOOPS #62)" >/dev/null 2>&1; fin="$fin $w0"; fi   # commits WIP, writes ended
+    continue; fi
+  [ -f $d/ended ] && continue
   w=$(basename $d); wt=$(sed -n 's/^worktree=//p' $d/meta)
   [ -n "$wt" ] || continue
   ps -eo args | grep -F -- "$wt" | grep -qv grep && continue          # a live process still uses the worktree
@@ -65,5 +69,5 @@ if [ -n "$dead" ]; then
   fi
 fi
 big=$(du -sm /tmp/w-* 2>/dev/null | awk '$1>2048{printf " %s(%dMB)", $2, $1}'); [ -n "$big" ] && mgr="$mgr WORKER SCRATCH OVER 2 GB (COMMON: never copy benches; stop it if disk is under 8 GB):$big"   # 06:58Z LOOPS #55
-[ -n "$fin" ] && mgr="$mgr FINALIZED (finished, wrapper left no exit marker; not a death, do not re-dispatch):$fin"
+[ -n "$fin" ] && mgr="$mgr FINALIZED (finished; wrapper ended early, now committed via stop-worker; not a death, do not re-dispatch):$fin"
 echo "$(date -u +%FT%TZ) ensure-daemons $A: uptime $(awk '{printf "%d", $1/60}' /proc/uptime)m; started:${started:- none}; dead workers:${dead:- none}; disk $(df -BG --output=avail /home/user | tail -1 | tr -d ' ')$mgr"
