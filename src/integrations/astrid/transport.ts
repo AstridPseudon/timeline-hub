@@ -50,7 +50,7 @@ export class BridgeRouteError extends Error {
     status: number,
     envelope: z.infer<typeof bridgeErrorEnvelopeSchema> | null,
   ) {
-    const nextAction = readNextAction(envelope);
+    const nextAction = envelope?.next_action?.trim() || readNextAction(envelope);
     const reason = envelope?.detail ?? `${status} ${reasonPhrase(status)}`;
     const description = nextAction ? `${reason} Next: ${nextAction}` : reason;
     super(`Astrid bridge ${action} failed: ${description}`);

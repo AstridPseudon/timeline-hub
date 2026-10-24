@@ -32,9 +32,20 @@ const localAgentModelSchema = z.object({
   description: z.string().nullable().optional(),
   thoughtLevel: thoughtLevelSchema.optional(),
 });
+export type LocalAgentModel = z.infer<typeof localAgentModelSchema>;
+
+export const localAgentSignInSchema = z.enum(['signed-in', 'signed-out', 'unknown']);
+export type LocalAgentSignIn = z.infer<typeof localAgentSignInSchema>;
+
+export const localAgentStepSchema = z.object({
+  kind: z.enum(['install', 'sign-in']),
+  command: z.string(),
+  label: z.string(),
+});
+export type LocalAgentStep = z.infer<typeof localAgentStepSchema>;
 
 export const localAgentCatalogSchema = z.object({
-  agents: z.array(z.strictObject({
+  agents: z.array(z.object({
     id: localAgentIdSchema,
     name: z.string(),
     state: z.enum(['ready', 'sign-in', 'not-installed']),
@@ -42,6 +53,10 @@ export const localAgentCatalogSchema = z.object({
     signInLine: z.string().optional(),
     models: z.array(localAgentModelSchema),
     defaultModel: z.string().nullable(),
+    signIn: localAgentSignInSchema.optional(),
+    steps: z.array(localAgentStepSchema).optional(),
+    creditLine: z.string().optional(),
+    creditUrl: z.string().optional(),
   })),
   defaultAgent: localAgentIdSchema,
 });

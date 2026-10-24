@@ -1,10 +1,45 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { AstridLocalAcpRoutes } from './acpRoutes.ts';
+import { AGENT_NOT_INSTALLED_CODE, AstridLocalAcpRoutes, isAgentSetupError, modelCatalogSchema } from './acpRoutes.ts';
 import { LOCAL_AGENT_TABLE } from './localAgents.ts';
 import { BridgeRouteError, type AstridBridgeTransport } from './transport.ts';
 
 describe('AstridLocalAcpRoutes', () => {
+  it('accepts old and new provider fields and drops unknown provider keys', () => {
+    const oldCatalog = modelCatalogSchema.parse({ providers: [{ id: 'openai', name: 'OpenAI', signedIn: true, models: [] }], currentModel: null });
+    expect(oldCatalog.providers[0]).toMatchObject({ id: 'openai', signedIn: true });
+    const newCatalog = modelCatalogSchema.parse({ providers: [{
+      id: 'openrouter', name: 'OpenRouter', signedIn: false, models: [], usable: false,
+      reason: 'needs_sign_in', login: 'api-key', recommended: true, futureField: 'ignored',
+    }], currentModel: null });
+    expect(newCatalog.providers[0]).toMatchObject({ usable: false, reason: 'needs_sign_in', login: 'api-key', recommended: true });
+    expect(newCatalog.providers[0]).not.toHaveProperty('futureField');
+  });
+
+  it('carries next_action on route errors and identifies setup error codes', () => {
+    const error = new BridgeRouteError('Connect agent', 502, { error: AGENT_NOT_INSTALLED_CODE, detail: 'Install the agent', next_action: 'install-agent' });
+    expect(error.nextAction).toBe('install-agent');
+    expect(error.message).toContain('Next: install-agent');
+    expect(isAgentSetupError(error)).toBe(AGENT_NOT_INSTALLED_CODE);
+    expect(isAgentSetupError(new Error('no'))).toBeNull();
+  });
+
+  it('posts an OpenRouter key and strips it from a failing error', async () => {
+    const key = 'secret-openrouter-key';
+    const requestJson = vi.fn(async (_path: string, _request: unknown, _schema: unknown) => {
+      throw new BridgeRouteError('Save Astrid API key', 400, { error: 'invalid_key', detail: `Rejected ${key}` });
+    });
+    const routes = new AstridLocalAcpRoutes({ requestJson } as unknown as AstridBridgeTransport);
+    let thrown: unknown;
+    try { await routes.saveAstridApiKey('openrouter', key); } catch (error) { thrown = error; }
+    expect(requestJson).toHaveBeenCalledWith('/acp/astrid/api-key', {
+      method: 'POST', body: { provider: 'openrouter', key },
+    }, expect.anything(), 'Save Astrid API key');
+    expect(thrown).toMatchObject({ code: 'invalid_key', detail: 'Rejected [redacted]' });
+    expect(JSON.stringify(thrown)).not.toContain(key);
+    expect(String(thrown)).not.toContain(key);
+  });
+
   it('takes over the loaded session and preserves submission identity on prompt requests', async () => {
     const requestJson = vi.fn(async (_path: string, _request: unknown, schema: { parse: (value: unknown) => unknown }) => schema.parse({ result: { _astridSession: { role: 'writer', active: true, activeRequestId: 'queued-1' } } }));
     const routes = new AstridLocalAcpRoutes({ requestJson } as unknown as AstridBridgeTransport);

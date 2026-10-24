@@ -20,6 +20,20 @@ describe('local agent registry', () => {
     expect(localStorage.length).toBe(0);
   });
 
+  it('accepts optional setup fields and drops unknown agent and model keys', () => {
+    const catalog = localAgentCatalogSchema.parse({ defaultAgent: 'astrid', agents: [{
+      id: 'astrid', name: 'Astrid', state: 'ready', line: null, models: [{ modelId: 'openrouter/model', name: 'Model', futureModelField: true }], defaultModel: 'openrouter/model',
+      signIn: 'signed-in', steps: [{ kind: 'sign-in', command: 'run-astrid', label: 'Sign in' }],
+      creditLine: 'Built on oh-my-pi', creditUrl: 'https://example.test/omp', futureAgentField: true,
+    }] });
+    expect(catalog.agents[0]).toMatchObject({
+      signIn: 'signed-in', steps: [{ kind: 'sign-in', command: 'run-astrid', label: 'Sign in' }],
+      creditLine: 'Built on oh-my-pi', creditUrl: 'https://example.test/omp',
+    });
+    expect(catalog.agents[0]).not.toHaveProperty('futureAgentField');
+    expect(catalog.agents[0].models[0]).not.toHaveProperty('futureModelField');
+  });
+
   it.each([
     'Install with `curl -fsSL https://hermes-agent.nousresearch.com/install.sh | bash`',
     'Install with `iex (irm https://hermes-agent.nousresearch.com/install.ps1)`',

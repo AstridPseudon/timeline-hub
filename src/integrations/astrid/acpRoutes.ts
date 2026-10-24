@@ -35,15 +35,34 @@ const modelUsageSchema = z.strictObject({
   })),
 });
 export const modelCatalogSchema = z.strictObject({
-  providers: z.array(z.strictObject({
+  providers: z.array(z.object({
     id: z.string().min(1), name: z.string().min(1), signedIn: z.boolean(),
-    models: z.array(z.strictObject({ id: z.string().min(1), name: z.string().min(1) })),
+    models: z.array(z.object({ id: z.string().min(1), name: z.string().min(1) })),
     usage: modelUsageSchema.optional(),
+    usable: z.boolean().optional(),
+    reason: z.enum(['needs_sign_in', 'no_available_models']).nullable().optional(),
+    login: z.enum(['oauth', 'api-key', 'local']).optional(),
+    recommended: z.boolean().optional(),
   })),
   currentModel: z.string().nullable(),
 });
+const saveAstridApiKeyResponseSchema = z.object({
+  provider: z.literal('openrouter'),
+  signedIn: z.literal(true),
+  currentModel: z.string().nullable(),
+});
+export type SaveAstridApiKeyResponse = z.infer<typeof saveAstridApiKeyResponseSchema>;
 const localModelResponseSchema = z.object({ models: localAgentModelsSchema.nullable() });
 export type AcpModelCatalog = z.infer<typeof modelCatalogSchema>;
+export type AcpModelProvider = AcpModelCatalog['providers'][number];
+
+export const AGENT_NOT_INSTALLED_CODE = 'agent_not_installed';
+export const AGENT_SIGN_IN_REQUIRED_CODE = 'agent_sign_in_required';
+export const AGENT_RUNTIME_MISSING_CODE = 'agent_runtime_missing';
+export type AgentSetupErrorCode =
+  | typeof AGENT_NOT_INSTALLED_CODE
+  | typeof AGENT_SIGN_IN_REQUIRED_CODE
+  | typeof AGENT_RUNTIME_MISSING_CODE;
 
 // Defined beside the transport retry that must not retry it; re-exported for the chat pane.
 export { ACP_UNAVAILABLE_CODE };
@@ -51,6 +70,22 @@ export { ACP_UNAVAILABLE_CODE };
 /** True for the door's "no chat service here" answer: a state the chat pane shows plainly, never an error. */
 export function isAcpUnavailable(error: unknown): boolean {
   return error instanceof BridgeRouteError && error.status === 503 && error.code === ACP_UNAVAILABLE_CODE;
+}
+
+export function isAgentSetupError(error: unknown): AgentSetupErrorCode | null {
+  if (!(error instanceof BridgeRouteError)) return null;
+  return error.code === AGENT_NOT_INSTALLED_CODE
+    || error.code === AGENT_SIGN_IN_REQUIRED_CODE
+    || error.code === AGENT_RUNTIME_MISSING_CODE
+    ? error.code
+    : null;
+}
+
+class AstridApiKeyRouteError extends Error {
+  constructor(readonly code: string | undefined, readonly detail: string) {
+    super(detail);
+    this.name = 'AstridApiKeyRouteError';
+  }
 }
 
 export type AstridAcpConnection = z.infer<typeof connectionSchema>;
@@ -153,6 +188,21 @@ export class AstridLocalAcpRoutes {
 
   async models(): Promise<AcpModelCatalog> {
     return this.transport.requestJson('/acp/models', { method: 'GET' }, modelCatalogSchema, 'List ACP models');
+  }
+
+  async saveAstridApiKey(provider: 'openrouter', key: string): Promise<SaveAstridApiKeyResponse> {
+    try {
+      return await this.transport.requestJson('/acp/astrid/api-key', {
+        method: 'POST', body: { provider, key },
+      }, saveAstridApiKeyResponseSchema, 'Save Astrid API key');
+    } catch (error) {
+      const code = error instanceof BridgeRouteError ? error.code : undefined;
+      const rawDetail = error instanceof BridgeRouteError
+        ? error.detail ?? ''
+        : error instanceof Error ? error.message : 'Request failed';
+      const redactKey = (value: string) => key ? value.split(key).join('[redacted]') : value;
+      throw new AstridApiKeyRouteError(code ? redactKey(code) : code, redactKey(rawDetail));
+    }
   }
 
   async sessionModels(connectionId: string, sessionId: string) {
