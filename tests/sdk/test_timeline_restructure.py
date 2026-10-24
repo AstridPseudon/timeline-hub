@@ -275,26 +275,6 @@ def test_three_way_merge_works_on_the_stored_form(restructure_runtime):
     assert any("bed" in line for line in conflicts)  # the same film-level clip changed on both sides refuses
 
 
-def test_three_way_merge_works_on_the_stored_form_r4_original():
-    base = published(split(flat_film()))
-    mine = Checkout(copy.deepcopy(base))
-    mine.clip("late").data["hold"] = 1.5
-    mine.clip("bed").data["volume"] = 0.9
-    candidate = mine.stored_document()
-    head = copy.deepcopy(base)
-    first = head["shots"][head["placements"][0]["shot_id"]]
-    first["internal_timeline"]["clips"][0]["hold"] = 3.9  # someone else touched a different clip in another chapter
-    merged, conflicts = three_way(base, head, candidate)  # noqa: F821 -- retired upstream route remains visible
-    assert conflicts == []
-    by_id = {c["id"]: c for s in merged["shots"].values() for c in s["internal_timeline"]["clips"]}
-    assert by_id["late"]["hold"] == 1.5 and by_id["p1"]["hold"] == 3.9
-    assert next(c for c in merged["parent"]["clips"] if c["id"] == "bed")["volume"] == 0.9
-    theirs = copy.deepcopy(base)
-    next(c for c in theirs["parent"]["clips"] if c["id"] == "bed")["volume"] = 0.1
-    _, conflicts = three_way(base, theirs, candidate)  # noqa: F821 -- retired upstream route remains visible
-    assert any("bed" in line for line in conflicts)
-
-
 def test_restructure_refuses_what_would_change_the_render():
     flat = flat_film()
     good = split(flat)
