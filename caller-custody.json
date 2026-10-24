@@ -2,7 +2,7 @@
   "status": "PREPARED",
   "run_authorization": "NOT_GRANTED",
   "artifact": {
-    "branch": "tl/app-P2-P3-caller-prep-0841",
+    "branch": "tl/app-P3-D53-caller-prepare-1140",
     "purpose": "mechanical source/body refresh of the existing qualified caller",
     "original_run": false,
     "caller_artifacts_only": ["caller-publication.py", "caller-custody.json"]
@@ -15,39 +15,51 @@
     "logic_reuse": "conditional-byte-identical-after-audited-binding"
   },
   "p3_only_binding": {
-    "selected_source": "82cb5c0005df7abe0fcb8673f7be192a6c9e9183",
-    "selected_tree": "6fa0a0f32b212dbdae7c2ecaca1813de68907e67",
+    "selected_source": "602f8b1f58593302829fb449d0ded62a91462a22",
+    "selected_tree": "a38844975865110cd2c026dc10fd7aa1ea488e71",
     "selected_parents": [
-      "182c65242d8228232cde32961fd1948056dd841a",
-      "f56128d540ff96013c9532d79f3f4e767beba820"
+      "2e3c8f65a8628127cd283ed26116f7bcb2977b83",
+      "2357df925a660dde6624149b8e8a6e1dbf09da98"
     ],
-    "service_snapshot": "UNKNOWN until normal test-run; exact source or authenticated same-tree single-parent child is checked by the installed row",
-    "p2_row": "installed byte-exact and not rebound"
+    "service_snapshot": "UNKNOWN — created by the normal test-run after request",
+    "pure_proof": "MISSING — normal pure qualification receipt is not an input yet",
+    "pure_proof_metadata": {
+      "manifest_env": "TIMELINE_P3_PURE_PROOF_MANIFEST",
+      "required_status": "PASS",
+      "required_source": "602f8b1f58593302829fb449d0ded62a91462a22",
+      "required_tree": "a38844975865110cd2c026dc10fd7aa1ea488e71",
+      "required_parents": [
+        "2e3c8f65a8628127cd283ed26116f7bcb2977b83",
+        "2357df925a660dde6624149b8e8a6e1dbf09da98"
+      ],
+      "status": "MISSING"
+    },
+    "p2_row": "live current row authenticated byte-exact and not rebound"
   },
   "not_final_candidates": {
-    "current_integration": "182c65242d8228232cde32961fd1948056dd841a",
+    "current_integration": "2e3c8f65a8628127cd283ed26116f7bcb2977b83",
     "popup_review": "63e3956746e696ad816482fbb6bd7c079e332d0a",
-    "p3_packet": "f56128d540ff96013c9532d79f3f4e767beba820",
-    "adoption": "none; source0900 facts and the kept exact checkout are the selected P3 input"
+    "p3_packet": "2357df925a660dde6624149b8e8a6e1dbf09da98",
+    "adoption": "final HOME is the D52 plus reviewed D53 merge; 2357df is the reviewed D53 source, not final HOME"
   },
   "existing_suite_rows": {
     "full-e2e-three-products": {
-      "installed_sha256": "1fe55269347c878c986263b93afedccd6a198952d61858794ce84f0304f01fd1"
+      "installed_sha256": "11b2eebf5a610670623c4a7f958dfa799841da088bc9ccb13aa146dab60575da"
     },
     "ap2-P3-gate5-h6-0348": {
-      "installed_sha256": "4ae8ae786cefd6be2aedb901a539fe81eb77a299ae4c246a8cd31c429440798d"
+      "installed_sha256": "23226c274dbdbb8750f009cb89d7920db40eb49513af906df7b4f76d9a7a3bf0"
     },
     "outside_rows": 248,
-    "outside_bytes": 509237,
-    "outside_sha256": "ead5526f663ab292bb0bf02e910f5cea5703645c8658028762a2792fb9168a4a",
+    "outside_bytes": 509279,
+    "outside_sha256": "5092b26317865501bf3f7c7c2cb1af4c4bded6bb312cb939ce40999de97ec752",
     "registry_snapshot": {
       "line_count": 249,
-      "byte_count": 567369,
-      "sha256": "2ed2444c3c2a64dc744d03c7c7a4687abebaa9529a65fab0102b4082ab54670e",
+      "byte_count": 569327,
+      "sha256": "bf9e6f1ba32089456eeacfd2e34105db4a0e4227ea108c78b07c9b240b2ccfde",
       "outside_row_count": 248,
-      "outside_bytes": 509237,
-      "outside_sha256": "ead5526f663ab292bb0bf02e910f5cea5703645c8658028762a2792fb9168a4a",
-      "p2_row_sha256": "1fe55269347c878c986263b93afedccd6a198952d61858794ce84f0304f01fd1"
+      "outside_bytes": 509279,
+      "outside_sha256": "5092b26317865501bf3f7c7c2cb1af4c4bded6bb312cb939ce40999de97ec752",
+      "p2_row_sha256": "11b2eebf5a610670623c4a7f958dfa799841da088bc9ccb13aa146dab60575da"
     },
     "retained_before_evidence": {
       "status": "VERIFIED",
@@ -57,15 +69,17 @@
       "sha256": "1340ef479d7f0b850f71f149347806146a4686f7b195b8d6fca3184667fce9d7",
       "removed_keys": ["agent venv-agent-child-app-p3-079-2a9-2147-full"],
       "added_keys": [],
-      "changed_common_keys": []
+      "changed_common_keys": [],
+      "parallel_p2_change": true
     },
-    "draft_sha256": "23226c274dbdbb8750f009cb89d7920db40eb49513af906df7b4f76d9a7a3bf0"
+    "draft_sha256": "1b7c7996f9d296aab985a0a9466de89bb71cc816d7796facc8bc79fa0b23c6e7",
+    "live_p2_row_sha256": "11b2eebf5a610670623c4a7f958dfa799841da088bc9ccb13aa146dab60575da"
   },
   "wire_fields": {
     "request": [
       "api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id",
       "commands", "schema_version", "op", "version", "select", "args", "created", "label", "steps",
-      "id", "intent", "tags", "command_ordinals", "patch", "reads", "merge", "fields", "atomic",
+      "id", "intent", "tags", "command_ordinals", "patch", "reads", "dependencies", "merge", "fields", "atomic",
       "Idempotency-Key", "dry_run", "source", "rationale", "group_id"
     ],
     "reply": [
@@ -97,36 +111,52 @@
     "backend_execution": "not run"
   },
   "source_rederivation": {
-    "final_manifest": "not used; selected source is bound to existing dispatcher facts and immutable checkout",
+    "final_manifest": "not used; clean merged HOME identity is authoritative",
     "dispatcher_authorization": {
-      "worker": "required existing ORCH/workers/<worker>/meta identity",
-      "branch": "must be tl/<worker> and match the dispatched clean checkout",
-      "base": "must match dispatcher meta base/base_sha",
-      "source_facts": "existing dispatcher meta/report/queue plus immutable selected checkout",
-      "review": "existing source0900 report must be PASS and match selected Git identity",
-      "proof_release": "existing source0900 PASS report and DONE marker",
+      "worker": "ap2-P3-D53-clean-apply-1123; exact existing ORCH worker meta",
+      "branch": "tl/ap2-P3-D53-clean-apply-1123",
+      "base": "tl/integration at d6ed8cbda122d810d5836ebfce3c56c10e76e9b4",
+      "source_facts": "dispatcher meta/remote marker plus immutable Git identity",
+      "review": "handoff-ap2-P3-D53-final-review-1126 PASS",
+      "proof_release": "independent final review PASS; no live qualification claimed",
       "service_snapshot": "UNKNOWN before request; never fabricate one"
     },
-    "final_source": "82cb5c0005df7abe0fcb8673f7be192a6c9e9183",
-    "final_tree": "6fa0a0f32b212dbdae7c2ecaca1813de68907e67",
-    "final_parent": "182c65242d8228232cde32961fd1948056dd841a f56128d540ff96013c9532d79f3f4e767beba820",
-    "source_worker": "app-P3-current-integrated-0900",
-    "source_checkout": "/home/user/work/wt/app-pin-82cb5c00",
+    "final_source": "602f8b1f58593302829fb449d0ded62a91462a22",
+    "final_tree": "a38844975865110cd2c026dc10fd7aa1ea488e71",
+    "final_parent": "2e3c8f65a8628127cd283ed26116f7bcb2977b83 2357df925a660dde6624149b8e8a6e1dbf09da98",
+    "source_worker": "final-home (reviewed D53 source ap2-P3-D53-clean-apply-1123)",
+    "source_checkout": "/home/user/work/app",
+    "reviewed_d53_source": "2357df925a660dde6624149b8e8a6e1dbf09da98",
+    "reviewed_d53_tree": "50070be219d9d16954aaaf237b1e7287b76187c1",
+    "reviewed_d53_parent": "d6ed8cbda122d810d5836ebfce3c56c10e76e9b4",
+    "d53_base": "d6ed8cbda122d810d5836ebfce3c56c10e76e9b4",
     "independent_review": "PASS",
     "required_reviewed_paths": [
       "tests/e2e/local/three-products.spec.ts",
       "tests/e2e/local/support/gate5-reset-precondition.ts",
-      "tests/e2e/local/support/gate5-reset-precondition.test.mjs"
+      "tests/e2e/local/support/gate5-reset-precondition.test.mjs",
+      "tests/e2e/local/support/gate5-fault-order.ts",
+      "tests/e2e/local/support/gate5-fault-order.test.mjs"
     ],
     "protected_hashes": {
       "d50_tail_sha256": "5ede6f374857a66a327da3cea0e85de0457a04267003f3f66e3d40ee4f380912",
       "known_reviewed_reference": "5ede6f374857a66a327da3cea0e85de0457a04267003f3f66e3d40ee4f380912",
-      "p3_gate5_sha256": "e6cf20b09e412df16f82265b0b855c426123e93b44861bd0b7770dcf82d751d4",
+      "p3_gate5_sha256": "d47d55265b3905a1882ffb370df033cf92b35c3492d4bec366d8da0272b9fb20",
       "p2_body_hashes": "retained from installed P2 row; no P2 rebinding",
       "source_body_sha256": {
-        "tests/e2e/local/three-products.spec.ts": "26c1ae764013f8907ff7f3664dbcee016c88bc17a797f66800d012e618165d5b",
+        "tests/e2e/local/three-products.spec.ts": "95d9a3e728509ad95b591b94bece0fc4942d040a0b160afa654815c0b3dd296c",
         "tests/e2e/local/support/gate5-reset-precondition.ts": "94568a9baec294cd6848ad37d01163c057c0c4fb0cea202eafe3838b493c71ab",
-        "tests/e2e/local/support/gate5-reset-precondition.test.mjs": "430d75012714c7c183f467bba533f1b2122fa834c9711395de935d8ebef02fee"
+        "tests/e2e/local/support/gate5-reset-precondition.test.mjs": "430d75012714c7c183f467bba533f1b2122fa834c9711395de935d8ebef02fee",
+        "tests/e2e/local/support/gate5-fault-order.ts": "8ea7522aa8a6a22f3f5a93616a4bcd9af89eacf46af315465b24fa771a36d7f5",
+        "tests/e2e/local/support/gate5-fault-order.test.mjs": "e7235bc7074ddb4c75e4dcd958c0c3cf71f640604d968fd750c4162bbd2ae06b"
+      },
+      "d53_regions": {
+        "gate5_body": "d47d55265b3905a1882ffb370df033cf92b35c3492d4bec366d8da0272b9fb20",
+        "reset_block": "980b4cbe2c1d7a05840c8419fd55991ff73783784c89df6c717e2721a212fe62",
+        "canonical_tail": "5ede6f374857a66a327da3cea0e85de0457a04267003f3f66e3d40ee4f380912",
+        "downstream_tail": "6bfdd99dfddf9608d24da81345884e4d32329b3414bd43eeb55ffe3bdde18f74",
+        "fault_helper": "3e896066737d9e8f07eccfdcb25f88f16d6e8e48457281f1b986af0b1cab7434",
+        "d53_guard": "1c080595fbb1dd5fb6ecc7387e9bf01744e0b08e61473d3994383e226b60a9e0"
       }
     },
     "no_obsolete_hash_reuse": true

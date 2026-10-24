@@ -29,22 +29,33 @@ P3_SUITE = "ap2-P3-gate5-h6-0348"
 QUALIFIED_APP = "66354161950d1e747965c095ea97b881d2592708"
 QUALIFIED_TREE = "9a37265f0286128df7e6240a9df9877d959474af"
 QUALIFIED_PARENT = "b2380539c5545661954d2794976631312ee1d939"
-P3_SOURCE = "82cb5c0005df7abe0fcb8673f7be192a6c9e9183"
-P3_TREE = "6fa0a0f32b212dbdae7c2ecaca1813de68907e67"
-P3_PARENTS = (
-    "182c65242d8228232cde32961fd1948056dd841a",
-    "f56128d540ff96013c9532d79f3f4e767beba820",
-)
-P3_PARENT = " ".join(P3_PARENTS)
-P3_SOURCE_WORKER = "app-P3-current-integrated-0900"
-P3_SOURCE_CHECKOUT = Path("/home/user/work/wt/app-pin-82cb5c00")
+
+# D53 was independently reviewed on this exact author commit.  It is the
+# source of the new helper and the strict retry guard, not the final HOME
+# source used for a run.
+D53_BASE = "d6ed8cbda122d810d5836ebfce3c56c10e76e9b4"
+P3_SOURCE = "2357df925a660dde6624149b8e8a6e1dbf09da98"
+P3_TREE = "50070be219d9d16954aaaf237b1e7287b76187c1"
+P3_PARENTS = (D53_BASE,)
+P3_PARENT = D53_BASE
+P3_SOURCE_WORKER = "ap2-P3-D53-clean-apply-1123"
+P3_SOURCE_BRANCH = f"tl/{P3_SOURCE_WORKER}"
+P3_SOURCE_REPO = Path("/home/user/work/app")
 P3_SOURCE_META = ORCH / "workers" / P3_SOURCE_WORKER / "meta"
-P3_SOURCE_REPORT = ORCH / "workers" / P3_SOURCE_WORKER / "report.md"
-P3_SOURCE_QUEUE = ORCH / "queue" / "done" / P3_SOURCE_WORKER
-P3_SOURCE_CHECKOUT_QUEUE = ORCH / "queue" / "done" / f"checkout-app-{P3_SOURCE}"
+P3_SOURCE_REVIEW = ORCH / "design/handoff-ap2-P3-D53-final-review-1126.md"
+P3_SOURCE_QUEUE = ORCH / "queue" / f".remote-app-{P3_SOURCE_WORKER}"
+
+# The merged HOME is an observed input.  Its full identity is captured at
+# preparation time and must still match at the final CAS read.  The pure
+# qualification receipt is intentionally separate and may be absent.
+FINAL_HOME = Path("/home/user/work/app")
+FINAL_SOURCE_MANIFEST_ENV = "TIMELINE_P3_FINAL_SOURCE_MANIFEST"
+PURE_PROOF_MANIFEST_ENV = "TIMELINE_P3_PURE_PROOF_MANIFEST"
+FINAL_HOME_BASE = "2e3c8f65a8628127cd283ed26116f7bcb2977b83"
+FINAL_HOME_REQUIRED_PARENTS = (FINAL_HOME_BASE, P3_SOURCE)
 RETAINED_OUTSIDE_BEFORE = Path("/tmp/w-8922952ec4/app-P3-solo-return-1011/outside.before")
 EXPECTED_REMOVED_ROW = "agent venv-agent-child-app-p3-079-2a9-2147-full"
-SOURCE_BASE = "f90e708b379145ac456924742cc51c187ed6e0c6"
+SOURCE_BASE = D53_BASE
 AGENT = "079580ca46af77e0292d49dc34386b25c8391f99"
 RUNTIME = "37eb6c7bdb79dcae2523883e66b5cea5be721ffd"
 RUNTIME_TREE = "be4114705127f9ee9e86b26cd6de3f467e771c01"
@@ -77,7 +88,17 @@ REQUIRED_FINAL_SOURCE_PATHS = (
     "tests/e2e/local/three-products.spec.ts",
     "tests/e2e/local/support/gate5-reset-precondition.ts",
     "tests/e2e/local/support/gate5-reset-precondition.test.mjs",
+    "tests/e2e/local/support/gate5-fault-order.ts",
+    "tests/e2e/local/support/gate5-fault-order.test.mjs",
 )
+
+D53_FULL_SPEC_SHA256 = "95d9a3e728509ad95b591b94bece0fc4942d040a0b160afa654815c0b3dd296c"
+D53_GATE5_BODY_SHA256 = "d47d55265b3905a1882ffb370df033cf92b35c3492d4bec366d8da0272b9fb20"
+D53_RESET_BLOCK_SHA256 = "980b4cbe2c1d7a05840c8419fd55991ff73783784c89df6c717e2721a212fe62"
+D53_CANONICAL_TAIL_SHA256 = "5ede6f374857a66a327da3cea0e85de0457a04267003f3f66e3d40ee4f380912"
+D53_DOWNSTREAM_TAIL_SHA256 = "6bfdd99dfddf9608d24da81345884e4d32329b3414bd43eeb55ffe3bdde18f74"
+D53_FAULT_HELPER_SHA256 = "3e896066737d9e8f07eccfdcb25f88f16d6e8e48457281f1b986af0b1cab7434"
+D53_GUARD_SHA256 = "1c080595fbb1dd5fb6ecc7387e9bf01744e0b08e61473d3994383e226b60a9e0"
 
 
 def git(root: Path, *args: str) -> bytes:
@@ -97,9 +118,16 @@ def source_bytes(root: Path, commit: str, path: str) -> bytes:
 
 
 def guarded(text: str, start: str, end: str | None) -> bytes:
+    if not start or text.count(start) != 1:
+        raise RuntimeError(f"PREPARED: source anchor is not unique: {start!r}")
+    if end is not None and text.count(end) != 1:
+        raise RuntimeError(f"PREPARED: source end anchor is not unique: {end!r}")
     a = text.index(start)
     b = text.index(end, a) if end else len(text)
-    return text[a:b].encode()
+    value = text[a:b].encode()
+    if not value.strip():
+        raise RuntimeError("PREPARED: source anchor selected an empty region")
+    return value
 
 
 def key_value_file(path: Path) -> dict[str, str]:
@@ -111,108 +139,207 @@ def key_value_file(path: Path) -> dict[str, str]:
     return values
 
 
-def final_source_input() -> dict[str, object]:
-    """Read actual dispatcher evidence; a service snapshot is a later fact."""
-    if os.environ.get("TIMELINE_FINAL_SOURCE_MANIFEST"):
-        raise RuntimeError("PREPARED: generic final source manifests are unsupported")
-    for path in (P3_SOURCE_META, P3_SOURCE_REPORT, P3_SOURCE_QUEUE, P3_SOURCE_CHECKOUT_QUEUE):
+def reviewed_d53_source() -> dict[str, object]:
+    """Authenticate the reviewed author branch and independent final review."""
+    for path in (P3_SOURCE_META, P3_SOURCE_REVIEW, P3_SOURCE_QUEUE):
         if path.is_symlink() or not path.is_file():
-            raise RuntimeError(f"PREPARED: selected P3 evidence is unavailable: {path.name}")
+            raise RuntimeError(f"PREPARED: D53 review evidence is unavailable: {path.name}")
     meta = key_value_file(P3_SOURCE_META)
     if meta.get("name") != P3_SOURCE_WORKER or meta.get("repo") != "app":
-        raise RuntimeError("PREPARED: selected P3 dispatcher metadata is not for the App worker")
-    if meta.get("base") != P3_SOURCE or meta.get("base_sha") != P3_SOURCE[:10]:
-        raise RuntimeError("PREPARED: selected P3 dispatcher base is not exact")
-    report = P3_SOURCE_REPORT.read_text()
-    if not report.startswith("PASS — P3 integrated source qualification."):
-        raise RuntimeError("PREPARED: selected P3 source report is not PASS")
-    if P3_SOURCE not in report or P3_TREE not in report or any(parent not in report for parent in P3_PARENTS):
-        raise RuntimeError("PREPARED: selected P3 report identity is not exact")
-    if P3_SOURCE not in P3_SOURCE_QUEUE.read_text() or P3_SOURCE not in P3_SOURCE_CHECKOUT_QUEUE.read_text():
-        raise RuntimeError("PREPARED: selected P3 queue facts do not name the exact source")
-    root = P3_SOURCE_CHECKOUT
+        raise RuntimeError("PREPARED: D53 dispatcher metadata is not for the App worker")
+    if meta.get("base") != "tl/integration" or meta.get("base_sha") != D53_BASE:
+        raise RuntimeError("PREPARED: D53 dispatcher base is not exact")
+    if P3_SOURCE_QUEUE.read_text().strip() != P3_SOURCE[:9]:
+        raise RuntimeError("PREPARED: D53 remote source marker is not exact")
+    review = P3_SOURCE_REVIEW.read_text()
+    required_review = (
+        "## Result: PASS", P3_SOURCE, "sole parent", D53_BASE,
+        "Full spec: `26c1ae", "D53 guard: `15b580",
+        "No browser, live service, original journey, or full suite was run",
+    )
+    if any(marker not in review for marker in required_review):
+        raise RuntimeError("PREPARED: independent D53 review evidence is incomplete")
+    root = P3_SOURCE_REPO
     if root.is_symlink() or root == APP or not root.is_dir():
-        raise RuntimeError("PREPARED: selected P3 checkout is unavailable")
-    if any((root / name).exists() for name in ("caller-publication.py", "caller-custody.json")):
-        raise RuntimeError("PREPARED: selected P3 checkout contains caller artifacts")
-    if git(root, "status", "--porcelain=v1", "--untracked-files=all").strip():
-        raise RuntimeError("PREPARED: selected P3 checkout is not clean")
-    if git(root, "rev-parse", "HEAD").decode().strip() != P3_SOURCE:
-        raise RuntimeError("PREPARED: selected P3 checkout HEAD is not exact")
+        raise RuntimeError("PREPARED: D53 source repository is unavailable or is a caller target")
+    if git(root, "rev-parse", P3_SOURCE_BRANCH).decode().strip() != P3_SOURCE:
+        raise RuntimeError("PREPARED: D53 author branch does not point to the reviewed source")
     if git(root, "show", "-s", "--format=%T", P3_SOURCE).decode().strip() != P3_TREE:
-        raise RuntimeError("PREPARED: selected P3 checkout tree is not exact")
+        raise RuntimeError("PREPARED: D53 source tree is not exact")
     if git(root, "show", "-s", "--format=%P", P3_SOURCE).decode().strip() != P3_PARENT:
-        raise RuntimeError("PREPARED: selected P3 checkout parents are not exact")
+        raise RuntimeError("PREPARED: D53 source parent is not exact")
     return {
-        "checkout": str(root), "source_checkout": str(root), "source": P3_SOURCE, "tree": P3_TREE, "parent": P3_PARENT,
-        "parents": list(P3_PARENTS), "worker": P3_SOURCE_WORKER,
+        "checkout": str(root), "source": P3_SOURCE, "tree": P3_TREE, "parent": P3_PARENT,
+        "parents": list(P3_PARENTS), "worker": P3_SOURCE_WORKER, "branch": P3_SOURCE_BRANCH,
         "dispatcher_meta": {"path": str(P3_SOURCE_META), "name": meta["name"], "repo": meta["repo"], "base": meta["base"], "base_sha": meta["base_sha"]},
-        "source_report": str(P3_SOURCE_REPORT), "source_queue": str(P3_SOURCE_QUEUE),
-        "checkout_queue": str(P3_SOURCE_CHECKOUT_QUEUE),
-        "service_snapshot": "UNKNOWN — created by the normal test-run after request",
+        "source_review": str(P3_SOURCE_REVIEW), "source_queue": str(P3_SOURCE_QUEUE),
     }
 
 
+def pure_proof_input(final: dict[str, object]) -> dict[str, object] | None:
+    path_name = os.environ.get(PURE_PROOF_MANIFEST_ENV)
+    if not path_name:
+        return None
+    path = Path(path_name)
+    if path.is_symlink() or not path.is_file():
+        raise RuntimeError("PREPARED: pure proof manifest is unavailable")
+    try:
+        proof = json.loads(path.read_text())
+    except json.JSONDecodeError as exc:
+        raise RuntimeError("PREPARED: pure proof manifest is not JSON") from exc
+    if not isinstance(proof, dict) or proof.get("status") != "PASS":
+        raise RuntimeError("PREPARED: pure proof manifest is not PASS")
+    if proof.get("source") != final["source"] or proof.get("tree") != final["tree"]:
+        raise RuntimeError("PREPARED: pure proof source identity differs from final HOME")
+    if proof.get("parents") != final["parents"]:
+        raise RuntimeError("PREPARED: pure proof parent identity differs from final HOME")
+    return {"path": str(path), "sha256": digest(path.read_bytes()), "status": proof["status"]}
+
+
+def final_source_input() -> dict[str, object]:
+    """Capture final HOME by full SHA; pure proof is a separate later input."""
+    if os.environ.get("TIMELINE_FINAL_SOURCE_MANIFEST"):
+        raise RuntimeError("PREPARED: generic final source manifests are unsupported")
+    root = FINAL_HOME
+    if root.is_symlink() or root == APP or not root.is_dir():
+        raise RuntimeError("PREPARED: final HOME is unavailable or is a caller target")
+    if any((root / name).exists() for name in ("caller-publication.py", "caller-custody.json")):
+        raise RuntimeError("PREPARED: final HOME contains caller artifacts")
+    if git(root, "status", "--porcelain=v1", "--untracked-files=all").strip():
+        raise RuntimeError("PREPARED: final HOME is not clean")
+    source = git(root, "rev-parse", "HEAD").decode().strip()
+    tree = git(root, "show", "-s", "--format=%T", source).decode().strip()
+    parents = tuple(git(root, "show", "-s", "--format=%P", source).decode().strip().split())
+    if len(source) != 40 or parents != FINAL_HOME_REQUIRED_PARENTS:
+        raise RuntimeError("PREPARED: final HOME is not the reviewed D52 plus D53 merge")
+    final = {
+        "checkout": str(root), "source_checkout": str(root), "source": source, "tree": tree,
+        "parent": " ".join(parents), "parents": list(parents), "worker": "final-home",
+        "branch": "tl/integration", "service_snapshot": "UNKNOWN — created by the normal test-run after request",
+    }
+    proof = pure_proof_input(final)
+    final["pure_proof"] = proof
+    final["pure_proof_status"] = "PRESENT" if proof else "MISSING — normal pure qualification receipt is not an input yet"
+    return final
+
+
 def source_custody(final: dict[str, object]) -> dict[str, object]:
+    reviewed = reviewed_d53_source()
     root = Path(str(final.get("source_checkout", final["checkout"]))).resolve()
     source = str(final["source"])
     tree = str(final["tree"])
     parent = str(final["parent"])
-    paths = git(root, "diff", "--name-only", SOURCE_BASE, source).decode().splitlines()
+    d53_paths = git(root, "diff", "--name-only", D53_BASE, P3_SOURCE).decode().splitlines()
+    expected_d53_paths = sorted((
+        "tests/e2e/local/support/gate5-fault-order.test.mjs",
+        "tests/e2e/local/support/gate5-fault-order.ts",
+        "tests/e2e/local/three-products.spec.ts",
+    ))
+    if d53_paths != expected_d53_paths:
+        raise RuntimeError(f"PREPARED: D53 changed paths differ: {d53_paths!r}")
+    spec = source_bytes(root, source, "tests/e2e/local/three-products.spec.ts")
+    text = spec.decode()
+    d53_spec = source_bytes(root, P3_SOURCE, "tests/e2e/local/three-products.spec.ts").decode()
+    if digest(d53_spec.encode()) != D53_FULL_SPEC_SHA256:
+        raise RuntimeError("PREPARED: reviewed D53 full spec hash is not authentic")
+
+    def regions(value: str) -> dict[str, bytes]:
+        gate5_start = "test('M2 real gate 5 (M1 real mounted path):"
+        ordinary_start = "test('M2 ordinary extension batch"
+        reset_start = "  const resetResponse = page.waitForResponse((response) => response.request().method() === 'POST' && COMMITS.test(new URL(response.url()).pathname), CEILING);"
+        reset_end = "  const recordedA = await expectV2History"
+        gate5_offset = value.index(gate5_start)
+        reset_offset = value.index(reset_start, gate5_offset)
+        recorded_offset = value.index(reset_end, reset_offset)
+        tail_end = value.index("\n", value.index(ordinary_start)) + 1
+        return {
+            "gate5_body": guarded(value, gate5_start, ordinary_start),
+            "reset_block": value[reset_offset:recorded_offset].encode(),
+            "canonical_tail": value[reset_offset:tail_end].encode(),
+            "downstream_tail": guarded(value, reset_end, ordinary_start),
+            "fault_helper": guarded(value, "async function faultFirstCommit(page: Page) {", "function accepted(post: CommitPost)"),
+            "d53_guard": guarded(value, "    expect(wire.observed).toHaveLength(2);", "  });\n  const owner = await ownerWithTwoMountedDocuments(page, seed);"),
+        }
+
+    reviewed_regions = regions(d53_spec)
+    final_regions = regions(text)
+    expected_regions = {
+        "gate5_body": D53_GATE5_BODY_SHA256,
+        "reset_block": D53_RESET_BLOCK_SHA256,
+        "canonical_tail": D53_CANONICAL_TAIL_SHA256,
+        "downstream_tail": D53_DOWNSTREAM_TAIL_SHA256,
+        "fault_helper": D53_FAULT_HELPER_SHA256,
+        "d53_guard": D53_GUARD_SHA256,
+    }
+    for name, expected in expected_regions.items():
+        if digest(reviewed_regions[name]) != expected or digest(final_regions[name]) != expected:
+            raise RuntimeError(f"PREPARED: D53 {name} region is not exact")
+
     fingerprints = {}
-    for path in paths:
+    for path in REQUIRED_FINAL_SOURCE_PATHS:
         data = source_bytes(root, source, path)
-        assert (root / path).read_bytes() == data, path
         fingerprints[path] = {"blob": git_blob(data), "sha256": digest(data)}
-    canonical = "".join(f"{p}\t{v['blob']}\t{v['sha256']}\n" for p, v in fingerprints.items())
+    canonical = "".join(f"{p}\t{v['blob']}\t{v['sha256']}\n" for p, v in sorted(fingerprints.items()))
     required_paths = tuple(final.get("required_paths", REQUIRED_FINAL_SOURCE_PATHS))
     if not required_paths:
         raise RuntimeError("PREPARED: final reviewed source path set is empty")
-    missing = [path for path in required_paths if path not in paths and not (root / path).is_file()]
+    missing = []
+    for path in required_paths:
+        try:
+            git(root, "cat-file", "-e", f"{source}:{path}")
+        except subprocess.CalledProcessError:
+            missing.append(path)
     if missing:
         raise RuntimeError(f"final source missing required reviewed paths: {missing}")
     observed_hashes = {path: digest(source_bytes(root, source, path)) for path in required_paths}
-    reviewed_hashes = observed_hashes
-    spec = source_bytes(root, source, "tests/e2e/local/three-products.spec.ts")
-    tail = spec[spec.index(b"  const resetResponse = page.waitForResponse", spec.index(b"test('M2 real gate 5")):spec.index(b"\n", spec.index(b"test('M2 ordinary extension batch")) + 1]
-    if digest(tail) != "5ede6f374857a66a327da3cea0e85de0457a04267003f3f66e3d40ee4f380912":
-        raise RuntimeError("D50/P3 protected tail does not match final source")
-    p3 = guarded(spec.decode(), "test('M2 real gate 5", "test('M2 ordinary extension batch").rstrip() + b"\n"
-    if digest(p3) != "e6cf20b09e412df16f82265b0b855c426123e93b44861bd0b7770dcf82d751d4":
-        raise RuntimeError("P3 Gate5 body does not match final source")
+    reviewed_hashes = {
+        path: digest(source_bytes(root, P3_SOURCE, path))
+        for path in required_paths
+    }
+    tail = final_regions["canonical_tail"]
+    p3 = final_regions["gate5_body"]
     parents = tuple(parent.split())
-    if parents != P3_PARENTS:
-        raise RuntimeError("PREPARED: selected P3 parent list changed")
-    anchors = {}
-    anchors[source] = {"tree": tree, "parents": list(parents)}
+    if parents != tuple(FINAL_HOME_REQUIRED_PARENTS):
+        raise RuntimeError("PREPARED: final HOME parent list changed")
+    anchors = {P3_SOURCE: {"tree": P3_TREE, "parents": list(P3_PARENTS)}, source: {"tree": tree, "parents": list(parents)}}
     return {"source": source, "tree": tree, "parent": parent, "checkout": str(root),
             "parents": list(parents),
-            "anchors": anchors, "fingerprints": fingerprints, "fingerprint_count": len(fingerprints),
+            "pure_proof": final.get("pure_proof"),
+            "pure_proof_status": final.get("pure_proof_status"),
+            "reviewed_source": reviewed, "anchors": anchors, "fingerprints": fingerprints, "fingerprint_count": len(fingerprints),
             "fingerprint_digest": digest(canonical.encode()), "required_paths": list(required_paths), "p3_whole": {"blob": git_blob(spec), "sha256": digest(spec)},
             "gate5_sha256": digest(p3), "reset_and_tail_sha256": digest(tail), "reviewed_hashes": reviewed_hashes,
             "protected_hashes": {
                 "d50_tail_sha256": digest(tail), "p3_gate5_sha256": digest(p3),
+                "d53": {name: digest(value) for name, value in final_regions.items()},
             }}
 
 def custody_facts() -> dict[str, object]:
+    provision_receipt = ORCH / "tests/provision" / f"{CHILD}.txt"
+    child_receipt = ORCH / "queue/done" / f"childvenv-{CHILD}"
+    remotion_receipt = ORCH / "queue/done" / f"runtime-{REMOTION}"
+    child_root = Path("/home/user/work/bench-store/entries") / f"child-{CHILD_KEY}"
     assert git(AGENT_CHECKOUT, "rev-parse", "HEAD").decode().strip() == AGENT
     assert git(AGENT_CHECKOUT, "show", "-s", "--format=%T", "HEAD").decode().strip() == "2deab1a1494fbccfce5e9235412bacb8a949c0cd"
     assert not git(AGENT_CHECKOUT, "status", "--porcelain=v1", "--untracked-files=all").strip()
     assert git(RUNTIME_CHECKOUT, "rev-parse", "HEAD").decode().strip() == RUNTIME
     assert git(RUNTIME_CHECKOUT, "show", "-s", "--format=%T", "HEAD").decode().strip() == RUNTIME_TREE
     assert not git(RUNTIME_CHECKOUT, "status", "--porcelain=v1", "--untracked-files=all").strip()
-    for receipt in (PROVISION_RECEIPT, CHILD_RECEIPT, REMOTION_RECEIPT):
+    for receipt in (provision_receipt, child_receipt, remotion_receipt):
         assert receipt.is_file()
-    provision = PROVISION_RECEIPT.read_text()
-    remotion = REMOTION_RECEIPT.read_text()
+    provision = provision_receipt.read_text()
+    child = child_receipt.read_text()
+    remotion = remotion_receipt.read_text()
     assert f"agent_sha={AGENT}" in provision and f"runtime_sha={RUNTIME}" in provision
+    assert f"requested_name={CHILD}" in child and f"actual_agent={AGENT}" in child and f"actual_runtime={RUNTIME}" in child
     assert f"requested_name={REMOTION}" in remotion and f"requested_runtime_sha={RUNTIME}" in remotion
     assert "reuse=verified" in remotion
 
     paths = git(RUNTIME_CHECKOUT, "ls-tree", "-r", "--name-only", RUNTIME, "packages/python/astrid_runtime_client/").decode().splitlines()
     assert len(paths) == 4
     client_hashes = {}
-    child_site = CHILD_ROOT / "lib/python3.13/site-packages"
+    assert child_root.is_dir() and not child_root.is_symlink()
+    child_site = child_root / "lib/python3.13/site-packages"
     for path in paths:
         runtime_bytes = git(RUNTIME_CHECKOUT, "show", f"{RUNTIME}:{path}")
         agent_path = path.removeprefix("packages/python/")
@@ -236,7 +363,7 @@ def custody_facts() -> dict[str, object]:
     graph_files = sorted(path for path in graph_root.rglob("*") if path.is_file())
     graph_hashes = {str(path.relative_to(graph_root)): digest(path.read_bytes()) for path in graph_files}
     assert len(graph_hashes) == 80
-    return {"agent": AGENT, "agent_tree": "2deab1a1494fbccfce5e9235412bacb8a949c0cd", "runtime": RUNTIME, "runtime_tree": RUNTIME_TREE, "child": CHILD, "child_key": CHILD_KEY, "remotion": REMOTION, "remotion_tree": "b01dca9b3b24f54093c20b7c5657316f997725db", "provision_receipt_sha256": digest(PROVISION_RECEIPT.read_bytes()), "child_receipt_sha256": digest(CHILD_RECEIPT.read_bytes()), "remotion_receipt_sha256": digest(REMOTION_RECEIPT.read_bytes()), "client_file_count": len(client_hashes), "client_hashes": client_hashes, "runtime_backend_file_count": len(backend_hashes), "runtime_backend_digest": digest(json.dumps(backend_hashes, sort_keys=True, separators=(",", ":")).encode()), "graph_file_count": len(graph_hashes), "graph_digest": digest(json.dumps(graph_hashes, sort_keys=True, separators=(",", ":")).encode()), "daemon_identity": "UNINFERRED_BY_SOURCE_PREPARATION"}
+    return {"agent": AGENT, "agent_tree": "2deab1a1494fbccfce5e9235412bacb8a949c0cd", "runtime": RUNTIME, "runtime_tree": RUNTIME_TREE, "child": CHILD, "child_key": CHILD_KEY, "remotion": REMOTION, "remotion_tree": "b01dca9b3b24f54093c20b7c5657316f997725db", "provision_receipt_sha256": digest(provision_receipt.read_bytes()), "child_receipt_sha256": digest(child_receipt.read_bytes()), "remotion_receipt_sha256": digest(remotion_receipt.read_bytes()), "client_file_count": len(client_hashes), "client_hashes": client_hashes, "runtime_backend_file_count": len(backend_hashes), "runtime_backend_digest": digest(json.dumps(backend_hashes, sort_keys=True, separators=(",", ":")).encode()), "graph_file_count": len(graph_hashes), "graph_digest": digest(json.dumps(graph_hashes, sort_keys=True, separators=(",", ":")).encode()), "daemon_identity": "UNINFERRED_BY_SOURCE_PREPARATION"}
 
 
 def selected_rows() -> tuple[bytes, dict[str, tuple[int, bytes]]]:
@@ -294,12 +421,13 @@ def retained_registry_evidence(outside: bytes) -> dict[str, object]:
     current_keyed = keyed_registry_lines(outside)
     previous_rows = dict(previous_keyed)
     current_rows = dict(current_keyed)
+    p2_key = f"app {P2_SUITE}"
     if len(previous_rows) != len(previous_keyed):
         raise RuntimeError("PREPARED: retained-before registry has duplicate row keys")
     if len(current_rows) != len(current_keyed):
         raise RuntimeError("PREPARED: current registry has duplicate retained row keys")
     common = set(previous_rows) & set(current_rows)
-    changed = sorted(key for key in common if previous_rows[key] != current_rows[key])
+    changed = sorted(key for key in common if previous_rows[key] != current_rows[key] and key != p2_key)
     removed = sorted(set(previous_rows) - set(current_rows))
     added = sorted(set(current_rows) - set(previous_rows))
     if changed or added or removed != [EXPECTED_REMOVED_ROW]:
@@ -309,9 +437,21 @@ def retained_registry_evidence(outside: bytes) -> dict[str, object]:
         )
     previous_without_removed = b"".join(
         line for line in previous.splitlines(keepends=True)
-        if not (line.strip() and not line.lstrip().startswith(b"#") and registry_row_key(line) == EXPECTED_REMOVED_ROW)
+        if not (
+            line.strip()
+            and not line.lstrip().startswith(b"#")
+            and registry_row_key(line) in (EXPECTED_REMOVED_ROW, p2_key)
+        )
     )
-    if previous_without_removed != outside:
+    current_without_p2 = b"".join(
+        line for line in outside.splitlines(keepends=True)
+        if not (
+            line.strip()
+            and not line.lstrip().startswith(b"#")
+            and registry_row_key(line) == p2_key
+        )
+    )
+    if previous_without_removed != current_without_p2:
         raise RuntimeError("PREPARED: retained-before registry has changed common bytes")
     return {
         "status": "VERIFIED",
@@ -322,6 +462,7 @@ def retained_registry_evidence(outside: bytes) -> dict[str, object]:
         "removed_keys": removed,
         "added_keys": added,
         "changed_common_keys": changed,
+        "parallel_p2_change": previous_rows.get(p2_key) != current_rows.get(p2_key),
     }
 
 
@@ -462,12 +603,7 @@ def prepare(out: Path) -> dict[str, object]:
     retained_evidence = retained_registry_evidence(outside)
     p2_line = rows[P2_SUITE][1]
     p2_line_sha256 = digest(p2_line)
-    binding_replacements = {
-        QUALIFIED_APP: str(final["source"]),
-        QUALIFIED_TREE: str(final["tree"]),
-        QUALIFIED_PARENT: str(final["parent"]),
-    }
-    replacements = dict(binding_replacements)
+    replacements = {}
     drafts = {}
     stage_records = {}
     for n, name in enumerate(SUITES, 2):
@@ -483,12 +619,24 @@ def prepare(out: Path) -> dict[str, object]:
             continue
         assert name == P3_SUITE
         text = line.decode()
-        current_app = f"P{n}APP={QUALIFIED_APP}"
-        current_tree = f"P{n}TREE={QUALIFIED_TREE}"
-        assert text.count(current_app) == 1 and text.count(current_tree) == 1
-        assert QUALIFIED_PARENT in text
         outer, inner, tail = extract_inner(line)
-        row_replacements = dict(binding_replacements)
+        app_match = re.search(rf"\bP{n}APP=([0-9a-f]{{40}})", inner)
+        tree_match = re.search(rf"\bP{n}TREE=([0-9a-f]{{40}})", inner)
+        parent_match = re.search(
+            r"format=%P .*? = '([0-9a-f]{40} [0-9a-f]{40})'",
+            inner,
+        )
+        if not app_match or not tree_match or not parent_match:
+            raise RuntimeError("PREPARED: installed P3 source identity controls are incomplete")
+        current_app = app_match.group(1)
+        current_tree = tree_match.group(1)
+        current_parent = parent_match.group(1)
+        row_replacements = {
+            current_app: str(final["source"]),
+            current_tree: str(final["tree"]),
+            current_parent: str(final["parent"]),
+        }
+        replacements.update(row_replacements)
         # Recompute this row's guards from the actual installed command, rather
         # than assuming its fingerprints came from the qualified commit tree.
         final_root = Path(str(final["source_checkout"]))
@@ -509,9 +657,9 @@ def prepare(out: Path) -> dict[str, object]:
             f"P{n}APP={final['source']}" not in updated
             or f"P{n}TREE={final['tree']}" not in updated
             or str(final["parent"]) not in updated
-            or QUALIFIED_APP in updated
-            or QUALIFIED_TREE in updated
-            or QUALIFIED_PARENT in updated
+            or current_app in updated
+            or current_tree in updated
+            or current_parent in updated
         ):
             raise RuntimeError("decoded mounted caller retained stale source identity")
         # Lock every changed final source file before any production stage.
@@ -555,7 +703,7 @@ def prepare(out: Path) -> dict[str, object]:
         raise RuntimeError("PREPARED: installed P2 row changed during candidate preparation")
 
     manifest = {
-        "status": "REVIEWABLE",
+        "status": "PREPARED",
         "replacements": replacements,
         "run_authorization": "NOT_GRANTED",
         "qualified_caller": {"commit": "d54582a08c6ad0453742523a3ec374dd321ce477", "app_source": QUALIFIED_APP, "app_tree": QUALIFIED_TREE, "app_parent": QUALIFIED_PARENT},
@@ -584,15 +732,17 @@ def prepare(out: Path) -> dict[str, object]:
         "final_inputs": {
             "catalog_source": "dispatcher metadata/report/queue facts",
             "p3_source": source,
-            "source_manifest": "not used; immutable selected checkout is authoritative",
+            "final_home": source,
+            "source_manifest": "not used; clean merged HOME identity is authoritative",
+            "pure_proof": final.get("pure_proof_status"),
         },
-        "missing_inputs": ["integrated P3 execution and daemon identity"],
+        "missing_inputs": ["pure proof real receipt", "integrated P3 execution and daemon identity"],
         "negative_context": {"source_target_0644": "retained as source-only context", "wrong_artifacts": ["20674", "10144"], "wrong_artifacts_status": "preflight-only, originals NOTRUN; never reuse or relabel"},
         "retention_reuse": {"allowed": True, "condition": "decoded caller logic byte-identical after audited bindings/fingerprints/body hashes/log identity", "otherwise": "bounded real execution controls required", "qualified_stages": 60},
         "selected_source": {
             "dispatcher_worker": P3_SOURCE_WORKER,
             "checkout": str(final["checkout"]),
-            "source_parents": list(P3_PARENTS),
+            "source_parents": list(final["parents"]),
             "service_snapshot": final["service_snapshot"],
             "daemon_identity": "UNKNOWN",
         },
@@ -603,7 +753,7 @@ def prepare(out: Path) -> dict[str, object]:
     (out / "outside.before").write_bytes(outside)
     (out / "prepared.json").write_text(json.dumps(manifest, indent=2) + "\n")
     (out / "custody-receipt.json").write_text(json.dumps({
-        "status": "REVIEWABLE",
+        "status": "PREPARED",
         "run_authorization": "NOT_GRANTED",
         "source": source,
         "service_snapshot_status": final["service_snapshot"],
