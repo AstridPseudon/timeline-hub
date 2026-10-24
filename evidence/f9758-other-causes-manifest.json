@@ -1,8 +1,11 @@
 {
   "run": "agent-full-1024095047-9758",
+  "observed_commit": "ba55ac1e9e70156f03f7e31cc1b1ef040bb75b84",
   "observed_tree": "c13d368666e710bb911ff448b86251b516867c03",
+  "current_commit": "c2b1f7e5a31e3ab24309532bddfc892ae64ba374",
   "current_tree": "1a5cd15370cac2e769801e09f1869fc427978f12",
-  "expected_ba55": "unverified; no retained ba55 source hash was available",
+  "current_is_descendant_of_observed": true,
+  "expected_ba55": "ba55ac1e9e70156f03f7e31cc1b1ef040bb75b84 is available; its tree is c13d368666e710bb911ff448b86251b516867c03",
   "status_scope": {
     "full_failed": 231,
     "reserved_core_failed_excluded": 60,
@@ -12,18 +15,42 @@
     "skips_excluded": 4
   },
   "family_counts": {
-    "fixture/input": 70,
-    "missinginput/environment": 61,
-    "product": 29,
     "sourceversion_mismatch": 5,
-    "UNKNOWN": 6
+    "missinginput/environment": 43,
+    "UNKNOWN": 35,
+    "fixture/input": 88
   },
   "source_parity": {
     "summary_failed_entries": 231,
-    "failure_traceback_sections": 231,
+    "assigned_rows": 171,
+    "retained_traceback_sections": 55,
+    "summary_only_rows": 116,
     "one_to_one": true,
     "unique_node_ids": 171,
     "no_overlap_with_reserved_core_files": true
+  },
+  "traceback_custody": {
+    "source": "authoritative census1058 terminal.csv plus retained tracebacks artifact",
+    "assigned_retained": 55,
+    "assigned_summary_only": 116,
+    "traceback_sections_claimed": 55,
+    "summary_only_rows_have_no_traceback_section": true
+  },
+  "source_tree_checks": {
+    "ba55_tree": "c13d368666e710bb911ff448b86251b516867c03",
+    "c2b_tree": "1a5cd15370cac2e769801e09f1869fc427978f12",
+    "assigned_test_files_unchanged_between_trees": true,
+    "known_descendant_diff_scope": [
+      "astrid/sdk/timeline/_commit_patch.py",
+      "astrid/sdk/timeline/inverse.py",
+      "six WC6 test/helper files",
+      "documentation and baseline files"
+    ]
+  },
+  "classification_policy": {
+    "product": "No row is called a production defect without a valid production invocation; test doubles and other unsupported labels remain UNKNOWN.",
+    "domain_input": "Identity/source, authenticated materialization, and word-binding failures are fixture/input evidence; runtime-import restoration is not requested.",
+    "current_cause": "Current c2b was not rerun; no current PASS or preexisting credit is claimed."
   },
   "reserved_core_files": [
     "test_provider_occurrence_fork.py",
@@ -34,6 +61,7 @@
     "test_recipe_m2_auto_placement.py"
   ],
   "preexisting_claims": 0,
-  "current_cause_policy": "Every row records current applicability as UNKNOWN because c2b was not rerun; original observed cause and current cause remain distinct.",
+  "current_cause_policy": "Every row records current applicability as UNKNOWN because c2b was not rerun; original literal exceptions and corrected classification remain distinct.",
+  "official_census_267": "unchanged; this artifact covers only the assigned 171 non-core rows",
   "test_policy": "Evidence-only; no product, test, config, registry, package, generated, pin, or execution changes."
 }
