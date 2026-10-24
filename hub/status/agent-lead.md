@@ -1,1 +1,1 @@
-2026-10-24T18:53:22Z agent lead: daemons up, heartbeat fresh, live 1/cap 4, 0 ready (board 18:43Z: 0 doing/23 review), core open 10, hub-sync wedge (rebase conflict on deletion-ledger) FIXED and pushed, upstream tip 924437716 unchanged, no stuck-DONE, disk 8.6G
+2026-10-24T19:26:48Z agent lead: daemons up, heartbeat fresh, live 0/cap 6 (1 queued, 0 ready), board 19:24Z (1 doing/21 review), core open 5 (P4 ten-note, 2 PARAM, 2 restart timeouts), hub-sync healthy, upstream tip 924437716 unchanged, no stuck-DONE, disk 8.8G
