@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T03:36:35Z | dispatcher heartbeat 14s | live 2 (sol 2, luna 0, other 0) | busy30 17 | status age 4m -->
-# runtime board, 2026-10-24T03:32:00Z
+<!-- main | 2026-10-24T03:38:52Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 15 | status age 0m -->
+# runtime board, 2026-10-24T03:38:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -43,7 +43,7 @@
 | F-authoring-seed-fixture | Preserve shared-alias compiler case | Sol / Luna | Agent current-only home join | blocked:agent | Author0303; review0313 PASS | Exact8f9a:21 plus3 passed; oldsource two causal failures. Strict sibling and authority guards retained. [Review](../../design/runtime-authoring-alias-review-0313.md) | 8f9a6acc7 held |
 | OPS-manifest-restore | Restore accidental generated manifest write | Luna | Exact main file identity | merged | Restore 0110; independent 0113 PASS | Exact tracked hash 7c541b restored; main cleanliness and byte equality independently verified. | HEAD 458595850 |
 | R0-public-export-manifest | Refresh generated artifact hash | Luna | Integrated verification passed | merged | Author 0111; review 0115; integrated 0128 | Actual db11: 74 passed, manifest and generation checks passed; 77 of 78 entries unchanged. [Proof](../../design/runtime-R0-manifest-integrated-0128.md) | db11ea829 / 8a742b1c2 |
-| R5-full-headless | Preserve headless acceptance and retry | Sol / Luna | Offline second-effect diagnosis | doing | rt-R5-headless-effect-cause-sol-0332 | First positive now accepts; second CAS-correct commit has effect-before mismatch.12 passed,1 failed. Stopped unchanged PDB rerun; WIP kept. | ddaa6aed held |
+| R5-full-headless | Preserve headless acceptance and retry | Sol / Luna | Agent authoritative effect fix | blocked:agent | Cause0332 complete; Agent owner requested | First authored patch after bootstrap omits a mirror removal in Agent effects.12 passed,1 failed; Runtime guard correct. [Cause](../../design/runtime-headless-effect-cause-0332.md) | ddaa6aed held |
 | R5-full-occupancy | Preserve fifteen occupancy scenarios | Sol / Luna | Agent semantic redo source | blocked:agent | Author0313; review0317 PASS | Static prepared only:65 original predicates and16 scenarios retained. Runtime retirement merged; Agent0308 owns redo. [Review](../../design/runtime-occupancy-faithful-review-0317.md) | 3441bc34 held |
 | R5-full-speed | Preserve six speed refusals | Luna | Integrated proof passed | merged | Review 0138; port review 0148; service 13500 | Actual 28bb: 14 passed. Original six inputs and SQL/CAS retained; no new type diagnostics. | 4e983cebc / 0e28e6261 |
 | R5-full-receipt-key | Preserve receipt and key guards | Luna | Integrated proof passed | merged | Reviews 0138 and 0148; integrated 0157 | Actual 28bb: both cases passed in 1.97 s with explicit Agent path. All original replay and receipt equalities retained. | 28bb65668 / b57ab2331 |
@@ -64,7 +64,7 @@ Runtime integration is 36760ee0ad, tree 11389911c2ee. Foreign retirement integra
 Blockers: App / Proof — P3 3362 failed before Gate5. P2 12221 passed readiness; three gestures failed, five not run. App owns causes and D42 coalescing; no repeat before qualified pin.
 Blockers: Runtime — Full 29085 retains 36 failures. Targeted speed, receipt and manifest repairs passed. Headless, occupancy and contract remain assigned. No unchanged full rerun.
 Blockers: Freeze — D39 client regeneration and Agent/App tuple adoption are held for the freeze; current consumer pins stay intact.
-Blockers: Runtime / Agent — Headless effect diagnosis0332 and D42 complete-input memo0330 are active. Agent owns reviewed alias current port, semantic historical redo and D40 consumer.
+Blockers: Runtime / Agent — D42 complete-input memo0330 is first priority. Agent owns headless mirror effects, alias home proof, historical redo and D40 consumer. Agent owns reviewed alias current port, semantic historical redo and D40 consumer.
 Blockers: Runtime / Agent — D40 producer passed and merged f320; integrated317passed2configuredexclusions. Agent consumer Sol0258 owns captured-byte join; missing hook still refuses before discovery.
 
 Blockers: Freeze — Reviewed U1c 40427e8b5 against live 795379a67 stays held until freeze.
