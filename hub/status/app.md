@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T08:39:03Z | dispatcher heartbeat 4s | live 2 (sol 0, luna 2, other 0) | busy30 16 | status age 1m -->
+<!-- app | 2026-10-24T08:42:01Z | dispatcher heartbeat 14s | live 2 (sol 0, luna 2, other 0) | busy30 17 | status age 0m -->
 # app board, 2026-10-24T08:32Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -17,6 +17,7 @@
 | A3-real-provider-controls | Keep real provider stall controls | Sol; independent Luna | Review 0717 PASS | merged | Author 0707; integrated 0724 | Three real-provider controls pass on HOME. Whole tree equals reviewed 2056; independent 108 tests, types and lint reused by identity. | 38b29b5e29 |
 | P2 | Eight original gesture cases | App service; Proof verdict | Current pair terminal | blocked:app | Actual 23809; source owners below | Three failed, five not run; exit 1 in 463 seconds. Element response unknown, popup local refusal, parent request oracle mismatch. | Selected 663; HOME 9b810 |
 | P3 | Original Gate5 journey | App service; Proof verdict | Current predecessor oracle | blocked:app2 | Actual9310; Proof0813/0822 | Exit 1 in 307 seconds. Readiness passed 41.4 seconds; one accepted predecessor POST missed by clip.move predicate. Original tail unrun. | Selected 663; HOME 9b810 |
+| P2-P3-next-caller | Prepare next guarded caller binding | Luna | Reviewed source joins pending | doing | app-P2-P3-caller-prep-0841 | Reuse qualified0623 logic; pure final proof branch will be target. No row installation or original run before final source/proof. | PREPARED pending |
 | P2-P3-current-packet | Publish same-ID terminal evidence | Luna; Proof review | Actual retained files | merged | Producer return 0707; Proof 0717 | Eight safe files published byte-exact with origin paths and hashes. Actual daemon and P2 synthetic snapshot identity remain unknown. | Source 663 |
 | P2-P3-lifecycle-custody | Verify retained lifecycle bytes | Luna; independent Luna | Independent 0741 PASS | merged | Producer 0733; review 0741 | Originals, copies and attachments are 224 bytes with LF. Exact selected writer matches. Prior 225/no-LF claim contradicted. | Same immutable files |
 | P3-parent-path | Prove actual predecessor dispatch | Sol; independent Luna | Independent 0720 PASS | merged | Sol 0714; review 0720 | One POST 200 accepted; guarded doc.patch moves 0 to 5 with 25 request/step reads. Canonical 5 and history 2 to 3. | Report only |
@@ -33,13 +34,13 @@
 | U3b-home | Merge reviewed freeze draft | Manager merge queue | Header P2/P3 GO | gated:freeze | Final draft review 0738 | Upstream 2a288 included. Refresh live upstream at actual merge; do not merge before header condition. | Draft branch only |
 | U4p-D39 | Adopt final generated tuple | Luna | U3b home and exact producer | gated:freeze | Dispatch after U3b | Producer becfe6 inventory ready. Normal generated-client tooling; no manual type/pin edit or old consumer compatibility claim. | Producer becfe6 |
 | F-final-host-prep | Prepare final App host commands | Luna; independent review | Cumulative 0758 PASS with limits | merged | Return 0754; review 0758 | Corrected tool, locks and maker argv qualified. P4/P5 rows missing; final Agent/App and receipts are explicit inputs. No final tuple claimed. | Report only |
-| F-P4-P5-registrations | Draft missing final host rows | Luna; independent review | First return0834 complete | review | Return0834; cumulative0838 | Overlay removed; offline guard/argv refusals reported. Cumulative source-only review pending; final tuple still missing. | PREPARED only |
+| F-P4-P5-registrations | Install final host rows from draft | Luna; independent review | Final tuple and real receipts | gated:freeze | Draft0834; review0838 PREPARED | Exact3+14+24 scope, offline guards qualified. Actual origins and unused child/graph guard inputs need real final qualification. | No registration yet |
 | F-App-final | Full suite on final App head | App test service | Final tuple and freeze | gated:freeze | App service; Runtime FREEZE | D49 venue accepted. Historical 12ef full passed 18,819; current final qualification is still required. | Final head pending |
 
 | A3-popup-inputs | Compare actual asset and planner inputs | Luna; independent Luna | Independent0814 PASS | merged | Author0748; review0814 | Valid type, size, timing, track and selection; async prepared asset absent. Fullcaller witness remains RED, cause not yet attributed. | Report only |
 
 | A3-popup-diagnostic | Retain safe refusal stage | Luna; independent review | Integrated0826 PASS | merged | Reviews0816/0818; integrated0826 | HOME182c passes46 plus7 semantic and22 controls, three types and lint. Safe diagnostics only; placement repair separate. | 209723 /182c |
-| A3-popup-full-caller | Repair real popup authored boundary | Luna; independent review | Independent0814 found source defect | doing | Return0822; wholepath0822 | Projected existing assetEntry fails authored serialization before applyEdit. First return fixes source and ordinary fullcaller witness. | Failedaebf held |
+| A3-popup-full-caller | Repair real popup authored boundary | Luna; independent review | First return0822 complete | review | Return0822; cumulative0840 | Author29 media,2 ordinary mounted and36 provider controls/types/lintPASS. Exact derived-field preservation and full envelope review pending. | Branch held |
 | P2-tour-oracles | Strict transition and parent helpers | Proof Luna; independent review | Integrated 0800 PASS | merged | Proof 0737/0742; App proof 0800 | Exact reviewed paths on HOME28b0 passed 17 joined controls, three types, lint/list. Original gesture outcomes remain open. | 0a22d85455 / 59cb263629 |
 
 | P2-element-handler | Check retained completion attribution | Luna; independent Luna | Independent0814 PASS | merged | Author0808; review0814 | Actual30-file inventory has no matching handler or receipt link. One POST remains unresolved; outcome UNKNOWN. No new collection. | Report only |
