@@ -625,6 +625,47 @@ def test_publish_uses_one_compilation_and_returns_complete_mapping():
     assert all("from_revision" not in action for action in result["next_actions"][2:])
 
 
+def test_publication_data_projects_accepted_parent_revision_without_rewriting_reply():
+    parent, shots, timelines = _closure(shared=True)
+    candidate = open_authoring_bundle(
+        parent, shot_revisions=shots, internal_timeline_revisions=timelines
+    )
+    candidate["source_mapping"]["_runtime_document"] = _runtime_document(parent, shots, timelines)
+
+    class CompleteReplyWriter(_Writer):
+        def commit_timeline(self, project_id, timeline_id, body, *, idempotency_key):
+            envelope = super().commit_timeline(
+                project_id, timeline_id, body, idempotency_key=idempotency_key
+            )
+            envelope["data"].update(
+                base_revision_id=body["base_revision_id"],
+                base_publication_id=body["base_publication_id"],
+                commands=copy.deepcopy(body["commands"]),
+                steps=copy.deepcopy(body["steps"]),
+                merge_mode=body["merge"],
+                label=body["label"],
+                source=copy.deepcopy(body["source"]),
+                rationale=body["rationale"],
+                publisher="test-user",
+            )
+            envelope["receipt"]["result"] = copy.deepcopy(envelope["data"])
+            return envelope
+
+    writer = CompleteReplyWriter(candidate["source_mapping"]["_runtime_document"])
+
+    result = publish_authoring_candidate(candidate, writer, idempotency_key="accepted-parent-alias")
+
+    publication = result["publication"]
+    assert publication["accepted_revision_id"] == "saved-revision"
+    assert publication["parent_revision_id"] == publication["accepted_revision_id"]
+    assert publication["data"]["accepted_revision_id"] == "saved-revision"
+    assert publication["data"]["parent_revision_id"] == "saved-revision"
+    assert publication["canonical_document"] == writer.document
+    assert publication["data"]["canonical_document"] == writer.document
+    assert publication["receipt"]["result"]["accepted_revision_id"] == "saved-revision"
+    assert publication["data"]["steps"] == writer.calls[0][2]["steps"]
+
+
 def test_group_move_compiles_and_uses_existing_publication_boundary():
     parent, shots, timelines = _closure(shared=True)
     candidate = open_authoring_bundle(

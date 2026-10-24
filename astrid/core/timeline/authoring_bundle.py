@@ -1863,7 +1863,9 @@ def publish_authoring_candidate(
     if result.get('status') not in ('accepted', 'merged'):
         raise AuthoringBundleError(f"authoring commit was not accepted: {result}")
     document = result['canonical_document']
-    result.update(new_head=result['accepted_revision_id'], old_head=result['previous_revision_id'],
+    accepted_revision_id = result['accepted_revision_id']
+    result.update(new_head=accepted_revision_id, parent_revision_id=accepted_revision_id,
+                  old_head=result['previous_revision_id'],
                   dependency_manifest=document['dependency_manifest'])
     if isinstance(envelope, Mapping) and 'data' in envelope:
         result['data'] = _copy(result)
