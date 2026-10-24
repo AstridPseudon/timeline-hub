@@ -24,6 +24,7 @@ from astrid.packs.music.actions.duck._audio import (
 from astrid.packs.music.actions.duck.core import (
     Placement,
     duck_audio,
+    placed_samples,
     select_music_clip,
 )
 
@@ -118,6 +119,22 @@ def _mono(path: Path) -> np.ndarray:
     return load_audio(path).samples[:, 0]
 
 
+def _integrated_source_span(path: Path, start_s: float, end_s: float) -> float:
+    """Measure a source-file span independently with the action's EBU helper."""
+    audio = load_audio(path)
+    lo = round(start_s * audio.rate)
+    hi = round(end_s * audio.rate)
+    assert hi > lo
+    return integrated(weighted_power(audio.samples[lo:hi], audio.rate), audio.rate)
+
+
+def _integrated_placed_span(path: Path, placement: Placement) -> float:
+    """Decode output, map it to timeline clock, then measure the used clip span."""
+    audio = load_audio(path)
+    samples = placed_samples(audio, placement, audio.rate, placement.start, placement.duration)
+    return integrated(weighted_power(samples, audio.rate), audio.rate)
+
+
 def test_constant_bed_keeps_line_gap_within_half_lu(duck_fixture_paths: dict[str, Path], tmp_path: Path) -> None:
     paths = duck_fixture_paths
     source = load_audio(paths["steady_bed"])
@@ -140,6 +157,15 @@ def test_constant_bed_keeps_line_gap_within_half_lu(duck_fixture_paths: dict[str
         source.rate, source.bits, source.samples.shape[1],
     )
     assert len(rendered.samples) == len(source.samples)
+    # The report is not the evidence of ducking: measure each emitted music span
+    # against the corresponding independent voice span from the input files.
+    output_path = tmp_path / "steady-ducked.wav"
+    for music_start, music_end, voice_start, voice_end in (
+        (0, 19, 0, 19), (20, 39, 20, 39),
+    ):
+        voice_i = _integrated_source_span(paths["steady_voice"], voice_start, voice_end)
+        output_i = _integrated_source_span(output_path, music_start, music_end)
+        assert voice_i - output_i == pytest.approx(8, abs=0.5)
 
 
 def test_speech_keyed_gain_handles_bed_jump_and_nonunit_source_mapping(
@@ -151,7 +177,6 @@ def test_speech_keyed_gain_handles_bed_jump_and_nonunit_source_mapping(
     voice = Placement(paths["voice"], start=10, duration=12, from_s=0, speed=1.5, id="line")
     result = duck_audio(music, [voice], output)
 
-    assert result.report["gain_caused_leaps"] == 0
     assert result.report["max_slope_db_per_s"] <= 2 + 1e-9
     assert np.max(np.abs(np.diff(result.gain_db) / np.diff(result.times))) * music.speed <= 2 + 1e-9
     # Voice's first source syllable is at 1s. It plays at timeline 10+1/1.5,
@@ -168,6 +193,15 @@ def test_speech_keyed_gain_handles_bed_jump_and_nonunit_source_mapping(
     assert np.array_equal(rendered[39 * _SAMPLE_RATE:], original[39 * _SAMPLE_RATE:])
     assert result.gain_db[0] == pytest.approx(0, abs=1e-9)
     assert result.gain_db[-1] == pytest.approx(0, abs=1e-9)
+
+    # Decode and place the emitted music WAV and input voice on the same
+    # timeline clock, including the clip's source trim and 1.5x speed mapping.
+    voice_i = _integrated_placed_span(paths["voice"], voice)
+    bed_i = _integrated_placed_span(paths["jump_bed"], music)
+    output_i = _integrated_placed_span(output, music)
+    measured_gap = voice_i - output_i
+    assert bed_i - output_i >= 3
+    assert measured_gap == pytest.approx(result.report["lines"][0]["gap_after_lu"], abs=0.1)
 
     # A tagged rerun resolves the immutable original and reproduces every byte.
     tag = read_duck_tag(output)

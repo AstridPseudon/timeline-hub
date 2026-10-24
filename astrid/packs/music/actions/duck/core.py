@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import math
-from dataclasses import asdict, dataclass, replace
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Callable
 
@@ -39,21 +39,11 @@ class Placement:
     fade_out_curve: str = "linear"
 
 
-@dataclass(frozen=True)
-class DuckParameters:
-    bed_lu: float = 8.
-    cap_lu: float = 4.
-    slew_db_per_s: float = 2.
-    smooth_s: float = 1.
-    floor_db: float = -12.
-    merge_gap_s: float = 1.2
-
-    def validate(self) -> None:
-        if not all(math.isfinite(v) for v in asdict(self).values()):
-            raise AstridError("duck parameters must be finite")
-        if (self.bed_lu < 0 or self.cap_lu < 0 or self.slew_db_per_s <= 0
-                or self.smooth_s < 0 or self.floor_db > 0 or self.merge_gap_s < 0):
-            raise AstridError("duck gaps/smoothing/merge must be nonnegative, slew positive and floor nonpositive")
+CAP_LU = 4.
+SLEW_DB_PER_S = 2.
+SMOOTH_S = 1.
+FLOOR_DB = -12.
+MERGE_GAP_S = 1.2
 
 
 @dataclass(frozen=True)
@@ -133,16 +123,16 @@ def _voiced(samples: np.ndarray, rate: int) -> list[tuple[float, float]]:
     return [(float(starts[i] / rate), float(min(starts[i] + hop, len(power)) / rate)) for i in on]
 
 
-def gain_curve(target: np.ndarray, dt: float, parameters: DuckParameters) -> np.ndarray:
+def gain_curve(target: np.ndarray, dt: float) -> np.ndarray:
     """Loudest slew-bounded minorant, followed by the requested positive Hann smoothing."""
     g = target.copy()
-    step = parameters.slew_db_per_s * dt
+    step = SLEW_DB_PER_S * dt
     for i in range(1, len(g)):
         g[i] = min(g[i], g[i - 1] + step)
     for i in range(len(g) - 2, -1, -1):
         g[i] = min(g[i], g[i + 1] + step)
-    if parameters.smooth_s > 0:
-        n = int(parameters.smooth_s / dt) | 1
+    if SMOOTH_S > 0:
+        n = int(SMOOTH_S / dt) | 1
         window = np.hanning(n + 2)[1:-1]
         window /= window.sum()
         g = np.convolve(np.pad(g, (n, n), mode="edge"), window, mode="same")[n:-n]
@@ -150,33 +140,11 @@ def gain_curve(target: np.ndarray, dt: float, parameters: DuckParameters) -> np.
     return np.minimum(g, 0.)
 
 
-def _leaps(power: np.ndarray, rate: int, gain: np.ndarray, times: np.ndarray,
-           music: Placement) -> list[dict]:
-    centers = np.arange(.2, len(power) / rate - .2, .1)
-    levels = moments(power, rate, centers)
-    events = []
-    for i in range(len(centers)):
-        for j in range(i + 1, min(i + 11, len(centers))):
-            change = float(levels[j] - levels[i])
-            if abs(change) <= 4:
-                continue
-            lo = music.from_s + centers[i] * music.speed
-            hi = music.from_s + centers[j] * music.speed
-            select = (times > lo) & (times < hi)
-            interval = np.concatenate(([np.interp(lo, times, gain)], gain[select],
-                                       [np.interp(hi, times, gain)]))
-            move = float(np.ptp(interval))
-            events.append({"from_s": float(music.start + centers[i]),
-                           "to_s": float(music.start + centers[j]), "level_change_db": change,
-                           "gain_move_db": move,
-                           "cause": "gain-caused" if move > 2 + 1e-9 else "in-song"})
-    return events
-
-
 def duck_audio(music: Placement, voices: list[Placement], output: Path, *,
-               parameters: DuckParameters = DuckParameters(),
+               bed_lu: float = 8.,
                resolve_source: Callable[[str], Path] | None = None) -> DuckResult:
-    parameters.validate()
+    if not math.isfinite(bed_lu) or bed_lu < 0:
+        raise AstridError("bed_lu must be finite and nonnegative")
     _validate_placement(music)
     if Path(output).resolve() == Path(music.path).resolve():
         raise AstridError("duck output must be a new file")
@@ -227,7 +195,7 @@ def duck_audio(music: Placement, voices: list[Placement], output: Path, *,
         if vi is None or mi is None or not voiced:
             ignored.append(voice.id)
             continue
-        bed = min(0., vi - parameters.bed_lu - mi)
+        bed = min(0., vi - bed_lu - mi)
         lines.append({"id": voice.id, "start_s": a, "end_s": b, "vo_i": vi,
                       "music_i_before": mi, "gap_before_lu": vi - mi,
                       "bed_db": bed, "voiced": voiced, "sample_start": s, "sample_end": e})
@@ -244,7 +212,7 @@ def duck_audio(music: Placement, voices: list[Placement], output: Path, *,
     intervals = sorted(iv for line in lines for iv in line["voiced"])
     spans: list[list[float]] = []
     for a, b in intervals:
-        if spans and a - spans[-1][1] < parameters.merge_gap_s:
+        if spans and a - spans[-1][1] < MERGE_GAP_S:
             spans[-1][1] = max(spans[-1][1], b)
         else:
             spans.append([a, b])
@@ -252,28 +220,36 @@ def duck_audio(music: Placement, voices: list[Placement], output: Path, *,
     for a, b in spans:
         inside |= (timeline >= a) & (timeline < b)
     bed = np.zeros(len(times))
-    reference = np.zeros(len(times))
+    cap = np.zeros(len(times))
     voiced_mask = np.zeros(len(times), dtype=bool)
-    # Each line keeps its reference through a merged gap; the gap uses the deeper bed.
-    for i, line in enumerate(lines):
-        start = line["voiced"][0][0]
-        end = lines[i + 1]["voiced"][0][0] if i + 1 < len(lines) else spans[-1][1]
-        zone = (timeline >= start) & (timeline < end)
-        bed[zone] = line["bed_db"]
-        reference[zone] = line["vo_i"]
+    def require(line, zone):
+        bed[zone] = np.minimum(bed[zone], line["bed_db"])
+        cap[zone] = np.minimum(cap[zone], line["vo_i"] - CAP_LU - ml[zone])
+
+    # Every line owns its full speech extent. Overlapping lines combine by
+    # minimum, so a short louder line cannot erase a longer quieter line.
+    extents = sorted((line["voiced"][0][0], line["voiced"][-1][1], i)
+                     for i, line in enumerate(lines))
+    previous_end = None
+    previous_line = None
+    for start, end, index in extents:
+        line = lines[index]
+        require(line, (timeline >= start) & (timeline < end))
         for a, b in line["voiced"]:
             voiced_mask |= (timeline >= a) & (timeline < b)
-        if i + 1 < len(lines):
-            gap = (timeline >= line["voiced"][-1][1]) & (timeline < end)
-            bed[gap] = min(line["bed_db"], lines[i + 1]["bed_db"])
+        if previous_end is not None and 0 < start - previous_end < MERGE_GAP_S:
+            gap = (timeline >= previous_end) & (timeline < start)
+            require(previous_line, gap)
+            require(line, gap)
+        if previous_end is None or end > previous_end:
+            previous_end, previous_line = end, line
     # A merged speech span includes its natural gaps. Keep the cap in force
     # there too; resetting it between syllables would introduce gain rebounds.
-    cap = reference - parameters.cap_lu - ml
     raw_target = np.where(inside, np.minimum(np.minimum(bed, cap), 0.), 0.)
-    target = np.maximum(parameters.floor_db, raw_target)
-    gain = gain_curve(target, dt, parameters)
+    target = np.maximum(FLOOR_DB, raw_target)
+    gain = gain_curve(target, dt)
     source_gain = np.interp(np.arange(len(audio.samples)) / rate, times, gain)
-    tag = {"kind": TAG_KIND, "source_digest": source_digest, "parameters": asdict(parameters)}
+    tag = {"kind": TAG_KIND, "source_digest": source_digest, "parameters": {"bed_lu": bed_lu}}
     write_duck_wav(Path(output), audio, source_gain, tag)
     played_gain = np.interp(music.from_s + np.arange(len(played)) / rate * music.speed, times, gain)
     played *= np.power(10., played_gain[:, None] / 20)
@@ -290,14 +266,13 @@ def duck_audio(music: Placement, voices: list[Placement], output: Path, *,
         select = (timeline >= line["start_s"]) & (timeline < line["end_s"])
         eligible = select & voiced_mask & (vo_m >= line["vo_i"] - 6)
         line["worst_voiced_gap_lu"] = float((vo_m - after_m)[eligible].min()) if eligible.any() else None
-        line["floor_held"] = bool((raw_target[select] < parameters.floor_db).any())
+        line["floor_held"] = bool((raw_target[select] < FLOOR_DB).any())
         if line["floor_held"]:
             floor_lines.append(line["id"])
         line.pop("voiced")
     gaps = [line["gap_after_lu"] for line in lines if line["gap_after_lu"] is not None]
     worst = [line["worst_voiced_gap_lu"] for line in lines if line["worst_voiced_gap_lu"] is not None]
-    leaps = _leaps(after_power, rate, gain, times, music)
-    report = {"schema_version": 1, "parameters": asdict(parameters), "source_digest": source_digest,
+    report = {"schema_version": 1, "parameters": {"bed_lu": bed_lu}, "source_digest": source_digest,
               "clip": music.id, "sample_rate": rate, "channels": audio.samples.shape[1],
               "sample_format": ("float" if audio.floating else "pcm") + str(audio.bits),
               "frames": len(audio.samples), "speech_spans": spans, "lines": lines,
@@ -308,7 +283,6 @@ def duck_audio(music: Placement, voices: list[Placement], output: Path, *,
               "floor_held_lines": floor_lines,
               "max_slope_db_per_s": float(np.abs(np.diff(gain)).max() / dt),
               "max_excess_db": max(0., float((gain - target).max())),
-              "true_peak_dbfs": true_peak(Path(output)), "leaps": leaps,
-              "gain_caused_leaps": sum(event["cause"] == "gain-caused" for event in leaps),
+              "true_peak_dbfs": true_peak(Path(output)),
               "method": "BS.1770 K weighting; EBU R128 400ms/100ms absolute and relative gates"}
     return DuckResult(report, times, gain, target)

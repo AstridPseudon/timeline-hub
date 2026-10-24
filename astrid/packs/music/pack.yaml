@@ -352,16 +352,6 @@
             "{snapshot}",
             "--bed-lu",
             "{bed_lu}",
-            "--cap-lu",
-            "{cap_lu}",
-            "--slew-db-per-s",
-            "{slew_db_per_s}",
-            "--smooth-s",
-            "{smooth_s}",
-            "--floor-db",
-            "{floor_db}",
-            "--merge-gap-s",
-            "{merge_gap_s}",
             "--out",
             "{out}"
           ]
@@ -380,41 +370,6 @@
           "required": false,
           "default": 8,
           "description": "Integrated voice-minus-music gap in LU."
-        },
-        {
-          "name": "cap_lu",
-          "type": "number",
-          "required": false,
-          "default": 4,
-          "description": "Music momentary ceiling in LU below the line voice level."
-        },
-        {
-          "name": "slew_db_per_s",
-          "type": "number",
-          "required": false,
-          "default": 2.0,
-          "description": "Maximum gain movement in dB per timeline second."
-        },
-        {
-          "name": "smooth_s",
-          "type": "number",
-          "required": false,
-          "default": 1.0,
-          "description": "Hann smoothing window in timeline seconds."
-        },
-        {
-          "name": "floor_db",
-          "type": "number",
-          "required": false,
-          "default": -12.0,
-          "description": "Minimum permitted gain in dB."
-        },
-        {
-          "name": "merge_gap_s",
-          "type": "number",
-          "required": false,
-          "default": 1.2,
-          "description": "Merge voiced regions separated by less than this many timeline seconds."
         }
       ],
       "outputs": [
@@ -428,7 +383,13 @@
           "name": "duck",
           "type": "file",
           "path_template": "{out}/duck.json",
-          "description": "Parameters, line gaps, floor holds, curve bounds, true peak and leap diagnostics."
+          "description": "Parameters, line gaps, floor holds, curve bounds, and true peak."
+        },
+        {
+          "name": "manifest",
+          "type": "file",
+          "path_template": "{out}/artifacts/manifest.json",
+          "description": "Managed run manifest for the ducked WAV and analysis report."
         }
       ],
       "cache": {

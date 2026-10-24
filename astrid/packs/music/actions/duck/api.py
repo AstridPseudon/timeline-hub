@@ -9,9 +9,11 @@ from dataclasses import asdict
 from pathlib import Path
 
 from astrid.core.contracts.errors import AstridError
+from astrid.core.execution.managed_inputs import managed_file_digest
+from astrid.core.foundation.hash import sha256_file
 from astrid.core.timeline import clip_fields
 from astrid.packs.music.actions.duck._audio import read_duck_tag
-from astrid.packs.music.actions.duck.core import DuckParameters, Placement, select_music_clip
+from astrid.packs.music.actions.duck.core import Placement, select_music_clip
 from astrid.sdk.media_handles import resolve_media_handle, save_media
 from astrid.sdk.timeline import Checkout
 
@@ -93,11 +95,17 @@ def prepare_snapshot(client, project: str, timeline: str, target: Path, *,
 
 def duck_timeline(client, project: str, timeline: str, *, clip: str | None = None,
                   voice_tracks: list[str] | None = None,
-                  parameters: DuckParameters = DuckParameters(), wait: bool = True):
+                  bed_lu: float = 8., wait: bool = True):
     """One agent call: capture current placements, admit music.duck, return its managed result."""
-    parameters.validate()
     with tempfile.TemporaryDirectory(prefix="music-duck-admit-") as directory:
         snapshot = Path(directory) / "snapshot.zip"
         prepare_snapshot(client, project, timeline, snapshot, clip=clip, voice_tracks=voice_tracks)
+        imported = client.media.import_file(
+            project=project, path=snapshot,
+            idempotency_key="music-duck-snapshot-" + sha256_file(snapshot),
+        )
+        if not imported.ok:
+            raise AstridError(f"could not import music.duck snapshot: {imported.error}")
+        digest = managed_file_digest(imported.data, "snapshot")
         return client.invoke_result("music.duck", kind="action", project=project,
-                                    inputs={"snapshot": snapshot, **asdict(parameters)}, wait=wait)
+                                    inputs={"snapshot": digest, "bed_lu": bed_lu}, wait=wait)
