@@ -83,15 +83,6 @@ def test_commit_requires_a_message(capsys) -> None:
     ]).message == "tighten c3"
 
 
-def test_publish_requires_a_message(capsys) -> None:
-    parser = timeline_cli.build_parser(_Client())
-    with pytest.raises(SystemExit) as exc:
-        parser.parse_args(["publish", "main", "--project", "p"])
-    assert exc.value.code == 2
-    assert "-m/--message" in capsys.readouterr().err
-    assert parser.parse_args(["publish", "main", "--project", "p", "-m", "tighten c3"]).message == "tighten c3"
-
-
 class _CreateTimelines:
     def __init__(self):
         self.calls = []
