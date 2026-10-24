@@ -86,7 +86,7 @@ def resident_host(tmp_path, real_runtime):
     boot = support / "boot-manifest.json"
     handoff = compose_profile_handoff(boot, support_root=support)
     record = GenericPackHost(pack_roots=[pack]).discover()[0]
-    daemon = real_runtime(tmp_path / "realm", support_root=support, production_worker_credentials=True)
+    daemon = real_runtime(tmp_path / "realm", support_root=support)
     # The Runtime is importable only once real_runtime has located it.
     from runtime_protocol.remote_worker_activation import QualifiedRemoteWorkerLauncher
     from runtime_protocol.remote_worker_deployment import (
@@ -447,7 +447,7 @@ def test_uncertain_commit_preserves_exact_host_and_credential(resident_host, mon
 
 
 def test_real_disabled_bearer_fails_handshake_and_enabled_bearer_becomes_ready(real_runtime):
-    daemon = real_runtime(production_worker_credentials=True)
+    daemon = real_runtime()
     try:
         token, _path = daemon.credentials.provision(
             "activation-host", ["handshake", "worker:execute"], enabled=False,

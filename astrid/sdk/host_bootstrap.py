@@ -1087,9 +1087,25 @@ class _ParkedPackHostPreparer:
             return
         primary_error = sys.exc_info()[1]
         try:
+            identity_error = None
+            try:
+                identity_matches = _parked_host_identity_matches(handle.state)
+            except PackHostBootstrapError as exc:
+                identity_error = exc
+                identity_matches = False
+            if not identity_matches:
+                # The host can exit during observation. Only a positive child
+                # wait permits cleanup without verified live host identity.
+                try:
+                    exit_code = handle.process.wait(timeout=0)
+                except subprocess.TimeoutExpired as exc:
+                    raise PackHostBootstrapError("parked host identity cannot be verified safely") from (identity_error or exc)
+                if isinstance(exit_code, bool) or not isinstance(exit_code, int):
+                    raise PackHostBootstrapError("parked host identity cannot be verified safely") from identity_error
             handle.control.close()
-            terminate_group(handle.process)
-            handle.process.wait(timeout=1)
+            if identity_matches:
+                terminate_group(handle.process)
+                handle.process.wait(timeout=1)
             ready_path = Path(handle.state["ready_file"])
             ready = _read_object(ready_path)
             if ready and (ready.get("pid"), ready.get("process_birth_id")) == (
