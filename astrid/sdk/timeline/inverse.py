@@ -789,15 +789,25 @@ def _stage_restoration_orders(records, record):
             or not equal(record.get('derived_writes'), mirrors)
             or not equal(record.get('_inverse_effects'), inverse_changes(step['patch'][first:last]))):
         raise CommandError('inverse stage differs from accepted partition', kind='history_unavailable')
+    result_orders = {}
+    for effect in step['patch'][first:last]:
+        if effect['ref'] == 'parent' and effect['path'] == ['occurrences']:
+            if (effect['op'] != 'set' or effect['before'].get('state') != 'present'
+                    or ('parent', 'occurrence') in result_orders):
+                raise CommandError('inverse stage occurrence order is unavailable', kind='history_unavailable')
+            result_orders[('parent', 'occurrence')] = tuple(
+                order(State({'parent': {}, 'placements': rows}), 'parent', 'occurrence')
+                for rows in (effect['before']['value'], effect['value']))
     if images is None:
-        return {}
+        return result_orders
     result = []
     for image in images:
         if image.get('state') != 'present' or not isinstance(image.get('value'), list):
             raise CommandError('inverse stage order is unavailable', kind='history_unavailable')
         result.append(order(State({'parent': {'clips': image['value'],
                                              'config': {'clips': image['value']}}}), 'parent', 'clip'))
-    return {('parent', 'clip'): tuple(result)}
+    result_orders[('parent', 'clip')] = tuple(result)
+    return result_orders
 
 
 def _validate_materializations(records):

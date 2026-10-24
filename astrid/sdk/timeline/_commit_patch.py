@@ -968,7 +968,7 @@ def inverse_address_resolver(entries, head_bundle, *, load_boundary, load_histor
     from ._step_undo import validate_nested_history
 
     landing = Closure(head_bundle)
-    transitions, missing, contexts = [], set(), {}
+    transitions, missing, contexts, owners = [], set(), {}, {}
     for entry in entries:
         validate_nested_history(entry, load_history)
         before, after = (Closure(bundle) for bundle in load_boundary(entry))
@@ -995,15 +995,31 @@ def inverse_address_resolver(entries, head_bundle, *, load_boundary, load_histor
                         contexts.setdefault(id(capture), (boundary, output))
             if step is not None:
                 for dependency in step.get('dependencies', []):
-                    contexts.setdefault(id(dependency), (boundary, output))
+                    if id(dependency) in contexts:
+                        continue
+                    contexts[id(dependency)] = boundary, output
+                    # Generated field dependencies retain the native read's
+                    # owner only when that exact input site has one provenance.
+                    if dependency['kind'] == 'field' and not any(
+                            binding.get('key') == 'commit.read' and binding.get('dependency') == dependency
+                            for record in records for binding in record['bindings']):
+                        sources = {read['ref'].split('/', 1)[0] if read['ref'].startswith('occurrence:')
+                                   and '/' in read['ref'] else None
+                                   for record in records for read in record['reads']
+                                   if canonical_site(boundary, read['ref'], read['path'])
+                                   == (dependency['ref'], dependency['path'])
+                                   and equal(read['state'], dependency['state'])}
+                        if len(sources) == 1:
+                            owners[id(dependency)] = sources.pop()
 
-    def continuation(ref):
+    def continuation(ref, owner):
         seen = set()
         while ref not in landing.images and ref not in ('parent', 'timeline'):
             if ref in seen:
                 raise CommandError('cyclic inverse materialization history', kind='history_unavailable', ref=ref)
             seen.add(ref)
-            successors = {new for old, new, _ in transitions if old == ref}
+            successors = {new for old, new, source_owner in transitions
+                          if old == ref and (owner is None or source_owner == owner)}
             if ref in missing:
                 raise CommandError('missing authenticated materialization history', kind='history_unavailable', ref=ref)
             if not successors:
@@ -1017,9 +1033,14 @@ def inverse_address_resolver(entries, head_bundle, *, load_boundary, load_histor
         boundary, output = contexts.get(id(capture), (None, None))
         if boundary is None:
             boundary = output = landing  # Earlier commands in this new batch.
-        return site(boundary, output, ref, path)
+        owner = owners.get(id(capture))
+        if ref.startswith('occurrence:') and '/' in ref:
+            owner = ref.split('/', 1)[0]
+        elif capture.get('key') == 'commit.materialization':
+            owner = capture['owner'].removesuffix('/shot')
+        return site(boundary, output, ref, path, owner)
 
-    def site(boundary, output, ref, path):
+    def site(boundary, output, ref, path, owner):
         if ref.startswith(('internal-revision:', 'shot-revision:')):
             physical, path = ref, list(path)
         else:
@@ -1040,6 +1061,6 @@ def inverse_address_resolver(entries, head_bundle, *, load_boundary, load_histor
         path = tuple(('id', token[3:]) if isinstance(token, str) and token.startswith('id:')
                      else ('occurrence_id', token[14:]) if isinstance(token, str)
                      and token.startswith('occurrence_id:') else token for token in path)
-        return logical_address(continuation(physical), path)
+        return logical_address(continuation(physical, owner), path)
 
     return resolve
