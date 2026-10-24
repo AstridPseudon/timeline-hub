@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T12:25:31Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 1m -->
-# runtime board, 2026-10-24T12:21:23Z
+<!-- main | 2026-10-24T12:28:36Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 1m -->
+# runtime board, 2026-10-24T12:26:50Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -78,8 +78,11 @@
 | F-D52-occurrence-delete | Qualify 19 live delete cases | Luna | Exact integrated source proof | merged | Author1139; independent1141 PASS | Exact Agent7e258 and Runtimebecfe:19PASS6.43s; bodies and params unchanged. [Review](../../design/runtime-D52-occurrence-review-1141.md) | Agent7e258 unchanged |
 | F-D52-core-five | Qualify five inverse and fork originals | Luna / Luna | Agent inverse materialization custody | blocked:agent | Review1214; corrected return1220 | Three passed, two redo failures. Review narrows cause to stage custody. [Review](../../design/runtime-D52-core-five-review-1214.md) | Agent d411; Runtime becfe |
 | FREEZE | Final integrated tuple and gates | Runtime manager | D54 and D56 | doing | Runtime1219; App and Agent owners | Runtime and Agent U/D39 home. App joins now. Only final integrated tuple gates next; D41 retired. | Runtime becfe6db8 |
-| F-final | Prepare main delivery build and ZIP | Luna | Final integrated P1 to P5 and core suites | doing | rt-F-final-prepare-1219 | Existing builder and fresh upstream apply-check route under preparation. No build or ZIP yet. | No delivery commit |
-| F-D54-runtime-census | Classify core and regressions | Luna | Retained results and actual source | doing | rt-F-D54-runtime-census-1219 | Exact node inventory and final core service command in preparation. No new suite claim. | Runtime becfe |
+| F-final | Main delivery build and ZIP | Luna | Final integrated P1 to P5 and core suites | doing | Preparation1219; three source owners1226 | Existing builder route has stale v1 inputs and clone placement defect. Three independent repairs are active; no build yet. | No delivery artifact |
+| F-final-builder | Put fresh verifier clones in TMPDIR | Luna | Existing builder source | doing | rt-F-final-builder-tmp-1226 | Candidate only; source custody checks and ZIP failure guard preserved. Independent custody review follows. | No live change |
+| F-final-docs | Refresh stale v1 delivery prose | Luna | Current D54 to D57 facts | doing | rt-F-final-docs-1226 | Two existing input candidates; final tuple and gate fields stay pending. Author checks suffice under D56. | No live change |
+| F-final-service | Prepare core and v2 delivery rows | Luna | Existing service and final builder | doing | rt-F-final-service-1226 | Private registration and guarded installer candidates; no old extras or suite run. Outside rows stay exact. | No live change |
+| F-D54-runtime-census | Classify core and regressions | Luna | Retained accounting complete | merged | Census1219 | Confirmed core open0; regressions0. One cross-lane provider incident remains unknown. [Accounting](../../design/runtime-D54-census-1219.md) | Runtime becfe |
 | F-composition-main | Final Composition full on main | Service | Final integrated tuple and gates | gated:freeze | Prepared through final worker1219 | Prior Viewing23379 passed86. Main route preparation only; no new full requested. | Source635f |
 | OPS-child-observability | Retain bounded maker failure evidence | Luna | Independent installed proof passed | merged | Review 0730; installed 0735; live 0739 PASS | All four live, publication and committed copies match reviewed bytes. Real child and bootstrap remain unqualified. | 33fc06bbd installed |
 | OPS-wheel-acquisition | Verify normal original-wheel acquisition | Luna | Independent source review passed | merged | Author 0743; review 0747 PASS; Agent 0733 | Standard hash-locked pip operation qualified from source. Input must survive maker snapshot; no actual wheels or child credit. | Source facts only |
@@ -107,7 +110,7 @@ FREEZE, D54 and D56: Runtime upstream and canonical D39 producer are home at bec
 
 Venues under D56: each lane uses its own service. Composition final full runs on main; prior Viewing635f checkpoint86PASS remains historical. Farm and schema-access venue work stop, with no new child, preflight, checkpoint or source route. Proof finishes in-flight items and hands open work to App; App owns P2/P3 execution and one independent verdict per run. Viewing stands down. No final integrated tuple or final gate PASS is claimed.
 
-Core open: 0 known Runtime original failures; current final-tuple qualification is pending. Regressions: 0 confirmed Runtime originals; current census1219 will qualify exact nodes and unknown limits. Two new core-five redo failures are Agent-owned stage-custody gaps; Agent core count owns them. All known-gap delivery claims require D54a evidence, and any caused regression is fixed or reverted regardless of core status.
+core open: 0 confirmed Runtime originals; regressions: 0 confirmed Runtime originals. Census1219 verified original36closed/0open/0unaccounted. Final-tuple qualification remains pending. One provider-completion incident has unknown cross-lane cause and remains visibly failed, not an allowed known gap. Two new core-five redo failures are Agent-owned stage-custody gaps; Agent core count owns them. All known-gap delivery claims require D54a evidence, and any caused regression is fixed or reverted regardless of core status.
 
 Agent current checkpoint remains terminal FAIL on ba55/Runtimebecfe:17673PASS,231FAIL,45errors,4skips,566subtests. Census verified all276 bad IDs; D52 conservative230live/45env/1D23 with157summary-only. Historical263closed/4open remains separate. Runtime shot-set17 and occurrence-delete19 are qualified at retained scopes; new core-five three pass and two fail with independent1214 source limits. Exact author report return1220 is read-only; Agent existing R2 redo source owner receives the custody seam. No new full or child.
 
@@ -126,10 +129,12 @@ Provider completion: Runtime 0915 and independent 0923 retain original cause, ho
 Blockers: Final delivery — App and Agent final integration sources, P1–P5 and core suite results precede main F-final. Farm/schema work is stopped under D56; prior denied source routes remain stopped.
 Blockers: App — final U3b/D39 integration and final-tuple P2/P3 verdicts are owned by App under D56. Prior run11933 remains a historical in-flight result, not final tuple proof.
 Blockers: Agent — two exact core-five redo failures need authenticated custody across the inverse stage. Independent1214 narrows the source seam; existing Agent R2 owner receives it.
-Next ready: Final main builder1219, Runtime core census1219 and report correction1220 dispatched. App final join and Agent core repairs remain owned.
+Next ready: Three final pipeline authors1226 dispatched in parallel. Builder custody review then guarded installation; prose and service setup use D56 author checks. App final join and Agent core repairs stay owned.
 
 Later: D47 memo and proof-pin work remain held until after delivery; nine state attacks stay open. D34 broader cleanup resumes below 8.5 GB or after delivery. Prior denied cleanup, process, retirement and publication targets remain stopped. V4 is cut; D14/D23 remain deferred and unchanged. D52 supersedes D37: owner lanes may remove caller-proven dormant scope with its exclusive tests, ledger entry and independent review. Live tests stay strict.
 
 Disk: Sweep3 removed zero directories; compaction packed zero and compressed six old logs. Core-five author tree was already recycled. About9GB free, above main8GB heavy floor; D34 broader cleanup stays held.
 
-Pass 2026-10-24T12:21:23Z: D54/D54a/D55/D56 applied immediately. Main F-final and core accounting workers dispatched in parallel. Farm/schema venue work stopped and App integration hold cleared. Independent core-five1214 qualifies3PASS2FAIL and corrects custody cause; Agent source handback and first return1220 sent. No product, test, pin or Git write by manager.
+Pass 2026-10-24T12:26:50Z: Runtime census1219 complete with core0/regression0confirmed and provider incident stillunknown. Main delivery prep1219 found stale v1 gates/extras, obsolete service hash and verifier clones outsideTMPDIR. Split into independent builder/docs/service Luna1226; no duplicate classification. Core-five source handback complete; Agent owns two redo failures. D56 finaltuple-only policy remains.
+
+live 3 / cap 6; ready-undispatched 0. Cap follows current free bytes; finaltuple gating work remains gated, not ready.
