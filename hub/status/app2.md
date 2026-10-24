@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-24T08:08:56Z | dispatcher heartbeat 9s | live 2 (sol 0, luna 2, other 0) | busy30 13 | status age 2m -->
+<!-- app2 | 2026-10-24T08:11:07Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 13 | status age 1m -->
 # app2 board, 2026-10-24T08:06Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -20,7 +20,7 @@
 | P2/P3-preflight-facts | Preserve wrong-target failures | App producer; Proof0649 | Actual20674 and10144 terminal | merged | Producer0634 | Both exit2 in6 seconds at source guard; all original cases and prior stages not run. No product failure inferred. | Artifactd545 refused |
 | P2/P3-terminal | Review current same-ID terminal packet | Independent Luna | Verdict0709 complete | merged | ap2-P2-P3-verified-result-verdict-0709 | Independent P2 and P3 NO-GO, exact counts, element390 correction, source preservation and primary custody limits qualified. | Exact663 / 079 / 37eb |
 | P2/P3-safe-files | Audit eight current safe files | Independent Luna; App review | Direct schema audit and custody correction PASS | merged | Proof0717; App0733 and0741 | All eight hashes/schema pass. Lifecycle is224B INCLUDING LF and matches exact writer/attachments. Earlier225/no-LF claim is corrected. | Same actual23809 and9310 |
-| P2-element-current | Classify retained post-POST Apply wait | Runtime Luna; App source | Actual backend outcome unknown | doing | rt-R-commit-response-source-0745 | Error audit and timing independently PASS. Most assertion time is after POST; no captured response, abort or refresh. Source assessment active. | Exact pinned663 /079 /37eb |
+| P2-element-current | Classify retained post-POST Apply wait | Runtime Luna; independent Luna | Corrected source assessment complete | merged | Runtime0755; independent0756 PASS | Initial path3 validations, CAS retry2; source only. No actual response, daemon or latency conclusion. Actual backend outcome stays unknown. | Exact663 /079 /37eb |
 | P2-popup-current | Locate actual popup local preview refusal | App Luna; independent Luna | Retained cause review0745 PASS | doing | app-A3-popup-placement-repro-0745 | Media import/selection pass; alert identifies local placement preview refusal before capture. Exact inner null cause still unknown; faithful reproduction active. | Exact current source |
 | P2-five-oracle | Classify five previously unrun paths | App independent Luna | Independent0651 complete | merged | App0651 | Four exact helper defects confirmed; SWAP aligned. Source and controlled transport only; no live gesture credit. | Exact9b810 / 079 / 37eb |
 | P2-transition-oracle | Strict single and bulk clear expectations | Luna; independent Luna | Source merged; combined proof follows | merged | Donor ac538; composition0737 | Independent0730 and0742 PASS. Normal App receipt28b0 includes exact reviewed transition delta; no browser credit. | ac538 / HOME28b0 |
@@ -57,7 +57,7 @@ All eight current safe JSON hashes, schemas, bounds, security and correlations p
 
 D48/D49 final map0708 and independent0719 PASS establish existing source routes and App-host venue, not READY final execution. Runtime FREEZE coordinates final joins and D39 adoption. App host-prep0744 is assigned; exact final Agent source, actual registrations, authenticated child/import custody and preflight remain pending. App U3b integration remains gated on P2/P3 GO. Final P1–P5, full venues and Farm F-final/ZIP follow qualified final heads.
 
-Blockers: App and Runtime — actual element completion is unknown; popup placement reproduction0745 and Runtime response source0745 remain active.
+Blockers: App — actual element completion and exact popup async refusal remain unknown. Runtime source0755/0756 is complete; App0754 owns full-caller witness and safe stage diagnostics.
 Blockers: Proof — semantic review0800 passed; clean composition0805 and P3 independent0800 plus own-only join must qualify before another pair.
 Blockers: App ledger — D50 source547c and tour0a22 are merged at28b0; App0756 owns the pending behaviour-change ledger publication.
 Blockers: Freeze — final tuple, actual App-host inputs, final gates and D49 full checkpoints precede Farm F-final and ZIP.
@@ -69,6 +69,6 @@ Later: D34 legacy registration and pre-cutover accounting remain UNKNOWN; no fur
 
 Safety: Prior process/reference/file/MONITOR/keep-awake/publication/graph/locked-v1/compact refusals stay stopped. No alternate cleanup or publication route. D30 worker finals are reports copied byte-exact. Managers make no product/test/generated/pin or Git mutation. No weakened tests or raw credential export.
 
-Disk: Latest8222437376 bytes free. No new heavy runs below8GB. Lead07:42 requires minimal necessary light dispatches and pauses new ones below7GB except D50 and its review. No finished non-KEEP worktree is left in inventory; harness recycles on finish. Existing three finished KEEP trees remain protected. Supported sweep3 at07:24 removed zero directories. No compact or previously refused cleanup retry.
+Disk: Latest8217071616 bytes free. No new heavy runs below8GB. Lead07:42 requires minimal necessary light dispatches and pauses new ones below7GB except D50 and its review. No finished non-KEEP worktree is left in inventory; harness recycles on finish. Existing three finished KEEP trees remain protected. Supported sweep3 at07:24 removed zero directories. No compact or previously refused cleanup retry.
 
 Pass: 08:06. INBOX consumed through728838 bytes. Semantic independent0800 PASS; exact full final copied. Clean own-only elements/catalog composition0805 dispatched on28b0. P3 Sol0745 completed6b208; independent0800 dispatched immediately and is running. Both tour and D50 merge receipts are28b0. App ledger0756 pending. Current App board and Runtime owner rows checked; no cleared dependency remains blocked. No finished non-KEEP worktree exists. Disk8364281856 bytes before two necessary light launches; no heavy/original run. Next full pass about08:16; completions sooner.
