@@ -163,6 +163,54 @@ def _evaluation(method):
     return evaluate
 
 
+class _HistoryReadCursor:
+    def __init__(self, inputs, query, parameters):
+        self.inputs, self.query, self.parameters = inputs, query, parameters
+        self.cursor = inputs.connection.execute(query, parameters)
+
+    def _read(self, method):
+        value = getattr(self.cursor, method)()
+        rows = [value] if method == "fetchone" else value
+        snapshot = tuple(None if row is None else tuple(row) for row in rows)
+        key = (self.query, self.parameters, method)
+        if key in self.inputs.rows and self.inputs.rows[key] != snapshot:
+            raise ProtocolError("accepted commit inputs changed during verification")
+        self.inputs.rows[key] = snapshot
+        return value
+
+    def fetchone(self):
+        return self._read("fetchone")
+
+    def fetchall(self):
+        return self._read("fetchall")
+
+    def __iter__(self):
+        return iter(self.fetchall())
+
+
+class _HistoryReadInputs:
+    """Exact consumed SQL results and CAS bytes for one graph assembly only."""
+    def __init__(self, connection, cas_root):
+        self.connection, self.cas_root = connection, cas_root
+        self.rows, self.objects = {}, {}
+
+    def execute(self, query, parameters=()):
+        return _HistoryReadCursor(self, query, tuple(parameters))
+
+    def check(self):
+        from .cas import ContentAddressedStore
+
+        for object_id, expected in self.objects.items():
+            data = ContentAddressedStore(self.cas_root).read(object_id)
+            if (len(data), hashlib.sha256(data).digest()) != expected:
+                raise ProtocolError("accepted commit object changed during verification")
+        for (query, parameters, method), expected in self.rows.items():
+            value = getattr(self.connection.execute(query, parameters), method)()
+            rows = [value] if method == "fetchone" else value
+            if tuple(None if row is None else tuple(row) for row in rows) != expected:
+                raise ProtocolError("accepted commit inputs changed during verification")
+
+
 class TimelineCommitStore:
     def __init__(self, store, *, validate_prepared, validate_event=None):
         self.store = store
@@ -187,7 +235,25 @@ class TimelineCommitStore:
 
     @property
     def conn(self):
+        current = getattr(self._verification, "current", None)
+        traversal = current["traversal"] if current else None
+        if traversal is not None:
+            return traversal["inputs"]
         return self.store.conn
+
+    def _read_history_object(self, object_id):
+        from .cas import ContentAddressedStore
+
+        data = ContentAddressedStore(self.store.cas_root).read(object_id)
+        current = getattr(self._verification, "current", None)
+        traversal = current["traversal"] if current else None
+        if traversal is not None:
+            objects = traversal["inputs"].objects
+            value = (len(data), hashlib.sha256(data).digest())
+            if object_id in objects and objects[object_id] != value:
+                raise ProtocolError("accepted commit object changed during verification")
+            objects[object_id] = value
+        return data
 
     def _membership(self, project_id, timeline_id):
         row = self.conn.execute("SELECT p.realm_id FROM timelines t JOIN projects p ON p.id=t.project_id "
@@ -254,7 +320,8 @@ class TimelineCommitStore:
         # replay proof pass. Later lookups rebuild it, even in the same scope.
         traversal = {"nodes": {identity: (row, edge, allow_archived)},
                      "dependencies": {identity: set()}, "pending": deque([identity]),
-                     "replays": {}, "current": identity}
+                     "replays": {}, "current": identity,
+                     "inputs": _HistoryReadInputs(self.store.conn, self.store.cas_root)}
         current["traversal"] = traversal
         try:
             while traversal["pending"]:
@@ -289,6 +356,10 @@ class TimelineCommitStore:
                         ready.append(consumer)
             if len(ordered) != len(remaining):
                 raise ProtocolError("accepted commit history contains a cycle")
+            # Callbacks during collection may have changed an already checked
+            # dependency. Re-read every consumed result, including empty SQL
+            # results and physical object bytes, before using queued proofs.
+            traversal["inputs"].check()
             proofs = set()
             for node in ordered:
                 replay = traversal["replays"].get(node)
@@ -297,6 +368,9 @@ class TimelineCommitStore:
                     if key not in current["verified"]:
                         self._verify_accepted_replay(*arguments)
                         proofs.add(key)
+            # Replay/capture validation can also call back into the runtime.
+            # Publish no proofs or history until all inputs still match.
+            traversal["inputs"].check()
             current["verified"].update(proofs)
         except (KeyError, TypeError, ValueError, IndexError, ValidationError, CommitRejected) as exc:
             raise ProtocolError("accepted commit record is corrupt") from exc
@@ -692,10 +766,9 @@ class TimelineCommitStore:
             if parent is None:
                 reject("history_unavailable")
             if parent["commit_manifest_json"] is None:
-                from .cas import ContentAddressedStore
                 from .timeline_commit_baseline import verify_revision_source
                 document = verify_revision_source(self.conn, project_id, timeline_id, revision_id,
-                                                   read_object=ContentAddressedStore(self.store.cas_root).read)
+                                                   read_object=self._read_history_object)
                 self._validate_closure(document, allow_archived=allow_archived)
                 return document
             manifest = json.loads(parent["commit_manifest_json"])
@@ -955,8 +1028,7 @@ class TimelineCommitStore:
                                     "WHERE p.project_id=? AND p.relation='managed' AND o.digest=?", (project_id, pin["media_id"][7:])).fetchone()
             if row is None:
                 reject("dependency_unavailable")
-            from .cas import ContentAddressedStore
-            data = ContentAddressedStore(self.store.cas_root).read(pin["media_id"][7:])
+            data = self._read_history_object(pin["media_id"][7:])
             if len(data) != row["size"] or "sha256:" + hashlib.sha256(data).hexdigest() != pin["media_id"]:
                 reject("dependency_unavailable")
         payload_media = set()
