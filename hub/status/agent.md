@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T14:21:15Z | dispatcher heartbeat 1s | live 4 (sol 1, luna 3, other 0) | busy30 14 | status age 4m -->
-# agent board, 2026-10-24T14:15:51Z
+<!-- agent | 2026-10-24T14:24:23Z | dispatcher heartbeat 8s | live 3 (sol 0, luna 3, other 0) | busy30 14 | status age 3m -->
+# agent board, 2026-10-24T14:21:24Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -76,8 +76,10 @@
 
 | Runtime five receipts | Publish actual home XML and map | Luna / Manager | Existing authentic1330 files | merged | Original home1330; handoff1409 | Two authentic files copied byte-exact to normal design publication, with full hashes. Runtime can qualify named membership without rerun. | Evidence only |
 
-| R2 proposal inverse | Trace restart inverse binding refusal | Luna | D39 retained6of7 result | doing | Whole path1415 | Separate core original fails invalid_records at Runtime inverse stage binding coverage. Not proven same as four fork failures; exact source trace active. | Source512f / e68cf |
+| R2 proposal inverse | Emit complete inverse stage bindings | Luna | Whole path1415 source-cause PASS | doing | Author1421 | Authentic legacy producer request emits inverse.stage without physical effect bindings. Narrow Agent emitter fix active; strict Runtime validation retained. | Base5492fc8041 |
 | P4 D60 home binding | Bind actual refreshed service source | Luna | U2 and D39 home | doing | Bind1415 | Refresh existing row only, collect original3 and verify actual home/core1408 source equivalence. No body until single heavy slot clears. | Current home pending receipt |
+
+| F D60 comparison | Compare exact276 against upstream924 | Luna / Service | Terminal service1621 XML | doing | Compare1420 | Prepares lossless exact-selector comparison while sole full runs. Missing or nonidentical evidence stays UNKNOWN; no duplicated body. | Upstream924 |
 
 Integration: Agent home47b744dfe9 includes reviewed final R2 null and G4 join. D60 candidateacf87bd is a true merge with exact upstream924 parent. Final committed source review1408 PASS; actual U2 home5ffc. D39 candidate512f custody1410 PASS and actualhome5492; proposal inverse failure remains a separate tracked core row. Runtime normal integration is e68cf; wire/schema/client15 unchanged per producer1346, exact producer review remains separate.
 core open: 6 tracked:5 checkpoint cases and1 distinct proposal inverse failure. Actual47b and refreshed acf have152 required PASS,4 fork FAIL,1 managed D13 UNKNOWN. Existing D23 covers both timing originals170 and213; unchanged visibly failing. Refreshed acf/e68 exact159 result matches; actualhome equivalence1415 pending. No final-tuple closure claim.
@@ -89,7 +91,7 @@ Admission: D56 drops Farm venue/source access. Historical403 and automatic refus
 Disk: 9.54GB free before new workers. Recycled finished capture-export1055. G2-open-commit recycle refused DIRTY; left untouched. Sweep3 removed0; compaction packed0 and compressed2 old logs through existing helpers. Target15GB where reachable; no new heavy below8.5GB.
 Blockers: Runtime — publish D61 authenticated history recorder_abi exact field/slot and source qualification. Consumer Sol1417 proceeds in parallel; no orchestrator decision remains owed.
 Blockers: Agent — upstream full1621 running is the sole heavy body; exact D54 comparison and final full follow its actual terminal result. D13 input remains UNKNOWN under existing admission hold.
-Next ready: P4 home binding1415 and exact proposal inverse wholepath1415. Baseline1621 sole heavy body continues. D61 consumer Sol1417 proceeds alongside Runtime producer; no independent ready row waits.
-live 0 / cap 6; ready-undispatched 0. Latest received dispatcher14:14:52Z reports0; two Luna1415 and HARD Sol1417 are dispatched after it. Sol exception is D61 authenticated custody after securityFAIL. Header lag disclosed.
+Next ready: P4 home binding1415, proposal inverse author1421 and baseline comparison1420. Baseline1621 sole heavy body continues. D61 consumer Sol1417 proceeds alongside Runtime producer; no independent ready row waits.
+live 3 / cap 6; ready-undispatched 0. Dispatcher14:17:48Z reports1 Sol/2 Luna; comparison1420 and author1421 dispatched after, wholepath1415 finished. HARD Sol1417 is D61 authenticated custody after securityFAIL.
 Evidence: [Rollup](../../design/agt-F-d54-current-rollup-return-1343.json), [U2 author](../../workers/agt-U2-final-amend-1336/report.md), [ABI whole path](../../workers/agt-R2-ABI-whole-path-1354/report.md).
-Inbox read through Runtime1400 source and exact-file handbacks. Both asks have owned rows; no dependency waits unassigned. Last pass 2026-10-24T14:06:44Z.
+Inbox read through App1404 adoption ask and ORCH D61. App ask answered by actual5492 receipt1419; D61 decision cleared immediately and consumer1417 active. Both asks have owned rows; no dependency waits unassigned. Last pass 2026-10-24T14:06:44Z.
