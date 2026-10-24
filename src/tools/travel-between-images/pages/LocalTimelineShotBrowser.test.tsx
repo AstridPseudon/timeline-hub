@@ -25,7 +25,7 @@ vi.mock('../components/VideoGallery/ShotListDisplay.tsx', () => ({
 
 vi.mock('./ShotEditorView.tsx', () => ({
   ShotEditorView: ({ shotToEdit, canonicalOccurrence, canonicalShotComposition, onClose, ...props }: { shotToEdit: { name: string; images?: Array<{ id: string }> }; canonicalOccurrence?: { occurrenceId: string; stableDeepLink: string }; canonicalShotComposition?: unknown; onClose?: () => void }) => {
-    mocks.shotEditorProps(props);
+    mocks.shotEditorProps({ canonicalShotComposition, ...props });
     const navigate = useNavigate();
     const location = useLocation();
     return (
@@ -199,9 +199,7 @@ describe('LocalTimelineShotBrowser', () => {
     expect(screen.getByTestId('location')).toHaveTextContent('/tools/video-editor?project=project-001&timeline=document-primary');
   });
 
-  it('forwards the parent occurrence session and current-data callback to the shot editor', async () => {
-    const occurrenceAddMediaPort = { capture: vi.fn(), finish: vi.fn(), submit: vi.fn() };
-    const getOccurrenceAddMediaCurrent = vi.fn(() => null);
+  it('mounts the canonical occurrence owner and Runtime saver for the shot editor', async () => {
     const shotCompositionAdapter = createShotCompositionAdapter({
       load: async () => fixture,
     });
@@ -215,8 +213,6 @@ describe('LocalTimelineShotBrowser', () => {
             timelineRef="document-primary"
             shotCompositionAdapter={shotCompositionAdapter}
             shotRef="project/project-001/document/document-primary/shot/shot-alpha/revision/rev-a/occurrence/occ-1"
-            occurrenceAddMediaPort={occurrenceAddMediaPort}
-            getOccurrenceAddMediaCurrent={getOccurrenceAddMediaCurrent}
           />
         </MemoryRouter>
       </QueryClientProvider>,
@@ -224,8 +220,9 @@ describe('LocalTimelineShotBrowser', () => {
 
     expect(await screen.findByRole('heading', { name: 'shot-alpha' })).toBeInTheDocument();
     expect(mocks.shotEditorProps).toHaveBeenCalledWith(expect.objectContaining({
-      occurrenceAddMediaPort,
-      getOccurrenceAddMediaCurrent,
+      canonicalShotComposition: shotCompositionAdapter,
+      timelineDataProvider: expect.anything(),
+      onCanonicalCompositionPublished: expect.any(Function),
     }));
   });
 
