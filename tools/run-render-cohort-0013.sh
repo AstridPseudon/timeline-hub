@@ -4,6 +4,7 @@ set -eu
 MODE=${1:-run}
 case "$MODE" in
     run|preflight) ;;
+    tests/*) MODE=selected ;;
     *) printf '%s\n' 'usage: run-render-cohort-0013.sh [run|preflight]' >&2; exit 2 ;;
 esac
 
@@ -11,20 +12,24 @@ esac
 # producer remains the existing canonical render executor.
 WORKER=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-render-managed-0013
 EVIDENCE="$WORKER/evidence"
+[ "$MODE" = selected ] && EVIDENCE="$WORKER/evidence-path-node-five"
 mkdir -p "$EVIDENCE"
 CHILD=/home/user/work/bench-store/entries/child-c886d448c07fe72421bfbc708db0dc9399c2833a66b7dadc67625a3df0d4da0e
 PYTHON="$CHILD/bin/python"
 RUNTIME=/home/user/work/wt/rt-pin-8ea0766f
 PROFILE=/home/user/work/runtimes/agent-remotion-v3-819acf-1110
 NODE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node
+NODE_BIN=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin
 SCHEMA=/home/user/work/venv-agent/lib/python3.13/site-packages
 OUTCOMES=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-qualified-full-sol-2225/outcomes-.test-agent-full-post-g5-2225-1023222822-25691-17158.jsonl.gz
 INDEX=/home/user/work/bench-store/index.json
-export CHILD RUNTIME PROFILE NODE SCHEMA OUTCOMES INDEX
+export CHILD RUNTIME PROFILE NODE NODE_BIN SCHEMA OUTCOMES INDEX
 
 export HOME=/root LANG=C.UTF-8 LC_ALL=C.UTF-8 PYTHONDONTWRITEBYTECODE=1
 export PYTHONPATH="$PWD:$RUNTIME"
-export PATH="$CHILD/bin:/usr/bin:/bin"
+# Keep the managed child environment first, while making the existing pinned
+# Node toolchain visible to both this caller and every managed-child process.
+export PATH="$CHILD/bin:$NODE_BIN:/usr/bin:/bin"
 export ASTRID_HOST_EXECUTION_PROFILE=installed
 export ASTRID_RUNTIME_CHECKOUT="$RUNTIME"
 export ASTRID_REMOTION_PROJECT_DIR="$PROFILE"
@@ -51,6 +56,7 @@ child = Path(os.environ["CHILD"]).resolve()
 runtime = Path(os.environ["RUNTIME"]).resolve()
 profile = Path(os.environ["PROFILE"]).resolve()
 node = Path(os.environ["NODE"]).resolve()
+node_bin = Path(os.environ["NODE_BIN"]).resolve()
 schema = Path(os.environ["SCHEMA"]).resolve()
 index_path = Path(os.environ["INDEX"])
 direct_files = {
@@ -128,16 +134,27 @@ assert child == Path("/home/user/work/bench-store/entries/child-c886d448c07fe724
 assert runtime == Path("/home/user/work/wt/rt-pin-8ea0766f")
 assert profile == Path("/home/user/work/runtimes/agent-remotion-v3-819acf-1110")
 assert schema.is_dir() and node.is_file() and os.access(node, os.X_OK)
+assert node.parent == node_bin
 assert os.environ.get("PYTHONNOUSERSITE") is None
 for name in ("ASTRID_NORMAL_RUNTIME_SOURCE", "ASTRID_PARENT_MEDIA_SEED_RUNTIME", "ASTRID_WORD_ANCHOR_SEED_RUNTIME", "ASTRID_RUNTIME_SOURCE_MANIFEST"):
     assert name not in os.environ, name
-assert subprocess.run([str(node), "--version"], check=True, capture_output=True, text=True).stdout.strip() == "v20.19.4"
+path_node = Path(shutil.which("node") or "")
+path_npx = Path(shutil.which("npx") or "")
+assert path_node == node, (path_node, node, os.environ["PATH"])
+assert path_npx == node_bin / "npx", (path_npx, node_bin, os.environ["PATH"])
+node_version = subprocess.check_output([str(path_node), "--version"], text=True).strip()
+npx_version = subprocess.check_output([str(path_npx), "--version"], text=True).strip()
+assert node_version == "v20.19.4"
+assert npx_version == "10.8.2"
 agent = git_facts(root)
 runtime_git = git_facts(runtime)
 if agent["head"] != "c36ca8c94b695b0e25b7d42c89f194661f187423":
     parent = subprocess.check_output(["git", "rev-parse", "HEAD^1"], cwd=root, text=True).strip()
     parent_tree = subprocess.check_output(["git", "rev-parse", "HEAD^1^{tree}"], cwd=root, text=True).strip()
-    assert parent == "c36ca8c94b695b0e25b7d42c89f194661f187423" and parent_tree == "50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92"
+    assert {
+        "c36ca8c94b695b0e25b7d42c89f194661f187423": "50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92",
+        "a8b737d9a5bee638f30cb947b5e58edccb0954f8": "654e2052922b54c321f066242b7b713b3c73b2d1",
+    }.get(parent) == parent_tree
 assert runtime_git == {"head": "8ea0766f5e9fb23cea26c7398770a8aaac06b258", "tree": "6047ac3033c3594b8f83db3afd8bb2c47cafa6d6", "status": ""}
 assert {rel: digest(root / rel) for rel in source_files} == source_hashes
 body_hashes = {rel: ast_hashes(root / rel, body_names[rel]) for rel in source_files}
@@ -173,7 +190,7 @@ assert all(tools.values()), tools
 font = subprocess.check_output([tools["fc-match"], "-f", "%{file}\\n", "sans"], text=True).splitlines()[0]
 assert Path(font).is_file(), font
 media = {name: {"path": path, "version": subprocess.check_output([path, "-version"], text=True, stderr=subprocess.STDOUT).splitlines()[0]} for name, path in tools.items() if name != "fc-match"}
-out.write_text(json.dumps({"status": "passed", "source": {"agent": agent, "runtime": runtime_git, "source_hashes": source_hashes, "body_hashes": body_hashes}, "bench_store": {"index": str(index_path), "entry": entry, "registration": registration}, "environment": {"mode": "installed", "child": str(child), "child_site": str(child / "lib/python3.13/site-packages"), "runtime": str(runtime), "profile": str(profile), "node": str(node), "node_version": "v20.19.4", "schema_path": str(schema), "PYTHONPATH": os.environ["PYTHONPATH"], "PYTHONNOUSERSITE": None}, "profile": {"package_lock_sha256": digest(lock), "composition_archive_sha256": digest(archive), "composition_version": "0.0.14", "inventory": profile_facts(), "registry": registry_facts()}, "inputs": {"executables": media, "font": {"path": font, "sha256": digest(font)}}, "inventory": {"archive": os.environ["OUTCOMES"], "archive_sha256": digest(Path(os.environ["OUTCOMES"])), "failed_original_nodes": 267, "selected_nodes": selected, "counts": {"direct": 14, "sdk_conformance": 6, "export_adapter": 1}}, "supported_invocation": {"parent": "source checkout c36ca8c94b695b0e25b7d42c89f194661f187423", "child": "installed package via -I", "source_required_tests": selected, "note": "The parent caller uses the source checkout while the managed child proves installed identity; no fixture identity was forced."}}, indent=2, sort_keys=True) + "\n")
+out.write_text(json.dumps({"status": "passed", "source": {"agent": agent, "runtime": runtime_git, "source_hashes": source_hashes, "body_hashes": body_hashes}, "bench_store": {"index": str(index_path), "entry": entry, "registration": registration}, "environment": {"mode": "installed", "child": str(child), "child_site": str(child / "lib/python3.13/site-packages"), "runtime": str(runtime), "profile": str(profile), "node": str(node), "node_bin": str(node_bin), "node_path": str(path_node), "node_version": node_version, "npx_path": str(path_npx), "npx_version": npx_version, "PATH": os.environ["PATH"], "schema_path": str(schema), "PYTHONPATH": os.environ["PYTHONPATH"], "PYTHONNOUSERSITE": None}, "profile": {"package_lock_sha256": digest(lock), "composition_archive_sha256": digest(archive), "composition_version": "0.0.14", "inventory": profile_facts(), "registry": registry_facts()}, "inputs": {"executables": media, "font": {"path": font, "sha256": digest(font)}}, "inventory": {"archive": os.environ["OUTCOMES"], "archive_sha256": digest(Path(os.environ["OUTCOMES"])), "failed_original_nodes": 267, "selected_nodes": selected, "counts": {"direct": 14, "sdk_conformance": 6, "export_adapter": 1}}, "supported_invocation": {"parent": "source checkout c36ca8c94b695b0e25b7d42c89f194661f187423", "child": "installed package via -I", "source_required_tests": selected, "note": "The parent caller uses the source checkout while the managed child proves installed identity; no fixture identity was forced."}}, indent=2, sort_keys=True) + "\n")
 print("selected 21 rendering nodes from actual 267-call-failure inventory")
 PY
 
@@ -215,6 +232,26 @@ if [ "$MODE" = preflight ]; then
 fi
 
 EXPECTED="$EVIDENCE/expected-nodeids.txt"
+if [ "$MODE" = selected ]; then
+    "$PYTHON" - "$EXPECTED" "$@" <<'PY'
+import sys
+from pathlib import Path
+
+expected_path = Path(sys.argv[1])
+requested = set(sys.argv[2:])
+selected = {
+    "tests/packs/rendering/test_threejs_backend.py::test_threejs_identity_invariants_never_claim_remotion",
+    "tests/packs/rendering/test_threejs_backend.py::test_threejs_own_namespace_config_is_strict",
+    "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_accepts_empty_and_exact_text_fields",
+    "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_accepts_window_and_rejects_fps_mismatch",
+    "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_unsupported_timelines_with_clip_reasons",
+}
+assert requested == selected, {"requested": sorted(requested), "required": sorted(selected)}
+original = set(expected_path.read_text().splitlines())
+assert selected <= original, {"missing_from_original": sorted(selected - original)}
+expected_path.write_text("\n".join(sorted(selected)) + "\n")
+PY
+fi
 "$PYTHON" -P - "$EXPECTED" > "$EVIDENCE/collect.txt" 2>&1 <<'PY'
 import sys
 from pathlib import Path
@@ -226,7 +263,7 @@ from pathlib import Path
 import sys
 actual = {line.strip() for line in Path(sys.argv[1]).read_text().splitlines() if line.startswith("tests/")}
 expected = set(Path(sys.argv[2]).read_text().splitlines())
-assert actual == expected and len(actual) == 21, {"actual": sorted(actual), "expected": sorted(expected)}
+assert actual == expected, {"actual": sorted(actual), "expected": sorted(expected)}
 print(f"exact collect: {len(actual)} nodeids")
 PY
 
@@ -329,6 +366,7 @@ assert {case["nodeid"] for case in cases} == expected
 Path(sys.argv[2]).write_text(json.dumps({"selected": len(cases), "cases": cases, "source_cause": {"direct": "managed-child environment owner when runtime_protocol stderr is observed; preserve renderer predicates", "sdk_conformance": "missing result producer remains unconfirmed unless child stderr/result path identifies it", "export_adapter": "canonical executor failure remains unconfirmed unless child stderr/result path identifies it"}}, indent=2, sort_keys=True) + "\n")
 PY
 
-printf 'pytest_exit=%s\nselected=21\n' "$test_status" > "$EVIDENCE/result.txt"
-printf 'render cohort 0013: pytest_exit=%s; phase outcomes and longrepr retained in %s\n' "$test_status" "$EVIDENCE/outcome-map.json"
+selected_count=$(wc -l < "$EXPECTED")
+printf 'pytest_exit=%s\nselected=%s\n' "$test_status" "$selected_count" > "$EVIDENCE/result.txt"
+printf 'render cohort 0013: pytest_exit=%s; selected=%s; phase outcomes and longrepr retained in %s\n' "$test_status" "$selected_count" "$EVIDENCE/outcome-map.json"
 exit "$test_status"
