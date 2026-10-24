@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T12:37:22Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 0m -->
-# runtime board, 2026-10-24T12:37:17Z
+<!-- main | 2026-10-24T12:40:20Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 0m -->
+# runtime board, 2026-10-24T12:39:42Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -109,7 +109,7 @@ Runtime full: Zero of the 36 original failures remain open at their retained int
 
 FREEZE, D54 and D56: Runtime upstream and canonical D39 producer are home at becfe. Agent upstream and D39 are home, with current core repairs owned by Agent. App U3b/D39 is home d993/tree3311 at exact reviewed5a9ff source; same checkpoint16138 is running. Old P2/P3 GO hold is superseded. All further gating runs use the final integrated tuple; no D41 backport or pinned repeat. Runtime owns final build and ZIP on main, after P1–P5 and core suites pass. Existing final-builder route is being prepared by1219. One delivery-time live-main refresh per repo remains D51.
 
-Venues under D56: each lane uses its own service. Composition final full runs on main; prior Viewing635f checkpoint86PASS remains historical. Farm and schema-access venue work stop, with no new child, preflight, checkpoint or source route. Proof finishes in-flight items and hands open work to App; App owns P2/P3 execution and one independent verdict per run. Viewing stands down. No final integrated tuple or final gate PASS is claimed.
+Venues under D56: each lane uses its own service. Composition final full runs on main; prior Viewing635f checkpoint86PASS remains historical. Farm and schema-access venue work stop, with no new child, preflight, checkpoint or source route. Proof finishes in-flight items and hands open work to App; App owns P2/P3 execution and one independent verdict per run. Viewing stands down. No final integrated tuple or final gate PASS is claimed. D55b now fixes all eight original P2 gestures as core: every gesture must pass, no known-gap gesture cut.
 
 core open: 0 confirmed Runtime originals; regressions: 0 confirmed Runtime originals. Census1219 verified original36closed/0open/0unaccounted. Final-tuple qualification remains pending. One provider-completion incident has unknown cross-lane cause and remains visibly failed, not an allowed known gap. Two new core-five redo failures are Agent-owned stage-custody gaps; Agent core count owns them. All known-gap delivery claims require D54a evidence, and any caused regression is fixed or reverted regardless of core status.
 
@@ -137,6 +137,6 @@ Later: D47 memo and proof-pin work remain held until after delivery; nine state 
 
 Disk: Sweep3 removed zero directories; compaction packed zero and compressed six old logs. Core-five author tree was already recycled. About9GB free, above main8GB heavy floor; D34 broader cleanup stays held.
 
-Pass 2026-10-24T12:26:50Z: Runtime census1219 complete with core0/regression0confirmed and provider incident stillunknown. Main delivery prep1219 found stale v1 gates/extras, obsolete service hash and verifier clones outsideTMPDIR. Split into independent builder/docs/service Luna1226; no duplicate classification. Core-five source handback complete; Agent owns two redo failures. D56 finaltuple-only policy remains.
+Pass 2026-10-24T12:39:42Z: All final input prose and reviewedbuilder f25d are installed and smokequalified. Service firstreturn1236 corrects fullcommand environment, actualrun tupleguards and private serviceTMPDIR. App finalhomed993 consumed and integrationwait cleared. D55b all8P2 gesturescore applied. Exact Agent4e7f source/XML still absent onnormalhub; owner asked once and spareclassificationcapacity offered. No source or original run duplicated.
 
 live 1 / cap 6; ready-undispatched 0. Source/XML comparison and finaltuple service installation remain blocked on actual inputs.
