@@ -225,6 +225,125 @@ def _assert_legacy_guard(error, reason="destination_occupied"):
     }
 
 
+def _historical_shared_request(*, project_id, timeline_id, base_revision_id,
+                               base_publication_id, source_ref, source_occurrence_id,
+                               occurrence_id, idempotency_key, origin, dry_run=False):
+    """Prepare the held Agent carrier without invoking a provider.
+
+    ``source_ref`` is supplied by the authenticated source-creation setup.  In
+    particular, this helper must not manufacture a source document or turn a
+    historical pin into a current-head lookup.  The eventual Runtime acceptance
+    is intentionally left to the reviewed Agent handoff.
+    """
+    source_keys = ("project_id", "timeline_id", "revision_id", "publication_id", "content_digest")
+    assert set(source_ref) == set(source_keys)
+    assert source_ref["project_id"] == project_id
+    assert source_ref["timeline_id"] != timeline_id
+    command = {
+        "schema_version": 1,
+        "op": "occurrence.place-shared",
+        "version": "1",
+        "select": "parent",
+        "args": {
+            "occurrence_id": occurrence_id,
+            "on": 12,
+            "source_ref": copy.deepcopy(source_ref),
+            "source_occurrence_id": source_occurrence_id,
+        },
+        "created": ["occurrence:" + occurrence_id],
+    }
+    label = "Historical shared placement (" + origin + ")"
+    steps = [{
+        "id": "historical-share",
+        "label": label,
+        "intent": "Place authenticated historical occurrence",
+        "tags": ["occupancy", "historical"],
+        "command_ordinals": [0],
+        "patch": [],
+        "reads": [],
+    }]
+    body = {
+        "api_version": 1,
+        "project_id": project_id,
+        "timeline_id": timeline_id,
+        "base_revision_id": base_revision_id,
+        "base_publication_id": base_publication_id,
+        "commands": [command],
+        "label": label,
+        "steps": steps,
+        "merge": "fields",
+        "reads": [],
+        "dry_run": dry_run,
+        "source": {"via": "python", "detail": "legacy occupancy historical preparation"},
+        "rationale": "Preserve authenticated historical occurrence occupancy",
+        "group_id": "legacy-occupancy",
+    }
+    # Runtime receives this key in the existing commit header/call argument,
+    # not in the C0v2 JSON body.
+    return body, idempotency_key
+
+
+@pytest.mark.parametrize("origin", ["inline", "reference"])
+def test_historical_shared_carrier_preparation_preserves_authenticated_pin(origin):
+    """Map both held historical origins to the existing v2 carrier only.
+
+    This is an offline fixture test.  It deliberately does not exercise the
+    known-held provider body; that acceptance remains NOT QUALIFIED until the
+    reviewed Agent source is handed off.
+    """
+    source_ref = {
+        "project_id": "project-1",
+        "timeline_id": "source" if origin == "inline" else "reference-source",
+        "revision_id": "accepted-source-revision",
+        "publication_id": "accepted-source-publication",
+        "content_digest": "sha256:" + ("1" if origin == "inline" else "2") * 64,
+    }
+    body, idempotency_key = _historical_shared_request(
+        project_id="project-1",
+        timeline_id="destination",
+        base_revision_id="destination-base-revision",
+        base_publication_id="destination-base-publication",
+        source_ref=source_ref,
+        source_occurrence_id="source-occurrence",
+        occurrence_id="historical-copy",
+        idempotency_key="historical-shared-" + origin,
+        origin=origin,
+    )
+    preview, preview_key = _historical_shared_request(
+        project_id="project-1",
+        timeline_id="destination",
+        base_revision_id="destination-base-revision",
+        base_publication_id="destination-base-publication",
+        source_ref=source_ref,
+        source_occurrence_id="source-occurrence",
+        occurrence_id="historical-copy",
+        idempotency_key="historical-preview-" + origin,
+        origin=origin,
+        dry_run=True,
+    )
+    command = body["commands"][0]
+    assert set(body) == {
+        "api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id",
+        "commands", "label", "steps", "merge", "reads", "dry_run", "source", "rationale",
+        "group_id",
+    }
+    assert command["select"] == "parent"
+    assert command["args"]["source_ref"] == source_ref
+    assert set(command["args"]["source_ref"]) == {
+        "project_id", "timeline_id", "revision_id", "publication_id", "content_digest",
+    }
+    assert command["args"]["source_occurrence_id"] == "source-occurrence"
+    assert command["created"] == ["occurrence:historical-copy"]
+    assert idempotency_key == "historical-shared-" + origin
+    assert body["steps"][0]["patch"] == []
+    assert body["steps"][0]["reads"] == []
+    assert body["reads"] == []
+    assert body["dry_run"] is False
+    assert preview["commands"] == body["commands"]
+    assert preview["dry_run"] is True
+    assert preview_key == "historical-preview-" + origin
+
+
 def _seed_collision(service, commits, project, *, foreign=False, archived=False):
     owner = service.create_project({"slug": "private", "name": "Private film"})["id"] if foreign else project
     _seed_occupied(service, commits, owner, "owner", archived=archived)
