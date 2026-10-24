@@ -1,6 +1,7 @@
 """Finite, private recovery proof. Legacy custody is deliberately not invented."""
 import hashlib
 import importlib.util
+import inspect
 import json
 import os
 from pathlib import Path
@@ -104,6 +105,13 @@ exit "$rc"
         return subprocess.run(argv, env=self.env(empty),
                               pass_fds=fds, capture_output=True, text=True, check=False)
 
+    def inject(self, source):
+        # Fault injection only in the private copy executed by the real branch.
+        helper = self.orch / 'bin/bench_store.py'
+        helper.write_text(helper.read_text().replace(
+            "if __name__ == '__main__':", inspect.getsource(tree) + '\n' + source
+            + "\nif __name__ == '__main__':"))
+
     def entry(self, number):
         # Synthetic identities describe only new private Store births, never a
         # reconstructed tuple for any of the seven legacy directories above.
@@ -141,6 +149,171 @@ exit "$rc"
 
 
 class LegacyRecoveryTests(unittest.TestCase):
+    def test_preflight_races_refuse_before_transaction_writes(self):
+        for empty in (False, True):
+            for kind in ('root', 'parent', 'root-permission', 'parent-permission', 'marker'):
+                with self.subTest(env_i=empty, kind=kind):
+                    f = Fixture()
+                    f.pending_eviction(empty=empty)
+                    target = Path(f.old['path'])
+                    observation = f.home / 'after-adversary.json'
+                    actions = {
+                        'root': "target.rename(target.with_name('displaced')); target.mkdir()",
+                        'parent': "target.parent.rename(target.parent.with_name('displaced')); target.parent.mkdir()",
+                        'root-permission': 'target.chmod(0o500)',
+                        'parent-permission': 'target.parent.chmod(0o500)',
+                        'marker': "(target / '.bench-owner.json').write_text('{}')",
+                    }
+                    f.inject(f'''
+def race(self, point):
+    if point != 'recovery:preflight':
+        return
+    target = Path({str(target)!r})
+    {actions[kind]}
+    Path({str(observation)!r}).write_text(json.dumps([tree(self.root), tree(self.tests)]))
+Store._checkpoint = race
+''')
+                    result = f.dispatch(empty=empty)
+                    self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                    self.assertIn('REFUSED:', result.stdout)
+                    self.assertEqual(json.loads(json.dumps([tree(f.root), tree(f.tests)])),
+                                     json.loads(observation.read_text()))
+                    self.assertEqual(f.legacy(), f.legacy_before)
+
+    def test_deletion_consumes_preflight_descriptor(self):
+        for empty in (False, True):
+            with self.subTest(env_i=empty):
+                f = Fixture()
+                f.pending_eviction(empty=empty)
+                f.inject('''
+original_open = os.open
+def checkpoint(self, point):
+    if point == 'recovery:preflight':
+        os.open = no_reopen
+def no_reopen(path, flags, *args, **kwargs):
+    check(not flags & os.O_DIRECTORY or str(path).endswith('/tests')
+          or str(path).endswith('/bench-store'), 'deletion reopened an authority directory')
+    return original_open(path, flags, *args, **kwargs)
+Store._checkpoint = checkpoint
+''')
+                result = f.dispatch(empty=empty)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertFalse(Path(f.old['path']).exists())
+                f.protected()
+
+    def test_own_readonly_nested_payload_recovers(self):
+        for empty in (False, True):
+            with self.subTest(env_i=empty):
+                f = Fixture()
+                f.pending_eviction(empty=empty)
+                target = Path(f.old['path'])
+                child = target / 'readonly-child'
+                child.mkdir()
+                (child / 'payload').write_text('private run-created content')
+                child.chmod(0o500)
+                target.chmod(0o500)
+                result = f.dispatch(empty=empty)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertFalse(target.exists())
+                f.protected()
+
+    def test_final_rmdir_substitution_counterexample(self):
+        # This is an acceptance FAILURE, recorded explicitly rather than claiming
+        # descriptor-relative rmdir provides an atomic inode comparison.
+        for empty in (False, True):
+            with self.subTest(env_i=empty):
+                f = Fixture()
+                f.pending_eviction(empty=empty)
+                target = Path(f.old['path'])
+                displaced = f.home / 'displaced-empty-victim'
+                observation = f.home / 'replacement-inode'
+                f.inject(f'''
+original_rmdir = os.rmdir
+def substitute(path, *args, **kwargs):
+    if str(path) in ({str(target)!r}, {target.name!r}):
+        target = Path({str(target)!r})
+        target.rename({str(displaced)!r})
+        target.mkdir()
+        Path({str(observation)!r}).write_text(str(target.stat().st_ino))
+    return original_rmdir(path, *args, **kwargs)
+os.rmdir = substitute
+''')
+                result = f.dispatch(empty=empty)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertTrue(observation.exists())
+                self.assertTrue(displaced.exists())
+                self.assertFalse(target.exists(), 'counterexample no longer reproduces; qualify the fix')
+                self.assertFalse(f.store.journal.exists())
+                f.protected()
+
+    def test_late_replacement_refusal_has_already_written_counterexample(self):
+        for empty in (False, True):
+            with self.subTest(env_i=empty):
+                f = Fixture()
+                f.pending_eviction(empty=empty)
+                target = Path(f.old['path'])
+                displaced = f.home / 'late-displaced-victim'
+                before_payload = tree(target)
+                before_index = (f.root / 'index.json').read_bytes()
+                before_suites = (f.tests / 'suites.conf').read_bytes()
+                f.inject(f'''
+original_projection = Store._apply_projection
+def substitute(self, projections, forward):
+    target = Path({str(target)!r})
+    target.rename({str(displaced)!r})
+    target.mkdir()
+    return original_projection(self, projections, forward)
+Store._apply_projection = substitute
+''')
+                result = f.dispatch(empty=empty)
+                self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                self.assertIn('REFUSED: deletion root replaced', result.stdout)
+                self.assertNotEqual((f.root / 'index.json').read_bytes(), before_index)
+                self.assertNotEqual((f.tests / 'suites.conf').read_bytes(), before_suites)
+                self.assertTrue(f.store.journal.exists())
+                self.assertEqual(tree(displaced), before_payload)
+                f.protected()
+
+    def test_parent_rename_at_rmdir_does_not_delete_replacement(self):
+        for empty in (False, True):
+            with self.subTest(env_i=empty):
+                f = Fixture()
+                f.pending_eviction(empty=empty)
+                target = Path(f.old['path'])
+                displaced = f.home / 'displaced-entries'
+                f.inject(f'''
+original_rmdir = os.rmdir
+def substitute(path, *args, **kwargs):
+    if str(path) == {target.name!r}:
+        target = Path({str(target)!r})
+        target.parent.rename({str(displaced)!r})
+        target.parent.mkdir()
+        target.mkdir()
+    return original_rmdir(path, *args, **kwargs)
+os.rmdir = substitute
+''')
+                result = f.dispatch(empty=empty)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertTrue(target.exists())
+                self.assertFalse((displaced / target.name).exists())
+                self.assertEqual(tree(displaced / Path(f.current['path']).name), f.current_before)
+                self.assertEqual(f.legacy(), f.legacy_before)
+
+    def test_queue_directory_substitution_counterexample(self):
+        for empty in (False, True):
+            with self.subTest(env_i=empty):
+                f = Fixture()
+                pending = f.queue.parent
+                pending.rename(f.home / 'displaced-pending')
+                foreign = f.home / 'foreign-pending'
+                foreign.mkdir()
+                pending.symlink_to(foreign, target_is_directory=True)
+                before = tree(f.root), tree(f.tests), f.legacy()
+                result = f.request('--recover-store', empty=empty)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertEqual((foreign / f.queue.name).read_bytes(), b'BENCHRECOVER\n')
+                self.assertEqual((tree(f.root), tree(f.tests), f.legacy()), before)
+
     def test_request_dispatch_recovery_normal_and_env_i(self):
         for empty in (False, True):
             with self.subTest(env_i=empty):

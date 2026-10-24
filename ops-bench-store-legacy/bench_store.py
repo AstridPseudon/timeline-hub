@@ -366,7 +366,12 @@ class Store:
             self._owned_dir(path, entry)
         else:
             check(not list(path.iterdir()), 'missing deletion marker')
-        root_fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        parent_fd = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        try:
+            root_fd = os.open(path.name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=parent_fd)
+        except BaseException:
+            os.close(parent_fd)
+            raise
         try:
             root_info = os.fstat(root_fd)
             check([root_info.st_dev, root_info.st_ino] == entry['node'] and root_info.st_uid == os.getuid(), 'deletion directory replaced/foreign')
@@ -384,14 +389,42 @@ class Store:
                         finally:
                             os.close(child_fd)
             validate_children(root_fd)
-            yield root_fd
+            yield root_fd, parent_fd, os.fstat(root_fd), os.fstat(parent_fd)
         finally:
             os.close(root_fd)
+            os.close(parent_fd)
 
-    def _delete_owned(self, path, entry):
-        with self._deletion_authority(path, entry) as root_fd:
-            if root_fd is None:
-                return
+    def _revalidate_deletion(self, path, entry, authority):
+        for directory, node in self.owner['directories'].items():
+            check(inode(physical(directory)) == node, 'store directory replaced')
+        if authority is None:
+            check(not path.exists() and not path.is_symlink(), 'deletion target appeared')
+            return
+        root_fd, parent_fd, root_info, parent_info = authority
+        check(inode(physical(path.parent)) == [parent_info.st_dev, parent_info.st_ino], 'deletion parent replaced')
+        current = os.stat(path.name, dir_fd=parent_fd, follow_symlinks=False)
+        check([current.st_dev, current.st_ino] == entry['node'] == inode(path), 'deletion root replaced')
+        check(os.fstat(root_fd).st_mode == root_info.st_mode and current.st_mode == root_info.st_mode
+              and os.fstat(parent_fd).st_mode == parent_info.st_mode, 'deletion permissions changed')
+        check(inode(self.root / 'locks' / self._entry_id(entry['component'], entry['key'])) == entry['lock'], 'lease inode changed')
+        if '.bench-owner.json' in os.listdir(root_fd):
+            fd = os.open('.bench-owner.json', os.O_RDONLY | os.O_NOFOLLOW, dir_fd=root_fd)
+            try:
+                info = os.fstat(fd)
+                check(stat.S_ISREG(info.st_mode) and info.st_uid == os.getuid() and info.st_nlink == 1, 'unsafe metadata file')
+                with os.fdopen(fd, encoding='utf-8', closefd=False) as stream:
+                    marker = json.load(stream)
+                check(marker == {'owner': self.owner['id'], 'component': entry['component'],
+                                 'key': entry['key'], 'identity': entry['identity']}, 'bench marker mismatch')
+            finally:
+                os.close(fd)
+        else:
+            check(not os.listdir(root_fd), 'missing deletion marker')
+
+    def _delete_owned(self, path, entry, authority):
+        self._revalidate_deletion(path, entry, authority)
+        if authority is not None:
+            root_fd, parent_fd, _, _ = authority
             marker = path / '.bench-owner.json'
             root_info = os.fstat(root_fd)
             self._checkpoint('deletion:validated')
@@ -433,8 +466,9 @@ class Store:
                 os.unlink('.bench-owner.json', dir_fd=root_fd)
                 os.fsync(root_fd)
             check(inode(path) == entry['node'], 'deletion root replaced')
-            path.rmdir()
-            sync_dir(path.parent)
+            # dir_fd pins the parent, but comparison and rmdir are not atomic.
+            os.rmdir(path.name, dir_fd=parent_fd)
+            os.fsync(parent_fd)
             self._checkpoint('eviction:directory')
 
     def _evict(self, before, component, incoming, current):
@@ -475,19 +509,26 @@ class Store:
                 os.close(fd)
 
     def _roll(self, journal, forward):
-        self._verify_pending_reports(journal)
-        self._apply_projection(journal['projections'], forward)
-        atomic(self.root / 'index.json', canonical(journal['after'] if forward else journal['before']))
-        self._checkpoint('index')
-        if journal['kind'] == 'eviction':
-            for eid in journal['victims']:
-                entry = journal['before']['entries'][eid]
-                self._delete_owned(Path(entry['path']), entry)
-        elif journal['new']:
-            entry = journal['new']
-            for path in (Path(entry['path']), self.root / 'staging' / entry['key']):
-                self._delete_owned(path, entry)
-        self._finish_journal()
+        with contextlib.ExitStack() as stack:
+            targets = []
+            if journal['kind'] == 'eviction':
+                targets = [(Path(journal['before']['entries'][eid]['path']),
+                            journal['before']['entries'][eid]) for eid in journal['victims']]
+            elif journal['new']:
+                entry = journal['new']
+                targets = [(Path(entry['path']), entry), (self.root / 'staging' / entry['key'], entry)]
+            held = [(path, entry, stack.enter_context(self._deletion_authority(path, entry)))
+                    for path, entry in targets]
+            self._checkpoint('recovery:preflight')
+            for path, entry, authority in held:
+                self._revalidate_deletion(path, entry, authority)
+            self._verify_pending_reports(journal)
+            self._apply_projection(journal['projections'], forward)
+            atomic(self.root / 'index.json', canonical(journal['after'] if forward else journal['before']))
+            self._checkpoint('index')
+            for path, entry, authority in held:
+                self._delete_owned(path, entry, authority)
+            self._finish_journal()
 
     def _validate_transition(self, journal):
         before, after = journal['before'], journal['after']
@@ -557,19 +598,7 @@ class Store:
                 elif journal['new']:
                     e = journal['new']
                     held.append(self._lock(self._entry_id(e['component'], e['key']), e, True))
-                # Validate deletion authority before touching any projection/index.
-                # Keep these descriptors through recovery; deletion checks again.
-                with contextlib.ExitStack() as authority:
-                    targets = []
-                    if journal['kind'] == 'eviction':
-                        targets = [(Path(journal['before']['entries'][eid]['path']),
-                                    journal['before']['entries'][eid]) for eid in journal['victims']]
-                    elif journal['new']:
-                        e = journal['new']
-                        targets = [(Path(e['path']), e), (self.root / 'staging' / e['key'], e)]
-                    for path, entry in targets:
-                        authority.enter_context(self._deletion_authority(path, entry))
-                    self._roll(journal, journal['kind'] == 'eviction')
+                self._roll(journal, journal['kind'] == 'eviction')
             finally:
                 for fd in held:
                     os.close(fd)
