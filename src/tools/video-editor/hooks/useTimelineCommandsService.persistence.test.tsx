@@ -9,7 +9,7 @@ import { RUNTIME_SCHEMA_DIGEST } from '@/integrations/runtime/contract-metadata.
 import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import type { Transport } from '@/integrations/runtime/generated.ts';
-import type { CommitRequest } from '@/integrations/runtime/timeline-commit-types.ts';
+import type { CommitRequest, MediaSelection } from '@/integrations/runtime/timeline-commit-types.ts';
 import type { DataProvider, TimelineCommandBasis, TimelineCommitResult } from '../data/DataProvider.ts';
 import { VideoEditorRuntimeProvider, type VideoEditorRuntimeContextValue } from '../contexts/VideoEditorRuntimeContext.tsx';
 import { createDefaultTimelineConfig } from '../lib/defaults.ts';
@@ -33,6 +33,15 @@ const scope = { realmId: 'realm', actorId: 'actor', projectId: 'project-commit',
 const head = { revisionId: 'r0', publicationId: 'p0' };
 const runtimeHead = { projectId: scope.projectId, timelineId: scope.timelineId,
   headRevisionId: head.revisionId, headPublicationId: head.publicationId };
+
+function preparedMediaSelection(asset: string, generationId: string, variantId: string): MediaSelection {
+  const sourceMedia = asset === 'asset-source';
+  return {
+    asset, generation_id: generationId, variant_id: variantId,
+    object_id: `sha256:${(sourceMedia ? 'a' : 'c').repeat(64)}`,
+    catalog_digest: `sha256:${(sourceMedia ? 'b' : 'd').repeat(64)}`,
+  };
+}
 
 const locksDescriptor = Object.getOwnPropertyDescriptor(navigator, 'locks');
 beforeEach(() => {
@@ -203,7 +212,7 @@ describe('mounted prepared-media command persistence', () => {
       payload: {
         asset: { assetKey: 'asset-copy', mediaType: 'video', durationSeconds: 2,
           entry: { file: 'copy.mp4', type: 'video/mp4', media_id: 'media-copy', generationId: 'generation-copy' },
-          source: 'registered' },
+          source: 'registered', mediaSelection: preparedMediaSelection('asset-copy', 'generation-copy', 'variant-copy') },
         selectedTrackId: null, at: 0, afterClipId: 'anchor', forceNewTrack: false, insertAtTop: false,
       },
     } satisfies PlacePreparedMediaCommand);
@@ -236,7 +245,8 @@ describe('mounted prepared-media command persistence', () => {
         result = mounted.result.current.commands.addClip({
           preparedAsset: { assetKey: 'asset-copy', mediaType: 'video', durationSeconds: 2,
             entry: { file: 'copy.mp4', type: 'video/mp4', media_id: 'media-copy', generationId: 'generation-copy' },
-            source: 'registered' },
+            source: 'registered', mediaSelection: preparedMediaSelection('asset-copy', 'generation-copy', 'variant-copy') },
+          oldMediaSelection: preparedMediaSelection('asset-source', 'generation-source', 'variant-source'),
           trackId: 'V1', afterClipId: 'anchor', time: 0,
         });
       });
@@ -254,24 +264,19 @@ describe('mounted prepared-media command persistence', () => {
       expect(send).toHaveBeenCalledOnce();
       const [request, key] = send.mock.calls[0]!;
       expect(request).toMatchObject({ api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
-        base_revision_id: 'r0', base_publication_id: 'p0', label: 'Edit timeline', merge: 'atomic', dry_run: false,
-        source: { via: 'app' }, commands: [{ schema_version: 1, op: 'doc.patch', version: '1', select: null, created: ['parent/clip:clip-0'] }],
-        steps: [{ id: expect.any(String), label: 'Edit timeline', intent: 'Save local editor changes', tags: [], command_ordinals: [0] }],
+        base_revision_id: 'r0', base_publication_id: 'p0', label: 'Add video after clip', merge: 'fields', dry_run: false,
+        rationale: 'Duplicate selected parent video', group_id: expect.any(String), source: { via: 'app' },
+        commands: [{ schema_version: 1, op: 'clip.duplicate-media', version: '1', select: 'parent/clip:anchor',
+          args: { id: 'clip-0', old_media: preparedMediaSelection('asset-source', 'generation-source', 'variant-source'),
+            media: preparedMediaSelection('asset-copy', 'generation-copy', 'variant-copy') },
+          intent: { ownership: 'parent' }, created: ['parent/asset:asset-copy', 'parent/clip:clip-0'] }],
+        steps: [{ id: expect.any(String), label: 'Add video after clip', intent: 'Duplicate selected parent video', tags: [],
+          command_ordinals: [0], patch: [], reads: [{ kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:anchor'],
+            state: { state: 'present', value: config.clips.find((clip) => clip.id === 'anchor') } }] }],
       });
-      expect(request).not.toHaveProperty('reads');
-      expect(request.commands[0]?.args.changes).toEqual(expect.arrayContaining([
-        { op: 'list.insert', ref: 'parent', path: ['clips'], id: 'clip-0', before: { state: 'absent' },
-          value: expect.objectContaining({ id: 'clip-0', at: 3, track: 'V1', asset: 'asset-copy', from: 2, to: 6, speed: 2,
-            opacity: 0.5, effects: { glow: 1 }, transition: { type: 'crossfade', duration: 0.5, params: { opaque: [null, false] } },
-            params: { opaque: { ordered: [null, false, 0] } }, app: { opaque: { keep: null, ordered: [false, 0, ''] } } }),
-          order_before: ['anchor', 'later', 'sibling'], after_id: 'anchor' },
-        { op: 'set', ref: 'parent', path: ['clips', 'id:later', 'at'], before: { state: 'present', value: 5 }, value: 7 },
-      ]));
-      expect(request.steps?.[0]?.patch).toEqual(request.commands[0]?.args.changes);
-      expect(request.commands[0]?.args.changes).toEqual(expect.arrayContaining([
-        { op: 'set', ref: 'parent', path: ['registry', 'assets', 'asset-copy'], before: { state: 'absent' },
-          value: { file: 'copy.mp4', type: 'video/mp4', media_id: 'media-copy', generationId: 'generation-copy' } },
-      ]));
+      expect(request.reads).toEqual([{ kind: 'collection', ref: 'parent', path: ['config', 'clips'],
+        members: ['anchor', 'later', 'sibling'], order: ['anchor', 'later', 'sibling'] }]);
+      expect(request.steps?.[0]?.id).toBe(request.group_id);
       const commitCalls = transportCalls.filter((call) => call.path.endsWith('/commit'));
       expect(commitCalls).toHaveLength(1);
       const [wire] = commitCalls;
@@ -288,7 +293,7 @@ describe('mounted prepared-media command persistence', () => {
         status: 'accepted', base_revision_id: 'r0', base_publication_id: 'p0',
         previous_revision_id: 'r0', previous_publication_id: 'p0', accepted_revision_id: 'r1', rebased_onto: null,
         document_digest: fixtureDigest(accepted.canonicalDocument), commands: request.commands,
-        merge_mode: 'atomic', steps: request.steps, label: 'Edit timeline', source: { via: 'app' },
+        merge_mode: 'fields', steps: request.steps, label: 'Add video after clip', source: { via: 'app' },
       });
       expect(accepted.response.data.canonical_document).toEqual(accepted.canonicalDocument);
       expect(accepted.response.data.canonical_document.parent_revision).toMatchObject({
@@ -303,7 +308,7 @@ describe('mounted prepared-media command persistence', () => {
       expect(accepted.receipt.result).toEqual(accepted.response.data);
       const [stored] = await createCommitOutbox().list(scope);
       expect(stored.intents).toEqual([]);
-      expect(stored.accepted?.value).toMatchObject({ response: { data: { status: 'accepted', merge_mode: 'atomic' } } });
+      expect(stored.accepted?.value).toMatchObject({ response: { data: { status: 'accepted', merge_mode: 'fields' } } });
       expect(key).toBe(stored.accepted?.value && stored.accepted?.value !== null ? stored.accepted?.value.response?.receipt?.idempotency_key : undefined);
       expect(mounted.result.current.save.dataRef.current?.config.clips).toEqual(preparedData!.nextData.config.clips);
       expect(mounted.result.current.save.dataRef.current?.config.clips.find((clip) => clip.id === 'later')?.at).toBe(7);
@@ -357,7 +362,8 @@ describe('mounted prepared-media command persistence', () => {
       act(() => mounted.result.current.commands.addClip({
         preparedAsset: { assetKey: 'asset-copy', mediaType: 'video', durationSeconds: 2,
           entry: { file: 'copy.mp4', type: 'video/mp4', media_id: 'media-copy', generationId: 'generation-copy' },
-          source: 'registered' },
+          source: 'registered', mediaSelection: preparedMediaSelection('asset-copy', 'generation-copy', 'variant-copy') },
+        oldMediaSelection: preparedMediaSelection('asset-source', 'generation-source', 'variant-source'),
         trackId: 'V1', afterClipId: 'anchor', time: 0,
       }));
       expect(mounted.result.current.save.dataRef.current?.config.clips.some((clip) => clip.id === 'clip-0')).toBe(true);
@@ -384,7 +390,7 @@ describe('mounted prepared-media command persistence', () => {
       expect(wire).toMatchObject({ method: 'POST', path: `/v1/projects/${scope.projectId}/timelines/${scope.timelineId}/commit`,
         headers: { Accept: 'application/json', Authorization: 'Bearer runtime-token', 'Content-Type': 'application/json',
           'Idempotency-Key': expect.any(String) } });
-      expect(wire.body).toMatchObject({ base_revision_id: 'r0', base_publication_id: 'p0', merge: 'atomic' });
+      expect(wire.body).toMatchObject({ base_revision_id: 'r0', base_publication_id: 'p0', merge: 'fields' });
       expect((await createCommitOutbox().list(scope)).find((record) => record.ownerId === ownerId)?.pending?.outcome).toMatchObject({
         kind: 'rejected', error: { kind: 'conflict', code: 'dependency_changed',
           message: 'dependency_changed: The prepared after-anchor source changed', details: {
@@ -404,7 +410,6 @@ type MountedAfterAnchorPositiveCase = {
   expectedSource: Record<string, unknown>;
   expectedInserted: Record<string, unknown>;
   expectedLaterAt: number;
-  sourceHoldPatched?: boolean;
 };
 
 const mountedAfterAnchorPositiveCases: MountedAfterAnchorPositiveCase[] = [
@@ -435,7 +440,10 @@ const mountedAfterAnchorPositiveCases: MountedAfterAnchorPositiveCase[] = [
     configure: (config) => {
       const anchor = config.clips.find((clip) => clip.id === 'anchor')!;
       anchor.clipType = 'video';
-      anchor.hold = 0.01;
+      // The mounted editor supplies the normalized zero-hold form. The raw
+      // 0.01-to-zero legacy normalization remains covered by the dormant
+      // parent-after-anchor capture test.
+      anchor.hold = 0;
       delete anchor.from;
       delete anchor.to;
       delete anchor.speed;
@@ -443,7 +451,6 @@ const mountedAfterAnchorPositiveCases: MountedAfterAnchorPositiveCase[] = [
     expectedSource: { clipType: 'video', hold: 0 },
     expectedInserted: { clipType: 'video', hold: 0.0667 },
     expectedLaterAt: 5.0667,
-    sourceHoldPatched: true,
   },
   {
     name: 'old video with incoming transition',
@@ -486,7 +493,7 @@ describe('mounted prepared-media after-anchor positive parity', () => {
     });
   });
 
-  it.each(mountedAfterAnchorPositiveCases)('$name emits the normalized v2 doc.patch through A2', async (testCase) => {
+  it.each(mountedAfterAnchorPositiveCases)('$name emits the normalized v2 semantic command through A2', async (testCase) => {
     const config = authoredConfig();
     testCase.configure(config);
     const document = authoredDocument(config);
@@ -503,6 +510,7 @@ describe('mounted prepared-media after-anchor positive parity', () => {
         media_id: `media-${assetSuffix}`, generationId: `generation-${assetSuffix}`,
       },
       source: 'registered' as const,
+      mediaSelection: preparedMediaSelection(`asset-${assetSuffix}`, `generation-${assetSuffix}`, `variant-${assetSuffix}`),
     };
     const preparedCommand: PlacePreparedMediaCommand = {
       type: 'place-prepared-media',
@@ -541,7 +549,8 @@ describe('mounted prepared-media after-anchor positive parity', () => {
       let result: ReturnType<typeof mounted.result.current.commands.addClip>;
       act(() => {
         result = mounted.result.current.commands.addClip({
-          preparedAsset, trackId: 'V1', afterClipId: 'anchor', time: 0,
+          preparedAsset, oldMediaSelection: preparedMediaSelection('asset-source', 'generation-source', 'variant-source'),
+          trackId: 'V1', afterClipId: 'anchor', time: 0,
         });
       });
       expect(result!).toEqual({ ok: true, data: { clipId: 'clip-0', trackId: 'V1' } });
@@ -560,25 +569,19 @@ describe('mounted prepared-media after-anchor positive parity', () => {
       const [request, key] = send.mock.calls[0]!;
       expect(request).toMatchObject({
         api_version: 1, project_id: scope.projectId, timeline_id: scope.timelineId,
-        base_revision_id: 'r0', base_publication_id: 'p0', label: 'Edit timeline', merge: 'atomic', dry_run: false,
-        source: { via: 'app' }, commands: [{ schema_version: 1, op: 'doc.patch', version: '1', select: null,
-          created: ['parent/clip:clip-0'] }],
-        steps: [{ id: expect.any(String), label: 'Edit timeline', intent: 'Save local editor changes', tags: [], command_ordinals: [0] }],
+        base_revision_id: 'r0', base_publication_id: 'p0', label: 'Add video after clip', merge: 'fields', dry_run: false,
+        rationale: 'Duplicate selected parent video', group_id: expect.any(String), source: { via: 'app' },
+        commands: [{ schema_version: 1, op: 'clip.duplicate-media', version: '1', select: 'parent/clip:anchor',
+          args: { id: 'clip-0', old_media: preparedMediaSelection('asset-source', 'generation-source', 'variant-source'),
+            media: preparedAsset.mediaSelection }, intent: { ownership: 'parent' },
+          created: [`parent/asset:${preparedAsset.assetKey}`, 'parent/clip:clip-0'] }],
+        steps: [{ id: expect.any(String), label: 'Add video after clip', intent: 'Duplicate selected parent video', tags: [],
+          command_ordinals: [0], patch: [], reads: [{ kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:anchor'],
+            state: { state: 'present', value: config.clips.find((clip) => clip.id === 'anchor') } }] }],
       });
-      expect(request).not.toHaveProperty('reads');
-      const changes = request.commands[0]!.args.changes;
-      expect(changes).toEqual(expect.arrayContaining([
-        { op: 'list.insert', ref: 'parent', path: ['clips'], id: 'clip-0', before: { state: 'absent' },
-          value: expect.objectContaining({ id: 'clip-0', asset: preparedAsset.assetKey }),
-          order_before: ['anchor', 'later', 'sibling'], after_id: 'anchor' },
-        { op: 'set', ref: 'parent', path: ['clips', 'id:later', 'at'], before: { state: 'present', value: 5 },
-          value: testCase.expectedLaterAt },
-        { op: 'set', ref: 'parent', path: ['registry', 'assets', preparedAsset.assetKey], before: { state: 'absent' },
-          value: preparedAsset.entry },
-      ]));
-      expect(changes.some((change) => change.path.join('/') === 'clips/id:anchor/hold'))
-        .toBe(testCase.sourceHoldPatched ?? false);
-      expect(request.steps?.[0]?.patch).toEqual(changes);
+      expect(request.reads).toEqual([{ kind: 'collection', ref: 'parent', path: ['config', 'clips'],
+        members: ['anchor', 'later', 'sibling'], order: ['anchor', 'later', 'sibling'] }]);
+      expect(request.steps?.[0]?.id).toBe(request.group_id);
       const [wire] = transportCalls.filter((call) => call.path.endsWith('/commit'));
       expect(wire.rawBody).toBe(JSON.stringify(request));
       expect(wire.body).toEqual(request);
