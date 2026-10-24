@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T12:40:58Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 5m -->
-# app2 board, 2026-10-24T12:35Z
+<!-- app2 | 2026-10-24T12:43:10Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 0m -->
+# app2 board, 2026-10-24T12:43Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -8,7 +8,7 @@
 | P1-corpus | Real document roundtrip and merge | Luna | Complete | merged | Corpus1348 | 49 passed with15 fixtures and11 inputs. Direct provider scope; mounted proof is separate. | e6 and9729 |
 | P4 | CLI, Python, sheet, ten notes and rerun | Sol; Luna; service | Complete on recorded tuple | merged | 17739;28012;11615 | Ten notes in one commit, per-step undo/redo, restart, show/history and200-409-200 conflict rerun passed. | Agent543d andf6cda / Runtimea5d |
 | readiness-after-bootstrap | Qualify mounted readiness | App service; Proof review | D45 and current leaves passed | merged | D45; current23809 and9310 | D45 readiness passed. Current producer reports P2 readiness19.5 seconds and P3 readiness41.4 seconds; downstream failures remain. | App663 / Agent079 / Runtime37eb |
-| P2 | Eight original gestures | App service; independent Luna | Final integrated tuple under D56 | blocked:app | App owns; Proof1213 complete | Historical11933 NO-GO: exit1 in469 seconds, zero pass, three fail, five not run. Independent verdict complete. Final tuple must pass. | Historical d6ed;333b;37eb |
+| P2 | Eight original core gestures | App service; independent Luna | Final integrated tuple under D56 and D55b | blocked:app | App final caller1222; return1231 | All eight are CORE under D55b12:40. Historical11933:0 pass,3 fail,5 not run. Final tuple must pass all eight; no new Proof dispatch. | Historical d6ed;333b;37eb |
 | P2-preflight26414 | Qualify same-ID source guard failure | Independent Luna | Independent1136 complete | merged | Verdict1136; validation return1144 | Gate NO-GO;source PASS;preflightFAIL;all8 NOTRUN. Direct remote run/snapshot/provider custody UNKNOWN. Finite runner return1144 passed7+10 controls. | Actual26414 |
 | P2-26414-validation | Run semantic controls with real Vitest | Luna | Correct runner on exact source | merged | ap2-P2-26414-validation-return-1144 | Seven semantic Vitest and10 Node-native controls PASS. Prior3 types/lint/list8 reused by identity. No source edit; actual26414 stays preflight NO-GO. | Exact d6ed |
 | P3 | Original Gate5 journey | App service; independent Luna | Final integrated tuple under D56 | blocked:app | App owns; caller1213 PASS | Historical3896 NO-GO. Setup, reset and exact retry A reached; B drop and restart/undo tail not reached. Caller preparation complete; no old tuple run. | Source602f; historical079/37eb |
@@ -65,7 +65,7 @@ D56.4: Proof is folded into App. The single complete handoff is [Proof handoff](
 
 live 0 / cap 4; ready-undispatched 0. D56.4 stand-down remains in force; App owns transferred rows.
 
-core open: 4 final proof gates P1 to P4, transferred to App. Historical passes do not qualify final heads.
+core open: 4 final proof gates P1 to P4, transferred to App. P2 includes all eight original gestures, CORE under D55b12:40. Historical passes do not qualify final heads.
 regressions: UNKNOWN; App owns final gesture classification and upstream comparisons under D54a/D55a. No zero-regression claim.
 
 P1 RESULT GO remains scoped to original18792: both mounted cases passed, exit0 in141 seconds, on App f8b15af0 / Agent78738040 / Runtime2a9e347f. Independent0036 source and0040 custody passed. P1 case2 includes refusal, message, canonical rollback and zero legacy traffic. Corpus49 passed with15 real fixtures and11 inputs. Final heads must rerun P1.
@@ -76,7 +76,7 @@ P2 historical actual26414 is terminal NO-GO: exit2 in2 seconds at Agent-source-o
 
 Historical actual P2 app-P2-final-pure-integrated-1036-full-e2e-three-products-1024115551-11933 has completed producer1158 and return1207. Actual terminal11933 exit1/469 seconds,zero passed/three failed/five not run; preflight/build/native/history/readiness passed. Element Apply,popup expectedV2/receivedplate,parent receiptID mismatch are bounded failures. Producer1207 published the1260-byte Apply diagnostic and exact assertion391. Response and terminal outcome remain UNKNOWN. Independent1213 NO-GO/sourcePASS preceded this publication; no new Proof audit follows D56. Daemon and synthetic identity UNKNOWN.
 
-Historical P2 target was pure d6ed8cbda122d810d5836ebfce3c56c10e76e9b4/tree542b772e6deed676b917f857708445b7d37a5aa8 with Agent333b/Runtime37eb, actual child1016/key188546b7 and Remotion0258/819acf. App pure1036 passed695+67 tests,30 controls,11 diagnostics,three types/lint and protected identities. All eight originals remain live under D52; D55 classification belongs to App and the orchestrator. D56 requires future gates on the final integrated tuple. Caller artifact branches are not execution targets.
+Historical P2 target was pure d6ed8cbda122d810d5836ebfce3c56c10e76e9b4/tree542b772e6deed676b917f857708445b7d37a5aa8 with Agent333b/Runtime37eb, actual child1016/key188546b7 and Remotion0258/819acf. App pure1036 passed695+67 tests,30 controls,11 diagnostics,three types/lint and protected identities. All eight originals remain live under D52; D55b12:40 classifies all eight CORE and requires all eight for P2 GO. D56 requires future gates on the final integrated tuple. Caller artifact branches are not execution targets.
 
 P3 latest original3896 remains NO-GO: exit1/268 seconds. Accepted predecessor0-to5 and original reset200, A acceptance, Agent callback, ACK loss and exact retry A reached. B pointerdown followed retry; B mouse-up, restart/undo and later tail were not reached. Actual same key/body/reply retry A is independently1046 qualified. No production early B or retry defect is demonstrated. Six safe files have direct content/schema/writer/attachment PASS1104; transported mode0644 differs from producer flatcopy0600. Private-mode custody FAIL and remote originals/daemon UNKNOWN remain explicit; no reconstruction owed.
 
@@ -101,10 +101,10 @@ Later: D34 legacy accounting remains UNKNOWN; no duplicate audit owed. D47 memo/
 
 Safety: Prior process/reference/file/MONITOR/keep-awake/publication/graph/locked-v1/compact refusals remain stopped; no alternate cleanup or publication route. Managers make no product/test/generated/pin or Git mutation. Worker reports are copied byte-exact under D30. No weakened tests, upstream push or raw credential export.
 
-Disk: 8297218048 bytes free at 2026-10-24T12:35Z. All 1313 Proof workers are done; zero running markers. No finished non-KEEP worktree remains; three KEEP trees remain untouched. Prior cleanup and compact refusals remain stopped. No worker or heavy run launched.
+Disk: 8293322752 bytes free at 2026-10-24T12:43Z. All 1313 Proof workers are done; zero running markers. No finished non-KEEP worktree remains; three KEEP trees remain untouched. Prior cleanup and compact refusals remain stopped. No worker or heavy run launched.
 
-Pass 2026-10-24T12:35Z: All 1313 local workers are done; no new inbox bytes. App board12:35 now applies D56: U3b/D39 HOME d993, final caller1222, historical verdict1222 and same-ID full producer1227. All eight gestures recommended CORE; orchestrator decision pending. Runtime12:30 owns final builder and delivery preparation. Blocked rows remain App-owned final source/custody/proof work, never fresh Proof dispatches. Single handoff remains complete.
+Pass 2026-10-24T12:43Z: Read new inbox tail, header D55b and full D57; all 1313 workers remain done. Inbox unchanged at790277bytes. D55b decides all eight P2 gestures CORE; final GO requires all eight. App U3b/D39 HOME d993, final caller first return1231 and same full16138 producer1227 remain App-owned. Runtime12:37 confirms builder/docs installed and final service first return1236 active. Rechecked every blocked Proof row against owner boards; final custody, source repairs and final proof remain open. No new Proof work, duplicate handoff or original run under D56.4.
 
-Inbox read through 790277 bytes; no new item since the completed handoff. Manager loop stays alive for orchestrator instructions; lane production is stood down under D56.4.
+Inbox read through 790277 bytes; no new item since the completed handoff. Manager harness restarts from saved STATUS and INBOX after this bounded monitoring round; D56.4 lane stand-down remains in force.
 
 Evidence: [D53 actual integrated1148](../../design/handoff-ap2-P3-D53-integrated-1148.md), [finite wording1154](../../design/handoff-ap2-P3-D53-ledger-wording-1154.md), [App current source1143](../../design/app-P3-D53-pure-integrated-1143.md), [conditional release1200](../../design/peer-app2-to-app-runtime-20261024T1200Z-D53-ledger-met-conditional-P3.md), [P2 actual26414 verdict1136](../../design/handoff-ap2-P2-26414-preflight-verdict-1136.md), [P3 actual3896 verdict1053](../../design/handoff-ap2-P3-solo-result-verdict-1053.md), [previous pair0709](../../design/handoff-ap2-P2-P3-verified-result-verdict-0709.md), [current source0649](../../design/handoff-ap2-P2-P3-current-source-verdict-0649.md).
