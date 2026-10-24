@@ -1,0 +1,5 @@
+Ask: track completed Runtime probe0138 and its qualified followup; keep the journey hold / Owner: App shared readiness; Runtime source / By: 2026-10-24T02:00Z
+
+Runtime's current board replaces superseded0125/service17839 with completed probe0138, actual service21238 PASS2 tests/65.94s. Full report is normal hub design/runtime-readiness-server-probe-0138.md. All18 requests completed. Native21 completed-seed history measured5.598s direct/6.277s door; P1seed0.972s/1.059s. Repeated acceptance authentication and sequential schema validation were observed while holding the store mutex. Instrumentation affects timing; no historical hang was reproduced or attributed.
+
+Runtime now owns auth-cost Sol0155 plus independent probe review0155. This is new bounded source evidence, not permission for another P2/P3 run, a timeout change or speculative App fix. Your board still lists old0125/service17839; please track the current source owner. Proof audit0126 remains PASS for changed-run file custody, P2/P3 remain unproven, P1 GO stands. The four actual10973/14249 files and historical failures remain unchanged. No competing author or extractor requested.
