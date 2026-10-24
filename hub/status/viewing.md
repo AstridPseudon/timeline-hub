@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T10:31:35Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
-# viewing board, 2026-10-24T10:28:27Z
+<!-- viewing | 2026-10-24T10:33:10Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# viewing board, 2026-10-24T10:32:33Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna | H0 | merged | Inventory and acceptance reviews | Four copies and drift checks independently passed. No product change. | 6c4d934; 7a95a40 |
@@ -24,7 +24,7 @@
 | F-D32-render-wire | Classify six missing SDK result files | Luna | Qualified installed child | merged | Viewing 0116 and 0117; service 27934 | Agent reports six originals passed on child c886 and Runtime 8ea. Classification independently passed. | No product change |
 | F-authoring-ABA | Review original undo and ABA result | Sol and Luna | Diagnostic attachment and retention | blocked:agent | Verdict 0859; capture review 0948 PASS | Original 20732 failed assertion 42 of 59. Cause, hook and acceptance remain unknown. Reviewed helper is queued; original remains held. | Agent 0c2c; Runtime becfe |
 | F-ABA completion capture | Qualify opt-in boundary capture at home | Sol and Luna | Integrated targeted proof passed | merged | Viewing 0948; Agent 1004 | Actual home 3c3 has integrated 19 plus one runner control passed. Independent helper review, Ruff and mypy passed. No original execution. | 30cf3c00a; home 3c3ee9e8c4 |
-| F-ABA runner attachment | Wire helper into the managed test row | Agent Luna | Candidate row and install input | blocked:agent | Author 1004; review 1014 FAIL | All 20 offline checks pass. Candidate row is missing; live row still calls pytest directly. First return belongs to Agent runner owner. Original held. | 546d86816a |
+| F-ABA runner attachment | Wire helper into the managed test row | Agent Luna | First-return independent review | review | Author 1004; return 1019 | Candidate and install input prepared. Author reports 21 offline checks plus static gates passed. Live row remains unchanged; original held. | Support 546d86816a |
 | F-ABA completion evidence | Recover retained request-bound evidence | Agent Luna | Finite recovery complete | merged | Agent0938 source handback | Retained20732 packet has no request-bound accepted provider record. Missing facts stay unknown; no reconstruction or body. | Evidence only |
 | F-authoring-ABA lost ack | Qualify caller transport controls | Sol and Luna | Integrated targeted proof PASS | merged | Viewing 0906; Agent home proof 0916 | Actual ba55 passed 17 with zero failures or skips; exact test blob, Ruff and mypy passed. Offline controls only; original remains failed. | f966c9ea6; home ba55ac1e9e |
 | F-authoring-ABA storage | Merge current item storage source | Sol and Luna | Integrated source proof passed | merged | Agent integrated proof 0816 | Actual current joined source passed 123, including all 95 diagnostics. Runtime becfe auth matches repaired 460c; static and normal mappings passed. | ca8915f23d; home 0c2c28da4 |
@@ -79,10 +79,12 @@ Original ABA service 11466 failed at undo before lost ACK, retaining all 59 asse
 
 10:28Z: Agent independent runner review 1014 FAIL is published. Offline 20, Ruff, mypy and guards pass, but runner 546d has no candidate row or install input; the managed row still calls pytest directly with no plugin or sink. The mounted caller does not use it, so attachment and durable retention are not qualified. This is an ordinary first-return integration gap for the existing Agent owner, not a Runtime source issue or new decision. No original body released. [Runner review](../../design/agt-F-ABA-attach-review-1014.md).
 
+10:33Z: Agent first return 1019 is PREPARED PASS with a concrete one-row candidate and install manifest, exact pre/post registry hashes and outside-row identity. Author reports 21 offline controls and static checks passed; no installation or original body. Agent owns finalization and one independent candidate review before installation. [First return](../../design/agt-F-ABA-attach-return-1019.md).
+
 D49 venue: Viewing test service. Checkpoint composition-full-1024074900-23379 passed 86 with zero skips on actual compiled source. Installed shared App package 0.0.13 versus tracked 0.0.14 was disclosed by independent readiness review; source checkpoint does not qualify that consumer graph. Final full runs after Runtime coordinates the final tuple and gate reruns. No graph mutation or duplicate full is requested.
 
 Evidence: [Runtime completion review](../../design/runtime-provider-completion-review-0923.md), [transport independent PASS](../../design/viewing-F-ABA-lost-ack-review-0908.md), [transport source handback](../../design/viewing-F-ABA-lost-ack-source-0906.md), [original 20732 verdict](../../design/viewing-F-ABA-20732-verdict-0901.md), [current Viewing review](../../design/viewing-F-ABA-current-review-0805.md), [diagnostic review](../../design/viewing-F-ABA-diagnostics-review-0748.md), [original ABA verdict](../../design/viewing-F-authoring-ABA-original-review-0513.md), [whole path verdict](../../design/viewing-F-authoring-ABA-whole-path-review-0638.md), [Composition checkpoint](../../design/viewing-FREEZE-composition-checkpoint-0750.md), [earlier evidence](../../design/viewing-evidence-before-D33-20261024T0053.md).
 
-Blockers: Agent — first return on runner review 1014: supply the exact candidate managed row and install input, then qualify durable retention. Original remains held.
+Blockers: Agent — independently qualify prepared candidate 1019 and install it normally with bounded durable retention. Original remains held.
 Later: Image inverse peer 0455 predates forwarding source 0df7. Agent owns any next image witness; no new Viewing body. V4 cut and deferred timing remain unchanged. Earlier permission refusals stay stopped.
-Next ready: Agent runner owner supplies missing candidate row and install input, then the normal review and installation. Viewing retains finite original verdict.
+Next ready: Agent candidate review and normal installation, then the finite captured result. Viewing retains original verdict; no unassigned source task.
