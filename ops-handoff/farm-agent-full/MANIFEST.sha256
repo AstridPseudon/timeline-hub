@@ -1,0 +1,12 @@
+ccfefdb105b74d843197b58a566188dde34f9b9b9600c378ff203e74a84f8fd4  ops-handoff/farm-agent-full/README.md
+0e111e286505c0be08415c72c5097dbc9e9aeaca1cb4311bf425c69205fcbee8  ops-handoff/farm-agent-full/init-bench-store.py
+22229e37a0392ac12033876c832eb1251c2abdfeebbb4ff75b8f912606a97f6d  ops-handoff/farm-agent-full/registration-row.txt
+d714321361cb6a8842fe9cee3bad432dd6056da7da06944e585e072995483189  ops-handoff/farm-agent-full/test_farm_agent_full.py
+574cb72a87ead3bd9d7808915d0dd625e69b94c84225256a675444ae984f9089  ops-handoff/farm-agent-full/agent-remotion.env.b64
+880541922b0a7615134d7eccaf178322ef47b2311716ea2f15b1995f647cb544  ops-handoff/farm-agent-full/remotion-env-nodes.row.b64
+
+# Decoded approved attachment hashes (the row hash is excluding its final LF).
+# remotion-env-nodes.row: 709 bytes with LF; 708 bytes without LF:
+# ffdb0b13c65f106d7b818208343feb3f438dfc943f4af57c5f612ddcf73dc036
+# agent-remotion.env: 523 bytes:
+# e53a69a465e05976dcf7a781f420b1c7def64a13691f7a5f387f6a0609a6da02
