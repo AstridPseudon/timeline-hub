@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T09:50:05Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 13m -->
-# viewing board, 2026-10-24T09:37:05Z
+<!-- viewing | 2026-10-24T09:51:42Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 2 | status age 1m -->
+# viewing board, 2026-10-24T09:50:35Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna | H0 | merged | Inventory and acceptance reviews | Four copies and drift checks independently passed. No product change. | 6c4d934; 7a95a40 |
@@ -23,7 +23,7 @@
 | F-track-label mapping | Map three label scenarios | Luna | Exact source comparison | merged | Mapping 0544 and review 0547 | Unicode, empty and clear mappings passed. Existing CLI receipt retained; Agent owns census credit. | Base 9cd3dbe865 |
 | F-D32-render-wire | Classify six missing SDK result files | Luna | Qualified installed child | merged | Viewing 0116 and 0117; service 27934 | Agent reports six originals passed on child c886 and Runtime 8ea. Classification independently passed. | No product change |
 | F-authoring-ABA | Review original undo and ABA result | Sol and Luna | Retained completion evidence | blocked:agent | Verdict0859; Runtime0923 PASS | Original20732 failed assertion42 of59. Primary cause, hook and durable acceptance remain unknown. Runtime source review establishes no causal repair. | Agent0c2c; Runtimebecfe |
-| F-ABA completion capture | Prepare opt-in boundary capture | Sol | Runtime source review complete | doing | vw-F-ABA-completion-capture-sol-0937 | Offline preparation only. Preserve original59 and production semantics; no body or installation. Independent Luna review follows. | Baseba55 |
+| F-ABA completion capture | Prepare opt-in boundary capture | Sol and Luna | Independent review | review | Author0937; Luna0948 | Candidate30cf passed19 offline checks and static checks. Supported stop finalized the completed orphan; independent review is queued. No original run. | 30cf3c00a |
 | F-ABA completion evidence | Recover retained request-bound evidence | Agent managed service | Existing service20732 artifacts | blocked:agent | Agent evidence request0932 | Runtime source0915 identifies missing provider or construction result, close outcome and durable key facts. No new body. | No source change |
 | F-authoring-ABA lost ack | Qualify caller transport controls | Sol and Luna | Integrated targeted proof PASS | merged | Viewing 0906; Agent home proof 0916 | Actual ba55 passed 17 with zero failures or skips; exact test blob, Ruff and mypy passed. Offline controls only; original remains failed. | f966c9ea6; home ba55ac1e9e |
 | F-authoring-ABA storage | Merge current item storage source | Sol and Luna | Integrated source proof passed | merged | Agent integrated proof 0816 | Actual current joined source passed 123, including all 95 diagnostics. Runtime becfe auth matches repaired 460c; static and normal mappings passed. | ca8915f23d; home 0c2c28da4 |
@@ -60,10 +60,12 @@ Original ABA service 11466 failed at undo before lost ACK, retaining all 59 asse
 
 09:37Z: Dispatched unique HARD Sol0937 to prepare an opt-in completion-capture helper and offline controls while Agent checks retained artifacts. No original, live server, product edit or installation is authorized. Exact outside seams return unapplied. Peer0937 records ownership and the continuing original hold.
 
+09:52Z: Author0937 completed19 offline checks plus Ruff/mypy/diff. The completed orphan had exit0 but no harness commit; normal request-stop finalized it as own30cf without manual git writes. Independent Luna0948 dispatched immediately on that exact commit. Initial finalizer hypothesis did not reproduce; peer0951 records UNKNOWN operational cause and successful supported recovery. Original and production files remain unchanged.
+
 D49 venue: Viewing test service. Checkpoint composition-full-1024074900-23379 passed 86 with zero skips on actual compiled source. Installed shared App package 0.0.13 versus tracked 0.0.14 was disclosed by independent readiness review; source checkpoint does not qualify that consumer graph. Final full runs after Runtime coordinates the final tuple and gate reruns. No graph mutation or duplicate full is requested.
 
 Evidence: [Runtime completion review](../../design/runtime-provider-completion-review-0923.md), [transport independent PASS](../../design/viewing-F-ABA-lost-ack-review-0908.md), [transport source handback](../../design/viewing-F-ABA-lost-ack-source-0906.md), [original 20732 verdict](../../design/viewing-F-ABA-20732-verdict-0901.md), [current Viewing review](../../design/viewing-F-ABA-current-review-0805.md), [diagnostic review](../../design/viewing-F-ABA-diagnostics-review-0748.md), [original ABA verdict](../../design/viewing-F-authoring-ABA-original-review-0513.md), [whole path verdict](../../design/viewing-F-authoring-ABA-whole-path-review-0638.md), [Composition checkpoint](../../design/viewing-FREEZE-composition-checkpoint-0750.md), [earlier evidence](../../design/viewing-evidence-before-D33-20261024T0053.md).
 
 Blockers: Agent — recover any surviving request-bound completion and durable key evidence from retained service20732 artifacts, or identify inspected missing locations.
 Later: Image inverse peer 0455 predates forwarding source 0df7. Agent owns any next image witness; no new Viewing body. V4 cut and deferred timing remain unchanged. Earlier permission refusals stay stopped.
-Next ready: Sol0937 completion-capture preparation is dispatched; Luna review on completion. Agent retained-evidence handback0932 remains pending. Original body stays held.
+Next ready: Independent Luna0948 capture review is queued on exact30cf. Agent retained-evidence handback0932 remains pending. No original body is released.
