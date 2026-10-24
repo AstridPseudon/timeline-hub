@@ -6,6 +6,7 @@ import copy
 import hashlib
 import json
 import math
+from collections import OrderedDict
 from functools import cache, lru_cache
 from importlib.resources import files
 from typing import Protocol, cast
@@ -94,12 +95,43 @@ def _validator(definition: str):
     bundle, registry = _schema_resources()
     if definition not in bundle["resources"][bundle["root"]]["$defs"]:
         raise ValidationError("unknown commit schema definition")
-    validator = Draft202012Validator(
+    validator = _reuse_schema_validators(Draft202012Validator)(
         {"$ref": bundle["root"] + "#/$defs/" + definition}, registry=registry
     )
     return validator.evolve(
         _resolver=_reuse_schema_resolution(_validator_resolver(validator))
     )
+
+
+def _reuse_schema_validators(base):
+    from threading import RLock
+
+    from jsonschema.validators import extend
+
+    validator = extend(base)
+    evolve = validator.evolve
+    compiled = OrderedDict()
+    lock = RLock()
+
+    def reuse(self, **changes):
+        if len(changes) != 2 or "schema" not in changes or "_resolver" not in changes:
+            return evolve(self, **changes)
+        schema, resolver = changes["schema"], changes["_resolver"]
+        key = (id(self), id(schema), id(resolver))
+        entry = compiled.get(key)
+        if entry is not None:
+            return entry[3]
+        with lock:
+            child = evolve(self, **changes)
+            # Retain all identity-keyed objects until eviction. Only schema setup
+            # is reused; validation still traverses each instance with fresh errors.
+            compiled[key] = (self, schema, resolver, child)
+            if len(compiled) > 256:
+                compiled.popitem(last=False)
+            return child
+
+    validator.evolve = reuse
+    return validator
 
 
 def _reuse_schema_resolution(resolver):
