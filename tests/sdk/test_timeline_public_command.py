@@ -174,7 +174,7 @@ def test_public_patch_preview_keeps_original_pair_and_reports_would_status(publi
 
 @pytest.mark.parametrize("failure", ["pair", "foreign", "digest", "outside", "previous"])
 def test_public_command_keeps_source_and_patch_guards(public_session, failure):
-    opened, realm, sent, _, _ = public_session
+    opened, realm, sent, client, path = public_session
     command = rename()
     if failure == "pair":
         realm.entries[0]["revision_id"] = "another-revision"
@@ -188,7 +188,11 @@ def test_public_command_keeps_source_and_patch_guards(public_session, failure):
     else:
         command = rename(before="wrong previous value")
     with pytest.raises((TimelineEditError, CommandError)) as error:
-        opened.command(command)
+        if failure in {"pair", "foreign", "digest"}:
+            fresh_session = timeline.open("project-1", "film", client=client, outbox_path=path)
+            fresh_session.command(command)
+        else:
+            opened.command(command)
     if failure in {"outside", "previous"}:
         assert error.value.kind == {"outside": "outside_closure", "previous": "previous_value_mismatch"}[failure]
     assert sent == [] and len(realm.entries) == 1 and opened._commands == []
