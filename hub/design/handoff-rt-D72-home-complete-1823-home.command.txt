@@ -1,0 +1,30 @@
+PYTHONDONTWRITEBYTECODE=1 TMPDIR=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D72-home-complete-1823/tmpdir PYTHONPATH="$PWD:/home/user/work/runtime:/home/user/work/runtime/packages/python" ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -oaddopts= -pno:cacheprovider --timeout=45 --junitxml="/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D72-home-complete-1823/evidence/home.xml" \
+  'tests/packs/rendering/test_live_scene_composition.py::test_d69_upstream_native_window_layer_is_materialized_once_with_pin_hold_and_alpha[0]' \
+  'tests/packs/rendering/test_live_scene_composition.py::test_d69_upstream_native_window_layer_is_materialized_once_with_pin_hold_and_alpha[1]' \
+  'tests/packs/rendering/test_live_scene_composition.py::test_native_window_layer_is_materialized_once_with_pin_hold_and_alpha[0]' \
+  'tests/packs/rendering/test_live_scene_composition.py::test_native_window_layer_is_materialized_once_with_pin_hold_and_alpha[1]' \
+  tests/packs/rendering/test_live_scene_composition.py::test_layer_materialization_retains_null_window_support_rejection \
+  'tests/packs/rendering/test_live_scene_composition.py::test_native_layer_window_supports_windows_only_backend[0]' \
+  'tests/packs/rendering/test_live_scene_composition.py::test_native_layer_window_supports_windows_only_backend[1]' \
+  tests/packs/video_editing/test_runtime_publication_chain.py::test_d66_upstream_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke \
+  tests/packs/video_editing/test_runtime_publication_chain.py::test_requester_commit_publishes_without_local_save_or_invoke \
+  tests/packs/video_editing/test_runtime_publication_chain.py::test_legacy_assembler_admission_refuses_before_execution_and_keeps_artifacts \
+  tests/timeline/test_authoring_bundle.py::test_d66_upstream_approval_is_bound_to_candidate_and_base_revision \
+  tests/timeline/test_authoring_bundle.py::test_d66_upstream_frozen_render_restart_then_approval_promotion_is_single_generation \
+  tests/timeline/test_authoring_bundle.py::test_candidate_compiler_integrates_with_runtime_atomic_publication \
+  tests/timeline/test_authoring_bundle.py::test_diff_of_an_unedited_checkout_is_empty_and_names_clips_by_id \
+  tests/timeline/test_authoring_bundle.py::test_diff_ignores_float_noise_but_reports_real_clip_edits \
+  'tests/timeline/test_authoring_bundle_approval_security.py::test_d72_approval_binding_rejects_independent_tampering_before_commit[candidate-candidate_digest]' \
+  'tests/timeline/test_authoring_bundle_approval_security.py::test_d72_approval_binding_rejects_independent_tampering_before_commit[candidate_digest-candidate_digest]' \
+  'tests/timeline/test_authoring_bundle_approval_security.py::test_d72_approval_binding_rejects_independent_tampering_before_commit[publication_digest-publication_digest]' \
+  'tests/timeline/test_authoring_bundle_approval_security.py::test_d72_approval_binding_rejects_independent_tampering_before_commit[scope-project_id]' \
+  'tests/timeline/test_authoring_bundle_approval_security.py::test_d72_approval_binding_rejects_independent_tampering_before_commit[base-base_parent]' \
+  tests/timeline/test_authoring_bundle.py::test_publish_uses_one_compilation_and_returns_complete_mapping \
+  tests/sdk/test_timeline_helper_capture.py::test_nudge_restart_merges_peer_other_clip \
+  tests/sdk/test_timeline_normal_publish.py::test_nudge_disjoint_clips_merge_onto_peer_head \
+  'tests/sdk/test_timeline_helper_capture.py::test_conflicts_and_uncaptured_edits_never_write[same]' \
+  'tests/sdk/test_timeline_helper_capture.py::test_conflicts_and_uncaptured_edits_never_write[mixed]' \
+  tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_changed_key_payload_and_force_never_write \
+  tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_refuses_a_clip_both_sides_changed \
+  tests/sdk/test_timeline_sync.py::test_clean_bundle_hydration_authenticates_exact_pair_without_pending_commands \
+  tests/sdk/test_timeline_sync.py::test_clean_bundle_hydration_refuses_wrong_publication_for_revision

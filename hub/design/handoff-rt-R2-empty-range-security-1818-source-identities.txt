@@ -1,0 +1,13 @@
+Runtime worktree HEAD: 09c79ac580229381e02e24c509a8be0bd1fb8322
+Runtime auth blob: a3a9c1aa35dd0d464b905fe6f4344b4fbb8aa674
+Runtime auth SHA256: a3fbb6a0289396fe84fbe455294747a627f9bae8c7579204a89db6402c66a908
+Agent worktree HEAD: 00c5620d45dd474353aaa9e281b2d85fd77c260c
+Agent astrid/sdk/timeline_elements.py: bfd22e2b58082db71131cf27bd976d3bd18a76d9
+Agent astrid/sdk/timeline/_commit_patch.py: b420634307da60e560e70c5b34eca7c636fc22c1
+Agent astrid/sdk/timeline/_step_undo.py: 57c246395cf662d831f100522f2ce45c0bb5b708
+Agent four-selector test: 2a450a0a9f202931906da454708f419c3157f216
+Agent provider ABA test: 0c23acf7599509d325c09afe02256eebe4ff50a6
+
+Runtime diff is exactly two comparator changes in timeline_commit_auth.py:
+_inverse_stage_inherited: effect[0] == effect_end <= effect[1] <= len(source_step["patch"])
+_inverse_stage_ranges: effect_start == previous_effect_end and effect_start <= effect_end <= len(step["patch"])

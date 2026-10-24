@@ -1,0 +1,6 @@
+astrid=/home/user/work/wt/rt-D72-home-complete-1823/astrid/__init__.py
+authoring_bundle=/home/user/work/wt/rt-D72-home-complete-1823/astrid/core/timeline/authoring_bundle.py
+rendering=/home/user/work/wt/rt-D72-home-complete-1823/astrid/packs/rendering/shared/runtime_stitch.py
+checkout=/home/user/work/wt/rt-D72-home-complete-1823/astrid/sdk/timeline/checkout.py
+runtime_client=/home/user/work/wt/rt-D72-home-complete-1823/astrid_runtime_client/__init__.py
+timeline_schema=/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py

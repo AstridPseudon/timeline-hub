@@ -1,0 +1,7 @@
+Direct read-only matrix against _inverse_stage_ranges and _inverse_stage_inherited:
+
+Accepted: valid zero effect; valid mixed empty/nonempty.
+Rejected: overlap; gap; reversed; out of bounds; negative; bool; float; empty native range; native out of bounds; native-source binding tamper.
+
+Inherited-path matrix also accepted valid mixed and rejected overlap, gap,
+reversed, negative, bool, float, and empty native range.
