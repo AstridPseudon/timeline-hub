@@ -1,1 +1,1 @@
-LEAD 2026-10-24T11:50Z | up | P1 GO stands | P2 run 26414 stopped in 2s at a stale-caller guard, no gestures run, App fixes caller | P3 run 3896 still no-go, fault-order fix in review, D53 worker running | disk 7.8G, no heavy runs
+LEAD 12:19Z | up | speed-up D54-D56 received; open P2/P3 rows handed to App in one note; finishing in-flight items, no new dispatches | P1 GO stands | disk 8G
