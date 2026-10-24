@@ -15,7 +15,7 @@ or below the threshold.
 
 | # | File | Lines | Current exemption and next decomposition seam |
 |---:|---|---:|---|
-| 1 | `astrid/core/execution/generic_host.py` | 14,097 | Generic executor host owns discovery, admission, worker execution, settlement orchestration, and the idle release of the warm holds (Wan2GP child, VibeComfy session) it keeps between tasks. Split protocol boundary, admission, and worker lifecycle into cohesive modules. |
+| 1 | `astrid/core/execution/generic_host.py` | 14,166 | Generic executor host owns discovery, admission, worker execution, settlement orchestration, and the idle release of the warm holds (Wan2GP child, VibeComfy session) it keeps between tasks. Split protocol boundary, admission, and worker lifecycle into cohesive modules. |
 | 2 | `astrid/sdk/invocation.py` | 4,676 | SDK invocation owns the single admission/execution/finalization path. Split transport preparation, ledger transitions, and output projection behind the same facade. |
 | 3 | `astrid/core/execution/custody_broker.py` | 4,110 | Consumes Runtime's designation ABI to observe candidate processes and deliver audit-token-checked signals, including the Darwin process-census ctypes layer. Signal delivery and observation share start-anchor and audit-token identity checks, so they stay together; the `_Darwin*` ABI structures and census readers are a separable platform seam. |
 | 4 | `astrid/packs/timeline/cli.py` | 3,993 | Product parser and human renderer for the runtime-owned `timelines` family: each verb is argument parsing plus one SDK call. No single-file reason: candidate split into the human renderers (`_human_*`, `_render_*`, `_print_cut_table`) and per-verb handlers (`_cmd_*`), keeping `build_parser` as the entry point. |

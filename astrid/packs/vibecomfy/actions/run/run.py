@@ -481,7 +481,10 @@ def _run_and_settle(
     from astrid.packs.vibecomfy import production_engine
 
     if comfy_url:
-        from astrid.packs.vibecomfy.local_server import validate_comfy_url, validate_output_directory
+        from astrid.core.generation.backends.vibecomfy_local_server import (
+            validate_comfy_url,
+            validate_output_directory,
+        )
 
         comfy_url = validate_comfy_url(comfy_url)
         comfy_output_dir = validate_output_directory(comfy_output_dir, output_root.resolve().parent)

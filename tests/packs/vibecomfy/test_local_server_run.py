@@ -11,7 +11,7 @@ from types import SimpleNamespace
 import pytest
 from PIL import Image
 
-from astrid.packs.vibecomfy import production_engine
+from astrid.packs.vibecomfy import local_server_engine, production_engine
 from astrid.packs.vibecomfy.local import pack_images
 
 pytestmark = pytest.mark.integration  # pinned VibeComfy checkout
@@ -247,7 +247,7 @@ def test_profile_identity_requires_exact_local_semantics():
 
 def test_prompt_timeout_deletes_only_accepted_prompt(comfy, tmp_path, monkeypatch):
     comfy.pending = True
-    monkeypatch.setattr(production_engine, "_LOCAL_PROMPT_TIMEOUT_SEC", 0.05)
+    monkeypatch.setattr(local_server_engine, "_LOCAL_PROMPT_TIMEOUT_SEC", 0.05)
     with pytest.raises(Exception, match="ours-1.*did not complete"):
         production_engine.run_workflow_result_path(
             comfy.workflow, tmp_path / "attempt" / "outputs", task_identity="task-1",

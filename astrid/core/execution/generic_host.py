@@ -506,7 +506,7 @@ class _ManagedLocalServerTaskAdapter(_ManagedTaskAdapter):
         self.destination = destination
 
     def _cleanup(self) -> None:
-        from astrid.packs.vibecomfy.local_server import cleanup_prompts
+        from astrid.core.generation.backends.vibecomfy_local_server import cleanup_prompts
 
         cleanup_prompts(self.url, self.destination)
 
@@ -1976,7 +1976,7 @@ def _network_policy(record: "CapabilityRecord", inputs: Mapping[str, Any] | None
         raise HostError(f"network_policy for {record.id!r} must be an object")
     policy = {str(key): value for key, value in raw.items()}
     if record.id == "vibecomfy.run" and inputs and inputs.get("comfy_url"):
-        from astrid.packs.vibecomfy.local_server import validate_comfy_url
+        from astrid.core.generation.backends.vibecomfy_local_server import validate_comfy_url
 
         url = validate_comfy_url(inputs["comfy_url"])
         policy = {"allowed_protocols": ["dns", "tcp"],
@@ -9383,7 +9383,10 @@ class GenericPackHost:
                 ),
             )
             if capability_id == "vibecomfy.run" and inputs.get("comfy_url"):
-                from astrid.packs.vibecomfy.local_server import validate_comfy_url, validate_output_directory
+                from astrid.core.generation.backends.vibecomfy_local_server import (
+                    validate_comfy_url,
+                    validate_output_directory,
+                )
 
                 if readiness_profile is not None or inputs.get("source_video"):
                     raise HostError("local_server cannot use a readiness profile or source_video")

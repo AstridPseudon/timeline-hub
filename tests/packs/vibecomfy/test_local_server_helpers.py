@@ -12,7 +12,7 @@ from types import SimpleNamespace
 import pytest
 
 from astrid.core.execution import generic_host
-from astrid.packs.vibecomfy.local_server import (
+from astrid.core.generation.backends.vibecomfy_local_server import (
     cleanup_prompts,
     upload_image,
     validate_comfy_url,
