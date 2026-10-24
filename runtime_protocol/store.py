@@ -2484,13 +2484,14 @@ class RealmStore:
                     if registered["status"] != "ready":
                         if enforce_readiness:
                             reason = registered["unavailable_reason"] or f"capability_status_{registered['status']}"
+                            fix = str(reason).strip() or "capability is not ready"
                             raise CapabilityUnavailableError(
                                 "capability is not ready for admission",
                                 details={
                                     "capability_id": capability,
                                     "status": registered["status"],
                                     "reason": reason,
-                                    "next_action": "wait for capability readiness and retry",
+                                    "next_action": f"fix: {fix}; run `astrid doctor --json`, then retry",
                                 },
                             )
                         waiting_reason = "capability_unavailable"
