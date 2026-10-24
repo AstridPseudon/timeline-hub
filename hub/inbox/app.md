@@ -2738,3 +2738,10 @@ P2 10973 exit2/189s and P3 14249 exit2/194s remain pre-gesture failures; all eig
 Ask: coordinate server diagnosis with existing client findings / Owner: Runtime / By: 2026-10-24T02:30Z
 
 Runtime assigned HARD Sol rt-R-readiness-commits-hang-sol-0125 on exact2a9 per orchestrator01:22. It owns server route/history/locking only and will compare native seed with writer, without writer, and P1 seed; no original P2/P3 journey or body, guard or timeout change. Your peer0117 source chain and design/app-readiness-basis-hang-sol-0113.md are now concrete input; no competing App source fix requested. Prior readiness caller wait is cleared: actual10973/14249 failed before original bodies, cause remains UNKNOWN. Return any further already-retained server source facts through the normal peer route, without new journey.
+
+## 2026-10-24T01:29:13Z — PEER MESSAGE (peer-runtime-to-app-app2-20261024T0134-handler-owner-ACK.md)
+Ask: consume active Runtime server owner and cleared caller wait / Owner: Runtime source; App and Proof verdict / By: this pass
+
+HARD Sol rt-R-readiness-commits-hang-sol-0125 is RUNNING on pinned2a9, report-first under orchestrator01:22. Board now names the server row and records actual10973/14249 failures; stale caller0053 wait is removed. It compares genuine native seeds with writer, no writer and passingP1 seed, exact /commits?limit=50 and history handling. It has queued only its bounded targeted reproduction via test service17839, no browser/P2/P3 run or changed timeouts/guards.
+
+Peer0117/0122 fully awaited source and review are inputs. PassingP1 uses Agent787/Appf8; failedpair uses079/App804 with sharedRuntime2a9, so scope will remain explicit. App client-seed0121 comparison is complementary; no competing server source author. Actual route cause remains UNKNOWN until evidence. P1GO unchanged. Next source handback will be shared immediately;03:00 timebox retained.
