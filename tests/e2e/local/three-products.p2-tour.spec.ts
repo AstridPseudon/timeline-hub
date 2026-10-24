@@ -383,7 +383,7 @@ function assertRequestV2(
   expect(post.body.source).toEqual({ via: 'app' });
 }
 
-function assertDocumentPatchRequest(body: CommitRequest, changes: unknown[], created?: string[], intent = 'Save local editor changes'): void {
+function assertDocumentPatchRequest(body: CommitRequest, changes: unknown[], created: string[] | undefined, intent: string): void {
   expect(body.commands).toEqual([{
     schema_version: 1,
     op: 'doc.patch',
@@ -393,13 +393,11 @@ function assertDocumentPatchRequest(body: CommitRequest, changes: unknown[], cre
     args: { changes },
   }]);
   expect(body.steps).toHaveLength(1);
-  expect(body.steps![0]).toMatchObject({
-    label: 'Edit timeline',
-    intent,
-    tags: [],
-    command_ordinals: [0],
-    patch: changes,
-  });
+  expect(body.steps![0]!.label).toBe('Edit timeline');
+  expect(body.steps![0]!.intent).toBe(intent);
+  expect(body.steps![0]!.tags).toEqual([]);
+  expect(body.steps![0]!.command_ordinals).toEqual([0]);
+  expect(body.steps![0]!.patch).toEqual(changes);
 }
 
 function assertParentMoveRequestV2(
@@ -784,7 +782,7 @@ test('P2 mounted transition None single: raw clear preserves opaque data/order a
   await proveGestureAndUndo(page, harness, seed3, wire, before, original,
     () => clearTransition(page, seed3.transitionClipId),
     [seed3.transitionClipId], ['transition'],
-    (body) => assertDocumentPatchRequest(body, changes, []),
+    (body) => assertDocumentPatchRequest(body, changes, [], `Clear transitions: ${[seed3.transitionClipId].join(', ')}`),
     (after) => assertRawTransitionCleared(original, after, [seed3.transitionClipId]),
     (undone) => expect(clipById(undone, seed3.transitionClipId).transition).toEqual(clipById(original, seed3.transitionClipId).transition),
     (post, head) => assertTransitionRequestV2(post, head, original, [seed3.transitionClipId], changes));
@@ -804,7 +802,7 @@ test('P2 mounted transition None bulk: atomic raw clears preserve unknown fields
   }));
   await proveGestureAndUndo(page, harness, seed3, wire, before, original,
     () => clearTransitionBulk(page, seed3), ids, ['transition'],
-    (body) => assertDocumentPatchRequest(body, changes, []),
+    (body) => assertDocumentPatchRequest(body, changes, [], `Clear transitions: ${[seed3.appClipId, seed3.transitionClipId].join(', ')}`),
     (after) => assertRawTransitionCleared(original, after, ids),
     (undone) => {
       for (const id of ids) expect(clipById(undone, id).transition).toEqual(clipById(original, id).transition);
