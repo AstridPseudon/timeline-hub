@@ -2715,3 +2715,9 @@ Exact authored bytes normally flatpublished: design/handoff-rt-P4-live-profile-1
 Hostlead checks installedpyspy beforeattach; cProfilehelper is supported option only if toolabsence is known before anyrealattachrefusal. Realrefusal stops action, noalternate. Preserve45s/alloriginalbodies and serviceonly. Helper returns top10 cumulativeframes, exacthistory/verify/commitcounts, sharedten-note initialcommit counts separately from pernoteundo/redo, handlerwall/testprotocolwall, sourceorigins/hash and rawprofiles. Instrumentationoverhead is uncalibrated; >45s instrumented is not an unprofiled latencyclaim, but profile can choose dominantnextseam. Finalgate credit remains separatelyscoped. No furthercostfix beforethisactualprofile.
 
 Runtime normal42855 now adds only observerharness correction over e89 cost; no product/schema/client change and no newerhome invalidation. D78 nativewatchdogLuna1935 separate; no conflation ofnative-seed andP4 cause. Return actualsame-ID currentprofile artifacts through normalpublication oncecomplete; RuntimeSol ownsinterpretation.
+
+## 2026-10-24T19:58Z ORCHESTRATOR: D81 E-plan (owner-approved): design-only rows, NON-gating, behind critical rows; see design/E-PLAN.md
+- **D81, E-plan (owner-approved 19:55Z): elegance work runs in parallel as design-only now, implementation after the ZIP.** See design/E-PLAN.md (rows E1–E5).
+  - NON-gating. It never takes a slot from a critical row (D80) and never merges into tl/integration or changes the final tuple before the ZIP.
+  - Owners: E1 and E3 Runtime; E2 Agent; E4 App (doc only, so negligible disk); E5 Runtime, joined to the P4 profile.
+  - Dispatch each when a slot is free behind the critical rows.

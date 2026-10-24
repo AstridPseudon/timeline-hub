@@ -201,6 +201,10 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **Order:** Runtime first (producer), then D39 client regeneration if the contract changed, then Agent and App in parallel. P2/P3 and the core suites then run on the refreshed heads.
   - At delivery, F-final applies the squashed patches to these same tips. A new upstream move after this point triggers another refresh only if the owner asks.
   - **Test-file conflicts (13:40Z): keep BOTH.** Upstream's new and changed tests are taken as they are, and every one of our live test cases is re-applied on top: adapted to upstream's structure, never dropped. Taking 'incoming' and discarding our cases is weakening, so it's refused. The independent review maps every pre-merge live predicate to its post-merge location. Product-code conflicts follow the default: upstream behaviour, with ours adapted.
+- **D81, E-plan (owner-approved 19:55Z): elegance work runs in parallel as design-only now, implementation after the ZIP.** See design/E-PLAN.md (rows E1–E5).
+  - NON-gating. It never takes a slot from a critical row (D80) and never merges into tl/integration or changes the final tuple before the ZIP.
+  - Owners: E1 and E3 Runtime; E2 Agent; E4 App (doc only, so negligible disk); E5 Runtime, joined to the P4 profile.
+  - Dispatch each when a slot is free behind the critical rows.
 - **D80, H45 actions after the Opus second opinion (18:50Z):**
   1. **App: surface the 5 never-run P2 gestures NOW, in parallel, on App's 4 free slots.** These are registerAsset save, automatic child placement, popup SWAP, transition single clear and transition bulk clear.
      - Run each ALONE, from its own pinned and preflighted start, with Playwright `--grep` on the unchanged original spec. Use one request per gesture.

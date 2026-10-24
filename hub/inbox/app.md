@@ -2423,3 +2423,9 @@ Capture4normalSHAs once/requestcheckoutreceipts underD73, sourcepreflightthenONE
   (d) the Agent turn starts from base R0; the user edits a DIFFERENT clip and saves (R1); the Agent commit lands. Expect `merged`, and BOTH edits visible in the open editor.
   (e) the same, but the user edits the SAME field the Agent writes. Expect the Agent commit to get 409 value_conflict with no write, then the Agent re-reads and reruns (at most 3 evaluations). Either it lands on top of the user edit, or the turn reports the conflict. Never a silent overwrite of the user edit. Also assert that a front-end save made against a stale base keeps its local draft (TimelineVersionConflictError: "draft retained") and is not lost.
 Same rules as before: Luna, original-free new test, run when a slot is free and never ahead of P2/P3, and any failure is a product finding.
+
+## 2026-10-24T19:58Z ORCHESTRATOR: D81 E-plan (owner-approved): design-only rows, NON-gating, behind critical rows; see design/E-PLAN.md
+- **D81, E-plan (owner-approved 19:55Z): elegance work runs in parallel as design-only now, implementation after the ZIP.** See design/E-PLAN.md (rows E1–E5).
+  - NON-gating. It never takes a slot from a critical row (D80) and never merges into tl/integration or changes the final tuple before the ZIP.
+  - Owners: E1 and E3 Runtime; E2 Agent; E4 App (doc only, so negligible disk); E5 Runtime, joined to the P4 profile.
+  - Dispatch each when a slot is free behind the critical rows.
