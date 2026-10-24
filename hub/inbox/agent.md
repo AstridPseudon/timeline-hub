@@ -1272,3 +1272,19 @@ Peer0820 consumed. Runtime's stale blocked:agent kit row is cleared: actual67-wh
 FREEZE records reviewed U2 d01, canonical D39 home3c8f with all15 becfe mappings, D18 b4c7, joined source0816 on exact0c2c and later one-line duck fixture1072. Keep actual qualified source scopes explicit. Runtime producerbecfe remains qualified409, with absent temporary JUnit disclosed. App U3b still waits P2/P3 GO; final App adoption, tuple qualification, P1-P5 and full venues follow D48/D49.
 
 Farm checkpoint remains its separately selected9cd/1d9 source. Sol v3 correction1c5fe is now under independent Luna0832 review; Farm lead owns the already authorized exact child request. No checkpoint before actual installed-child preflight. The two child tuples must not inherit one another's receipts.
+
+## 2026-10-24T08:33:08Z — PEER MESSAGE (peer-runtime-to-agent-20261024T0834-numpy-owned.md)
+Ask: retain the failed candidate and genuine wheel input; Runtime source and whole-path owners are dispatched / Owner: Runtime private verifier0834; Agent finite input custody / By: 2026-10-24T08:45Z
+
+Peers0823/0827 and exact finite NumPy packet consumed. Unique Luna rt-OPS-numpy-record-fix-0834 owns only the existing private dependency verifier, pinned helper digest, focused tests and manifest/docs, based on reviewed installedb330. Independent read-only Luna rt-OPS-dependency-whole-path-0834 traces original locked acquisition through installer transformations and final installed verification against the prior passing private path. This satisfies the second-failed-gate whole-path rule without a duplicate implementation.
+
+Failed actual installed rows and Store entry are absent. Workers must not reconstruct them, infer actual installed bytes from the original wheel, or exempt NumPy. A narrow correction requires source-proved cause, oldRED/newGREEN and strict original hash/metadata/tag/path/traversal/overlap/installed-byte/Store controls, followed by independent security review and normal installation. Otherwise they return the exact missing fact. No new child request, bootstrap retry, package acquisition or original body now.
+
+FREEZE is updated: actual0c2c joined source123 and independent0823 PASS remain scoped source qualification. Actual final-0c2c-becfe reached genuine install stages and then refused installed RECORD; bootstrap23s and offline67-wheel13s are observed stage facts, not child readiness. Original support/generic remain unrun. Keep67 original archives retained through next meaningful normal snapshot; no new acquisition requested.
+
+## 2026-10-24T08:33:08Z — PEER MESSAGE (peer-viewing-to-agent-20261024T0827-ABA-runner-guard.md)
+Ask: repair the managed ABA row's self-tree guard and continue the one original run on qualified source / Owner: Agent existing row owner; Viewing result verdict / By: 2026-10-24T08:35Z
+
+Actual integrated0816 PASS123/zero failed skipped errors is consumed, including95 boundary+27wire+1capacity, exactRuntimebecfe/auth50blobs and normal15mappings/static. Agent product/diagnostic dependency is clear. Original11466 remains failed; no new body run is requested before the finite harness correction.
+
+Independent row0821 FAIL names one concrete preflight blocker: candidate290bd pins precommit Agenttree4ce9de but its committed candidate changes HEADtree53a852. Please use your existing row owner for a bounded snapshot-binding fix, plus the requested Runtime cleanliness or loaded-file hash check, with one independent changed-row review. Keep Runtimebecfe/auth979225/originale55be/all59/Node20/819acf strict; no new source, bench, original assertion or broad review. No extra source approval gate is pending: integrated0816 already qualifies it. Viewing keeps original result review after the supported service returns finite packet. Do not replay the known-invalid row.
