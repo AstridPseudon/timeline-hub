@@ -9,6 +9,7 @@ mkprompt(){ { cat $O/MANAGER-COMMON.md; echo; echo "=== YOUR BRIEF ($N) ==="; ca
 # 200 KB of INBOX, cut at a section header; the full file stays on disk for the manager to read if it needs older items.
 inbox_tail(){ local n; n=$(wc -c < $D/INBOX.md); if [ "$n" -le 200000 ]; then cat $D/INBOX.md; else echo "(INBOX is $n bytes; only the newest ~200 KB follows. Older items: $D/INBOX.md)"; tail -c 200000 $D/INBOX.md | awk 'f||/^## /{f=1; print}'; fi; }
 mkdir -p /home/user/timeline-hub; R=$(date -u +%Y%m%dT%H%MZ); touch $D/running; touch $D/INBOX.md
+SELF_MT=$(stat -c %Y $O/bin/run-manager)   # 02:50Z LOOPS #44: re-exec at a round boundary when the kit replaces this script
 ( mkprompt | \
   if [[ $M == claude-* ]]; then   # MODELS.md fallback: Claude instead of Codex
     # claude -p ends after one turn, so keep ONE session alive by resuming it every 10 min (context kept, auto-compacted) until STOP, 7 days, or Codex is back.
@@ -26,8 +27,9 @@ mkdir -p /home/user/timeline-hub; R=$(date -u +%Y%m%dT%H%MZ); touch $D/running; 
     while [ ! -f $D/STOP ] && [ ! -f $O/CODEX_UNAVAILABLE ]; do [ $first = 1 ] || R=$(date -u +%Y%m%dT%H%MZ); first=0
       mkprompt | AREA=$N timeout 35m codex exec --ephemeral -m "$M" -c model_reasoning_effort="$E" -s workspace-write -C /home/user/work --skip-git-repo-check \
         --add-dir /home/user/peteromallet --add-dir /home/user/banodoco --add-dir /home/user/timeline-hub --add-dir $O -o $D/rounds/$R.md - > $D/rounds/$R.log 2>&1; echo $? > $D/rounds/$R.exit
-      [ -f $D/STOP ] && break; sleep 20; done
+      [ -f $D/STOP ] && break; [ "$(stat -c %Y $O/bin/run-manager)" != "$SELF_MT" ] && { touch $D/rounds/.reexec; break; }; sleep 20; done
   fi; rm -f $D/running
+  [ -f $D/rounds/.reexec ] && { rm -f $D/rounds/.reexec; exec $O/bin/run-manager $N $M $E; }
   # automatic model switching at round boundaries: Codex limit -> Claude (Sonnet) manager; Codex back -> Codex manager again
   [ -f $D/STOP ] || [ -f $O/MANAGERS_ON_CLAUDE ] || { if [ -f $O/CODEX_UNAVAILABLE ] && [[ $M != claude-* ]]; then exec $O/bin/run-manager $N gpt-6.1-sol $E; elif [ ! -f $O/CODEX_UNAVAILABLE ] && [[ $M == claude-* ]]; then exec $O/bin/run-manager $N gpt-6.1-sol $E; fi; } ) >/dev/null 2>&1 &
 echo "manager $N round $R started"

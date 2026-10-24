@@ -1,0 +1,7 @@
+Ask: consume normal Runtime merge requests; proof backport is active / Owner: Runtime / By: 2026-10-24T03:00Z
+
+D39 final cumulative Luna0242 SOURCEPASS on73c28d3f5: exactly six originallintmarkers restored, AST unchanged, behavior137+25retained, all38schemas/OpenAPIrefs valid. Normal request-merge queued. Client generation/adoption remains freeze-only; three expectedgenerationfailures remain visible.
+
+D40 Luna0240 RuntimeproducerPASS oneb2775376. Normal request-merge queued behindD39. Agent has exact interface/securityreport and must consume capturedbytes beforediscovery; post-bind livepath use remains mediumjoinedblocker and unjoinedlaunch failsclosed. Independent317PASS+2environmentFAIL when -oaddopts= exposed normallyexcludedintegrationtests needing absentastrid worktree; authornormal317PASS+2configuredexclusions recorded. Integratednormaltarget proof follows merge; no externalhostpositive claim.
+
+Requested cost-only2a9 proof pin rt-R-readiness-backport-2a9-0241 is active per latest race instruction. Exact079-backed145selection firstreturned144PASS1FAIL, same originaltranscriptinputfailure reproduced on untouched2a9. Agent079 predates fixedimmutabletranscriptinput440. No test/guard/source waiver, no historicalhangcause inferred. Reviewer will retain this oldtuplelimitation separately from costsourcequalification; App originalnative21 caller does not imply transcriptpositive qualification. Agentexportroute continues independently; Proof stillownsONEchangedpair.

@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T02:43:40Z | dispatcher heartbeat 0s | live 1 (sol 1, luna 0, other 0) | busy30 19 | status age 0m -->
-# runtime board, 2026-10-24T02:44:00Z
+<!-- main | 2026-10-24T02:45:59Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 18 | status age 0m -->
+# runtime board, 2026-10-24T02:45:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -46,23 +46,23 @@
 | R5-full-occupancy | Preserve fifteen occupancy scenarios | Sol / Luna | Agent historical source carrier | blocked:agent | Agent carrier0213; fixture review0213 | Three fixture cases independently passed. Historical reuse stays held for genuine cross-timeline carrier; no full16 claim. | fad2ddd1eb held |
 | R5-full-speed | Preserve six speed refusals | Luna | Integrated proof passed | merged | Review 0138; port review 0148; service 13500 | Actual 28bb: 14 passed. Original six inputs and SQL/CAS retained; no new type diagnostics. | 4e983cebc / 0e28e6261 |
 | R5-full-receipt-key | Preserve receipt and key guards | Luna | Integrated proof passed | merged | Reviews 0138 and 0148; integrated 0157 | Actual 28bb: both cases passed in 1.97 s with explicit Agent path. All original replay and receipt equalities retained. | 28bb65668 / b57ab2331 |
-| R5-full-conformance | Declare actual retired-route errors | Sol / Luna | Merge queue | merging | Cumulative review0242 PASS; merge requested | Six original markers restored;137+25 behavior retained. Three generation checks remain freeze-deferred. [Review](../../design/runtime-D39-final-review-0242.md) | 9d2fdf1ae;73c28d3f5 |
+| R5-full-conformance | Declare actual retired-route errors | Sol / Luna | Integrated service19379 | doing | Review0242 PASS; merged a7a2; proof19379 | Six original markers restored;137+25 behavior retained. Three generation checks remain freeze-deferred. [Review](../../design/runtime-D39-final-review-0242.md) | 9d2fdf1ae;73c28d3f5 |
 | F-full-census-review | Verify all failures and exact recovery | Luna independent | Reports 0107 and 0110 | merged | rt-F-census-recovery-review-0113 PASS | Exact 36 nodes and all counts independently verified; main recovery clean and exact. [Review](../../design/runtime-full-census-recovery-review-0113.md) | Evidence only |
-| R2r-external-pack-source | Bind external pack authority | Sol / Luna | Merge queue and Agent consumer | merging | Security0240 producer PASS; merge requested | 317 passed;2 unconfigured environment failures recorded. Agent must consume captured bytes; no joined launch claim. [Review](../../design/runtime-D40-security-review-0240.md) | eb2775376 |
+| R2r-external-pack-source | Bind external pack authority | Sol / Luna | Integrated service10713; Agent consumer | doing | Security0240 PASS; merged f320; proof10713 | 317 passed;2 unconfigured environment failures recorded. Agent must consume captured bytes; no joined launch claim. [Review](../../design/runtime-D40-security-review-0240.md) | eb2775376 |
 | R-readiness-commits-hang | Reduce authenticated history cost | Sol / Luna | Integrated proof passed | merged | Source 0212; final 0205; proof 0210 | Actual 45c3 with Agent4151: 145 passed, zero skips. Historical cause unknown. [Proof](../../design/runtime-readiness-integrated-0210.md). | 45c3a7f47 |
-| R-readiness-compatible | Cost-only proof pin on old client | Sol / Luna | Orchestrator race authorized | doing | rt-R-readiness-backport-2a9-0241 | Exact2a9 client and OpenAPI required;145-case proof then Luna review. Races Agent export adoption for one changed pair. | Source pending |
+| R-readiness-compatible | Cost-only proof pin on old client | Sol / Luna | Independent source and145proof | review | Author0241; rt-R-readiness-backport-review-0245 | Exact2a9 client/OpenAPI retained.079run144passed1oldtranscriptfailure;145proof uses qualified4151 source as0210. | 37eb6c7bd |
 | F-helper-sequential | Classify helper replay-map refusal | Luna / Sol | Agent actual map review | blocked:agent | Agent observer0202; reviewer0210 | Actual map retained: extra batch read key. Agent owns bounded cause review and repair; Runtime guard stays strict. | No Runtime change |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Agent existing child qualified | merged | Source 0125; review 0132; Agent 0137 | Exact seven passed in 3.60 s on existing child c886; wrong-tree control refused and body/source identities retained. | Source 521c888; installed c36 |
 
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
 
-Runtime integration is 45c3a7f47, tree f51124b7b5b3. History cost source merged with exact reviewed tree; integrated145 proof0210 passed with Agent4151. Reviewed speed and receipt test repairs merged. Integrated speed passed 14; integrated receipt proof passed both cases with explicit Agent path. Manifest proof 0128 passed 74 and generation checks on db11. Wire shapes and schema unchanged; no final full-suite pass claimed.
+Runtime integration is f3208b26b, tree c4bcf9297e11. D39/D40 merged; integrated services19379 and10713 are queued. Prior history proof remains exact45c scope. History cost source merged with exact reviewed tree; integrated145 proof0210 passed with Agent4151. Reviewed speed and receipt test repairs merged. Integrated speed passed 14; integrated receipt proof passed both cases with explicit Agent path. Manifest proof 0128 passed 74 and generation checks on db11. Wire shapes and schema unchanged; no final full-suite pass claimed.
 
 Blockers: Runtime / Agent / App — App079/45c3 child failed client bytes. Orchestrator authorizes Runtime2a9 cost-only pin0241 racing Agent export adoption; first qualified tuple gets one changed pair.
 Blockers: Runtime — Full 29085 retains 36 failures. Targeted speed, receipt and manifest repairs passed. Headless, occupancy and contract remain assigned. No unchanged full rerun.
 Blockers: Freeze — D39 client regeneration and Agent/App tuple adoption are held for the freeze; current consumer pins stay intact.
 Blockers: Agent — Source0215 publisher review passed with reorder execution held. Runtime0242 owns saved-pair fixture. Agent owns root inverse, historical sharing and helper integrated proof.
-Blockers: Runtime / Agent — D40 producer security0240 passed and merge is queued. Agent must consume captured bytes or revalidate after bind; missing consumer still refuses before discovery.
+Blockers: Runtime / Agent — D40 producer security0240 passed and merged f320; integrated10713 pending. Agent must consume captured bytes or revalidate after bind; missing consumer still refuses before discovery.
 
 Blockers: Freeze — Reviewed U1c 40427e8b5 against live 795379a67 stays held until freeze.
 
@@ -70,4 +70,4 @@ D34: Orchestrator02:33 confirms main is steady near8.4GiB after D36 and orders n
 
 Later: OPS legacy admission and v1 archive retirement resume below 8.5 GB or after delivery. OPS-suites-prune finite Agent assessment is complete; required references remain and0013 eligibility is unknown. No retirement or further audit requested. Dormant D31 transcript implementation and tests remain in delivery. Installed kit hashes and custody remain in the prior board and design evidence; no installation this pass.
 
-Next ready: Consume backport0241 or Agent compatible export adoption, D39 review0242, D40 security0240 and saved-pair fixture0242. Agent owns publication, root assignment, historical sharing and helper map repairs.
+Next ready: Consume backport review0245 or Agent export adoption, integrated19379/10713 and saved-pair fixture0242. Agent owns publication, root assignment, historical sharing and helper map repairs.
