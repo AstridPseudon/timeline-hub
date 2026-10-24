@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-24T04:50:44Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 3m -->
+<!-- viewing | 2026-10-24T04:52:12Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 6 | status age 1m -->
 # viewing board, 2026-10-24T04:47:25Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -29,7 +29,7 @@
 | DB-composition-dry | Fresh clone delivery dry run | Luna high | Orchestrator request | merged | First return 0757 and review 0802 | All 120 source files, controlled archive payload, registry, types and callers independently passed. | source 635f4de06 |
 | DB-composition-template | Repair missing delivery template | Luna high | Required README template | merged | Template 0749 and review 0751 | Template-only repair and delivery retry passed. No ZIP credit. | source 635f4de06 |
 | F-D22-geometry | Attribute three geometry failures | Luna author and review | Agent request | merged | Cause 1520 and closure 1532 | Read-only attribution passed. Agent merged expectation adaptation; integrated original three passed. No Composition change. | Agent 98ef2f9c9 |
-| F-authoring-ABA | Forward authenticated inverse records | Sol author; Luna review next | Saved WIP and Agent released seams | doing | vw-F-authoring-ABA-forward-sol-0443 | Resumed from saved WIP after restart. Original 13559 still fails; next meaningful qualification belongs Viewing. Image inverse source question included. | WIP 39e319789 |
+| F-authoring-ABA | Forward authenticated inverse records | Sol author; Luna review | Completed source | review | vw-F-authoring-ABA-forward-review-0451 | Author passed 71 plus 5 tests, lint and types. Old accept and preview fail. Image inverse uses same path; original qualification waits for review and home merge. | 39e319789; 0df7b65cd |
 | F-headless-root-mirror | Preserve complete canonical mirror effects | Sol author; Luna review | Independent PASS | merging | vw-F-headless-root-mirror-review-0443 | Independent 63 tests, Ruff, types and mounted caller passed. Remote merge queued; Runtime owns original family. | eca4de47d |
 | F-retired-callers | Qualify retained native, CLI and Scene scenarios | Luna author and review | Independent PASS | merging | vw-F-retired-callers-review-0444 | Independent 53 tests, Ruff, types and caller trace passed. Sheet delta queued for home merge; exact scope is 30 originals. | 0712aadf6 |
 | F-D32-render-wire | Classify six missing SDK result files | Luna author and review | Agent qualified installed child | merged | Viewing 0116 and 0117; service 27934 | Agent reports six original cases passed in 41.48 seconds on child c886 and Runtime 8ea. Source classification independently passed. | no product change |
