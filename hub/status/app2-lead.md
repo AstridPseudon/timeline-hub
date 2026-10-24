@@ -1,1 +1,1 @@
-LEAD 2026-10-24T02:53Z | up | P1 GO stands | P2 and P3 blocked on first qualified D41 tuple and caller (Runtime 0241, Agent U4a due 03:15Z), one run each | manager loop being restarted onto D36 kit when the current round ends | disk 8.4G
+LEAD 2026-10-24T03:25Z | up | P1 GO stands | D41 pair done: P2 readiness passes now, 3 fail 5 not run (element capture, two 90s waits); P3 stops at outbox read, Gate-5 not run; App owns cause | manager loop on D36 kit | disk 8.3G
