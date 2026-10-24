@@ -21,6 +21,7 @@ import os
 from pathlib import Path
 import re
 import shlex
+import stat
 import subprocess
 import tempfile
 from typing import Any
@@ -29,24 +30,30 @@ from typing import Any
 ORCH = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch")
 SUITES = ORCH / "tests/suites.conf"
 ARTIFACT = Path(__file__).resolve().parent
-APP = Path(os.environ.get("TIMELINE_APP_CHECKOUT", "/home/user/work/app"))
-AGENT = Path(os.environ.get("TIMELINE_AGENT_CHECKOUT", "/home/user/work/agent"))
-RUNTIME = Path(os.environ.get("TIMELINE_RUNTIME_CHECKOUT", "/home/user/work/runtime"))
-
-APP_COMMIT = "cca3deb361e8fbbc62ddf491d5fd09c7e542b99f"
-APP_TREE = "911956d49c42021f11d21e9cf69e9e9478ab569a"
-APP_PARENTS = (
-    "d99396bca7c3853435cfa5a5991f5b1073187be4",
-    "8a712d39c74e92ff10886007ae5135d4f316e92e",
-)
-AGENT_COMMIT = "cba425b61958f380f25b7bdea83d23c92f627761"
-AGENT_TREE = "d19ce2e55ce9f29e18a504fb9c97178764272bbe"
-AGENT_PARENTS = (
-    "de2d1aadbec1b9f4bfb76dcc70c62d2f192cb0a5",
-    "9746c9254ad288945e01ecad25f71689a6231a42",
-)
+APP = Path("/home/user/work/app")
+AGENT = Path("/home/user/work/agent")
+RUNTIME = Path("/home/user/work/runtime")
+NORMAL_REF = "tl/integration"
 RUNTIME_COMMIT = "becfe6db88b2cc034dba3fafa6c050117cdf2b06"
 RUNTIME_TREE = "7edc08e3fe94edcbc8ef695c479f4de301789b89"
+RUNTIME_PARENTS = (
+    "46eb068c5adf663270512aca8a4bdd62c1488e6d",
+    "c021f13afb655225570e3f0323f00a55132e8643",
+)
+# Fixed installed inputs from the independently reviewed 1238 snapshot.
+REGISTRY_SHA256 = "52f556f8dfd4fcdb29443ac84db0f33ee9252bb808c92de4ab660871ec73db93"
+APPROVED_ROWS = {
+    "full-e2e-three-products": (
+        "6a45d0567f7dea7a3c15fbcaf687f9dd62debf4527464529d8a4faf8f8e48fee",
+        "f6042b33d35229f47fe74cbd2a575b5984422d2209ed664b996fe1b590656d43",
+        "0839e6b5f6454e9a3101dbb7280b201052b5166e1836749b68d28717c22e1f58",
+    ),
+    "ap2-P3-gate5-h6-0348": (
+        "1b7c7996d9f296aab985a0a9466de89bb71cc816d7796facc8bc79fa0b23c6e7",
+        "6366048bf89533fa450a4575288ac2de004696bab49db6d32f1869783ae493f3",
+        "47deb73f184acc27b701572b1378f2bf4ad70b75de546963647bc94cf6a8da7b",
+    ),
+}
 LEGACY_AGENT_TREE = "1094bf3662c785e4b21eddf7e3ae980da79b1af1"
 LEGACY_AGENT_TREE_P3 = "2deab1a1494fbccfce5e9235412bacb8a949c0cd"
 LEGACY_RUNTIME_TREE = "be4114705127f9ee9e86b26cd6de3f467e771c01"
@@ -117,51 +124,76 @@ def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def physical(path: Path) -> None:
+    require(path.is_absolute() and path.resolve() == path and not path.is_symlink(), f"nonphysical path: {path}")
+
+
+def identity(path: Path) -> tuple[int, ...]:
+    physical(path)
+    value = path.lstat()
+    return (value.st_dev, value.st_ino, value.st_mode, value.st_size, value.st_mtime_ns, value.st_ctime_ns)
+
+
+def regular_bytes(path: Path) -> bytes:
+    before = identity(path)
+    require(stat.S_ISREG(before[2]) and path.stat().st_nlink == 1, f"not a single regular file: {path}")
+    with path.open("rb") as stream:
+        opened = os.fstat(stream.fileno())
+        require((opened.st_dev, opened.st_ino) == before[:2], f"path substituted while opening: {path}")
+        data = stream.read()
+    require(identity(path) == before, f"file changed while reading: {path}")
+    return data
+
+
 def file_sha(path: Path) -> str:
-    require(path.is_file() and not path.is_symlink(), f"missing regular file: {path}")
-    return sha256(path.read_bytes())
+    return sha256(regular_bytes(path))
 
 
-def facts(root: Path, commit: str, tree: str, label: str, *, parents: tuple[str, ...] = ()) -> dict[str, Any]:
-    require(root.is_dir() and not root.is_symlink(), f"{label} checkout is unavailable: {root}")
+def exact_record(path: Path, expected: str) -> bytes:
+    data = regular_bytes(path)
+    require(sha256(data) == expected, f"record digest mismatch: {path}")
+    return data
+
+
+def facts(root: Path, commit: str | None = None, tree: str | None = None, label: str = "source", *, parents: tuple[str, ...] | None = None) -> dict[str, Any]:
+    expected_path = {"App": APP, "Agent": AGENT, "Runtime": RUNTIME}.get(label)
+    require(expected_path is not None and root == expected_path, f"unexpected {label} checkout: {root}")
+    physical(root)
+    require(root.is_dir() and root != ARTIFACT, f"{label} checkout is unavailable or is the caller artifact")
+    before = identity(root)[:2]
+    require(git(root, "rev-parse", "--show-toplevel") == str(root), f"{label} is not the checkout root")
+    require(git(root, "symbolic-ref", "--short", "HEAD") == NORMAL_REF, f"{label} is not on {NORMAL_REF}")
     actual = git(root, "rev-parse", "HEAD")
-    actual_tree = git(root, "show", "-s", "--format=%T", "HEAD")
-    actual_parents = tuple(git(root, "show", "-s", "--format=%P", "HEAD").split())
-    require(actual == commit, f"{label} source mismatch: {actual} != {commit}")
-    require(actual_tree == tree, f"{label} tree mismatch: {actual_tree} != {tree}")
-    if parents:
+    require(git(root, "rev-parse", "refs/heads/" + NORMAL_REF) == actual, f"{label} normal ref changed")
+    actual_tree = git(root, "show", "-s", "--format=%T", actual)
+    actual_parents = tuple(git(root, "show", "-s", "--format=%P", actual).split())
+    require(bool(re.fullmatch(r"[0-9a-f]{40}", actual)) and bool(actual_parents), f"{label} invalid commit identity")
+    if commit is not None:
+        require(actual == commit, f"{label} source mismatch: {actual} != {commit}")
+    if tree is not None:
+        require(actual_tree == tree, f"{label} tree mismatch: {actual_tree} != {tree}")
+    if parents is not None:
         require(actual_parents == parents, f"{label} parent mismatch: {actual_parents} != {parents}")
-    dirty = [line for line in git(root, "status", "--porcelain=v1", "--untracked-files=all").splitlines() if line]
-    require(not dirty, f"{label} checkout is dirty: {dirty[:3]}")
+    require(not git(root, "status", "--porcelain=v1", "--untracked-files=all"), f"{label} checkout is dirty")
+    require(git(root, "rev-parse", "HEAD") == actual and identity(root)[:2] == before, f"{label} checkout changed during observation")
     return {
         "checkout": str(root), "source": actual, "tree": actual_tree,
-        "parents": list(actual_parents), "ref": git(root, "branch", "--show-current") or "HEAD",
+        "parents": list(actual_parents), "ref": NORMAL_REF, "directory_identity": list(before),
     }
 
 
 def app_facts() -> dict[str, Any]:
-    # The production source is the clean normal integration checkout, never
-    # this caller-artifact worktree.  A later harness commit may advance the
-    # artifact branch without changing the product source target.
-    require(APP != ARTIFACT, "App source checkout must not be the caller artifact")
-    source = git(APP, "rev-parse", "HEAD")
-    tree = git(APP, "show", "-s", "--format=%T", "HEAD")
-    parents = tuple(git(APP, "show", "-s", "--format=%P", "HEAD").split())
-    require(source == APP_COMMIT, f"App source is not the approved integrated commit: {source}")
-    require(tree == APP_TREE, f"App tree is not the approved integrated tree: {tree}")
-    require(parents == APP_PARENTS, f"App parents are not exact: {parents}")
-    require(not git(APP, "status", "--porcelain=v1", "--untracked-files=all"), "App source checkout is dirty")
-    return {
-        "checkout": str(APP), "source": source, "tree": tree, "parents": list(parents),
-        "ref": git(APP, "branch", "--show-current") or "HEAD", "orch": str(ORCH),
-    }
+    for label, root in (("APP", APP), ("AGENT", AGENT), ("RUNTIME", RUNTIME)):
+        value = os.environ.get(f"TIMELINE_{label}_CHECKOUT", str(root))
+        require(value == str(root), f"{label} checkout substitution is refused: {value}")
+    return {**facts(APP, label="App"), "orch": str(ORCH)}
 
 
 def read_lock(root: Path) -> dict[str, Any]:
     path = root / "runtime.lock.json"
     require(path.is_file() and not path.is_symlink(), f"missing runtime lock: {path}")
     try:
-        value = json.loads(path.read_text())
+        value = json.loads(regular_bytes(path))
     except json.JSONDecodeError as exc:
         fail(f"invalid runtime lock: {path}: {exc}")
     require(isinstance(value, dict), f"runtime lock is not an object: {path}")
@@ -195,7 +227,7 @@ def check_runtime_lock() -> dict[str, Any]:
         actual = file_sha(AGENT / destination)
         require(actual == expected, f"Agent runtime consumer hash mismatch: {destination}")
     return {
-        "producer": {"source": RUNTIME_COMMIT, "tree": RUNTIME_TREE, "ref": "HEAD", "files": producer_files},
+        "producer": {"source": RUNTIME_COMMIT, "tree": RUNTIME_TREE, "ref": NORMAL_REF, "parents": list(RUNTIME_PARENTS), "files": producer_files},
         "app_consumer": {"source": app_lock["source_commit"], "file_count": len(app_files), "lock_sha256": file_sha(APP / "runtime.lock.json")},
         "agent_consumer": {"source": agent_lock["source_commit"], "file_count": len(agent_files), "lock_sha256": file_sha(AGENT / "runtime.lock.json")},
     }
@@ -212,22 +244,38 @@ def extract_row(line: str) -> tuple[str, str, str]:
 
 
 def installed_rows() -> tuple[dict[str, Any], dict[str, str]]:
+    before = identity(SUITES)
+    whole = exact_record(SUITES, REGISTRY_SHA256)
     rows: dict[str, str] = {}
-    for line in SUITES.read_text().splitlines(True):
-        if not line.strip() or line.lstrip().startswith("#"):
-            continue
+    outside = bytearray()
+    for line in whole.splitlines(keepends=True):
         fields = line.split(None, 2)
-        if len(fields) >= 2 and fields[0] == "app" and fields[1] in {P2_SUITE, P3_SUITE}:
-            rows[fields[1]] = line
-    require(set(rows) == {P2_SUITE, P3_SUITE}, "current P2/P3 registry rows are not both present")
-    whole = SUITES.read_bytes()
-    outside = b"".join(line.encode() for line in SUITES.read_text().splitlines(True) if not any(line.startswith(f"app {name} ") for name in rows))
+        if len(fields) >= 2 and fields[0] == b"app" and fields[1].decode() in APPROVED_ROWS:
+            name = fields[1].decode()
+            require(name not in rows, f"duplicate registry row: {name}")
+            require(sha256(line) == APPROVED_ROWS[name][0], f"unapproved registry row: {name}")
+            outer, body, tail = extract_row(line.decode())
+            require(sha256(body.encode()) == APPROVED_ROWS[name][1], f"unapproved decoded body: {name}")
+            require(sha256(tail.encode()) == APPROVED_ROWS[name][2], f"unapproved tail: {name}")
+            rows[name] = line.decode()
+        else:
+            outside.extend(line)
+    require(set(rows) == set(APPROVED_ROWS), "current P2/P3 registry rows are not both present")
+    require(identity(SUITES) == before, "concurrent registry change")
     snapshot = {
-        "path": str(SUITES), "line_count": len(whole.splitlines()), "byte_count": len(whole), "sha256": sha256(whole),
-        "outside_row_count": len(outside.splitlines()), "outside_bytes": len(outside), "outside_sha256": sha256(outside),
-        "rows": {name: {"sha256": sha256(line.encode()), "bytes": len(line.encode())} for name, line in rows.items()},
+        "path": str(SUITES), "identity": list(before), "line_count": len(whole.splitlines()),
+        "byte_count": len(whole), "sha256": sha256(whole), "outside_row_count": len(outside.splitlines()),
+        "outside_bytes": len(outside), "outside_sha256": sha256(outside),
+        "rows": {name: {"sha256": sha256(line.encode()), "bytes": len(line.encode()),
+                           "decoded_sha256": APPROVED_ROWS[name][1], "tail_sha256": APPROVED_ROWS[name][2]}
+                 for name, line in rows.items()},
     }
     return snapshot, rows
+
+
+def unchanged_registry(snapshot: dict[str, Any]) -> None:
+    require(list(identity(SUITES)) == snapshot["identity"], "concurrent registry replacement or write")
+    require(file_sha(SUITES) == snapshot["sha256"] == REGISTRY_SHA256, "concurrent registry byte change")
 
 
 def assignment(body: str, key: str) -> str:
