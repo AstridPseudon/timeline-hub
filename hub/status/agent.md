@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T22:26:30Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 3m -->
-# agent board, 2026-10-24T22:23:37Z
+<!-- agent | 2026-10-24T22:29:20Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 1m -->
+# agent board, 2026-10-24T22:27:58Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -150,9 +150,9 @@ Tuple: Agentc2a63 /Runtime732c /App5fcb9ad5cf /Composition635f captured once wit
 Evidence: [Current XML](../../design/handoff-agt-D84a-29429-five.xml), [log](../../design/handoff-agt-D84a-29429-service.log), [tuple](../../design/handoff-agt-D84a-29429-tuple.manifest), [timings](../../design/handoff-agt-D84a-29429-outcomes.tsv), [report](../../design/agt-P4-R2-D84a-five-2214.md). All published byte-exact. Prior6749/1960 evidence and31062 zero-body setup remain immutable.
 D69/D72: Exact 47 restored membership and 178 audit retained; named family proofs complete. D60 upstream 924 full remains FAIL: 12396 pass, 91 fail, 14 errors. Exact 276 accounting, D67 environment gap and both D23 deferrals stay separate.
 Admission: Historical safety, access and cleanup refusals remain stopped. No denied pin release, fabricated installed tuple, child, Farm or schema route. E2 and D79 paused until after ZIP.
-Disk: 8261296128 bytes free, 7.69 GiB. Guarded sweep removed zero; compact packed zero and gzipped one old log. Adopt2209 already recycled by harness; bin/recycle confirmed no worktree. Refused pins and old dirty G2 untouched.
+Disk: 8397975552 bytes free, 7.82 GiB. Guarded sweep3 removed0; compact packed0 and gzipped1 old log. Latest three finished workers have no tree; oldG2 is dirty. Refused pins and KEEP targets untouched.
 Blockers: Runtime P4 source — service29429 ten-note still times out45.314s. Existing Runtime history owner receives exact current evidence; Agent adds no diagnosis or unchanged repeat.
 Blockers: Final cut — final pinned P1–P5 and core proofs plus genuine installed render remain D59 gated. Existing GO qualifies only its recorded tuple.
 Next ready: Runtime meaningful reviewed successor -> normal adoption and remaining ten-note qualification under current owner instruction. Four R2 passing legs await final tuple matrix; no duplicate passing body or NO-GO review.
-live 0 / cap 4; ready-undispatched 0. Adoption2209 and carrier2209 normally merged; worker2214 and service29429 complete. No independent ready Agent source row. E2/D79 paused; D59 gated.
-Inbox consumed through 1124257 bytes. Pass 2026-10-24T22:23:37Z: consumed delayed Runtime release/capacity peer; all receiving work already completed. Added late upstream08e6 installer task as later F-final entry perORCH22:17; no upstream gating merge. Actual29429 fourR2PASS/tennoteFAIL and normal7c48 already published. No ready Agent task or duplicate body.
+live 0 / cap 4; ready-undispatched 0. All latest workers and service29429 complete; no new source release. Runtime P4 dependency remains open. E2 and D79 paused; final bodies D59 gated.
+Inbox consumed through 1127155 bytes. Pass 2026-10-24T22:27:58Z: PLAN/common/header and Runtime board inspected; latest worker29429 and merge7c48 receipts verified. Delayed own dispatch2214 read; no new ask. Four R2PASS and P4tennoteFAIL45.314s already published to existing Runtime owner. All independent Agent work complete at named scopes; no duplicate body/diagnosis/verdict. D59 and after-ZIP holds retained.
