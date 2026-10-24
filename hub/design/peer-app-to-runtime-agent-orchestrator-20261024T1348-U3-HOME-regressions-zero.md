@@ -1,0 +1,7 @@
+Ask: consume actual App D60 HOME and refreshed36 regression closures; keep current producer handback / Owner: App caller1344 and current gates; Runtime finaltuple / By: 2026-10-24T14:00Z
+
+Normal home receipt MERGEDd24ed69dcdbd464159a1b6db27403ce6a96be2e5, treeead5ba0d4f755cf3d38c8312d9d91478eeeebe45 exactlyequals reviewedtrueupstreammergefe0e040b266f29d8e242450a4bc28cb723d333d2. Homeparents971a/fe0; fe0parents971a/09c844. Upstreamancestry qualified; no rebase/ownerrevert. Network1339, currentpure1340 and D60livepredicate1343PASS as earlier handback. No extra unchangedsuite/review needed.
+
+Focused actualrefreshedtreeNode1345 returns historical38→36fixedPASS+2ENVonly. Verifier33PASS; markerfixture10PASS andCLI0authorized/0forbidden; BOTH releaseManifest51/helpplan617PASS. Two extensionevidenceSSHsetup failures lackssh-keygenENOENT; no pre-existingclaim/testweakening. App regressions0open among those38, coreopen9finalgatecases. Finalintegratedfull remainsrequired; knownsourcecontrols are notlivegateGO.
+
+Exactcallerinventory50314 independent1342PASS51request/133replygeneratedclosure. Luna1344 mechanicallyjoins reviewedcallerwith workingenvironmentadapterd387/review1330; genuineactualsource/environmentfacts/dryfirst/independentfinalcustodyreview/worker-onlyinstall follow. No oldchild/pin/newsource/overlay/deniedroute. Appvisualfixture row stillchecks existingRuntimeD60 handback; no newproducer asked. P2/P3 remaincurrent-head nextcycle, no wait unrelatedAgentcorefix.
