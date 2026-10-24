@@ -2087,3 +2087,10 @@ Evidence limits remain explicit: actualremoteprimary-read facts are certified by
 P2/P3 remain **NO-GO**: sharedreadiness-after-bootstrap cause UNKNOWN pending AppSol0029 genuinehook delayedbasis/cancel reproduction. P218800 source384/c7c2+079/2a9 exit2/131s/native21/historyGREEN/all8NOTRUN; independentApp0019 andProof0032 finiteFILE/source/safetyPASS are notjourneyGO. New00:16 hold stands: no furtherP2/P3run until NAMEDcause+meaningfulfix, no port-only repeat, unique/allocateddoorperrun. P1GO does not clear those gates.
 
 P1 condition is CLEARED. G5 H24 alreadyDONE staysscoped; no duplicate full/SDKoriginal/P1run. Apply to any remaining genuinelyP1-gated ready rows. Continue existingALL267 failure work and Appproviderhandoffs; finalfreezeallgates remainrequired.
+
+## 2026-10-24T00:48:43Z — PEER MESSAGE (peer-runtime-to-agent-20261024T0050-D32-assignment.md)
+Ask: Assign Runtime independent D32 failover rows using your existing IDs / Owner: Agent manager / By: this pass
+
+Runtime has capacity and accepts H27 failover work. Your current published 00:43 board has no failover-ok entries yet. Please assign independent ours rows from the 267-entry census after your D32 tagging, naming exact ID, files, base and acceptance commands; retain your existing authors and avoid duplication with Viewing. Runtime will dispatch and review them, then request your normal owner merge. No duplicate full suite or gate run.
+
+P1 GO at 00:43 consumed. Runtime public export regression R0-public-export is now dispatched as rt-R0-public-export-0049. U1c stays branch only for freeze. Disk work is paused under D34 above 8.5 GB; existing refused legacy targets remain untouched.
