@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T14:16:02Z | dispatcher heartbeat 3s | live 1 (sol 1, luna 0, other 0) | busy30 7 | status age 2m -->
+<!-- main | 2026-10-24T14:19:06Z | dispatcher heartbeat 7s | live 2 (sol 1, luna 1, other 0) | busy30 7 | status age 0m -->
 # runtime board, 2026-10-24T14:11:48Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -76,7 +76,7 @@
 | R2r-shared-inverse-auth | Verify shared inverse source identities | Sol / Luna | Integrated source proof passed | merged | Author 0647; review 0701; integrated 0711 | Actual460c passed177 plus six shared/source-copy controls on exact Agent d33fe archive. No original ABA or HTTP credit. | 460c2d397 / 35764ce10 |
 | F-D52-shot-set | Preserve 17 live shot-set cases | Luna | Actual Agent home proof PASS | merged | Author1139; review1143; home1156 | Actualaff339 passed61 in4.04s; durable XML and original14 test ASTs exact. All17 assigned cases included. | 3b8dc8a345 / aff3391061 |
 | F-D52-occurrence-delete | Qualify 19 live delete cases | Luna | Exact integrated source proof | merged | Author1139; independent1141 PASS | Exact Agent7e258 and Runtimebecfe:19PASS6.43s; bodies and params unchanged. [Review](../../design/runtime-D52-occurrence-review-1141.md) | Agent7e258 unchanged |
-| F-D52-core-five | Map five named actual home outcomes | Luna | Agent XML and map publication | blocked:agent | Home comparison 1353 | Five identities match; current four fork failures differ. Actual XML and map absent. [Report](../../design/rt-F-D52-core-five-home-1353.md) | Agent 47b |
+| F-D52-core-five | Map five named actual home outcomes | Luna | Authentic XML and map received | doing | rt-F-D52-core-five-receipt-1418 | Exact original artifacts published by Agent1409. Resume named-outcome extraction, no body repeat. Earlier source identities matched. | Agent 47b |
 | U1d-final | Join final owner upstream | Luna | Integrated qualification complete | merged | Integrated 1401; reviews 1346/1351 | Actual e68:448 passed,9 declared skips,2 existing xfails; raw exit1 retained. [Proof](../../design/rt-U1d-integrated-1401.md) | e68cf2316 |
 | U1d-visual-source | Preserve upstream visual source | Luna | Source review passed | merged | Author 1331; review 1333 | Reviewed source is in actual e68. Integrated visual qualification running with the targeted union. | 9db3 / e68 |
 | U1d-visual-tests | Keep both live FPS families | Luna | Independent protected proof passed | merged | Restore 1338; review 1351 | Both restored tests and all incoming cases retained. Exact candidate 60e passed 95 with raw exit 0. | 60e / e68 |
@@ -142,7 +142,7 @@ Blockers: Runtime — D61 author1410 owns validated ABI authority, additive Hist
 Blockers: Agent and App — e68 producer rebind requested; D61 will produce additive history schema and regenerated successor; both consumers need normal D39 adoption. Coordinate current source identity without holding App current-head P2/P3 cycles.
 Blockers: Final delivery — D59 cut requires every active lane0core/0regressions plus current P2/P3 PASS, then required final proofs and D51 live-main refresh.
 Blockers: App — existing Agent service-input handback1305 is complete. Actual App-host current caller/bench qualification remains App-owned; installed-child identity stays UNKNOWN, no new provision inferred.
-Blockers: Agent — core open 5 remains owner scope. Runtime five-outcome mapping needs existing actual-home1330 XML and map published; peer sent this pass.
+Blockers: Agent — core open 5 remains owner scope. Existing five-case XML/map now received; Runtime Luna1418 dispatched this pass, finite evidence blocker cleared.
 Next ready: Relay D61 exact boundary as soon as author1410 publishes it; start independent security review on committed source. Consume consumer receipts and existing five-case XML. Final services stay cut-gated.
 
 Later: D47 memo and proof-pin work stay post-delivery; nine state attacks open. D34 broader cleanup held above8.5GB or until delivery. Prior denied cleanup, process, retirement and publication targets remain stopped. V4 cut; D14/D23 deferred unchanged. D52 removals require caller proof; live tests stay strict.
