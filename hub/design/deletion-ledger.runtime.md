@@ -29,3 +29,8 @@ This area ledger records deletion/retention decisions only; it is not a combined
 | id | what (paths) | contradicts | replaced by | owner | ms | status | evidence |
 |---|---|---|---|---|---|---|---|
 | D62 | Runtime does not prove a v2 producer's native coverage is complete at submit (Sol1422's 8 omission packets); such commits fail closed at fork/inverse use. | Submit-time producer-trust completeness is deferred by D62. | Immutable accepted-record recorder ABI classification and existing fork/inverse guards. | runtime | v2.1 | Deferred submit-time hardening; accepted-mode producer8825 awaits joined security and integration. | BOARD-HEADER D62; rt-R-recorder-D62-producer-sol-1450.md; rt-R-recorder-native-custody-review-1445.md; exact eight packets retained in worker1422 evidence. |
+
+
+### 2026-10-24T21:40Z — R2r D83 legacy recorder ABI expectation
+
+D61/D62 require acceptance-derived recorder_abi=1 in authenticated legacy metadata. The sole exact SQL equality now includes that field; all 18 other statements and 12 assertions are preserved. Independent review rt-R2-legacy-ABI-review-2135 PASS; 75 targeted cases passed in 18.90s. Normal integrated head 7aa603d13762b499af2279e4c1340b31b6eda5a2, tree daa9efc4a158e9bc4f6fe2186dd28ffd00800405. All product blobs unchanged from bc04. [Review](runtime-legacy-ABI-review-2135.md).

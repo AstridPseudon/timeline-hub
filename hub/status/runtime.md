@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T21:35:11Z | dispatcher heartbeat 6s | live 1 (sol 1, luna 0, other 0) | busy30 6 | status age 2m -->
-# runtime board, 2026-10-24T21:32:19Z
+<!-- main | 2026-10-24T21:38:24Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 2m -->
+# runtime board, 2026-10-24T21:36:01Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -172,11 +172,11 @@
 
 | D83-history-cost-return | Decode fresh metadata once | Sol / Luna | Independent security and normal apply PASS | merged | Author2113; security2122 PASS | Normalbc04 exact reviewedblob. Mutation1 and378PASS/1parent-identicalFAIL; HTTP16/ABA3PASS. Counts42equal; finiteCPU8.34%gain. Originaltiming unproved. | bc04caa23 / 1fa23066f |
 
-| D83-request-lock | Measure real lock hold and wait | HARD Sol | ORCH 21:28 element and popup inputs | doing | rt-D83-request-lock-sol-2126 | Read-only seconds-long genuine daemon control; per-request wait/hold versus verify compute. No new original or speculative source fix. | Metadata author branch |
+| D83-request-lock | Measure real lock hold and wait | Sol / Luna | Named central service route | doing | Source Sol2126; rt-D83-lock-service-2135 | Source facts complete; private targeted path rejected before pytest. Luna registers one named row and runs the prepared real daemon control. No measurements yet. | Reviewed metadata source |
 | D83-request-cost | Measure verify cost per ordinal | HARD Sol | ORCH 21:28 accepted-history priority | doing | rt-D83-request-cost-sol-2126 | Sole next product author: finite N and ordinal counts, strict measured correction or source-backed limit. Prior metadata review remains independent. | Metadata author branch |
 
 | R-P2-popup-read | Qualify internal timeline read response | HARD Sol | App26387 source finding | doing | rt-D83-request-cost-sol-2126 | Native/readiness PASS; internal timeline read pending before ADD group helper. No App defect or old422 proved. Same accepted-history owner takes source input. | Runtime dc55 captured |
-| R2r-legacy-ABI-expectation | Preserve legacy metadata and ABI assertions | Luna | Approved ABI behavior must be cited | doing | rt-R2-legacy-ABI-expectation-2131 | Resolve parent-identical recorderABI SQL expectation without dropping legacy replay/restart predicates. Exact correction only if normative; one independent review. | Base bc04 |
+| R2r-legacy-ABI-expectation | Preserve legacy metadata and ABI assertions | Luna / Luna | Independent protected review | review | Author2131; rt-R2-legacy-ABI-review-2135 | D61 and D62 cited. Exact SQL equality adds ABI1; all 12 other assertions preserved. Author 75 passed. Reviewer applies normally on PASS. | Test only above bc04 |
 
 Runtime producer: Normal bc04caa23f4b503fc55e49769ead20677904702a, treefa696b342468ae191735409822fa3c7c66f8a590. Freshmetadata1fa security2122 PASS above schemae745/observer4351/projection57df. Canonical15/schema867f unchanged. Released21:29 to both receiving lanes; new2126 questions do not gate adoption or originals.
 
@@ -198,5 +198,5 @@ Later: E1/E3 designs and E2 Agentdesign complete before D83; further E/D79 pause
 Admission: D56 Farm/schema access stopped. Original403/accessrefusals, historical deniedcleanup/process/retirement targets untouched. D67D13envgap unchanged. AppdirtyU3guardrefusals stopped.
 Disk: 8660201472 available bytes (8.07 GiB), cap 4. No ended clean non-KEEP Runtime tree eligible; five old dirty trees remain untouched. Existing KEEP and refused targets not retried; 15 GB target not reached.
 
-live 3 / cap 4; ready-undispatched 0. Two requested Sol2126 active; spare-slot Luna2131 resolves retained exact legacyABI expectation failure. Security2122 COMPLETE; normalbc04 remains RELEASED to both receiving lanes.
-Pass 2026-10-24T21:32:19Z: actualpopup26387sourcefinding2121 consumed as rowR-P2-popup-read with existing costSol2126; no newcollector/body/sourceauthor. Native/readiness passes butinternalreadunknownthroughteardown; old422notinferred. Parent837 responsewait andasset12674 findingsremainAppproducerowned; ORCH21:31 holds furtherisolatedbodiesuntilbc04adoption. Metadata2122 PASS/release2129 already normallypublished; no receiverholdfor2126. Criticalfinalprooflegacyassertion getsLuna2131 onbc04, test-onlystrictcorrectionifnormative, allotherpredicatesexact. Inboxconsumedthrough563299bytes. All3workershavefreshprogress. Main8GiB/cap4, endedcleanworkerautorecycle; refusedtargetsuntouched.
+live 3 / cap 4; ready-undispatched 0. Request-cost Sol2126 is active. Luna2135 registers and runs the prepared lock control; separate Luna2135 reviews the exact legacy ABI expectation correction. E and D79 remain paused.
+Pass 2026-10-24T21:36:01Z: lock source facts returned without a measurement because the targeted service rejects absolute private paths before pytest. This ordinary blocker was assigned immediately to the named-suite worker; no orchestrator decision is needed. The exact legacy SQL expectation author passed 75 cases and cited D61/D62, so its one independent review was dispatched immediately. The source still requires fresh verification and all original timing guards. Runtime bc04 remains released; neither new investigation holds receiving-lane adoption. Inbox consumed through 563299 bytes. No prior denied cleanup or source route was retried.
