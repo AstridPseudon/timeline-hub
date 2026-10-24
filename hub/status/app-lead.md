@@ -1,1 +1,1 @@
-app-lead 13:12Z: daemons up (ensure-daemons uptime 1631m, machine up 27h, no restart), 4 workers running, disk 11.0G free, wt 31 dirs, scratch /tmp/w-* <=2MB; board 'live 5 / cap 6; ready-undispatched 0'; no blockers, no LEAD FETCH, no new refusals; P2 (all 8 CORE per D55b) and P3 not yet GO, caller custody repairs active
+app-lead 13:42Z: daemons up (uptime 1661m, no restart), 2 workers running, disk 11.2G free, wt 29 dirs; board 'live 2 / cap 6; ready-undispatched 0'; U3-final true merge fe0e040b266 in review; no blockers, no new refusals; P2/P3 not yet GO
