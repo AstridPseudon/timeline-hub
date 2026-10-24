@@ -21,6 +21,7 @@ import {
   getPlayableAssetKind,
   planAssetDropTarget,
   planGenerationAssetRegistration,
+  type TimelineAssetPlacementPolicy,
 } from '@/tools/video-editor/lib/timeline-asset-plans.ts';
 import { readPositiveDurationSeconds } from '@/tools/video-editor/lib/timeline-asset-durations.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
@@ -90,6 +91,8 @@ export interface AddClipCommandInput {
   removeClipIds?: string[];
   replaceClipId?: string;
   pinnedShotGroupsOverride?: PinnedShotGroup[];
+  /** Preserve a caller-captured occurrence raw track during prepared placement. */
+  placementPolicy?: TimelineAssetPlacementPolicy;
 }
 
 export interface UpdateClipCommandInput {
@@ -497,6 +500,7 @@ export function createTimelineCommands(
             ...(input.pinnedShotGroupsOverride !== undefined
               ? { pinnedShotGroupsOverride: input.pinnedShotGroupsOverride }
               : {}),
+            ...(input.placementPolicy !== undefined ? { placementPolicy: input.placementPolicy } : {}),
           },
         };
         const preview = applyPreparedMediaCommand(current, command);

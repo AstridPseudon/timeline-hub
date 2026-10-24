@@ -103,6 +103,7 @@ describe('ShotTimelineMediaControls', () => {
       preparedAsset,
       trackId: 'V1',
       time: 1.25,
+      placementPolicy: { kind: 'occurrence-raw-track', trackId: 'V1' },
     }));
     expect(state.commands.addClip.mock.calls[0]?.[0].preparedAsset.mediaSelection).toEqual(
       preparedAsset.mediaSelection,
@@ -226,8 +227,12 @@ describe('ShotTimelineMediaControls', () => {
   it.each(['add', 'swap'] as const)('routes %s through the real mounted command receiver with a semantic placement', async kind => {
     const config: TimelineConfig = {
       ...createDefaultTimelineConfig(),
-      tracks: [{ id: 'V1', kind: 'visual' }],
-      clips: [{ id: 'clip-old', track: 'V1', at: 0.75, hold: 2, asset: 'asset-old', clipType: 'media' }],
+      tracks: kind === 'add'
+        ? [{ id: 'V1', kind: 'visual' }, { id: 'V2', kind: 'visual' }]
+        : [{ id: 'V1', kind: 'visual' }],
+      clips: kind === 'add'
+        ? [{ id: 'clip-occupied', track: 'V2', at: 0, hold: 20, asset: 'asset-old', clipType: 'media' }]
+        : [{ id: 'clip-old', track: 'V1', at: 0.75, hold: 2, asset: 'asset-old', clipType: 'media' }],
     };
     const registry: AssetRegistry = { assets: {
         'asset-old': { file: 'asset-old', type: 'video/mp4' },
@@ -269,6 +274,7 @@ describe('ShotTimelineMediaControls', () => {
     state.data.current = current;
     state.editor.resolvedConfig = current.resolvedConfig;
     state.editor.selectedClipIds = kind === 'swap' ? new Set(['clip-old']) : new Set();
+    state.editor.selectedTrackId = kind === 'add' ? 'V2' : 'V1';
     state.assets.uploadImageGeneration.mockResolvedValue({ generationId: 'generation-new', variantId: 'variant-new' });
     state.assets.prepareGenerationAsset.mockReturnValue({
       assetKey: 'asset-new', mediaType: 'image', entry: { file: 'asset-new', type: 'image/png' },
@@ -283,7 +289,9 @@ describe('ShotTimelineMediaControls', () => {
     await waitFor(() => expect(applied).toHaveBeenCalledTimes(1));
     expect(state.commands.addClip).toHaveBeenCalledWith(expect.objectContaining({
       preparedAsset: expect.objectContaining({ assetKey: 'asset-new' }),
+      trackId: kind === 'swap' ? 'V1' : 'V2',
       time: kind === 'swap' ? 0.75 : 1.25,
+      ...(kind === 'add' ? { placementPolicy: { kind: 'occurrence-raw-track', trackId: 'V2' } } : {}),
       ...(kind === 'swap' ? { replaceClipId: 'clip-old' } : {}),
     }));
     expect(applied).toHaveBeenCalledWith(expect.objectContaining({
@@ -292,9 +300,15 @@ describe('ShotTimelineMediaControls', () => {
         type: 'place-prepared-media',
         payload: expect.objectContaining({
           at: kind === 'swap' ? 0.75 : 1.25,
+          ...(kind === 'add' ? { placementPolicy: { kind: 'occurrence-raw-track', trackId: 'V2' } } : {}),
           ...(kind === 'swap' ? { replaceClipId: 'clip-old' } : {}),
         }),
       }),
     }), expect.objectContaining({ semantic: true }));
+    if (kind === 'add') {
+      expect(dataRef.current.config.clips).toEqual(expect.arrayContaining([
+        expect.objectContaining({ asset: 'asset-new', track: 'V2' }),
+      ]));
+    }
   });
 });

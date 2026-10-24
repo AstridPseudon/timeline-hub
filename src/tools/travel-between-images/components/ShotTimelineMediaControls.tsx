@@ -263,6 +263,9 @@ export function ShotTimelineMediaControls({
         preparedAsset,
         trackId: target.trackId,
         time: target.time,
+        ...(!target.replaceClipId && !target.afterClipId ? {
+          placementPolicy: { kind: 'occurrence-raw-track' as const, trackId: target.trackId },
+        } : {}),
         ...(target.replaceClipId ? { replaceClipId: target.replaceClipId } : {}),
         ...(target.afterClipId ? { afterClipId: target.afterClipId, oldMediaSelection } : {}),
       });
