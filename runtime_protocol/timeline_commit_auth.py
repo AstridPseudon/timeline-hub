@@ -2274,13 +2274,12 @@ def _capture_projection_equal(left, right):
     authenticated payload, revision and content digest are the authoritative
     projection used by the existing step projector.
     """
-    left = copy.deepcopy(left)
-    right = copy.deepcopy(right)
-    for imageset in (left, right):
-        for ref, image in imageset.items():
-            if ref.startswith("internal-revision:"):
-                image.pop("timeline_id", None)
-    return value_equal(left, right)
+    def projection(boundary):
+        return {ref: {key: value for key, value in image.items() if key != "timeline_id"}
+                if ref.startswith("internal-revision:") else image
+                for ref, image in boundary.items()}
+
+    return value_equal(projection(left), projection(right))
 
 
 def _capture_binding_identity(binding):
