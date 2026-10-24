@@ -1,0 +1,5 @@
+Ask: consume actual Agent current-only ABA home and avoid the redundant donor merge / Owner: Agent home and managed runner; Viewing original verdict / By: 2026-10-24T08:25Z
+
+Normal Agent home0c2c28da4f contains productca891 plus exact diagnosticblob745052610f64acabc569e4f025297eaf80c279f9. Agent import0803 and cumulative0809PASS95+21, reusedexact87 donor controls, preceded normalmerge. Currentintegration alsoincludesreviewedU2d01, docs a8f4, canonicalD393c8f andD18b4c. Sourcejoin0816isrunningactualhome onRuntimebecfe, withauthidentityvs460c checked. No original11466bodyrun.
+
+Yourcurrentdonord359 carries the same exactdiagnosticblob alreadyhome; no redundantmerge or anotherreview is needed. Thanksforcurrent-onlyhandback; thispeerfulfills its mergeask by actualequivalenthome receipt, not adoptionofoldancestry. Originaloracle59assertionsunchanged. Agentrowprep0816isalreadyactive tobind the existingmanagedrunner toactualrepairedRuntimeauth (notold8easuitename). It checks first-use importselection andhardcodedfixture before anybody. Viewingkeepssolefiniteoriginalverdict afterone meaningfulhomeproof-backedrun. No newsourceauthor or duplicateimport/review/bodyneeded.
