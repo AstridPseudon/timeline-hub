@@ -2,6 +2,7 @@ import { expect, type Locator, type Page, type Request, type Response } from '@p
 import { sha256Hex, THREE_PRODUCTS_REFERENCE_AT, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
 import { ASTRID_PYTHON } from './support/astrid.ts';
 import { dropFileOnTimeline, openEmbeddedCanonicalShot, test as appTest } from './support/app.ts';
+import { assertSemanticAddMediaRequest } from './support/p2-semantic-oracle.ts';
 import type {
   CanonicalDocument,
   CommitAcceptedMutation,
@@ -475,7 +476,7 @@ test('P2 mounted registerAsset save: real file drop, exact media/registry fields
   const post = await commitFromGesture(page, wire, () => dropFileOnTimeline(page, file, seed3.appClipId, seed3.transitionClipId, 0, THREE_PRODUCTS_REFERENCE_AT, 5));
   const imported = object((await (await importResponse).json()).data, 'registered media import');
   const selected = await selectionResponse.then((response) => response.json()) as JsonObject;
-  assertRequestV2(post, before.head);
+  assertSemanticAddMediaRequest(post, before.head, original, { op: 'clip.add-media', owner: 'parent', select: 'parent' });
   const command = post.body.commands[0]!;
   expect(command.op).toBe('clip.add-media');
   expect(command.select).toBe('parent');
@@ -531,7 +532,9 @@ test('P2 mounted automatic child placement: embedded shot file gesture, occurren
   const post = await commitFromGesture(page, wire, () => dropFileIn(dialog, file, seed3.agentClipId, seed3.agentClearClipId, 3, 6, 4.5));
   const imported = object((await (await importResponse).json()).data, 'child media import');
   const selected = await selectionResponse.then((response) => response.json()) as JsonObject;
-  assertRequestV2(post, before.head);
+  assertSemanticAddMediaRequest(post, before.head, original, {
+    op: 'occurrence.add-media', owner: `occurrence:${seed3.occurrenceId}`, select: `occurrence:${seed3.occurrenceId}`,
+  });
   const command = post.body.commands[0]!;
   expect(command.op).toBe('occurrence.add-media');
   expect(command.select).toBe(`occurrence:${seed3.occurrenceId}`);
