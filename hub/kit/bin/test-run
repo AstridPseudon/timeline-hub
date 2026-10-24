@@ -198,11 +198,11 @@ NM=$W/node_modules; [ -e $NM ] || NM=/home/user/work/app/node_modules; case $rep
 if [ $repo = agent ]; then RNM=$W/remotion/node_modules; [ -e $RNM ] || RNM=/home/user/work/agent/remotion/node_modules
   [ -e $RNM ] && [ ! -e $SNAP/remotion/node_modules ] && mkdir -p $SNAP/remotion && ln -s "$(readlink -f $RNM)" $SNAP/remotion/node_modules; fi
 if [ -n "$BENCH_CONTROL_FD" ]; then
-  ( exec {BENCH_CONTROL_FD}>&-; cd $SNAP && PYTHONPATH=$SNAP exec timeout -k 60 90m nice -n 5 bash -c "$CMD" ) > $D/log.txt 2>&1 < /dev/null &
+  ( exec {BENCH_CONTROL_FD}>&-; cd $SNAP && PYTHONPATH=$SNAP D66_OUTPUT_DIR="$D/d66" exec timeout -k 60 90m nice -n 5 bash -c "$CMD" ) > $D/log.txt 2>&1 < /dev/null &
   SUITE_PID=$!; printf '%s\n' "$SUITE_PID" >&"$BENCH_CONTROL_FD"; exec {BENCH_CONTROL_FD}>&-
   wait "$SUITE_PID"; RC=$?
 else
-( cd $SNAP && PYTHONPATH=$SNAP timeout -k 60 90m nice -n 5 bash -c "$CMD" ) > $D/log.txt 2>&1 < /dev/null; RC=$?
+( cd $SNAP && PYTHONPATH=$SNAP D66_OUTPUT_DIR="$D/d66" timeout -k 60 90m nice -n 5 bash -c "$CMD" ) > $D/log.txt 2>&1 < /dev/null; RC=$?
 fi
 [ -n "$LEASED" ] && exit "$RC"
 fi
