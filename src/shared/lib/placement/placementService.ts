@@ -16,12 +16,12 @@ import { AstridLocalClient } from '@/integrations/astrid/client';
 import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider';
 import type { CanonicalDocument, EditCommand } from '@/integrations/runtime/timeline-commit-types';
 import type { TimelineCommandBasis, TimelineSaveReceipt } from '@/tools/video-editor/data/DataProvider';
-import { toOutboxJson } from '@/tools/video-editor/commands/commitOutbox';
+import { createCommitOutbox, toOutboxJson, type OutboxScope } from '@/tools/video-editor/commands/commitOutbox';
 import { createLocalSaveSession, type LocalSaveSession } from '@/tools/video-editor/commands/localSaveSession';
 import { canonicalJsonStringify } from '@/tools/video-editor/data/typed/timelineBundle';
 import { authoringBundleFromDocument } from '@/tools/video-editor/commands/authoringBundle';
 import type { TimelineSaveSource } from '@/tools/video-editor/hooks/timelineLocalSaveHandoff';
-import { TimelineVersionConflictError } from '@/sdk/video/timeline/errors';
+import { TimelineVersionConflictError, isTimelineVersionConflictError } from '@/sdk/video/timeline/errors';
 import { resolveGenerationAsset } from '@/tools/video-editor/data/generationAssetResolver';
 import type { TimelineConfig } from '@/tools/video-editor/types/index';
 import type { TimelineBundleEnvelope } from '@/tools/video-editor/data/typed/timelineBundle';
@@ -38,6 +38,8 @@ import {
 const GALLERY_PAGE_LIMIT = 100;
 /** Journey-scale bound: enough pages that panels see every generation without unbounded paging. */
 const GALLERY_MAX_ROWS = 500;
+/** Placement is recomputable, so one re-read-and-reapply on a stale head. */
+const PLACEMENT_RETRY_ATTEMPTS = 2;
 
 export class PlacementProjectMissingError extends Error {
   constructor(projectSlug: string) {
@@ -70,6 +72,7 @@ interface PlacementSaveDocument extends LoadedDocument {
   source: TimelineSaveSource;
   session: LocalSaveSession;
   handoff: TimelineLocalSaveHandoff;
+  retryRejected(): Promise<boolean>;
 }
 
 interface TimelineLocalSaveHandoff {
@@ -260,10 +263,17 @@ function createDocumentStore(target: ActiveTimelineTarget): DocumentStore {
       let saveBasis = basis;
       let source = sourceFromBasis(saveBasis);
       const identity = await provider.getRecoverableIdentity();
+      const outboxes = createCommitOutbox();
+      const scope: OutboxScope = {
+        ...identity,
+        projectId: basis.canonicalDocument.project_id,
+        timelineId: basis.canonicalDocument.timeline_id,
+      };
       const session = await createLocalSaveSession({
-        scope: { ...identity, projectId: basis.canonicalDocument.project_id, timelineId: basis.canonicalDocument.timeline_id },
+        scope,
         initial: basis,
         document: toOutboxJson(basis.canonicalDocument),
+        outboxes,
         send: (request, key) => provider.commitTimeline(request, key),
         loadLatest: () => provider.loadTimelineCommandBasis(ref),
         prepareDisplay: async (nextBasis, draft) => ({
@@ -310,6 +320,16 @@ function createDocumentStore(target: ActiveTimelineTarget): DocumentStore {
         source,
         session,
         handoff,
+        retryRejected: async () => {
+          const ownerId = session.getState().ownerId;
+          if (!ownerId) return false;
+          return await outboxes.recover(scope, ownerId, async (outbox) => {
+            const record = await outbox.read();
+            if (record.pending?.outcome?.kind !== 'rejected') return false;
+            await outbox.resolveRejected(record.intents.map((intent) => intent.id));
+            return true;
+          });
+        },
       };
     },
     async save(document) {
@@ -338,17 +358,29 @@ export async function mutateTimelineDocument<T>(
   const store = createDocumentStore(target);
   const ref = target.timelineRef;
 
-  const document = await store.load();
-  if (!target.allowVersionRebase) {
-    const stale = target.headRevisionId !== undefined && document.headRevisionId !== target.headRevisionId;
-    if (stale) {
-      throw new TimelineVersionConflictError(
-        `Timeline ${ref} is at version ${document.expectedVersion}; expected active editor version ${target.configVersion}`,
-      );
+  for (let attempt = 0; attempt < PLACEMENT_RETRY_ATTEMPTS; attempt += 1) {
+    const document = await store.load();
+    if (!target.allowVersionRebase) {
+      const stale = target.headRevisionId !== undefined && document.headRevisionId !== target.headRevisionId;
+      if (stale) {
+        throw new TimelineVersionConflictError(
+          `Timeline ${ref} is at version ${document.expectedVersion}; expected active editor version ${target.configVersion}`,
+        );
+      }
+    }
+    const result = mutate(document);
+    try {
+      return { result, configVersion: await store.save(document) };
+    } catch (error) {
+      if (attempt + 1 < PLACEMENT_RETRY_ATTEMPTS
+        && isTimelineVersionConflictError(error)
+        && await document.retryRejected()) continue;
+      throw error;
     }
   }
-  const result = mutate(document);
-  return { result, configVersion: await store.save(document) };
+  throw new TimelineVersionConflictError(
+    `Timeline placement save conflicted ${PLACEMENT_RETRY_ATTEMPTS} consecutive times`,
+  );
 }
 
 async function resolveLegacyPlacementTarget(projectSlug: string): Promise<ActiveTimelineTarget> {

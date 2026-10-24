@@ -172,7 +172,7 @@ describe('placementService under Workspace v1', () => {
     expect(calls.some((call) => call.endsWith('/save'))).toBe(false);
   });
 
-  it('retains a refused placement intent after a stale-head conflict', async () => {
+  it('re-reads the head and re-applies the placement once after a stale-head conflict', async () => {
     installV1Fetch();
     const { placeGeneration } = await loadService();
     // A sibling publish lands between placement's read and its publish.
@@ -183,12 +183,12 @@ describe('placementService under Workspace v1', () => {
       runtime.head = 'rev-sibling';
     };
 
-    await expect(placeGeneration({ projectSlug: PROJECT, shotId: SHOT, generationId: 'gen-1' }))
-      .rejects.toMatchObject({ code: 'timeline_version_conflict' });
-    expect(runtime.publishes).toHaveLength(0);
-    const outboxes = createCommitOutbox({ indexedDB: globalThis.indexedDB });
-    const [saved] = await outboxes.list({ realmId: 'realm', actorId: 'actor', projectId: PROJECT, timelineId: TIMELINE });
-    expect(saved?.pending?.outcome?.kind).toBe('rejected');
+    await placeGeneration({ projectSlug: PROJECT, shotId: SHOT, generationId: 'gen-1' });
+
+    const clipIds = (runtime.config as { clips: Array<{ id: string }> }).clips.map((clip) => clip.id);
+    expect(clipIds).toContain('sibling');
+    expect(clipIds.some((id) => id.startsWith('clip-'))).toBe(true);
+    expect(runtime.publishes).toHaveLength(1);
   });
 
   it('surfaces the conflict when the head stays stale', async () => {
