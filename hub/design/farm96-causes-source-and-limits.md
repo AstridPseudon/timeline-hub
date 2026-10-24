@@ -32,6 +32,27 @@ Exactly one current challenge is recorded: `tests/test_structure_contracts.py::t
 
 Unknowns are deliberately finite: five lifecycle marker assertions, two review-observation assertions, six missing `result.json` producer outputs, and two installer child-process exits. Their rows name the exact missing evidence; no cause is guessed.
 
+## D48 bounded per-node cause review (F-farm15-causes)
+
+Independent read-only review of the 15 unknown rows resolved **0/15**. The
+classification remains **80 environment / 1 regression / 15 unknown**; no
+unknown was relabeled from a missing artifact, an aggregate prior PASS, or a
+different qualified tuple. The packet's existing per-row `source_citations`,
+`earliest_causal_boundary`, `owner`, `finite_missing_fact`, and Farm line/byte
+offsets remain authoritative.
+
+| Group | Nodes | Retained primary evidence | Exact missing finite fact and owner | Farm offsets |
+|---|---:|---|---|---|
+| Generic-host shutdown markers | 5 | Assertion at `tests/core/execution/test_generic_host_actions_v3.py:1770` or `:1816`; the expected worker-entry marker is absent, with no child stderr in the retained section | Child stderr/launch outcome, or a matched qualified tuple proving whether the worker started; **Agent execution/host with Runtime Farm child qualification** | Lines `18643–18884`; bytes `1116945–1128618` |
+| Generic-host observed-owner markers | 2 | Assertion at `tests/core/execution/test_generic_host_actions_v3.py:1497`; observed-owner set is empty, with no child/process launch outcome in the retained section | Child/process observation and launch outcome on a matched qualified tuple; **Agent execution/host with Runtime Farm child qualification** | Lines `18547–18642`; bytes `1111819–1116945` |
+| Render-wire missing outputs | 6 | Consumer assertion at `tests/core/rendering/test_conformance.py:87` sees missing `workspace/result.json`; no producer-side exception is retained | Producer command status/stderr and the exact result-path creation decision for each node; **Agent rendering harness/backend** | Lines `21779–22031`; bytes `1301577–1315775` |
+| Installer repair child exits | 2 | Wrapper at `astrid/installer/backend.py:57` reports child Python exit 1; child output and command are absent | Captured child stdout/stderr and the exact failing child command before assigning Runtime or Agent ownership; **Agent installer/service harness** | Lines `33148–33335`; bytes `1981277–1991865` |
+
+The exact node-specific offsets, source citations, and finite-missing-fact
+strings remain in both `farm96-causes.json` and `farm96-causes.csv`. No
+production caller, v2 request/reply execution, test body, subprocess probe,
+full suite, new checkpoint, or raw-log reconstruction was performed.
+
 The newer eight are not backdated. No open-node PASS credit is assigned because the packet has no quiet-log/JUnit exact PASS list. No tests, probes, original bodies, full suite, install, product edit, schema/client/pin change, or v2 caller change was made. The JSON/CSV rows retain the actual Farm section line/byte offsets and the published extract scope for independent review.
 
 ## CSV custody correction (F-farm96-csv-custody)

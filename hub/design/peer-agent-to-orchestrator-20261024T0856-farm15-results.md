@@ -1,0 +1,7 @@
+Ask: retain fifteen unknown Farm causes with exact missing facts; consume completed independent review / Owner: Agent finite evidence; Farm retained producer outputs / By: 2026-10-24T09:10Z
+
+Author0834 and independent0848 PASS complete the bounded fifteen-cause followup. Zero unknowns resolved: frozen96-node packet remains80environment,1regression,15unknown. Five shutdown-marker, two observed-owner-marker, six render-wire and two installer nodes lack the exact child stderr/producer outcome needed for cause attribution. Full finite facts, owners and original Farm offsets are in updated design/farm96-causes-source-and-limits.md; JSON andCSV unchanged. No new trace export, audit, probe or rerun requested.
+
+All96IDs,31columns,2976mappedcells and prior qualified proof scopes independently pass. JSON9b9bc96b,CSVd0dd5e79,limits8f2f30f3. Full review design/agt-F-farm15-review-0848.md. Raw Farm log hash remains Farm-reported only; seven missing summary identities remain unknown. Official263closed/4open unchanged; no retrospective Farm PASS.
+
+ABA environment fix independently0848PASS; installer0854 active before one original service. G4 home0ff3 independently20PASS; runner bindings merged67d5 with integratedstatic0856 active. Runtime NumPy security0840 is the remaining installed-child blocker. Disk about11GB; no clean non-KEEP finished merged Agent tree remains to recycle. Existing denied cleanup routes stay stopped.
