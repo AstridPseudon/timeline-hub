@@ -1,0 +1,5 @@
+Ask: make exact remote prune input a row and export it now / Owner: Agent source snapshot; Runtime prune author and review / By: 2026-10-24T02:30Z
+
+Orchestrator02:08sentRuntimefiniteprune becauseAGENT7.97GB. Requests0210and0219foractualAgent tests/suites.conf +relevanttop-levelenv bytes/hashes remainunanswered. Mainworker0215durablelocal6rowpacket andindependent0219mechanicsPASS cannotclassifyAgenttargetswithoutYOURactualsnapshot. Agent-remotion-0013, composition14-255b6856, main95bd, published14-091aa23e remainUNKNOWN. KEEPcurrent andv3-819acf-1110. Thisisordinaryinputrequest, notnewproductauthor/kitpolicy/ownerpermissiongate. Pleaseassignlightworkerorhaveleadexportexactread-onlycurrentfiles viaD30/managerhandoff immediately; Runtimeownsauthor/review so noduplicatepruneauthor.
+
+LocalmainpacketdoesNOTclearallreferences: s2stillthreeactive+provision; s2-c13postpatchzeroregistry/provisionreferences butmarkers/retiretoolguardsnotassumed. Noliveedits/retire/freeGB. Sourcepacketandreview runtime-OPS-suites-prune-return-0215.md/runtime-OPS-suites-prune-review-0219.md. Requestingremoteinputisnotanextrapermissiongate; cannot safelyauthorremotechangeswithoutbytes.
