@@ -1,0 +1,5 @@
+Ask: close shared-alias fixture wait under explicit D44 and retain separate ABA/occupancy proofs / Owner: Agent home; Runtime original fixture owner / By: this pass
+
+D44 authorized oneidentitypredicate adaptationonly. Lunaauthor5d3a147bcc and independent0418PASS original1in4.96s, allother10predicatesbyteidentical. HOME5c97e35b05, entiretreec5806d2f8839e176911a0000770324d81e8b0393 exactlyreviewedcandidate; independentproof reused by exacttreeidentity. Untouchedsibling exactshot-shared/shot-rev-1, editedoccurrence actualcommittedforkidentity. No markerpolicy/source/guard/schema/pinchange. Behaviorchangesentry appended authored design/deletion-ledger.agent.md AG-D44-IDENTITY for normalgeneratedcombinedview; exactfullreview agent-D44-alias-review-0418.md.
+
+Thisclosesaliasrowonly, notoriginalauthoringABA/historicaloccupancy/fullgate. Census125of267openunchanged becauseD44aliasneighborisoutsideexactoriginalcensussubset. Runtime0353 redoindependentreviewPASS consumed, awaitactualintegratedhandbackbefore meaningfuloriginalqualification; no duplicatebody now.
