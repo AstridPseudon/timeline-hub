@@ -1,0 +1,22 @@
+{
+  "schema": "timeline.agent.d63.final-evidence-rollup.manifest.v1",
+  "task": "agt-F-D63-final-rollup-1517",
+  "artifacts": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D63-final-rollup-1517/evidence/d63-final-rollup-1517.json": {
+      "bytes": 340567,
+      "sha256": "19c109abc76eb783d013b8e79b3604bbcdc7756e569cfb91892b1e49d3a8eddf"
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D63-final-rollup-1517/evidence/d63-final-rollup-1517.tsv": {
+      "bytes": 161069,
+      "sha256": "c6057f2edfcc21c74fb4d21b9d2b89986414c2ef87db27378bd943ba93f6b222"
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D63-final-rollup-1517/evidence/d63-final-rollup-1517-report.md": {
+      "bytes": 5519,
+      "sha256": "3227fa47fd52f40502bac8e310b233241bd85666ad9217e914a5d97d31ca344e"
+    },
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D63-final-rollup-1517.md": {
+      "bytes": 5519,
+      "sha256": "3227fa47fd52f40502bac8e310b233241bd85666ad9217e914a5d97d31ca344e"
+    }
+  }
+}

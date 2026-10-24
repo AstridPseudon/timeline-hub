@@ -1,0 +1,137 @@
+{
+  "schema": "timeline.agent.d63.rename-correction.v1",
+  "task": "agt-F-D63-rename-return-1508",
+  "read_only": true,
+  "correction_scope": "Correct the D63 publication overlay; retain the original 201-row artifacts unchanged.",
+  "current_agent_commit": "68e82c0c2ce621f43ae73aa05fce0d1d0f47a677",
+  "current_agent_tree": "aa62e96c1231de41cee32c5388592c99ae04345f",
+  "sources": {
+    "original_publication_json": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D63-new-ours-rename-1503/evidence/d63-new-ours-rename-201.json",
+      "sha256": "b80dd62061f5344aa36acb9c7ea2ae5c65b1cf481deafd14b21b9f442ceeec22",
+      "rows": 201
+    },
+    "original_publication_tsv": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D63-new-ours-rename-1503/evidence/d63-new-ours-rename-201.tsv",
+      "sha256": "3455cc2e144d2123216bad111cd8a41a6e7703588041edfde52abfae7aaf4cff",
+      "rows": 201
+    },
+    "original_folded_summary": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D63-new-ours-rename-1503/evidence/d63-folded-276-summary.json",
+      "sha256": "25d000c116f9e991f82a6a840f7b8d4884e4992e3c3656a33ce736dfa5d7cda1",
+      "total": 276
+    },
+    "current_rollup": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D60-baseline-terminal-1452/evidence/current-rollup-1343.json",
+      "sha256": "fc9081845ea12f9d33959fc5e3121c331a97bf976ccce6416b82695784d87caf",
+      "rows": 276
+    },
+    "upstream_terminal_xml": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D60-snapshot-return-1342/evidence/upstream-full-9244377.xml",
+      "sha256": "2941565205663912985f766210bfead7db42264976fabee7dc899d03d4f4657f",
+      "agent_commit": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+      "records": 12517
+    }
+  },
+  "preservation_invariants": {
+    "d63_input_rows": 201,
+    "d63_input_unique_full_selectors": 201,
+    "d63_input_rows_with_current_evidence_refs": 199,
+    "all_ids_and_current_evidence_refs_preserved": true,
+    "original_artifacts_retained": true,
+    "folded_total": 276,
+    "prior_exact_matches": 75,
+    "prior_exact_failures": 66,
+    "prior_exact_passes": 9
+  },
+  "correction": {
+    "rename_check": "Reuse the existing bounded same-name/body-text result; no failure search or test rerun.",
+    "input_rows": 201,
+    "authenticated_counterpart_rows": 2,
+    "new_ours_rows_after_name_body_check": 199,
+    "upstream_exact_status_for_missing_selectors": "UNKNOWN",
+    "counterpart_upstream_status_observation": "PASS",
+    "folded_qualified_counterparts_if_proved": 77,
+    "folded_qualified_counterparts_fail": 66,
+    "folded_qualified_counterparts_pass": 11,
+    "current_pass_contrasts": {
+      "total": 9,
+      "prior_exact_pass_contrasts": 8,
+      "order_129_rename_pass_contrast": 1,
+      "regression_closure": "none"
+    },
+    "current_candidate": {
+      "order": 181,
+      "status": "current OPEN; upstream PASS",
+      "classification": "counterpart_pending_current_proof",
+      "new_ours_noncore_known_gap": false,
+      "exclusive_proof_worker": "agt-F-D63-env-catalogue-current-1508"
+    }
+  },
+  "rows_changed_by_overlay": [
+    {
+      "old276_order": 129,
+      "selector": "tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest::test_text_card_renders_visible_markup",
+      "current_qualification": "PASS",
+      "current_evidence_refs": ["d54-d57-final-classification-rollup-1242"],
+      "rename_basis": "same_function_name",
+      "corrected_classification": "COUNTERPART",
+      "upstream_xml": {
+        "classname": "tests.packs.rendering.test_remotion_render_contract.TextCardVisibleMarkupTest",
+        "name": "test_text_card_renders_visible_markup",
+        "status": "PASS"
+      },
+      "note": "Exact module/class/function path authenticated; current PASS remains unchanged."
+    },
+    {
+      "old276_order": 181,
+      "selector": "tests/test_env_vars_conformance.py::TestNoBareStringAccess::test_no_catalogued_bare_strings_in_core",
+      "current_qualification": "OPEN",
+      "current_evidence_refs": [],
+      "rename_basis": "same_function_name_and_body_text",
+      "corrected_classification": "COUNTERPART_PENDING_CURRENT_PROOF",
+      "upstream_xml": {
+        "classname": "tests.test_env_vars_conformance.TestNoBareStringAccess",
+        "name": "test_no_catalogued_bare_strings_in_core",
+        "status": "PASS"
+      },
+      "note": "Exact module/class/function path and identical normalized body authenticated; do not classify as NEW-OURS non-core known gap or close regression before the exclusive current-proof worker returns."
+    }
+  ],
+  "visible_known_gap_check": {
+    "old276_order": 55,
+    "selector": "tests/core/rendering/test_conformance.py::test_no_audio_wire_parity - ...",
+    "current_qualification": "OPEN",
+    "current_category": "visible_known_gap",
+    "corrected_classification": "NEW-OURS",
+    "rename_check": "no_match",
+    "reason": "The retained current selector includes the literal ' - ...' suffix, has no body hash, and has no authenticated module/class/function mapping in the existing rename result; the nearby upstream XML testcase is tests.core.rendering.test_conformance::test_no_audio_wire_parity and FAILED, so it is not a qualified counterpart or regression closure."
+  },
+  "folded_categories_after_correction": {
+    "existing_environment": 78,
+    "existing_d23_deferred": 2,
+    "core_current_pass": 152,
+    "core_current_open": 5,
+    "current_qualification_total": {
+      "PASS": 162,
+      "OPEN": 112,
+      "DEFERRED": 2
+    },
+    "d63_missing_set": {
+      "new_ours": 199,
+      "counterpart": 1,
+      "counterpart_pending_current_proof": 1,
+      "visible_known_gap_new_ours": 1,
+      "current_core_open": 5,
+      "existing_environment": 45,
+      "existing_d23_deferred": 1,
+      "current_qualified_pass": 147
+    }
+  },
+  "limits": [
+    "No current proof was run for order 181; the exclusive worker remains the owner.",
+    "No regression closure is claimed for the nine current-PASS contrasts.",
+    "No tests, source execution, product test execution, registry/generated-file work, locks, installs, or package acquisition were performed.",
+    "The full v2 contract requirements were read as requested; this correction makes no product or contract change."
+  ]
+}
