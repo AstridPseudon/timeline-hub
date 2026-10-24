@@ -987,14 +987,84 @@ def _materialization_sites(entry, old_images, old_rows, new_images, new_rows, re
                                 if binding.get('key') == 'commit.effect' and binding.get('physical_ref') == ref
                                 and binding.get('path') == [] and start <= binding.get('effect_ordinal', -1) < end
                                 and binding.get('boundary', {}).get('side') == side]
-                        # An unchanged retained pin has no root-write effect.
-                        # Reattachment reuses that exact physical identity, never
-                        # another root with equal payload bytes.
-                        if (not pins and ref in old_images and ref in new_images
-                                and equal(old_images[ref], new_images[ref])
+                        if not pins and ref in old_images and ref in new_images:
+                            # A retained root can have no effect pin when the
+                            # selected owner never rewrote it.  Its identity is
+                            # still authenticated by the accepted inverse stage
+                            # and exact source owner; payload bytes are not a
+                            # successor-selection mechanism.
+                            source_publications = {
+                                publication
+                                for record in records
+                                if record.get('command', {}).get('op') == 'timeline.inverse'
+                                for publication in record.get('command', {}).get('args', {}).get(
+                                    'publications', [])
+                            }
+                            boundary = stage.get('boundary', {}) if stage is not None else {}
+                            owner_id = owner.removeprefix('occurrence:')
+                            before_owner = next((row for row in old_rows
+                                                 if row.get('occurrence_id') == owner_id), None)
+                            after_owner = next((row for row in new_rows
+                                                if row.get('occurrence_id') == owner_id), None)
+
+                            def physical_ref(row, images):
+                                shot = 'shot-revision:' + row['shot_revision_id']
+                                if ref.startswith('shot-revision:'):
+                                    return shot
+                                image = images.get(shot)
+                                return ('internal-revision:' + image['internal_timeline_revision_id']
+                                        if image is not None else None)
+
+                            # The destination may be reattached to a physical
+                            # root still owned by another occurrence.  Only an
+                            # unchanged, uniquely ordered source owner from
+                            # both accepted closures can authorize that reuse.
+                            source_owners = []
+                            for source_before in old_rows:
+                                source_after = next((row for row in new_rows
+                                                     if row.get('occurrence_id')
+                                                     == source_before.get('occurrence_id')), None)
+                                if (source_after is None
+                                        or physical_ref(source_before, old_images) != ref
+                                        or physical_ref(source_after, new_images) != ref
+                                        or old_rows.index(source_before) != new_rows.index(source_after)
+                                        or any(write['ref'] == 'occurrence:' + source_before['occurrence_id']
+                                               and (not write['path'] or write['path'] == ['shot_id'])
+                                               for record in records for write in record['writes'])):
+                                    continue
+                                source_owners.append((source_before, source_after))
+                            from .commit import _digest
+
+                            def valid_image(image):
+                                return (isinstance(image, dict)
+                                        and image.get('content_digest') == _digest(image.get('payload'))
+                                        and isinstance(image.get('payload'), dict))
+
+                            metadata = {key: value for key, value in old_images[ref].items()
+                                        if key != 'payload'}
+                            after_metadata = {key: value for key, value in new_images[ref].items()
+                                              if key != 'payload'}
+                            target_ref = None
+                            if before_owner is not None and after_owner is not None:
+                                target_ref = (physical_ref(before_owner, old_images)
+                                              if side == 'before' else
+                                              physical_ref(after_owner, new_images))
+                            retained = (
+                                step is not None
+                                and boundary.get('publication_id') in source_publications
+                                and boundary.get('step_id') == step.get('id')
+                                and boundary.get('command_ordinals') == step.get('command_ordinals')
+                                and before_owner is not None and after_owner is not None
+                                and target_ref == ref
+                                and source_owners
+                                and valid_image(old_images[ref]) and valid_image(new_images[ref])
+                                and metadata == after_metadata
+                                and old_images[ref].get('content_digest')
+                                == new_images[ref].get('content_digest')
                                 and not any(effect['ref'] == ref and not effect['path']
-                                            for effect in step['patch'][start:end])):
-                            continue
+                                            for effect in step['patch'][start:end]))
+                            if retained:
+                                continue
                         if not pins or any(
                                 binding.get('ref') != ref or binding.get('revision_id') != images[ref]['revision_id']
                                 or binding.get('content_digest') != images[ref]['content_digest']

@@ -119,6 +119,26 @@ def test_retained_destination_requires_the_same_complete_physical_pin(damage):
     assert realm.entries == snapshot
 
 
+@pytest.mark.parametrize('damage', ['source-owner', 'source-publication'])
+def test_unchanged_retained_destination_requires_accepted_source_custody(damage):
+    realm = DetachedRealm(app_document())
+    first = land(realm, capture_clip_set(current(realm), CLEAR, clear=['asset']))
+    land(realm, inverse([first['receipt']['receipt_id']]))
+    entry = realm.entries[-1]
+    before = Closure(bundle_from_document(realm.documents[entry['previous']['revision_id']]))
+    after = Closure(bundle_from_document(realm.documents[entry['revision_id']]))
+    old_images, old_rows, new_images, new_rows, records, step = next(
+        _managed_boundaries(entry, before, after))
+    if damage == 'source-owner':
+        new_rows[:] = [row for row in new_rows if row['occurrence_id'] != 'shared-sibling']
+    else:
+        step['_inverse_stage']['boundary']['publication_id'] = 'forged-source'
+    with pytest.raises(CommandError) as error:
+        _materialization_sites(entry, old_images, old_rows, new_images, new_rows, records, step,
+                               [], set(), [], include_inverse_stages=True)
+    assert error.value.kind == 'history_unavailable'
+
+
 @pytest.mark.parametrize('kind', ['ancestor', 'retained-fork'])
 @pytest.mark.parametrize('selected', [False, True], ids=['whole', 'step'])
 def test_repeated_redo_preserves_exact_documents_and_preview(kind, selected):
