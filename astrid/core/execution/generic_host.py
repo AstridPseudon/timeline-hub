@@ -198,6 +198,115 @@ class HostError(RuntimeError):
     """A controlled host-side error suitable for a worker diagnostic."""
 
 
+class _RuntimeSourceCustody:
+    """Retain the private launcher's bytes, never a caller's source claims."""
+
+    def __init__(self, sources: Any):
+        issuer = sys.modules.get(type(sources).__module__)
+        if issuer is None or type(sources) is not getattr(issuer, "_RuntimeExternalSources", None):
+            raise HostError("external sources require the private Runtime launcher handle")
+        self._sources = sources
+        self._payload = sources.inventory()
+        self._bound = False
+        try:
+            value = json.loads(self._payload)
+            from runtime_protocol.external_pack_sources import _validate_grants
+            from runtime_protocol.verified_host_launch import canonical
+
+            if (type(self._payload) is not bytes or canonical(value) != self._payload
+                    or set(value) != {"scope", "selected_profile_digest", "sources"}
+                    or set(value["scope"]) != {"operation_id", "channel_id", "owner_epoch", "custody_scope"}
+                    or any(not isinstance(v, str) or not v for v in value["scope"].values())
+                    or not re.fullmatch(r"[0-9a-f]{64}", value["selected_profile_digest"])
+                    or not isinstance(value["sources"], list) or not value["sources"]):
+                raise ValueError("invalid external source inventory")
+            grants = []
+            for source in value["sources"]:
+                grants.append({key: item for key, item in source.items()
+                               if key not in {"contents", "materialization", "ancestors"}})
+                if (set(source) != set(grants[-1]) | {"contents", "materialization", "ancestors"}
+                        or set(source["contents"]) != set(source["files"])):
+                    raise ValueError("invalid external captured contents")
+                for relative, encoded in source["contents"].items():
+                    data = base64.b64decode(encoded, validate=True)
+                    if hashlib.sha256(data).hexdigest() != source["files"][relative]:
+                        raise ValueError("external captured bytes differ from inventory")
+            _validate_grants(grants)
+            self.verify(require_bound=False)
+        except (KeyError, TypeError, ValueError, OSError) as exc:
+            raise HostError("invalid private Runtime source capture") from exc
+
+    def bind(self, preparation: Mapping[str, Any]) -> None:
+        from runtime_protocol.verified_host_launch import raw_digest
+
+        value = json.loads(self._payload)
+        if ({key: preparation.get(key) for key in value["scope"]} != value["scope"]
+                or raw_digest(preparation.get("profile")) != value["selected_profile_digest"]):
+            raise HostError("external source custody differs from retained preparation")
+        self._bound = True
+        self.verify()
+
+    def verify(self, *, require_bound: bool = True) -> None:
+        if require_bound and not self._bound:
+            raise HostError("external source custody has no retained preparation")
+        if self._sources.inventory() != self._payload:
+            raise HostError("external source custody changed")
+        for source in json.loads(self._payload)["sources"]:
+            root = Path(source["root"])
+            expected = source["materialization"]
+            if set(expected) != {str(root), *(str(path) for path in root.rglob("*"))}:
+                raise HostError("external source materialization changed")
+            if set(source["ancestors"]) != {str(path) for path in root.parents}:
+                raise HostError("external source ancestor inventory changed")
+            for ancestor, identities in ((False, expected), (True, source["ancestors"])):
+                for raw_path, identity in identities.items():
+                    path = Path(raw_path)
+                    info = path.lstat()
+                    current = [info.st_dev, info.st_ino]
+                    if not ancestor:
+                        current += [info.st_mode, info.st_size, info.st_mtime_ns, info.st_ctime_ns]
+                    if path.is_symlink() or current != identity:
+                        raise HostError("external source or ancestor identity changed")
+
+    def source_for(self, path: Path) -> Mapping[str, Any] | None:
+        return next((source for source in json.loads(self._payload)["sources"]
+                     if path == Path(source["root"]) or path.is_relative_to(source["root"])), None)
+
+    def select(self, record: Any) -> bytes | None:
+        source = self.source_for(record.source_root)
+        if source is None:
+            return None
+        self.verify()
+        value = json.loads(self._payload)
+        matches = [definition for definition in source["definitions"]
+                   if definition["capability_id"] == record.id
+                   and definition["definition_digest"] == record.capability_digest
+                   and record.manifest_path == Path(source["root"]) / definition["path"]]
+        if len(matches) != 1:
+            raise HostError("external definition has no exact Runtime selection")
+        selected = self._sources.select(scope=value["scope"],
+            selected_profile_digest=value["selected_profile_digest"], root=source["root"],
+            definition=matches[0])
+        from runtime_protocol.verified_host_launch import canonical
+
+        if selected != canonical({"scope": value["scope"],
+                "selected_profile_digest": value["selected_profile_digest"],
+                "source": source, "definition": matches[0]}):
+            raise HostError("external selected source custody changed")
+        return selected
+
+
+_runtime_external_sources: _RuntimeSourceCustody | None = None
+
+
+def _consume_runtime_external_sources(*, sources: Any) -> None:
+    """Called only by Runtime's retained launcher, before CLI/discovery."""
+    global _runtime_external_sources
+    if _runtime_external_sources is not None:
+        raise HostError("external Runtime source custody was already consumed")
+    _runtime_external_sources = _RuntimeSourceCustody(sources)
+
+
 class CommandCleanupUnresolved(HostError):
     """A command finished but its task scope may still own child writers."""
 
