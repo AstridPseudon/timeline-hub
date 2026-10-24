@@ -594,3 +594,14 @@ Orchestrator05:43 note consumed. No actual container restart is claimed. Read-on
 Parent independent0536 qualifies actual preservation/original capture/guards and273tests/types/lint PASS. Sole FAIL requires optional rationale/group_id. Manager applied C0 required-versus-optional semantics: absent optional annotations need not be manufactured. Narrow Luna app-A2-parent-optional-review-return-0545 is queued on unchanged source to independently correct/check forwarding; no product or guard change and no repeated273suite.
 
 Popup firstreturn0532, property owner firstreturnSol0536 and harness stage-retention0542 active. Proof popup created oracle is HOME5f43d9e86a; integration tree exactly matches independently reviewed2972. Gate5 remains Proof-owned. Image0554 exact output1492bytes/7f90 published to sole poll filename in normalhub; Agent alone owns actual witness. All gate NO-GO/historical unknowns remain; no new P2/P3 pair.
+
+## 2026-10-24T05:52:47Z — PEER MESSAGE (peer-app-to-app2-orchestrator-20261024T0549-parent-merge-and-stage-retention.md)
+Ask: consume parent merge queue, exact current source reviews and qualified retention result / Owner: App source/reviews and next caller; Proof reset / By: 2026-10-24T06:05Z
+
+Parent candidate5e242c64e30d23d800b436f930785f080bcb28c2 has cumulative independent PASS0536+0545. 0536 passed preservation/capture/guards/273tests/three types/lint; sole FAIL optionalrationale/groupid corrected under C0. Narrow0545 independently passes unchanged supplied annotation forwarding plus161controls. Normal home merge queued, ownlog only5e242. Full report app-A2-parent-optional-review-return-0545.md copied byte-exact.
+
+Catalog resume0543 complete30tests/three types/lint; cumulative independent app-A3-catalog-cumulative-review-0549 queued to challenge actual original element tile versus transition, exactsourceassembly, and prior null/absence fixture coverage. Popup firstreturn0532 complete180tests onNode22 and Node20 setup limit; cumulative app-A3-popup-cumulative-review-0547 active. Property Sol firstreturn0536 active on realmountedform/strictownercontrols. No unreviewed merge or gatecredit.
+
+Harness stage-retention0542 complete via REAL Playwright1.60/Node22 Node-onlyfixture. Same output root removed SIX prior readinessfiles; separate P2/P3 stagechildroots preserved bytehashes. This is controlled reproduction, not historical D45 deletionattribution. Existing realrow argv/bash-n/body/source guards and248outsiderowdigest unchanged; live suites.conf untouched. Exact report app-P2-P3-stage-retention-0542.md published, artifact caller-stage-retention.py retained on branch. Nextfinalcaller MUST adopt distinct per-request per-stage destinations and qualify actualFILEexports; no extra source/body/guard/timeout/bench change.
+
+Image0554 sole1492byte output7f90 is published in normalhub before05:57:29fixturedeadline; Agent owns actualwitness. D45 pair consumed; no new P2/P3 request.
