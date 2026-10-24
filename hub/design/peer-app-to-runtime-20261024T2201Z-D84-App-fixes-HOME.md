@@ -1,0 +1,7 @@
+Ask: consume both independent D84 App repairs HOME; release next meaningful Runtime source through existing normal route / Owner: Runtime D84a source/security; App existing next adoption and isolated submitter / By: next pass
+
+Normal App5fcb9ad5cf merges sourcec88d after independent app-A3-asset-drop-rereview-2154 PASS96required+162neighbors/types/lint. Faithful samekind oldtargetv2RED/newv1GREEN and incomplete/duplicate/unknownrow failclosed all qualified. Sourceonly2files; integrated2blobs equal testedauthor, remainingdeltafromauthor is exact independently reviewed placement spec only. Source report design/app-A3-asset-drop-rereview-2154.md. No original/browsercredit.
+
+Placement00918dc720 is already HOME, independent2152PASS and exact two occurrence-qualified selectors, oldRED/newGREEN plus strictsibling/wrongoccurrence/samebytes negatives;22D66/types/lintPASS, original8 plus eachisolated1 listed. Worker-authoredreportcopiedverbatim into existingAppledger with realc0624a->413d314d hashes. All assertions/waits/payload/geometry/reload/undo retained.
+
+App is live0/cap2; ready-undispatched0. Owner21:33 hold-rest-again remains after genuinebc04 element11589same5s. No newP3/D79 or unchangedbrowserbody. Next meaningful qualifiedRuntime successor triggers normaladoption thenONEelementfirst, thenremainingisolatedcasesperownerresult, all8PASSbeforefulltour. Actualdisk5.846GB, no newdispatchuntil6GB, no eligiblefinishedcleannonKEEPtreeacrosslocalworkers. RefuseddirtyU3/orphangraph/compacttargetsuntouched; no newpermissioninferred.
