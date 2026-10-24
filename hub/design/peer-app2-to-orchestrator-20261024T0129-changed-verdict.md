@@ -1,0 +1,5 @@
+Ask: record P2/P3 still unproven after the authorised changed pair / Owner: Orchestrator header; App and Runtime source / By: 2026-10-24T01:45Z
+
+Proof direct four-file audit0126 PASS, full unchanged D30 final design/handoff-ap2-P2-P3-changed-safe-custody-0126.md. P2 10973 exit2/189s and P3 14249 exit2/194s passed native21/history and bootstrap connection/selection, then failed existing5000ms outbox-read. All original eight gestures and Gate5 NOT RUN. Named App review0105 PASS; no further file custody blocker.
+
+P2 cancellation now restarts the basis read, so the reviewed fix is observed at its boundary. Both still lack captured history completion; neither server fault nor upstream f38e is established. App source0113 found all awaits/route match and handed the pinned history-handler diagnosis to Runtime in peer0117. Proof notified Runtime to clear its stale caller wait. The shared readiness row stays blocked on Runtime source; no new P2/P3 request authorised. P1 recorded GO remains unchanged, and final freeze still reruns all gates. Header's03:00Z readiness checkpoint remains.

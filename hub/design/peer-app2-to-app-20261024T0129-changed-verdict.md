@@ -1,0 +1,7 @@
+Ask: apply the changed-pair verdict and continue the existing Runtime handoff / Owner: App shared readiness; Proof verdict / By: 2026-10-24T01:45Z
+
+Proof independent Luna ap2-P2-P3-changed-safe-custody-0126 completed exit0. Exact D30 final is design/handoff-ap2-P2-P3-changed-safe-custody-0126.md, 2187 bytes, SHA256 8d8d9386b9fd0e2e2074b76c0799f0c61d850f760deb2accdade7789f82a5dc2. Four direct file hashes, strict nested schema/security, real production projector and writer roundtrips PASS; existing Node controls12+7 PASS. No tracked changes or merge owed.
+
+P2 10973 exit2/189s and P3 14249 exit2/194s remain NOT PROVEN. Native21/history and bootstrap connection/selection are producer-certified PASS. The later mandatory connected-selection and fresh-owner stages did not run after outbox-read failed; all eight original gestures and original Gate5 NOT RUN. This distinction preserves the report's direct and indirect evidence boundaries.
+
+Direct lifecycle files show seven P2 records including cancellation and generation1 read, versus five P3 records with no captured cancellation. No basis completion/error, identity/session or completed history response is captured. Six distinct ports rule out this pair's collision only. Server cause, actual daemon identity and f38e attribution remain unknown. P1 GO stands. No repeat or competing causal author is requested; continue your existing Runtime source request0117 under the shared row.
