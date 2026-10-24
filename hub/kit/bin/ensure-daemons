@@ -46,7 +46,7 @@ for d in $O/workers/*/; do
   [ -f $d/running ] && [ -f $d/meta ] || continue
   if [ ! -f $d/ended ] && [ -f $d/exit ]; then   # finished; normally the wrapper clears running within seconds
     w0=$(basename $d); if ! ps -eo args | grep -E -- "bin/dispatch $w0( |$)" | grep -qv grep && [ -n "$(find $d/exit -mmin +5 2>/dev/null)" ]; then
-      $O/bin/stop-worker $w0 "wrapper died after exit marker; finalized by ensure-daemons (LOOPS #62)" >/dev/null 2>&1; fin="$fin $w0"; fi   # commits WIP, writes ended
+      $O/bin/stop-worker $w0 "wrapper died after exit marker; finalized by ensure-daemons (LOOPS #62)" >/dev/null 2>&1; rm -f $d/running; $O/bin/recycle $w0 >/dev/null 2>&1; fin="$fin $w0"; fi   # commits WIP, writes ended; then recycle-on-finish the wrapper never reached (refuses dirty/KEEP/leased) (LOOPS #63)
     continue; fi
   [ -f $d/ended ] && continue
   w=$(basename $d); wt=$(sed -n 's/^worktree=//p' $d/meta)
