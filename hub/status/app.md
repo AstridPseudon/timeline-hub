@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T22:37:47Z | dispatcher heartbeat 5s | live 2 (sol 0, luna 2, other 0) | busy30 5 | status age 3m -->
-# app board, 2026-10-24T22:34Z
+<!-- app | 2026-10-24T22:41:13Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 6 | status age 2m -->
+# app board, 2026-10-24T22:39Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -97,10 +97,12 @@
 | P2-D84a-element | Original element on structural release | Luna; service | Exact bceb / 039f / 732 / 635f | review | App2216; actual7131 | NO-GO172s. Native and readiness PASS; original applied status412 FAIL5s. Response wait remains open; eventual outcome UNKNOWN. | Appbceb; Runtime732 |
 
 | P2-D84a-main-venue | Main four isolated diagnostics | Runtime Luna | Element7131 first signal complete | ready | Runtime venue requested2221; released2225 | Main owns parent move, SWAP, single clear and bulk clear. Same exact four pins; unchanged originals; no full tour. | Appbceb; Runtime732 |
-| P2-D84a-app-sweep | App three isolated diagnostics | Luna; service | Element7131 first signal complete | doing | app-P2-D84a-app-sweep-2225 | Owns ADD, asset and placement serially. Same four pins. ADD5083 reached HTTP200 then strict digest452FAIL; asset1155 running after4579 preflight PASS; placement next. | Appbceb; Runtime732 |
+| P2-D84a-app-sweep | App three isolated diagnostics | Luna; service | Element7131 first signal complete | doing | app-P2-D84a-app-sweep-2225 | Owns ADD, asset and placement serially. Same four pins. ADD5083 reached HTTP200 then strict digest452FAIL; asset1155 responsewait90s ERROR; placement8259 running after13237 preflight PASS. | Appbceb; Runtime732 |
 | P2-D84a-7131-facts | Retained element phase and dump facts | Luna read only | Actual7131 terminal | merged | app-P2-D84a-7131-safe-facts-2227 | Exact safe JSON/MD published. Element ordinal3 provider seen; no accept/receipt/HTTP response. Private5868B dump; attribution bounded. | Evidence only |
 
-| P2-popup-5083-digest | Attribute strict canonical digest mismatch | Luna source only | Actual5083 accepted reply | doing | app-P2-popup-5083-digest-source-2233 | ADD progressed beyond read and commit; spec452 digest equality fails. Exact source and retained-response control owed; no expectation changed. | Appbceb; Runtime732 |
+| P2-popup-5083-digest | Correct strict canonical digest oracle | Luna independent | Author2233 oldRED/newGREEN PASS | review | app-P2-popup-digest-review-2239 | JS loses12000.0 numeric spelling. Exact raw reply hashing proposal preserves complete canonical equality. Review applies on PASS; no body yet. | Appbceb; Runtime732 |
+
+| P2-asset-1155 | Attribute current asset response timeout | Luna next slot | Actual1155 and home5fcb | ready | App source author next slot | Readiness PASS; original responsewait90s ERROR. Must establish whether commit POST was sent before source change. | Appbceb; Runtime732 |
 
 Integration: App bceb0350326f22beefdde5c5ba275412bb09b419 normally adopts Runtime732c48c6f5a9441a65c61b24595d454a1cd3e180. Exact diagnostic tuple is Appbceb / Agent039ff2c2187d02b723074a8a6dfcbc6a70544c19 / Runtime732 / Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40. Existing asset5fcb and strict placement00918 repairs are included; original placement spec413d and other five protected files retained.
 
@@ -108,9 +110,9 @@ core open: Eight original P2 gestures remain unqualified. D84a element7131 passe
 regressions: Zero remaining confirmed App source findings. Asset independent96required and162neighbors plus placement22controls/types/lint passed and are home. Their browser proofs remain owed. D69 restoration evidence retained.
 
 Blockers: Final cut — all8isolatedP2 plus fulltour and pinned final P1–P5/core, D69 and genuine installed render required. Runtime coordinates final matrix and ZIP. Recorded P1 31083 and P3 15493 GO retain their exact tuple scopes.
-Next ready: Runtime main venue dispatch four assigned cases now, released in peer2225. App2225 runs its three cases. Retained7131 safe facts2227 published to Runtime in peer2230. No P3, D79 or E work.
+Next ready: Runtime main venue dispatch four assigned cases now, released in peer2225. App2225 runs its three cases. Retained7131 safe facts2227 published to Runtime in peer2230. Asset1155 source author takes the next free slot; popup digest reviewer2239 active. No P3, D79 or E work.
 
-live 2 / cap 2; ready-undispatched 0 on App. Main four cases assigned to Runtime through normal peer route; awaiting actual worker receipt, not a Runtime source blocker.
+live 2 / cap 2; ready-undispatched 1 on App; asset1155 source author takes the next slot. Main four cases assigned to Runtime through normal peer route; awaiting actual worker receipt, not a Runtime source blocker.
 Capacity: No ended clean non-KEEP App worktree eligible in this pass. Latest ten stale pins released through guarded D74a route; receipt design/app-D74a-fresh-stale-pins-2214.md. Current tuple pins and all run evidence retained.
 Disk: 6.38GB during ADD5083; build release follows terminal. Owner22:14 App critical source/gate floor5.2GB; stop4.5GB, NON-element first. One body at a time on App; parallel main diagnostic venue explicitly authorized22:24. Noncritical work retains7.5GB floor.
 Safety: No new refusal. Prior dirtyU3, compact, graph, publication and source-access refusal targets stay stopped. No raw deletion or alternative denied route.

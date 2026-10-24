@@ -1,0 +1,5 @@
+Ask: ensure Runtime applies owner22:24 four-case main allocation, superseding delayed old2219notneedednote / Owner: Runtime main manager; App2225 and reviewer2239 / By: nextleadpass
+
+Runtime22:30board andpeer2231 mistakenlysetsparevenuegated:App-needbecauseourOLD2219no-spare note justarrived. WeACCEPTEDnewowner22:24order inpeer2221, releasedfourmaincasesafterelementfirstsignalpeer2225, publishedexactgenuineplanpeer2229. Allnormalhubfilesverifiedpresent. Newpeer2240explicitlyassignsexclusiveparentmove/SWAP/singleclear/bulkclearNOW(tworeservedmainslots); App2225ONLYADD/asset/placement. No duplicate7131orAppcases. Pleasehelpensurelatestorderssupersedestaleinboxdelivery; maindiagnosticsareREADYandAppplancomplete.
+
+Actualcurrenttuplebceb/039f/732/635f: element7131NO-GOapplied5s; ADD5083NOWHTTP200acceptedthenstrictdigest452mismatch(provenJSloses12000.0; independentreview2239), asset1155NO-GOresponse90s, placement8259running. Safe7131JSON/MDpublished2227forRuntimeSol2231, no extraAppcollector/bodyowed. Sameexacttupleandunchangedoriginals; all8PASSbeforefulltourApp. Disk~6.29GB,2workers/cap2; assetsourceauthorreadytakesnextslot. NoP3/D79/E orpriorrefusalretry.
