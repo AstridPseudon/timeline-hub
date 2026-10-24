@@ -630,6 +630,10 @@ class RealmStore:
         published = False
         root_was_present = root.exists()
         try:
+            if sys.platform == "win32":
+                # This lock follows the directory identity across publication.
+                # Openers take the same lock before touching any child files.
+                store._acquire_admission_lock()
             store._acquire_owner()
             store._open(fresh=True)
             timestamp = now()
@@ -652,31 +656,37 @@ class RealmStore:
                 os.close(staged_fd)
             parent_fd = os.open(root.parent, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
             if sys.platform == "win32":
-                # SQLite's Windows VFS holds non-delete-sharing file handles.
-                # Preserve owner.lock while closing SQLite across publication.
+                # Windows cannot rename a directory with open descendants,
+                # even when owner.lock was opened with delete sharing. Keep
+                # the directory admission lock while closing both descendants.
                 store.conn.close()
                 store.conn = None
+                store._release_owner()
             os.rename(staged_root.name, root.name, src_dir_fd=parent_fd, dst_dir_fd=parent_fd)
             published = True
             os.fsync(parent_fd)
-            # Keep the staged owner lock held through publication and final
-            # admission. Reopening here would create an ownership race in
-            # which another opener can acquire the just-published root before
-            # the creator's second admission completes.
+            # POSIX retains owner.lock across rename. Windows transfers custody
+            # back from the directory admission lock before admitting openers.
             store.root = root
             store.lock_path = root / "owner.lock"
             store.db_path = root / "realm.sqlite3"
             store.cas_root = root / "cas" / "sha256"
             store.staging_root = root / "staging"
             if sys.platform == "win32":
+                store._acquire_owner()
                 store._open()
             store._begin_admission_session()
+            store._release_admission_lock()
             return store
         except Exception:
             rollback_error = None
-            if sys.platform == "win32" and store.conn is not None:
-                store.conn.close()
-                store.conn = None
+            if sys.platform == "win32":
+                if store.conn is not None:
+                    store.conn.close()
+                    store.conn = None
+                # Keep admission fenced through removal, but close every child
+                # handle so Windows can remove either staged or published data.
+                store._release_owner()
             if published and parent_fd >= 0:
                 # The final name may already be visible when durability or
                 # post-publication admission fails.  Remove it below the
@@ -767,7 +777,10 @@ class RealmStore:
         ``owner.lock`` cannot be used for the first inspection because
         malformed roots must fail without creating it. An advisory flock on
         the realm directory provides that short critical section while leaving
-        no marker behind. The daemon's owner.lock remains the lifetime lock.
+        no marker behind. Windows uses a named mutex keyed by directory file
+        identity, so fresh creation can retain this lock across rename while
+        closing all descendant handles. The daemon's owner.lock remains the
+        lifetime lock.
         """
         try:
             descriptor = os.open(self.root, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
@@ -864,6 +877,14 @@ class RealmStore:
             self._lock_file.close()
             self._lock_file = None
             raise OwnerBusyError("another runtime daemon owns this realm") from exc
+
+    def _release_owner(self):
+        if self._lock_file is not None:
+            try:
+                platform.unlock_file(self._lock_file.fileno())
+            finally:
+                self._lock_file.close()
+                self._lock_file = None
 
     @staticmethod
     def _copy_admission_file(source: Path, destination: Path, deadline: float) -> None:
@@ -1302,12 +1323,7 @@ class RealmStore:
                         if clean_realm_id is not None:
                             self._write_admission_state(clean=True, realm_id=clean_realm_id)
                 finally:
-                    if self._lock_file is not None:
-                        try:
-                            platform.unlock_file(self._lock_file.fileno())
-                        finally:
-                            self._lock_file.close()
-                            self._lock_file = None
+                    self._release_owner()
         finally:
             self._release_admission_lock()
 

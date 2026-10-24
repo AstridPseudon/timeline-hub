@@ -6,6 +6,18 @@ on:
   pull_request:
 
 jobs:
+  windows-realm-publication:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: python -m pip install -e '.[test]'
+      - name: Verify native realm creation, ownership, and rollback
+        run: python -m pytest -q tests/test_realm_creation_publication.py
+
   unit:
     runs-on: ${{ matrix.os }}
     strategy:
