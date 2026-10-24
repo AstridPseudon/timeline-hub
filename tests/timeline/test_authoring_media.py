@@ -697,11 +697,12 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
     from tests.helpers.runtime import use_runtime
     from tests.helpers.trusted_seed import seed_trusted_parent
 
-    monkeypatch.setenv('ASTRID_RUNTIME_CHECKOUT', '/home/user/work/runtime')
-    runtime = use_runtime(commit='a0dca16975dfe8f5e762703b99d9791a16cf7fd7')
-    sys.path.insert(0, str(runtime / 'tests'))
+    monkeypatch.setenv('ASTRID_RUNTIME_CHECKOUT', '/home/user/work/wt/rt-pin-8ea0766f')
+    use_runtime()
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.store import RealmStore
+    source_runtime = use_runtime(commit='a0dca16975dfe8f5e762703b99d9791a16cf7fd7')
+    sys.path.insert(0, str(source_runtime / 'tests'))
     from timeline_commit_film_fixture import build_film_fixture, read_object_from_realm
 
     source_root = tmp_path / 'source'
@@ -871,10 +872,7 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
     baseline = commits.revision_closure(project, 'film', 'wc6-baseline')
     service.close()
 
-    daemon = real_runtime(
-        realm, commit='a0dca16975dfe8f5e762703b99d9791a16cf7fd7',
-        authoring_profile='astrid',
-    )
+    daemon = real_runtime(realm, authoring_profile='astrid')
 
     def open_client(endpoint_daemon):
         return AstridClient.open(
@@ -1039,7 +1037,6 @@ def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_ab
     # restart; the M1 real-HTTP proof uses this convention as well.
     restarted = real_runtime(
         realm, port=restart_port,
-        commit='a0dca16975dfe8f5e762703b99d9791a16cf7fd7',
         authoring_profile='astrid',
     )
     client2 = open_client(restarted)
