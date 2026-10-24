@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T16:28:40Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 13 | status age 0m -->
-# runtime board, 2026-10-24T16:22:20Z
+<!-- main | 2026-10-24T16:31:41Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 13 | status age 1m -->
+# runtime board, 2026-10-24T16:29:54Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -80,7 +80,7 @@
 | U1-D69-test-audit | Preserve upstream test predicates | Luna | Seven restorations before cut | merged | rt-U1-D69-test-audit-1603 | Missing16:9 mapped,7 restore. Changed129:75 clear,54 cited. Two skip markers cited;12 dynamic scopes explicit. [Audit](../../design/rt-U1-D69-test-audit-1603.md) | Source facts only |
 | R-P4-history-cost | Reduce historical schema validation cost | Luna | Finite profile then strict review | doing | rt-P4-history-cost-1625 | Actual P4 ten-note timeout in schema ref validation. Profile finite captures; preserve every check and45s budget. No history memo. | Pending |
 | U1-D69-restore-guard | Restore two skip guard originals | Luna | Joined policy review | review | Restore1613; policy1616; join1621 | Two exact upstream bodies restored. Policy fix passes24; joined seven-test scope and independent protected review next. | ee407797d |
-| U1-D69-skip-policy | Restore upstream skip enforcement | Luna | Joined protected review | review | rt-U1-D69-join-1621 | Policy1616 passes24 and Pyright0. Preserve no_ci, false-condition refusal and stricter current xfail/node/hash guards. | Policy source ready |
+| U1-D69-skip-policy | Restore upstream skip enforcement | Luna | Joined protected review | review | rt-U1-D69-checker-1629 | Policy1616 passes24 and Pyright0. Preserve no_ci, false-condition refusal and stricter current xfail/node/hash guards. | Policy source ready |
 | U1-D69-restore-registry | Restore five registry originals | Luna | Joined policy review | review | Restore1613; join1621 | Five exact bodies restored; prior11PASS1FAIL exposed no_ci. Join1621 imports exact blob onto corrected policy. | Source ready |
 | U1d-final | Join final owner upstream | Luna | Integrated qualification complete | merged | Integrated 1401; reviews 1346/1351 | Actual e68:448 passed,9 declared skips,2 existing xfails; raw exit1 retained. [Proof](../../design/rt-U1d-integrated-1401.md) | e68cf2316 |
 | U1d-visual-source | Preserve upstream visual source | Luna | Source review passed | merged | Author 1331; review 1333 | Reviewed source is in actual e68. Integrated visual qualification running with the targeted union. | 9db3 / e68 |
@@ -132,7 +132,7 @@
 Runtime producer: bc227de07262accb702eae8a44c4a666b568c08e, tree1d410a674d827979caf10d2da2ce3767b68c75da. Normal merge receipt is complete; actual tree equals independently reviewed760269 exactly. Security1606 PASS28focused,333strict,171ABI and static. Canonical15/schema867f unchanged from8b32; no regeneration. [Review](../../design/rt-R-inverse-timeline-security-1606.md).
 
 core open: 2 Runtime-owned items: P4 historical validation timeout newly assigned1625; retained inverse original awaiting Agent actual-home qualification after meaningful merged correction. Source cause fixed and independently reviewed; do not infer actual original PASS. Agent separately owns empty-create setup. Runtime cut core suite remains required.
-regressions: 0 confirmed open Runtime originals; D69 restored tests exposed a real skip-policy omission now corrected privately and awaiting joined independent review. Historical36closed/0open/0unaccounted remains scoped accounting.
+regressions: 1 D69 skip-policy regression remains open at home: omitted upstream no_ci/false-condition enforcement. Policy1616 fixes two causes; checker1629 fixes joined remaining no_ci checker. Merge awaits29green and independent review. Historical36 accounting unchanged.
 
 FREEZE D59/D66: actual Runtimebc227 source correction is home. Agent original proof and normal source provenance are consumer-owned; no separate Runtime integrated D62 stage. App1540 repaired stale generated-schema save admission; actual changed P1control26312 is pending, GREEN releases parallel P2/P3 immediately. No cut, finalGO or artifact.
 
@@ -142,10 +142,10 @@ D65 delivery: owner merges Runtime, then Agent, runs authentic App update-manife
 
 Blockers: Runtime P4 — actual ten-note timeout during historical canonical schema validation; bounded profile/source1625 active, no validation or budget waiver.
 Blockers: Agent — one unchanged inverse original on actual Runtimebc227 is due after merged security PASS. Peer1621 supplies exact source/tree and asks only the one meaningful current-home proof.
-Blockers: App — changed P1control26312 on actual1540 pending; previous zeroPOST cause repaired. P2/P3 parallel only after GREEN, no duplicate control.
-Blockers: Runtime D69 — joined seven exact upstream restorations plus skip policy ownedrt-U1-D69-join-1621; independent protected/policy review follows before merge.
+Blockers: App — current P2 25943 and P3 10033 running. P1control26312 PASS2; independent1616 verdict pending. App owns exact terminal facts; no duplicate original.
+Blockers: Runtime D69 — joined28PASS1FAIL. Checker1629 restores upstream no_ci source predicate; independent wholepath1628 checks source and audit citations. All7 restored bodies exact.
 Blockers: Final delivery — cut needs active lanes0core/0regressions, current P2/P3PASS and D69 completion, then final proofs/build/ZIP.
-Next ready: consume join1621 then dispatch independent policy/protected review immediately; consume final candidate independent1621. Agent one-original and App P1 are already owned.
+Next ready: consume checker1629 then dispatch exact joined policy/protected review; consume P4 profile1625 and wholepath1628 findings. Agent inverse and App parallel gate originals already owned.
 
 Later: D47 memo and proof pins remain post-delivery; nine state attacks open. V4 cut; D14/D23 deferred unchanged. D34 broader cleanup remains held. D62 submit completeness is an explicit known gap in the Runtime behavior-change ledger.
 
@@ -153,7 +153,7 @@ Admission: D56 stops Farm and schema-access work. Exact403 and automatic access 
 
 Disk: about8.6GB, above main8GB heavy floor. Sweep3 freed0; compact packed0/compressed0. Finished worktrees automatically recycle; no old refused target retried.
 
-live 0 / cap 4; ready-undispatched 0. Copied dispatcher header16:19:41Z reports0Sol/0Luna before two1621 requests; join and independent final review are now queued. No ready local row waiting.
+live 2 / cap 4; ready-undispatched 0. Copied dispatcher header16:28:40Z reports0Sol/2Luna. Checker1629 nowqueued; P4cost1625 and wholepath1628 active. No ready local row waiting.
 
 Pass 2026-10-24T15:34:02Z: PLAN/common/header D62–D67 and peer boards consumed. SecurityPASS412 -> normal merge8b32 completed and exact producer handed to Agent/App immediately. Separate D62 proof removed perD66. D67 docs installer1533 active; D65 missing command assigned App. No final proof or delivery claim.
 
@@ -196,3 +196,5 @@ Pass 2026-10-24T16:22:20Z: normal inverse merge bc227 confirmed exact reviewed t
 Pass 2026-10-24T16:25Z: peerAgent1619 became owned R-P4-history-cost/Luna1625 immediately; finite profile before smallest shared-schema optimization, D47 history memo held. App current P1control26312 PASS2; App already released parallel P2/P3. D69 join and independent finalcandidate1621 active.
 
 Pass 2026-10-24T16:28Z: final joined candidate independent1621 PASS consumed, kept private/gated cut. D69 joined actual29 has28PASS1FAIL: existing registry checker ignores upstream no_ci. Independent readonly wholepath1628 assigned immediately after first policy fix failed to clear joined scope; author correction follows exact source return. P4 finite profile1625 active.
+
+Pass 2026-10-24T16:29:54Z: join1621 terminal28PASS1FAIL reveals existing checker dropped upstream no_ci predicate. Corrector1629 dispatched on committedjoined4e1 while independent wholepath1628 runs; protected7 original bodies stay exact. Runtime policy regression1 explicitly open until normalmergeproof. Finalcandidate1621 independentPASS held at cut.
