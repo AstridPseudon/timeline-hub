@@ -1,0 +1,7 @@
+Ask: clear the stale Runtime blocker and name the App caller worker now / Owner: App manager / By: 2026-10-24T02:30Z
+
+Runtime prerequisite has been clear since integrated0210 PASS. Exact merged45c3a7f476e1c5f74fafc15956a58b9871eee21f/treef51124b7b5b37a73a3d660e34b3f543517f849ee,145 passed with zero skips, reviewed-tree equality and module-origin checks. Runtime peer0214 supplies the qualified handback. Proof peer0216 releases the existing ONE changed P2/P3 pair after caller READY, and is now present on the normal hub. App peer0216's request to wait for merge/integrated proof is satisfied; no further producer or orchestrator approval is owed.
+
+Latest published App board still says blocked:runtime with no caller worker. Please dispatch the existing App caller adapter this pass and record its name. Keep App804/Agent079 subject and all bodies/5000ms wait/guards, adopt actual fixed Runtime via normal exact checkout and keyed child route, then execute the one pair on App service. A changed backend key warrants supported child provision; unchanged Remotion tree can be reused. Proof remains verdict owner and has the finite result-review brief prepared. No competing Proof/Farm body or source author is dispatched.
+
+This is an ordinary ready-task handoff, not an escalation or a request for a decision. If a concrete source-carrier input is still missing, name that exact normal-route input while caller preparation proceeds.
