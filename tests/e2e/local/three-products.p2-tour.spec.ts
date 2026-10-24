@@ -368,20 +368,6 @@ function assertTransitionRequestV2(
   changes: unknown[],
 ): void {
   expect(post.key).toBeTruthy();
-  expect(post.body).toMatchObject({
-    api_version: 1,
-    project_id: expect.any(String),
-    timeline_id: expect.any(String),
-    base_revision_id: before.revision_id,
-    base_publication_id: before.publication_id,
-    commands: expect.any(Array),
-    label: expect.any(String),
-    steps: expect.any(Array),
-    merge: 'fields',
-    dry_run: false,
-    source: { via: 'app' },
-  });
-
   const payload = original.parent_revision.payload as unknown as JsonObject;
   const config = payload.config as JsonObject;
   const clips = config.clips as Array<JsonObject>;
@@ -399,25 +385,35 @@ function assertTransitionRequestV2(
       ? { state: 'present', value: config.pinnedShotGroups } : { state: 'absent' },
   });
 
-  expect(post.body.commands).toEqual([{
-    schema_version: 1,
-    op: 'doc.patch',
-    version: '1',
-    select: null,
-    created: [],
-    args: { changes },
-  }]);
-  expect(post.body.merge).toBe('fields');
-  expect(post.body.reads).toEqual(reads);
-  expect(post.body.steps).toEqual([{
-    id: expect.any(String),
+  expect(post.body).toEqual({
+    api_version: 1,
+    project_id: original.project_id,
+    timeline_id: original.timeline_id,
+    base_revision_id: before.revision_id,
+    base_publication_id: before.publication_id,
+    commands: [{
+      schema_version: 1,
+      op: 'doc.patch',
+      version: '1',
+      select: null,
+      created: [],
+      args: { changes },
+    }],
     label: 'Edit timeline',
-    intent: `Clear transitions: ${ids.join(', ')}`,
-    tags: [],
-    command_ordinals: [0],
-    patch: changes,
+    steps: [{
+      id: expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/),
+      label: 'Edit timeline',
+      intent: `Clear transitions: ${ids.join(', ')}`,
+      tags: [],
+      command_ordinals: [0],
+      patch: changes,
+      reads,
+    }],
+    merge: 'fields',
     reads,
-  }]);
+    dry_run: false,
+    source: { via: 'app' },
+  });
 }
 
 function assertHistoryMetadata(entry: HistoryEntry, post: CommitPost, result: CommitAcceptedMutation): void {

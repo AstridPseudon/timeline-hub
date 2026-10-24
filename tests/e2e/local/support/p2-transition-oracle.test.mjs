@@ -12,6 +12,8 @@ assert.ok(helper, 'exercise the actual mounted transition assertion helper');
 const check = compileFunction(`${ts.transpileModule(helper, {}).outputText}\nreturn assertTransitionRequestV2;`, ['expect'])(expect);
 
 const original = {
+  project_id: 'project',
+  timeline_id: 'timeline',
   parent_revision: {
     payload: {
       config: {
@@ -44,7 +46,7 @@ function fixture(ids) {
     base_revision_id: 'revision', base_publication_id: 'publication',
     commands: [{ schema_version: 1, op: 'doc.patch', version: '1', select: null, created: [], args: { changes } }],
     label: 'Edit timeline',
-    steps: [{ id: 'step', label: 'Edit timeline', intent: `Clear transitions: ${ids.join(', ')}`, tags: [], command_ordinals: [0], patch: changes, reads }],
+    steps: [{ id: '00000000-0000-4000-8000-000000000001', label: 'Edit timeline', intent: `Clear transitions: ${ids.join(', ')}`, tags: [], command_ordinals: [0], patch: changes, reads }],
     merge: 'fields', reads, dry_run: false, source: { via: 'app' },
   };
   return { post: { key: 'receipt', body }, changes, ids };
@@ -76,9 +78,14 @@ test('actual helper refuses missing/extra/wrong command, created, read, merge, a
     (candidate) => { candidate.body.reads = [...candidate.body.reads, { kind: 'scope', ref: 'timeline', path: [] }]; },
     (candidate) => { candidate.body.steps[0].reads = candidate.body.reads.slice(0, -1); },
     (candidate) => { candidate.body.merge = 'atomic'; },
+    (candidate) => { candidate.body.label = 'Wrong label'; },
+    (candidate) => { candidate.body.unexpected = true; },
     (candidate) => { candidate.body.commands[0].op = 'clip.set'; },
     (candidate) => { candidate.body.steps[0].patch = []; },
     (candidate) => { candidate.body.commands[0].args.changes = []; },
+    (candidate) => { candidate.body.reads[0].path = ['config', 'clips', 'id:alpha', 'asset']; },
+    (candidate) => { candidate.body.reads[1].state = { state: 'absent' }; },
+    (candidate) => { candidate.body.reads[1].state.value.duration = 99; },
   ];
   for (const mutate of variants) {
     const candidate = structuredClone(post);
