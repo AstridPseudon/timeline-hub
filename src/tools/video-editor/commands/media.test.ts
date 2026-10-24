@@ -1,11 +1,94 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createDefaultTimelineConfig } from '@/tools/video-editor/lib/defaults.ts';
 import { buildSwitchShotGroupToFinalVideoMutation } from '@/tools/video-editor/lib/shot-group-commands.ts';
-import { buildTimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import { buildTimelineData, type TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import type { AssetRegistry } from '@/tools/video-editor/types/index.ts';
-import { applyPreparedMediaCommand } from './media.ts';
+import {
+  applyPreparedMediaCommand as previewPreparedMedia,
+  MEDIA_COMMAND_DESCRIPTORS,
+  PLACE_PREPARED_MEDIA_COMMAND_DESCRIPTOR,
+  type PlacePreparedMediaCommand,
+} from './media.ts';
+import { createTimelineCommandRunner } from './runner.ts';
+
+const retainedRunner = createTimelineCommandRunner(MEDIA_COMMAND_DESCRIPTORS);
+const applyPreparedMediaCommand = (current: TimelineData, command: PlacePreparedMediaCommand) => {
+  const preview = previewPreparedMedia(current, command);
+  const legacy = retainedRunner.apply(current, { commands: [command] });
+  expect(preview).toEqual(legacy.status === 'rejected' ? null : {
+    nextData: legacy.nextData,
+    commandResult: legacy.commandResults[0],
+    history: legacy.history,
+  });
+  return preview;
+};
 
 describe('prepared media command', () => {
+  it.each([
+    ['negative time', (command: PlacePreparedMediaCommand) => { command.payload.at = -1; }],
+    ['non-finite time', (command: PlacePreparedMediaCommand) => { command.payload.at = Infinity; }],
+    ['non-JSON payload', (command: PlacePreparedMediaCommand) => { command.payload.asset.durationSeconds = NaN; }],
+    ['non-JSON metadata', (command: PlacePreparedMediaCommand) => { command.metadata = { duration: Infinity }; }],
+    ['empty asset key', (command: PlacePreparedMediaCommand) => { command.payload.asset.assetKey = ''; }],
+    ['missing source', (command: PlacePreparedMediaCommand) => { command.payload.asset.entry = {}; }],
+  ] as const)('preserves the %s refusal without mutating input', async (_label, invalidate) => {
+    const current = await buildTimelineData({
+      ...createDefaultTimelineConfig(),
+      tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
+      clips: [],
+    }, { assets: {} });
+    const before = structuredClone(current);
+    const command: PlacePreparedMediaCommand = {
+      type: 'place-prepared-media',
+      payload: {
+        asset: {
+          assetKey: 'asset-new', mediaType: 'image', durationSeconds: 2,
+          entry: { file: 'new.png', type: 'image/png' }, source: 'registered',
+        },
+        trackId: 'V1', at: 0,
+      },
+    };
+    invalidate(command);
+    expect(applyPreparedMediaCommand(current, command)).toBeNull();
+    expect(current).toEqual(before);
+  });
+
+  it('previews through editor utilities without executing the command descriptor', async () => {
+    const current = await buildTimelineData({
+      ...createDefaultTimelineConfig(),
+      tracks: [{ id: 'V1', kind: 'visual', label: 'V1' }],
+      clips: [],
+    }, { assets: {} });
+    const validate = vi.spyOn(PLACE_PREPARED_MEDIA_COMMAND_DESCRIPTOR, 'validate');
+    const dryRun = vi.spyOn(PLACE_PREPARED_MEDIA_COMMAND_DESCRIPTOR, 'dryRun');
+    const apply = vi.spyOn(PLACE_PREPARED_MEDIA_COMMAND_DESCRIPTOR, 'apply');
+    const invert = vi.spyOn(PLACE_PREPARED_MEDIA_COMMAND_DESCRIPTOR, 'invert');
+    try {
+      const preview = previewPreparedMedia(current, {
+        type: 'place-prepared-media',
+        payload: {
+          asset: {
+            assetKey: 'asset-new', mediaType: 'image', durationSeconds: 2,
+            entry: { file: 'new.png', type: 'image/png' }, source: 'registered',
+          },
+          trackId: 'V1', at: 0,
+        },
+      });
+      expect(preview?.nextData.config.clips).toEqual([
+        expect.objectContaining({ asset: 'asset-new', track: 'V1' }),
+      ]);
+      expect(validate).not.toHaveBeenCalled();
+      expect(dryRun).not.toHaveBeenCalled();
+      expect(apply).not.toHaveBeenCalled();
+      expect(invert).not.toHaveBeenCalled();
+    } finally {
+      validate.mockRestore();
+      dryRun.mockRestore();
+      apply.mockRestore();
+      invert.mockRestore();
+    }
+  });
+
   it('persists the prepared registry entry and clip replacement in one compound mutation', async () => {
     const config = {
       ...createDefaultTimelineConfig(),
