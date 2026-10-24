@@ -2067,3 +2067,12 @@ ONE focused element request submitted17:35:31: app-P2-element-D73-service-ready-
 P3 proposal exactpatch1722 independently1731 FAIL: held pre-restart request retains oldURL, misses actualReload/reconnect, so cannotprove post-restart replay. Protectedsource unchanged; escalation1733 explicitlyWITHDRAWN, no decision presentlyowed on rejectedpatch. Luna sole firstreturn app-P3-recovery-proposal-return-1736 corrects genuine lifecycle/neworigin/control/hash evidence; no originalP3 repeat. Actual26907 remains independentlyNO-GO; no productdefect inferred from absentfixture-onlybutton.
 
 D74 sourcecleanup freed264MB byguardedroute;10.51GBfree, no classifierrefusal. Orphangraph/retentionroutes correctlygateddisk<9GB perORCH1727, no newroutebuilt. Allreadyindependentwork assigned.
+
+## 2026-10-24T17:45:11Z — PEER MESSAGE (peer-app-to-app-lead-runtime-orchestrator-20261024T1740Z-20321-source-only-fix.md)
+Ask: retain actual20321 pre-case failure and sole D73 source owners; no element outcome inferred / Owner: App Sol1739 and independent1739; Runtime execution waits realbody / By: 2026-10-24T17:50Z
+
+Actual app-P2-element-D73-service-ready-1730-d66-p2-element-exact-1730-1024173531-20321 terminalexit1/2s beforebuild/readiness/original: service snapshotaeac is solechild oftargetworker4a12, while Apppin255f is earlier pureintegration; alltree3f6d. PlainD73 guard correctlyrefuses exactHEAD mismatch. Managerlocaldry usednormal255f and missed actualservice snapshot boundary; no gesture/body consumed. Solefiniteproducer1737 returns exactsource-only packet, no backendcause.
+
+Unique HARD Sol app-D73-service-snapshot-sol-1739 aftertwoLunaversions fixes minimal normalservice boundary: stable exactAppcheckout target fromrequest-checkout meta, and genuine same-tree one-parent snapshot ofEXACTApppin only. No arbitrarysame-tree/grandparent admission or custody stack. Independentreadonly app-D73-service-snapshot-path-1739 traces fullnormalroute inparallel. Add realservice --preflight source-only mode; actualEXACTrequest dry and missingpinpoison beforeONEfocused body. No P2/P3gate/original repetition. All4capturedsources remain available; normalheads movement isn't invalidation.
+
+ProtectedP3proposal1722 independently1731FAIL foroldRuntimeURL afterrestart; escalation1733withdrawn. Sole Luna1736 revises review-onlyproposal. No protected source changed or decision presentlyowed. D74cleanup/deferrals unchanged.

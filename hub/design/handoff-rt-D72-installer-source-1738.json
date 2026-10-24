@@ -1,0 +1,131 @@
+[
+  {
+    "ref": "origin/main",
+    "commit": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+    "symbols": [
+      {
+        "path": "astrid/sdk/host_bootstrap.py",
+        "name": "_provision_render_runtime_env",
+        "line": 461,
+        "end_line": 515,
+        "sha256": "32d859c8787c2663fcb627379ac67fa35aab028a4d17cab3e2be903a12582787"
+      },
+      {
+        "path": "astrid/core/rendering/remotion_runtime.py",
+        "name": "_REQUIRED_SCHEMA_FILES",
+        "line": 51,
+        "end_line": 58,
+        "sha256": "5f16e98293a95ab3c24a25ff6c4f888c9bc89cccdc7f0c0dd36048b0ff498b04"
+      },
+      {
+        "path": "astrid/core/rendering/remotion_runtime.py",
+        "name": "_SCHEMA_PROBE",
+        "line": 60,
+        "end_line": 89,
+        "sha256": "de808aba9aaa6422cf9011e1fab85bdcfe8398e421aaa091bc251e0cd37c1a26"
+      },
+      {
+        "path": "astrid/core/timeline/banodoco_schema.py",
+        "name": "load_vendored_timeline_schema",
+        "line": 511,
+        "end_line": 519,
+        "sha256": "75df0b02621b12c2363c35bd0b34cf50575d0947830afcd23fc01eab59bad167"
+      }
+    ]
+  },
+  {
+    "ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+    "commit": "11caf1d9de291d76f491cf69f7942606b7471d7a",
+    "symbols": [
+      {
+        "path": "astrid/sdk/host_bootstrap.py",
+        "name": "_provision_render_runtime_env",
+        "line": 398,
+        "end_line": 452,
+        "sha256": "32d859c8787c2663fcb627379ac67fa35aab028a4d17cab3e2be903a12582787"
+      },
+      {
+        "path": "astrid/core/rendering/remotion_runtime.py",
+        "name": "_REQUIRED_SCHEMA_FILES",
+        "line": 48,
+        "end_line": 55,
+        "sha256": "5f16e98293a95ab3c24a25ff6c4f888c9bc89cccdc7f0c0dd36048b0ff498b04"
+      },
+      {
+        "path": "astrid/core/rendering/remotion_runtime.py",
+        "name": "_SCHEMA_PROBE",
+        "line": 57,
+        "end_line": 81,
+        "sha256": "0b7cb11b8904ee38ac99129491dbb09eb73029f3a99f8bf7f9de4ba7c15b9aa2"
+      }
+    ]
+  },
+  {
+    "ref": "b4f79d12e0^",
+    "commit": "3b61e8ef7825801210d337e20b7574d9745f8636",
+    "symbols": [
+      {
+        "path": "astrid/sdk/host_bootstrap.py",
+        "name": "_provision_render_runtime_env",
+        "line": 461,
+        "end_line": 515,
+        "sha256": "32d859c8787c2663fcb627379ac67fa35aab028a4d17cab3e2be903a12582787"
+      },
+      {
+        "path": "astrid/core/rendering/remotion_runtime.py",
+        "name": "_REQUIRED_SCHEMA_FILES",
+        "line": 55,
+        "end_line": 62,
+        "sha256": "5f16e98293a95ab3c24a25ff6c4f888c9bc89cccdc7f0c0dd36048b0ff498b04"
+      },
+      {
+        "path": "astrid/core/rendering/remotion_runtime.py",
+        "name": "_SCHEMA_PROBE",
+        "line": 64,
+        "end_line": 93,
+        "sha256": "de808aba9aaa6422cf9011e1fab85bdcfe8398e421aaa091bc251e0cd37c1a26"
+      },
+      {
+        "path": "astrid/core/timeline/banodoco_schema.py",
+        "name": "load_vendored_timeline_schema",
+        "line": 518,
+        "end_line": 526,
+        "sha256": "75df0b02621b12c2363c35bd0b34cf50575d0947830afcd23fc01eab59bad167"
+      }
+    ]
+  },
+  {
+    "ref": "HEAD",
+    "commit": "b4f79d12e0037f283ccc929f364f38d21dc50d4a",
+    "symbols": [
+      {
+        "path": "astrid/sdk/host_bootstrap.py",
+        "name": "_provision_render_runtime_env",
+        "line": 461,
+        "end_line": 515,
+        "sha256": "32d859c8787c2663fcb627379ac67fa35aab028a4d17cab3e2be903a12582787"
+      },
+      {
+        "path": "astrid/core/rendering/remotion_runtime.py",
+        "name": "_REQUIRED_SCHEMA_FILES",
+        "line": 55,
+        "end_line": 62,
+        "sha256": "5f16e98293a95ab3c24a25ff6c4f888c9bc89cccdc7f0c0dd36048b0ff498b04"
+      },
+      {
+        "path": "astrid/core/rendering/remotion_runtime.py",
+        "name": "_SCHEMA_PROBE",
+        "line": 64,
+        "end_line": 93,
+        "sha256": "de808aba9aaa6422cf9011e1fab85bdcfe8398e421aaa091bc251e0cd37c1a26"
+      },
+      {
+        "path": "astrid/core/timeline/banodoco_schema.py",
+        "name": "load_vendored_timeline_schema",
+        "line": 518,
+        "end_line": 526,
+        "sha256": "75df0b02621b12c2363c35bd0b34cf50575d0947830afcd23fc01eab59bad167"
+      }
+    ]
+  }
+]
