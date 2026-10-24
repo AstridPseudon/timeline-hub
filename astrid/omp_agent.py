@@ -680,7 +680,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if "--onboard" in rest:
         rest.remove("--onboard")
-        if rest:
+        if rest and rest not in (["--help"], ["-h"]):
             print("astrid: --onboard takes no other arguments", file=sys.stderr)
             return 1
         omp_bin = _resolve_omp_bin()
@@ -688,7 +688,7 @@ def main(argv: list[str] | None = None) -> int:
             print("astrid: this OMP build does not support native onboarding", file=sys.stderr)
             return 1
         profile = _service_profile()
-        replace_process([omp_bin, *( ["--profile", profile] if profile else []), "onboard"])
+        replace_process([omp_bin, *(["--profile", profile] if profile else []), "onboard", *rest])
         return 1  # pragma: no cover - hand-off exits or replaces the process
 
     flags, message = _split_flags(rest)

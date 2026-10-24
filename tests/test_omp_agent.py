@@ -343,7 +343,7 @@ def test_windows_handoffs_wait_and_propagate_child_exit(monkeypatch, route):
     assert captured["kwargs"] == {"env": None, "check": False}
     assert signal.getsignal(signal.SIGINT) is previous_handler
     if route == "onboard":
-        assert captured["argv"] == [executable, "setup"]
+        assert captured["argv"] == [executable, "onboard"]
     else:
         assert captured["argv"][-2:] == ["--print", message]
         if route == "packaged":
@@ -355,10 +355,10 @@ def test_windows_handoffs_wait_and_propagate_child_exit(monkeypatch, route):
 
 
 @pytest.mark.parametrize("output,returncode,supported", [
-    (b"Run onboarding setup or install dependencies for optional features", 0, True),
-    (b"Run onboarding setup or install dependencies for optional features", 1, False),
+    (b"detect-first provider onboarding", 0, True),
+    (b"detect-first provider onboarding", 1, False),
     (b"Install optional Python dependencies", 0, False),
-    (b"Unknown command: setup", 0, False),
+    (b"Unknown command: onboard", 0, False),
 ])
 def test_onboard_checks_for_the_provider_setup_command(monkeypatch, output, returncode, supported):
     calls = []
@@ -369,4 +369,14 @@ def test_onboard_checks_for_the_provider_setup_command(monkeypatch, output, retu
 
     monkeypatch.setattr(omp_agent.subprocess, "run", run)
     assert omp_agent._omp_supports_onboard("/selected/omp") is supported
-    assert calls == [["/selected/omp", "setup", "--help"]]
+    assert calls == [["/selected/omp", "onboard", "--help"]]
+
+
+@pytest.mark.parametrize("help_flag", ["--help", "-h"])
+def test_onboard_forwards_help_without_an_interactive_terminal(monkeypatch, help_flag):
+    monkeypatch.setattr(omp_agent, "_resolve_omp_bin", lambda: "/selected/omp")
+    monkeypatch.setattr(omp_agent, "_omp_supports_onboard", lambda _: True)
+    calls = []
+    monkeypatch.setattr(omp_agent, "replace_process", lambda argv: calls.append(argv))
+    assert omp_agent.main(["--onboard", help_flag]) == 1
+    assert calls == [["/selected/omp", "onboard", help_flag]]

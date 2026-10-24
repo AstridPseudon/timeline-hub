@@ -73,8 +73,8 @@ def test_real_omp_model_snapshot_respects_disabled_providers(tmp_path):
         f"import {{ loadExtensions }} from {json.dumps(str(package / 'src/extensibility/extensions/loader.ts'))};\n"
         f"const loaded = await loadExtensions([{json.dumps(str(root / 'astrid/omp_extensions/astrid-models.ts'))}], {json.dumps(str(tmp_path))});\n"
         "if (loaded.errors.length) throw Error(JSON.stringify(loaded.errors));\n"
-        "const registry = {getAll:()=>[{provider:'hidden-fixture',id:'model'}],getAvailable:()=>[],"
-        "hasConfiguredAuth:()=>false,getDiscoverableProviders:()=>[],authStorage:{hasAuth:()=>false}};\n"
+        "const registry = {getAll:()=>[{provider:'hidden-fixture',id:'model'},{provider:'visible-fixture',id:'model'}],getAvailable:()=>[],"
+        "hasConfiguredAuth:()=>false,getDiscoverableProviders:()=>[],authStorage:{keys:{source:(id)=>id==='visible-fixture'?{kind:'api_key'}:undefined}}};\n"
         "const handlers = loaded.extensions[0].handlers.get('session_shutdown');\n"
         f"await handlers[0]({{}}, {{cwd:{json.dumps(str(tmp_path))},modelRegistry:registry}});\n"
         "process.exit(0);\n"
@@ -87,3 +87,4 @@ def test_real_omp_model_snapshot_respects_disabled_providers(tmp_path):
     assert "hidden-fixture" in value["_hiddenProviderIds"]
     assert "hidden-fixture" not in {row["id"] for row in value["providers"]}
     assert value["currentModel"] is None
+    assert next(row for row in value["providers"] if row["id"] == "visible-fixture")["signedIn"] is True

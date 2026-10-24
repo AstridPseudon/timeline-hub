@@ -51,9 +51,9 @@ async function makeSnapshot(ctx: any, settings: any): Promise<Snapshot> {
 				.filter((model: any) => model.provider === id)
 				.map((model: any) => ({ id: model.id, name: model.name, selector: `${model.provider}/${model.id}`, usable: true as const }))
 			.sort((a: ListedModel, b: ListedModel) => a.id.localeCompare(b.id));
-			const hasAuth = registry.authStorage.hasAuth(id) || oauthProviders.some((provider: any) =>
+			const hasAuth = registry.authStorage.keys.source(id) !== undefined || oauthProviders.some((provider: any) =>
 				(provider.id === id || provider.storeCredentialsAs === id) &&
-				registry.authStorage.hasAuth(provider.storeCredentialsAs ?? provider.id),
+				registry.authStorage.keys.source(provider.storeCredentialsAs ?? provider.id) !== undefined,
 			);
 			return { id, name: oauth?.name ?? id, signedIn: hasAuth, models };
 		});
