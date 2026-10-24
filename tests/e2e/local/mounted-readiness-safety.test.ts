@@ -1,13 +1,17 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { runInNewContext } from 'node:vm';
 import type { BrowserContext, Page } from '@playwright/test';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { createFakeIndexedDB } from '../../../vendor/fake-indexeddb/index.js';
 import { createCommitOutbox } from '../../../src/tools/video-editor/commands/commitOutbox.ts';
-import { bootstrapMountedBaseline } from './support/app.ts';
+import { emitTimelineSaveDiagnostic, markTimelineSaveRejection } from '../../../src/tools/video-editor/lib/timeline-diagnostics.ts';
+import { TimelineVersionConflictError } from '../../../src/sdk/video/timeline/errors.ts';
+import { bootstrapMountedBaseline, installMountedBootstrapDiagnostics } from './support/app.ts';
 import type { DirectHarness } from './support/harness.ts';
+import { mountedDiagnosticInitScript, projectMountedDiagnosticDetail } from './p1-diagnostic-safety.ts';
 import { clearMountedBootstrapFailure, hasFreshSettledOwner, isFreshlyConnected, MountedBootstrapError, readExistingReadonly, readMountedBootstrapFailure, recordMountedBootstrapFailure, retainMountedBootstrapDiagnostics } from './mounted-readiness-safety.ts';
 
 test('missing database is unavailable, not a verified empty baseline', async () => {
@@ -58,29 +62,129 @@ test('mounted bootstrap failures expose only a finite safe projection', () => {
   assert.equal(readMountedBootstrapFailure(), undefined);
 });
 
-test('mounted bootstrap retention uses the real serialized producer snapshot and preserves unknowns', async () => {
-  const directory = mkdtempSync(join(tmpdir(), 'mounted-bootstrap-lifecycle-'));
+test('mounted bootstrap retention uses the authentic producer through the real bootstrap finally', async () => {
+  const directory = mkdtempSync(join(process.env.TMPDIR ?? tmpdir(), 'mounted-bootstrap-lifecycle-'));
   const artifactPath = join(directory, 'mounted-bootstrap-lifecycle.json');
   const testInfo = {
     outputPath(name: string) { assert.equal(name, 'mounted-bootstrap-lifecycle.json'); return artifactPath; },
-    async attach(name: string) { assert.equal(name, 'mounted-bootstrap-lifecycle.json'); },
-  };
-  const page = {
-    async evaluate<T>(fn: () => T): Promise<T> {
-      void fn;
-      return {
-        status: 'observed', buffer: 'mounted-bootstrap', accepted: 1, rejected: 0, overflow: 0, listenerErrors: 0,
-        records: [{ version: 1, phase: 'basis-read', basisStatus: 'loading', projectId: 'project', timelineId: 'timeline',
-          identityPresent: 'UNKNOWN', sessionPresent: false, errorCode: 'UNKNOWN', errorClass: 'UNKNOWN' }],
-      } as T;
+    async attach(name: string, options: { path: string; contentType: string }) {
+      assert.equal(name, 'mounted-bootstrap-lifecycle.json');
+      assert.deepEqual(options, { path: artifactPath, contentType: 'application/json' });
     },
   };
-  await retainMountedBootstrapDiagnostics(testInfo, page, 'failed');
-  const artifact = JSON.parse(readFileSync(artifactPath, 'utf8')) as { status: string; lifecycle: { beforePageClose: boolean }; diagnostics: { records: Array<Record<string, unknown>> } };
+  const listeners = new Map<string, (event: { type: string; detail: unknown }) => void>();
+  const diagnosticWindow = {
+    __timelineSaveDiagnosticsEnabled: false,
+    addEventListener(name: string, listener: (event: { type: string; detail: unknown }) => void) { listeners.set(name, listener); },
+    dispatchEvent(event: { type: string; detail: unknown }) { listeners.get(event.type)?.(event); return true; },
+  };
+  const initScriptRuns: string[] = [];
+  let emitted = false;
+  const owner = {};
+  const sourceDocument = {
+    head: { projectId: 'project', headRevisionId: 'revision', headPublicationId: 'publication' },
+    config: { clips: [{ id: 'clip', from: 3, to: 8, at: 0, hold: 8, speed: 1 }] },
+    token: 'must-not-enter',
+  };
+  const emitAuthenticProducerEvents = () => {
+    if (emitted) return;
+    emitted = true;
+    const previousWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
+    const previousCustomEvent = Object.getOwnPropertyDescriptor(globalThis, 'CustomEvent');
+    class TestCustomEvent {
+      readonly type: string;
+      readonly detail: unknown;
+      constructor(type: string, init: { detail: unknown }) { this.type = type; this.detail = init.detail; }
+    }
+    const restore = () => {
+      if (previousWindow) Object.defineProperty(globalThis, 'window', previousWindow);
+      else Reflect.deleteProperty(globalThis, 'window');
+      if (previousCustomEvent) Object.defineProperty(globalThis, 'CustomEvent', previousCustomEvent);
+      else Reflect.deleteProperty(globalThis, 'CustomEvent');
+    };
+    Object.defineProperty(globalThis, 'window', { configurable: true, value: diagnosticWindow });
+    Object.defineProperty(globalThis, 'CustomEvent', { configurable: true, value: TestCustomEvent });
+    try {
+      const boundedWindow = {
+        __timelineSaveDiagnosticsEnabled: false,
+        addEventListener(name: string, listener: (event: { type: string; detail: unknown }) => void) { listeners.set(`bounded:${name}`, listener); },
+        dispatchEvent(event: { type: string; detail: unknown }) { listeners.get(`bounded:${event.type}`)?.(event); return true; },
+      };
+      runInNewContext(mountedDiagnosticInitScript({ buffer: 'bounded', maxRecords: 2 }), { window: boundedWindow, Object, Set, Number, JSON });
+      Object.defineProperty(globalThis, 'window', { configurable: true, value: boundedWindow });
+      for (let index = 0; index < 3; index += 1) {
+        emitTimelineSaveDiagnostic('schedule', () => ({ owner, timelineId: 'timeline', generation: 1,
+          sessionPresent: false, closed: false, current: true, state: { status: 'dirty' } }));
+      }
+      const boundedSnapshot = (boundedWindow as Record<string, unknown>).__timelineSaveDiagnosticsSnapshot as () => { accepted: number; overflow: number; records: unknown[] };
+      assert.deepEqual({ accepted: boundedSnapshot().accepted, overflow: boundedSnapshot().overflow, records: boundedSnapshot().records.length }, { accepted: 3, overflow: 1, records: 2 });
+      Object.defineProperty(globalThis, 'window', { configurable: true, value: diagnosticWindow });
+      for (let index = 0; index < 2; index += 1) {
+        emitTimelineSaveDiagnostic('schedule', () => ({ owner, timelineId: 'timeline', generation: 1,
+          sessionPresent: false, closed: false, current: true, state: { status: 'dirty' } }));
+      }
+      emitTimelineSaveDiagnostic('owner-init', () => ({ owner, timelineId: 'timeline', generation: 1, closed: false, sessionPresent: false }));
+      emitTimelineSaveDiagnostic('basis-read', () => ({ owner, timelineId: 'timeline', mounted: sourceDocument, basisStatus: 'loading', generation: 1 }));
+      emitTimelineSaveDiagnostic('basis-ready', () => ({ owner, timelineId: 'timeline', mounted: sourceDocument,
+        basis: { source: sourceDocument }, basisStatus: 'ready', generation: 1 }));
+      emitTimelineSaveDiagnostic('identity-read', () => ({ owner, timelineId: 'timeline', identityPresent: true, generation: 1 }));
+      emitTimelineSaveDiagnostic('session-created', () => ({ owner, timelineId: 'timeline', sessionPresent: true, generation: 1 }));
+      const rejection = markTimelineSaveRejection(new TimelineVersionConflictError('private primary failure'), 'capture-input-head-unavailable');
+      emitTimelineSaveDiagnostic('capture-rejected', () => ({ error: rejection, owner, timelineId: 'timeline',
+        generation: 1, sessionPresent: true, closed: false, current: true, mounted: sourceDocument,
+        source: sourceDocument, gesture: { kind: 'trim', clipId: 'clip', patch: { from: 3, to: 8 } },
+        basis: { source: sourceDocument }, basisStatus: 'ready', state: { status: 'error', ownerId: 'owner', recoverableOwners: [owner] } }));
+      const snapshot = ((diagnosticWindow as Record<string, unknown>).__timelineSaveDiagnosticsSnapshot as () => { accepted: number; records: unknown[] })();
+      assert.equal(snapshot.accepted, 8);
+      assert.equal(projectMountedDiagnosticDetail(snapshot.records.at(-1)).accepted, true);
+    } finally {
+      restore();
+    }
+  };
+  const control = bootstrapControl(async (probe, storage) => {
+    if (probe === 1) await storage.create({ realmId: 'realm', actorId: 'actor', projectId: 'project', timelineId: 'timeline' }, async () => {});
+  }, { evaluateWindow: diagnosticWindow, onEvaluate: emitAuthenticProducerEvents, onInitScript: (content) => {
+    initScriptRuns.push(content);
+    runInNewContext(content, { window: diagnosticWindow, Object, Set, Number, JSON });
+    assert.equal(typeof (diagnosticWindow as Record<string, unknown>).__timelineSaveDiagnosticsSnapshot, 'function');
+  } });
+  await installMountedBootstrapDiagnostics(control.context as BrowserContext, testInfo);
+  await assert.doesNotReject(control.run);
+  const artifact = JSON.parse(readFileSync(artifactPath, 'utf8')) as {
+    status: string;
+    lifecycle: { outcome: string; pageMounted: boolean; beforePageClose: boolean };
+    diagnostics: { status: string; buffer: string; accepted: number; rejected: number; overflow: number; records: Array<Record<string, unknown>> };
+    losses: { read: boolean; write: boolean; records: boolean };
+  };
+  assert.equal(initScriptRuns.length, 1);
   assert.equal(artifact.status, 'captured');
+  assert.deepEqual(artifact.lifecycle, { outcome: 'completed', pageMounted: true, beforePageClose: true });
   assert.equal(artifact.lifecycle.beforePageClose, true);
-  assert.equal(artifact.diagnostics.records[0].phase, 'basis-read');
-  assert.equal(artifact.diagnostics.records[0].identityPresent, 'UNKNOWN');
+  assert.equal(artifact.diagnostics.status, 'observed');
+  assert.equal(artifact.diagnostics.buffer, 'mounted-bootstrap');
+  assert.equal(artifact.diagnostics.accepted, 8);
+  assert.equal(artifact.diagnostics.rejected, 0);
+  assert.equal(artifact.diagnostics.overflow, 0);
+  assert.equal(artifact.diagnostics.records.length, 8);
+  assert.deepEqual(artifact.diagnostics.records.at(-1), {
+    version: 1, sequence: 11, time: artifact.diagnostics.records.at(-1)?.time, phase: 'capture-rejected', projectId: 'project',
+    timelineId: 'timeline', clipId: 'clip', ownerAlias: 1, generation: 1, sessionPresent: true, closed: false,
+    current: true, identityPresent: 'UNKNOWN', scopeMatched: 'UNKNOWN', mountedHead: { revisionId: 'revision', publicationId: 'publication' },
+    originalHead: { revisionId: 'revision', publicationId: 'publication' }, basisStatus: 'ready', gestureKind: 'trim',
+    patch: { from: 3, fromState: 'present', to: 8, toState: 'present', at: 'UNKNOWN', atState: 'absent', hold: 'UNKNOWN', holdState: 'absent', speed: 'UNKNOWN', speedState: 'absent' },
+    mountedClip: { from: 3, fromState: 'present', to: 8, toState: 'present', at: 0, atState: 'present', hold: 8, holdState: 'present', speed: 1, speedState: 'present' },
+    sourceClip: { from: 3, fromState: 'present', to: 8, toState: 'present', at: 0, atState: 'present', hold: 8, holdState: 'present', speed: 1, speedState: 'present' },
+    gestureClip: { from: 'UNKNOWN', fromState: 'UNKNOWN', to: 'UNKNOWN', toState: 'UNKNOWN', at: 'UNKNOWN', atState: 'UNKNOWN', hold: 'UNKNOWN', holdState: 'UNKNOWN', speed: 'UNKNOWN', speedState: 'UNKNOWN' },
+    originalClip: { from: 3, fromState: 'present', to: 8, toState: 'present', at: 0, atState: 'present', hold: 8, holdState: 'present', speed: 1, speedState: 'present' },
+    status: 'error', ownerPresent: true, recoverableOwnerCount: 1, intentsPendingCount: 'UNKNOWN', errorStage: 'capture',
+    errorCode: 'capture-input-head-unavailable', errorClass: 'TimelineVersionConflictError',
+  });
+  assert.ok(artifact.diagnostics.records.some((record) => record.phase === 'basis-read' && record.basisStatus === 'loading'));
+  assert.ok(artifact.diagnostics.records.some((record) => record.phase === 'basis-ready' && record.basisStatus === 'ready'));
+  assert.ok(artifact.diagnostics.records.some((record) => record.phase === 'identity-read' && record.identityPresent === true));
+  assert.ok(artifact.diagnostics.records.some((record) => record.phase === 'session-created' && record.sessionPresent === true));
+  assert.doesNotMatch(readFileSync(artifactPath, 'utf8'), /must-not-enter|private primary failure/);
+  assert.deepEqual(artifact.losses, { read: false, write: false, records: false });
 });
 
 test('mounted bootstrap retention keeps an early UNKNOWN artifact when the page closes or the writer fails', async () => {
@@ -106,7 +210,10 @@ function browserEvents<T extends { addEventListener(name: string, listener: () =
   return target;
 }
 
-function bootstrapControl(beforeProbe: (probe: number, storage: ReturnType<typeof createCommitOutbox>) => Promise<void>) {
+function bootstrapControl(
+  beforeProbe: (probe: number, storage: ReturnType<typeof createCommitOutbox>) => Promise<void>,
+  options: { onEvaluate?: () => void; onInitScript?: (content: string) => void; evaluateWindow?: object } = {},
+) {
   const factory = createFakeIndexedDB();
   const storage = createCommitOutbox({ indexedDB: factory, exclusiveLock: async (_name, work) => work() });
   let probes = 0;
@@ -136,14 +243,29 @@ function bootstrapControl(beforeProbe: (probe: number, storage: ReturnType<typeo
     on() {}, async goto() {}, locator: () => locator, getByRole: () => locator,
     async evaluate<T, A>(fn: (arg: A) => T, arg: A) {
       const prior = globalThis.indexedDB;
+      const priorWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
       Object.defineProperty(globalThis, 'indexedDB', { configurable: true, value: browserFactory });
-      try { return await fn(arg); }
-      finally { Object.defineProperty(globalThis, 'indexedDB', { configurable: true, value: prior }); }
+      if (options.evaluateWindow) Object.defineProperty(globalThis, 'window', { configurable: true, value: options.evaluateWindow });
+      try {
+        options.onEvaluate?.();
+        const result = await fn(arg);
+        return options.evaluateWindow ? JSON.parse(JSON.stringify(result)) as T : result;
+      }
+      finally {
+        Object.defineProperty(globalThis, 'indexedDB', { configurable: true, value: prior });
+        if (priorWindow) Object.defineProperty(globalThis, 'window', priorWindow);
+        else Reflect.deleteProperty(globalThis, 'window');
+      }
     },
     async close() { closed = true; },
   };
+  const context = {
+    async addInitScript({ content }: { content: string }) { options.onInitScript?.(content); },
+    async newPage() { return page as unknown as Page; },
+  };
   return {
-    run: () => bootstrapMountedBaseline({ newPage: async () => page as unknown as Page } as BrowserContext,
+    context,
+    run: () => bootstrapMountedBaseline(context as BrowserContext,
       { origin: 'https://bootstrap.test', seed: { projectId: 'project', timelineId: 'timeline', projectName: 'Project' } } as DirectHarness),
     state: () => ({ probes, opens, closed, databases: factory.databases.size }),
   };
