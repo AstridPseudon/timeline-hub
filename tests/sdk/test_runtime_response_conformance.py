@@ -109,12 +109,16 @@ def test_every_recorded_case_is_present() -> None:
 
 # -- Astrid's own path over the recorded bytes ------------------------------------------------------
 
-def _client(case: str) -> tuple[WorkspaceClient, list[tuple[str, str, bytes | None]]]:
+def _client(
+    case: str, *, sent_headers: list[dict[str, str]] | None = None,
+) -> tuple[WorkspaceClient, list[tuple[str, str, bytes | None]]]:
     recorded = fixture(case)
     calls: list[tuple[str, str, bytes | None]] = []
 
     def transport(method, path, headers, body):
         calls.append((method, path, body))
+        if sent_headers is not None:
+            sent_headers.append(dict(headers))
         return recorded["status"], {"content-type": "application/json"}, json.dumps(recorded["body"]).encode()
 
     client = object.__new__(WorkspaceClient)
@@ -215,7 +219,8 @@ def test_validation_error_422_maps_to_validation_error() -> None:
 
 def test_commit_conflict_409_maps_to_conflict_and_keeps_its_details() -> None:
     """The recorded conflict is returned by the canonical timeline commit route."""
-    client, calls = _client("publish_conflict_409")
+    sent_headers: list[dict[str, str]] = []
+    client, calls = _client("publish_conflict_409", sent_headers=sent_headers)
     recorded = fixture("publish_conflict_409")
     request = _concrete(recorded["request"]["body"], project_id="project-1")
     idempotency_key = "commit-conflict-409"
@@ -226,6 +231,7 @@ def test_commit_conflict_409_maps_to_conflict_and_keeps_its_details() -> None:
     assert error.details == recorded["body"]["details"] and error.request_id == "<request_id>"
     assert _SERVICE_ERROR_CLASSES[error.code] is ServiceConflictError
     _sent_the_recorded_request("publish_conflict_409", calls, exact_request=True, project_id="project-1")
+    assert sent_headers[-1]["Idempotency-Key"] == idempotency_key
 
 
 def test_invalid_cursor_400_keeps_its_status_and_code() -> None:
