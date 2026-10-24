@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T02:24:55Z | dispatcher heartbeat 5s | live 4 (sol 3, luna 1, other 0) | busy30 22 | status age 5m -->
-# runtime board, 2026-10-24T02:19:11Z
+<!-- main | 2026-10-24T02:27:40Z | dispatcher heartbeat 4s | live 3 (sol 2, luna 1, other 0) | busy30 21 | status age 1m -->
+# runtime board, 2026-10-24T02:26:33Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -23,7 +23,7 @@
 | DB-runtime-dry | Fresh upstream patch and generation | Luna / independent Luna | Orchestrator dry run | merged | Author 0742; review 0749; builder 7292 | 145 passed; patch and bundle verified. Final build belongs to Farm. | a5d425831 |
 | R2r-prepared-media-input | Classify prepared media authority | Luna / independent Luna | Exact four requests | merged | Author 2117; review 2121 | Runtime guard correctly refused missing verified inputs. App owns caller correction. | evidence only |
 | OPS-bench-store | Legacy admission and lifecycle | Sol / independent Luna | D34 resume threshold or delivery | gated:D34 | Author 0022; review 0029 | Queue fix passed; lifecycle failed two adversarial probes. Source held and uninstalled; no retirement. | 9e67ac9c58 held |
-| OPS-suites-prune | Retire unused suite registrations | Luna | Exact remote registry | review | Local author0215; review0219 | Durable local six-row packet is under review. Four Agent targets need exact current snapshot. No live edits or retirement. | Packet branch only |
+| OPS-suites-prune | Retire unused suite registrations | Luna | Exact source and independent review | doing | Local review0223; Agent source0227 | Local six rows scope PASS. Exact Agent snapshot0218 received; remote four-target packet is now authoring. No live edits or retirement. | Packet branches only |
 | OPS-v1-archives | Six unused source archives | Luna / independent Luna | D34 resume threshold or delivery | gated:D34 | Custody 0040; review 0042 | [Independent custody passed](../../design/runtime-v1-archive-custody-review-0042.md). Archives unchanged; no cleanup round. | evidence only |
 | OPS-retire-venv | Guarded retirement route | Sol / Luna | Reviewed installation | merged | Installer 1805; remote acknowledgements | Installed a500 and 44c6; old process refusals remain stopped. | installed |
 | OPS-retire-runtime | Guarded runtime retirement | Luna / independent Luna | Reviewed installation | merged | Installer 1813; peer 1825 | Installed 954d and 21f6; seven referenced targets refused. Freed 0 GB. | installed |
@@ -37,12 +37,12 @@
 | OPS-App-template | Authentic approved profile | Proof Luna | Exact pair export | merged | Proof 1835; App 1842 | Proof pair imported unchanged. Runtime duplicate with wrong newline hash remains excluded. | evidence only |
 | OPS-main-v1-registration | Finite abandoned registration proposal | Luna / independent Luna | Source only | merged | Return 1850; review 1855 | Proposal passed; no live configuration, removal or target retry. | evidence only |
 | V4-deferred | H9 cut and deferred timing | Orchestrator | Deferred scope | gated:H9-cut | No new worker | Original failures stay unchanged and visible. No V4 repair or proof run. | deferred |
-| F-authoring-publish-writer | Preserve publication behavior | Sol / Luna | Current Agent source | doing | rt-F-authoring-noop-sol-0216 | Seven source regressions confirmed. Current4151 port is merged; Sol0216 owns four no-op cases. Removal, reorder and unplaced cases remain next. | 415181d983 base |
+| F-authoring-publish-writer | Preserve publication behavior | Sol / Luna | Agent unique source author | blocked:agent | Agent behavior0215; Runtime noop review0223 | Delayed ownership race resolved: Runtime placement0225 stopped. Current-based no-op source passed6; handed for Agent reuse, no Runtime merge. | 4151 base; noop branch held |
 | F-authoring-seed-fixture | Preserve shared-alias compiler case | Luna / Sol | Agent semantic fork projection | blocked:agent | Fixture0207; source review0213 PASS | All 11 assertions preserved. Correct contradictory-alias guard exposes missing authoring semantic projection, not bad setup. | d7390a90d4 held |
 | OPS-manifest-restore | Restore accidental generated manifest write | Luna | Exact main file identity | merged | Restore 0110; independent 0113 PASS | Exact tracked hash 7c541b restored; main cleanliness and byte equality independently verified. | HEAD 458595850 |
 | R0-public-export-manifest | Refresh generated artifact hash | Luna | Integrated verification passed | merged | Author 0111; review 0115; integrated 0128 | Actual db11: 74 passed, manifest and generation checks passed; 77 of 78 entries unchanged. [Proof](../../design/runtime-R0-manifest-integrated-0128.md) | db11ea829 / 8a742b1c2 |
-| R5-full-headless | Preserve ten headless scenarios | Sol / Luna | Agent clips assignment repair | blocked:agent | Sol 0202; review 0202; peer 0205 | Eleven passed; faithful positive hits confirmed Agent root mirror defect. [Review](../../design/runtime-R5-source-owner-review-0202.md). | 3c46eb0d0 held |
-| R5-full-occupancy | Preserve fifteen occupancy scenarios | Sol / Luna | Agent historical source carrier | blocked:agent | Source0208; fixture review0213 PASS | Three fixture cases independently passed; exact reviewed delta held for cumulative join. Historical reuse still needs genuine carrier. | fad2ddd1eb held |
+| R5-full-headless | Preserve ten headless scenarios | Sol / Luna | Agent root assignment source | blocked:agent | Agent root0213; Runtime review0202 | Eleven passed; faithful positive awaits minimal root assignment fix. Original raw input and genuine admitted media preserved. | 3c46eb0d0 held |
+| R5-full-occupancy | Preserve fifteen occupancy scenarios | Sol / Luna | Agent historical source carrier | blocked:agent | Agent carrier0213; fixture review0213 | Three fixture cases independently passed. Historical reuse stays held for genuine cross-timeline carrier; no full16 claim. | fad2ddd1eb held |
 | R5-full-speed | Preserve six speed refusals | Luna | Integrated proof passed | merged | Review 0138; port review 0148; service 13500 | Actual 28bb: 14 passed. Original six inputs and SQL/CAS retained; no new type diagnostics. | 4e983cebc / 0e28e6261 |
 | R5-full-receipt-key | Preserve receipt and key guards | Luna | Integrated proof passed | merged | Reviews 0138 and 0148; integrated 0157 | Actual 28bb: both cases passed in 1.97 s with explicit Agent path. All original replay and receipt equalities retained. | 28bb65668 / b57ab2331 |
 | R5-full-conformance | Declare actual retired-route errors | Sol / Luna | D39 approved | doing | rt-R5-D39-contract-sol-0215 | Corrected declarations and recorder source authorized. Generated clients and consumer tuple adoption stay held until freeze. | 45c3a7f47 base |
@@ -59,13 +59,13 @@ Runtime integration is 45c3a7f47, tree f51124b7b5b3. History cost source merged 
 Blockers: App / Proof — Runtime45c3 is merged and integrated145 passed. Actual caller adoption and any authorized changed run are theirs. Historical failed-request cause remains unknown.
 Blockers: Runtime — Full 29085 retains 36 failures. Targeted speed, receipt and manifest repairs passed. Headless, occupancy and contract remain assigned. No unchanged full rerun.
 Blockers: Freeze — D39 client regeneration and Agent/App tuple adoption are held for the freeze; current consumer pins stay intact.
-Blockers: Runtime / Agent — Sol0216 owns four no-op cases. Three other publication cases plus genuine shared-alias projection remain source work. Agent owns helper capture review and the two R5 carrier gaps.
+Blockers: Agent — Unique source0215 owns publication regressions after duplicate Runtime0225 stop. Agent0213 owns root assignment and historical carrier; Agent0210 owns actual helper map repair.
 Blockers: Runtime / Agent — D40 producer0219 is active after readiness and prune authoring. Agent consumer waits for the exact reviewed owner-bound interface.
-Blockers: Agent — Exact remote suite registry and relevant env snapshot needed for four approved prune targets; requested in peer0210 and reminder0219.
+Blockers: Runtime — Exact Agent registry snapshot0218 is received; Luna0227 authors the finite remote prune packet. Local six-row packet scope passed; independent remote review follows.
 Blockers: Freeze — Reviewed U1c 40427e8b5 against live 795379a67 stays held until freeze.
 
 D34: Orchestrator02:08 explicitly resumes OPS-suites-prune because Agent is at7.97GB; Luna0210 is active. Main remains about8.9GB; legacy store/archive rounds stay paused. At 01:52 disk briefly fell to 8,127,651,840 bytes. Recycle checked five finished v1 trees and refused all as dirty; no force or retry, freed 0 GB. Available space then rose to 8,920,993,792 bytes through other activity. Disk-only work is paused again above 8.5 GB. No new archive or legacy-store worker started; finite registry prune is explicitly authorized separately.
 
 Later: OPS legacy admission and v1 archive retirement resume below 8.5 GB or after delivery. OPS-suites-prune now runs under02:08 instruction, with independent review before any exact registration apply or lead retirement; live and final-gate rows stay protected. Dormant D31 transcript implementation and tests remain in delivery. Installed kit hashes and custody remain in the prior board and design evidence; no installation this pass.
 
-Next ready: Consume prune review0219, D39 source0215, no-op source0216 and D40 producer0219. Scope and authority decisions are cleared. Qualified history source is with App/Proof; no duplicate journey.
+Next ready: Consume no-op review0223 for Agent reuse, D39 source0215, D40 producer0219 and Agent prune packet0227. Source ownership race is resolved; no duplicate product merge or journey.
