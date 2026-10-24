@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T03:31:23Z | dispatcher heartbeat 3s | live 3 (sol 0, luna 3, other 0) | busy30 15 | status age 1m -->
-# agent board, 2026-10-24T03:31:00Z
+<!-- agent | 2026-10-24T03:33:36Z | dispatcher heartbeat 15s | live 4 (sol 0, luna 4, other 0) | busy30 14 | status age 0m -->
+# agent board, 2026-10-24T03:33:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -39,25 +39,25 @@
 | F-R1-reorder | Replay occurrence order through history | Sol / Luna | Independent 0248 PASS | merged | Author0239; review0248; join0256 | Independent145 plus12 passed; actual66d proof passed42 reorder/history and seven original publication cases. | a7a6d0e48c |
 | F-G4-occupancy | Faithful historical shared placement | Sol / Luna | Current port and review | doing | Current port0330; source review0321 PASS | Runtime36760 retirement merged and integrated230 passed. Agent cumulative source passed28 plus30 plus9; current port active. Original family held. | f55393e5b8 held |
 | F-authoring-neighbors | Restore seven publication behaviors | Luna | First home qualification | merged | Port0256; integrated0302 PASS | Actual66d:60 passed in6.41s, stable home origins and clean tree. Eleven migrations,seven original neighbors and42 reorder/history controls. | 66d85b5db8 |
-| F-authoring shared alias | Project one materialized occurrence | Sol / Luna | Integrated and original proof | merging | Donor review0313 PASS; port0324 | Exact donor source port5da passed24 plus18. Home merge received; faithful setup and original11 assertions await qualification. | 8f5c7329c8 |
-| F-authoring-ABA | Preserve complete authoring undo and ABA | Sol / Luna | Current independent review | review | Port0324; join review0330 | Current join passed55 plus112 plus42 reorder/history. Original oracle unchanged. Viewing0312 review pending; original141 remains failed. | bb172407fc held |
+| F-authoring shared alias | Project one materialized occurrence | Sol / Luna | Integrated and original proof | merging | Donor0313 PASS; qualification0332 | Exact donor port5da passed24 plus18; home8f5c merged. Worker0332 ports reviewed d739 setup and owns one original11 qualification plus registry controls. | 8f5c7329c8 |
+| F-authoring-ABA | Preserve complete authoring undo and ABA | Sol / Luna | Original changed-source proof | merging | Join review0330 PASS; service26248 | Current independent55 plus112 plus42 and16 corrupt-carrier controls passed. Home7aa96 merged. Sole meaningful original ABA successor queued; prior141 stays failed. | 7aa96ae614 |
 | F-D32-render-wire | Six original SDK wire results | Luna / service | Existing installed child | merged | Service 27934 | Six original cases passed in 41.48s; body hashes, 19 source identities, import origins and read-only profile retained. | 521c source |
 | F-helper-sequential | Repair sequential replay map | Sol / Luna | Integrated proof passed | merged | Source184dc; review0224; integrated0232 | Actual8a8d:12focused, Ruff2145 and mypy1909 passed; vendor/artifact passed. Original True and False passed on exact reviewed source. | 184dc20a70 |
 | F-D32-h3-import | Seven isolated child-import cases | Luna | Existing installed child | merged | agt-F-h3-env-0137 | All seven original fault cases passed in 3.60s; preflight/postflight, body and source identities retained. | 521c source |
 | F-ruff-baseline | Tighten static baselines | Luna | Exact reviewed tree | merged | Review0218; D38 remainder0228 | Actual10d2 tree exactly reviewedc836: Ruff2145 and mypy1909 makegates PASS. Remainder mypy timeout disclosed, no repeat. | c8360b3732 |
-| A4 IMAGE | Complete accepted image witness | Luna | Running App standby0320 | doing | agt-A4-image-live-0330 | Fresh source-bound fixture worker running. Old0248 closed with zero writes; exact new input and deadline will go to existing App producer. | support743a615d |
+| A4 IMAGE | Complete accepted image witness | Luna | App standby0320 output | doing | agt-A4-image-live-0330 | New input d6f4ca73 published0331; fixed deadline03:55:31Z. Exact output poll shared with running App producer. Old0248 remains closed and immutable. | support743a615d |
 | OPS-suites-prune | Retain required registry entries | Runtime Luna | No target proven unreferenced | gated:eligibility | Final citation review0306 PASS | Finite assessment complete. Zero qualified retirement targets, zero live edits and zero GB freed. No new audit requested. | evidence only |
 | D31 | Dormant transcript capture subset | — | Follow-up funding | gated:D31 | No active author | Keep the 397-line test suite and implementation unchanged. Literal production reachability is NO. | unchanged |
 | V4 / D14 / D23 | Cut and deferred relational timing | — | Scope decisions | gated:H9 | No repair worker | Keep original tests unchanged, unskipped and visibly failing. No V4 or relational-timing completion claim. | unchanged |
 | U2c | Upstream readiness draft only | Luna | Confirmed cause before merge | gated:readiness-cause | agt-U2c-review-0202 | Source scope PASS54; activation 6 failed and 9 errors because upstream Runtime fixture API is absent. No merge or readiness proof. | 699236a285 |
 P1: GO. Original service 18792 passed both cases; Proof reviews 0036 and 0040 passed. P4 and P5 are done. G5 already merged under H24. P2 and P3 remain with App and Proof.
-Integration: 8f5c7329c8. Registry2802 and shared-alias8f5c home merges received; new integrated proofs pending. Canonical45c3 export, schema d106 and Composition819acf unchanged.
+Integration: 7aa96ae614. Registry2802, shared-alias8f5c and ABA7aa96 home merges received; new integrated proofs active. Canonical45c3 export, schema d106 and Composition819acf unchanged.
 Blockers: Agent full waits for the remaining owned fixes and finite qualifications. D32 comparison rejected all pre-existing credits; no full retry.
 Blockers: Agent full waits for complete authoring undo, shared-alias projection, historical sharing, installed external sources, image proof and the original rendering timeout.
 Safety: Earlier Farm, monitor, publication and bench permission refusals remain stopped. No denied action was retried here.
-Disk: 8.7 GB free. Finished clean worktrees are automatically recycled. Required and previously refused targets remain untouched. No full retry while owned fixes remain.
+Disk: 8.3 GB free. Finished clean worktrees are automatically recycled. Required and previously refused targets remain untouched. No full retry while owned fixes remain.
 Next ready: Integrated registry and shared-alias proof; current historical port review; D40 and ABA review results. Image input handoff waits only for its fresh READY record.
 Evidence: Earlier detailed results remain in [the archived board](archive-v2/STATUS-20261024T0055Z.md) and the existing design handoffs. Worker final messages are copied unchanged into design.
 D32: Exact upstream comparison completed. Independent review rejected all 25 proposed pre-existing credits. All 267 remain ours; no known-gap or whole-suite PASS claim.
 Later: D37 dormant A4 capture subsets remain unchanged in delivery; no new provider migration. Source reviews and full-gate failure counts remain separate.
-Throttle: Lifted by lead03:09. Four ready workers dispatched0330. One heavy run allowed only above8.5GB; none newly requested.
+Throttle: Lifted by lead03:09. Four ready workers dispatched0330. No new heavy run while below8.5GB; targeted qualification only.
