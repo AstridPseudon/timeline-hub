@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T08:05:24Z | dispatcher heartbeat 4s | live 2 (sol 1, luna 1, other 0) | busy30 34 | status age 2m -->
+<!-- agent | 2026-10-24T08:07:50Z | dispatcher heartbeat 14s | live 2 (sol 1, luna 1, other 0) | busy30 34 | status age 1m -->
 # agent board, 2026-10-24T08:04:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -143,6 +143,8 @@
 | U2 interim home | Merge independently reviewed upstream source | Sol / queue | HARD0755 SOURCE PASS and freshlive tip | merging | agt-U2-boundary-final-sol-0745 | Allrestoredpredicates andexactunionqualified; D18loader/duckworkflow executionremain separateopenrows. | ccf87bd949 |
 | U2 D18 loader | Preserve package context in generated-client fixture | Luna | Independent exact source diagnosis | doing | agt-U2-D18-loader-0803 | Fixtureloads generated.py top-level but it hasrelativeimports. Preserve142tests624assertions andall6boundedwaits. | Baseccf87 |
 | F-ABA current test join | Import exact independently reviewed diagnostic blob | Luna | Viewing0748 PASS95 | doing | agt-F-ABA-diagnostic-join-0803 | Currentproductca891 independentlyPASS87; exact81dfe testonlyimport, nooldancestry/originalbody. | Baseca891 |
+
+| OPS received kit | Verify normal kit receipt and finite jaraco metadata | Luna | Existing files and original archives | doing | agt-OPS-kit-wheel-input-0807 | Four exact receivedhashes plus originalwheel hash/metadata/RECORD facts; no newdownload/build or inputmove. | Lock236d |
 
 P1: GO recorded. P4 and P5 done. G5 merged under H24. App and Proof retain P2/P3 ownership.
 Integration: 3f7e63b0cf adds reviewed persistence fixture848b above the exact d566 harness union. Runtime two-original home0733 and result0736 PASS; exact count mapping0750 active, no credit inferred from merge. Harness integrated0706 remains scoped staticPASS.
