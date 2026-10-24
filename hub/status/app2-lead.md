@@ -1,1 +1,1 @@
-LEAD 19:59Z | up | P1 GO stands | App-owned: P3 NO-GO but further: both recovery mounts pass, record equality fails, later steps unproved | P2 NO-GO stands | P4 profile run found no fix yet | disk 8G
+LEAD 21:02Z | up | P1 GO stands | P3 now GO: run 15493 passed all steps, exit 0 in 248s, independent verdict 2024 | P2 NO-GO stands | P4 ten-note undo still 45s | disk 8G
