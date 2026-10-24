@@ -70,6 +70,34 @@ export type PlacePreparedMediaCommand = Omit<TimelineCommand<'place-prepared-med
   payload: PlacePreparedMediaPayload;
 };
 
+export type PreparedMediaDiagnosticStage =
+  | 'command-schema'
+  | 'provisioned-asset'
+  | 'placement'
+  | 'final-config';
+
+export type PreparedMediaDiagnosticReason =
+  | 'invalid-command'
+  | 'invalid-asset'
+  | 'invalid-placement'
+  | 'invalid-config';
+
+export type PreparedMediaDiagnosticFieldCategory =
+  | 'command'
+  | 'asset'
+  | 'placement'
+  | 'config';
+
+export type PreparedMediaDiagnostic = Readonly<{
+  stage: PreparedMediaDiagnosticStage;
+  reason: PreparedMediaDiagnosticReason;
+  fieldCategory: PreparedMediaDiagnosticFieldCategory;
+}>;
+
+export type ApplyPreparedMediaCommandOptions = Readonly<{
+  onFailure?: (diagnostic: PreparedMediaDiagnostic) => void;
+}>;
+
 const roundSeconds = (value: number): number => Math.round(value * 1000) / 1000;
 
 const preparedMediaInput = z.object({
@@ -773,23 +801,59 @@ export const MEDIA_COMMAND_DESCRIPTORS = [
 export const applyPreparedMediaCommand = (
   currentData: TimelineData,
   command: PlacePreparedMediaCommand,
+  options?: ApplyPreparedMediaCommandOptions,
 ): {
   nextData: TimelineData;
   commandResult: TimelineCommandStepResult<PlacePreparedMediaCommand>;
   history: TimelineCommandHistoryMetadata;
 } | null => {
-  if (!preparedMediaInput.safeParse(command).success) {
+  let diagnostic: PreparedMediaDiagnostic = {
+    stage: 'command-schema',
+    reason: 'invalid-command',
+    fieldCategory: 'command',
+  };
+  const refuse = () => {
+    try {
+      options?.onFailure?.(Object.freeze(diagnostic));
+    } catch {
+      // Diagnostics must never change the existing refusal behavior.
+    }
     return null;
-  }
-  const payload = command.payload;
-  if (!payload || validateProvisionedAsset(payload.asset, '$.payload.asset').length > 0
-    || !Number.isFinite(payload.at) || payload.at < 0) {
-    return null;
-  }
-
+  };
   try {
+    if (!preparedMediaInput.safeParse(command).success) {
+      return refuse();
+    }
+    const payload = command.payload;
+    diagnostic = {
+      stage: 'provisioned-asset',
+      reason: 'invalid-asset',
+      fieldCategory: 'asset',
+    };
+    if (!payload || validateProvisionedAsset(payload.asset, '$.payload.asset').length > 0) {
+      return refuse();
+    }
+    if (!Number.isFinite(payload.at) || payload.at < 0) {
+      diagnostic = {
+        stage: 'command-schema',
+        reason: 'invalid-command',
+        fieldCategory: 'placement',
+      };
+      return refuse();
+    }
+
+    diagnostic = {
+      stage: 'placement',
+      reason: 'invalid-placement',
+      fieldCategory: 'placement',
+    };
     const effect = buildPlacePreparedMediaEffect(currentData, payload);
     const nextData = effect.mutation.data;
+    diagnostic = {
+      stage: 'final-config',
+      reason: 'invalid-config',
+      fieldCategory: 'config',
+    };
     validateSerializedConfig(nextData.config);
     return {
       nextData,
@@ -823,7 +887,7 @@ export const applyPreparedMediaCommand = (
       },
     };
   } catch {
-    return null;
+    return refuse();
   }
 };
 

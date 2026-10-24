@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createDefaultTimelineConfig } from '@/tools/video-editor/lib/defaults.ts';
 import { buildSwitchShotGroupToFinalVideoMutation } from '@/tools/video-editor/lib/shot-group-commands.ts';
 import { buildTimelineData, type TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import * as serialize from '@/tools/video-editor/lib/serialize.ts';
 import type { AssetRegistry } from '@/tools/video-editor/types/index.ts';
 import {
   applyPreparedMediaCommand as previewPreparedMedia,
@@ -800,5 +801,62 @@ describe('prepared media command', () => {
     expect(clone).toMatchObject({ at: 0, hold: 0.0667, asset: 'asset-copy' });
     expect(result?.nextData.config.clips.find((clip) => clip.id === 'peer')).toMatchObject({ at: 0.0667 });
     expect(current).toEqual(before);
+  });
+
+  it('reports only fixed phase diagnostics for prepared-media refusals and nothing on success', async () => {
+    const current = await buildTimelineData({
+      ...createDefaultTimelineConfig(),
+      tracks: [{ id: 'V1', kind: 'visual' as const, label: 'V1' }],
+      clips: [],
+    }, { assets: {} });
+    const command: PlacePreparedMediaCommand = {
+      type: 'place-prepared-media',
+      payload: {
+        asset: {
+          assetKey: 'asset-new', mediaType: 'image', durationSeconds: 2,
+          entry: { file: 'new.png', type: 'image/png' }, source: 'registered',
+        },
+        trackId: 'V1', at: 0,
+      },
+    };
+    const cases = [
+      {
+        mutate: (candidate: PlacePreparedMediaCommand) => { (candidate as unknown as { type: string }).type = 'unknown'; },
+        diagnostic: { stage: 'command-schema', reason: 'invalid-command', fieldCategory: 'command' },
+      },
+      {
+        mutate: (candidate: PlacePreparedMediaCommand) => { candidate.payload.asset.assetKey = ''; },
+        diagnostic: { stage: 'provisioned-asset', reason: 'invalid-asset', fieldCategory: 'asset' },
+      },
+      {
+        mutate: (candidate: PlacePreparedMediaCommand) => { candidate.payload.afterClipId = 'missing-clip'; },
+        diagnostic: { stage: 'placement', reason: 'invalid-placement', fieldCategory: 'placement' },
+      },
+    ] as const;
+
+    for (const testCase of cases) {
+      const candidate = structuredClone(command);
+      testCase.mutate(candidate);
+      const onFailure = vi.fn();
+      expect(previewPreparedMedia(current, candidate, { onFailure })).toBeNull();
+      expect(onFailure).toHaveBeenCalledWith(testCase.diagnostic);
+      expect(Object.isFrozen(onFailure.mock.calls[0]?.[0])).toBe(true);
+    }
+
+    const onFailure = vi.fn();
+    expect(previewPreparedMedia(current, command, { onFailure })).not.toBeNull();
+    expect(onFailure).not.toHaveBeenCalled();
+
+    const validateSerializedConfig = vi.spyOn(serialize, 'validateSerializedConfig')
+      .mockImplementationOnce(() => { throw new Error('private validation detail'); });
+    try {
+      const finalConfigFailure = vi.fn();
+      expect(previewPreparedMedia(current, command, { onFailure: finalConfigFailure })).toBeNull();
+      expect(finalConfigFailure).toHaveBeenCalledWith({
+        stage: 'final-config', reason: 'invalid-config', fieldCategory: 'config',
+      });
+    } finally {
+      validateSerializedConfig.mockRestore();
+    }
   });
 });
