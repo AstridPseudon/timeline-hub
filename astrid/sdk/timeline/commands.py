@@ -38,6 +38,8 @@ def operations():
     from ._trim_commands import clip_trim
     from .capture import MOVE_INTENT, move, track_create
     from .native_initialize import initialize
+    from .native_media_admission import PARAMETERS as MEDIA_INPUT_PARAMETERS
+    from .native_media_admission import admit
     from .native_occurrence_create import occurrence_create
     from .native_occurrence_delete import occurrence_delete
     from .native_occurrence_duplicate import OCCURRENCE_INTENT, occurrence_duplicate
@@ -71,6 +73,7 @@ def operations():
     from .native_word_anchor import declare
     from .producer import producer_guard
     return {'doc.patch': Operation(_SCHEMA['$defs']['DocPatchArgs'], patch, {}),
+            'media.admit': Operation(MEDIA_INPUT_PARAMETERS, admit, {}),
             'text-binding.set': Operation(_SCHEMA['$defs']['TextBindingSetArgs'], text_binding_set, TEXT_INTENT, True),
             'timeline.duplicate': Operation(DUPLICATE_PARAMETERS, duplicate, {}),
             'timeline.restructure': Operation(RESTRUCTURE_PARAMETERS, restructure, {}),
@@ -297,4 +300,7 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
         # Keep original claims and metadata after they have been verified.
         record['command'].update({k: v for k, v in command.items() if k != 'intent'})
         records.append(record)
+    from .native_media_admission import validate_admissions
+
+    validate_admissions(candidate, commands)
     return metadata.finish(Plan(candidate, records))

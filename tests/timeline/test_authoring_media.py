@@ -554,9 +554,13 @@ def test_real_runtime_import_and_parent_publication_roundtrip(tmp_path):
     from runtime_protocol import service as service_module
     from runtime_protocol import store as store_module
 
+    from astrid.sdk.timeline.commit import create_runtime_commit_service
+    from tests.helpers.trusted_seed import seed_trusted_parent
+
     root = tmp_path / "isolated-realm"
     store_module.RealmStore.initialize(root).close()
     service = service_module.RuntimeService(root)
+    service.register_timeline_commit_provider(create_runtime_commit_service())
     try:
         project = service.create_project(
             {"slug": "checkin-test", "name": "Checkin test"}, idempotency_key="project"
@@ -600,7 +604,7 @@ def test_real_runtime_import_and_parent_publication_roundtrip(tmp_path):
         publication = json.loads(
             json.dumps(publication).replace(OLD, old).replace(AUDIO, old_audio)
         )
-        service.publish_parent_composition(project_id, "main", publication, idempotency_key="seed")
+        seed_trusted_parent(service, publication, idempotency_key="seed")
         work = open_authoring_bundle(
             service.get_project_parent_composition_revision(project_id, "main", "parent-1"),
             shot_revisions=[
@@ -635,10 +639,25 @@ def test_real_runtime_import_and_parent_publication_roundtrip(tmp_path):
                 kwargs["original_name"] = kwargs.pop("filename")
                 return service.import_media(project_id, payload, actor_id="test-user", **kwargs)
 
-            def publish_parent_composition(self, project_id, timeline_id, payload, **kwargs):
-                return service.publish_parent_composition(
-                    project_id, timeline_id, payload, **kwargs
-                )["data"]
+            def list_timeline_commits(self, project_id, timeline_id, **kwargs):
+                return service.list_timeline_commits(project_id, timeline_id, authorize=lambda: None, **kwargs)
+
+            def get_project_parent_composition_revision(self, project_id, timeline_id, revision):
+                return service.get_project_parent_composition_revision(project_id, timeline_id, revision)
+
+            def get_project_shot_revision(self, project_id, shot_id, revision):
+                return service.get_project_shot_revision(project_id, shot_id, revision)
+
+            def get_project_timeline_revision(self, project_id, timeline_id, revision):
+                return service.get_project_timeline_revision(project_id, timeline_id, revision)
+
+            def get_project_media_selection(self, project_id, selection):
+                return service.get_project_media_selection(project_id, selection, authorize=lambda: None)
+
+            def commit_timeline(self, project_id, timeline_id, payload, **kwargs):
+                return service.commit_timeline(project_id, timeline_id, payload, publisher="test-user",
+                    invocation_path=f"/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+                    authorize=lambda: None, **kwargs)
 
         transport = Transport()
         imported = import_authoring_media(plan, transport)
