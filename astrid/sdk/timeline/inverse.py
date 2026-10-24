@@ -48,6 +48,8 @@ def _set_physical(state, ref, path, value, records):
     if projected is not state:
         _validate_occurrences(state, value)
     projected.set(ref, path, value)
+    if ref == 'parent' and list(path) in (['clips'], ['config'], ['config', 'clips']):
+        state.parent_clip_path = State(state.bundle).parent_clip_path
     if projected is not state:
         state.bundle['placements'] = projected.bundle['parent']['occurrences']
 
@@ -206,18 +208,33 @@ def coalesce(records, state=None, *, cache_stages=None):
                        if write['ref'] == 'parent' and write['path'][:1] == ['registry']]
     direct_registry = bool(registry_writes) and (
         registry_writes[0]['path'] != ['registry'] or registry_writes[0]['before'] != ABSENT)
+    # An authored absent edge proves that clips acquired independent physical
+    # storage. Logical overlap with config is still used by history scans.
+    clip_writes = [write for record in records for write in record['writes']
+                   if write['ref'] == 'parent' and write['path'] == ['clips']]
+    physical_clips = any(ABSENT in (write['before'], write['after']) for write in clip_writes)
+    direct_clips = bool(clip_writes) and clip_writes[0]['before'] != ABSENT
+    addresses = {}
 
-    def value_address(write):
+    def source_address(write):
         # A direct registry write targets physical storage. Folding it into a
         # config aggregate would invent a mirror absent from that capture.
         if write['ref'] == 'parent' and write['path'][:1] == ['registry']:
             return 'parent', tuple(write['path'])
+        if physical_clips and write['ref'] == 'parent' and write['path'][:1] == ['clips']:
+            return 'parent', tuple(write['path'])
+        if physical_clips and direct_clips and write['ref'].startswith('parent/clip:'):
+            return 'parent', ('clips', ('id', write['ref'].removeprefix('parent/clip:')), *write['path'])
         ref, path = root_address(write['ref'], write['path'])
         # Source rows are owned by an occurrence, but aren't JSON children of
         # its placement row. Ownership overlap must not fold them into that row.
         if ref.startswith('occurrence:') and path[:1] == ('source',):
             return ref + '/source', path[1:]
         return ref, path
+
+    def value_address(write):
+        captured = addresses.get(id(write))
+        return captured[1] if captured is not None else source_address(write)
 
     result = []
     for record in records:
@@ -265,7 +282,23 @@ def coalesce(records, state=None, *, cache_stages=None):
         writes = aliases
         for raw in [*writes, *(cache_stages or {}).get(id(record), [])]:
             write = copy.deepcopy(raw)
-            address = value_address(write)
+            address = source_address(write)
+            # Keep the source-stage address even after later storage changes.
+            addresses[id(write)] = write, address
+            if write['ref'] == 'parent' and write['path'] == ['clips']:
+                direct_clips = write['after'] != ABSENT
+            if (physical_clips and write['ref'].startswith('parent/clip:')
+                    and address[1][:1] == ('clips',)):
+                # Update only a config mirror actually captured by an earlier
+                # aggregate. The physical clip root remains a separate guard.
+                mirror = ('config', *address[1])
+                for old in result:
+                    root, prefix = value_address(old)
+                    if (root == 'parent' and mirror[:len(prefix)] == prefix
+                            and old['after']['state'] == 'present'
+                            and isinstance(old['after'].get('value'), dict)
+                            and 'clips' in old['after']['value']):
+                        old['after'] = _patch(old['after'], mirror[len(prefix):], write['after'])
             ancestor = next((old for old in result if value_address(old)[0] == address[0]
                              and address[1][:len(value_address(old)[1])] == value_address(old)[1]), None)
             if ancestor is not None:
@@ -758,6 +791,8 @@ def _restore_write(ctx, write):
             ctx.create(owner, entity.split(':', 1)[0], write['before']['value'], restoring=True)
     else:
         ctx.assign(write['ref'], write['path'], write['before'])
+    if write['ref'] == 'parent' and write['path'] in (['clips'], ['config'], ['config', 'clips']):
+        ctx.state.parent_clip_path = State(ctx.state.bundle).parent_clip_path
     if write['ref'].startswith('parent/clip:'):
         ctx.compile_mirrors()
 
