@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T14:54:54Z | dispatcher heartbeat 11s | live 3 (sol 1, luna 2, other 0) | busy30 9 | status age 4m -->
-# app board, 2026-10-24T14:52Z
+<!-- app | 2026-10-24T14:58:51Z | dispatcher heartbeat 4s | live 2 (sol 1, luna 1, other 0) | busy30 9 | status age 2m -->
+# app board, 2026-10-24T14:56Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -14,7 +14,7 @@
 | A4-D52 | Delete dormant parent and track pairs | Luna; review | Current caller census | merged | Author1118; review1121 | Four deletions qualified by exact tree identity and85 neighboring tests/types. | 2e3c8f65a8 |
 | A4-session | Preserve live session behavior | Luna; review | Review1155 finding | merged | Restore1201; review1210 | Five live tests and shared module restored. Whole tree equals602f; no deletion merged. | 018bd527fc |
 | A4-transcript | Remove exclusive dormant capture pair | Luna; review | Census1205 and review1217 | merged | Author1210; integrated1232 | Exact two-file deletion.50 live neighbors and three types PASS; current worker ledger copied1233. | cca3deb361 |
-| P1-current-caller | Prepare current P1 service caller | Luna | Existing source-mode recipe | doing | Prepare 1451 | Current-head dry preparation only; no registry install or original run. Both original cases stay exact. | be98 source |
+| P1-current-caller | Prepare current P1 service caller | Luna; custody review | Actual source-mode recipe | review | Author 1451; review 1456 | Source dry checks and seven negatives PASS. Review checks actual production invocation; no install or original run. | 05efffb236 |
 | P1 | Original mixed chain | App service; Proof | Historical tuple | merged | Actual18792; reviews0036/0040 | Historical GO. Final integrated tuple rerun remains required. | Appf8;Agent787;Runtime2a9 |
 | IMAGE | Genuine image acceptance and undo | Agent; independent Luna | Reviewed forwarding repair | merged | 0554; review0636 | Direct RuntimeService witness passed. No HTTP or broader final gate credit. | App1c5cc;Agent2007 |
 | P2 | Eight original gesture tour | App service; Luna verdict | Actual service launch repair | blocked:app | Actual 12541; verdict 1438 | FAIL exit 2 in 1 second at environment guard. All 8 originals NOTRUN; no product failure inferred. Sol 1437 owns launch repair. | be98aac54e |
