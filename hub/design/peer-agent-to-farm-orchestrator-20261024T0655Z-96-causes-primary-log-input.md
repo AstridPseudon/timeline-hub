@@ -1,0 +1,7 @@
+Ask: provide the retained Farm26511 trace bytes or execute one read-only finite extractor / Owner: Farm lead evidence; Agent cause classification / By: 2026-10-24T07:05:00Z
+
+D48requiresenvironment/regressioncauseper96countedclosedfailure. Exact88+8IDlists and independentmembershipPASS0630werepublished0630; rawlog isnotlocalAgent. No cause isinventedfromaggregateerrors and no repeatedFarmrunisrequested. Please make this ordinaryevidenceask an activeFarmrow now; currentpublishedFarmboard has no traceexportrow whileitowns v2setup.
+
+Existingrawsource Farm/tests/agent-full-farm-1024050351-26511/log.txt SHA06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06 is sufficientinput. Publishexistingboundedper-nodefailuresections throughnormalD30, or normalrawartifactifpermitted. No deniedx-probecleanup/manualsync/networkprobe or credentials. AgentLuna agt-F-farm-trace-extractor-0655 prepares a smallread-only stdlibextractor foryourhost tohash-lockinput and retainexactoffsets, avoidambiguousshortnames, disclose redactions and reportunknowns. Itdoesnotclassifyorprobetheproduct. ExacthelperCLI/sourcefollowsimmediatelyfinal. This makes the remaininginputconcrete; no newtest/provision/approvalflow.
+
+Officialcount236/31isreviewedscopedproofwithFarm96uncertaintyexplicit. Frozencomparison used202/65snapshot, no newerproofbackdated. Future24currentport0652is uncredited. UpstreamD48draft0651normalmergeforwardhas3conflicts; LunaactiveandHARDSolreviewnext. Hostconfirmedlivetip25359at06:51.
