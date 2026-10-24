@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T05:39:55Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 6m -->
-# runtime board, 2026-10-24T05:33:03Z
+<!-- main | 2026-10-24T05:42:30Z | dispatcher heartbeat 9s | live 3 (sol 0, luna 3, other 0) | busy30 8 | status age 1m -->
+# runtime board, 2026-10-24T05:40:54Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -64,6 +64,10 @@
 | R2r-source-copy-guards | Classify two retained source-copy guards | Agent Sol / Luna | Independent result review passed | merged | Agent0502; review0511 PASS | Exact two originals passed in 20.90 seconds on Agent 9cd and Runtime 2b49. All 54 guards retained. Capture and HTTP limits stay explicit. | Source unchanged |
 | U2c-child-proof | Identify supported activation child proof | Luna / Luna | Source facts independently reviewed | merged | Facts0425; independent0430 PASS | Producer is absent in Agent RunPod adapter. Exact owner and custody seam returned; Runtime guard unchanged. | Source facts only |
 
+| F-CLI-remainder | Preserve five original CLI scenarios | Luna | Agent assigned exact files and source | doing | rt-F-CLI-remainder-0540 | Check existing receipts first; otherwise faithful fixtures and five targeted nodes. All original predicates required. | Agent 2007 base |
+| U1c-freeze-recheck | Recheck held upstream draft | Luna | H32 exact upstream request | doing | rt-U1c-freeze-recheck-0540 | Read-only check against upstream 795379a67 and current integration. No merge or repeated unchanged bodies. | Draft 40427 |
+| R0-D39-generation-dry | Rehearse client generation for freeze | Luna | H32 branch-only dry run | doing | rt-R0-D39-generation-dry-0540 | Normal generators and focused checks in isolated branch. Current consumer pins stay intact. | Runtime 1d9dd base |
+
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
 
 Runtime integration is 1d9ddba54, tree f56c396c4495. The merge adds only the reviewed headless fixture. Integrated 0521 passed thirteen; independent accounting 0524 passed: all 36 original failures closed, zero open and zero unaccounted. Prior proofs keep their exact Agent source scope. This is not a new full-suite PASS. Product source remains unchanged from 2b49.
@@ -78,6 +82,6 @@ Blockers: Freeze — Reviewed U1c 40427e8b5 against live 795379a67 stays held un
 
 D34: Main has 8.6 GiB free at the latest check. The orchestrator orders no further main disk work. Reviewed registry candidate fdb9e9e9 was installed; normal retirement of s2-c13 was refused for incomplete tuple markers. No retry; zero GB freed.
 
-Later: D46 closes U2c; no new relay or provider custody backend. Its upstream commit arrives at the freeze. Agent owns support-probe timeout investigation 0522; no Runtime author is requested. Disk and D47 memo work stay paused. Agent failover capacity was offered in peer 0525; no duplicate author is started without an exact assignment.
+Later: D46 closes U2c; no new relay or provider custody backend. Its upstream commit arrives at the freeze. Agent owns support-probe timeout investigation 0522; no Runtime author is requested. Disk and D47 memo work stay paused. Agent assigned F-CLI-remainder in peer 0531; unique Runtime Luna 0540 owns its five originals and three fixture files. The H32 U1c recheck and D39 generation dry run are also dispatched.
 
-Next ready: None. Farm worker 0503 is active in the latest published heartbeat; consume its result and any precise Agent failover assignment. All ready Runtime work is merged and qualified. Upstream and generation wait for freeze; memo waits for delivery.
+Next ready: None waiting. Three Luna workers own the CLI remainder, U1c recheck and D39 generation dry run. Consume their reports, dispatch independent reviews and retain freeze holds. Farm checkpoint 26511 remains active.
