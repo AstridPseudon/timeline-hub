@@ -1264,16 +1264,25 @@ async function ownerWithTwoMountedDocuments(page: Page, seed: ThreeProductsSeed)
 async function openCommandTimeline(page: Page, harness: DirectHarness, seed: ThreeProductsSeed) {
   // A case selected alone must establish its own verified authoring baseline.
   await harness.enableTimelineAuthoring(ASTRID_PYTHON);
-  const previous = page.url().startsWith(harness.origin) ? await commandOutboxes(page, seed.timelineId) : [];
+  // The hosted blank page establishes the storage origin without mounting an
+  // editor or claiming an owner, including on an ordinary fresh Playwright page.
+  await page.goto(`${harness.origin}/__blank.html`);
+  const previous = await commandOutboxes(page, seed.timelineId);
   await openApp(page, harness);
   await expectConnected(page);
   await openSeededTimeline(page, harness);
   // Loading the canvas can finish before immutable reads and the native owner claim.
   await expect.poll(async () => ({
-    ready: (await commandOutboxes(page, seed.timelineId)).some((owner) =>
-      !previous.some((old) => old.ownerId === owner.ownerId) && !owner.pending && !owner.intents.length),
+    ready: (await commandOutboxes(page, seed.timelineId)).filter((owner) =>
+      owner.scope.projectId === harness.seed.projectId && owner.scope.timelineId === seed.timelineId
+        && !previous.some((old) => old.ownerId === owner.ownerId) && !owner.pending && !owner.intents.length).length === 1,
     notice: await page.getByTestId('timeline-command-recovery').allTextContents(),
   }), { ...CEILING, message: 'the mounted editor must claim a new durable command owner before the gesture' }).toMatchObject({ ready: true });
+  const fresh = (await commandOutboxes(page, seed.timelineId)).filter((owner) =>
+    owner.scope.projectId === harness.seed.projectId && owner.scope.timelineId === seed.timelineId
+      && !previous.some((old) => old.ownerId === owner.ownerId) && !owner.pending && !owner.intents.length);
+  expect(fresh, 'exactly one fresh scoped owner must have been claimed').toHaveLength(1);
+  return { ownerId: fresh[0].ownerId, scope: fresh[0].scope };
 }
 
 async function prepareDependentMoves(page: Page, harness: DirectHarness, seed: ThreeProductsSeed, beforeBDrop?: (a: CommitAcceptedMutation) => Promise<void>) {
@@ -1535,17 +1544,40 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
   const sniff = new TokenSniff(secretsOf(harness, astrid));
   sniff.attach(page);
   let c!: CommitAcceptedMutation;
-  await openCommandTimeline(page, harness, seed3);
+  const preconditionOwner = await openCommandTimeline(page, harness, seed3);
   const preconditionBase = await history(harness, seed3);
+  const preGestureDocument = await canonicalDocumentAt(harness, seed3, preconditionBase.head.revision_id);
   const preconditionRequest = page.waitForRequest((request) => {
     if (request.method() !== 'POST' || new URL(request.url()).pathname !== `/api/runtime${timelineBase(harness, seed3)}/commit`) return false;
     const body = request.postDataJSON() as Record<string, any>;
     return body?.base_revision_id === preconditionBase.head.revision_id
       && body?.base_publication_id === preconditionBase.head.publication_id
       && body?.commands?.length === 1
-      && body.commands[0]?.op === 'clip.move'
-      && body.commands[0]?.select === `parent/clip:${seed3.appClipId}`
-      && body.commands[0]?.args?.on === 5;
+      && body.commands[0]?.schema_version === 1
+      && body.commands[0]?.op === 'doc.patch'
+      && body.commands[0]?.version === '1'
+      && body.commands[0]?.select === null
+      && Array.isArray(body.commands[0]?.created)
+      && body.commands[0].created.length === 0
+      && body.commands[0]?.args?.changes?.length === 1
+      && body.commands[0].args.changes[0]?.op === 'set'
+      && body.commands[0].args.changes[0]?.ref === 'parent'
+      && body.commands[0].args.changes[0]?.path?.join('/') === `clips/id:${seed3.appClipId}/at`
+      && body.commands[0].args.changes[0]?.before?.state === 'present'
+      && body.commands[0].args.changes[0]?.before?.value === 0
+      && body.commands[0].args.changes[0]?.value === 5
+      && body.label === 'Edit timeline'
+      && body.merge === 'fields'
+      && body.dry_run === false
+      && body.source?.via === 'app'
+      && Array.isArray(body.reads) && body.reads.length > 0
+      && body.steps?.length === 1
+      && body.steps[0]?.label === 'Edit timeline'
+      && body.steps[0]?.intent === `Move ${seed3.appClipId} on V1`
+      && body.steps[0]?.command_ordinals?.length === 1
+      && body.steps[0].command_ordinals[0] === 0
+      && JSON.stringify(body.steps[0]?.patch) === JSON.stringify(body.commands[0].args.changes)
+      && JSON.stringify(body.steps[0]?.reads) === JSON.stringify(body.reads);
   }, CEILING);
   const preconditionResponse = page.waitForResponse(async (response) => response.request() === await preconditionRequest, CEILING);
   await dragTimelineClip(page, seed3.appClipId, seed3.transitionClipId, 0, 5, THREE_PRODUCTS_REFERENCE_AT);
@@ -1558,7 +1590,7 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
     body: setupRequest.postData()!, key: setupRequest.headers()['idempotency-key'],
     status: setupResponse.status(), response: setupBody,
   };
-  await expectV2History(harness, seed3, setupPost, 'accepted');
+  const setupHistory = await expectV2History(harness, seed3, setupPost, 'accepted');
   const setupData = (setupBody as CommitAcceptedMutation).data;
   const authoritativeHead = (await history(harness, seed3)).head;
   const authoritativeRevision = await revisionBody(harness, setupData.accepted_revision_id);
@@ -1567,7 +1599,10 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
     requestIdempotencyKey: setupRequest.headers()['idempotency-key'], responseStatus: setupResponse.status(), responseBody: setupBody,
     expectedBase: { revisionId: preconditionBase.head.revision_id, publicationId: preconditionBase.head.publication_id },
     expectedScope: { projectId: harness.seed.projectId, timelineId: seed3.timelineId },
-    clipId: seed3.appClipId, expectedPosition: 5, settledOutboxes: await commandOutboxes(page, seed3.timelineId),
+    expectedOwnerId: preconditionOwner.ownerId, expectedOwnerScope: preconditionOwner.scope, preGestureDocument,
+    authoritativeHistory: setupHistory,
+    clipId: seed3.appClipId, expectedTrackId: 'V1', expectedPreviousPosition: 0, expectedPosition: 5,
+    settledOutboxes: (await commandOutboxes(page, seed3.timelineId)).filter((owner) => owner.ownerId === preconditionOwner.ownerId),
     authoritativeHead, authoritativeRevision,
   });
   const resetResponse = page.waitForResponse((response) => response.request().method() === 'POST' && COMMITS.test(new URL(response.url()).pathname), CEILING);
@@ -1638,7 +1673,7 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
   expect(wire.posts[2].key).not.toBe(wire.posts[0].key);
   expect(requestB).toMatchObject({ base_revision_id: pinOf(a).revision_id, base_publication_id: pinOf(a).publication_id });
   expect(requestB.commands).toEqual([{ schema_version: 1, op: 'doc.patch', version: '1', select: null,
-    args: { changes: mountedB.changes } }]);
+    args: { changes: mountedB.changes }, created: [] }]);
   expect(requestB.label).toBe(mountedB.label);
   expect(requestB.merge).toBe(mountedB.merge ?? 'atomic');
   expect(requestB.steps).toEqual([{ ...mountedB.step, command_ordinals: [0], patch: mountedB.changes }]);

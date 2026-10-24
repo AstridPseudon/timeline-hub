@@ -1,7 +1,7 @@
 {
-  "astrid_commit": "3f1ceaed144d33a7b14c76164ea3c6e6d92bda61",
-  "astrid_tree": "b8beca33526a177d699041ca44318687bfa60640",
-  "refresh_command": "node scripts/astrid-landing/refresh-vendor.mjs --astrid-repo <Astrid checkout> --commit 3f1ceaed144d33a7b14c76164ea3c6e6d92bda61",
+  "astrid_commit": "ba55ac1e9e70156f03f7e31cc1b1ef040bb75b84",
+  "astrid_tree": "c13d368666e710bb911ff448b86251b516867c03",
+  "refresh_command": "node scripts/astrid-landing/refresh-vendor.mjs --astrid-repo <Astrid checkout> --commit ba55ac1e9e70156f03f7e31cc1b1ef040bb75b84",
   "declared_files": "config/astrid-vendor-files.json",
   "excluded_files": [
     "astrid/packs/rendering/editor/live-scenes/diagnostics.ts",
@@ -74,8 +74,9 @@
     "astrid/packs/astrid_motion/rendering/elements/effects/am-terminal/element.yaml": "1e05df27df1ccf82d76d62cf2085dea7551018da6dc62fbfe9a6f42edbaa89a6",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-tweet/component.tsx": "b889f7d0dd95d945deebec74e825b9f168f0b6d8f5ea6457f9464d04871d4d2b",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-tweet/element.yaml": "be1a09967880f5f2e3fcb91eed17317a73bbe34eaf13f433907c5a0eeb9744f5",
-    "astrid/packs/astrid_motion/rendering/elements/effects/am-type/component.tsx": "bc8270ba7c506d3bdf2ccc8041cb8fa0ae3c3293f1c1bfdf5bc02d96985f186c",
-    "astrid/packs/astrid_motion/rendering/elements/effects/am-type/element.yaml": "fab87dca9d9c4032bfd4715459f08e561b843edc39a2e456308ed674d1d1c84e",
+    "astrid/packs/astrid_motion/rendering/elements/effects/am-type/component.tsx": "2d9fdb33fb995d5fc049cac431048b3a7a82e13d863eae2fd13c17533ce032b9",
+    "astrid/packs/astrid_motion/rendering/elements/effects/am-type/element.yaml": "8a78e98f4cf2fefd54f2559123e49c6f9dc396865144cf110a8a280cce4eec8b",
+    "astrid/packs/astrid_motion/rendering/elements/effects/am-type/position-keys.ts": "2965b083cfc0035e46bc82658c09806a98f50038400f4047c6b8c541f5809c9b",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-ui-sketch/component.tsx": "8e1219af8d926dd352507d6cdb2dddba1b876bfbe95ac5c580c6d0644f7a8b90",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-ui-sketch/element.yaml": "e7281271f6a17d75100e5266877330501198f328c0f2972f281e1d0a5c109ae8",
     "astrid/packs/local/rendering/elements/boundary.ts": "cc8a8700a08cb1991f00bc1f0d231aa7f256227fb86cfe474f530827ae010fe7",

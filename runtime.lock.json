@@ -1,5 +1,9 @@
 {
   "files": {
+    "src/integrations/runtime/fixtures/responses/commit_conflict_409.json": {
+      "from": "conformance/responses/commit_conflict_409.json",
+      "sha256": "sha256:e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08"
+    },
     "src/integrations/runtime/fixtures/responses/events_page_1_200.json": {
       "from": "conformance/responses/events_page_1_200.json",
       "sha256": "sha256:6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d"
@@ -20,9 +24,9 @@
       "from": "conformance/responses/not_found_404.json",
       "sha256": "sha256:4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6"
     },
-    "src/integrations/runtime/fixtures/responses/publish_conflict_409.json": {
-      "from": "conformance/responses/publish_conflict_409.json",
-      "sha256": "sha256:19d664d035691202da03b22b858456c49983e253c7485a6347baa1cf350eea57"
+    "src/integrations/runtime/fixtures/responses/retired_route_410.json": {
+      "from": "conformance/responses/retired_route_410.json",
+      "sha256": "sha256:e3b43083786aae88fe3aabaaf8de631803c6a11610607eb7c3527f999aa80292"
     },
     "src/integrations/runtime/fixtures/responses/task_admission_201.json": {
       "from": "conformance/responses/task_admission_201.json",
@@ -38,7 +42,7 @@
     },
     "src/integrations/runtime/generated-contract-metadata.ts": {
       "from": "packages/typescript/src/contract-metadata.ts",
-      "sha256": "sha256:001186de18c627be1930c3b77b78afb1b15a3eea4bd8401931e251643f33c972"
+      "sha256": "sha256:1028aaeca1cd15f860994c1e830ba69f55405e648841877eff4d43f466f40c79"
     },
     "src/integrations/runtime/generated.ts": {
       "from": "packages/typescript/src/generated.ts",
@@ -55,6 +59,6 @@
   },
   "manifest": "contract/artifacts.json",
   "producer": "astrid-runtime",
-  "producer_version": "sha256:d5f98db3213e91d96d4a7f5b184e17bf5268357b37dc06eaa5b568c4b788a572",
-  "source_commit": "34eac0041b0891e9011966b39bcbd26053fde5bc"
+  "producer_version": "sha256:65085756a96619a74de401b90d6e1b4ff0590d5090e4d4d411c50de476f345b8",
+  "source_commit": "becfe6db88b2cc034dba3fafa6c050117cdf2b06"
 }
