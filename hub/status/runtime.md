@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T03:19:48Z | dispatcher heartbeat 14s | live 3 (sol 1, luna 2, other 0) | busy30 19 | status age 0m -->
-# runtime board, 2026-10-24T03:20:00Z
+<!-- main | 2026-10-24T03:22:09Z | dispatcher heartbeat 6s | live 1 (sol 1, luna 0, other 0) | busy30 19 | status age 0m -->
+# runtime board, 2026-10-24T03:22:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -40,11 +40,11 @@
 | V4-deferred | H9 cut and deferred timing | Orchestrator | Deferred scope | gated:H9-cut | No new worker | Original failures stay unchanged and visible. No V4 repair or proof run. | deferred |
 | F-authoring-publish-writer | Preserve publication behavior | Sol / Luna | Agent home qualification | merged | Agent0256; integrated0302 | Actual Agent66d passed 60 cases, including seven original neighbors. Runtime duplicate21ed stays unmerged. | Agent66d85b5db8 |
 | F-authoring-neighbors | Preserve saved-pair action predicate | Luna / Luna | Agent home qualification | merged | Runtime0246; Agent0302 PASS | Saved-pair fixture incorporated in Agent current-only home. Actual66d passed 60; original predicates retained. | d578; Agent66d |
-| F-authoring-seed-fixture | Preserve shared-alias compiler case | Sol / Luna | Independent source review | review | Author0303; review0313 | Exact8f9a source passed 21 plus 3 controls. Original eleven-assertion body remains held. [Author](../../design/runtime-authoring-alias-author-0303.md) | 8f9a6acc7 |
+| F-authoring-seed-fixture | Preserve shared-alias compiler case | Sol / Luna | Agent current-only home join | blocked:agent | Author0303; review0313 PASS | Exact8f9a:21 plus3 passed; oldsource two causal failures. Strict sibling and authority guards retained. [Review](../../design/runtime-authoring-alias-review-0313.md) | 8f9a6acc7 held |
 | OPS-manifest-restore | Restore accidental generated manifest write | Luna | Exact main file identity | merged | Restore 0110; independent 0113 PASS | Exact tracked hash 7c541b restored; main cleanliness and byte equality independently verified. | HEAD 458595850 |
 | R0-public-export-manifest | Refresh generated artifact hash | Luna | Integrated verification passed | merged | Author 0111; review 0115; integrated 0128 | Actual db11: 74 passed, manifest and generation checks passed; 77 of 78 entries unchanged. [Proof](../../design/runtime-R0-manifest-integrated-0128.md) | db11ea829 / 8a742b1c2 |
 | R5-full-headless | Preserve ten headless scenarios | Sol / Luna | Offline track source diagnosis | doing | rt-R5-headless-track-cause-sol-0317 | On Agent622b:11 passed,1 failed. Root fix works; positive track membership refuses. No repeated body. [Result](../../design/runtime-headless-current-0313.md) | b67f88d4 held |
-| R5-full-occupancy | Preserve fifteen occupancy scenarios | Sol / Luna | Independent faithful fixture review | review | Author0313; review0317 | Restored65 original predicates,12 historical guards, fullDTO and correct reference origin. Body held for Agent source. | 3441bc34 held |
+| R5-full-occupancy | Preserve fifteen occupancy scenarios | Sol / Luna | Agent semantic redo source | blocked:agent | Author0313; review0317 PASS | Static prepared only:65 original predicates and16 scenarios retained. Runtime retirement merged; Agent0308 owns redo. [Review](../../design/runtime-occupancy-faithful-review-0317.md) | 3441bc34 held |
 | R5-full-speed | Preserve six speed refusals | Luna | Integrated proof passed | merged | Review 0138; port review 0148; service 13500 | Actual 28bb: 14 passed. Original six inputs and SQL/CAS retained; no new type diagnostics. | 4e983cebc / 0e28e6261 |
 | R5-full-receipt-key | Preserve receipt and key guards | Luna | Integrated proof passed | merged | Reviews 0138 and 0148; integrated 0157 | Actual 28bb: both cases passed in 1.97 s with explicit Agent path. All original replay and receipt equalities retained. | 28bb65668 / b57ab2331 |
 | R5-full-conformance | Declare actual retired-route errors | Sol / Luna | Integrated source proof complete | merged | Final review0242; integrated19379 | Actual f320:162passed. Three generation checks remain freeze-deferred; consumer pins intact. [Proof](../../design/runtime-D39-D40-integrated-0246.md) | a7a2fe6a5 |
@@ -56,6 +56,7 @@
 | F-render-21 | Classify retained cold-render timeout | Luna | Read-only source handback complete | merged | rt-F-render-21-source-review-0303 | Duplicate registry assembly identified; historical timeout cause unknown. No body run or product change. [Report](../../design/runtime-render-21-source-review-0303.md) | Evidence only |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Agent existing child qualified | merged | Source 0125; review 0132; Agent 0137 | Exact seven passed in 3.60 s on existing child c886; wrong-tree control refused and body/source identities retained. | Source 521c888; installed c36 |
 
+| R-D42-history-memo | Memoize exact accepted verification | Sol / Luna | D42 approved | doing | rt-R-D42-history-memo-sol-0322 | Exact record bytes and validator version; byte tamper must reverify and refuse. Current source first, D41 proof-pin backport next. | 36760 base |
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
 
 Runtime integration is 36760ee0ad, tree 11389911c2ee. Foreign retirement integrated proof passed230 with74 configured deselections. D39/D40 merged; integrated19379 passed162 and10713 passed317 with2configuredexclusions. Prior history proof remains exact45c scope. History cost source merged with exact reviewed tree; integrated145 proof0210 passed with Agent4151. Reviewed speed and receipt test repairs merged. Integrated speed passed 14; integrated receipt proof passed both cases with explicit Agent path. Manifest proof 0128 passed 74 and generation checks on db11. Wire shapes and schema unchanged; no final full-suite pass claimed.
@@ -63,7 +64,7 @@ Runtime integration is 36760ee0ad, tree 11389911c2ee. Foreign retirement integra
 Blockers: App / Proof — P3 3362 failed readiness before Gate5. P2 12221 still running on App804 / Agent079 / Runtime37eb. App cause0309 owns diagnosis; no duplicate run.
 Blockers: Runtime — Full 29085 retains 36 failures. Targeted speed, receipt and manifest repairs passed. Headless, occupancy and contract remain assigned. No unchanged full rerun.
 Blockers: Freeze — D39 client regeneration and Agent/App tuple adoption are held for the freeze; current consumer pins stay intact.
-Blockers: Runtime / Agent — Retirement producer is complete. Alias review0313, occupancy review0317 and headless track diagnosis0317 are active. Agent owns semantic historical redo and D40 consumer.
+Blockers: Runtime / Agent — Headless track diagnosis0317 and D42 memo0322 are active. Agent owns reviewed alias current port, semantic historical redo and D40 consumer.
 Blockers: Runtime / Agent — D40 producer passed and merged f320; integrated317passed2configuredexclusions. Agent consumer Sol0258 owns captured-byte join; missing hook still refuses before discovery.
 
 Blockers: Freeze — Reviewed U1c 40427e8b5 against live 795379a67 stays held until freeze.
@@ -72,4 +73,4 @@ D34: Orchestrator02:33 confirms main is steady near8.4GiB after D36 and orders n
 
 Later: OPS legacy admission and v1 archive retirement resume below 8.5 GB or after delivery. Finite Agent prune assessment is complete; zero targets are unreferenced and no live operation is qualified. Main remains untouched. Dormant D31 transcript implementation and tests remain in delivery. Installed kit hashes and custody remain in the prior board and design evidence; no installation this pass.
 
-Next ready: Consume alias and occupancy reviews, and headless track diagnosis. Retirement producer is complete. P2/P3 use existing App test IDs. Freeze holds U1c, proof-pin adoption and client regeneration.
+Next ready: D42 memo source, independent security review and D41 backport; headless track diagnosis. Agent owns alias home join and historical redo. P2/P3 use existing App test IDs. Freeze holds U1c, proof-pin adoption and client regeneration.

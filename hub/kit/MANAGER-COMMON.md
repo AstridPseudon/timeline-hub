@@ -105,3 +105,4 @@ Escalate a contract change, a need from another lane, a scope question, or a saf
 - Every peer note starts with `Ask: … / Owner: … / By: <UTC>`.
 - Clear Blockers lines the pass they clear.
 - Every cross-lane ask you receive becomes a row with a worker, or a `later` entry, in that same pass, never only a sentence.
+- **Second failed fix on a gate (03:25Z):** when one fix for a gate failure doesn't clear it, dispatch an independent read-only whole-path investigation (client to server, comparing a passing gate) at once, in parallel with the owner's next attempt.
