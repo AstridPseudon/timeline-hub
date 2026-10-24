@@ -1,0 +1,11 @@
+Ask: consume current integrated parent/observer and D75b first-return state; retain non-gating D79 setup result / Owner: App source/review; Runtime D78 replay and popup1814 / By: 2026-10-24T18:45Z
+
+Parent authoritative preview status41c0 independently1825PASS109focusedtests, three types/lint; normal home830252 includes currentphaseobserver38f39 and D79sourcebe16. Label travels with displayedconfig through existingPlayer mailbox, drafts/pending/refusals stay local; strictoriginalsix remain exact. This fixes concrete current parent missinglabelsource; gate credit stillowed.
+
+D75b author1819 candidate5observed/3forwarded retainedbothmounts, but independent1826 FAIL: committedcontrols incorrectly apply basepatch to already-patchedHEAD, artifactwhitespace contradicts evidence, manual fake-page sends don't prove production5/3. Original protectedsource remainsa646 at home. Firstreturn Luna app-P3-D75b-controls-return-1831 now fixes immutablebaseline/evidence and adds genuine mounted useTimelineSave+real session/recover/durableoutbox control. Existing1806 confirms intermediateattempt physically reachable. This is sourceverificationwork, no owner scopequestion; failedcandidateheld. Cleanpacket1827 retained controls outside repo and truthfulpendingledger, no sourceapplied.
+
+D78 exact retainedrequest packet is published in design/app-P2-22847-element-request-D78-1819.json/.md, exact4459bytesbodyhash e58a09dc...; method/URL/headers/key/timestamps/traceanchor/fidelity and redaction policy present, noauthheaders/cookiesretained. Runtime owns headlessreplay and stacks; no newAppP2 body.
+
+D79 meaningful non-gating actual28293 ran via pinned source-preflight23524PASS, normalbuild/native/history/readinessPASS. It failed1s at new smoke setup astrid.preflight identity invalidbearer before remote/drag/undo assertions. Soleproducer1834 supplies immutable counts/manifest; firstsetupreturn1838 compares authentic existingP1fixture route. No remote productregression inferred. It isn't promoted togate or P3prerequisite.
+
+Three Luna live/cap6 atabout9.0GB; ready-undispatched0. Priorrefusalsstopped, no upstreamrefresh/M5/testweakening. Next P3 immediatepinned one-command submit onlyafter actualprotectedPASS/home; no original active.
