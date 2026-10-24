@@ -21,8 +21,9 @@ PIP_NETWORK_TIMEOUT_SECONDS=${CHILD_VENV_PIP_NETWORK_TIMEOUT_SECONDS:-30}
 PIP_RETRIES=${CHILD_VENV_PIP_RETRIES:-2}
 REQUIREMENTS_PATH=${CHILD_VENV_REQUIREMENTS_PATH:-requirements/proof.lock}
 EXPECTED_PROOF_LOCK_SHA256=236d5be9894de96ce0483894630d54ee28f65107cd44ebe845940bc68c28c778
-VERIFIER_SHA256=fac14467f10f55ef4ce9fbe186c64ecd7b407f8fe4fb951d7c0d96ca6d6b7ef0
+VERIFIER_SHA256=c11b53e37dfabda54bc1e46af6ceb65d356ffa73d0f648dabfd7c471affa470b
 DEPENDENCY_SEED=
+BOOTSTRAP_ARCHIVE=$O/artifacts/bootstrap-wheel-input-0932-443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548.tgz
 SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
 
 case "$O:$W" in
@@ -191,7 +192,7 @@ done)
 
 STORE_HELPER=$O/bin/bench_store.py
 [ -f "$STORE_HELPER" ] && [ ! -L "$STORE_HELPER" ] || { echo 'REFUSED: bench store helper unavailable' >&2; exit 2; }
-export STORE_CONTEXT="$(declare -p O A R W PYTHON TIMEOUT_BIN PIP_TIMEOUT_SECONDS LOCAL_TIMEOUT_SECONDS FREEZE_TIMEOUT_SECONDS BUILD_TIMEOUT_SECONDS KILL_AFTER_SECONDS PIP_NETWORK_TIMEOUT_SECONDS PIP_RETRIES REQUIREMENTS_PATH N S BS RT RUNTIME_SHA CLIENT_IDENTITY LOCK_SHA VERIFIER_SHA256 DEPENDENCY_SEED SCRIPT_DIR; declare -f failure run_stage progress source_state)"
+export STORE_CONTEXT="$(declare -p O A R W PYTHON TIMEOUT_BIN PIP_TIMEOUT_SECONDS LOCAL_TIMEOUT_SECONDS FREEZE_TIMEOUT_SECONDS BUILD_TIMEOUT_SECONDS KILL_AFTER_SECONDS PIP_NETWORK_TIMEOUT_SECONDS PIP_RETRIES REQUIREMENTS_PATH N S BS RT RUNTIME_SHA CLIENT_IDENTITY LOCK_SHA VERIFIER_SHA256 DEPENDENCY_SEED SCRIPT_DIR BOOTSTRAP_ARCHIVE; declare -f failure run_stage progress source_state)"
 python3 -I - "$0" "$STORE_HELPER" "$W/bench-store" "$O/tests" "$N" "$S" "$RUNTIME_SHA" "$CLIENT_IDENTITY" "$A" "$R" "$W" "$PYTHON" "$BS" "$RT" "$REQUIREMENTS_PATH" "$LOCK_SHA" "$DEPENDENCY_SEED" "$VERIFIER_SHA256" "$EXPECTED_PROOF_LOCK_SHA256" <<'STORE_PY'
 import hashlib, importlib.util, json, os, pathlib, re, shlex, stat, subprocess, sys
 script, helper, root, tests, name, agent, backend, client, checkout, runtime_checkout, work, python, base_suite, remotion, requirements, lock, dependency_seed, verifier_sha, approved_lock = sys.argv[1:]
@@ -239,6 +240,25 @@ def success_receipt(entry, report):
             ' provision_report_sha256=' + hashlib.sha256(data).hexdigest() + ' status=passed')
 identity = {'agent_sha': agent, 'backend_sha': backend,
             'client_tuple': dict(line.split('=', 1) for line in client.splitlines())}
+seed_helper = pathlib.Path(script).parent / 'verify_dependency_seed.py'
+def bootstrap_key():
+    if (seed_helper != seed_helper.resolve() or not seed_helper.is_file()
+            or hashlib.sha256(seed_helper.read_bytes()).hexdigest() != verifier_sha):
+        raise RuntimeError('untrusted dependency seed verifier')
+    value = subprocess.check_output([python, '-I', str(seed_helper), '--bootstrap-identity',
+                                     shutil.which(python) or python], text=True).strip()
+    if not re.fullmatch('[0-9a-f]{64}', value):
+        raise RuntimeError('missing trusted host Python/venv bootstrap source identity')
+    return value
+# New seeded children have a distinct key. Old incomplete entries are never
+# adopted. Without a new input, find a previously bound entry before legacy reuse.
+import shutil
+if dependency_seed:
+    identity['bootstrap_authority'] = bootstrap_key()
+elif seed_helper.is_file() and any(pathlib.Path(root, 'entries').glob('child-*/.bootstrap-authority')):
+    bound = {**identity, 'bootstrap_authority': bootstrap_key()}
+    if (pathlib.Path(root) / 'entries' / ('child-' + module.key_for('child', bound))).exists():
+        identity = bound
 def build(stage, final):
     build.failure_evidence = None
     build.failure_recorded = False
@@ -310,6 +330,8 @@ def verify(path):
             raise RuntimeError('retained child source/client marker mismatch: ' + marker)
     retained_seed = retained / '.dependency-wheelhouse'
     if dependency_seed or retained_seed.exists() or retained_seed.is_symlink():
+        if 'bootstrap_authority' not in identity:
+            raise RuntimeError('seeded child missing authenticated bootstrap authority; rebuild with genuine input0932')
         if not retained_seed.is_dir() or retained_seed.is_symlink():
             raise RuntimeError('seeded child reuse requires Store custody and retained original wheels')
         seed_helper = pathlib.Path(script).parent / 'verify_dependency_seed.py'
@@ -327,7 +349,7 @@ def verify(path):
                   'm.main(local_inventory={k:set(v) for k,v in json.load(sys.stdin).items()})')
         subprocess.run([python, '-I', '-c', invoke, str(seed_helper),
                         str(retained_seed), '-', '--committed-lock', checkout,
-                        agent, requirements, lock, '--maker-python', python, '--installed', str(retained)],
+                        agent, requirements, lock, '--maker-python', python, '--bootstrap-root', str(retained), '--installed', str(retained)],
                        input=json.dumps(local_inventory), text=True, check=True,
                        timeout=int(os.environ.get('CHILD_VENV_LOCAL_TIMEOUT_SECONDS', '600')))
     # Re-run the existing freeze identity verifier at the verified final path.
@@ -378,11 +400,21 @@ STORE_PY
 exit $?
 : <<'STORE_BUILD_BODY'
 # STORE_BUILD_BEGIN
-run_stage venv "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -m venv --copies "$T"
+if [ -n "$DEPENDENCY_SEED" ]; then
+  run_stage venv "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -m venv --copies --prompt child "$T"
+  run_stage authenticate-bootstrap "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -I "$SCRIPT_DIR/verify_dependency_seed.py" --prepare-bootstrap "$BOOTSTRAP_ARCHIVE" "$T" "$(command -v "$PYTHON")"
+else
+  run_stage venv "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -m venv --copies "$T"
+fi
 P=$T/bin/python
 PIP_ARGS=(--no-cache-dir --disable-pip-version-check --progress-bar off --retries "$PIP_RETRIES" --timeout "$PIP_NETWORK_TIMEOUT_SECONDS")
-run_stage bootstrap-pip "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q \
-  'pip==26.2.1' 'setuptools==80.9.0' 'wheel==0.46.3'
+if [ -n "$DEPENDENCY_SEED" ]; then
+  run_stage bootstrap-pip "$PIP_TIMEOUT_SECONDS" "$PYTHON" -I "$SCRIPT_DIR/verify_dependency_seed.py" --install-python "$P" "$T/.bootstrap-wheelhouse" "$T/.bootstrap-wheelhouse/requirements.txt" --install "${PIP_ARGS[@]}"
+  run_stage verify-bootstrap "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -I "$SCRIPT_DIR/verify_dependency_seed.py" --verify-bootstrap "$T" "$(command -v "$PYTHON")"
+else
+  run_stage bootstrap-pip "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q \
+    'pip==26.2.1' 'setuptools==80.9.0' 'wheel==0.46.3'
+fi
 
 run_stage requirements "$LOCAL_TIMEOUT_SECONDS" mkdir -p "$REPORT_DIR"
 REQ=$T/.provision-requirements.txt
@@ -391,15 +423,15 @@ run_stage filter-requirements "$LOCAL_TIMEOUT_SECONDS" bash -c \
   _ "$A" "$S" "$REQUIREMENTS_PATH" "$REQ"
 if [ -n "$DEPENDENCY_SEED" ]; then
   SEED_SNAPSHOT=$T/.dependency-wheelhouse
-  run_stage verify-dependency-seed "$LOCAL_TIMEOUT_SECONDS" "$P" -I "$SCRIPT_DIR/verify_dependency_seed.py" "$DEPENDENCY_SEED" - "$SEED_SNAPSHOT" --committed-lock "$A" "$S" "$REQUIREMENTS_PATH" "$LOCK_SHA"
+  run_stage verify-dependency-seed "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -I "$SCRIPT_DIR/verify_dependency_seed.py" "$DEPENDENCY_SEED" - "$SEED_SNAPSHOT" --committed-lock "$A" "$S" "$REQUIREMENTS_PATH" "$LOCK_SHA"
 fi
 if [ -n "$DEPENDENCY_SEED" ]; then
-  run_stage pinned-requirements "$PIP_TIMEOUT_SECONDS" "$P" -I "$SCRIPT_DIR/verify_dependency_seed.py" "$SEED_SNAPSHOT" - --committed-lock "$A" "$S" "$REQUIREMENTS_PATH" "$LOCK_SHA" --install "${PIP_ARGS[@]}"
+  run_stage pinned-requirements "$PIP_TIMEOUT_SECONDS" "$PYTHON" -I "$SCRIPT_DIR/verify_dependency_seed.py" --install-python "$P" "$SEED_SNAPSHOT" - --committed-lock "$A" "$S" "$REQUIREMENTS_PATH" "$LOCK_SHA" --install "${PIP_ARGS[@]}"
 else
   run_stage pinned-requirements "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps -r "$REQ"
 fi
 if [ -n "$DEPENDENCY_SEED" ]; then
-  run_stage verify-installed-dependencies "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -I "$SCRIPT_DIR/verify_dependency_seed.py" "$SEED_SNAPSHOT" - --committed-lock "$A" "$S" "$REQUIREMENTS_PATH" "$LOCK_SHA" --maker-python "$PYTHON" --installed "$T"
+  run_stage verify-installed-dependencies "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -I "$SCRIPT_DIR/verify_dependency_seed.py" "$SEED_SNAPSHOT" - --committed-lock "$A" "$S" "$REQUIREMENTS_PATH" "$LOCK_SHA" --maker-python "$PYTHON" --bootstrap-root "$T" --installed "$T"
 fi
 
 AGENT_SRC=$SRC/agent
@@ -565,7 +597,7 @@ spec = importlib.util.spec_from_file_location('dependency_seed', helper)
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 sys.argv = [str(helper), seed, '-', '--committed-lock', agent, sha, lock_path, lock_sha,
-            '--maker-python', python, '--installed', root]
+            '--maker-python', python, '--bootstrap-root', root, '--installed', root]
 module.main(local_inventory={k: set(v) for k, v in json.loads(output.getvalue()).items()})
 STAGING_INVENTORY
 fi

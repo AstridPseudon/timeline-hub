@@ -18,6 +18,7 @@ PACKET = Path(__file__).parents[1]
 CANDIDATE = PACKET / "candidate"
 MAKER = CANDIDATE / "make-child-venv"
 VERIFY = CANDIDATE / "verify_dependency_seed.py"
+BOOTSTRAP_ARCHIVE = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/bootstrap-wheel-input-0932-443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548.tgz")
 
 
 def wheel(
@@ -334,6 +335,7 @@ set -u
 : "${FAKE_LOG:?}"
 printf 'PY %s\n' "$*" >> "$FAKE_LOG"
 case " $* " in
+  *" --bootstrap-identity "*) exec REAL_TEST_PYTHON "$@";;
   *" -m venv --copies "*) T="${@: -1}"; mkdir -p "$T/bin" "$T/lib/python3.13/site-packages"; cp "$0" "$T/bin/python"; cp "$0" "$T/bin/astrid-runtime"; cp "$0" "$T/bin/astrid-runtime-protocol"; chmod +x "$T/bin/python" "$T/bin/astrid-runtime" "$T/bin/astrid-runtime-protocol"; exit 0;;
   *"verify_dependency_seed.py"*) printf 'VERIFIER %s\n' "$*" >> "$FAKE_LOG"; exit 0;;
   *"-m pip install"*) printf 'PIP %s\n' "$*" >> "$FAKE_LOG"; exit 0;;
@@ -342,6 +344,7 @@ case " $* " in
 esac
 """
     )
+    fake_python.write_text(fake_python.read_text().replace("REAL_TEST_PYTHON", shlex.quote(sys.executable)))
     fake_python.chmod(0o755)
     env = os.environ.copy()
     env.update(
@@ -391,7 +394,7 @@ esac
     assert dispatch.returncode == 0, dispatch.stdout + dispatch.stderr
     records = log.read_text().splitlines()
     assert any(line.startswith("VERIFIER ") for line in records)
-    pinned = [line for line in records if line.startswith("VERIFIER ") and "--install" in line.split()]
+    pinned = [line for line in records if line.startswith("VERIFIER ") and "--install" in line.split() and ".dependency-wheelhouse" in line]
     assert len(pinned) == 1
     assert "--committed-lock" in pinned[0]
     assert ".dependency-wheelhouse" in pinned[0]
@@ -809,8 +812,11 @@ def retained_fixture(
     identity = {"agent_sha": agent_sha, "backend_sha": runtime_sha,
                 "client_tuple": {"packages/python/astrid_runtime_client/__init__.py": hashlib.sha256(client).hexdigest()}}
     maker_python = tmp_path / "maker-python"
-    maker_python.write_text(f'#!/bin/bash\ncase "$*" in *verify_dependency_seed.py*) exec {shlex.quote(sys.executable)} "$@";; esac\nexit 0\n')
+    maker_python.write_text(f'#!/bin/bash\ncase "$*" in *verify_dependency_seed.py*|*bootstrap-identity*) exec {shlex.quote(sys.executable)} "$@";; esac\nexit 0\n')
     maker_python.chmod(0o755)
+    bootstrap = load_helper("bootstrap_fixture", VERIFY)
+    if provenance != "missing" and managed:
+        identity["bootstrap_authority"] = bootstrap.bootstrap_identity(maker_python)
     name = "venv-agent-child-retained"
     store = store_module.Store.initialize(work / "bench-store", orch / "tests") if managed else None
     final = (work / "bench-store/entries" / ("child-" + store_module.key_for("child", identity))) if managed else work / name
@@ -857,6 +863,16 @@ def retained_fixture(
         (stage / "bin").mkdir()
         shutil.copyfile(maker_python, stage / "bin/python")
         (stage / "bin/python").chmod(0o755)
+        if provenance != "missing" and managed:
+            # Genuine original wheels and trusted host templates, materialized
+            # without installing or executing any package in this private fixture.
+            bootstrap.write_snapshot(stage / ".bootstrap-wheelhouse", bootstrap.BOOTSTRAP_LOCK,
+                                     bootstrap.bootstrap_artifacts(BOOTSTRAP_ARCHIVE))
+            (stage / ".bootstrap-input.tgz").write_bytes(BOOTSTRAP_ARCHIVE.read_bytes())
+            (stage / ".bootstrap-authority").write_text(identity["bootstrap_authority"] + "\n")
+            for rel, content in bootstrap.venv_files(destination).items():
+                (stage / rel).write_bytes(content)
+            materialize_bootstrap(bootstrap, stage, destination)
         markers = {".astrid-source-commit": agent_sha, ".astrid-runtime-source-commit": runtime_sha,
                    ".astrid-runtime-client-identity": "\n".join(f"{key}={value}" for key, value in identity["client_tuple"].items()),
                    ".astrid-import-origins": "\n".join(f"{module}={destination}/lib/python3.13/site-packages/{module}/__init__.py" for module in ("astrid", "astrid_runtime", "runtime_protocol", "astrid_runtime_client")),
@@ -987,6 +1003,7 @@ def test_real_maker_failure_evidence_survives_store_rollback(tmp_path: Path) -> 
 set -u
 case " $* " in
   *" -m venv --help "*) exit 0;;
+  *" --bootstrap-identity "*) exec REAL_TEST_PYTHON "$@";;
   *" -m venv --copies "*) T="${@: -1}"; mkdir -p "$T/bin"; cp "$0" "$T/bin/python"; chmod +x "$T/bin/python"; exit 0;;
   *" -m pip install "*) printf '%s\\n' 'ERROR https://user:secret@example.invalid/simple?token=do-not-retain' 'Authorization: Bearer do-not-retain' >&2; exit 23;;
   *) exit 0;;
@@ -1215,3 +1232,36 @@ def test_source_record_cannot_launder_inventory_additions(tmp_path: Path, mutati
     result = run_source_ownership_verifier(env, args)
     assert result.returncode != 0
     assert "unowned local distribution" in result.stderr or "unexpected local installer" in result.stderr
+
+
+def materialize_bootstrap(helper, stage: Path, destination: Path) -> dict[str, bytes]:
+    """Materialize original wheel bytes plus canonical pip wrappers, no installs."""
+    import io
+    import configparser
+
+    artifacts = helper.bootstrap_artifacts(BOOTSTRAP_ARCHIVE)
+    site = stage / "lib/python3.13/site-packages"
+    for filename, data in artifacts.items():
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            files = {entry.filename: archive.read(entry) for entry in archive.infolist()
+                     if not entry.is_dir() and not entry.filename.endswith("/RECORD")}
+        metadata = next(rel.split("/")[0] for rel in files if rel.endswith(".dist-info/METADATA"))
+        parser = configparser.ConfigParser()
+        entry = metadata + "/entry_points.txt"
+        if entry in files:
+            parser.read_string(files[entry].decode())
+        scripts = dict(parser.items("console_scripts")) if parser.has_section("console_scripts") else {}
+        if filename.startswith("pip-"):
+            scripts["pip3.13"] = scripts["pip"]
+        for name, target in scripts.items():
+            module, function = target.split(":")
+            executable = str(destination / "bin/python")
+            if " " in executable:
+                executable = '"' + executable + '"'
+            files["../../../bin/" + name] = (
+                f"#!{executable}\nimport sys\nfrom {module} import {function}\n"
+                "if __name__ == '__main__':\n"
+                "    sys.argv[0] = sys.argv[0].removesuffix('.exe')\n"
+                f"    sys.exit({function}())\n").encode()
+        write_record(site, metadata, files)
+    return artifacts
