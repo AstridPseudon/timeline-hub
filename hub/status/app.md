@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T21:36:52Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 9 | status age 0m -->
-# app board, 2026-10-24T21:37Z
+<!-- app | 2026-10-24T21:40:27Z | dispatcher heartbeat 2s | live 2 (sol 0, luna 2, other 0) | busy30 8 | status age 2m -->
+# app board, 2026-10-24T21:39Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -8,7 +8,7 @@
 | U4p | Generated client and schema | Luna; reviewed | Runtime D62 | merged | Adoption1539; composed1553 | Normal tools, 14 mappings exact; schema867f. | 95cfbf216f |
 | U4p-D83 | Adopt qualified history and observer source | Luna | Runtime dc55 security PASS | merged | app-U4p-D83-qualified-adoption-2052 | Eight strict controls, 15 vendor tests, 14 exact mappings PASS; home tree equals author. Protected six unchanged. | Home ce1cd9c439 |
 | U4p-metadata | Adopt qualified metadata decoding fix | Luna | Runtimebc04 released; security2122 PASS | merged | app-U4p-D83-metadata-adoption-2133 | Normal tools PASS;8strict,15vendor,14mappings/protected6 exact. Only lock and install manifest; home tree equals author. | App245742dc77 |
-| P2-metadata-element | Qualify applied status on metadata fix | Luna; Service | U4p2133 normal home | doing | app-P2-metadata-element-2136 | Dispatched immediately after merge. One element first; same pending5s failure holds rest. Actual ID pending authentic submission. | App245742; Runtimebc04 |
+| P2-metadata-element | Qualify applied status on metadata fix | Luna; Service | Preflight23701 PASS | doing | App2136; actual11589 | Submitted21:36:40Z AppChild1. One body; same pending5s failure holds rest. Captured four pins, no current result. | App245742; Runtimebc04 |
 | U4p-current | Current popup provenance | Luna | Runtime2c1 | merged | Author1711; return1714 | Normal tools, eight strict controls and 14 mappings PASS. | 92414037c7 |
 | A2 | Production dependent save funnel | HARD Sol; Luna | C0 and U3 | merged | Source authors and reviews | Mounted save/outbox and authoritative replies integrated; original gates below. | Current home |
 | A3 | Popup placement element asset saves | Luna; core Sol | A2 | merged | Source authors and reviews | Mounted routes integrated; all eight original gestures remain core and unqualified. | Current home |
@@ -119,8 +119,8 @@ Next ready: Element2136 actual newsource result; same applied-status wait holds 
 live 2 / cap 2; ready-undispatched 0. Elementrunner2136 plus A3 asset source2137. Adoption2133 home245742. Runtimebc04 release consumed; one element body only.
 
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
-Disk: Current 6.495 GB; cap 2. One critical P2 build/body runs under D74a 6 GB exception. No concurrent body or noncritical dispatch. Guarded scan found no finished clean non-KEEP App worktree remaining. Six stale pins previously released. D74a permits critical gates/D78 down to6.0GB. Cleanup1939 verifies stale KEEP pins and archives dirty abandoned U3 work before guarded recycle; classifier refusal stops. Orphan graph and prior denied routes stay stopped; all run evidence retained.
-Inbox consumed through 1723914 bytes; ORCH 20:47 cancels both redundant P3 workers. Owner boards Runtime 20:30 and Agent 20:27 rechecked. Runtime e745 schema setup is home, but both D83 Sol rows and observer acceptance remain active; no consolidated native wait release. P3 current 15493 independently GO.
+Disk: Current 5.839 GB; cap 2. No further dispatch below6GB; current body finishes. One critical P2 build/body runs under D74a 6 GB exception. No concurrent body or noncritical dispatch. Guarded scan found no finished clean non-KEEP App worktree remaining. Six stale pins previously released. D74a permits critical gates/D78 down to6.0GB. Cleanup1939 verifies stale KEEP pins and archives dirty abandoned U3 work before guarded recycle; classifier refusal stops. Orphan graph and prior denied routes stay stopped; all run evidence retained.
+Inbox consumed through 1725840 bytes; ORCH 20:47 cancels both redundant P3 workers. Owner boards Runtime 20:30 and Agent 20:27 rechecked. Runtime e745 schema setup is home, but both D83 Sol rows and observer acceptance remain active; no consolidated native wait release. P3 current 15493 independently GO.
 Evidence: [D73 path](../../design/app-D73-service-snapshot-path-1739.md), [corrected P3 proposal](../../design/app-P3-recovery-proposal-return-1736.md), [same-ID source-only20321](../../design/app-P2-element20321-phase-producer-1737.md), [P1 current verdict](../../design/app-P1-26312-current-verdict-1616.md), [D69 final](../../design/app-U3-D69-home-and-preflight-1704.md).
 
 
@@ -149,3 +149,5 @@ Pass21:24Z: NEW inbox consumed through1717736bytes, Runtime2113 owner ask fulfil
 21:35Z: U4p2133 authorPASS exactnormalbc04 adoption, onlyruntime.lock/installmanifest.8strict+15vendor+14mappings/protected6PASS, knownRuntimeTSstaleoutput remainsunchanged. Normalmergequeued immediately; noindependentreview needed metadataD56. Elementrunner2134 readyonhomereceipt. NewRuntimepeer2128 twodisjointSol sourceowners consumed; owner21:33release supersedesolderhold.
 
 21:37Z: normaladoption2133 MERGED245742dc77, exactauthortree3b83bafa. Elementrunner2136 dispatchedimmediately; actualIDpendingplan. Asset2131 finitePASS provesno browsercommitPOST, successfulmediaimport/select but ownershipreject; notdemonstratedRuntime90s stall. A3assetowner2137 dispatched firstfreeslot forfaithfuloldRED/minimumfixorstrictsetupreviewproposal. Exactreport+separateRuntime/lead2137peerspublished; noextraassetbody.
+
+21:39Z: exactnewsourceelement11589 submitted21:36:40 afterpreflight23701PASS on245742/840a58/bc04/635f. Sameplan preserved, no duplicate. Disk5.839GBduringbuild, nofurtherdispatch; separatelead2139alertpublished. Runtime2129normalrelease isfulfilled byadoptionhomeandactualbody. SourceA3asset2137 remainsactive.
