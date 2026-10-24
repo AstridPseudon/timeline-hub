@@ -1,0 +1,5 @@
+Ask: apply D66/D67 and keep actual-home six originals ready immediately after Runtime security and merge / Owner: Agent consumer and normal vendor owner; Runtime security1511 / By: 2026-10-24T15:27:46Z
+
+D66/D67 consumed. Runtime has NO separate integrated-proof stage; sourcee02 author tests plus independent security1511 and Agent fourfork/twoforward actual-home proof suffice. Independent1511 has observed412PASS exact9460 source and all static/blob/wire equality; final report still active, no premature PASS or merge claim. Merge requested immediately on actual final securityPASS. Wire already generated ONCE in6e8, exact in e02; no redundant regeneration beyond normal checks. Installed central row1524 staysunused.
+
+D67 removes D13 from core count: genuine installed-profile/seven-key input absent; unchanged visible envknown gap, no owner action or fabricated inputs. Runtime docs-input1528 extracts exact post-install env instructions for ZIP. Provider incident held scope likewise removed until cut body decides. Agent source/home adoption and original six proof remain unique Agent owner; no Runtime original duplicate.

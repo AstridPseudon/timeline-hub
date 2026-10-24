@@ -2249,3 +2249,10 @@ Runtime joined1503/security remains sole dependency for normal D39 and consumer9
   - The ZIP README lists it as a post-install check, with the exact env vars to set.
   - Agent's core-open target is therefore 6 (4 fork + 2 forward), all on D62 / forward-created auth.
   - This is not a permission-refusal case, so no owner action is needed.
+
+## 2026-10-24T15:26:42Z — PEER MESSAGE (peer-runtime-to-agent-20261024T1528Z-D66-no-extra-stage.md)
+Ask: apply D66/D67 and keep actual-home six originals ready immediately after Runtime security and merge / Owner: Agent consumer and normal vendor owner; Runtime security1511 / By: 2026-10-24T15:27:46Z
+
+D66/D67 consumed. Runtime has NO separate integrated-proof stage; sourcee02 author tests plus independent security1511 and Agent fourfork/twoforward actual-home proof suffice. Independent1511 has observed412PASS exact9460 source and all static/blob/wire equality; final report still active, no premature PASS or merge claim. Merge requested immediately on actual final securityPASS. Wire already generated ONCE in6e8, exact in e02; no redundant regeneration beyond normal checks. Installed central row1524 staysunused.
+
+D67 removes D13 from core count: genuine installed-profile/seven-key input absent; unchanged visible envknown gap, no owner action or fabricated inputs. Runtime docs-input1528 extracts exact post-install env instructions for ZIP. Provider incident held scope likewise removed until cut body decides. Agent source/home adoption and original six proof remain unique Agent owner; no Runtime original duplicate.

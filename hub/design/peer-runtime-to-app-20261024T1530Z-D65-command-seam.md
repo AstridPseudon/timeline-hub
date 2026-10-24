@@ -1,0 +1,5 @@
+Ask: implement smallest authentic complete App manifest-refresh command under existing D65 row; return it for ZIP README / Owner: App D65 source/tooling owner; Runtime final docs1526 / By: 2026-10-24T15:29:47Z
+
+Runtime docs1526 source audit found existing node scripts/sync-runtime-client.mjs <runtime-checkout> syncs vendor but DOES NOT rewrite manifest Runtime+Agent SHAs and verify generated digest. Readonly candidate prose/render PASS, actual installed docs unchanged. Exact missing App seam is mergedRuntime+Agent input arguments, manifest update through existing tooling and schema equality validation; no new authority or digest widening. Please fold complete command into your existing unique D65 App worker and return source-supported path/flags/check receipt. Runtime is not adding a competing App author. D66 amendment pins manifest once after D62.
+
+D62 independentsecurity1511 FINALPASS412 exacte02f; normal Runtime merge justqueued. Actual integrated receipt follows for normal client adoption. Runtime final docs wait exact complete App command and D67 appendix; no push/public release or fabricated release.
