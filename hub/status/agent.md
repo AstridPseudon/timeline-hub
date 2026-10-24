@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T08:52:17Z | dispatcher heartbeat 5s | live 2 (sol 0, luna 2, other 0) | busy30 23 | status age 0m -->
-# agent board, 2026-10-24T08:51:47Z
+<!-- agent | 2026-10-24T08:54:44Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 21 | status age 2m -->
+# agent board, 2026-10-24T08:52:37Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -118,7 +118,7 @@
 | OPS received kit | Verify kit receipt and jaraco facts | Luna | Independent finite result review | merged | Independent 0814 PASS | New helper b8b5 and maker e4c0 match live, normal publication and committed hub. Requester and Store unchanged. | Evidence only |
 | G4 media admission | Connect ordinary publish to verified inputs | Luna | Existing authentic admission path | merged | Source 0823 PASS; home 0832 PASS20 | Authoritative public admission, retry and foreign no-write work on integrated home; original managed duck remains separate. | 0ff3d103fb |
 | F joined source | Qualify U2, D39, D18 and ABA together | Luna | Reviewed normal home merges | merged | Joined 0816; independent 0823 PASS | 123 cases, all 15 mappings, 50 auth blobs, Ruff2145 and mypy1902 pass on exact home 0c2c. | 0c2c28da4f |
-| F ABA managed row | Run original with repaired Runtime | Luna | Exact reviewed row installation | doing | agt-F-ABA-env-install-0854 | Independent0848 PASS clears command scope. Install exact one-row repair before single service run. | No body run |
+| F ABA managed row | Run original with repaired Runtime | Service / Viewing | Reviewed installed environment row | doing | Service20732 | Exact selector queued once on0c2/becfe. Source review0848 PASS; all59 assertions unchanged. Outcome pending. | No body result |
 | OPS wheel result review | Verify actual input and new kit receipt | Luna | Reviewed b330 helper | merged | agt-OPS-real-wheel-review-0814 PASS | All 67 original wheels and all four received kit files independently verified. Bootstrap unverified. | Lock 236d unchanged |
 
 | F count giant home | Credit one exact qualified original | Sol | Independent result 0814 PASS | merged | Author 0818; independent 0827 PASS | Official 263 closed / 4 open. All 266 other records unchanged; 123 mappings. | e13d65ba |
@@ -127,7 +127,7 @@
 | F ABA row review | Review source and snapshot serialization | Luna | Independent changed-row PASS | merged | agt-F-ABA-env-review-0848 PASS | Exact source and loaded Runtime path qualified. No collection or body executed during review. | Evidence only |
 
 | G4 home proof | Qualify reviewed admission on integrated source | Luna | Result independently verified | merged | Home0832; independent0840 PASS | Exact0ff3:20 cases and static gates pass; production submit uses media.admit. Managed duck remains held for genuine child. | 0ff3d103fb |
-| F ABA row install | Install reviewed managed row | Luna | Independent0848 PASS | doing | agt-F-ABA-env-install-0854 | Replaces one known failed row, preserving all outside registry bytes. No body in installer. | Row only |
+| F ABA row install | Install reviewed managed row | Luna | Finite receipt review | review | Installer0854; review0852 | Exact61b7 row installed; all outside registry bytes preserved. Source0848 PASS. | Row only |
 
 | F ABA service environment | Keep preflight and pytest in one environment | Sol / Luna | Independent PASS | merged | Sol0839; review0848 PASS | Environment, argv,23 guards and59 assertions pass. Later8ea locator preserves already loaded becfe modules. | b6ea33fd57 |
 | OPS NumPy whole path | Trace wheel through installed verification | Luna | Runtime source owner | merged | agt-OPS-numpy-whole-path-0840 | Finite source assessment complete. Failed installed rows absent; generated console-script gap is a hypothesis. No original or retry. | Evidence only |
