@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T18:45:04Z | dispatcher heartbeat 12s | live 3 (sol 1, luna 2, other 0) | busy30 17 | status age 2m -->
-# app board, 2026-10-24T18:44Z
+<!-- app | 2026-10-24T18:48:44Z | dispatcher heartbeat 2s | live 2 (sol 0, luna 2, other 0) | busy30 20 | status age 0m -->
+# app board, 2026-10-24T18:49Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -31,7 +31,7 @@
 | P3-history | Strict authenticated history ABI | Luna; review | Actual10033 | merged | Author1620; review1626 | 23 controls, types/lint PASS; missing/wrong ABI rejected. | 9f4ec08f56 |
 | P3-D70 | Exact semantic setup intent | Luna; review | D70 approved | merged | Author1655; review1643 | Exact a646 spec, virtual review match; original body/reset/tail retained. | aaddaf12d2 |
 | P3-recovery-source | Mounted automatic recovery census | HARD Sol PLAN A2 | Actual26907 | merged | Sol1713; verdict1718 | No product defect established; production auto-recovers. 266 mounted plus3 fault checks/types/lint PASS. | Source unchanged |
-| P3-D75 | Retain both recovery mounts and exact counts | HARD Sol; Luna | Second control FAIL1839 | doing | Sol1843; wholepath1843 | Mounted3+97 PASS; metadata hash lengths/title matcher/custom tsc failed. Sol controls only; clean source unchanged. | Source09ae |
+| P3-D75 | Retain both recovery mounts and exact counts | HARD Sol; Luna | Source and controls1843 PASS | merged | app-P3-D75b-clean-return-1839 | CORE/PROTECTED PASS; actual7controls/lint/types/hashes PASS. Exact5 observed,3 forwarded; both mounts retained. | Source09ae |
 | P3-D75-path | Challenge full restart route | Luna | Second proposal failure | merged | app-P3-D75-door-wholepath-1750 | Browser door stable; original P1 holds across restart. Verify door realm plus direct new-daemon history. | Read only |
 | P-D73-submit | One-command guarded submission | Luna | D73 addendum | merged | app-D73-one-command-submit-1757 | 18 mocked controls/types/lint PASS; one preflight then one original, same4pins, 124 resume without duplicate. | 5d7550ca7d |
 | F-install-schema | Strict tuple/schema alignment | Luna | D62 and D65 | merged | Pin1545; fixture1548; proof1553 | Two skew,four updater,two schema controls PASS. Installer regression closed. | 6d74fdd88a |
@@ -44,25 +44,33 @@
 | P2-D78 | Exact retained element request handoff | Luna | D78 owner1816 | merged | app-P2-D78-retained-request-handoff-1819 | Published json/md;4459 exact body bytes,e58a09dc;trace anchor and redaction validated. Runtime replay owns cause. | Evidence only |
 | D79 | One live-edit robustness smoke | Luna; Service | Actual28293 terminalFAIL | doing | Producer1834; setup1838 | ReadinessPASS; smoke stops at identity invalid bearer. Remote/drag/undo NOTREACHED. First setup return; non-gating. | App830252 |
 
-| P3-D75-clean | Clean same-blob home packet and ledger | Luna | Final protected path1843 | review | app-P3-D75b-clean-return-1839 | Exact two donor blobs; mounted3/types/lint PASS. Root artifacts outside repo; merge awaits path plus control PASS. | Source1839 |
+| P3-D75-clean | Clean same-blob home packet and ledger | Luna | Merge receipt pending | doing | app-P3-D75b-home-receipt-1848 | Actual home/ledger and machine-computed hash correction; original report retained. No repeated suite or new review gate. | Source1839 |
 
-| P1-current | Updated parent-source control | Service; Luna | Preflight11421 PASS | doing | Actual31083; producer1841 | Required D59 current-source rerun; independent verdict follows. P3 submission does not wait for P1. | App830252 |
+| P1-current | Updated parent-source control | Service; Luna | Actual31083 terminalPASS | review | Producer1841; verdict1846 | Readiness1 and original2 PASS; capturedtuple retained. No P3 serialization. | App830252 |
 
-Integration: App5d7550 includes one-command guarded submit037a8 over587316, with D73 snapshot admission6c7c over255f, with real Runtime CLI phase bootstrap over D73fd74, current popup provenance924140, D69c3d79, approved D70aaddaf, parent reads/audited restorations and frozen upstream3881. No new upstream refresh for gating.
+| P2-D80-asset | RegisterAsset alone | Luna; Service | D80 owner; recipe1846 | doing | app-P2-D80-isolated-recipes-1846 | Diagnostic exact one-case grep; unchanged spec. Submit pinned/preflighted, stagger disk below8.5GB. No gate credit. | Current source |
+| P2-D80-placement | Automatic placement alone | Luna; Service | D80 owner; recipe1846 | doing | app-P2-D80-isolated-recipes-1846 | Diagnostic exact one-case grep; unchanged spec. Submit pinned/preflighted, stagger disk below8.5GB. No gate credit. | Current source |
+| P2-D80-swap | Popup SWAP alone | Luna; Service | D80 owner; recipe1846 | doing | app-P2-D80-isolated-recipes-1846 | Diagnostic exact one-case grep; unchanged spec. Submit pinned/preflighted, stagger disk below8.5GB. No gate credit. | Current source |
+| P2-D80-clear | Transition single clear alone | Luna; Service | D80 owner; recipe1846 | doing | app-P2-D80-isolated-recipes-1846 | Diagnostic exact one-case grep; unchanged spec. Submit pinned/preflighted, stagger disk below8.5GB. No gate credit. | Current source |
+| P2-D80-bulk | Transition bulk clear alone | Luna; Service | D80 owner; recipe1846 | doing | app-P2-D80-isolated-recipes-1846 | Diagnostic exact one-case grep; unchanged spec. Submit pinned/preflighted, stagger disk below8.5GB. No gate credit. | Current source |
+
+| P2-D78-live | One unchanged element gesture with stacks | Service; Luna | Kit route1847 or19:06 fallback | blocked:runtime | App submitter; Runtime kit | Highest-priority diagnostic. Exact pins and one-command preflight; Runtime gets ID/host immediately. No original waits changed. | Current source |
+
+Integration: App2bd162 includes reviewed D75b both-mount recovery; parent status830252; D79 setup49f6; full phase38f39. App5d7550 includes one-command guarded submit037a8 over587316, with D73 snapshot admission6c7c over255f, with real Runtime CLI phase bootstrap over D73fd74, current popup provenance924140, D69c3d79, approved D70aaddaf, parent reads/audited restorations and frozen upstream3881. No new upstream refresh for gating.
 
 core open: 9 original gesture cases, eight P2 plus one P3. P1 original2 PASS and independent1616 PASS at its recorded tuple.
 regressions: 0 confirmed open App source findings. D69 all four restorations home and final1704 PASS; original gates remain open.
 
 Blockers: Runtime — New popup authenticated shot-owner422 in22847, exactpeer1802; source owner owed there.
-Blockers: Runtime execution — D78 exact retained element request published1823; Runtime owns replay/stack dumps. Historical phases UNAVAILABLE; next full observer home.
+Blockers: Runtime kit — D78 live switch1846: waiting actual auto-stack install1847; fallback submit at19:06. Exact headless realm unavailable; no synthetic reconstruction.
 Blockers: Final cut — Current P2/P3 nine core cases remain unqualified; Runtime coordinates final suites and ZIP.
 Next ready: consume parent and D75b reviews; normal merge on PASS; P3 through one-command pinned preflight submit immediately. D79 smoke body later behind gate priority.
 
-live 3 / cap 6; ready-undispatched 0. HARD Sol1843 controls after two failures; Luna1843 independent path; Luna1841 P1 producer. D79 setup merge queued.
+live 3 / cap 6; ready-undispatched 0. Luna1848 finite home/ledger,1846 D80 recipes,1846 P1 verdict. P3 merge queued; no ready original held.
 
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
-Disk: About8.6GB free; below9GB trigger peer renewed. Heavy stop below8GB and D74 worker caps observed. Guarded recycle removed one ended clean non-KEEP tree; other finished trees already recycled. Deferred kit routes gated below9GB; prior refused routes stopped.
-Inbox consumed through1631661 bytes, including D75b, D78 and non-gating D79. Runtime and Agent normal hub boards rechecked. D75 scope blocker cleared.
+Disk: About8.9GB free; below9GB trigger peer renewed. Heavy stop below8GB and D74 worker caps observed. Guarded recycle removed one ended clean non-KEEP tree; other finished trees already recycled. Deferred kit routes gated below9GB; prior refused routes stopped.
+Inbox consumed through1631661 bytes plus lead D80 relay1844, including D75b, D78 and non-gating D79. Runtime and Agent normal hub boards rechecked. D75 scope blocker cleared.
 Evidence: [D73 path](../../design/app-D73-service-snapshot-path-1739.md), [corrected P3 proposal](../../design/app-P3-recovery-proposal-return-1736.md), [same-ID source-only20321](../../design/app-P2-element20321-phase-producer-1737.md), [P1 current verdict](../../design/app-P1-26312-current-verdict-1616.md), [D69 final](../../design/app-U3-D69-home-and-preflight-1704.md).
 
 Blockers: App lead kit — Disk8.6GB below9 trigger; exact deferred guarded graph/retention route requested again. Prior denied targets stay stopped; no output release before verdict.

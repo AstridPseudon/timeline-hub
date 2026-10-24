@@ -1,0 +1,53 @@
+diff --git a/tests/e2e/local/three-products.spec.ts b/tests/e2e/local/three-products.spec.ts
+index 1af9a62b62261dd60ba28a25b30259f47bb55dd3..aca69c367f7c7800a89084f40076daf00c9d2c65 100644
+--- a/tests/e2e/local/three-products.spec.ts
++++ b/tests/e2e/local/three-products.spec.ts
+@@ -789,0 +790 @@ async function faultFirstCommit(page: Page) {
++  const observedUrls: string[] = [];
+@@ -798,0 +800 @@ async function faultFirstCommit(page: Page) {
++  let recoveryRetryArmed = false;
+@@ -838,0 +841 @@ async function faultFirstCommit(page: Page) {
++    recoveryRetryArmed = false;
+@@ -851,0 +855,11 @@ async function faultFirstCommit(page: Page) {
++    observedUrls.push(request.url());
++    if (recoveryRetryArmed && stagedRetries.length > 0 && !recoveryForwarded
++      && sameGate5CommitIdentity(identity, stagedRetries[0])) {
++      if (stagedRoute) {
++        await route.abort('failed');
++        throw new Error('Gate5 fault control already has a staged automatic retry');
++      }
++      stagedRoute = route;
++      stagedPage = target;
++      return;
++    }
+@@ -894 +908 @@ async function faultFirstCommit(page: Page) {
+-    posts, forwarded, observed, stagedRetries, legacy, attach,
++    posts, forwarded, observed, stagedRetries, legacy, attach, observedUrls,
+@@ -899,0 +914 @@ async function faultFirstCommit(page: Page) {
++    armRecoveryRetry() { recoveryRetryArmed = true; },
+@@ -1726,0 +1742,2 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
++  wire.armRecoveryRetry();
++  await wire.abortStagedRetry();
+@@ -1732,0 +1750 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
++  await wire.abortStagedRetry('connectionclosed');
+@@ -1754,2 +1772,9 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
+-  await reopened.getByRole('button', { name: /^Recover saved edits/ })
+-    .and(reopened.locator(`[data-owner-id="${owner.ownerId}"]`)).click();
++  wire.armRecoveryRetry();
++  await expect.poll(() => wire.observed.length, CEILING).toBe(4);
++  expect(wire.observed.slice(0, 4)).toEqual([originalARequest, originalARequest, originalARequest, originalARequest]);
++  expect(wire.observedUrls.slice(0, 4)).toEqual([wire.observedUrls[0], wire.observedUrls[0], wire.observedUrls[0], wire.observedUrls[0]]);
++  expect(wire.observedUrls.slice(0, 4).map((url) => new URL(url).origin))
++    .toEqual([new URL(harness.doorBase).origin, new URL(harness.doorBase).origin,
++      new URL(harness.doorBase).origin, new URL(harness.doorBase).origin]);
++  expect(wire.forwarded).toHaveLength(1);
++  await wire.releaseStagedRetry();
+@@ -1761,0 +1787,8 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
++  expect(wire.observed).toHaveLength(5);
++  expect(wire.observed.slice(0, 4)).toEqual([originalARequest, originalARequest, originalARequest, originalARequest]);
++  expect(wire.observed[4]).toEqual({ body: wire.posts[2].body, key: wire.posts[2].key });
++  expect(wire.observedUrls).toEqual([wire.observedUrls[0], wire.observedUrls[0], wire.observedUrls[0], wire.observedUrls[0], wire.observedUrls[0]]);
++  expect(wire.observedUrls.map((url) => new URL(url).origin))
++    .toEqual([new URL(harness.doorBase).origin, new URL(harness.doorBase).origin,
++      new URL(harness.doorBase).origin, new URL(harness.doorBase).origin, new URL(harness.doorBase).origin]);
++  expect(wire.forwarded).toHaveLength(3);
