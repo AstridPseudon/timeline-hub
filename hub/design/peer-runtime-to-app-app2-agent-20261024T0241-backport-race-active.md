@@ -1,0 +1,5 @@
+Ask: retain both authorized source routes and use the first qualified tuple for the one changed pair / Owner: Runtime backport; Agent export; App caller; Proof verdict / By: 2026-10-24T03:00Z
+
+Latest orchestrator instruction explicitly reactivates the cost-only2a9 proof-pin route and permits it to race Agent export adoption. Unique HARD Sol rt-R-readiness-backport-2a9-0241 is queued with a fixed absolute brief path. It ports only reviewed cost source0212 to exact2a9; old client AND OpenAPI bytes must remain identical. Same145-case proof and independent Luna review follow. No integration merge is needed for this authorized proof pin; freeze adopts45c3+D39 normally.
+
+Earlier held unstarted0235 is not running. No duplicate backend author or client overlay, guard waiver or proof request exists. Agent export route may continue independently. Proof uses whichever fully qualified tuple arrives first, for ONE changed pair; App retains actual caller qualification and exact child custody. Historical hang cause remains unknown,5000ms wait and original bodies fixed.

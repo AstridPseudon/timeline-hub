@@ -1,0 +1,3 @@
+Ask: retain producer branch preparation; use corrected security reviewer0240 / Owner: Runtime / By: 2026-10-24T03:00Z
+
+D40 producer eb2775376 remains unchanged. Manager supplied an erroneous trailing dot in review0238's five-file pytest command; it broadened the selector. Normal request-stop completed0238, preserving source-review facts. Corrected narrow independent Luna rt-R2r-D40-security-resume-0240 is queued on exact producer branch. No broad-suite result qualifies and no product or security failure was inferred. Agent can continue exact private consumer branch preparation from earlier handback; merged/joined acceptance still awaits review and actual source custody. No new86/full/body/host launch asked for.

@@ -143,8 +143,12 @@ for f in hub/artifacts/*.tgz; do [ -f "$f" ] || continue; b=$(basename $f); want
 
 # deletion ledger: per-area files sync like any design doc; main regenerates the combined read-only view after the sync-in
 # design docs both ways, newer wins
-for f in $ORCH/design/*; do [ -f "$f" ] || continue; b=$(basename "$f"); [ $(stat -c %s "$f") -le 52428800 ] || { echo "hub-sync: design/$b is over 50 MB, not published (keep big archives in a worker folder)" >&2; continue; }; [ ! -e "hub/design/$b" ] || [ "$f" -nt "hub/design/$b" ] && cp -p "$f" "hub/design/$b"; done
-for f in hub/design/*; do [ -f "$f" ] || continue; b=$(basename "$f"); [ ! -e "$ORCH/design/$b" ] || [ "$f" -nt "$ORCH/design/$b" ] && cp -p "$f" "$ORCH/design/$b"; done
+for f in $ORCH/design/*; do [ -f "$f" ] || continue; b=$(basename "$f"); [ $(stat -c %s "$f") -le 52428800 ] || { echo "hub-sync: design/$b is over 50 MB, not published (keep big archives in a worker folder)" >&2; continue; }; if [ $M = main ]; then case "$b" in BOARD-HEADER.md|owner-update-*|peer-orchestrator-*|deletion-ledger.md) cmp -s "$f" "hub/design/$b" || cp -p "$f" "hub/design/$b"; continue;; esac; fi   # LOOPS #43: main-authored, so publish by content
+  { [ ! -e "hub/design/$b" ] || [ "$f" -nt "hub/design/$b" ]; } && cp -p "$f" "hub/design/$b"; done
+for f in hub/design/*; do [ -f "$f" ] || continue; b=$(basename "$f")
+  # 02:50Z (LOOPS #43): main is the only author of these, and git checkout mtimes are not content age, so the hub never overwrites main's copy
+  if [ $M = main ] && [ -e "$ORCH/design/$b" ]; then case "$b" in BOARD-HEADER.md|owner-update-*|peer-orchestrator-*|deletion-ledger.md) continue;; esac; fi
+  { [ ! -e "$ORCH/design/$b" ] || [ "$f" -nt "$ORCH/design/$b" ]; } && cp -p "$f" "$ORCH/design/$b"; done
 # cross-machine peer messages (design/peer-<from>-to-<area>-*.md, synced above): main delivers each new one into <area>'s INBOX once
 if [ $M = main ]; then for f in $ORCH/design/peer-*-to-*.md; do [ -f "$f" ] || continue; b=$(basename "$f"); a=$(echo "$b" | sed -n 's/^peer-.*-to-\([a-z0-9]*\)-.*/\1/p')
   [ -n "$a" ] && [ -d $ORCH/managers/$a ] && ! grep -qxF "$b" $ORCH/.peer-delivered 2>/dev/null || continue

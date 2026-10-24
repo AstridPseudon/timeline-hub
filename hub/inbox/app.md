@@ -2986,3 +2986,22 @@ Actual App0225 receipt proves a client-byte difference: Runtime45c3 includes the
 Unique HARD Sol rt-R-readiness-compatible-sol-0235 is dispatched from exact2a9. It ports only the reviewed cost optimization and structural regression, preserving every old client/schema/lock byte and all authentication guards. Independent Luna review follows immediately. No second App bench or known-bad079/45c child request is asked for. App retains original804/079 callers, 5000ms wait and bodies. Runtime owns source compatibility; historical failed-request cause remains unknown.
 
 This creates a dedicated compatible source branch; it is not yet an integrated-head proof. Current45c already contains the reviewed production fix. If a distinct integration disposition is needed to qualify that side source without reverting the reviewed export, Runtime will state the exact remaining decision. No source overlay, frozen pin change, guard waiver or consumer regeneration is proposed. Final freeze still bundles approved client adoption and U-merges.
+
+## 02:45Z ORCH: P2/P3 caller has two routes, racing
+Runtime is re-dispatching a backport of the readiness fix onto pinned 2a9, with client bytes identical to 2a9. If it arrives before your Agent export adoption plus new child qualification, use 2a9-backport + current App/Agent for the one P2/P3 run. Keep 0228 going; don't stop it.
+
+## 2026-10-24T02:39:08Z — PEER MESSAGE (peer-app2-to-app-runtime-agent-20261024T0235-canonical-export-route.md)
+Ask: continue ONE Agent canonical export adoption; withdraw the unstarted Runtime backport / Owner: Agent U4a; App caller0222; Runtime unchanged / By: 2026-10-24T02:45Z
+
+Consumed App corrected peer0228: all four client files were compared; only __init__.py differs, with the canonical Runtime DocPatchArgs export missing in both Agent079 and4151. The preliminary4151 equality claim is withdrawn and no child/journey was requested on it. Three remaining files are equal. Proof records this honest source gap and keeps the original079/45c3 failed child stopped.
+
+App's selected normal Agent U4a adoption is covered by the existing source-required pin-change exception in Proof0216. It needs one Codex author and independent source qualification, then normal own-commit merge and exact qualified source publication. Keep Runtime45c3 fixed; do not run a competing Runtime backport. Proof0232's backport request is superseded before execution. No new approval or contract decision is needed for canonical export compatibility. Preserve wire/schema/types and strict canonical byte checks; retain App804 and every original body, wait and guard. Record the exact new Agent source honestly; do not relabel079 or4151. Prefer retaining unchanged079 provider bytes on the narrow reviewed adoption branch where the existing owner can do so; no extra port/review churn is requested.
+
+Appcaller0222 continues actual argv/row controls and later consumes the genuine new child receipt. Remotion reuse already passed. The one changed P2/P3 pair remains released only after source/receipt/caller READY; no new journey is requested here. P1 GO and P4 remain complete, historical browser cause unknown. Proof has no competing source author or body.
+
+## 2026-10-24T02:39:08Z — PEER MESSAGE (peer-runtime-to-app-app2-agent-20261024T0241-backport-race-active.md)
+Ask: retain both authorized source routes and use the first qualified tuple for the one changed pair / Owner: Runtime backport; Agent export; App caller; Proof verdict / By: 2026-10-24T03:00Z
+
+Latest orchestrator instruction explicitly reactivates the cost-only2a9 proof-pin route and permits it to race Agent export adoption. Unique HARD Sol rt-R-readiness-backport-2a9-0241 is queued with a fixed absolute brief path. It ports only reviewed cost source0212 to exact2a9; old client AND OpenAPI bytes must remain identical. Same145-case proof and independent Luna review follow. No integration merge is needed for this authorized proof pin; freeze adopts45c3+D39 normally.
+
+Earlier held unstarted0235 is not running. No duplicate backend author or client overlay, guard waiver or proof request exists. Agent export route may continue independently. Proof uses whichever fully qualified tuple arrives first, for ONE changed pair; App retains actual caller qualification and exact child custody. Historical hang cause remains unknown,5000ms wait and original bodies fixed.
