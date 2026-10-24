@@ -5,7 +5,7 @@ The installer is intentionally inert unless ``--install`` is supplied.  A
 release must provide the final four-repository source tuple; no ambient
 checkout is accepted as a substitute.
 
-Source: tl/rt-F-final-service-sol-1244, based on candidate 1e1f32dd0.
+Source: tl/rt-F-final-service-lock-return-sol-1305, successor to 15f78c995.
 """
 
 from __future__ import annotations
@@ -19,6 +19,7 @@ import tempfile
 
 
 REGISTRY_SHA256 = "fdb9e9e9b9e964c92f4a6b3e3464cd300f51f33044b6f8f4ed4060ad69cfc81f"
+CANDIDATE_SHA256 = "23b2cdf81202c70a3aa5f6e6fcbd3dfc3c1afa23e5524284d97e5af7b1be0497"
 REVIEWED_BUILDER_SHA256 = (
     "f25dfab13bbfb090bf26cf97a85e59bd4818859f5b974dac94aae7e6f2272708"
 )
@@ -32,9 +33,9 @@ OLD_ROW_SHA256 = {
     "v2-auth-current-integration": "e5c6c4ccd2c2e05d19a8bfae7147ca07a7e0a6e1cdcc20bb29c70c747b25ef9a",
 }
 NEW_ROW_SHA256 = {
-    "core-v2-final-integration": "1cb6d268f14ce25657ecdeb6ece08021f02b2ca2021a06505ba0f741d3fa3a10",
-    "delivery-v2-final": "ae4295fe53221fc4159a0184aabd4e6417ad2de538142610b346eec931063924",
-    "delivery-v2-dryrun": "c7220bf9a55f5e1fd19ca146fcb5a02920208085459ed5bf5605c81f31322f10",
+    "core-v2-final-integration": "4cd770d6f63a6104b59a6900e494f929c0404cbc7e7355397c3b07aa745a961f",
+    "delivery-v2-final": "23a86a5fb3bef7aca7d012c8b785fc995769bab9327d6e65572c4d9bdb89f5dc",
+    "delivery-v2-dryrun": "cd88c8b53e5690bae75df9efdac81be6679c03d570860177a4d13b221b53e67a",
 }
 
 NEW_NAMES = {
@@ -44,11 +45,11 @@ NEW_NAMES = {
 }
 ARTIFACT_ROOT = Path(
     "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch"
-    "/workers/rt-F-final-service-sol-1244"
+    "/workers/rt-F-final-service-lock-return-sol-1305"
 )
 RUNNER = ARTIFACT_ROOT / "run-final-services.py"
 FINAL_TUPLE = ARTIFACT_ROOT / "final-source-tuple.json"
-RUNNER_SHA256 = "3ff01eabcd30b60664f29302f28d1d6505c80ee922de56b1f0caeccc83441837"
+RUNNER_SHA256 = "2611b13745e5b6ecd1f2f2ba4346743093c5f150cae89384f2024f10fa4a98de"
 TUPLE_MARKER = b"FINAL_TUPLE_SHA256_PENDING"
 
 
@@ -67,6 +68,12 @@ def reviewed_runner():
 
 def digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
+
+def read_candidate(path: Path) -> bytes:
+    if not path.is_file() or path.is_symlink():
+        raise ValueError(f"candidate must be a regular non-symlink file: {path}")
+    return path.read_bytes()
 
 
 def row_fields(raw: bytes, *, source: str) -> tuple[str, str, str]:
@@ -97,6 +104,8 @@ def registry_rows(raw: bytes) -> list[tuple[bytes, str, str, str]]:
 
 
 def validate_registry(raw: bytes, candidate: bytes) -> tuple[dict[str, bytes], dict[str, bytes]]:
+    if digest(candidate) != CANDIDATE_SHA256:
+        raise ValueError("candidate file does not match the reviewed source bytes")
     if digest(raw) != REGISTRY_SHA256:
         raise ValueError(
             f"predecessor registry hash mismatch: {digest(raw)} != {REGISTRY_SHA256}"
@@ -136,7 +145,7 @@ def install(registry: Path, candidate: Path, backup: Path, tuple_bytes: bytes) -
     if not registry.is_file() or registry.is_symlink():
         raise ValueError(f"registry is not a regular file: {registry}")
     old = registry.read_bytes()
-    new_rows = candidate.read_bytes()
+    new_rows = read_candidate(candidate)
     validate_registry(old, new_rows)
     if not new_rows.endswith(b"\n"):
         raise ValueError("candidate must end with LF")
@@ -202,7 +211,7 @@ def main() -> int:
         parser.error("--registry, --candidate, and --builder are required")
 
     raw = args.registry.read_bytes()
-    candidate = args.candidate.read_bytes()
+    candidate = read_candidate(args.candidate)
     validate_registry(raw, candidate)
     runner = reviewed_runner()
     runner.validate_builder(args.builder, REVIEWED_BUILDER_SHA256)
@@ -215,6 +224,7 @@ def main() -> int:
     tuple_bytes = args.source_tuple.read_bytes()
     value = runner.validate_source_tuple(args.source_tuple, digest(tuple_bytes))
     runner.validate_roots(value)
+    runner.validate_agent_lock(value)
     for name, item in value.items():
         if runner.git_value(Path(item["root"]), "rev-parse", "tl/integration^{commit}") != item["sha"]:
             raise ValueError(f"final source tuple integration ref drift for {name}")

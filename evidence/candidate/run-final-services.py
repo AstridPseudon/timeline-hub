@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Private final-service runner retained outside disposable Runtime worktrees.
 
-Source: tl/rt-F-final-service-sol-1244, based on candidate 1e1f32dd0.
+Source: tl/rt-F-final-service-lock-return-sol-1305, successor to 15f78c995.
 The service rows verify this file's SHA256 before executing it.
 """
 from __future__ import annotations
@@ -21,6 +21,17 @@ REVIEWED_BUILDER_SHA256 = "f25dfab13bbfb090bf26cf97a85e59bd4818859f5b974dac94aae
 BUILDER = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build")
 PYTHON = "/home/user/work/venv-runtime/bin/python"
 SOURCE_ROOTS = {name: Path("/home/user/work") / name for name in REQUIRED_TUPLE_REPOS}
+AGENT_RUNTIME_FILES = {
+    "astrid/core/timeline/schema/timeline-config.schema.json": "contract/schemas/timeline-config.schema.json",
+    **{f"astrid_runtime_client/{name}.py": f"packages/python/astrid_runtime_client/{name}.py"
+       for name in ("__init__", "contract_metadata", "generated", "timeline_commit_types")},
+    **{f"tests/fixtures/runtime-responses/{name}.json": f"conformance/responses/{name}.json"
+       for name in ("events_page_1_200", "events_page_2_200", "invalid_cursor_400",
+                    "managed_outputs_200", "not_found_404", "task_admission_201",
+                    "task_read_200", "validation_error_422")},
+    "tests/fixtures/runtime-responses/publish_conflict_409.json": "conformance/responses/commit_conflict_409.json",
+    "tests/fixtures/visual-boundary-v1.json": "conformance/fixtures/visual-boundary-v1.json",
+}
 
 CORE_TEST_FILES = """
 tests/test_timeline_absent_head_repair_integration.py
@@ -305,6 +316,55 @@ def validate_roots(value: dict[str, dict[str, str]]) -> None:
             raise ValueError(f"final source tuple {name}.root differs from the service source")
 
 
+def validate_agent_lock(value: dict[str, dict[str, str]], env: dict[str, str] | None = None) -> dict:
+    agent = Path(value["agent"]["root"])
+    producer = Path(value["runtime"]["root"])
+    path = agent / "runtime.lock.json"
+    if not path.is_file() or path.is_symlink():
+        raise ValueError("Agent runtime lock must be a regular file")
+    raw = path.read_bytes()
+    lock = json.loads(raw)
+    if (
+        not isinstance(lock, dict)
+        or lock.get("producer") != "astrid-runtime"
+        or lock.get("manifest") != "contract/artifacts.json"
+        or lock.get("source_commit") != value["runtime"]["sha"]
+    ):
+        raise ValueError("Agent runtime lock does not select the final Runtime producer")
+    version = lock.get("producer_version")
+    if (
+        not isinstance(version, str) or not version.startswith("sha256:")
+        or len(version) != 71 or any(c not in "0123456789abcdef" for c in version[7:])
+    ):
+        raise ValueError("Agent runtime lock producer_version must be a SHA256 digest")
+    files = lock.get("files")
+    if not isinstance(files, dict) or set(files) != set(AGENT_RUNTIME_FILES):
+        raise ValueError("Agent runtime lock must contain all 15 canonical files")
+    for consumer, source in AGENT_RUNTIME_FILES.items():
+        entry = files[consumer]
+        if not isinstance(entry, dict) or set(entry) != {"from", "sha256"} or entry["from"] != source:
+            raise ValueError(f"Agent runtime lock canonical mapping changed: {consumer}")
+        sha = entry["sha256"]
+        if (
+            not isinstance(sha, str) or not sha.startswith("sha256:")
+            or len(sha) != 71 or any(c not in "0123456789abcdef" for c in sha[7:])
+        ):
+            raise ValueError(f"Agent runtime lock hash is invalid: {consumer}")
+    # Use the normal consumer/producer checks against the selected integration
+    # source, whose identity is checked separately from the service snapshot.
+    # This preserves vendor_lock's committed-manifest and all artifact checks
+    # while allowing the approved same-tree Runtime snapshot/source-parent form.
+    try:
+        subprocess.check_output(
+            [PYTHON, str(agent / "scripts/vendor_lock.py"), "check", str(path),
+             "--producer", str(producer)],
+            env=env, text=True, stderr=subprocess.STDOUT,
+        )
+    except subprocess.CalledProcessError as exc:
+        raise ValueError(f"Agent Runtime vendor check failed: {exc.output}") from exc
+    return {"lock_sha256": digest(raw), "files": {name: digest((agent / name).read_bytes()) for name in files}}
+
+
 def source_identity(path: Path, expected_sha: str, runtime: Path, env: dict[str, str]) -> dict:
     value = validate_source_tuple(path, expected_sha)
     validate_roots(value)
@@ -327,7 +387,8 @@ print(json.dumps({name: str(pathlib.Path(importlib.import_module(name).__file__)
     }
     if origins != expected:
         raise ValueError(f"final service imported different source modules: {origins}")
-    return {"tuple": value, "runtime_head": git_value(runtime, "rev-parse", "HEAD"), "origins": origins}
+    return {"tuple": value, "runtime_head": git_value(runtime, "rev-parse", "HEAD"),
+            "origins": origins, "agent_runtime_lock": validate_agent_lock(value, env)}
 
 
 def main() -> int:
