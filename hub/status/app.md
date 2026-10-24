@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T06:42:40Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 6m -->
-# app board, 2026-10-24T06:36Z
+<!-- app | 2026-10-24T06:45:32Z | dispatcher heartbeat 6s | live 1 (sol 1, luna 0, other 0) | busy30 9 | status age 0m -->
+# app board, 2026-10-24T06:44Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -80,12 +80,12 @@
 | App-current-real-path-proof | Qualify all final mounted caller repairs | Luna | Independent correction merged | merged | app-A2-A3-corrected-integrated-0629 | [27 files, 690 tests, Gate5 12 controls, three types and lint PASS.](../../design/app-A2-A3-corrected-integrated-0629.md) Donor and protected blobs pass. | 9b810408cc |
 
 | A2-media-timing-join | Preserve prepared media canonical timing | Sol; Luna review | Independent 0623 PASS | merged | app-A2-media-timing-review-0623 | [252 tests, all 26 media tests, three types and lint passed.](../../design/app-A2-media-timing-review-0623.md) Original timing assertion unchanged. | 6635416195 / 9b810408cc |
-| P2-P3-target | Qualify product source dispatch target | Luna; D21 | Source and caller PASS | doing | app-P2-P3-target-custody-0636 | Exact product663 target; wrong artifact d545 negative. No guard or suite changes. | Source663 / HOME9b810 |
+| P2-P3-target | Qualify product source dispatch target | Luna; D21 | Source and caller PASS | doing | app-P2-P3-source-target-sol-0644 | Luna fixture expanded into copied bench and was stopped. Sol now checks only unchanged App source guards; no new bench or suite changes. | Source663 / HOME9b810 |
 
 Integration: 9b810408ccf8aadbca708dd0bc461afc19576427, tree 9a37265f0286128df7e6240a9df9877d959474af. Exact whole tree equals independently reviewed timing candidate 6635416195. All reviewed catalog, parameter, popup, parent, P3 setup and oracle repairs remain present.
 
-Next ready: D21 target custody 0636 qualifies exact product branch before corrected dispatch. Producer0634 returns actual preflight NOTRUN facts; no repeat of terminal IDs.
-Blockers: App — exact product dispatch target qualification0636 must pass; caller artifact tree was correctly refused.
+Next ready: D21 source target Sol0644 qualifies exact product branch before corrected dispatch. Producer0634 returns actual preflight NOTRUN facts; no repeat of terminal IDs.
+Blockers: App — exact product source guard qualification0644 must pass. Luna0636 was stopped after an oversized copied bench fixture.
 Blockers: Freeze — U3b waits P2/P3 and final freeze.
 
 P2/P3: Requests 20674 and10144 failed source preflight in6s, before setup or originals. Target correction0636 is active; original meaningful pair still awaits correct source target. D45 pair is consumed. P213583 failed three with five not run; P34065 failed first original reset after readiness passed. Every original guard, wait, intended-field, reload, undo and tail remains required.
@@ -94,5 +94,5 @@ IMAGE0554: independent0636 PASS closes the bounded direct RuntimeService behavio
 
 Delivery: D31 retains transcriptAssociateCapture.ts, unchanged397-line/40-assertion test and required helpers. D37 retains dormant raw-birth and same-order track implementations/tests unchanged with existing ledger entries. D47 memo/capsule remains deferred and held unmerged.
 Safety: Historical cleanup, graph and publication denials stand. Managers write boards, briefs and shared reports; workers own product changes. No refused cleanup or compact retry.
-Disk: About 12 GB available. Recent finished review worktrees are already recycled; three ordinary recycle checks returned no worktree. Recycled finished catalog0524 via bin/recycle. Sweep3 completed; capped output did not retain its removal count. Remaining historical U3 trees were previously refused and stay untouched.
+Disk: Free space restored to about 12 GB. Stopped Luna0636 at06:43; harness removed its5.5GB private copies. Sol0644 has a strict10MB fixture cap and no bench copying. Recent finished review worktrees are already recycled; three ordinary recycle checks returned no worktree. Recycled finished catalog0524 via bin/recycle. Sweep3 completed; capped output did not retain its removal count. Remaining historical U3 trees were previously refused and stay untouched.
 Evidence: [catalog final review](../../design/app-A3-catalog-final-cumulative-review-0603.md), [parameter review](../../design/app-A2-element-cumulative-review-0554.md), [popup review](../../design/app-A3-popup-cumulative-review-0547.md), [parent review](../../design/app-A2-parent-optional-review-return-0545.md), [P3 final review](../../design/handoff-ap2-P3-reset-final-review-0553.md), [retained caller preparation](../../design/app-P2-P3-retained-caller-prep-0600.md), [IMAGE result](../../design/agt-A4-image-result-review-0636.md).
