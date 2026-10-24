@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T05:05:25Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 2m -->
-# app board, 2026-10-24T05:04Z
+<!-- app | 2026-10-24T05:08:01Z | dispatcher heartbeat 2s | live 5 (sol 2, luna 3, other 0) | busy30 15 | status age 1m -->
+# app board, 2026-10-24T05:06Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -66,10 +66,15 @@
 | readiness-D45-caller | Publish current source on existing bench | Sol | D45 and joined523 PASS | merged | app-readiness-D45-final-caller-sol-0446 | READY: 60 execution controls, authentic custody and exact two rows. One pair submitted04:53:33Z. | c0fe /079 /37eb |
 
 | P2-P3-D45-handoff | Publish same-ID terminal evidence | Luna | Actual terminal artifacts | merged | app-P2-P3-D45-result-handoff-0454 | [Full terminal packet published.](../../design/app-P2-P3-D45-result-handoff-0454.md) Both failed. Safe diagnostic JSON files not created. | c0fe /079 /37eb |
-| P2-D45-element-cause | Classify actual element failure | Sol | Retained13583 artifacts | doing | app-P2-D45-element-cause-sol-0459 | Exact failure boundary and source diagnosis only. No assumed old cause, source fix or repeated body. | c0fe /079 /37eb |
-| P2-D45-whole-path | Independently investigate client to server | Luna | Second failed fix rule | doing | app-P2-D45-whole-path-review-0459 | Source-only review compares passingP1. Sol alone owns private trace extraction. | c0fe /079 /37eb |
+| P2-D45-element-cause | Classify actual element failure | Sol | Independent0459 source PASS | merged | app-P2-D45-element-cause-sol-0459 | Confirmed: real catalog caller never captures its adapter turn. Refusal occurs before save and POST. Repair0505 assigned. | c0fe /079 /37eb |
+| P2-D45-whole-path | Independently investigate client to server | Luna | Independent source audit complete | merged | app-P2-D45-whole-path-review-0459 | Confirms catalog capture defect and a separate missing basis for parameter saves. Bounded authors0505 assigned. | c0fe /079 /37eb |
 
-| P3-D45-original-cause | Classify actual Gate5 failure | Sol | Terminal4065 artifacts | doing | app-P3-D45-original-cause-sol-0501 | Readiness passed; original Gate5 failed. Unique private trace and source diagnosis; no fix or repeat. | c0fe /079 /37eb |
+| P3-D45-original-cause | Classify actual Gate5 failure | Sol; independent Luna | Independent cause review0506 | review | app-P3-D45-original-cause-sol-0501 | Author finds reset5-to0 against freshclip0; zero POSTs. Proof setup owner requested; independent0506 reviews causal limits. | c0fe /079 /37eb |
+
+| A3-catalog-capture | Capture real catalog Apply turn | Luna | Sol and independent0459 findings | doing | app-A3-catalog-capture-0505 | Real mounted panel RED/GREEN and stale head refusal required. Existing adapter guards remain strict. | Currentc0fe base |
+| A2-element-params | Preserve parameter edit ownership basis | Sol | Independent0459 source finding | doing | app-A2-element-params-sol-0505 | Faithful callback RED required before fix. Separate files from catalog capture; no ownership waiver. | Currentc0fe base |
+| P2-D45-popup-shape | Classify popup command assertion | Luna | Actual closed13583 popup artifacts | doing | app-P2-D45-popup-shape-0505 | Product versus oracle classification only. No source or body edit; Proof owns any oracle adaptation. | Currentc0fe |
+| P2-D45-parent-cause | Classify actual parent move timeout | Sol | Actual closed13583 parent artifacts | doing | app-P2-D45-parent-cause-sol-0505 | Find exact gesture to outbox to response boundary. No presumed Runtime cost or repeated body. | Currentc0fe |
 
 Safety: Historical cleanup, graph and publication denials stand. Managers write boards, briefs and shared reports; workers own product changes.
 Delivery legacy subset: Keep transcriptAssociateCapture.ts and its unchanged 397-line, 40-assertion test, plus required helpers, under D31.
@@ -77,8 +82,9 @@ Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-han
 Integration: c0fe889944 contains all reviewed App fixes. Joined0438 passed523 tests, three types and lint; independent A4census0444 passed.
 Later: Runtime D42 remains security held. D45 releases the next pair on existing37eb plus current App; no unsafe memo adoption.
 Blockers: Freeze — U3b waits P2/P3 and final freeze.
-Next ready: Proof verdict on completed0454 packet; Sol0459 and0501 diagnoses and independent whole-path0459. No repeated pair.
+Next ready: Catalog and parameter repairs0505, popup and parent diagnoses0505, independent P3 cause0506 and Proof setup correction. No repeated pair.
 Disk: About11 GB available. Sweep0441 removed zero directories; freed0 GB. No new eligible non-KEEP tree. Earlier dirty U3 and compact refusals remain stopped.
 
 Lead: D45 pair is terminal: P213583 failed3 with5 not run; P34065 failed original Gate5 after readiness passed. Full packet and causal owners are in peer0504.
 Blockers: Viewing — IMAGE0441 undo preview refused invalid records. Existing ABA owner0443 and Agent path0454 own source diagnosis; no new producer or realm.
+Blockers: Proof — original Gate5 reset expects a5-second state absent from its fresh fixture. Proof owns setup correction and no-weakening; App independent0506 reviews cause.
