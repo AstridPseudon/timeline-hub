@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T22:17:56Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 3 | status age 1m -->
-# agent board, 2026-10-24T22:16:45Z
+<!-- agent | 2026-10-24T22:20:48Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 3 | status age 1m -->
+# agent board, 2026-10-24T22:18:57Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -139,7 +139,7 @@
 | U4a D83 metadata | Adopt released Runtime metadata fix | Luna | Normal home merge complete | merged | agt-U4a-D83-metadata-adopt-2131 | Lock only; all 15 mappings, vendor, artifact and diff checks pass. Actual home 840a verified. | 840a58a70a |
 | P4 / R2 bc04 five | Retain five-original NO-GO | Luna / Service | Authentic terminal evidence complete | merged | Batch2138; service6749 | Historical3FAIL2PASS218.32s retained. Earlier31062 zero-body disclosed. No current scope credit. | Candidate197d /Runtimebc04 |
 | U4a D84a adoption | Adopt released request-scoped producer | Luna | Normal merge complete | merged | agt-U4a-D84a-adopt-2209 | Lock-only tools PASS;15 mappings/schema/config unchanged. Actual home039f includes exact reviewed provenance. [Report](../../design/agt-U4a-D84a-adopt-2209.md) | Home039ff2c218 |
-| P4 / R2 D84a five | Qualify same five timeout originals | Luna / Service | Exact D73 checkout and preflight | doing | agt-P4-R2-D84a-five-2214 | Sole unchanged45s unprofiled batch assigned; exact checkouts and parsed positiveonce/poisonzero first. | Candidatec2a63 /Runtime732c |
+| P4 / R2 D84a five | Qualify same five timeout originals | Luna / Service | Same-ID terminal result | doing | Batch2214; service29429 | Parsed syntax0,positive17/onecall,poison1/zerocalls PASS. Sole five-case unprofiled45s service running. | Candidatec2a63 /Runtime732c |
 Integration: Agent home039ff2c218 normally adopts released Runtime732c48c6f5. Fresh HELD candidatec2a63bbee9369b84bec7f4bfec06f447df02c27b adds exact reviewed PARAM donor2 with identical tool provenance. Fresh99controls/static/vendor/artifact PASS. Batch2214 assigned immediately.
 core open: Five historical home scopes remain open. Last completedbc04 batch has three failures/two candidate-only passes; new D84a batch2214 is preparing. Allfour R2PASS before candidate merge.
 regressions: D71 leak, CLI terminal lines and named D72 family behavior retain their recorded qualification. D77a source controls pass; genuine installed render remains cut-blocking at D59.
@@ -150,8 +150,8 @@ Evidence: [Completed bc04 XML](../../design/handoff-agt-D83-bc04-6749-five.xml),
 D69/D72: Exact 47 restored membership and 178 audit retained; named family proofs complete. D60 upstream 924 full remains FAIL: 12396 pass, 91 fail, 14 errors. Exact 276 accounting, D67 environment gap and both D23 deferrals stay separate.
 Admission: Historical safety, access and cleanup refusals remain stopped. No denied pin release, fabricated installed tuple, child, Farm or schema route. E2 and D79 paused until after ZIP.
 Disk: 8261296128 bytes free, 7.69 GiB. Guarded sweep removed zero; compact packed zero and gzipped one old log. Adopt2209 already recycled by harness; bin/recycle confirmed no worktree. Refused pins and old dirty G2 untouched.
-Blockers: Original qualification — batch2214 needs genuine four D73 checkouts and parsed preflight, then its sole same-five result. Runtime release and source preparation are complete.
+Blockers: Original qualification — service29429 is running the sole same-five batch at its pinned D73 tuple. Parsed preflight PASS; timings pending. No Runtime source or preparation blocker.
 Blockers: Final cut — final pinned P1–P5 and core proofs plus genuine installed render remain D59 gated. Existing GO qualifies only its recorded tuple.
-Next ready: Batch2214 exact four checkouts/preflight -> ONE five-original unprofiled45s service request at critical6GB floor. Return timings; NO-GO automatic summary, GO one independent verdict. Allfour R2PASS before candidate merge.
-live 1 queued or running / cap 4; ready-undispatched 0. Adoption2209 merged039f; carrier2209 PASS99. Sole heavy batch2214 assigned immediately. E2/D79 stay paused.
-Inbox consumed through 1121991 bytes. Pass 2026-10-24T22:15:09Z: normal adoption039f and fresh committed carrierc2a63 PASS99 consumed immediately; batch2214 queued without diagnosis/review delay. Runtime released732c and security243+13 are qualified. Source waits cleared. Sole original body will keep45s, genuine D73 checkouts/preflight and6GB critical floor.
+Next ready: Same-ID service29429 terminal -> five wall timings. NO-GO automatic summary only; GO one independent verdict. Allfour R2PASS before candidate merge; actual-home proof remains distinct.
+live 1 / cap 4; ready-undispatched 0. Batch2214 owns sole heavy service29429. Normal adoption039f and fresh carrier99PASS complete. E2/D79 stay paused.
+Inbox consumed through 1121991 bytes. Pass 2026-10-24T22:18:57Z: sole actual service29429 submitted at22:17:32 on D84a; parsed syntax0/positive17onecall/poison1zerocalls qualify. Same-ID result awaited, no duplicate body, diagnosis or review. Current service agent-p4-current-becfe-http-3legs-1024221732-29429.
