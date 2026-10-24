@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T10:42:25Z | dispatcher heartbeat 0s | live 1 (sol 0, luna 1, other 0) | busy30 15 | status age 1m -->
-# agent board, 2026-10-24T10:34:42Z
+<!-- agent | 2026-10-24T10:44:57Z | dispatcher heartbeat 1s | live 2 (sol 0, luna 2, other 0) | busy30 15 | status age 0m -->
+# agent board, 2026-10-24T10:43:48Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -143,13 +143,13 @@
 
 | R1 popup gate source | Qualify coherent selected 079 provider | Luna / Luna | Complete independent verdict | merged | Author 0930; independent 0935 FAIL | Legitimate accepted passes; disjoint merge fails. Source custody verified on full 079. No HTTP or journey claim. | Selected 079 unchanged |
 
-| R1 popup pin repair | Preserve gate client bytes with source fix | Sol / Luna | App exact source adoption | blocked:app | Sol 0943; independent 0955 PASS | New 18 and production detached caller 2 pass. All 3418 protected blobs unchanged; 16 prior failures stay visible. [Review](../../design/agt-R1-popup-079-backport-review-0955.md). | 333b44b1a1 on exact 079 |
+| R1 popup pin repair | Preserve gate client bytes with source fix | Sol / Luna | App and Proof P2 | gated:P2 | Agent0955; App1011 PASS67; child1016 PASS | Exact333b source/client qualified. App owns actual P2 caller and submission. Prior16 inverse failures remain scoped; no new Agent action. | 333b44b1a1 on079 |
 
 | R1 static gates | Tighten exact static baseline | Luna / Luna | Integrated strict gates passed | merged | Author0940; review0955; home0959 | Actual f91 normal Ruff2143 and mypy1902 pass. Baseline tree and reviewed product/test blobs exact. | 4cea04007f |
 
 | F provider undo | Classify six existing source failures | Luna / Luna | Causal review passed | merged | Author0952; independent0959 PASS | Authenticated historical inverse scratch is compared to accepted fork source. Six existing failures; outside267 census. R2 Sol0959 owns repair. | Evidence only |
 
-| F local checkpoint | Qualify D49 on existing service | Service | H36 instruction | doing | agent-full-1024095047-9758 | One full is running, about98 percent. Exactba55 snapshot and existing venv/profile. No duplicate request. | Homeba55 |
+| F local checkpoint | Qualify D49 on existing service | Service | H36 instruction | doing | agent-full-1024095047-9758 | One full is running, about99 percent. Exactba55 snapshot and existing venv/profile. No duplicate request. | Homeba55 |
 
 | R2 historical source | Restore authenticated historical item mapping | Sol / Luna | Structure rationale | merged | Source1011 PASS; integrated1017 PASS67 | Actuald83 passes67 and strict static gates; 244 controls retained. Structure correction has its own row. | d83e8de3a1 |
 
@@ -157,7 +157,7 @@
 
 | OPS shared schema source | Preserve declared schema authority | Runtime / owner | Orchestrator10:16 disposition | blocked:runtime | Runtime acquisition0955 stopped | Exact declared source HTTP403; automatic access request refused. No alternate route. Installed provenance0918/0922 stays scoped. | Source242f unknown |
 
-| R2 structure rationale | Register inverse file rationale | Luna / Luna | Integrated proof passed | merged | Review1035; integrated1038 PASS | Actualc2b original1 passed0.45s. Entry39 inverse1208; prior38 entries and original unchanged. Parent1168 correction retained. | c2b1f7e5a3 |
+| R2 structure rationale | Register inverse file rationale | Luna / Luna | Unchanged actual home proof | merging | Review1035 PASS; home1045 | 1038 made an unnecessary docs rewrite, held15ba. Exact reviewed18bb remains homec2b; clean read-only verification1045 assigned. | Homec2b1f7e5a3 |
 
 | OPS received kit | Verify installed verifier receipt | Luna | Runtime independent installed1027 | merged | agt-OPS-received-kit-review-1036 PASS | Four received/live/hub/committed scripts match; archive443977 and prior67-wheel custody retained. Runtime1027 pending; no admission release. | Sourceab6d |
 
@@ -174,11 +174,13 @@ D48: Upstream 25359 merged via reviewed source ccf87 and normal d01. Restored pr
 D39: Canonical adoption is integrated-qualified on exact 0c2 with all 15 mappings. Actual wire-key negative controls remain strict. Final three-lane tuple and gate proofs remain unqualified.
 D49 venue: Existing Agent own-service full9758 on working venv-agent is running. The orchestrator selected this primary venue pending the owner after schema access refusal. Farm remains held; zero-setup and final-gate qualification are unproven.
 Safety: Prior Farm, monitor, publication, bench and cleanup refusals remain stopped. No denied action retried.
-Disk: About8.7GB free, up from7.7GB. Eight more finished clean worktrees recycled, preserving branches and reports. Sweep3 removed zero dirs; compact packed zero dirs and compressed five old logs. No new heavy run below8.5GB; existing full9758 may finish. Prior denied targets stay stopped.
+Disk: About9.1GB free, up from7.7GB. Eight more finished clean worktrees recycled, preserving branches and reports. Sweep3 removed zero dirs; compact packed zero dirs and compressed five old logs. No new heavy run below8.5GB; existing full9758 may finish. Prior denied targets stay stopped.
 Later: D31/D37 dormant implementations and tests unchanged. V4 and D14/D23 remain cut or deferred. D46 U2c closed and folded into the freeze; relay and remote providers stay deferred and fail-closed. D47 memo held.
-Next ready: Rationale is integrated-qualified. Capture export1040 is active; Viewing owns terminal3783 verdict. Kit received1036 PASS awaits Runtime route1035. Full9758 is98percent. No ready task waits.
+Next ready: Rationale source is reviewed; unchanged-home verification1045 is assigned. Capture export1040 is active; Viewing owns terminal3783 verdict. Kit received1036 PASS awaits Runtime route1035. Full9758 is99percent. No ready task waits.
 Evidence: [D39 review](../../design/agt-D39-header-review-0809.md), [ABA review](../../design/agt-F-ABA-cumulative-review-0809.md), [wheel input](../../design/agt-OPS-real-wheel-qualify-0810.md), [Farm checkpoint](../../design/farm-agent-full-checkpoint-20261024T0555Z.md).
 
 Pass10:34Z: All eight DONE orphans finalized through request-stop; no live processes were found. Independent capture preparation1027 passed21 and exact one-row custody; normal stacked merge7ba6 completed. Rationale review and row installer dispatched immediately.
 
 Pass10:39Z: Capture diagnostic3783 terminal FAIL retains complete22725-byte JSONL packet through capture.end, original exit separate. Export1040 dispatched; Viewing requested as sole finite verdict owner. No repeat body or causal source change. Received-kit1036 PASS at exact published hashes; schema/child hold retained.
+
+Pass10:45Z correction:1038 unexpectedly changed one rationale explanation despite read-only scope. Unnecessary15ba is held unmerged. Exact reviewed18bb remains homec2b; clean verification1045 records unchanged tree and reruns only the tiny structure original. No product source or original assertions changed.
