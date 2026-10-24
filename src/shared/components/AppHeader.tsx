@@ -18,6 +18,7 @@ interface AppHeaderProps {
   navigationControls?: ReactNode;
   timelineName?: string | null;
   showProjectControls?: boolean;
+  settingsDisabled?: boolean;
 }
 
 function AppHeaderProjectControls() {
@@ -87,6 +88,7 @@ export function AppHeader({
   navigationControls,
   timelineName,
   showProjectControls = false,
+  settingsDisabled = false,
 }: AppHeaderProps) {
   const isToolsNavigation = navigationMode === 'tools';
   const navigationLabel = isToolsNavigation ? 'Tools' : 'Home';
@@ -143,6 +145,7 @@ export function AppHeader({
         size="icon"
         className={cn('ml-auto h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground', COARSE_TOUCH_TARGET)}
         onClick={() => dispatchAppEvent('openSettings', {})}
+        disabled={settingsDisabled}
         title="Settings"
         aria-label="Settings"
       >
