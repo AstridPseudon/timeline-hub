@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T04:57:28Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 0m -->
-# app board, 2026-10-24T04:57Z
+<!-- app | 2026-10-24T05:00:05Z | dispatcher heartbeat 12s | live 3 (sol 1, luna 2, other 0) | busy30 13 | status age 1m -->
+# app board, 2026-10-24T04:59Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -19,7 +19,7 @@
 | readiness-after-bootstrap | Qualify history and bootstrap readiness | Sol; Luna review | D45 current caller on existing37eb | doing | App Sol0446; Proof verdict | Current coalescing and gesture fixes passed joined523. D45 releases one pair without memo; historical causes stay bounded. | Appc0fe / Agent079 / Runtime37eb |
 | P-door-port-alloc | Allocate door port per run | Luna; D21 | Resolved | merged | app-P2-P3-door-allocation-0039 | [Node 20 allocation, shared stage value and failure checks passed.](/home/user/timeline-hub/hub/design/app-P2-P3-door-allocation-0039.md) | Harness rows only |
 | readiness-upstream-check | Check f38e candidate | Sol; Luna review | Review 0057 PASS | merged | App Sol 0046; Luna 0057 | No census or attempt-root signature supports attribution. Exact patch is unavailable locally; historical cause remains unknown. | Report only |
-| P2 | Eight original gesture cases | App service; Proof verdict | D45 source and caller READY | doing | Test13583; producer0454 | Running8 originals after native21/history GREEN. Same13583; no final counts yet. Prior12221 remains3FAIL5NOTRUN. | c0fe889944 |
+| P2 | Eight original gesture cases | App service; Proof verdict | D45 source and caller READY | doing | Test13583; producer0454 | First elementcase failed15.8s; run active, final counts pending. Sol0459 diagnosis and independent whole-path0459 assigned. | c0fe889944 |
 | P3 | Original Gate-5 journey | App service; Proof verdict | D45 source and caller READY | doing | Test4065; producer0454 | Mounted readiness PASS16.7s; original Gate5 nowrunning. Same4065; final result pending. Prior3362 retained. | c0fe889944 |
 | A2-parent-media-closure | Preserve untouched child closure | Sol; Luna review | Resolved | merged | app-A2-parent-media-integrated-0035 | [299 tests, types, lint and external producer passed.](/home/user/timeline-hub/hub/design/app-A2-parent-media-integrated-0035.md) | 1b0428db7d |
 | A2-image-created | Declare genuine image creations | Sol; Luna review | Review 0133 PASS | merged | app-A2-image-created-sol-0126 | Independent 261 tests and producer 28, three types and lint passed. Clip and new authored registry alias claims match provider. Joined proof 0150 passed 448 tests, three types and lint. | b3a84dea71 / 1c5cc47bf6 |
@@ -66,6 +66,9 @@
 | readiness-D45-caller | Publish current source on existing bench | Sol | D45 and joined523 PASS | merged | app-readiness-D45-final-caller-sol-0446 | READY60 execution controls, authentic custody and exact two rows. One no-cache pair submitted04:53:33Z. | c0fe /079 /37eb |
 
 | P2-P3-D45-handoff | Publish same-ID terminal evidence | Luna | Actual13583 and4065 terminal artifacts | doing | app-P2-P3-D45-result-handoff-0454 | Finite primary facts and strictly qualified safe files; no duplicate run or causal extractor. | c0fe /079 /37eb |
+| P2-D45-element-cause | Classify actual element failure | Sol | Retained13583 artifacts | doing | app-P2-D45-element-cause-sol-0459 | Exact failure boundary and source diagnosis only. No assumed old cause, source fix or repeated body. | c0fe /079 /37eb |
+| P2-D45-whole-path | Independently investigate client to server | Luna | Second failed fix rule | doing | app-P2-D45-whole-path-review-0459 | Source-only review compares passingP1. Sol alone owns private trace extraction. | c0fe /079 /37eb |
+
 Safety: Historical cleanup, graph and publication denials stand. Managers write boards, briefs and shared reports; workers own product changes.
 Delivery legacy subset: Keep transcriptAssociateCapture.ts and its unchanged 397-line, 40-assertion test, plus required helpers, under D31.
 Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-handoff-0029.md), [image review](/home/user/timeline-hub/hub/design/app-A2-image-created-review-0133.md), [A4 cut map](/home/user/timeline-hub/hub/design/app-A4-current-cut-census-0042.md).
