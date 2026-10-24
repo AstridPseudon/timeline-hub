@@ -215,10 +215,70 @@ def test_real_parked_process_inspection_preserves_identity_guards(resident_host,
         handle.state["process_birth_id"] = birth
 
 
+def _assert_pre_activation_claim_denied(daemon, task_id, target, capability_id):
+    """Enabled registration and placement cannot replace resident acceptance."""
+    executor_id = "pre-activation-probe"
+    token, _path = daemon.credentials.provision(
+        executor_id, list(host_bootstrap.PACK_HOST_SCOPES), enabled=True,
+        metadata={
+            "execution_binding": {
+                "actual": target, "executor_incarnation": "unaccepted-incarnation",
+                "verification": {"method": "credential_claim", "verified": True,
+                                 "evidence_digest": "sha256:" + "1" * 64},
+            },
+            "qualified_activation": {"task_id": task_id, "activation_id": "unaccepted"},
+        },
+    )
+    client = RuntimeProtocolClient(daemon.endpoint, token)
+    client._authenticate_worker(executor_id)
+    client.generated.register_executor({
+        "executor_id": executor_id, "capabilities": [capability_id],
+        "max_concurrency": 1, "runtime_epoch": client.health().runtime_epoch,
+    }, idempotency_key="pre-activation-registration")
+    assert daemon.service.executor_observation(executor_id, identity=OWNER)["executor_id"] == executor_id
+    assert daemon.service._latest_remote_activation(task_id) is None
+    assert daemon.service.store.conn.execute(
+        "SELECT COUNT(*) FROM attempts WHERE task_id=?", (task_id,),
+    ).fetchone()[0] == 0
+    denied = client.claim_next(executor_id=executor_id, capability_ids=[capability_id],
+                               idempotency_key="precommit-claim", target=target)
+    assert denied.waiting_reason == "remote_activation_missing"
+    assert getattr(denied, "attempt_id", None) is None
+    assert daemon.service.task(task_id)["task"]["status"] == "queued"
+    assert daemon.service.store.conn.execute(
+        "SELECT COUNT(*) FROM attempts WHERE task_id=?", (task_id,),
+    ).fetchone()[0] == 0
+
+
+def test_enabled_registered_worker_cannot_claim_before_activation(real_runtime):
+    """Exercise the refusal without launching an external host or accepting anything."""
+    daemon = real_runtime()
+    try:
+        service = daemon.service
+        capability_id = "cpu.activation"
+        capability_digest = "sha256:" + hashlib.sha256(capability_id.encode()).hexdigest()
+        service.register_capability({"capability_id": capability_id, "definition_digest": capability_digest})
+        project = service.create_project({"slug": "pre-activation", "name": "Pre-activation"},
+                                         idempotency_key="pre-activation-project")
+        target = {"kind": "machine", "id": socket.gethostname()}
+        task_id = service.create_task({
+            "project": project["id"], "capability_id": capability_id,
+            "capability_digest": capability_digest, "input_object_ids": [], "spec": {"inputs": {}},
+            "execution_request": {"schema_version": 1, "target": target},
+            "idempotency_key": "pre-activation-task",
+        }, enforce_readiness=True)["task"]["id"]
+        _assert_pre_activation_claim_denied(daemon, task_id, target, capability_id)
+    finally:
+        daemon.stop()
+
+
 @pytest.mark.parametrize("lost_reply", [False, True])
 def test_bootstrap_register_observe_commit_and_same_incarnation_recovery(resident_host, monkeypatch, lost_reply):
     """Resident acceptance is committed over the private channel while the credential is still disabled."""
     witness = resident_host
+    _assert_pre_activation_claim_denied(witness.daemon, witness.task_id,
+                                       witness.reference.effective_target,
+                                       witness.reference.capability_identity.capability_id)
     parked = witness.launcher.park(witness.reference, target=witness.reference.effective_target)
     events = []
     acknowledge = witness.preparer.acknowledge
@@ -250,17 +310,8 @@ def test_bootstrap_register_observe_commit_and_same_incarnation_recovery(residen
 
     def ready(handle):
         observation = observe_ready(handle)
-        if witness.service._latest_remote_activation(witness.task_id) is None:
-            client = RuntimeProtocolClient(witness.daemon.endpoint, witness.daemon.worker_credential_path.read_text().strip())
-            client._authenticate_worker(witness.reference.executor_id)
-            denied = client.claim_next(executor_id=witness.reference.executor_id,
-                                       capability_ids=[witness.reference.capability_identity.capability_id],
-                                       idempotency_key="precommit-claim", target=witness.reference.effective_target)
-            assert denied.waiting_reason == "remote_activation_missing"
-            assert getattr(denied, "attempt_id", None) is None
-            assert witness.service.task(witness.task_id)["task"]["status"] == "queued"
-            events.append("enabled_registered_observed_claim_denied")
-        assert events[-1] in {"acknowledged", "enabled_registered_observed_claim_denied"}
+        assert witness.service._latest_remote_activation(witness.task_id) is not None
+        assert events[-1] == "acknowledged"
         # Only after the private ACK does Runtime enable the credential the host registers with.
         RuntimeProtocolClient(witness.daemon.endpoint, witness.daemon.worker_credential_path.read_text().strip()
                               )._authenticate_worker(witness.reference.executor_id)
@@ -390,18 +441,23 @@ def test_abort_preserves_primary_failure_without_signaling_after_failed_identity
         "test-operation", "test-channel",
     )
     preparer._handle = handle
+    ready_path = Path(handle.state["ready_file"])
+    ready_path.write_text(json.dumps({"pid": process.pid,
+                                     "process_birth_id": handle.state["process_birth_id"]}))
+    assert ready_path.exists()
     observed = []
-    original_identity = host_bootstrap._parked_host_identity_matches
+    terminate_group = host_bootstrap.terminate_group
     original_kill = os.kill
 
-    def failed_identity(state):
-        assert state["pid"] == process.pid and process.poll() is None
+    def failed_identity(retained):
+        # Abort delegates authority to this retained handle, not a fresh PID lookup.
+        assert retained is process and handle.state["pid"] == process.pid and process.poll() is None
         observed.append("identity")
         if child_exits:
             process.stdin.close()
             assert process.wait(timeout=3) == 0
-            return original_identity(state)
-        return False
+            return terminate_group(retained)
+        raise host_bootstrap.CleanupUncertainError("host process tree cannot be verified safely")
 
     def forbidden_signal(*args, **kwargs):
         observed.append("signal")
@@ -414,9 +470,10 @@ def test_abort_preserves_primary_failure_without_signaling_after_failed_identity
 
     try:
         with monkeypatch.context() as patch:
-            patch.setattr(host_bootstrap, "_parked_host_identity_matches", failed_identity)
+            patch.setattr(host_bootstrap, "terminate_group", failed_identity)
             patch.setattr(os, "kill", observe_without_signaling)
             patch.setattr(os, "killpg", forbidden_signal)
+            patch.setattr(process._astrid_custody, "signal", forbidden_signal)
             if has_primary:
                 with pytest.raises(OSError) as caught:
                     try:
@@ -428,19 +485,20 @@ def test_abort_preserves_primary_failure_without_signaling_after_failed_identity
             elif child_exits:
                 preparer.abort(handle)
             else:
-                with pytest.raises(host_bootstrap.PackHostBootstrapError) as caught:
+                with pytest.raises(host_bootstrap.CleanupUncertainError) as caught:
                     preparer.abort(handle)
                 assert caught.value is handle.cleanup_error
         if child_exits:
             assert handle.cleanup_error is None
             assert primary.__cause__ is None
         else:
-            assert isinstance(handle.cleanup_error, host_bootstrap.PackHostBootstrapError)
+            assert isinstance(handle.cleanup_error, host_bootstrap.CleanupUncertainError)
             assert "cannot be verified safely" in str(handle.cleanup_error)
             if has_primary:
                 assert handle.cleanup_error is primary.__cause__
         assert observed == ["identity"]
-        assert not Path(handle.state["ready_file"]).exists()
+        assert ready_path.exists() == (not child_exits)
+        assert handle.aborted == child_exits
         assert (process.poll() is not None) == child_exits
     finally:
         if not process.stdin.closed:

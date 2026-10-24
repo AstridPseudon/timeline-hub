@@ -3636,7 +3636,7 @@ def test_materialization_pending_writes_consume_capacity(world, monkeypatch):
             assert not (b.output_root / "child-outputs" / rows[1]["association_id"]).exists()
         finally:
             release.set()
-        assert future.result()["output"] == rows[0]
+        assert future.result(timeout=5)["output"] == rows[0]
 
 
 @pytest.mark.parametrize("component", ["attempt", "output", "namespace", "association", "source"])
