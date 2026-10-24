@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T16:25:03Z | dispatcher heartbeat 13s | live 4 (sol 0, luna 4, other 0) | busy30 14 | status age 3m -->
-# app board, 2026-10-24T16:16Z
+<!-- app | 2026-10-24T16:29:11Z | dispatcher heartbeat 15s | live 5 (sol 0, luna 5, other 0) | busy30 16 | status age 0m -->
+# app board, 2026-10-24T16:26Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -15,7 +15,7 @@
 | A4 | Reachable executor retirement | Luna; review | Historical P1 GO | merged | Census0438; review0444 | Zero reachable legacy film writers; live controls retained. | c0fe889944 |
 | A4-D52 | Proven dormant deletions | Luna; review | Current caller census | merged | Authors1118/1210; reviews1121/1232 | Parent/track and exclusive transcript pairs deleted;85/50live neighbors/types PASS. Live session restored. | 2e3c8f/cca3deb |
 | P1 | Historical mixed chain | Service; independent Luna | Historical tuple | merged | Actual18792; reviews0036/0040 | Historical GO only; current control13564 failed initial split. | Appf8;Agent787;Runtime2a9 |
-| P2 | Eight original core gestures | Service; independent Luna | D66 amended16:13 | doing | Actual25943 | Submitted16:13:26currentintegration through plainlauncher. All8 CORE; sameIDwait. | App1540b3f12e |
+| P2 | Eight original core gestures | Service; independent Luna | D66 amended 16:13 | review | Actual25943; verdict1625 | Exit 1 in 463 seconds: readiness PASS; originals 0 PASS, 3 FAIL, 5 NOTRUN. | App1540b3f12e |
 | P3 | Original Gate5 journey | Service; independent Luna | D66 amended 16:13 | review | Actual10033; verdict1620 | Exit 1 in 286 seconds. Readiness PASS; original fails authoritative history precondition. | App1540b3f12e |
 | P2-core | Classify all eight gestures | Luna; decision | D55b | merged | Worker1222; accepted12:40 | All8 CORE; no behavior cut. | Report only |
 | P2-diagnostic | Retained lifecycle and Apply sampler | Sol; review | Actual serialized Apply | merged | Authors1214/1309; reviews1235/1315 |28diagnostic and97mounted controls,types/lint PASS; strict original cases retained. | fbf5bfe/971a29 |
@@ -40,25 +40,34 @@
 
 | P1-fix-review | Review exact current contract fix | Luna | Author4349PASS | merged | app-P1-current-contract-review-1605 | IndependentPASS227+77tests,types/lint; failclosedunknowns and full authoritative accepted envelope preserved. | 4349ad6ec1 |
 
-| U3-D69 | Audit missing and weakened upstream tests | Luna | D69 current3881 | doing | app-U3-D69-reverse-test-audit-1608 | Reverse diff and assertion audit; actual decisions or restoration needs. Does not block gates. | Current integration |
+| U3-D69 | Audit missing and weakened upstream tests | Luna | D69 current3881 | merged | app-U3-D69-reverse-test-audit-1608 | 1343 upstream paths: 1284 exact, 57 changed, 2 missing. Affected cases: 1403 clear, 67 cited, 4 restore needed. | Current integration |
 
 | P1-changed-run | Current split admission control | App service; Luna verdict | Core fix 1540 home | merged | Actual26312; verdict1616 | PASSexit0/237s:readiness1PASS,original2PASS. Independent1616 PASS: manifest, XML and original hashes. Pair already running. | App1540b3f12e |
 
 | P1-green-verdict | Review same current green26312 | Luna | Exact terminal26312 | merged | app-P1-26312-current-verdict-1616 | PASS: readiness 1, originals 2; same App tree and hashes. Reused 304 source checks. | App1540/treea3b3 |
 
-| P3-history | Repair exact history precondition | Luna | Actual 10033 failure | doing | app-P3-history-precondition-1620 | Sole author checks actual history and D62 contract. Original Gate5 body stays unchanged. | Base 1540 |
-| P3-current-verdict | Judge 10033 and challenge path | Luna | Same-ID terminal facts | doing | app-P3-10033-verdict-path-1620 | Independent manifest/XML verdict and client-to-server comparison with passing P1. | Read only |
-| P2-element-current | Repair current element failure | Luna | Completed first case 25943 | doing | app-P2-element-current-cause-1620 | Exact failed assertion pending; declaration 398 is not treated as assertion. Remaining tour active. | Base 1540 |
-| P2-element-path | Challenge mounted element path | Luna | Repeated gate failure | doing | app-P2-element-whole-path-1621 | Independent source comparison with passing P1; no second private collector. | Read only |
+| P3-history | Repair exact history precondition | Luna | Actual 10033 failure | review | app-P3-history-precondition-1620 | Added exact ABI 2 and wrong-ABI control; author tests/types/lint PASS. Independent 1626 active. | Base 1540 |
+| P3-current-verdict | Judge 10033 and challenge path | Luna | Same-ID terminal facts | merged | app-P3-10033-verdict-path-1620 | NO-GO. Exact history oracle omits authenticated recorder_abi 2; reset/retry/restart/undo unreached. | Read only |
+| P2-element-current | Classify current element failure | Luna | Completed first case 25943 | blocked:runtime | app-P2-element-current-cause-1620 | UI applied check fails at 412 after 5 seconds; valid request pending at teardown. 187 mounted and 31 diagnostic controls PASS. No App fix proven. | Base 1540 |
+| P2-element-path | Challenge mounted element path | Luna | Repeated gate failure | merged | app-P2-element-whole-path-1621 | Request starts; retained diagnostic remains pending through teardown. No terminal response or backend cause proven. | Read only |
+
+| P2-current-verdict | Judge exact tour 25943 | Luna | Same-ID terminal | merged | app-P2-25943-verdict-1625 | Separate three failed cases from five NOTRUN. Plain manifest/XML and original hashes. | Read only |
+| P2-parent-reads | Preserve exact declared history reads | Luna | Current parent failure 550 | doing | app-P2-parent-history-reads-1625 | Compare submitted reads with authenticated history; keep strict absence and equality checks. | Base 1540 |
+| P2-popup-runtime | Fix physical observation refusal | Runtime owner | Current ADD 422 | blocked:runtime | Peer app 1625 sent | Genuine ADD returns invalid_records: intermediate command lacks authenticated physical observation. No guard waiver. | Agent9502/Runtime8b32 |
+| P3-history-review | Review strict authenticated ABI oracle | Luna | Author 1620 PASS | review | app-P3-history-review-1626 | Check ABI 2 authority, wrong/missing ABI negatives and original Gate5 body. | Author branch |
+| D69-placement | Restore two upstream placement cases | Luna | Reverse audit 1608 | doing | app-U3-D69-placement-restore-1625 | Restore exact upstream bodies; fix caused product failures within C0 or report concrete conflict. | Frozen upstream3881 |
+| D69-fullscreen | Restore upstream fullscreen assertions | Luna | Reverse audit 1608 | doing | app-U3-D69-fullscreen-restore-1626 | Restore shell portal and Escape assertions; preserve additional current cases. | Frozen upstream3881 |
+| D69-voice | Restore gated upstream voice matrix | Luna | Reverse audit 1608 | doing | app-U3-D69-voice-restore-1626 | Dispatched immediately when P2 verdict finished. Qualify existing voice decision before restoration. | Frozen upstream3881 |
 
 Integration: App1540b3f12ebde61c56a19be9089af2b2f2917e6c, tree a3b3b97851cacbb1515df36fdb779d42b15dc631. Normalmerge tree equals reviewed4349;304focusedtests/types/lint retained by exactidentity. Includes frozen upstream3881,D62normalclient,D65manifest/schema and D66plainlauncher. P1actualmanifest Agent9502/Runtime8b32/schema867f;1553vendor proof retains5777 exactclient mappings. Each newrun records its actualsourceversions. Normal14consumer mappings exact. All6 original spec hashes unchanged.
 
-live 5 / cap 6; ready-undispatched 0. Dispatcher reports 4 Luna workers; independent element path 1621 queued now. P1 verdict PASS; P2 still active and P3 terminal.
+live 5 / cap 6; ready-undispatched 0. Dispatcher element author finished without source change; five Luna authors/reviewer remain. Element and popup handler needs sent to Runtime; no unassigned ready App work.
 
 core open:9 activecurrentgesturecases (8P2+1P3). Current P1 original 2 PASS and independent 1616 PASS; current P1 GO at recorded tuple. All8P2 CORE;historicalP1GOretainsrecordedscope.
 regressions:0 confirmed open at qualifiedsource: stale D62admission fixed1540,independent304controlsPASS and exacthome tree. Installer regression CLOSED by integrated2+4+2PASS. Actual changedP1 stillpending.
 
-Blockers: App — P3 10033 fails exact history precondition; author and independent path/verdict 1620 active. P2 25943 still running; element author and independent path 1620/1621 active.
+Blockers: App — Parent reads oracle 1625 and P3 history review 1626 active; D69 restoration rows active. Current P1 GO; P2/P3 retain exact NO-GO.
+Blockers: Runtime — Popup ADD 422 physical-observation refusal (peer1625) and element request pending at teardown (peer1629). Backend defect not inferred from pending. Existing owner requested.
 
 Historical signals:11933 exited1/469s,0PASS3FAIL5NOTRUN. Native/history/readinessPASS; element terminal outcomeUNKNOWN. P33896 reached predecessor/reset,Aacceptance,ACKloss and exactAretry;B/restart/undo tailNOTRUN.12541/1689 and26414 are source/launch preflight failures with originalsNOTRUN. No historical signal is relabeled finalGO.
 
@@ -72,4 +81,4 @@ Disk: About11GB free; sweep3 in progress; eligible finished clean nonKEEP worktr
 Evidence: [current composed qualification](../../design/app-F-current-join-proof-1553.md), [current P1 manifest](../../tests/app-D66-plain-stack-sol-1528-d66-plain-p1-three-products-1024154715-13564/d66/manifest.json), [current P1 JUnit](../../tests/app-D66-plain-stack-sol-1528-d66-plain-p1-three-products-1024154715-13564/d66/p1.xml), [all8core](../../design/app-P2-core-classification-1222.md), [current source proof](../../design/app-P2-P3-e68-current-pure-target-1409.md).
 
 Inbox consumed through1557536bytes including lead16:13amendedD66,Agent1556 and D69. Runtime/Agent boards checked: normalD62consumer homes complete; Agent owns remaining inverse/create_empty core2. Runtime core0 source; final cut remains open. No cross-lane source/adoption wait remains.
-Next ready: wait SAMEP126312/P225943/P310033;on terminaldispatch independentverdictpergate and exact demonstratedrepair. ConsumeD69audit and dispatch restorationneeds;no duplicateoriginals.
+Next ready: consume current authors/reviews and merge qualified fixes. Request changed originals only after actual repair; retain same completed IDs and verdicts.
