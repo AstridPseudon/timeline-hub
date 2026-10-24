@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T02:42:53Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 7m -->
-# viewing board, 2026-10-24T02:35:08Z
+<!-- viewing | 2026-10-24T02:44:19Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# viewing board, 2026-10-24T02:43:53Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -29,7 +29,7 @@
 | DB-composition-dry | Fresh clone delivery dry run | Luna high | Orchestrator request | merged | First return 0757 and review 0802 | All 120 source files, controlled archive payload, registry, types and callers independently passed. | source 635f4de06 |
 | DB-composition-template | Repair missing delivery template | Luna high | Required README template | merged | Template 0749 and review 0751 | Template-only repair and delivery retry passed. No ZIP credit. | source 635f4de06 |
 | F-D22-geometry | Attribute three geometry failures | Luna author and review | Agent request | merged | Cause 1520 and closure 1532 | Read-only attribution passed. Agent merged expectation adaptation; integrated original three passed. No Composition change. | Agent 98ef2f9c9 |
-| F-authoring-ABA | Repair repeated authenticated track captures | Sol author and Luna review | Agent undo repair and live proof | blocked:agent | agt-F-ABA-inverse-cause-sol-0227 | Source 87 controls and oracle review 0224 passed. Original service 141 failed at undo; no ABA behavior pass. | source 61d53; oracle c70c4665b2 |
+| F-authoring-ABA | Complete authenticated undo capture and projection | Sol author and Luna review | Agent assignment or projection repair | blocked:agent | Agent author pending; Viewing capacity note 0244 | Cause 0227 complete: exact baseline restored offline, but private capture and parent projection fail. Original service 141 remains failed. | source 61d53; oracle c70c4665b2 |
 | F-D32-render-wire | Classify six missing SDK result files | Luna author and review | Agent qualified installed child | merged | Viewing 0116 and 0117; service 27934 | Agent reports six original cases passed in 41.48 seconds on child c886 and Runtime 8ea. Source classification independently passed. | no product change |
 
 
@@ -47,8 +47,8 @@ F-D32-render-wire classification and owner qualification are complete. [Author 0
 
 Historical recycle permission refusals remain parked under viewing-20261023T002713Z-recycle-b70-permission-refusal.md. No retry or alternate deletion.
 
-Blockers: F-authoring-ABA waits for Agent Sol 0227 to diagnose the original service 141 undo failure and qualify the live behavior.
-Next ready: none. Agent Sol 0227 owns the inverse private-proof failure; no duplicate Viewing source or live run.
+Blockers: F-authoring-ABA awaits Agent author assignment or a reviewed projection repair; Viewing offered its available capacity in peer 0244.
+Next ready: none assigned. Dispatch F-authoring-ABA here if Agent transfers the ready projection repair; otherwise retain its unique home author.
 
 
 
@@ -56,6 +56,6 @@ Next ready: none. Agent Sol 0227 owns the inverse private-proof failure; no dupl
 
 Earlier ABA attempts, before the reviewed oracle correction: Agent integrated proof 0150 on bc38 passed 87 controls and failed the original at the hold before-value assertion. Independent boundary review 0154 found that trusted setup, authenticated base and request used 0.9 while the stale expectation used 1.8. Later reload, undo, retry and ABA did not run. Oracle 0200 then stopped on a missing checkout key; first return 0204 also stopped before behavior because the public checkout lacks the proposed nested revision field. Agent board 02:08:00 assigns Sol agt-F-ABA-oracle-sol-0208 to trace the authenticated canonical mapping and retain all 52 predicates. No new live pass or provider defect is claimed. [Original integrated report](/home/user/timeline-hub/hub/design/agent-F-ABA-integrated-0150.md), [independent attribution](/home/user/timeline-hub/hub/design/agent-F-ABA-boundary-review-0154.md), [first oracle](/home/user/timeline-hub/hub/design/agent-F-ABA-oracle-0200.md), [first return](/home/user/timeline-hub/hub/design/agent-F-ABA-oracle-return-0204.md).
 
-Current pass 2026-10-24T02:35:08Z: Read PLAN first, then common rules, new INBOX items and BOARD-HEADER. Rechecked all 1,288 Viewing workers; none is running and all six current workers already have independent review and owner handback. Agent board 02:28:00 still assigns the original service 141 undo failure to Sol agt-F-ABA-inverse-cause-sol-0227. No new Viewing assignment or failover row is ready. Oracle 0208 and independent 0224 have cleared the harness blocker; original ABA behavior remains unqualified. Donor source request is superseded by reviewed current port 61d53/home 13d42. Dispatcher and hub sync are fresh. Free disk is 15,337,033,728 bytes, above target. Historical recycling refusals stay parked; no retry or alternate deletion. No new source, test run, packaging or pin change. Continue the monitoring interval and consume any explicit new assignment or Agent qualification.
+Current pass 2026-10-24T02:43:53Z: Rechecked INBOX, header, owner board, reports and local health during the monitoring interval. Agent board 02:39:24 now marks F-authoring-ABA ready, waiting for its four-worker throttle. Sol cause 0227 completed a read-only diagnosis: retained undo restores the exact baseline offline, but supplies zero private captures; capture alone still has a parent projection mismatch. Its 34 controls and 11 corruption refusals passed. This is source classification, not an original behavior pass. Viewing offered its idle capacity through [peer 0244](../../design/peer-viewing-to-agent-20261024T0244-ABA-ready-capacity.md), requesting unique row assignment and non-overlapping scope before any author starts. No duplicate source or live run is dispatched. Original service 141 remains failed. Local disk is above target; historical refusals stay parked.
 
-Current oracle evidence: [author 0208](/home/user/timeline-hub/hub/design/agt-F-ABA-oracle-sol-0208.md), [independent PASS 0224](/home/user/timeline-hub/hub/design/agt-F-ABA-oracle-review-0224.md), and [harness candidate 0224](/home/user/timeline-hub/hub/design/agt-OPS-ABA-suite-0224.md). The [Agent board](/home/user/timeline-hub/hub/status/agent.md) records original service 141 failed at undo and assigns Sol 0227. The original behavior remains unqualified.
+Current oracle evidence: [author 0208](/home/user/timeline-hub/hub/design/agt-F-ABA-oracle-sol-0208.md), [independent PASS 0224](/home/user/timeline-hub/hub/design/agt-F-ABA-oracle-review-0224.md), and [harness candidate 0224](/home/user/timeline-hub/hub/design/agt-OPS-ABA-suite-0224.md). The [Agent board](/home/user/timeline-hub/hub/status/agent.md) records original service 141 failed at undo. [Cause 0227](/home/user/timeline-hub/hub/design/agt-F-ABA-inverse-cause-sol-0227.md) is complete; a projection implementation is ready and waiting for an author slot. The original behavior remains unqualified.

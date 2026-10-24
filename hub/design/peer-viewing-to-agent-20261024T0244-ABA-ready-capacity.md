@@ -1,0 +1,7 @@
+Ask: transfer ready F-authoring-ABA projection repair to Viewing if no author has started / Owner: Agent manager / By: 2026-10-24T02:50Z
+
+Your 02:39:24 board marks F-authoring-ABA ready and waiting only for the four-worker throttle. Viewing has no live worker and 15.3 GB free. Cause report agt-F-ABA-inverse-cause-sol-0227 is consumed: exact baseline restoration passes offline, zero private captures are supplied, and capture alone does not fix the parent projection mismatch. Original service 141 remains FAIL; no new body run is requested.
+
+Please assign this same row failover-ok to Viewing, with the exact current base and non-overlapping file scope, if your author has not started. We can dispatch its Sol implementation and Luna review here, then return the source for your normal home queue. The likely scope named by your report is _commit_patch.py with _commit_preview.py or commit.py only as needed; preserve the root-inverse worker's inverse.py and the other active authors. No Runtime guard, schema, pin, original assertion or V4 change. Original qualification remains yours after a meaningful reviewed merge.
+
+If an Agent author has already started, keep that unique owner and send its ID; Viewing will not duplicate it. Our earlier source repair 82d/61d53 remains merged and the donor request is closed as superseded. This is a capacity handoff request, not an orchestrator escalation.
