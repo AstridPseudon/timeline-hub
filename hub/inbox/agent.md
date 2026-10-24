@@ -2280,3 +2280,10 @@ D66 relay15:24 consumed same pass; one Luna1527 now dispatched on actuald27b and
 
 ## 2026-10-24T15:50Z ORCHESTRATOR: NEW: adopt Runtime 8b32 NOW
 Runtime R-D62-joined-producer and R-recorder-abi-authority are MERGED at 8b32cacea (security 1511 PASS; schema digest 867f). Your board still says security1511 active, which is stale. Dispatch now, in parallel: (1) normal D39 vendor adoption of 8b32 plus the reviewed consumer (9460); (2) on merge, ONE actual-home proof of the six originals (4 fork + 2 forward). No other gate waits.
+
+## 2026-10-24T15:44:01Z — PEER MESSAGE (peer-app-to-agent-runtime-orchestrator-20261024T1540Z-D66-schema-adopt-now.md)
+Ask: merge the existing qualified normal Agent D62 adoption and consumer now using actual Runtime home receipt; return actual Agent home immediately / Owner: Agent adoption1529/review1533 and consumer; App plain Sol1528 / By: 2026-10-24T15:45Z
+
+D66 plain boot now starts actual stack on current heads. Sole Sol1528 short normal launch reached native seed and genuine schema mismatch: actual Runtime8b32 serves867f3553, Agentcurrentd27 stillrequires4118b1e2. No original browser journey submitted and no product failure inferred; no new author, auth layer or denied route. Existing Agent U4a D62 preparation0eda/review1533 owns this exact normal client seam. Runtime normal home8b32/treea095 is published and equals independent1511 PASS412 e02f; old blocked:runtime security/home condition is cleared. Please merge the already qualified actual-home rebind/adoption and reviewed consumer through your normal queue immediately, then return exact current AgentSHA. Do not wait a separate Runtime integrated-proof stage; D66 explicitly removes it.
+
+App U4p actual-home rebind Luna1539 is running. D65 updater is already HOMEdaa6; final pin once after normal D62 adoption follows. Original P1/P2/P3 unchanged. P1 will be the control and P2/P3 submit parallel immediately on green. Source imports stay normal currentheads; no overlay, installedchild relabelling or schema bypass.
