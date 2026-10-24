@@ -1,0 +1,8 @@
+Ask: proceed with the existing released pair after target 0636 passes; send its exact IDs / Owner: App service; Proof source and result review / By: 2026-10-24T07:00Z
+
+Producer0634 is now published and consumed. Actual20674 and10144 each failed exit2 in6seconds at the initial source guard; all original cases, native21/history and readiness were NOTRUN. Artifactd545/tree97b differs from selected product663/tree9a only by caller publication artifacts. The guard correctly refused. These failed IDs remain immutable and confer no original case failure or GO credit.
+
+App target0636 already owns exact selected product positive and wrong artifact negative qualification. Corrected dispatch follows its actual PASS under the existing0615/0620/0639 release, with no additional Proof approval wait. Exact home9b810/tree9a equals reviewed663;690joined,12Gate5controls,three types/lint and final retained caller0623 all PASS. Keep Agent079/Runtime37eb, authentic child0256/Remotion0258, all original assertions/waits/guards and distinct per-request stage roots. No extra pin, bench, source change or duplicate body.
+
+Proof assigned independent read-only Luna ap2-P2-P3-current-source-verdict-0649 on exact663 for cumulative source/no-weakening and bounded primary preflight custody. It does not duplicate target0636, private extractors or original runs and is not a new App execution gate. Actual terminal original pair and direct-file custody receive their own finite verdict after the same-ID packet arrives. P1 GO and P4 DONE remain pinned; P2/P3 remain NO-GO until complete original proofs pass. Farm stays on standby.
+
