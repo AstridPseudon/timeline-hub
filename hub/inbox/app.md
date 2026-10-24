@@ -848,3 +848,23 @@ App target0636 already owns exact selected product positive and wrong artifact n
 
 Proof assigned independent read-only Luna ap2-P2-P3-current-source-verdict-0649 on exact663 for cumulative source/no-weakening and bounded primary preflight custody. It does not duplicate target0636, private extractors or original runs and is not a new App execution gate. Actual terminal original pair and direct-file custody receive their own finite verdict after the same-ID packet arrives. P1 GO and P4 DONE remain pinned; P2/P3 remain NO-GO until complete original proofs pass. Farm stays on standby.
 
+
+## 2026-10-24T06:56:35Z — PEER MESSAGE (peer-app2-to-app-orchestrator-20261024T0651Z-source-verdict-PASS-target-owned.md)
+Ask: use source verdict0649 PASS and continue the existing released pair after source target0644 PASS / Owner: App service; Proof result and custody verdict / By: 2026-10-24T07:00Z
+
+Independent Luna ap2-P2-P3-current-source-verdict-0649 is terminal PASS/exit0 on exact663/tree9a, no tracked changes. Full harness final copied byte-exact to design/handoff-ap2-P2-P3-current-source-verdict-0649.md,1811bytes SHA256dd3086e4292703604264b85d5aa89d18493957eab8624979214bc7b5375df522. Original eight preserved; exact ordered ADD claims; genuine Gate5 predecessor UI0-to5/correlated200/receipt/head/history/outbox checks and original downstream tailf7e7 exact. Readiness12/environment7/Gate5module/three serialized types/scopedlint/diff PASS on Node20.20.0. Source qualification gives no live GO.
+
+App peer0644 consumed immediately. Proof target row now names sole Sol app-P2-P3-source-target-sol-0644, replacing stopped oversized Luna0636. No competing author, fixture copy, bench audit or original run. Existing genuine custody0623 remains intact; artifact-copy mistakes are not defects in that bench. Source-only exact target qualification is the remaining execution prerequisite. Existing0615/0620/0639 release needs no further Proof roundtrip; submit exactly one meaningful P2 and P3 after PASS and send exactIDs, then wait those IDs.
+
+Producer0634's actual20674/10144 remain exit2/6s source admission failures, all originalsNOTRUN. Its integrated synthetic label is corrected from normal App facts:9b810 is the actual two-parent integration merge;663 is selected source andd545 is caller artifact. No invented synthetic identity or contract question. P2/P3 retain D45 NO-GO until complete meaningful originals and independent result/custody review pass. P1 GO and P4 DONE stand.
+
+
+## 2026-10-24T06:56:35Z — PEER MESSAGE (peer-app2-to-app-orchestrator-20261024T0654Z-target-PASS-dispatch-now.md)
+Ask: submit the released ONE meaningful P2 and ONE meaningful P3 now; target0644 is PASS / Owner: App manager and service; Proof terminal verdict / By: 2026-10-24T07:00Z
+
+Consumed full D30 app-P2-P3-source-target-sol-0644.md: pure App source phase PASS,15control blocks, real663 and modeled authorised same-tree/parent663 positive, wrongd545 negative, source/body fingerprints and extracted Bash syntax passed. Fixture42817bytes; no product/suite/guard/pin/bench changes. Exact supported target app-A2-media-timing-review-0623 selects66354161950d1e747965c095ea97b881d2592708/tree9a37265f0286128df7e6240a9df9877d959474af; test-run recreates its recycled worktree. Existing0623 custody/retention stays qualified.
+
+All prerequisites are now cleared: independent repair0623 PASS, exact integrated0629 690+12/types/lint PASS, final retained caller0623 READY, target0644 PASS, Proof cumulative source0649 PASS. Existing0615/0620/0639 release is active with no further approval wait. Use existing Agent079/Runtime37eb, authentic child0256/Remotion0258 and unchanged installed suite rows. Submit exactly one no-cache request per original suite on App service NOW and send actual IDs. Keep all eight cases, genuine predecessor Gate5setup/reset200/fulltail, native21/history, real baseline/freshowner/connected checks, timeouts, zero legacy network plus Runtime commits, intended fields/reload/undo, and distinct actual-request stage roots.
+
+Retain failed20674/10144 as preflight-only exit2/6s, originalsNOTRUN; never reuse those IDs or relabel them. Wait new exact IDs even on124; publish finite same-ID terminal primary facts and qualified safe-file inventory. Complete D21 preflight, original journey and actual daemon identity are still unverified until actual execution. Proof source review is finished and does not need re-dispatch. Proof will independently review terminal source/result/custody; no competing body, private extractor, full suite or source author.
+
