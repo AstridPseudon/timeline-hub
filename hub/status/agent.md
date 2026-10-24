@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T07:50:25Z | dispatcher heartbeat 12s | live 3 (sol 2, luna 1, other 0) | busy30 28 | status age 1m -->
+<!-- agent | 2026-10-24T07:52:56Z | dispatcher heartbeat 6s | live 6 (sol 3, luna 3, other 0) | busy30 30 | status age 1m -->
 # agent board, 2026-10-24T07:48:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -108,11 +108,11 @@
 | U2 managed row | Bind exact136 tests through normal snapshot service | Luna | Correct row and independent review | doing | Row0738; service23062; return0747 | Service stopped before tests: literal HEAD guard rejected normal snapshot. First fix preserves exact tree, source parent and all hashes. | No body ran |
 | U2 HARD review | Independently review cumulative freeze repairs | Sol | Three fixture corrections | review | Sol0738 FAIL; finalrepair0745 | Exact union and productioncustody preserved; effective deadline/claim/abort coverage incomplete. No home merge. | Base5783 |
 | D39 preparation | Adopt final Runtime producer on U2 branch | Luna | Reviewed U2 home and fixture correction | review | Author0738; independent0747 | All15 canonical mappings, Ruff2145 and mypy1902 pass.62 tests pass; one old-route fixture mismatch remains. Schema73 pass. | 91bf2133b9 |
-| F-ABA diagnostics | Migrate six stale diagnostic expectations | Viewing Luna | Qualified Runtime460c published | ready | Viewing peer0740 assigned | Existing test-only ownership; current productca891 and joined review0719 supplied. Original59 assertions unchanged. | No original rerun |
+| F-ABA diagnostics | Migrate six stale diagnostic expectations | Viewing Luna | Qualified Runtime460c published | doing | Viewing diagnostics0744 | Existing test-only ownership active; productca891 independently PASS87. Original59 assertions unchanged. | No original rerun |
 | OPS-wheel artifacts | Qualify genuine lock-authenticated original wheels | Luna | Runtime verifier layout correction | blocked:runtime | Author0733; independent0740 complete | All67 hashes/tags/metadata/RECORD valid; one dotted metadata layout refused. Runtime owns strict verifier correction; no qualified child input. | Lock236d unchanged |
 
 | F-giant rationale | Correct stale freeze source line count | Luna | Independent review and U2 home | review | Port0744; independent0747 | Joined source14330 versus claimed13998; minimal docs correction passes original1. Oldhome14313 candidate superseded. | 8c5ae21fcd |
-| F-farm prior proofs | Repair all96 prior closure references | Luna | Complete independent review | review | Return0742; independent0747 | Author attaches96 prior-qualified scopes and one current docs challenge. Complete80env/1regression/15unknown packet awaits review. | 856de6e3f2 |
+| F-farm prior proofs | Repair all96 prior closure references | Luna | Complete independent review | review | Return0742; independent0747 | Author attaches96 prior-qualified scopes and one current docs challenge. Finalreview0747FAIL:288CSVtuplecells lost; Sol0752 and independentwholepath0752 active. All96 genuine priorproofmemberships verified. | 856de6e3f2 |
 
 | U2 final fixtures | Restore effective refusal and bounded waits | Sol | Second cumulative coverage failure | doing | agt-U2-boundary-final-sol-0745 | Only2testfiles; no productioncustody changes. Three precise findings must clear. | Base5783 |
 | U2 whole path | Audit activation and retained-handle abort | Luna | Independent second-failure investigation | doing | agt-U2-boundary-whole-path-0745 | Read-only path audit compares passingguards; no duplicate source or body. | Base5783 |
@@ -121,6 +121,11 @@
 | D39 independent review | Audit full canonical adoption and limits | Luna | Complete author result | doing | agt-D39-adoption-review-0747 | All15 bytes, schema/client/public exports and source guards challenged. Existing failed fixture body is not repeated. | Base91bf |
 
 | F-count persistence delta | Restore restart, close writer and challenge docs | Sol | Complete exact results published | doing | agt-F-count-persistence-challenge-sol-0750 | Two source-mode originals qualified; current docs failure reopened pending homefix. Full267 census reconciliation; no duplicate credit. | Candidate only |
+
+| U2 snapshot row review | Check real service serialization and snapshot | Luna | Corrected staged row | review | Return0747; independent0752 | Exactsource/directparent snapshot plus treehash; source and Runtimeguardspreserved. No changedrow body yet. | a704b8fb rowhash |
+| D39 fixture review | Verify complete canonical conflict scenario | Luna | Meaningful corrected scenario PASS | review | Author0747; independent0752 | Conformance18 pluscontract9 pass. Alloriginal error/request assertions retained; canonicalclient bytes unchanged. | 82ca21469d |
+| F-farm CSV custody | Restore all96 Farm tuples in CSV | Sol | Second Luna serialization failure | doing | agt-F-farm96-csv-sol-0752 | Only288 losttuplecells; oldFarmtuple and priorproof scopes remain distinct. Full package review follows. | Base856de |
+| F-farm whole path | Audit export to published evidence | Luna | Independent second-failure investigation | doing | agt-F-farm96-whole-path-0752 | Compare passed187packet; no source/body/full or authoroverlap. | Read only |
 
 P1: GO recorded. P4 and P5 done. G5 merged under H24. App and Proof retain P2/P3 ownership.
 Integration: 3f7e63b0cf adds reviewed persistence fixture848b above the exact d566 harness union. Runtime two-original home0733 and result0736 PASS; exact count mapping0750 active, no credit inferred from merge. Harness integrated0706 remains scoped staticPASS.
@@ -137,5 +142,5 @@ D48: Two coverage pieces passed independent0721 review. Joined5783 retains histo
 D39: Runtimebecfe producer and independent0727 source/result PASS consumed. Canonical adoption91bf prepared; independent0747 and exact conflict fixture0747 active. Home merge held for reviewed U2.
 D49 venue: Agent final full on Farm after corrected host setup and a zero-setup-error checkpoint. Fallback is Agent service after dependency-route qualification. Checkpoint 26511 has 187 setup errors; neither venue is yet qualified for final.
 Later: D31/D37 dormant implementations and tests unchanged. V4 and D14/D23 remain cut or deferred. Independent0709 applies D23 to the separate internal a-rocket moved-head restart original; keep it visibly failing. D47 memo stays held.
-Next ready: Seven source/review workers active or queued. Viewing diagnostic worker ID requested; Runtime owns persistence home proof and verifier correction. All independent Agent work dispatched.
+Next ready: Seven source/review workers active or queued. Viewing diagnostic0744 active; Runtime owns persistence home proof and verifier correction. All independent Agent work dispatched.
 Evidence: [upstream draft](../../design/agt-U2-freeze-draft-0651.md), [discovery review](../../design/agt-F-discovery-harness-final-review-0654.md), [generic review](../../design/agt-F-generic-harness-final-review-0654.md), [Farm checkpoint](../../design/farm-agent-full-checkpoint-20261024T0555Z.md).
