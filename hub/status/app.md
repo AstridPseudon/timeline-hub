@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T02:49:49Z | dispatcher heartbeat 1s | live 6 (sol 1, luna 5, other 0) | busy30 23 | status age 0m -->
-# app board, 2026-10-24T02:47Z
+<!-- app | 2026-10-24T02:52:45Z | dispatcher heartbeat 11s | live 5 (sol 1, luna 4, other 0) | busy30 22 | status age 0m -->
+# app board, 2026-10-24T02:52Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -16,11 +16,11 @@
 | A4-dormant-scope | Record dormant raw and track subsets | Luna | D37 applied | merged | app-A4-D37-wording-0222 | Both exact worker records copied into existing App and combined ledgers. Implementations and tests unchanged. | Documentation only |
 | A4-reviewed-stack | Ports and mounted witnesses | Luna | Review 0105 and integrated 0115 PASS | merged | app-A4-mounted-fixture-return-0059 | Independent and integrated 111 plus 33 tests passed on exact93d487. Types/lint passed; mocked authority limit retained. | 93d48799a2 |
 | A2-bootstrap-fix | Restart cancelled bootstrap | Sol; Luna review | Resolved | merged | app-A2-basis-cancel-repro-sol-0029 | [326 tests, three typechecks and lint passed.](/home/user/timeline-hub/hub/design/app-A2-bootstrap-integrated-0046.md) | 804134d747 |
-| readiness-after-bootstrap | Adopt qualified Runtime history fix | Sol; Luna review | D41 compatible backend proof pin | blocked:runtime | rt-R-readiness-backport-2a9-0241 | D41 permits the qualified cost-only backport. App caller controls complete; awaiting exact reviewed source and truthful backend custody. | App 804; Agent 079 |
+| readiness-after-bootstrap | Adopt qualified Runtime history fix | Sol; Luna review | D41 source qualification | blocked:runtime | Runtime 0241; App caller Sol 0250 | Backport 37eb published. Author 144 passed and one old-pin failure; independent source qualification pending. Client bytes match. | Runtime proof pin 37eb6c7bdb |
 | P-door-port-alloc | Allocate door port per run | Luna; D21 | Resolved | merged | app-P2-P3-door-allocation-0039 | [Node 20 allocation, shared stage value and failure checks passed.](/home/user/timeline-hub/hub/design/app-P2-P3-door-allocation-0039.md) | Harness rows only |
 | readiness-upstream-check | Check f38e candidate | Sol; Luna review | Review 0057 PASS | merged | App Sol 0046; Luna 0057 | No census or attempt-root signature supports attribution. Exact patch is unavailable locally; historical cause remains unknown. | Report only |
-| P2 | Eight original gesture cases | App service; Proof verdict | Caller and new backend receipts | doing | Caller Sol 0222 | Prior 10973: exit 2, 189 seconds; all eight NOT RUN. Prepare one changed run with Runtime 45c3; no new request yet. | App 804134d747 |
-| P3 | Original Gate-5 journey | App service; Proof verdict | Caller and new backend receipts | doing | Caller Sol 0222 | Prior 14249: exit 2, 194 seconds; Gate-5 NOT RUN. Prepare changed run alongside P2 with Runtime 45c3; no new request yet. | App 804134d747 |
+| P2 | Eight original gesture cases | App service; Proof verdict | D41 source and actual backend custody | doing | app-readiness-D41-caller-sol-0250 | Prior 10973: exit 2, 189 seconds; all eight NOT RUN. Prepare one changed run with Runtime 45c3; no new request yet. | App 804134d747 |
+| P3 | Original Gate-5 journey | App service; Proof verdict | D41 source and actual backend custody | doing | app-readiness-D41-caller-sol-0250 | Prior 14249: exit 2, 194 seconds; Gate-5 NOT RUN. Prepare changed run alongside P2 with Runtime 45c3; no new request yet. | App 804134d747 |
 | A2-parent-media-closure | Preserve untouched child closure | Sol; Luna review | Resolved | merged | app-A2-parent-media-integrated-0035 | [299 tests, types, lint and external producer passed.](/home/user/timeline-hub/hub/design/app-A2-parent-media-integrated-0035.md) | 1b0428db7d |
 | A2-image-created | Declare genuine image creations | Sol; Luna review | Review 0133 PASS | merged | app-A2-image-created-sol-0126 | Independent 261 tests and producer 28, three types and lint passed. Clip and new authored registry alias claims match provider. Joined proof 0150 passed 448 tests, three types and lint. | b3a84dea71 / 1c5cc47bf6 |
 | A4-image-live | New authenticated image witness | App producer; Agent fixture | Agent boundary classification | doing | Agent witness 0154 | Request reached Runtime before deadline and has an accepted response. A later command-equality assertion failed; reopen and inverse remain unproven. | Fixed 1c5cc47bf6 |
@@ -50,12 +50,12 @@ Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-han
 | A4-protocol-chain | Move six local chain declarations | Luna | Review 0240 FAIL | doing | app-A4-chain-protocol-return-0246 | First return restores all exact recovery and final canonical assertions, reusing the owned A2 guard fix. | Failed branch held |
 | A4-track-label | Move six label protocol declarations | Luna | Review 0240 HOLD | doing | app-A4-label-protocol-return-0246 | First return uses the real clear input and observed remote path. Unmapped literal remove assertions remain unchanged. | Failed branch held |
 | A4-replay-protocol | Move six retained replay declarations | Luna | One-case author PASS 124 tests | review | app-A4-replay-protocol-review-0249 | One faithful replay candidate; five original declarations retained unchanged for missing API mappings. Independent review active. | Branch only |
-| A4-label-refusals | Move six label refusal declarations | Luna | Review 0240 FAIL | doing | app-A4-label-refusal-return-0246 | First return restores genuine ownership and mixed-preview boundaries; unmapped original cases stay unchanged. | Failed branch held |
-| readiness-backend-bench | Exact Runtime 45c3 child and graph receipts | Dispatcher; App caller | D41 compatible backend proof pin | blocked:runtime | Runtime backport 0241; App caller | Old 079/45c3 child remains refused. Exact backport custody will be checked normally; no false old-child/backend claim. | Failed child 0222 |
+| A4-label-refusals | Move six label refusal declarations | Luna | First return 124 tests PASS | review | app-A4-label-refusal-return-review-0252 | Only three equivalent cases moved. Three original ownership, basis and mixed-preview cases restored unchanged; review active. | Return branch only |
+| readiness-backend-bench | Exact Runtime 45c3 child and graph receipts | Dispatcher; App caller | D41 source qualification | blocked:runtime | Runtime backport 0241; App caller Sol 0250 | Backport 37eb read-only checkout requested. Four client files match both Agent 079 and 4151. Actual backend custody still required. | Failed old child 0222 |
 
 Blockers: U3b awaits P2/P3 and the final freeze.
-Blockers: Runtime owns D41 backport 0241 with unchanged client bytes. App needs its exact qualified source and actual backend custody. Agent export remains fallback.
+Blockers: Runtime owns D41 qualification for 37eb: 144 passed and one same-base transcript failure. App caller Sol 0250 is active; no new journey until qualified custody.
 
-Next ready: Merge the qualified owner packet, finish seven basis guards, map remaining protocol cases and consume Agent client adoption handback.
+Next ready: Merge the reviewed current recovery packet, consume protocol return reviews, and bind the qualified D41 source for one changed P2/P3 pair.
 Integration: 78d05b8a36d09c4680d66497e37fa1bb48dbab2e. Exports and lifecycle joined proof passed 108 plus 105 tests, three types, lint and governance. Historical joined proof 0150 remains bound to 1c5cc47bf6.
 Disk: Sweep removed nine old temporary directories and freed 735 MiB. Five finished worker trees were already recycled, freeing 0 GB. Active, pinned, freeze and refused paths retained; prior compact refusal stands.
