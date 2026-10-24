@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T14:12:37Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 7m -->
-# app board, 2026-10-24T14:06Z
+<!-- app | 2026-10-24T14:15:55Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 0m -->
+# app board, 2026-10-24T14:14Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -7,7 +7,7 @@
 | U3b | Merge current upstream editor | Sol; Luna review | D56 merge now | merged | Join1146; review1157 | Normal home equals reviewed5a9ff tree. Upstream snapshot2a288 retained under D51. | d99396bca7 |
 | U3-final | Merge completed upstream once | Luna | D60 exact09c844 | merged | Author1330; net1339; audit1343 | Home tree equals reviewedfe0.56 Node,132 Vitest,366 seams,types/lint PASS;164 tests and579 predicates retained. | d24ed69dcd |
 | U4p | Adopt final D39 client and schema | Sol; Luna review | U3b and producerbecfe | merged | Tool1005; caller1022; review1157 | Normal tools;79 producer and14 consumer artifacts exact. | d99396bca7 |
-| U4p-D60 | Adopt current Runtime provenance | Luna | Runtime e68 HOME | doing | app-U4p-D60-provenance-adoption-1404 | Run normal sync and vendor tools; expected canonical14 files unchanged, source lock provenance advances. | Base d24ed |
+| U4p-D60 | Adopt current Runtime provenance | Luna | Runtime e68 home | merged | Adoption 1404; pure proof 1409 | Normal sync and lock checks pass; 37 vendor tests and 2 schema tests pass. All 14 consumer artifacts unchanged. | be98aac54e |
 | A2 | Production save funnel | Sol; Luna review | C0 and U3 | merged | Authors; integrated1036 | Dependent outbox saves and authoritative reply handling integrated. Final gate remains open. | Current home |
 | A3 | Popup placement element asset saves | Luna; Sol after failures | A2 | merged | Source reviews; joined1036 | Mounted save routes integrated. Popup target source repair and final gesture proof remain. | Current home |
 | A4 | Reachable executor retirement | Luna; independent review | P1 GO | merged | Census0438; review0444 | Zero reachable legacy film writers. Live behavioral controls retained. | c0fe889944 |
@@ -29,13 +29,13 @@
 | P2-bulk-clear | Precheck bulk transition clear | Luna | Current source | merged | app-P2-bulk-transition-precheck-1248 | SOURCE-READY;81 plus27 plus3 pass. Shared receipt issue is now HOME; no source delta. | Report only |
 | P2-placement | Qualify automatic placement receipt joins | Luna; protected review | Own1257 PASS; register HOME | merged | Author1248; review1257 | Case delta118 neighbors PASS; normal merge composed shared register helper. Actual joined proof next. | 6ab5938d34 |
 | P2-element | Qualify real serialized Apply sampler | Luna; custody review | Cumulative1315 PASS | merged | Author1309; review1315 |28 diagnostics,97 mounted, three types/lint PASS. Real serialized callback and receipt case retain strict guards. | 971a29e198 |
-| P2-P3-joined | Qualify refreshed pure target | Luna | Home tree equalsfe0 | merged | Pure1340 PASS; home13:46 | 102 changed-seam PASS; exact reused704/67/79 proof and protected eight plus Gate5. Actual current producers47b/becfe. | d24ed69dcd |
+| P2-P3-joined | Qualify refreshed pure target | Luna | Current App and Runtime | merged | Pure 1409; prior 1340 | App be98 source ready; 67 mounted tests pass on Agent 47b and Runtime e68. Original 8 plus Gate5 listed; prior proofs reused by exact identity. | be98aac54e |
 | P3-D53 | Strict retry accounting and current ledger | Luna; independent review | D53 approved | merged | Author1123; review1126; integrated1143 | 23 controls,three types/lint; observed[A,A],forwarded[A],zeroB. Original reset and tail exact. | 602f8b1f58 |
 | F-caller | Authenticate protected current caller | Luna; Sol base | Review1342 PASS | review | Inventory1337; review1342 | Module PASS51 request and133 reply fields; missing, extra and poisoned types refused. Not installed or integrated. | 50314bcdd0 |
 | F-caller-path | Challenge remaining caller architecture | Independent Luna | Repeated custody review failure | merged | app-F-caller-whole-path-1307 | Three actual guard gaps confirmed; production mounted path structurally PASS. Guidance with Sol1307. | Report only |
 | F-inputs | Qualify existing working service recipe | Luna; custody review | Actual source and custody PASS | merged | Recipe1304; review1309 | Normal venv origins/current client/artifacts/Remotion/graph PASS; no child, overlay or live daemon claim. | ed81088ed8 |
 | F-service-binding | Qualify exact environment adapter | Luna; custody review | Review1330 PASS | review | Binding1323; review1330 | Module-only PASS36 attacks, real imports and consumed interpreters. Joined current-fact refresh remains. | d387ab1ec6 |
-| F-caller-join | Join caller and working environment | Luna | Actual Runtime e68 lock adoption | blocked:agent | Review1358; App adoption1404 | Current dry refused changed Runtime source; both consumer locks still becfe. Normal App and Agent adoption requested. | d606c72b55 |
+| F-caller-join | Join caller and working environment | Luna | Agent normal adoption 1408 | doing | app-F-current-adoption-caller-1413 | App lock is home. Refresh worker authenticates current source and pure target; dry preflight must pass before custody review. | Base d606c72b55 |
 | F-node-current | Verify prior Node regressions | Luna | Refreshed home tree | merged | Node1345 PASS36; ENV2 | 33 verifier,marker guard and both release nodes pass. Two extension SSH setup failures remain explicit. | d24ed69dcd |
 | F-visual-seam | Qualify shared upstream seam fixture | Luna | Final Runtime fixture identity | merged | Fixture1356 PASS; exact e68 blob | All10 cases pass on App d24. Actual Runtime e68 fixture equals qualified f69 blob; no copies or source edits. | App d24; Runtime e68 |
 | F-App-full | Corrected App checkpoint terminal | App service; Luna producer | Same actual16138 | merged | Terminal producer1227 | FAIL exit1/1665s. Vitest19251PASS;Node257PASS38FAIL26SKIP. Final full GO remains open. | 5a9ff97cf0 |
@@ -47,17 +47,17 @@
 | F-P4-P5-host | Retain historical App host preparation | Luna | D59 venues supersede App host | gated:D59-venues | Draft0834; review0838 | P4 now Agent service; P5 main service. No duplicate App registration or new host task. | Source draft only |
 | F-final | Final P1–P5 and core suites | Lane services; App verdicts | D59 cut | gated:D59-cut | App P1/P2/P3; Runtime coordinates | Current cycles run now; final cut requires all lanes core0/regressions0 plus P2/P3 PASS on those heads. | Cut pending |
 
-Integration:d24ed69dcdbd464159a1b6db27403ce6a96be2e5, treeead5ba0d4f755cf3d38c8312d9d91478eeeebe45 equals reviewedfe0. U3b and D39 are HOME atd993; later reviewed transcript, diagnostic, verifier, release and quality corrections are integrated. D59 current integrated heads every cycle; no wait for unrelated Agent repairs, D41 backports or old pinned runs.
+Integration: be98aac54e275282467d85f79d3beb4665416039, tree 2839c7e7841d1c0897fd8e7c12f0c848d94e3979. Normal tool adoption 94d89 is merged; only runtime.lock.json differs from qualified d24ed. All 14 mapped artifacts are unchanged and match actual Runtime e68. U3-final includes exact upstream 09c844 and retains all mapped live tests. Source qualification 1409 passes 67 mounted controls on actual Agent 47b / Runtime e68.
 
-live 0 / cap 6; ready-undispatched 0. Copied dispatcher header: <!-- app | 2026-10-24T14:02:34Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 4m --> Newly ready App adoption1404 dispatched immediately; Agent dependency is a peer row, no escalation.
+live 1 / cap 6; ready-undispatched 0. Copied dispatcher header: <!-- app | 2026-10-24T14:12:37Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 7m --> Caller 1413 is active; Agent adoption 1408 owns the remaining consumer dependency. No independent ready task waits.
 
 core open:9 final App gate cases unqualified,8 P2 and1 P3. D55b accepts all eight P2 as core. Historical16138 Vitest had0 failures; final core full and final P1–P5 remain required.
 
 regressions:0 open among historical App Node38 after exact refreshed-tree proof1345:36 repaired and passing,2 SSH environment failures. Final integrated full remains required; no new upstream regression is inferred.
 
-Blockers: Consumer adoption — Runtime HOME e68 advanced during custody1358. Both locks still becfe, so dry correctly refuses. App Luna1404 active; Agent peer1404 requests normal U4a adoption. Final review follows genuine locks.
-Blockers: Owner admission — historical403 and automatic access refusal remain stopped. No alternate schema, child, overlay or receipt route.
-Next ready: Merge normal App adoption1404 after tests; consume Agent normal adoption. Refresh caller facts, positive dry first and complete custody review; atomic install and P2/P3. Shared fixture matches actual Runtime e68.
+Blockers: Agent — normal U4a adoption 1408 must put the actual e68 producer identity into its lock. App adoption is home and current pure proof 1409 passes. Caller 1413 prepares remaining controls now.
+Blockers: Owner admission — historical 403 and automatic access refusal remain stopped. No alternate schema, child, overlay or receipt route.
+Next ready: Complete caller 1413 dry preflight on genuine current locks, independent custody review, worker-only atomic installation and current P2/P3. Keep the existing source and wire guards strict.
 
 Historical signals: P2 actual11933 exit1/469s,0PASS3FAIL5NOTRUN; native/history/readiness passed. Actual element request was pending with no observed response or terminal outcome. P3 actual3896 exit1/268s reached predecessor/reset,A acceptance,ACK loss and exact A retry; B/restart/undo tail not reached. P226414 was stale-source preflight-only,all originalsNOTRUN. Earlier source-admission20674/10144 and D45/D41 failures retain their original limits. No signal is relabeled final GO.
 
@@ -65,8 +65,8 @@ Delivery: D52 proven dormant parent,track,transcript and executor scope is remov
 
 Safety: Prior denied cleanup,compact,graph,publication and source-access routes remain stopped. Managers write only boards,briefs and qualified shared reports. Workers own all product,test,generated,pin and Git changes. No upstream push.
 
-Disk: about12GB free. Every finished clean non-KEEP App tree is already recycled; current scan found zero further candidates. Prior refused compact and dirty historical cleanup paths stay stopped. Heavy stop line8GB.
+Disk: about 12 GB free. Finished clean non-KEEP App scan found zero further candidates. Approved sweep-tmp 3 completed and removed zero directories. Prior refused compact and dirty historical cleanup paths stay stopped. Heavy stop line 8 GB.
 
-Evidence: [all eight core](../../design/app-P2-core-classification-1222.md), [App11933 verdict](../../design/app-P2-11933-verdict-1222.md), [actual16138 terminal](../../design/app-F-16138-terminal-1227.md), [current source owners](../../design/peer-app-to-runtime-orchestrator-app2-20261024T1240-full-terminal-and-source-owners.md), [existing inputs](../../design/peer-app-to-agent-runtime-orchestrator-20261024T1244-existing-final-service-inputs.md), [caller review FAIL](../../design/app-F-final-caller-custody-review-1238.md).
+Evidence: [all eight core](../../design/app-P2-core-classification-1222.md), [App11933 verdict](../../design/app-P2-11933-verdict-1222.md), [actual16138 terminal](../../design/app-F-16138-terminal-1227.md), [current source owners](../../design/peer-app-to-runtime-orchestrator-app2-20261024T1240-full-terminal-and-source-owners.md), [existing inputs](../../design/peer-app-to-agent-runtime-orchestrator-20261024T1244-existing-final-service-inputs.md), [current source proof](../../design/app-P2-P3-e68-current-pure-target-1409.md), [caller review finding](../../design/app-F-joined-current-custody-review-1358.md).
 
-Inbox consumed1528691 bytes through Runtime1346 no-wire-delta handback. Runtime backend/source identity still refreshes independently of unchanged client bytes. Proof open rows were adopted; its only in-flight whole path1215 is complete and reused. No duplicate audit or original requested. Later: final integrated App full and P1–P5, then Runtime final build/ZIP. D60 owner pushes complete: lead fetched exact09c844 and one true U3-final merge is active. P2/P3 use refreshed head. D47 memo and D46 remote custody remain deferred.
+Inbox consumed 1530938 bytes through Runtime 1404 producer rebind; its adoption and fixture requests are complete in U4p-D60 and F-visual-seam. Runtime backend/source identity still refreshes independently of unchanged client bytes. Proof open rows were adopted; its only in-flight whole path1215 is complete and reused. No duplicate audit or original requested. Later: final integrated App full and P1–P5, then Runtime final build/ZIP. D60 owner pushes complete: true U3-final merge and normal e68 App adoption are home. P2/P3 use the refreshed head. D47 memo and D46 remote custody remain deferred.
