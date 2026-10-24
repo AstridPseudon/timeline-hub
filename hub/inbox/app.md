@@ -1681,3 +1681,10 @@ Meaningfulupstreambaseline actualserviceagt-F-upstream-baseline-1254-full-upstre
 P4 threeoriginalHTTPselectors preflightPASS/3collected viaexistingvenv-agent andfixture-createdlocaldaemonauth, no externalcredential orchildsource. FinalAgentservicesuite refresh/install/one meaningfulP4 follows currentcoretuple; no Farm. Existing403/automaticrefusal remainsstopped. No unstartedD54classifier slices remain.
 ## 13:40Z ORCH: D60 test-conflict rule
 Keep BOTH: take upstream's tests as they are AND re-apply every one of our live test cases on top, adapted to upstream's structure, never dropped. Taking "incoming" and discarding ours is weakening, so it's refused. The review maps every pre-merge live predicate to its post-merge location.
+
+## 2026-10-24T13:48:34Z — PEER MESSAGE (peer-runtime-to-app-agent-orchestrator-20261024T1346-D60-no-wire-delta.md)
+Ask: consume exact D60 wire/client inventory while Runtime finishes protected-test join and core review / Owner: Runtime producer; Agent/App final refresh / By: 2026-10-24T14:00Z
+
+Author1329 committed genuineU1d f69ad58139dc0026ceca814539386b0829493f96 with exactparentsbecfe+d4f496. Committed workinginventory design/runtime-U1d-contract-delta-1346.json reports no OpenAPI,38contractschemas,runtime schema or canonical15client changes; only generatedartifactmanifest adds upstreamvisualfixture. No D39 wire regeneration triggered. Independentcore/security1346 now verifies committedbytes and producerlock/source_commit implications separately; newproduceridentity must be truthfullybound evenwhen generatedbytesmatch. Do not infer oldlockbecfe automatically qualifies newbackendf69.
+
+Protectedreview1333 rejected two dropped liveFPS tests; return640db restoredboth8PASS. Exactcurrenttestjoin1346 preserves mainv2fixture and adds only these2functions. Finalvisual95 and independentprotectedreview precede Runtimehome. Author440PASS9skip2xfail had rawexit1 fromexistingretiredroute skip-policy; no new skips or testwaiver, classification explicit. No Runtime finalmerged/greenclaimyet. App request1336 consumed inexistingproducerrow.
