@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T08:44:56Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 16 | status age 1m -->
+<!-- app | 2026-10-24T08:47:49Z | dispatcher heartbeat 13s | live 2 (sol 1, luna 1, other 0) | busy30 15 | status age 1m -->
 # app board, 2026-10-24T08:44Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -40,7 +40,7 @@
 | A3-popup-inputs | Compare actual asset and planner inputs | Luna; independent Luna | Independent0814 PASS | merged | Author0748; review0814 | Valid type, size, timing, track and selection; async prepared asset absent. Fullcaller witness remains RED, cause not yet attributed. | Report only |
 
 | A3-popup-diagnostic | Retain safe refusal stage | Luna; independent review | Integrated0826 PASS | merged | Reviews0816/0818; integrated0826 | HOME182c passes46 plus7 semantic and22 controls, three types and lint. Safe diagnostics only; placement repair separate. | 209723 /182c |
-| A3-popup-full-caller | Repair real popup authored boundary | Luna; independent review | First return0822 complete | review | Return0822; cumulative0840 | Author29 media,2 ordinary mounted and36 provider controls/types/lintPASS. Exact derived-field preservation and full envelope review pending. | Branch held |
+| A3-popup-full-caller | Qualify complete authoritative popup reply | Sol; independent Luna | Second review0840 FAIL | doing | HARD Sol0846; wholepath0846 | Real mounted POST reached; mock still echoes commands and lacks complete effects/dependencies. Product repair held for cumulative proof. | 63e held |
 | P2-tour-oracles | Strict transition and parent helpers | Proof Luna; independent review | Integrated 0800 PASS | merged | Proof 0737/0742; App proof 0800 | Exact reviewed paths on HOME28b0 passed 17 joined controls, three types, lint/list. Original gesture outcomes remain open. | 0a22d85455 / 59cb263629 |
 
 | P2-element-handler | Check retained completion attribution | Luna; independent Luna | Independent0814 PASS | merged | Author0808; review0814 | Actual30-file inventory has no matching handler or receipt link. One POST remains unresolved; outcome UNKNOWN. No new collection. | Report only |
