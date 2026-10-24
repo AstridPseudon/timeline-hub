@@ -530,3 +530,39 @@ def test_pip_embedded_consumes_canonical_bundle_and_pinned_session_config(
     ]
     assert config.runtime_root == (tmp_path / "task-out" / ".vibecomfy-runtime").resolve()
     assert config.cwd == root.resolve()
+
+
+@pytest.mark.parametrize("extra", [
+    {"source_video": "source.mp4"},
+    {"readiness_profile_path": "/unused/profile.json", "readiness_profile_hash": "sha256:unused"},
+])
+def test_local_server_rejects_incompatible_modes_before_execution(tmp_path, monkeypatch, extra):
+    monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
+    action = importlib.import_module("astrid.packs.vibecomfy.actions.run.run")
+    with pytest.raises(ValueError, match="readiness profile or source_video"):
+        action._run_and_settle(
+            tmp_path / "workflow.json", tmp_path / "attempt" / "outputs",
+            task_identity="task-1", comfy_url="http://localhost:43217", **extra,
+        )
+
+
+def test_local_server_mode_selection_canonicalizes_url_and_requires_managed_result(tmp_path, monkeypatch):
+    monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
+    action = importlib.import_module("astrid.packs.vibecomfy.actions.run.run")
+    run = Mock(return_value=production_engine.ProductionRunResult(outputs=()))
+    monkeypatch.setattr(production_engine, "run_workflow_result_path", run)
+    with pytest.raises(ValueError, match="managed_generation_result_path"):
+        action._run_and_settle(
+            tmp_path / "workflow.json", tmp_path / "attempt" / "outputs",
+            task_identity="task-1", comfy_url="http://localhost:43217",
+        )
+    assert run.call_args.kwargs["profile_id"] == "local_server"
+    assert run.call_args.kwargs["comfy_url"] == "http://127.0.0.1:43217"
+    assert "comfy_output_dir" not in run.call_args.kwargs
+
+
+def test_unknown_workflow_input_lists_valid_names(monkeypatch):
+    bundle = SimpleNamespace(workflow=SimpleNamespace(inputs={"seed": SimpleNamespace(), "prompt": SimpleNamespace()}))
+    monkeypatch.setattr(production_engine, "_canonical_bundle_value", lambda _: bundle)
+    with pytest.raises(production_engine.ProductionEngineError, match="valid inputs: prompt, seed"):
+        production_engine._validate_workflow_input_bindings(bundle, {"typo": "value"})

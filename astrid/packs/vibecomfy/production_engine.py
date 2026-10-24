@@ -7,6 +7,7 @@ import hashlib
 import importlib
 import json
 import os
+import secrets
 import shutil
 import sys
 import tempfile
@@ -19,6 +20,12 @@ from typing import Any
 from runtime_protocol import platform
 
 _PROFILE_CONFIGS = {
+    "local_server": {
+        "name": "local_server",
+        "session_kind": "external_server",
+        "warm_policy": "never",
+        "cancellation": "delete-owned-prompt-and-interrupt-if-running",
+    },
     "pip_embedded": {
         "name": "pip_embedded",
         "dependency_lock": "vibecomfy-pip-comfyui-0.26.0",
@@ -37,6 +44,7 @@ _PROFILE_CONFIGS = {
 
 _EMBEDDED_COMFY_CLIENT = Path("comfy/client/embedded_comfy_client.py")
 _EMBEDDED_COMFY_FALLBACKS = (Path("/root/b06-t04/comfyui-embedded"),)
+_LOCAL_PROMPT_TIMEOUT_SEC = 3300  # leave containment time below the host's 3600s deadline
 
 
 class ProductionEngineError(RuntimeError):
@@ -572,7 +580,8 @@ def _validate_workflow_input_bindings(
             raise ProductionEngineError("workflow run input names must be non-empty strings")
         if name not in public_inputs:
             raise ProductionEngineError(
-                f"workflow run input {name!r} is not a declared public input"
+                f"workflow run input {name!r} is not a declared public input; "
+                f"valid inputs: {', '.join(sorted(public_inputs)) or '(none)'}"
             )
         input_type = str(getattr(public_inputs[name], "type", "") or "").upper()
         media = str(getattr(public_inputs[name], "media_semantics", "") or "").lower()
@@ -598,23 +607,7 @@ def _validate_workflow_input_bindings(
     return validated
 
 
-def _embedded_session_config(
-    bundle: Any,
-    destination: Path,
-    comfy_root: Path,
-    *,
-    task_identity: str,
-    attempt_identity: str | None = None,
-) -> Any:
-    """Build a pinned SessionConfig for the embedded profile.
-
-    The Comfy-specific values remain in VibeComfy's ``extra`` mapping; the
-    runtime-root and cwd fields are typed SessionConfig fields.  This keeps
-    model/configuration identity explicit and prevents the child from
-    inheriting a task worker's ambient cwd or global model registry.
-    """
-    from vibecomfy.runtime.session import SessionConfig
-
+def _workflow_comfy_configuration(bundle: Any) -> dict[str, Any]:
     metadata = getattr(bundle.workflow, "metadata", {})
     configured = metadata.get("comfy_configuration", {})
     if not isinstance(configured, Mapping):
@@ -649,7 +642,27 @@ def _embedded_session_config(
             "workflow comfy_configuration attempts to override host-owned keys: "
             + ", ".join(overridden)
         )
-    values = dict(configured)
+    return dict(configured)
+
+
+def _embedded_session_config(
+    bundle: Any,
+    destination: Path,
+    comfy_root: Path,
+    *,
+    task_identity: str,
+    attempt_identity: str | None = None,
+) -> Any:
+    """Build a pinned SessionConfig for the embedded profile.
+
+    The Comfy-specific values remain in VibeComfy's ``extra`` mapping; the
+    runtime-root and cwd fields are typed SessionConfig fields.  This keeps
+    model/configuration identity explicit and prevents the child from
+    inheriting a task worker's ambient cwd or global model registry.
+    """
+    from vibecomfy.runtime.session import SessionConfig
+
+    values = _workflow_comfy_configuration(bundle)
     values.update(
         {
             "base_directory": str(comfy_root.resolve()),
@@ -722,6 +735,219 @@ def _result_from_runtime_result(
     )
 
 
+def _local_server_preflight(bundle: Any, run_inputs: Mapping[str, Any] | None, url: str, destination: Path) -> Any:
+    """Read the live schema, without preparing or installing dependencies."""
+    from vibecomfy.node_packs import missing_packs_for_workflow, resolve_node_packs
+    from vibecomfy.schema.provider import get_target_schema_provider
+    from vibecomfy.schema.validate import (
+        _choice_scope, validate_api_against_schema, validate_api_link_shapes,
+    )
+
+    provider = get_target_schema_provider(url, cache_dir=destination / ".vibecomfy-schema")
+    # Inspect an unapproved projection first, so a missing live class gets
+    # our actionable gap report before the approval gate can reject it.
+    api = bundle.workflow.compile("api", run_inputs=dict(run_inputs or {}))
+    # Force a fresh read, including an empty registry (which VibeComfy's
+    # general validator treats as an unavailable, skippable schema).
+    provider.object_info()
+    issues = [*validate_api_against_schema(api, provider), *validate_api_link_shapes(api, provider)]
+    missing_nodes = sorted({
+        node["class_type"] for node in api.values()
+        if provider.get_schema(node["class_type"]) is None
+    })
+    missing_models: list[str] = []
+    for node_id, node in api.items():
+        schema = provider.get_schema(node["class_type"])
+        if schema is None:
+            continue
+        for name, value in node.get("inputs", {}).items():
+            spec = schema.inputs.get(name)
+            if (spec is not None and spec.choices is not None
+                    and isinstance(value, str) and value not in spec.choices
+                    and _choice_scope(node["class_type"], name, value) == "environment_asset"):
+                missing_models.append(f"{value} ({node['class_type']}.{name}, node {node_id})")
+    if missing_nodes or missing_models:
+        packs, _unresolved = missing_packs_for_workflow(
+            bundle.workflow, lockfile_path=destination / "custom_nodes.lock"
+        )
+        # The helper excludes classes known to the agent's offline schemas;
+        # they may still be absent from this user's live server.
+        packs = list({pack.name: pack for pack in [
+            *packs, *resolve_node_packs(set(missing_nodes), lockfile_path=destination / "custom_nodes.lock"),
+        ]}.values())
+        nodes = [
+            name + "".join(f" (pack {pack.name})" for pack in packs if name in pack.classes)
+            for name in missing_nodes
+        ]
+        gaps = []
+        if nodes:
+            gaps.append("missing nodes: " + ", ".join(nodes))
+        if missing_models:
+            gaps.append("missing models: " + ", ".join(missing_models))
+        raise ProductionEngineError(
+            f"ComfyUI at {url}: {'; '.join(gaps)}. "
+            "See 'Missing nodes and models' in the VibeComfy skill "
+            "(packs/vibecomfy/docs/SKILL.md)."
+        )
+    errors = [issue.message for issue in issues if issue.severity == "error"]
+    if errors:
+        raise ProductionEngineError("ComfyUI workflow preflight failed: " + "; ".join(errors))
+    return provider
+
+
+def _approve_local_server(bundle: Any, bindings: dict[str, Any], provider: Any) -> Any:
+    """Bind the canonical projections to the live target's inventory.
+
+    The pinned bundle.compile() also requires every model in the agent's
+    local model registry/filesystem, even with a live target provider. Those
+    files belong to the user's server. Our read-only live preflight replaces
+    that local inventory gate; VibeComfy still verifies the record against
+    the unchanged canonical bundle at its production queue boundary.
+    """
+    from vibecomfy.workflow_bundle import ApprovedProjectionRecord, canonical_digest
+
+    api = bundle.workflow.compile("api", run_inputs=bindings)
+    record = ApprovedProjectionRecord(
+        revision_id=bundle.revision_id,
+        selected_variant=bundle.workflow.default_variant,
+        input_binding=bindings,
+        api_projection=api,
+        ui_projection=bundle.materialize_ui(schema_provider=provider),
+        api_digest=canonical_digest(api),
+    )
+    record.assert_matches(
+        bundle, run_inputs=bindings, api_projection=api,
+        ui_projection=bundle.materialize_ui(schema_provider=provider),
+    )
+    return record
+
+
+def _local_server_bundle(resolved: Any, destination: Path) -> Any:
+    """Retain the first LoadImage as an input in an attempt-owned derived pair.
+
+    The pinned UI importer infers image inputs but its retained-input emitter
+    only publishes prompt/seed controls. Never mutate a sealed bundle to fix
+    that: use VibeComfy's canonical writer to establish a new revision.
+    """
+    from vibecomfy.security.provenance import Provenance
+    from vibecomfy.workflow_bundle import emit_bundle_with_candidate, load_bundle
+
+    bundle = _canonical_bundle_value(resolved)
+    if "image" in bundle.workflow.inputs:
+        return bundle
+    nodes = [node for node in bundle.workflow.nodes.values() if node.class_type == "LoadImage"]
+    if not nodes:
+        return bundle
+    node = nodes[0]
+    if any(spec.node_id == node.id and spec.field == "image" for spec in bundle.workflow.inputs.values()):
+        return bundle
+    workflow = bundle.workflow.clone()
+    value = node.inputs.get("image", node.widgets.get("image"))
+    if not isinstance(value, str):
+        return bundle
+    input_types = dict(zip(node.native_input_names or (), node.native_input_types or ()))
+    workflow.register_input(
+        "image", node.id, "image", value,
+        type=input_types.get("image", "STRING"), media_semantics="image",
+    )
+    root = destination / "local-server-workflow"
+    root.mkdir(parents=True, exist_ok=True)
+    source = bundle.python_path.with_name("source.json") if bundle.python_path else None
+    derived = emit_bundle_with_candidate(
+        workflow, root / "workflow.py", Provenance.USER_CONFIRMED, bundle.ui_sidecar,
+        parent_revision=bundle.revision_id, operation="authored",
+        parent_evidence={"revision_id": bundle.revision_id, "workflow_identity": bundle.workflow_identity},
+        source_format="ready_template",
+        extra_members={"source.json": source.read_bytes()} if source and source.is_file() else None,
+    )
+    return load_bundle(derived.python_path, trust=Provenance.USER_CONFIRMED)
+
+
+def _run_local_server(
+    resolved: Any, destination: Path, *, comfy_url: str, comfy_output_dir: str,
+    task_identity: str, attempt_identity: str | None, run_inputs: Mapping[str, Any] | None,
+) -> ProductionRunResult:
+    from vibecomfy.runtime.run import run_sync
+    from vibecomfy.runtime.session import SessionConfig
+    from astrid.packs.vibecomfy.local_server import (
+        cleanup_prompts, upload_image, validate_comfy_url, validate_identity,
+        validate_output_directory,
+    )
+
+    url = validate_comfy_url(comfy_url)
+    output_directory = validate_output_directory(comfy_output_dir, destination.parent)
+    validate_identity(task_identity)
+    if attempt_identity is not None:
+        validate_identity(attempt_identity)
+    bundle = _canonical_bundle_value(resolved)
+    values = _workflow_comfy_configuration(bundle)
+    values.update({
+        "runtime_root": str(destination / ".vibecomfy-runtime"),
+        "cwd": str(destination), "warm_policy": "never",
+        "disable_known_models": True, "quiet_schema_degradation": False,
+        "schema_warn_only": False, "prompt_timeout_sec": _LOCAL_PROMPT_TIMEOUT_SEC,
+        "task_id": task_identity,
+    })
+    if output_directory:
+        values["output_directory"] = output_directory
+    if attempt_identity is not None:
+        values["attempt_id"] = attempt_identity
+    config = SessionConfig.from_dict(values)
+    provider = _local_server_preflight(bundle, run_inputs, url, destination)
+    bindings = dict(run_inputs or {})
+    for name, value in bindings.items():
+        spec = bundle.workflow.inputs[name]
+        media = str(getattr(spec, "media_semantics", "") or "").lower()
+        if media in {"image", "mask", "video", "audio"}:
+            source = destination / "engine-input" / str(value)
+            if media not in {"image", "mask"}:
+                raise ProductionEngineError("local_server managed assets must be images")
+            bindings[name] = upload_image(url, source, task_id=task_identity)
+    record = _approve_local_server(bundle, bindings, provider)
+
+    def stop(signum: int, _frame: Any) -> None:
+        raise SystemExit(128 + signum)
+
+    pins = {"VIBECOMFY_COMFY_CONFIGURATION": "{}", "VIBECOMFY_WARM": "never",
+            "VIBECOMFY_SCHEMA_WARN_ONLY": "0"}
+    previous = {key: os.environ.get(key) for key in pins}
+    restore = platform.install_stop_handlers(stop)
+    try:
+        os.environ.update(pins)
+        try:
+            result = run_sync(record, bundle, server_url=url, config=config, schema_provider=provider)
+            if not getattr(result, "managed_generation_result_path", None):
+                raise ProductionEngineError(
+                    "local_server requires VibeComfy managed_generation_result_path; "
+                    "set comfy_output_dir to the server's output directory and give each "
+                    "save node a filename_prefix when the workflow has multiple outputs"
+                )
+            result_path = Path(result.managed_generation_result_path)
+            if (result_path.is_symlink() or not result_path.resolve().is_relative_to(destination.resolve())
+                    or any(part.is_symlink() for part in result_path.parents)):
+                raise ProductionEngineError("local_server managed result escaped attempt custody")
+            # The pinned producer reports public-input defaults in metadata.
+            # Preserve its evidence, but report the detached invocation values
+            # (including the chosen seed) that actually reached /prompt.
+            payload = json.loads(result_path.read_text(encoding="utf-8"))
+            payload["inputs"].update(bindings)
+            result_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+            return _result_from_runtime_result(result, tuple(Path(path) for path in result.outputs))
+        except BaseException as exc:
+            cleanup_prompts(url, destination)
+            if "vibecomfy schema refresh" in str(exc) or getattr(exc, "next_action", None) == "vibecomfy schema refresh":
+                fix = "See 'Missing nodes and models' in the VibeComfy skill (packs/vibecomfy/docs/SKILL.md)"
+                raise ProductionEngineError(str(exc).replace("vibecomfy schema refresh", fix)) from exc
+            raise
+    finally:
+        restore()
+        for key, value in previous.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+
+
 def _run_profile_result(
     resolved: Any,
     profile_id: str,
@@ -733,7 +959,18 @@ def _run_profile_result(
     destination: Path,
     attempt_identity: str | None = None,
     run_inputs: Mapping[str, Any] | None = None,
+    comfy_url: str = "",
+    comfy_output_dir: str = "",
 ) -> ProductionRunResult:
+    if comfy_url and profile_id != "local_server":
+        raise ProductionEngineError("comfy_url requires the local_server profile")
+    if profile_id == "local_server":
+        if hc03_profile is not None:
+            raise ProductionEngineError("local_server cannot use a readiness profile")
+        return _run_local_server(
+            resolved, destination, comfy_url=comfy_url, comfy_output_dir=comfy_output_dir,
+            task_identity=task_identity, attempt_identity=attempt_identity, run_inputs=run_inputs,
+        )
     if profile_id == "pip_embedded":
         comfy_root = _bootstrap_embedded_comfy_client()
         from vibecomfy.runtime.run import run_embedded_sync
@@ -858,9 +1095,16 @@ def _run_profile(
     destination: Path,
     attempt_identity: str | None = None,
     run_inputs: Mapping[str, Any] | None = None,
+    comfy_url: str = "",
+    comfy_output_dir: str = "",
 ) -> tuple[Path, ...]:
     """Compatibility projection for callers that only need output paths."""
     global _LAST_PRODUCTION_RESULT
+    local_kwargs: dict[str, Any] = {}
+    if comfy_url:
+        local_kwargs["comfy_url"] = comfy_url
+    if comfy_output_dir:
+        local_kwargs["comfy_output_dir"] = comfy_output_dir
     _LAST_PRODUCTION_RESULT = _run_profile_result(
         resolved,
         profile_id,
@@ -871,6 +1115,7 @@ def _run_profile(
         destination=destination,
         attempt_identity=attempt_identity,
         run_inputs=run_inputs,
+        **local_kwargs,
     )
     return _LAST_PRODUCTION_RESULT.outputs
 
@@ -887,6 +1132,8 @@ def run_workflow_path(
     expected_execution_identity: str | None = None,
     attempt_identity: str | None = None,
     workflow_input_bindings: Mapping[str, Any] | None = None,
+    comfy_url: str = "",
+    comfy_output_dir: str = "",
 ) -> tuple[Path, ...]:
     """Run a file workflow through the reviewed production-engine path.
 
@@ -909,16 +1156,26 @@ def run_workflow_path(
         actual_identity = loaded_workflow_execution_identity(loaded, hc03_profile)
         if actual_identity != expected_execution_identity:
             raise ProductionEngineError("workflow execution identity changed before launch")
-    run_inputs = _validate_workflow_input_bindings(
-        loaded.resolved, workflow_input_bindings
-    )
+    resolved = loaded.resolved
+    if profile_id == "local_server":
+        resolved = _local_server_bundle(resolved, destination_path)
+    run_inputs = _validate_workflow_input_bindings(resolved, workflow_input_bindings)
+    if profile_id == "local_server":
+        bundle = _canonical_bundle_value(resolved)
+        run_inputs = dict(run_inputs or {})
+        if "seed" in bundle.workflow.inputs and "seed" not in run_inputs:
+            run_inputs["seed"] = secrets.randbelow(2**32)
     global _LAST_PRODUCTION_RESULT
     _LAST_PRODUCTION_RESULT = None
     profile_kwargs: dict[str, Any] = {}
     if attempt_identity is not None:
         profile_kwargs["attempt_identity"] = attempt_identity
+    if comfy_url:
+        profile_kwargs["comfy_url"] = comfy_url
+    if comfy_output_dir:
+        profile_kwargs["comfy_output_dir"] = comfy_output_dir
     outputs = _run_profile(
-        loaded.resolved,
+        resolved,
         profile_id,
         hc03_profile,
         model_id=loaded.model_id,
@@ -943,6 +1200,8 @@ def run_workflow_result_path(
     expected_execution_identity: str | None = None,
     attempt_identity: str | None = None,
     workflow_input_bindings: Mapping[str, Any] | None = None,
+    comfy_url: str = "",
+    comfy_output_dir: str = "",
 ) -> ProductionRunResult:
     """Run a workflow while retaining the producer result envelope.
 
@@ -965,6 +1224,10 @@ def run_workflow_result_path(
         kwargs["attempt_identity"] = attempt_identity
     if workflow_input_bindings is not None:
         kwargs["workflow_input_bindings"] = workflow_input_bindings
+    if comfy_url:
+        kwargs["comfy_url"] = comfy_url
+    if comfy_output_dir:
+        kwargs["comfy_output_dir"] = comfy_output_dir
     outputs = run_workflow_path(
         workflow_path,
         destination,

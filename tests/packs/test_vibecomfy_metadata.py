@@ -78,8 +78,19 @@ class VibeComfyStructuredMetadataTest(unittest.TestCase):
                 "{managed_assets}",
                 "--workflow-inputs",
                 "{workflow_inputs}",
+                "--comfy-url",
+                "{comfy_url}",
+                "--comfy-output-dir",
+                "{comfy_output_dir}",
             ],
         )
+        inputs = {item["name"]: item for item in payload["inputs"]}
+        self.assertEqual(inputs["comfy_url"]["type"], "string")
+        self.assertFalse(inputs["comfy_url"]["required"])
+        self.assertEqual(inputs["comfy_url"]["default"], "")
+        self.assertEqual(inputs["comfy_output_dir"]["type"], "string")
+        self.assertFalse(inputs["comfy_output_dir"]["required"])
+        self.assertEqual(inputs["comfy_output_dir"]["default"], "")
         self.assertEqual(payload["isolation"]["requirements"], ["vibecomfy"])
         self.assertTrue(payload["isolation"]["network"])
         self.assertEqual(metadata["pack_id"], "vibecomfy")
