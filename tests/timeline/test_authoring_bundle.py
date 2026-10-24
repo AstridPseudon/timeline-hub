@@ -613,7 +613,16 @@ def test_publish_uses_one_compilation_and_returns_complete_mapping():
     assert set(result["identity_mapping"]["placements"]) == {"occ-1", "occ-2"}
     assert result["summary"]["new_head"] == result["publication"]["data"]["new_head"]
     assert isinstance(result["update"], str)
-    assert {action["scope"] for action in result["next_actions"]} == {"current_head"}
+    assert [action["scope"] for action in result["next_actions"]] == [
+        "saved_revision_pair", "saved_revision_pair", "current_head", "current_head",
+    ]
+    saved_actions = result["next_actions"][:2]
+    assert [(action["from_revision"], action["to_revision"], action["format"])
+            for action in saved_actions] == [
+        ("parent-1", "saved-revision", "readable"),
+        ("parent-1", "saved-revision", "details"),
+    ]
+    assert all("from_revision" not in action for action in result["next_actions"][2:])
 
 
 def test_group_move_compiles_and_uses_existing_publication_boundary():
