@@ -11,12 +11,15 @@ from __future__ import annotations
 import copy
 import hashlib
 import importlib
+import inspect
 import json
 import math
 import os
 import re
 import subprocess
 import sys
+import tempfile
+import time
 import traceback
 from pathlib import Path
 from typing import Any
@@ -29,7 +32,20 @@ RUNTIME_TREE = "6047ac3033c3594b8f83db3afd8bb2c47cafa6d6"
 MAX_DEPTH = 80
 MAX_ITEMS = 200_000
 MAX_STRING = 8 * 1024 * 1024
-MAX_EVIDENCE = 24 * 1024 * 1024
+MAX_EVIDENCE = 12 * 1024 * 1024
+AGENT_HEAD = "415181d983d6d1d56a912da16ad4c5690e663187"
+CAPTURE_KEYS = {"schema_version", "context", "original", "landing", "replay_bindings", "prepared_digest"}
+FRAME_FIELDS = (
+    "expected_base", "expected_landing", "original_records", "landing_records",
+    "binding_pairs", "source_to_landing", "landing_to_source", "replay_required",
+    "expected_map", "seen_map", "replay", "entry", "map_key", "kind",
+    "ordinal", "index", "command_ordinal", "change_ordinal", "command", "record",
+    "binding", "original_binding", "landing_binding", "binding_candidates", "landing_candidates",
+    "source_physical", "landing_physical", "source_key", "landing_key",
+    "chain", "terminal", "source_step_ordinals", "node", "step", "owners", "original_owners",
+    "original_transition", "landing_transition", "target_original", "target_landing", "continued",
+    "boundary", "original", "accepted", "touched", "output", "indices", "ref", "read",
+)
 SECRET_TEXT = re.compile(
     r"(?:-----BEGIN [A-Z ]*PRIVATE KEY-----|\bAKIA[0-9A-Z]{16}\b|\bBearer\s+\S+|\bsk-[A-Za-z0-9]{20,})"
 )
@@ -124,7 +140,6 @@ def _finite(value: Any, *, path: str = "$", depth: int = 0) -> None:
 
 def _serialize(value: Any) -> str:
     normalized = _jsonable(value)
-    _finite(normalized)
     return json.dumps(normalized, ensure_ascii=True, allow_nan=False, indent=2, sort_keys=True) + "\n"
 
 
@@ -149,8 +164,104 @@ def _offline_probe() -> int:
             rejected.append(str(exc))
     if len(rejected) != 3:
         raise ObserverFailure("non-finite telemetry number was not rejected")
+    # This synthetic function exercises only the observer; no test module or
+    # product executor is imported or invoked by the offline checks.
+    def selected():
+        expected_map = {(1, "patch", 0)}
+        seen_map = set()
+        map_key = (1, "patch", 0)
+        binding_pairs = {(1, 0): {"owner": "offline"}}
+        if map_key in expected_map and map_key not in seen_map and binding_pairs:
+            raise ValueError("offline exception retention")
+
+    def unrelated():
+        total = 0
+        for number in range(25):
+            total += number
+        return total
+
+    from unittest.mock import patch
+
+    scratch = Path(tempfile.mkdtemp(prefix="helper-observer-offline-"))
+    observer = Observer(scratch / "packet.json")
+    observer.packet["target"] = "offline observer selfcheck only"
+    observer._cache_auth(importlib.import_module("runtime_protocol.timeline_commit_auth"))
+    runtime_map_lines = sorted(observer._map_lines)
+    observer._active_attempt = {"validator_events": []}
+    observer.packet["attempts"].append(observer._active_attempt)
+    observer._sequential_code = selected.__code__
+    selected_lines, start = inspect.getsourcelines(selected)
+    observer._map_lines = frozenset(start + index for index, line in enumerate(selected_lines)
+                                    if "if map_key in expected_map" in line)
+    source_packet = {"finite": 0.625, "path": Path("/capture/source.json")}
+    observer.packet["capture"] = _copy(source_packet)
+    source_packet["finite"] = 7.0
+    observer._write("offline_before_validation", required=True)
+    previous_trace = sys.gettrace()
+    try:
+        with patch.object(Path, "resolve", side_effect=AssertionError("per-event Path.resolve")):
+            sys.settrace(observer._trace)
+            try:
+                selected()
+            except ValueError as exc:
+                observer._record_exception(exc, boundary="offline selected")
+            finally:
+                sys.settrace(previous_trace)
+    finally:
+        sys.settrace(previous_trace)
+    observer._write("offline_after_exception", required=True)
+    retained = json.loads(observer.evidence.read_text())
+    if retained["capture"]["finite"] != 0.625 or not retained["exceptions"]:
+        raise ObserverFailure("immutable capture or exception was not retained")
+    fields = retained["runtime_comparison"]["fields"]
+    if fields["expected_map"] != [[1, "patch", 0]] or fields["seen_map"] != []:
+        raise ObserverFailure("selected validator frame was not retained")
+    if fields["binding_pairs"] != [{"coordinates": [1, 0], "pair": {"owner": "offline"}}]:
+        raise ObserverFailure("tuple-keyed binding coordinates were not retained")
+    durable = observer.evidence.read_bytes()
+    observer.packet["bad_number"] = float("nan")
+    if observer._write("offline_refused_nan") or observer.evidence.read_bytes() != durable:
+        raise ObserverFailure("failed flush damaged previously durable capture")
+    observer.packet.pop("bad_number")
+    observer.packet["api_key"] = "offline fake credential"
+    if observer._write("offline_refused_credentials") or observer.evidence.read_bytes() != durable:
+        raise ObserverFailure("credential refusal damaged previously durable capture")
+    observer.packet.pop("api_key")
+    with patch.object(os, "replace", side_effect=OSError("offline interrupted replace")):
+        if observer._write("offline_interrupted_replace") or observer.evidence.read_bytes() != durable:
+            raise ObserverFailure("interrupted replace damaged previously durable capture")
+    observer._write("offline_incremental_final", required=True)
+    if not json.loads(observer.evidence.read_text())["exceptions"]:
+        raise ObserverFailure("incremental final flush lost the exception")
+
+    count = 10_000
+    baseline_start = time.perf_counter()
+    for _ in range(count):
+        unrelated()
+    baseline = time.perf_counter() - baseline_start
+    start_time = time.perf_counter()
+    try:
+        with patch.object(Path, "resolve", side_effect=AssertionError("per-event Path.resolve")):
+            sys.settrace(observer._trace)
+            for _ in range(count):
+                unrelated()
+    finally:
+        sys.settrace(previous_trace)
+    traced = time.perf_counter() - start_time
+    if traced - baseline > 1.0 or observer._trace(sys._getframe(), "call", None) is not None:
+        raise ObserverFailure(f"unrelated-frame observer overhead exceeded 1s: {traced - baseline}")
+    events = observer._active_attempt["validator_events"]
+    if [entry["event"] for entry in events] != ["line", "exception"]:
+        raise ObserverFailure("trace selection admitted unrelated frames or lines")
     print(json.dumps({"finite_float": decoded["finite_float"], "path": decoded["source_path"],
-                      "rejected": rejected}, sort_keys=True))
+                      "rejected": rejected, "durable_exception_retained": True,
+                      "failed_flush_preserved_packet": True, "credential_refusal": True,
+                      "path_resolve_calls_while_tracing": 0, "unrelated_calls": count,
+                      "selected_events": len(events),
+                      "runtime_map_lines": runtime_map_lines,
+                      "baseline_seconds": baseline, "traced_seconds": traced,
+                      "overhead_seconds": traced - baseline,
+                      "offline_evidence": str(observer.evidence)}, sort_keys=True))
     return 0
 
 
@@ -178,8 +289,8 @@ def _copy(value: Any) -> Any:
 
 
 class Observer:
-    def __init__(self) -> None:
-        evidence = os.environ.get("HELPER_SEQUENTIAL_EVIDENCE")
+    def __init__(self, evidence: Path | None = None) -> None:
+        evidence = evidence or os.environ.get("HELPER_SEQUENTIAL_EVIDENCE")
         if not evidence:
             raise ObserverFailure("HELPER_SEQUENTIAL_EVIDENCE is required")
         self.evidence = Path(evidence).expanduser().resolve()
@@ -194,6 +305,7 @@ class Observer:
             "authenticated_inputs": None,
             "port_observations": {"head": [], "history": [], "history_entry": [], "revision_closure": []},
             "runtime_comparison": None,
+            "attempts": [],
             "exceptions": [],
             "wire_attempts": [],
             "test_report": None,
@@ -204,10 +316,14 @@ class Observer:
         self._generated: Any = None
         self._env: Any = None
         self._trace_previous: Any = None
-        self._auth_path: Path | None = None
+        self._sequential_code: Any = None
+        self._validate_code: Any = None
+        self._map_lines: frozenset[int] = frozenset()
+        self._active_attempt: dict[str, Any] | None = None
         self._durable_phase: str | None = None
         self._installed = False
         self._finalized = False
+        self._source_functions: dict[str, Any] = {}
 
     def _write(self, phase: str, *, required: bool = False) -> bool:
         packet = _copy(self.packet)
@@ -222,7 +338,19 @@ class Observer:
                 if len(payload_bytes) > MAX_EVIDENCE:
                     raise ObserverFailure(f"evidence size limit exceeded: {len(payload_bytes)} > {MAX_EVIDENCE}")
                 self.evidence.parent.mkdir(parents=True, exist_ok=True)
-                self.evidence.write_text(payload, encoding="utf-8")
+                # Validate/scan before opening anything. Replace atomically so
+                # even an interrupted flush leaves the previous packet intact.
+                pending = self.evidence.with_suffix(".pending")
+                with pending.open("w", encoding="utf-8") as stream:
+                    stream.write(payload)
+                    stream.flush()
+                    os.fsync(stream.fileno())
+                os.replace(pending, self.evidence)
+                directory = os.open(self.evidence.parent, os.O_RDONLY | os.O_DIRECTORY)
+                try:
+                    os.fsync(directory)
+                finally:
+                    os.close(directory)
                 self._durable_phase = phase
                 return True
             except (ObserverFailure, OSError) as exc:
@@ -243,6 +371,10 @@ class Observer:
         })
 
     def preflight(self) -> None:
+        if _git(Path.cwd(), "rev-parse", "HEAD") != AGENT_HEAD:
+            raise ObserverFailure("run from the exact integration4151 Agent checkout")
+        if _git(Path.cwd(), "status", "--porcelain", "--untracked-files=no"):
+            raise ObserverFailure("integration Agent tracked sources are not clean")
         expected_source_root = os.environ.get("ASTRID_RUNTIME_SOURCE_ROOT")
         if expected_source_root and Path(expected_source_root).expanduser().resolve() != self.runtime:
             raise ObserverFailure("ASTRID_RUNTIME_SOURCE_ROOT disagrees with ASTRID_RUNTIME_CHECKOUT")
@@ -257,6 +389,9 @@ class Observer:
             Path("astrid/sdk/timeline/_commit_preview.py"),
             Path("astrid/sdk/timeline/commit.py"),
             Path("tests/sdk/test_timeline_helper_capture.py"),
+            Path("tests/sdk/test_timeline_restructure.py"),
+            Path("astrid/sdk/timeline/commands.py"),
+            Path("astrid_runtime_client/__init__.py"),
         ]
         runtime_paths = [
             self.runtime / "runtime_protocol/timeline_commit_port.py",
@@ -266,6 +401,7 @@ class Observer:
         hashes = {str(path): _sha256(path) for path in [*(Path.cwd() / path for path in source_paths), *runtime_paths]}
         self.packet["preflight"] = {
             "agent_root": str(Path.cwd().resolve()),
+            "agent_head": AGENT_HEAD,
             "runtime_root": str(self.runtime),
             "runtime_head": head,
             "runtime_tree": tree,
@@ -284,13 +420,23 @@ class Observer:
         self._class_patches.append((cls, name, original))
         setattr(cls, name, callback(original))
 
+    def _cache_auth(self, runtime_auth: Any) -> None:
+        self._sequential_code = runtime_auth.validate_sequential_capture.__code__
+        self._validate_code = runtime_auth.validate.__code__
+        lines, start = inspect.getsourcelines(runtime_auth.validate_sequential_capture)
+        self._map_lines = frozenset(start + index for index, line in enumerate(lines)
+                                    if "require(map_key in expected_map" in line
+                                    or "require(seen_map == expected_map" in line)
+        if len(self._map_lines) != 2:
+            raise ObserverFailure("authenticated replay map source boundaries changed")
+
     def _install(self, env: Any) -> None:
         if self._installed:
             return
         self._env = env
         runtime_port = importlib.import_module("runtime_protocol.timeline_commit_port")
         runtime_auth = importlib.import_module("runtime_protocol.timeline_commit_auth")
-        self._auth_path = Path(runtime_auth.__file__).resolve()
+        self._cache_auth(runtime_auth)
         origins = {}
         for name in (
             "runtime_protocol",
@@ -301,6 +447,8 @@ class Observer:
             "astrid.sdk.timeline._commit_preview",
             "astrid.sdk.timeline.commit",
             "tests.sdk.test_timeline_helper_capture",
+            "tests.sdk.test_timeline_restructure",
+            "astrid_runtime_client",
         ):
             module = importlib.import_module(name)
             origin = Path(module.__file__).resolve()
@@ -308,14 +456,36 @@ class Observer:
             if name.startswith("runtime_protocol") and not origin.is_relative_to(self.runtime):
                 raise ObserverFailure(f"Runtime module origin escaped pinned checkout: {name}={origin}")
         self.packet["preflight"]["module_origins"] = origins
+        helper_module = importlib.import_module("tests.sdk.test_timeline_helper_capture")
+        self._source_functions = {
+            "test_body": helper_module.test_contiguous_helpers_keep_sequential_steps,
+            "peer_edit": helper_module.peer_edit,
+            "auth_sequential": runtime_auth.validate_sequential_capture,
+            "auth_validate": runtime_auth.validate,
+            "port_capture": runtime_port.RequestCommitPort.capture_sequential_execution,
+            "port_validate": runtime_port.RequestCommitPort._validate_sequential_execution,
+        }
+        self.packet["preflight"]["function_body_hashes"] = {
+            name: hashlib.sha256(inspect.getsource(fn).encode()).hexdigest()
+            for name, fn in self._source_functions.items()
+        }
+        self.packet["preflight"]["trace_selection"] = {
+            "functions": [self._sequential_code.co_name, self._validate_code.co_name],
+            "map_lines": sorted(self._map_lines), "frame_fields": list(FRAME_FIELDS),
+        }
+        self._write("observer_installed", required=True)
         def capture_wrapper(original):
             def wrapped(port, capture):
                 self.packet["capture"] = _copy(capture)
+                self._active_attempt = {"capture": self.packet["capture"], "validator_events": []}
+                self.packet["attempts"].append(self._active_attempt)
                 # Persist the complete carrier before touching Runtime's
                 # validation seam.  A later observer/test exception must not
                 # erase an already captured original/landing map.
                 self._write("capture_observed", required=True)
                 self.packet["request"] = _copy(capture["context"]["request"])
+                self._active_attempt["port_context"] = _copy(port._RequestCommitPort__context)
+                self._active_attempt["request"] = self.packet["request"]
                 self._write("before_runtime_capture_validation", required=True)
                 try:
                     return original(port, capture)
@@ -337,6 +507,9 @@ class Observer:
                     "history": _copy(history),
                     "request": _copy(capture["context"]["request"] if capture else None),
                 }
+                if self._active_attempt is not None:
+                    self._active_attempt["prepared"] = self.packet["prepared"]
+                    self._active_attempt["authenticated_inputs"] = self.packet["authenticated_inputs"]
                 self._write("before_runtime_sequential_validation", required=True)
                 try:
                     result = original(port, prepared, source, base, continuations, history)
@@ -374,6 +547,8 @@ class Observer:
             attempt: dict[str, Any] = {"args": _copy(args), "kwargs": _copy(kwargs)}
             before = list(env.service.store.conn.iterdump())
             attempt["database_before"] = {"line_count": len(before), "sha256": hashlib.sha256("\n".join(before).encode()).hexdigest()}
+            self.packet["wire_attempts"].append(attempt)
+            self._write("before_wire_attempt", required=True)
             try:
                 result = self._generated_original(*args, **kwargs)
             except BaseException as exc:
@@ -386,7 +561,8 @@ class Observer:
             finally:
                 after = list(env.service.store.conn.iterdump())
                 attempt["database_after"] = {"line_count": len(after), "sha256": hashlib.sha256("\n".join(after).encode()).hexdigest()}
-                self.packet["wire_attempts"].append(attempt)
+                attempt["no_write"] = before == after
+                self._write("wire_attempt_finished", required=True)
 
         env.generated.commit_timeline = send
         self._trace_previous = sys.gettrace()
@@ -394,21 +570,33 @@ class Observer:
         self._installed = True
 
     def _trace(self, frame, event, arg):  # noqa: ARG002 - sys.settrace protocol
-        if event == "line" and self._auth_path is not None and Path(frame.f_code.co_filename).resolve() == self._auth_path:
-            if frame.f_code.co_name == "validate_sequential_capture" and frame.f_lineno in (2195, 2196):
-                local = frame.f_locals
-                self.packet["runtime_comparison"] = {
-                    "expected_map": _copy(local.get("expected_map")),
-                    "seen_map": _copy(local.get("seen_map")),
-                    "replay": _copy(local.get("replay")),
-                    "entry": _copy(local.get("entry")),
-                    "map_key": _copy(local.get("map_key")),
-                    "line": frame.f_lineno,
-                }
-                # This is deliberately written at the authenticated map
-                # boundary, not deferred to pytest teardown.
-                self._write(f"runtime_comparison_line_{frame.f_lineno}", required=True)
-        return self._trace
+        # The global callback sees calls only. No path work, locals access or
+        # local trace is allowed for unrelated frames.
+        code = frame.f_code
+        if code is self._sequential_code:
+            return self._trace_auth
+        if code is self._validate_code:
+            frame.f_trace_lines = False
+            return self._trace_auth
+        return None
+
+    def _trace_auth(self, frame, event, arg):
+        if event == "exception" or (event == "line" and frame.f_lineno in self._map_lines):
+            local = frame.f_locals
+            snapshot = {"function": frame.f_code.co_name, "line": frame.f_lineno, "event": event,
+                        "fields": {name: _copy(local[name]) for name in FRAME_FIELDS if name in local}}
+            if "binding_pairs" in local:
+                snapshot["fields"]["binding_pairs"] = [
+                    {"coordinates": list(key), "pair": _copy(value)}
+                    for key, value in local["binding_pairs"].items()
+                ]
+            if event == "exception":
+                snapshot["exception"] = {"type": arg[0].__name__, "message": str(arg[1])}
+            self.packet["runtime_comparison"] = snapshot
+            if self._active_attempt is not None:
+                self._active_attempt["validator_events"].append(snapshot)
+            self._write(f"auth_{event}_{frame.f_lineno}", required=True)
+        return self._trace_auth
 
     def pytest_runtest_call(self, item):
         if item.nodeid == TARGET:
@@ -436,6 +624,22 @@ class Observer:
             self._generated.commit_timeline = self._generated_original
         for cls, name, original in reversed(self._class_patches):
             setattr(cls, name, original)
+        hashes = self.packet["preflight"]["source_hashes"]
+        self.packet["source_hashes_after"] = {path: _sha256(Path(path)) for path in hashes}
+        self.packet["source_unchanged"] = hashes == self.packet["source_hashes_after"]
+        self.packet["function_body_hashes_after"] = {
+            name: hashlib.sha256(inspect.getsource(fn).encode()).hexdigest()
+            for name, fn in self._source_functions.items()
+        }
+        self.packet["function_bodies_unchanged"] = (
+            self.packet["function_body_hashes_after"] == self.packet["preflight"]["function_body_hashes"])
+        self.packet["module_origins_after"] = {
+            name: {"path": str(Path(importlib.import_module(name).__file__).resolve()),
+                   "sha256": _sha256(Path(importlib.import_module(name).__file__))}
+            for name in self.packet["preflight"]["module_origins"]
+        }
+        self.packet["module_origins_unchanged"] = (
+            self.packet["module_origins_after"] == self.packet["preflight"]["module_origins"])
         self._write("final")
         self._finalized = True
 
@@ -449,7 +653,7 @@ def main() -> int:
         return _offline_probe()
     observer = Observer()
     observer.preflight()
-    return pytest.main(["-q", "-o", "addopts=", "-p", "no:cacheprovider", "--timeout=90", TARGET], plugins=[observer])
+    return pytest.main(["-q", "-o", "addopts=", "-p", "no:cacheprovider", "--timeout=45", TARGET], plugins=[observer])
 
 
 if __name__ == "__main__":
