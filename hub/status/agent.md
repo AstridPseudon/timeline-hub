@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T10:39:54Z | dispatcher heartbeat 1s | live 2 (sol 0, luna 2, other 0) | busy30 23 | status age 0m -->
+<!-- agent | 2026-10-24T10:42:25Z | dispatcher heartbeat 0s | live 1 (sol 0, luna 1, other 0) | busy30 15 | status age 1m -->
 # agent board, 2026-10-24T10:34:42Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -149,7 +149,7 @@
 
 | F provider undo | Classify six existing source failures | Luna / Luna | Causal review passed | merged | Author0952; independent0959 PASS | Authenticated historical inverse scratch is compared to accepted fork source. Six existing failures; outside267 census. R2 Sol0959 owns repair. | Evidence only |
 
-| F local checkpoint | Qualify D49 on existing service | Service | H36 instruction | doing | agent-full-1024095047-9758 | One full is running, about89 percent. Exactba55 snapshot and existing venv/profile. No duplicate request. | Homeba55 |
+| F local checkpoint | Qualify D49 on existing service | Service | H36 instruction | doing | agent-full-1024095047-9758 | One full is running, about98 percent. Exactba55 snapshot and existing venv/profile. No duplicate request. | Homeba55 |
 
 | R2 historical source | Restore authenticated historical item mapping | Sol / Luna | Structure rationale | merged | Source1011 PASS; integrated1017 PASS67 | Actuald83 passes67 and strict static gates; 244 controls retained. Structure correction has its own row. | d83e8de3a1 |
 
@@ -157,7 +157,7 @@
 
 | OPS shared schema source | Preserve declared schema authority | Runtime / owner | Orchestrator10:16 disposition | blocked:runtime | Runtime acquisition0955 stopped | Exact declared source HTTP403; automatic access request refused. No alternate route. Installed provenance0918/0922 stays scoped. | Source242f unknown |
 
-| R2 structure rationale | Register inverse file rationale | Luna / Luna | Actual integrated proof | merging | Author1026; review1035 PASS; joined1038 | Reviewed original1 passed. Homec2b merged exact entry39. Physical prior count1168 is corrected in review. | c2b1f7e5a3 |
+| R2 structure rationale | Register inverse file rationale | Luna / Luna | Integrated proof passed | merged | Review1035; integrated1038 PASS | Actualc2b original1 passed0.45s. Entry39 inverse1208; prior38 entries and original unchanged. Parent1168 correction retained. | c2b1f7e5a3 |
 
 | OPS received kit | Verify installed verifier receipt | Luna | Runtime independent installed1027 | merged | agt-OPS-received-kit-review-1036 PASS | Four received/live/hub/committed scripts match; archive443977 and prior67-wheel custody retained. Runtime1027 pending; no admission release. | Sourceab6d |
 
@@ -167,7 +167,7 @@ Count: Official263 closed /4 open of267 restored after independent current-repai
 Open originals: discovery support; generic harvest/reopen; D23 helper word-second; D23 moved-head restart. All original records and historical challenges retained.
 Farm: Checkpoint 26511 remains 17,335 passed, 288 failed, 187 setup errors and 4 skips on Agent 9cd / Runtime 45c3. Independently reviewed 96-node packet: 80 environment, 1 docs regression and 15 unknown. Setup packet: 140 environment and 47 tuple mismatches. No new Farm pass credit.
 Blockers: Runtime and owner — exact schema acquisition returned HTTP403 and the access request was refused by automatic review. Orchestrator10:16 keeps child admission held; no Agent action is owed. All alternate routes stay stopped. Impact: [refusal](../../escalations/agent-20261024T1008Z-schema-source-refusal.md).
-Blockers: Runtime installed kit — Agent received-kit1036 PASS; Runtime independent installed1027 remains owed. Source1006 passed140 plus79 attacks. Schema admission stays held.
+Blockers: Runtime route review1035 — local installed1027 and Agent received1036 PASS; committed publication and ensure-daemons drift provenance await Runtime1035. Schema admission remains held.
 Runtime: Producer becfe is independently qualified and all 15 Agent mappings now match. Shared authority is qualified on 460c and its exact-auth descendant becfe. Runtime has all 36 original failures closed at recorded scopes.
 App: Complete IMAGE 0554 and independent 0636 PASS retained at direct RuntimeService scope. No additional producer or realm; no inferred original-node credit.
 D48: Upstream 25359 merged via reviewed source ccf87 and normal d01. Restored predicates retained. D18 loader merged after independent PASS; duck scenario remains open under unique G4 source owner 0814.
@@ -176,7 +176,7 @@ D49 venue: Existing Agent own-service full9758 on working venv-agent is running.
 Safety: Prior Farm, monitor, publication, bench and cleanup refusals remain stopped. No denied action retried.
 Disk: About8.7GB free, up from7.7GB. Eight more finished clean worktrees recycled, preserving branches and reports. Sweep3 removed zero dirs; compact packed zero dirs and compressed five old logs. No new heavy run below8.5GB; existing full9758 may finish. Prior denied targets stay stopped.
 Later: D31/D37 dormant implementations and tests unchanged. V4 and D14/D23 remain cut or deferred. D46 U2c closed and folded into the freeze; relay and remote providers stay deferred and fail-closed. D47 memo held.
-Next ready: Integrated rationale1038 and finite capture export1040 are dispatched. Viewing owns terminal3783 verdict. Received-kit1036 PASS awaits Runtime1027. App owns333b. Full9758 continues; no ready task waits.
+Next ready: Rationale is integrated-qualified. Capture export1040 is active; Viewing owns terminal3783 verdict. Kit received1036 PASS awaits Runtime route1035. Full9758 is98percent. No ready task waits.
 Evidence: [D39 review](../../design/agt-D39-header-review-0809.md), [ABA review](../../design/agt-F-ABA-cumulative-review-0809.md), [wheel input](../../design/agt-OPS-real-wheel-qualify-0810.md), [Farm checkpoint](../../design/farm-agent-full-checkpoint-20261024T0555Z.md).
 
 Pass10:34Z: All eight DONE orphans finalized through request-stop; no live processes were found. Independent capture preparation1027 passed21 and exact one-row custody; normal stacked merge7ba6 completed. Rationale review and row installer dispatched immediately.
