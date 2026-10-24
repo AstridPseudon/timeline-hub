@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T06:19:47Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 4m -->
-# app2 board, 2026-10-24T06:15Z
+<!-- app2 | 2026-10-24T06:21:48Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 1m -->
+# app2 board, 2026-10-24T06:20Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -27,7 +27,9 @@
 | A4-source | Zero reachable legacy film writers | App Luna; independent Luna | Census0438 and review0444 PASS | merged | App census0438; review0444 | Same-head523 tests,three types and lint. D31/D37 implementations,helpers and tests retained unchanged. P2/P3 separate. | c0fe889944 |
 | P-OPS-registration | Historical launch custody | Runtime Sol; Luna | D34 threshold or after delivery | gated:D34 | Runtime2138; Proof2125 and2127 | Prospective21 checks passed. Pre-cutover launch accounting and atomic boundary unknown. No further Proof audit owed. | Source only |
 
-| P2/P3-next-pair | One changed pair after source repairs | App service; Proof review | Joined proof and final caller 0609 PASS | blocked:app | App joined 0609 and caller 0609 | Proof released one pair after required checks. All source is HOME. No new request yet; prior D45 NO-GO remains. | Fixed App b238; Agent 079; Runtime 37eb |
+| P2/P3-next-pair | One changed pair after source repairs | App service; Proof review | Reviewed timing repair, joined proof and caller | blocked:app | App Sol0616; joined0609; caller0609 | Joined b238 has 685 PASS and one FAIL. Conditional pair release stays held until corrected source checks pass. No new request. | App repair pending; Agent079; Runtime37eb |
+
+| P2-media-timing-join | Preserve prepared media canonical timing | App Sol; independent review | Unchanged joined positive failed | doing | app-A2-media-timing-join-sol-0616 | Joined0609 found result null at media timing line720. Sole repair active; original assertion and all strict guards remain required. | Base b2380539c5 |
 
 P1 RESULT GO. Header records GO at00:43Z. Original18792 passed both cases in141 seconds on App f8b15af0a66ed14e7711a4bb7f1ed5b62b4988b5 / Agent78738040d72ce74c42ddf7731221aecb06f9246d / Runtime2a9e347ff0e1df1dedff5ab7b59ddb27dfe3129d. Proof0036 source and0040 custody PASS. P4 DONE. Final freeze reruns all gates and complete original tails on final heads.
 
@@ -35,10 +37,10 @@ P2 RESULT NO-GO. Actual app-readiness-D45-final-caller-sol-0446-full-e2e-three-p
 
 P3 RESULT NO-GO. Actual app-readiness-D45-final-caller-sol-0446-ap2-P3-gate5-h6-0348-1024045333-4065: exit1/277s,original Gate5 zero PASS,one FAIL. First reset assumes5-to0 against fresh clip0/reference15 and emitted noPOST; exact internal return is inferred. Native21/history and readiness passed. Orchestrator05:45 requires the exact serial predecessor mounted UI0-to5 and its POST200, with the original reset200 and every downstream assertion byte-identical. No moved state may be seeded or fabricated.
 
-Blockers: App joined proof 0609 and final retained caller 0609 must pass on b238 before the released one changed pair executes.
+Blockers: App Sol0616 must repair the unchanged media timing regression, then independent review, corrected joined proof and final retained caller must pass.
 
 Blockers: Farm F-final waits for P2/P3,remaining Agent D32 fixes and the final upstream freeze.
-Next ready: App executes one P2 and one P3 after joined proof and final caller 0609 pass. Conditional release sent; no additional Proof approval wait.
+Next ready: App Sol0616 is active. One P2 and one P3 follow reviewed repair, corrected joined proof and caller PASS; no extra Proof approval wait.
 
 Current P3 packet: bb5ee02b67f59b6e58051c45da311e6d556313f8/tree d45bdd73e4ea321c688d3279383aca9f6626410b,soleparent5f43d9e86a. Sol0543 copied the final three files,then added meaningful actual-helper and offline IndexedDB refusal controls and pre-armed exact response correlation. Source-faithful actual caller/drag slice was RED before timing fix and GREEN after. Existing five controls retained; direct TAP12/12,three types,lint,list15,diff all passed on Node20.20.0. All4863 outsidebase paths exact,including P2 oracle. Reverse-removing only setup/import reproduces original c0fe spec byte-for-byte. Spec SHA256741bcfb986fe0e80bbf81a40f741418991ed7e59cda59e578060b818e7d7cd94; new Gate5body c7735569a90ec9acdc2d66feed8747d3480c3b6d0e5acd3e22316ba84f9489e8; originaltail f7e7abd9233a332adfeea03155d78af05a5d631ffffbecd64691c7014936bb67 unchanged. Independent final Luna0553 PASS is complete:12 controls,three types,lint,list15,diff and all bytepreservation checks exit0. Normal remote own-only merge is HOME ae7acc1c2e; all three reviewed blobs match. Source qualification is PASS; actual journey remains NO-GO. Earlier e1/port0539 remain held and are not normal merge candidates. Whole-path0543 sourcePASS is preserved with its stated scheduling uncertainty; Sol's actual timing control now supplies evidence.
 
@@ -59,3 +61,5 @@ Disk: 06:10 available 8687362048 bytes. Read-only inventory found no finished no
 Pass: 06:12. All1251 Proof workers checked; none running or pending. INBOX consumed through676183 bytes, plus normal hub catalog-path peer060115Z and IMAGE closure060308Z. Four peer boards and header reread. Normal P3 home receipt ae7acc1c2e verified against all three independently reviewed blobs; App notified to clear its stale Proof wait. Parameter e42 is HOME, popup79cd and parent7551 remain source qualified. Catalog exact-motion author finished31 tests; independent final cumulative0603 is active. Retained caller0600 is active and owns stage-root adoption. No new Proof author, review, original run or pair is ready. Next full pass06:22; consume new receipt or peer work immediately. All gate tails and qualified scope limits remain in force.
 
 Update 06:15: Independent exact catalog0603 PASS consumed; catalog is HOME b238. App joined0609 and final retained caller0609 are dispatched. Proof conditionally releases ONE changed P2 and ONE changed P3 after required exact-source checks pass, with no further approval wait; no service request is yet submitted. Source scope and complete original tail requirements are unchanged. INBOX through677993 bytes.
+
+Update06:20: App joined0609 found one unchanged media timing positive failure among686 tests. Sol0616 owns minimal production repair. Proof conditional release is held until independently reviewed correction, integrated proof and actual retained caller PASS; no extra release handshake for this authorized repair. App peer061600 and061041 consumed from normal hub. No new original request or new Proof worker.
