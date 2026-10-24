@@ -1,8 +1,9 @@
 # H30/D43/H3 cumulative census limits
 
 - Artifact: `agent-D32-current-node-reconciliation-H30-corrected.json`
-- Artifact SHA-256: `286047a522d61e57f8c46bb655d63d96bd82fd21e6f597fa72a2e017b2552eb2`
-- Current0750 candidate census: **267 total; 262 closed; 5 open; 122 mapping rows (121 unique current closures + 1 historical challenged restart)**. Reviewed0715 base: **261/6/120**. Prior next24 snapshot: **260/7/118**. Base **236/31/94**, commit `02bd3f1f238501ae42061d7802dd69fd34dd1821`, has independent0644 CORE plus scoped metadata/cumulative PASS. The current challenge candidate awaits independent review; no full-suite PASS is asserted.
+- Artifact SHA-256: `e13d65bad98c46f90ab9dd037ae9b20d2c99a650c3db6827b65d4d542a1b24a0`
+- Current0818 candidate: **263 closed /4 open /267; 123 mappings (122 current +1 historical)**. Exact giant original only; independent cumulative review pending. All266 other records and all122 prior mappings are unchanged.
+- Historical0750 census (independent0759 PASS): **267 total; 262 closed; 5 open; 122 mapping rows (121 unique current closures + 1 historical challenged restart)**. Reviewed0715 base: **261/6/120**. Prior next24 snapshot: **260/7/118**. Base **236/31/94**, commit `02bd3f1f238501ae42061d7802dd69fd34dd1821`, has independent0644 CORE plus scoped metadata/cumulative PASS. The0818 giant-only candidate below awaits independent cumulative review; no full-suite PASS is asserted.
 - Prior metadata correction: active families summed to **66**, with **0** active Rendering missing result file nodes (all six are proven passed); active lane owners summed to **66** (Agent 60, Runtime 2, Viewing 4). That metadata-only correction preserved all 267 nodes and 59 mapping rows; the one-node D40 delta below is subsequent.
 - Historical baseline preserved: **172 closed / 95 open**; the 0550 package snapshot remains historical **179 closed / 88 open** metadata context only.
 - Prior cumulative inverse delta: **+22 exact current Occurrence-media inverse originals** (16 corruption and 6 retained-scope cases), all phase `call`, Agent-owned at base, now independently reviewed PASS.
@@ -150,7 +151,9 @@ Remaining **6** exact original IDs, all phase `call`:
 - Validation: standalone stdlib full JSON/CSV membership, exact base delta and264 preservation, owner/family/all267 sums, all prior proof/coverage/mapping/contract preservation, ten original body/assertion pairs, relevant production blobs, exact current/future docs comparison, final census external SHA and five-file package SHA (sorted relative filename +NUL+bytes+NUL). Final report carries package SHA; no recursive embedded package digest. Structured detail: `corrected.json#/persistence_challenge0750` and `delta-mapping.json#/persistence_challenge_mapping0750`.
 
 
-## Standalone read-only stdlib validator (0750)
+## Historical standalone read-only stdlib validator (0750)
+
+This retained block validates the0750 snapshot, not the current0818 package. Use the0818 validator below for current membership.
 
 Save this block under TMPDIR and run `python3 "$TMPDIR/validate_count.py"` from the candidate worktree. It imports no product code and runs no test/probe. Raw XML checking is conditional on local availability; independently verified0736 membership/digest is explicit when absent.
 
@@ -325,4 +328,210 @@ print('PASS: all267 original IDs/phases/tags;262 closed/5 open;264 unchanged;own
 print('CENSUS_SHA256='+digest)
 print('PACKAGE_SHA256='+package.hexdigest())
 print('RAW_XML_LOCAL='+str(raw.exists())+';0736 independently verified named membership/digest retained; no local raw validation claimed when absent')
+```
+
+
+## Current giant original closure (0818)
+
+- **CANDIDATE; independent cumulative package PASS pending.** Independent0759 base `82025e10b8` is **262 closed /5 open /267**. Exact retained giant original closure yields **263 closed /4 open /267**; all266 other node records and all267 original IDs/phases/tags remain unchanged and ours. Current owners: **Agent4**. Families: **SDK/timeline2 + execution/rendering/pack1 + Runtime child/import1 =4**; CLI/manifest/current-surface is0.
+- Retained0809 XML locally parsed: exactly `tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale`, **1 passed,0 failed/errors/skipped**, suite0.458s/case0.114s. Agent `a8f4c05719c2e1848c5f24adc1fbb17655f77eec`/tree`12d92980eb0d900a0fa976ae49344f95d6bf4b5e`; Runtime `becfe6db88b2cc034dba3fafa6c050117cdf2b06`/tree`7edc08e3fe94edcbc8ef695c479f4de301789b89`. Independent0814 result PASS. Raw XML, qualification, actualhome report, independent report and baseline0759 report are read and hashed; exact command is retained in the new proof. No new body run or qualification.
+- Relevant `generic_host.py`, rationale, original test file and REPO_ROOT path helper blobs exactly match HOME `0c2c28da4f9733a1becc134f95219ae3079fc50e`/tree`4ce9de35768c75d38db16882423313fb5047eb5f`. This is static equality, not execution on0c2 or later heads. generic_host has14330 physical newlines, SHA`9a0d3f8e987c043e4dfdb7912e63b228fc6dfeec41d573d92ff31bf4ec8cd11b`, with14330 rationale claim. Test file/body/all5assertions exactly match original c36. Rationale has **38 members,37 unchanged**; only generic_host claim13998→14330. The prior51-member statement is a reporting typo; independent0814 confirms38/37.
+- **123 CSV/JSON mappings =122 unique current closures +1 historical challenged restart**; all122 old rows preserved byte-for-field and one exact giant row appended. **51 proofs/coverage entries =50 retained +1 scoped PASS**, with no broadening of old evidence. Prior0750 giant challenge/direct oldRED315>50 and frozen Farm80environment/1regression/15unknown remain historical; no retrospective Farm or other original credit. Restart38af challenge/0649 failure and subsequent0733/0736 closure remain unchanged. Historical pending-at-author-time metadata is retained; this0818 section overrides only giant current applicability.
+- Remaining exact originals (all phasecall, ours, Agent-owned):
+
+  - `tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_unsupported_timelines_with_clip_reasons`
+
+  - `tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut["second"]`
+
+  - `tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head`
+
+  - `tests/test_generic_host.py::test_structure_pack_members_survive_harvest_cleanup_and_reopen`
+
+- Support discovery and generic reopen remain unqualified; helper wordsecond and persistence moved-head remain D23 deferred and open. Full25691 remains FAIL. No current full267, complete-tuple, installed, HTTP, production caller, full v2 request/reply/history/receipt, D18-loader, duck, neighbor or broader qualification. Full CONTRACTINVENTORY and all prior finite observed coverage/limits remain unchanged: acceptance still requires **the production caller uses it**. New proof exercises zero request/reply fields.
+- Only the existing five evidence artifacts change. No product/test/schema/client/pin/M5, ORCH, design or report edits; no new process-persistence/probe/body/full/browser/gate run, install or bench. Final external census SHA is written after final census bytes; final package SHA is reported externally, never embedded recursively. Structured current detail: `corrected.json#/giant_home0818`, `delta-mapping.json#/giant_home_mapping0818`.
+
+## Standalone read-only stdlib validator (0818)
+
+Save the following block to `$TMPDIR/validate_giant0818.py` and run `python3 "$TMPDIR/validate_giant0818.py"` from the candidate worktree. It reads JSON/CSV/XML and Git source blobs; it imports no product code and runs no tests or probes.
+
+```python
+import ast
+import collections
+import csv
+import hashlib
+import json
+from pathlib import Path
+import re
+import subprocess
+import xml.etree.ElementTree as ET
+
+root = Path.cwd()
+e = root / 'evidence'
+prefix = 'agent-D32-current-node-reconciliation-H30-'
+base = '82025e10b8d059e2c2fadeeebb6c78fc410a8a7f'
+orch = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
+sha = lambda b: hashlib.sha256(b).hexdigest()
+
+def git(*args, repo=root):
+    return subprocess.check_output(['git', '-C', str(repo), *args])
+
+def old(name):
+    return git('show', base+':evidence/'+prefix+name)
+
+def blob(ref, path):
+    return git('show', ref+':'+path)
+
+d = json.loads((e/(prefix+'corrected.json')).read_text())
+m = json.loads((e/(prefix+'delta-mapping.json')).read_text())
+b = json.loads(old('corrected.json'))
+bm = json.loads(old('delta-mapping.json'))
+a = d['giant_home0818']
+p = d['proofs'][a['proof_ref']]
+nid = p['exact_original_node_ids'][0]
+assert a == m['giant_home_mapping0818']
+assert a['base_commit'] == base and a['base_census_sha256'] == sha(old('corrected.json'))
+original = json.loads((orch/'design/agent-D32-failure-map-0057.json').read_text())
+key = lambda n: (n['exact_node_id'], n['phase'], n['tag'])
+assert len(d['nodes']) == len({key(n) for n in d['nodes']}) == 267
+assert len({n['exact_node_id'] for n in d['nodes']}) == 267
+assert {key(n) for n in d['nodes']} == {key(n) for n in b['nodes']} == {key(n) for n in original['entries']}
+assert all(n['tag'] == 'ours' for n in d['nodes'])
+assert collections.Counter(n['phase'] for n in d['nodes']) == {'call':262,'setup':5}
+bn = {n['exact_node_id']:n for n in b['nodes']}
+dn = {n['exact_node_id']:n for n in d['nodes']}
+assert [k for k in dn if dn[k] != bn[k]] == [nid]
+assert a['preservation']['unchanged_other_node_records'] == 266
+closed = {k for k,n in dn.items() if n['status'] == 'proven_passed'}
+bc = {k for k,n in bn.items() if n['status'] == 'proven_passed'}
+opened = [n for n in d['nodes'] if n['exact_node_id'] not in closed]
+assert closed-bc == {nid} and bc-closed == set()
+assert a['delta'] == {'newly_closed':[nid], 'reopened':[], 'net_closed':1}
+assert a['counts'] == {'total':267,'closed':len(closed),'open':len(opened)} == {'total':267,'closed':263,'open':4}
+assert a['remaining_exact_original_node_ids'] == [n['exact_node_id'] for n in opened]
+owners = dict(collections.Counter(n['effective_owner'] for n in opened))
+families = dict(collections.Counter(n['family'] for n in opened))
+r = d['reconciliation']
+assert owners == a['active_owner_counts'] == r['effective_owner_counts_active'] == {'Agent':4}
+assert families == {k:v for k,v in a['active_family_counts'].items() if v}
+assert a['active_family_counts'] == r['active_family_counts']
+assert sum(owners.values()) == sum(families.values()) == 4
+assert r['counts'] == dict(b['reconciliation']['counts'], proven_passed=263, active_owner=4)
+assert (r['confirmed_closed_ids'],r['open_ids'],r['held_or_unknown_ids']) == (263,4,4)
+assert r['confirmed_closed_ids']+r['open_ids'] == 267
+assert r['newly_confirmed_closed_since_0118'] == b['reconciliation']['newly_confirmed_closed_since_0118']+1
+assert not r['current_head_full267_pass']
+assert all(r[k] == v for k,v in b['reconciliation'].items() if k not in {
+    'counts','confirmed_closed_ids','open_ids','held_or_unknown_ids',
+    'newly_confirmed_closed_since_0118','full_checkpoint',
+    'effective_owner_counts_active','active_family_counts'})
+for section in ['proofs','PROOF_FIELD_COVERAGE']:
+    assert len(d[section]) == 51 and len(b[section]) == 50
+    assert all(d[section][k] == v for k,v in b[section].items())
+for k,v in b.items():
+    if k not in {'reconciliation','proofs','PROOF_FIELD_COVERAGE','nodes','scope'}:
+        assert d[k] == v, k
+assert all(d['scope'][k] == v for k,v in b['scope'].items())
+assert d['CONTRACTINVENTORY'] == b['CONTRACTINVENTORY']
+assert all(m[k] == v for k,v in bm.items() if k not in {'rows','base_artifact_sha256'})
+assert m['rows'][:122] == bm['rows'] and len(m['rows']) == 123
+with (e/(prefix+'delta.csv')).open(newline='') as f:
+    assert list(csv.DictReader(f)) == m['rows']
+assert (e/(prefix+'delta.csv')).read_bytes().startswith(old('delta.csv'))
+current = [x for x in m['rows'] if x['credit'] == 'confirmed_closed']
+historical = [x for x in m['rows'] if x['credit'] == 'historical_challenged']
+assert len(current) == len({x['exact_original_node_id'] for x in current}) == 122
+assert len(historical) == 1 and len({x['exact_original_node_id'] for x in m['rows']}) == 122
+assert a['mapping_inventory'] == {
+    'total_rows':len(m['rows']), 'current_confirmed_closed_rows':len(current),
+    'current_unique_original_ids':len({x['exact_original_node_id'] for x in current}),
+    'historical_challenged_rows':len(historical),
+    'all_unique_original_ids':len({x['exact_original_node_id'] for x in m['rows']}),
+    'unchanged_prior_rows':len(bm['rows']), 'appended_current_rows':1}
+assert m['rows'][-1]['exact_original_node_id'] == nid and m['rows'][-1]['proof_ref'] == a['proof_ref']
+assert all(x['exact_original_node_id'] in closed for x in current)
+for row in m['rows']:
+    assert row['phase'] == dn[row['exact_original_node_id']]['phase']
+    assert all(x in d['proofs'] for x in row['proof_ref'].split(';'))
+assert all(p in d['proofs'] for n in d['nodes'] for p in n.get('proof_refs', []))
+assert a['proof_inventory']['distinct_proof_refs_on_current_closed_nodes'] == len({p for n in d['nodes'] if n['exact_node_id'] in closed for p in n['proof_refs']})
+assert a['proof_inventory']['total'] == len(d['proofs'])
+assert a['proof_inventory']['unchanged_prior_records'] == len(b['proofs'])
+assert a['preservation']['unchanged_prior_coverage_entries'] == len(b['PROOF_FIELD_COVERAGE'])
+assert dn[nid]['integrated_reconciliation']['historical_pre_giant_home0818_reconciliation'] == bn[nid]['integrated_reconciliation']
+for source in a['retained_sources'].values():
+    assert sha(Path(source['path']).read_bytes()) == source['sha256']
+assert 'Giant-file result — PASS' in Path(a['retained_sources']['independent0814']['path']).read_text()
+q = json.loads(Path(p['qualification']['path']).read_text())
+assert q['result'] == 'PASS' and q['original_test']['nodeid'] == nid
+assert q['original_test']['return_code'] == 0 and q['original_test']['runs'] == 1
+assert p['command'] == q['original_test']['command'] and p['new_runs_in_this_package'] == 0
+raw = Path(p['junit']['path']).read_bytes()
+assert sha(raw) == p['junit']['sha256']
+xml = ET.fromstring(raw)
+cases = list(xml.iter('testcase'))
+assert len(cases) == 1 and all(not list(c) for c in cases)
+assert cases[0].get('classname').replace('.','/')+'.py::'+cases[0].get('name') == nid
+suite = next(xml.iter('testsuite'))
+assert {k:int(suite.get(k)) for k in ['tests','failures','errors','skipped']} == {'tests':1,'failures':0,'errors':0,'skipped':0}
+assert p['junit']['counts'] == q['original_test']['counts'] == {'tests':1,'passed':1,'failed':0,'errors':0,'skipped':0}
+assert suite.get('time') == p['junit']['suite_time_seconds'] and cases[0].get('time') == p['junit']['testcase_time_seconds']
+t = p['qualification_tuple']
+assert t == a['qualification_tuple']
+assert git('rev-parse',t['agent_head']+'^{tree}').decode().strip() == t['agent_tree']
+assert git('rev-parse',t['runtime_head']+'^{tree}',repo='/home/user/work/runtime').decode().strip() == t['runtime_tree']
+custody = p['agent_custody']
+assert custody == q['agent_custody'] and custody['worktree_clean_before_after']
+assert custody['tested_head'] == custody['head_before'] == custody['head_after'] == t['agent_head']
+assert custody['tested_tree'] == custody['tree_before'] == custody['tree_after'] == t['agent_tree']
+home = p['relevant_home']
+assert home == a['relevant_home'] == dn[nid]['integrated_reconciliation']['relevant_home']
+assert d['scope']['current_giant_home_qualification0818'] == {'qualification_tuple':t,'relevant_home':home}
+assert git('rev-parse',home['head']+'^{tree}').decode().strip() == home['tree']
+assert not home['execution_on_this_home_claimed']
+for path,rec in home['source_comparison'].items():
+    data = blob(rec['qualified_ref'],path)
+    assert data == blob(rec['home_ref'],path)
+    assert rec['qualified_git_blob'] == rec['home_git_blob'] == git('rev-parse',rec['home_ref']+':'+path).decode().strip()
+    assert sha(data) == rec['sha256'] and data.count(b'\n') == rec['physical_newlines'] and rec['equal']
+assert home['source_comparison']['astrid/core/execution/generic_host.py']['sha256'] == q['source_hashes']['generic_host_sha256']
+assert home['source_comparison']['astrid/core/execution/generic_host.py']['physical_newlines'] == q['source_hashes']['generic_host_lines']
+assert home['source_comparison']['tests/test_structure_contracts.py']['sha256'] == q['source_hashes']['test_file_sha256']
+assert home['source_comparison']['docs/giant-file-rationale.md']['sha256'] == q['source_hashes']['rationale_sha256']
+for info in [p['original_source_identity'],p['qualified_source_identity']]:
+    data = blob(info['source_ref'],info['test_file'])
+    node = next(n for n in ast.parse(data).body if isinstance(n,ast.FunctionDef) and n.name == nid.split('::')[1])
+    dump = lambda n: sha(ast.dump(n,include_attributes=False).encode())
+    assert sha(data) == info['source_file_sha256'] and node.lineno == info['function_line']
+    assert dump(node) == info['function_ast_sha256']
+    assert dump(ast.Module(body=node.body,type_ignores=[])) == info['body_ast_sha256']
+    assertions = [dump(n) for n in ast.walk(node) if isinstance(n,ast.Assert)]
+    assert assertions == info['assertion_ast_sha256'] and len(assertions) == info['assertion_count'] == 5
+assert blob(p['original_source_identity']['source_ref'],'tests/test_structure_contracts.py') == blob(t['agent_head'],'tests/test_structure_contracts.py')
+rm = p['rationale_membership']
+pattern = re.compile(r'\|\s*\d+\s*\|\s*`([^`]+)`\s*\|\s*([\d,]+)\s*\|')
+parse = lambda ref: {k:int(v.replace(',','')) for k,v in pattern.findall(blob(ref,'docs/giant-file-rationale.md').decode())}
+before,after = parse(rm['reviewed_parent']),parse(t['agent_head'])
+assert before == rm['before_members'] and after == rm['qualified_members'] == parse(home['head'])
+assert before.keys() == after.keys() and len(after) == rm['members'] == 38
+assert [k for k in after if before[k] != after[k]] == rm['changed_members'] == ['astrid/core/execution/generic_host.py']
+assert sum(before[k] == after[k] for k in after) == rm['unchanged_members'] == 37
+assert before[rm['changed_members'][0]] == rm['generic_host_old_claim'] == 13998
+assert after[rm['changed_members'][0]] == rm['generic_host_new_claim'] == rm['generic_host_actual_lines'] == 14330
+assert d['PROOF_FIELD_COVERAGE'][a['proof_ref']]['request_fields_exercised'] == []
+assert d['PROOF_FIELD_COVERAGE'][a['proof_ref']]['reply_fields_exercised'] == []
+cp = e/(prefix+'corrected.json')
+digest = sha(cp.read_bytes())
+assert (e/(prefix+'corrected.sha256')).read_text() == digest+'  '+cp.name+'\n'
+assert m['base_artifact_sha256'] == digest
+assert digest in (e/(prefix+'limits.md')).read_text()
+allowed = {'evidence/'+prefix+s for s in ['corrected.json','corrected.sha256','delta-mapping.json','delta.csv','limits.md']}
+assert set(git('diff','--name-only',base).decode().splitlines()) == allowed
+assert not git('ls-files','--others','--exclude-standard').strip()
+package = hashlib.sha256()
+for name in sorted(allowed):
+    package.update(name.encode()+b'\0'+(root/name).read_bytes()+b'\0')
+print('PASS:267 original IDs/phases/tags;263 closed/4 open;266 unchanged;owner/family/delta sums;123 mappings=122 current+1 historical;all122 prior rows/50 proofs/coverage/history/contracts preserved;exact local one-test XML;original file/body/5assertions;qualified/HOME0c2 source blobs;38 rationale members/37 unchanged;five-file-only scope')
+print('CENSUS_SHA256='+digest)
+print('PACKAGE_SHA256='+package.hexdigest())
+
 ```
