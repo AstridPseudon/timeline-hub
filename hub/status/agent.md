@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T03:16:23Z | dispatcher heartbeat 0s | live 3 (sol 2, luna 1, other 0) | busy30 15 | status age 0m -->
-# agent board, 2026-10-24T03:10:00Z
+<!-- agent | 2026-10-24T03:18:31Z | dispatcher heartbeat 7s | live 3 (sol 2, luna 1, other 0) | busy30 13 | status age 0m -->
+# agent board, 2026-10-24T03:18:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -36,7 +36,7 @@
 | F-P4-symbol | Rename stale fixture symbol | Luna | G5 | merged | agt-F-P4-symbol-integrated-0023 | Both original metadata and CLI behavior cases passed on the integrated head. | 45cecae7b |
 | F-authoring-publish-writer | Publication helper integrated behavior | Sol / Luna | Scoped proof complete | merged | Original0158; D38 remainder0228 | Original7PASS on4151; actual10d2 vendor, artifact and Ruff PASS. MypyPASS reused from exact reviewed tree; seven neighbors separate. | 544d589ca6 |
 | F-G4-root-assignment | Restore absent roots and exact undo | Sol / Luna | Cumulative independent review | merged | Author0251; review0300; integrated0305 | Reviewed187 plus7 and69 timing passed, ten malformed roots refused. Actual622b:263 passed in35.42s; five source blobs exact, canonical vendor/artifact passed. | 622b30a8c3 |
-| F-R1-reorder | Replay occurrence order through history | Sol / Luna | Independent 0248 PASS | merged | Author0239; review0248; join0256 | Source145 plus12 guards passed; parent three history failures became green. Current joined proof assigned0256. | a7a6d0e48c |
+| F-R1-reorder | Replay occurrence order through history | Sol / Luna | Independent 0248 PASS | merged | Author0239; review0248; join0256 | Independent145 plus12 passed; actual66d proof passed42 reorder/history and seven original publication cases. | a7a6d0e48c |
 | F-G4-occupancy | Faithful historical shared placement | Sol / Luna | Runtime inverse retirement | doing | Agent redo0308; Runtime retirement0258 | Parallel source work: Agent revalidates accepted source/access/media on redo; Runtime verifies sole-owner root retirement. Original family still held. | candidate held |
 | F-authoring-neighbors | Restore seven publication behaviors | Luna | First home qualification | merged | Port0256; integrated0302 PASS | Actual66d:60 passed in6.41s, stable home origins and clean tree. Eleven migrations,seven original neighbors and42 reorder/history controls. | 66d85b5db8 |
 | F-authoring shared alias | Project one materialized occurrence | Sol failover | Reviewed source cause0213 | doing | rt-F-authoring-alias-semantic-sol-0303 | Runtime owns existing semantic fork projection. Real shared topology and eleven original assertions retained; generic guard stays strict. | source pending |
@@ -53,9 +53,9 @@
 P1: GO. Original service 18792 passed both cases; Proof reviews 0036 and 0040 passed. P4 and P5 are done. G5 already merged under H24. P2 and P3 remain with App and Proof.
 Integration: 622b30a8c33b837a11a7987703f11a5645994d32, tree 49c96e0812dbc6b781bda877f5424b9ee47c7ab1. Canonical45c3 export adopted; schema d106 and Composition819acf unchanged.
 Blockers: Agent full waits for the remaining owned fixes and finite qualifications. D32 comparison rejected all pre-existing credits; no full retry.
-Blockers: Agent full waits for exact root inverse, publication joins, complete authoring undo, installed external sources and the original rendering timeout.
+Blockers: Agent full waits for complete authoring undo, shared-alias projection, historical sharing, installed external sources, image proof and the original rendering timeout.
 Safety: Earlier Farm, monitor, publication and bench permission refusals remain stopped. No denied action was retried here.
-Disk: Lead reports8.6GB free. Recycled five clean finished worktrees; supported sweep and compact completed. Required and previously refused targets remain untouched.
+Disk: About8.4GB free now. Five clean finished worktrees recycled; sweep and compact completed. Required and previously refused targets remain untouched. No new heavy run below8.5GB.
 Next ready: D40 security review, historical redo review, registry reuse review and peer ABA/shared-alias source handoffs. Next image fixture waits for a running App producer.
 Evidence: Earlier detailed results remain in [the archived board](archive-v2/STATUS-20261024T0055Z.md) and the existing design handoffs. Worker final messages are copied unchanged into design.
 D32: Exact upstream comparison completed. Independent review rejected all 25 proposed pre-existing credits. All 267 remain ours; no known-gap or whole-suite PASS claim.
