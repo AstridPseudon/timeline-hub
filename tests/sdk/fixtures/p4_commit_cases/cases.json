@@ -18,7 +18,7 @@
       "id": "cli",
       "kind": "cli",
       "path": "tests/packs/timeline/test_cli_commit_move.py",
-      "symbol": "test_ordinary_edit_literal_move_uses_native_outbox",
+      "symbol": "test_ordinary_edit_literal_move_uses_commit_outbox",
       "edit_operation": "move",
       "commands": [
         "timelines edit t --clip a --on 5 --json"
