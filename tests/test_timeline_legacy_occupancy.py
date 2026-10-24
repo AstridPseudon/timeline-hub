@@ -228,13 +228,7 @@ def _assert_legacy_guard(error, reason="destination_occupied"):
 def _historical_shared_request(*, project_id, timeline_id, base_revision_id,
                                base_publication_id, source_ref, source_occurrence_id,
                                occurrence_id, idempotency_key, origin, dry_run=False):
-    """Prepare the held Agent carrier without invoking a provider.
-
-    ``source_ref`` is supplied by the authenticated source-creation setup.  In
-    particular, this helper must not manufacture a source document or turn a
-    historical pin into a current-head lookup.  The eventual Runtime acceptance
-    is intentionally left to the reviewed Agent handoff.
-    """
+    """Build the registered historical-sharing carrier from an accepted source."""
     source_keys = ("project_id", "timeline_id", "revision_id", "publication_id", "content_digest")
     assert set(source_ref) == set(source_keys)
     assert source_ref["project_id"] == project_id
@@ -283,65 +277,19 @@ def _historical_shared_request(*, project_id, timeline_id, base_revision_id,
     return body, idempotency_key
 
 
-@pytest.mark.parametrize("origin", ["inline", "reference"])
-def test_historical_shared_carrier_preparation_preserves_authenticated_pin(origin):
-    """Map both held historical origins to the existing v2 carrier only.
-
-    This is an offline fixture test.  It deliberately does not exercise the
-    known-held provider body; that acceptance remains NOT QUALIFIED until the
-    reviewed Agent source is handed off.
-    """
-    source_ref = {
-        "project_id": "project-1",
-        "timeline_id": "source" if origin == "inline" else "reference-source",
-        "revision_id": "accepted-source-revision",
-        "publication_id": "accepted-source-publication",
-        "content_digest": "sha256:" + ("1" if origin == "inline" else "2") * 64,
+def _accepted_source_ref(result, occurrence_id):
+    canonical = result["data"]["canonical_document"]
+    parent = canonical["parent_revision"]
+    assert parent["revision_id"] == result["data"]["accepted_revision_id"]
+    assert any(row["occurrence_id"] == occurrence_id
+               for row in parent["payload"]["occurrences"])
+    return {
+        "project_id": canonical["project_id"],
+        "timeline_id": canonical["timeline_id"],
+        "revision_id": parent["revision_id"],
+        "publication_id": result["receipt"]["receipt_id"],
+        "content_digest": parent["content_digest"],
     }
-    body, idempotency_key = _historical_shared_request(
-        project_id="project-1",
-        timeline_id="destination",
-        base_revision_id="destination-base-revision",
-        base_publication_id="destination-base-publication",
-        source_ref=source_ref,
-        source_occurrence_id="source-occurrence",
-        occurrence_id="historical-copy",
-        idempotency_key="historical-shared-" + origin,
-        origin=origin,
-    )
-    preview, preview_key = _historical_shared_request(
-        project_id="project-1",
-        timeline_id="destination",
-        base_revision_id="destination-base-revision",
-        base_publication_id="destination-base-publication",
-        source_ref=source_ref,
-        source_occurrence_id="source-occurrence",
-        occurrence_id="historical-copy",
-        idempotency_key="historical-preview-" + origin,
-        origin=origin,
-        dry_run=True,
-    )
-    command = body["commands"][0]
-    assert set(body) == {
-        "api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id",
-        "commands", "label", "steps", "merge", "reads", "dry_run", "source", "rationale",
-        "group_id",
-    }
-    assert command["select"] == "parent"
-    assert command["args"]["source_ref"] == source_ref
-    assert set(command["args"]["source_ref"]) == {
-        "project_id", "timeline_id", "revision_id", "publication_id", "content_digest",
-    }
-    assert command["args"]["source_occurrence_id"] == "source-occurrence"
-    assert command["created"] == ["occurrence:historical-copy"]
-    assert idempotency_key == "historical-shared-" + origin
-    assert body["steps"][0]["patch"] == []
-    assert body["steps"][0]["reads"] == []
-    assert body["reads"] == []
-    assert body["dry_run"] is False
-    assert preview["commands"] == body["commands"]
-    assert preview["dry_run"] is True
-    assert preview_key == "historical-preview-" + origin
 
 
 def _seed_collision(service, commits, project, *, foreign=False, archived=False):
@@ -601,8 +549,39 @@ def test_legacy_historical_reuse_keeps_newer_global_shot_head(tmp_path, occupanc
         service.register_timeline_commit_provider(occupancy_provider)
         commits = _commits(service)
         commits.bootstrap(project, "main", authorize=lambda: None)
-        _seed_occupied(service, commits, project, "main")
-        source_document = _document(commits, project, "main", service)
+        source_result = _seed_occupied(service, commits, project, "source")
+        _prepare_timeline(service, commits, project, "main")
+        source_occurrence_id = next(
+            row["occurrence_id"]
+            for row in source_result["data"]["canonical_document"]["parent_revision"]["payload"]["occurrences"]
+            if row["shot_id"] == "shot-1"
+        )
+        source_ref = _accepted_source_ref(source_result, source_occurrence_id)
+        if not inline:
+            _prepare_timeline(service, commits, project, "reference-source")
+            reference_body, reference_key = _historical_shared_request(
+                project_id=project,
+                timeline_id="reference-source",
+                base_revision_id=_head(service, project, "reference-source")["revision_id"],
+                base_publication_id=_head(service, project, "reference-source")["publication_id"],
+                source_ref=source_ref,
+                source_occurrence_id=source_occurrence_id,
+                occurrence_id="reference-one",
+                idempotency_key="reference-source",
+                origin="reference",
+            )
+            reference_result = service.commit_timeline(
+                project, "reference-source", reference_body,
+                idempotency_key=reference_key, publisher="occupancy-test",
+                invocation_path=route_path(project, "reference-source"), authorize=lambda: None,
+            )
+            assert reference_result["data"]["status"] == "accepted"
+            source_occurrence_id = "reference-one"
+            source_ref = _accepted_source_ref(reference_result, source_occurrence_id)
+            source_document = reference_result["data"]["canonical_document"]
+        else:
+            source_document = _document(commits, project, "source", service)
+        assert source_ref["timeline_id"] == ("source" if inline else "reference-source")
         assert source_document is not None
         source_shots = copy.deepcopy(source_document["shot_revisions"])
         source_internals = copy.deepcopy(source_document["internal_timeline_revisions"])
@@ -625,36 +604,81 @@ def test_legacy_historical_reuse_keeps_newer_global_shot_head(tmp_path, occupanc
                          "args": {"changes": changes}}
         newer_steps = [{"id": "newer", "label": "Update current closure", "intent": "Update closure",
                         "tags": ["occupancy"], "command_ordinals": [0], "patch": changes, "reads": reads}]
-        newer_body = _body(service, project, "main", [newer_command], "newer",
+        newer_body = _body(service, project, "source", [newer_command], "newer",
                            steps=newer_steps, reads=reads, label="newer")
         newer = service.commit_timeline(
-            project, "main", newer_body, idempotency_key="newer", publisher="occupancy-test",
-            invocation_path=route_path(project, "main"), authorize=lambda: None,
+            project, "source", newer_body, idempotency_key="newer", publisher="occupancy-test",
+            invocation_path=route_path(project, "source"), authorize=lambda: None,
         )
-        newer_receipt = newer["receipt"]["receipt_id"]
+        assert newer["data"]["status"] == "accepted"
         newer_head = _conn(service).execute(
             "SELECT revision_id FROM shot_revision_heads WHERE shot_id='shot-1'"
         ).fetchone()[0]
         assert newer_head != source_shots[0]["revision_id"]
-        inverse = {"schema_version": 1, "op": "timeline.inverse", "version": "1", "select": None,
-                   "args": {"publications": [newer_receipt]}}
-        if inline:
-            inverse["args"]["steps"] = {newer_receipt: ["newer"]}
-        result, body = _submit(service, project, "main", [inverse],
-                               "historical-reuse-" + str(inline),
-                               label="historical inline" if inline else "historical referenced")
+        source_after_newer = _document(commits, project, "source", service)
+        body, key = _historical_shared_request(
+            project_id=project,
+            timeline_id="main",
+            base_revision_id=_head(service, project, "main")["revision_id"],
+            base_publication_id=_head(service, project, "main")["publication_id"],
+            source_ref=source_ref,
+            source_occurrence_id=source_occurrence_id,
+            occurrence_id="historical-copy",
+            idempotency_key="historical-reuse-" + str(inline),
+            origin="inline" if inline else "reference",
+        )
+        before = _document(commits, project, "main", service)
+        assert before is not None
+        assert before["parent_revision"]["payload"]["occurrences"] == []
+        before_destination = tuple(_conn(service).iterdump())
+        physical_counts = tuple(_conn(service).execute("SELECT COUNT(*) FROM " + table).fetchone()[0]
+                                for table in ("shot_revisions", "internal_timeline_revisions"))
+        preview = service.commit_timeline(
+            project, "main", {**body, "dry_run": True}, idempotency_key=key + "-preview",
+            publisher="occupancy-test", invocation_path=route_path(project, "main"), authorize=lambda: None,
+        )
+        assert preview["receipt"] is None
+        assert preview["data"]["would_status"] == "accepted"
+        assert tuple(_conn(service).iterdump()) == before_destination
+        result = service.commit_timeline(
+            project, "main", body, idempotency_key=key, publisher="occupancy-test",
+            invocation_path=route_path(project, "main"), authorize=lambda: None,
+        )
         assert result["data"]["status"] == "accepted"
+        assert _document(commits, project, "source", service) == source_after_newer
+        assert tuple(_conn(service).execute("SELECT COUNT(*) FROM " + table).fetchone()[0]
+                     for table in ("shot_revisions", "internal_timeline_revisions")) == physical_counts
         assert _conn(service).execute("SELECT revision_id FROM shot_revision_heads WHERE shot_id='shot-1'").fetchone()[0] == newer_head
         assert result["data"]["canonical_document"]["shot_revisions"] == source_shots
         assert result["data"]["canonical_document"]["internal_timeline_revisions"] == source_internals
         assert result["data"]["canonical_document"]["shot_revisions"][0]["shot_id"] == "shot-1"
+        after = result["data"]["canonical_document"]
+        row = next(row for row in after["parent_revision"]["payload"]["occurrences"]
+                   if row["occurrence_id"] == "historical-copy")
+        assert row["shot_id"] == "shot-1"
+        assert row["shot_revision_id"] == source_shots[0]["revision_id"]
+        assert row["placement"]["start_ms"] == 12000
+        assert after == _document(commits, project, "main", service)
         assert result["data"]["steps"][0]["patch"]
-        if inline:
-            assert body["commands"][0]["args"]["steps"] == {newer_receipt: ["newer"]}
-        else:
-            assert "steps" not in body["commands"][0]["args"]
-        assert commits.history_entry(project, "main", result["receipt"]["receipt_id"])["records"]["undo_steps"] == (
-            {newer_receipt: ["newer"]} if inline else None
+        assert body["commands"][0]["select"] == "parent"
+        assert body["commands"][0]["args"]["source_ref"] == source_ref
+        assert body["commands"][0]["args"]["source_occurrence_id"] == source_occurrence_id
+        assert body["commands"][0]["created"] == ["occurrence:historical-copy"]
+        assert body["steps"][0]["patch"] == body["steps"][0]["reads"] == body["reads"] == []
+        assert body["dry_run"] is False
+        history = commits.history_entry(project, "main", result["receipt"]["receipt_id"])
+        assert history["records"]["commands"][0]["created"] == [
+            {"ref": "occurrence:historical-copy", "kind": "occurrence", "owner": "parent"},
+        ]
+        source_row = service.get_project_timeline(project, source_ref["timeline_id"])
+        service.archive_timeline(
+            source_ref["timeline_id"], {"expected_version": source_row["version"]},
+            idempotency_key="archive-" + source_ref["timeline_id"],
         )
+        with _validation_no_writes(service):
+            assert service.commit_timeline(
+                project, "main", body, idempotency_key=key, publisher="occupancy-test",
+                invocation_path=route_path(project, "main"), authorize=lambda: None,
+            ) == result
     finally:
         service.close()
