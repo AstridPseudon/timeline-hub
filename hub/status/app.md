@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T10:03:35Z | dispatcher heartbeat 7s | live 4 (sol 2, luna 2, other 0) | busy30 8 | status age 7m -->
-# app board, 2026-10-24T09:56Z
+<!-- app | 2026-10-24T10:06:40Z | dispatcher heartbeat 7s | live 7 (sol 3, luna 4, other 0) | busy30 11 | status age 0m -->
+# app board, 2026-10-24T10:05Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -19,9 +19,9 @@
 | P3 | Original Gate5 journey | App service; Proof verdict | Final source and caller proof | blocked:app | Actual9310; setupHOME82cb | Exit 1 in 307 seconds. Readiness passed 41.4 seconds; one accepted predecessor POST missed by clip.move predicate. Original tail unrun. | Selected 663; HOME 9b810 |
 | P2-P3-next-caller | Bind prepared caller after product join | Luna; independent Luna | Cumulative0902 PASS; final source pending | blocked:app | Return0853; cumulative0902 | PREPARED only. Actual decoded source and forged-target controls pass;248 rows preserved. Final pure proof target and source hashes remain inputs. No rows installed. | 1d92503b4c |
 | P2-P3-D41-caller | Prepare source-required Agent backport inputs | Sol; independent Luna | Review0945 FAIL; real pin pending | doing | Luna0939; review0945; Sol0950 | Receipt substring, parent and child binding gaps found. Sol first return closes exact witnesses. No rows installed; old caller0902 intact. | b2f7113cc2 held |
-| P2-element-diagnostic | Retain Apply transport and UI stages | Luna | Orchestrator09:57 | doing | app-P2-element-retained-diagnostic-0955 | Add safe retained events through real fixture, original bodies hash-locked. Review before next P2. | Base82cb |
-| P3-solo | Qualify P3-only current caller | Luna; Proof release | HOME82cb; old custody | doing | app-P3-solo-caller-0955 | Bind legacy1d925 to pure proof0900; preserve P2 row. Proof no-popup determination and release requested. | Base1d925 |
-| U3b-D39-early | Stack current fixes and D39 on branch | Sol; Luna review | Orchestrator D48 amendment09:57 | doing | app-U3b-D39-early-stack-sol-0955 | Manager merge-forward82cb into reviewedcd29 is conflict-free. Normal D39 generation active; service full checkpoint follows review. No home merge. | Draft branch only |
+| P2-element-diagnostic | Retain Apply transport and UI stages | Luna; independent Luna | H36 | review | Author0955; review1005 queued | Collector, fixture and bounded controls authored; original four specs unchanged. Final harness commit pending. | Base82cb; source pending |
+| P3-solo | Qualify P3-only current caller | Luna; independent Luna | Proof0951 PASS and release0954 | review | Author0955; review1005 queued | PREPARED. Review challenges circular service snapshot input; source0900 and old079 custody are qualified. Other249 rows unchanged. | Base1d925; source pending |
+| U3b-D39-early | Stack current fixes and D39 on branch | Sol; Luna review | H36 branch checkpoint | doing | Author0955; Sol return1005 queued | HOME20 paths exact;756 pass,11 git-init EPERM. D39 old fixture mapping needs repair; final merge commit pending. No home merge. | Draft branch only |
 | P2-P3-current-packet | Publish same-ID terminal evidence | Luna; Proof review | Actual retained files | merged | Producer return 0707; Proof 0717 | Eight safe files published byte-exact with origin paths and hashes. Actual daemon and P2 synthetic snapshot identity remain unknown. | Source 663 |
 | P2-P3-lifecycle-custody | Verify retained lifecycle bytes | Luna; independent Luna | Independent 0741 PASS | merged | Producer 0733; review 0741 | Originals, copies and attachments are 224 bytes with LF. Exact selected writer matches. Prior 225/no-LF claim contradicted. | Same immutable files |
 | P3-parent-path | Prove actual predecessor dispatch | Sol; independent Luna | Independent 0720 PASS | merged | Sol 0714; review 0720 | One POST 200 accepted; guarded doc.patch moves 0 to 5 with 25 request/step reads. Canonical 5 and history 2 to 3. | Report only |
@@ -53,10 +53,10 @@
 
 Integration: HOME82cb5c0005df7abe0fcb8673f7be192a6c9e9183 unchanged. P3 integrated0900 PASS20 controls, types, lint/list; P2 integrated0826 remains PASS46 plus7 semantic and22 Node controls. Popup d99 remains held. Independent0928 FAIL verifies direct production rebase path and assigns provider continuation; mounted test rerun did not finish. Author66 of67 is not independent mounted proof. Sol0935 owns deterministic fixture execution; Agent0922 independently classifies provider source. Caller0902 remains PREPARED only.
 
-Blockers: Agent — reviewed current continuation repair and qualified D41 backport0943 are needed. Coherent079 failure independently qualified. Source-only undo relevance ask0948 is with Agent.
-Blockers: App — D41 caller0950 must close review0945 custody gaps; complete popup provider green precedes source merge and joined proof. Runner0940 PASS clears subprocess wait.
-Blockers: Freeze — App U3b home still waits header P2/P3 GO. Early U3b+D39 branch/checkpoint now proceeds under09:57 amendment; Runtime coordinates FREEZE.
-Next ready: Element diagnostic0955, earlyfreezeSol0955, P3solo0955 and callerSol0950 dispatched. Proof P3-only release and Agent pin qualification are separate inputs. P3 integrated0900 and caller cumulative0902 PASS are published. After popup PASS, merge exact source, qualify joined head, bind final caller, then use conditional release0850 once.
+Blockers: Agent — current repair final static and independently qualified D41 backport0943 remain inputs for P2.
+Blockers: App — finalization of exited0955 workers is with the lead; diagnostic review1005 and P3 caller review1005 are queued. CallerSol0950 remains active.
+Blockers: Freeze — home U3b waits header P2/P3 GO. Early branch D39 tooling returnSol1005 precedes independent review and App-service full checkpoint.
+Next ready: Diagnostic review1005, P3 caller review1005 and D39 tool returnSol1005 queued. P3-only authority is released by Proof0954; dispatch exactly once after genuine caller checks. P2 remains held.
 
 Later: Final P1–P5 run on App service with Proof verdict after final tuple qualification, then D49 full suites and Farm F-final/ZIP. No duplicate farm or Proof run. D47 memo/capsule stays deferred and held unmerged. D46 U2c draft stays closed. D14/D23 deferred relational timing cases retain their original assertions and failures.
 
@@ -66,8 +66,12 @@ Delivery: D31 retains transcriptAssociateCapture.ts, its unchanged 397-line/40-a
 
 Safety: Prior historical cleanup, graph, publication and compact refusals remain stopped; no alternate route or retry. Managers write only boards, briefs and qualified shared reports. Workers own every product, test, generated and pin change. No direct Git mutation or upstream push.
 
-Disk: Sweep3 removed zero directories; about11.4 GB free. No eligible finished clean non-KEEP App worktree exists. Remaining old P1 and target trees are KEEP; two dirty historical U3 trees have prior cleanup refusals and remain untouched. No refused compact or cleanup route is retried. Dependencies are inspected in place with bounded scratch.
+Disk: Sweep3 removed zero directories; about10.7 GB free. Recycled finished clean caller0939 and fixture runner0935; branches and reports retained. Remaining old P1 and target trees are KEEP; two dirty historical U3 trees have prior cleanup refusals and remain untouched. No refused compact or cleanup route is retried. Dependencies are inspected in place with bounded scratch.
 
 Evidence: [joined 690](../../design/app-A2-A3-corrected-integrated-0629.md), [real provider integrated](../../design/app-A3-provider-integrated-0724.md), [actual predecessor review](../../design/app-P3-parent-trace-review-0720.md), [element clock](../../design/app-P2-element-clock-review-0724.md), [element error review](../../design/app-P2-element-error-review-0738.md), [popup cause review](../../design/app-P2-popup-cause-review-0745.md), [lifecycle review](../../design/app-P2-P3-lifecycle-review-0741.md), [IMAGE](../../design/agt-A4-image-result-review-0636.md).
 
 Pass 2026-10-24T09:57Z: INBOX consumed through1426469 bytes, including orchestrator09:57 three asks. All three became owned rows and dispatches immediately. Sanctioned earlyfreeze merge-forward completed conflict-free; actual U3b source retains all current82cb fixes. P3solo starts from qualified1d925, not failedD41package; no popup pin dependency is assumed. Proof no-popup assessment and oneP3-only release requested0955. Header home-merge condition stays intact.
+
+Pass 2026-10-24T10:05Z: NEW INBOX consumed through1427776 bytes plus normal hub Proof0954. Three exited workers have pending harness finalization, reported to lead. Their finals copied byte-exact. Ordinary source and generator blockers have concrete owners; no permission question or original request. Prior cleanup refusals remain stopped.
+
+Dispatch correction10:06Z: three1005 requests initially refused ordinary missing brief FILE because relative paths resolve at dispatcher cwd. Requeued with absolute brief paths; no safety refusal. Supported exact App82cb checkout requested for P3 source custody. No fixture or bench copies.
