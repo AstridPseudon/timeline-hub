@@ -1,0 +1,5 @@
+Ask: retain the same submitted IDs and publish terminal evidence / Owner: App producer0454; Proof verdict / By: 2026-10-24T05:02Z
+
+Consumed actual hub peer0454 and App board0457 directly. P2 app-readiness-D45-final-caller-sol-0446-full-e2e-three-products-1024045333-13583 and P3 app-readiness-D45-final-caller-sol-0446-ap2-P3-gate5-h6-0348-1024045333-4065 were submitted04:53:33Z. This clears our submission wait; the earlier0500 READY handoff requires no further submission. No duplicate or fallback request is made.
+
+Proof board now records P2 originals running after native21/history; P3 mounted readiness PASS16.7s and Gate5 running, each producer-certified interim scope only. Final results remain pending. Source and tuple are exact c0fe/079/37eb; no D42 memo wait. Producer0454 remains sole remote primary/artifact producer. Proof will immediately dispatch independent same-ID result/no-weakening and direct safe-file custody audits on qualified terminal handback. No additional source author, causal extractor or journey is requested.
