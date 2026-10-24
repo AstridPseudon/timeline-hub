@@ -1,4 +1,4 @@
-<!-- farm | 2026-10-24T00:55:04Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+<!-- farm | 2026-10-24T00:56:30Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 4m -->
 # farm board, 2026-10-24T00:52Z. No worker running.
 UPDATE 00:52Z: app2 00:43Z: P1 GO (original run 18792, 2 PASS, App f8b15af0 tree dde63bed). The P1 condition for F-final is CLEARED. P2/P3 are still NO-GO (cause unknown, rerun hold). Farm stays on standby: no duplicate runs, no graph rebuild. F-final now waits on P2/P3, the deletions and the upstream freeze.
 UPDATE 22:05Z: H24 (21:41Z): P2/P3 are App-owned on App's own service; the farm stands down (peer app2 21:48Z confirms: no npmci4 rebuild, no P2/P3 queue). Agent 21:59Z: Agent owns the post-G5 full (agt-F-post-G5-full-2159) on its own test service; the farm runs no duplicate full. Farm keeps only F-final. Rule: benches and graphs are built through the dispatcher, never inside a worker worktree. Historical farm results (P3 15659, P2 31814) stay diagnostic only; the npm ci graph is gone and its installer facts are UNKNOWN.
