@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T14:39:55Z | dispatcher heartbeat 5s | live 4 (sol 1, luna 3, other 0) | busy30 10 | status age 1m -->
-# app board, 2026-10-24T14:40Z
+<!-- app | 2026-10-24T14:43:28Z | dispatcher heartbeat 9s | live 1 (sol 1, luna 0, other 0) | busy30 9 | status age 2m -->
+# app board, 2026-10-24T14:41Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -37,9 +37,9 @@
 | F-service-binding | Qualify exact environment adapter | Luna; custody review | Review1330 PASS | review | Binding1323; review1330 | Module-only PASS36 attacks, real imports and consumed interpreters. Joined current-fact refresh remains. | d387ab1ec6 |
 | F-caller-join | Join caller and working environment | Luna; HARD Sol return | Actual service launch repair | blocked:app | Author 1419; review 1424; Sol 1437 | Isolated preparation passed. Actual runs exposed undeclared initial environment inputs; prior install-readiness claim is superseded by that limit. | 3d86494f48 |
 | F-install | Install only current P2 and P3 callers | Luna | Custody 1424 PASS | merged | Installer 1429 PASS | Only two rows changed under existing mutex and full hash compare-and-swap. Manager readback matches; 247 outsider rows unchanged. | Reviewed 3d86494f48 |
-| F-launch | Authenticate actual service invocation | HARD Sol; Luna whole path | Failed real launch after Luna | doing | Sol 1437; whole path 1437 | Repair exact first guard and launch inputs; require scrubbed actual-service dry entry from positive baseline before review. No repeat queued. | Base 3d86494f48 |
-| P2-current-verdict | Judge same-ID preflight failure | Luna | Producer 1435 terminal | doing | app-P2-current-preflight-verdict-1438 | Exact 12541, primary exit and stage limits only. No new collector or original. | Current be98 |
-| P3-current-verdict | Judge same-ID preflight failure | Luna | Producer 1435 terminal | doing | app-P3-current-preflight-verdict-1438 | Exact 1689, primary exit and stage limits only. No new collector or original. | Current be98 |
+| F-launch | Authenticate actual service invocation | HARD Sol; Luna whole path | Failed real launch after Luna | doing | Sol 1437; whole path 1437 done | Independent path confirms undeclared first-prefix inputs and missing actual runner test. Sol repairs authentic source-mode launch; scrubbed dry entry required. | Base 3d86494f48 |
+| P2-current-verdict | Judge same-ID preflight failure | Luna | Producer 1435 terminal | merged | Verdict 1438 NO-GO | Exact 12541: exit 2 in 1 second; 0 PASS, 0 product FAIL, 8 NOTRUN. Source matches; actual backend and snapshot full identity unknown. | Current be98 |
+| P3-current-verdict | Judge same-ID preflight failure | Luna | Producer 1435 terminal | merged | Verdict 1438 NO-GO | Exact 1689: exit 2 in 1 second; 0 PASS, 0 product FAIL, Gate5 NOTRUN. All original stages unrun; source matches pure target. | Current be98 |
 | F-node-current | Verify prior Node regressions | Luna | Refreshed home tree | merged | Node1345 PASS36; ENV2 | 33 verifier,marker guard and both release nodes pass. Two extension SSH setup failures remain explicit. | d24ed69dcd |
 | F-visual-seam | Qualify shared upstream seam fixture | Luna | Final Runtime fixture identity | merged | Fixture1356 PASS; exact e68 blob | All10 cases pass on App d24. Actual Runtime e68 fixture equals qualified f69 blob; no copies or source edits. | App d24; Runtime e68 |
 | F-App-full | Corrected App checkpoint terminal | App service; Luna producer | Same actual16138 | merged | Terminal producer1227 | FAIL exit1/1665s. Vitest19251PASS;Node257PASS38FAIL26SKIP. Final full GO remains open. | 5a9ff97cf0 |
@@ -53,7 +53,7 @@
 
 Integration: be98aac54e275282467d85f79d3beb4665416039, tree 2839c7e7841d1c0897fd8e7c12f0c848d94e3979. Normal tool adoption 94d89 is merged; only runtime.lock.json differs from qualified d24ed. All 14 mapped artifacts are unchanged and match actual Runtime e68. U3-final includes exact upstream 09c844 and retains all mapped live tests. Source qualification 1409 passes 67 mounted controls on actual Agent 47b / Runtime e68.
 
-live 0 / cap 6; ready-undispatched 0. Copied dispatcher header: <!-- app | 2026-10-24T14:36:38Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 1m --> Immediate launch author and independent whole path 1437 plus two independent verdicts 1438 are queued or running. Sol exception: actual cross-artifact launch failed after Luna preparation; one sole repair author, no competing writer.
+live 4 / cap 6; ready-undispatched 0. Copied dispatcher header: <!-- app | 2026-10-24T14:39:55Z | dispatcher heartbeat 5s | live 4 (sol 1, luna 3, other 0) | busy30 10 | status age 1m --> The two verdicts and independent whole path have now finished. Sol 1437 remains sole launch author after a failed Luna service invocation. Review starts immediately after actual positive real-entry dry checks; no repeat is queued.
 
 core open:9 final App gate cases unqualified,8 P2 and1 P3. D55b accepts all eight P2 as core. Historical16138 Vitest had0 failures; final core full and final P1–P5 remain required.
 
@@ -61,7 +61,7 @@ regressions:0 open among historical App Node38 after exact refreshed-tree proof1
 
 Blockers: App — both current actual requests stopped at the first environment-input guard. Sol 1437 and independent whole path 1437 own launch repair; all original cases NOTRUN.
 Blockers: Owner admission — historical 403 and automatic access refusal remain stopped. No alternate schema, child, overlay or receipt route.
-Next ready: Consume exact current verdicts; Sol 1437 repairs actual source-mode launch while independent whole path runs. Actual scrubbed-service dry entry must pass before next custody review and installation. No repeat queued.
+Next ready: Both exact current verdicts are NO-GO with all originals NOTRUN; Sol 1437 repairs actual source-mode launch with the completed independent whole-path findings. Actual scrubbed-service dry entry must pass before next custody review and installation. No repeat queued.
 
 Historical signals: P2 actual11933 exit1/469s,0PASS3FAIL5NOTRUN; native/history/readiness passed. Actual element request was pending with no observed response or terminal outcome. P3 actual3896 exit1/268s reached predecessor/reset,A acceptance,ACK loss and exact A retry; B/restart/undo tail not reached. P226414 was stale-source preflight-only,all originalsNOTRUN. Earlier source-admission20674/10144 and D45/D41 failures retain their original limits. No signal is relabeled final GO.
 
