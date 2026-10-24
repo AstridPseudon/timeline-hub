@@ -12,6 +12,9 @@ export interface Gate5ResetPreconditionInput {
   expectedScope: { projectId: string; timelineId: string };
   expectedOwnerId: string;
   expectedOwnerScope: { realmId: string; actorId: string; projectId: string; timelineId: string };
+  // Captured producer metadata, never inferred from the submitted request. The
+  // mounted move uses appendDocument, which supplies neither annotation.
+  expectedRequestAnnotations?: { rationale?: string; group_id?: string };
   authoritativeHistory: unknown;
   preGestureDocument: unknown;
   clipId: string;
@@ -145,8 +148,15 @@ export function assertGate5ResetPrecondition(input: Gate5ResetPreconditionInput)
   if (input.responseStatus !== 200) throw new Error(`Gate5 precondition response status ${String(input.responseStatus)}`);
 
   const request = object(input.request, 'request');
+  const annotations = input.expectedRequestAnnotations ?? {};
+  for (const [key, value] of Object.entries(annotations)) {
+    if (!['rationale', 'group_id'].includes(key) || typeof value !== 'string' || (key === 'group_id' && !value)) {
+      throw new Error('Gate5 precondition producer annotations mismatch');
+    }
+  }
   keys(request, ['api_version', 'project_id', 'timeline_id', 'base_revision_id', 'base_publication_id',
-    'commands', 'label', 'steps', 'merge', 'reads', 'dry_run', 'source'], 'request');
+    'commands', 'label', 'steps', 'merge', 'reads', 'dry_run', 'source', ...Object.keys(annotations)], 'request');
+  for (const [key, value] of Object.entries(annotations)) exact(request[key], value, `request ${key}`);
   if (request.api_version !== 1) throw new Error('Gate5 precondition request version mismatch');
   if (request.project_id !== input.expectedScope.projectId) throw new Error('Gate5 precondition project scope mismatch');
   if (request.timeline_id !== input.expectedScope.timelineId) throw new Error('Gate5 precondition timeline scope mismatch');
@@ -195,7 +205,8 @@ export function assertGate5ResetPrecondition(input: Gate5ResetPreconditionInput)
   const data = object(envelope.data, 'response data');
   keys(data, ['status', 'base_revision_id', 'base_publication_id', 'previous_revision_id', 'previous_publication_id',
     'accepted_revision_id', 'rebased_onto', 'commands', 'document_digest', 'canonical_document', 'id_map',
-    'provider_version', 'compiler_version', 'publisher', 'merge_mode', 'label', 'source', 'steps'], 'response data');
+    'provider_version', 'compiler_version', 'publisher', 'merge_mode', 'label', 'source', 'steps', ...Object.keys(annotations)], 'response data');
+  for (const [key, value] of Object.entries(annotations)) exact(data[key], value, `response ${key}`);
   if (string(data.status, 'response status') !== 'accepted') throw new Error('Gate5 precondition was not accepted');
   if (data.base_revision_id !== request.base_revision_id || data.base_publication_id !== request.base_publication_id) {
     throw new Error('Gate5 precondition response base mismatch');
@@ -372,7 +383,7 @@ export function assertGate5ResetPrecondition(input: Gate5ResetPreconditionInput)
     publication_id: receipt.receipt_id, revision_id: acceptedRevisionId,
     previous: { revision_id: input.expectedBase.revisionId, publication_id: input.expectedBase.publicationId },
     receipt, intent: 'recorded', provider_version: data.provider_version, compiler_version: data.compiler_version,
-    publisher: ownerScope.actorId, source: { via: 'app' }, label: 'Edit timeline', merge: 'fields', merge_mode: 'fields',
+    publisher: ownerScope.actorId, source: { via: 'app' }, label: 'Edit timeline', ...annotations, merge: 'fields', merge_mode: 'fields',
     reads: expectedReads, steps: [expectedStep], records: { schema_version: 1, commands: [record], undo_of: [],
       restored_from: null, undo_steps: null, label: 'Edit timeline', merge_mode: 'fields', steps: [expectedStep] },
   }, 'authoritative history');

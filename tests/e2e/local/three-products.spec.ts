@@ -1264,14 +1264,18 @@ async function ownerWithTwoMountedDocuments(page: Page, seed: ThreeProductsSeed)
 async function openCommandTimeline(page: Page, harness: DirectHarness, seed: ThreeProductsSeed) {
   // A case selected alone must establish its own verified authoring baseline.
   await harness.enableTimelineAuthoring(ASTRID_PYTHON);
-  const previous = page.url().startsWith(harness.origin) ? await commandOutboxes(page, seed.timelineId) : [];
+  // The hosted blank page establishes the storage origin without mounting an
+  // editor or claiming an owner, including on an ordinary fresh Playwright page.
+  await page.goto(`${harness.origin}/__blank.html`);
+  const previous = await commandOutboxes(page, seed.timelineId);
   await openApp(page, harness);
   await expectConnected(page);
   await openSeededTimeline(page, harness);
   // Loading the canvas can finish before immutable reads and the native owner claim.
   await expect.poll(async () => ({
-    ready: (await commandOutboxes(page, seed.timelineId)).some((owner) =>
-      !previous.some((old) => old.ownerId === owner.ownerId) && !owner.pending && !owner.intents.length),
+    ready: (await commandOutboxes(page, seed.timelineId)).filter((owner) =>
+      owner.scope.projectId === harness.seed.projectId && owner.scope.timelineId === seed.timelineId
+        && !previous.some((old) => old.ownerId === owner.ownerId) && !owner.pending && !owner.intents.length).length === 1,
     notice: await page.getByTestId('timeline-command-recovery').allTextContents(),
   }), { ...CEILING, message: 'the mounted editor must claim a new durable command owner before the gesture' }).toMatchObject({ ready: true });
   const fresh = (await commandOutboxes(page, seed.timelineId)).filter((owner) =>

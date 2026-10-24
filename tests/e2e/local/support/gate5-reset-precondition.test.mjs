@@ -332,7 +332,8 @@ test('the actual opening boundary returns the fresh scoped owner with an older s
   check.poll = callback => ({ toMatchObject: async () => assert.equal((await callback()).ready, true) });
   const run = new (Object.getPrototypeOf(async () => {}).constructor)(
     'page', 'harness', 'seed', 'ASTRID_PYTHON', 'CEILING', 'commandOutboxes', 'openApp', 'expectConnected', 'openSeededTimeline', 'expect', compiled);
-  const claimed = await run({ url: () => 'https://offline.invalid/', getByTestId: () => ({ allTextContents: async () => [] }) },
+  const claimed = await run({ url: () => 'https://offline.invalid/', goto: async (url) => assert.equal(url, 'https://offline.invalid/__blank.html'),
+    getByTestId: () => ({ allTextContents: async () => [] }) },
     { origin: 'https://offline.invalid', seed: scope, enableTimelineAuthoring: async () => {} }, scope, 'offline-python', {},
     async () => opened ? [old, settled[0]] : [old], async () => { opened = true; }, async () => {}, async () => {}, check);
   assert.deepEqual(claimed, { ownerId: settled[0].ownerId, scope: ownerScope });
@@ -341,6 +342,154 @@ test('the actual opening boundary returns the fresh scoped owner with an older s
   assert.throws(() => assertGate5ResetPrecondition({ ...valid, expectedOwnerId: claimed.ownerId, settledOutboxes: [old] }), /owner identity/);
   assert.doesNotThrow(() => assertGate5ResetPrecondition({ ...valid, expectedOwnerId: claimed.ownerId,
     settledOutboxes: [old, settled[0]].filter(owner => owner.ownerId === claimed.ownerId) }));
+});
+
+test('the actual opening helper reads historical durable owners from a fresh blank page before mounting', async () => {
+  const spec = readFileSync(new URL('../three-products.spec.ts', import.meta.url), 'utf8');
+  const start = spec.indexOf('async function openCommandTimeline(');
+  const end = spec.indexOf('\nasync function prepareDependentMoves(', start);
+  const compiled = ts.transpileModule(spec.slice(start, end) + '\nreturn openCommandTimeline(page, harness, seed);',
+    { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext } }).outputText;
+  const run = new (Object.getPrototypeOf(async () => {}).constructor)(
+    'page', 'harness', 'seed', 'ASTRID_PYTHON', 'CEILING', 'commandOutboxes', 'openApp', 'expectConnected', 'openSeededTimeline', 'expect', compiled);
+  let indexedDB, outboxes;
+  const initial = { head: base, canonicalDocument: preGestureDocument };
+  let lastAccepted;
+  const accept = async (body, key) => {
+    const reply = responseFor(data);
+    reply.receipt = { ...reply.receipt, idempotency_key: key, request_hash: fixtureDigest({ operation: 'commitTimeline',
+      path: `/v1/projects/${scope.projectId}/timelines/${scope.timelineId}/commit`, publisher: ownerScope.actorId, request: body }).slice(7) };
+    lastAccepted = { body, key, reply };
+    return { ...acceptedValue, response: reply, receipt: reply.receipt };
+  };
+  const createSession = (sessionScope = ownerScope, send = accept) => {
+    const document = { ...preGestureDocument, project_id: sessionScope.projectId };
+    return createLocalSaveSession({ scope: sessionScope, initial: { ...initial, canonicalDocument: document }, document,
+      outboxes, loadLatest: async () => initial, changed() {}, send,
+      prepareDisplay: async (basis, document = basis.canonicalDocument) => ({ document, adopt() {} }) });
+  };
+  let mounted;
+  try {
+    for (const scenario of ['old-only', 'new', 'foreign', 'nonempty', 'pending']) {
+      indexedDB = createFakeIndexedDB();
+      outboxes = createCommitOutbox({ indexedDB, exclusiveLock: async (_name, work) => work() });
+      // Persist the historical acceptance through the real encoder/session/outbox.
+      const old = await createSession();
+      await old.appendDocument({ before: preGestureDocument, after: moved,
+        roots: [{ ref: 'parent', revisionId: base.revisionId, contentDigest: preGestureDocument.parent_revision.content_digest }],
+        label: request.label, step: request.steps[0], merge: 'fields', reads });
+      await old.flush();
+      const oldId = old.getState().ownerId;
+      await old.dispose();
+      const calls = [];
+      let url = 'about:blank';
+      const page = { url: () => url,
+        goto: async (target) => { assert.equal(target, 'https://offline.invalid/__blank.html'); url = target; calls.push('origin'); },
+        getByTestId: () => ({ allTextContents: async () => [] }) };
+      const check = value => ({ toHaveLength: count => assert.equal(value.length, count) });
+      check.poll = callback => ({ toMatchObject: async () => assert.equal((await callback()).ready, true) });
+      const readOwners = async (_page, timelineId) => {
+        assert.equal(new URL(url).origin, 'https://offline.invalid');
+        calls.push('read');
+        // Real durable rows; only the browser inspection transport is replaced.
+        const owners = await outboxes.list({ realmId: ownerScope.realmId, actorId: ownerScope.actorId, timelineId });
+        // Exercise old-first ordering with actual durable records, not invented owners.
+        return owners.sort((left, right) => left.ownerId === oldId ? -1 : right.ownerId === oldId ? 1 : 0);
+      };
+      const open = async () => {
+        assert.deepEqual(calls, ['origin', 'read']);
+        calls.push('mount');
+        if (scenario === 'old-only') return;
+        mounted = await createSession(scenario === 'foreign' ? { ...ownerScope, projectId: 'foreign-project' } : ownerScope,
+          scenario === 'pending' ? async () => { throw new Error('offline ACK loss'); } : undefined);
+        if (scenario === 'nonempty' || scenario === 'pending') {
+          await mounted.append({ before: preGestureDocument, after: moved, label: request.label, commands: request.commands,
+            steps: request.steps, reads });
+          if (scenario === 'pending') await assert.rejects(mounted.flush());
+        }
+      };
+      const opening = run(page, { origin: 'https://offline.invalid', seed: scope, enableTimelineAuthoring: async () => {} },
+        scope, 'offline-python', { timeout: 90_000 }, readOwners, open,
+        async () => { calls.push('connected'); }, async () => { calls.push('selected'); }, check);
+      if (scenario === 'new') {
+        const claimed = await opening;
+        assert.deepEqual(claimed, { ownerId: mounted.getState().ownerId, scope: ownerScope });
+        assert.notEqual(claimed.ownerId, oldId);
+        assert.deepEqual(calls.slice(0, 5), ['origin', 'read', 'mount', 'connected', 'selected']);
+        const historical = (await readOwners(page, scope.timelineId)).filter(owner => owner.ownerId === oldId);
+        assert.throws(() => assertGate5ResetPrecondition({ ...valid, expectedOwnerId: claimed.ownerId,
+          settledOutboxes: historical }), /owner identity/);
+        await mounted.appendDocument({ before: preGestureDocument, after: moved,
+          roots: [{ ref: 'parent', revisionId: base.revisionId, contentDigest: preGestureDocument.parent_revision.content_digest }],
+          label: request.label, step: request.steps[0], merge: 'fields', reads });
+        await mounted.flush();
+        const input = { ...inputWithReply(lastAccepted.reply), request: lastAccepted.body,
+          requestIdentity: lastAccepted.body, responseRequest: lastAccepted.body, requestIdempotencyKey: lastAccepted.key,
+          expectedOwnerId: claimed.ownerId, expectedOwnerScope: claimed.scope,
+          settledOutboxes: (await readOwners(page, scope.timelineId)).filter(owner => owner.ownerId === claimed.ownerId) };
+        assert.doesNotThrow(() => assertGate5ResetPrecondition(input));
+        assert.throws(() => assertGate5ResetPrecondition({ ...input, settledOutboxes: historical }), /owner identity/);
+      } else await assert.rejects(opening, /false !== true/);
+      await mounted?.dispose();
+      mounted = undefined;
+    }
+  } finally {
+    await mounted?.dispose();
+  }
+});
+
+test('Gate5 accepts source-generated supplied annotations and binds their request, reply, history and owner forwarding', async () => {
+  const annotations = { rationale: 'Move the selected clip to five seconds', group_id: 'setup-annotation-group' };
+  const outboxes = createCommitOutbox({ indexedDB: createFakeIndexedDB(), exclusiveLock: async (_name, work) => work() });
+  const initial = { head: base, canonicalDocument: preGestureDocument };
+  let suppliedRequest, suppliedKey, suppliedReply;
+  const session = await createLocalSaveSession({ scope: ownerScope, initial, document: preGestureDocument,
+    outboxes, loadLatest: async () => initial, changed() {},
+    prepareDisplay: async (basis, document = basis.canonicalDocument) => ({ document, adopt() {} }),
+    send: async (body, key) => {
+      suppliedRequest = body;
+      suppliedKey = key;
+      const nextData = { ...data, rationale: body.rationale, group_id: body.group_id };
+      suppliedReply = responseFor(nextData);
+      suppliedReply.receipt = { ...suppliedReply.receipt, idempotency_key: key,
+        request_hash: fixtureDigest({ operation: 'commitTimeline',
+          path: `/v1/projects/${scope.projectId}/timelines/${scope.timelineId}/commit`, publisher: ownerScope.actorId, request: body }).slice(7) };
+      return { ...acceptedValue, response: suppliedReply, receipt: suppliedReply.receipt };
+    } });
+  try {
+    // localSaveSession.append forwards caller annotations; appendDocument does not.
+    await session.append({ before: preGestureDocument, after: moved, label: request.label, commands: request.commands,
+      steps: request.steps, reads, ...annotations });
+    await session.flush();
+    assert.deepEqual(suppliedRequest, { ...request, ...annotations });
+    const input = { ...inputWithReply(suppliedReply), request: suppliedRequest,
+      requestIdentity: suppliedRequest, responseRequest: suppliedRequest, requestIdempotencyKey: suppliedKey,
+      expectedRequestAnnotations: annotations, expectedOwnerId: session.getState().ownerId,
+      settledOutboxes: await outboxes.list(ownerScope), authoritativeHistory: { ...authoritativeHistory,
+        ...annotations, receipt: suppliedReply.receipt } };
+    assert.doesNotThrow(() => assertGate5ResetPrecondition(input));
+    for (const key of ['rationale', 'group_id']) {
+      for (const value of [null, 1, {}, 'different']) {
+        assert.throws(() => assertGate5ResetPrecondition({ ...input, request: { ...suppliedRequest, [key]: value } }), /request .* mismatch/);
+        const reply = responseFor({ ...suppliedReply.data, [key]: value });
+        assert.throws(() => assertGate5ResetPrecondition({ ...input, responseBody: reply }), /response .* mismatch/);
+      }
+      const missing = { ...suppliedRequest };
+      delete missing[key];
+      assert.throws(() => assertGate5ResetPrecondition({ ...input, request: missing }), /request keys/);
+      const missingData = { ...suppliedReply.data };
+      delete missingData[key];
+      assert.throws(() => assertGate5ResetPrecondition({ ...input, responseBody: responseFor(missingData) }), /response data keys/);
+      const history = { ...input.authoritativeHistory, [key]: 'different' };
+      assert.throws(() => assertGate5ResetPrecondition({ ...input, authoritativeHistory: history }), /authoritative history/);
+      assert.throws(() => assertGate5ResetPrecondition({ ...input, expectedRequestAnnotations: { ...annotations, [key]: 1 } }), /producer annotations/);
+    }
+    assert.throws(() => assertGate5ResetPrecondition({ ...input, request: { ...suppliedRequest, foreign: true } }), /request keys/);
+    assert.throws(() => assertGate5ResetPrecondition({ ...input, responseBody: responseFor({ ...suppliedReply.data, foreign: true }) }), /response data keys/);
+    assert.throws(() => assertGate5ResetPrecondition({ ...input, expectedRequestAnnotations: undefined }), /request keys/);
+    assert.throws(() => assertGate5ResetPrecondition({ ...valid, responseBody: suppliedReply }), /response data keys/);
+    assert.throws(() => assertGate5ResetPrecondition({ ...input, expectedRequestAnnotations: { ...annotations, group_id: '' } }), /producer annotations/);
+  } finally { await session.dispose(); }
 });
 
 test('Gate5 refuses missing, extra, or wrong normalized command claims and accepted steps', () => {
