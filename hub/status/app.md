@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T04:27:47Z | dispatcher heartbeat 15s | live 3 (sol 0, luna 3, other 0) | busy30 17 | status age 0m -->
-# app board, 2026-10-24T04:27Z
+<!-- app | 2026-10-24T04:30:33Z | dispatcher heartbeat 13s | live 4 (sol 0, luna 4, other 0) | busy30 14 | status age 1m -->
+# app board, 2026-10-24T04:30Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -55,16 +55,16 @@
 | A2-popup-wrapper | Bind scoped popup saves to verified source | Sol; Luna review | First return 0417 complete | review | app-A2-popup-binding-review-0427 | Author 351 tests, three types and lint passed. Forged context and missing head reproduced then refused; cumulative independent review active. | 0267ed4f03 held |
 | readiness-D42-caller | Prepare qualified D42 caller | Sol | Qualified Runtime memo proof pin | blocked:runtime | app-readiness-D42-caller-sol-0348 | Draft24+28+4 and4 extra controls passed; exact old receipts checked. Shared rows unchanged; final pin and keyed child required. | Draft only |
 | P2-parent-outbox | Reproduce parent move dispatch boundary | Sol; Luna review | Source reproduction complete | review | app-P2-parent-transition-review-0422 | Parent author adds verified physical source path. Original historical trigger remains unknown; no live credit. | See author 0411 |
-| P2-popup-target | Correct rendered popup target lookup | Luna; Proof review | Proof 0418 PASS | merging | ap2-P2-popup-rendered-target-0413 | Two selector lines only; all other bytes retained. Remote normal queue submitted; local branch delivery awaited. | adf39c533 |
+| P2-popup-target | Correct rendered popup target lookup | Luna; Proof review | Proof 0418 PASS and home merge | merged | ap2-P2-popup-rendered-target-0413 | Exactly two selector lines integrated; own reviewed blob retained. Source tests and no-weakening pass; original live P2 awaits combined fixes. | adf39c533 / c768058cd0 |
 | P2-five-static | Check five original not-run gestures | Luna; independent review | Review 0357 PASS | merged | app-P2-five-review-0357 | Static review finds transition clears and single-occurrence placement gaps. Authors 0411 and 0410 assigned. Asset and swap still need live proof. | Report only |
-| P2-parent-transition | Preserve closure on parent and transition edits | Sol; Luna review | Author 0411 complete | review | app-P2-parent-transition-review-0422 | Author 292 tests, three types and lint passed. Sixteen positives kept; child and unrelated changes refused. Unsafe wrapper ancestry held. | See author 0411 |
+| P2-parent-transition | Land verified parent and transition edits | Luna port; independent review | Own scope 0422 PASS | doing | app-P2-parent-current-packet-0430 | Only reviewed five-file diff ports to current integration, excluding held wrapper ancestry. Integrated 292-test qualification follows. | Donor53b77c3949 |
 
 | P2-single-child-placement | Declare occurrence ADD creation claims | Luna; independent review | Exact audit0420 FAIL | doing | app-A3-created-claims-return-0424 | No transport fills missing created claims. Prior341 tests retained; incorrect envelope PASS cannot qualify actual submitted command. | 561a792a held |
 Safety: Historical cleanup, graph and publication denials stand. Managers write boards, briefs and shared reports; workers own product changes.
 Delivery legacy subset: Keep transcriptAssociateCapture.ts and its unchanged 397-line, 40-assertion test, plus required helpers, under D31.
 Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-handoff-0029.md), [image review](/home/user/timeline-hub/hub/design/app-A2-image-created-review-0133.md), [A4 cut map](/home/user/timeline-hub/hub/design/app-A4-current-cut-census-0042.md).
-Integration: e492d963ba; joined 332 and independent 108 tests, three types and lint passed. Element migration is integrated; original old804 element failure is not directly reproduced.
-Blockers: Runtime — Review0357 found another warm-cache closure bypass. Correction0403 and whole-path audit0403 are active; pin and HTTP release remain held.
+Integration: c768058cd0 adds reviewed two-selector correction to e492. Element and coalescing source proof remains 332 plus108 tests, types and lint; no new browser proof.
+Blockers: Runtime — D42 mutable state and resolver bypasses require Sol0423 correction, independent security proof, compatible pin and HTTP release. No caller adoption yet.
 Blockers: Freeze — U3b waits P2/P3 and final freeze.
 Next ready: Wrapper binding return0417; parent author0411; child review0416 and claim audit0420; Proof selector0413; image producer0419. Qualify D42 caller once Runtime pin and HTTP release arrive. No repeat now.
 Disk: About 11 GB available after dispatches. No finished non-KEEP clean worktree remains. Prior dirty U3 and compact refusals stand; sweep3 removed zero directories. Freed zero GB.
