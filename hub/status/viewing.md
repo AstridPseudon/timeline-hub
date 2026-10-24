@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T03:00:41Z | dispatcher heartbeat 1s | live 1 (sol 1, luna 0, other 0) | busy30 1 | status age 1m -->
-# viewing board, 2026-10-24T02:59:17Z
+<!-- viewing | 2026-10-24T03:02:07Z | dispatcher heartbeat 13s | live 1 (sol 1, luna 0, other 0) | busy30 1 | status age 0m -->
+# viewing board, 2026-10-24T03:01:11Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -32,7 +32,7 @@
 | F-authoring-ABA | Complete authenticated undo capture and projection | Sol author; Luna review next | Agent transfer 0257 | doing | vw-F-authoring-ABA-projection-sol-0300 | Cause 0227 complete. Joined projection and capture implementation assigned; original service 141 remains failed. | Base 8a8dbf2d |
 | F-D32-render-wire | Classify six missing SDK result files | Luna author and review | Agent qualified installed child | merged | Viewing 0116 and 0117; service 27934 | Agent reports six original cases passed in 41.48 seconds on child c886 and Runtime 8ea. Source classification independently passed. | no product change |
 
-| OPS-hub-publication | Restore supported board publication | Manager | Permission boundary | blocked:orchestrator | No worker | Hub sync hit read-only Git config; attempt stopped. Publication unconfirmed. | No product change |
+| OPS-hub-publication | Confirm supported board publication | Existing hub daemon | Published current board and peer | merged | Existing hub daemon | Board body and author handoff match local bytes; hub HEAD equals origin/main. Failed manual action remains stopped. | Hub ea55792fc |
 
 Detailed prior evidence: [retained board and scope boundaries](../../design/viewing-evidence-before-D33-20261024T0053.md). V1: [Agent integrated proof](../../design/agent-V1-integrated-proof-0147.md). V3: [Agent shared archive proof](../../design/agent-V3-integrated-proof-0111.md). Delivery dry run: [independent review](../../design/handoff-viewing-DB-composition-review-0802.md).
 
@@ -49,7 +49,6 @@ F-D32-render-wire classification and owner qualification are complete. [Author 0
 Historical recycle permission refusals remain parked under viewing-20261023T002713Z-recycle-b70-permission-refusal.md. No retry or alternate deletion.
 
 Blockers: Agent owns the current source port and one original ABA qualification after Viewing source and independent review pass.
-Blockers: Orchestrator must resolve supported hub publication after the read-only Git configuration failure; see the linked escalation.
 Next ready: independent Luna review after vw-F-authoring-ABA-projection-sol-0300 completes.
 
 
@@ -69,3 +68,5 @@ Permission handoff 2026-10-24T02:56:49Z: The supported hub sync attempt hit `err
 
 
 Current pass 2026-10-24T02:59:17Z: Agent transfer0257 is received and applied. F-authoring-ABA is doing with unique Sol author vw-F-authoring-ABA-projection-sol-0300 on assigned8a8; no competing author. Source scope is stage projection/capture plus a new focused test; Agent inverse/timing, Runtime fixture/native-carrier and original behavior ownership remain intact. All prior1288 Viewing workers are done. Disk15.3GB is above target. Hub publication remains stopped under the existing permission escalation; no retry. Local handoff: [author assignment](../../design/peer-viewing-to-agent-20261024T0300-ABA-author.md). Earlier waiting notes above are superseded by this explicit transfer.
+
+Publication resolved by observation 2026-10-24T03:01:11Z: existing hub daemon independently published this pass at ea55792fc106e03adc086a15340fffdc32b3e6db, with HEAD equal to origin/main. Board body and author handoff0300 are byte-identical to local files. No manual sync retry, permission change or alternate publication route. OPS blocker cleared; historical refusal remains recorded.
