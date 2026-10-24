@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T21:24:51Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 10m -->
-# app2 board, 2026-10-24T21:14Z
+<!-- app2 | 2026-10-24T21:27:23Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# app2 board, 2026-10-24T21:25Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -10,7 +10,7 @@
 | P1-case2 | Refusal, message and canonical rollback | App service; independent Luna | Same original run | merged | App18792; Proof0040 | Passed in20.4 seconds: Agent edit,409,message,canonical rollback,history and zero legacy traffic. | Same pinned tuple |
 | P1-corpus | Real document roundtrip and merge | Luna | Complete | merged | Corpus1348 | 49 passed with15 fixtures and11 inputs. Direct provider scope; mounted proof is separate. | e6 and9729 |
 | P4 | CLI, Python, sheet, ten notes and rerun | Sol; Luna; service | Complete on recorded tuple | merged | 17739;28012;11615 | Ten notes in one commit, per-step undo/redo, restart, show/history and200-409-200 conflict rerun passed. | Agent543d andf6cda / Runtimea5d |
-| P4-current | Qualify original ten-note timing | Agent Luna; service | Meaningful Runtime cost correction | blocked:runtime | Batch2056; actual1960 | NO-GO:4PASS/3FAIL236.51s. Ten-note45.439s timeout; CLI/sheet and rerun PASS. False2 timeouts; True2 candidate-only PASS. No unchanged repeat. | Candidate21c6 / Runtimedc55 |
+| P4-current | Qualify original ten-note timing | Agent Luna; Runtime Sol | Meaningful measured correction | blocked:runtime | Batch2056; actual1960; Sol2113 | NO-GO:4PASS/3FAIL236.51s. Ten-note45.439s timeout; False2 timeouts. True2 passes candidate-only. Runtime2113 source return active. | Candidate21c6 / dc55 |
 | readiness-after-bootstrap | Qualify mounted readiness | App service; Proof review | D45 and current leaves passed | merged | D45; current23809 and9310 | D45 readiness passed. Current producer reports P2 readiness19.5 seconds and P3 readiness41.4 seconds; downstream failures remain. | App663 / Agent079 / Runtime37eb |
 | P2 | Eight original core gestures | App service; independent Luna | Corrected counts and headline published | review | Actual22847; count1809; headline1819 | NO-GO: eight selected, three executed, 0 PASS / 3 FAIL / 5 NOT RUN. Readiness passed separately. Original bodies retained. | App587316 / Agentf4d6 / Runtime327da / Comp635f |
 | P2-preflight26414 | Qualify same-ID source guard failure | Independent Luna | Independent1136 complete | merged | Verdict1136; validation return1144 | Gate NO-GO;source PASS;preflightFAIL;all8 NOTRUN. Direct remote run/snapshot/provider custody UNKNOWN. Finite runner return1144 passed7+10 controls. | Actual26414 |
@@ -80,23 +80,23 @@
 
 | P3-D82-original | Strict recorded-command original | App service; independent Luna | Preflight11918 and verdict2024 PASS | merged | Actual15493; independent2024 | GO. Exact tuple, synthetic snapshot, six protected hashes and both XML qualified. No new run; rendering and final-cut scope remain separate. | Appc184bd0bec |
 | P3-D83-diagnostic | Cancel redundant P3 diagnostic | App Luna | ORCH20:47 correction; original GO | gated:cancelled | App diagnostic2040 and batched2040 stopped | App reports no service submission or source merge. Both workers stopped and recycled; original15493 independently GO. No follow-up. | Branch63bc retained |
-| P2-D83-order | Qualify eight isolated gestures | App Luna; service | Runtime dc55 released | doing | App2058; actual22971 and26387 | Element22971 reached gesture, then failed applied status at412. Popup ADD26387 running; six assigned after terminal. Full tour only after8PASS. | ce1cd / b2cb / dc55 /635f |
+| P2-D83-order | Qualify eight isolated gestures | App Luna; service | Runtime dc55 released | doing | App2058; 22971,26387,837 | First three terminal NO-GO: element status, popup setup group, parent response wait. Producer advances five remaining; full tour only after8PASS. | Captured tuples retained |
 
-| P2-element-22971 | Diagnose missing applied status | App Luna | Actual22971 original reached | doing | app-P2-element-22971-cause-2104 | App owns retained artifacts and mounted path. No backend cause inferred, duplicate body or independent NO-GO verdict. | App ce1cd9 |
+| P2-element-22971 | Return provider pending boundary | App Luna; Runtime | App safe handoff2110 published | blocked:runtime | App2104 and2110; Runtime peer2110 | No App fix justified. Ordinal3 provider pending; actual7469B stack and123 safe phases published. Runtime cause remains owner work. | Evidence only |
 
 D56.4: Proof is folded into App. The complete [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md) remains binding. In-flight work and independent caller1213 are complete. No new Proof dispatch, original run or product merge is owed. App owns P1/P2/P3 execution and verdicts; Agent owns P4; Runtime owns P5, Composition and delivery. The manager loop remains alive for new orchestrator instructions.
 
-live 0 / cap 4; ready-undispatched 0 for Proof under D56.4. Normal Proof header21:13 confirms0live; all1313 dispatcher rows ended. App has2live; Runtime0; Agent0. No new Proof assignment.
+live 0 / cap 4; ready-undispatched 0 for Proof under D56.4. Actual1313 workers all ended; normal Proof header confirms0live. Owner headers: App2, Runtime1, Agent0. No new Proof assignment.
 
 core open: 2 transferred gate groups, P2 and P4. P3 original15493 independently2024 GO on its captured tuple; P1 current31083 independently1846 GO. All8 P2 cases remain required; P4 original45s remains open. Final D59 matrix still applies.
 
 regressions: 1 presumed cut-blocking installed-render regression under D77a. Consumerdfea is normally HOME; visible D77 receipt MERGED831df, actual34 adversarial+2positive PASS and D13 fixture migrated. Final genuine installed render remains owed. No confirmed open Proof-authored source regression.
 
-Blockers: Runtime P4 cost follow-through — actual1960 terminal4PASS/3FAIL236.51s; ten-note45.439s timeout and False2 timeout. Agent peer2105 requests meaningful source, candidate21c6 held; no unchanged repeat.
+Blockers: Runtime P4 cost — actual1960 remains4PASS/3FAIL; Sol2113 owns measured strict correction from dc55. No unchanged original repeat; candidate21c6 remains held.
 
-Blockers: App P2 results — element22971 is terminal FAIL after readiness; App2104 owns source diagnosis. Popup ADD26387 runs under2058, remaining six follow one at a time. Full tour after8PASS.
+Blockers: App P2 results — first three isolated cases terminal NO-GO. App2058 advances five remaining; popup2115 active and parent837 source author awaits cap2 slot. Runtime has element phase handoff2110.
 
-Next ready: None for Proof under D56.4. App2058 owns sequential isolated cases; App2104 owns element22971. Agent1960 is terminal NO-GO; Runtime follow-through requested by Agent2105. E/D79 paused until ZIP.
+Next ready: None for Proof under D56.4. Existing App2058 and source owners handle P2; Runtime2113 handles P4 cost. Full tour waits eight isolated PASS. E/D79 paused until ZIP.
 
 Current gate evidence:
 - P3 latest15493: independent2024 GO, exit0/248s; readiness1 and original1 PASS, XML zero failures/errors. Exact Appc184bd0bec5d10292647600272329534e058d474 / Agent22d00393f7d944f1d01505637ca00b1995c3e158 / Runtime44917baf5976d6a655d582fafc63fde7b6cb242d / Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40. Genuine same-tree snapshot4863f39c, spec93c2 and five other protected hashes qualified. Both mounts, exact5/3, merged B, history, restart, canonical closure and guarded undo pass. [Independent GO](../../design/app-P3-15493-GO-verdict-2024.md). No renderer or final-cut full credit; historical14240 remains NO-GO.
@@ -129,10 +129,10 @@ Historical proof limits:
 Later: D34 broader legacy accounting UNKNOWN. D47 memo/capsule held with nine attacks; no mutable authority/history memo. D46 U2c closed until final join. D14/D23 timing deferred. V4 cut. Historical App P4/P5 registration drafts superseded by D59 venues. D52 removals never weaken live gates. D79 has actual owner lanes; App28293 failed at identity invalid bearer before remote/drag/undo; setup1838 owns the non-gating return. Runtime corpus WIP yields to D80; kit1847 local route7e857 was published and host-verified. Actual live stack capture remains owed through existing App1952. No Proof dispatch.
 Safety: Prior process/reference/file/MONITOR/keep-awake/publication/graph/locked-v1/compact refusals remain stopped. No alternate cleanup,publication or source acquisition route. No manager product/test/generated/pin edit or Git mutation. Full worker reports remain byte-exact under D30; no upstream push,test weakening or credential export.
 
-Disk: 8010850304 bytes free at2026-10-24T21:14Z; D74 local cap4. Three remaining Proof worktrees are ended and KEEP-marked; zero non-KEEP candidates. Prior cleanup refusals remain stopped.
+Disk: 8007716864 bytes free at2026-10-24T21:25Z; D74 local cap4. Three remaining Proof worktrees are ended and KEEP-marked; zero non-KEEP candidates. Prior cleanup refusals remain stopped.
 
-Pass 2026-10-24T21:14Z: PLAN and manager rules read first; NEW inbox is unchanged at791665 bytes. Local and normal hub headers match exactly; D56.4 and D83 remain binding. Rechecked both transferred blockers on owner boards. App21:05 publishes actual22971 original FAIL at applied-status412 after native setup/readiness PASS; App2104 owns cause, existing2058 has popup26387 submitted21:04:32Z and all remaining cases assigned sequentially. Runtime21:02 source release remains complete, but Agent21:06 publishes actual1960 terminal4PASS/3FAIL236.51s and requests measured Runtime follow-through via peer2105. Ten-note45.439s and False R2 variants time out; True passes remain candidate-only. No unchanged repeat, duplicate diagnosis or new Proof dispatch. P1 and P3 retain recorded GO tuple scope; final D59 reruns remain owed. Actual workers1313allended and three retained trees allKEEP; zero eligible recycle candidates. Prior cleanup and safety refusals remain stopped.
+Pass 2026-10-24T21:25Z: NEW inbox remains791665 bytes; normal header hash unchanged and D56.4/D83 remain binding. Ran actual bin/workers:1313rows,allended. Rechecked transferred blocked rows on actual App21:19, Runtime21:13 and Agent21:16 boards. Runtime Sol2113 is active on measured strict P4 history-cost return; Agent1960 stays terminalNO-GO with original45s unchanged and candidate21c6 held. App element22971 remainsNO-GO; reviewed safe handoff2110 records ordinal3 provider pending,7469B stack and123phases without cause attribution. Popup26387 failed fixture shared-group setup, parent837 errored at90000ms response wait. Existing2058 advances remainingfive; popup2115 active, parent source brief ready at nextcap2slot. No Proof author, run, independentNO-GOreview or duplicate extractor. P1/P3 GO retain captured scope; final D59 reruns/render/core remain owed. Three retained Proof trees allended/KEEP, zero eligible recycle targets; refusal holds unchanged.
 
-Next watch: approximately21:25Z. Check new inbox, normal header, App26387 and Runtime response to Agent2105. No new Proof dispatch, product edit, private extractor, Git mutation or original body under D56.4.
+Next watch: approximately21:35Z. Read NEW inbox and normal header; watch App remainingfive, popup2115/parent837 source and Runtime2113. No new Proof dispatch under D56.4.
 
 Inbox read through791665bytes. STATUS is the restart point; [D83 ready handoff](../../design/peer-app2-to-app-agent-20261024T2058Z-D83-ready-handoff.md) clears transferred source wait; [original Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md) remains binding.
