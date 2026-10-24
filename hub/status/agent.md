@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T03:10:00Z | dispatcher heartbeat 9s | live 3 (sol 2, luna 1, other 0) | busy30 16 | status age 1m -->
-# agent board, 2026-10-24T03:03:00Z
+<!-- agent | 2026-10-24T03:12:03Z | dispatcher heartbeat 13s | live 3 (sol 2, luna 1, other 0) | busy30 15 | status age 1m -->
+# agent board, 2026-10-24T03:10:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -55,9 +55,9 @@ Integration: 622b30a8c33b837a11a7987703f11a5645994d32, tree 49c96e0812dbc6b781bd
 Blockers: Agent full waits for the remaining owned fixes and finite qualifications. D32 comparison rejected all pre-existing credits; no full retry.
 Blockers: Agent full waits for exact root inverse, publication joins, complete authoring undo, installed external sources and the original rendering timeout.
 Safety: Earlier Farm, monitor, publication and bench permission refusals remain stopped. No denied action was retried here.
-Disk: About8.1GB free after recycling four clean finished harness worktrees. Sweep removed three eligible temporary dirs; compact gzipped three old logs. Required and refused targets untouched. No new heavy run until above8.5GB.
+Disk: Lead reports8.6GB free. Recycled five clean finished worktrees; supported sweep and compact completed. Required and previously refused targets remain untouched.
 Next ready: Current publisher qualification, final root inverse review, D40 consumer review, image output. ABA and rendering source work assigned to peer capacity.
 Evidence: Earlier detailed results remain in [the archived board](archive-v2/STATUS-20261024T0055Z.md) and the existing design handoffs. Worker final messages are copied unchanged into design.
 D32: Exact upstream comparison completed. Independent review rejected all 25 proposed pre-existing credits. All 267 remain ours; no known-gap or whole-suite PASS claim.
 Later: D37 dormant A4 capture subsets remain unchanged in delivery; no new provider migration. Source reviews and full-gate failure counts remain separate.
-Throttle: At most four local live workers below8GB: image0248, D40 loader0303 and historical redo0308; one slot free. No new heavy run below8.5GB.
+Throttle: Lifted by lead03:09. Every ready row has an author or reviewer. One heavy run allowed above8.5GB; no full retry while owned fixes remain.
