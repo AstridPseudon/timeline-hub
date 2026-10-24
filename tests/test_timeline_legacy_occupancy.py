@@ -6,18 +6,21 @@ import copy
 from typing import Any
 
 import pytest
-
+import test_shot_composition_runtime as _shot_composition_runtime
 from astrid_runtime_client import ApiError, WorkspaceClient
+from test_timeline_commit_acceptance import (
+    validate_prepared,
+)
+
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.errors import RetiredRouteError, RuntimeErrorBase
 from runtime_protocol.timeline_commit_port import route_path
 from runtime_protocol.timeline_commit_store import TimelineCommitStore
-from test_shot_composition_runtime import (
-    _publication, _service, _validation_no_writes,
-    restore_provider as _restore_provider,  # noqa: F401 (register the existing provider fixture)
-)
-from test_timeline_commit_acceptance import validate_prepared  # noqa: F401 (provider schema)
 
+_publication = _shot_composition_runtime._publication
+_service = _shot_composition_runtime._service
+_validation_no_writes = _shot_composition_runtime._validation_no_writes
+_restore_provider = _shot_composition_runtime.restore_provider
 
 PNG = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
@@ -137,7 +140,9 @@ def _seed_occupied(service, commits, project, timeline, *, archived=False):
         "variant_id": imported["variant_id"],
     }, authorize=lambda: None)
     verified = service.get_project_verified_media(project, pin, authorize=lambda: None)
-    from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_add_media
+    from astrid.sdk.timeline.native_occurrence_media_commands import (
+        capture_occurrence_add_media,
+    )
 
     bundle = _bundle(commits, service, project, timeline)
     media_command = capture_occurrence_add_media(
@@ -504,7 +509,9 @@ def test_legacy_current_destination_requires_verified_current_closure(tmp_path, 
                 (foreign_project,),
             )
         else:
-            from astrid.sdk.timeline.native_occurrence_delete import capture_occurrence_delete
+            from astrid.sdk.timeline.native_occurrence_delete import (
+                capture_occurrence_delete,
+            )
 
             _submit(service, project, "main", [capture_occurrence_delete(
                 _bundle(commits, service, project, "main"), "occurrence:occ-1")], "removed")
