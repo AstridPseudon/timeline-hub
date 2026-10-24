@@ -1844,6 +1844,118 @@ describe('current App preservation pending acknowledgements', () => {
 });
 
 describe('verified basis loader diagnostics', () => {
+  it.each([
+    ['history-head', 'history', /malformed timeline history head/],
+    ['next-history-head', 'history', /malformed timeline history head/],
+    ['next-history-changed', 'history', /changed the captured timeline history head/],
+    ['parent-identity', 'parent', /belongs to project/],
+    ['parent-revision', 'parent', /identity mismatch/],
+    ['parent-manifest', 'parent', /verified parent dependency manifest/],
+    ['shot-identity', 'shot', /belongs to project/],
+    ['shot-revision', 'shot', /identity mismatch/],
+    ['shot-pin', 'shot', /Baseline shot pin mismatch/],
+    ['shot-payload', 'shot', /shot payload/],
+    ['internal-identity', 'internal', /belongs to project/],
+    ['internal-revision', 'internal', /identity mismatch/],
+    ['internal-pin', 'internal', /Baseline internal pin mismatch/],
+    ['internal-payload', 'internal', /internal payload/],
+    ['canonical-digest', 'parent', /parent content_digest/],
+    ['canonical-shot-pin', 'shot', /shot payload disagrees/],
+    ['canonical-occurrence', 'parent', /unresolved shot revision/],
+    ['graph-projection', 'parent', /shot closure is missing internal revision/],
+  ] as const)('does not complete unvalidated reads (%s)', async (fault, operation, message) => {
+    const { withTimelineBasisDiagnostics } = await import('@/tools/video-editor/lib/timeline-basis-diagnostics.ts');
+    const fixture = runtimeFixture();
+    const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' },
+      { revision_id: 'r0', publication_id: 'p0' }, { projectId: PROJECT_ID, timelineId: TIMELINE_ID, children: true }).data.canonical_document;
+    const observations: Array<{ operation: string; operationOrdinal: number; operationState: string }> = [];
+    const calls: string[] = [];
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: async (...args) => {
+      const [, path] = args;
+      const read = path.includes('/commits?') ? 'history' : path.includes('/composition-revisions/') ? 'parent'
+        : path.includes('/shots/') ? 'shot' : path.includes('/revisions/') ? 'internal' : undefined;
+      if (!read) return fixture.transport(...args);
+      calls.push(read);
+      const value: Record<string, unknown> = read === 'history'
+        ? { items: [], next_cursor: fault.startsWith('next-history') && calls.length === 1 ? 'next' : null,
+          head: { revision_id: 'r0', publication_id: 'p0' } }
+        : read === 'parent' ? { ...document.parent_revision, project_id: PROJECT_ID, timeline_id: TIMELINE_ID,
+          dependency_manifest: document.dependency_manifest }
+        : read === 'shot' ? { ...document.shot_revisions[0], project_id: PROJECT_ID, timeline_id: 'shot-1' }
+        : { ...document.internal_timeline_revisions[0], project_id: PROJECT_ID };
+      if (read === 'history') {
+        if (fault === 'history-head' || (fault === 'next-history-head' && calls.length === 2)) value.head = null;
+        if (fault === 'next-history-changed' && calls.length === 2) value.head = { revision_id: 'other', publication_id: 'other' };
+      }
+      if (fault === `${read}-identity`) value.project_id = 'other-project';
+      if (fault === `${read}-revision`) value.revision_id = 'other-revision';
+      if (fault === 'parent-manifest' && read === 'parent') value.dependency_manifest = null;
+      if (fault === `${read}-pin`) value.content_digest = `sha256:${'f'.repeat(64)}`;
+      if (fault === `${read}-payload`) value.payload = null;
+      if (read === 'parent' && fault === 'canonical-digest') value.content_digest = 'invalid';
+      if (read === 'shot' && fault === 'canonical-shot-pin') {
+        value.payload = { ...document.shot_revisions[0]!.payload, internal_timeline_revision_id: 'other' };
+      }
+      if (read === 'parent' && fault === 'canonical-occurrence') {
+        value.payload = { ...document.parent_revision.payload, occurrences: [{ occurrence_id: 'bad', shot_id: 'missing', shot_revision_id: 'missing' }] };
+      }
+      if (read === 'parent' && fault === 'graph-projection') {
+        value.dependency_manifest = { ...document.dependency_manifest, internal_timelines: [] };
+      }
+      return { status: 200, headers: {}, body: json(value) };
+    } });
+    await expect(withTimelineBasisDiagnostics(provider, observation => observations.push(observation),
+      () => provider.loadTimelineCommandBasis(TIMELINE_ID))).rejects.toThrow(message);
+    const failed = observations.filter(item => item.operation === operation).at(-1)!;
+    expect(failed.operationState).toBe('refused');
+    expect(observations.some(item => item.operationOrdinal === failed.operationOrdinal && item.operationState === 'end')).toBe(false);
+    expect(observations.filter(item => item.operationState === 'end' && item.operation !== 'history')).toEqual([]);
+    expect(observations.at(-1)).toMatchObject({ operation: 'loader', operationState: 'refused' });
+    for (const start of observations.filter(item => item.operationState === 'start')) {
+      expect(observations.filter(item => item.operationOrdinal === start.operationOrdinal)).toHaveLength(2);
+    }
+    const expectedCalls = operation === 'history' ? (fault.startsWith('next-') ? ['history', 'history'] : ['history'])
+      : fault === 'graph-projection' ? ['history', 'parent', 'shot']
+      : fault.startsWith('canonical-') ? ['history', 'parent', 'shot', 'internal']
+      : ['history', 'parent', 'shot', 'internal'].slice(0, ['history', 'parent', 'shot', 'internal'].indexOf(operation) + 1);
+    expect(calls).toEqual(expectedCalls);
+  });
+
+  it('defers immutable completion until the entire closure validates', async () => {
+    const { withTimelineBasisDiagnostics } = await import('@/tools/video-editor/lib/timeline-basis-diagnostics.ts');
+    const fixture = runtimeFixture();
+    const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' },
+      { revision_id: 'r0', publication_id: 'p0' }, { projectId: PROJECT_ID, timelineId: TIMELINE_ID, children: true }).data.canonical_document;
+    let release!: () => void;
+    let entered!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    const internalStarted = new Promise<void>(resolve => { entered = resolve; });
+    const observations: string[] = [];
+    const provider = new RuntimeDataProvider({ projectId: PROJECT_ID, transport: async (...args) => {
+      const [, path] = args;
+      let value: unknown;
+      if (path.includes('/commits?')) value = { items: [], next_cursor: null, head: { revision_id: 'r0', publication_id: 'p0' } };
+      else if (path.includes('/composition-revisions/')) value = { ...document.parent_revision, project_id: PROJECT_ID,
+        timeline_id: TIMELINE_ID, dependency_manifest: document.dependency_manifest };
+      else if (path.includes('/shots/')) value = { ...document.shot_revisions[0], project_id: PROJECT_ID };
+      else if (path.includes('/revisions/')) {
+        entered();
+        await gate;
+        value = { ...document.internal_timeline_revisions[0], project_id: PROJECT_ID };
+      } else return fixture.transport(...args);
+      return { status: 200, headers: {}, body: json(value) };
+    } });
+    const read = withTimelineBasisDiagnostics(provider,
+      ({ operation, operationState }) => observations.push(`${operation}:${operationState}`),
+      () => provider.loadTimelineCommandBasis(TIMELINE_ID));
+    await internalStarted;
+    try {
+      expect(observations).toEqual(['loader:start', 'history:start', 'history:end', 'parent:start', 'shot:start', 'internal:start']);
+    } finally { release(); }
+    expect((await read).canonicalDocument).toEqual(document);
+    expect(observations.slice(-4)).toEqual(['parent:end', 'shot:end', 'internal:end', 'loader:end']);
+  });
+
   it.each(['complete', 'history', 'parent', 'shot', 'internal', 'listener'] as const)(
     'observes exact immutable closure order without changing calls or faults (%s)', async boundary => {
       const { withTimelineBasisDiagnostics } = await import('@/tools/video-editor/lib/timeline-basis-diagnostics.ts');
@@ -1874,8 +1986,8 @@ describe('verified basis loader diagnostics', () => {
         expect((await read).canonicalDocument).toEqual(document);
         expect(calls).toEqual(['history', 'parent', 'shot', 'internal']);
         expect(observations.map(({ operation, operationState }) => `${operation}:${operationState}`)).toEqual([
-          'loader:start', 'history:start', 'history:end', 'parent:start', 'parent:end',
-          'shot:start', 'shot:end', 'internal:start', 'internal:end', 'loader:end',
+          'loader:start', 'history:start', 'history:end', 'parent:start', 'shot:start', 'internal:start',
+          'parent:end', 'shot:end', 'internal:end', 'loader:end',
         ]);
       } else {
         await expect(read).rejects.toBe(fault);

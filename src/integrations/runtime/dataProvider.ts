@@ -886,18 +886,9 @@ export class RuntimeDataProvider implements DataProvider {
   async loadTimelineCommandBasis(timelineId: string): Promise<TimelineCommandBasis> {
     const observe = timelineBasisDiagnostics(this);
     const finishLoader = observe('loader');
+    // Immutable reads are complete only when their assembled closure validates.
+    const pendingReads: Array<(completed: boolean) => void> = [];
     try {
-      const finishFirstHistory = observe('history');
-      let firstHistory;
-      try {
-        firstHistory = await this.listTimelineCommits(timelineId);
-        finishFirstHistory(true);
-      } catch (error) {
-        finishFirstHistory(false);
-        throw error;
-      }
-      const pages = [firstHistory];
-      const seenCursors = new Set<string>();
       const requireHead = (page: HistoryPage): HistoryPage['head'] => {
         const head = page?.head;
         if (!head || typeof head.revision_id !== 'string' || !head.revision_id
@@ -906,7 +897,19 @@ export class RuntimeDataProvider implements DataProvider {
         }
         return head;
       };
-      const firstHead = requireHead(firstHistory);
+      const finishFirstHistory = observe('history');
+      let firstHistory;
+      let firstHead;
+      try {
+        firstHistory = await this.listTimelineCommits(timelineId);
+        firstHead = requireHead(firstHistory);
+        finishFirstHistory(true);
+      } catch (error) {
+        finishFirstHistory(false);
+        throw error;
+      }
+      const pages = [firstHistory];
+      const seenCursors = new Set<string>();
       while (pages[pages.length - 1]!.next_cursor !== null) {
         const cursor = pages[pages.length - 1]!.next_cursor!;
         if (seenCursors.has(cursor)) {
@@ -917,15 +920,15 @@ export class RuntimeDataProvider implements DataProvider {
         let nextPage;
         try {
           nextPage = await this.listTimelineCommits(timelineId, cursor);
+          const nextHead = requireHead(nextPage);
+          if (nextHead.revision_id !== firstHead.revision_id
+            || nextHead.publication_id !== firstHead.publication_id) {
+            throw new TimelineSchemaIncompatibleError('Workspace Runtime changed the captured timeline history head');
+          }
           finishNextPage(true);
         } catch (error) {
           finishNextPage(false);
           throw error;
-        }
-        const nextHead = requireHead(nextPage);
-        if (nextHead.revision_id !== firstHead.revision_id
-          || nextHead.publication_id !== firstHead.publication_id) {
-          throw new TimelineSchemaIncompatibleError('Workspace Runtime changed the captured timeline history head');
         }
         pages.push(nextPage);
       }
@@ -939,28 +942,16 @@ export class RuntimeDataProvider implements DataProvider {
         throw new TimelineSchemaIncompatibleError('Timeline has no verified authoring history head');
       }
       const finishParent = observe('parent');
-      let parent;
-      try {
-        parent = await this.readParentCompositionAtHead(this.projectId, timelineId, head.revision_id);
-        finishParent(true);
-      } catch (error) {
-        finishParent(false);
-        throw error;
-      }
+      pendingReads.push(finishParent);
+      const parent = await this.readParentCompositionAtHead(this.projectId, timelineId, head.revision_id);
       const manifest = requiredRecord(parent.dependency_manifest, 'verified parent dependency manifest');
       const shots = await Promise.all(array(manifest.shots, 'baseline shots').map(async (value) => {
         const pin = requiredRecord(value, 'baseline shot pin');
         const shotId = requiredString(pin.shot_id, 'baseline shot_id');
         const revision = requiredString(pin.revision_id, 'baseline shot revision_id');
         const finishShot = observe('shot');
-        let shot;
-        try {
-          shot = await this.client.getProjectShotRevision(this.projectId, shotId, revision);
-          finishShot(true);
-        } catch (error) {
-          finishShot(false);
-          throw error;
-        }
+        pendingReads.push(finishShot);
+        const shot = await this.client.getProjectShotRevision(this.projectId, shotId, revision);
         assertRuntimeIdentity(shot, this.projectId, shotId, 'shot revision');
         assertRevisionIdentity(shot, revision, 'shot revision');
         if (shot.shot_id !== shotId || shot.content_digest !== pin.content_digest
@@ -975,14 +966,8 @@ export class RuntimeDataProvider implements DataProvider {
         const scope = requiredString(pin.timeline_id, 'baseline internal timeline_id');
         const revision = requiredString(pin.revision_id, 'baseline internal revision_id');
         const finishInternal = observe('internal');
-        let internal;
-        try {
-          internal = await this.client.getProjectTimelineRevision(this.projectId, scope, revision);
-          finishInternal(true);
-        } catch (error) {
-          finishInternal(false);
-          throw error;
-        }
+        pendingReads.push(finishInternal);
+        const internal = await this.client.getProjectTimelineRevision(this.projectId, scope, revision);
         assertRuntimeIdentity(internal, this.projectId, scope, 'internal timeline revision');
         assertRevisionIdentity(internal, revision, 'internal timeline revision');
         if (internal.content_digest !== pin.content_digest) throw new TimelineSchemaIncompatibleError('Baseline internal pin mismatch');
@@ -998,9 +983,11 @@ export class RuntimeDataProvider implements DataProvider {
         head: { revisionId: head.revision_id, publicationId: head.publication_id }, canonicalDocument, history,
         graph: runtimeGraphToContractFromCanonicalDocument(this.projectId, timelineId, canonicalDocument, head.publication_id),
       };
+      for (const finish of pendingReads) finish(true);
       finishLoader(true);
       return result;
     } catch (error) {
+      for (const finish of pendingReads) finish(false);
       finishLoader(false);
       throw error;
     }
