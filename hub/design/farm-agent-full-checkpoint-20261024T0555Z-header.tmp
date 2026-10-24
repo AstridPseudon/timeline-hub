@@ -1,4 +1,0 @@
-Ask: Agent credits exact nodes / Owner: Agent / By: 2026-10-24T06:30Z
-
-Node lists: farm-agent-full-checkpoint-20261024T0555Z-nodes-failed.txt (281 ids) and -nodes-errored.txt (187 ids). Raw log SHA256 06d435fe... (no junit produced; passed ids cannot be enumerated). Tested HEAD 9cd3dbe8 tree 57f0231d, NOT the selected 8657e836 / b5cbc402. Non-gate checkpoint.
-
