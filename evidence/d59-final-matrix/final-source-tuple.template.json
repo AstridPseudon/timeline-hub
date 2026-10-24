@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "status": "PENDING",
+  "final_tuple_sha256": "FINAL_TUPLE_SHA256_PENDING",
+  "d73_source_tuple": "FINAL_D73_SOURCE_TUPLE_PENDING",
+  "d73_tuple_sha256": "FINAL_D73_TUPLE_SHA256_PENDING",
+  "repos": {
+    "agent": {
+      "sha": "FINAL_AGENT_SHA_PENDING",
+      "tree": "FINAL_AGENT_TREE_PENDING",
+      "source_path": "/home/user/work/agent",
+      "checkout_path": "FINAL_AGENT_CHECKOUT_PENDING",
+      "checkout_receipt": "FINAL_AGENT_RECEIPT_PENDING",
+      "checkout_receipt_sha256": "FINAL_AGENT_RECEIPT_SHA256_PENDING",
+      "checkout_head": "FINAL_AGENT_SHA_PENDING",
+      "checkout_tree": "FINAL_AGENT_TREE_PENDING"
+    },
+    "runtime": {
+      "sha": "FINAL_RUNTIME_SHA_PENDING",
+      "tree": "FINAL_RUNTIME_TREE_PENDING",
+      "source_path": "/home/user/work/runtime",
+      "checkout_path": "FINAL_RUNTIME_CHECKOUT_PENDING",
+      "checkout_receipt": "FINAL_RUNTIME_RECEIPT_PENDING",
+      "checkout_receipt_sha256": "FINAL_RUNTIME_RECEIPT_SHA256_PENDING",
+      "checkout_head": "FINAL_RUNTIME_SHA_PENDING",
+      "checkout_tree": "FINAL_RUNTIME_TREE_PENDING"
+    },
+    "app": {
+      "sha": "FINAL_APP_SHA_PENDING",
+      "tree": "FINAL_APP_TREE_PENDING",
+      "source_path": "/home/user/work/app",
+      "checkout_path": "FINAL_APP_CHECKOUT_PENDING",
+      "checkout_receipt": "FINAL_APP_RECEIPT_PENDING",
+      "checkout_receipt_sha256": "FINAL_APP_RECEIPT_SHA256_PENDING",
+      "checkout_head": "FINAL_APP_SHA_PENDING",
+      "checkout_tree": "FINAL_APP_TREE_PENDING"
+    },
+    "composition": {
+      "sha": "FINAL_COMPOSITION_SHA_PENDING",
+      "tree": "FINAL_COMPOSITION_TREE_PENDING",
+      "source_path": "/home/user/work/composition",
+      "checkout_path": "FINAL_COMPOSITION_CHECKOUT_PENDING",
+      "checkout_receipt": "FINAL_COMPOSITION_RECEIPT_PENDING",
+      "checkout_receipt_sha256": "FINAL_COMPOSITION_RECEIPT_SHA256_PENDING",
+      "checkout_head": "FINAL_COMPOSITION_SHA_PENDING",
+      "checkout_tree": "FINAL_COMPOSITION_TREE_PENDING"
+    }
+  },
+  "test_receipts": [],
+  "route_readiness": {
+    "app-p1": "PENDING",
+    "app-p2": "PENDING",
+    "app-p3": "PENDING",
+    "app-core": "PENDING",
+    "agent-p4": "PENDING",
+    "agent-core": "PENDING",
+    "agent-d77-render": "PENDING",
+    "runtime-p5": "PENDING",
+    "runtime-core": "PENDING",
+    "composition-full": "PENDING"
+  },
+  "schema": {
+    "path": "contract/schemas/timeline-config.schema.json",
+    "digest": "SCHEMA_DIGEST_PENDING"
+  },
+  "manifest_bindings": {},
+  "render_environment": {
+    "status": "PENDING",
+    "receipt": null,
+    "node": null,
+    "npm": null,
+    "playwright": null,
+    "composition_artifact": null
+  }
+}
