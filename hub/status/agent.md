@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T06:04:54Z | dispatcher heartbeat 251s | live 0 (sol 0, luna 0, other 0) | busy30 22 | status age 2m -->
-# agent board, 2026-10-24T06:02:30Z
+<!-- agent | 2026-10-24T06:07:10Z | dispatcher heartbeat 386s | live 0 (sol 0, luna 0, other 0) | busy30 21 | status age 1m -->
+# agent board, 2026-10-24T06:05:37Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -64,18 +64,18 @@
 | F-source-copy guards | Qualify current source-copy originals | Sol / Luna | Independent result review passed | merged | Sol0502; result review0511 PASS | Actual9cd/Runtime2b49: two originals passed20.90s,54guards and four accepted inverses. Capture and authentication limits retained. | Source9cd unchanged |
 | F-track-label mapping | Map three retained label scenarios | Viewing Luna | Existing CLI11 receipt and current rename | blocked:viewing | Viewing0544; independent0547 | Approved H30 artifact assigns three rows to Viewing. Qualify old dispatch names against current apply counterparts before original-node credit; no duplicate body. | Current9cd |
 
-| F-D09-remainder | Qualify exact retained originals | Runtime Luna | Existing source and receipts | ready | failover-ok; assigned Runtime H32 | 3 originals; verify existing proof before one bounded qualification. [Assignment](../../design/peer-agent-to-runtime-20261024T0554Z-H32-three-remainder-assignments.md) | Current2007 |
-| F-G5-restructure-remainder | Qualify exact retained originals | Runtime Luna | Existing source and receipts | ready | failover-ok; assigned Runtime H32 | 7 originals; verify existing proof before one bounded qualification. [Assignment](../../design/peer-agent-to-runtime-20261024T0554Z-H32-three-remainder-assignments.md) | Current2007 |
-| F-normal-publish-remainder | Qualify exact retained originals | Runtime Luna | Existing source and receipts | ready | failover-ok; assigned Runtime H32 | 8 originals; verify existing proof before one bounded qualification. [Assignment](../../design/peer-agent-to-runtime-20261024T0554Z-H32-three-remainder-assignments.md) | Current2007 |
+| F-D09-remainder | Qualify exact retained originals | Runtime Luna | Existing source and receipts | ready | failover-ok; assigned Runtime H32 | 3 originals; verify existing proof before one bounded qualification. Assignment0554. | Current2007 |
+| F-G5-restructure-remainder | Qualify exact retained originals | Runtime Luna | Existing source and receipts | ready | failover-ok; assigned Runtime H32 | 7 originals; verify existing proof before one bounded qualification. Assignment0554. | Current2007 |
+| F-normal-publish-remainder | Qualify exact retained originals | Runtime Luna | Existing source and receipts | ready | failover-ok; assigned Runtime H32 | 8 originals; verify existing proof before one bounded qualification. Assignment0554. | Current2007 |
 
 | F-SDK-proof-remainder | Map retained SDK originals to existing proof | Luna | Published qualified receipts | doing | agt-F-SDK-proof-map-0554 | Read-only exact-node mapping; excludes Runtime H32, Viewing ABA and all new body runs. No census credit yet. | Source2007 |
 
-| F-count D40 delta | Credit one exact installed original | Sol | Independent0552 PASS | doing | agt-F-count-D40-delta-sol-0558 | Add only one exact original to reviewed201/66 package; expected202/65 awaits independent review. | Evidence40f base |
+| F-count D40 delta | Credit one exact installed original | Sol / Luna | Independent package review | review | Author0558; review0605 | One-node delta202closed65open authored;266 others unchanged and60 exact mappings. Official201/66 until review. | Evidence3cce6b4c |
 | F-harness integrated | Verify reviewed harness merges | Luna | Integrated proof passed | merged | agt-F-harness-integrated-0558 PASS | Actual930332 exact reviewed blobs; IMAGE unit1 and six observer synthetics, types/lint passed. No original body repeated. | Home930332e3f9 |
 
-| F-CLI save path | Distinguish staging from film publication | Luna | Runtime0548 source handback | doing | agt-F-CLI-save-path-review-0600 | Read-only complete save-path check; retains five actual unit passes without C0 claim. | Currentbb50 |
-| F-generic reopen | Qualify retained harvest and reopen proof | Luna | Existing finite receipts | doing | agt-F-generic-reopen-evidence-0600 | Read-only exact original mapping; no duplicate D40 body or inferred second original credit. | Currentbb50 |
-| F-schema originals | Verify two exact operation inventories | Luna | Existing schema0037 receipts | doing | agt-F-schema-original-evidence-0600 | Independent exact two-node mapping; schema/client/provider guards remain unchanged. | Currentbb50 |
+| F-CLI save path | Distinguish staging from film publication | Luna | Complete source call graph | merged | agt-F-CLI-save-path-review-0600 PASS | Checkout.save stages locally; final candidate uses G3 emitter and Runtime commit. No missing film writer found; five original credits await reconciliation. | Currentbb50 |
+| F-generic reopen | Qualify retained harvest and reopen proof | Luna | Candidate child receipt and harness review | doing | Evidence0600; bind0605 | Exact body/source parity verified; old receipt lacks target custody. Preparing one necessary original qualification on genuine candidate child. | Sourcebb50 |
+| F-schema originals | Preserve provider operation census | Luna | Existing media admission provider | doing | Evidence0600; author0605 | Source544d added media.admit; two test inventories lack its closed mapping. Fixture-only first fix; frozen30 wire branches unchanged. | Sourcebb50 |
 | F-SDK proof review | Review nine mapped original candidates | Luna | SDK map0554 complete | review | agt-F-SDK-map-review-0603 | Eleven candidates found; schema owns two. Nine remaining candidates get independent exact source/receipt review. | Currentbb50 |
 | F-discovery child | Prepare faithful changed-source support run | Luna | Normal managed child receipt | doing | agt-F-discovery-child-bind-0603 | Candidatebb50/f320 requested normally. Harness only; no body until independent review and integrated source proof. | Sourcebb50 |
 
@@ -95,4 +95,6 @@ Disk: About10GB available. Throttle lifted at05:56; six or more light workers qu
 Next ready: Review D40 countdelta0558; consume SDK/source mapping and integrated discovery0603. Prepare one candidate-child support original after normal receipt. Three H32 groups remain assigned Runtime.
 Evidence: [previous board details](archive-v2/STATUS-20261024T0055Z.md), [source-copy final](../../design/agt-F-source-copy-capture-sol-0502.md), [source-copy independent result](../../design/agt-F-source-copy-result-review-0511.md), [ABA whole path](../../design/agt-F-ABA-11466-path-0507.md), [D40 cumulative review](../../design/agt-F-D40-types-review-0511.md).
 
-Capacity: Six or more independent light workers queued after lead05:56 direction. H32 three Runtime assignments were published at05:53; awaiting Runtime intake, not permission. No local queue refusal.
+Capacity: Six independent light requests queued. Dispatcher heartbeat stopped advancing at06:00:44 during synchronous make-child-venv; no worker refusal. Runtime H32 intake also pending. Normal queue remains authoritative.
+
+Blockers: Dispatcher — six light requests pending behind the normal child maker since06:01. Heartbeat06:00:44; no worker launch or permission refusal. Lead notified; no daemon edits or alternate launch.
