@@ -1,0 +1,94 @@
+{
+  "packet": "F-farm-v2 Agent environment evidence",
+  "as_of": "2026-10-24",
+  "scope": "environment evidence only; no suite or body rerun",
+  "agent_source": {
+    "checkout": "/home/user/work/wt/agt-F-farm-env-snapshot-0626",
+    "commit": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+    "tree": "045dd0b01a1bddc6e3c7b822894151a116eacf1b",
+    "status": "clean"
+  },
+  "current_agent_full_row": {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf:170",
+    "exact_row_file": "agent-full-current-row.txt",
+    "row_sha256": "3e3bfc3b0eeddc2e408137b130437530729696a8c49d5b5e9d088eef72a4c16d",
+    "suites_file_sha256": "265b551927ab2f1dc013f66b18b428ede7375613576e7f00f7db67b21de56995",
+    "runtime_checkout_in_row": "/home/user/work/wt/rt-pin-3b926efa",
+    "runtime_commit_in_row": "3b926efab2eed122d374540baee297d4cdcec62a",
+    "runtime_tree_in_row": "b794170504544b259781e50d7ca4d61b6729e67c",
+    "selection_status": "current row retained verbatim but unqualified for D40: 3b926efa is not an ancestor of D40 f3208b26 and lacks runtime_protocol/external_pack_sources.py"
+  },
+  "safe_env_projection_of_current_row": {
+    "PATH": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/home/user/work/venv-agent/bin:/usr/bin:/bin",
+    "ASTRID_REMOTION_PROJECT_DIR": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110",
+    "ASTRID_NODE_EXECUTABLE": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
+    "ASTRID_TIMELINE_SCHEMA_PYTHONPATH": "/home/user/work/venv-agent/lib/python3.13/site-packages",
+    "ASTRID_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-3b926efa",
+    "PYTHONPATH": "$PWD:/home/user/work/wt/rt-pin-3b926efa"
+  },
+  "safe_file_hashes": {
+    "node": {
+      "path": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
+      "sha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490"
+    },
+    "remotion_profile_package_json": {
+      "path": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110/package.json",
+      "sha256": "3dbcfbf7f63c084a8e571cba4e584fcd4e53e37aeadc6ece4e74ed8ec279d723"
+    },
+    "remotion_profile_package_lock": {
+      "path": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110/package-lock.json",
+      "sha256": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d"
+    },
+    "composition_archive": {
+      "path": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110/artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz",
+      "sha256": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+      "declared_version": "0.0.14"
+    }
+  },
+  "runtime_source_provenance": {
+    "d40_f320": {
+      "commit": "f3208b26b53c4d7053e5464eaa7c5e15b1505812",
+      "tree": "c4bcf9297e110b81898db703c8944d54073ea900",
+      "external_pack_sources_sha256": "8931d2ae530ff1d6eccbb28dadec4349641fd4e1c19f231dba2616b93be2234e",
+      "source_proof": "Runtime D40 producer receipt: 317 passed, 2 deselected; separate integrated custody receipt: 77 passed",
+      "joined_full_status": "not proven"
+    },
+    "current_owner_selection": {
+      "owner_branch": "tl/rt-OPS-farm-full-v2-sol-0617",
+      "owner_commit": "1a1ccab1ca77b8d336d29607145d01fbbf23d685",
+      "selected_runtime_commit": "1d9ddba546f8fb1300f55ff62607ed492719cbaa",
+      "selected_runtime_tree": "f56c396c4495547680b46e832565278d2c375e69",
+      "is_descendant_of_f320": true,
+      "external_pack_sources_sha256": "8931d2ae530ff1d6eccbb28dadec4349641fd4e1c19f231dba2616b93be2234e",
+      "source_selection_json_sha256": "1c3fc5be97405570e4e21e92146a7c96ea58c13e6bcc314c0e1a47203d1722fd",
+      "status": "Runtime-owned source packet; not duplicated or selected by this Agent task"
+    }
+  },
+  "installed_proof": {
+    "managed_child": "child-3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9",
+    "agent_sha": "ba8f0bc8bebf6d0e9a8143fed80d31f846cd5b95",
+    "runtime_sha": "f3208b26b53c4d7053e5464eaa7c5e15b1505812",
+    "node": "v20.19.4",
+    "profile": "agent-remotion-v3-819acf-1110",
+    "provision_receipt_sha256": "e8b01d8b47d27054e5976ccef2b019cbcb689192557cec9c603697ee92ca335c",
+    "retained_receipt": "D40 observed-qualified-0551: one installed-child original passed in 4.59s; imports resolved from child site-packages; custody changed_files=[]",
+    "evidence_baseline_sha256": "77bddf5b34c107a53a518823e4faf42a6d373646636a1931596454d069af495f",
+    "qualification_boundary": "installed proof for the retained D40 original only; not a full-suite green and not proof for current Agent bb50"
+  },
+  "preserved_original_failure": {
+    "test_id": "agent-full-farm-1024050351-26511",
+    "agent_commit": "9cd3dbe865a941c052bda04ae0d61306d18f8f26",
+    "agent_tree": "57f0231da0d7904ecd8778169973d6384e0ae141",
+    "runtime_commit": "45c3a7f476e1c5f74fafc15956a58b9871eee21f",
+    "result": "2836s; 17335 passed, 288 failed, 187 setup errors, 4 skipped; no JUnit",
+    "retained_pytest_log_sha256": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
+    "runtime_tree": "f51124b7b5b37a73a3d660e34b3f543517f849ee",
+    "external_pack_sources": "absent from Runtime 45c3 checkout; absence preserved as source mismatch, not relabeled"
+  },
+  "claims_not_made": [
+    "No full suite green claim",
+    "No current Agent bb50 installed proof",
+    "No D09 or original-body rerun",
+    "No source selection or configuration mutation"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "schema": "timeline.farm-checkpoint-diff.environment-only.v1",
+  "nodes": [],
+  "count": 0,
+  "reason": "The retained checkpoint report gives rough aggregate setup/environment causes, but the documented raw log is unavailable and does not provide per-node causal text. No node is promoted to environment-only on family-wide inference."
+}

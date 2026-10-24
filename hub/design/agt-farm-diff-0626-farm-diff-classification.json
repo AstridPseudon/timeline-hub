@@ -1,0 +1,131 @@
+{
+  "schema": "timeline.farm-checkpoint-diff.classification.v1",
+  "read_only": true,
+  "historical_basis": {
+    "census_total": 267,
+    "closed": 172,
+    "open": 95,
+    "closed_definition": "142 baseline_status=proven_passed plus 30 exact integrated_0500 retained-caller nodes",
+    "newer_proof_is_not_backdated": [
+      "7 h3_current_0508 nodes",
+      "22 inverse22_current_0537 nodes",
+      "1 d40_observed_0551 node"
+    ]
+  },
+  "current_package": {
+    "closed": 202,
+    "open": 65,
+    "arithmetic": "172 historical + 7 H3 + 22 inverse + 1 D40 = 202; 267 - 202 = 65"
+  },
+  "farm": {
+    "test_id": "agent-full-farm-1024050351-26511",
+    "agent_head": "9cd3dbe865a941c052bda04ae0d61306d18f8f26",
+    "agent_tree": "57f0231da0d7904ecd8778169973d6384e0ae141",
+    "runtime_head": "45c3a7f476e1c5f74fafc15956a58b9871eee21f",
+    "runtime_label": "45c3a7f4",
+    "summary": {
+      "failed": 288,
+      "passed": 17335,
+      "skipped": 4,
+      "errored": 187,
+      "failed_list_lines": 281,
+      "failed_list_unique": 281,
+      "errored_list_lines": 187,
+      "errored_list_unique": 187,
+      "missing_summary_failed_lines": 7
+    },
+    "junit": null,
+    "raw_log": {
+      "documented_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-full-farm-1024050351-26511/log.txt",
+      "available": false
+    }
+  },
+  "lists": {
+    "a_closed_historical_possible_regression": {
+      "count": 88,
+      "path": "closed-historical-172-farm-failed-possible-regression.txt",
+      "meaning": "Exact historical-closed IDs present in the farm failed list. They are possible regressions only; no confirmed non-environment cause is established."
+    },
+    "a_closed_historical_confirmed_non_environment": {
+      "count": 0,
+      "meaning": "No IDs: the retained raw farm log is unavailable and the checkpoint's cause grouping is explicitly rough."
+    },
+    "newer_proof_failed_not_backdated": {
+      "count": 8,
+      "path": "closed-newer-proof-30-farm-failed-not-backdated.txt",
+      "meaning": "Current 202-closed IDs that fail on farm but were open in the requested 172/95 historical basis."
+    },
+    "newer_proof_closed_without_farm_failure_line": {
+      "count": 22,
+      "path": "closed-newer-proof-30-no-farm-line.txt",
+      "meaning": "Current newer-closed IDs absent from the failed list; absence is not a farm pass."
+    },
+    "b_historical_open_proven_pass_on_farm": {
+      "count": 0,
+      "meaning": "No pass IDs can be enumerated without JUnit or an authoritative pass list."
+    },
+    "b_historical_open_no_farm_pass_evidence": {
+      "count": 95,
+      "path": "historical-open-95-no-farm-pass.txt",
+      "meaning": "Exact H30 historical-open universe; retained to show that none is promoted to PASS."
+    },
+    "b_current_open_no_farm_pass_evidence": {
+      "count": 65,
+      "path": "current-open-65-no-farm-pass.txt",
+      "meaning": "Exact current open universe; also has no enumerated farm pass evidence."
+    },
+    "c_farm_environment_only": {
+      "count": 0,
+      "meaning": "No IDs promoted: no per-node causal log is retained. The report's 187 setup/environment grouping is insufficient for an environment-only classification."
+    },
+    "fourth_unresolved_failed": {
+      "count": 185,
+      "path": "unresolved-farm-failed-185.txt",
+      "meaning": "Exact farm failed IDs not in the 172 historical-closed possible-regression list or the eight newer-proof failures."
+    },
+    "fourth_unresolved_errored": {
+      "count": 187,
+      "path": "unresolved-farm-errored-187.txt",
+      "meaning": "All exact farm errored IDs; no per-node causal text is retained."
+    }
+  },
+  "source_artifacts": [
+    {
+      "path": "design/farm-agent-full-checkpoint-20261024T0555Z.md",
+      "sha256": "59ad4cf1593e97823600f152a35af3b94fb8f529a663df8e783038f20eed7760"
+    },
+    {
+      "path": "design/farm-agent-full-checkpoint-20261024T0555Z-nodes-failed.txt",
+      "sha256": "4a9c45c040993822fbad2e4cfd583037b88880632b069a456ef57b4e5aef3169"
+    },
+    {
+      "path": "design/farm-agent-full-checkpoint-20261024T0555Z-nodes-errored.txt",
+      "sha256": "0d63c121c5c9f526eb89b86816a56d444d00c09055ad8cd4ce0d6ccf1d176125"
+    },
+    {
+      "path": "design/agent-D32-current-node-reconciliation-H30-corrected.json",
+      "sha256": "3cce6b4c4e36e4fe7e65f99d9943706d2c84b2e84026e456d4d5ff7a68fb56fb"
+    },
+    {
+      "path": "design/agent-D32-current-node-reconciliation-H30-delta-mapping.json",
+      "sha256": "a1206b5461139a1a8319f218e0037d4e4acc11f69c1f79a7ae569ee67058725a"
+    },
+    {
+      "path": "design/agent-D32-current-node-reconciliation-H30-limits.md",
+      "sha256": "1f6e8db38553b14886b8ff0906e4390c27d6a1d13af74ec612977f6cbec17f4a"
+    }
+  ],
+  "arithmetic": {
+    "farm_failed_partition": "88 historical possible + 8 newer-proof-not-backdated + 185 unresolved = 281 failed list lines",
+    "farm_errored_partition": "0 environment-only + 187 unresolved = 187 errored list lines",
+    "farm_summary_gap": "288 summary failed - 281 failed-list lines = 7 missing failed lines",
+    "historical_census": "172 closed + 95 open = 267",
+    "current_census": "202 closed + 65 open = 267"
+  },
+  "limits": [
+    "No farm rerun, probe, pytest, static check, browser, gate, or original-body rerun was launched.",
+    "The farm subject is 9cd3dbe8/tree57f0231d with Runtime45c3a7f4, not selected Agent8657e836/tree b5cbc402.",
+    "A failed-list line establishes failure only; without the raw log it does not establish a non-environment cause.",
+    "Absence from failed/errored lists does not establish PASS; there is no JUnit and seven summary failures lack lines."
+  ]
+}
