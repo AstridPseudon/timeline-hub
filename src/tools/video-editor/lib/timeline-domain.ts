@@ -2514,6 +2514,12 @@ export const sanitizeTrackDefinitionSnapshot = (track: TrackDefinition): TrackDe
   return serializedTrack as TrackDefinition;
 };
 
+/** Closed editor view only; the session retains the complete canonical document. */
+export const projectTimelineTracksForDisplay = (config: TimelineConfig): TimelineConfig => ({
+  ...config,
+  tracks: (config.tracks ?? []).map(sanitizeTrackDefinitionSnapshot),
+});
+
 export const sanitizeAssetRegistryEntry = (entry: AssetRegistryEntry): AssetRegistryEntry => {
   const sanitizedEntries: [string, unknown][] = [];
   for (const field of ASSET_REGISTRY_ENTRY_FIELDS) {

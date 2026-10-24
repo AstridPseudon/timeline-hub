@@ -2,7 +2,7 @@ import type { CanonicalDocument, CommitRequest, MediaSelection } from '@/integra
 import { ApiError } from '@/integrations/runtime/generated.ts';
 import { buildTimelineData } from '../../lib/timeline-data.ts';
 import { withDefaultTimelineOutput } from '../../lib/defaults.ts';
-import { canonicalizeTimelinePair } from '../../lib/timeline-domain.ts';
+import { canonicalizeTimelinePair, projectTimelineTracksForDisplay } from '../../lib/timeline-domain.ts';
 import { buildPlacePreparedMediaCommand } from '../../hooks/useAssetManagement.ts';
 import { previewPreparedMediaCommand } from '../media.ts';
 import { createCommitOutbox, toOutboxJson } from '../commitOutbox.ts';
@@ -166,7 +166,7 @@ export async function producePreparedImageRequest(input: PreparedImageRequestInp
   const { bundle: _bundle, ...sourceConfig } = rawConfig;
   const loaded = { ...sourceConfig, ...withDefaultTimelineOutput(sourceConfig as never) } as never;
   const projected = canonicalizeTimelinePair(loaded, structuredClone(registry));
-  const source = { config: projected.config, registry: projected.registry, head };
+  const source = { config: projectTimelineTracksForDisplay(projected.config), registry: projected.registry, head };
   const session = await createLocalSaveSession({
     scope,
     initial,

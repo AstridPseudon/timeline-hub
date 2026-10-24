@@ -4,6 +4,8 @@ import { tmpdir } from 'node:os';
 import { describe, expect, it } from 'vitest';
 import { document } from '../__tests__/commitSessionEnvironment.ts';
 import { producePreparedImageRequestFromPaths, type PreparedImageRequestInput } from './preparedImageRequestProducer.ts';
+import { serializeTimelineConfigSnapshot } from '../../lib/timeline-domain.ts';
+import type { TimelineConfig } from '../../types/index.ts';
 
 const SYNTHETIC_SELECTION = {
   asset: 'synthetic-image',
@@ -33,9 +35,17 @@ describe('prepared image request producer fixture', () => {
     const inputPath = join(directory, 'input.json');
     const outputPath = join(directory, 'output.json');
     const source = input();
+    const tracks = [{ id: 'V1', kind: 'visual', role: 'output', opaque: [null, false] }];
+    source.canonicalDocument.parent_revision.payload.config.tracks = structuredClone(tracks);
+    source.canonicalDocument.parent_revision.payload.tracks = structuredClone(tracks);
+    const original = JSON.stringify(source);
+    // The UI serializer still refuses unknown authored keys before sanitizing.
+    expect(() => serializeTimelineConfigSnapshot(source.canonicalDocument.parent_revision.payload.config as unknown as TimelineConfig))
+      .toThrow("unexpected key 'opaque'");
     await writeFile(inputPath, JSON.stringify(source), 'utf8');
 
     await producePreparedImageRequestFromPaths(inputPath, outputPath);
+    expect(await readFile(inputPath, 'utf8')).toBe(original);
     const exported = JSON.parse(await readFile(outputPath, 'utf8')) as {
       request: Record<string, unknown>; idempotency_key: string; request_body_sha256: string;
     };
@@ -46,7 +56,8 @@ describe('prepared image request producer fixture', () => {
       merge: 'fields', dry_run: false, source: { via: 'app' },
     });
     const command = (exported.request.commands as Array<Record<string, unknown>>)[0]!;
-    expect(command).toMatchObject({ op: 'clip.add-media', select: 'parent', args: { media: SYNTHETIC_SELECTION } });
+    expect(exported.request.commands).toHaveLength(1);
+    expect(command).toMatchObject({ op: 'clip.add-media', select: 'parent', intent: {}, args: { media: SYNTHETIC_SELECTION } });
     expect((command.args as Record<string, unknown>).row).toMatchObject({
       id: 'clip-0', track: 'V1', at: 2, clipType: 'hold', hold: 5, asset: 'synthetic-image',
     });
