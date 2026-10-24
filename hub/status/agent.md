@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T22:11:58Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 3 | status age 1m -->
-# agent board, 2026-10-24T22:10:25Z
+<!-- agent | 2026-10-24T22:14:54Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 1m -->
+# agent board, 2026-10-24T22:13:03Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -138,9 +138,9 @@
 | U4a D83 history | Adopt merged history successor | Luna | Normal merge complete | merged | agt-U4a-D83-history-adopt-2051 | Actual5fc1 adopts security-PASS dc55 normally. Lock only; all15 mappings/schema/config and tool checks PASS. Publication hold resolved. | 5fc1f300fb |
 | U4a D83 metadata | Adopt released Runtime metadata fix | Luna | Normal home merge complete | merged | agt-U4a-D83-metadata-adopt-2131 | Lock only; all 15 mappings, vendor, artifact and diff checks pass. Actual home 840a verified. | 840a58a70a |
 | P4 / R2 bc04 five | Retain five-original NO-GO | Luna / Service | Authentic terminal evidence complete | merged | Batch2138; service6749 | Historical3FAIL2PASS218.32s retained. Earlier31062 zero-body disclosed. No current scope credit. | Candidate197d /Runtimebc04 |
-| U4a D84a adoption | Adopt released request-scoped producer | Luna | Qualified732c release | doing | agt-U4a-D84a-adopt-2209 | Lock-only normal tools and15 canonical mappings pending. No separate security review owed. | Runtime732c |
+| U4a D84a adoption | Adopt released request-scoped producer | Luna | Normal merge complete | merged | agt-U4a-D84a-adopt-2209 | Lock-only tools PASS;15 mappings/schema/config unchanged. Actual home039f includes exact reviewed provenance. [Report](../../design/agt-U4a-D84a-adopt-2209.md) | Home039ff2c218 |
 | P4 / R2 D84a five | Qualify same five timeout originals | Luna / Service | Adoption2209 and carrier2209 | todo | Next batch worker | One pinned unprofiled batch at45s; exact checkouts and parsed positiveonce/poisonzero required. | Pending |
-Integration: Agent home840a adoptsbc04. Qualified Runtime D84a now normal732c48c6f5a9441a65c61b24595d454a1cd3e180/tree7ed0559c6f0a05954427cc668e303b6cd2f51586. ORCH22:08:49 release authoritative; normal tool adoption2209 and exact PARAM carrier2209 queued immediately. No wire regeneration.
+Integration: Agent home039ff2c218 normally adopts released732c. Qualified Runtime D84a now normal732c48c6f5a9441a65c61b24595d454a1cd3e180/tree7ed0559c6f0a05954427cc668e303b6cd2f51586. ORCH22:08:49 release authoritative; normal tool adoption2209 and exact PARAM carrier2209 queued immediately. No wire regeneration.
 core open: Five historical scopes remain unqualified at current home. Current batch has three actual failures and two candidate-only True passes. All four R2 originals must pass before normal candidate merge.
 regressions: D71 leak, CLI terminal lines and named D72 family behavior retain their recorded qualification. D77a source controls pass; genuine installed render remains cut-blocking at D59.
 Timings: bc04 service 6749 vs 45s: ten-note 45.242s FAIL; False None 45.006s FAIL; False public-element 45.010s FAIL; True None 39.261s PASS; True public-element 40.053s PASS.
@@ -150,8 +150,8 @@ Evidence: [Current XML](../../design/handoff-agt-D83-bc04-6749-five.xml), [log](
 D69/D72: Exact 47 restored membership and 178 audit retained; named family proofs complete. D60 upstream 924 full remains FAIL: 12396 pass, 91 fail, 14 errors. Exact 276 accounting, D67 environment gap and both D23 deferrals stay separate.
 Admission: Historical safety, access and cleanup refusals remain stopped. No denied pin release, fabricated installed tuple, child, Farm or schema route. E2 and D79 paused until after ZIP.
 Disk: 8713240576 bytes free, 8.11 GiB. Latest guarded sweep removed zero; compact packed zero and gzipped one old log. No eligible ended clean non-KEEP Agent tree. Refused pins and old dirty G2 untouched.
-Blockers: Agent preparation — adoption2209 and carrier2209 must finish before the sole D84a five-original batch. Runtime release and security waits cleared.
+Blockers: Agent preparation — carrier2209 fresh controls must finish before the sole D84a five-original batch. Normal adoption039f complete; Runtime release and security waits cleared.
 Blockers: Final cut — final pinned P1–P5 and core proofs plus genuine installed render remain D59 gated. Existing GO qualifies only its recorded tuple.
 Next ready: Adopt2209 normal merge; carrier2209 exact reviewed source plus99 controls; then one D73 five-original unprofiled45s batch on released732c. Critical6GB floor. Allfour R2PASS before candidate merge.
-live 2 queued or running / cap 4; ready-undispatched 0. Two independent Luna2209 workers assigned immediately on release. Sole heavy batch follows their exact results. E2/D79 stay paused.
+live 1 / cap 4; ready-undispatched 0. Adoption2209 author PASS and normal merge039f complete. Carrier2209 controls active; sole five-original batch next. E2/D79 stay paused.
 Inbox consumed through 1117924 bytes. Pass 2026-10-24T22:10:25Z: ORCH22:08:49 D84a release consumed immediately; exact local732c/tree7ed clean. Two independent Luna workers2209 queued for normal adoption and exact PARAM carrier99. Cleared every Runtime release blocker this pass; no stale board wait, new diagnosis or extra review. Batch next at6GB critical floor.
