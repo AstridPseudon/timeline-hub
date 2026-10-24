@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "name": "overlapping sprites on an overlay track",
+      "timeline": {
+        "output": {"resolution": "1920x1080", "fps": 30, "file": "case.mp4"},
+        "tracks": [{"id": "overlay", "kind": "visual", "role": "overlay", "label": "Sprites"}],
+        "clips": [
+          {"id": "sprite-a", "clipType": "am-sprite", "track": "overlay", "at": 0, "hold": 2},
+          {"id": "sprite-b", "clipType": "am-sprite", "track": "overlay", "at": 1, "hold": 2}
+        ]
+      },
+      "expected": []
+    },
+    {
+      "name": "overlapping overlays inside an occurrence",
+      "occurrence": {"id": "occ-1", "start_ms": 0, "duration_ms": 2000, "track": "picture"},
+      "timeline": {
+        "output": {"resolution": "1920x1080", "fps": 30, "file": "case.mp4"},
+        "tracks": [
+          {"id": "picture", "kind": "visual", "label": "Picture"},
+          {"id": "overlay", "kind": "visual", "role": "overlay", "label": "Sprites"}
+        ],
+        "clips": [
+          {"id": "base", "clipType": "media", "asset": "base", "track": "picture", "at": 0, "hold": 2,
+            "app": {"canonical": {"occurrenceId": "occ-1", "sourceClipId": "base"}}},
+          {"id": "sprite-a", "clipType": "am-sprite", "track": "overlay", "at": 0.25, "hold": 1.5,
+            "app": {"canonical": {"occurrenceId": "occ-1", "sourceClipId": "sprite-a"}}},
+          {"id": "sprite-b", "clipType": "am-sprite", "track": "overlay", "at": 0.75, "hold": 1,
+            "app": {"canonical": {"occurrenceId": "occ-1", "sourceClipId": "sprite-b"}}}
+        ]
+      },
+      "expected": []
+    },
+    {
+      "name": "gap on an overlay track",
+      "timeline": {
+        "output": {"resolution": "1920x1080", "fps": 30, "file": "case.mp4"},
+        "tracks": [{"id": "overlay", "kind": "visual", "role": "overlay", "label": "Icons"}],
+        "clips": [
+          {"id": "icon-a", "clipType": "am-icon", "track": "overlay", "at": 0, "hold": 1},
+          {"id": "icon-b", "clipType": "am-icon", "track": "overlay", "at": 2, "hold": 1}
+        ]
+      },
+      "expected": []
+    },
+    {
+      "name": "overlapping full-frame media on the base track",
+      "timeline": {
+        "output": {"resolution": "1920x1080", "fps": 30, "file": "case.mp4"},
+        "tracks": [{"id": "picture", "kind": "visual", "role": "base", "label": "Picture"}],
+        "clips": [
+          {"id": "base-a", "label": "Base A", "clipType": "media", "asset": "a", "track": "picture", "at": 0, "hold": 2},
+          {"id": "base-b", "label": "Base B", "clipType": "media", "asset": "b", "track": "picture", "at": 1, "hold": 2}
+        ]
+      },
+      "expected": [{"code": "boundary/overlap", "frame": 30, "clips": ["base-a", "base-b"]}],
+      "expectedLabels": ["Base A", "Base B"]
+    },
+    {
+      "name": "gap in the base picture",
+      "timeline": {
+        "output": {"resolution": "1920x1080", "fps": 30, "file": "case.mp4"},
+        "tracks": [{"id": "picture", "kind": "visual", "role": "base", "label": "Picture"}],
+        "clips": [
+          {"id": "base-a", "label": "Base A", "clipType": "media", "asset": "a", "track": "picture", "at": 0, "hold": 1},
+          {"id": "base-b", "label": "Base B", "clipType": "media", "asset": "b", "track": "picture", "at": 2, "hold": 1}
+        ]
+      },
+      "expected": [{"code": "boundary/gap", "frame": 60, "clips": ["base-a", "base-b"]}],
+      "expectedLabels": ["Base A", "Base B"]
+    },
+    {
+      "name": "declared transition overlap",
+      "timeline": {
+        "output": {"resolution": "1920x1080", "fps": 30, "file": "case.mp4"},
+        "tracks": [{"id": "picture", "kind": "visual", "role": "base", "label": "Picture"}],
+        "clips": [
+          {"id": "base-a", "label": "Base A", "clipType": "media", "asset": "a", "track": "picture", "at": 0, "hold": 2},
+          {"id": "base-b", "clipType": "media", "asset": "b", "track": "picture", "at": 1.8, "hold": 2,
+            "transition": {"type": "crossfade", "duration": 0.2}}
+        ]
+      },
+      "expected": []
+    },
+    {
+      "name": "sub-frame and translucent media do not establish an opaque base overlap",
+      "timeline": {
+        "output": {"resolution": "1920x1080", "fps": 30, "file": "case.mp4"},
+        "tracks": [{"id": "picture", "kind": "visual", "role": "base", "label": "Picture"}],
+        "clips": [
+          {"id": "base-a", "clipType": "media", "asset": "a", "track": "picture", "at": 0, "hold": 2},
+          {"id": "short", "clipType": "media", "asset": "b", "track": "picture", "at": 1, "hold": 1, "height": 540},
+          {"id": "translucent", "clipType": "media", "asset": "c", "track": "picture", "at": 1.25, "hold": 0.5, "opacity": 0.5}
+        ]
+      },
+      "expected": []
+    },
+    {
+      "name": "declared custom picture track participates in coverage findings",
+      "timeline": {
+        "output": {"resolution": "1920x1080", "fps": 30, "file": "case.mp4"},
+        "tracks": [{"id": "plate", "kind": "visual", "label": "Plate"}],
+        "app": {"visualSeamContract": {"pictureTracks": ["plate"]}},
+        "clips": [
+          {"id": "plate-a", "label": "Plate A", "clipType": "am-footage", "track": "plate", "at": 0, "hold": 2},
+          {"id": "plate-b", "label": "Plate B", "clipType": "am-footage", "track": "plate", "at": 1, "hold": 2}
+        ]
+      },
+      "expected": [{"code": "boundary/overlap", "frame": 30, "clips": ["plate-a", "plate-b"]}],
+      "expectedLabels": ["Plate A", "Plate B"]
+    }
+  ]
+}
