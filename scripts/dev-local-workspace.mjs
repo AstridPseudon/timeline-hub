@@ -25,6 +25,7 @@ import {
   resolveWorkspaceDiscoveryPath,
   loadLocalRuntimeEnvironment,
   shellQuote,
+  LOCAL_EDITOR_PORT,
 } from './dev-local-workspace-options.mjs';
 
 // What the person sees is a few friendly lines. Everything technical is behind `--verbose` (or ASTRID_VERBOSE=1), and every
@@ -184,7 +185,8 @@ try {
   exit(fail(CANT_START, error instanceof Error ? error.message : String(error)) ? 1 : 1);
 }
 const buildOnly = process.argv.includes('--build');
-const port = process.env.PORT ?? '2222';
+const port = process.env.PORT ?? LOCAL_EDITOR_PORT;
+const editorUrl = `http://127.0.0.1:${port}/tools/video-editor`;
 runtimeSettings = {
   dataRoot: selectedDataRoot || process.env.ASTRID_SUPPORT_ROOT?.trim()
       || (basename(dirname(discoveryPath)) === 'runtime' ? dirname(dirname(discoveryPath)) : dirname(discoveryPath)),
@@ -608,7 +610,7 @@ if (port !== '0' && await waitForPort(port, 0)) {
   const holder = await appPortHolder(port, expectedIdentity.realmId);
   if (holder === 'ours') {
     console.log('Astrid is already running in another window.');
-    if (hostedOrigin) printOpenBlock(hostedOrigin);
+    printOpenBlock(editorUrl);
     exit(0);
   }
   if (holder === 'other_astrid') exit(fail(OTHER_ASTRID_RUNNING, `port ${port} is in use by Astrid's app for another realm`) ? 1 : 1);
@@ -735,13 +737,13 @@ if (hostedOrigin) {
   if (shuttingDown) {
     // A service already stopped the launch and said why.
   } else if (reachable && viteAlive) {
-    printOpenBlock(hostedOrigin);
+    printOpenBlock(editorUrl);
     flushHeld();
   } else {
     stopWith(COULDNT_START, `nothing listened on 127.0.0.1:${doorPort} and 127.0.0.1:${port} in time`);
   }
 } else if (await waitForPort(port, VITE_START_TIMEOUT_MS, () => shuttingDown)) {
-  console.log(`Local App: http://127.0.0.1:${port}`);
+  console.log(`Local App: ${editorUrl}`);
 }
 await services.find(({ child: owned }) => owned === child).done;
 
