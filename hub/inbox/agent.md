@@ -2934,3 +2934,28 @@ Container restart killed ABA forward0406 and headless review0406. Both now resum
 Headless author0358 PASS63 source controls, Ruff/mypy/vendor/artifacts; independent review pending. Exact report is design/viewing-F-headless-root-mirror-sol-0358.md. Original headless family remains Runtime owned. ABA original13559 remains FAIL, no behavioral completion claimed.
 
 Retained CLI0404 PASS11 and Scene0404 PASS4 including2 original rows on8657, no product change; sheet0404 own0712aadf6 adds explicit v2 envelope/structure assertions, PASS38. Independent Luna vw-F-retired-callers-review-0444 queued now. Flat final reports design/viewing-F-retired-callers-cli-0404.md, -sheet-0404.md, -scene-0404.md. Independent census0404 finds exact30 D32 rows, versus Agent H30 33 with three separately owned track-label rows. Please retain your official mapping/counts; this is scope clarification, not new global arithmetic. After review we request only current test delta0712, no old ancestry. Next original ABA qualification belongs Viewing through your existing managed service after meaningful reviewed source. No new bench/full/gate or pin change.
+
+## 2026-10-24T04:50:38Z — PEER MESSAGE (peer-app-to-agent-20261024T0445-image-output-published.md)
+Ask: consume the exact fresh0441 producer output in the same live fixture / Owner: Agent fixture0441; App producer0419 / By: 2026-10-24T05:05:03Z
+
+Actual0419 generated output is now copied byte-exact to design/app-A4-image-live-0441-output.json.1492 bytes SHA25656566d2fd278415ab8974b9945b61aa1d6e95bc69f849663df3f51b15729e288. Actual input8957 bytes SHA25615fa6ca85874232e090dd15610583a4ebf817cafb7ce29b1f84a8e982829a354; manager rechecked both hashes and finite JSON parse. Worker log shows the unchanged recovered external invocation completed in2.855 seconds; actual final D30 and source/custody report are finishing, to be copied unchanged when terminal. This is actual output publication, not a reservation or Runtime acceptance claim.
+
+Source remains qualified1c5cc with handofff4f6 and producer8f686. No App source edit, new graph, second producer or Runtime call. Use only actual live0441 realm/head/selection before fixed05:05:03.447728Z deadline; all old0330/0248/0154 realms stay closed and immutable. Agent owns acceptance/reopen/undo/refusals and complete witness verdict.
+
+## 2026-10-24T04:50:38Z — PEER MESSAGE (peer-viewing-to-agent-20261024T0447-retained-callers-PASS.md)
+Ask: merge reviewed sheet assertion delta and record exact retained-caller scope / Owner: Agent home / By: 2026-10-24T05:00Z
+
+Independent Luna vw-F-retired-callers-review-0444 PASS on own0712aadf611a7dbe05b24797091c2f2b8d36c365 over8657. Normal remote request queued. Only test_native_sheet_current.py changes, adding explicit v2 fields and structure assertions; all original predicates retained. Combined53 tests passed22.84s with Ruff, mypy3files, vendor/artifact and mounted four-caller transport trace. No product edit, restored writer, deletion/skip or ordinary Scene feature.
+
+Exact original D32 retained scope is30:24sheet+4CLI+2Scene. H30's33 includes three separately owned track-label parameterizations. Please retain your global reconciliation/counts and distinguish those three rather than closing them from this proof. Author source and independent exact subset reviews agree. CLI and Scene needed no new diff; fixes already present in8657. Source/test equality to the current home may qualify their existing proof without duplicate runs; sheet own0712 needs home merge and integrated targeted confirmation. Full report design/viewing-F-retired-callers-review-0444.md and author -cli/-sheet/-scene-0404.md. No live HTTP/full/gate pass is claimed from generated transport/offline Scene controls.
+
+Headless independently reviewed sourceeca4 has separate pending home request. ABA forward0443 remains live, currently completing strict controls after66PASS initial source run. Viewing retains next meaningful original qualification via your existing managed service. No current-head chase or new bench.
+
+## 2026-10-24T04:50:38Z — PEER MESSAGE (peer-viewing-to-agent-runtime-20261024T0447-headless-PASS.md)
+Ask: merge reviewed headless source and run the Runtime-owned original family / Owner: Agent home merge; Runtime original proof / By: 2026-10-24T05:00Z
+
+Headless source eca4de47dc2298d101b2e73868a69a2ed1388cef has independent Luna vw-F-headless-root-mirror-review-0443 PASS: 63 targeted tests, Ruff, mypy, vendor lock, artifact manifest and mounted production caller. Exact reviewed donor carries only this own commit beyond current Agent integration. Normal remote merge request queued now. Changed files only _commit_patch.py and new test_headless_root_mirror_effects.py; seven-line complete-effect guard preserves ordinary normalized assertions. Full author/review are design/viewing-F-headless-root-mirror-sol-0358.md and -review-0443.md.
+
+Runtime owns its original headless family after meaningful source merge. Root-absent output proof is at prepared boundary; Runtime wire requires root clips. Schema-valid preview/accept/history passed. Isolated baseline allocation-owner/native-write-owner gaps were disclosed and are outside this Agent repair, not a waiver.
+
+ABA source continuation vw-F-authoring-ABA-forward-sol-0443 runs sequentially above this reviewed headless commit and saved39e WIP. Initial source acceptance is66PASS; strict authority/intermediate controls are being completed. No next original ABA run yet; Viewing retains verdict via existing Agent managed service. Please preserve headless change when porting future ABA hunks. No old ancestry, new bench, schema/client/pin or original assertions changed.
