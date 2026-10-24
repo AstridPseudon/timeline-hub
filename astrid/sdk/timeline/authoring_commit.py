@@ -5,7 +5,11 @@ import copy
 from collections.abc import Mapping
 from typing import Any
 
-from astrid.core.timeline.authoring_bundle import AuthoringBundleError, compile_authoring_candidate
+from astrid.core.timeline.authoring_bundle import (
+    AuthoringBundleError,
+    CandidateCompilation,
+    compile_authoring_candidate,
+)
 
 
 def response_data(value: Any) -> dict[str, Any]:
@@ -77,12 +81,15 @@ def _read_base(writer: Any, candidate: Mapping[str, Any]) -> dict[str, Any]:
     return base
 
 
-def authoring_commit_request(candidate: Mapping[str, Any], writer: Any) -> dict[str, Any]:
+def authoring_commit_request(candidate: Mapping[str, Any], writer: Any, *,
+                             compilation: CandidateCompilation | None = None) -> dict[str, Any]:
     from ._command_state import equal
+    from .commands import execute
     from .emitter import _diff, emit_document_commands
     from .native_media_admission import registry_selections
 
-    compilation = compile_authoring_candidate(candidate)
+    if compilation is None:
+        compilation = compile_authoring_candidate(candidate)
     base = _read_base(writer, candidate)
     work = copy.deepcopy(dict(candidate))
     # These two missing transport pins may be hydrated only from Runtime. All
@@ -90,24 +97,55 @@ def authoring_commit_request(candidate: Mapping[str, Any], writer: Any) -> dict[
     work['base_parent'].setdefault('publication_id', base['base_parent']['publication_id'])
     work['source_mapping'].setdefault('_runtime_document', copy.deepcopy(base['source_mapping']['_runtime_document']))
     placements = work['placements']
-    if ([row['occurrence_id'] for row in placements] != [row['occurrence_id'] for row in base['placements']]
-            or any(row['shot_id'] != old['shot_id'] for row, old in zip(placements, base['placements']))):
+    originals = {row['occurrence_id']: row for row in base['placements']}
+    if any(row['occurrence_id'] not in originals
+           or row['shot_id'] != originals[row['occurrence_id']]['shot_id'] for row in placements):
         raise AuthoringBundleError('closure membership edits require registered semantic commands')
+    retained = {row['occurrence_id'] for row in placements}
+    removals = [{'schema_version': 1, 'op': 'occurrence.delete', 'version': '1',
+                 'select': 'occurrence:' + identity, 'args': {}, 'intent': {'ownership': 'occurrence'}}
+                for identity in originals if identity not in retained]
+    commands: list[dict[str, Any]] = []
+    if removals:
+        plan = execute(base, removals)
+        commands.extend(plan.commands)
+        base = plan.bundle
+    # Publication contains only placed shots. Keep the exact surviving source
+    # mappings and baselines so filtering cannot hide a reachable forged root.
+    reachable = {row['shot_id'] for row in placements}
+    for bundle in (base, work):
+        bundle['shots'] = {key: row for key, row in bundle['shots'].items() if key in reachable}
+        mapping = bundle['source_mapping']
+        mapping['shots'] = {key: row for key, row in mapping['shots'].items() if key in reachable}
+        mapping['placements'] = {key: row for key, row in mapping['placements'].items() if key in retained}
+    # List guards use published physical edges, not local independent-shot IDs.
+    physical = [row for row in base['source_mapping']['_runtime_document'][
+        'parent_revision']['payload']['occurrences'] if row['occurrence_id'] in retained]
+    physical_by_id = {row['occurrence_id']: row for row in physical}
+    target = [{**row, **{key: physical_by_id[row['occurrence_id']][key]
+                        for key in ('shot_id', 'shot_revision_id')}} for row in placements]
     placement_changes: list[dict[str, Any]] = []
-    for old, row in zip(base['placements'], placements):
-        _diff(old, row, 'parent', ('occurrences', 'occurrence_id:' + row['occurrence_id']), placement_changes)
+    _diff(physical, target, 'parent', ('occurrences',), placement_changes)
     work['placements'] = copy.deepcopy(base['placements'])
-    commands = emit_document_commands(base, work)
+    payload_commands = emit_document_commands(base, work)
     if placement_changes:
         commands.append({'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
                          'args': {'changes': placement_changes}})
+    commands.extend(payload_commands)
     if not commands:
-        raise AuthoringBundleError('authoring candidate has no changes to commit')
+        # Reaffirm the authored track collection with an ordinary previous-value
+        # guard. Runtime still owns publication, stale-head checks and replay.
+        path = ['config', 'tracks'] if 'tracks' in base['parent']['config'] else ['config']
+        value = base['parent']['config'].get('tracks') if len(path) == 2 else base['parent']['config']
+        commands.append({'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
+                         'args': {'changes': [{'op': 'set', 'ref': 'parent', 'path': path,
+                             'before': {'state': 'present', 'value': copy.deepcopy(value)},
+                             'value': copy.deepcopy(value)}]}})
     source = base['source_mapping']['_runtime_document']
     inputs = [{'pin': copy.deepcopy(pin)} for pin in compilation.publication['dependency_manifest']['media']
               if pin not in source['dependency_manifest']['media']]
     old_selections = list(registry_selections(base))
-    for association in registry_selections(candidate):
+    for association in registry_selections(work):
         if association in old_selections:
             continue
         selected = response_data(writer.get_project_media_selection(candidate['project_id'],
