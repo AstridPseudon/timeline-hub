@@ -62,48 +62,96 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _finite(value: Any, *, path: str = "$", depth: int = 0) -> None:
+def _jsonable(value: Any, *, path: str = "$", depth: int = 0) -> Any:
+    """Normalize only values whose JSON meaning can be retained exactly.
+
+    In particular, floats stay numbers and non-finite floats are refused before
+    a JSON encoder can turn them into JavaScript extensions such as ``NaN``.
+    ``Path`` is the one intentional non-JSON value in the real capture shape;
+    its source spelling is retained as a string.  There is no lossy fallback
+    for any other value.
+    """
     if depth > MAX_DEPTH:
         raise ObserverFailure(f"JSON depth limit exceeded at {path}")
     if isinstance(value, float):
         if not math.isfinite(value):
             raise ObserverFailure(f"non-finite JSON number at {path}")
-        return
+        return value
     if isinstance(value, str):
         if len(value) > MAX_STRING:
             raise ObserverFailure(f"JSON string limit exceeded at {path}")
-        return
+        return value
+    if isinstance(value, Path):
+        return str(value)
     if isinstance(value, (bool, int)) or value is None:
-        return
+        return value
     if isinstance(value, dict):
         if len(value) > MAX_ITEMS:
             raise ObserverFailure(f"JSON object item limit exceeded at {path}")
+        result: dict[str, Any] = {}
         for key, item in value.items():
-            _finite(key, path=f"{path}.<key>", depth=depth + 1)
-            _finite(item, path=f"{path}.{key}", depth=depth + 1)
-    elif isinstance(value, (list, tuple, set, frozenset)):
+            if isinstance(key, Path):
+                json_key = str(key)
+            elif isinstance(key, str):
+                json_key = key
+            elif isinstance(key, (bool, int, float)):
+                # Validate a numeric key before JSON's required string
+                # coercion, so NaN/Infinity cannot evade the finite check.
+                checked_key = _jsonable(key, path=f"{path}.<key>", depth=depth + 1)
+                json_key = str(checked_key)
+            else:
+                raise ObserverFailure(f"unsupported JSON key {type(key).__name__} at {path}.<key>")
+            if json_key in result:
+                raise ObserverFailure(f"JSON key collision after normalization at {path}.{json_key}")
+            result[json_key] = _jsonable(item, path=f"{path}.{json_key}", depth=depth + 1)
+        return result
+    if isinstance(value, (list, tuple, set, frozenset)):
         if len(value) > MAX_ITEMS:
             raise ObserverFailure(f"JSON array item limit exceeded at {path}")
-        for index, item in enumerate(value):
-            _finite(item, path=f"{path}[{index}]", depth=depth + 1)
-    else:
-        raise ObserverFailure(f"unsupported JSON value {type(value).__name__} at {path}")
+        values = [_jsonable(item, path=f"{path}[{index}]", depth=depth + 1)
+                  for index, item in enumerate(value)]
+        if isinstance(value, (set, frozenset)):
+            return sorted(values, key=lambda item: json.dumps(item, sort_keys=True,
+                                                              separators=(",", ":"), allow_nan=False))
+        return values
+    raise ObserverFailure(f"unsupported JSON value {type(value).__name__} at {path}")
 
 
-def _jsonable(value: Any) -> Any:
-    """Preserve diagnostic values, including Runtime's computed key sets."""
-    if isinstance(value, dict):
-        return {str(key): _jsonable(item) for key, item in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_jsonable(item) for item in value]
-    if isinstance(value, (set, frozenset)):
-        values = [_jsonable(item) for item in value]
-        return sorted(values, key=lambda item: json.dumps(item, sort_keys=True, separators=(",", ":")))
-    if isinstance(value, Path):
-        return str(value)
-    if isinstance(value, (str, int, float, bool)) or value is None:
-        return value
-    raise ObserverFailure(f"unsupported captured value {type(value).__name__}")
+def _finite(value: Any, *, path: str = "$", depth: int = 0) -> None:
+    """Validate an already-normalized value for callers that need a predicate."""
+    _jsonable(value, path=path, depth=depth)
+
+
+def _serialize(value: Any) -> str:
+    normalized = _jsonable(value)
+    _finite(normalized)
+    return json.dumps(normalized, ensure_ascii=True, allow_nan=False, indent=2, sort_keys=True) + "\n"
+
+
+def _offline_probe() -> int:
+    """Exercise the observer serializer without importing the test/runtime."""
+    sample = {
+        "finite_float": 0.625,
+        "source_path": Path("/capture/source.json"),
+        "nested": {"frame": 12.5, "items": (1, 2)},
+    }
+    payload = _serialize(sample)
+    decoded = json.loads(payload)
+    if decoded["finite_float"] != sample["finite_float"]:
+        raise ObserverFailure("finite float changed during telemetry serialization")
+    if decoded["source_path"] != str(sample["source_path"]):
+        raise ObserverFailure("Path changed during telemetry serialization")
+    rejected: list[str] = []
+    for value in (float("nan"), float("inf"), float("-inf")):
+        try:
+            _serialize({"number": value})
+        except ObserverFailure as exc:
+            rejected.append(str(exc))
+    if len(rejected) != 3:
+        raise ObserverFailure("non-finite telemetry number was not rejected")
+    print(json.dumps({"finite_float": decoded["finite_float"], "path": decoded["source_path"],
+                      "rejected": rejected}, sort_keys=True))
+    return 0
 
 
 def _credential_scan(value: Any, *, path: str = "$") -> list[str]:
@@ -157,22 +205,33 @@ class Observer:
         self._env: Any = None
         self._trace_previous: Any = None
         self._auth_path: Path | None = None
+        self._durable_phase: str | None = None
         self._installed = False
         self._finalized = False
 
-    def _write(self, phase: str) -> None:
+    def _write(self, phase: str, *, required: bool = False) -> bool:
         packet = _copy(self.packet)
         packet["phase"] = phase
         packet["credential_scan"] = {"matches": _credential_scan(packet)}
         if packet["credential_scan"]["matches"]:
-            raise ObserverFailure(f"credential scan refused evidence: {packet['credential_scan']['matches']}")
-        packet = _jsonable(packet)
-        _finite(packet)
-        payload = json.dumps(packet, ensure_ascii=True, allow_nan=False, indent=2, sort_keys=True) + "\n"
-        if len(payload.encode()) > MAX_EVIDENCE:
-            raise ObserverFailure(f"evidence size limit exceeded: {len(payload.encode())} > {MAX_EVIDENCE}")
-        self.evidence.parent.mkdir(parents=True, exist_ok=True)
-        self.evidence.write_text(payload, encoding="utf-8")
+            error = ObserverFailure(f"credential scan refused evidence: {packet['credential_scan']['matches']}")
+        else:
+            try:
+                payload = _serialize(packet)
+                payload_bytes = payload.encode()
+                if len(payload_bytes) > MAX_EVIDENCE:
+                    raise ObserverFailure(f"evidence size limit exceeded: {len(payload_bytes)} > {MAX_EVIDENCE}")
+                self.evidence.parent.mkdir(parents=True, exist_ok=True)
+                self.evidence.write_text(payload, encoding="utf-8")
+                self._durable_phase = phase
+                return True
+            except (ObserverFailure, OSError) as exc:
+                error = exc
+        if required:
+            raise error
+        self.packet["observer_errors"].append({"phase": phase, "type": type(error).__name__,
+                                               "message": str(error)})
+        return False
 
     def _record_exception(self, exc: BaseException, *, boundary: str) -> None:
         self.packet["exceptions"].append({
@@ -218,7 +277,7 @@ class Observer:
                         "max_evidence_bytes": MAX_EVIDENCE},
             "credential_scan": {"scope": "captured JSON values and keys; no secret values retained", "matches": []},
         }
-        self._write("preflight")
+        self._write("preflight", required=True)
 
     def _observe_method(self, cls: type[Any], name: str, callback) -> None:
         original = getattr(cls, name)
@@ -252,8 +311,12 @@ class Observer:
         def capture_wrapper(original):
             def wrapped(port, capture):
                 self.packet["capture"] = _copy(capture)
+                # Persist the complete carrier before touching Runtime's
+                # validation seam.  A later observer/test exception must not
+                # erase an already captured original/landing map.
+                self._write("capture_observed", required=True)
                 self.packet["request"] = _copy(capture["context"]["request"])
-                self._write("before_runtime_capture_validation")
+                self._write("before_runtime_capture_validation", required=True)
                 try:
                     return original(port, capture)
                 except BaseException as exc:
@@ -274,7 +337,7 @@ class Observer:
                     "history": _copy(history),
                     "request": _copy(capture["context"]["request"] if capture else None),
                 }
-                self._write("before_runtime_sequential_validation")
+                self._write("before_runtime_sequential_validation", required=True)
                 try:
                     result = original(port, prepared, source, base, continuations, history)
                 except BaseException as exc:
@@ -342,6 +405,9 @@ class Observer:
                     "map_key": _copy(local.get("map_key")),
                     "line": frame.f_lineno,
                 }
+                # This is deliberately written at the authenticated map
+                # boundary, not deferred to pytest teardown.
+                self._write(f"runtime_comparison_line_{frame.f_lineno}", required=True)
         return self._trace
 
     def pytest_runtest_call(self, item):
@@ -379,6 +445,8 @@ class Observer:
 
 
 def main() -> int:
+    if "--offline-probe" in sys.argv[1:]:
+        return _offline_probe()
     observer = Observer()
     observer.preflight()
     return pytest.main(["-q", "-o", "addopts=", "-p", "no:cacheprovider", "--timeout=90", TARGET], plugins=[observer])
