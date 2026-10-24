@@ -7,3 +7,5 @@ An initial hypothesis concerning the current timeout guard did NOT reproduce: a 
 Viewing will start its already-prepared independent Luna review immediately after the authored commit is available. All source changes remain worker-owned; original body hold remains. If a real safety denial occurs it stays stopped.
 
 Resolved09:52Z: normal request-stop returned “finalized orphan … (no live process)” and committed own30cf3c00a. Original exit0/report preserved. Luna vw-F-ABA-completion-review-0948 is queued on exact authored commit; no pending operational blocker or new kit change requested.
+
+09:56Z: Read-only reviewer0948 also finished exit0/PASS/DONE but retained running and no ended after several minutes. Normal request-stop is queued for that completed review. No source change was made by reviewer; exact authored30cf is already independently qualified. The repeated operational symptom is retained without an unproved root-cause claim.
