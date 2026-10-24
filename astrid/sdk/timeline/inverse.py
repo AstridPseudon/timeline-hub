@@ -103,6 +103,46 @@ def _physical_state(state, ref, path, records):
         **state.bundle['parent'], 'occurrences': state.bundle['placements']}}, closures=state.closures)
 
 
+def _input_read_state(state, read, record, records):
+    """Authenticate restored item identities at this command's accepted input."""
+    if (read['ref'].endswith('/shot') and read['path'][:1] == ['payload']
+            and isinstance(records, AcceptedRecords)):
+        from ._step_undo import entry_records
+
+        owner = read['ref'].removesuffix('/shot')
+        current = state.entity(owner, optional=True)
+        for entry in records.entries:
+            if not any(item is record for item in entry_records(records, entry)):
+                continue
+            before, _ = records.load_boundary(entry)
+            prior = one(before['placements'], 'occurrence_id', owner.removeprefix('occurrence:'), optional=True)
+            if current is not None and prior is not None and current['shot_id'] == prior['shot_id']:
+                shot = current['shot_id']
+                source = before['source_mapping']['shots'].get(shot)
+                sources = state.bundle['source_mapping']['shots']
+                if (source is not None and shot not in sources
+                        and state.bundle['shots'][shot].get('_created') is True
+                        and any(write['ref'] == 'shot:' + shot and not write['path']
+                                and write['after'] == ABSENT and write['before'] != ABSENT
+                                and equal(write['before'], state.get(write['ref'], []))
+                                and equal(write['before'], State(before).get(write['ref'], []))
+                                for write in record['writes'])):
+                    # Redo has recreated this exact recorded root, but has no
+                    # compiler source yet. Its accepted input owns the codec.
+                    sources = {**sources, shot: source}
+                if source is not None and equal(source, sources.get(shot)):
+                    # This is a read-only codec view, not the compiler baseline.
+                    # Keep H and every authored value; only the exact restored
+                    # owner/source may use its own authenticated input document.
+                    state = State({**state.bundle, 'source_mapping': {
+                        **state.bundle['source_mapping'],
+                        'shots': sources,
+                        '_runtime_document': before['source_mapping']['_runtime_document']}},
+                        closures=state.closures)
+            break
+    return _physical_state(state, read['ref'], read['path'], records)
+
+
 def _set_physical(state, ref, path, value, records):
     path = _inverse_item_path(state, ref, path, records)
     projected = _physical_state(state, ref, path, records)
@@ -826,7 +866,7 @@ def _validate_inputs(state, record, records):
                 else:
                     _set_physical(stage, write['ref'], write['path'], write['after'], records)
             reads.extend(read for read in record['reads']
-                         if _physical_state(stage, read['ref'], read['path'], records).matches(
+                         if _input_read_state(stage, read, record, records).matches(
                              read['ref'], read['path'], read['state']))
             selections.extend(selected for selected in record['selections']
                               if equal(selection(stage, selected['key'], selected['owner'],
@@ -839,7 +879,7 @@ def _validate_inputs(state, record, records):
 
     for read in record['reads']:
         if (_authenticated_timeline_scope_read(record, read)
-                or _physical_state(state, read['ref'], read['path'], records).matches(
+                or _input_read_state(state, read, record, records).matches(
                     read['ref'], read['path'], read['state'])):
             continue
         if sites is None:
