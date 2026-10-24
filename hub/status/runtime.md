@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T21:13:30Z | dispatcher heartbeat 13s | live 1 (sol 1, luna 0, other 0) | busy30 3 | status age 2m -->
-# runtime board, 2026-10-24T21:10:54Z
+<!-- main | 2026-10-24T21:16:34Z | dispatcher heartbeat 3s | live 1 (sol 1, luna 0, other 0) | busy30 3 | status age 1m -->
+# runtime board, 2026-10-24T21:13:49Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -170,6 +170,8 @@
 | R-P4-evidence-hygiene | Keep proof outputs outside source | Luna | Byte equality verified | merged | rt-P4-evidence-cleanup-2018 | Exact24 files preserved outside source and removed. Both reviewed product/test blobs exact; normal e745 only two-file product delta. | a213ed89f / e74527f5f |
 | D78-actual-frame | Reduce observer attribution overhead | Sol / Luna | Integrated service proof passed | merged | Sol2019; Luna2035 | Normal4351: exact service2PASS7.72s includes helper13 and mounted off/parent/fixed. Source blobs exact; no original recovery claim. | 4351b9f91 / fa2c16296 |
 
+| D83-history-cost-return | Clear retained original history cost | HARD Sol | Terminal original 1960 NO-GO | doing | rt-D83-history-cost-return-sol-2113 | Exact batch 4 PASS and 3 timeout failures on candidate21c6/dc55. One measured strict correction assigned; original budgets and D47 hold. | Base dc55 |
+
 Runtime producer: Normal dc55b8bc6e638acd9e5031ff6b51b50cd2e2b63c, tree0f941b27dc3396adbf41683e8ae30d77fc8b8768. Reviewed schema setup e745, observer4351, projection57df. Canonical15/schema867f unchanged. Source frozen since20:42 for receiving-lane proof.
 
 core open: 2 Runtime boundaries remain at original scope: P4 ten-note45s and full native-seed/element outcome. Agent retains five historical original scopes, all unclosed. Source qualification does not close originals. Final Runtime core suite owed.
@@ -179,10 +181,10 @@ Current proof: P1 readiness1/original2 GO31083; P3 readiness1/original1 GO15493 
 D83 source proof: security2018 schema258PASS; observer2035 exact service2PASS and integrated2PASS including helper13; projectionsecurity2037 31+289+96PASS; exact currentdc55 genuine reduced native loop8PASS84.30s. Baselinee745 7PASS1FAIL145s remains. Reduced control excludesmedia/finaldocpatch, not original seed credit.
 D78 actual capture: App2026 correlates cap1dump to successfulrequest1. Request2 SDK30s transporttimeout; outer120s did notfire. Safeauthsnapshot cannot prove failing-request2 lockwait. Baseline local acquisition max2.09ms, compute dominated; original fullmedia34.498s cause still not fully attributed.
 
-Blockers: Agent originals — service 1960 is running through sole batch2056 on candidate21c6 and Runtime dc55. Five original scopes remain open; candidate source is not home proof.
+Blockers: Agent originals — service1960 NO-GO: 4 PASS and3 timeout failures. Runtime Sol2113 owns next measured strict correction. Candidate21c6 remains held; all five original home scopes stay open.
 Blockers: App P2 — worker2058 owns eight isolated originals on qualified dc55, one body at a time. App home ce1cd9 adopts dc55; next full serial tour waits eight isolated PASS results.
 Blockers: Final cut — all lane core0/regressions0, final P1–P5 plus core on one pinned tuple, D69 and genuine installed render required. No build or ZIP before cut.
-Next ready: Receiving lanes start already released original work. Runtime consumes same-ID results, handles any demonstrated new source failure immediately. No speculative author or duplicate diagnostic.
+Next ready: Sol2113 measured source result -> one security reviewer -> normal release and existing original submitters. Consume App22971 same-ID result; no unchanged original repeat.
 
 Venues: App P1/P2/P3; Agent P4; main P5/Composition. D73 four exact SHAs capturedonce with checkoutreceipts. Newerhead doesnotinvalidate a run. D83 NO-GO automaticbriefsummary, GO oneindependentverdict; correction reviewer applies/releasesproof. Productchanges rerun final matrix.
 D65 delivery: Runtime merge, Agent merge, authentic App manifest command/digest equality, then App merge. Installed v2 docs and D67bindings retained. Final candidate remains D59-cut gated.
@@ -190,5 +192,5 @@ Later: E1/E3 designs and E2 Agentdesign complete before D83; further E/D79 pause
 Admission: D56 Farm/schema access stopped. Original403/accessrefusals, historical deniedcleanup/process/retirement targets untouched. D67D13envgap unchanged. AppdirtyU3guardrefusals stopped.
 Disk: 8660201472 available bytes (8.07 GiB), cap 4. No ended clean non-KEEP Runtime tree eligible; five old dirty trees remain untouched. Existing KEEP and refused targets not retried; 15 GB target not reached.
 
-live 0 / cap 4; ready-undispatched 0 local. All D83 source, security and reduced-control workers finished. Agent service1960 is running; App worker2058 owns the eight isolated cases after consuming release2052. No E or D79 work active.
-Pass 2026-10-24T21:10:54Z: all D83 workers remain finished; Runtime source still frozen dc55. H6 dependency checks consumed actual Agent5fc1 adoption, candidate21c6 and running service1960, plus Appce1cd9 adoption and isolated worker2058. Earlier App seed wait is cleared. No local ready work, no duplicate original and no new review. E/D79 remain paused. Inbox consumed through 551822 bytes. Disk above main floor with no eligible clean finished Runtime tree; stopped cleanup targets untouched. Original full-media seed, element, history scopes and45s gate outcomes remain open.
+live 1 / cap 4; ready-undispatched 0. Sol2113 running since21:13:17Z, dispatched immediately after actual Agent1960 terminal evidence reached the hub. No E or D79 active.
+Pass 2026-10-24T21:13:49Z: consumed terminal1960 from actual Agent board and normal flat XML/log/tuple: four PASS, three45s timeouts; no independent NO-GO verdict or whole-path worker added under D83. Existing source controls and review remain valid at their scope but do not close originals. Added D83-history-cost-return with unique HARD Sol2113, based on dc55, limited to measured fresh-work-preserving history/validator correction. App22971 currently owns its isolated element, no duplicate requested. Source integration remains dc55 while candidate work proceeds. Inbox consumed through555918 bytes; newer hub peer2105 consumed directly pending normal inbox delivery. Main disk8.06GiB/cap4, no eligible clean finished Runtime tree; prior refusals untouched.
