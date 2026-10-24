@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T04:13:47Z | dispatcher heartbeat 7s | live 3 (sol 2, luna 1, other 0) | busy30 17 | status age 0m -->
+<!-- main | 2026-10-24T04:16:16Z | dispatcher heartbeat 4s | live 2 (sol 2, luna 0, other 0) | busy30 18 | status age 2m -->
 # runtime board, 2026-10-24T04:05:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -77,6 +77,6 @@ Blockers: Freeze — Reviewed U1c 40427e8b5 against live 795379a67 stays held un
 
 D34: Main remains near 8.4 GiB. The orchestrator orders no further main disk work. Reviewed registry candidate fdb9e9e9 was installed; normal retirement of s2-c13 was refused for incomplete tuple markers. No retry; zero GB freed.
 
-Later: Legacy admission and v1 archive retirement resume only below 8.5 GB or after delivery. The finite Agent prune assessment found no unreferenced target. No live cleanup or installation is qualified this pass.
+Later: Agent U2c fixture API facts from peer 0407 are assigned to Luna 0414; draft activation remains freeze held. Legacy admission and v1 archive retirement resume only below 8.5 GB or after delivery. The finite Agent prune assessment found no unreferenced target. No live cleanup or installation is qualified this pass.
 
-Next ready: D42 corrected source review, source merge and integrated proof, corrected proof pin and independent review, then required HTTP release timings. Agent owns alias, headless effects and its occupancy join; Runtime owns the new redo image correction.
+Next ready: D42 corrected source review, source merge and integrated proof, corrected proof pin and independent review, then required HTTP release timings. Agent owns alias, headless effects and its occupancy join; Runtime has merged the redo image correction and is qualifying the integrated head.
