@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T05:41:54Z | dispatcher heartbeat 14s | live 2 (sol 1, luna 1, other 0) | busy30 27 | status age 5m -->
+<!-- agent | 2026-10-24T05:44:08Z | dispatcher heartbeat 11s | live 3 (sol 1, luna 2, other 0) | busy30 25 | status age 0m -->
 # agent board, 2026-10-24T05:36:25Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -57,7 +57,7 @@
 | F-headless-root-mirror | Preserve complete canonical mirror effects | Sol / Luna | Runtime original family | merged | Independent0443; integrated0500 PASS71 | Actual9cd projection/headless controls passed with exact reviewed eca4 hunks. Source closure qualified; Runtime original family now released and remains its owner. | Homed730; current9cd |
 | F-retired-callers | Retained native, CLI and scene scenarios | Luna / Sol | Integrated joined qualification complete | merged | Independent0444; integrated0500 PASS53 | Actual9cd all53 retained controls passed. Exact30 original nodes; three track-label mappings remain separate. Count reconciliation follows proof, no full-suite claim. | 9cd3dbe865 |
 | F-inverse22 evidence | Qualify retained inverse originals | Luna | Independent result review passed | merged | Qualified0537; result0550 PASS22 | Exactly22 original corruption and retained-scope cases passed3.55s. Both target ASTs unchanged; faithful authenticated helper verified. | Current2007; Runtime2b49 |
-| F-count | Reconcile exact original closures | Luna | Cumulative H3 metadata and22 inverse delta | doing | H3return0550; inverse delta0600 | Official172 closed/95 open. SevenH3 plus22inverse proofs qualified; metadata correction and exact22 delta get cumulative review. | Evidence only |
+| F-count | Reconcile exact original closures | Sol / Luna | One inherited family count corrected | doing | Cumulative0616 source PASS; Sol0628 | All201 closed and66 open memberships independently pass. Package holds for stale Rendering family count6; only metadata changes. | Evidence only |
 | F-D40-installed | Preserve complete installed result custody | Sol / Luna | Observer source independently passed | doing | Author0540; review0607 PASS; original0612 | Persistent observer passed six synthetic checks. One original installed qualification now records actual return and source origins. | Source2007 unchanged |
 | U2c identity diagnostic | Exact identity refusal detail | Luna | D46 | closed: D46, folded into the freeze U-merge | Author0439; independent0444 PASS | Reviewed WIP retained only. No activation rerun or early merge. | 30f033046b held |
 | U2c RunPod child | Provider child custody | Luna | D46 | closed: D46, folded into the freeze U-merge | No active worker | Owner-deferred remote provider scope. No new custody backend; guards stay strict. | a181136220 held |
