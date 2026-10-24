@@ -1,1 +1,1 @@
-LEAD 21:34Z | up | P1 GO stands, P3 GO | P2 NO-GO stands, App owns | P4 batch NO-GO 4 pass 3 fail, ten-note times out at 45s, waiting on Runtime source fix | disk 8G
+LEAD 23:09Z | up | P1 GO stands, P3 GO | P2 now running as 8 isolated gestures, 0 of 8 pass so far, App and Runtime working | P4 ten-note still 45s, Runtime fix owned | disk 8G
