@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T16:21:16Z | dispatcher heartbeat 1s | live 4 (sol 0, luna 4, other 0) | busy30 10 | status age 4m -->
+<!-- app | 2026-10-24T16:25:03Z | dispatcher heartbeat 13s | live 4 (sol 0, luna 4, other 0) | busy30 14 | status age 3m -->
 # app board, 2026-10-24T16:16Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -16,7 +16,7 @@
 | A4-D52 | Proven dormant deletions | Luna; review | Current caller census | merged | Authors1118/1210; reviews1121/1232 | Parent/track and exclusive transcript pairs deleted;85/50live neighbors/types PASS. Live session restored. | 2e3c8f/cca3deb |
 | P1 | Historical mixed chain | Service; independent Luna | Historical tuple | merged | Actual18792; reviews0036/0040 | Historical GO only; current control13564 failed initial split. | Appf8;Agent787;Runtime2a9 |
 | P2 | Eight original core gestures | Service; independent Luna | D66 amended16:13 | doing | Actual25943 | Submitted16:13:26currentintegration through plainlauncher. All8 CORE; sameIDwait. | App1540b3f12e |
-| P3 | Original Gate5 journey | Service; independent Luna | D66 amended16:13 | doing | Actual10033 | Submitted16:13:26in parallel withP2;originalGate5unchanged. SameIDwait. | App1540b3f12e |
+| P3 | Original Gate5 journey | Service; independent Luna | D66 amended 16:13 | review | Actual10033; verdict1620 | Exit 1 in 286 seconds. Readiness PASS; original fails authoritative history precondition. | App1540b3f12e |
 | P2-core | Classify all eight gestures | Luna; decision | D55b | merged | Worker1222; accepted12:40 | All8 CORE; no behavior cut. | Report only |
 | P2-diagnostic | Retained lifecycle and Apply sampler | Sol; review | Actual serialized Apply | merged | Authors1214/1309; reviews1235/1315 |28diagnostic and97mounted controls,types/lint PASS; strict original cases retained. | fbf5bfe/971a29 |
 | P2-popup-track | Current selected popup target | Luna; review | Actual source defect | merged | Author1240; review1246 | Mounted pointer RED to GREEN;79 tests/types/lint PASS. | 450f3080ec |
@@ -42,18 +42,23 @@
 
 | U3-D69 | Audit missing and weakened upstream tests | Luna | D69 current3881 | doing | app-U3-D69-reverse-test-audit-1608 | Reverse diff and assertion audit; actual decisions or restoration needs. Does not block gates. | Current integration |
 
-| P1-changed-run | Current split admission control | App service; Luna verdict | Corefix1540HOME | review | Actual26312; verdict1616 | PASSexit0/237s:readiness1PASS,original2PASS. Independentplainmanifest/XMLverdict active;pair alreadyrunning. | App1540b3f12e |
+| P1-changed-run | Current split admission control | App service; Luna verdict | Core fix 1540 home | merged | Actual26312; verdict1616 | PASSexit0/237s:readiness1PASS,original2PASS. Independent1616 PASS: manifest, XML and original hashes. Pair already running. | App1540b3f12e |
 
-| P1-green-verdict | Review same current green26312 | Luna | Exact terminal26312 | review | app-P1-26312-current-verdict-1616 | D66manifest/XML/originalhashreview only;reuse unchanged304sourcechecks. | App1540/treea3b3 |
+| P1-green-verdict | Review same current green26312 | Luna | Exact terminal26312 | merged | app-P1-26312-current-verdict-1616 | PASS: readiness 1, originals 2; same App tree and hashes. Reused 304 source checks. | App1540/treea3b3 |
+
+| P3-history | Repair exact history precondition | Luna | Actual 10033 failure | doing | app-P3-history-precondition-1620 | Sole author checks actual history and D62 contract. Original Gate5 body stays unchanged. | Base 1540 |
+| P3-current-verdict | Judge 10033 and challenge path | Luna | Same-ID terminal facts | doing | app-P3-10033-verdict-path-1620 | Independent manifest/XML verdict and client-to-server comparison with passing P1. | Read only |
+| P2-element-current | Repair current element failure | Luna | Completed first case 25943 | doing | app-P2-element-current-cause-1620 | Exact failed assertion pending; declaration 398 is not treated as assertion. Remaining tour active. | Base 1540 |
+| P2-element-path | Challenge mounted element path | Luna | Repeated gate failure | doing | app-P2-element-whole-path-1621 | Independent source comparison with passing P1; no second private collector. | Read only |
 
 Integration: App1540b3f12ebde61c56a19be9089af2b2f2917e6c, tree a3b3b97851cacbb1515df36fdb779d42b15dc631. Normalmerge tree equals reviewed4349;304focusedtests/types/lint retained by exactidentity. Includes frozen upstream3881,D62normalclient,D65manifest/schema and D66plainlauncher. P1actualmanifest Agent9502/Runtime8b32/schema867f;1553vendor proof retains5777 exactclient mappings. Each newrun records its actualsourceversions. Normal14consumer mappings exact. All6 original spec hashes unchanged.
 
-live 2 / cap 6; ready-undispatched 0. Dispatcher Luna1608audit active; independentLuna1616greenverdict queuedimmediately. P225943/P310033serviceactive;P126312GREEN.
+live 5 / cap 6; ready-undispatched 0. Dispatcher reports 4 Luna workers; independent element path 1621 queued now. P1 verdict PASS; P2 still active and P3 terminal.
 
-core open:9 activecurrentgesturecases (8P2+1P3). CurrentP1original2PASS,independent1616verdictpending;no finalP1GOclaimuntilreview. All8P2 CORE;historicalP1GOretainsrecordedscope.
+core open:9 activecurrentgesturecases (8P2+1P3). Current P1 original 2 PASS and independent 1616 PASS; current P1 GO at recorded tuple. All8P2 CORE;historicalP1GOretainsrecordedscope.
 regressions:0 confirmed open at qualifiedsource: stale D62admission fixed1540,independent304controlsPASS and exacthome tree. Installer regression CLOSED by integrated2+4+2PASS. Actual changedP1 stillpending.
 
-Blockers: App service — P126312GREEN,independent1616active;P225943/P310033running,wait sameIDs. D66amended16:13 removes greenP1serialization;allthreeplainoriginalsrun.
+Blockers: App — P3 10033 fails exact history precondition; author and independent path/verdict 1620 active. P2 25943 still running; element author and independent path 1620/1621 active.
 
 Historical signals:11933 exited1/469s,0PASS3FAIL5NOTRUN. Native/history/readinessPASS; element terminal outcomeUNKNOWN. P33896 reached predecessor/reset,Aacceptance,ACKloss and exactAretry;B/restart/undo tailNOTRUN.12541/1689 and26414 are source/launch preflight failures with originalsNOTRUN. No historical signal is relabeled finalGO.
 
@@ -66,5 +71,5 @@ Disk: About11GB free; sweep3 in progress; eligible finished clean nonKEEP worktr
 
 Evidence: [current composed qualification](../../design/app-F-current-join-proof-1553.md), [current P1 manifest](../../tests/app-D66-plain-stack-sol-1528-d66-plain-p1-three-products-1024154715-13564/d66/manifest.json), [current P1 JUnit](../../tests/app-D66-plain-stack-sol-1528-d66-plain-p1-three-products-1024154715-13564/d66/p1.xml), [all8core](../../design/app-P2-core-classification-1222.md), [current source proof](../../design/app-P2-P3-e68-current-pure-target-1409.md).
 
-Inbox consumed through1556965bytes including lead16:13amendedD66,Agent1556 and D69. Runtime/Agent boards checked: normalD62consumer homes complete; Agent owns remaining inverse/create_empty core2. Runtime core0 source; final cut remains open. No cross-lane source/adoption wait remains.
+Inbox consumed through1557536bytes including lead16:13amendedD66,Agent1556 and D69. Runtime/Agent boards checked: normalD62consumer homes complete; Agent owns remaining inverse/create_empty core2. Runtime core0 source; final cut remains open. No cross-lane source/adoption wait remains.
 Next ready: wait SAMEP126312/P225943/P310033;on terminaldispatch independentverdictpergate and exact demonstratedrepair. ConsumeD69audit and dispatch restorationneeds;no duplicateoriginals.
