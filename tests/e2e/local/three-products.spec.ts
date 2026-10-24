@@ -1344,7 +1344,7 @@ async function ownerWithTwoMountedDocuments(page: Page, seed: ThreeProductsSeed)
     op: 'set', ref: 'parent', path: ['clips', `id:${seed.appClipId}`, 'at'],
     before: { state: 'present', value: 5 }, value: 7,
   }]);
-  expect(second.step).toMatchObject({ label: second.label, intent: 'Save local editor changes', tags: [] });
+  expect(second.step).toMatchObject({ label: second.label, intent: `Move ${seed.appClipId} on V1`, tags: [] });
   return owner;
 }
 
