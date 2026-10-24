@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T10:06:40Z | dispatcher heartbeat 7s | live 7 (sol 3, luna 4, other 0) | busy30 11 | status age 0m -->
+<!-- app | 2026-10-24T10:10:05Z | dispatcher heartbeat 15s | live 5 (sol 2, luna 3, other 0) | busy30 12 | status age 0m -->
 # app board, 2026-10-24T10:05Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -19,7 +19,7 @@
 | P3 | Original Gate5 journey | App service; Proof verdict | Final source and caller proof | blocked:app | Actual9310; setupHOME82cb | Exit 1 in 307 seconds. Readiness passed 41.4 seconds; one accepted predecessor POST missed by clip.move predicate. Original tail unrun. | Selected 663; HOME 9b810 |
 | P2-P3-next-caller | Bind prepared caller after product join | Luna; independent Luna | Cumulative0902 PASS; final source pending | blocked:app | Return0853; cumulative0902 | PREPARED only. Actual decoded source and forged-target controls pass;248 rows preserved. Final pure proof target and source hashes remain inputs. No rows installed. | 1d92503b4c |
 | P2-P3-D41-caller | Prepare source-required Agent backport inputs | Sol; independent Luna | Review0945 FAIL; real pin pending | doing | Luna0939; review0945; Sol0950 | Receipt substring, parent and child binding gaps found. Sol first return closes exact witnesses. No rows installed; old caller0902 intact. | b2f7113cc2 held |
-| P2-element-diagnostic | Retain Apply transport and UI stages | Luna; independent Luna | H36 | review | Author0955; review1005 queued | Collector, fixture and bounded controls authored; original four specs unchanged. Final harness commit pending. | Base82cb; source pending |
+| P2-element-diagnostic | Retain Apply transport and UI stages | Luna; independent Luna | Review1005 FAIL | doing | First return1009 | Review found fast-request race, unrelated-request capture and attach-error reporting. Original four specs remain exact82cb. | Worker source only |
 | P3-solo | Qualify P3-only current caller | Luna; independent Luna | Proof0951 PASS and release0954 | review | Author0955; review1005 queued | PREPARED. Review challenges circular service snapshot input; source0900 and old079 custody are qualified. Other249 rows unchanged. | Base1d925; source pending |
 | U3b-D39-early | Stack current fixes and D39 on branch | Sol; Luna review | H36 branch checkpoint | doing | Author0955; Sol return1005 queued | HOME20 paths exact;756 pass,11 git-init EPERM. D39 old fixture mapping needs repair; final merge commit pending. No home merge. | Draft branch only |
 | P2-P3-current-packet | Publish same-ID terminal evidence | Luna; Proof review | Actual retained files | merged | Producer return 0707; Proof 0717 | Eight safe files published byte-exact with origin paths and hashes. Actual daemon and P2 synthetic snapshot identity remain unknown. | Source 663 |
@@ -75,3 +75,5 @@ Pass 2026-10-24T09:57Z: INBOX consumed through1426469 bytes, including orchestra
 Pass 2026-10-24T10:05Z: NEW INBOX consumed through1427776 bytes plus normal hub Proof0954. Three exited workers have pending harness finalization, reported to lead. Their finals copied byte-exact. Ordinary source and generator blockers have concrete owners; no permission question or original request. Prior cleanup refusals remain stopped.
 
 Dispatch correction10:06Z: three1005 requests initially refused ordinary missing brief FILE because relative paths resolve at dispatcher cwd. Requeued with absolute brief paths; no safety refusal. Supported exact App82cb checkout requested for P3 source custody. No fixture or bench copies.
+
+Pass10:09Z: independent diagnostic1005 FAIL published byte-exact. Sole Luna first-return1009 closes real event-order, correlation and attachment gaps with actual controls; source recovery limited to three existing worker-authored files while harness finalization remains pending.
