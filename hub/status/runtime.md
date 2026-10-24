@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T14:19:06Z | dispatcher heartbeat 7s | live 2 (sol 1, luna 1, other 0) | busy30 7 | status age 0m -->
-# runtime board, 2026-10-24T14:11:48Z
+<!-- main | 2026-10-24T14:22:18Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 2m -->
+# runtime board, 2026-10-24T14:20:15Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -86,7 +86,7 @@
 | U1d-producer-handback | Return fixture and producer inventory | Luna | Actual e68 home | merged | rt-U1d-handoff-1401 PASS | Wire and 15 clients exact; manifest adds genuine visual fixture. [Handback](../../design/rt-U1d-handoff-1401.md) | e68cf2316 |
 | U1d-consumer-rebind | Rebind producer identity in consumers | Agent / App Luna | Normal vendor tools | blocked:agent-app | Peer producer rebind 1404 | Client bytes unchanged; source commit and producer manifest need current owner receipts. | Runtime e68 |
 | R-recorder-abi-authority | Authenticate recorder mode in accepted history | HARD Sol | D61 approved | doing | rt-R-recorder-abi-authority-sol-1410 | HistoryEntry needs optional recorder_abi enum1/2; additive schema impact reported. Server-validated coverage pending. [Design](../../design/runtime-D61-abi-boundary-1410.json) | Base e68 |
-| FREEZE | Reach final tuple cut | Runtime manager | D59 cut | doing | Lane owners; main benches1244 | Runtime0core/0regressions; Agent51core at refresh1254; App9gate cases,36regression repairs home awaiting proof. Cut requires all lanes0/0 plus current P2/P3 PASS. | Runtime becfe6db8 |
+| FREEZE | Reach final tuple cut | Runtime manager | D59 cut and D61 producer | doing | Runtime1410; Agent/App owners | Runtime1 required D61 task; Agent5 core; App9 gates. Confirmed regressions0. Cut requires current heads0/0 plus P2/P3 PASS. | Runtime e68 |
 | F-final | Main delivery build and ZIP | Luna | D59 cut and final proofs | doing | Builder1233; docs1229; service1244 | Builder and v2 prose installed. Durable service helper repair active; live-main refresh and final build wait qualified cut and proofs. | No delivery artifact |
 | F-final-builder | Put verifier clones in TMPDIR | Luna / Luna | Exact installed proof complete | merged | Review1229; installed1233 PASS | f25d atomically installed0755, old script backed up. Installed smoke and integrity checks passed; no real build. | f25dfab1 installed |
 | F-final-docs | Refresh v1 delivery prose | Luna | Installed hashes and rendering passed | merged | Author1226; install1229 PASS | Two exact v2 documents installed atomically; predecessors backed up. Final tuple, gates and ZIP remain pending. | ef414 / 403384 installed |
@@ -149,9 +149,9 @@ Later: D47 memo and proof-pin work stay post-delivery; nine state attacks open. 
 
 Disk: About8.5GB free, above main8GB heavy floor. Five old v1 trees refused recycle as dirty; no forced removal. Sweep3 removed0. Compaction packed0 and compressed0 logs; no refused target retried.
 
-Pass 2026-10-24T14:11:48Z: D61 approved new core boundary. HARD Sol1410 dispatched immediately from e68; early exact slot publication required. Agent consumer1354 remains unique; peer sent. U1d integrated448 complete. No ready local task left waiting.
+Pass 2026-10-24T14:20:15Z: D61 early schema impact sent14:13Z; Sol1410 owns source and normal generation. Genuine new controls established baseline authority failures; source validation continues. Agent original XML/map received and Luna1418 dispatched immediately. No cut or gate GO.
 
-live 0 / cap 4; ready-undispatched 0. Dispatcher14:06:39Z reports0; HARD Sol1410 queued after this snapshot.
+live 2 / cap 4; ready-undispatched 0. Dispatcher: main | 2026-10-24T14:19:06Z | dispatcher heartbeat 7s | live 2 (sol 1, luna 1, other 0) | busy30 7 | status age 0m
 
 Sol exception: Sole new Sol1410 is explicitly D61-mandated authenticated recorder mode and complete coverage custody. Independent security review will be Luna.
 
