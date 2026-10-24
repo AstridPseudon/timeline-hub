@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T08:00:16Z | dispatcher heartbeat 3s | live 2 (sol 0, luna 2, other 0) | busy30 15 | status age 0m -->
+<!-- main | 2026-10-24T08:03:06Z | dispatcher heartbeat 7s | live 3 (sol 0, luna 3, other 0) | busy30 15 | status age 1m -->
 # runtime board, 2026-10-24T08:01:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -55,7 +55,7 @@
 | F-helper-sequential | Classify helper replay-map refusal | Agent Sol / Luna | Integrated proof complete | merged | Agent184dc; review0224; integrated0232 | Actual Agent 8a8d passed 12 focused cases and static, vendor and artifact checks. Both original variants passed on reviewed source. | Agent184dc20a70 |
 | F-render-21 | Classify retained cold-render timeout | Luna | Read-only source handback complete | merged | rt-F-render-21-source-review-0303 | Duplicate registry assembly identified; historical timeout cause unknown. No body run or product change. [Report](../../design/runtime-render-21-source-review-0303.md) | Evidence only |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Current installed qualification passed | merged | Agent0508; independent0517 PASS | Exact seven originals passed on managed child 3b5c, Agent ba8f and Runtime f320. Current 9cd relevant sources and test AST match. | Managed child 3b5c |
-| OPS-farm-agent-full | Correct farm full-suite environment | Sol / Luna | Authentic isolated child input | doing | Farm0752; Runtime source0801 | Parent preflight passed. Isolated child lacks Runtime import; source assessment dispatched. No checkpoint. | 471712 reviewed packet |
+| OPS-farm-agent-full | Install exact child for Farm full suite | Luna / Luna | Reviewed v3 packet and genuine child | doing | Source0803; source facts0801 | Owner selects normal D21 child for9cd/1d9. New packet drops PYTHONPATH and preserves verified graph. No checkpoint. | v2 471712; v3 pending |
 | OPS-child-dependency-route | Publish verified dependency seed route | Sol / Luna | Reviewed wheel layout and actual input | doing | Source0752; independent0756 | Original67 wheel hashes qualified by Agent0740. Narrow layout repair is in security review; no candidate built. | 33fc installed; b330 candidate |
 | R2r-historical-image | Restore authenticated retired roots on redo | Sol / Luna | Integrated proof passed | merged | Review 0405; integrated 0413 PASS | 13 standalone cases and 243 controls passed; 74 configured deselections. [Proof](../../design/runtime-historical-image-integrated-0413.md) | 2b49da8d6 / 2e96c68c |
 | R-D42-history-memo | Harden verified replay memo | Sol / Luna | Post-delivery scope under D47 | gated:D47 | Design0448; review0454 PASS | Deferred by D47. No stable validation boundary; nine state attacks remain open. Source stays unmerged. | Tests 6c6bb375; source held |
@@ -100,10 +100,10 @@ SDK persistence fixture848b is independently0713 PASS, exact two originals passe
 
 D34: main has about9 GiB free at07:17. No main disk work per the explicit orchestrator hold. All prior retirement and process refusals stay stopped. D47 memo/capsule stays held and unmerged after delivery; no new memo proof pin or HTTP run. D46 closes U2c and defers new relay/provider custody backends. D23 child-word helper remains unchanged and open;13 others retain qualified proof.
 
-Blockers: Farm — parent0752 passed; isolated child lacks Runtime import. Runtime source0801 owns supported bootstrap facts before checkpoint.
+Blockers: Farm — isolated children need installed Runtime. Runtime source0803 authors normal managed-child full-farm packet; Farm lead owns actual child request.
 Blockers: Agent and App — reviewed U2 home, D39 consumer adoption and header P2/P3 GO are still needed for the final tuple.
 Blockers: Agent child — candidateb330 passed security and static review; installer0801 and actual67-wheel acceptance are pending.
-Next ready: Wheel installer0801 and Farm isolated-source assessment0801 are dispatched. Agent owns actual67-wheel acceptance; no unassigned ready Runtime task.
+Next ready: Wheel installer0801, Farm sourcefacts0801 and v3 packet0803 are dispatched. Agent owns actual67-wheel acceptance; no unassigned ready task.
 Later: Viewing owns the original ABA joined-source verdict. Runtime shared-auth handoff0715 is complete; no competing Runtime author or original body. D34 disk work and D47 memo resume only under their stated conditions.
 
 Later: Agent peer0714 classifies the separate moved-head persistence original as existing D23 child-word scope. It remains unchanged and visibly open; no new journal/publish repair or duplicate body. This does not alter the two Runtime fixture selectors.
@@ -126,4 +126,4 @@ New input0744: Agent independent0740 validates all67 original wheels against exa
 
 Farm0745 exact denial evidence: manager/worker command forms hit the Farm session approval layer; Runtime performed no retry. Orchestrator assigned the existing Farm lead role; normal request returned verifiedreuse5ca5 and row0738 replaced onlyline161 with outside bytes unchanged. Genuine preflight0747 now runs.
 
-07:55 pass: Two completed workers moved directly to independent review. Agent U2 joined5783 has Sol0745 repair and whole-path review after0738 FAIL; managed row0747 repairs snapshot admission. Branch-only D39 source91bf has independent0747 and conflict fixture0747. Composition full checkpoint23379 is on Viewing service after unchanged67b8 upstream preflight. App U3b remains held for header P2/P3 GO. Farm row0738 installed; preflight0752 pending. D34 main disk hold remains in force at8.6GB. No final tuple, host readiness or full-suite PASS claimed.
+07:55 pass: Two completed workers moved directly to independent review. Agent U2 joined5783 has Sol0745 repair and whole-path review after0738 FAIL; managed row0747 repairs snapshot admission. Branch-only D39 source91bf has independent0747 and conflict fixture0747. Composition full checkpoint23379 is on Viewing service after unchanged67b8 upstream preflight. App U3b remains held for header P2/P3 GO. Farm row0738 installed; parent0752 passed and isolated child import failed. Owner08:03 selects exact managed child; v3 source0803 dispatched. D34 main disk hold remains in force at8.6GB. No final tuple, host readiness or full-suite PASS claimed.
