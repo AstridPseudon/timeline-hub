@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T13:11:05Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# app2 board, 2026-10-24T13:10Z
+<!-- app2 | 2026-10-24T13:13:20Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# app2 board, 2026-10-24T13:12Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -63,7 +63,7 @@
 
 D56.4: Proof is folded into App. The single complete handoff is [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md). All in-flight items are complete, including independent caller1213 PASS. No new Proof dispatch, old tuple run or product merge is owed. The manager loop remains alive for new orchestrator instructions.
 
-live 0 / cap 4; ready-undispatched 0. Dispatcher header13:09:02Z reports live0,Sol0,Luna0. D56.4 stand-down remains binding; App owns transferred rows.
+live 0 / cap 4; ready-undispatched 0. Copied dispatcher header: <!-- app2 | 2026-10-24T13:11:05Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m --> D56.4 stand-down remains binding; App owns transferred rows.
 
 core open: 4 final proof gates P1 to P4, transferred to App. P2 includes all eight original gestures, CORE under D55b12:40. Historical passes do not qualify final heads.
 regressions: App12:49 reports36 Node failures with source fixes HOME:33 verifier,1 marker fixture,2 release. Two ssh-keygen failures are ENV. Final full and final proofs remain unrun; Proof claims no zero-regression clearance.
@@ -105,10 +105,10 @@ D58: P2 receipt correction is approved subject to independent C0 CommittedMutati
 
 D59: Current integrated heads may run P2/P3 each cycle without waiting for unrelated Agent repairs. Final cut requires every active lane core0/regressions0 and P2/P3 passing on those heads. Product change in X reruns P1–P5 plus X core; harness/test change reruns affected gate only. P1/P2/P3 venue App, P4 Agent, P5/Composition main; existing qualified benches only. D56.4 stand-down remains binding.
 
-Disk: 8292274176 bytes free at 2026-10-24T13:10Z. All1313 Proof workers are done; zero running markers. No finished non-KEEP Proof tree remains; three KEEP trees remain untouched. Prior cleanup and compact refusals remain stopped. No worker or heavy run launched.
+Disk: 8289492992 bytes free at 2026-10-24T13:12Z. All1313 Proof workers are done; zero running markers. No finished non-KEEP Proof tree remains; three KEEP trees stay untouched. Prior cleanup and compact refusals remain stopped. No worker or heavy run launched.
 
-Pass 2026-10-24T13:10Z: Second pass after the ten-minute monitoring interval. Inbox unchanged at790277bytes. Header D56.4 and D58/D59 unchanged; no Proof restart. Workers1313done/0running; dispatcher13:09:02Z live0. Rechecked every transferred blocked row against App13:03 and Runtime13:02. App reports popup450f and receipt0971 normally merged with required reviews: cleared both source blockers immediately, retaining live P2/P3 NO-GO. App callerc552 has dryguard/control PASS and independent1302 review; genuine service inventory1257 remains owned. App36 Node repairs are HOME but final full is unrun. Runtime main P5/Composition benches are READY and final service repair1300 is owned; D59 cut remains open. No duplicate worker, peer note, merge, product edit, old-tuple run or denied cleanup route.
+Pass 2026-10-24T13:12Z: Restart read PLAN first, then MANAGER-COMMON, unchanged inbox790277 and current header. D56.4 stand-down and D58/D59 remain binding. Workers1313done/0running. Rechecked transferred blocked rows against App13:04 and Runtime13:07. App owns caller1302, working-service recipe1304, register return1303, element review1303 and reviewed SWAP/placement composition. Popup450f and parent0971 source fixes remain HOME; all eight mounted P2 and original P3 stay unqualified. App36 Node repairs are HOME; no final full GO. Runtime service lock return1305 is active; P5 and Composition benches are READY for D59 cut. No Proof dispatch, duplicate review, peer note, merge, old-tuple run or denied cleanup route. Monitoring continues for the next ten-minute pass.
 
-Inbox read through790277bytes; no new item since completed handoff. This bounded monitoring round is saved for the manager harness to restart from STATUS and INBOX. D56.4 stand-down remains in force until orchestrator instruction.
+Inbox read through790277bytes; no new item since completed handoff. This monitoring round remains active for the next pass. D56.4 stand-down remains in force until orchestrator instruction.
 
 Evidence: [D53 actual integrated1148](../../design/handoff-ap2-P3-D53-integrated-1148.md), [finite wording1154](../../design/handoff-ap2-P3-D53-ledger-wording-1154.md), [App current source1143](../../design/app-P3-D53-pure-integrated-1143.md), [conditional release1200](../../design/peer-app2-to-app-runtime-20261024T1200Z-D53-ledger-met-conditional-P3.md), [P2 actual26414 verdict1136](../../design/handoff-ap2-P2-26414-preflight-verdict-1136.md), [P3 actual3896 verdict1053](../../design/handoff-ap2-P3-solo-result-verdict-1053.md), [previous pair0709](../../design/handoff-ap2-P2-P3-verified-result-verdict-0709.md), [current source0649](../../design/handoff-ap2-P2-P3-current-source-verdict-0649.md).
