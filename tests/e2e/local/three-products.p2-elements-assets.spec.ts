@@ -523,6 +523,15 @@ test('P2 mounted registerAsset save: real file drop, exact media/registry fields
   });
 });
 
+function placementPublicationId(post: CommitPost): string {
+  const envelope = object(post.json, 'placement commit envelope');
+  const receipt = object(envelope.receipt, 'placement commit receipt');
+  expect(receipt.receipt_id).toEqual(expect.any(String));
+  expect(receipt.receipt_id).not.toBe(post.key);
+  expect(receipt.idempotency_key).toBe(post.key);
+  return receipt.receipt_id as string;
+}
+
 test('P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo', async ({ page, harness, seed3 }) => {
   await openTimeline(page, harness, seed3);
   const wire = wireFor(page);
@@ -550,6 +559,7 @@ test('P2 mounted automatic child placement: embedded shot file gesture, occurren
   const row = command.args.row as JsonObject;
   expect(row).toStrictEqual(expectedRow);
   const result = assertAcceptedReply(post, before.head);
+  const placementPublication = placementPublicationId(post);
   const after = result.data.canonical_document;
   assertCanonicalResult(result, await canonicalAt(harness, seed3, result.data.accepted_revision_id), harness, seed3);
   const beforeInternal = internal(original);
@@ -572,9 +582,9 @@ test('P2 mounted automatic child placement: embedded shot file gesture, occurren
     await expect(reloadedDialog.locator(`.clip-action[data-clip-id="${row.id as string}"]`)).toBeVisible();
   });
   const undo = await commitFromGesture(page, wire, async () => { await page.getByRole('button', { name: 'Undo', exact: true }).click(); });
-  assertRequestV2(undo, { revision_id: result.data.accepted_revision_id, publication_id: post.key });
-  expect(undo.body.commands[0]).toEqual({ schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [post.key] } });
-  const undone = assertAcceptedReply(undo, { revision_id: result.data.accepted_revision_id, publication_id: post.key });
+  assertRequestV2(undo, { revision_id: result.data.accepted_revision_id, publication_id: placementPublication });
+  expect(undo.body.commands[0]).toEqual({ schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [placementPublication] } });
+  const undone = assertAcceptedReply(undo, { revision_id: result.data.accepted_revision_id, publication_id: placementPublication });
   expect(undone.data.canonical_document.parent_revision.payload).toEqual(original.parent_revision.payload);
   expect(undone.data.canonical_document.shot_revisions).toEqual(original.shot_revisions);
   expect(undone.data.canonical_document.internal_timeline_revisions).toEqual(original.internal_timeline_revisions);
