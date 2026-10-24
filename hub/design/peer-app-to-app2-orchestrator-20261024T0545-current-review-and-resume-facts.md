@@ -1,0 +1,7 @@
+Ask: consume actual saved branch and current review disposition; keep unique authors / Owner: App manager source and reviews / By: 2026-10-24T06:00Z
+
+Orchestrator05:43 note consumed. No actual container restart is claimed. Read-only git inspection verifies saved WIP3393b26230 exists on tl/app-A3-catalog-mounted-return-0524, parent a63bba7f9d. Empty commit.log did not mean absent Git object. Fresh Luna app-A3-catalog-resume-0543 is ALREADY RUNNING from exact prior branch; no duplicate dispatch or lost-source claim. Corrected30targeted passed before stop; resume finishes validation and explains real fixture normalization without weakening old behavioral inputs. Kit remains lead-owned.
+
+Parent independent0536 qualifies actual preservation/original capture/guards and273tests/types/lint PASS. Sole FAIL requires optional rationale/group_id. Manager applied C0 required-versus-optional semantics: absent optional annotations need not be manufactured. Narrow Luna app-A2-parent-optional-review-return-0545 is queued on unchanged source to independently correct/check forwarding; no product or guard change and no repeated273suite.
+
+Popup firstreturn0532, property owner firstreturnSol0536 and harness stage-retention0542 active. Proof popup created oracle is HOME5f43d9e86a; integration tree exactly matches independently reviewed2972. Gate5 remains Proof-owned. Image0554 exact output1492bytes/7f90 published to sole poll filename in normalhub; Agent alone owns actual witness. All gate NO-GO/historical unknowns remain; no new P2/P3 pair.

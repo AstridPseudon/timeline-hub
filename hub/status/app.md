@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T05:43:05Z | dispatcher heartbeat 2s | live 4 (sol 1, luna 3, other 0) | busy30 18 | status age 0m -->
-# app board, 2026-10-24T05:39Z
+<!-- app | 2026-10-24T05:46:14Z | dispatcher heartbeat 9s | live 3 (sol 1, luna 2, other 0) | busy30 19 | status age 1m -->
+# app board, 2026-10-24T05:44Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -83,7 +83,7 @@
 
 | P2-five-current-paths | Recheck five original never-run paths | Luna; independent Luna | Review 0525 PASS | merged | app-P2-current-path-repro-review-0525 | All five real selectors and mounted paths confirmed. No prior static gap remains. Browser upload, dispatch, reload and undo stay unknown. | Report only |
 
-| A2-parent-materialization | Preserve untouched move data and basis | Sol; independent Luna | Author source complete | review | app-A2-parent-materialization-review-0536 | Faithful witness now three PASS; adjacent 273 tests, three types and lint passed. Guarded source reuse under review. | Branch only |
+| A2-parent-materialization | Preserve untouched move data and basis | Sol; Luna review return | Source and guards PASS; annotation correction | review | app-A2-parent-optional-review-return-0545 | Sole review issue requires optional rationale and group id. C0 permits omission; narrow correction checks unchanged forwarding. | Branch only |
 
 | P2-P3-stage-retention | Preserve earlier stage diagnostic files | Luna; D21 | Proof finite retention ask | doing | app-P2-P3-stage-retention-0542 | Prove real output cleanup behavior offline; prepare bounded caller adjustment. No live row or original run change. | Candidate only |
 
