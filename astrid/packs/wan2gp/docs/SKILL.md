@@ -63,11 +63,9 @@ sdk.invoke("wan2gp.generate_video", kind="executor", inputs={"prompt": "a cat", 
 
 ## Windows with NVIDIA
 
-Wan2GP on Windows with NVIDIA is **not qualified yet**. Without an NVIDIA
-GPU and working driver it is unavailable. To test an unqualified combination,
-set `$env:ASTRID_ALLOW_UNQUALIFIED_GPU = "1"` in the environment that starts
-the pack host. The capability label and the host's settled result retain the
-unqualified status even when this opt-in permits a run.
+Wan2GP on Windows with NVIDIA is untested, but runs by default. Please tell us
+how it went, including the GPU model and driver from `nvidia-smi`. Wan2GP still
+needs a detected NVIDIA GPU and working driver.
 
 The candidate Python/CUDA pins are in `environment.windows-nvidia.json` and
 `requirements.windows-nvidia.txt`. Provision the environment from the clean,

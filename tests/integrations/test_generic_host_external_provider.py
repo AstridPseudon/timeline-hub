@@ -23,7 +23,7 @@ from astrid.core.execution.generic_host import (
     _hivemind_source_preflight,
 )
 from astrid.core.execution.network_broker import ObservableNetworkBroker
-from astrid_runtime_client import ApiError, WorkspaceClient
+from astrid_runtime_client import WorkspaceClient
 
 pytestmark = pytest.mark.integration  # needs the Runtime from a second checkout (real_runtime fixture)
 
@@ -322,8 +322,8 @@ def test_hivemind_without_clean_pinned_source_is_optional_unavailable(tmp_path: 
     assert "not a Git checkout" in host.capabilities[record.id].preflight["pack_source"]["reason"]
 
 
-def test_unready_external_provider_is_not_claimed_by_runtime(tmp_path: Path, real_runtime) -> None:
-    """Unavailable capabilities fail before admission and leave no ledger rows."""
+def test_external_provider_without_key_is_admitted_by_runtime(tmp_path: Path, real_runtime) -> None:
+    """A declared key never blocks admission or an unauthenticated provider call."""
     class ProviderHandler(BaseHTTPRequestHandler):
         def do_GET(self):  # noqa: N802 - stdlib handler API
             body = b"provider-ready"
@@ -383,30 +383,12 @@ def test_unready_external_provider_is_not_claimed_by_runtime(tmp_path: Path, rea
         )
         record = host.discover()[0]
         registration = host.register()
-        assert host.capabilities[record.id].ready is False
-        assert registration["capabilities"][0]["ready"] is False
-        project = generated.create_project("Provider fixture", slug="provider-fixture", idempotency_key="provider-project")
-        with pytest.raises(ApiError, match="capability is not ready for admission"):
-            generated.admit_task(
-                capability_id=record.id,
-                capability_digest=record.capability_digest,
-                input_object_ids=[],
-                project_id=project.project_id,
-                idempotency_key="provider-unready-task",
-            )
-
-        # Admission rejection is pre-ledger: no task, run, or execution event
-        # exists for the unavailable capability.
-        assert generated.list_project_tasks(project.project_id)[0] == []
-        assert generated.list_project_runs(project.project_id)[0] == []
-        assert generated.list_events()[0] == []
-
-        # Readiness changes only after the host receives the declared
-        # credential; the same host registration then enables settlement.
-        host.credential_source["PROVIDER_KEY"] = "fixture-provider-key"
-        host.preflight()
         assert host.capabilities[record.id].ready is True
-        host.register(deliberate=True)
+        assert registration["capabilities"][0]["ready"] is True
+        assert host.capabilities[record.id].preflight["credentials"] == {
+            "ok": True, "missing": ["PROVIDER_KEY"],
+        }
+        project = generated.create_project("Provider fixture", slug="provider-fixture", idempotency_key="provider-project")
         capability_page, capability_cursor = generated.list_capabilities()
         assert capability_cursor is None
         capability = next(item for item in capability_page if item.capability_id == record.id)

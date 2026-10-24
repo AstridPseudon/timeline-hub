@@ -352,7 +352,7 @@ def test_manifest_credentials_use_shared_precedence_at_host_boundary(
         secrets.clear()
 
 
-def test_manifest_credential_missing_from_all_sources_blocks_readiness(
+def test_manifest_credential_missing_from_all_sources_does_not_block_readiness(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     _write_credential_manifest(tmp_path)
@@ -362,7 +362,11 @@ def test_manifest_credential_missing_from_all_sources_blocks_readiness(
     record = host.discover()[0]
     host.preflight(record.id)
     record = host.capabilities[record.id]
-    assert record.preflight["credentials"] == {"ok": False, "missing": ["FAL_KEY"]}
+    assert record.ready is True
+    assert record.preflight["credentials"] == {"ok": True, "missing": ["FAL_KEY"]}
+    child_env, secrets = host._child_environment(record, tmp_path / "attempt")
+    assert "FAL_KEY" not in child_env
+    assert not secrets
 
 
 def test_input_materialization_rejects_traversal_names(tmp_path):
@@ -1113,19 +1117,29 @@ def test_claim_only_admits_capabilities_that_are_currently_ready(tmp_path, monke
         }),
         encoding="utf-8",
     )
+    unready_root = tmp_path / "missing_binary"
+    unready_root.mkdir()
+    unready_definition = json.loads((root / "executor.yaml").read_text(encoding="utf-8"))
+    unready_definition["id"] = "fixture.missing_binary"
+    unready_definition["isolation"]["binaries"] = ["astrid-test-missing-binary"]
+    (unready_root / "executor.yaml").write_text(json.dumps(unready_definition), encoding="utf-8")
     runtime = FakeRuntime()
     host = GenericPackHost(pack_roots=[tmp_path], client=runtime)
     host.discover()
+    host.preflight()
 
-    assert host.capabilities["fixture.required_env"].ready is False
+    assert host.capabilities["fixture.required_env"].ready is True
+    assert host.capabilities["fixture.missing_binary"].ready is False
     assert host.claim_once() is None
-    assert not hasattr(runtime, "claim_payload")
+    assert runtime.claim_payload["capability_ids"] == ["fixture.required_env"]
+    assert host.capabilities["fixture.required_env"].preflight["credentials"]["missing"] == ["ASTRID_PROVIDER_KEY"]
 
-    # Rotation is observed on the next claim cycle, without rebuilding the
-    # host, and the now-ready capability becomes the only candidate.
+    # Rotation updates diagnostics on the next claim cycle without changing
+    # the admitted candidate set.
     monkeypatch.setenv("ASTRID_PROVIDER_KEY", "fixture-secret")
     assert host.claim_once() is None
     assert runtime.claim_payload["capability_ids"] == ["fixture.required_env"]
+    assert host.capabilities["fixture.required_env"].preflight["credentials"]["missing"] == []
 
 
 def test_hivemind_contributor_key_file_satisfies_provider_readiness(tmp_path, monkeypatch):
@@ -2863,7 +2877,8 @@ def test_register_preserves_declared_dispositions_and_block_reasons(tmp_path, mo
         component.split(":", 1)[0]: component
         for component in unavailable_reason.split(";")
     }
-    assert reason_by_check["credentials"] == "credentials:missing=ASTRID_TEST_PROVIDER_KEY"
+    assert "credentials" not in reason_by_check
+    assert host.capabilities["required.provider"].preflight["credentials"]["missing"] == ["ASTRID_TEST_PROVIDER_KEY"]
     assert reason_by_check["network"] == "network:reason=provider network_policy is missing"
     assert registered["optional.provider"]["status"] == "unavailable"
     assert registered["unsupported.provider"]["status"] == "unsupported"

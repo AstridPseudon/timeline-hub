@@ -130,6 +130,7 @@ LANES: dict[str, Lane] = {
     "non_root": Lane("platform", "needs a non-root user (chmod 000 does not block root)", lambda: not hasattr(os, "geteuid") or os.geteuid() != 0, (UBUNTU,)),
     "linux_native": Lane("platform", "needs Linux-only /proc or pidfd APIs", lambda: sys.platform.startswith("linux"), (UBUNTU,)),
     "windows_native": Lane("platform", "needs native Windows APIs", lambda: sys.platform == "win32", no_ci=NO_WINDOWS_CI),
+    "windows_installer": Lane("platform", "needs native Windows installer APIs", lambda: sys.platform == "win32", ("windows-installer-cleanup",)),
     "darwin_native": Lane("platform", "needs native macOS APIs", lambda: sys.platform == "darwin", (DARWIN,), default_off=True),
     "ffmpeg": Lane("dependency", "needs ffmpeg and ffprobe on PATH", has_media_tools, (UBUNTU,), provision="ffmpeg"),
     "node": Lane("dependency", "needs Node on PATH", lambda: bool(shutil.which("node")), (UBUNTU,), provision="setup-node"),

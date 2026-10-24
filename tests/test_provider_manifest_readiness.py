@@ -146,11 +146,12 @@ def test_all_supported_provider_routes_are_ready_and_grantable_with_declared_inp
         assert token.startswith("provider-route-grant-v1.")
 
 
-def test_required_provider_routes_remain_unavailable_without_credentials(monkeypatch):
+def test_required_provider_routes_do_not_gate_readiness_on_credentials(monkeypatch, tmp_path):
     # Hermetic: readiness must not depend on what this machine happens to have installed
     # (e.g. a `codex` binary on PATH) or exported. Hide every binary except the macOS
     # sandbox launcher, and clear every provider credential variable from the environment.
     real_which = shutil.which
+    monkeypatch.setenv("ASTRID_ENV_FILE", str(tmp_path / "missing.env"))
     monkeypatch.setattr(
         shutil, "which", lambda name, *a, **k: real_which(name, *a, **k) if name == "sandbox-exec" else None
     )
@@ -166,16 +167,15 @@ def test_required_provider_routes_remain_unavailable_without_credentials(monkeyp
     assert len(required) == 18
     for record in required:
         if record.matrix.get("required_env"):
-            # Credential-gated: never ready without the credential, whatever else is installed.
-            assert record.ready is False, record.id
+            # Missing keys are diagnostic, regardless of other readiness checks.
+            assert record.preflight["credentials"]["ok"] is True, record.id
             assert record.preflight["credentials"]["missing"], record.id
-        elif record.matrix.get("required_binaries"):
+        if record.matrix.get("required_binaries"):
             # Binary-gated (binaries are hidden above): unavailable because the binary is missing.
             assert record.ready is False, record.id
             assert not record.preflight["binaries"]["ok"], record.id
         else:
-            # Not gated by a credential or binary (e.g. training.training_run, whose credentials
-            # are declared in its run config): readiness is exactly the remaining checks.
+            # Readiness is exactly the remaining checks.
             checks = record.preflight
             ok = all(v is True or (isinstance(v, dict) and v.get("ok") is True) for v in checks.values())
             assert record.ready is ok, record.id

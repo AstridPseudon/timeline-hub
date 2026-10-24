@@ -50,23 +50,12 @@ def test_launcher_context_reads_real_preferences_and_refreshes_project(
             "actor_id": actor,
             "credential_file": str(credential_file),
         }
-        for name in (
-            "ASTRID_RUNTIME_CREDENTIAL",
-            "ASTRID_TIMELINE_EVAL_ENDPOINT",
-            "ASTRID_TIMELINE_EVAL_CREDENTIAL",
-            "ASTRID_TIMELINE_EVAL_REALM_ID",
-            "ASTRID_TIMELINE_EVAL_ACTOR_ID",
-        ):
-            monkeypatch.delenv(name, raising=False)
-        launcher_calls = []
-
-        def isolated_launcher(*, start_pack_host):
-            launcher_calls.append(start_pack_host)
-            assert start_pack_host is False
-            return connection
-
-        # The only patched boundary: the public client and renderer remain real.
-        monkeypatch.setattr("astrid.sdk.autobootstrap.ensure_runtime", isolated_launcher)
+        monkeypatch.setenv("ASTRID_TIMELINE_EVAL_ENDPOINT", connection["endpoint"])
+        monkeypatch.setenv("ASTRID_TIMELINE_EVAL_CREDENTIAL", connection["credential_file"])
+        monkeypatch.setenv("ASTRID_TIMELINE_EVAL_REALM_ID", connection["realm_id"])
+        monkeypatch.setenv("ASTRID_TIMELINE_EVAL_ACTOR_ID", connection["actor_id"])
+        # Both launcher paths now use the explicitly supplied disposable
+        # Runtime, while open_existing_from_launcher remains unpatched.
         with AstridClient.open_from_launcher(start_pack_host=False) as client:
             first = client.projects.create(slug="first", name="First", idempotency_key="first")
             second = client.projects.create(slug="second", name="Second", idempotency_key="second")
@@ -131,13 +120,9 @@ def test_launcher_context_reads_real_preferences_and_refreshes_project(
             assert agent_context.PREFERENCE_HELPER in empty
             assert "No saved preferences." in empty
             assert "Preference context unavailable" not in empty
-        assert launcher_calls == [False] * 6
     finally:
         daemon.stop()
 
     assert agent_context.main([]) == 0
     unavailable = capsys.readouterr().out
-    assert agent_context.PREFERENCE_HELPER in unavailable
-    assert "Preference context unavailable" in unavailable
-    assert "Do not assume preferences are empty." in unavailable
-    assert "No saved preferences." not in unavailable
+    assert unavailable == "Preferences unavailable. Run `astrid preferences` to read current preferences.\n"

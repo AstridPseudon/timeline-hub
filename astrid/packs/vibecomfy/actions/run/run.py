@@ -48,6 +48,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--python", default="")
     parser.add_argument("--companion", default="")
     parser.add_argument("--source", default="")
+    parser.add_argument("--comfy-url", default="")
+    parser.add_argument("--comfy-output-dir", default="")
     parser.add_argument(
         "--source-video",
         default="",
@@ -470,12 +472,26 @@ def _run_and_settle(
     source_video_widget: str = "video",
     managed_assets: str = "",
     workflow_inputs: str = "{}",
+    comfy_url: str = "",
+    comfy_output_dir: str = "",
 ) -> dict[str, Any]:
     """Run *workflow_path*, copy every engine result, and write its receipt."""
     if not isinstance(task_identity, str) or not task_identity.strip():
         raise AstridValueError("host-issued task identity is required")
     from astrid.packs.vibecomfy import production_engine
 
+    if comfy_url:
+        from astrid.core.generation.backends.vibecomfy_local_server import (
+            validate_comfy_url,
+            validate_output_directory,
+        )
+
+        comfy_url = validate_comfy_url(comfy_url)
+        comfy_output_dir = validate_output_directory(comfy_output_dir, output_root.resolve().parent)
+        if readiness_profile_path != "-" or readiness_profile_hash != "-" or source_video:
+            raise AstridValueError("local_server cannot use a readiness profile or source_video")
+    elif comfy_output_dir:
+        raise AstridValueError("comfy_output_dir requires comfy_url")
     readiness_profile = None
     if (readiness_profile_path == "-") != (readiness_profile_hash == "-"):
         raise AstridValueError("readiness profile path and hash must be supplied together")
@@ -490,12 +506,12 @@ def _run_and_settle(
             raise AstridValueError("Worker readiness profile could not be read") from exc
         if not isinstance(readiness_profile, dict):
             raise AstridValueError("Worker readiness profile must be an object")
-    profile_id = (
-        "checkout_server"
-        if isinstance(readiness_profile, dict)
-        and isinstance(readiness_profile.get("vibecomfy_session"), dict)
-        else "pip_embedded"
-    )
+    if comfy_url:
+        profile_id = "local_server"
+    elif isinstance(readiness_profile, dict) and isinstance(readiness_profile.get("vibecomfy_session"), dict):
+        profile_id = "checkout_server"
+    else:
+        profile_id = "pip_embedded"
     workflow_input_bindings: dict[str, Any] = _workflow_inputs(workflow_inputs)
     if managed_assets:
         resolved_assets = _stage_managed_asset_manifest(
@@ -524,6 +540,8 @@ def _run_and_settle(
             raise AstridValueError("source_video was supplied by more than one input path")
         workflow_input_bindings["source_video"] = source_video_name
     if "source_video" in workflow_input_bindings:
+        if comfy_url:
+            raise AstridValueError("local_server cannot use source_video")
         from astrid.packs.vibecomfy.invocation_preflight import preflight_invocation
 
         staged_input = _source_video_input_directory(
@@ -552,6 +570,10 @@ def _run_and_settle(
     }
     if workflow_input_bindings:
         production_kwargs["workflow_input_bindings"] = workflow_input_bindings
+    if comfy_url:
+        production_kwargs["comfy_url"] = comfy_url
+    if comfy_output_dir:
+        production_kwargs["comfy_output_dir"] = comfy_output_dir
     if attempt_identity != "-":
         production_kwargs["attempt_identity"] = attempt_identity
     synthetic = _t9_child_dispatch(
@@ -588,6 +610,8 @@ def _run_and_settle(
         )
 
     inventory = production_result.outputs
+    if comfy_url:
+        raise AstridValueError("local_server requires VibeComfy managed_generation_result_path")
 
     sources: list[Path] = []
     output_root = output_root.expanduser().resolve()
@@ -697,11 +721,16 @@ def main(argv: list[str] | None = None) -> int:
                 source_video_widget=args.source_video_widget,
                 managed_assets=args.managed_assets,
                 workflow_inputs=args.workflow_inputs,
+                comfy_url=args.comfy_url,
+                comfy_output_dir=args.comfy_output_dir,
             )
     except Exception as exc:
         error = exc if isinstance(exc, AstridError) else AstridError(
             f"vibecomfy.run: {exc}",
-            recovery_command="python3 -m astrid executors run vibecomfy.run --help",
+            recovery_command=(
+                "python3 -m astrid.packs.vibecomfy.local scan" if args.comfy_url
+                else "python3 -m astrid executors run vibecomfy.run --help"
+            ),
         )
         render_astrid_error(error)
         return 1

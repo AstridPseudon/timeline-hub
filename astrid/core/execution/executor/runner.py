@@ -36,6 +36,7 @@ from astrid.core.contracts.exec_error import (
     error_from_missing_binaries,
     error_from_returncode,
 )
+from astrid.core.contracts.errors import AstridError
 from astrid.core.contracts.run_status import RunStatus
 from astrid.core.contracts.scoped_config import SCOPE_REGISTRY, ScopeRequest
 from astrid.core.env_vars import ASTRID_INTERNAL_INVOCATION
@@ -996,7 +997,6 @@ def _emit_scoped_config_env(
     if not executor.scoped_configs:
         return {}
     import astrid.core.util.credentials_scope  # noqa: F401
-    values = _request_values(request, executor)
     scope_request = ScopeRequest(
         project_slug=request.project,
         env=dict(os.environ),
@@ -1006,7 +1006,13 @@ def _emit_scoped_config_env(
     for key in executor.scoped_configs:
         if key.startswith("credentials."):
             from astrid.core.util.credentials_scope import _PROVIDER_ENV, CredentialsScope
-            result = SCOPE_REGISTRY.resolve(key, scope_request)
+            try:
+                result = SCOPE_REGISTRY.resolve(key, scope_request)
+            except AstridError:
+                # A declared provider may not be used by the selected route.
+                # Leave absent keys out; the provider reports the recovery
+                # command if a cloud call actually needs the credential.
+                continue
             if isinstance(result, CredentialsScope):
                 provider_env = _PROVIDER_ENV.get(result.provider)
                 if provider_env:

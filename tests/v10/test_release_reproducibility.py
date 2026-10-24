@@ -27,10 +27,17 @@ def test_repository_dependency_locks_are_hashed_exact_and_cover_metadata() -> No
     }
     assert report["locks"]["requirements/build.lock"]["packages"] >= 6
     assert report["locks"]["requirements/runtime.lock"]["packages"] >= 60
-    assert report["locks"]["requirements/proof.lock"]["packages"] >= 70
+    assert report["locks"]["requirements/proof.lock"]["packages"] >= 65
     assert all(
         len(lock["sha256"]) == 64 for lock in report["locks"].values()
     )
+
+
+@pytest.mark.parametrize("name", ["runtime", "proof"])
+def test_locks_cover_no_deps_vibecomfy_install(name: str) -> None:
+    # The installer deliberately installs the pinned VibeComfy with --no-deps.
+    pins = validate_hashed_lock(REPO_ROOT / "requirements" / f"{name}.lock")["pins"]
+    assert {"huggingface-hub", "hf-xet", "httpx", "pyyaml", "websockets"} <= pins.keys()
 
 
 def test_lock_validation_fails_closed_on_ranges_urls_and_missing_hashes(

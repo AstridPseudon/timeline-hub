@@ -99,7 +99,7 @@ from astrid.core.contracts.binding import (
     assert_provided_inputs_bound,
     expand_command,
 )
-from astrid.core.contracts.errors import AstridError
+from astrid.core.contracts.errors import AstridError, recovery_suffix
 from astrid.core.env_vars import (
     ASTRID_INTERNAL_INVOCATION,
     ASTRID_PACKS_PATH,
@@ -690,6 +690,36 @@ class _ManagedTaskAdapter:
         if self._process_census is not None and self._process_census():
             return {"ok": False, "released": False, "reason": reason, "active_processes": True}
         return {"ok": True, "released": True, "reason": reason}
+
+
+class _ManagedLocalServerTaskAdapter(_ManagedTaskAdapter):
+    """Plain task lifecycle, with prompt containment and no GPU residency control."""
+
+    def __init__(self, cancel_signal, *, url: str, destination: Path, process_census=None):
+        super().__init__(cancel_signal, process_census=process_census)
+        self.url = url
+        self.destination = destination
+
+    def _cleanup(self) -> None:
+        from astrid.core.generation.backends.vibecomfy_local_server import cleanup_prompts
+
+        cleanup_prompts(self.url, self.destination)
+
+    def cancel(self, *, reason: str) -> dict[str, Any]:
+        self._cancel_signal.set()
+        self._cleanup()
+        return super().cancel(reason=reason)
+
+    def fence(self, *, reason: str) -> dict[str, Any]:
+        result = super().fence(reason=reason)
+        self._cleanup()
+        return result
+
+    def release(self, *, reason: str) -> dict[str, Any]:
+        # Release follows child teardown even on a crash/SIGKILL. Repeat the
+        # journal read here to catch acceptance racing an earlier cancel.
+        self._cleanup()
+        return super().release(reason=reason)
 
 
 class _ManagedVibeSessionAdapter:
@@ -2157,7 +2187,7 @@ def _resolve_credential_value(
     return value or None
 
 
-def _network_policy(record: "CapabilityRecord") -> dict[str, Any] | None:
+def _network_policy(record: "CapabilityRecord", inputs: Mapping[str, Any] | None = None) -> dict[str, Any] | None:
     """Read the optional bounded network policy from the manifest/matrix."""
     raw = record.definition.metadata.get("network_policy")
     if raw is None:
@@ -2166,7 +2196,15 @@ def _network_policy(record: "CapabilityRecord") -> dict[str, Any] | None:
         return None
     if not isinstance(raw, Mapping):
         raise HostError(f"network_policy for {record.id!r} must be an object")
-    return {str(key): value for key, value in raw.items()}
+    policy = {str(key): value for key, value in raw.items()}
+    if record.id == "vibecomfy.run" and inputs and inputs.get("comfy_url"):
+        from astrid.core.generation.backends.vibecomfy_local_server import validate_comfy_url
+
+        url = validate_comfy_url(inputs["comfy_url"])
+        policy = {"allowed_protocols": ["dns", "tcp"],
+                  "allowed_destinations": [url.removeprefix("http://")],
+                  "allow_redirects": False}
+    return policy
 
 
 def _provider_routes(record: "CapabilityRecord", inputs: Mapping[str, Any] | None = None) -> tuple[str, ...]:
@@ -6440,7 +6478,9 @@ class GenericPackHost:
                     else self.credential_source.get(name)
                 )
             ]
-            checks["credentials"] = {"ok": not missing_env, "missing": missing_env}
+            # Credentials are diagnostic here; the selected cloud provider
+            # resolves its key only when a call actually needs it.
+            checks["credentials"] = {"ok": True, "missing": missing_env}
             required_packages = record.matrix.get("required_packages") or record.definition.metadata.get("required_packages", adapter.required_packages)
             missing_packages = [package for package in (required_packages or ()) if importlib.util.find_spec(str(package)) is None]
             checks["packages"] = {"ok": not missing_packages, "missing": missing_packages}
@@ -6624,8 +6664,8 @@ class GenericPackHost:
                 status = "ready" if record.ready else "unavailable"
                 unavailable_reason = None if record.ready else _preflight_unavailable_reason(record)
                 gpu = record.preflight.get("gpu")
-                if isinstance(gpu, Mapping) and not gpu.get("qualified"):
-                    label = str(gpu["reason"])
+                if isinstance(gpu, Mapping) and (gpu.get("warning") or not gpu.get("qualified")):
+                    label = str(gpu.get("warning") or gpu["reason"])
                     unavailable_reason = (
                         label + " " + unavailable_reason
                         if unavailable_reason and unavailable_reason != label else label
@@ -8322,7 +8362,7 @@ class GenericPackHost:
         # VibeComfy output root. Keep the task's generated spool inside that
         # attested root instead of handing the child an arbitrary attempt
         # directory, which the adapter must correctly reject.
-        if record.id == "vibecomfy.run":
+        if record.id == "vibecomfy.run" and not inputs.get("comfy_url"):
             profile = _read_readiness_profile_document()
             launch = profile.get("launch") if isinstance(profile, Mapping) else None
             profile_output_root = launch.get("output_root") if isinstance(launch, Mapping) else None
@@ -8412,6 +8452,10 @@ class GenericPackHost:
             admission=admission,
             network_broker=network_broker,
             readiness_worker_kind='command',
+            network_policy=(
+                _network_policy(record, inputs)
+                if record.id == "vibecomfy.run" and inputs.get("comfy_url") else None
+            ),
             allow_runtime_connection=allow_runtime_connection and child_bridge is None,
             explicit_env={
                 **({} if os.environ.get('ASTRID_HOST_EXECUTION_PROFILE') == 'installed' else {
@@ -9156,7 +9200,7 @@ class GenericPackHost:
                 self._handoff_settlement_call(self.client.fail,
                     task_id,
                     lease_token,
-                    str(error),
+                    str(error) + recovery_suffix(error),
                     retryable=False,
                     attempt_id=attempt_id,
                     fence=fence,
@@ -9233,7 +9277,7 @@ class GenericPackHost:
             self._handoff_settlement_call(self.client.fail,
                 task_id,
                 lease_token,
-                str(exc),
+                str(exc) + recovery_suffix(exc),
                 retryable=False,
                 attempt_id=attempt_id,
                 fence=fence,
@@ -9570,6 +9614,25 @@ class GenericPackHost:
                     if port.type == "file"
                 ),
             )
+            if capability_id == "vibecomfy.run" and inputs.get("comfy_url"):
+                from astrid.core.generation.backends.vibecomfy_local_server import (
+                    validate_comfy_url,
+                    validate_output_directory,
+                )
+
+                if readiness_profile is not None or inputs.get("source_video"):
+                    raise HostError("local_server cannot use a readiness profile or source_video")
+                inputs["comfy_url"] = validate_comfy_url(inputs["comfy_url"])
+                if inputs.get("comfy_output_dir"):
+                    inputs["comfy_output_dir"] = validate_output_directory(inputs["comfy_output_dir"], root)
+                local_network_policy = _network_policy(record, inputs)
+                if local_network_policy is None:
+                    raise HostError("vibecomfy.run local_server requires a network policy")
+                network_admission["allowed_routes"] = local_network_policy["allowed_destinations"]
+                managed_adapter = _ManagedLocalServerTaskAdapter(
+                    cancel_signal, url=inputs["comfy_url"], destination=root / "outputs",
+                    process_census=lambda: bool(self._active_processes),
+                )
             if renderer_selection is not None and not inputs.get("selector"):
                 # The child never relies on its own default renderer.
                 inputs["selector"] = renderer_selection["selector"]
@@ -10231,8 +10294,9 @@ class GenericPackHost:
                     f"is unavailable on this host: {renderer_selection['remotion_reason']}"
                 )
             gpu = record.preflight.get("gpu")
-            if isinstance(gpu, Mapping) and not gpu.get("qualified"):
-                failure_message += " " + str(gpu["reason"])
+            if isinstance(gpu, Mapping) and (gpu.get("warning") or not gpu.get("qualified")):
+                failure_message += " " + str(gpu.get("warning") or gpu["reason"])
+            failure_message += recovery_suffix(original_error or exc)
             self._handoff_settlement_call(self.client.fail,
                 task_id,
                 lease_token,
@@ -10698,7 +10762,7 @@ class GenericPackHost:
                     self._handoff_settlement_call(self.client.fail,
                         task_id,
                         lease_id,
-                        str(exc),
+                        str(exc) + recovery_suffix(exc),
                         retryable=False,
                         attempt_id=attempt_id,
                         fence=int(fence),

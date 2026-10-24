@@ -10,12 +10,20 @@ from pathlib import Path
 import pytest
 
 from astrid import omp_agent
+from astrid import agent_context
 from astrid.core.util import process as _process
+
+
+@pytest.fixture(autouse=True)
+def stub_preferences_context(monkeypatch):
+    monkeypatch.setattr(agent_context, "current_context", lambda: "")
 
 
 def test_installed_mode_uses_shipped_profile_despite_user_profile(monkeypatch) -> None:
     captured: dict[str, object] = {}
+    reads = []
     monkeypatch.setenv("ASTRID_HOST_EXECUTION_PROFILE", "installed")
+    monkeypatch.setattr(agent_context, "current_context", lambda: (reads.append("read") or "Saved prefs"))
     monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: True)
     monkeypatch.setattr(omp_agent, "_find_launcher", lambda: (_ for _ in ()).throw(AssertionError("global launcher/cache must not run")))
     monkeypatch.setattr(omp_agent, "_resolve_omp_bin", lambda: "/private/installed/omp")
@@ -27,6 +35,8 @@ def test_installed_mode_uses_shipped_profile_despite_user_profile(monkeypatch) -
     argv = captured["argv"]
     assert argv[:3] == ["/private/installed/omp", "--system-prompt", omp_agent.ASTRID_SYSTEM_PROMPT]
     assert "--mode=acp" in argv
+    assert argv[argv.index("--append-system-prompt") + 1].endswith("Saved prefs")
+    assert reads == ["read"]
 
 
 def test_main_uses_shipped_profile_without_materializing_a_user_agent(monkeypatch) -> None:
@@ -119,11 +129,44 @@ def test_installed_prompt_notice_preserves_overrides_and_names_packaged_skills()
     assert omp_agent._prompt_args([], agent="scout", env={"ASTRID_HOST_EXECUTION_PROFILE": "installed"}) == []
 
 
+def test_prompt_args_appends_preferences_after_existing_prompt_text():
+    result = omp_agent._prompt_args([], env={"ASTRID_SYSTEM_PROMPT": "Existing"}, preferences_context="Saved prefs")
+    assert result[0] == "--append-system-prompt"
+    assert result[1].startswith("Existing\n\nHivemind contributor login status:")
+    assert result[1].endswith("Saved prefs")
+    assert omp_agent._prompt_args(["--append-system-prompt", "custom"], preferences_context="Saved") == []
+
+
 def test_profile_file_lookup_is_read_only_and_returns_installed_resource(capsys, monkeypatch) -> None:
     monkeypatch.setattr(omp_agent, "_find_launcher", lambda: (_ for _ in ()).throw(AssertionError("launcher lookup")))
     monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: (_ for _ in ()).throw(AssertionError("OMP lookup")))
     assert omp_agent.main(["--agent-profile-file"]) == 0
     assert capsys.readouterr().out.strip() == str(Path(omp_agent._AGENT_PROFILE_FILE))
+
+
+def test_agent_context_flag_prints_block_and_always_succeeds(capsys, monkeypatch):
+    monkeypatch.setattr(agent_context, "current_context", lambda: "Preferences block")
+    assert omp_agent.main(["--agent-context"]) == 0
+    assert capsys.readouterr().out == "Preferences block\n"
+    monkeypatch.setattr(agent_context, "current_context", lambda: (_ for _ in ()).throw(RuntimeError()))
+    assert omp_agent.main(["--agent-context"]) == 0
+    assert capsys.readouterr().out == ""
+
+
+def test_main_injects_context_for_default_agent_only_and_respects_overrides(monkeypatch):
+    captured = []
+    monkeypatch.setattr(agent_context, "current_context", lambda: "Saved prefs")
+    monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: True)
+    monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
+    monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
+    monkeypatch.setattr(omp_agent, "replace_process", lambda argv: captured.append(argv))
+
+    omp_agent.main([])
+    assert "Saved prefs" in captured[-1][captured[-1].index("--append-system-prompt") + 1]
+    omp_agent.main(["--agent", "scout"])
+    assert "--append-system-prompt" not in captured[-1]
+    omp_agent.main(["--system-prompt", "custom"])
+    assert "Saved prefs" not in captured[-1]
 
 
 def test_gateway_console_script_is_astrid_tools_and_module_entry_is_unchanged() -> None:

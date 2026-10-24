@@ -1,11 +1,12 @@
 from __future__ import annotations
 import copy
 import json
+import re
 from pathlib import Path
 from types import SimpleNamespace
 import pytest
 from astrid.sdk.client import AstridClient
-from astrid.sdk.documents import stable_document_id
+from astrid.sdk.documents import _digest, stable_document_id
 from astrid.sdk.media_transcript import build_transcript, transcript_document_id
 from astrid.sdk.remote import RemoteAstridClient
 from astrid.sdk.workspace_client import WorkspaceClientError
@@ -165,12 +166,30 @@ def test_lost_response_replays_exact_key_and_changed_body_new_key(client, tmp_pa
     r.lose_response = True
     assert not c.preferences.checkin(path).ok
     key = r.writes[-1][-1]
+    assert re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._~-]{0,255}", key)
     assert c.preferences.checkin(path).ok
     assert r.writes[-1][-1] == key
     assert len(r.replays) == 1
     path.write_text("Use Y")
     assert c.preferences.checkin(path).ok
     assert r.writes[-1][-1] != key
+
+
+def test_checkin_upgrades_a_persisted_legacy_retry_key(client, tmp_path):
+    c, runtime = client
+    path = tmp_path / "prefs.md"
+    assert c.preferences.checkout(scope="user", file=path).ok
+    path.write_text("Use X")
+    sidecar = path.with_name(path.name + ".astrid.json")
+    meta = json.loads(sidecar.read_text())
+    body_digest = _digest("Use X")
+    old_key = "document-checkin:" + _digest([meta["checkout_id"], body_digest, meta["base_version"]])
+    meta["retry"] = {"body_digest": body_digest, "base_version": meta["base_version"], "idempotency_key": old_key}
+    sidecar.write_text(json.dumps(meta))
+
+    assert c.preferences.checkin(path).ok
+    assert runtime.writes[-1][-1].startswith("document-checkin-")
+    assert runtime.writes[-1][-1][0].isalnum()
 
 
 def test_commit_then_metadata_write_failure_replays(client, tmp_path, monkeypatch):

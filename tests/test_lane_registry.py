@@ -79,7 +79,7 @@ def test_the_jobs_of_a_lane_provision_and_select_it(name: str) -> None:
 
 
 def test_a_platform_lane_runs_on_the_os_of_its_jobs() -> None:
-    runs_on = {"posix_native": "ubuntu", "linux_native": "ubuntu", "non_root": "ubuntu", "windows_native": "windows", "darwin_native": "macos"}
+    runs_on = {"posix_native": "ubuntu", "linux_native": "ubuntu", "non_root": "ubuntu", "windows_native": "windows", "windows_installer": "windows", "darwin_native": "macos"}
     for name, expected in runs_on.items():
         for job_name in lanes.LANES[name].jobs:
             assert expected in job_name or job_name == lanes.DARWIN and expected == "macos", f"{name} runs on {expected}, not {job_name}"

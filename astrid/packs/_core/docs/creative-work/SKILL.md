@@ -38,6 +38,7 @@ keeping the low-resolution badge readable.
 
 | User intent | Read and use | Typical entrypoints |
 | --- | --- | --- |
+| Generate with the user's own ComfyUI or a saved ComfyUI workflow ("my ComfyUI", "my saved workflow", local generation) | [Run on your own ComfyUI](../../../vibecomfy/docs/SKILL.md#run-on-your-own-comfyui) | `vibecomfy.run` with `comfy_url` |
 | Generate an image, video, or audio asset from a prompt | [generation](../../../generation/docs/SKILL.md) | `generation.generate_image`, `generation.generate_video`, `generation.generate_audio` |
 | Inspect, edit, validate, or run a ComfyUI/VibeComfy graph | [vibecomfy](../../../vibecomfy/docs/SKILL.md) | `vibecomfy.inspect`, `vibecomfy.edit`, `vibecomfy.validate`, `vibecomfy.run` |
 | Understand or describe an image, audio clip, or video | [understanding](../../../understanding/docs/SKILL.md) | `understanding.understand`, `understanding.scene_describe` |

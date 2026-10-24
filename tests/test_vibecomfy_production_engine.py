@@ -439,12 +439,11 @@ def test_pip_embedded_fails_closed_when_embedded_client_is_missing(
     monkeypatch: pytest.MonkeyPatch,
     _isolated_comfy_imports: None,
 ) -> None:
-    monkeypatch.setenv("COMFYUI_PATH", str(tmp_path / "missing-client"))
-    monkeypatch.setattr(production_engine, "_EMBEDDED_COMFY_FALLBACKS", ())
+    monkeypatch.delenv("COMFYUI_PATH", raising=False)
 
     with pytest.raises(
         production_engine.ProductionEngineError,
-        match="comfy/client/embedded_comfy_client.py",
+        match=r"set COMFYUI_PATH, or use local_server mode \(comfy_url\) with your own ComfyUI",
     ):
         production_engine._run_profile(
             object(),
@@ -469,7 +468,6 @@ def test_pip_embedded_inserts_tree_containing_embedded_client(
     (client.parent / "__init__.py").write_text("", encoding="utf-8")
     client.write_text("class Comfy:\n    pass\n", encoding="utf-8")
     monkeypatch.setenv("COMFYUI_PATH", str(root))
-    monkeypatch.setattr(production_engine, "_EMBEDDED_COMFY_FALLBACKS", ())
 
     selected = production_engine._bootstrap_embedded_comfy_client()
 
@@ -493,7 +491,6 @@ def test_pip_embedded_consumes_canonical_bundle_and_pinned_session_config(
     (client.parent / "__init__.py").write_text("", encoding="utf-8")
     client.write_text("class Comfy:\n    pass\n", encoding="utf-8")
     monkeypatch.setenv("COMFYUI_PATH", str(root))
-    monkeypatch.setattr(production_engine, "_EMBEDDED_COMFY_FALLBACKS", ())
 
     workflow = SimpleNamespace(metadata={"comfy_configuration": {"cache_none": True}})
     bundle = SimpleNamespace(workflow=workflow)
@@ -530,3 +527,60 @@ def test_pip_embedded_consumes_canonical_bundle_and_pinned_session_config(
     ]
     assert config.runtime_root == (tmp_path / "task-out" / ".vibecomfy-runtime").resolve()
     assert config.cwd == root.resolve()
+
+
+@pytest.mark.parametrize("extra", [
+    {"source_video": "source.mp4"},
+    {"readiness_profile_path": "/unused/profile.json", "readiness_profile_hash": "sha256:unused"},
+])
+def test_local_server_rejects_incompatible_modes_before_execution(tmp_path, monkeypatch, extra):
+    monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
+    action = importlib.import_module("astrid.packs.vibecomfy.actions.run.run")
+    with pytest.raises(ValueError, match="readiness profile or source_video"):
+        action._run_and_settle(
+            tmp_path / "workflow.json", tmp_path / "attempt" / "outputs",
+            task_identity="task-1", comfy_url="http://localhost:43217", **extra,
+        )
+
+
+def test_local_server_mode_selection_canonicalizes_url_and_requires_managed_result(tmp_path, monkeypatch):
+    monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
+    action = importlib.import_module("astrid.packs.vibecomfy.actions.run.run")
+    run = Mock(return_value=production_engine.ProductionRunResult(outputs=()))
+    monkeypatch.setattr(production_engine, "run_workflow_result_path", run)
+    with pytest.raises(ValueError, match="managed_generation_result_path"):
+        action._run_and_settle(
+            tmp_path / "workflow.json", tmp_path / "attempt" / "outputs",
+            task_identity="task-1", comfy_url="http://localhost:43217",
+        )
+    assert run.call_args.kwargs["profile_id"] == "local_server"
+    assert run.call_args.kwargs["comfy_url"] == "http://127.0.0.1:43217"
+    assert "comfy_output_dir" not in run.call_args.kwargs
+
+
+def test_unknown_workflow_input_lists_valid_names(monkeypatch):
+    bundle = SimpleNamespace(workflow=SimpleNamespace(inputs={"seed": SimpleNamespace(), "prompt": SimpleNamespace()}))
+    monkeypatch.setattr(production_engine, "_canonical_bundle_value", lambda _: bundle)
+    with pytest.raises(production_engine.ProductionEngineError, match="valid inputs: prompt, seed"):
+        production_engine._validate_workflow_input_bindings(bundle, {"typo": "value"})
+
+
+def test_local_server_failure_has_runnable_discovery_hint(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("ASTRID_INTERNAL_INVOCATION", "1")
+    action = importlib.import_module("astrid.packs.vibecomfy.actions.run.run")
+    workflow = tmp_path / "workflow.json"
+    workflow.write_text("{}")
+    monkeypatch.setattr(
+        action, "_run_and_settle",
+        Mock(side_effect=production_engine.ProductionEngineError("missing nodes: MissingNode")),
+    )
+
+    assert action.main([
+        "run", str(workflow), "--out", str(tmp_path / "out"),
+        "--comfy-url", "http://127.0.0.1:8188",
+    ]) == 1
+
+    error = capsys.readouterr().err
+    assert "missing nodes: MissingNode" in error
+    assert "recovery: python3 -m astrid.packs.vibecomfy.local scan" in error
+    assert "astrid executors" not in error

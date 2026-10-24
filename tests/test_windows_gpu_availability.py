@@ -22,7 +22,7 @@ def windows_gpu(monkeypatch):
 
 
 @pytest.mark.parametrize("opted_in", [False, True])
-def test_registered_availability_keeps_the_unqualified_sentence(tmp_path, monkeypatch, windows_gpu, opted_in):
+def test_registered_availability_warns_without_blocking_unqualified_gpu(tmp_path, monkeypatch, windows_gpu, opted_in):
     for capability_id in ("wan2gp.generate_video", "vibecomfy.run", "vibecomfy.validate"):
         _write_manifest(tmp_path / capability_id, capability_id=capability_id)
     runtime = FakeRuntime()
@@ -33,23 +33,26 @@ def test_registered_availability_keeps_the_unqualified_sentence(tmp_path, monkey
     registrations = {item["capability_id"]: item for item in runtime.registrations[-1][1]["capabilities"]}
     for capability_id in ("wan2gp.generate_video", "vibecomfy.run"):
         row = registrations[capability_id]
-        assert row["status"] == ("ready" if opted_in else "unavailable")
-        assert row["unavailable_reason"].endswith("is not qualified yet.")
+        assert row["status"] == "ready"
+        assert row["unavailable_reason"].endswith("please tell us how it went (GPU model and driver from `nvidia-smi`).")
         assert host.capabilities[capability_id].manifest()["preflight"]["gpu"]["qualified"] is False
     assert registrations["vibecomfy.validate"]["status"] == "ready"
     assert len(windows_gpu[1]) == 1
 
 
-def test_missing_gpu_is_unavailable_even_with_opt_in(tmp_path, monkeypatch, windows_gpu):
+def test_missing_gpu_warns_for_vibecomfy_but_still_blocks_wan2gp(tmp_path, monkeypatch, windows_gpu):
     windows_gpu[0].update(available=False, devices=[], reason="No NVIDIA GPU was detected.")
     monkeypatch.setenv(gpu.ALLOW_UNQUALIFIED_ENV, "1")
-    _write_manifest(tmp_path / "comfy", capability_id="comfy_wrap.run")
+    _write_manifest(tmp_path / "comfy", capability_id="vibecomfy.run")
+    _write_manifest(tmp_path / "wan", capability_id="wan2gp.generate_video")
     runtime = FakeRuntime()
     host = GenericPackHost(pack_roots=[tmp_path], client=runtime)
     host.register()
-    row = runtime.registrations[-1][1]["capabilities"][0]
-    assert row["status"] == "unavailable"
-    assert row["unavailable_reason"] == "No NVIDIA GPU was detected."
+    rows = {item["capability_id"]: item for item in runtime.registrations[-1][1]["capabilities"]}
+    assert rows["vibecomfy.run"]["status"] == "ready"
+    assert rows["vibecomfy.run"]["unavailable_reason"] == "VibeComfy uses your own ComfyUI, so Astrid does not need to detect an NVIDIA GPU."
+    assert rows["wan2gp.generate_video"]["status"] == "unavailable"
+    assert rows["wan2gp.generate_video"]["unavailable_reason"] == "No NVIDIA GPU was detected."
 
 
 def test_unqualified_label_survives_other_readiness_failures(tmp_path, monkeypatch, windows_gpu):
@@ -63,12 +66,12 @@ def test_unqualified_label_survives_other_readiness_failures(tmp_path, monkeypat
     host.register()
     row = runtime.registrations[-1][1]["capabilities"][0]
     assert row["status"] == "unavailable"
-    assert row["unavailable_reason"].startswith("ComfyUI on Windows with this NVIDIA GPU is not qualified yet.")
+    assert row["unavailable_reason"].startswith("ComfyUI on Windows with this NVIDIA GPU is untested.")
     assert "astrid_missing_gpu_dependency" in row["unavailable_reason"]
 
 
 @pytest.mark.parametrize("opted_in", [False, True])
-def test_execution_requires_opt_in_and_labels_settlement(tmp_path, monkeypatch, windows_gpu, opted_in):
+def test_execution_runs_and_labels_settlement_without_opt_in(tmp_path, monkeypatch, windows_gpu, opted_in):
     packs = tmp_path / "packs"
     _write_manifest(packs / "comfy", capability_id="comfy_wrap.run")
     runtime = FakeRuntime()
@@ -88,20 +91,15 @@ def test_execution_requires_opt_in_and_labels_settlement(tmp_path, monkeypatch, 
     task = {"id": "gpu-test", "capability": "comfy_wrap.run", "project_id": "project",
             "attempt_id": "attempt", "fence": 1, "spec": {"spec": {"inputs": {}}}}
     runtime.tasks["gpu-test"] = task
-    if not opted_in:
-        with pytest.raises(HostError, match="not qualified yet"):
-            host.run_task(task, lease_token="lease")
-        assert not runtime.settlements
-        assert len(runtime.failures) == 1
-        return
     host.run_task(task, lease_token="lease")
     result = runtime.settlements[-1][2]["result"]
     assert result["gpu_qualification"]["qualified"] is False
     assert result["gpu_qualification"]["status"] == "not qualified yet"
-    assert result["gpu_qualification"]["opted_in"] is True
+    assert result["gpu_qualification"]["warning"].startswith("ComfyUI on Windows with this NVIDIA GPU is untested.")
+    assert result["gpu_qualification"]["opted_in"] is opted_in
 
 
-def test_lost_gpu_is_rechecked_at_task_admission(tmp_path, monkeypatch, windows_gpu):
+def test_vibecomfy_remains_ready_when_nvidia_detection_is_lost(tmp_path, monkeypatch, windows_gpu):
     _write_manifest(tmp_path / "comfy", capability_id="comfy_wrap.run")
     monkeypatch.setenv(gpu.ALLOW_UNQUALIFIED_ENV, "1")
     runtime = FakeRuntime()
@@ -109,9 +107,9 @@ def test_lost_gpu_is_rechecked_at_task_admission(tmp_path, monkeypatch, windows_
     host.register()
     assert host.capabilities["comfy_wrap.run"].ready
     windows_gpu[0].update(available=False, devices=[], reason="No NVIDIA GPU was detected.")
-    with pytest.raises(HostError, match="No NVIDIA GPU"):
-        host.run_task({"id": "gone", "capability": "comfy_wrap.run", "project_id": "project", "attempt_id": "gone-attempt", "fence": 1}, lease_token="lease")
-    assert not runtime.settlements
+    host.preflight("comfy_wrap.run")
+    assert host.capabilities["comfy_wrap.run"].ready
+    assert host.capabilities["comfy_wrap.run"].preflight["gpu"]["warning"].startswith("VibeComfy uses your own ComfyUI")
 
 
 def test_failed_opt_in_run_retains_unqualified_label(tmp_path, monkeypatch, windows_gpu):
@@ -129,5 +127,4 @@ def test_failed_opt_in_run_retains_unqualified_label(tmp_path, monkeypatch, wind
     runtime.tasks["failed"] = task
     with pytest.raises(RuntimeError, match="GPU execution failed"):
         host.run_task(task, lease_token="lease")
-    assert runtime.failures[-1][2].endswith("ComfyUI on Windows with this NVIDIA GPU is not qualified yet.")
-
+    assert runtime.failures[-1][2].endswith("ComfyUI on Windows with this NVIDIA GPU is untested. It will probably work, but please tell us how it went (GPU model and driver from `nvidia-smi`).")

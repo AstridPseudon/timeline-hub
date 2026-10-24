@@ -33,7 +33,11 @@ def test_missing_vibecomfy_is_actionable_and_does_not_probe_comfyui(
 
     assert result.ready is False
     assert "vibecomfy" in result.reason
-    assert "pip install vibecomfy" in result.recovery_command
+    assert "VibeComfy ships with Astrid" in result.recovery_command
+    assert "curl -fsSL https://astrid.haus/install | sh -s -- --update" in result.recovery_command
+    assert "install.ps1))) --update" in result.recovery_command
+    assert "outside chat" in result.recovery_command
+    assert "pip" not in result.recovery_command
     assert checked == ["vibecomfy"]
 
 
@@ -54,7 +58,9 @@ def test_missing_comfyui_runtime_is_actionable(
 
     assert result.ready is False
     assert "ComfyUI runtime" in result.reason
-    assert "vibecomfy[comfy]" in result.recovery_command
+    assert "existing ComfyUI" in result.recovery_command
+    assert "vibecomfy.run" in result.recovery_command
+    assert "pip" not in result.recovery_command
 
 
 def test_ready_structural_local_path_requires_no_network_probe(
