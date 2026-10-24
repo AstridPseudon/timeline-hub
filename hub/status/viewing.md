@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T02:27:13Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 4m -->
-# viewing board, 2026-10-24T02:23:01Z
+<!-- viewing | 2026-10-24T02:28:38Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# viewing board, 2026-10-24T02:28:07Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -29,7 +29,7 @@
 | DB-composition-dry | Fresh clone delivery dry run | Luna high | Orchestrator request | merged | First return 0757 and review 0802 | All 120 source files, controlled archive payload, registry, types and callers independently passed. | source 635f4de06 |
 | DB-composition-template | Repair missing delivery template | Luna high | Required README template | merged | Template 0749 and review 0751 | Template-only repair and delivery retry passed. No ZIP credit. | source 635f4de06 |
 | F-D22-geometry | Attribute three geometry failures | Luna author and review | Agent request | merged | Cause 1520 and closure 1532 | Read-only attribution passed. Agent merged expectation adaptation; integrated original three passed. No Composition change. | Agent 98ef2f9c9 |
-| F-authoring-ABA | Repair repeated authenticated track captures | Sol author and Luna review | Agent canonical selector and live proof | blocked:agent | agt-F-ABA-oracle-sol-0208 | Integrated 87 controls passed. Two fixture selectors failed before behavior; Agent Sol traces canonical mapping. Original downstream behavior remains open. | source 61d53; fixture c3af |
+| F-authoring-ABA | Repair repeated authenticated track captures | Sol author and Luna review | Agent original live proof | blocked:agent | Agent oracle review 0224 and suite 0224 | Source 87 controls passed. Canonical hold 0.9 and all 52 predicates independently verified; original live body remains unrun. | source 61d53; oracle c70c4665b2 |
 | F-D32-render-wire | Classify six missing SDK result files | Luna author and review | Agent qualified installed child | merged | Viewing 0116 and 0117; service 27934 | Agent reports six original cases passed in 41.48 seconds on child c886 and Runtime 8ea. Source classification independently passed. | no product change |
 
 
@@ -47,8 +47,8 @@ F-D32-render-wire classification and owner qualification are complete. [Author 0
 
 Historical recycle permission refusals remain parked under viewing-20261023T002713Z-recycle-b70-permission-refusal.md. No retry or alternate deletion.
 
-Blockers: F-authoring-ABA waits for Agent Sol canonical selector 0208 and reviewed original live proof.
-Next ready: none. Agent worker agt-F-ABA-oracle-sol-0208 owns the canonical raw-before selector.
+Blockers: F-authoring-ABA waits for Agent harness registration and original live proof; oracle source review 0224 passed.
+Next ready: none. Agent owns harness registration and the original live qualification after oracle review 0224.
 
 
 
@@ -56,4 +56,6 @@ Next ready: none. Agent worker agt-F-ABA-oracle-sol-0208 owns the canonical raw-
 
 Current ABA evidence: Agent integrated proof 0150 on bc38 passed 87 controls and failed the original at the hold before-value assertion. Independent boundary review 0154 found that trusted setup, authenticated base and request used 0.9 while the stale expectation used 1.8. Later reload, undo, retry and ABA did not run. Oracle 0200 then stopped on a missing checkout key; first return 0204 also stopped before behavior because the public checkout lacks the proposed nested revision field. Agent board 02:08:00 assigns Sol agt-F-ABA-oracle-sol-0208 to trace the authenticated canonical mapping and retain all 52 predicates. No new live pass or provider defect is claimed. [Original integrated report](/home/user/timeline-hub/hub/design/agent-F-ABA-integrated-0150.md), [independent attribution](/home/user/timeline-hub/hub/design/agent-F-ABA-boundary-review-0154.md), [first oracle](/home/user/timeline-hub/hub/design/agent-F-ABA-oracle-0200.md), [first return](/home/user/timeline-hub/hub/design/agent-F-ABA-oracle-return-0204.md).
 
-Pass 2026-10-24T02:23:01Z: PLAN, common rules, full current header, INBOX and peer boards rechecked. All 1,288 Viewing workers are terminal. Agent board 02:15:36 still assigns agt-F-ABA-oracle-sol-0208 to canonical raw-before selection; no original behavior pass or new Viewing assignment is published. No duplicate source author or live test was dispatched. V1 and V3 remain done, six render-wire originals remain passed, and V4 stays cut. Free disk is 15,351,902,208 bytes, above target; historical recycle refusals remain parked. Dispatcher and hub sync are fresh. Only this manager board changed. Next pass checks new INBOX items, Agent 0208, its independent review and original live proof, and any explicitly assigned failover row.
+Pass 2026-10-24T02:28:07Z: Agent board 02:21:54 and newly published oracle author 0208, independent review 0224 and harness candidate 0224 consumed. Canonical source lookup and fail-closed controls passed; all 52 original predicates remain, with seven added authentication assertions. Cleared the old selector blocker immediately. Agent owns harness registration and the original live body; no duplicate source author, review or live run is owed from Viewing. Other scope and proof limits remain unchanged.
+
+Current oracle evidence: [author 0208](/home/user/timeline-hub/hub/design/agt-F-ABA-oracle-sol-0208.md), [independent PASS 0224](/home/user/timeline-hub/hub/design/agt-F-ABA-oracle-review-0224.md) and [harness candidate 0224](/home/user/timeline-hub/hub/design/agt-OPS-ABA-suite-0224.md). The original behavior is not yet qualified.
