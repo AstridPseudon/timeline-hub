@@ -550,9 +550,12 @@ class CommitPatch:
                 effects.extend(effect_diff(segments[-1][2], after))
             # Byte-equal sequential edits still carry intent, history and exact inverse guards.
             if all(self.calls[i]['op'] == 'doc.patch' for i in step['command_ordinals']):
-                if before.document == after.document or all(
+                # A whole-parent effect preserves raw mirror presence, which
+                # normalized submitted paths cannot represent.
+                mirror_effect = any(effect['ref'] == 'parent' and not effect['path'] for effect in effects)
+                if not mirror_effect and (before.document == after.document or all(
                         change['ref'] == 'parent' for i in step['command_ordinals']
-                        for change in self.calls[i]['args']['changes']):
+                        for change in self.calls[i]['args']['changes'])):
                     effects = [{**copy.deepcopy(binding['change']),
                                 'path': normalized_path(binding['physical_ref'], binding['change']['path'])}
                                for i in step['command_ordinals']
