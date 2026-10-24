@@ -400,6 +400,16 @@ def validate_nested_history(entry, load_history, *, ancestors=()):
                     or ordinals != [command['ordinal'] for command in commands]
                     or end - start != sum(len(command['writes']) for command in commands)):
                 raise CommandError('nested inverse identity differs from source history', kind='history_unavailable')
+            # Independent parent writes can commute without changing any image.
+            # Child item paths may be re-encoded by the authenticated item codec;
+            # native refs and parent storage paths retain their source order.
+            expected_writes = [write for command in reversed(commands) for write in reversed(command['writes'])]
+            actual_writes = record['writes'][start:end]
+            if ([write['ref'] for write in actual_writes] != [write['ref'] for write in expected_writes]
+                    or [write['path'] for write in actual_writes if write['ref'] == 'parent'] !=
+                    [write['path'] for write in expected_writes if write['ref'] == 'parent']):
+                raise CommandError('nested inverse native order differs from source history',
+                                   kind='history_unavailable')
 
 
 def _causal_commands(entry, commands):
