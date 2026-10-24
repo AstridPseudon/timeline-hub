@@ -1,4 +1,8 @@
+import type { EditCommand, JSON, MediaSelection, VerifiedMedia } from '@/integrations/runtime/timeline-commit-types.ts';
 import type { ClipMeta, ClipOrderMap, TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import type { AuthoredBundle } from './clipMoveCapture.ts';
+import type { OutboxBasis, OutboxHead } from './commitOutbox.ts';
+import type { TimelinePatch } from '@/sdk/video/timeline/patch.ts';
 import type { TimelineRow } from '@/tools/video-editor/types/timeline-canvas.ts';
 
 export type JsonPrimitive = string | number | boolean | null;
@@ -190,3 +194,32 @@ export type TimelineCommandRunner<TCommand extends TimelineCommand = TimelineCom
     options?: TimelineCommandRunOptions,
   ) => TimelineCommandExecutionResult<TCommand>;
 };
+
+/**
+ * The occurrence media popup uses the mounted save funnel's existing outbox.
+ * Keep this port type with the command contracts rather than the retired
+ * command-session implementation.
+ */
+export type OccurrenceAddMediaCaptureBasis = Readonly<{
+  bundle: AuthoredBundle;
+  ownerRef: `occurrence:${string}`;
+  row: Record<string, JSON>;
+  media: MediaSelection;
+  localGeneration: number;
+  localBasis: OutboxBasis;
+  displayHead: OutboxHead;
+}>;
+
+export interface OccurrenceAddMediaCapturePort {
+  capture(input: {
+    ownerRef: `occurrence:${string}`;
+    row: Record<string, JSON>;
+    media: MediaSelection;
+    current: TimelineData;
+  }): OccurrenceAddMediaCaptureBasis;
+  finish(basis: OccurrenceAddMediaCaptureBasis, verifiedMedia: VerifiedMedia): {
+    command: EditCommand;
+    preview: TimelinePatch | null;
+  };
+  submit(input: { command: EditCommand; preview: TimelinePatch | null }): void;
+}

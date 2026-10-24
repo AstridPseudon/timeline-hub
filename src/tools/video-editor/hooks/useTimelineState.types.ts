@@ -5,7 +5,7 @@ import type { useClipResize } from '@/tools/video-editor/hooks/useClipResize.ts'
 import type { useDragCoordinator } from '@/tools/video-editor/hooks/useDragCoordinator.ts';
 import type { useExternalDrop } from '@/tools/video-editor/hooks/useExternalDrop.ts';
 import type { TimelineStoreApi } from '@/tools/video-editor/hooks/timelineStore.ts';
-import type { OccurrenceAddMediaCapturePort } from '@/tools/video-editor/commands/commitSession.ts';
+import type { OccurrenceAddMediaCapturePort } from '@/tools/video-editor/commands/types.ts';
 import type { useTimelinePlayback } from '@/tools/video-editor/hooks/useTimelinePlayback.ts';
 import type { useTimelineTrackManagement } from '@/tools/video-editor/hooks/useTimelineTrackManagement.ts';
 import type {

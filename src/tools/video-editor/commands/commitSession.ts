@@ -50,6 +50,8 @@ import { captureParentClipAddMedia } from './parentClipAddCapture.ts';
 import { captureParentClipSwapMedia, finishParentClipSwapMedia } from './parentClipSwapCapture.ts';
 import { captureOccurrenceAddMedia, finishOccurrenceAddMedia } from './occurrenceMediaCapture.ts';
 import type { TimelineData } from '../lib/timeline-data.ts';
+import type { OccurrenceAddMediaCaptureBasis, OccurrenceAddMediaCapturePort } from './types.ts';
+export type { OccurrenceAddMediaCaptureBasis } from './types.ts';
 
 type Payload = { commands: EditCommand[]; before: AuthoredBundle; after: AuthoredBundle; preview: TimelinePatch | null; displayBasis?: TimelineCommandBasis };
 export type ParentClipAddMediaCaptureBasis = {
@@ -103,30 +105,8 @@ export interface ParentClipSwapMediaCapturePort extends ParentClipSwapMediaPrepa
   submit(input: { command: EditCommand; preview: TimelinePatch }): void;
 }
 
-/** The one occurrence-owned ADD seam; it uses this session's existing outbox. */
-export type OccurrenceAddMediaCaptureBasis = Readonly<{
-  bundle: AuthoredBundle;
-  ownerRef: `occurrence:${string}`;
-  row: Record<string, JSON>;
-  media: MediaSelection;
-  localGeneration: number;
-  localBasis: OutboxBasis;
-  displayHead: OutboxHead;
-}>;
-
-export interface OccurrenceAddMediaCapturePort {
-  capture(input: {
-    ownerRef: `occurrence:${string}`;
-    row: Record<string, JSON>;
-    media: MediaSelection;
-    current: TimelineData;
-  }): OccurrenceAddMediaCaptureBasis;
-  finish(basis: OccurrenceAddMediaCaptureBasis, verifiedMedia: VerifiedMedia): {
-    command: EditCommand;
-    preview: TimelinePatch | null;
-  };
-  submit(input: { command: EditCommand; preview: TimelinePatch | null }): void;
-}
+/** Compatibility export for callers awaiting the reviewed occurrence-port cut. */
+export type { OccurrenceAddMediaCapturePort } from './types.ts';
 export type CommandSessionState = {
   status: 'loading' | 'saved' | 'dirty' | 'saving' | 'retry' | 'conflict' | 'error' | 'recovery';
   error: string | null;
