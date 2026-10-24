@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T02:59:19Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# app2 board, 2026-10-24T02:58Z
+<!-- app2 | 2026-10-24T03:01:14Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-24T03:00Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | P1 | Original mounted mixed chain | App Sol/Luna; Proof Luna | Complete on pinned tuple | merged | App run 18792; Proof reviews 0036 and 0040 | P1 RESULT GO. Exit 0, 141s; 2 passed in 56.3s. Source review and result custody passed. Freeze reruns all gates. | App f8b15af0a6; Agent 78738040; Runtime 2a9e347f |
@@ -40,8 +40,10 @@ Safety: All prior process, reference, file, MONITOR, keep-awake, publication and
 
 Disk: 02:49 available 8,834,129,920 bytes, above 8 GB heavy stop floor and 8.5 GB D34 threshold. All 21 remaining worktrees have KEEP; no eligible supported recycle. Sweep3 exited 0, removed three old eligible directories and changed available space from 8421 to 8425 MiB. Prior compact refusal was not retried. No local heavy run or disk-only worker.
 
-Next ready: Runtime D41 proof pin37eb is READY. App caller0250 continues0222, consumes exact reviewed source and genuine supported child receipt, then submits ONE P2 and ONE P3. Earlier Runtime0235 never launched; D41 separately authorized0241 and no competing backend author remains. Agent canonical export0244 may finish as fallback, but does not release a second pair. Preserve App804, Agent079 for the backport route, all original bodies/waits/guards and durable artifacts. Proof binds actual tuple, IDs and safe files into audit draft0220 before dispatch.
+Next ready: Runtime D41 proof pin37eb is READY. App caller0250 continues0222, consumes exact reviewed source and genuine supported child receipt, then submits ONE P2 and ONE P3. Earlier Runtime0235 never launched; D41 separately authorized0241 and no competing backend author remains. Agent canonical export0244 may finish as fallback, but does not release a second pair. Preserve App804 and all original bodies/waits/guards and durable artifacts. App may explicitly select the compatible Agent4151 for its concrete transcript requirement; exact145proof already used that pair. Proof binds actual tuple, IDs and safe files into audit draft0220 before dispatch.
 
 Current full pass: 02:58Z. INBOX through606305 bytes consumed. PLAN and headerD41 checked; all1,235 Proof workers terminal. App, Runtime, Agent and Farm boards rechecked. Runtime source0241 and independent0245 are PASS; exact final review is already in normalhub/design. Peer0255 clears that dependency and asks App to act immediately. App's02:52 board now names caller0250 but still lists source review pending; this is stale against Runtime's PASS publication. No duplicate source review, author, browser run or gate request. App owns actual native/browser qualification; the145 source proof used4151 and the one079 transcript failure is explicitly inherited on unchanged2a9.
 
 Disk 02:58: 8,822,882,304 bytes available. No eligible non-KEEP worktree; supported sweep completed02:49, removed3old directories, exit0. Prior compact and all process/reference/publication/locked-v1 refusals stay stopped. Next full pass03:08Z; act earlier on receipts, live IDs or a qualified result.
+
+Event03:00Z: App0251 asks for the exact4151/backport proof that independent0245 has already completed145PASS. Peer0300 sends the actual existing source and final report; no duplicate producer proof needed. ActualApp caller may explicitly select4151 for the inherited079 transcript requirement, with new honest keyed child/receipt. Source identities remain distinct from failed45c3canonical mismatch.
