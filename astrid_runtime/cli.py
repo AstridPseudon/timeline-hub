@@ -37,9 +37,10 @@ from runtime_protocol import cancellation
 from .paths import DATA_ROOT_ENV, RuntimePaths
 from .runtime_boundary import LocalRuntimeBoundary, ForegroundRuntimeBoundary
 from runtime_protocol import platform
+from runtime_protocol import process_control
 from .workspace import configure_workspace, inspect_workspace
 from runtime_protocol.door import DEFAULT_DOOR_PORT, DEFAULT_HOSTED_ORIGIN, exact_https_origin
-from runtime_protocol.errors import RuntimeErrorBase
+from runtime_protocol.errors import ConflictError, RuntimeErrorBase
 from runtime_protocol.upgrade import DEFAULT_UPGRADE_TIMEOUT_SECONDS
 
 
@@ -96,10 +97,12 @@ def parser() -> argparse.ArgumentParser:
     _profile_args(workspace_create)
     workspace_create.add_argument("--realm-root", required=True, type=Path)
     workspace_create.add_argument("--realm-id")
+    _process_control_arg(workspace_create)
     workspace_attach = workspace_sub.add_parser("attach", help="validate and select an existing canonical workspace")
     _profile_args(workspace_attach)
     workspace_attach.add_argument("--realm-root", required=True, type=Path)
     workspace_attach.add_argument("--realm-id", required=True)
+    _process_control_arg(workspace_attach)
     workspace_adopt = workspace_sub.add_parser("adopt", help="clone and migrate a stopped workspace or authenticated backup into this installation")
     _profile_args(workspace_adopt)
     workspace_adopt.add_argument("--from", dest="source", required=True, type=Path, help="source data root, stopped realm root, or authenticated backup directory")
@@ -182,6 +185,14 @@ def _profile_args(command: argparse.ArgumentParser, *, data_root_required: bool 
     command.add_argument("--hosted-origin", type=_hosted_origin, default=DEFAULT_HOSTED_ORIGIN, help="the hosted page the browser door answers, or 'off' for no door")
     command.add_argument("--door-port", type=_door_port, default=os.environ.get(DOOR_PORT_ENV, str(DEFAULT_DOOR_PORT)), help=f"the browser door's loopback port (default {DOOR_PORT_ENV} or {DEFAULT_DOOR_PORT})")
     command.add_argument("--json", action="store_true")
+
+
+def _process_control_arg(command: argparse.ArgumentParser) -> None:
+    command.add_argument(
+        "--process-control", choices=["strict", "sandbox"],
+        help="how Runtime may signal processes: strict (default; pidfds only on Linux) or sandbox "
+             "(also works where seccomp denies pidfd_open and process-group kill, e.g. OpenShell); "
+             "omit to keep the current setting")
 
 
 def _read_args(command: argparse.ArgumentParser) -> None:
@@ -435,6 +446,14 @@ def main(argv: list[str] | None = None) -> int:
     except (OSError, ValueError) as exc:
         _emit({"ok": False, "error": str(exc)}, json_mode=True)
         return 1
+    if args.command not in {"workspace", "doctor", "status"}:
+        # Any other command may stop or signal the Runtime it manages, so it
+        # follows the installed process-control setting from the start.
+        try:
+            process_control.configure_from(paths.runtime_support)
+        except (ConflictError, OSError) as exc:
+            _emit({"ok": False, "error": str(exc)}, json_mode=True)
+            return 1
     if args.command == "workspace":
         try:
             boundary = LocalRuntimeBoundary()
@@ -456,6 +475,7 @@ def main(argv: list[str] | None = None) -> int:
                     mode=args.workspace_command,
                     realm_root=args.realm_root,
                     realm_id=args.realm_id,
+                    process_control=args.process_control,
                 )
             _emit(result, json_mode=args.json)
             return 0 if result.get("ok") else 1
