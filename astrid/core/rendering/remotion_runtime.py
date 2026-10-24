@@ -264,6 +264,10 @@ def _file_binding(path: Path, *, digest_memo: dict | None = None) -> dict[str, A
             "uid": facts.st_uid, "device": facts.st_dev, "inode": facts.st_ino}
 
 
+# Names the OS or Python creates on its own (Finder, bytecode); never installation inputs.
+_GENERATED_NAMES = frozenset({"__pycache__", ".DS_Store"})
+
+
 def _tree_files(root: Path) -> list[Path]:
     """Immutable installation inputs; generated Python bytecode is separate."""
     found: dict[str, Path] = {}
@@ -274,7 +278,7 @@ def _tree_files(root: Path) -> list[Path]:
             return
         visited.add(resolved)
         for path in sorted(directory.iterdir()):
-            if path.name in {"__pycache__", ".cache", ".git"} or path.suffix == ".pyc":
+            if path.name in _GENERATED_NAMES | {".cache", ".git"} or path.suffix == ".pyc":
                 continue
             if path.is_dir():
                 visit(path)
@@ -328,7 +332,7 @@ def _runtime_inputs(project_dir: Path, environment: Mapping[str, str], python: s
                 paths.append(directory)
             continue
         # Detect changed startup/optional module availability as well as bytes.
-        startup[raw] = sorted(p.name for p in directory.iterdir() if p.name != "__pycache__")
+        startup[raw] = sorted(p.name for p in directory.iterdir() if p.name not in _GENERATED_NAMES)
         paths.extend(directory.glob("*.pth"))
         for name in ("sitecustomize.py", "sitecustomize.pyc", "usercustomize.py", "usercustomize.pyc"):
             p = directory / name
@@ -577,7 +581,7 @@ def _registry_inputs(observation: Mapping[str, Any], *, digest_memo: dict | None
                 paths.append(root)
             continue
         if root.is_dir():
-            inventory['startup:' + raw] = sorted(p.name for p in root.iterdir() if p.name != '__pycache__')
+            inventory['startup:' + raw] = sorted(p.name for p in root.iterdir() if p.name not in _GENERATED_NAMES)
             paths.extend(root.glob('*.pth'))
             for name in ('sitecustomize.py', 'sitecustomize.pyc', 'usercustomize.py', 'usercustomize.pyc'):
                 if (root / name).is_file():
