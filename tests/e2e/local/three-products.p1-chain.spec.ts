@@ -1657,7 +1657,12 @@ test('P1 split -> trim new clip: a real Agent move refuses the stale trim and th
   expect(traffic.posts[1].response.details.conflicts).toEqual(expect.arrayContaining([
     expect.objectContaining({ kind: 'value_conflict', ref: 'parent', path: ['config', 'clips', `id:${rightId}`, 'at'] }),
   ]));
-  await expect(page.getByTestId('timeline-command-recovery')).toContainText('Your changes are retained and need resolution before they can be saved.');
+  const conflictDialog = page.getByRole('alertdialog');
+  await expect(conflictDialog).toBeVisible();
+  await expect(conflictDialog.getByRole('heading', { name: 'This timeline changed somewhere else', exact: true })).toBeVisible();
+  await expect(conflictDialog.getByText('Keep your changes, or switch to the latest version.', { exact: true })).toBeVisible();
+  await expect(conflictDialog.getByRole('button', { name: 'Use latest version', exact: true })).toBeVisible();
+  await expect(conflictDialog.getByRole('button', { name: 'Keep my changes', exact: true })).toBeVisible();
   await expect.poll(async () => (await commandOutboxes(page, seed.timelineId)).find((owner) => owner.pending)?.pending?.outcome?.kind, CEILING).toBe('rejected');
   const current = await history(harness, seed);
   expect(current.items).toHaveLength(before.items.length + 2);
