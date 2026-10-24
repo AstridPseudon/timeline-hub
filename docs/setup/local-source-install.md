@@ -67,9 +67,10 @@ services. Unknown settings or non-string values fail with a logged error.
 `ASTRID_ALLOW_UNQUALIFIED_GPU` opts into unqualified GPU execution when set to
 `1`; keep `0` for the qualified path.
 
-The app is hosted; installation does not clone or build it. App developers use
-`npm run dev:local` in their app checkout. Creative providers still need their
-own credentials and qualified artifacts.
+Installation does not clone or build the editor. astrid.haus is the default;
+to change the editor itself, follow the
+[fully local route](../getting-started.md#run-everything-on-your-computer).
+Creative providers still need their own credentials and qualified artifacts.
 
 ## Developer qualification with local Git sources
 

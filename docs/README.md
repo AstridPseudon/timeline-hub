@@ -5,7 +5,8 @@ pipelines where agents and humans collaborate to make art.
 
 **Where to start:** use Astrid at [astrid.haus](https://astrid.haus). Install
 this computer with the OS command in [Getting Started](getting-started.md).
-Do not install `astrid-app` to use Astrid. Developers can start with
+To change the editor itself, use the
+[fully local route](getting-started.md#run-everything-on-your-computer). Developers can start with
 [AGENTS.md](../AGENTS.md) and the
 [`astrid/packs/_core/docs/SKILL.md`](../astrid/packs/_core/docs/SKILL.md).
 

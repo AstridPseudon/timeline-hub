@@ -2,9 +2,14 @@
 
 Windows isn't supported yet; CI runs on Linux and macOS.
 
-Open Terminal on macOS or Linux, or PowerShell on Windows. Install Astrid on
-this computer, then use it at [astrid.haus](https://astrid.haus). Do not
-install or clone `astrid-app` to use Astrid; that repository is for developers.
+Install Astrid on this computer, then use it at
+[astrid.haus](https://astrid.haus) by default. If you want to change the editor
+itself, you can also run everything on your computer using the fully local
+path below. Both paths keep projects, media, models and your agent on your
+computer through Astrid Runtime.
+
+Open Terminal on macOS or Linux, or PowerShell on Windows. Read the installer
+before running it. It keeps your existing workspace and credentials.
 
 On macOS or Linux, run:
 
@@ -22,7 +27,37 @@ Then open [astrid.haus](https://astrid.haus) and follow the on-screen steps.
 For help, see [Troubleshooting](setup/troubleshooting.md).
 
 Astrid Runtime runs on this computer and owns workspace projects, media,
-timelines, tasks, and run records. Use Astrid at astrid.haus to work with them.
+timelines, tasks, and run records.
+
+## Run everything on your computer
+
+After the official install above, ask your agent to follow the
+[fully local setup instructions](setup/SKILL.md#run-everything-on-this-computer),
+or install Git and Node.js 20.19 or newer in the Node 20 release line and run:
+
+```sh
+git clone https://github.com/banodoco/astrid-app.git
+cd astrid-app
+npm ci
+npm run dev:local
+```
+
+Open **http://127.0.0.1:5180/tools/video-editor?connect=1** and confirm it shows Connected.
+Keep the terminal open. The editor connects through its local server, so no
+browser local-network permission is needed. astrid.haus remains available on
+the same computer. Once dependencies are installed, the local editor can open
+offline; online models and providers still need internet.
+
+The `astrid-app` clone is your editor's code. Edit it while the server runs to
+see changes. Start later with `npm run dev:local` in that folder. Stop with
+Ctrl+C; an already running installed Runtime keeps running. To update, stop
+the editor, save or commit source changes, then run `git pull --ff-only origin main`,
+`npm ci`, and `npm run dev:local`. If Git reports a conflict or divergence,
+keep your changes and resolve it before continuing. Update the Runtime and
+agent with the [official update command](setup/troubleshooting.md#update-astrid),
+then restart the editor. See the
+[App README](https://github.com/banodoco/astrid-app#run-astrid-fully-on-your-computer)
+for details.
 
 ## Developer reference
 

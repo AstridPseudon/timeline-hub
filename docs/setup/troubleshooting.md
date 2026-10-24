@@ -5,7 +5,8 @@ read the log at the installer's `Details:` path. Open Terminal on macOS or
 Linux, or PowerShell on Windows, when you run an installer command below.
 
 The supported setup commands are listed in [Getting Started](../getting-started.md).
-Do not clone or install `astrid-app` to troubleshoot a user installation.
+For the default hosted route, cloning `astrid-app` is not a repair step.
+For a source editor, follow the [fully local route](../getting-started.md#run-everything-on-your-computer).
 
 ## Asking for help
 
