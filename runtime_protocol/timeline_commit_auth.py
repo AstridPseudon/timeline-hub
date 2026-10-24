@@ -287,6 +287,32 @@ def _omitted_inverse_created_is_authenticated(submitted, record, records):
     return set(created) <= restoration_writes
 
 
+def _omitted_track_created_is_authenticated(submitted, record):
+    """Authenticate the allocation derived by the legacy track.create recorder.
+
+    Omission asks the native recorder to derive the claim. An explicit claim,
+    including an empty one, must still match exactly. The sealed command's row
+    and owner must account for the complete authored birth and allocation fact;
+    boundary, binding and reservation validation still applies independently.
+    """
+    if "created" in submitted or submitted.get("op") != "track.create":
+        return False
+    owner, args = submitted.get("select"), submitted.get("args")
+    if not isinstance(owner, str) or not isinstance(args, dict):
+        return False
+    row = args.get("row")
+    if not isinstance(row, dict) or not isinstance(row.get("id"), str):
+        return False
+    ref = owner + "/track:" + row["id"]
+    return (value_equal(record["command"].get("created"), [ref])
+            and value_equal(record["created"], [{"ref": ref, "kind": "track", "owner": owner}])
+            and any(value_equal(read, {"ref": ref, "path": [], "state": {"state": "absent"}})
+                    for read in record["reads"])
+            and value_equal(record["writes"], [{
+                "ref": ref, "path": [], "before": {"state": "absent"},
+                "after": {"state": "present", "value": row}}]))
+
+
 def validate_claims(request, records):
     commands = records["commands"]
     require(len(commands) == len(request["commands"]), "provider command count differs from request")
@@ -295,7 +321,8 @@ def validate_claims(request, records):
                            for key in ("schema_version", "op", "version", "select", "args"))
         created_matches = value_equal(submitted.get("created", []), record["command"].get("created", []))
         inverse_restoration = _omitted_inverse_created_is_authenticated(submitted, record, records)
-        require(core_matches and (created_matches or inverse_restoration),
+        track_creation = _omitted_track_created_is_authenticated(submitted, record)
+        require(core_matches and (created_matches or inverse_restoration or track_creation),
                 "provider executed a different command")
 
 

@@ -289,10 +289,19 @@ class TimelineCommitStore:
             valid = valid and event is not None and event["kind"] == "timeline.commit.accepted"
             if valid:
                 payload = json.loads(event["payload_json"])
-                valid = payload == {"project_id": edge["project_id"], "timeline_id": edge["timeline_id"],
-                                    "previous": previous, "revision_id": edge["revision_id"],
-                                    "publisher": edge["publisher"], "intent": "recorded",
-                                    "records_digest": digest(records)}
+                expected = {"project_id": edge["project_id"], "timeline_id": edge["timeline_id"],
+                            "previous": previous, "revision_id": edge["revision_id"],
+                            "publisher": edge["publisher"], "intent": "recorded",
+                            "records_digest": digest(records)}
+                # Only historical events and metadata that both lack the mode
+                # are ABI1. Never reclassify mutable record shapes on replay.
+                if "recorder_abi" in metadata or "recorder_abi" in payload:
+                    abi = metadata.get("recorder_abi")
+                    valid = (type(abi) is int and abi in (1, 2)
+                             and type(payload.get("recorder_abi")) is int) and valid
+                    expected.update(recorder_abi=abi, request_hash=row["request_hash"],
+                                    metadata_digest=digest(metadata))
+                valid = valid and payload == expected
             if not valid:
                 raise ValueError()
             prepared = {**data, "records": records, "expected_head": previous}
@@ -1218,6 +1227,12 @@ class TimelineCommitStore:
                 self._check_head(context, prepared["expected_head"])
                 self._check_shot_destinations(context, prepared, inputs)
                 candidate, execution = self._validate(context, prepared, inputs)
+                # Validation has accepted these exact records. Physical bindings
+                # identify the v2 recorder; native coverage completeness is not
+                # a separate submit-time obligation.
+                recorder_abi = 2 if any("physical_ref" in binding
+                                       for record in prepared["records"]["commands"]
+                                       for binding in record["bindings"]) else 1
                 request, previous = context["request"], prepared["expected_head"]
                 from .timeline_commit_reference_projection import (
                     ReferenceProjectionError,
@@ -1254,7 +1269,7 @@ class TimelineCommitStore:
                     data["steps"] = prepared["records"]["steps"]
                 self._persist_closure(candidate["canonical_document"])
                 result = self._publish(context, data, previous, prepared["records"], prepared["semantic_events"],
-                                       execution=execution)
+                                       recorder_abi=recorder_abi, execution=execution)
                 from .timeline_commit_reference_projection import (
                     apply_reference_projection,
                 )
@@ -1406,24 +1421,26 @@ class TimelineCommitStore:
             self.conn.execute("UPDATE parent_composition_revisions SET commit_manifest_json=? WHERE id=? AND commit_manifest_json IS NULL",
                               (canonical_json(manifest), parent["revision_id"]))
 
-    def _publish(self, context, data, previous, records, semantic_events, *, execution=None):
+    def _publish(self, context, data, previous, records, semantic_events, *, recorder_abi, execution=None):
         request = context["request"]
         project_id, timeline_id = request["project_id"], request["timeline_id"]
         revision_id = data["canonical_document"]["parent_revision"]["revision_id"]
+        metadata = {**_history_metadata(request, data), "recorder_abi": recorder_abi}
+        if execution is not None:
+            metadata[_PRIVATE_EXECUTION] = execution
         event_ids = []
         for event in semantic_events:
             event_ids.append(self.store._append_timeline_event(timeline_id, event["kind"],
                 {"project_id": project_id, "timeline_id": timeline_id, "publisher": context["publisher"], **event}))
         event_ids.append(self.store._append_timeline_event(timeline_id, "timeline.commit.accepted",
             {"project_id": project_id, "timeline_id": timeline_id, "previous": previous, "revision_id": revision_id,
-             "publisher": context["publisher"], "intent": "recorded", "records_digest": digest(records)}))
+             "publisher": context["publisher"], "intent": "recorded", "records_digest": digest(records),
+             "recorder_abi": recorder_abi, "request_hash": context["request_hash"],
+             "metadata_digest": digest(metadata)}))
         seq = self.conn.execute("SELECT COUNT(*) FROM timeline_events WHERE timeline_id=?", (timeline_id,)).fetchone()[0]
         publication_id = self.store._record_command_receipt("timeline.commit", scope(context), context["idempotency_key"], context["request_hash"],
             data, project_id=project_id, event_ids=event_ids, primary_stream_id=timeline_id, resulting_stream_seq=seq)
         ledger = self.conn.execute("SELECT * FROM command_idempotency WHERE txn_id=?", (publication_id,)).fetchone()
-        metadata = _history_metadata(request, data)
-        if execution is not None:
-            metadata[_PRIVATE_EXECUTION] = execution
         self.conn.execute("INSERT INTO timeline_commit_history VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (publication_id, project_id, timeline_id, revision_id, previous["publication_id"] if previous else None,
              previous["revision_id"], "recorded", canonical_json(records),
