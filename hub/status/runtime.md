@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T17:48:15Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 16 | status age 1m -->
-# runtime board, 2026-10-24T17:46:51Z
+<!-- main | 2026-10-24T17:51:24Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 1m -->
+# runtime board, 2026-10-24T17:49:47Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -111,7 +111,8 @@
 | F-final-D68-assess | Check fresh upstream packaging | Luna | Source assessment complete | merged | rt-F-final-D68-assess-1543 | Stale builder hash found. Proposed refresh moves frozen integration; correction assigned1546. [Facts](../../workers/rt-F-final-D68-assess-1543/evidence/source-assessment.md) | Evidence only |
 | F-final-D68 | Preserve fresh upstream in staging | Luna | Source and private caller qualified | gated:D59-cut | Author1546; review1554; wire1601 | Exact fda independent PASS; caller1601 synthetic service path PASS, extras and overlap receipts retained. No live install or build. | fda54be4 held |
 | D72-frame-window | Preserve native frame window assertions | Luna | Agent integrated qualification | doing | Review1722 PASS; homef4d6 | Remote merge receipt f4d6; reviewed7 PASS. Agent owns actual home proof. Native/legacy semantic coverage and typecheck limits retained. | 4f01572d4 / Agentf4d6 |
-| D72-installer-schema | Qualify local staging and installed-model scope | HARD Sol / Luna | Orchestrator scope decision | blocked:orchestrator | Sol1738; whole-path1738; local review1746 | Local51PASS; installed Python models remain unqualified. [Decision](../../escalations/runtime-20261024T1745Z-D72-installed-schema-scope.md) | 2a1637a14 held |
+| D72-installer-schema | Verify pinned local staging schema | HARD Sol / Luna | Agent normal merge and home proof | merging | Local1746 PASS; remote1738 requested | D77 accepts migration. Author51PASS, independent50+new1PASS; strict graph/digest guards. Separate installed renderer D77 remains open. | 2a1637a14 / b4f79 |
+| D77-render-path | Compare genuine upstream installed rendering | Luna | Upstream924 and Composition67b8 | doing | rt-D77-upstream-render-path-1749 | Read-only upstream/current comparison. Working upstream means cut-blocking regression; failure needs exact pre-existing evidence. No denied acquisition. | Source facts pending |
 | D72-generic-host | Migrate requester publication fixture | Luna | Agent integrated qualification | doing | Review1722 PASS; homef4d6 | Remote merge receipt f4d6; reviewed3 PASS. Agent owns actual home proof. CAS/producer/idempotency assertions unchanged. | 712093ec9 / Agentf4d6 |
 | F-final-D73 | Capture proof tuple once at submit | Luna | Final tuple and D59 cut | gated:D59-cut | Source1728; receipt1735 PASS | Private87Python+TS candidate and D73 stubs passed. Current security175/integrated35 cited; tuple pending, no install or body. | Private candidate |
 | F-final-D72 | Document retired CLI migration | Luna | Installed renderer and byte checks passed | merged | rt-F-final-D72-docs-1704 PASS | Actual docs installed171108 with backups; help, renderer, exactD65/D67/D62 preservation PASS. [Proof](../../design/rt-F-final-D72-docs-1704.md) | Installed docs |
@@ -154,7 +155,7 @@ Blockers: App element phases — activation CLOSED at App255f. Actual20321 zero-
 Blockers: Agent P4 proof — Runtime actual327da after independent175 PASS. Normal adoption/D73 meaningful original requestedpeer1728; original45s still OPEN. Runtime integrated1728 PASS35; current source qualified.
 Blockers: App — changed P34858 intent correction and stable current sources owned. P1 recordedGO; no duplicate P2/P3. Runtime1700 owns safe next-run phase capture; App owns normal launch wiring.
 Blockers: Final delivery — all active lanes need core0/regressions0 plus current P2/P3 and D69 completion. Agent newly reports39 restored-node failures; four classifiers own them. No cut/proofs/build/ZIP.
-Next ready: consume installer local review1746 and orchestrator scope answer1745. App1739 owns focused service preflight; Agent1740 owns unchanged three-leg P4. Final candidate ready at D59 cut.
+Next ready: consume D77 upstream1749 and Agent installer merge receipt. App1739 owns focused preflight; Agent1740 owns unchanged three-leg P4. Final candidate ready at D59 cut.
 
 Later: D47 memo and proof pins remain post-delivery; nine state attacks open. V4 cut; D14/D23 deferred unchanged. D34 broader cleanup remains held. D62 submit completeness is an explicit known gap in the Runtime behavior-change ledger.
 
@@ -162,7 +163,7 @@ Admission: D56 stops Farm and schema-access work. Exact403 and automatic access 
 
 Disk: about8.2GB. Sweep3 removed0; compact packed0 and compressed3 old logs. Three abandoned v1 trees refused as dirty and remain untouched; no alternate deletion. Finished current trees automatically recycle.
 
-live 1 / cap 4; ready-undispatched 0. Luna1746 final local installer integrity/new-test review; installed-model scope decision filed1745. Two D72 source merges received; home proof Agent-owned. No denied targets retried.
+live 1 / cap 4; ready-undispatched 0. Luna1749 D77 upstream path comparison. Installer2a163 independently localPASS queued for normal Agent merge; actual-home proof Agent-owned. No denied targets retried.
 
 Pass 2026-10-24T16:57:06Z: New Agent actual49 failures consumed with its four disjoint source classifiers. Popup author88b9 complete -> independent security1658 dispatched. D69 review1647 FAIL only citations -> return1658 dispatched. P4Sol1652 active; element phase still UNKNOWN pending App-host input. Source remains5c1 and no originals duplicated.
 
@@ -184,6 +185,9 @@ Pass 2026-10-24T17:38:07Z: Installer review1735 secondFAIL: 50testsPASS but actu
 
 Pass 2026-10-24T17:39:47Z: Both remote D72 source requests MERGED as Agentf4d6c72ce3. Final actual-home qualification remains Agent-owned, no repeated body on main. Installer Sol/whole-path1738 progressing. No new inbox or cut.
 
-Blockers: orchestrator — D72 installer local JSON vs installed Python-model scope; exact reviewable source and conflicting classifications in [decision1745](../../escalations/runtime-20261024T1745Z-D72-installed-schema-scope.md). No source acquisition authorized.
 
 Pass 2026-10-24T17:46:51Z: Sol1738 completed51PASS/newtest only; local guard source unchangedb4. Whole-path1738 agrees JSON cannot supply strict Python models, disagrees on D67 scope. Exact source reports/XML published; finite1745 scope question filed and localnewtest review1746 dispatched. App20321 ZERO BODY, corrected blockedApp1739. Agent P4 provenance1ba208 and soleD73three-leg1740 consume source327da.
+
+Pass 2026-10-24T17:49:06Z: D77 decision consumed same pass. Local integrity migration accepted; scope blocker cleared. One Luna1749 upstream924/Composition67b8 read-only path comparison dispatched; working upstream means regression and HARD Sol consumer migration. Refused source routes remain stopped.
+
+Pass 2026-10-24T17:49:47Z: Independent1746 localPASS -> exact2a163 normal remote merge requested immediately; authentic flat reports/XML published. D77 upstream1749 launched on exact924; no installed-render readiness inferred. Other ready rows remain owned.
