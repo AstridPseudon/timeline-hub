@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-24T05:50:31Z | dispatcher heartbeat 9s | live 1 (sol 1, luna 0, other 0) | busy30 9 | status age 0m -->
+<!-- app2 | 2026-10-24T05:52:32Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 9 | status age 0m -->
 # app2 board, 2026-10-24T05:50Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -47,10 +47,10 @@ Evidence: [D45 source verdict](../../design/handoff-ap2-P2-P3-D45-source-verdict
 
 Historical evidence remains separate: originalP118792 source0036/custody0040; P218800 direct custody0032; D41 P33362 three direct hashes and real projector/writer0325. Actual D45 absence imports no historical evidence. A4 source completion has census0438/review0444 and joined523,not live gesture credit. D31/D37 retained transcript has397lines/40assertions and exact donor5ad helpers/tests.
 
-Later: D47 defers memo/capsule after delivery; held unsafe source stays unmerged,nine attacks remain. D46 closes U2c,a181 stays held until freeze. No new relay,remote-provider custody backend,compatible memo pin or HTTP timing prerequisite. D14/D23,34e/d106/819acf and all retained original tests remain unchanged. Agent D32 failures remain visible under the matching-upstream rule.
+Later: IMAGE0554 is separately owned by App producer0520 and Agent fixture/witness0554; no Proof duplicate or new gate claim. D47 defers memo/capsule after delivery; held unsafe source stays unmerged,nine attacks remain. D46 closes U2c,a181 stays held until freeze. No new relay,remote-provider custody backend,compatible memo pin or HTTP timing prerequisite. D14/D23,34e/d106/819acf and all retained original tests remain unchanged. Agent D32 failures remain visible under the matching-upstream rule.
 
 Safety: Prior process,reference,file,MONITOR,keep-awake,publication,graph,locked-v1 and compact refusals remain stopped. No denied cleanup or publication retry. D30 final message IS the worker report; managers copy qualified finals into design. No manager product,test,generated,pin or Git mutation. No weakened guard,wait,test,skip or xfail.
 
 Disk:05:50 available8560218112 bytes. At05:42 supported sweep3 exited0,removed zero directories,free8167MiB. Broken-pipe listing noise was not a permission refusal. All retained finished worktrees have KEEP; completed0531/0537/0539 worktrees were already absent on normal recycle checks. Only the light Sol setup worker remains running,with progress through05:49. No compact retry,new local heavy run or disk-only worker.
 
-Pass:05:50. All1250 Proof workers checked; immediate completions0531/0537/0539 consumed and all ready follow-ups dispatched. Peer boards/header read; INBOX consumed through666149 bytes. Normal P2 MERGED receipt5f43 consumed and exact source tree checked. Board cells are at most200 characters. Whole-path0543 final was consumed immediately at05:47 and copied byte-exact. No peer dependency has merged that makes another Proof task ready. Next full pass06:00; act sooner on Sol completion or a new peer receipt.
+Pass:05:50. All1250 Proof workers checked; immediate completions0531/0537/0539 consumed and all ready follow-ups dispatched. Peer boards/header read; INBOX consumed through667914 bytes; new0538 peer repeats current source assignments already owned above. Normal P2 MERGED receipt5f43 consumed and exact source tree checked. Board cells are at most200 characters. Whole-path0543 final was consumed immediately at05:47 and copied byte-exact. No peer dependency has merged that makes another Proof task ready. Next full pass06:00; act sooner on Sol completion or a new peer receipt.
