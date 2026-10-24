@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T11:17:37Z | dispatcher heartbeat 4s | live 4 (sol 0, luna 4, other 0) | busy30 14 | status age 0m -->
-# app board, 2026-10-24T11:15Z
+<!-- app | 2026-10-24T11:20:49Z | dispatcher heartbeat 8s | live 3 (sol 0, luna 3, other 0) | busy30 13 | status age 0m -->
+# app board, 2026-10-24T11:20Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -15,7 +15,7 @@
 | A2-A3-real-path-proof | Qualify combined mounted repairs | Luna | Independent source reviews | merged | Integrated 0629 | 27 files, 690 tests, Gate5 12 controls, three types and lint PASS. Exact tree equals reviewed 663; no browser credit. | 9b810408cc |
 | A2-media-timing | Preserve canonical prepared timing | Sol; Luna review | Independent 0623 PASS | merged | Sol 0616; review 0623 | 252 tests including all 26 media tests passed. Original timing assertion unchanged. Joined 0629 passes. | 6635416195 / 9b810 |
 | A3-real-provider-controls | Keep real provider stall controls | Sol; independent Luna | Review 0717 PASS | merged | Author 0707; integrated 0724 | Three real-provider controls pass on HOME. Whole tree equals reviewed 2056; independent 108 tests, types and lint reused by identity. | 38b29b5e29 |
-| P2 | Eight original gesture cases | App service; Proof verdict | Current pair terminal | blocked:app | Actual 23809; source owners below | Three failed, five not run; exit 1 in 463 seconds. Element response unknown, popup local refusal, parent request oracle mismatch. | Selected 663; HOME 9b810 |
+| P2 | Eight original gesture cases | App service; Proof verdict | Source1036 and caller1103 PASS | doing | Actual26414; producer1119 | ONE no-cache original submitted11:19:09. Exact d6ed/333b/37eb; all eight originals retained. Prior23809 NO-GO remains. | d6ed8cbda1 |
 | P3 | Original Gate5 journey | App service; Proof | Strict fault-order repair | blocked:app2 | Proof source1053; review1100 | Actual3896 NO-GO,exit1/268s. Exact retry A counted before B drop; no production defect demonstrated. No repeat released. | Source82cb;079;37eb |
 | P2-P3-next-caller | Bind prepared caller after product join | Luna; independent Luna | Cumulative0902 PASS; final source pending | blocked:app | Return0853; cumulative0902 | PREPARED only. Actual decoded source and forged-target controls pass;248 rows preserved. Final pure proof target and source hashes remain inputs. No rows installed. | 1d92503b4c |
 | P2-P3-D41-caller | Prepare source-required Agent backport inputs | Sol; independent Luna | Actual custody1020 | review | Cumulative1035 | Actual333b/37eb child1016 and maker receipts bound. P2-only preparation preserves current P3; final App pure source and caller binding pending. | Prepared artifact branch |
@@ -58,19 +58,19 @@
 | U4p-D39-test-identity | Refresh strict current producer identity | Luna | Sol1022 caller repair | doing | Identity1035 | Change only one stale digest literal to exact approved D39 producer; all original semantic assertions remain. Cumulative independent review follows. | Earlyfreeze only |
 
 | P2-final-caller | Bind only P2 to pure target | Luna; independent Luna | Independent1103 PASS | merged | Author1054; review1103 | Complete caller PASS: 60 guards,14 negative controls,actual receipt and source. P3 and247 outsiders exact. Source preparation only. | ae17a48c3a |
-| P2-only-install | Install reviewed P2 row | Luna | Review1103 PASS | doing | app-P2-only-install-1115 | Atomic only P2 write and readback under existing lock. P3 and current outsiders must stay exact. No original submitted. | Config only |
+| P2-only-install | Install reviewed P2 row | Luna | Review1103 PASS | merged | app-P2-only-install-1115 | Atomic write and readback PASS. P2 row11b2eebf; P3 and247 outsiders unchanged. | Config only |
 | P3-fault-order | Preserve strict recovery ordering | Proof Luna; independent Luna | Independent1100 FAIL | blocked:app2 | Source1053; review1100 | Candidate hides observed A retry from attempts. Route lifecycle controls are incomplete. Held; Proof owns exact scope proposal. No repeat released. | 32ba166b6 held |
 
 | A4-D52 | Delete two proven dormant subsets | Luna; independent review next | Owner D52 supersedes D37 | doing | app-A4-D52-dormant-delete-1118 | Verify no live callers, delete four named files, preserve live behavior tests. Branch only; no merge during P2. | Pending |
-| P2-D52-live-check | Classify five unreached gestures | Luna | Owner11:15 request | doing | app-P2-D52-live-gesture-check-1118 | Static live versus dead scope check before ONE P2. No live gesture may be dropped. | Exact d6ed |
-| F-App-early | Run D49 branch full checkpoint | App service; Luna producer | Independent1058 PASS | doing | Actual19570; producer1108 | ONE no-cache full submitted11:09 on exacte8a/treec94. Wait SAME ID including124. No final tuple or home GO. | e8a593e1d3 |
+| P2-D52-live-check | Classify five unreached gestures | Luna | Owner11:15 request | merged | app-P2-D52-live-gesture-check-1118 | All five source-live; no dead or deferred cut. All eight originals retained. No browser credit. | Exact d6ed |
+| F-App-early | Run D49 branch full checkpoint | App service; Luna producer | Independent1058 PASS | doing | Actual19570; continuation1119 | ONE no-cache full submitted11:09 on exacte8a/treec94. Wait SAME ID including124. No final tuple or home GO. | e8a593e1d3 |
 
-Integration: HOME d6ed8cbda122d810d5836ebfce3c56c10e76e9b4/tree542b772e6deed676b917f857708445b7d37a5aa8. Pure joined1036 PASS695+67 tests,30controls including20Gate5,11diagnostics,three types/lint and protected identities. No current P2 original submitted. Early branch e8a/treec94 is independently1058 PASS; ONE D49 full submitted11:09.
+Integration: HOME d6ed8cbda122d810d5836ebfce3c56c10e76e9b4/tree542b772e6deed676b917f857708445b7d37a5aa8. Pure joined1036 PASS695+67 tests,30controls including20Gate5,11diagnostics,three types/lint and protected identities. ONE current P2 original26414 submitted11:19; source tuple and caller guards retained. Early branch e8a/treec94 is independently1058 PASS; ONE D49 full submitted11:09.
 
-Blockers: App — worker-only installation1115 and D52 live-gesture check1118 precede ONE P2. Independent1103, source1036 and custody1035 PASS.
+Blockers: App service — wait SAME P2 actual26414 and publish qualified terminal packet. Caller1103, installation1115 and live-check1118 PASS.
 Blockers: Proof — independent1100 FAIL holds P3 candidate32ba. Hidden retry accounting needs the existing Proof scope decision route; no new P3 released.
-Blockers: Freeze — home U3b/D39 wait P2/P3 GO. Early full app-U3b-D39-current-join-sol-1045-full-1024110900-19570 is running on App service; sole producer1108 waits SAME ID.
-Next ready: On installation1115 and live-check1118 PASS, submit ONE P2 and dispatch same-ID producer. Await Proof return or scope decision after1100 FAIL; keep candidate held. Await same-ID19570 full.
+Blockers: Freeze — home U3b/D39 wait P2/P3 GO. Early full app-U3b-D39-current-join-sol-1045-full-1024110900-19570 is running on App service; sole continuation1119 waits SAME ID.
+Next ready: Await SAME actual26414 P2; dispatch independent terminal review on producer1119 handback. Await Proof return or scope decision after1100 FAIL; keep candidate held. Await same-ID19570 full.
 
 Later: Final P1–P5 run on App service with Proof verdict after final tuple qualification, then D49 full suites and Farm F-final/ZIP. No duplicate farm or Proof run. D47 memo/capsule stays deferred and held unmerged. D46 U2c draft stays closed. D14/D23 deferred relational timing cases retain their original assertions and failures.
 
@@ -87,4 +87,6 @@ Evidence: [joined 690](../../design/app-A2-A3-corrected-integrated-0629.md), [re
 
 Current evidence: [pure join1036](../../design/app-P2-final-pure-integrated-1036.md), [actual cause](../../design/app-A2-P3-lost-ack-cause-sol-1040.md), [independent cause/custody](../../design/app-P3-current-cause-custody-review-1046.md), [safe origins](../../design/app-P3-3896-qualified-safe-origins.md), [early review1058](../../design/app-U3b-D39-final-cumulative-review-1058.md). Independent1046 retains40PASS/1 unchanged historical P1 source-hash control failure; required current19 controls pass.
 
-Inbox: Consumed1464787 bytes through Proof1056. Blocked owners checked against normal hub boards11:14. Independent1103 PASS consumed; installer1115 dispatched immediately. No original repeated, product/test/pin edited by manager, or home freeze merge. Explicit stop line8GB applies to new heavy work.
+Inbox: Consumed1468633 bytes through delayed self-peer1103 and ownerD51/D52. Blocked owners checked against normal hub boards11:14. Independent1103, installer1115 and live-check1118 PASS; ONEP2actual26414 submitted. D52 deletion1118 active, branch only. No original repeated, product/test/pin edited by manager, or home freeze merge. Explicit stop line8GB applies to new heavy work.
+
+Current P2 ID: app-P2-final-pure-integrated-1036-full-e2e-three-products-1024111909-26414. Sole producer app-P2-terminal-producer-1119; no duplicate P3. D51 freezes current upstream snapshot until delivery refresh.
