@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T09:43:31Z | dispatcher heartbeat 3s | live 5 (sol 1, luna 4, other 0) | busy30 13 | status age 0m -->
-# agent board, 2026-10-24T09:43:23Z
+<!-- agent | 2026-10-24T09:46:02Z | dispatcher heartbeat 4s | live 6 (sol 1, luna 5, other 0) | busy30 12 | status age 0m -->
+# agent board, 2026-10-24T09:45:33Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -139,13 +139,13 @@
 | F ABA lost-ack path | Preserve exact undo flight on transport errors | Sol / Luna | Integrated targeted PASS | merged | Viewing0906; home0916 PASS17 | Actualba55 exact testblob and unchanged product bytes; six offline controls plus11 existing checks pass. No original repair claim. | ba55ac1e9e |
 | F Farm giant regression | Attribute315 lines and verify smallest repair | Luna / Luna | Exact repair and causal reviews PASS | merged | Source0904; cause0909/0914 PASS | Current14,330 and rationale match prior PASS. Farm315=31 inherited+284 D40; laterU2+17. No new source,body or count credit. | Existing8c5ae21/a8f4 |
 | OPS shared schema input | Return genuine distribution provenance | Luna / Luna | Independent review passed | merged | Author 0918; independent 0922 PASS | Version 0.0.2, VCS pin and 12 installed hashes pass. Original wheel unknown. [Review](../../design/agt-OPS-schema-input-review-0922.md). | Evidence only |
-| R1 popup rebase | Preserve same-step fork continuation | Sol / Luna | Independent source review | review | Author 0928; independent 0940 | All 18 new controls pass; 167 pass and four prior undo failures. Production caller turns green. Source review due 10:00. | 4f6c85ddc6 |
+| R1 popup rebase | Preserve same-step fork continuation | Sol / Luna | Strict joined static review | review | Source 0940 PASS; joined 0948 | 18 new pass; 167 pass and four exact prior failures. Production caller green; normal mypy 1902 passes. | 4f6c85ddc6 |
 
 | R1 popup gate source | Qualify coherent selected 079 provider | Luna / Luna | Complete independent verdict | merged | Author 0930; independent 0935 FAIL | Legitimate accepted passes; disjoint merge fails. Source custody verified on full 079. No HTTP or journey claim. | Selected 079 unchanged |
 
 | R1 popup pin repair | Preserve gate client bytes with source fix | Sol / Luna | 079 failure reviewed; source in review | doing | agt-R1-popup-079-backport-sol-0943 | Draft D41 branch from 079 now; qualify exact client and schema bytes. No selected pin changes before review. | Base 079; source 4f6 |
 
-| R1 static gates | Tighten exact static improvements | Luna / Luna | Exact source 4f6 | doing | agt-R1-static-baseline-0940 | Ruff improved by two. Normal generator only; typecheck uses the established qualified venv. No new diagnostic accepted. | Source 4f6 |
+| R1 static gates | Tighten exact static baseline | Luna / Luna | Source 4f6 independently passed | review | Author 0940; independent 0948 | Parent and current both 2143; zero new diagnostics. Normal generated baseline and strict mypy pass; cumulative review due 10:05. | Baseline branch 0940 |
 
 P1: Historical GO recorded. P4 and P5 retain their named scopes; final freeze reruns all gates. App and Proof own P2/P3.
 Integration: ba55ac1e9e adds only reviewed offline transport tests, integrated0916 PASS17. Runner67d5 static PASS; product0ff3 independently20PASS; earlier0c2 joined123 retains its scope. Original20732 failed at lost-ack error code.
