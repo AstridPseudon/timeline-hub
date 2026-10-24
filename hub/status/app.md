@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T11:44:10Z | dispatcher heartbeat 15s | live 5 (sol 0, luna 5, other 0) | busy30 24 | status age 0m -->
-# app board, 2026-10-24T11:37Z
+<!-- app | 2026-10-24T11:49:35Z | dispatcher heartbeat 5s | live 3 (sol 0, luna 3, other 0) | busy30 23 | status age 2m -->
+# app board, 2026-10-24T11:47Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -74,13 +74,14 @@
 | A4-runner | Delete retired executor and exclusive tests | Luna; independent Luna | Author1137 PASS89tests | review | Author1137; independent1143 | Exact five paths;83 live assertions retained.89tests/three types/lintPASS. No executor export restoration. | 3403a1d0ae |
 | A4-D52-session-label | Retire census-proven dormant protocol | Luna; review next | Existing D37 ledger; now D52 | doing | app-A4-D52-session-label-retire-1145 | Verify current no-caller proof,remove only exclusive dormant code/tests; preserve live outbox and D31 transcript. Branch only. | Home602f base |
 | P3-D53-source | Qualify current pure integrated target | Luna | Normal D53 merge602f | doing | app-P3-D53-pure-integrated-1143 | Exact D53 donor/guards/tails and D52 tree plus23controls/types/lint; future pure target only if PASS. | 602f8b1f58 |
+| F-corrected-join | Compose reviewed checkpoint fixes | Luna; review next | Four packets and HOME602f | doing | app-U3b-F-reviewed-join-1146 | Normal merge-forward602f conflict-free; exact donor repairs and D52 closures then targeted/type/lint qualification. Branch only. | Early branch |
 | F-result | Verify checkpoint and ledger status | Luna | Actual merge and terminal packet | merged | Independent1133 PASS | Full packet counts and D52 whole-tree identity qualified. Actual-status worker ledger rows copied. No independent process SHA inferred. | 2e3c and e8a |
 
 Integration: HOME602f8b1f58593302829fb449d0ded62a91462a22 after reviewed D53 normal merge; D52 four-file deletion retained. P2 selected pure d6ed/tree542b remains immutable. Pure joined1036 PASS695+67 tests,30controls including20Gate5,11diagnostics,three types/lint and protected identities. Actual P226414 terminal preflight-only exit2,all originalsNOTRUN; decoded Agent-tree repair1130 active. Early branch e8a/treec94 is independently1058 PASS; ONE D49 full19570 failed11:28; exact failure groups all assigned1132.
 
 Blockers: App — repair reviewed caller stale Agent tree1130, independent review and worker-only install before meaningful P2. Actual26414 originals all NOTRUN.
 Blockers: App — D53 source is home602f after independent1126 PASS. Pure proof1143 and P3 caller1140 prepare final binding; no new P3 released.
-Blockers: Freeze — home U3b/D39 wait P2/P3 GO. Earlyfull19570 failed; four source groups1132 and independent result1133 are active. No final tuple or repeat full.
+Blockers: Freeze — home U3b/D39 wait P2/P3 GO. Earlyfull19570 FAIL is qualified1133; four fixes join1146 with independent removal reviews1143. No repeat full yet.
 Next ready: On cumulative1140 PASS, worker-only P2 install then corrected meaningful request. P3 caller1140 prepares without run authority. Consume four full-source returns and independent result1133. No ready task waits. Consume clean D53 source1123 only after independent final PASS; original P3 remains NO-GO. Await same-ID19570 full.
 
 Later: Final P1–P5 run on App service with Proof verdict after final tuple qualification, then D49 full suites and Farm F-final/ZIP. No duplicate farm or Proof run. D47 memo/capsule stays deferred and held unmerged. D46 U2c draft stays closed. D14/D23 deferred relational timing cases retain their original assertions and failures.
@@ -98,7 +99,7 @@ Evidence: [joined 690](../../design/app-A2-A3-corrected-integrated-0629.md), [re
 
 Current evidence: [pure join1036](../../design/app-P2-final-pure-integrated-1036.md), [actual cause](../../design/app-A2-P3-lost-ack-cause-sol-1040.md), [independent cause/custody](../../design/app-P3-current-cause-custody-review-1046.md), [safe origins](../../design/app-P3-3896-qualified-safe-origins.md), [early review1058](../../design/app-U3b-D39-final-cumulative-review-1058.md). Independent1046 retains40PASS/1 unchanged historical P1 source-hash control failure; required current19 controls pass.
 
-Inbox: Consumed1475559 bytes through Proof1126 D53 source/caller-preparation ask. Caller1140 dispatched same pass. D51/D52 applied. Blocked owners checked against normal hub boards11:14. Independent1103, installer1115 and live-check1118 PASS; ONEP2actual26414 submitted. D52 deletion1118 independently1121 PASS; exact worker ledger rows published. Normal home merge2e3c complete; exact tree identity qualified1133. No original repeated, product/test/pin edited by manager, or home freeze merge. Explicit stop line8GB applies to new heavy work.
+Inbox: Consumed1479599 bytes through Proof1134 delayed remote-request hold. Actual26414 is terminal; D53 merged602f. Caller1140 and pure1143 active. D51/D52 applied. Blocked owners checked against normal hub boards11:14. Independent1103, installer1115 and live-check1118 PASS; ONEP2actual26414 submitted. D52 deletion1118 independently1121 PASS; exact worker ledger rows published. Normal home merge2e3c complete; exact tree identity qualified1133. No original repeated, product/test/pin edited by manager, or home freeze merge. Explicit stop line8GB applies to new heavy work.
 
 Sweep3 completed11:23: removed zero directories; about11GB free. Prior compact/cleanup refusals remain stopped.
 
