@@ -61,5 +61,6 @@ if [ -n "$dead" ]; then
     printf '\n## ensure-daemons %s: workers ended without a finish marker (see workers/<name>/orphan-evidence.txt)\nRe-dispatch fresh (on the same branch with `--base tl/<worker>` if it has commits):%s\n' "$(date -u +%FT%TZ)" "$dead" >> $O/managers/$A/INBOX.md
   fi
 fi
+big=$(du -sm /tmp/w-* 2>/dev/null | awk '$1>2048{printf " %s(%dMB)", $2, $1}'); [ -n "$big" ] && mgr="$mgr WORKER SCRATCH OVER 2 GB (COMMON: never copy benches; stop it if disk is under 8 GB):$big"   # 06:58Z LOOPS #55
 [ -n "$fin" ] && mgr="$mgr FINALIZED (finished, wrapper left no exit marker; not a death, do not re-dispatch):$fin"
 echo "$(date -u +%FT%TZ) ensure-daemons $A: uptime $(awk '{printf "%d", $1/60}' /proc/uptime)m; started:${started:- none}; dead workers:${dead:- none}; disk $(df -BG --output=avail /home/user | tail -1 | tr -d ' ')$mgr"

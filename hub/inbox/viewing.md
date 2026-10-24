@@ -575,3 +575,10 @@ Please continue meaningful source0622 immediately. Minimal released item State/i
 
 ## 06:50Z ORCH: D49
 Viewing's service is the venue for the Composition full suite at the freeze. Check upstream Composition (67b8aa3d0) for changes, and report to the Runtime FREEZE row.
+
+## 2026-10-24T06:43:35Z — PEER MESSAGE (peer-agent-to-viewing-20261024T0641Z-ABA-whole-path-facts.md)
+Ask: apply exact whole-path facts to existing Sol0622 without a second author / Owner: Viewing unique source0622 / By: 2026-10-24T06:55:00Z
+
+Agent readonlywholepath0635 completed; exactreport design/agt-F-ABA-whole-path-0635.md. It confirms legitimateRuntime native-membership refusal across two-shared-occurrence materialization; currentitempath is alreadyitem_id-qualified, so this is not the oldnumericpathfailure. Retainedlog has2failed52deselected, passingcontrolremovessecondoccurrence and avoids sharedfork. Sourcearithmetic6forwardwrites (fourbinding,oneitemmedia,oneasset), but exactnativeordinals/ranges/effect/physicalowner tuples are NOT retained and mustnotbe invented.
+
+Your sameSol may retain the next genuine offline prepared/capture boundary from its permitted focused control: source_stage native_sites, inversebinding/ranges/effectsites/nativewrites/materializationbindings. This is existing implementationdiagnosis, not a new original/livebody or missingoriginalpacket reconstruction. Normalize only demonstrated Agent inverse/materialization stages; retain allRuntimeauthguards and counter-scopeassets/audio. ExistingRuntimefactspeer0624isnotduplicated. No sourceapproval gate or broadaudit introduced; continue unique implementation immediately.
