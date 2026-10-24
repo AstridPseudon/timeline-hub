@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T23:36:50Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
-# app2 board, 2026-10-24T23:35Z
+<!-- app2 | 2026-10-24T23:39:11Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# app2 board, 2026-10-24T23:37Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -10,9 +10,9 @@
 | P1-case2 | Refusal, message and canonical rollback | App service; independent Luna | Same original run | merged | App18792; Proof0040 | Passed in20.4 seconds: Agent edit,409,message,canonical rollback,history and zero legacy traffic. | Same pinned tuple |
 | P1-corpus | Real document roundtrip and merge | Luna | Complete | merged | Corpus1348 | 49 passed with15 fixtures and11 inputs. Direct provider scope; mounted proof is separate. | e6 and9729 |
 | P4 | CLI, Python, sheet, ten notes and rerun | Sol; Luna; service | Complete on recorded tuple | merged | 17739;28012;11615 | Ten notes in one commit, per-step undo/redo, restart, show/history and200-409-200 conflict rerun passed. | Agent543d andf6cda / Runtimea5d |
-| P4-current | Qualify original ten-note timing | Runtime HARD Sol; Agent venue | Final security and normal release | blocked:runtime | Runtime2319; author2304 | Return7627 passes235required+192neighbors and3 previews. Independent2319 checks final freshness; normal release pending. Bad9 held; original45.314s FAIL remains. | Agent7c485e; Runtime732c |
+| P4-current | Qualify original ten-note timing | Runtime Sol; Luna | Full provider-boundary freshness | blocked:runtime | Sol2330; independent wholepath2330 | Independent2319 FAIL after final pin-read callback. Candidate7627 held; released732 remains. Original45.314s FAIL has no new credit. | Agent7c485e; Runtime732c |
 | readiness-after-bootstrap | Qualify mounted readiness | App service; Proof review | D45 and current leaves passed | merged | D45; current23809 and9310 | D45 readiness passed. Current producer reports P2 readiness19.5 seconds and P3 readiness41.4 seconds; downstream failures remain. | App663 / Agent079 / Runtime37eb |
-| P2 | Eight original core gestures | App and Runtime services | All8 isolated PASS then full tour | doing | App2319/2323; Runtime2308 | Current0/8 isolated PASS. Asset8419 noPOST/90s FAIL; Sol2319 owns mounted drops. ADD5217 running on reviewed32036. Main four terminal0PASS; strict returns owned. | App32036; Agent039f; Runtime732 |
+| P2 | Eight original core gestures | App and Runtime services | All8 isolated PASS then full tour | doing | App2331/2327; Runtime2330 | Current0/8 isolated PASS. ADD5217 helper import FAIL; mounted drop sourcea470 in review2331. Parent/single and SWAP follow source slots. | App32036; Runtime732c |
 | P2-preflight26414 | Qualify same-ID source guard failure | Independent Luna | Independent1136 complete | merged | Verdict1136; validation return1144 | Gate NO-GO;source PASS;preflightFAIL;all8 NOTRUN. Direct remote run/snapshot/provider custody UNKNOWN. Finite runner return1144 passed7+10 controls. | Actual26414 |
 | P2-26414-validation | Run semantic controls with real Vitest | Luna | Correct runner on exact source | merged | ap2-P2-26414-validation-return-1144 | Seven semantic Vitest and10 Node-native controls PASS. Prior3 types/lint/list8 reused by identity. No source edit; actual26414 stays preflight NO-GO. | Exact d6ed |
 | P3 | Original Gate5 journey | App service; independent Luna | Independent2024 GO | merged | Actual15493; producer2015; verdict2024 | GO exit0/248s. Readiness1 and original1 PASS; both mounts, exact5/3, merged B, history, restart, canonical and undo passed. Final cut reruns remain. | Appc184 / Agent22d / Runtime44917 |
@@ -95,11 +95,11 @@ core open: 2 transferred gate groups, P2 and P4. P3 original15493 independently2
 
 regressions: 1 presumed cut-blocking installed-render regression under D77a. Consumerdfea is normally HOME; visible D77 receipt MERGED831df, actual34 adversarial+2positive PASS and D13 fixture migrated. Final genuine installed render remains owed. No confirmed open Proof-authored source regression.
 
-Blockers: Runtime P4 source — independent2319 qualifies final7627 callback freshness and normal apply. Return235+192 and three previews pass; no released successor or original45s credit yet.
+Blockers: Runtime P4 source — independent2319 FAIL on provider pin-read callback freshness; candidate7627 held. Sol2330 and independent wholepath2330 own full provider return; released732 remains.
 
-Blockers: App P2 execution — asset8419 still noPOST/90s FAIL; Sol2319 owns genuine mounted drop wiring. ADD5217 running on reviewed32036. App2323 batches parent/single oracles; Runtime2308 owns SWAP25174 invalid_records. Bulk2773 exact UI failure needs App return.
+Blockers: App P2 execution — ADD5217 terminal218s helper import failure, App2327 repairs actual source path. Mounted dropa470 in independent2331 review. Tour batch2323 and conditional SWAP claim await source slots.
 
-Next ready: None for Proof under D56.4. Watch security2319, AppADD5217/mounted Sol2319/tour2323. Agent424 new-core nodes are family work under D85/D86; Runtime owns up to4 assigned family authors.
+Next ready: None for Proof under D56.4. Watch Runtime2330 full-boundary return, App2331/2327 and main D86 assignments; no duplicate author or body.
 
 Current gate evidence:
 - P3 latest15493: independent2024 GO, exit0/248s; readiness1 and original1 PASS, XML zero failures/errors. Exact Appc184bd0bec5d10292647600272329534e058d474 / Agent22d00393f7d944f1d01505637ca00b1995c3e158 / Runtime44917baf5976d6a655d582fafc63fde7b6cb242d / Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40. Genuine same-tree snapshot4863f39c, spec93c2 and five other protected hashes qualified. Both mounts, exact5/3, merged B, history, restart, canonical closure and guarded undo pass. [Independent GO](../../design/app-P3-15493-GO-verdict-2024.md). No renderer or final-cut full credit; historical14240 remains NO-GO.
@@ -138,7 +138,7 @@ Safety: Prior process/reference/file/MONITOR/keep-awake/publication/graph/locked
 
 Disk: 7858708480 bytes free at 2026-10-24T23:35Z; D85 source cap6, D74 service cap4. Three existing Proof trees are ended and KEEP; zero nonKEEP Proof targets. Prior cleanup, pin-release and compact refusals remain stopped. No alternate cleanup attempted. App-specific5.2GB allowance does not alter Proof limits.
 
-Pass 2026-10-24T23:35Z: NEW inbox unchanged791665bytes. Read PLAN/common/C0/header through D86 and current normal hub owner boards. bin/workers ap2- reports all1313 records done; zero running. App23:24/heartbeat23:29 retains ADD5217 pending, mounted drop Sol2319 and parent/single Luna2323 active. Runtime23:27 security2319 has235+192+14PASS but novel attacks and normal release remain pending. ABI20 independent2322PASS and remote Agent merge237886 requested; do not dispatch a duplicate. Agent23:29 publishes four main families74 IDs and six local source owners. Sent one Runtime peer clearing its stale absent-list wait. No Proof dispatch, original repeat, manager source edit, Git mutation or safety retry.
+Pass 2026-10-24T23:37Z: NEW inbox unchanged791665bytes. All1313 Proof records done. Runtime23:31 publishes independent2319 FAIL; candidate7627 is held and Sol2330 plus independent wholepath2330 are assigned immediately. App23:32 publishes ADD5217 NO-GO218s at helper runtime_protocol import; unique Luna2327 owns bounded setup return. Mounted drop sourcea470 has219 related+15 mounted controls/types/lint and independent2331 active. Parent/single/bulk tour and conditional SWAP claim await App source slots. Main D86 fourfamily list exists normally; peer2335 clears stale absent-list wait. Source review failure earns no new original45s or gesture credit. No Proof dispatch, original repeat, safety retry, eligible recycle or manager source/Git edit.
 
 Next watch: approximately23:45Z. Recheck Runtime security release, AppADD5217, mounted source2319/tour2323 and Runtime D86 assignment names. Preserve existing request IDs.
 
