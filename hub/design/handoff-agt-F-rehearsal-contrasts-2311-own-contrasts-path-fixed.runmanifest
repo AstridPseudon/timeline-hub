@@ -1,0 +1,7 @@
+agent_sha=7c485e5b612a31a9b4f6e9a67163612a4a3313d4
+runtime_sha=732c48c6f5a9441a65c61b24595d454a1cd3e180
+app_sha=7d53ba281342d2963d92d8bcd746dc7f6b2921a4
+composition_sha=635f4de06fda22a85fc2e4cfc764d0153a4c9f40
+original_p4_test_hash=acf46e7d51ce8e931ac28a44edf7f7bfa495c72388238f6d90fe19c6e9690d1f
+service_versions=agent:7c485e5b612a31a9b4f6e9a67163612a4a3313d4,runtime:732c48c6f5a9441a65c61b24595d454a1cd3e180,node:v20.19.4,composition:0.0.14
+junit_paths=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-rehearsal-contrasts-2311/evidence/OWN-REHEARSAL-CONTRASTS.xml

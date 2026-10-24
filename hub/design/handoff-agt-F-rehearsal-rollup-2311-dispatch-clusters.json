@@ -1,0 +1,583 @@
+{
+  "clusters": [
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 4 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_native_sheet_ordinary_runtime.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 4,
+      "family": "NativeSheet ordinary-runtime fixture",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 7 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_inverse_stage_runtime_regressions.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 7,
+      "family": "R2 inverse/authentication source identity",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 8 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/packs/timeline/test_cli_document_commit.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 8,
+      "family": "cli-document-commit",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 7 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/sdk/test_timeline_commit_provider.py",
+        "tests/sdk/test_timeline_commit_provider_add_delete_runtime.py",
+        "tests/sdk/test_timeline_commit_provider_scalar.py",
+        "tests/sdk/test_timeline_semantic_reservations.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 7,
+      "family": "commit-provider-custody",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 5 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_doc_patch_atomic_scope_runtime.py",
+        "tests/timeline/test_authoring_media.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 5,
+      "family": "document-patch-emitter",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 3 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 3,
+      "family": "fresh word transcript frontend source identity",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 2 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 2,
+      "family": "media-manifest inverse fixture",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 24 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_native_batch_ingress.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 24,
+      "family": "native-batch-ingress",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 46 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_native_word_anchor.py",
+        "tests/editing_conformance/test_word_binding_recipe.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 46,
+      "family": "native-word-binding",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 2 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_timing_retained_inputs.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 2,
+      "family": "relational-timing-capture",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 9 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/sdk/test_timeline_capture_projection.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 9,
+      "family": "saved capture/projection source fixture",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 9 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/sdk/test_timeline_numeric_revision_runtime.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 9,
+      "family": "selected-schema runtime fixture registration",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 7 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_native_sheet_ordinary_runtime.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 7,
+      "family": "test-native-sheet-ordinary-runtime",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 11 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_next_command_cohort_runtime.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 11,
+      "family": "test-next-command-cohort-runtime",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 2 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_next_ordinary_union_runtime.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 2,
+      "family": "test-next-ordinary-union-runtime",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 6 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_occurrence_media_manifest_inverse.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 6,
+      "family": "test-occurrence-media-manifest-inverse",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 10 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_recipe_m2_auto_placement.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 10,
+      "family": "test-recipe-m2-auto-placement",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 4 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 4,
+      "family": "test-recipe-m2-placement-create-unplace",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 6 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 6,
+      "family": "test-recipe-m2-shared-auto-placement",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 6 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_recipe_m2_shot_pool.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 6,
+      "family": "test-recipe-m2-shot-pool",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 8 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_recipe_m2_video_unplace.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 8,
+      "family": "test-recipe-m2-video-unplace",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 3 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_recipe_occurrence_media.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 3,
+      "family": "test-recipe-occurrence-media",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 1 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_s3_reviewed_cohort_runtime.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 1,
+      "family": "test-s3-reviewed-cohort-runtime",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 4 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/sdk/test_timeline_clip_scalar_provider.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 4,
+      "family": "test-timeline-clip-scalar-provider",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 2 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/core/test_timeline_element_publication_runtime.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 2,
+      "family": "test-timeline-element-publication-runtime",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 1 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/sdk/test_timeline_script.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 1,
+      "family": "test-timeline-script",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 11 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/sdk/test_wc6_completion_capture.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 11,
+      "family": "wc6-completion-capture",
+      "owner": "Agent"
+    },
+    {
+      "acceptance": "Agent fixture migration/deletion ledger under D52/D72; no Runtime legacy writer resurrection; exact 3 selectors must be accounted for.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_cli_trim_runtime.py"
+      ],
+      "category": "KNOWN GAP",
+      "count": 3,
+      "family": "commitTimeline provider / CLI trim/move",
+      "owner": "Agent2311"
+    },
+    {
+      "acceptance": "Agent fixture migration/deletion ledger under D52/D72; no Runtime legacy writer resurrection; exact 10 selectors must be accounted for.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_commit_runtime_m1.py"
+      ],
+      "category": "KNOWN GAP",
+      "count": 10,
+      "family": "commitTimeline provider / M1 outbox/restart",
+      "owner": "Agent2311"
+    },
+    {
+      "acceptance": "Agent fixture migration/deletion ledger under D52/D72; no Runtime legacy writer resurrection; exact 3 selectors must be accounted for.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_commit_runtime_native_frontends.py"
+      ],
+      "category": "KNOWN GAP",
+      "count": 3,
+      "family": "commitTimeline provider / NativeSheet frontends",
+      "owner": "Agent2311"
+    },
+    {
+      "acceptance": "Agent fixture migration/deletion ledger under D52/D72; no Runtime legacy writer resurrection; exact 4 selectors must be accounted for.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_commit_runtime_native_checkout.py"
+      ],
+      "category": "KNOWN GAP",
+      "count": 4,
+      "family": "commitTimeline provider / native checkout",
+      "owner": "Agent2311"
+    },
+    {
+      "acceptance": "Agent2311 fixture ownership: migrate/authenticate occurrence-media carrier/fixture without reopening Runtime legacy writer; exact 48 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_commit_runtime_occurrence_media.py"
+      ],
+      "category": "KNOWN GAP",
+      "count": 48,
+      "dispatch_reservation": "occurrence-media48 reserved for Agent2311",
+      "family": "commitTimeline provider / occurrence-media",
+      "owner": "Agent2311"
+    },
+    {
+      "acceptance": "Agent fixture migration/deletion ledger under D52/D72; no Runtime legacy writer resurrection; exact 6 selectors must be accounted for.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_commit_runtime_opaque_items.py"
+      ],
+      "category": "KNOWN GAP",
+      "count": 6,
+      "family": "commitTimeline provider / opaque occurrence",
+      "owner": "Agent2311"
+    },
+    {
+      "acceptance": "Agent fixture migration/deletion ledger under D52/D72; no Runtime legacy writer resurrection; exact 6 selectors must be accounted for.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_owned_move_publish_runtime.py"
+      ],
+      "category": "KNOWN GAP",
+      "count": 6,
+      "family": "commitTimeline provider / owned parent move",
+      "owner": "Agent2311"
+    },
+    {
+      "acceptance": "Agent fixture migration/deletion ledger under D52/D72; no Runtime legacy writer resurrection; exact 2 selectors must be accounted for.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_commit_runtime_parent_media_swap.py"
+      ],
+      "category": "KNOWN GAP",
+      "count": 2,
+      "family": "commitTimeline provider / parent media swap",
+      "owner": "Agent2311"
+    },
+    {
+      "acceptance": "Agent fixture migration/deletion ledger under D52/D72; no Runtime legacy writer resurrection; exact 1 selectors must be accounted for.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_commit_runtime_parent_track_batch_inverse.py"
+      ],
+      "category": "KNOWN GAP",
+      "count": 1,
+      "family": "commitTimeline provider / parent track batch",
+      "owner": "Agent2311"
+    },
+    {
+      "acceptance": "Agent fixture migration/deletion ledger under D52/D72; no Runtime legacy writer resurrection; exact 2 selectors must be accounted for.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_commit_runtime_parent_track_label.py"
+      ],
+      "category": "KNOWN GAP",
+      "count": 2,
+      "family": "commitTimeline provider / parent track label",
+      "owner": "Agent2311"
+    },
+    {
+      "acceptance": "Agent fixture migration/deletion ledger under D52/D72; no Runtime legacy writer resurrection; exact 1 selectors must be accounted for.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_commit_runtime_scalar.py"
+      ],
+      "category": "KNOWN GAP",
+      "count": 1,
+      "family": "commitTimeline provider / scalar outbox",
+      "owner": "Agent2311"
+    },
+    {
+      "acceptance": "Agent fixture migration/deletion ledger under D52/D72; no Runtime legacy writer resurrection; exact 1 selectors must be accounted for.",
+      "allowed_test_files": [
+        "tests/sdk/test_timeline_selected_schema_runtime.py"
+      ],
+      "category": "KNOWN GAP",
+      "count": 1,
+      "family": "commitTimeline provider / selected-schema HTTP seed",
+      "owner": "Agent2311"
+    },
+    {
+      "acceptance": "Agent fixture migration/deletion ledger under D52/D72; no Runtime legacy writer resurrection; exact 10 selectors must be accounted for.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_commit_runtime_shared_inverse.py"
+      ],
+      "category": "KNOWN GAP",
+      "count": 10,
+      "family": "commitTimeline provider / shared inverse",
+      "owner": "Agent2311"
+    },
+    {
+      "acceptance": "Runtime: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 2 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_owned_move_publish_runtime.py",
+        "tests/editing_conformance/test_prepared_video_birth.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 2,
+      "family": "commit-rebase-custody",
+      "owner": "Runtime"
+    },
+    {
+      "acceptance": "Runtime: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 1 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_historical_shared_redo_authority.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 1,
+      "family": "historical-redo-authority",
+      "owner": "Runtime"
+    },
+    {
+      "acceptance": "Runtime: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 1 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/packs/video_editing/test_runtime_publication_chain.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 1,
+      "family": "publication-route",
+      "owner": "Runtime"
+    },
+    {
+      "acceptance": "Runtime: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 7 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/sdk/test_timeline_selected_schema_runtime.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 7,
+      "family": "selected-schema-inverse",
+      "owner": "Runtime"
+    },
+    {
+      "acceptance": "Runtime: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 1 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/sdk/test_timeline_commit_graph_roots.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 1,
+      "family": "semantic-history-authority",
+      "owner": "Runtime"
+    },
+    {
+      "acceptance": "Runtime: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 3 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 3,
+      "family": "test-commit-runtime-clip-scalar-fields",
+      "owner": "Runtime"
+    },
+    {
+      "acceptance": "Runtime: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 6 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_commit_runtime_numeric_move.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 6,
+      "family": "test-commit-runtime-numeric-move",
+      "owner": "Runtime"
+    },
+    {
+      "acceptance": "Runtime: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 3 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_commit_runtime_numeric_params.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 3,
+      "family": "test-commit-runtime-numeric-params",
+      "owner": "Runtime"
+    },
+    {
+      "acceptance": "Runtime: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 2 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_commit_runtime_occurrence_create.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 2,
+      "family": "test-commit-runtime-occurrence-create",
+      "owner": "Runtime"
+    },
+    {
+      "acceptance": "Runtime: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 1 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_commit_runtime_occurrence_fork.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 1,
+      "family": "test-commit-runtime-occurrence-fork",
+      "owner": "Runtime"
+    },
+    {
+      "acceptance": "Runtime: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 14 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_commit_runtime_parent_auto_completion.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 14,
+      "family": "test-commit-runtime-parent-auto-completion",
+      "owner": "Runtime"
+    },
+    {
+      "acceptance": "Runtime: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 20 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_commit_runtime_parent_media.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 20,
+      "family": "test-commit-runtime-parent-media",
+      "owner": "Runtime"
+    },
+    {
+      "acceptance": "Runtime: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 10 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_commit_runtime_parent_media_swap.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 10,
+      "family": "test-commit-runtime-parent-media-swap",
+      "owner": "Runtime"
+    },
+    {
+      "acceptance": "Runtime: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 6 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_commit_runtime_text_binding.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 6,
+      "family": "test-commit-runtime-text-binding",
+      "owner": "Runtime"
+    },
+    {
+      "acceptance": "Runtime: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 4 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_commit_runtime_video_unplace.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 4,
+      "family": "test-commit-runtime-video-unplace",
+      "owner": "Runtime"
+    },
+    {
+      "acceptance": "Runtime: repair only this source family and allowed test modules; preserve test bodies/live contracts; exact 17 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/editing_conformance/test_native_sheet_current_runtime.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 17,
+      "family": "test-native-sheet-current-runtime",
+      "owner": "Runtime"
+    },
+    {
+      "acceptance": "Runtime peer2310: repair provider ABI/contract validation only; preserve v2 custody/ABI/ABA/freshness/range rules; exact 20 selectors must PASS.",
+      "allowed_test_files": [
+        "tests/sdk/test_selected_param_neutral_stage.py"
+      ],
+      "category": "NEW-OURS core",
+      "count": 20,
+      "dispatch_reservation": "ProviderABI20 reserved for Runtime peer2310",
+      "family": "timeline commit provider ABI / contract validation",
+      "owner": "Runtime2310"
+    }
+  ],
+  "schema": "timeline.agent.rehearsal.dispatch-clusters.v1"
+}

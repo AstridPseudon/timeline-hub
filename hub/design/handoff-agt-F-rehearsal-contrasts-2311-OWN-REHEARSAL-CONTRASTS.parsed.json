@@ -1,0 +1,137 @@
+{
+  "exact18": [
+    {
+      "node_id": "tests/packs/rendering/test_timeline_filmstrip_cards.py::test_pack_keeps_audio_navigation_in_rich_result_index",
+      "original_rehearsal_status": "FAILED",
+      "rerun_status": "PASSED",
+      "upstream_status": "PASSED"
+    },
+    {
+      "node_id": "tests/packs/rendering/test_timeline_filmstrip_cards.py::test_pack_keeps_audio_navigation_links_separate_from_compact_receipt",
+      "original_rehearsal_status": "FAILED",
+      "rerun_status": "PASSED",
+      "upstream_status": "PASSED"
+    },
+    {
+      "node_id": "tests/packs/rendering/test_timeline_filmstrip_cards.py::test_pack_uses_rendered_frames_without_html_artifact",
+      "original_rehearsal_status": "FAILED",
+      "rerun_status": "PASSED",
+      "upstream_status": "PASSED"
+    },
+    {
+      "node_id": "tests/packs/rendering/test_timeline_filmstrip_execution.py::test_execution_delivers_audio_sidecar_optional_media_and_reuses_cache",
+      "original_rehearsal_status": "FAILED",
+      "rerun_status": "PASSED",
+      "upstream_status": "PASSED"
+    },
+    {
+      "node_id": "tests/packs/rendering/test_timeline_filmstrip_execution.py::test_input_audio_visualizer_discovers_audio_embedded_in_verified_video",
+      "original_rehearsal_status": "FAILED",
+      "rerun_status": "PASSED",
+      "upstream_status": "PASSED"
+    },
+    {
+      "node_id": "tests/packs/rendering/test_timeline_filmstrip_execution.py::test_input_audio_visualizer_uses_verified_source_amplitude",
+      "original_rehearsal_status": "FAILED",
+      "rerun_status": "PASSED",
+      "upstream_status": "PASSED"
+    },
+    {
+      "node_id": "tests/packs/rendering/test_timeline_filmstrip_execution.py::test_managed_execution_verifies_video_before_extracting",
+      "original_rehearsal_status": "FAILED",
+      "rerun_status": "PASSED",
+      "upstream_status": "PASSED"
+    },
+    {
+      "node_id": "tests/test_installer_sources.py::test_local_source_cleans_failed_extraction",
+      "original_rehearsal_status": "ERROR",
+      "rerun_status": "PASSED",
+      "upstream_status": "PASSED"
+    },
+    {
+      "node_id": "tests/test_installer_sources.py::test_local_source_rejects_tracked_links_and_submodules[120000]",
+      "original_rehearsal_status": "ERROR",
+      "rerun_status": "PASSED",
+      "upstream_status": "PASSED"
+    },
+    {
+      "node_id": "tests/test_installer_sources.py::test_local_source_rejects_tracked_links_and_submodules[160000]",
+      "original_rehearsal_status": "ERROR",
+      "rerun_status": "PASSED",
+      "upstream_status": "PASSED"
+    },
+    {
+      "node_id": "tests/test_installer_sources.py::test_local_source_reports_missing_git",
+      "original_rehearsal_status": "ERROR",
+      "rerun_status": "PASSED",
+      "upstream_status": "PASSED"
+    },
+    {
+      "node_id": "tests/test_installer_sources.py::test_local_source_requires_an_available_commit_object[missing]",
+      "original_rehearsal_status": "ERROR",
+      "rerun_status": "PASSED",
+      "upstream_status": "PASSED"
+    },
+    {
+      "node_id": "tests/test_installer_sources.py::test_local_source_requires_an_available_commit_object[tag]",
+      "original_rehearsal_status": "ERROR",
+      "rerun_status": "PASSED",
+      "upstream_status": "PASSED"
+    },
+    {
+      "node_id": "tests/test_installer_sources.py::test_local_source_requires_an_available_commit_object[tree]",
+      "original_rehearsal_status": "ERROR",
+      "rerun_status": "PASSED",
+      "upstream_status": "PASSED"
+    },
+    {
+      "node_id": "tests/test_installer_sources.py::test_local_sources_materialize_only_the_pinned_commit[agent-False]",
+      "original_rehearsal_status": "ERROR",
+      "rerun_status": "PASSED",
+      "upstream_status": "PASSED"
+    },
+    {
+      "node_id": "tests/test_installer_sources.py::test_local_sources_materialize_only_the_pinned_commit[agent-True]",
+      "original_rehearsal_status": "ERROR",
+      "rerun_status": "PASSED",
+      "upstream_status": "PASSED"
+    },
+    {
+      "node_id": "tests/test_installer_sources.py::test_local_sources_materialize_only_the_pinned_commit[vibecomfy-False]",
+      "original_rehearsal_status": "ERROR",
+      "rerun_status": "PASSED",
+      "upstream_status": "PASSED"
+    },
+    {
+      "node_id": "tests/test_installer_sources.py::test_local_sources_materialize_only_the_pinned_commit[vibecomfy-True]",
+      "original_rehearsal_status": "ERROR",
+      "rerun_status": "PASSED",
+      "upstream_status": "PASSED"
+    }
+  ],
+  "exact18_count": 18,
+  "original_rehearsal_counts": {
+    "ERROR": 242,
+    "FAILED": 308,
+    "PASSED": 8713
+  },
+  "original_rehearsal_sha256": "af1b309f43afcbcf6ba6953ad9d430c37b05b58b84e3eabe7bc712ff1bc49f7a",
+  "original_rehearsal_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-core-rehearsal-2234/evidence/OWN-REHEARSAL-SUITE.xml",
+  "poison_zero": true,
+  "positive_once": true,
+  "rerun_counts": {
+    "PASSED": 18
+  },
+  "rerun_node_count": 18,
+  "rerun_sha256": "c87666bdd3a1ce392a14d84fd176b17c3dbb6d16767b9bcc5a45d19d6a8fd7af",
+  "rerun_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-rehearsal-contrasts-2311/evidence/OWN-REHEARSAL-CONTRASTS.xml",
+  "schema": "timeline.agent.f.exact18-rehearsal.v1",
+  "upstream_counts": {
+    "ERROR": 14,
+    "FAILED": 91,
+    "PASSED": 12396,
+    "SKIPPED": 16
+  },
+  "upstream_sha256": "2941565205663912985f766210bfead7db42264976fabee7dc899d03d4f4657f",
+  "upstream_xml": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D60-snapshot-return-1342/evidence/upstream-full-9244377.xml"
+}

@@ -1,0 +1,7 @@
+current XML: PASS=8713 FAIL=308 ERROR=242 unique=9263
+upstream XML: PASS=12396 FAIL=91 ERROR=14 SKIP=16 unique=12517
+status pairs: FAIL/FAIL=16 FAIL/PASS=7 ERROR/PASS=11 FAIL/MISSING=285 ERROR/MISSING=231
+final buckets: PRE-EXISTING=16 KNOWN GAP=135 ENV=54 NEW-OURS core=326 NEW-OURS non-core=0 REGRESSION=0
+separate: KNOWN-P4=1 PENDING-18=18
+partition: 550 total; final buckets + separate = 550
+old 276 reference: 276 records; bad-row intersection=40; status matching used current full XML, not a 276-row cap
