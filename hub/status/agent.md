@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T05:53:14Z | dispatcher heartbeat 10s | live 1 (sol 1, luna 0, other 0) | busy30 25 | status age 0m -->
+<!-- agent | 2026-10-24T05:55:30Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 23 | status age 2m -->
 # agent board, 2026-10-24T05:52:40Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -67,6 +67,8 @@
 | F-D09-remainder | Qualify exact retained originals | Runtime Luna | Existing source and receipts | ready | failover-ok; assigned Runtime H32 | 3 originals; verify existing proof before one bounded qualification. [Assignment](../../design/peer-agent-to-runtime-20261024T0554Z-H32-three-remainder-assignments.md) | Current2007 |
 | F-G5-restructure-remainder | Qualify exact retained originals | Runtime Luna | Existing source and receipts | ready | failover-ok; assigned Runtime H32 | 7 originals; verify existing proof before one bounded qualification. [Assignment](../../design/peer-agent-to-runtime-20261024T0554Z-H32-three-remainder-assignments.md) | Current2007 |
 | F-normal-publish-remainder | Qualify exact retained originals | Runtime Luna | Existing source and receipts | ready | failover-ok; assigned Runtime H32 | 8 originals; verify existing proof before one bounded qualification. [Assignment](../../design/peer-agent-to-runtime-20261024T0554Z-H32-three-remainder-assignments.md) | Current2007 |
+
+| F-SDK-proof-remainder | Map retained SDK originals to existing proof | Luna | Published qualified receipts | doing | agt-F-SDK-proof-map-0554 | Read-only exact-node mapping; excludes Runtime H32, Viewing ABA and all new body runs. No census credit yet. | Source2007 |
 
 P1: GO recorded. Original18792 passed both cases; independent0036/0040 passed. P4 and P5 done. G5 merged under H24. App and Proof own P2/P3 failures and next actions.
 Integration: 2007cf7aaf joins reviewed D40 test support119850 plus014db above9cd3. Headless and ABA forwarding stack and sheet assertions remain integrated with0500 PASS71+5+53. No pending Viewing source merge.
