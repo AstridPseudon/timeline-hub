@@ -134,3 +134,107 @@ def test_v2_recorder_cannot_enter_acceptance_as_legacy_bindings(recorder, monkey
         publish(submitted, "stripped")
     assert reached
     assert tuple(runtime.store.conn.iterdump()) == before
+
+
+@pytest.mark.parametrize("private_capture", [False, True])
+@pytest.mark.parametrize("omitted", ["fork.source", "native_bindings", "reads", "selections"])
+def test_complete_native_coverage_cannot_be_inferred_from_remaining_physical_bindings(
+        recorder, monkeypatch, private_capture, omitted):
+    """Keep full physical effect coverage while removing native obligations.
+
+    Raw semantic requests need not carry captured read/selection/binding claims.
+    An original/landing carrier copied from the rewritten records cannot supply
+    an independent expectation of what the native executor actually observed.
+    """
+    from runtime_protocol.timeline_commit_port import RequestCommitPort
+    from runtime_protocol.timeline_commit_validation import digest
+
+    runtime, _project, fork, publish = recorder
+    submitted = fork(True)
+    for key in ("resolved", "reads", "selections", "bindings", "expect", "authorship"):
+        submitted["commands"][0].pop(key, None)
+    validate_commit_value(submitted, "CommitRequest")
+    accept = RequestCommitPort.accept
+    reached = []
+
+    def attack(port, prepared):
+        value = copy.deepcopy(prepared)
+        record = value["records"]["commands"][0]
+        assert {binding["key"] for binding in record["bindings"] if binding["key"] != "commit.effect"} == {
+            "collection.owner:collection.clips", "collection.owner:collection.tracks", "fork.source", "fork.owner"}
+        if omitted in {"fork.source", "native_bindings"}:
+            record["bindings"] = [binding for binding in record["bindings"]
+                                  if binding["key"] != omitted and (
+                                      omitted != "native_bindings" or binding["key"] == "commit.effect")]
+            if omitted == "native_bindings":
+                record["command"]["bindings"] = {}
+        else:
+            assert record[omitted]
+            record[omitted] = []
+            record["command"][omitted] = []
+        assert record["bindings"] and all("physical_ref" in binding for binding in record["bindings"])
+        effects = [binding for binding in record["bindings"] if binding["key"] == "commit.effect"]
+        assert len(effects) == sum(
+            int(change["before"]["state"] == "present") + int(change["op"] != "remove")
+            for change in value["records"]["steps"][0]["patch"])
+        validate_commit_value(value, "PreparedCommit")
+        if private_capture:
+            context = port._provider_context()
+            head = value["expected_head"]
+            assert head == {"revision_id": submitted["base_revision_id"],
+                            "publication_id": submitted["base_publication_id"]}
+            execution = {"evaluated_head": head, "records": copy.deepcopy(value["records"]), "commands": [{
+                "boundary": {"base_revision_id": submitted["base_revision_id"],
+                             "base_publication_id": submitted["base_publication_id"],
+                             "evaluated_head": head, "step_id": value["records"]["steps"][0]["id"],
+                             "command_ordinal": 0, "phase": "input"},
+                "input": port.revision_closure(head["revision_id"]),
+                "output": copy.deepcopy(value["canonical_document"])}]}
+            port.capture_sequential_execution({
+                "schema_version": 1, "context": context,
+                "original": copy.deepcopy(execution), "landing": copy.deepcopy(execution),
+                "replay_bindings": [], "prepared_digest": digest(value)})
+        reached.append(value)
+        return accept(port, value)
+
+    monkeypatch.setattr(RequestCommitPort, "accept", attack)
+    before = tuple(runtime.store.conn.iterdump())
+    with pytest.raises(RuntimeErrorBase):
+        publish(submitted, "missing-native-coverage")
+    assert reached
+    assert tuple(runtime.store.conn.iterdump()) == before
+
+
+def test_supported_genuine_legacy_acceptance_remains_replayable_after_restart(recorder):
+    runtime, project, _fork, _publish = recorder
+    commits = runtime._timeline_commits()[0]
+    head = commits.head(project, "film")
+    before = commits.history(project, "film", head)
+    recorded = [entry for entry in before["items"] if entry["intent"] == "recorded"]
+    assert [entry["records"]["commands"][0]["command"]["op"] for entry in recorded] == [
+        "track.create", "occurrence.create"]
+    assert all(entry.get("recorder_abi", 1) == 1 for entry in recorded)
+    root = runtime.store.root
+    runtime.close()
+    restarted = RuntimeService(root)
+    try:
+        assert restarted._timeline_commits()[0].history(project, "film", head) == before
+    finally:
+        restarted.close()
+
+
+def test_legacy_history_cannot_acquire_injected_mode_two(recorder):
+    runtime, project, _fork, _publish = recorder
+    commits = runtime._timeline_commits()[0]
+    publication = commits.head(project, "film")["publication_id"]
+    entry = commits.history_entry(project, "film", publication)
+    assert entry["records"]["commands"][0]["command"]["op"] == "occurrence.create"
+    assert "recorder_abi" not in entry
+    metadata = json.loads(runtime.store.conn.execute(
+        "SELECT metadata_json FROM timeline_commit_history WHERE publication_id=?", (publication,),
+    ).fetchone()[0])
+    metadata["recorder_abi"] = 2
+    runtime.store.conn.execute("UPDATE timeline_commit_history SET metadata_json=? WHERE publication_id=?",
+                               (canonical_json(metadata), publication))
+    with pytest.raises(ProtocolError, match="accepted commit record is corrupt"):
+        commits.history_entry(project, "film", publication)

@@ -229,6 +229,9 @@ class TimelineCommitStore:
             valid = valid and data["status"] in {historical_status, modern_status}
             valid = valid and data["rebased_onto"] == (None if previous == base else previous)
             metadata = json.loads(edge["metadata_json"])
+            # Existing accepted events have no recorder authority commitment.
+            # Mutable history metadata cannot add that fact to an old edge.
+            valid = valid and "recorder_abi" not in metadata
             if "merge_mode" in metadata:
                 valid = valid and data.get("merge_mode") == metadata["merge_mode"]
             if "merge" in metadata:
