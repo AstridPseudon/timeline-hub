@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T21:00:17Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 6 | status age 0m -->
-# agent board, 2026-10-24T20:59:41Z
+<!-- agent | 2026-10-24T21:03:05Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 0m -->
+# agent board, 2026-10-24T21:02:19Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -145,10 +145,12 @@ D60 baseline: upstream924 terminal12396 PASS,91 FAIL,14 errors,16 skips,566 subt
 Admission: D56 Farm/schema venue stand-down and prior source/access/cleanup refusals remain stopped. No source substitute, child, KEEP release or installed-record relabel.
 Disk: 8.31 GiB free; cap4 after current four-tuple checkouts. Sweep3 removed0; compact gzipped8 old logs. All ended clean Agent trees auto recycled; no eligible non-KEEP target. Prior refused pins untouched.
 Blockers: Final cut — final core and genuine installed render remain D59 gated. P4 evidence verdict1956 is PASS; original gate remains open pending Runtime measured correction.
-Next ready: Batch2056 D73 checkouts and positive/poison preflight -> one seven-case service body. Allfour R2 PASS permits normal candidate merge; GO gets one independent verdict, NO-GO automatic summary. E2/D79 paused until ZIP.
-live 1 / cap 4; ready-undispatched 0 local. Batch2056 has four genuine checkout receipts and installed seven-case row; parsed shell/selector check PASS. Sole critical timing body follows positive/poison preflight.
+Next ready: Await the single running seven-case service 1960. All four R2 originals must pass before normal candidate merge. GO gets one independent verdict; NO-GO gets automatic summary only. E2 and D79 paused until ZIP.
+live 1 / cap 4; ready-undispatched 0 local. Batch 2056 passed genuine four-checkout, parsed command, positive stub once and poison zero checks. One seven-case service body 1960 is running; live failures are not a final verdict.
 Inbox consumed through 1087671 bytes, including Runtime2048 consolidated RELEASE. Current-seed hold cleared; no further source approval owed.
 D79 later: Inventory1831 complete; no full accepted record/context survived. Existing non-gating input request retained. No fixture or test fabricated.
 Continuation: P4 current service row uses the1948 opt-in profiling recipe. After qualified Runtime fix, worker restores normal unprofiled launch via guarded registry route for D83 original batch; no repeated diagnostic profile.
 Continuation: PARAM carrier1925 has exactly two reviewed donor blobs and99 controls, but remains unmerged. True2 candidate results do not qualify current home. Preserve this distinction through fix adoption, batch result and normal merge.
 Current pass 2026-10-24T20:56:45Z: Runtime2048 expressly releases consolidateddc55 and removes narrow seedcomparison prerequisite. U4a normal home5fc1 merged; exact donor candidate21c6 committed with99controls/staticPASS. Seven-original worker2056 dispatched in same pass. No extra source review, diagnosis or original duplicate. Five tracked failures remain open pending genuine batch result.
+
+Pass 2026-10-24T21:03Z: PLAN, common rules, header and new inbox through 1089771 bytes consumed. Batch 2056 is genuinely running service 1960 on candidate 21c6 / Runtime dc55, no profile. Live log shows failures; five historical scopes remain open until exact terminal membership. No duplicate body, diagnosis or red merge. Current disk 8.3 GiB, cap 4. Only ended extant Agent tree is dirty G2; no eligible non-KEEP recycle. Sweep 3 and compact are running through guarded tools; prior denied pins remain untouched.
