@@ -23,6 +23,8 @@ const normalHomes = {
   runtime: process.env.D66_NORMAL_RUNTIME_HOME ?? '/home/user/work/runtime',
 };
 
+const checkoutPrefixes = { agent: 'agt-pin', runtime: 'rt-pin' };
+
 const selectedEnvironment = {
   agent: ['D66_AGENT_CHECKOUT', 'ASTRID_CHECKOUT'],
   runtime: ['D66_RUNTIME_CHECKOUT', 'ASTRID_RUNTIME_CHECKOUT'],
@@ -36,14 +38,22 @@ function optionalGit(dir, args) {
   try { return git(dir, args); } catch { return null; }
 }
 
-function sourcePath(env, role) {
+export function exactCheckoutPath(role, head, checkoutRoot = '/home/user/work/wt') {
+  return path.join(checkoutRoot, `${checkoutPrefixes[role]}-${head.slice(0, 8)}`);
+}
+
+function missingCheckoutError(role, head, checkout) {
+  return new Error(`D66 ${role} current normal HEAD ${head} needs a detached exact checkout at ${checkout}; request-checkout ${role} ${head} "D66 current ${role} source"`);
+}
+
+function sourcePath(env, role, normalState) {
   const key = selectedEnvironment[role].find((candidate) => env[candidate]?.trim());
-  if (!key) {
-    throw new Error(`D66 ${role} source is not selected; the test service must provide ${selectedEnvironment[role][0]} from its normal exact-checkout route`);
-  }
-  const requested = env[key].trim();
+  const requested = key
+    ? env[key].trim()
+    : exactCheckoutPath(role, normalState.head);
+  if (!key && !existsSync(requested)) throw missingCheckoutError(role, normalState.head, requested);
   if (!path.isAbsolute(requested)) throw new Error(`D66 ${role} source must be an absolute checkout path: ${requested}`);
-  return { key, requested };
+  return { key: key ?? 'automatic exact checkout route', requested };
 }
 
 /** Pure control shared by the launcher and its focused tests. */
@@ -53,7 +63,7 @@ export function validateSelectedSource({ role, selected, normal, normalState, se
   if (selectedState.branch) throw new Error(`D66 ${role} source must be detached: ${selected}`);
   if (selectedState.dirty) throw new Error(`D66 ${role} source is dirty: ${selected}`);
   if (selectedState.head !== normalState.head || selectedState.tree !== normalState.tree) {
-    throw new Error(`D66 ${role} source is not the current normal head: selected ${selectedState.head}/${selectedState.tree}, current ${normalState.head}/${normalState.tree}`);
+    throw new Error(`D66 ${role} source is not the current normal head: selected ${selectedState.head}/${selectedState.tree}, current ${normalState.head}/${normalState.tree}; use detached exact checkout ${exactCheckoutPath(role, normalState.head)}`);
   }
   return { checkout: selected, head: selectedState.head, tree: selectedState.tree, normal_home: normal, normal_head: normalState.head, normal_tree: normalState.tree };
 }
@@ -78,7 +88,7 @@ function selectSources(env = process.env) {
   for (const role of ['agent', 'runtime']) {
     const normal = realpathSync(normalHomes[role]);
     const normalState = checkoutState(normal);
-    const requested = sourcePath(env, role).requested;
+    const requested = sourcePath(env, role, normalState).requested;
     const selectedRoot = realpathSync(requested);
     selected[role] = validateSelectedSource({
       role, selected: selectedRoot, normal,

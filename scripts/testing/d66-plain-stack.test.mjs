@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { validateSelectedSource } from './d66-plain-stack.mjs';
+import { exactCheckoutPath, validateSelectedSource } from './d66-plain-stack.mjs';
 
 const state = (overrides = {}) => ({
   root: '/snapshot/agent', head: 'a'.repeat(40), tree: 'b'.repeat(40), branch: null, dirty: false, ...overrides,
@@ -39,4 +39,9 @@ test('D66 refuses attached or dirty source checkouts', () => {
     role: 'runtime', selected: '/snapshot/runtime', normal: '/home/user/work/runtime',
     normalState: state(), selectedState: state({ root: '/snapshot/runtime', dirty: true }),
   }), /dirty/);
+});
+
+test('D66 derives the supported detached route from the captured normal head', () => {
+  assert.equal(exactCheckoutPath('agent', 'a'.repeat(40)), '/home/user/work/wt/agt-pin-aaaaaaaa');
+  assert.equal(exactCheckoutPath('runtime', 'b'.repeat(40), '/tmp/checkouts'), '/tmp/checkouts/rt-pin-bbbbbbbb');
 });
