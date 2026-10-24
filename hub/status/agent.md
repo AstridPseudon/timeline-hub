@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T17:08:26Z | dispatcher heartbeat 10s | live 2 (sol 1, luna 1, other 0) | busy30 19 | status age 0m -->
+<!-- agent | 2026-10-24T17:11:15Z | dispatcher heartbeat 10s | live 2 (sol 1, luna 1, other 0) | busy30 20 | status age 0m -->
 # agent board, 2026-10-24T17:02:13Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -121,7 +121,7 @@
 | P4 current service | Qualify repaired single-edit original | Luna / Service | Current source | merged | Launcher1633; actual30725 FAIL1 | Original failed later no-leak predicate; D71 fixes product, original unchanged. [JUnit](../../design/handoff-agt-P4-single-30725-p4-current-single.xml) | Agent ef036 / Runtime bc227 |
 | D69 current launch | Qualify restored47 and two predicates | Luna / HARD Sol | Actual service preflight | doing | Sol1642; whole path1634; service17475 | Exact49 collected.17475 also zero-body: direct HEAD guard rejects synthetic snapshot. Sol1642 owns exact parent predicate and real stub preflight. | Agent ef036 / Runtime bc227 |
 
-| G2 P4 read boundary | Keep authenticated cache private | HARD Sol / Luna | D71 answered | doing | Sol1701 resumes1639 | Original P4 unchanged; one security review then service rerun. [Decision](../../managers/agent/INBOX.md) | Base3cc55 |
+| G2 P4 read boundary | Keep authenticated cache private | HARD Sol / Luna | D71 answered | doing | Sol1711 resumes20f7 | Draft5+196PASS, restructure caller exposed; authorized publish.py/private caller completion1711, original P4 unchanged. [Decision](../../managers/agent/INBOX.md) | Base3cc55 |
 
 | D69 actual49 checkpoint | Qualify restored47 and two assertions | Service | Product failure follow-through | review | Actual service23762 | All49 ran:39 FAIL10PASS17.11s. Exact47 subset37FAIL10PASS; two audit predicates FAIL. [JUnit](../../design/handoff-agt-F-D69-23762-d69-restored47.xml) | Agent ef036 / Runtime bc227 |
 | D69 CLI failures | Map retired CLI behavior coverage | Luna | D72 ready at cap | ready | Next free Luna slot | Eleven retired-interface failures; ledger mappings plus targeted replacement tests for uncovered capabilities. No old aliases. | Source8a2f |
@@ -140,7 +140,9 @@
 
 | U4a popup provenance | Bind new normal Runtime product | Luna | Normal reviewed producer receipt | doing | Adoption1710 | Actual normal Runtimeb318 popup fix observed; preserve schema867f and15 canonical bytes, normal tools only. | Source8a2f |
 
-Integration: Agent8a2f5bb4f8 includes true upstream924 merge, D62 client/consumer, unchanged47 restorations, reviewed CLI terminal hints81a261 and tool-only Runtime5c1 provenance578420. Canonical15 unchanged. Runtime5c1 product equals qualifiedbc227; only reviewed skip-policy files changed.
+| P4 pinned submission | Fix current-head launch race | Luna | D73 ready at cap | ready | Brief1711 prepared | Exact4SHAs captured once; normal checkout receipts before service body, no late current resolution. | Harness only |
+
+Integration: Agent200819d572 includes reviewed R2 root replay14c8 and true upstream924 merge, D62 client/consumer, unchanged47 restorations, reviewed CLI terminal hints81a261 and tool-only Runtime5c1 provenance578420. Canonical15 unchanged. Runtime5c1 product equals qualifiedbc227; only reviewed skip-policy files changed.
 core open: 4 tracked: two P4 and two source-copy redo. CLI two actual-home originals now PASS2 on8a2f/5c1. Separate37 D69 restored failures now have D72 migration/retirement owners; no unqualified known-gap label. D71 no-leak regression now has active Sol1701. Root inverse actual-home PASS1.
 regressions: D71 confirms one P4 no-leak regression; active Sol1701. Two CLI output-order regressions closed at actual-home1703 PASS2 on8a2f/5c1. All37 D69 restored failures require D72 qualification; duplicate stricter admission is not called a repair. Prior181 PASS16.
 D60 baseline: Upstream924 full1621 terminal FAIL: 12396 passed, 91 failed, 14 errors, 16 skips, 566 subtests. Exact276:199 NEW-OURS and77 counterparts. Mutable external Runtime scope remains disclosed.
@@ -153,5 +155,5 @@ Blockers: Agent — D72 resolves original37 disposition. Parallel faithful migra
 
 Blockers: Runtime — P4 ten-note timeout45s, unique HARD Sol1652 on immutable-schema resolver strategy after Luna profile. All validation and D47 no mutable-result cache retained.
 Next ready: consume sourcecopy1655 and private-cache1701, dispatch one independent security review per completed core change; actual CLI home1703. Apply D69 disposition1654 immediately. Final-core and unchanged P4 proofs follow meaningful reviewed source.
-live 4 / cap 4; ready-undispatched 4. Sol1701 D71; Luna1710 adoption,1709 element review and1707 approval. D72 create2,retired CLI,retired SDK,duplicate ready at cap. Three render families assigned Runtime.
+live 4 / cap 4; ready-undispatched 6. Sol1711 resumes D71 callers; Luna1710 adoption,1709 element review and1707 approval. D72 create2,retired CLI/SDK,duplicate; D73 harness and new D71 independent whole-path ready at cap. Three render families assigned Runtime.
 Inbox consumed through D72 relay2026-10-24T17:01:22Z and full D71. Both decision waits cleared. Runtime board16:52 and App16:55 rechecked; normal Runtime5c1 provenance merged8a2f. D71 decision wait cleared immediately. Pass 2026-10-24T17:02:13Z.
