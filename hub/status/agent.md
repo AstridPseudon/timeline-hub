@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T09:26:37Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 1m -->
-# agent board, 2026-10-24T09:24:46Z
+<!-- agent | 2026-10-24T09:29:00Z | dispatcher heartbeat 12s | live 1 (sol 1, luna 0, other 0) | busy30 9 | status age 0m -->
+# agent board, 2026-10-24T09:29:01Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -139,14 +139,16 @@
 | F ABA lost-ack path | Preserve exact undo flight on transport errors | Sol / Luna | Integrated targeted PASS | merged | Viewing0906; home0916 PASS17 | Actualba55 exact testblob and unchanged product bytes; six offline controls plus11 existing checks pass. No original repair claim. | ba55ac1e9e |
 | F Farm giant regression | Attribute315 lines and verify smallest repair | Luna / Luna | Exact repair and causal reviews PASS | merged | Source0904; cause0909/0914 PASS | Current14,330 and rationale match prior PASS. Farm315=31 inherited+284 D40; laterU2+17. No new source,body or count credit. | Existing8c5ae21/a8f4 |
 | OPS shared schema input | Return genuine distribution provenance | Luna / Luna | Independent review passed | merged | Author 0918; independent 0922 PASS | Version 0.0.2, VCS pin and 12 installed hashes pass. Original wheel unknown. [Review](../../design/agt-OPS-schema-input-review-0922.md). | Evidence only |
-| R1 popup rebase | Classify intermediate fork binding refusal | Luna | Actual App donor d99fd | doing | agt-R1-popup-rebase-classify-0922 | Read-only legitimate provider lifecycle comparison; App cumulative 0908 stays separate. Due 09:45. No pin or body change. | Agent ba55; witness 67d5 |
+| R1 popup rebase | Preserve same-step fork continuation | Sol / Luna | Current-source classification 0922 | doing | Sol agt-R1-fork-rebase-sol-0928 | Current accepted passes, merged binding fails. Source-only repair and strict controls; review next. Due 10:00. No gate-pin claim. | Base ba55; witness 67d5 |
+
+| R1 popup gate source | Qualify coherent selected 079 provider | Luna | Exact App donor and 079 | doing | agt-R1-popup-079-source-0930 | Read-only offline caller proof on all coherent pin modules. Mixed-version probe gave no result. Due 09:55. No pin edit. | Selected 079 |
 
 P1: Historical GO recorded. P4 and P5 retain their named scopes; final freeze reruns all gates. App and Proof own P2/P3.
 Integration: ba55ac1e9e adds only reviewed offline transport tests, integrated0916 PASS17. Runner67d5 static PASS; product0ff3 independently20PASS; earlier0c2 joined123 retains its scope. Original20732 failed at lost-ack error code.
 Count: Official263 closed /4 open of267 restored after independent current-repair0904 and causal0914 PASS. Exactly123 mappings remain; census e13d65ba unchanged. Farm giant was an already repaired original, so no duplicate closure or new census artifact.
 Open originals: discovery support; generic harvest/reopen; D23 helper word-second; D23 moved-head restart. All original records and historical challenges retained.
 Farm: Checkpoint 26511 remains 17,335 passed, 288 failed, 187 setup errors and 4 skips on Agent 9cd / Runtime 45c3. Independently reviewed 96-node packet: 80 environment, 1 docs regression and 15 unknown. Setup packet: 140 environment and 47 tuple mismatches. No new Farm pass credit.
-Blockers: Farm and Runtime — full preflight refuses shared schema; actual astrid_runtime absence is unconfirmed. Agent source-input0918 and independent0922 PASS are returned. Runtime distributions0913 owns normal maker implementation; original wheel custody stays unknown.
+Blockers: Farm and Runtime — full preflight refuses shared schema; Farm0925 physical listing confirms astrid_runtime is present; schema and xdist are not listed. Agent source-input0918 and independent0922 PASS are returned. Runtime distributions0913 owns normal maker implementation; original wheel custody stays unknown.
 Blockers: Runtime private verifier — child failed installed NumPy RECORD. First correction49c9 failed independent0840 on containment, grammar and stale baseline; return0848 active. No child retry before clean review and install.
 Runtime: Producer becfe is independently qualified and all 15 Agent mappings now match. Shared authority is qualified on 460c and its exact-auth descendant becfe. Runtime has all 36 original failures closed at recorded scopes.
 App: Complete IMAGE 0554 and independent 0636 PASS retained at direct RuntimeService scope. No additional producer or realm; no inferred original-node credit.
@@ -156,5 +158,5 @@ D49 venue: Agent final full on Farm after a zero-setup-error checkpoint. Fallbac
 Safety: Prior Farm, monitor, publication, bench and cleanup refusals remain stopped. No denied action retried.
 Disk: About11 GB free. Fresh read-only check found one remaining finished non-KEEP Agent tree; it is dirty. No eligible clean merged tree to recycle. Prior cleanup refusals remain stopped; light work proceeds.
 Later: D31/D37 dormant implementations and tests unchanged. V4 and D14/D23 remain cut or deferred. D46 U2c closed and folded into the freeze; relay and remote providers stay deferred and fail-closed. D47 memo held.
-Next ready: Schema input independently0922 PASS and returned; R1 popup classification0922 active. Transport home0916 passed17. Runtime owns ABA diagnosis0915, verifier final0903 and distribution0913. No ready Agent task waits.
+Next ready: Schema input independently0922 PASS and returned; R1 popup classification0922 confirms current-source failure; HARD Sol0928 queued. Transport home0916 passed17. Runtime owns ABA diagnosis0915, verifier final0903 and distribution0913. No ready Agent task waits.
 Evidence: [D39 review](../../design/agt-D39-header-review-0809.md), [ABA review](../../design/agt-F-ABA-cumulative-review-0809.md), [wheel input](../../design/agt-OPS-real-wheel-qualify-0810.md), [Farm checkpoint](../../design/farm-agent-full-checkpoint-20261024T0555Z.md).

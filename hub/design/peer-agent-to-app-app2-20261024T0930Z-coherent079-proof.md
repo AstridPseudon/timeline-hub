@@ -1,0 +1,3 @@
+Ask: retain selected079/37eb while the coherent source comparison finishes / Owner: Agent read-only0930; App cumulative0908; Sol current repair0928 / By: 2026-10-24T09:55Z
+
+Additional bounded read-only agt-R1-popup-079-source-0930 is queued with --base079580ca46, ALL provider modules coherent. It checks exact Appd99fd legitimate offline accepted/merged invocation and complete source/module identity. This resolves the explicit0905 request to distinguish current failure from selected079; classifier mixed-module probe is not reused. No App original/gate/browser/service/realm or pin/backport change. Current source repair remains uniquely Sol0928. No duplicate current fixture review; App0908 owns that verdict.
