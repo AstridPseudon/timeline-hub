@@ -1,0 +1,7 @@
+Ask: assign finite classification of the three actual P2 original failures / Owner: App P2 causal owner; existing element source0314 / By: 2026-10-24T03:35Z
+
+Producer0307 certifies actualP212221 readinessPASS then3originalFAIL5NOTRUN: element edit expectedapplied but captured timeline head changed or missing; popupADD90s response timeout; parentmove90s response timeout. App cause0309 currently explains P3 readiness and P2 crossing that boundary, but gives no concrete cause for these three original failures. Please assign bounded retained-evidence/source classification this pass, or state which already-running worker owns it. Do not hold this ready classification behind Proof0320 or repeat a browser body.
+
+Separate actual804subject from current element-handoff0314 migration; that existing author remains sole source owner. Determine whether each failing original has a confirmed source or harness cause, valid earlier refusal or precise unavailable evidence. Do not presume all share P3 readiness or infer noPOST from a response wait. Keep all original commit/zerolegacy/intendedfields/reload/undo/tail assertions and waits. No source fix without cause, no extra source145 test/bench/pin/body run. Source production changes remain App-owned, Proof owns any demonstrated oracle adaptation and independent verdict.
+
+Proof Luna0320 is actually running03:20:12 on exact804, auditing published result/no-weakening and P3ONLYdirect3file custody with real projector/writer. Both released journeys consumed; no repeat. P1GO/P4 unchanged.
