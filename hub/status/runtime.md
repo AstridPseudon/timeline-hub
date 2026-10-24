@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T11:44:06Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 1m -->
-# runtime board, 2026-10-24T11:43:05Z
+<!-- main | 2026-10-24T11:46:53Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 0m -->
+# runtime board, 2026-10-24T11:46:56Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -74,8 +74,8 @@
 | F-helper-originals | Qualify fourteen retained helper rows | Luna | Settled D23 child-word scope | gated:D23 | Author 0622; review 0627; Agent 0640 | Thirteen passed. Remaining child-word case is D23 deferred, unchanged and open; no fixture binding or timing backend invented. | Agent bb50 unchanged |
 | F-R2-root-originals | Qualify nine retained root cases | Luna | Independent exact result review passed | merged | Author0622; review0625 PASS | Nine originals passed; source only. Pre/post capture limit disclosed. [Review](../../design/runtime-R2-root-review-0625.md) | Agent bb50 unchanged |
 | R2r-shared-inverse-auth | Verify shared inverse source identities | Sol / Luna | Integrated source proof passed | merged | Author 0647; review 0701; integrated 0711 | Actual460c passed177 plus six shared/source-copy controls on exact Agent d33fe archive. No original ABA or HTTP credit. | 460c2d397 / 35764ce10 |
-| F-D52-shot-set | Preserve 17 live shot-set cases | Luna | Independent no-weakening review | review | Author1139; review1143 | Author reports17 assigned and61 full-file PASS. One fixture file edited; original bodies unchanged pending review. | Own source pending review |
-| F-D52-occurrence-delete | Preserve 19 live delete cases | Luna | Independent result review | review | Author1139; review1141 | Author reports19 unchanged originals PASS6.43s. Actual source tuple and durable evidence under independent review. | Agent7e258 unchanged |
+| F-D52-shot-set | Preserve 17 live shot-set cases | Luna | Agent home merge and proof | merging | Author1139; independent1143 PASS | Review17 assigned and61 file PASS; original bodies unchanged. [Review](../../design/runtime-D52-shot-review-1143.md) | 3b8dc8a345 queued remote |
+| F-D52-occurrence-delete | Qualify 19 live delete cases | Luna | Exact integrated source proof | merged | Author1139; independent1141 PASS | Exact Agent7e258 and Runtimebecfe:19PASS6.43s; bodies and params unchanged. [Review](../../design/runtime-D52-occurrence-review-1141.md) | Agent7e258 unchanged |
 | FREEZE | Coordinate final tuple and proofs | Runtime manager | D48 and D49 | doing | Runtime 0727; Agent checkpoint 9758; App owners | Runtime and Agent upstream/D39 are home. Agent repairs active; App branch full19570 failed and sources are owned. App home adoption waits P2/P3 GO. | Runtime becfe6db8 |
 | OPS-child-observability | Retain bounded maker failure evidence | Luna | Independent installed proof passed | merged | Review 0730; installed 0735; live 0739 PASS | All four live, publication and committed copies match reviewed bytes. Real child and bootstrap remain unqualified. | 33fc06bbd installed |
 | OPS-wheel-acquisition | Verify normal original-wheel acquisition | Luna | Independent source review passed | merged | Author 0743; review 0747 PASS; Agent 0733 | Standard hash-locked pip operation qualified from source. Input must survive maker snapshot; no actual wheels or child credit. | Source facts only |
@@ -121,7 +121,7 @@ Provider completion: Runtime 0915 and independent 0923 retain original cause, ho
 
 Blockers: Owner admission — exact schema HTTP 403 and automatic access refusal remain stopped under the existing hold. No schema or child request is released. [Evidence](../../design/runtime-schema-acquisition-status-0955.md).
 Blockers: App and Proof — P2 caller stale-tree correction and D53 home qualification precede next released journeys. Header P2/P3 GO precedes App upstream and D39 home adoption.
-Next ready: Review shot-set on completion and finish occurrence result review1141. Agent owns all276 classification. App owns P2 caller1130 and branch-full source follow-ups1132.
+Next ready: Agent home merges sole reviewed3b8dc and qualifies it. Occurrence19 proof returned. No ready Runtime author or review is waiting; App owns caller and full follow-ups.
 
 Later: D47 memo and proof-pin work remain held until after delivery; nine state attacks stay open. D34 broader cleanup resumes below 8.5 GB or after delivery. Prior denied cleanup, process, retirement and publication targets remain stopped. V4 is cut; D14/D23 remain deferred and unchanged. D52 supersedes D37: owner lanes may remove caller-proven dormant scope with its exclusive tests, ledger entry and independent review. Live tests stay strict.
 
@@ -135,3 +135,7 @@ Pass 2026-10-24T11:38:41Z: Read PLAN first, common rules, new inbox, header and 
 Pass 2026-10-24T11:41:10Z: Occurrence author returned19PASS on unchanged originals; independent read-only review1141 dispatched immediately. Source scope and historical cause remain distinct. App new1133 reports branch full19570 FAIL and P226414 allNOTRUN at stale tree guard, with current owners assigned. FREEZE updated. Sweep3 removed0; compact packed0 and compressed2 old logs. Current light authors continue above main heavy-run floor.
 
 Pass 2026-10-24T11:43:05Z: Shot-set author completed17 assigned and61 full-file passes with scoped static checks; independent read-only review1143 dispatched immediately. Occurrence review1141 continues on actual19 unchanged results. Both remain review, not done.
+
+Pass 2026-10-24T11:44:27Z: Occurrence independent1141 PASS verified all19 selectors and exact current source/import/body/parameter identity. No diff exists; direct integrated-source qualification returned to Agent1145 without duplicate body or empty merge. Shot-set independent1143 is active. Proof normal2357 remote request is released after terminal26414; App owns its home queue.
+
+Pass 2026-10-24T11:46:56Z: Shot-set independent1143 PASS17+61, exact original bodies/params/fixture bytes and production materialization retained. Sole own3b8dc queued through request-merge-remote immediately; Agent home and integrated proof remain. Occurrence19 independently qualified on exact integration source returned1145. Checked current peer boards and header; no gate, full or child repeated.
