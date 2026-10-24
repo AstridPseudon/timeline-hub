@@ -328,6 +328,7 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - The ZIP README lists it as a post-install check, with the exact env vars to set.
   - Agent's core-open target is therefore 6 (4 fork + 2 forward), all on D62 / forward-created auth.
   - This is not a permission-refusal case, so no owner action is needed.
+- **H46 (19:42Z):** popup shot-owner fix merged (87bc); P3 26908 NO-GO (recovery count 3 vs 4); P4 ten-note still >45 s (profile ordered); element capture 13100 reached accept. Agent core 5.
 - **H45 (18:55Z):** ETA ~12:00Z 25 Oct (06Z 25 Oct to 04Z 26 Oct). Gates: P1 GO current (26312/1616); P2 22847 0/3/5; P3 NO-GO (D75b applied); P4 ten-note 45 s FAIL. Critical path: D80 per-gesture diagnostics plus the D78 element hang, then a full P2 rerun.
 - **H43 (16:45Z) gates:** P2 25943 NO-GO (0 pass / 3 fail / 5 notrun: element doc.patch hang -> Runtime Sol; popup 422 physical observation -> Runtime whole-path, D54a check vs 8b32/bc227; parent reads present -> App 1625). P3 10033 NO-GO on the history oracle missing recorder_abi (App fix done). P1 current control 13564 fails its initial split (App Sol1600). Agent core open 3 (inverse proof pending on bc227; P4 single edit; P4 ten-note timeout). Reverse diff done: 47 restored, 178 audited (167/9/2).
 - **H42 (15:40Z):** ETA ~08:00Z 25 Oct (03-22Z). Critical path: App plain-launch boot (D66) -> P2/P3 parallel; Runtime D62 bundle -> one regen -> Agent 4 fork + 2 forward proofs -> manifest pin -> cut.

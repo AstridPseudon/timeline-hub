@@ -1,0 +1,2 @@
+PASS: finite helper delegation, exception, scope, raw profile, counts, output and source-link checks
+SANITY ONLY: no authentic P4 body and no performance measurements
