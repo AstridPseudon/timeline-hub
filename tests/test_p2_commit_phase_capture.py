@@ -274,6 +274,35 @@ def test_dispatch_scope_expires_after_deferred_response_before_handler_reuse(ser
     assert capture._thread_requests == {}
 
 
+def test_observer_avoids_line_events_and_unrelated_request_lookups(service):
+    counts = {"line": 0, "unrelated_lookup": 0}
+
+    class CountingCapture(P2CommitPhaseCapture):
+        def _trace_inner(self, frame, event, arg):
+            if event == "line":
+                counts["line"] += 1
+            return super()._trace_inner(frame, event, arg)
+
+        def _request_for_frame(self, frame):
+            if (self._phase(frame) is None
+                    and frame.f_code.co_qualname != "CommitExecutionCoordinator.execute"
+                    and frame.f_code not in self._frames):
+                counts["unrelated_lookup"] += 1
+            return super()._request_for_frame(frame)
+
+    body = commit_request(service)
+    handler = _handler(service, body)
+    capture = CountingCapture(enabled=True)
+    with capture:
+        handler._dispatch()
+
+    assert handler.sent_status == 200
+    assert json.loads(handler.wfile.getvalue())["data"]["status"] == "accepted"
+    assert _summary(capture)[0]["phases"]["receipt"]["status"] == "observed"
+    assert capture.failures == 0
+    assert counts == {"line": 0, "unrelated_lookup": 0}
+
+
 def test_watchdog_captures_a_genuine_pending_handler_with_all_python_threads(tmp_path):
     entered = threading.Event()
     release = threading.Event()

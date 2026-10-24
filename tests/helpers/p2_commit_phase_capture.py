@@ -366,6 +366,8 @@ class P2CommitPhaseCapture:
 
     def _trace_inner(self, frame: Any, event: str, arg: Any) -> Any:
         if event == "call":
+            # Phase attribution needs call/return/exception, never line events.
+            frame.f_trace_lines = False
             previous = self._frames.get(id(frame))
             if previous is not None and previous.get("phase") == "coordinator_admission":
                 return self._trace
@@ -380,10 +382,15 @@ class P2CommitPhaseCapture:
                     if (parent.f_globals.get("__name__") == "runtime_protocol.server"
                             and parent.f_code.co_qualname == "RuntimeHandler._dispatch"):
                         self._frames[id(parent)] = {"phase": "request_scope", "ordinal": ordinal}
+                        parent.f_trace_lines = False
                         parent.f_trace = self._trace
                         break
                     parent = parent.f_back
                 return self._trace
+            if (phase is None
+                    and frame.f_code.co_qualname != "CommitExecutionCoordinator.execute"
+                    and frame.f_code not in self._frames):
+                return None
             ordinal = self._request_for_frame(frame)
             if phase is None and frame.f_code.co_qualname == "CommitExecutionCoordinator.execute":
                 ordinal = ordinal or self._new_request()
@@ -403,8 +410,6 @@ class P2CommitPhaseCapture:
                            if phase == "http_response" and type(frame.f_locals.get("status")) is int else {}))
             self._frames[id(frame)] = {"phase": phase, "ordinal": ordinal, "error": False,
                                        "yielded": False, "acquired": False}
-            if phase == "coordinator_admission":
-                return self._trace
             return self._trace
 
         state = self._frames.get(id(frame))
