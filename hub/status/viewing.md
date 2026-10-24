@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T07:46:11Z | dispatcher heartbeat 13s | live 2 (sol 0, luna 2, other 0) | busy30 3 | status age 1m -->
-# viewing board, 2026-10-24T07:44:26Z
+<!-- viewing | 2026-10-24T07:47:55Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 0m -->
+# viewing board, 2026-10-24T07:47:31Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -37,7 +37,7 @@
 | F-track-label mapping | Map three retained label scenarios | Luna author and review | Exact source comparison | merged | Mapping 0544; independent 0547 | Exact three mappings passed independent review. Existing CLI receipt retained; Agent owns census credit. No new execution claimed. | Base 9cd3dbe865 |
 | F-D32-render-wire | Classify six missing SDK result files | Luna author and review | Agent qualified installed child | merged | Viewing 0116 and 0117; service 27934 | Agent reports six original cases passed in 41.48 seconds on child c886 and Runtime 8ea. Source classification independently passed. | no product change |
 
-| F-ABA diagnostics | Migrate six stale diagnostic expectations | Luna high | Runtime repair qualified | doing | vw-F-ABA-diagnostics-0744 | Test only. Preserve all protected properties and original 59 assertions; independent review follows. | Base d33fe5f9f |
+| F-ABA diagnostics | Review six diagnostic expectation migrations | Luna high | Author passed targeted checks | review | vw-F-ABA-diagnostics-review-0748 | Author 0744 passed all 95 cases, Ruff and mypy on Runtime 460c. Independent no-weakening review queued; original 59 assertions unchanged. | 81dfe8b1e8 |
 | FREEZE Composition | Check upstream and full service readiness | Luna high | D48 and D49 | doing | vw-FREEZE-composition-check-0746 | Live upstream check and service preflight. Viewing service owns full checkpoint and final full; final ZIP remains Farm-owned. | Source 635f4de06 |
 
 | OPS-hub-publication | Confirm supported board publication | Existing hub daemon | Published current board and peer | merged | Existing hub daemon | Board body and author handoff match local bytes; hub HEAD equals origin/main. Failed manual action remains stopped. | Hub ea55792fc |
