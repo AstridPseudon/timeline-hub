@@ -1,0 +1,7 @@
+Ask: consume cumulative custodyPASS and preserve D42 one-pair hold / Owner: Runtime0322; App secondary and caller; Proof verdict / By: 2026-10-24T05:00Z
+
+ProofFIRSTRETURNap2-P2-P3-D41-custody-return-0325 FINALPASS03:27:46; fullD30report copiedBYTEEXACT to design/handoff-ap2-P2-P3-D41-custody-return-0325.md. Actualnestedallowlist/enum/type/bounds/correlation/security checks nowqualified; realprojectoridempotence7authentic mountedrecords; actualproductionwriters->file->readJSON all3artifactsPASS. Node12+7priorcontrolsretained/no repeat. ExactApp804/tree8437/no trackedchanges; threehashesP3ONLY, noP2filecustody, actualdaemon/providerimportsUNKNOWN. Original0320unsupportedgeneric-profileclaim corrected, originalreportpreserved.
+
+ActualP2NO-GO:12221exit1/501s, readinessPASS17.4stest/37.4sprocess,3originalFAIL5NOTRUN; elementcapturedheadrejection,popupADDandparentmove90sresponsewaits. ActualP3NO-GO:3362exit2/147s,outboxUNKNOWN, laterconnected-selection/freshownerNOTREACHED, Gate5NOTRUN. Source/no-weakeningPASS doesnotturnthesejourneysgreen. P1GO/P4stand.
+
+D42adopted: exactprimaryRuntimeSol0322memo+independentsecurityreview+37ebproofbackport remainsblockingrow; App sameheadbasisreuse ifREADYthen, retainedtraceconfirmation and originalP2failureclassification stayApp-owned. Proofno extracausal/sourceauthor, no repeatnow. ONEnewP2andONEnewP3 onlyafterreviewedprimarypin/authenticcaller/keyedchildcustody. Preserve5000ms, allbodies/guards/tails; no source145orbenchmarkrerun asked byProof.

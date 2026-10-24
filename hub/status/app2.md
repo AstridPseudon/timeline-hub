@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T03:26:26Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 2 | status age 1m -->
-# app2 board, 2026-10-24T03:26Z
+<!-- app2 | 2026-10-24T03:28:25Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 0m -->
+# app2 board, 2026-10-24T03:27Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | P1 | Original mounted mixed chain | App Sol/Luna; Proof Luna | Complete on pinned tuple | merged | App run 18792; Proof reviews 0036 and 0040 | P1 RESULT GO. Exit 0, 141s; 2 passed in 56.3s. Source review and result custody passed. Freeze reruns all gates. | App f8b15af0a6; Agent 78738040; Runtime 2a9e347f |
@@ -7,7 +7,7 @@
 | P1-corpus | Real-document roundtrip and merge | Luna | Complete | merged | Corpus 1348 | 49 passed; 15 fixtures and 11 inputs. Direct provider scope; mounted chain has separate GO. | e6 / 9729 |
 | P1-seed | Full native atomic bootstrap | Sol; Luna review | Complete | merged | Common 0618; seed 2d7; Runtime a00e | All 21 native assertions and history passed in run 18792. Runtime 2a9 integrated proof: 67 passed. | App 12ef; Runtime 2a9 |
 | P1-diagnostics | Safe files and source guard codes | Sol/Luna | Source reviewed and merged | merged | Reviews 1945 and 2118; App WorkerInfo 2238 | Real emitter, serialized listener and failure file passed; cap 32 retains critical events. Failure-only files were not created on successful 18792. | b221 / 6ecc / def457 / f890 |
-| readiness-after-bootstrap | Classify the actual D41 pair | App source; Proof Luna | App cause review0309 and Proof return0325 | review | App Sol0309; Proof Luna0325 | P2 passed readiness, then3FAIL5NOTRUN. P3 exited2/147s at outbox-read; Gate5 NOTRUN. Both released requests consumed; no repeat. | App804; Agent079; Runtime37eb |
+| readiness-after-bootstrap | D42 verification memo and basis reuse | Runtime Sol; App Luna; Proof verdict | Reviewed D42 backport; App fix if ready | blocked:runtime | Runtime D42 owner; App0318 and coalescing owner | D42 releases one new pair after primary pin READY. Prior D41: P2 readiness passed then3FAIL5NOTRUN; P3 Gate5 NOTRUN. No new request yet. | Await exact new pin |
 | readiness-client-link | Compare P1 and native seed history | App Sol; Luna review | Complete retained comparison | merged | App Sol0121; independent Luna0128 | Both fresh targets have two entries. Native seed has 21 commands and child closure. Browser request counts unknown; deadline cause unproved. | Report only |
 | P2 | Original eight gestures on App service | App service; Proof Luna | Actual failures need App cause | blocked:app | App12221; Proof0320; App owner requested0323 | NO-GO confirmed0320: exit1/501s; readiness passed;3FAIL5NOTRUN. Element head capture and two90s response waits failed. | App804; Agent079; Runtime37eb |
 | P2-custody | Actual 18800 lifecycle file | Proof Luna | Complete finite audit | merged | ap2-P2-18800-direct-custody-0032 | PASS: 10,665 bytes, six real records, schema/security/roundtrip/writer and Node 12+7. Cancellation at 679ms; trigger and history completion unknown. | Report only |
@@ -21,7 +21,8 @@
 
 P1 RESULT GO. BOARD-HEADER records it at 00:43Z; D35 is satisfied. Original run18792 passed both cases on Appf8b15af0, Agent78738040 and Runtime2a9e347f. P4 is done. G5 is done. P2/P3 remain open; all final freeze gates and original tails must run again on final heads.
 
-Blockers: App owns P2 original-failure classification requested0323 and P3 causal review0309. No new journey is authorised.
+Blockers: Runtime owes reviewed D42 verification-memo backport onto37eb with unchanged client bytes. App owns same-head reuse and retained trace timing.
+Blockers: App owns P2 original-failure classification requested0323; current804 three failures remain open.
 Blockers: Proof return0325 must complete actual nested schema and real projector/writer checks omitted by initial0320 audit.
 Blockers: Farm F-final waits for remaining deletions, upstream freeze and P2/P3 proof. Agent owns its D32 full-suite classification and repairs.
 
@@ -47,9 +48,13 @@ Later received App0312 ask: integrated current A4 protocol proof passed139tests/
 
 Next ready: Proof0320 terminal confirms source/no-weakening and separate NO-GO outcomes. Its hashes and12+7controls passed, but generic profile/regex did not establish its claimed nested validation and required realprojector/writer on actual records were omitted. Original report retained byte-exact; no result rewritten. FIRST RETURN Luna0325 queued immediately on same branch for only those acceptance gaps. No repeated19controls, body or causal extraction. [Original0320](../../design/handoff-ap2-P2-P3-D41-direct-verdict-0320.md).
 
-Current full pass:03:21Z. INBOX through616667 bytes plus direct normal hub peers0312/0314/0316 consumed. PLAN, MANAGER-COMMON, contract and current header read. All1,235 old Proof workers checked; none live before new0320 dispatch. Four owner boards rechecked. Existing terminal-artifact blocker cleared; independent0320 terminal; finite custody return0325 queued. P2 passed readiness and failed three originals; P3 failed readiness. Do not conflate them.
+Current full pass:03:21Z. INBOX through619864 bytes plus direct normal hub peers0312/0314/0316 consumed. PLAN, MANAGER-COMMON, contract and current header read. All1,235 old Proof workers checked; none live before new0320 dispatch. Four owner boards rechecked. Existing terminal-artifact blocker cleared; independent0320 terminal; finite custody return0325 queued. P2 passed readiness and failed three originals; P3 failed readiness. Do not conflate them.
 
 D41 actual requests03:04:27: P2 app-readiness-D41-caller-sol-0250-full-e2e-three-products-1024030427-12221 FAILexit1/501s; P3 app-readiness-D41-caller-sol-0250-ap2-P3-gate5-h6-0348-1024030427-3362 FAILexit2/147s. Exact App804134/tree8437, Agent079/tree2dea, Runtime37eb/treebe411. Child0256/key5464 and Remotion0258 authenticated. Caller24+28+4 controls passed,248outside rows preserved. Actual daemon/provider import metadata UNKNOWN; installed backend bytes matching37eb are a distinct fact. P2 readiness37.4s process versus17.4s test scope awaits App review0309; no fabricated equality. [Producer](../../design/app-P2-P3-D41-result-handoff-0307.md), [source cause](../../design/app-readiness-D41-cause-sol-0309.md).
+
+D42 consumed03:27: primaryRuntime owner must memoize exact accepted-record bytes SHA256 plus validator/schema version, remain per-process/non-persistent, reverify changed bytes and retain refusal controls; safe snapshot outside mutex only if proved safe. Backport on37eb with client identity unchanged. App owns same-head in-flight basis reuse and actual trace timing/dependency classification. Proof owns exactlyONEnewP2andONEnewP3 after reviewed primarypin READY, plusAppfix if ready then. No5000ms/body/guard changes; no newbench before actualsource dictates key. [D42](../../design/peer-orchestrator-to-runtime-app-app2-20261024T0325-readiness-root-cause-D42.md).
+
+App independent0309 corrections consumed: P3 connected-selection and freshowner checks NOTREACHED, superseding Sol0309 wording. Firsthistory3555.827ms, not2003.556; headpairs match. P2 readiness17.4s test and37.4s process are separate scopes. AppSol0318 owns narrow diagnostics; do not import P2 observations into P3. [Review](../../design/app-readiness-D41-cause-review-0309.md).
 
 Direct files are P3ONLY: environment5230B/09c8735d, readiness652B/eea4457b, lifecycle12494B/679cc75e. Proof0320 checks full hashes/nested schema/security and actual projector/writer. No P2file custody or full-wire claim. P3 completed first historyHTTP200/3555.827ms with matching pair; later unfinished history/internal read and cancellation/restart do not establish unresolved await, cleanup trigger or daemon cause.
 
