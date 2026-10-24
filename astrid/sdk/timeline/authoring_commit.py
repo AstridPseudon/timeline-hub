@@ -97,6 +97,7 @@ def authoring_commit_request(candidate: Mapping[str, Any], writer: Any, *,
     # supplied baseline/provenance fields remain checked by the normal emitter.
     work['base_parent'].setdefault('publication_id', base['base_parent']['publication_id'])
     work['source_mapping'].setdefault('_runtime_document', copy.deepcopy(base['source_mapping']['_runtime_document']))
+    base, duplicates = _materialize_duplicates(base, work)
     placements = work['placements']
     originals = {row['occurrence_id']: row for row in base['placements']}
     if any(row['occurrence_id'] not in originals
@@ -106,7 +107,7 @@ def authoring_commit_request(candidate: Mapping[str, Any], writer: Any, *,
     removals = [{'schema_version': 1, 'op': 'occurrence.delete', 'version': '1',
                  'select': 'occurrence:' + identity, 'args': {}, 'intent': {'ownership': 'occurrence'}}
                 for identity in originals if identity not in retained]
-    commands: list[dict[str, Any]] = []
+    commands: list[dict[str, Any]] = list(duplicates)
     if removals:
         plan = execute(base, removals)
         commands.extend(plan.commands)
@@ -186,6 +187,80 @@ def authoring_commit_request(candidate: Mapping[str, Any], writer: Any, *,
         'rationale': 'Publish authoring candidate ' + compilation.candidate_digest}
 
 
+def _materialize_duplicates(base: dict[str, Any], work: dict[str, Any]) -> tuple[
+        dict[str, Any], list[dict[str, Any]]]:
+    from astrid.core.timeline.authoring_bundle import (
+        _remap_known_item_references,
+        _validate_placement_capabilities,
+    )
+    from astrid.sdk.timeline_editing import add_authoring_shot
+
+    from ._command_state import equal
+    from .commands import execute, validate_command
+
+    reservations = work.pop('_authoring_duplicates', [])
+    if not isinstance(reservations, list):
+        raise AuthoringBundleError('duplicate reservations must be a list')
+    commands = []
+    for reservation in reservations:
+        if not isinstance(reservation, dict) or set(reservation) != {'command', 'start_ms'}:
+            raise AuthoringBundleError('invalid duplicate reservation')
+        call = reservation['command']
+        if (not isinstance(call, dict) or call.get('op') != 'occurrence.duplicate'
+                or set(call) != {'schema_version', 'op', 'version', 'select', 'args', 'intent'}):
+            raise AuthoringBundleError('expected an occurrence.duplicate reservation')
+        validate_command(call)
+        shot_id, occurrence_id = call['args']['shot_id'], call['args']['occurrence_id']
+        if not any(row['occurrence_id'] == occurrence_id for row in work['placements']):
+            continue  # Unplaced local copies are not part of publication.
+        # Resolve the explicit owner on the authenticated input, never by equal
+        # payloads, source-map similarity, or the first matching physical shot.
+        source = next((row for row in base['placements']
+                       if 'occurrence:' + row['occurrence_id'] == call['select']), None)
+        if source is None:
+            raise AuthoringBundleError('duplicate source occurrence is unavailable')
+        expected = copy.deepcopy(base)
+        add_authoring_shot(expected, template_shot_id=source['shot_id'], shot_id=shot_id,
+                           occurrence_id=occurrence_id, start_ms=reservation['start_ms'])
+        authored = work['shots'][shot_id]
+        if (set(authored) != set(expected['shots'][shot_id])
+                or any(not equal(authored[field], expected['shots'][shot_id][field])
+                for field in ('shot_id', 'base_payload', 'base_internal_timeline'))
+                or not equal(work['source_mapping']['shots'].get(shot_id),
+                             expected['source_mapping']['shots'][shot_id])
+                or occurrence_id in work['base_placements']):
+            raise AuthoringBundleError('duplicate source baseline changed')
+        baseline = work['source_mapping']['placements'].get(occurrence_id)
+        original = expected['source_mapping']['placements'][occurrence_id]
+        if not isinstance(baseline, dict):
+            raise AuthoringBundleError('duplicate placement baseline is unavailable')
+        changed = {key for key in set(baseline) | set(original)
+                   if (key in baseline) != (key in original)
+                   or not equal(baseline.get(key), original.get(key))}
+        if changed - {'source_offset', 'speed', 'transform'}:
+            raise AuthoringBundleError('duplicate placement baseline changed')
+        _validate_placement_capabilities(baseline, path='duplicate baseline', fields=changed)
+        if not equal(work['base_parent'], base['base_parent']):
+            raise AuthoringBundleError('duplicate source parent changed')
+        for bundle in (base, work):
+            bundle['base_parent'].pop('publication_id', None)
+        plan = execute(base, [call])
+        native = plan.bundle['shots'][shot_id]
+        remap = {old['item_id']: new['item_id'] for old, new in zip(
+            authored['base_payload'].get('items', []), native['payload'].get('items', []))}
+        copied = copy.deepcopy(native)
+        copied['payload'] = _remap_known_item_references(authored['payload'], remap)
+        copied['internal_timeline'] = _remap_known_item_references(authored['internal_timeline'], remap)
+        work['shots'][shot_id] = copied
+        if occurrence_id in plan.bundle['base_placements']:
+            work['base_placements'][occurrence_id] = copy.deepcopy(plan.bundle['base_placements'][occurrence_id])
+        work['source_mapping']['shots'].pop(shot_id)
+        work['source_mapping']['placements'].pop(occurrence_id)
+        base = plan.bundle
+        commands.extend(plan.commands)
+    return base, commands
+
+
 def _fork_shared_aliases(base: dict[str, Any], work: dict[str, Any]) -> tuple[
         dict[str, Any], dict[str, Any], list[dict[str, Any]]]:
     from astrid.core.timeline.authoring_bundle import (
@@ -214,7 +289,9 @@ def _fork_shared_aliases(base: dict[str, Any], work: dict[str, Any]) -> tuple[
     for placement in work['placements']:
         local = placement['shot_id']
         shot, original = work['shots'][local], base['shots'][local]
-        source = physical[placement['occurrence_id']]
+        source = physical.get(placement['occurrence_id'])
+        if source is None:
+            continue  # A preceding registered duplicate owns this new placement.
         shared = sum(row['shot_revision_id'] == source['shot_revision_id']
                      for row in physical.values()) > 1
         if not shared or all(equal(shot[field], original[field])

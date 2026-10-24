@@ -287,6 +287,32 @@ class State:
         elif value['shot_id'] not in self.bundle['shots']:
             raise CommandError('occurrence references missing shot', kind='identity_conflict', ref=ref)
 
+    def _copy_placement_baseline(self, identity, value):
+        from astrid.core.timeline.authoring_bundle import (
+            UnsupportedAuthoringEditError,
+            _copied_shot_baseline,
+            _CopiedShot,
+            _validate_placement_capabilities,
+        )
+
+        shot = self.bundle['shots'][value['shot_id']]
+        if (type(shot) is not _CopiedShot or shot.get('_created') is not True
+                or shot.source.get('occurrence_id') != identity
+                or shot.source.get('source_occurrence_id') == identity):
+            return
+        _copied_shot_baseline(self.bundle, shot, value['shot_id'])
+        source = self.entity('occurrence:' + shot.source['source_occurrence_id'])
+        identities = {'occurrence_id', 'shot_id', 'stable_deep_link', 'output_identity'}
+        if not equal({key: item for key, item in value.items() if key not in identities},
+                     {key: item for key, item in source.items() if key not in identities}):
+            raise CommandError('duplicate placement differs from its source', kind='identity_conflict')
+        try:
+            _validate_placement_capabilities(value, path='duplicate placement')
+        except UnsupportedAuthoringEditError:
+            # Only an exact native copy inherits legacy projection metadata.
+            # Later edits still pass the compiler's normal changed-field guards.
+            self.bundle['base_placements'][identity] = copy.deepcopy(value)
+
     def shot_item_map(self, ref):
         """Use the existing verified input to authenticate placement-local items."""
         from .commit import bundle_from_document
@@ -555,6 +581,7 @@ class State:
                         rows[index] = copy.deepcopy(state['value'])
                 elif state['state'] == 'present':
                     rows.append(copy.deepcopy(state['value']))
+                    self._copy_placement_baseline(identity, state['value'])
             elif state['state'] == 'absent':
                 if any(row['shot_id'] == identity for row in self.bundle['placements']):
                     raise CommandError('shot has surviving occurrences', kind='surviving_dependents', ref=ref)
