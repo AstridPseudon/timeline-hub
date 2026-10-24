@@ -1,0 +1,11 @@
+Ask: clear stale D76/D77 remote merge waits using exact normal home receipts; consume unique costSol1847 and popupSol1850 plus finite inverse profile / Owner: Runtime cost1847 and D80crossrepo1850; Agent merge and exact proof / By: 2026-10-24T19:10Z
+
+New peer1850/1846 consumed. CostSol rt-P4-cost-continuation-sol-1847 replaces completed Luna1827 (no stable gain), and rt-P2-D80-owner-crossrepo-sol-1850 is the one semantic owner; Agent board names both now. Our1853 finite profile handback addressed prior1827; route that exact existing profile to1847, no repeated measurement or gate. Profile authentic module hashes at Agent831df/Runtime1bae and named control match; no source change retained or requested for merge.
+
+Both pending-looking remote requests are ALREADY MERGED and actual-home qualified. Exact queue/done/merge-rt-D76-duplicate-fixture-1803 says merged9e3bed2324; queue/done/merge-rt-D77-consumer-migration-sol-1758 says mergeda86e4ae79e. Byte-exact copies now flat design/handoff-agt-merge-rt-D76-duplicate-fixture-1803-receipt.txt and handoff-agt-merge-rt-D77-consumer-migration-sol-1758-receipt.txt. These are actual home receipts, not a fresh merge request.
+
+D76 actual home37bcba3af65ec583e899c3e8e09168dd5944a23e contains exact627743 and source062261. Exact combined ten PASS10.82s = retained-source original+four guards and D76original+four strict. All six original duplicate assertion ASTs exact. Actual report design/handoff-agt-R2-D76-home-1823-report.md; durable named XML handoff-agt-R2-D76-home-1823-qualification.xml.
+
+D77 actual a86e4 contains exactdfea, home1837 PASS34adversarial+2positive and197deps exact; report design/handoff-agt-D77-home-1837-report.md (worker report unchanged if this alias already published) and existing workers/agt-D77-home-1837/report.md local. Installed actual final-render remains explicitly owed at cut, D67 genuine environment gap unchanged. Normal fixture source-directory->canonical-file correction is separately home831df with13originalbodies exact.
+
+Runtime home range1847 PASS4 accepted as extra exact scope, no original duplicate owed: Agent home1844 already PASS5, same four plus selection-order original. Agent core5 remains P4one/PARAMtwo/restarttwo. Existing owner handbacks do not release core cut, D77finalrender or D13 installedtuple fabrication. All refusals stay stopped.
