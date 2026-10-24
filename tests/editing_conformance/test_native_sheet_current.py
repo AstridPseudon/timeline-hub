@@ -57,6 +57,28 @@ def requests(*, clear_hold=False, ref=REF, track=TRACK):
             command('track.set', track, {'values': {'label': ''}, 'clear': []})]
 
 
+def steps_for(commands, label, tags=()):
+    return [{'id': f'step-{index + 1}', 'label': label, 'intent': '', 'tags': list(tags),
+             'command_ordinals': [index], 'patch': []}
+            for index, _command in enumerate(commands)]
+
+
+def assert_current_commit_request(body, commands):
+    """The four frontends must submit one complete v2 commit request."""
+    assert body['api_version'] == 1
+    assert body['project_id'] == 'p' and body['timeline_id'] == 't'
+    assert (body['base_revision_id'], body['base_publication_id']) == ('r0', 'pub0')
+    assert body['commands'] == commands
+    assert isinstance(body['label'], str) and body['label']
+    assert body['merge'] == 'fields' and body['dry_run'] is False
+    assert body['source']['via'] in {'python', 'cli', 'sheet'}
+    assert len(body['steps']) == len(commands)
+    assert [ordinal for step in body['steps'] for ordinal in step['command_ordinals']] == list(range(len(commands)))
+    assert all(step['id'] and step['label'] and step['intent'] == ''
+               and isinstance(step['tags'], list) and step['patch'] == []
+               for step in body['steps'])
+
+
 @pytest.mark.parametrize('entry', ['python', 'cli', 'sheet-python', 'sheet-cli'])
 @pytest.mark.parametrize('clear_hold', [False, True])
 def test_same_semantics_original_pins_exact_commands_reload_inverse(native_cli, tmp_path, capsys, entry, clear_hold):
@@ -77,7 +99,11 @@ def test_same_semantics_original_pins_exact_commands_reload_inverse(native_cli, 
     assert sheet.preview(edited).commands == plan.commands
     path = tmp_path / 'edit.txt'
     if entry == 'python':
-        result = session.commit_many(requests(clear_hold=clear_hold))
+        python_commands = requests(clear_hold=clear_hold)
+        result = session.commit_many(
+            python_commands, label='Timeline edit', steps=steps_for(python_commands, 'Timeline edit'),
+            merge='fields', reads=[],
+        )
     elif entry == 'cli':
         path.write_text(edited)
         assert run('apply', 't', str(path), '--json') == 0
@@ -90,8 +116,8 @@ def test_same_semantics_original_pins_exact_commands_reload_inverse(native_cli, 
         result = json.loads(capsys.readouterr().out)
         assert path.read_text() == edited
     body = json.loads(generated.calls[-1][0])
-    assert body['base_revision_id'] == 'r0' and body['base_publication_id'] == 'pub0'
-    assert body['commands'] == plan.commands and len(generated.accepted) == 1
+    assert_current_commit_request(body, plan.commands)
+    assert len(generated.accepted) == 1
     assert generated.bundles['r1'] == plan.bundle
     after = State(plan.bundle).entity(REF)
     assert after['opaque'] == row['opaque'] and after['params']['opaque'] == row['params']['opaque']
