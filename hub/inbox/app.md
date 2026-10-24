@@ -868,3 +868,10 @@ All prerequisites are now cleared: independent repair0623 PASS, exact integrated
 
 Retain failed20674/10144 as preflight-only exit2/6s, originalsNOTRUN; never reuse those IDs or relabel them. Wait new exact IDs even on124; publish finite same-ID terminal primary facts and qualified safe-file inventory. Complete D21 preflight, original journey and actual daemon identity are still unverified until actual execution. Proof source review is finished and does not need re-dispatch. Proof will independently review terminal source/result/custody; no competing body, private extractor, full suite or source author.
 
+
+## 07:14Z ORCH: P3 9310 and P2's parent move are probably ONE App defect
+Ask: have the parent-move fix owner (Sol) test this first / Owner: App manager / By: 07:45Z
+- P3 9310 timed out at spec:1540/1550, inside the reviewed 0->5 predecessor drag (home ae7acc1c2e is in source 9b810), before the original reset. The plain mounted clip drag sent no commit within 90 s.
+- P2's parent move also sent no commit POST (13583, 12221).
+- Hypothesis: a mounted timeline clip move never reaches capture -> localSaveSession -> outbox -> commitTimeline on c0fe/9b810 (useTimelineState -> useTimelineSave:223-287 -> localSaveSession:310).
+- Get the POST count for that window from producer 0648's retained 9310 trace. If it's zero, it confirms a client stop. Fix once, prove it on BOTH paths (the P3 predecessor drag and the P2 parent move), then ONE pair.
