@@ -52,6 +52,9 @@ LANE_MARKERS = {
 # no unlisted job does. ``blocking=False`` says every job and OS that runs the
 # test has ``continue-on-error``, so a failure there cannot fail CI; the run
 # summary lists those skips under their own header.
+# ``no_ci`` is the one exception to "some CI job runs it": a plain reason, for an
+# entry that no CI job runs. The checker accepts the reason in place of a job,
+# and the run summary prints those skips under "NOT RUN BY ANY CI JOB".
 # Today every entry is blocking: the Windows ``unit`` matrix leg is continue-on-error,
 # but each Windows entry is also run by ``portability-lifecycle`` (or
 # ``windows-worker-handoff``), which fails CI.
@@ -70,6 +73,7 @@ class DeclaredSkip:
     skip_when: str  # Python expression over ``sys_platform`` and ``os_name``; true = skipped
     reason: str
     ci: tuple[str, ...]  # jobs that run the test on a host where the condition is false
+    no_ci: str = ""  # why no CI job runs it (then ``ci`` is empty)
     blocking: bool = True  # False: every (job, OS) that runs it is continue-on-error
     only_error: Callable[[BaseException], bool] | None = None  # runtime entries: the one error that may skip
 
@@ -330,6 +334,12 @@ class _FdGuard:
 _DECLARED_TAG = re.compile(r"\[declared:([a-z0-9-]+)\]")
 
 
+def _declared_entry(reason: str) -> DeclaredSkip:
+    match = _DECLARED_TAG.search(reason)
+    assert match is not None
+    return SKIP_REGISTRY[match.group(1)]
+
+
 class _SkipGuard:
     """No invisible skips: list every skip by name and fail on any undeclared one.
 
@@ -383,7 +393,11 @@ class _SkipGuard:
         reason = reason.removeprefix("Skipped: ")
         match = _DECLARED_TAG.search(reason)
         if match and match.group(1) in SKIP_REGISTRY:
-            self.declared.append((report.nodeid, reason))
+            declared = SKIP_REGISTRY[match.group(1)]
+            if declared.applies(CURRENT):
+                self.declared.append((report.nodeid, reason))
+            else:
+                self.undeclared.append((report.nodeid, f"{declared.tag} used where its condition is false on this host: {reason}"))
         else:
             self.undeclared.append((report.nodeid, reason))
 
@@ -421,12 +435,21 @@ class _SkipGuard:
                 write(f"  XFAIL {nodeid}: {reason}")
         non_blocking = [
             (nodeid, reason) for nodeid, reason in sorted(self.declared)
-            if not SKIP_REGISTRY[_DECLARED_TAG.search(reason).group(1)].blocking
+            if not _declared_entry(reason).blocking
         ]
         if non_blocking:
             write(f"declared skips whose tests run only in non-blocking CI jobs ({len(non_blocking)}):")
             for nodeid, reason in non_blocking:
                 write(f"  NON-BLOCKING {nodeid}: {reason}")
+        no_ci = [
+            (nodeid, reason) for nodeid, reason in sorted(self.declared)
+            if _declared_entry(reason).no_ci
+        ]
+        if no_ci:
+            write(f"NOT RUN BY ANY CI JOB ({len(no_ci)}):")
+            for nodeid, reason in no_ci:
+                entry = _declared_entry(reason)
+                write(f"  NO CI {nodeid}: {entry.tag} {entry.no_ci}")
         for nodeid, reason in sorted(self.undeclared):
             write(f"UNDECLARED SKIP {nodeid}: {reason}")
 
