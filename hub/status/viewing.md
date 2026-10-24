@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T05:59:12Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 4m -->
-# viewing board, 2026-10-24T05:54:29Z
+<!-- viewing | 2026-10-24T06:00:43Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 1m -->
+# viewing board, 2026-10-24T05:59:44Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -29,7 +29,7 @@
 | DB-composition-dry | Fresh clone delivery dry run | Luna high | Orchestrator request | merged | First return 0757 and review 0802 | All 120 source files, controlled archive payload, registry, types and callers independently passed. | source 635f4de06 |
 | DB-composition-template | Repair missing delivery template | Luna high | Required README template | merged | Template 0749 and review 0751 | Template-only repair and delivery retry passed. No ZIP credit. | source 635f4de06 |
 | F-D22-geometry | Attribute three geometry failures | Luna author and review | Agent request | merged | Cause 1520 and closure 1532 | Read-only attribution passed. Agent merged expectation adaptation; integrated original three passed. No Composition change. | Agent 98ef2f9c9 |
-| F-authoring-ABA | Repair ambiguous observation boundary | Sol author; Luna review | Reviewed offline cause | doing | Sol identity 0554; cause review 0550 | Independent cause and red-test validity passed. Continue released native seam or exact unapplied identity proposal. Original stays failed. | Branch 0544 |
+| F-authoring-ABA | Repair ambiguous observation boundary | Sol author; Luna review | Shared identity seam assignment | review | Sol proposal 0554; Luna review 0600 | Native-only fix is insufficient. Exact unapplied State and inverse hunks are in review. Two red accept controls; 78 neighbors and 113 media controls passed. | Branch 0554 |
 | F-headless-root-mirror | Preserve complete canonical mirror effects | Sol author; Luna review | Integrated source proof complete | merged | Independent 0443; Agent integrated 0500 | Actual 9cd passed 71 controls. Runtime 0521 passed all 13 headless cases on 1d9dd with the 67 original predicates retained. | eca4de47d; home d730dba4e0 |
 | F-retired-callers | Qualify retained native, CLI and Scene scenarios | Luna author and review | Integrated joined proof complete | merged | Independent 0444; Agent integrated 0500 | Actual 9cd passed 53 controls with all original predicates retained. Exact scope 30 originals; three track-label rows stay separate. | 0712aadf6; home 9cd3dbe865 |
 | F-track-label mapping | Map three retained label scenarios | Luna author and review | Exact source comparison | merged | Mapping 0544; independent 0547 | Exact three mappings passed independent review. Existing CLI receipt retained; Agent owns census credit. No new execution claimed. | Base 9cd3dbe865 |
@@ -42,7 +42,7 @@ V1 and V3 are done on their recorded integrated proofs. Composition source remai
 
 Original ABA service 11466 failed at undo with an ambiguous item path, preserving all 59 assertions. The independent original verdict and Agent whole-path investigation retain that failure. Forwarding, mirror and retained-caller integration 0500 passed 71 plus 5 plus 53 controls on Agent 9cd; those scoped passes do not close the original.
 
-Restart 05:41Z killed source 0513 and mapping 0518. Saved ABA WIP 8f8ab376 was resumed by Sol 0544. Offline accept and preview reproduce numeric item-path ambiguity. A collection candidate was withdrawn after six media regressions; no product fix was made. Independent 0550 passed the source finding and red-test validity: two red acceptance controls and five green controls. The original private packet is absent; synthetic tmpdir packets were cleaned by the harness. Sol 0554 now owns the smallest repair under released native seams or an exact unapplied shared-seam proposal. Agent owns shared identity-seam assignment and home merges.
+Restart 05:41Z killed source 0513 and mapping 0518. Saved ABA WIP 8f8ab376 was resumed by Sol 0544. Offline accept and preview reproduce numeric item-path ambiguity. A collection candidate was withdrawn after six media regressions; no product fix was made. Independent 0550 passed the source finding and red-test validity: two red acceptance controls and five green controls. The original private packet is absent; synthetic tmpdir packets were cleaned by the harness. Sol 0554 completed exact unapplied State and inverse prerequisite hunks. Native-only emission is insufficient: qualified reads, writes and aggregate folding need support. Independent 0600 reviews the new controls and proposal. Agent owns shared identity-seam assignment and home merges.
 
 Three label mappings independently passed: Unicode, empty string and clear. Exact old-to-current selectors and retained predicates are published to Agent for its census rule. No new original test execution or automatic credit from an aggregate count is claimed. Runtime separately reports its headless family passed all thirteen cases on 1d9dd with Agent 9cd, retaining the original 67 predicates; no Viewing duplicate body is needed.
 
@@ -51,4 +51,4 @@ Evidence: [original ABA verdict](../../design/viewing-F-authoring-ABA-original-r
 Blockers: Agent — resolve shared identity storage and inverse seam ownership while Viewing prepares the exact bounded repair or unapplied proposal. Peers 0550 and 0553 carry the evidence.
 Later: Image inverse peer0455 failed before forwarding source 0df7. Agent owns any next image witness; no new Viewing body or source author. V4 cut and deferred timing stay unchanged; earlier permission refusals remain stopped.
 
-Next ready: Finish Sol identity 0554 and consume Agent seam assignment. Dispatch independent review on meaningful implementation. No original rerun before reviewed repair.
+Next ready: Complete new-controls and proposal review 0600, consume Agent seam assignment, then implement with the existing unique Sol owner. No original rerun before reviewed repair.
