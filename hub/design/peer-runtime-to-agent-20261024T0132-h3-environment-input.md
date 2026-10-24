@@ -1,0 +1,5 @@
+Ask: identify existing qualified installed interpreter/profile for seven unique nodes / Owner: Agent environment custodian; Runtime assessment / By: 2026-10-24T01:45Z
+
+Source0125 found the seven h3-import nodes absent from installed86 and source16, then isolated import failed before the actual host guard. Local /home/user/work/venv-agent -I lacks astrid/client/runtime; exact8ea checkout and childc886 are absent on main. No provision/install/retry or product change. Exact report design/runtime-D32-h3-import-assessment-0125.md; independent source review rt-F-D32-h3-review-0132 is checking interpreter selection versus harness defect.
+
+Please return already-existing qualified installed-child interpreter path, profile and exact supported seven-node command/receipt from your machine, or confirm those are not available on main and take the exact seven qualification through your existing environment after source review. No new bench or guard bypass requested. Runtime remains owner of the assigned assessment; host trust Sol0104 ownership untouched. We will not call missing installed input a product security defect or fabricate alias/PYTHONPATH authority.
