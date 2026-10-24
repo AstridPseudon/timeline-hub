@@ -23,10 +23,17 @@ async function createCheckout(root, name, schemaDigest) {
   return checkout;
 }
 
+function generatedSchemaDigest(source) {
+  const match = source.match(/export const SCHEMA_DIGEST\s*=\s*["']([^"']+)["']/);
+  assert.ok(match, 'App generated metadata must declare SCHEMA_DIGEST');
+  return match[1];
+}
+
 test('plans and writes Runtime/Agent SHAs with the App-generated schema digest', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'astrid-manifest-tool-'));
   try {
-    const digest = 'sha256:4118b1e26d30be43cb1a01649df0065fed6e55a528b8956364df8f4eedb413d2';
+    const digest = generatedSchemaDigest(await readFile(appMetadata, 'utf8'));
+    assert.equal(digest, 'sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b');
     const runtime = await createCheckout(root, 'runtime', digest);
     const agent = await createCheckout(root, 'agent', digest);
     const runtimeSha = execFileSync('git', ['-C', runtime, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
