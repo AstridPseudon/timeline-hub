@@ -351,9 +351,9 @@ async function seedImageFile(harness: DirectHarness): Promise<{ name: string; ty
   return { name: 'p2-mounted-image.png', type: harness.seed.image.mediaType, bytesBase64: Buffer.from(bytes).toString('base64') };
 }
 
-async function dropFileIn(scope: Locator, file: { name: string; type: string; bytesBase64: string }, clipId: string, referenceId: string, from: number, referenceAt: number, time: number): Promise<void> {
-  const clipLocator = scope.locator(`.clip-action[data-clip-id="${clipId}"]`).first();
-  const referenceLocator = scope.locator(`.clip-action[data-clip-id="${referenceId}"]`).first();
+async function dropFileIn(scope: Locator, file: { name: string; type: string; bytesBase64: string }, occurrenceId: string, clipId: string, referenceId: string, from: number, referenceAt: number, time: number): Promise<void> {
+  const clipLocator = scope.locator(`.clip-action[data-clip-id="${occurrenceId}:${clipId}"]`).first();
+  const referenceLocator = scope.locator(`.clip-action[data-clip-id="${occurrenceId}:${referenceId}"]`).first();
   const wrapper = scope.locator('.timeline-wrapper').first();
   await expect(clipLocator).toBeVisible();
   await expect(referenceLocator).toBeVisible();
@@ -562,7 +562,7 @@ test('P2 mounted automatic child placement: embedded shot file gesture, occurren
   const dialog = await openEmbeddedCanonicalShot(page, seed3.occurrenceId, 'F2 agent shot');
   const importResponse = page.waitForResponse((response) => response.request().method() === 'POST' && /\/media-imports$/.test(new URL(response.url()).pathname), CEILING);
   const selectionResponse = page.waitForResponse((response) => response.request().method() === 'GET' && /\/media-selection\?/.test(new URL(response.url()).pathname + new URL(response.url()).search), CEILING);
-  const post = await commitFromGesture(page, wire, () => dropFileIn(dialog, file, seed3.agentClipId, seed3.agentClearClipId, 3, 6, 4.5));
+  const post = await commitFromGesture(page, wire, () => dropFileIn(dialog, file, seed3.occurrenceId, seed3.agentClipId, seed3.agentClearClipId, 3, 6, 4.5));
   const imported = object((await (await importResponse).json()).data, 'child media import');
   const selected = await selectionResponse.then((response) => response.json()) as JsonObject;
   const expectedRow = await expectedImageDropRow(original, `occurrence:${seed3.occurrenceId}`, String(selected.asset), 'V2', 4.5);
