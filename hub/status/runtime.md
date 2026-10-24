@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T12:58:19Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 2m -->
-# runtime board, 2026-10-24T12:56:09Z
+<!-- main | 2026-10-24T13:01:18Z | dispatcher heartbeat 12s | live 2 (sol 1, luna 1, other 0) | busy30 12 | status age 0m -->
+# runtime board, 2026-10-24T13:00:49Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -76,12 +76,12 @@
 | R2r-shared-inverse-auth | Verify shared inverse source identities | Sol / Luna | Integrated source proof passed | merged | Author 0647; review 0701; integrated 0711 | Actual460c passed177 plus six shared/source-copy controls on exact Agent d33fe archive. No original ABA or HTTP credit. | 460c2d397 / 35764ce10 |
 | F-D52-shot-set | Preserve 17 live shot-set cases | Luna | Actual Agent home proof PASS | merged | Author1139; review1143; home1156 | Actualaff339 passed61 in4.04s; durable XML and original14 test ASTs exact. All17 assigned cases included. | 3b8dc8a345 / aff3391061 |
 | F-D52-occurrence-delete | Qualify 19 live delete cases | Luna | Exact integrated source proof | merged | Author1139; independent1141 PASS | Exact Agent7e258 and Runtimebecfe:19PASS6.43s; bodies and params unchanged. [Review](../../design/runtime-D52-occurrence-review-1141.md) | Agent7e258 unchanged |
-| F-D52-core-five | Match exact redo result receipts | Luna / Agent | Actual XML now published | doing | rt-F-D52-core-five-receipt-1256 | Compare all5 named nodes and source hashes with actual author334PASS. Current corrected join remains Agent-owned; no new body. | Author4e7f scope only |
+| F-D52-core-five | Retain exact redo author result | Luna / Agent | Agent joined security and home proof | blocked:agent | Mapping1250; receipt1256 PASS | Both old failures are named FAIL→PASS at4e7f;17controls unchanged, no lost passes. Other3 retain old scope. [Result](../../design/runtime-core-five-receipt-comparison-1256.md) | Author4e7f scope only |
 | FREEZE | Reach final tuple cut | Runtime manager | D59 cut | doing | Lane owners; main benches1244 | Runtime0core/0regressions; Agent count pending; App9gate cases and34regressions. Cut requires all lanes0/0 plus current P2/P3 PASS. | Runtime becfe6db8 |
 | F-final | Main delivery build and ZIP | Luna | D59 cut and final proofs | doing | Builder1233; docs1229; service1244 | Builder and v2 prose installed. Durable service helper repair active; live-main refresh and final build wait qualified cut and proofs. | No delivery artifact |
 | F-final-builder | Put verifier clones in TMPDIR | Luna / Luna | Exact installed proof complete | merged | Review1229; installed1233 PASS | f25d atomically installed0755, old script backed up. Installed smoke and integrity checks passed; no real build. | f25dfab1 installed |
 | F-final-docs | Refresh v1 delivery prose | Luna | Installed hashes and rendering passed | merged | Author1226; install1229 PASS | Two exact v2 documents installed atomically; predecessors backed up. Final tuple, gates and ZIP remain pending. | ef414 / 403384 installed |
-| F-final-service | Bind callable final service environment | HARD Sol | Two Luna returns; custody defect | doing | rt-F-final-service-sol-1244 | Repair recycled relative helper path with durable authenticated artifact. Preserve81 files, complete env, tuple guards and private TMPDIR. | 1e1f candidate held |
+| F-final-service | Bind callable final service environment | HARD Sol / Luna | Finish WIP controls and custody review | doing | ResumeSol1300; reviewLuna1300 | Sol1244 hit model capacity; WIP15f78 saved. Resume and independent exact-source custody review active. No live install. | 15f78 WIP held |
 | F-final-inputs | Return qualified Runtime producer | Runtime1219 / App1222 | Actual consumer and Agent receipts | merged | Producer0727; handback1231 | Runtime becfe/tree7edc and all15 canonical mappings qualified. App home d993 receipt consumed; no child authority inferred. | Producer becfe |
 | F-D54-runtime-census | Classify core and regressions | Luna | Retained accounting complete | merged | Census1219 | Confirmed core open0; regressions0. One cross-lane provider incident remains unknown. [Accounting](../../design/runtime-D54-census-1219.md) | Runtime becfe |
 | F-composition-main | Run Composition full on main at cut | Luna / Service | D59 cut | gated:D59-cut | Bench1244 READY | Main dependencies and service preflight pass. Source635f; prior86PASS historical. At cut use integration:composition full with no cache. | Source635f |
@@ -114,7 +114,7 @@ Venues: P1/P2/P3 on App service with App verdicts; P4 on Agent service; P5 and C
 
 core open: 0 confirmed Runtime originals; regressions: 0 confirmed Runtime originals. Census1219 verified original36closed/0open/0unaccounted. Final-tuple qualification remains pending. One provider-completion incident has unknown cross-lane cause and remains visibly failed, not an allowed known gap. Two new core-five redo failures are Agent-owned stage-custody gaps; Agent core count owns them. All known-gap delivery claims require D54a evidence, and any caused regression is fixed or reverted regardless of core status.
 
-Agent current checkpoint remains terminal FAIL on ba55/Runtimebecfe:17673PASS,231FAIL,45errors,4skips,566subtests. Census verified all276 bad IDs; D52 conservative230live/45env/1D23 with157summary-only. Historical263closed/4open remains separate. Runtime shot-set17 and occurrence-delete19 are qualified at retained scopes; new core-five three pass and two fail with independent1214 source limits. Exact4e7f source is now locally available; comparison1250 maps it to original failures without another body. Actual authorXML/report published1248; receipt1256 comparison is active. Agent owns corrected1238 security and home proof. No new full or child.
+Agent current checkpoint remains terminal FAIL on ba55/Runtimebecfe:17673PASS,231FAIL,45errors,4skips,566subtests. Census verified all276 bad IDs; D52 conservative230live/45env/1D23 with157summary-only. Historical263closed/4open remains separate. Runtime shot-set17 and occurrence-delete19 are qualified at retained scopes; new core-five three pass and two fail with independent1214 source limits. Exact4e7f source is now locally available; comparison1250 maps it to original failures without another body. Actual authorXML/report published1248; receipt1256 comparison PASS at author4e7f scope. Agent owns corrected1238 security and home proof. No new full or child.
 
 Kit: Reviewed source 6de00342ba6301ccfadf184a5ca76aee2f6c531d passed all 268 unchanged tests with durable JUnit and independent result 1058 PASS. Security 1053 passed the exact source and baseline join. Guarded installation 1105, local integrity and production wiring 1107, committed publication 1110, actual Agent receipt 1113 and independent receipt 1116 all PASS. All five files match reviewed hashes and modes across actual live, normal hub, retained 2b4a and current a3f49 publication. [Receipt review](../../design/agt-OPS-five-kit-result-review-1116.md). No Runtime source, installation, publication or receipt review remains owed.
 
@@ -131,8 +131,8 @@ Provider completion: Runtime 0915 and independent 0923 retain original cause, ho
 KIT CHANGE: delivery-build f25dfab1 installed and independently qualified. Final service candidate remains uninstalled pending durable helper/custody repair1244.
 Blockers: Final delivery — D59 cut requires every active lane0core/0regressions plus current P2/P3 PASS, then required final proofs and D51 live-main refresh.
 Blockers: App and Agent — existing working-service custody handback remains owner-specific; App1244 requests actual Agent sources and installed receipts, not new provisioning.
-Blockers: Agent — corrected joined redo security and current-home proof remain needed. Old authorXML now published and comparison1256 active; source mapping1250 complete.
-Next ready: Consume durable service1244 and receipt1256 returns. Independent custody review brief1255 is ready for completed source. All Agent classifier slices owned; no duplicate classifier.
+Blockers: Agent — corrected joined redo security and current-home proof remain needed. Source1250 and exact author-result1256 comparisons complete; no Runtime duplicate body needed.
+Next ready: Consume resumed serviceSol1300 and exact-source custodyLuna1300. Publish qualified install candidate only after matching hashes and PASS. All Agent classifier slices already owned.
 
 Later: D47 memo and proof-pin work stay post-delivery; nine state attacks open. D34 broader cleanup held above8.5GB or until delivery. Prior denied cleanup, process, retirement and publication targets remain stopped. V4 cut; D14/D23 deferred unchanged. D52 removals require caller proof; live tests stay strict.
 
@@ -140,4 +140,4 @@ Disk: About8.5GB free, above main8GB heavy floor. Five old v1 trees refused recy
 
 Pass 2026-10-24T12:51:44Z: Composition main preflight READY. P5 exact38 collection passed; service-command first return1253 active. App16138 terminal failure consumed. P5 corrected1253 READY38 in actualservice environment; Composition1244 READY. New realredoXML received; comparison1256 dispatched. D59 cut not reached; no body/build/ZIP run.
 
-live 1 / cap 4; ready-undispatched 0. Dispatcher header: <!-- main | 2026-10-24T12:55:19Z | dispatcher heartbeat 14s | live 1 (sol 1, luna 0, other 0) | busy30 12 | status age 2m -->
+live 0 / cap 4; ready-undispatched 0. Dispatcher header: <!-- main | 2026-10-24T12:58:19Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 2m -->
