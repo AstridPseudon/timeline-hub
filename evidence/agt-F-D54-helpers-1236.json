@@ -1,0 +1,116 @@
+{
+  "schema": "timeline.agent.d57.package-classification.v1",
+  "task": "agt-F-D54-helpers-1236",
+  "base": "tl/integration",
+  "package": "helpers",
+  "owner_intersection": [
+    "Agent timeline provider fixture seam",
+    "Agent D13 native preflight seam",
+    "Agent SDK timeline (D23)"
+  ],
+  "decision_basis": {
+    "plan": "PLAN.md §3 R1/R2/G2; §1 honest-scope deferred relational timing",
+    "board": "BOARD-HEADER D54/D54a/D56",
+    "contract": "design/commit-v2.md §§1-5",
+    "regression_baseline": "upstream25359ed68",
+    "scope_evidence": "agt-F-D54-core-classify-1230, core-provider-60 vs other-noncore-171",
+    "source_evidence": [
+      "tests/packs/video_editing/test_runtime_publication_chain.py:441-507,669-674",
+      "tests/sdk/test_p4_note_rerun.py:68-145",
+      "tests/sdk/test_timeline_helper_capture.py:221-229",
+      "tests/sdk/test_timeline_open_commit.py:22-80",
+      "tests/sdk/test_timeline_open_commit_v2.py:150-213,398-429",
+      "tests/sdk/test_timeline_persistence.py:1-17,711-727",
+      "astrid/sdk/timeline/commit_session.py:163-280",
+      "astrid/sdk/timeline/sync.py:137-181,306-362",
+      "astrid/sdk/timeline/__init__.py:1-16"
+    ]
+  },
+  "definitions": {
+    "core": "D54 CORE end-state: EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, Agent runner/rebase/inverse.",
+    "non-core": "Outside that end-state model, including the retained other-noncore package; scope classification does not authorize deletion.",
+    "env": "Only the exact retained 45 setup/profile error records; this package has no such record.",
+    "pre-existing": "Exact same selector FAIL on upstream25359ed68; none retained.",
+    "dead-scope": "D52 retired/dormant production-caller proof plus exclusive-test proof; none retained.",
+    "deferred": "The owner-approved D23 child-word relational-timing gap.",
+    "REGRESSION": "Exact selector PASS on upstream25359ed68 and FAIL on ours.",
+    "UNPROVEN": "The required exact upstream comparison/category evidence is missing; do not convert historical ours-live into regression."
+  },
+  "counts": {
+    "total": 23,
+    "status": {"failed": 23, "error": 0},
+    "scope": {"core": 0, "non-core": 23},
+    "d52_routing": {"ours-live": 22, "deferred": 1},
+    "disposition": {"env": 0, "pre-existing": 0, "dead-scope": 0, "deferred": 1, "REGRESSION": 0, "UNPROVEN": 22},
+    "regression": {"proven": 0, "unproven": 22, "not_applicable": 1},
+    "traceback": {"retained": 16, "summary_only": 7},
+    "by_owner": {
+      "Agent timeline provider fixture seam": 21,
+      "Agent D13 native preflight seam": 1,
+      "Agent SDK timeline (D23)": 1
+    }
+  },
+  "intersections": {
+    "core_classifier": {"core": 0, "non-core": 23},
+    "d52_category_by_scope": {"non-core": {"ours-live": 22, "deferred": 1}},
+    "disposition_by_scope": {"non-core": {"env": 0, "pre-existing": 0, "dead-scope": 0, "deferred": 1, "REGRESSION": 0, "UNPROVEN": 22}}
+  },
+  "baseline_request": {
+    "status": "UNPROVEN for 22 ours-live rows",
+    "smallest_finite_request": {
+      "checkout": "upstream Agent 25359ed68",
+      "selectors": "the 22 exact node IDs whose disposition is UNPROVEN",
+      "observations": "one ordinary baseline result per exact selector, with durable identity, compared to the retained full9758 ours result",
+      "artifacts": "baseline source/tree identity, exact command, durable result summary/JUnit or equivalent, selector mapping",
+      "rule": "upstream PASS + ours FAIL => REGRESSION; upstream FAIL => pre-existing; otherwise UNPROVEN"
+    },
+    "deferred_exclusion": "D23 is owner-deferred and not a regression candidate; no baseline credit is claimed."
+  },
+  "evidence_map": {
+    "d13": "The test directly calls _d13_installed_profile and asserts profile/source_digest; the helper validates installed source/runtime/environment, interpreter, origins, fonts, private temp-root and disk. It does not call timeline.open, Timeline.commit, Runtime commit, or a native editor (source lines 441-507, 669-674). This is non-core package scope, not one of the exact 45 retained setup/profile errors; no env/pre-existing/dead-scope/regression credit is claimed.",
+    "p4": "The test calls public timeline.open and tl.commit(function), forces a conflict, rereads the verified peer head, and asserts full v2 request fields, doc.patch, step patch/read data and changed base IDs (lines 68-145). Production caller is the mounted commit_session Timeline.open/commit path (commit_session.py lines 163-280). The retained D54 package classifier still assigns this fixture-seam node to other-noncore-171; upstream comparison is absent, so UNPROVEN.",
+    "d23": "The exact parametrized node is the anchor=\"second\" child-cut restart case (lines 221-229). Existing D52/D54 evidence maps it to approved D23 child-word relational timing; disposition is deferred, regression_status not-applicable, and the original failing test remains unchanged.",
+    "open_commit": "The 16 parametrized nodes exercise timeline.open, Timeline.command/commit, provider dispatch and frozen retry across doc.patch/native, commit/preview, omitted/declared reads, and label/function (test_timeline_open_commit.py lines 22-80). The production path is commit_session.open/Timeline.commit and sync TimelineSession. They remain non-core under the retained other-noncore-171 scope classification; no upstream PASS/FAIL is retained.",
+    "open_commit_v2": "The three exact nodes assert bounded function reevaluation against returned heads/new keys, persisted evaluation count across reopening, and unknown-retry/conflict continuation (test_timeline_open_commit_v2.py lines 150-213,398-429). These are retained provider-fixture package rows, not the disjoint core-provider-60 set; all three are UNPROVEN without upstream comparison.",
+    "persistence": "The exact node uses tests/sdk/test_timeline_persistence.py's child-process Checkout/publish working-copy route and asserts stale-base merge after restart (lines 1-17,711-727). It is retained other-noncore package scope; no D52 dead-scope proof or upstream comparison is retained."
+  },
+  "records": [
+    {"node_id":"tests/packs/video_editing/test_runtime_publication_chain.py::test_d13_installed_native_preflight","status":"failed","terminal_order":162,"source_file":"tests/packs/video_editing/test_runtime_publication_chain.py","selector":"test_d13_installed_native_preflight","family":"missinginput/environment","d52_category":"ours-live","owner":"Agent D13 native preflight seam","scope":"non-core","scope_evidence_id":"other-noncore-171","disposition":"UNPROVEN","regression_status":"UNPROVEN","traceback":null,"summary_offset":[33953,3487438,3487542]},
+    {"node_id":"tests/sdk/test_p4_note_rerun.py::test_p4_note_conflict_reruns_public_function_from_verified_peer_document","status":"failed","terminal_order":166,"source_file":"tests/sdk/test_p4_note_rerun.py","selector":"test_p4_note_conflict_reruns_public_function_from_verified_peer_document","family":"fixture/input","d52_category":"ours-live","owner":"Agent timeline provider fixture seam","scope":"non-core","scope_evidence_id":"other-noncore-171","disposition":"UNPROVEN","regression_status":"UNPROVEN","traceback":null,"summary_offset":[33957,3488002,3488115]},
+    {"node_id":"tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[\"second\"]","status":"failed","terminal_order":170,"source_file":"tests/sdk/test_timeline_helper_capture.py","selector":"test_cut_nudge_restart_merges_other_cut[\"second\"]","family":"fixture/input","d52_category":"deferred","owner":"Agent SDK timeline (D23)","scope":"non-core","scope_evidence_id":"deferred-d23-1","disposition":"deferred","regression_status":"not-applicable","traceback":null,"summary_offset":[33961,3488440,3488540]},
+    {"node_id":"tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-commit-omitted-reads-label]","status":"failed","terminal_order":194,"source_file":"tests/sdk/test_timeline_open_commit.py","selector":"test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-commit-omitted-reads-label]","family":"fixture/input","d52_category":"ours-live","owner":"Agent timeline provider fixture seam","scope":"non-core","scope_evidence_id":"other-noncore-171","disposition":"UNPROVEN","regression_status":"UNPROVEN","traceback":[29064,29143,3171495,3176125,"d8bc550f379f98b774cc694fbb56d0158bb07a94de4b464b311c70ea8f8574f4"],"summary_offset":[33985,3491379,3491540]},
+    {"node_id":"tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-commit-omitted-reads-function]","status":"failed","terminal_order":195,"source_file":"tests/sdk/test_timeline_open_commit.py","selector":"test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-commit-omitted-reads-function]","family":"fixture/input","d52_category":"ours-live","owner":"Agent timeline provider fixture seam","scope":"non-core","scope_evidence_id":"other-noncore-171","disposition":"UNPROVEN","regression_status":"UNPROVEN","traceback":[29143,29221,3176125,3180758,"3cc9b1d92e2dcae04f09211241817b3c0d97e26398804e91bfdfb16e3312496c"],"summary_offset":[33986,3491540,3491704]},
+    {"node_id":"tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-commit-declared-reads-label]","status":"failed","terminal_order":196,"source_file":"tests/sdk/test_timeline_open_commit.py","selector":"test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-commit-declared-reads-label]","family":"fixture/input","d52_category":"ours-live","owner":"Agent timeline provider fixture seam","scope":"non-core","scope_evidence_id":"other-noncore-171","disposition":"UNPROVEN","regression_status":"UNPROVEN","traceback":[29221,29299,3180758,3185388,"11e994d80e836d8f326d6b1e748cd56aef0ec1f7bfd4bce7ea166b05161e2ce0"],"summary_offset":[33987,3491704,3491866]},
+    {"node_id":"tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-commit-declared-reads-function]","status":"failed","terminal_order":197,"source_file":"tests/sdk/test_timeline_open_commit.py","selector":"test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-commit-declared-reads-function]","family":"fixture/input","d52_category":"ours-live","owner":"Agent timeline provider fixture seam","scope":"non-core","scope_evidence_id":"other-noncore-171","disposition":"UNPROVEN","regression_status":"UNPROVEN","traceback":[29299,29377,3185388,3190020,"fca5393c2a775d581d95ef93bca3f956a75547d6246892c52564d89d641c5c4a"],"summary_offset":[33988,3491866,3492031]},
+    {"node_id":"tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-preview-omitted-reads-label]","status":"failed","terminal_order":198,"source_file":"tests/sdk/test_timeline_open_commit.py","selector":"test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-preview-omitted-reads-label]","family":"fixture/input","d52_category":"ours-live","owner":"Agent timeline provider fixture seam","scope":"non-core","scope_evidence_id":"other-noncore-171","disposition":"UNPROVEN","regression_status":"UNPROVEN","traceback":[29377,29455,3190020,3194651,"5ec923e7b657738947352e14cab1b24431381f1a65227157c72168ade8517a00"],"summary_offset":[33989,3492031,3492193]},
+    {"node_id":"tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-preview-omitted-reads-function]","status":"failed","terminal_order":199,"source_file":"tests/sdk/test_timeline_open_commit.py","selector":"test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-preview-omitted-reads-function]","family":"fixture/input","d52_category":"ours-live","owner":"Agent timeline provider fixture seam","scope":"non-core","scope_evidence_id":"other-noncore-171","disposition":"UNPROVEN","regression_status":"UNPROVEN","traceback":[29455,29533,3194651,3199284,"947b99174ab976e172d302323d98326b0e9660a4bf62c5ee866bed1dcc768c59"],"summary_offset":[33990,3492193,3492358]},
+    {"node_id":"tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-preview-declared-reads-label]","status":"failed","terminal_order":200,"source_file":"tests/sdk/test_timeline_open_commit.py","selector":"test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-preview-declared-reads-label]","family":"fixture/input","d52_category":"ours-live","owner":"Agent timeline provider fixture seam","scope":"non-core","scope_evidence_id":"other-noncore-171","disposition":"UNPROVEN","regression_status":"UNPROVEN","traceback":[29533,29611,3199284,3203914,"df6623811e0ca732b4fe0d0b118dce624b6358f6669cd06e11020dc27685d9f6"],"summary_offset":[33991,3492358,3492521]},
+    {"node_id":"tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-preview-declared-reads-function]","status":"failed","terminal_order":201,"source_file":"tests/sdk/test_timeline_open_commit.py","selector":"test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[doc.patch-preview-declared-reads-function]","family":"fixture/input","d52_category":"ours-live","owner":"Agent timeline provider fixture seam","scope":"non-core","scope_evidence_id":"other-noncore-171","disposition":"UNPROVEN","regression_status":"UNPROVEN","traceback":[29611,29689,3203914,3208546,"0640559b5b85768f9ac4ca29078669eee0bf47a9137e0dcfda124addf59f69a3"],"summary_offset":[33992,3492521,3492687]},
+    {"node_id":"tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-commit-omitted-reads-label]","status":"failed","terminal_order":202,"source_file":"tests/sdk/test_timeline_open_commit.py","selector":"test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-commit-omitted-reads-label]","family":"fixture/input","d52_category":"ours-live","owner":"Agent timeline provider fixture seam","scope":"non-core","scope_evidence_id":"other-noncore-171","disposition":"UNPROVEN","regression_status":"UNPROVEN","traceback":[29689,29768,3208546,3213174,"b3a460c7fb3ad2b5912d8ac8af807af8d87662933249feabaad92e7fea97a40e"],"summary_offset":[33993,3492687,3492845]},
+    {"node_id":"tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-commit-omitted-reads-function]","status":"failed","terminal_order":203,"source_file":"tests/sdk/test_timeline_open_commit.py","selector":"test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-commit-omitted-reads-function]","family":"fixture/input","d52_category":"ours-live","owner":"Agent timeline provider fixture seam","scope":"non-core","scope_evidence_id":"other-noncore-171","disposition":"UNPROVEN","regression_status":"UNPROVEN","traceback":[29768,29847,3213174,3217804,"35221335164478708e09aee6ca58e65d164041ba8fa7e410e335ff8756f494b3"],"summary_offset":[33994,3492845,3493006]},
+    {"node_id":"tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-commit-declared-reads-label]","status":"failed","terminal_order":204,"source_file":"tests/sdk/test_timeline_open_commit.py","selector":"test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-commit-declared-reads-label]","family":"fixture/input","d52_category":"ours-live","owner":"Agent timeline provider fixture seam","scope":"non-core","scope_evidence_id":"other-noncore-171","disposition":"UNPROVEN","regression_status":"UNPROVEN","traceback":[29847,29925,3217804,3222433,"bd66e78880ec2e7253245efd7ecf1bb96d3b6d1da7d2544129c34c79335bdf2e"],"summary_offset":[33995,3493006,3493165]},
+    {"node_id":"tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-commit-declared-reads-function]","status":"failed","terminal_order":205,"source_file":"tests/sdk/test_timeline_open_commit.py","selector":"test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-commit-declared-reads-function]","family":"fixture/input","d52_category":"ours-live","owner":"Agent timeline provider fixture seam","scope":"non-core","scope_evidence_id":"other-noncore-171","disposition":"UNPROVEN","regression_status":"UNPROVEN","traceback":[29925,30003,3222433,3227064,"902d2de9ff7643a63c77502f8a05e8cb4996b0c6692754db05dabad1e50864d8"],"summary_offset":[33996,3493165,3493327]},
+    {"node_id":"tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-preview-omitted-reads-label]","status":"failed","terminal_order":206,"source_file":"tests/sdk/test_timeline_open_commit.py","selector":"test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-preview-omitted-reads-label]","family":"fixture/input","d52_category":"ours-live","owner":"Agent timeline provider fixture seam","scope":"non-core","scope_evidence_id":"other-noncore-171","disposition":"UNPROVEN","regression_status":"UNPROVEN","traceback":[30003,30082,3227064,3231693,"6a601868e4d46df4543a12dc79e82e9679ab3a8815b5e2ab1dbdaf45368463fd"],"summary_offset":[33997,3493327,3493486]},
+    {"node_id":"tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-preview-omitted-reads-function]","status":"failed","terminal_order":207,"source_file":"tests/sdk/test_timeline_open_commit.py","selector":"test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-preview-omitted-reads-function]","family":"fixture/input","d52_category":"ours-live","owner":"Agent timeline provider fixture seam","scope":"non-core","scope_evidence_id":"other-noncore-171","disposition":"UNPROVEN","regression_status":"UNPROVEN","traceback":[30082,30160,3231693,3236325,"f970e6846aa4142c7cf957565d76389ad914b5b74c0f4e37a26cf0b91fa4a33c"],"summary_offset":[33998,3493486,3493648]},
+    {"node_id":"tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-preview-declared-reads-label]","status":"failed","terminal_order":208,"source_file":"tests/sdk/test_timeline_open_commit.py","selector":"test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-preview-declared-reads-label]","family":"fixture/input","d52_category":"ours-live","owner":"Agent timeline provider fixture seam","scope":"non-core","scope_evidence_id":"other-noncore-171","disposition":"UNPROVEN","regression_status":"UNPROVEN","traceback":[30160,30238,3236325,3240954,"beaf28a0157e0ff69020597d0ea16aeaa140d70b9c58fafe1161ef652e2c55bc"],"summary_offset":[33999,3493648,3493808]},
+    {"node_id":"tests/sdk/test_timeline_open_commit.py::test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-preview-declared-reads-function]","status":"failed","terminal_order":209,"source_file":"tests/sdk/test_timeline_open_commit.py","selector":"test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry[native-preview-declared-reads-function]","family":"fixture/input","d52_category":"ours-live","owner":"Agent timeline provider fixture seam","scope":"non-core","scope_evidence_id":"other-noncore-171","disposition":"UNPROVEN","regression_status":"UNPROVEN","traceback":[30238,30708,3240954,3268460,"5ca6f674287c3e1450e405f70edea44cb372982a3b45a8fbbc0ee43f3eceba6d"],"summary_offset":[34000,3493808,3493971]},
+    {"node_id":"tests/sdk/test_timeline_open_commit_v2.py::test_function_reads_each_returned_head_and_recomputes_with_new_keys","status":"failed","terminal_order":210,"source_file":"tests/sdk/test_timeline_open_commit_v2.py","selector":"test_function_reads_each_returned_head_and_recomputes_with_new_keys","family":"fixture/input","d52_category":"ours-live","owner":"Agent timeline provider fixture seam","scope":"non-core","scope_evidence_id":"other-noncore-171","disposition":"UNPROVEN","regression_status":"UNPROVEN","traceback":null,"summary_offset":[34001,3493971,3494089]},
+    {"node_id":"tests/sdk/test_timeline_open_commit_v2.py::test_three_evaluation_bound_survives_reopening","status":"failed","terminal_order":211,"source_file":"tests/sdk/test_timeline_open_commit_v2.py","selector":"test_three_evaluation_bound_survives_reopening","family":"fixture/input","d52_category":"ours-live","owner":"Agent timeline provider fixture seam","scope":"non-core","scope_evidence_id":"other-noncore-171","disposition":"UNPROVEN","regression_status":"UNPROVEN","traceback":null,"summary_offset":[34002,3494089,3494186]},
+    {"node_id":"tests/sdk/test_timeline_open_commit_v2.py::test_unknown_retry_then_conflict_continues_with_persisted_evaluation_count","status":"failed","terminal_order":212,"source_file":"tests/sdk/test_timeline_open_commit_v2.py","selector":"test_unknown_retry_then_conflict_continues_with_persisted_evaluation_count","family":"fixture/input","d52_category":"ours-live","owner":"Agent timeline provider fixture seam","scope":"non-core","scope_evidence_id":"other-noncore-171","disposition":"UNPROVEN","regression_status":"UNPROVEN","traceback":null,"summary_offset":[34003,3494186,3494311]},
+    {"node_id":"tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head","status":"failed","terminal_order":213,"source_file":"tests/sdk/test_timeline_persistence.py","selector":"test_publish_after_a_restart_merges_other_clips_onto_the_moved_head","family":"fixture/input","d52_category":"ours-live","owner":"Agent timeline provider fixture seam","scope":"non-core","scope_evidence_id":"other-noncore-171","disposition":"UNPROVEN","regression_status":"UNPROVEN","traceback":null,"summary_offset":[34004,3494311,3494426]}
+  ],
+  "integrity": {
+    "membership_preserved": true,
+    "status_preserved": true,
+    "order_preserved": true,
+    "summary_offsets_preserved": true,
+    "traceback_offsets_preserved": true,
+    "source_membership_preserved": true,
+    "owner_intersection_unique": true,
+    "core_noncore_disjoint": true,
+    "no_env_credit_outside_exact_setup_errors": true,
+    "no_pre_existing_credit": true,
+    "no_dead_scope_credit": true,
+    "no_regression_without_upstream_pass": true
+  }
+}
