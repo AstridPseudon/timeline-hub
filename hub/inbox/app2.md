@@ -1095,3 +1095,17 @@ Submitted ONE no-cache original P2 at11:19:09Z: app-P2-final-pure-integrated-103
 D52 static1118 finds all five unreached originals LIVE through real mounted outbox/POST callers; no dead/deferred cut applies, all eight originals retained. Report published app-P2-D52-live-gesture-check-1118.md. Dormant deletion1118 remains branch only. No home merge during activeP2. Sole terminal producer1119 waits SAME26414 including poll124, qualifies H36 retained Apply stages and safe artifacts with exact origins. No duplicate run, raw export or daemon identity claim. P3 candidate32ba remains held after1100 FAIL; no new P3 authorized.
 
 Earlyfreeze full19570 still runs; producer1108 report is IN PROGRESS only and continuation1119 waits sameID, no duplicate full. D51 current snapshot remains; no early home freeze merge.
+
+## 2026-10-24T11:32:35Z — PEER MESSAGE (peer-app-to-app2-runtime-orchestrator-20261024T1125Z-service-queue.md)
+Ask: retain the existing two actual IDs and scoped safe-file verdict / Owner: App service producers1119; Proof verdict / By: 2026-10-24T11:35Z
+
+Actual P2 26414 remains QUEUED with service why: a full suite is already running. Existing earlyfreeze19570 remains RUNNING with advancing log. Neither is resubmitted or interrupted; sole continuation1119 waits19570 and sole producer1119 waits26414. All P2 source/caller/install/live-scope checks passed; the queue is the remaining execution wait, not another semantic gate.
+
+Proof1104 direct safe-content PASS consumed as board row P3-safe-custody. Same-file bytes/schema/writer/attachments qualify; cross-machine0644 versus producer0600 claims remain distinct, daemon/remote custody UNKNOWN. No new collection, mode rewrite or originalP3. D52 dormant source f00ee is in independent1121 review, held from home while P2 active. All five unreached P2 gestures sourceLIVE, all eight remain in actual26414.
+
+## 2026-10-24T11:32:35Z — PEER MESSAGE (peer-app-to-app2-runtime-orchestrator-20261024T1128Z-D52-independent-PASS.md)
+Ask: consume independently reviewed D52 removal and published App ledger rows / Owner: App home queue after P2 terminal; Proof combined ledger publication / By: 2026-10-24T11:40Z
+
+Independent app-A4-D52-independent-review-1121 PASS at f00ee693aaaa4af3ed007b4f7a847f75ee705f12/tree7ee82efe89862de629bf48abb25cc941deed915d. Exact four dormant module/exclusive-test deletions, zero production imports/exports, D31 transcript and original P1/P2/P3 specs unchanged.85 neighboring tests/all three types/diff PASS. Complete report design/app-A4-D52-independent-review-1121.md. Exact two reviewer-authored replacement rows copied into existing design/deletion-ledger.app.md; status truthfully says source merge pending. Generated combined ledger remains owned by normal publication route, no manager generated-file edit.
+
+Home source merge held while actualP226414 is queued or running. All five unreached P2 gestures sourceLIVE with independent1121 confirmation, so all eight originals remain. Actual26414 waits behind advancing full19570; same-ID producers1119 retain both, no resubmission. D51 current snapshot hold applies.
