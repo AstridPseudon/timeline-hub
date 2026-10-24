@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T21:46:34Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 0m -->
-# agent board, 2026-10-24T21:46:23Z
+<!-- agent | 2026-10-24T21:49:19Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 1m -->
+# agent board, 2026-10-24T21:47:46Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -147,13 +147,15 @@ Evidence: [Prior1960 XML](../../design/handoff-agt-D83-1960-seven.xml), [carrier
 D69/D72: Exact47 restored and178 audited retained; named family proofs complete. Upstream924 full remains FAIL12396PASS91FAIL14errors. Exact276, D67env and bothD23 deferrals remain separate.
 Admission: All historical safety/access/cleanup refusals remain stopped. No denied pin release, fabricated installed tuple, child/Farm/schema route. E2/D79 paused untilZIP.
 Disk: Measured8583991296 bytes,7.99GiB. Sweep3 removed0; compact packed0 and gzipped7 old logs. D74a explicit21:34 ruling allows this critical batch at6GB; no disk blocker. Old dirtyG2 and refused pins untouched; no eligible ended clean Agent worktree known.
-Blockers: Runtime source — service6749 ten-note and both False originals still timeout; existing lock/cost Sol2126 own the next source questions. Candidate197d remains held.
+Blockers: Runtime source — service6749 ten-note and both False originals timeout; Runtime schemaSol2141 and lockLuna2143 now own next source questions. Candidate197d remains held.
 Blockers: Final cut — final pinned P1–P5/core and genuine installed render remain D59 gated. Existing gate GO qualifies only its recorded tuple.
-Next ready: Runtime2126 meaningful reviewed successor -> normal adoption and existing candidate/original path. No local source diagnosis, unchanged original repeat or independent NO-GO verdict.
-live 1 / cap 4; ready-undispatched 0. Batch2138 is the only active local worker/heavy request owner. No E/D79 follow-up beforeZIP.
+Next ready: Runtime schema2141 meaningful reviewed successor -> normal adoption and existing candidate/original path. No local source diagnosis, unchanged original repeat or independent NO-GO verdict.
+live 0 / cap 4; ready-undispatched 0. Worker2138 and service6749 finished; no local heavy run. No E/D79 follow-up beforeZIP.
 Inbox consumed through 1098305 bytes. Pass 2026-10-24T21:38:46Z: PLAN/common/header and Runtime board read. ORCH21:34 floor ruling applied; source prep2131 complete, adoption normally merged840a. Assigned one fresh five-case batch2138 immediately;1960 remains immutable NO-GO.
 
 Current pass 2026-10-24T21:42:51Z: Service agent-p4-current-becfe-http-3legs-1024214145-6749 running exactfive. Previous31062 zero bodies/noXML: wrapper copied inputmanifest to itself; worker fixed inputpath, reran parsedpositive/poison and submitted same-tuple replacement. No meaningful original duplicated.
 
 Timings: bc04 service6749 vs45s: ten-note45.242s FAIL; FalseNone45.006s FAIL; Falsepublic45.010s FAIL; TrueNone39.261s PASS; Truepublic40.053s PASS.
-Current pass 2026-10-24T21:46:23Z: actual6749 terminal NO-GO3FAIL2PASS218.32s. Exact XML/log/tuple/checkouts/preflight copied byte-identical to design/handoff-agt-D83-bc04-6749-*. Allfive historical home scopes stay open; Runtime receives result immediately. Worker2138 finishing finite automatic handback; no second body/review/investigation.
+Current pass 2026-10-24T21:46:23Z: actual6749 terminal NO-GO3FAIL2PASS218.32s. Exact XML/log/tuple/checkouts/preflight copied byte-identical to design/handoff-agt-D83-bc04-6749-*. Allfive historical home scopes stay open; Runtime receives result immediately. Worker2138 DONE; report/outcomes/service receipt published byte-exact. No second body/review/investigation.
+
+Pass 2026-10-24T21:47:46Z: NEW Runtime2142 peer consumed; newer7aa is test-only and all product equals releasedbc04, so it does not invalidate6749 or justify repeat. Existing schemaSol2141 is sole next cost author; lockLuna2143 corrects its independent finite setup. No additional Agent diagnosis. Current report2138 is terminal, no independent NO-GO verdict.
