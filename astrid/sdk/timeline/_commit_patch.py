@@ -769,6 +769,24 @@ def rebase_patch(plan, entries, head_bundle, *, load_boundary):
     staged_roots = {effect['ref'] for step in plan.steps for effect in step['patch']
                     if not effect['path'] and effect['op'] == 'set' and effect['before'] == ABSENT}
     staged_roots.update(item['ref'] for record in plan.records for item in record['created'])
+    # A command can allocate a child that a later command in the same step
+    # materializes again. The step's net effects omit that intermediate image.
+    # Retain only allocated roots from the provider's actual command output;
+    # a submitted ref or an equal payload is never allocation authority.
+    from .commit import bundle_from_document
+
+    for execution in getattr(plan, '_sequential_execution', []):
+        record = plan.records[execution['boundary']['command_ordinal']]
+        allocations = [item['ref'] for item in record['created']
+                       if item['kind'] == 'shot' and item['ref'].startswith('shot:')]
+        if not allocations:
+            continue
+        before = Closure(bundle_from_document(execution['input']))
+        output = Closure(bundle_from_document(execution['output']))
+        for ref in allocations:
+            physical = output.resolve(ref)
+            staged_roots.update({physical, 'internal-revision:'
+                                 + output.images[physical]['internal_timeline_revision_id']} - before.images.keys())
     staged_predecessors = {binding['successor']: binding['physical_ref']
                           for record in plan.records for binding in record['bindings']
                           if binding.get('key') == 'commit.materialization'}
