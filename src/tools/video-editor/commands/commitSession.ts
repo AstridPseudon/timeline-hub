@@ -17,6 +17,8 @@ import { authoringBundleFromDocument, type AuthoringBundle } from './authoringBu
 import { captureClipMove, finishClipMove, type AuthoredBundle } from './clipMoveCapture.ts';
 import type { ClipMoveCapturePort, ClipMoveProposal } from './semanticGestures.ts';
 import { AuthoredState, assertFiniteJson, copy, equal, freezeJson } from './clipMovePrimitives.ts';
+import { captureTrackLabel, finishTrackLabel, type TrackLabelArgs } from './trackLabelCapture.ts';
+import type { TrackLabelCapturePort } from './trackLabelGesture.ts';
 import type { ClipParamsArgs } from './clipParamsCapture.ts';
 import type { JsonObject } from './types.ts';
 import { selectedParamsCommand } from './clipParamsCapture.ts';
@@ -146,6 +148,7 @@ export type CommandSessionState = {
   recoverableOwners: string[];
   canUndo: boolean;
   canDiscardRejected?: boolean;
+  canReapplyLabel?: boolean;
 };
 type Options = {
   imagePlacementHost?: EditorImagePlacementHost;
@@ -276,10 +279,25 @@ export async function createTimelineCommandSession(options: Options) {
     return !!box && !resolving && !persistenceFailed && !pendingAppends.length
       && record?.pending?.outcome?.kind === 'rejected' && record.pending.intentId === record.intents[0]?.id;
   }
+  function labelIntent() {
+    if (record?.intents.length !== 1) return;
+    const commands = (record.intents[0].payload as unknown as Payload).commands;
+    if (commands?.length !== 1) return;
+    const command = commands[0];
+    if (command.schema_version !== 1 || command.op !== 'track.set' || command.version !== '1'
+      || typeof command.select !== 'string' || !/^parent\/track:[^/]+$/.test(command.select) || command.select.includes('::')
+      || (command.intent !== undefined && !equal(command.intent, {}))) return;
+    const args = command.args;
+    if (!args || !equal(Object.keys(args).sort(), ['clear', 'values'])
+      || !args.values || typeof args.values !== 'object' || Array.isArray(args.values)) return;
+    if (!(equal(Object.keys(args.values), ['label']) && typeof args.values.label === 'string' && equal(args.clear, []))
+      && !(equal(args.values, {}) && equal(args.clear, ['label']))) return;
+    return { select: command.select, args: copy(args) as TrackLabelArgs };
+  }
   function publish(status: CommandSessionState['status'], error: string | null = null) {
     if (stopped) return;
     state = { ...state, status, error, canDiscardRejected: rejected() && !!options.loadLatest,
-      canUndo: !persistenceFailed && !resolving
+      canReapplyLabel: rejected() && !!options.loadLatest && !!labelIntent(), canUndo: !persistenceFailed && !resolving
       && ((status === 'saved' && !!undos.length) || (status === 'dirty' && !!record?.intents.length && !record.pending)) };
     options.changed(state);
   }
@@ -688,6 +706,53 @@ export async function createTimelineCommandSession(options: Options) {
       const key = JSON.stringify(command);
       const entry = prepared.get(key);
       if (!entry || entry.generation !== localGeneration) throw new Error('Move was not captured by this session');
+      prepared.delete(key);
+      enqueue({ ...entry.payload, preview }, preview, entry.basis);
+    },
+  };
+  const trackLabelPort: TrackLabelCapturePort = {
+    capture({ trackId, current }) {
+      assertReady();
+      if (current.head?.projectId !== options.scope.projectId || current.head.timelineId !== options.scope.timelineId
+        || current.head.headRevisionId !== displayHead.revisionId || current.head.headPublicationId !== displayHead.publicationId) {
+        throw new Error('Displayed timeline does not match the raw authoring basis');
+      }
+      if (current.resolvedConfig.tracks.filter((track) => track.id === trackId).length !== 1
+        || hasChildTrack(bundle, trackId)) {
+        throw new Error('Track label requires one unambiguous parent track identity');
+      }
+      return json({ ...captureTrackLabel(bundle, `parent/track:${trackId}`), localGeneration,
+        localBasis: lastIntent ? { after: lastIntent } : { head: known.head } }) as ReturnType<TrackLabelCapturePort['capture']>;
+    },
+    finish(basis, args) {
+      assertReady();
+      if (basis.localGeneration !== localGeneration) throw new Error('Timeline changed during the label edit');
+      const result = finishTrackLabel(basis, args);
+      const next = new AuthoredState(copy(bundle));
+      // Remote changes during typing may advance the closure, but never refresh these guards.
+      if (!result.command.reads!.every((read) => next.matches(read.ref, read.path, read.state))
+        || !result.record.writes.every((write) => next.matches(write.ref, write.path, write.before))) {
+        throw new Error('Track label changed during the label edit');
+      }
+      for (const write of result.record.writes) next.set(write.ref, write.path, write.after);
+      prepared.set(JSON.stringify(result.command), { payload: {
+        commands: [result.command], before: bundle, after: next.bundle, preview: null,
+      }, generation: localGeneration, basis: basis.localBasis as unknown as OutboxBasis });
+      return { command: result.command };
+    },
+    submit({ command, preview }) {
+      assertReady();
+      const key = JSON.stringify(command);
+      const entry = prepared.get(key);
+      if (command.op !== 'track.set' || !entry || entry.generation !== localGeneration || entry.payload.before !== bundle) {
+        throw new Error('Track label was not captured by this session or the timeline changed');
+      }
+      const args = command.args as TrackLabelArgs;
+      const trackId = command.select!.slice('parent/track:'.length);
+      if (preview.version !== 1 || !equal(preview.operations, [{ op: 'track.update', target: trackId,
+        payload: { label: 'label' in args.values ? args.values.label : trackId } }])) {
+        throw new Error('Track label requires one label-only preview');
+      }
       prepared.delete(key);
       enqueue({ ...entry.payload, preview }, preview, entry.basis);
     },
@@ -1117,8 +1182,10 @@ export async function createTimelineCommandSession(options: Options) {
       return enqueue(entry.payload, null, entry.basis, true);
     },
   };
-  async function resolveRejected() {
+  async function resolveRejected(keepLabel: boolean) {
     if (stopped || !rejected() || !options.loadLatest) throw new Error('Only a definitively rejected prefix can be resolved');
+    const label = keepLabel ? labelIntent() : undefined;
+    if (keepLabel && !label) throw new Error('Keep supports only one parent track label with no retained suffix');
     const ids = record!.intents.map((intent) => intent.id);
     resolving = true;
     projectionGeneration++;
@@ -1133,25 +1200,35 @@ export async function createTimelineCommandSession(options: Options) {
         throw new Error('Resolution requires a verified closure in the current project and timeline');
       }
       const before = await authoringBundleFromDocument(document) as AuthoredBundle;
+      let payload: Payload | undefined;
+      if (label) {
+        const trackId = label.select.slice('parent/track:'.length);
+        if (hasChildTrack(before, trackId)) throw new Error('Track label requires one unambiguous parent track identity');
+        const result = finishTrackLabel(captureTrackLabel(before, label.select), label.args);
+        payload = { commands: [result.command], before, after: result.bundle, displayBasis: fresh,
+          preview: { version: 1, operations: [{ op: 'track.update', target: trackId,
+            payload: { label: 'label' in label.args.values ? label.args.values.label : trackId } }] } };
+      }
       // One owner-fenced transaction either retains all original work or installs the new intent.
-      record = await box!.resolveRejected(ids, undefined, () => !stopped);
+      record = await box!.resolveRejected(ids, payload ? { payload: json(payload), head: fresh.head } : undefined, () => !stopped);
       if (stopped) throw new Error('Timeline command session is closed');
       localGeneration++;
       appendedGeneration = localGeneration;
       lastIntent = record.intents[0]?.id;
       prepared.clear();
       intentIds.clear();
-      bundle = before;
+      bundle = payload?.after ?? before;
       known = fresh;
       acceptedBasis = fresh;
-      await project(fresh, []);
+      await project(fresh, payload?.preview ? [payload.preview] : []);
       resolving = false;
-      publish('saved');
+      publish(payload ? 'dirty' : 'saved');
     } catch (error) {
       resolving = false;
       publish('error', message(error));
       throw error;
     }
+    if (keepLabel) await pump();
   }
   async function claim(owner?: string) {
     if (stopped) throw new Error('Timeline command session is closed');
@@ -1259,12 +1336,14 @@ export async function createTimelineCommandSession(options: Options) {
     elementPort,
     elementOverlay,
     genericPatchPort,
+    trackLabelPort,
     shotSetPort,
     parentClipAddMediaPort,
     parentClipSwapMediaPort,
     occurrenceAddMediaPort,
     occurrenceDuplicatePort,
-    useLatest: () => resolveRejected(),
+    useLatest: () => resolveRejected(false),
+    keepLabelChanges: () => resolveRejected(true),
     getState: () => state,
     // Existing task events and canonical reconnect reads wake this same pump.
     resumePlacements,
