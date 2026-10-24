@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T09:03:32Z | dispatcher heartbeat 1s | live 3 (sol 1, luna 2, other 0) | busy30 11 | status age 0m -->
+<!-- app | 2026-10-24T09:06:34Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 0m -->
 # app board, 2026-10-24T09:03Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -42,13 +42,14 @@
 | A3-popup-diagnostic | Retain safe refusal stage | Luna; independent review | Integrated0826 PASS | merged | Reviews0816/0818; integrated0826 | HOME182c passes46 plus7 semantic and22 controls, three types and lint. Safe diagnostics only; placement repair separate. | 209723 /182c |
 | A3-popup-full-caller | Qualify complete authoritative popup reply | Sol; independent Luna | Second review0840 FAIL | doing | HARD Sol0846; wholepath0846 | Real mounted POST reached; mock still echoes commands and lacks complete effects/dependencies. Product repair held for cumulative proof. | 63e held |
 | A3-popup-authority-path | Investigate full reply boundary | Independent Luna | Investigation0846 complete | merged | app-A3-popup-authority-path-0846 | Real mounted path reaches generated POST. Prior synthetic reply is incomplete; source-derived provider recipe published for sole Sol0846. No live claim. | Report only |
+| A3-popup-rebase | Classify pure provider rebase refusal | Agent R1; App independent review | App0846 source finding | blocked:agent | Peer0905; App0846 | Current Agent67d rejects intermediate binding after fork and add. Valid fixture versus provider defect remains to be classified;079 is untested. | Source handoff pending |
 | P2-tour-oracles | Strict transition and parent helpers | Proof Luna; independent review | Integrated 0800 PASS | merged | Proof 0737/0742; App proof 0800 | Exact reviewed paths on HOME28b0 passed 17 joined controls, three types, lint/list. Original gesture outcomes remain open. | 0a22d85455 / 59cb263629 |
 
 | P2-element-handler | Check retained completion attribution | Luna; independent Luna | Independent0814 PASS | merged | Author0808; review0814 | Actual30-file inventory has no matching handler or receipt link. One POST remains unresolved; outcome UNKNOWN. No new collection. | Report only |
 
 Integration: HOME82cb5c0005df7abe0fcb8673f7be192a6c9e9183 includes clean P3 f561 after HOME182c. Receipt and source are verified; prior integrated0826 covers182c only. Popup candidate63e remains held after independent0840 FAIL on authoritative reply modeling. Sole Sol0846 and independent whole-path0846 are running. Final joined proof follows reviewed popup merge; no current original run is released.
 
-Blockers: App — actual element completion is unknown; popup source0822 repairs confirmed derived assetEntry serialization refusal.
+Blockers: App — popup accepted proof passes; merged pure-provider binding refusal is under App and Agent classification. Historical element outcome remains unknown.
 Blockers: App — P3 source is HOME82cb. Final joined proof and caller binding follow popup review0840; Proof source dependencies are clear.
 Blockers: Freeze — App U3b home waits header P2/P3 GO, then D39 adoption and actual final tuple qualification. Runtime coordinates FREEZE.
 Next ready: Popup Sol0846 and independent path0846 are running. Caller first return0853 is in cumulative0902 review. After popup cumulative PASS, merge then dispatch exact joined proof and final caller binding. Conditional Proof0850 release applies only after all actual qualifications pass.
