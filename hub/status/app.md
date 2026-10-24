@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T20:57:04Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 0m -->
-# app board, 2026-10-24T20:57Z
+<!-- app | 2026-10-24T21:00:29Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 1m -->
+# app board, 2026-10-24T20:58Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -67,7 +67,7 @@
 | P2-D80-bulk | Transition bulk clear alone | Luna; Service | Preflight17367 PASS | review | Actual25054; producer1855 | Readiness PASS, original fixture transport_timeout before gesture. All five actual diagnostics complete, no gate credit. | App3c29 |
 
 | P2-D78-live | One unchanged element gesture with stacks | Service; Luna | Preflight9965 PASS | review | Actual13100; producer1856 | Exit1/213s; readiness PASS, native-seed timeout before element.128safe phase records published; no stack/PID captured. All output retained. | App3c29 |
-| P2-D80-seed | Native seed wait blocks gestures | Runtime HARD Sol | Actual14383 safe stack qualified | blocked:runtime | Runtime native wait owner; App capture complete | D83 names Runtime wait bug top priority. No more P2 runs until meaningful fix home; then isolated eight gestures before one full tour. | Runtime fix pending |
+| P2-D80-seed | Qualify meaningful native seed correction | Runtime Sol; App Luna | Runtime dc55 local8 and security PASS | doing | app-P2-D83-isolated-qualification-2058 | Runtime20:52 releases combined fix. App adoption home ce1cd9; next original element first, one body at a time. | Runtime dc55 |
 | P2-D78-wire | Wire published pending-request stack helper | Luna | Author focused checks PASS | merged | app-P2-D78-stack-wire-1859 | Helper exact8fe211, published patch and normal-stage activation;20Node/helper/activation controls, types/lint PASS. No actual dump claimed. | Home7098c7eeb5 |
 | P2-D80-path | Attribute native-seed boundary from App | Luna | Four retained setup failures | merged | app-P2-D80-native-seed-path-1910 | Request reaches Runtime; SDK30s timeout, App process120s. Relevant paths equal passingP1. No App repair justified; Runtime cost/progress unknown. | Source unchanged |
 | P2-D78-native-capture | Runtime native watchdog | Runtime Luna | Author12 PASS | merged | Runtime1932 and1935 | Normal44917 includes attribution fixes and daemon watchdog. Native source wait cleared; actual live14383 uses this helper. | Runtime44917 |
@@ -89,6 +89,15 @@
 
 | P2-D83-selectors | Complete all eight isolated gesture entries | Luna | Author source PASS | merged | app-P2-D83-eight-isolated-selectors-2032 | All8 isolated list1 each, aggregate8/P3one;22controls/lint/nodecheck PASS. Six protected hashes unchanged. No body before Runtime fix. | Home24a76a6b16 |
 
+| P2-D83-element | Element apply isolated original | Luna; Service | Qualified dc55 source; prior body ends | doing | app-P2-D83-isolated-qualification-2058 | Assigned sequentially under D74a critical 6 GB floor. Actual IDs pending; no current PASS or gate credit claimed. | Fresh captured tuple |
+| P2-D83-popup-add | Popup ADD isolated original | Luna; Service | Qualified dc55 source; prior body ends | doing | app-P2-D83-isolated-qualification-2058 | Assigned sequentially under D74a critical 6 GB floor. Actual IDs pending; no current PASS or gate credit claimed. | Fresh captured tuple |
+| P2-D83-parent-move | Parent move isolated original | Luna; Service | Qualified dc55 source; prior body ends | doing | app-P2-D83-isolated-qualification-2058 | Assigned sequentially under D74a critical 6 GB floor. Actual IDs pending; no current PASS or gate credit claimed. | Fresh captured tuple |
+| P2-D83-asset | RegisterAsset isolated original | Luna; Service | Qualified dc55 source; prior body ends | doing | app-P2-D83-isolated-qualification-2058 | Assigned sequentially under D74a critical 6 GB floor. Actual IDs pending; no current PASS or gate credit claimed. | Fresh captured tuple |
+| P2-D83-placement | Automatic placement isolated original | Luna; Service | Qualified dc55 source; prior body ends | doing | app-P2-D83-isolated-qualification-2058 | Assigned sequentially under D74a critical 6 GB floor. Actual IDs pending; no current PASS or gate credit claimed. | Fresh captured tuple |
+| P2-D83-swap | Popup SWAP isolated original | Luna; Service | Qualified dc55 source; prior body ends | doing | app-P2-D83-isolated-qualification-2058 | Assigned sequentially under D74a critical 6 GB floor. Actual IDs pending; no current PASS or gate credit claimed. | Fresh captured tuple |
+| P2-D83-clear | Transition single clear isolated original | Luna; Service | Qualified dc55 source; prior body ends | doing | app-P2-D83-isolated-qualification-2058 | Assigned sequentially under D74a critical 6 GB floor. Actual IDs pending; no current PASS or gate credit claimed. | Fresh captured tuple |
+| P2-D83-bulk | Transition bulk clear isolated original | Luna; Service | Qualified dc55 source; prior body ends | doing | app-P2-D83-isolated-qualification-2058 | Assigned sequentially under D74a critical 6 GB floor. Actual IDs pending; no current PASS or gate credit claimed. | Fresh captured tuple |
+
 Integration: App24a76a6b16 adds author-tested missing popupADD/parentmove D83 selectors; allsix protected hashes unchanged. Appc184bd includes exact independently qualified D82spec93c2 and original15493 GO. App860e added tested two-second watchdog selection for isolated capture14383. App e771 adds independently reviewed intermediate recovery readiness poll, exact spec736fd381. App7098 includes author-qualified D79 stack helper, fixture and normal-stage activation for future runs. App3c29 includes author-tested five D80 one-case descriptors. App2bd162 includes reviewed D75b both-mount recovery; parent status830252; D79 setup49f6; full phase38f39. App5d7550 includes one-command guarded submit037a8 over587316, with D73 snapshot admission6c7c over255f, with real Runtime CLI phase bootstrap over D73fd74, current popup provenance924140, D69c3d79, approved D70aaddaf, parent reads/audited restorations and frozen upstream3881. No new upstream refresh for gating.
 
 core open: 8 original P2 gesture cases. P3 original15493 independent2024 GO; P1 original2 PASS at its recorded tuple. Final source changes follow cut rerun matrix.
@@ -96,14 +105,14 @@ regressions: 0 confirmed open App source findings. D69 all four restorations hom
 
 
 Blockers: Final cut — eight P2 cases remain unqualified. P3 current15493 is independently GO. Runtime coordinates source repair, final tuple rerun matrix, suites and ZIP.
-Blockers: Runtime native wait — actual14383 frame/phase input complete. D83 requires meaningful Runtime wait fix home before next P2 isolated gesture.
-Next ready: All8 isolated entries are home24a76a. Wait Runtime native-wait fix, then freshfourpins/preflight and isolatedP2 until8PASS, thenonefulltour. Actual14383 input complete; P3 independentlyGO.
+Blockers: App qualification — Runtime dc55 source/security and local eight controls are released. App2058 owns all eight isolated cases, one body at a time; stop repeated native failures and return actual results.
+Next ready: App2058 captures four pins, gets checkout receipts, preflights and runs element first, then all eight isolated cases sequentially. One full original P2 only after eight PASS. P3 independently GO.
 
-live 0 / cap 4; ready-undispatched 0. U4p2052 normal home ce1cd9 carries Runtime dc55 and Agent b2cb through tools. P2 bodies await Runtime seed comparison. P3 remains GO; no redundant work.
+live 0 / cap 4; queued 1; ready-undispatched 0. All eight isolated P2 rows assigned App2058 under one-body D74a disk schedule. Runtime seed comparison PASS releases body dependency. P3 remains GO.
 
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
 Disk: Current 7.523 GB; cap 4. No active App body or build. Guarded scan found no finished clean non-KEEP App worktree remaining. Six stale pins previously released. D74a permits critical gates/D78 down to6.0GB. Cleanup1939 verifies stale KEEP pins and archives dirty abandoned U3 work before guarded recycle; classifier refusal stops. Orphan graph and prior denied routes stay stopped; all run evidence retained.
-Inbox consumed through 1709439 bytes; ORCH 20:47 cancels both redundant P3 workers. Owner boards Runtime 20:30 and Agent 20:27 rechecked. Runtime e745 schema setup is home, but both D83 Sol rows and observer acceptance remain active; no consolidated native wait release. P3 current 15493 independently GO.
+Inbox consumed through 1710474 bytes; ORCH 20:47 cancels both redundant P3 workers. Owner boards Runtime 20:30 and Agent 20:27 rechecked. Runtime e745 schema setup is home, but both D83 Sol rows and observer acceptance remain active; no consolidated native wait release. P3 current 15493 independently GO.
 Evidence: [D73 path](../../design/app-D73-service-snapshot-path-1739.md), [corrected P3 proposal](../../design/app-P3-recovery-proposal-return-1736.md), [same-ID source-only20321](../../design/app-P2-element20321-phase-producer-1737.md), [P1 current verdict](../../design/app-P1-26312-current-verdict-1616.md), [D69 final](../../design/app-U3-D69-home-and-preflight-1704.md).
 
 
@@ -124,3 +133,5 @@ Pass 20:48Z: later-arriving ORCH20:42 diagnostic request is superseded by explic
 20:55Z: U4p2052 PASS normal vendor/manifest tools, eight strict controls plus15vendor,14 exact mappings, protected6 hashes unchanged. Only lock and install manifest changed, normal merge queued immediately. Runtime conformance check reports two pre-existing stale outputs without mutation; no Runtime proof waived. Zero App workers live.
 
 20:57Z: normal MERGED U4p2052 homece1cd9, author609ebe. Home tree equality checked read-only. Qualified Runtime dc55 and captured Agent b2cb identities now adopted through normal tools; no schema/client delta or original test change.
+
+20:58Z immediate dependency recheck: Runtime20:52 publishes exactdc55 combinedlocal8PASS and explicitly releases App isolated originals. Cleared blocked Runtime row and dispatched Luna app-P2-D83-isolated-qualification-2058 in same pass. All8case rows assigned; sequential service bodies under critical6GB exception at current7.503GB. No idle ready task; no new P3 work.
