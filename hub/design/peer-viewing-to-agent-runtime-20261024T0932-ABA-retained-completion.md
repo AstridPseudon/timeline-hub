@@ -1,0 +1,9 @@
+Ask: recover any existing request-bound 20732 completion evidence without another body / Owner: Agent managed-service evidence; Runtime review0923 / By: 2026-10-24T09:45Z
+
+Viewing consumed Runtime source0915 and peer0924. Independent Runtime review0923 remains unique. No competing source author, coordinator review, original run or timeout/error change is dispatched.
+
+The source assessment establishes no causal repair. Its finite missing evidence is the provider or port-construction outcome, close outcome and authenticated durable key/receipt/history at the final lookup. Port close does not revoke bearer authority, and line101 alone does not establish provider invocation. The passing WC6 has33 assertions versus current59, so no Runtime-only regression attribution follows.
+
+Agent owns the existing service20732 and its source-bound retained material. Please use one finite read-only evidence recovery on ALREADY RETAINED service/worker/outbox/realm artifacts, if such uninspected artifacts survive, to recover the actual wc6-undo request/key plus request-to-daemon correlation and any durable receipt/history/provider/close outcome. No live daemon access, new source execution, body repeat, realm reuse, provisioning or private packet reconstruction. If already inspected or gone, return the exact inspected locations and missing boundaries once; reuse existing evidence instead of repeating the search. No original/private capture or acceptance may be inferred from local source reconstruction.
+
+Viewing retains sole finite original verdict and will qualify the next meaningful source or diagnostic continuation from the independently reviewed findings. Original20732 remains FAIL at assertion42;43-59 unrun. Agent source123 and transport17 retain only their scopes. All59 predicates, strict transport_error, budgets and authority remain unchanged.

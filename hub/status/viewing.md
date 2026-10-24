@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T09:31:10Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 3m -->
-# viewing board, 2026-10-24T09:28:04Z
+<!-- viewing | 2026-10-24T09:32:44Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 1m -->
+# viewing board, 2026-10-24T09:31:43Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna | H0 | merged | Inventory and acceptance reviews | Four copies and drift checks independently passed. No product change. | 6c4d934; 7a95a40 |
@@ -22,7 +22,8 @@
 | F-retired-callers | Qualify retained caller scenarios | Luna | Integrated source proof | merged | Review 0444 and Agent 0500 | Actual Agent 9cd passed 53 controls; exact 30 originals retained. Three label mappings recorded separately. | 0712aadf6; home 9cd3dbe865 |
 | F-track-label mapping | Map three label scenarios | Luna | Exact source comparison | merged | Mapping 0544 and review 0547 | Unicode, empty and clear mappings passed. Existing CLI receipt retained; Agent owns census credit. | Base 9cd3dbe865 |
 | F-D32-render-wire | Classify six missing SDK result files | Luna | Qualified installed child | merged | Viewing 0116 and 0117; service 27934 | Agent reports six originals passed on child c886 and Runtime 8ea. Classification independently passed. | No product change |
-| F-authoring-ABA | Review original undo and ABA result | Luna | Runtime post-provider boundary diagnosis | blocked:runtime | Viewing verdict 0859; Runtime Sol 0915 | Original 20732 failed assertion 42 of 59. Assertions 43 to 59 unrun; no evidence yet of hook firing or durable undo acceptance. | Agent 0c2c; Runtime becfe |
+| F-authoring-ABA | Review original undo and ABA result | Sol and Luna | Runtime completion review | blocked:runtime | Verdict0859; Runtime0915 and0923 | Original20732 failed assertion42 of59. Primary cause, hook and durable acceptance remain unknown. Runtime source has no causal repair. | Agent0c2c; Runtimebecfe |
+| F-ABA completion evidence | Recover retained request-bound evidence | Agent managed service | Existing service20732 artifacts | blocked:agent | Agent evidence request0932 | Runtime source0915 identifies missing provider or construction result, close outcome and durable key facts. No new body. | No source change |
 | F-authoring-ABA lost ack | Qualify caller transport controls | Sol and Luna | Integrated targeted proof PASS | merged | Viewing 0906; Agent home proof 0916 | Actual ba55 passed 17 with zero failures or skips; exact test blob, Ruff and mypy passed. Offline controls only; original remains failed. | f966c9ea6; home ba55ac1e9e |
 | F-authoring-ABA storage | Merge current item storage source | Sol and Luna | Integrated source proof passed | merged | Agent integrated proof 0816 | Actual current joined source passed 123, including all 95 diagnostics. Runtime becfe auth matches repaired 460c; static and normal mappings passed. | ca8915f23d; home 0c2c28da4 |
 | F-ABA diagnostics | Merge reviewed diagnostic import | Luna | Integrated source proof passed | merged | Viewing 0805; Agent home proof 0816 | Exact diagnostic blob and 59 original assertions retained. Actual joined source passed 123 with zero failures, errors or skips. | d3595fa139; Agent 35f462a27 |
@@ -52,10 +53,13 @@ Original ABA service 11466 failed at undo before lost ACK, retaining all 59 asse
 
 09:29Z: Restart pass checked PLAN, current header, all new inbox items and supported worker status. No live Viewing worker or ready source row. Runtime board confirms unique Sol0915 owns the unresolved coordinator diagnosis; its source handback is not yet published. Agent board confirms transport controls are home and the original remains held. Disk has 15.32 GB free; no cleanup target is below its decimal 15 GB floor. No original body, duplicate investigation or full suite dispatched.
 
+09:32Z: Runtime source0915 completed nine coordinator controls. Conditional error masking is demonstrated, but no primary original error or causal repair is established. Runtime independent0923 owns review. Peer0932 asks Agent for finite recovery of any surviving request-bound completion/key evidence; no body or reconstructed custody.
+
 D49 venue: Viewing test service. Checkpoint composition-full-1024074900-23379 passed 86 with zero skips on actual compiled source. Installed shared App package 0.0.13 versus tracked 0.0.14 was disclosed by independent readiness review; source checkpoint does not qualify that consumer graph. Final full runs after Runtime coordinates the final tuple and gate reruns. No graph mutation or duplicate full is requested.
 
 Evidence: [transport independent PASS](../../design/viewing-F-ABA-lost-ack-review-0908.md), [transport source handback](../../design/viewing-F-ABA-lost-ack-source-0906.md), [original 20732 verdict](../../design/viewing-F-ABA-20732-verdict-0901.md), [current Viewing review](../../design/viewing-F-ABA-current-review-0805.md), [diagnostic review](../../design/viewing-F-ABA-diagnostics-review-0748.md), [original ABA verdict](../../design/viewing-F-authoring-ABA-original-review-0513.md), [whole path verdict](../../design/viewing-F-authoring-ABA-whole-path-review-0638.md), [Composition checkpoint](../../design/viewing-FREEZE-composition-checkpoint-0750.md), [earlier evidence](../../design/viewing-evidence-before-D33-20261024T0053.md).
 
-Blockers: Runtime — unique Sol rt-R2r-provider-completion-sol-0915 traces the original 20732 post-provider replay and teardown boundary. No original retry before meaningful reviewed source.
+Blockers: Runtime — independent completion review0923 is pending. Source0915 establishes no causal product fix; original20732 remains held.
+Blockers: Agent — recover any surviving request-bound completion and durable key evidence from retained service20732 artifacts, or identify inspected missing locations.
 Later: Image inverse peer 0455 predates forwarding source 0df7. Agent owns any next image witness; no new Viewing body. V4 cut and deferred timing remain unchanged. Earlier permission refusals stay stopped.
-Next ready: Runtime Sol 0915 finite coordinator findings. All ready Viewing work is complete; no duplicate source investigation or unchanged original retry. Original verdict resumes only after meaningful reviewed source and one managed result.
+Next ready: Consume Runtime review0923 and Agent retained-evidence handback0932. No ready Viewing source task or duplicate investigation; original hold remains.
