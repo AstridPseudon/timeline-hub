@@ -201,6 +201,18 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **Order:** Runtime first (producer), then D39 client regeneration if the contract changed, then Agent and App in parallel. P2/P3 and the core suites then run on the refreshed heads.
   - At delivery, F-final applies the squashed patches to these same tips. A new upstream move after this point triggers another refresh only if the owner asks.
   - **Test-file conflicts (13:40Z): keep BOTH.** Upstream's new and changed tests are taken as they are, and every one of our live test cases is re-applied on top: adapted to upstream's structure, never dropped. Taking 'incoming' and discarding our cases is weakening, so it's refused. The independent review maps every pre-merge live predicate to its post-merge location. Product-code conflicts follow the default: upstream behaviour, with ours adapted.
+- **D84, a STRUCTURAL history-verification fix, not more micro-gains (21:50Z; H48 Opus).** So far +5.7%, +4.3% and +8%, and none has closed a gate. Accepted history is fully re-verified on every request, serialized, O(N). Runtime: ONE HARD Sol now (only one Sol is live on main), in the local seconds loop, then ONE security review. In this order:
+  1. **Never verify while holding the request/execution lock.**
+     - Verify outside it.
+     - Re-check only the head pair under the lock (CAS).
+     - No cache, so no new trust surface. Try this first.
+  2. **Only if (1) is not enough:** an in-process verified-PREFIX memo.
+     - Keyed by the authenticated chain position and digest (ordinal plus entry digest of the last verified entry).
+     - It verifies only the new suffix, and any mismatch invalidates it and falls back to full verification.
+     - It is never persisted.
+     - This is exactly the D45/D47 memo class that failed security review before: the reviewer must specifically attack its invalidation (rewind, fork, ABA, restart, tamper).
+  - **Gate:** the local loop shows per-request verification time flat in N, then P4 ten-note under 45 s and the App element/popup/parent isolated runs.
+- **App:** App-side P2 defects do NOT wait for Runtime. Source-only authors fix registerAsset ownership (12674) and the placement locator (28255) now, under the D74a source-only floor.
 - **D83, the speed-up (20:20Z; owner asked to speed up significantly; Opus second opinion, verified against the boards):** **most of the remaining red is ONE Runtime bug.**
   - **The evidence:**
     - All 5 D80 single-gesture runs AND the D78 live run died at the same native-seed `transport_timeout`, before any gesture.
@@ -358,6 +370,7 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - The ZIP README lists it as a post-install check, with the exact env vars to set.
   - Agent's core-open target is therefore 6 (4 fork + 2 forward), all on D62 / forward-created auth.
   - This is not a permission-refusal case, so no owner action is needed.
+- **H48 (21:55Z):** ETA ~12:00Z 25 Oct (07Z 25 Oct to 04Z 26 Oct). P1 and P3 GO; P2 0/8 (Runtime history verification stall plus App registerAsset setup); P4 ten-note 45.4 s. Critical path: the D84 structural verification fix.
 - **GATE P3 GO (20:44Z):** original Gate5 request 15493 passed: exit 0 in 248 s; readiness 1/1 and original 1/1 PASS (recovery mounts with exact 5/3 counts, merged B, history, restart, canonical, guarded undo). App c184bd0bec, protected spec 93c2bf4c72 (D70/D75/D75b/D82 corrections). Independent verdict GO: app-P3-15493-GO-verdict-2024. The cut matrix (D59) decides any rerun on the final tuple. P2 waits on the Runtime native-wait fix (D83): the SDK times out at 30 s on seed request 2.
 - **H46 (19:42Z):** popup shot-owner fix merged (87bc); P3 26908 NO-GO (recovery count 3 vs 4); P4 ten-note still >45 s (profile ordered); element capture 13100 reached accept. Agent core 5.
 - **H45 (18:55Z):** ETA ~12:00Z 25 Oct (06Z 25 Oct to 04Z 26 Oct). Gates: P1 GO current (26312/1616); P2 22847 0/3/5; P3 NO-GO (D75b applied); P4 ten-note 45 s FAIL. Critical path: D80 per-gesture diagnostics plus the D78 element hang, then a full P2 rerun.

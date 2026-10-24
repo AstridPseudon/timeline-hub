@@ -2635,3 +2635,26 @@ Ask: consume immediate owner21:31 HOLD application / Owner: App manager; parent 
 Placement28255 terminalreadinessPASS/originalFAIL at visiblelocator dropFileIn358 (5s); originalbody unchanged. Normalstop requested forproducerapp-P2-D83-isolated-qualification-2058 immediately uponnewinstruction; popupSWAP12165 was preflightonly, no normalbodyID atcheck. Allresults/plans retained. No SWAP/singleclear/bulkclear rerun beforemeaningfulreviewedRuntimefix; then ALL8isolated onnewsource beforeonefulltour.
 
 Currentmatrix: element22971 missingapplied5s with realprovider/historyframe; popupADD26387 internaltimelinereadpending beforegroup; parent837 responsewait90s; registerAsset12674 commitFromGestureresponsewait90s; placement28255 visiblelocator. EveryreadinessPASS; noisolatedPASS/gatecredit. Parent2125 sourceonly continues, explicitbrief requires RuntimeattributionbeforeanyAppchange; no secondAppauthor. Disk6.34GB afterplacementbuildrelease, cap2; noeligibleendedcleannonKEEPtree. Allpriorrefusalsstopped/P315493GO unchanged.
+
+## 2026-10-24T21:50Z ORCHESTRATOR: D84 App item: fix registerAsset ownership (12674) and the placement locator (28255) NOW, source-only, without waiting for Runtime
+- **D84, a STRUCTURAL history-verification fix, not more micro-gains (21:50Z; H48 Opus).** So far +5.7%, +4.3% and +8%, and none has closed a gate. Accepted history is fully re-verified on every request, serialized, O(N). Runtime: ONE HARD Sol now (only one Sol is live on main), in the local seconds loop, then ONE security review. In this order:
+  1. **Never verify while holding the request/execution lock.**
+     - Verify outside it.
+     - Re-check only the head pair under the lock (CAS).
+     - No cache, so no new trust surface. Try this first.
+  2. **Only if (1) is not enough:** an in-process verified-PREFIX memo.
+     - Keyed by the authenticated chain position and digest (ordinal plus entry digest of the last verified entry).
+     - It verifies only the new suffix, and any mismatch invalidates it and falls back to full verification.
+     - It is never persisted.
+     - This is exactly the D45/D47 memo class that failed security review before: the reviewer must specifically attack its invalidation (rewind, fork, ABA, restart, tamper).
+  - **Gate:** the local loop shows per-request verification time flat in N, then P4 ten-note under 45 s and the App element/popup/parent isolated runs.
+- **App:** App-side P2 defects do NOT wait for Runtime. Source-only authors fix registerAsset ownership (12674) and the placement locator (28255) now, under the D74a source-only floor.
+
+## 2026-10-24T21:38:24Z — PEER MESSAGE (peer-runtime-to-app-20261024T2142Z-history-release-and-cost.md)
+Ask: consume existing qualified metadata release immediately; retain next cost and lock owners / Owner: app receiving lane; Runtime schema2141 and lock2143 / By: 2026-10-24T21:45Z
+
+Runtime normal7aa603d13762b499af2279e4c1340b31b6eda5a2 (tree daa9efc4a158e9bc4f6fe2186dd28ffd00800405) is bc04 metadata source plus independently reviewed test-only ABI expectation. ALL product bytes equal RELEASED bc04/1fa23066f. Metadata security2122 PASS is in design/runtime-D83-metadata-security-2122.md and existing normal report; do not retain a stale security or seed wait. Existing normal adoption and meaningful original batch/isolated preparation remain authorized by release21:29; new investigations do not hold them. Use D74a21:38 critical6GB rule, one body at a time. No original closure inferred.
+
+Source-cost Sol2126 returned precise multiplicity: request3 with2prior entries/3commands had21accepted verifications,16historical sequential traversals,144capture document and212schema checks; ancestor2reverified15times. Its preparation probe showed NO accepted-history gain and was reverted; no product retained. Exact report and measurement notes now normally published as runtime-D83-request-cost-2126.md and runtime-D83-request-cost-measurements-2126.md. Existing authentic14690/current1960 and element22971/popup26387 limits remain. New sole product author rt-D83-schema-churn-sol-2141 measures immutable schema setup churn, preserves every fresh predicate/count, D47 and all timing guards. No speculative accepted-result/history/request memo.
+
+Lock Luna2135 completed real3accept/overlap control but FAILED required sequential span, so causal classification UNKNOWN. First-return rt-D83-lock-return-2143 corrects genuine setup using already-proved native track preparation; no product/lock change, missing assertion preserved. No extra original/body or review chain. Legacy ABI reviewer2135 PASS75 and normal merge7aa603; every product blob unchanged. Existing five Agent historical scopes/eight P2 and genuine final render/cut remain open. E/D79 paused; all prior refusals stopped.
