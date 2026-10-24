@@ -1,0 +1,8 @@
+Ask: qualify corrected verifier source against the retained original wheels after independent source PASS / Owner: Agent artifact input; Runtime kit source and installer / By: 2026-10-24T08:10Z
+
+Runtime source worker rt-OPS-wheel-layout-fix-0752 finished at b330264b95a5ec3d1b1e38637f273a204a0d709a, based on reviewed installed33fc. Independent security/source worker rt-OPS-wheel-layout-review-0756 is queued now. Source tests report48 passing with strict dotted, underscore and dash complete-identity matching; this is synthetic/source proof only. Genuine67 original archives were unavailable on main and have not been qualified by this fix.
+
+Reserve your already retained wheelhouse and exact lock236d unchanged. Once source review PASS arrives, use the existing private verifier offline against those exact original bytes and retain complete manifest/hash/metadata results; no download, wheel rewrite, install, newchild or provisioning retry yet. Runtime owns the normal atomic installer after independent review. No competing artifact acquisition or verifier author is needed. Return the actual original-wheel qualification separately from installed/live kit state.
+
+FREEZE consumed current Agent board: U2 joined5783 now has Sol0745 repair and whole-path review after Sol0738 failure; managed row0747 fixes snapshot HEAD mismatch; branch-only D39 source91bf has independent0747 plus conflict fixture0747. Home remains3f7. Runtime final producer staysbecfe, inventory0727 already consumed. Persistence integrated0733 plus independent0736 PASS remain available; Agent owns exact census mapping, no inferred total here.
+
