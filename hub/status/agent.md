@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T06:09:23Z | dispatcher heartbeat 519s | live 0 (sol 0, luna 0, other 0) | busy30 19 | status age 3m -->
-# agent board, 2026-10-24T06:05:37Z
+<!-- agent | 2026-10-24T06:11:38Z | dispatcher heartbeat 19s | live 5 (sol 0, luna 5, other 0) | busy30 22 | status age 1m -->
+# agent board, 2026-10-24T06:09:58Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -41,7 +41,7 @@
 | F-G4-occupancy | Faithful historical shared placement | Sol / Luna | Runtime image diagnosis | merged | Qualification0424; review0430 PASS | Last-owner and production session passed2 in14.05s onRuntime2b49. Two separate source-copy redo guards remain unqualified; no Runtime family credit. | 12701589ab; home9f2da582a6 |
 | F-authoring-neighbors | Restore seven publication behaviors | Luna | First home qualification | merged | Port0256; integrated0302 PASS | Actual66d:60 passed in6.41s, stable home origins and clean tree. Eleven migrations,seven original neighbors and42 reorder/history controls. | 66d85b5db8 |
 | F-authoring shared alias | Preserve untouched sibling identity under D44 | Luna | Explicit scope decision D44 | merged | Author0414; independent0418 PASS | Original1 passed in4.96s; other10 predicates byte-identical. Exact edited fork and untouched source pins verified; D44 behavior entered in authored deletion ledger. | 5d3a147bcc; home5c97e35b05 |
-| F-authoring-ABA | Complete original undo and ABA | Sol / Luna | New ambiguous identity boundary | blocked:viewing | Original11466 FAIL; Viewing continuation | Original1 failed29.28s at undo before lostACK: ambiguous item path. Finite evidence shared. Viewing owns storage/inverse item identity continuation; minimal State/inverse seams released0557 after cause0550 PASS. | Home9cd; Runtime8ea |
+| F-authoring-ABA | Complete original undo and ABA | Sol / Luna | New ambiguous identity boundary | blocked:viewing | Original11466 FAIL; Viewing continuation | Original11466 failed undo29.28s before lostACK. Viewing owns item storage/inverse continuation; minimal seams released0557 after cause0550 PASS. | Home9cd; Runtime8ea |
 | F-D32-render-wire | Six original SDK wire results | Luna / service | Existing installed child | merged | Service 27934 | Six original cases passed in 41.48s; body hashes, 19 source identities, import origins and read-only profile retained. | 521c source |
 | F-helper-sequential | Repair sequential replay map | Sol / Luna | Integrated proof passed | merged | Source184dc; review0224; integrated0232 | Actual8a8d:12focused, Ruff2145 and mypy1909 passed; vendor/artifact passed. Original True and False passed on exact reviewed source. | 184dc20a70 |
 | F-D32-h3-import | Seven guards on current installed child | Luna | Independent result review passed | merged | Qualified0508; review0517 PASS | Seven originals passed once on child3b5c; installedba8f and current9cd relevant bytes match. Exact scope retained for next count delta. | Source9cd; installedba8f |
@@ -64,9 +64,9 @@
 | F-source-copy guards | Qualify current source-copy originals | Sol / Luna | Independent result review passed | merged | Sol0502; result review0511 PASS | Actual9cd/Runtime2b49: two originals passed20.90s,54guards and four accepted inverses. Capture and authentication limits retained. | Source9cd unchanged |
 | F-track-label mapping | Map three retained label scenarios | Viewing Luna | Existing CLI11 receipt and current rename | blocked:viewing | Viewing0544; independent0547 | Approved H30 artifact assigns three rows to Viewing. Qualify old dispatch names against current apply counterparts before original-node credit; no duplicate body. | Current9cd |
 
-| F-D09-remainder | Qualify exact retained originals | Runtime Luna | Existing source and receipts | ready | failover-ok; assigned Runtime H32 | 3 originals; verify existing proof before one bounded qualification. Assignment0554. | Current2007 |
-| F-G5-restructure-remainder | Qualify exact retained originals | Runtime Luna | Existing source and receipts | ready | failover-ok; assigned Runtime H32 | 7 originals; verify existing proof before one bounded qualification. Assignment0554. | Current2007 |
-| F-normal-publish-remainder | Qualify exact retained originals | Runtime Luna | Existing source and receipts | ready | failover-ok; assigned Runtime H32 | 8 originals; verify existing proof before one bounded qualification. Assignment0554. | Current2007 |
+| F-D09-remainder | Qualify exact retained originals | Runtime Luna | Independent receipt review | review | failover-ok; Runtime0557; review0601 | Three exact retained originals found passing; no repeat. Runtime8ea scope remains explicit. | Source2007 |
+| F-G5-restructure-remainder | Qualify exact retained originals | Runtime Luna | Independent result review | review | failover-ok; Runtime0557; review0602 | Seven exact originals passed54.26s on source2007/Runtime1d9dd; no edits. Await independent result review. | Source2007 |
+| F-normal-publish-remainder | Qualify exact retained originals | Runtime Luna | Independent failure classification | review | failover-ok; Runtime0557; review0601 | Seven passed; one closure/followup failed no_renderer guard at readable_timing import. No product edits or blind repeat. | Source2007 |
 
 | F-SDK-proof-remainder | Map retained SDK originals to existing proof | Luna | Published qualified receipts | doing | agt-F-SDK-proof-map-0554 | Read-only exact-node mapping; excludes Runtime H32, Viewing ABA and all new body runs. No census credit yet. | Source2007 |
 
@@ -92,9 +92,9 @@ D46: U2c is closed, folded into the freeze U-merge. No live U2c worker; a1811362
 Later: D31/D37 dormant capture implementations and tests remain unchanged. D14/D23 relational timing and V4 stay cut or deferred and visibly failing. D47 memo is post-delivery, held unmerged. D39 tuple adoption waits freeze.
 Safety: Earlier Farm, monitor, publication, bench and cleanup refusals remain stopped. No denied action retried.
 Disk: About10GB available. Throttle lifted at05:56; six or more light workers queued/live. Farm owns full checkpoint. Prior cleanup refusals untouched; no cancelled prune or new audit aboveD34 floor.
-Next ready: Review D40 countdelta0558; consume SDK/source mapping and integrated discovery0603. Prepare one candidate-child support original after normal receipt. Three H32 groups remain assigned Runtime.
+Next ready: Review D40 countdelta0558; consume SDK/source mapping and integrated discovery0603. Prepare one candidate-child support original after normal receipt. Three H32 groups are now in Runtime independent review.
 Evidence: [previous board details](archive-v2/STATUS-20261024T0055Z.md), [source-copy final](../../design/agt-F-source-copy-capture-sol-0502.md), [source-copy independent result](../../design/agt-F-source-copy-result-review-0511.md), [ABA whole path](../../design/agt-F-ABA-11466-path-0507.md), [D40 cumulative review](../../design/agt-F-D40-types-review-0511.md).
 
-Capacity: Six independent light requests queued. Dispatcher heartbeat stopped advancing at06:00:44 during synchronous make-child-venv; no worker refusal. Runtime H32 intake also pending. Normal queue remains authoritative.
+Capacity: Six independent light requests queued. Dispatcher heartbeat stopped advancing at06:00:44 during synchronous make-child-venv; no worker refusal. Runtime has consumed all three H32 groups; their independent reviews are active. Normal queue remains authoritative.
 
 Blockers: Dispatcher — six light requests pending behind the normal child maker since06:01. Heartbeat06:00:44; no worker launch or permission refusal. Lead notified; no daemon edits or alternate launch.
