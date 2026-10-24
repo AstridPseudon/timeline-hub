@@ -49,7 +49,12 @@ function fixtureHarness(enableTimelineAuthoring: ReturnType<typeof vi.fn>) {
 it.each(selectedCases)('enables authoring before opening %s in a fresh worker', async (prefix) => {
   const run = [...journey.cases].find(([name]) => name.startsWith(prefix))![1];
   const enableTimelineAuthoring = vi.fn(async () => {});
-  const page = { on: vi.fn(), url: () => 'about:blank' };
+  const page = {
+    on: vi.fn(),
+    url: () => 'about:blank',
+    goto: vi.fn(async () => {}),
+    evaluate: vi.fn(async () => '[]'),
+  };
   const harness = fixtureHarness(enableTimelineAuthoring);
   await expect(run({ page, harness, astrid: {}, seed3: {} })).rejects.toBe(journey.opened);
   expect(enableTimelineAuthoring).toHaveBeenCalledTimes(1);
