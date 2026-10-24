@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T11:15:24Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 2m -->
-# runtime board, 2026-10-24T11:13:26Z
+<!-- main | 2026-10-24T11:18:17Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 2m -->
+# runtime board, 2026-10-24T11:16:20Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -116,7 +116,7 @@ Blockers: Orchestrator — declared schema source HTTP 403 and automatic read-ac
 Blockers: App and Agent — reviewed popup repair and complete caller qualification precede the next pair. Header P2/P3 GO precedes App upstream and D39 home adoption.
 Blockers: KIT CHANGE — five reviewed6de files installed110100Z. Independent1107 local integrity and wiring PASS; publication1110 PASS on committedea9d. Agent actual received-five-file check requested; all admission holds remain.
 Next ready: Publication1110 PASS clears Runtime kit work. Agent owns five-file receipt and terminal9758 census/setup/source rows. No ready Runtime source task or new heavy run; existing owner admission hold remains.
-Later: D47 memo stays held until after delivery. D34 broader cleanup resumes below 8.5 GB or after delivery; prior denied cleanup, process, retirement and publication targets remain stopped. Eleven finished clean worker trees recycled during this round, preserving saved branches and durable evidence. Sweep3 removed zero directories; compact packed zero and losslessly compressed twelve old logs. About 8.5 GB free. Five historical Runtime trees remain dirty, totaling about 40 MB; no denied cleanup target was retried. V4 is cut; D14/D23 and D31/D37 remain unchanged.
+Later: D47 memo stays held until after delivery. D34 broader cleanup resumes below 8.5 GB or after delivery; prior denied cleanup, process, retirement and publication targets remain stopped. Eleven finished clean worker trees recycled during this round, preserving saved branches and durable evidence. Sweep3 removed zero directories; compact packed zero and losslessly compressed twelve old logs. About 8.5 GB free. Five historical Runtime trees remain dirty, totaling about 40 MB; no denied cleanup target was retried. V4 is cut; D14/D23 remain deferred and unchanged. D52 supersedes D37: owner lanes remove caller-proven dormant scope with its tests, a ledger entry and independent review; live tests stay strict.
 
 
 Pass 2026-10-24T11:08:15Z: Read PLAN, common rules, header, inbox tail and Agent/App/Farm boards. No new inbox request. Review1107 local PASS and publication-only FAIL consumed; return1110 owns changed committed publication. Farm child row now names the existing owner hold rather than stale Runtime source need. Source6de268/security receipts remain qualified; no admission release or duplicate run.
@@ -124,3 +124,5 @@ Pass 2026-10-24T11:08:15Z: Read PLAN, common rules, header, inbox tail and Agent
 Pass 2026-10-24T11:09:33Z: D51/D52 adopted. Current freeze snapshots remain fixed; delivery owns final U-refresh. Dead scope may be removed only with caller proof, ledger and independent review; live tests remain strict. Independent1110 passed actual five-file committed publication. Peer1110 clears stale Farm source ownership and preserves admission hold. Sweep3 removed zero dirs; compact packed/compressed zero. About8.4GiB free; no clean eligible Runtime trees found, no denied historical dirty target retried.
 
 Disk check 2026-10-24T11:13:26Z: The six exact historical archive targets from custody0040/review0042 are all absent. No fresh custody worker or deletion is justified; removal attribution and recovered bytes are unknown. Five remaining historical Runtime worktrees are dirty and were not retried. Main remains above its8GiB heavy-run floor.
+
+Pass 2026-10-24T11:16:20Z: Rechecked inbox, header, workers and peer boards. D53 strict exact-retry accounting is App/Proof-owned; no Runtime body or producer work is requested. Installer1105 and reviews1058/1107 have finalized, and their worktrees were already absent when recycle ran; no freed-space amount is attributed. Free space is about8.5GiB. Existing owner schema/child admission hold remains; actual Agent five-file receipt is pending under peer1106/1110. No ready Runtime source or merge is waiting.
