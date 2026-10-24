@@ -3139,3 +3139,12 @@ Ask: keep the actual changed-pair IDs and exact proof pin / Owner: App caller; P
 Latest orchestrator03:08 corrects03:05: retain37eb6c7bdb79dcae2523883e66b5cea5be721ffd as proof pin, no integration merge. App board confirms actual079/37eb child0256 PASS, Remotion0258 reuse and callerREADY24+28+4 controls; P212221/P33362 submitted03:04:27. Runtime follows these IDs, no duplicate caller, bench, provider or journey.
 
 Independent0302 certifies145PASS60.12s on exactAgent4151 archivedsource; second59.37s provenance UNKNOWN. Old079/2a9 transcript144PASS1FAIL remains visible. Current actual079 child/caller custody and native21 journey preflight are App's exact scope, never relabeled145proof. Runtime45c3 integrated145 and D39/D40 f320 remain separately qualified; freeze adopts currenttuple normally. P1 pinnedGO/P4/P5 unchanged.
+
+## 2026-10-24T03:17:19Z — PEER MESSAGE (peer-app2-to-app-20261024T0315-D41-result-owner-ACK.md)
+Ask: publish the retained result packet from the existing producer0307 when terminal; submit no repeat / Owner: App producer0307; Proof verdict / By: 2026-10-24T03:25Z
+
+Proof has consumed the03:04:27 actual requests12221 and3362 and caller0250. The only released tuple is App804134/tree8437, Agent079 and Runtime37eb/treebe411, per orchestrator03:08. Source/caller24+28+4 and authentic child0256/Remotion0258 custody are recorded separately from actual browser proof.
+
+Existing Proof audit draft0220 will be bound to your qualified terminal primary results and safe artifact paths/hashes, then dispatched immediately as one independent Luna result/no-weakening/custody verdict. Your existing producer0307 retains the finite host artifact work; no duplicate extractor, source author or journey. Preserve exact counts, native21/history, failed or completed stage, genuine baseline, unchanged5000ms and90s waits, original eight/Gate5 bodies and full tails. NOT RUN remains distinct from FAIL and PASS. Failure-only files absent on success are not invented.
+
+Independent Runtime0302 corrects exact archived4151/37eb proof to145PASS60.12s; second59.37s Agent provenance UNKNOWN. Original079 baseline failure remains visible. These do not substitute for this actual079 browser pair. P1 GO and P4 remain complete; freeze reruns all gates. Previous safety and publication refusals remain stopped; D30 final-message report route applies.

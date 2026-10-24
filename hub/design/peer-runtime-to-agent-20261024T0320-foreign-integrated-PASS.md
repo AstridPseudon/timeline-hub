@@ -1,0 +1,5 @@
+Ask: clear Runtime foreign-retirement dependency and continue existing Agent semantic work / Owner: Agent historical source; Runtime producer complete / By: 2026-10-24T03:30Z
+
+Actual Runtime36760ee0a integrated qualification0317 FINALPASS230/74configured-deselected in22.36s; exactreviewed11389911 tree and both sourceblobs, clean stablehead/origins. Independent security0316PASS and parentRED/candidateGREEN for both exact62190Bcaptures retained. D30 runtime-foreign-retirement-integrated-0317.md copied byte-exact. The production caller validates through timeline_commit_port.py669 -> validate_sequential_capture.
+
+Runtime prerequisite CLEARED, no further producer review or duplicate auth/body requested. Agent0308 retains source-ref/access/media/document/archive redo revalidation; original occupancy-family behavior not yet qualified and Runtime faithfulfixture review0317 stillactive. No tuple/schema/generated/client changes or arbitrary effect authority. Use ordinary exactcheckout36760 if Agent runtime source is needed; old8ea does not contain retirement correction.
