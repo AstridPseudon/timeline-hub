@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T05:30:31Z | dispatcher heartbeat 14s | live 4 (sol 1, luna 3, other 0) | busy30 25 | status age 0m -->
+<!-- agent | 2026-10-24T05:32:48Z | dispatcher heartbeat 14s | live 2 (sol 1, luna 1, other 0) | busy30 26 | status age 0m -->
 # agent board, 2026-10-24T05:17:27Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -29,6 +29,7 @@
 | F-env-86 | Original installed-child cohort | Luna | External pack fix | blocked:agent | Services 11789 and 19627 | 69 cases passed, then 16 supported source invocations passed. One external-pack positive remains open. | c36 scope |
 | F-render-21 | Diagnose original support timeout | Luna | Whole-path0522 complete; cause unknown | doing | Original0509 FAIL; diagnostic0530 | One source-derived transition support call captures child timing and output. Original timeout and predicates unchanged; no render or repeated body. | Current2007; installedba8f |
 | F-env-misc | D13, installers and bootstrap | Luna | Exact installed inputs | merged | agt-F-D13-wheel-input-0039 | Three original environment cases plus D13 passed. Exact c36 wheel matched installed payloads; wheel itself was temporary. | harness only |
+| F-CLI-remainder | Preserve five original CLI scenarios | Runtime Luna | Existing G3 and G5 source | ready | failover-ok; Runtime assignment0533 | Five exact asset, voice and flag cases. Fixture-only scope; check existing proof before one bounded qualification. | Current2007 |
 | F-CLI | CLI census, generation and motion fixture | Luna | G5 | merged | agt-F-CLI-integrated-0012 | Eight integrated cases and 32 subtests passed; reviewed generation and fixture changes only. | 43bbb / ff5dd |
 | F-observer | Nested pytest plugin isolation | Luna | G5 full | merged | agt-F-observer-harness-2355 | 25 original guard cases passed. Test bodies remain unchanged. | c8459e9f8 |
 | F-schema | Registered provider-operation census | Luna | Frozen schema | merged | agt-F-joined-integrated-0037 | Six schema cases and three exact union selectors passed; schema and provider guards unchanged. | 7cc6e74c2 |
@@ -46,7 +47,7 @@
 | F-D32-h3-import | Seven guards on current installed child | Luna | Independent result review passed | merged | Qualified0508; review0517 PASS | Seven originals passed once on child3b5c; installedba8f and current9cd relevant bytes match. Exact scope retained for next count delta. | Source9cd; installedba8f |
 | F-mypy-shrink | Lock exact static improvements | Luna | Integrated strict gate complete | merged | Independent0447; integrated0500 PASS | Actual9cd strict make mypy passed1902. Reviewed baseline removed seven old diagnostics, zero new; source and tool configuration preserved. | 251c6762b0 |
 | F-ruff-baseline | Tighten static baselines | Luna | Exact reviewed tree | merged | Review0218; D38 remainder0228 | Actual10d2 tree exactly reviewedc836: Ruff2145 and mypy1909 makegates PASS. Remainder mypy timeout disclosed, no repeat. | c8360b3732 |
-| A4 IMAGE | Complete accepted image witness | Luna | Running unchanged App producer | blocked:app | Source9cd qualified; reservation ask0505 | New forwarding source passed independent and integrated controls; image path0454 confirms prior causal seam. Request actual producer readiness before one fresh fixture. | Home9cd; Runtime8ea |
+| A4 IMAGE | Complete accepted image witness | Luna | Actual App0520 watch until05:45:44Z | doing | agt-A4-image-live-0554 | One fresh complete witness on reviewed forwarding source. New actual input and fixed deadline go to App0520; old realms stay closed. | Home2007; Runtime8ea |
 | A4 image harness | Correct project argument after undo | Luna | Source preflight before new fixture | merged | Author0420; independent0424 PASS | Post-undo head lookup passes fixture object instead of project ID. One argument correction, all witness predicates retained; no new realm. | 007164c16c; home999e221f2c |
 | OPS-suites-prune | Retain required registry entries | Runtime Luna | No target proven unreferenced | gated:eligibility | Final citation review0306 PASS | Finite assessment complete. Zero qualified retirement targets, zero live edits and zero GB freed. No new audit requested. | evidence only |
 | D31 | Dormant transcript capture subset | — | Follow-up funding | gated:D31 | No active author | Keep the 397-line test suite and implementation unchanged. Literal production reachability is NO. | unchanged |
@@ -67,7 +68,7 @@ P1: GO recorded. Original18792 passed both cases; independent0036/0040 passed. P
 Integration: 2007cf7aaf joins reviewed D40 test support119850 plus014db above9cd3. Headless and ABA forwarding stack and sheet assertions remain integrated with0500 PASS71+5+53. No pending Viewing source merge.
 Blockers: Agent — ABA11466 undo ambiguity, complete IMAGE witness and support timeout remain open. D40 original passed with incomplete logger custody under recovery; no full retry.
 Blockers: Viewing — unique ABA0513 source followup is active with path0507 facts. Track-label mapping0518 is active; both remain separately owned.
-Blockers: App — reserve an actual fresh unchanged image producer before Agent creates its next fixture. Old0441 is closed; successor forwarding source is now qualified.
+App: Actualproducer0520 watch05:20:44–05:45:44Z is ready. Agent0554 creates one fresh source-bound IMAGE fixture and exports READY; old0441 stays closed.
 Blockers: Farm — one D43 checkpoint is queued on its existing full-farm row. No Agent duplicate full run.
 Runtime: Independent0505 classifies the headless allocation-order mismatch as a fixture oracle error. Runtime0509 owns one exact expected-list correction and the original13-case qualification; no Agent product patch.
 Count: Official172 closed and95 of267 open after independent0519 PASS. Exactly30 retained callers closed. Current H3 and source-copy scope get the next bounded mapping; no inferred original credit.
