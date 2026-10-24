@@ -296,6 +296,22 @@ class State:
         document = self.bundle['source_mapping'].get('_runtime_document')
         if document is None:
             raise CommandError('shot item source is unavailable', kind='history_unavailable', ref=ref)
+        from astrid.core.timeline.authoring_bundle import _copied_shot_baseline, _CopiedShot
+
+        current = self.bundle['shots'][shot]
+        if (type(current) is _CopiedShot and current.get('_created') is True
+                and shot not in self.bundle['source_mapping']['shots']):
+            identity = owner.removeprefix('occurrence:')
+            if (current.source.get('source_occurrence_id') != identity
+                    or current.source.get('occurrence_id') != identity):
+                raise CommandError('fork item owner changed', kind='identity_conflict', ref=ref)
+            # Native fork provenance authenticates the exact original closure
+            # and allocation. Its copied item IDs are already physical IDs.
+            payload, _ = _copied_shot_baseline(self.bundle, current, shot)
+            mapping = {row['item_id']: row['item_id'] for row in payload.get('items', [])}
+            for value in (payload, current['payload']):
+                self._item_ids(value.get('items', []), set(mapping), ref)
+            return mapping
         baseline = bundle_from_document(document)
         original = one(baseline['placements'], 'occurrence_id', owner.removeprefix('occurrence:'))
         source = self.bundle['source_mapping']['shots'].get(shot)
