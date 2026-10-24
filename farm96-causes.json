@@ -67,7 +67,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -78,7 +78,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -117,7 +126,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -128,7 +137,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -167,7 +185,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -178,7 +196,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -217,7 +244,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -228,7 +255,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -267,7 +303,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -278,7 +314,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -317,7 +362,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -328,7 +373,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -367,7 +421,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -378,7 +432,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -411,7 +474,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -422,7 +485,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -455,7 +527,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -466,7 +538,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -499,7 +580,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -510,7 +591,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -543,7 +633,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -554,7 +644,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -587,7 +686,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -598,7 +697,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -637,7 +745,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -648,7 +756,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -687,7 +804,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -698,7 +815,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -737,7 +863,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -748,7 +874,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -787,7 +922,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -798,7 +933,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -837,7 +981,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -848,7 +992,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -887,7 +1040,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -898,7 +1051,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -937,7 +1099,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -948,7 +1110,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -987,7 +1158,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -998,7 +1169,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -1031,7 +1211,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -1042,7 +1222,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -1075,7 +1264,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -1086,7 +1275,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -1125,7 +1323,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -1136,7 +1334,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -1175,7 +1382,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -1186,7 +1393,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -1225,7 +1441,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -1236,7 +1452,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -1275,7 +1500,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -1286,7 +1511,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -1325,7 +1559,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -1336,7 +1570,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -1375,7 +1618,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -1386,7 +1629,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -1425,7 +1677,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -1436,7 +1688,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -1475,7 +1736,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -1486,7 +1747,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent 8b4c4b30f00aa711a54260e5bdefdd289e555bb6 / tree 85ae7047165ae73807f06cbda9998d36cb42076a; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; source-mode qualification",
+        "import_scope": "source-mode import boundary, no installed-child claim",
+        "installed_scope": "not installed; source-mode only",
+        "source_comparison": "Distinct source-mode proof, not Farm45c3 and not a Farm failure pass.",
+        "evidence": "16 passed exact source-mode set.",
+        "reference": "env_source16",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -1525,7 +1795,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -1536,7 +1806,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -1575,7 +1854,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -1586,7 +1865,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -1625,7 +1913,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -1636,7 +1924,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -1675,7 +1972,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -1686,7 +1983,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -1725,7 +2031,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -1736,7 +2042,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -1775,7 +2090,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -1786,7 +2101,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -1825,7 +2149,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -1836,7 +2160,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -1875,7 +2208,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -1886,7 +2219,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -1925,7 +2267,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -1936,7 +2278,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -1975,7 +2326,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -1986,7 +2337,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -2025,7 +2385,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -2036,7 +2396,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -2075,7 +2444,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -2086,7 +2455,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -2125,7 +2503,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -2136,7 +2514,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -2175,7 +2562,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -2186,7 +2573,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -2225,7 +2621,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -2236,7 +2632,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -2275,7 +2680,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -2286,7 +2691,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -2325,7 +2739,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -2336,7 +2750,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -2375,7 +2798,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -2386,7 +2809,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -2425,7 +2857,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -2436,7 +2868,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -2475,7 +2916,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -2486,7 +2927,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -2525,7 +2975,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -2536,7 +2986,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -2575,7 +3034,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -2586,7 +3045,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -2625,7 +3093,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -2636,7 +3104,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -2675,7 +3152,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -2686,7 +3163,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -2725,7 +3211,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -2736,7 +3222,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -2775,7 +3270,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -2786,7 +3281,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -2825,7 +3329,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -2836,7 +3340,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -2875,7 +3388,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -2886,7 +3399,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent 3ccf94de5ad6849ee601370735590d519d60c043 / tree abc038fadf8f6ee1b995ff1325c19fb1ab940adc; six exact nodeid, call selectors",
+        "runtime_scope": "qualified service Runtime/import scope; exact Runtime commit is not published in the proof record",
+        "import_scope": "qualified import/profile custody; six body hashes and 19 relevant source files",
+        "installed_scope": "qualified render-wire service environment",
+        "source_comparison": "Six test bodies, astrid/sdk/rendering.py, astrid/core/rendering/transport.py and fixtures unchanged through the recorded source comparison; distinct from Farm45c3.",
+        "evidence": "6 exact original selectors passed in 41.48s; bounded six-node current credit only.",
+        "reference": "render_wire_27934",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -2919,7 +3441,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -2930,7 +3452,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent 3ccf94de5ad6849ee601370735590d519d60c043 / tree abc038fadf8f6ee1b995ff1325c19fb1ab940adc; six exact nodeid, call selectors",
+        "runtime_scope": "qualified service Runtime/import scope; exact Runtime commit is not published in the proof record",
+        "import_scope": "qualified import/profile custody; six body hashes and 19 relevant source files",
+        "installed_scope": "qualified render-wire service environment",
+        "source_comparison": "Six test bodies, astrid/sdk/rendering.py, astrid/core/rendering/transport.py and fixtures unchanged through the recorded source comparison; distinct from Farm45c3.",
+        "evidence": "6 exact original selectors passed in 41.48s; bounded six-node current credit only.",
+        "reference": "render_wire_27934",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -2963,7 +3494,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -2974,7 +3505,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent 3ccf94de5ad6849ee601370735590d519d60c043 / tree abc038fadf8f6ee1b995ff1325c19fb1ab940adc; six exact nodeid, call selectors",
+        "runtime_scope": "qualified service Runtime/import scope; exact Runtime commit is not published in the proof record",
+        "import_scope": "qualified import/profile custody; six body hashes and 19 relevant source files",
+        "installed_scope": "qualified render-wire service environment",
+        "source_comparison": "Six test bodies, astrid/sdk/rendering.py, astrid/core/rendering/transport.py and fixtures unchanged through the recorded source comparison; distinct from Farm45c3.",
+        "evidence": "6 exact original selectors passed in 41.48s; bounded six-node current credit only.",
+        "reference": "render_wire_27934",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -3007,7 +3547,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -3018,7 +3558,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent 3ccf94de5ad6849ee601370735590d519d60c043 / tree abc038fadf8f6ee1b995ff1325c19fb1ab940adc; six exact nodeid, call selectors",
+        "runtime_scope": "qualified service Runtime/import scope; exact Runtime commit is not published in the proof record",
+        "import_scope": "qualified import/profile custody; six body hashes and 19 relevant source files",
+        "installed_scope": "qualified render-wire service environment",
+        "source_comparison": "Six test bodies, astrid/sdk/rendering.py, astrid/core/rendering/transport.py and fixtures unchanged through the recorded source comparison; distinct from Farm45c3.",
+        "evidence": "6 exact original selectors passed in 41.48s; bounded six-node current credit only.",
+        "reference": "render_wire_27934",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -3051,7 +3600,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -3062,7 +3611,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent 3ccf94de5ad6849ee601370735590d519d60c043 / tree abc038fadf8f6ee1b995ff1325c19fb1ab940adc; six exact nodeid, call selectors",
+        "runtime_scope": "qualified service Runtime/import scope; exact Runtime commit is not published in the proof record",
+        "import_scope": "qualified import/profile custody; six body hashes and 19 relevant source files",
+        "installed_scope": "qualified render-wire service environment",
+        "source_comparison": "Six test bodies, astrid/sdk/rendering.py, astrid/core/rendering/transport.py and fixtures unchanged through the recorded source comparison; distinct from Farm45c3.",
+        "evidence": "6 exact original selectors passed in 41.48s; bounded six-node current credit only.",
+        "reference": "render_wire_27934",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -3095,7 +3653,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -3106,7 +3664,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent 3ccf94de5ad6849ee601370735590d519d60c043 / tree abc038fadf8f6ee1b995ff1325c19fb1ab940adc; six exact nodeid, call selectors",
+        "runtime_scope": "qualified service Runtime/import scope; exact Runtime commit is not published in the proof record",
+        "import_scope": "qualified import/profile custody; six body hashes and 19 relevant source files",
+        "installed_scope": "qualified render-wire service environment",
+        "source_comparison": "Six test bodies, astrid/sdk/rendering.py, astrid/core/rendering/transport.py and fixtures unchanged through the recorded source comparison; distinct from Farm45c3.",
+        "evidence": "6 exact original selectors passed in 41.48s; bounded six-node current credit only.",
+        "reference": "render_wire_27934",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -3139,7 +3706,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -3150,7 +3717,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / snapshot tree c817d99a43fe0fb56c1c47bb14e56a46035db39b; exact nodeid, call",
+        "runtime_scope": "Runtime scope held by qualified render cohort; exact pin not separately published in the proof record",
+        "import_scope": "qualified render import/profile custody",
+        "installed_scope": "qualified render environment cohort",
+        "source_comparison": "Separate render qualification; Farm Runtime45c3 failure is not reused as proof.",
+        "evidence": "9 exact passes in the finite 16-pass/5-fail run.",
+        "reference": "render_cohort_0013",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -3189,7 +3765,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -3200,7 +3776,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / snapshot tree c817d99a43fe0fb56c1c47bb14e56a46035db39b; exact nodeid, call",
+        "runtime_scope": "Runtime scope held by qualified render cohort; exact pin not separately published in the proof record",
+        "import_scope": "qualified render import/profile custody",
+        "installed_scope": "qualified render environment cohort",
+        "source_comparison": "Separate render qualification; Farm Runtime45c3 failure is not reused as proof.",
+        "evidence": "9 exact passes in the finite 16-pass/5-fail run.",
+        "reference": "render_cohort_0013",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -3239,7 +3824,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -3250,7 +3835,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / snapshot tree c817d99a43fe0fb56c1c47bb14e56a46035db39b; exact nodeid, call",
+        "runtime_scope": "Runtime scope held by qualified render cohort; exact pin not separately published in the proof record",
+        "import_scope": "qualified render import/profile custody",
+        "installed_scope": "qualified render environment cohort",
+        "source_comparison": "Separate render qualification; Farm Runtime45c3 failure is not reused as proof.",
+        "evidence": "9 exact passes in the finite 16-pass/5-fail run.",
+        "reference": "render_cohort_0013",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -3289,7 +3883,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -3300,7 +3894,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / snapshot tree c817d99a43fe0fb56c1c47bb14e56a46035db39b; exact nodeid, call",
+        "runtime_scope": "Runtime scope held by qualified render cohort; exact pin not separately published in the proof record",
+        "import_scope": "qualified render import/profile custody",
+        "installed_scope": "qualified render environment cohort",
+        "source_comparison": "Separate render qualification; Farm Runtime45c3 failure is not reused as proof.",
+        "evidence": "9 exact passes in the finite 16-pass/5-fail run.",
+        "reference": "render_cohort_0013",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -3339,7 +3942,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -3350,7 +3953,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / snapshot tree c817d99a43fe0fb56c1c47bb14e56a46035db39b; exact nodeid, call",
+        "runtime_scope": "Runtime scope held by qualified render cohort; exact pin not separately published in the proof record",
+        "import_scope": "qualified render import/profile custody",
+        "installed_scope": "qualified render environment cohort",
+        "source_comparison": "Separate render qualification; Farm Runtime45c3 failure is not reused as proof.",
+        "evidence": "9 exact passes in the finite 16-pass/5-fail run.",
+        "reference": "render_cohort_0013",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -3389,7 +4001,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -3400,7 +4012,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / snapshot tree c817d99a43fe0fb56c1c47bb14e56a46035db39b; exact nodeid, call",
+        "runtime_scope": "Runtime scope held by qualified render cohort; exact pin not separately published in the proof record",
+        "import_scope": "qualified render import/profile custody",
+        "installed_scope": "qualified render environment cohort",
+        "source_comparison": "Separate render qualification; Farm Runtime45c3 failure is not reused as proof.",
+        "evidence": "9 exact passes in the finite 16-pass/5-fail run.",
+        "reference": "render_cohort_0013",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -3439,7 +4060,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -3450,7 +4071,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / snapshot tree c817d99a43fe0fb56c1c47bb14e56a46035db39b; exact nodeid, call",
+        "runtime_scope": "Runtime scope held by qualified render cohort; exact pin not separately published in the proof record",
+        "import_scope": "qualified render import/profile custody",
+        "installed_scope": "qualified render environment cohort",
+        "source_comparison": "Separate render qualification; Farm Runtime45c3 failure is not reused as proof.",
+        "evidence": "9 exact passes in the finite 16-pass/5-fail run.",
+        "reference": "render_cohort_0013",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -3489,7 +4119,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -3500,7 +4130,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / snapshot tree c817d99a43fe0fb56c1c47bb14e56a46035db39b; exact nodeid, call",
+        "runtime_scope": "Runtime scope held by qualified render cohort; exact pin not separately published in the proof record",
+        "import_scope": "qualified render import/profile custody",
+        "installed_scope": "qualified render environment cohort",
+        "source_comparison": "Separate render qualification; Farm Runtime45c3 failure is not reused as proof.",
+        "evidence": "9 exact passes in the finite 16-pass/5-fail run.",
+        "reference": "render_cohort_0013",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -3539,7 +4178,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -3550,7 +4189,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / snapshot tree c817d99a43fe0fb56c1c47bb14e56a46035db39b; exact nodeid, call",
+        "runtime_scope": "Runtime scope held by qualified render cohort; exact pin not separately published",
+        "import_scope": "qualified render import/profile custody",
+        "installed_scope": "qualified render environment cohort",
+        "source_comparison": "Separate render qualification; Farm45c3 failure is not prior proof.",
+        "evidence": "4 passed, 1 timeout; only four exact passing node IDs are referenced.",
+        "reference": "render_node_five",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -3589,7 +4237,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -3600,7 +4248,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / snapshot tree c817d99a43fe0fb56c1c47bb14e56a46035db39b; exact nodeid, call",
+        "runtime_scope": "Runtime scope held by qualified render cohort; exact pin not separately published",
+        "import_scope": "qualified render import/profile custody",
+        "installed_scope": "qualified render environment cohort",
+        "source_comparison": "Separate render qualification; Farm45c3 failure is not prior proof.",
+        "evidence": "4 passed, 1 timeout; only four exact passing node IDs are referenced.",
+        "reference": "render_node_five",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -3639,7 +4296,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -3650,7 +4307,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / snapshot tree c817d99a43fe0fb56c1c47bb14e56a46035db39b; exact nodeid, call",
+        "runtime_scope": "Runtime scope held by qualified render cohort; exact pin not separately published",
+        "import_scope": "qualified render import/profile custody",
+        "installed_scope": "qualified render environment cohort",
+        "source_comparison": "Separate render qualification; Farm45c3 failure is not prior proof.",
+        "evidence": "4 passed, 1 timeout; only four exact passing node IDs are referenced.",
+        "reference": "render_node_five",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -3689,7 +4355,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -3700,7 +4366,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / snapshot tree c817d99a43fe0fb56c1c47bb14e56a46035db39b; exact nodeid, call",
+        "runtime_scope": "Runtime scope held by qualified render cohort; exact pin not separately published",
+        "import_scope": "qualified render import/profile custody",
+        "installed_scope": "qualified render environment cohort",
+        "source_comparison": "Separate render qualification; Farm45c3 failure is not prior proof.",
+        "evidence": "4 passed, 1 timeout; only four exact passing node IDs are referenced.",
+        "reference": "render_node_five",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -3739,7 +4414,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -3750,7 +4425,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / snapshot tree c817d99a43fe0fb56c1c47bb14e56a46035db39b; exact nodeid, call",
+        "runtime_scope": "Runtime scope held by qualified render cohort; exact pin not separately published",
+        "import_scope": "qualified render import/profile custody",
+        "installed_scope": "qualified render environment cohort",
+        "source_comparison": "Separate render qualification; no Farm45c3 credit.",
+        "evidence": "1 exact pass in the same finite render cohort.",
+        "reference": "render_audio_0013",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -3789,7 +4473,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -3800,7 +4484,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -3839,7 +4532,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -3850,7 +4543,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -3889,7 +4591,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -3900,7 +4602,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -3939,7 +4650,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -3950,7 +4661,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -3989,7 +4709,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -4000,7 +4720,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin recorded by the D13 installed qualification; distinct from Farm45c3",
+        "import_scope": "installed wheel preflight import scope",
+        "installed_scope": "installed wheel/profile",
+        "source_comparison": "Bounded D13 installed proof only; Farm failure not used.",
+        "evidence": "D13 original preflight passed.",
+        "reference": "d13_wheel_0039",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -4032,7 +4761,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -4043,7 +4772,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -4075,7 +4813,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -4086,7 +4824,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / tree 50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92; exact nodeid, call",
+        "runtime_scope": "Runtime pin 8ea0766f5e9fb23cea26c7398770a8aaac06b258; installed environment cohort",
+        "import_scope": "qualified installed child import/profile custody; exact node outcome map",
+        "installed_scope": "installed Agent/Runtime child cohort env86_installed",
+        "source_comparison": "Separate qualified installed proof; Farm failure is Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141 with Runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f. No Farm failure is prior-pass credit.",
+        "evidence": "69 passed, 17 failed exact outcome-map; only exact passing node memberships are referenced.",
+        "reference": "env86_installed",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -4118,7 +4865,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -4129,7 +4876,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent c36ca8c94b695b0e25b7d42c89f194661f187423 / snapshot tree c817d99a43fe0fb56c1c47bb14e56a46035db39b; exact nodeid, call",
+        "runtime_scope": "Runtime scope held by qualified render cohort; exact pin not separately published in the proof record",
+        "import_scope": "qualified render import/profile custody",
+        "installed_scope": "qualified render environment cohort",
+        "source_comparison": "Separate render qualification; Farm Runtime45c3 failure is not reused as proof.",
+        "evidence": "9 exact passes in the finite 16-pass/5-fail run.",
+        "reference": "render_cohort_0013",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -4168,7 +4924,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -4179,7 +4935,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent 41435b2f5fbe33f62f779200becce0a6e364b6f2 / tree 0474acfff84e4cb1b1d947aa7b74ad21acb688c; exact nodeid, call",
+        "runtime_scope": "Runtime scope recorded by env-misc qualification; distinct from Farm45c3",
+        "import_scope": "qualified environment/import scope",
+        "installed_scope": "bounded qualified environment",
+        "source_comparison": "Bounded env-misc proof; no Farm failure credit.",
+        "evidence": "3 passed finite environment qualification.",
+        "reference": "env_misc_0020",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -4218,7 +4983,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -4229,7 +4994,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent 41435b2f5fbe33f62f779200becce0a6e364b6f2 / tree 0474acfff84e4cb1b1d947aa7b74ad21acb688c; exact nodeid, call",
+        "runtime_scope": "Runtime scope recorded by env-misc qualification; distinct from Farm45c3",
+        "import_scope": "qualified environment/import scope",
+        "installed_scope": "bounded qualified environment",
+        "source_comparison": "Bounded env-misc proof; no Farm failure credit.",
+        "evidence": "3 passed finite environment qualification.",
+        "reference": "env_misc_0020",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -4262,7 +5036,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -4273,7 +5047,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent 41435b2f5fbe33f62f779200becce0a6e364b6f2 / tree 0474acfff84e4cb1b1d947aa7b74ad21acb688c; exact nodeid, call",
+        "runtime_scope": "Runtime scope recorded by env-misc qualification; distinct from Farm45c3",
+        "import_scope": "qualified environment/import scope",
+        "installed_scope": "bounded qualified environment",
+        "source_comparison": "Bounded env-misc proof; no Farm failure credit.",
+        "evidence": "3 passed finite environment qualification.",
+        "reference": "env_misc_0020",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -4306,7 +5089,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "historical_88",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -4317,7 +5100,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-historical-88.txt",
         "extract_bytes": 742107,
         "extract_sha256": "597c7445799991f0b328cd43e25b3726dd86aab2fe25bb20588eb32c64097563",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "Agent ff5ddcd9278b / tree 70bf5391; exact nodeid, call",
+        "runtime_scope": "not applicable to this source-only CLI surface proof",
+        "import_scope": "source/CLI surface scope",
+        "installed_scope": "not installed; source-only",
+        "source_comparison": "Current source rationale comparison is separately challenged below; this proof ref is historical CLI surface evidence and does not claim the giant-file rationale is fixed.",
+        "evidence": "8 requested, 32 subtests passed.",
+        "reference": "cli_surface_0012",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -4363,7 +5155,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "newer_8",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -4374,7 +5166,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-newer-8.txt",
         "extract_bytes": 43677,
         "extract_sha256": "ff2fa869a3d30494c1516f3ee937682649c7a54920612abc1c9ba8746a495e21",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "current Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26 / tree 57f0231da0d7904ecd8778169973d6384e0ae141, byte-compared relevant source to installed Agent ba8f0bc8bebf6d0e9a8143fed80d31f846cd5b95",
+        "runtime_scope": "authenticated Runtime f3208b26b53c4d7053e5464eaa7c5e15b1505812",
+        "import_scope": "genuine installed child, python -I; no PYTHONPATH production overlay",
+        "installed_scope": "Agent ba8f0bc8 + Runtime f320 child, D40 profile, Node20.19.4, Remotion archive 819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+        "source_comparison": "Relevant current 9cd source and installed ba8f source are byte-identical; authenticated f320 current scope, not old Farm Runtime45c3. Historical H3 import proof is not substituted.",
+        "evidence": "7 exact originals passed; no failures/errors/skips/xfail/xpass.",
+        "reference": "h3_current_0508",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -4406,7 +5207,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "newer_8",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -4417,7 +5218,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-newer-8.txt",
         "extract_bytes": 43677,
         "extract_sha256": "ff2fa869a3d30494c1516f3ee937682649c7a54920612abc1c9ba8746a495e21",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "current Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26 / tree 57f0231da0d7904ecd8778169973d6384e0ae141, byte-compared relevant source to installed Agent ba8f0bc8bebf6d0e9a8143fed80d31f846cd5b95",
+        "runtime_scope": "authenticated Runtime f3208b26b53c4d7053e5464eaa7c5e15b1505812",
+        "import_scope": "genuine installed child, python -I; no PYTHONPATH production overlay",
+        "installed_scope": "Agent ba8f0bc8 + Runtime f320 child, D40 profile, Node20.19.4, Remotion archive 819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+        "source_comparison": "Relevant current 9cd source and installed ba8f source are byte-identical; authenticated f320 current scope, not old Farm Runtime45c3. Historical H3 import proof is not substituted.",
+        "evidence": "7 exact originals passed; no failures/errors/skips/xfail/xpass.",
+        "reference": "h3_current_0508",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -4449,7 +5259,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "newer_8",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -4460,7 +5270,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-newer-8.txt",
         "extract_bytes": 43677,
         "extract_sha256": "ff2fa869a3d30494c1516f3ee937682649c7a54920612abc1c9ba8746a495e21",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "current Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26 / tree 57f0231da0d7904ecd8778169973d6384e0ae141, byte-compared relevant source to installed Agent ba8f0bc8bebf6d0e9a8143fed80d31f846cd5b95",
+        "runtime_scope": "authenticated Runtime f3208b26b53c4d7053e5464eaa7c5e15b1505812",
+        "import_scope": "genuine installed child, python -I; no PYTHONPATH production overlay",
+        "installed_scope": "Agent ba8f0bc8 + Runtime f320 child, D40 profile, Node20.19.4, Remotion archive 819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+        "source_comparison": "Relevant current 9cd source and installed ba8f source are byte-identical; authenticated f320 current scope, not old Farm Runtime45c3. Historical H3 import proof is not substituted.",
+        "evidence": "7 exact originals passed; no failures/errors/skips/xfail/xpass.",
+        "reference": "h3_current_0508",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -4492,7 +5311,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "newer_8",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -4503,7 +5322,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-newer-8.txt",
         "extract_bytes": 43677,
         "extract_sha256": "ff2fa869a3d30494c1516f3ee937682649c7a54920612abc1c9ba8746a495e21",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "current Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26 / tree 57f0231da0d7904ecd8778169973d6384e0ae141, byte-compared relevant source to installed Agent ba8f0bc8bebf6d0e9a8143fed80d31f846cd5b95",
+        "runtime_scope": "authenticated Runtime f3208b26b53c4d7053e5464eaa7c5e15b1505812",
+        "import_scope": "genuine installed child, python -I; no PYTHONPATH production overlay",
+        "installed_scope": "Agent ba8f0bc8 + Runtime f320 child, D40 profile, Node20.19.4, Remotion archive 819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+        "source_comparison": "Relevant current 9cd source and installed ba8f source are byte-identical; authenticated f320 current scope, not old Farm Runtime45c3. Historical H3 import proof is not substituted.",
+        "evidence": "7 exact originals passed; no failures/errors/skips/xfail/xpass.",
+        "reference": "h3_current_0508",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -4535,7 +5363,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "newer_8",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -4546,7 +5374,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-newer-8.txt",
         "extract_bytes": 43677,
         "extract_sha256": "ff2fa869a3d30494c1516f3ee937682649c7a54920612abc1c9ba8746a495e21",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "current Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26 / tree 57f0231da0d7904ecd8778169973d6384e0ae141, byte-compared relevant source to installed Agent ba8f0bc8bebf6d0e9a8143fed80d31f846cd5b95",
+        "runtime_scope": "authenticated Runtime f3208b26b53c4d7053e5464eaa7c5e15b1505812",
+        "import_scope": "genuine installed child, python -I; no PYTHONPATH production overlay",
+        "installed_scope": "Agent ba8f0bc8 + Runtime f320 child, D40 profile, Node20.19.4, Remotion archive 819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+        "source_comparison": "Relevant current 9cd source and installed ba8f source are byte-identical; authenticated f320 current scope, not old Farm Runtime45c3. Historical H3 import proof is not substituted.",
+        "evidence": "7 exact originals passed; no failures/errors/skips/xfail/xpass.",
+        "reference": "h3_current_0508",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -4578,7 +5415,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "newer_8",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -4589,7 +5426,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-newer-8.txt",
         "extract_bytes": 43677,
         "extract_sha256": "ff2fa869a3d30494c1516f3ee937682649c7a54920612abc1c9ba8746a495e21",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "current Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26 / tree 57f0231da0d7904ecd8778169973d6384e0ae141, byte-compared relevant source to installed Agent ba8f0bc8bebf6d0e9a8143fed80d31f846cd5b95",
+        "runtime_scope": "authenticated Runtime f3208b26b53c4d7053e5464eaa7c5e15b1505812",
+        "import_scope": "genuine installed child, python -I; no PYTHONPATH production overlay",
+        "installed_scope": "Agent ba8f0bc8 + Runtime f320 child, D40 profile, Node20.19.4, Remotion archive 819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+        "source_comparison": "Relevant current 9cd source and installed ba8f source are byte-identical; authenticated f320 current scope, not old Farm Runtime45c3. Historical H3 import proof is not substituted.",
+        "evidence": "7 exact originals passed; no failures/errors/skips/xfail/xpass.",
+        "reference": "h3_current_0508",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -4621,7 +5467,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "newer_8",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -4632,7 +5478,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-newer-8.txt",
         "extract_bytes": 43677,
         "extract_sha256": "ff2fa869a3d30494c1516f3ee937682649c7a54920612abc1c9ba8746a495e21",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "current Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26 / tree 57f0231da0d7904ecd8778169973d6384e0ae141, byte-compared relevant source to installed Agent ba8f0bc8bebf6d0e9a8143fed80d31f846cd5b95",
+        "runtime_scope": "authenticated Runtime f3208b26b53c4d7053e5464eaa7c5e15b1505812",
+        "import_scope": "genuine installed child, python -I; no PYTHONPATH production overlay",
+        "installed_scope": "Agent ba8f0bc8 + Runtime f320 child, D40 profile, Node20.19.4, Remotion archive 819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+        "source_comparison": "Relevant current 9cd source and installed ba8f source are byte-identical; authenticated f320 current scope, not old Farm Runtime45c3. Historical H3 import proof is not substituted.",
+        "evidence": "7 exact originals passed; no failures/errors/skips/xfail/xpass.",
+        "reference": "h3_current_0508",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -4664,7 +5519,7 @@
       },
       "counted_closed_proof": {
         "actual_source": "Farm raw log section exported verbatim; exact node header matched manifest",
-        "scope": "newer_8",
+        "scope": "official261/6 prior-closure map; exact nodeid, call",
         "raw_log": "tests/agent-full-farm-1024050351-26511/log.txt",
         "raw_log_sha256_manifest": "06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06",
         "raw_log_bytes_manifest": 2089428,
@@ -4675,7 +5530,16 @@
         "extract_file": "design/farm-trace-export-0705-failures-closed-newer-8.txt",
         "extract_bytes": 43677,
         "extract_sha256": "ff2fa869a3d30494c1516f3ee937682649c7a54920612abc1c9ba8746a495e21",
-        "extract_match": "unique name"
+        "extract_match": "unique name",
+        "status": "qualified_prior_closed",
+        "source_scope": "current Agent 9cd3dbe865a941c052bda04ae0d61306d18f8f26/tree 57f0231da0d7904ecd8778169973d6384e0ae141; exact external-pack test source SHA 3d8538d03b59eeb0f5cf0b397f639af0dfa3f5cbb5ce3b102001c427d6eb48ef",
+        "runtime_scope": "authenticated Runtime f3208b26b53c4d7053e5464eaa7c5e15b1505812",
+        "import_scope": "installed child site-packages; production caller and return originated in child",
+        "installed_scope": "Agent ba8f0bc8 + Runtime f320 child, D40 profile and custody lock",
+        "source_comparison": "All 32 custody hashes and three original assertions matched; no PYTHONPATH overlay or fabricated path. Distinct from Farm45c3.",
+        "evidence": "Exact original passed; JUnit 1 test, 0 failures/errors/skips; direct production return observed.",
+        "reference": "d40_observed_0551",
+        "farm_failure_evidence": "Farm raw log failure excerpt; never prior-pass credit"
       },
       "source_citations": [
         {
@@ -4697,5 +5561,50 @@
       "changed_source_disposition": "new_environment_repair_need",
       "changed_source_or_repair_note": "Agent source is exercising an API absent from Runtime45c3; align the Runtime API tuple or fixture pin. This newer proof remains non-backdated."
     }
-  ]
+  ],
+  "prior_closure": {
+    "official_census": "census22ee4d6df217eef1cef60f7e9c646b6f5fe13a45d31163afb2ffe46126facae0",
+    "official_census_state": {
+      "closed": 261,
+      "open": 6,
+      "total": 267
+    },
+    "historical_provenance_not_closure": {
+      "closed": 202,
+      "open": 65,
+      "total": 236
+    },
+    "farm_members_prior_qualified": 96,
+    "farm_member_prior_missing": 0,
+    "duplicate_credit": false,
+    "farm_failure_is_prior_proof": false,
+    "old_farm_runtime_is_not_authenticated_current_runtime": true,
+    "proof_reference_rule": "Only exact nodeid/call qualified records count. A Farm FAILURE excerpt never counts as prior closure; absent references remain explicit missing."
+  },
+  "current_challenges": [
+    {
+      "exact_node_id": "tests/test_structure_contracts.py::test_giant_file_inventory_matches_rationale",
+      "status": "CURRENT CHALLENGE",
+      "source_fact": "Current Agent generic_host.py is 14,313 lines; retained docs/giant-file-rationale.md rationale claims 13,998.",
+      "prior_reference": "cli_surface_0012",
+      "prior_reference_disposition": "historical CLI surface proof only; it does not prove the current rationale match",
+      "changed_source_already_addresses": false,
+      "docs_repair": "independent docs source repair is disjoint and unverified here; do not claim fixed.",
+      "classification_rule": "Exactly one challenge is counted, only because the current source fact is exact."
+    }
+  ],
+  "counts_exact": {
+    "total": 96,
+    "cohort": {
+      "historical_88": 88,
+      "newer_8": 8
+    },
+    "classification": {
+      "environment": 80,
+      "regression": 1,
+      "unknown": 15
+    },
+    "prior_proof_refs": 96,
+    "prior_proof_missing": 0
+  }
 }
