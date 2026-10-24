@@ -15,13 +15,13 @@ remains HELD (8 passed, 2 failed); its six refusal fixtures are preserved.
 3. Run the normal exact Runtime checkout request in README; await its done
    receipt. Verify Agent `8657e83653f48c935f52f209516456bcb5a36282` and Runtime
    `45c3a7f476e1c5f74fafc15956a58b9871eee21f`, clean, at the named pin paths.
-4. **HOLD registration under a strict no-build constraint:** fresh index has
-   no reusable managed entry. Existing maker would invoke its first managed
-   builder, even with a legacy graph present. Report this source limitation;
-   do not adopt/relabel a graph or queue a prohibited build. If normal first
-   managed build is in scope, use README's exact eight-field request-runtime
-   with approved remotion-env-nodes + Node v20.19.4/npm 10.8.2 carrier. Require
-   its normal verified registration/key/path/source receipt before continuing.
+4. Run README's exact eight-field request-runtime with approved
+   remotion-env-nodes + Node v20.19.4/npm 10.8.2 carrier. A first managed build
+   for this fresh Store key is authorized under D21c in this checkpoint; if the normal
+   maker authenticates reuse, reuse that entry. Require its normal verified
+   registration/key/path/source receipt before continuing. Never adopt or
+   relabel a legacy graph, fabricate registration, run the maker manually, or
+   force a rebuild.
 5. Farm Codex atomically appends exactly registration-row.txt after rechecking
    the full registry baseline. Existing full remains byte-exact; all outside
    bytes and current/final rows remain byte-exact. This new suite is unmanaged;
@@ -40,7 +40,11 @@ config equals the exact post-row snapshot; preserve maker registrations.
 Any drift, refusal or safety denial: STOP and return reason, no workaround.
 
 Current source qualification: fresh/public reuse/no-write checks 6 passed;
-held helper 8 passed / 2 failed. Local registry drift from farm's 04:08Z hash
-was observed; refresh that baseline through normal review before any apply.
+held helper 8 passed / 2 failed. The authentic farm input supplies registry
+SHA `64afaf615665def79f3660d771f17e226c83fa58223417f5dd11d8cc6227d61d`.
+Compare the current full row and all outside bytes to that input; if current
+bytes differ, save a fresh snapshot and return the drift rather than replacing
+the whole config with a stale baseline. Append the new row only from the
+fresh current snapshot, preserving unchanged outside bytes.
 No product/C0 changes, live writes, helper install, provisioning or full run
 were performed by this author. Manager dispatches Codex; manager writes no config.

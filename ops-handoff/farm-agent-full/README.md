@@ -30,11 +30,13 @@ and reads the returned receipts. No helper installation is required.
    its done receipt and verify exact SHA/clean status before proceeding. The
    Agent checkout already has its normal receipt; verify that too. Never use
    ambient Agent `9f2da582...` as the selected `8657e836...`.
-4. Use the exact eight-field Runtime request below only after resolving the
-   fresh-index/no-rebuild limitation below. Wait for its normal done receipt;
-   require approved template identity, exact requested source SHAs, verified
-   graph/toolchain, entry key and actual managed path. No fabricated registration,
-   no legacy adoption, no manual maker execution or forced rebuild.
+4. Use the exact eight-field Runtime request below after the checks above. A
+   first managed build for this new Store key is authorized under D21c by the
+   farm checkpoint; if the normal maker authenticates reuse, accept that reuse
+   instead. Wait for its normal done receipt; require approved template
+   identity, exact requested source SHAs, verified graph/toolchain, entry key
+   and actual managed path. No fabricated registration, no legacy adoption,
+   no manual maker execution and no forced rebuild.
 5. Farm Codex applies only `registration-row.txt` as one new row using a
    baseline-checked atomic config update. Preserve every pre-existing byte,
    including the original full row and final/current rows. The new row is an
@@ -49,6 +51,12 @@ and reads the returned receipts. No helper installation is required.
    pass and setup brief authorize no full test execution.
 
 Normal commands for that worker (run only after the checks above):
+
+The `request-runtime` invocation below has exactly eight positional fields
+after the command: runtime name, Agent SHA, Remotion lock SHA-256, Agent
+checkout, Runtime checkout, Runtime SHA, approved template suite and selected
+Node bin directory. The `env -u` declarations prevent inherited source or
+client overlays; do not add any overlay or alternate checkout.
 
 ```bash
 ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
@@ -68,7 +76,8 @@ print('initialized owner=' + store.owner['id'])
 PY
 "$ORCH/bin/request-checkout" runtime 45c3a7f476e1c5f74fafc15956a58b9871eee21f farm-agent-full-selected-lock
 # Wait for queue/done/checkout-runtime-45c3a7f476e1c5f74fafc15956a58b9871eee21f.
-# Only after the fresh-index limitation is resolved under the stated scope:
+# The first managed build for this new keyed tuple is in scope under D21c. The normal
+# maker may authenticate reuse instead; never adopt or relabel a legacy graph.
 env -u RUNTIME_AGENT_CHECKOUT -u RUNTIME_RUNTIME_CHECKOUT -u RUNTIME_RUNTIME_SHA \
   -u RUNTIME_TEMPLATE_SUITE -u RUNTIME_NODE_BIN \
   "$ORCH/bin/request-runtime" agent-remotion-farm-8657e836 \
@@ -106,23 +115,27 @@ print('appended exact unmanaged agent full-farm row; outside bytes unchanged')
 PY
 ```
 
-## Fresh-index limitation (source fact, not a permission failure)
+## Fresh-index behavior and authorized first build
 
 Installed `make-runtime` unconditionally calls `Store.ensure('runtime', ...)`.
 `Store.initialize` produces an empty index; `Store.ensure` reuses only entries
 already in that index. Thus its first Runtime request invokes the production
 builder even if an equivalent legacy graph exists outside the Store. There is
 no existing supported import of that legacy graph. This is evidence against
-promising a reuse-only registration on a fresh Store. If “no rebuild” includes
-this first managed build, **hold step 4 and later steps**; return this precise
-source limitation to the orchestrator. Do not queue a request that will violate
-that constraint. No new API, guard correction or adoption is proposed here.
-The exact normal request is ready if a first managed build is within scope.
+promising a reuse-only registration on a fresh Store. The farm checkpoint
+explicitly authorizes this necessary first managed build under D21c through
+the normal
+request-runtime/request-child-venv path. If the normal maker authenticates an
+existing managed entry, reuse it; never adopt or relabel a legacy graph. No
+new API, guard correction or alternate registration path is proposed here.
 
-At author time the local registry SHA was
-`fdb9e9e9b9e964c92f4a6b3e3464cd300f51f33044b6f8f4ed4060ad69cfc81f`,
-which differs from the farm's 04:08Z baseline. This is a baseline refresh need,
-not permission to install against drift or evidence of the farm's current state.
+The authentic farm input records the 04:08Z registry baseline as
+`64afaf615665def79f3660d771f17e226c83fa58223417f5dd11d8cc6227d61d`.
+Compare the live registry to that input before setup. If it differs, save the
+actual current full-row/all-outside-bytes snapshot and return the drift for
+review; never replace the whole config with this older snapshot. The eventual
+append must be based on the fresh post-maker snapshot and preserve every byte
+outside the one new row.
 
 ## Inputs and exact row
 
