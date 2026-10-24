@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T22:37:56Z | dispatcher heartbeat 10s | live 1 (sol 1, luna 0, other 0) | busy30 8 | status age 2m -->
-# runtime board, 2026-10-24T22:35:20Z
+<!-- main | 2026-10-24T22:41:04Z | dispatcher heartbeat 0s | live 2 (sol 1, luna 1, other 0) | busy30 10 | status age 1m -->
+# runtime board, 2026-10-24T22:39:23Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -193,7 +193,7 @@
 | F-final-rehearsal | Rehearse fresh upstream delivery | Luna | Critical timing and App priority | gated:critical-capacity | rt-F-final-rehearsal-2219 BLOCKED | App shallow-parent traversal stopped staging. No ZIP. Private input fix resumes after critical sample; raw temp loss disclosed. | Source unchanged |
 | F-final-matrix | Prepare pinned per-venue dispatch | Luna | Author durable controls passed | merged | rt-F-final-matrix-return-2228 | Durable 10-venue runner; stub once/poison zero and recycled-copy check PASS. [Report](../../design/runtime-final-matrix-durable-2228.md) | Private; final inputs pending |
 
-| P2-spare-venue | Run four assigned main diagnostics | Luna / main service | App2221 accepts; board2225 releases | doing | rt-P2-main-four-diagnostics-2232 | Exact Appbceb/Agent039ff/Runtime732/Composition635f. Parent, SWAP, single and bulk only; App owns other cases and finaltour. | No result yet |
+| P2-spare-venue | Run four assigned main diagnostics | Luna / main service | Existing main host profile | doing | rt-P2-main-profile-return-2238 | Prior preflight27231 exit127 missing App-only Node; zero bodies. First return adapts native main paths, fixed tuple and all guards intact. | No original result yet |
 
 | P4-D84a-distinct | Repair remaining multi-command cost | HARD Sol | Owner 22:27 and 22:31 | doing | rt-P4-element-D84a-return-sol-2231 | Prior one-case sample retained: 46.220 wall, 43.858 main CPU; 15/30/44 second stacks. Resume adds element shape, no original repeat. | Runtime732 base |
 
@@ -219,7 +219,7 @@ Later: E1/E3 and Agent E2 designs retained; further E/D79 paused until ZIP. All 
 Admission: D56 Farm/schema access stopped. Original403 and historical access, cleanup, process and retirement refusals remain stopped. D67 D13 environment gap and App dirty-U3 refusals remain unchanged.
 Disk: Last read 8600858624 available bytes, 8.01 GiB; cap4 conservatively. No ended clean non-KEEP Runtime worktree is eligible. Guarded sweep3 removed zero; compact packed zero and gzipped two old logs. Historical refused targets remain stopped; 15GB target not reached.
 
-live 2 queued or running / cap 4; ready-undispatched 0. HARD Sol2231 owns measured repair; Luna2232 owns four assigned main diagnostics. Matrix2228 done. Rehearsal yields to critical timing and diagnostic service priority.
+live 2 queued or running / cap 4; ready-undispatched 0. HARD Sol2231 owns measured repair; Luna2238 resumes four assigned main diagnostics after host-path preflight failure. Matrix2228 done. Rehearsal yields to critical timing and diagnostic service priority.
 Pass 2026-10-24T22:13:47Z: Read PLAN/common, new inbox through577361bytes, header and owner boards. App asset/placement source repairs accepted HOME with browser proof still open. Runtime732 product blobs remain released and actual home clean. Consumed2207 harness completion without a redundant review under D56; private92+TS inventory remains PENDING tuple and uninstalled. Published exact author report. No new source, duplicate original or denied route.
 
 Intake 2026-10-24T22:15:49Z: Orchestrator fresh Agent08e6b90511 packaging overlap became owned row F-final-upstream-installer and dispatched Luna2216 immediately. Gating source is frozen. No upstream fetch or merge requested.
@@ -235,3 +235,5 @@ Pass 2026-10-24T22:30:29Z: original sample2227 completed and durably retained, t
 Pass 2026-10-24T22:33:42Z: delayed App2221 ACCEPT supersedes earlier spare-venue selfclear. Latest Appboard releases mainfour now; dispatchedLuna2232 on exactbceb with exclusivecaseallocation and unchangedprotectedbodies. Finaltour staysApp. Matrix2228 PASS published, remaining finaltuple/P4registration/render inputs explicit. Inbox through589672bytes.
 
 Intake 2026-10-24T22:35:20Z: App2225 explicitfirstsignal release consumed; firstmainparent recipe preparing withgenuinefixedtuple receipts. Sol2231 sourcefact contradicts sharedmulticommand premise: retainedD78onepatch11reads accepts~0.33s locally, historicalrealmunavailable. Peerfacts sent, nooriginalclosure. Inbox through591594bytes.
+
+Pass 2026-10-24T22:39:23Z: consumed2232 ordinarymissingNodepreflight127;zerooriginals. ImmediatelydispatchedLuna2238 firstreturn onretainedbranch, onlysupportedmainhostprofile pathadaptation, no source/payload/budget/guardchange. ExplicitApp2229plan and7131safe-facts2230 consumed. Sol2231continuesuniqueproductsource. Inbox through595814bytes.
