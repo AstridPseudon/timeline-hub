@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T05:23:43Z | dispatcher heartbeat 2s | live 3 (sol 0, luna 3, other 0) | busy30 23 | status age 0m -->
+<!-- agent | 2026-10-24T05:25:58Z | dispatcher heartbeat 0s | live 3 (sol 0, luna 3, other 0) | busy30 24 | status age 1m -->
 # agent board, 2026-10-24T05:17:27Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -55,8 +55,8 @@
 | U2c | Upstream readiness draft | Luna | D46 | closed: D46, folded into the freeze U-merge | No active worker | Candidate stays unmerged. Upstream changes arrive through the single freeze U-merge. | a181136220 held |
 | F-headless-root-mirror | Preserve complete canonical mirror effects | Sol / Luna | Runtime original family | merged | Independent0443; integrated0500 PASS71 | Actual9cd projection/headless controls passed with exact reviewed eca4 hunks. Source closure qualified; Runtime original family now released and remains its owner. | Homed730; current9cd |
 | F-retired-callers | Retained native, CLI and scene scenarios | Luna / Sol | Integrated joined qualification complete | merged | Independent0444; integrated0500 PASS53 | Actual9cd all53 retained controls passed. Exact30 original nodes; three track-label mappings remain separate. Count reconciliation follows proof, no full-suite claim. | 9cd3dbe865 |
-| F-inverse22 evidence | Match retained inverse proof to originals | Luna | Existing R2 proof | doing | agt-F-inverse22-evidence-0526 | Read-only exact22 mapping against existing source receipts. No body or full run; count credit waits independent review. | Source2007 unchanged |
-| F-count | Reconcile exact original closures | Luna | Next exact qualified delta | doing | Author0509; review0519 PASS; delta0524 | Official172 closed and95 open. Exactly30 retained callers closed; current H3 and source-copy mapping assigned next. | Evidence only |
+| F-inverse22 evidence | Qualify retained inverse originals | Luna | Exact fixture and assertion review | doing | Mapper0526; qualification0537 | Prior aggregate proof is insufficient. Independently verify unchanged22 bodies and faithful helper, then one current targeted run. | Source2007 unchanged |
+| F-count | Reconcile exact original closures | Luna | Independent seven-node delta review | review | Delta0524; review0537 | Official172 closed and95 open. Candidate179 closed/88 open adds exactly7H3 originals; source-copy absent from census, zero credit. | Evidence only |
 | F-D40-installed | Genuine installed external positive | Luna | Exact observer custody recovery | doing | Original0520 PASS1; review0526 caveat; return0533 | Original3 assertions pass; observer source was temporary and output value inferred. Recover literal retained logger before credit; no body rerun. | 2007cf7aaf |
 | U2c identity diagnostic | Exact identity refusal detail | Luna | D46 | closed: D46, folded into the freeze U-merge | Author0439; independent0444 PASS | Reviewed WIP retained only. No activation rerun or early merge. | 30f033046b held |
 | U2c RunPod child | Provider child custody | Luna | D46 | closed: D46, folded into the freeze U-merge | No active worker | Owner-deferred remote provider scope. No new custody backend; guards stay strict. | a181136220 held |
