@@ -1309,7 +1309,22 @@ print(json.dumps({'revisionId': data['accepted_revision_id'], 'publicationId': r
     if (this.stopped) return;
     this.stopped = true;
     let cleanupError: unknown;
-    if (!this.attachment) await stopGroup(this.runtime).catch((error) => { cleanupError ??= error; });
+    const runtimeLogDir = process.env.D66_RUNTIME_LOG_DIR?.trim();
+    const runtime = this.runtime;
+    if (!this.attachment) await stopGroup(runtime).catch((error) => { cleanupError ??= error; });
+    // D66's focused element route keeps the daemon streams private so a later
+    // Runtime phase candidate can be compared with the same run. Nothing from
+    // these streams is exported through the manifest or browser diagnostics.
+    if (runtimeLogDir && runtime) {
+      try {
+        await runtime.closed;
+        mkdirSync(runtimeLogDir, { recursive: true, mode: 0o700 });
+        writeFileSync(path.join(runtimeLogDir, 'runtime.stdout.log'), runtime.stdout, { mode: 0o600 });
+        writeFileSync(path.join(runtimeLogDir, 'runtime.stderr.log'), runtime.stderr, { mode: 0o600 });
+      } catch (error) {
+        cleanupError = error;
+      }
+    }
     await new Promise<void>((resolve) => { if (!this.https) return resolve(); this.https.closeAllConnections?.(); this.https.close(() => resolve()); });
     if (this.tmp) rmSync(this.tmp, { recursive: true, force: true });
     if (cleanupError) throw cleanupError;

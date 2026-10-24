@@ -14,6 +14,11 @@ const readiness = 'tests/e2e/local/three-products.mounted-readiness.spec.ts';
 const suites = {
   p1: { files: ['tests/e2e/local/three-products.p1-chain.spec.ts'], count: 2 },
   p2: { files: ['tests/e2e/local/three-products.p2-popup.spec.ts', 'tests/e2e/local/three-products.p2-tour.spec.ts', 'tests/e2e/local/three-products.p2-elements-assets.spec.ts'], count: 8 },
+  'p2-element': {
+    files: ['tests/e2e/local/three-products.p2-elements-assets.spec.ts'], count: 1,
+    grep: 'P2 mounted element edit: real catalog apply, exact params patch, reload and guarded Undo$',
+    retainRuntimeLogs: true,
+  },
   p3: { files: ['tests/e2e/local/three-products.spec.ts'], count: 1,
     grep: 'M2 real gate 5 \\(M1 real mounted path\\): Agent edit, lost ACK, newer local gesture, exact retry, restart and undo preserve intent$' },
 };
@@ -141,17 +146,19 @@ function repoTrees(sources) {
 
 async function main() {
   const [name, mode = 'run'] = process.argv.slice(2);
-  assert(suites[name], 'choose p1, p2 or p3');
+  assert(suites[name], 'choose p1, p2, p2-element or p3');
   assert(['run', '--collect', '--launch'].includes(mode), 'unknown mode');
   const suite = suites[name];
-  const sources = selectSources();
-  assertSourcesUnchanged(sources);
+  // Collection is a source-independent descriptor check. Service launch still
+  // requires the detached exact current Agent/Runtime checkouts below.
+  const sources = mode === '--collect' ? null : selectSources();
+  if (sources) assertSourcesUnchanged(sources);
   const agentPython = requireExecutable(process.env.ASTRID_PYTHON ?? '/home/user/work/venv-agent/bin/python', 'Agent Python');
   const runtimePython = requireExecutable(process.env.ASTRID_RUNTIME_PYTHON ?? '/home/user/work/venv-runtime/bin/python', 'Runtime Python');
-  const importVersions = {
+  const importVersions = sources ? {
     runtime: importReadback(sources, runtimePython, [sources.runtime.checkout, sources.agent.checkout]),
     agent: importReadback(sources, agentPython, [sources.agent.checkout, sources.runtime.checkout]),
-  };
+  } : undefined;
   const snapshot = path.basename(root);
   const output = process.env.D66_OUTPUT_DIR ?? (snapshot.startsWith('.test-')
     ? path.join(orch, 'tests', snapshot.slice(6), 'd66')
@@ -161,7 +168,7 @@ async function main() {
   for (const key of ['NODE_PATH', 'ASTRID_QUICK_DESCRIPTOR', 'ASTRID_APP_DIRECT_DIST', 'APP_DIRECT_DIST',
     'ASTRID_LOCAL_DATA_ROOT', 'ASTRID_RUNTIME_DATA_ROOT', 'ASTRID_LOCAL_SOURCE_MANIFEST', 'ASTRID_RUNTIME_SOURCE_MANIFEST',
     'BANODOCO_LOCAL_DATA_ROOT', 'BANODOCO_RUNTIME_DATA_ROOT', 'BANODOCO_LOCAL_SOURCE_MANIFEST', 'BANODOCO_RUNTIME_SOURCE_MANIFEST']) delete process.env[key];
-  Object.assign(process.env, {
+  if (sources) Object.assign(process.env, {
     PATH: `${nodeDir}:${root}/node_modules/.bin:${process.env.PATH}`,
     ASTRID_CHECKOUT: sources.agent.checkout, ASTRID_PYTHON: agentPython,
     ASTRID_RUNTIME_CHECKOUT: sources.runtime.checkout, ASTRID_RUNTIME_PYTHON: runtimePython,
@@ -175,8 +182,11 @@ async function main() {
   const hashes = () => Object.fromEntries([...suite.files, readiness].map((file) =>
     [file, createHash('sha256').update(readFileSync(path.join(root, file))).digest('hex')]));
   const manifest = {
-    suite: name, started_at: new Date().toISOString(), repo_heads: repoHeads(sources), repo_trees: repoTrees(sources),
-    source_checkouts: sources, test_sha256_before: hashes(), service_versions: { imports: importVersions },
+    suite: name, started_at: new Date().toISOString(),
+    repo_heads: sources ? repoHeads(sources) : { app: git(root, ['rev-parse', 'HEAD']), composition: git('/home/user/work/composition', ['rev-parse', 'HEAD']) },
+    repo_trees: sources ? repoTrees(sources) : { app: git(root, ['rev-parse', 'HEAD^{tree}']), composition: git('/home/user/work/composition', ['rev-parse', 'HEAD^{tree}']) },
+    ...(sources ? { source_checkouts: sources } : {}),
+    test_sha256_before: hashes(), service_versions: importVersions ? { imports: importVersions } : {},
     junit: { readiness: path.join(output, 'readiness.xml'), original: path.join(output, `${name}.xml`) },
   };
   const save = () => writeFileSync(path.join(output, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
@@ -188,7 +198,9 @@ async function main() {
     if (grep) args.push('--grep', grep);
     args.push('--reporter', list ? 'list' : 'list,./config/testing/playwrightSkipGuard.ts,junit');
     if (list) args.push('--list');
-    return { args, env: { ...process.env, PLAYWRIGHT_OUTPUT_DIR: path.join(output, stage), PLAYWRIGHT_JUNIT_OUTPUT_FILE: manifest.junit[stage === 'readiness' ? 'readiness' : 'original'] } };
+    const env = { ...process.env, PLAYWRIGHT_OUTPUT_DIR: path.join(output, stage), PLAYWRIGHT_JUNIT_OUTPUT_FILE: manifest.junit[stage === 'readiness' ? 'readiness' : 'original'] };
+    if (suite.retainRuntimeLogs && stage === name) env.D66_RUNTIME_LOG_DIR = path.join(output, 'runtime-private');
+    return { args, env };
   }
 
   async function run(command, args, env = process.env) {
