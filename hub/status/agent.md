@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T20:22:54Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 0m -->
-# agent board, 2026-10-24T20:22:28Z
+<!-- agent | 2026-10-24T20:25:42Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 0m -->
+# agent board, 2026-10-24T20:25:05Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -141,9 +141,11 @@ Gates: P4 actual14690 diagnostic FAIL1/PASS2: CLI/sheet2.821s, ten-note45.407s a
 D60 baseline: upstream924 terminal12396 PASS,91 FAIL,14 errors,16 skips,566 subtests. Exact276 split199 NEW-OURS/77 counterparts; mutable external Runtime scope disclosed. D67 env and D23 deferrals unchanged.
 Admission: D56 Farm/schema venue stand-down and prior source/access/cleanup refusals remain stopped. No source substitute, child, KEEP release or installed-record relabel.
 Disk: About8.8GiB free; cap6. Sweep3 removed0; compact packed0 and gzipped2 old logs at20:01. Ended clean workers auto recycled; dirty old and refused KEEP/pin targets untouched.
-Blockers: Runtime — D83 assigns likely shared wait defect to existing Runtime Sol owners. Agent adds no diagnosis. P4, PARAM and restart originals stay open until qualified home fix and normal adoption.
+Blockers: Runtime — D83 assigns accepted-history cost and ordinal2 wait to two Runtime Sol owners. Agent adds no diagnosis. P4 and four tail cases await qualified home fix, normal adoption and one batch.
 Blockers: Final cut — final core and genuine installed render remain D59 gated. P4 evidence verdict1956 is PASS; original gate remains open pending Runtime measured correction.
-Next ready: D83 qualified Runtime fix publication -> normal D39 adoption -> originals once. Runtime Sol2004 owns measured repair; App14383 capture submitted. E2 further work paused until ZIP.
+Next ready: Qualified Runtime fix -> normal D39 adoption -> one batched original run on captured tuple. D83: NO-GO automatic summary, GO one verdict; correction reviewer applies/submits. E2/D79 paused until ZIP.
 live 0 / cap 6; ready-undispatched 0 local. D83 critical Runtime owners active; Agent waits published fix, then normal adoption and one original proof. E2 further work paused until ZIP.
-Inbox consumed through 1073706 bytes including D83 speed-up20:17. Existing E2 design finished20:13 before pause arrived; no live E2 or new diagnosis. Fix adoption/originals are next.
+Inbox consumed through 1076534 bytes, including full D83 at20:20. Security review and45s stay required; no extra NO-GO verdict or whole-path loop. E2 finished before pause; no live E/D79.
 D79 later: Inventory1831 complete; no full accepted record/context survived. Existing non-gating input request retained. No fixture or test fabricated.
+Continuation: P4 current service row uses the1948 opt-in profiling recipe. After qualified Runtime fix, worker restores normal unprofiled launch via guarded registry route for D83 original batch; no repeated diagnostic profile.
+Continuation: PARAM carrier1925 has exactly two reviewed donor blobs and99 controls, but remains unmerged. True2 candidate results do not qualify current home. Preserve this distinction through fix adoption, batch result and normal merge.
