@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T08:38:26Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 2m -->
-# runtime board, 2026-10-24T08:37:00Z
+<!-- main | 2026-10-24T08:41:06Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 0m -->
+# runtime board, 2026-10-24T08:40:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -83,7 +83,7 @@
 | OPS-Agent-current-child | Qualify changed Agent source child | Dispatcher / Agent Luna | Reviewed installed RECORD correction | blocked:runtime | final-0c2c-becfe; harness 0820 | Actual bootstrap passed; offline install of 67 wheels passed. Final NumPy installed RECORD validation refused. No child READY. | Agent 0c2c / Runtime becfe |
 | OPS-Farm-current-child | Qualify Farm checkpoint child | Farm lead | Existing authorized normal request | doing | Peer 0815; status request 0830 | Exact Agent 9cd and Runtime 1d9. Lead returns request and real receipt; reviewed row and preflight precede checkpoint. | Agent 9cd / Runtime 1d9 |
 
-| OPS-numpy-record | Verify installed dependency record paths | Luna / independent Luna | Exact finite Agent packet | doing | Author 0834; whole-path 0834 complete | Source rejects legitimate generated script paths. Exact candidate row is unknown; preserve all guards and require old RED/new GREEN proof. | Base b330 |
+| OPS-numpy-record | Verify installed dependency record paths | Luna / independent Luna | Clean independent security and caller review | review | Author 0834; security review 0840 | Five new cases passed; total 52 passed and one stale-baseline failure. Review checks exact maker wrappers, relocation and all integrity guards. | 49c95126 held |
 
 Runtime full: 0 of 36 original failures open at the retained integrated scopes. No new full-suite PASS. Current producer is becfe6db88b2cc034dba3fafa6c050117cdf2b06; exact integrated worker 0721 passed 409 cases. Independent 0727 passed source and result review. Temporary JUnit loss remains disclosed. [Producer proof](../../design/runtime-freeze-result-review-0727.md), [exact inventory](../../design/runtime-freeze-producer-custody-0727.json).
 
@@ -110,6 +110,6 @@ Agent census: official 263 closed / 4 open of 267, independently reviewed 0827 a
 
 Blockers: Farm — reviewed v3 packet is released. Farm lead owes the exact child receipt; Farm workers own guarded install and isolated-child preflight before one checkpoint.
 Blockers: App — header P2/P3 GO precedes U3b home, D39 adoption and final tuple qualification.
-Blockers: Runtime — final-0c2c-becfe refused installed NumPy RECORD. Luna author 0834 and independent whole-path 0834 own classification and a guard-preserving correction.
-Next ready: Review NumPy author 0834 immediately on completion. Whole-path 0834 is complete; candidate-specific first row remains unknown despite source-proved generated-script gap. Farm owns the already authorized child, guarded installer and preflight. No unassigned ready Runtime task.
+Blockers: Runtime — final-0c2c-becfe refused installed NumPy RECORD. Author 0834 committed correction 49c95126. Independent security review 0840 must clear source, maker path and the retained baseline failure before installation.
+Next ready: Independent NumPy security review 0840 is dispatched. Whole-path 0834 is complete; candidate-specific first row remains unknown despite the generated-script gap. Farm owns the already authorized child, guarded installer and preflight. No unassigned ready Runtime task.
 Later: D47 memo and capsule remain held and unmerged after delivery. D34 main disk hold and all earlier retirement, process, publication and permission refusals remain stopped. Main has 9080393728 bytes free at 08:30; light work continues. D34 holds remain in force; no refused cleanup is retried. V4 remains cut; D14/D23 and D31/D37 dormant subsets stay unchanged and visibly deferred. Viewing owns the original ABA, with no duplicate Runtime body.
