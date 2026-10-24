@@ -1,7 +1,7 @@
 {
   "schema": "timeline.d32.current-node-reconciliation.delta-mapping.v1",
   "base_artifact": "evidence/agent-D32-current-node-reconciliation-H30-corrected.json",
-  "base_artifact_sha256": "05be229672afd60c65ddd1e1e04b914d5d64b67c444de4d1109a9b6e2ba7e5c1",
+  "base_artifact_sha256": "3cce6b4c4e36e4fe7e65f99d9943706d2c84b2e84026e456d4d5ff7a68fb56fb",
   "base_artifact_sha256_meaning": "SHA-256 of the current corrected census file named by base_artifact; package linkage, not a historical source or proof hash.",
   "actual_home": {
     "head": "9cd3dbe865a941c052bda04ae0d61306d18f8f26",
@@ -1095,6 +1095,24 @@
       "scenario_mapping": "swap-missing",
       "proof_ref": "inverse22_current_0537",
       "credit": "confirmed_closed"
+    },
+    {
+      "exact_original_node_id": "tests/stage1/test_zero_shim_execution_pack_deletion.py::test_generic_host_runs_external_python_orchestrator_from_admitted_pack",
+      "current_node_id": "tests/stage1/test_zero_shim_execution_pack_deletion.py::test_generic_host_runs_external_python_orchestrator_from_admitted_pack",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_generic_host_runs_external_python_orchestrator_from_admitted_pack",
+      "current_function": "test_generic_host_runs_external_python_orchestrator_from_admitted_pack",
+      "function_renamed": "no",
+      "current_function_line": "166",
+      "original_body_ast_sha256": "51b55ea4556079af49c783c69d922fbe66a9da7e557ca4c35258a95d1e59bf5f",
+      "current_body_ast_sha256": "51b55ea4556079af49c783c69d922fbe66a9da7e557ca4c35258a95d1e59bf5f",
+      "original_source_ref": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+      "original_source_file_sha256": "3d8538d03b59eeb0f5cf0b397f639af0dfa3f5cbb5ce3b102001c427d6eb48ef",
+      "current_source_file_sha256": "3d8538d03b59eeb0f5cf0b397f639af0dfa3f5cbb5ce3b102001c427d6eb48ef",
+      "scenario_mapping": "Exact retained 2007 admitted-pack original; 3 unchanged assertions; AST with locations per 0520/0551 identity scheme",
+      "proof_ref": "d40_observed_0551",
+      "credit": "confirmed_closed"
     }
   ],
   "non_credit_dispositions": [
@@ -1173,5 +1191,28 @@
     "pytest_log": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-inverse22-qualified-0537/evidence/inverse22.log",
     "pytest_log_sha256": "3c1f4990a6d304c6b2a2a39f427ca6d26488d4d4246b0f9d46c372db9bab2874",
     "credit_limit": "Credit is limited to these exact 22 original call nodes. Do not infer credit from the prior 47/186/56 aggregate totals, source-copy selectors, installed-package claims, or any unenumerated neighbor/body rerun."
+  },
+  "d40_mapping": {
+    "proof_ref": "d40_observed_0551",
+    "independent_review_ref": "d40_result_review_0552",
+    "exact_count": 1,
+    "phase": "call",
+    "lane": "Agent",
+    "source_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+    "original_identity": {
+      "assertion_ast_sha256": [
+        "9e40f8eb3573e09d0c44e10f1a3798d9d702924f667bc6302fda8ac00aa122de",
+        "040b49d4d7b2f5b5248b10f6a376a30db042cee92c50002f7f0343dc4c89475d",
+        "4aa718bd236d97654c529c12571f8473834ce8ceea2ae3d0202652b6e7f58d3f"
+      ],
+      "assertion_count": 3,
+      "file_sha256": "3d8538d03b59eeb0f5cf0b397f639af0dfa3f5cbb5ce3b102001c427d6eb48ef",
+      "function_ast_sha256": "51b55ea4556079af49c783c69d922fbe66a9da7e557ca4c35258a95d1e59bf5f",
+      "function_source_sha256": "e3980ec0a6ad774d5e9d778d2ef90ec061f7373610b68d78fca79cb6886557db",
+      "helper_sha256": "f0ea5bac9b159bd6063d5b2606cafff27a856f382a931331ebf0ee6703f9b564"
+    },
+    "identity_scheme": "Retained 0520/0551 scheme: function and assertion ast.dump(include_attributes=True); source slice without final LF. Original here is the retained admitted-pack test at source 2007, with all three assertions unchanged.",
+    "evidence_directory": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D40-observed-qualified-0551/evidence/stage-b",
+    "credit_limit": "Only this exact external-pack original call node earns one closure. No second generic_host original, whole86/full/gate, current-whole-HEAD installed, future, or v2 production caller/wire-contract acceptance credit. No rerun performed for this package."
   }
 }

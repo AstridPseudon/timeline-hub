@@ -20,15 +20,15 @@
     "current_integrated_tree": "57f0231da0d7904ecd8778169973d6384e0ae141",
     "requested_base_head": "8657e83653f48c935f52f209516456bcb5a36282",
     "current_integration_is_three_commits_past_requested_base": true,
-    "current_source_identity_policy": "Source merge alone grants zero original behavior credit; every node retains its exact original pytest ID/body/assertion mapping. The 0500, 0508, and inverse22 deltas credit only exact mapped nodes."
+    "current_source_identity_policy": "Source merge alone grants zero original behavior credit; every node retains its exact original pytest ID/body/assertion mapping. The 0500, 0508, and inverse22 deltas credit only exact mapped nodes. The 0551 D40 delta credits one exact independently reviewed installed-child original with current relevant production bytes equal to qualified source 2007; it does not claim whole-current-HEAD installed qualification."
   },
   "reconciliation": {
     "exact_unique_entries": 267,
     "exact_unique_ids": 267,
     "exact_unique_phase_rows": 267,
     "counts": {
-      "proven_passed": 201,
-      "active_owner": 66,
+      "proven_passed": 202,
+      "active_owner": 65,
       "deferred_cut_visible": 0,
       "genuinely_unowned": 0
     },
@@ -38,14 +38,14 @@
     "unassigned_minimum_source_gaps": 0,
     "owner_status_does_not_credit_passes": true,
     "all_tags_ours": true,
-    "confirmed_closed_ids": 201,
-    "open_ids": 66,
-    "held_or_unknown_ids": 66,
-    "newly_confirmed_closed_since_0118": 65,
+    "confirmed_closed_ids": 202,
+    "open_ids": 65,
+    "held_or_unknown_ids": 65,
+    "newly_confirmed_closed_since_0118": 66,
     "current_head_full267_pass": false,
     "full_checkpoint": "pending; no authorized Farm result tree was available; do not assume forthcoming PASS",
     "effective_owner_counts_active": {
-      "Agent": 60,
+      "Agent": 59,
       "Runtime": 2,
       "Viewing": 4
     },
@@ -59,7 +59,7 @@
       "Other task-specific unconfirmed": 5,
       "Rendering missing result file": 0,
       "Retired CLI/native route or stale caller": 0,
-      "Runtime child import / OPS": 2
+      "Runtime child import / OPS": 1
     },
     "counts_are_exact_node_membership_not_author_named_totals": true
   },
@@ -502,6 +502,207 @@
       },
       "no_aggregate_credit": "No credit from aggregate 47/186/56 results; no source-copy, installed-package, D40, or unrelated prior credit.",
       "credit_limit": "Credit is limited to these exact 22 original call nodes. Do not infer credit from the prior 47/186/56 aggregate totals, source-copy selectors, installed-package claims, or any unenumerated neighbor/body rerun."
+    },
+    "d40_observed_0551": {
+      "result": "1 passed in 4.59s; exit 0; JUnit 1 test, 0 failures/errors/skips",
+      "qualifier": "agt-F-D40-observed-qualified-0551",
+      "independent_review": "agt-F-D40-result-review-0552",
+      "exact_node_ids": [
+        "tests/stage1/test_zero_shim_execution_pack_deletion.py::test_generic_host_runs_external_python_orchestrator_from_admitted_pack"
+      ],
+      "node_phase": "exact nodeid,call",
+      "evidence_directory": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D40-observed-qualified-0551/evidence/stage-b",
+      "qualification_report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D40-observed-qualified-0551/report.md",
+      "retained_command": {
+        "argv": [
+          "/home/user/work/bench-store/entries/child-3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9/bin/python",
+          "-I",
+          "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D40-observed-qualified-0551/evidence/stage-b/observer.py",
+          "_pytest",
+          "--root",
+          "/home/user/work/wt/agt-F-D40-observed-qualified-0551",
+          "--evidence",
+          "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D40-observed-qualified-0551/evidence/stage-b",
+          "--reviewed-source-sha256",
+          "cddde857a154057b3bea16643a44b65a77b1b85b0043ed259d25cfb4810067db"
+        ],
+        "cwd": "/home/user/work/wt/agt-F-D40-observed-qualified-0551",
+        "env": {
+          "ASTRID_HOST_EXECUTION_PROFILE": "installed",
+          "ASTRID_NODE_EXECUTABLE": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
+          "ASTRID_REMOTION_PROJECT_DIR": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110",
+          "ASTRID_TEST_NODE_MODULES": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110/node_modules",
+          "HOME": "/root",
+          "LANG": "C.UTF-8",
+          "LC_ALL": "C.UTF-8",
+          "PATH": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/bin:/bin",
+          "PYTHONDONTWRITEBYTECODE": "1",
+          "TMPDIR": "/tmp/w-badaa699e3/d40-rt_sytyf"
+        }
+      },
+      "runner_sha256": "cddde857a154057b3bea16643a44b65a77b1b85b0043ed259d25cfb4810067db",
+      "production_caller": "GenericPackHost.invoke_capability",
+      "production_code_file": "/home/user/work/bench-store/entries/child-3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9/lib/python3.13/site-packages/astrid/core/execution/generic_host.py",
+      "observer": {
+        "calls": 1,
+        "direct_values": 1,
+        "observer_errors": [],
+        "pytest_exit": 0
+      },
+      "direct_actual_return": {
+        "disposition": "direct actual return.outputs.imported_from",
+        "imported_from": "/tmp/w-badaa699e3/d40-rt_sytyf/d40-body/test_generic_host_runs_externa0/external_pack/external_pkg",
+        "code_file": "/home/user/work/bench-store/entries/child-3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9/lib/python3.13/site-packages/astrid/core/execution/generic_host.py",
+        "code_name": "GenericPackHost.invoke_capability"
+      },
+      "original_identity": {
+        "assertion_ast_sha256": [
+          "9e40f8eb3573e09d0c44e10f1a3798d9d702924f667bc6302fda8ac00aa122de",
+          "040b49d4d7b2f5b5248b10f6a376a30db042cee92c50002f7f0343dc4c89475d",
+          "4aa718bd236d97654c529c12571f8473834ce8ceea2ae3d0202652b6e7f58d3f"
+        ],
+        "assertion_count": 3,
+        "file_sha256": "3d8538d03b59eeb0f5cf0b397f639af0dfa3f5cbb5ce3b102001c427d6eb48ef",
+        "function_ast_sha256": "51b55ea4556079af49c783c69d922fbe66a9da7e557ca4c35258a95d1e59bf5f",
+        "function_source_sha256": "e3980ec0a6ad774d5e9d778d2ef90ec061f7373610b68d78fca79cb6886557db",
+        "helper_sha256": "f0ea5bac9b159bd6063d5b2606cafff27a856f382a931331ebf0ee6703f9b564"
+      },
+      "identity_scheme": "Retained 0520/0551 scheme: function and assertion ast.dump(include_attributes=True); source slice without final LF. Original here is the retained admitted-pack test at source 2007, with all three assertions unchanged.",
+      "source_identity": {
+        "qualified_source_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "qualified_source_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "count_package_base_head": "40f87370f16beff142033104f15dcdad6fd72efb",
+        "relevant_production_source_equality": {
+          "astrid/core/execution/generic_host.py": {
+            "equal": true,
+            "installed_agent_snapshot": "b5ad2c6494064ecb5e1c1c1c251b411a39f8b59de3358ddc783a1b1ec6765fd6",
+            "worktree": "b5ad2c6494064ecb5e1c1c1c251b411a39f8b59de3358ddc783a1b1ec6765fd6"
+          },
+          "astrid/core/execution/generic_host_worker.py": {
+            "equal": true,
+            "installed_agent_snapshot": "0fd735fad6312aa0dc9be3e84da697a5810711f8ae5fadba66deb2a7550b4a49",
+            "worktree": "0fd735fad6312aa0dc9be3e84da697a5810711f8ae5fadba66deb2a7550b4a49"
+          },
+          "astrid/core/execution/orchestrator/runner.py": {
+            "equal": true,
+            "installed_agent_snapshot": "580bae2886421109ab9a939e7c9ba525142d9dd3c6c6ccc36192506cd397bf73",
+            "worktree": "580bae2886421109ab9a939e7c9ba525142d9dd3c6c6ccc36192506cd397bf73"
+          },
+          "astrid/core/execution/orchestrator/schema.py": {
+            "equal": true,
+            "installed_agent_snapshot": "1f6638426f12225da5b2ef5c8eee6b2cd7b9b91dbf066403172b9aee418962e5",
+            "worktree": "1f6638426f12225da5b2ef5c8eee6b2cd7b9b91dbf066403172b9aee418962e5"
+          },
+          "astrid/core/pack/discovery.py": {
+            "equal": true,
+            "installed_agent_snapshot": "076bd6ba127b9c49c0c4432fef806d20f7509e6ef2200e4612c38e3c816ab52f",
+            "worktree": "076bd6ba127b9c49c0c4432fef806d20f7509e6ef2200e4612c38e3c816ab52f"
+          },
+          "astrid/core/source_identity.py": {
+            "equal": true,
+            "installed_agent_snapshot": "5236481dab209f8803fe9dcd2c93c1610b664bea2102e4370148273ffa4b9a32",
+            "worktree": "5236481dab209f8803fe9dcd2c93c1610b664bea2102e4370148273ffa4b9a32"
+          }
+        },
+        "current_relevant_production_bytes_equal_qualified_source": true,
+        "current_original_file_equal_qualified_source": true,
+        "whole_current_head_installed_claim": false,
+        "prior_scope_fields": "Other census scope/head fields retain their prior proof scopes; this qualification is limited to the exact retained D40 test and enumerated production bytes."
+      },
+      "installed_child": {
+        "root": "/home/user/work/bench-store/entries/child-3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9",
+        "agent_marker": "ba8f0bc8bebf6d0e9a8143fed80d31f846cd5b95",
+        "runtime_marker": "f3208b26b53c4d7053e5464eaa7c5e15b1505812",
+        "direct_urls": [
+          {
+            "direct_url": {
+              "dir_info": {},
+              "url": "file:///home/user/work/bench-store/entries/child-3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9/.child-venv-source-venv-agent-child-d40-ba8f-f320/agent"
+            },
+            "distribution": "astrid",
+            "version": "0.1.0"
+          },
+          {
+            "direct_url": {
+              "dir_info": {},
+              "url": "file:///home/user/work/bench-store/entries/child-3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9/.child-venv-source-venv-agent-child-d40-ba8f-f320/runtime"
+            },
+            "distribution": "astrid-runtime",
+            "version": "0.1.0"
+          }
+        ],
+        "profile": {
+          "composition_archive_expected_sha256": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+          "composition_archive_sha256": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+          "execution_profile": "installed",
+          "no_old_child_paths": true,
+          "node": {
+            "path": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
+            "version": "v20.19.4"
+          },
+          "package_lock_sha256": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+          "remotion_profile": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110"
+        },
+        "production_origins": "Before/after maps preserve all prior modules; call/return origins and production caller resolve inside genuine child site-packages.",
+        "production_overlay": false
+      },
+      "custody": {
+        "file_count": 32,
+        "changed_files": [],
+        "independent_review": "All 32 hashes matched; six disposable prior-worktree paths were remapped read-only to the same clean base contents.",
+        "retained_files": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D40-observed-qualified-0551/evidence/stage-b/custody.json"
+      },
+      "retained_artifact_sha256": {
+        "0520-baseline.json": "77bddf5b34c107a53a518823e4faf42a6d373646636a1931596454d069af495f",
+        "observer.py": "cddde857a154057b3bea16643a44b65a77b1b85b0043ed259d25cfb4810067db",
+        "command.json": "d9fbcc6d94b0b7f27bbac85535aba035f5c7c28b55b456c82cce125516869022",
+        "command.sh": "bafe436d636dbd68fc6f4a5d8a6bc79481638fdff787a0a1f3c1028debf66f13",
+        "pytest-command.json": "1224f65bf9d070e12c06590668528c93adc00e0189a617bcc4a446caea058c6d",
+        "pytest-result.json": "f9c624145bc08f14e066293f1359df9dd871e3e91bf0e888c1d70de3c722ba7c",
+        "exit.json": "1e3f6691f455051e8adb15d961e4bf3c7a17e83dd88b2afdd13315cc288250bb",
+        "junit.xml": "27348f79dfd881584ed753a8a9ce2537409153353c271a96cc095ee153afb937",
+        "stdout.txt": "8c1ee96acda7d1a52eb6b083614cd479c49c555fd7d52180b8944ea7fb5f9525",
+        "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "direct-observations.jsonl": "2c2a238c715174137160c20bf3ed96add0e9ba2fde6e9b365330036b933ebfb6",
+        "custody.json": "244cc85bcc397dc6e406fd1f42185e9c85433669fddcc413edd5433725c656ca",
+        "custody-after.json": "0a8e4c221f12f0ad028db2127405eb9eb372638a904e089f7893757d675fa219",
+        "origins-before-pytest.json": "1c5f163857b780f758bbc562254a7bf763259f3b49865801d285cb6c808d7fe1",
+        "origins-after-pytest.json": "0fffc35157b6fbbc0e39027b2a37eb6c311c4d52fc29ba941a36f64ac51b50b5",
+        "original-test.py": "3d8538d03b59eeb0f5cf0b397f639af0dfa3f5cbb5ce3b102001c427d6eb48ef",
+        "original-helper.py": "f0ea5bac9b159bd6063d5b2606cafff27a856f382a931331ebf0ee6703f9b564",
+        "astrid-source-commit": "988ed0c408ae2d4ebe93bdd8771f5224faebd55edb703df831588946bb3661df",
+        "astrid-runtime-source-commit": "69fbc28efe1d54f128eca748066dd4fb2d6a82af4329285505a035b161ee13e1",
+        "astrid-direct_url.json": "5fa085a526101253c3ed7c877a1aca104575a0e796f7485bdcd1593f64fbad2b",
+        "astrid_runtime-direct_url.json": "5f072ef8502db9782b3d1e05f0f2802dbbde70dd50a0a1a9ccab8faa57156e5f",
+        "astrid-distribution-metadata": "9791a490ec243df16e0969f0e9ed6af7dc9d6426bce173ca08d3b5a02dde6850",
+        "astrid-import-origins": "d05cb058feb07c01cfa25cd4b5373e7cd260da4a82ca903018d7ac4406b871bd",
+        "astrid-runtime-client-identity": "da2728a6903be1c676de1ed954a3ecea589b698a6d205f436457efdf368069e9",
+        "bench-owner.json": "7ee0374f2a591fdf0647a4e9eb9fb0d35e874f1d789f5a46e20b8f248a5cc7a9",
+        "provision-receipt.txt": "e8b01d8b47d27054e5976ccef2b019cbcb689192557cec9c603697ee92ca335c"
+      },
+      "earlier_attempts": [
+        {
+          "worker": "agt-F-D40-integrated-installed-0520",
+          "result": "1 passed in 3.32s; result-only evidence, no separately observed actual return; no additional census credit"
+        },
+        {
+          "worker": "agt-F-D40-observed-original-0612",
+          "result": "FAIL pre-body: immutable identity scheme mismatch; no child/body invocation and no credit"
+        }
+      ],
+      "credit_limit": "Only this exact external-pack original call node earns one closure. No second generic_host original, whole86/full/gate, current-whole-HEAD installed, future, or v2 production caller/wire-contract acceptance credit. No rerun performed for this package."
+    },
+    "d40_result_review_0552": {
+      "result": "Independent PASS: exact StageB0551 external-pack original earns closure",
+      "reviewer": "agt-F-D40-result-review-0552",
+      "qualification_ref": "d40_observed_0551",
+      "report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D40-result-review-0552/report.md",
+      "report_sha256": "c8f51f4c7be253666e838dc928a4c2e91a522a9811ce45d0eb759afef1f17b15",
+      "exact_node_ids": [
+        "tests/stage1/test_zero_shim_execution_pack_deletion.py::test_generic_host_runs_external_python_orchestrator_from_admitted_pack"
+      ],
+      "phase": "call",
+      "credit_limit": "Only this exact external-pack original call node earns one closure. No second generic_host original, whole86/full/gate, current-whole-HEAD installed, future, or v2 production caller/wire-contract acceptance credit. No rerun performed for this package."
     }
   },
   "unowned_gaps": {},
@@ -7468,7 +7669,7 @@
       "phase": "call",
       "family": "Runtime child import / OPS",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
       "reason": "Remaining external-pack positive is security-owned; do not duplicate 62-node cohort.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/stage1/test_zero_shim_execution_pack_deletion.py::test_generic_host_runs_external_python_orchestrator_from_admitted_pack",
@@ -7481,16 +7682,34 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "D40 source and 32 focused controls pass, but installed external positive is unqualified; no original behavior credit.",
+        "classification": "confirmed_closed_post_0118_d40",
+        "current_head": "2007cf7aaf5d304964e68a33e967502a16de1d24",
+        "current_tree": "68b0309cede387e758ba6baac84bb1d3cad9c803",
+        "post_0118_disposition": "Exact installed StageB0551 original PASS and independent 0552 result review; current relevant source bytes match qualified source 2007. Installed child retains ba8f/f320 markers; no whole-current-HEAD installed claim.",
         "post_0118_evidence_refs": [
-          "agt-F-D40-loader-sol-0303",
-          "agt-F-D40-security-review-0330"
+          "d40_observed_0551",
+          "d40_result_review_0552"
         ],
-        "qualifying_original_behavior_credit": false
-      }
+        "qualifying_original_behavior_credit": true,
+        "source_file_sha256": "3d8538d03b59eeb0f5cf0b397f639af0dfa3f5cbb5ce3b102001c427d6eb48ef",
+        "body_ast_sha256": "51b55ea4556079af49c783c69d922fbe66a9da7e557ca4c35258a95d1e59bf5f",
+        "historical_pre_0551_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "D40 source and 32 focused controls pass, but installed external positive is unqualified; no original behavior credit.",
+          "post_0118_evidence_refs": [
+            "agt-F-D40-loader-sol-0303",
+            "agt-F-D40-security-review-0330"
+          ],
+          "qualifying_original_behavior_credit": false
+        }
+      },
+      "proof_refs": [
+        "d40_observed_0551",
+        "d40_result_review_0552"
+      ],
+      "proof_status": "exact_current_scoped_pass"
     },
     {
       "exact_node_id": "tests/test_artifact_manifest.py::test_cli_surface_is_current",
@@ -8880,12 +9099,15 @@
     "d40": {
       "source_merge": "4745f956a3",
       "result": "32 focused controls passed",
-      "installed_external_positive": "UNQUALIFIED",
-      "original_node_credit": 0,
+      "installed_external_positive": "QUALIFIED: exact StageB0551 external-pack original PASS; independently reviewed 0552",
+      "original_node_credit": 1,
       "refs": [
         "agt-F-D40-loader-sol-0303",
         "agt-F-D40-security-review-0330"
-      ]
+      ],
+      "historical_installed_external_positive": "UNQUALIFIED",
+      "proof_ref": "d40_observed_0551",
+      "independent_review_ref": "d40_result_review_0552"
     },
     "aba": {
       "source_merge": "7aa96ae614",
@@ -8954,25 +9176,26 @@
   },
   "known_scopes_and_limits": [
     "All 267 D32 tags remain ours; zero upstream/pre-existing credit is admitted.",
-    "Historical baseline identity is preserved: the original 172 closed / 95 open baseline remains unchanged. The 0550 package snapshot is retained only as historical 179 closed / 88 open metadata context; cumulative current qualification now adds these exact 22 inverse originals for 201 closed / 66 open.",
-    "The current census has 66 remaining active IDs open/held/unknown for qualification, with current lane owners enumerated above; owner assignment is not pass credit.",
+    "Historical baseline identity is preserved: the original 172 closed / 95 open baseline remains unchanged. The 0550 package snapshot is retained only as historical 179 closed / 88 open metadata context; cumulative current qualification now adds these exact 22 inverse originals for the prior 201 closed / 66 open package; the one exact 0551 D40 original now yields 202 closed / 65 open.",
+    "The current census has 65 remaining active IDs open/held/unknown for qualification, with current lane owners enumerated above; owner assignment is not pass credit.",
     "Aggregate neighbor totals, source-only, mock, candidate, installed-positive absence, stale failures, and wrapper-only fixes receive zero original behavior credit.",
     "The seven exact H3 selectors are current-qualified and closed by h3_current_0508; historical h3_import_0137 remains historical and is not relabeled. The renderer support timeout 0509 is pending and not credited.",
     "The exact 22 occurrence-media inverse selectors are current-qualified by inverse22_current_0537 and independently PASS-reviewed by inverse22_result_review_0550: 16 corruption and six retained-scope call rows. Their helper authority uses actual realm history/boundaries and real inverse resolvers; no predicate was weakened.",
-    "The exact 22 inverse rows are the only new status changes in this update. Do not infer credit from prior 47/186/56 aggregate results, source-copy selectors, installed-package claims, or unenumerated body/neighbor reruns.",
+    "The exact D40 external-pack call row is the only new status change in this update. The prior 22 inverse originals remain qualified unchanged; aggregate, source-copy, and unenumerated body/neighbor results grant no additional credit.",
     "The 0550 metadata correction remains explicitly cumulative historical context only: it corrected H3 metadata and external hashes, preserved all 267 nodes and the exact 37-row mapping, and did not itself add inverse22 credit. Its 179/88 count is not the final current count.",
     "No current full267 PASS or authorized Farm checkpoint result was found; checkpoint remains pending.",
-    "D40 custody remains open, as do the three track-label rows, ABA-11466, IMAGE inverse, renderer timeout 0509, and Farm checkpoint. Source-copy selectors absent from the 267-node census receive zero credit.",
-    "This bounded fixture count does not claim the v2 production caller/wire-contract acceptance, including the complete request/reply shape; no product, test, schema, client, pin, or M5 change was made."
+    "D40 exact external-pack custody is closed by 0551/0552 for one original only. Three track-label rows, ABA-11466, IMAGE inverse (zero original credit), renderer timeout 0509, and Farm checkpoint remain open. The two source-copy selectors absent from the 267-node census receive zero credit; CLI/SDK mapping work is deferred here.",
+    "This bounded fixture count does not claim the v2 production caller/wire-contract acceptance, including the complete request/reply shape; no product, test, schema, client, pin, or M5 change was made.",
+    "Only this exact external-pack original call node earns one closure. No second generic_host original, whole86/full/gate, current-whole-HEAD installed, future, or v2 production caller/wire-contract acceptance credit. No rerun performed for this package."
   ],
   "correction": {
     "basis": "Independent H30 census review after FAIL0358",
     "review_artifact": "workers/agt-F-census-review-0358/evidence/h30-reconciliation-review.json",
     "corrected_counts": {
       "total": 267,
-      "closed": 201,
-      "open": 66,
-      "held_or_unknown": 66
+      "closed": 202,
+      "open": 65,
+      "held_or_unknown": 65
     },
     "newly_credited_ids": [
       "tests/core/rendering/test_conformance.py::test_attachment_wire_parity",
@@ -9039,14 +9262,17 @@
       "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[add-missing]",
       "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-dependent]",
       "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-disjoint]",
-      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-missing]"
+      "tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_retained_document_scope_is_required_before_removing_media[swap-missing]",
+      "tests/stage1/test_zero_shim_execution_pack_deletion.py::test_generic_host_runs_external_python_orchestrator_from_admitted_pack"
     ],
     "newly_credited_proof_refs": [
       "render_wire_27934",
       "integrated_0500",
       "h3_current_0508",
       "inverse22_current_0537",
-      "inverse22_result_review_0550"
+      "inverse22_result_review_0550",
+      "d40_observed_0551",
+      "d40_result_review_0552"
     ],
     "historical_open_ids": [
       "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]",
@@ -9141,7 +9367,14 @@
       "inverse22_result_review_0550"
     ],
     "cumulative_0550_metadata_fix_disposition": "The 0550 package correction was metadata-only: it reconciled the seven H3 current-qualified nodes, preserved the historical 172/95 baseline and exact 37-row mapping, and produced artifact SHA c70b6627e6fe4cd7f6d900e0bcb99168dd8e56a4269ad8d88e12b07eec272268. It remains historical 179/88 package context here; it is not new behavior credit or a node-status change.",
-    "current_cumulative_disposition": "Cumulative current qualification is 201 closed / 66 open: the 0550 historical 179/88 package snapshot plus these exact 22 inverse rows."
+    "current_cumulative_disposition": "Cumulative current qualification is 202 closed / 65 open: the prior 201/66 exact package plus this one D40 external-pack original. Historical 172/95 and 179/88 snapshots remain unchanged.",
+    "newly_confirmed_closed_at_0551_d40": [
+      "tests/stage1/test_zero_shim_execution_pack_deletion.py::test_generic_host_runs_external_python_orchestrator_from_admitted_pack"
+    ],
+    "newly_confirmed_closed_at_0551_d40_proof_refs": [
+      "d40_observed_0551",
+      "d40_result_review_0552"
+    ]
   },
   "owner_registry_note": "H30 current ownership is Viewing for the retained-caller delta and six render-wire rows, Runtime for the seven H3 source-drift rows, and Agent for Agent-home rows. Historical worker labels are not active authors. The three track-label rows remain separate. The seven H3 import-source rows and the exact 22 occurrence-media inverse rows are current-qualified; source-copy selectors were checked and are absent from the 267-node census."
 }
