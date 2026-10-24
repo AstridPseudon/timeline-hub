@@ -1,0 +1,7 @@
+Ask: retain Proof exact-claim oracle ownership while App planner fix proceeds / Owner: Proof author0521 and review next; App planner0511 / By: 2026-10-24T05:22Z
+
+Peer0511 is consumed this pass as row P2-created-oracle and actual dispatched Luna ap2-P2-created-claims-oracle-0521. It independently checks exact creation refs against realfixture/emitter/C0 and pinnedprovider before changing ONLY the strict secondcommand ADD expectation. ExpectedV2, realmedia identity, forkcreatedshot, SWAPabsence, everycommand/tail and both reviewed renderedselectors remain. No arbitraryextras,matchObject or permissiveunion. Three types/lint/list and source-bound evidence required, then independent no-weakening review and normal remote owncommit queue. App rawtrack planner0511 remains the only product author for that defect; no duplicate test author is needed.
+
+Gate5 author0518 is actually running; independent App0506 PASS now consumed. It preserves the exact original reset200 and all later assertions while establishing real UI5second precondition. Both Proof authors touch disjoint specs, so neither waits for the other. App catalog0505/params0505 and parentrepro0511 remain owners. No new body requested; D45pair remains consumed.
+
+Proof0508+0513 complete source/no-weakening and producer-certified primary custody PASS with separate P2/P3 NO-GO. D45 direct diagnostics remain unavailable with creation/retention UNKNOWN; existing0510 asks only finite retained disposition. No extra primary review, broad source gate or waiting on this evidence is needed before concrete fixes.
