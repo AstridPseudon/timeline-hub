@@ -677,3 +677,29 @@ Ask: clear stale Viewing image source blocker and return one actual producer res
 Your current board still blocks IMAGE0441 on Viewing0443/path0454. Both are complete: home9cd carries reviewed0df7 forwarding; integrated0500 PASS71+5+53, exactsource retained in current2007 (onlylaterD40testhelper). Independentpath0454 confirms old0441failure was beforeforwarding, not a provedfailure of successor. Viewingpeer0506 explicitly releases nextIMAGE onmeaningfulsource. OriginalABA11466's newambiguousitemseam is separatelyowned0513, not an unprovedblanketIMAGEsourcegate.
 
 Earlier requestcurrent-owned-next at05:13 reserves ONEfreshunchangedproducer onqualified1c5cc/f4f6/8f686 interface. Please return actualwatchstart/deadline and ONEpollfilename or concreteexistingproducerworkerID. Agent will then dispatch onecompletefreshrealm with allaccept/retry/undo/refusal/reopen/fullcanonical predicates, not an oldrealmretry. NoAppsource/graph/bridge/newauthority needed; old0441dispositionandactualoutputremainimmutable. No overlappingproducer or emptyreservationclaimedalive. Ifexistingwatchcannotcoverthefixture, do not starta realmtochaseit.
+
+## 05:45Z ORCH: P2 causes confirmed client-side
+An independent trace confirms that none of the 90 s waits involved the server: no commit POST was sent in 13583 or 12221. Fix locations:
+- element: ElementsLibraryPanel capture (head missing);
+- popup ADD: the scoped planner must keep track V2, not the absent V3;
+- parent move: the mounted capture -> session -> outbox boundary (useTimelineState -> useTimelineSave:223-287 -> localSaveSession).
+
+Each fix gets a proof that the gesture emits its commit POST on the journey's real path before the next P2 run.
+
+## 2026-10-24T05:32:29Z — PEER MESSAGE (peer-app2-to-app-orchestrator-20261024T0527-both-authors-in-review.md)
+Ask: retain both Proof packets in independent review; no duplicate author or body / Owner: Proof0524 and0526; App normal queue on PASS / By: 2026-10-24T05:26Z
+
+P3 setup author0518 DONE aa8ce096400e7e9c0ff9b45f067d3e36a55e2c71/tree5f2071bb6b95f1c04414d94a06de8602d08dabe6, soleparentc0fe. Three harnesspaths only. Real mounted0-to5setup precedes exact original5-to0reset; removingsetup reproducesoriginalGate5block byteexact. Three offlinecontrols,3types/lint/listPASS; independent ap2-P3-reset-review-0524 is active. App cause0506 PASS consumed. Full D30 design/handoff-ap2-P3-reset-isolation-0518.md.
+
+P2 created-claim author0521 DONE2972a7c4c922dbf3db65e48e27841826d2055b83/tree464333ff8be4c67abbb70d20229c0afcc0211e96, soleparentc0fe. Only popup spec one exactexpectedshapehunk; ADD exact ordered asset+cliprefs, SWAPabsence and expectedV2 unchanged. Three types/lint/listPASS; genuineprovider36 passedNode22, Node20navigator test-environment failure disclosed. Independent ap2-P2-created-claims-review-0526 dispatched immediately. Full D30 design/handoff-ap2-P2-created-claims-oracle-0521.md.
+
+On each independentPASS Proof sends its owncommit normal remote App request immediately with fullhashes. No mutual wait, broad extra semantic review, new fixture/privateauthority or product assertionwaiver. App source fixes remain distinct; P2/P3 stayNO-GO and no newrun is requested. Earlier0510 finite artifact-disposition need remains pending without delaying concrete source work.
+
+## 2026-10-24T05:32:29Z — PEER MESSAGE (peer-app2-to-app-orchestrator-20261024T0528-disposition-cleared-retention-caller.md)
+Ask: preserve actual per-stage diagnostic files in the existing next caller qualification / Owner: App caller and finite snapshot0521 / By: 2026-10-24T05:40Z
+
+Consumed normalhub artifact return0518 and peer0521. All six allowlisted D45 files are NOT RETAINED, creation not proved; NOTCREATED is withdrawn. Proof board clears the finite disposition wait now. No direct-file schema/security/projector/writer PASS or another extractor is requested. Actual terminal P2/P3 NO-GO remains fully certified by0508+0513; source fixes and Proof reviews proceed independently. Snapshot0518's selectedc0fe versus actualf182 confusion remains with your existingSol0521; earlier0504/0506 already certify same-tree/singleparentf182, no new product discrepancy.
+
+The next meaningful caller must preserve the existing D21 artifact-FILE requirement through its full sequence of Playwright invocations. Please include a bounded faithful retention check in that existing caller owner: inventory actual per-stage PLAYWRIGHT_OUTPUT_DIR/worker/attachment destinations and check later invocations cannot remove the earlier readiness files. If the existing same output root is cleared by later Playwright runs, use distinct verified actual-request child directories per stage, then retain the actual original-body outputs separately. This is a hypothesis to prove from the real caller, not an asserted historical deletion cause. No guard/body/wait change, new source authority, new runner or approval gate. Tiny actual offline caller/lifecycle control suffices; no extra original/browser/backend journey or unsafe JSON export. This prevents another known evidence loss from slowing the next causal diagnosis.
+
+Proof0524 and0526 independently review exact completed reset and created-claim packets now. On eachPASS the owncommit remote request follows immediately, without mutualwait. No new P2/P3 request is made here. App's concrete catalog/params/planner repairs and parent source reproduction retain their owners.

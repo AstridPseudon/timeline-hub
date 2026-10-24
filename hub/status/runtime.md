@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T05:32:29Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 1m -->
-# runtime board, 2026-10-24T05:31:00Z
+<!-- main | 2026-10-24T05:34:59Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 2m -->
+# runtime board, 2026-10-24T05:33:03Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -43,12 +43,12 @@
 | F-authoring-seed-fixture | Preserve shared alias compiler case | Sol / Luna | Explicit D44 behavior and review | merged | Agent author0414; independent0418 PASS | Original case passed in4.96s; other10 predicates unchanged. Exact reviewed tree equals Agent home. [Review](../../design/agent-D44-alias-review-0418.md) | Agent5c97e35b05 |
 | OPS-manifest-restore | Restore accidental generated manifest write | Luna | Exact main file identity | merged | Restore 0110; independent 0113 PASS | Exact tracked hash restored; main cleanliness and byte equality independently verified. | HEAD 458595850 |
 | R0-public-export-manifest | Refresh generated artifact hash | Luna | Integrated verification passed | merged | Author 0111; review 0115; integrated 0128 | Actual head db11 passed 74 cases and generation checks; 77 of 78 entries unchanged. [Proof](../../design/runtime-R0-manifest-integrated-0128.md) | db11ea829 / 8a742b1c2 |
-| R5-full-headless | Preserve headless acceptance and retry | Luna; Sol next | Retry payload classification | review | Return0509; path review0511 | Order correction reached later retry: twelve passed, one idempotency mismatch. Whole-path review is dispatched; no guard change. | Runtime fixture WIP; Agent 9cd3 |
+| R5-full-headless | Preserve headless acceptance and retry | Luna / Sol | Integrated proof and accounting passed | merged | Review 0518; proof 0521; accounting 0524 | Actual 1d9dd passed 13 cases with Agent 9cd. Ten original failures close; all 67 original predicates remain. [Proof](../../design/runtime-headless-integrated-0521.md) | 1d9ddba54 / 778878be0 |
 | R5-full-occupancy | Preserve fifteen occupancy scenarios | Luna / Luna | Integrated proof and result review passed | merged | Reviews0430/0438; integrated0444; audit0449 | Actual faf6 passed 16 in 45.92s;15 original nodes close. All65 original predicates and source guards retained; no full-suite claim. | faf6a5477 / f8051e52b |
 | R5-full-speed | Preserve six speed refusals | Luna | Integrated proof passed | merged | Review 0138; port review 0148; service 13500 | Actual head 28bb passed 14 cases. Original six inputs and SQL/CAS checks retained; no new type diagnostics. | 4e983cebc / 0e28e6261 |
 | R5-full-receipt-key | Preserve receipt and key guards | Luna | Integrated proof passed | merged | Reviews 0138 and 0148; integrated 0157 | Actual head 28bb passed both cases with explicit Agent source path. All receipt and replay equalities retained. | 28bb65668 / b57ab2331 |
 | R5-full-conformance | Declare actual retired-route errors | Sol / Luna | Integrated source proof complete | merged | Final review0242; integrated19379 | Actual head f320 passed 162 cases. Three generation checks deferred to freeze. [Proof](../../design/runtime-D39-D40-integrated-0246.md) | a7a2fe6a5 |
-| F-full-census-review | Reconcile exact open full-suite nodes | Luna independent | Evidence complete | merged | Author 0400; review 0405 PASS | 11 closed; 25 open; zero unaccounted. [Review](../../design/runtime-D43-accounting-review-0405.md) | Evidence only |
+| F-full-census-review | Reconcile exact full-suite nodes | Luna independent | Final accounting complete | merged | Initial 0405; final 0524 PASS | Final review closes all 36 originals; zero open or unaccounted. [Review](../../design/runtime-D43-final-accounting-review-0524.md) | Evidence only |
 | R2r-external-pack-source | Bind external pack authority | Sol / Luna | Runtime producer proof complete | merged | Security0240; integrated10713 | Actual head f320 passed 317 cases; two configured exclusions. Agent owns consumer proof. [Proof](../../design/runtime-D39-D40-integrated-0246.md) | f3208b26b / eb2775376 |
 | R-readiness-commits-hang | Reduce authenticated history cost | Sol / Luna | Integrated proof passed | merged | Source 0212; final 0205; proof 0210 | Actual head 45c3 passed 145 cases with Agent 4151, no skips. Historical cause unknown. [Proof](../../design/runtime-readiness-integrated-0210.md) | 45c3a7f47 |
 | R-readiness-compatible | Cost-only proof pin on old client | Sol / Luna | Freeze adoption | gated:freeze | Author0241; reviews0245 and0302 | Exact Agent 4151 archive passed 145 cases in 60.12 seconds. App child and caller qualified; proof pin only. | 37eb6c7bd |
@@ -56,7 +56,7 @@
 | F-render-21 | Classify retained cold-render timeout | Luna | Read-only source handback complete | merged | rt-F-render-21-source-review-0303 | Duplicate registry assembly identified; historical timeout cause unknown. No body run or product change. [Report](../../design/runtime-render-21-source-review-0303.md) | Evidence only |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Current installed qualification passed | merged | Agent0508; independent0517 PASS | Exact seven originals passed on managed child 3b5c, Agent ba8f and Runtime f320. Current 9cd relevant sources and test AST match. | Managed child 3b5c |
 
-| OPS-farm-agent-full | Prepare supported farm full-suite setup | Sol / Luna | Actual checkpoint result | doing | Review0423 PASS; Farm0503 | Store, normal runtime request and full-farm row are complete. Outside bytes preserved. One checkpoint queued at 05:04. | c9a58f3d2 packet |
+| OPS-farm-agent-full | Prepare supported farm full-suite setup | Sol / Luna | Checkpoint result | doing | Review 0423 PASS; Farm 0503 | Test agent-full-farm-1024050351-26511 reached about 70% at 05:29 on Agent 9cd, tree 57f0231d. Setup complete; result pending. | c9a58f3d2 packet |
 | R2r-historical-image | Restore authenticated retired roots on redo | Sol / Luna | Integrated proof passed | merged | Review 0405; integrated 0413 PASS | 13 standalone cases and 243 controls passed; 74 configured deselections. [Proof](../../design/runtime-historical-image-integrated-0413.md) | 2b49da8d6 / 2e96c68c |
 | R-D42-history-memo | Harden verified replay memo | Sol / Luna | Post-delivery scope under D47 | gated:D47 | Design0448; review0454 PASS | Deferred by D47. No stable validation boundary; nine state attacks remain open. Source stays unmerged. | Tests 6c6bb375; source held |
 | R-D42-proof-pin | Preserve a compatible future memo pin | Sol / Luna | Post-delivery safe memo under D47 | gated:D47 | No active pin author | D45: next P2/P3 uses existing37eb without memo. Prior unsafe backport stays held; no new checkout needed. | Earlier backport held |
@@ -71,7 +71,7 @@ Runtime integration is 1d9ddba54, tree f56c396c4495. The merge adds only the rev
 D47 defers the memo and validation capsule until after delivery. Held source remains unmerged. D45 and D46 keep the next pair on existing 37eb and Agent 079 with reviewed App fixes.
 
 P2/P3: D45 pair is terminal. Both reached readiness on App c0fe / Agent 079 / Runtime 37eb. P2 has three failures and five not run; P3 failed inside Gate5. App and Proof own diagnosis and verdict; no repeat here.
-Farm: full-farm row appended at 04:59 with outside bytes unchanged. Worker tf-agent-full-farm-0503 was dispatched at 05:04 and remains active in the 05:27 heartbeat. Actual test ID and result are pending; setup is complete.
+Farm: supported setup is complete. Worker tf-agent-full-farm-0503 runs test agent-full-farm-1024050351-26511, about 70% complete at 05:29. The actual Agent subject is 9cd3dbe8, tree 57f0231d, rather than the earlier selected 8657. This is one non-gate checkpoint; final result and custody remain pending.
 Blockers: Freeze — D39 client regeneration and Agent/App tuple adoption are held for the freeze; current consumer pins stay intact.
 
 Blockers: Freeze — Reviewed U1c 40427e8b5 against live 795379a67 stays held until freeze.
@@ -80,4 +80,4 @@ D34: Main has 8.6 GiB free at the latest check. The orchestrator orders no furth
 
 Later: D46 closes U2c; no new relay or provider custody backend. Its upstream commit arrives at the freeze. Agent owns support-probe timeout investigation 0522; no Runtime author is requested. Disk and D47 memo work stay paused. Agent failover capacity was offered in peer 0525; no duplicate author is started without an exact assignment.
 
-Next ready: None. Farm worker 0503 is active; consume its result and any precise Agent failover assignment. All ready Runtime work is merged and qualified. Upstream and generation wait for freeze; memo waits for delivery.
+Next ready: None. Farm worker 0503 is active in the latest published heartbeat; consume its result and any precise Agent failover assignment. All ready Runtime work is merged and qualified. Upstream and generation wait for freeze; memo waits for delivery.
