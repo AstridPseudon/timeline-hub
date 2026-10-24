@@ -1,7 +1,7 @@
 {
   "schema": "timeline.d32.current-node-reconciliation.delta-mapping.v1",
   "base_artifact": "evidence/agent-D32-current-node-reconciliation-H30-corrected.json",
-  "base_artifact_sha256": "b7af85439f36b31c1603b162d331d9daea77dd2a2e44148f0ed369462fd59e8c",
+  "base_artifact_sha256": "22ee4d6df217eef1cef60f7e9c646b6f5fe13a45d31163afb2ffe46126facae0",
   "base_artifact_sha256_meaning": "SHA-256 of the current corrected census file named by base_artifact; package linkage, not a historical source or proof hash.",
   "actual_home": {
     "head": "9cd3dbe865a941c052bda04ae0d61306d18f8f26",
@@ -1340,9 +1340,9 @@
       "original_source_ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
       "original_source_file_sha256": "",
       "current_source_file_sha256": "",
-      "scenario_mapping": "Original restart/crash/truncated-temp/discard storage predicates and same-clip restart refusal retained; no merge-positive credit. Retained body AST SHA-256 prefix 6b1885acf3b9fea9; full identity/source/authorization findings: sdk9_mapping and 0008 retained module result (log lines 17520-17697); 0037 retained original/restored-source 9-pass/1-fail result; independent 0603 and corrected 0619.",
-      "proof_ref": "sdk9_persistence_retained",
-      "credit": "confirmed_closed",
+      "scenario_mapping": "Original restart/crash/truncated-temp/discard storage predicates and same-clip restart refusal retained; no merge-positive credit. Retained body AST SHA-256 prefix 6b1885acf3b9fea9; full identity/source/authorization findings: sdk9_mapping and 0008 retained module result (log lines 17520-17697); 0037 retained original/restored-source 9-pass/1-fail result; independent 0603 and corrected 0619. CURRENT CHALLENGE0649: this mapping is retained as historical inventory only, superseded for current restart coverage. Independent0645 rejects older38af executed-source custody; current exact restart fails at draft (_FakeTimelines.history absent), within actual2FAIL1.92s. No current closure credit; Runtime fixture migration is unqualified.",
+      "proof_ref": "sdk9_persistence_retained;persistence_current_challenge0649",
+      "credit": "historical_challenged",
       "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     },
     {
@@ -2275,6 +2275,44 @@
       "proof_ref": "schema_census_fix_0605;schema_census_review_0622;schema_integrated_0634",
       "credit": "confirmed_closed",
       "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/timeline/test_authoring_media.py::test_document_publish_forwards_new_stale_head_to_runtime",
+      "current_node_id": "tests/timeline/test_authoring_media.py::test_document_publish_forwards_new_stale_head_to_runtime",
+      "phase": "call",
+      "lane": "Runtime",
+      "original_function": "test_document_publish_forwards_new_stale_head_to_runtime",
+      "current_function": "test_document_publish_forwards_new_stale_head_to_runtime",
+      "function_renamed": "no",
+      "current_function_line": "229",
+      "original_body_ast_sha256": "d4240a22f3b5976127f6e1e9a39f24f8bccd35197bea0b6051c6f679011d2fe7",
+      "current_body_ast_sha256": "ff9cb3644394c1b9d730251ec4014939bd48c6b90cb01a8ddc488df3cbb37389",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "755e4c572550cecd672e62065997fdd2de72c09e1dfd0e8929cd50f4b0159303",
+      "current_source_file_sha256": "0c23fc68bfcd32342cd4331a69a725d8d2ffe4d48527dfc795f402f222fbc487",
+      "scenario_mapping": "Original c36 Session.commit_many/fetch_bundle collaborators migrated to public timelines open/commit mocks. Six original file/sidecar/import assertions remain AST-identical. Original swap-media and exact base-pair checks move from nested collaborators to observed request/open_bundle assertions. RuntimeError from old Session becomes ValueError surfaced from WorkspaceClientError409; same stale-head refusal/no-write intent. Original9 assertions -> current22; not byte/AST identity to c36. One source-mode mocked unit only: the production timeline_document.main publish branch uses TimelineSession.open/commit_many and the public timelines.commit boundary. Runtime was supplied on PYTHONPATH but no Runtime module/API was exercised. No HTTP, installed, authenticated actor, full reply, history/undo or full-suite qualification.",
+      "proof_ref": "stale_head_0638_review0645",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    {
+      "exact_original_node_id": "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_preserves_complete_closure_and_followups",
+      "current_node_id": "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_preserves_complete_closure_and_followups",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_ordinary_publish_preserves_complete_closure_and_followups",
+      "current_function": "test_ordinary_publish_preserves_complete_closure_and_followups",
+      "function_renamed": "no",
+      "current_function_line": "22",
+      "original_body_ast_sha256": "ab9660943a2af977f069eb3ad3df1572c2cf8195d1f04d0eaecd8d272d55c664",
+      "current_body_ast_sha256": "ab9660943a2af977f069eb3ad3df1572c2cf8195d1f04d0eaecd8d272d55c664",
+      "original_source_ref": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "original_source_file_sha256": "df643aef3c7e125de45b2b759de3402fc38f82e1ba4439a16e1612ade10a938c",
+      "current_source_file_sha256": "df643aef3c7e125de45b2b759de3402fc38f82e1ba4439a16e1612ade10a938c",
+      "scenario_mapping": "Original full25691/2007/0557/HOME file, function/body AST and all22 assertion AST hashes unchanged. Canonical complete closure, media/opaque/null-vs-missing, narration/transcript followups, receipt, new head, clean journal and saved reload retained. One original source-mode outcome on Agent1f15/Runtime1d9 only; all22 original predicates retained. Real Runtime/provider via the in-process fixture, no renderer import. No HTTP/socket, installed-profile, full-suite/browser/provisioning or complete reply-variant qualification. Seven0557 publication passes already in236 remain unchanged and earn no second credit.",
+      "proof_ref": "normal_closure_home0640_review0645",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
     }
   ],
   "non_credit_dispositions": [
@@ -2921,5 +2959,190 @@
       "verdict": "CORE PASS and scoped metadata/cumulative correction PASS for02bd3f1f; no broad full-suite package PASS."
     },
     "historical_metadata0636_scope": "metadata0636 and its original pending-review wording are preserved verbatim as historical236/31 correction metadata; independent0644 resolves that scoped base review. This next24 package still requires its own independent review."
+  },
+  "current_challenge_mapping": {
+    "status": "CANDIDATE; independent package PASS pending",
+    "base_commit": "5419e0fcae202be2d8b1f517462244f5a9234913",
+    "base_census_sha256": "b7af85439f36b31c1603b162d331d9daea77dd2a2e44148f0ed369462fd59e8c",
+    "historical_base_counts": {
+      "total": 267,
+      "closed": 260,
+      "open": 7,
+      "mappings": 118
+    },
+    "official_parent_commit": "02bd3f1f238501ae42061d7802dd69fd34dd1821",
+    "official_parent_counts": {
+      "closed": 236,
+      "open": 31,
+      "mappings": 94
+    },
+    "delta": {
+      "reopened": [
+        "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history"
+      ],
+      "newly_closed": [
+        "tests/timeline/test_authoring_media.py::test_document_publish_forwards_new_stale_head_to_runtime",
+        "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_preserves_complete_closure_and_followups"
+      ],
+      "net_closed": 1
+    },
+    "counts": {
+      "total": 267,
+      "closed": 261,
+      "open": 6
+    },
+    "active_owner_counts": {
+      "Agent": 6
+    },
+    "active_family_counts": {
+      "Agent SDK / timeline unconfirmed": 4,
+      "CLI FakeCheckout fixture": 0,
+      "D09 installed-profile setup": 0,
+      "Execution/rendering/pack remainder": 1,
+      "Isolated Agent child import fence": 0,
+      "Occurrence-media inverse fixture": 0,
+      "Other task-specific unconfirmed": 0,
+      "Rendering missing result file": 0,
+      "Retired CLI/native route or stale caller": 0,
+      "Runtime child import / OPS": 1
+    },
+    "remaining_exact_original_node_ids": [
+      "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_unsupported_timelines_with_clip_reasons",
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[\"second\"]",
+      "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head",
+      "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+      "tests/sdk/test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param",
+      "tests/test_generic_host.py::test_structure_pack_members_survive_harvest_cleanup_and_reopen"
+    ],
+    "mapping_inventory": {
+      "total": 120,
+      "current_confirmed_closed": 119,
+      "historical_challenged": 1,
+      "note": "Historical restart mapping is retained inventory, not current closure coverage; mapping count is not the261-node closed total."
+    },
+    "proof_inventory": {
+      "total": 48,
+      "unchanged_prior_records": 45,
+      "new_scoped_pass_records": 2,
+      "new_current_failure_records": 1,
+      "note": "Composite historical SDK9 proof remains unchanged, with restart current applicability superseded below. No proof record is a whole-suite PASS.",
+      "distinct_proof_refs_on_current_closed_nodes": 45,
+      "distinct_proof_refs_note": "45 defined proof records are referenced by current261 closed nodes. This is a reference count, not45 executions or blanket current wire/whole-HEAD qualification; composite proofs retain source scope."
+    },
+    "current_proof_applicability": {
+      "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history": {
+        "current_credit": false,
+        "historical_proof_refs": [
+          "sdk9_persistence_retained",
+          "sdk9_source_map_0554",
+          "sdk9_independent_0603",
+          "sdk9_corrected_0619"
+        ],
+        "current_proof_ref": "persistence_current_challenge0649",
+        "historical_mapping_credit": "superseded historical scope, challenged"
+      },
+      "tests/sdk/test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param": {
+        "current_credit": false,
+        "current_proof_ref": "persistence_current_challenge0649",
+        "record_unchanged": true
+      },
+      "tests/timeline/test_authoring_media.py::test_document_publish_forwards_new_stale_head_to_runtime": {
+        "current_credit": true,
+        "proof_ref": "stale_head_0638_review0645",
+        "scope": "One source-mode mocked unit only: the production timeline_document.main publish branch uses TimelineSession.open/commit_many and the public timelines.commit boundary. Runtime was supplied on PYTHONPATH but no Runtime module/API was exercised. No HTTP, installed, authenticated actor, full reply, history/undo or full-suite qualification."
+      },
+      "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_preserves_complete_closure_and_followups": {
+        "current_credit": true,
+        "proof_ref": "normal_closure_home0640_review0645",
+        "scope": "One original source-mode outcome on Agent1f15/Runtime1d9 only; all22 original predicates retained. Real Runtime/provider via the in-process fixture, no renderer import. No HTTP/socket, installed-profile, full-suite/browser/provisioning or complete reply-variant qualification. Seven0557 publication passes already in236 remain unchanged and earn no second credit.",
+        "historical_h32_no_renderer_failure": "Historical0557 failure remains recorded; superseded only for this selector by HOME0640/independent0645."
+      }
+    },
+    "retained_sources": {
+      "stale_author0638": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-SDK-three-originals-0638.md",
+        "sha256": "1d91d569c0f135f4544565f9571d866b3453f4db7863b07686dd684675f409bc"
+      },
+      "sdk_independent0645": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-SDK-result-review-0645.md",
+        "sha256": "384b62ceb19c06efc3c0f0ad09b51abb413f1bf915e6891327324bc2188548f0"
+      },
+      "closure_author0640": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-normal-publish-home-0640.md",
+        "sha256": "f85869f660d5f2d49df78123c94ff815d723452d1def5bc97e593c72f4493093"
+      },
+      "closure_independent0645": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-normal-publish-result-review-0645.md",
+        "sha256": "dc699a0473674a256a8f124022c5aee28f9daae31a3b71934cce995c5ce65ec6"
+      },
+      "current_failure0649": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-SDK-two-first-return-0649.md",
+        "sha256": "97b69b8fbe214c95df4d06ed40a83fb30c10f1455eafb27bf578bfaa2c2669e4"
+      },
+      "fixture_peer0654": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-runtime-to-agent-orchestrator-20261024T0654-SDK-fixture-seam.md",
+        "sha256": "b8413a452279fc353f48518d7683a4e431d544feb7284175d4fc090dbf59bb33"
+      }
+    },
+    "source_identity": {
+      "tests/timeline/test_authoring_media.py::test_document_publish_forwards_new_stale_head_to_runtime": "agent-D32-current-node-reconciliation-H30-corrected.json#/proofs/stale_head_0638_review0645/source_identity",
+      "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_preserves_complete_closure_and_followups": "agent-D32-current-node-reconciliation-H30-corrected.json#/proofs/normal_closure_home0640_review0645/source_identity",
+      "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history": "agent-D32-current-node-reconciliation-H30-corrected.json#/proofs/persistence_current_challenge0649/source_identity/tests~1sdk~1test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+      "tests/sdk/test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param": "agent-D32-current-node-reconciliation-H30-corrected.json#/proofs/persistence_current_challenge0649/source_identity/tests~1sdk~1test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param"
+    },
+    "historical_restart_mapping": {
+      "exact_original_node_id": "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+      "current_node_id": "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+      "phase": "call",
+      "lane": "Agent",
+      "original_function": "test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+      "current_function": "test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+      "function_renamed": "no",
+      "current_function_line": "",
+      "original_body_ast_sha256": "",
+      "current_body_ast_sha256": "",
+      "original_source_ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+      "original_source_file_sha256": "",
+      "current_source_file_sha256": "",
+      "scenario_mapping": "Original restart/crash/truncated-temp/discard storage predicates and same-clip restart refusal retained; no merge-positive credit. Retained body AST SHA-256 prefix 6b1885acf3b9fea9; full identity/source/authorization findings: sdk9_mapping and 0008 retained module result (log lines 17520-17697); 0037 retained original/restored-source 9-pass/1-fail result; independent 0603 and corrected 0619.",
+      "proof_ref": "sdk9_persistence_retained",
+      "credit": "confirmed_closed",
+      "contract_inventory_ref": "agent-D32-current-node-reconciliation-H30-limits.md#contractinventory"
+    },
+    "raw_custody": {
+      "reported_junit_paths": {
+        "stale": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-SDK-three-originals-0638/sdk-three-originals-publication.xml",
+        "closure": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-normal-publish-home-0640/evidence/normal-publish-home.xml",
+        "persistence_two": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-SDK-two-first-return-0649/evidence/sdk-persistence-two.xml"
+      },
+      "present_locally": {
+        "stale": false,
+        "closure": false,
+        "persistence_two": false
+      },
+      "limit": "Primary author reports and independent verdicts read and SHA-256 hashed locally. Reported raw JUnit/log directories are absent locally; reported paths are references only, with no fabricated raw digest or fresh raw-result validation. No original body was rerun."
+    },
+    "scope_policy": "Original source-mode scope only; no relabeling of retained source pins as current integration execution.",
+    "preservation": {
+      "unchanged_other_node_records": 264,
+      "unchanged_prior_proofs": 45,
+      "unchanged_prior_field_coverage": 45,
+      "unchanged_prior_mapping_rows": 117,
+      "challenged_prior_mapping_rows": 1,
+      "new_mapping_rows": 2,
+      "prior24_roots_helpers_schema": "all records/proofs/mappings unchanged",
+      "phases": {
+        "call": 262,
+        "setup": 5
+      },
+      "CONTRACTINVENTORY": "unchanged complete metadata0636 inventory; production caller uses it remains required"
+    },
+    "historical_metadata_policy": "All earlier proof/coverage/mapping inventories retain original source/result and observed-field scope. Current applicability overrides are explicit here; historical OPEN/PASS prose is not a current claim.",
+    "retained_limits": [
+      "D23 wordsecond unchanged/open/deferred, all5assertions retained",
+      "source-only helper/root limits; root initial pre/post import snapshot gap",
+      "full25691 FAIL; frozen Farm26511 source/head mismatch and96 possible closed-node failures unresolved",
+      "No farm retrospective credit, full-suite green, HTTP/installed/full-v2 acceptance, product/static/behavior test run or product edit"
+    ]
   }
 }
