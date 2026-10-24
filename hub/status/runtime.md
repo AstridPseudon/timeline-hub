@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T16:34:39Z | dispatcher heartbeat 11s | live 2 (sol 0, luna 2, other 0) | busy30 15 | status age 2m -->
+<!-- main | 2026-10-24T16:37:41Z | dispatcher heartbeat 12s | live 1 (sol 1, luna 0, other 0) | busy30 16 | status age 2m -->
 # runtime board, 2026-10-24T16:29:54Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -78,7 +78,7 @@
 | F-D52-occurrence-delete | Qualify 19 live delete cases | Luna | Exact integrated source proof | merged | Author1139; independent1141 PASS | Exact Agent7e258 and Runtimebecfe:19PASS6.43s; bodies and params unchanged. [Review](../../design/runtime-D52-occurrence-review-1141.md) | Agent7e258 unchanged |
 | F-D52-core-five | Map five named actual home outcomes | Luna | Authentic XML and map verified | merged | Receipt 1418 PASS | All five named cases PASS on actual47b/becfe. Current four fork failures are distinct. [Receipt](../../design/rt-F-D52-core-five-receipt-1418.md) | Agent 47b |
 | U1-D69-test-audit | Preserve upstream test predicates | Luna | Seven restorations before cut | merged | rt-U1-D69-test-audit-1603 | Missing16:9 mapped,7 restore. Changed129:75 clear,54 cited. Two skip markers cited;12 dynamic scopes explicit. [Audit](../../design/rt-U1-D69-test-audit-1603.md) | Source facts only |
-| R-P4-history-cost | Reduce historical schema validation cost | Luna | Finite profile then strict review | doing | rt-P4-history-cost-1625 | Actual P4 ten-note timeout in schema ref validation. Profile finite captures; preserve every check and45s budget. No history memo. | Pending |
+| R-P4-history-cost | Reduce historical schema validation cost | HARD Sol after Luna | Guard-preserving measured design | doing | Luna1625; Sol1635 | Luna profile found no safe speedup. Sol continues caller cost, every validation and45s retained. D47 result/history memo held. | New3controls only |
 | U1-D69-marker-scope | Resolve two mixed-route marker citations | Luna | Finite live catalog mapping | doing | rt-U1-D69-marker-scope-1632 | Independent1628 found two marker citation components wrong. Check live catalog assertions and exact replacements before disposition. | Source facts pending |
 | U1-D69-restore-guard | Restore two skip guard originals | Luna | Joined policy review | review | Restore1613; policy1616; join1621 | Two exact upstream bodies restored. Policy fix passes24; joined seven-test scope and independent protected review next. | ee407797d |
 | U1-D69-skip-policy | Restore upstream skip enforcement | Luna | Joined protected review | review | rt-U1-D69-checker-1629 | Policy1616 passes24 and Pyright0. Preserve no_ci, false-condition refusal and stricter current xfail/node/hash guards. | Policy source ready |
@@ -154,7 +154,7 @@ Admission: D56 stops Farm and schema-access work. Exact403 and automatic access 
 
 Disk: about8.6GB, above main8GB heavy floor. Sweep3 freed0; compact packed0/compressed0. Finished worktrees automatically recycle; no old refused target retried.
 
-live 2 / cap 4; ready-undispatched 0. Copied dispatcher header16:28:40Z reports0Sol/2Luna. Checker1629 nowqueued; P4cost1625 and wholepath1628 active. No ready local row waiting.
+live 2 / cap 4; ready-undispatched 0. Copied dispatcher header16:31:41Z reports0Sol/2Luna before1633/1635 successors. Sol1635 justified by Luna failed safe optimization and core auth design; three rows owned.
 
 Pass 2026-10-24T15:34:02Z: PLAN/common/header D62–D67 and peer boards consumed. SecurityPASS412 -> normal merge8b32 completed and exact producer handed to Agent/App immediately. Separate D62 proof removed perD66. D67 docs installer1533 active; D65 missing command assigned App. No final proof or delivery claim.
 
@@ -201,3 +201,5 @@ Pass 2026-10-24T16:28Z: final joined candidate independent1621 PASS consumed, ke
 Pass 2026-10-24T16:29:54Z: join1621 terminal28PASS1FAIL reveals existing checker dropped upstream no_ci predicate. Corrector1629 dispatched on committedjoined4e1 while independent wholepath1628 runs; protected7 original bodies stay exact. Runtime policy regression1 explicitly open until normalmergeproof. Finalcandidate1621 independentPASS held at cut.
 
 Pass 2026-10-24T16:32Z: independent wholepath1628 FAIL finds three checker bodies missing no_ci; first1629 owns one then remaining two restore upstream unchanged. Two mixed-route marker citation issues get unique readonly1632 finite scope; no skipped live catalog credit. Other54 decision citations verified. P4 profile1625 active.
+
+Pass 2026-10-24T16:35Z: checker1629 actual29PASS; exact remaining two checker restorations1633 active before independent cumulative review. LunaP4profile1625 no justified productfix; HARD Sol1635 continues bounded caller optimization after failedLuna, all checks/timeouts retained and D47 memo held. Unique marker scope1632 active.
