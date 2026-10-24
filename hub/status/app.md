@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T02:30:26Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 19 | status age 2m -->
-# app board, 2026-10-24T02:28Z
+<!-- app | 2026-10-24T02:33:14Z | dispatcher heartbeat 13s | live 3 (sol 0, luna 3, other 0) | busy30 20 | status age 1m -->
+# app board, 2026-10-24T02:31Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -23,7 +23,7 @@
 | P3 | Original Gate-5 journey | App service; Proof verdict | Caller and new backend receipts | doing | Caller Sol 0222 | Prior 14249: exit 2, 194 seconds; Gate-5 NOT RUN. Prepare changed run alongside P2 with Runtime 45c3; no new request yet. | App 804134d747 |
 | A2-parent-media-closure | Preserve untouched child closure | Sol; Luna review | Resolved | merged | app-A2-parent-media-integrated-0035 | [299 tests, types, lint and external producer passed.](/home/user/timeline-hub/hub/design/app-A2-parent-media-integrated-0035.md) | 1b0428db7d |
 | A2-image-created | Declare genuine image creations | Sol; Luna review | Review 0133 PASS | merged | app-A2-image-created-sol-0126 | Independent 261 tests and producer 28, three types and lint passed. Clip and new authored registry alias claims match provider. Joined proof 0150 passed 448 tests, three types and lint. | b3a84dea71 / 1c5cc47bf6 |
-| A4-image-live | New authenticated image witness | App producer; Agent fixture | Output published | doing | App producer 0206; Agent fixture 0154 | Exact 1492-byte output af1a9a84 published at 02:08 from new input c0a3b657. Agent owns same-fixture Runtime acceptance. | Fixed 1c5cc47bf6 |
+| A4-image-live | New authenticated image witness | App producer; Agent fixture | Agent boundary classification | doing | Agent witness 0154 | Request reached Runtime before deadline and has an accepted response. A later command-equality assertion failed; reopen and inverse remain unproven. | Fixed 1c5cc47bf6 |
 | A2-video-caller | Normalized video duplication | Sol; Luna review | Resolved | merged | app-A2-video-integrated-2350 | 217 integrated tests and three typechecks passed. Agent provider is merged; no old raw-positive parity claim. | a714a4cc11 |
 | U3b-draft | Final upstream composition | Sol; Luna review | P2/P3 and final freeze | gated:freeze | app-U3b-current-join-2053 | Reviewed branch stays isolated. Refresh live upstream refs at freeze; do not merge during pinned proof. | Branch only |
 | F-App-full | Full suite before retirement | Test service; Luna review | Resolved for historical head | merged | app-F-D19-current-full-1230 | 18,819 tests passed on exact 12ef. A final qualification follows actual retirement and freeze. | 12ef320545 |
@@ -34,7 +34,7 @@
 
 | A4-media-wrappers | Retire unused media executor wrappers | Luna | Reviewed packet PASS | merged | app-A4-media-wrappers-current-packet-0205 | Four exact reviewed blobs; 108 tests, three typechecks and governance passed. | 7987a0b0dc / 9e5d1bb791 |
 
-| A4-owner-recovery-tests | Move explicit owner recovery cases | Luna | First return 0210 complete | review | app-A4-owner-current-packet-0226 | Independent review 0222 passed 105 tests, three types and lint. Current own-only packet 0226 is being qualified. | d7d39df574 held for packet |
+| A4-owner-recovery-tests | Move explicit owner recovery cases | Luna | Independent review and current packet PASS | merged | app-A4-owner-current-packet-0226 | Independent review and current packet each passed 105 tests, three typechecks and lint. Genuine outbox lock behavior retained. | 69d10d65ff / 78d05b8a36 |
 
 | A4-public-executor | Remove executor value exports | Luna | Review 0208 PASS | merged | app-A4-exports-lifecycle-current-0213 | 108 tests, three typechecks and governance passed. Exact reviewed exports copied; test-only runner remains. | b7261d56fd / 5ad7907e86 |
 | readiness-client-confirmation | Compare history cardinality and wait | Sol; Luna review | Existing 0121 and 0128 PASS | merged | App Sol 0121; Luna 0128 | Both histories have two entries; full child closure and seed command count differ. Browser request count unknown. Reply 0200 published. | Report only |
@@ -45,13 +45,15 @@ Safety: Historical cleanup, graph and publication denials stand. Managers write 
 Delivery legacy subset: Keep transcriptAssociateCapture.ts and its unchanged 397-line, 40-assertion test, plus required helpers, under D31.
 Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-handoff-0029.md), [image review](/home/user/timeline-hub/hub/design/app-A2-image-created-review-0133.md), [A4 cut map](/home/user/timeline-hub/hub/design/app-A4-current-cut-census-0042.md).
 
-| A2-recovery-basis | Preserve seven dependent recovery guards | Sol; Luna review | Original seven cases fail current path | doing | app-A2-recovery-basis-sol-0224 | Test migration found dependent stored basis unchecked after accepted prefix. Seven original expectations retained; bounded source repair active. | Current base 5ad7907e86 |
-| A4-remaining-protocol | Map remaining legacy protocol cases | Luna | Current exports and lifecycle merged | doing | app-A4-remaining-protocol-map-0226 | Read-only mapping to current save APIs; excludes owned recovery tests and retained dormant subsets. | Current 5ad7907e86 |
+| A2-recovery-basis | Preserve seven dependent recovery guards | Sol; Luna review | Author 0224 PASS 100 tests | review | app-A2-recovery-basis-review-0230 | Seven original failures now pass; valid refreshed-mount replay retained. Independent source and no-weakening review active. | 4182bea449 branch |
+| A4-remaining-protocol | Map remaining legacy protocol cases | Luna | Read-only map complete | merged | app-A4-remaining-protocol-map-0226 | Remaining cases mapped into bounded current-save packets. Six chain and six label declarations are now assigned. | Report only |
+| A4-protocol-chain | Move six local chain declarations | Luna | Map 0226 | doing | app-A4-protocol-chain-0231 | Preserve exact guards, request identity and refusal behavior through current local save; no production changes. | Branch only |
+| A4-track-label | Move six label protocol declarations | Luna | Map 0226 | doing | app-A4-track-label-protocol-0231 | Use actual production document patch handoff; retain all original positive and refusal assertions. | Branch only |
 | readiness-backend-bench | Exact Runtime 45c3 child and graph receipts | Dispatcher; App caller | Canonical Agent client adoption | blocked:agent | Agent peer 0229 | Remotion reuse authenticated. Old Agent child refused client mismatch; a new qualified Agent pin needs a fresh request. | Failed child 0222 |
 
 Blockers: U3b awaits P2/P3 and the final freeze.
 Blockers: Agent owns canonical client export adoption for Runtime 45c3. New Agent pin and exact child receipt are needed; old refused child stays stopped.
 
 Next ready: Merge the qualified owner packet, finish seven basis guards, map remaining protocol cases and consume Agent client adoption handback.
-Integration: 5ad7907e8676553133f9a77cc6e9a541f1364c42. Exports and lifecycle joined proof passed 108 plus 105 tests, three types, lint and governance. Historical joined proof 0150 remains bound to 1c5cc47bf6.
+Integration: 78d05b8a36d09c4680d66497e37fa1bb48dbab2e. Exports and lifecycle joined proof passed 108 plus 105 tests, three types, lint and governance. Historical joined proof 0150 remains bound to 1c5cc47bf6.
 Disk: Sweep removed nine old temporary directories and freed 735 MiB. Five finished worker trees were already recycled, freeing 0 GB. Active, pinned, freeze and refused paths retained; prior compact refusal stands.
