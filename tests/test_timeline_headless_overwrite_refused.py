@@ -332,9 +332,9 @@ def test_cas_correct_republish_after_reading_the_head_is_accepted(service):
     assert entry["receipt"] == again["receipt"]
     assert entry["records"]["commands"][0]["command"] == again["data"]["commands"][0]
     assert entry["records"]["commands"][0]["created"] == [
+        {"kind": "track", "owner": "parent", "ref": "parent/track:picture"},
         {"kind": "asset", "owner": "parent", "ref": "parent/asset:a"},
         {"kind": "clip", "owner": "parent", "ref": "parent/clip:edited"},
-        {"kind": "track", "owner": "parent", "ref": "parent/track:picture"},
     ]
     event = runtime.store.conn.execute(
         "SELECT kind, payload_json FROM timeline_events WHERE id=?",
@@ -361,7 +361,7 @@ def test_cas_correct_republish_after_reading_the_head_is_accepted(service):
         (again["data"]["accepted_revision_id"],),
     ).fetchone()["content_digest"] == again["data"]["canonical_document"]["parent_revision"]["content_digest"]
     before = _dump(runtime)
-    assert _commit(runtime, project, "second", base=head, replacement=expected) == again
+    assert _commit(runtime, project, "second", base=head, replacement=expected, declare_track=True) == again
     assert _dump(runtime) == before
     assert runtime.__dict__["test_provider"].calls == 1
     runtime.close()
@@ -377,7 +377,7 @@ def test_cas_correct_republish_after_reading_the_head_is_accepted(service):
             project, "main", reloaded_head["head_revision_id"]
         ) == closure
         before = _dump(reloaded)
-        assert _commit(reloaded, project, "second", base=head, replacement=expected) == again
+        assert _commit(reloaded, project, "second", base=head, replacement=expected, declare_track=True) == again
         assert _dump(reloaded) == before
         assert provider.calls == 0
     finally:
