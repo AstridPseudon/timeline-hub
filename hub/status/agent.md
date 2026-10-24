@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T16:16:39Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 19 | status age 1m -->
-# agent board, 2026-10-24T16:14:48Z
+<!-- agent | 2026-10-24T16:19:33Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 19 | status age 0m -->
+# agent board, 2026-10-24T16:19:39Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -101,30 +101,30 @@
 
 | F D63 different causes | Resolve four retained cause exceptions | Luna | Existing evidence only | merged | agt-F-D63-different-causes-1528 | Allfour non-core cause-open; no proven current defect or regression. Existing bounded cause scopes preserved; no body repeated. | Evidence only |
 
-| F D66 reverse diff | Restore missing upstream cases | Luna | D69 exact body preservation | doing | Source1551; review1557/1558; return1605 | Home9502 restores20 exact bodies; D69 workers1605 restore27 previously mapped bodies unchanged. No current live case dropped. | Home9502 /924 |
+| F D66 reverse diff | Restore missing upstream cases | Luna | Original47 behavior proof | doing | Source1605; review1610; proof prep1611 | All47 unchanged-body restorations now home3d67; behavior remains unrun. Current protected cases retained. | Home3d67461a4b /924 |
 
 | U4a D62 preparation | Adopt normal generated ABI field | Luna | Runtime security then home merge | merged | Author1529; review1533 PASS; rebind1536 | Actual5777 binds qualified Runtime8b32,15 mappings exact. Independent37 PASS/39 default-lane deselections; rebind31 PASS. Six-original home proof1540 active. | Home57779274a0 |
 
 | G4 empty timeline | Configure real daemon provider | Luna | Actual home proof complete | merged | Setup1551; home1556 PASS1 | Actual fba2 original PASS1 in4.45s, durableXML. Source and original AST exact; mypy PASS and unchanged RuffF841 retained. | Homefba2b8fa95 |
 
-| F D66 source reviews | Preserve original missing test bodies | Luna | Exact source reviews complete | merged | Protected1557 PASS; CLI1558 PASS | Actual9502 has20 restored bodies,27 mapped. Current live ASTs unchanged; no body result. D69 now requires27 unchanged-body restores. | Home9502c321b6 |
+| F D66 source reviews | Preserve original missing test bodies | Luna | Source exact, metadata return active | merged | Review1610 source PASS; metadata1617 | All47 bodies/args/decorators/parameters exact924 and all current live ASTs retained. Three manifest blob typos need successor metadata. | Home3d67461a4b |
 
 | F D69 weakening audit | Audit178 changed upstream tests | Luna | Two upstream assertions owed | doing | Audit1603; small restore ready | One pass:167 cleared9 cited D09/D10,2 owed restore in CLI edit-flags. Source unchanged; exact hunks retained. | Current9502 /924 |
 
-| P4 CLI default | Preserve ordinary parser namespace | Luna | Original29577 causal failure | doing | agt-P4-cli-native-default-1613 | Supported apply must expose native False while retired native flag stays rejected; core review follows. | Source candidate pending |
-| P4 ten-note cause | Classify schema-validation timeout | Luna | Retained original29577 | doing | agt-P4-result-whole-path-1613 | Independent exact result and whole path; no body rerun, budget increase or source guess. | Home9502 /8b32 |
-| D69 owed assertions | Restore two terminal-line predicates | Luna | Worker slot | ready | Next free Luna slot | Exact original assertions retained as unapplied hunks in audit1603. No conflicting author on edit-flags file. | Pending |
+| P4 CLI default | Preserve ordinary parser namespace | Luna | Independent core review | review | Author1613 PASS36; review1617 | Default native False restores ordinary namespace; retired flag still rejected. Ruff/mypy/diff PASS; original P4 bytes unchanged. | Donor1613 |
+| P4 ten-note cause | Qualify historical validation hot path | Luna / Runtime | Runtime source owner | blocked:runtime | Whole path1613; peer1619 | First redo reaches repeated canonical-document validation in Runtime historical capture. Budget45 retained; exact finer timing not yet qualified. | Home9502 /8b32 |
+| D69 owed assertions | Restore two terminal-line predicates | Luna | Exact upstream hunks | doing | agt-F-D69-two-assertions-1617 | Preserve current checks and add original terminal-line assertions. Same worker corrects three manifest metadata typos in successor receipt. | Candidate pending |
 
-Integration: Agent9502c321b6 includes true U2-final924, exact reviewed consumer9460 and normal generated Runtime8b32 adoption. Runtime source/security1511 PASS and actual adoption/rebind already complete; no stale producer-review or vendor wait. Includes trusted astrid profile test setup, actual original PASS, plus20 independently reviewed upstream test restorations. Restored behavior remains unrun. Exact source and receipt details remain in prior task rows.
+Integration: Agent3d67461a4b includes true U2-final924, exact reviewed consumer9460 and normal generated Runtime8b32 adoption. Runtime source/security1511 PASS and actual adoption/rebind already complete; no stale producer-review or vendor wait. Includes trusted astrid profile test setup, actual original PASS, plus all47 source-reviewed unchanged upstream test restorations. Restored behavior remains unrun; three receipt-only blob typos have a successor metadata worker. Exact source and receipt details remain in prior task rows.
 core open: 3 tracked at actual9502/8b32: Runtime inverse original plus P4 CLI parser and P4 ten-note timeout. Original29577 ran all3 with2FAIL1PASS; no final gate claim. Prior six has5PASS1FAIL and54guardsPASS. Empty timeline actualfba2 PASS1; D13ENV and D23 unchanged.
 regressions: 0 currently open at qualified scope; order181 repaired and actual d27b PASS16. Nine other upstream-PASS contrasts retain current PASS and await final cut confirmation. Exact276 overlays167 PASS107 open2 deferred; final core run remains owed.
 D60 baseline: Upstream924 full1621 terminal FAIL12396 passed91 failed14 errors16 skips566 subtests. Corrected exact276 has199 NEW-OURS and77 counterparts. External Runtimebecfe launch latere68 disclosed; no isolated all-run Runtime claim.
-D66 reverse: Corrected362 candidates=137 ledger-deleted178 present-changed47 remaining. Home9502 restores20 unchanged bodies; D69 requires all47 unchanged, so sdk15/other12 workers1605 restore the27 initially mapped. Original live tests remain unchanged; product behavior unqualified until current proof.
+D66 reverse: 137 ledger-deleted178 present-changed47 restored0renamed. All47 original bodies exact924 and current live cases unchanged at home3d67. Dedicated one-service original47 proof prepared1611. D69 audit178 is167cleared9cited2owed; exact two assertions author1617 active.
 Gates: P1/P2/P3 App; P4 Agent; P5 and Composition main. P4 preflight2787 PASS then original29577 FAIL2/PASS1 with actual bodies. Native parser source1613 and independent ten-note wholepath1613 active. Original23496 remains zero-body only. Final-core and restored47 proof await meaningful source readiness.
 Admission: D56 stops Farm and schema venue work. All prior403/automatic source refusal routes remain stopped. D67 D13 is ENV known gap with no owner action; no child, source substitute or carrier fabrication.
 Disk: About8.6GiB free; cap4. Sweep3 removed0 and compact packed0/compressed0; no eligible finished clean tree. Harness recycles clean finishes. Prior refused cleanup targets remain stopped.
 Blockers: Runtime — remaining inverse original needs timeline-root sequential-input validation. Unique HARD Sol rt-R-inverse-sequential-sol-1557 owns auth correction; Agent wholepath1546 and authentic homeXML/log published. No competing Agent author.
-Blockers: Agent — P4 original CLI parse fails missing native attribute and ten-note hits45s schema-validation timeout. Distinct Luna parser1613 and independent wholepath1613 own exact seams; no budgets or assertions changed.
-Next ready: Finish protected27-body review1610 then merge. Source-only restored47 proof preparation1611 active. Dispatch owed CLI assertion restore in next free slot. Consume P4 source results and Runtime auth1557, then meaningful original proofs with durable XML.
-live 2 / cap 4; ready-undispatched 1. Copied dispatcher16:11:03Z:0 Sol2 Luna. Two P4 Luna1613 dispatched after snapshot, so all4slots assigned. Owed two-assertion restore takes next slot; no Sol active.
+Blockers: Runtime — P4 ten-note first redo times out45s during historical canonical-document validation; exact report/log peer1619 requests bounded performance source owner. No validation or budget waiver.
+Next ready: Consume current47 service proof preparation1611 and run once after source ready. Review two assertions1617 and P4 parser1617; merge on PASS. Consume Runtime auth1557/security1606 and qualified ten-note source owner, normal provenance rebind, then meaningful originals with real XML.
+live 1 / cap 4; ready-undispatched 0. Copied dispatcher16:16:39Z:0 Sol1 Luna. Parser review1617 and two-assertion author1617 dispatched after snapshot; original47 prep1611 still active. No local Sol.
 Inbox consumed through fullD69 16:05 and Runtime1601 exact owner. Audit167clear9cite2owed published; three P4 actual-body results retained and assigned. Pass 2026-10-24T15:53:27Z.
