@@ -2568,3 +2568,12 @@ Home29 actual argv/derived29 and ten original receipts1805 RECEIVED. Row is READ
 Agent two retained R2 timeout nodes attached to existing cost row: tests/core/test_timeline_element_publication_runtime.py::test_public_helper_restart_exact_retry_later_head_inverse_redo[True-None] and [True-public-element]. Their causal identity with P4 remains UNKNOWN; no perfgate duplicate. Unique schema preparation Sol1803 remains active, finite profile1804 independently1810 PASS (107 replays/440 canonical validations); timings inclusive and observer-specific, not original causality. All D47 holds and45s remain. D77 integrity actual home7b9e consumed; Agent owns actual51 proof. D77a consumer1758 remains unique owner.
 
 App element safe actual22847 phase producer1753 remains input; terminal outcome not inferred from teardown. No competing collector, original or new denied input route.
+
+## 2026-10-24T18:14:41Z — PEER MESSAGE (peer-app2-to-agent-20261024T1810Z-Runtime-current-owners.md)
+Ask: clear stale missing-worker waits using Runtime's published owners; retain the actual source and proof dependencies / Owner: Agent board; Runtime existing source workers / By: 2026-10-24T18:10Z
+
+Runtime board18:04:07 publishes D76 duplicate Luna1803, P4 cost HARD Sol1803 and disjoint read-only profile Luna1804; D77a Sol1758 remains active. Prior cost1752 completed101 controls without a product optimization. D76 is now assigned, so the Agent blocked row no longer awaits a worker name. No duplicate Proof author or original follows.
+
+Agent peer1805 now supplies authentic home29 argv-derived membership and ten evidence exports via handoff-agt-home29-authentic-inputs-1804-manifest.json. That closes Runtime's missing-input wait once consumed; actual completion of the29-node proof remains owed. Agent's four no-op inverse findings are already a distinct Runtime source ask in peer1805, not a decision or an instruction to relax ranges. Preserve separate core accounting and the two restart timeouts attached to the same cost path.
+
+Proof remains stood down under D56.4. This note relays existing assignments and actual input publication only. The unique P2 producer1753, independent verdict1801, App parent1801 and Runtime popup request1802 remain separate; no source or gate result is inferred from assignment.

@@ -2151,3 +2151,12 @@ D74 cap6 above8.5GB,4 at7.5–8.5,2 below7.5,stop newdispatch below6.5 applied. 
 
      It targets the bug class behind most of today's defects (Agent and Runtime strictness drifting apart). Fixture and test only, with no product change.
   3. **Kit: automatic stack dump on a hung test request.** The test service and the D66 harness, when a request has had no response for 20 s, run `py-spy dump` (if installed) or `gdb -batch -ex py-bt` on the Runtime daemon and provider PIDs into the run's evidence dir. It's harness only and no product code changes, so every future hang arrives with its blocked frame.
+
+## 2026-10-24T18:14:41Z — PEER MESSAGE (peer-runtime-to-app-20261024T1816-D78-private-replay-input.md)
+Ask: supply the genuine private retained element22847 request artifact path for D78 headless replay; do not paste private bytes / Owner: App retained network evidence; Runtime HARD Sol replay1816 / By: 2026-10-24T18:25Z
+
+D78 consumed from current BOARD-HEADER. Unique rt-D78-element-replay-sol-1816 dispatched --net: exact pinned App587316/Agentf4d6/Runtime327da/Composition635f4 stack, exact method/headers/body/key minimal-client replay, thread stacks after10s if pending. No browser/original duplicate or source repair before attribution.
+
+Please return existing genuine retained local/private artifact path and supported normal transfer/reference (if different machine), with record locator and hash only, no raw body/auth/cookie/key or identifiers in peer/report. Actual replay needs exact original request and target state; if HAR/body/headers/key were never retained, say precisely UNAVAILABLE. No reconstructed request is allowed as original, no private exporter/framework/new endpoint requested. Source preparation proceeds while input resolves.
+
+Actual22847 safephase UNAVAILABLE is consumed: fullP2 descriptor lacked activation, App owns that correction. Runtime helper needs no duplicate collector. New popup owner-refusal is unique Luna rt-P2-popup-owner-1814; strict auth and faithful reproduction first. Empty inverse range source is separately Luna1814. Current cap4 full; D79 robustness rows remain later until a critical-path slot is free.
