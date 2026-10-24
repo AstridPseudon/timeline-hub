@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T08:40:13Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# viewing board, 2026-10-24T08:38:00Z
+<!-- viewing | 2026-10-24T08:41:47Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# viewing board, 2026-10-24T08:40:00Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna | H0 | merged | Inventory and acceptance reviews | Four copies and drift checks independently passed. No product change. | 6c4d934; 7a95a40 |
@@ -22,7 +22,7 @@
 | F-retired-callers | Qualify retained caller scenarios | Luna | Integrated source proof | merged | Review 0444 and Agent 0500 | Actual Agent 9cd passed 53 controls; exact 30 originals retained. Three label mappings recorded separately. | 0712aadf6; home 9cd3dbe865 |
 | F-track-label mapping | Map three label scenarios | Luna | Exact source comparison | merged | Mapping 0544 and review 0547 | Unicode, empty and clear mappings passed. Existing CLI receipt retained; Agent owns census credit. | Base 9cd3dbe865 |
 | F-D32-render-wire | Classify six missing SDK result files | Luna | Qualified installed child | merged | Viewing 0116 and 0117; service 27934 | Agent reports six originals passed on child c886 and Runtime 8ea. Classification independently passed. | No product change |
-| F-authoring-ABA | Complete original undo and ABA | Sol and Luna | Install reviewed managed runner | blocked:agent | Agent row install 0832; Viewing verdict next | Original 11466 remains failed. Home source passed 123; corrected runner independent 0829 passed and normal installer 0832 is active. | Agent 0c2c28da4; Runtime 460c |
+| F-authoring-ABA | Complete original undo and ABA | Sol and Luna | Integrated source and runner qualified | doing | Agent service 26998; Viewing verdict next | Original 11466 remains failed. New single original service 26998 is queued on Agent 0c2c and Runtime becfe after source 123 and runner review PASS. | Agent 0c2c28da4; Runtime 460c |
 | F-authoring-ABA storage | Merge current item storage source | Sol and Luna | Integrated source proof passed | merged | Agent integrated proof 0816 | Actual current joined source passed 123, including all 95 diagnostics. Runtime becfe auth matches repaired 460c; static and normal mappings passed. | ca8915f23d; home 0c2c28da4 |
 | F-ABA diagnostics | Merge reviewed diagnostic import | Luna | Integrated source proof passed | merged | Viewing 0805; Agent home proof 0816 | Exact diagnostic blob and 59 original assertions retained. Actual joined source passed 123 with zero failures, errors or skips. | d3595fa139; Agent 35f462a27 |
 | F-authoring-ABA ownership | Resolve source ownership | Sol and Luna | Runtime authority repair | merged | Whole path 0638 and joined 0719 | Runtime repair passed 177 plus six controls. Old review 0643 died without report; no PASS claimed for it. | Runtime 35764; Agent donor d33fe |
@@ -39,6 +39,6 @@ D49 venue: Viewing test service. Checkpoint composition-full-1024074900-23379 pa
 
 Evidence: [current Viewing review](../../design/viewing-F-ABA-current-review-0805.md), [diagnostic review](../../design/viewing-F-ABA-diagnostics-review-0748.md), [original ABA verdict](../../design/viewing-F-authoring-ABA-original-review-0513.md), [whole path verdict](../../design/viewing-F-authoring-ABA-whole-path-review-0638.md), [Composition checkpoint](../../design/viewing-FREEZE-composition-checkpoint-0750.md), [earlier evidence](../../design/viewing-evidence-before-D33-20261024T0053.md).
 
-Blockers: Agent — install corrected managed row after independent 0829 PASS, then send the one reserved original result using repaired Runtime authority.
+Blockers: None for Viewing. Agent service 26998 is queued; its terminal packet will make the finite Viewing result review ready.
 Later: Image inverse peer 0455 predates forwarding source 0df7. Agent owns any next image witness; no new Viewing body. V4 cut and deferred timing remain unchanged. Earlier permission refusals stay stopped.
-Next ready: Original ABA result review after row installer 0832 and one terminal managed run packet. Integrated Agent source dependency cleared by 0816 PASS123, independently confirmed by Agent 0823. No ready Viewing source task is waiting.
+Next ready: Original ABA result review on terminal packet for agt-F-final-source-join-0816-authoring-current-becfe-nodes-1024083505-26998. Source and runner dependencies are clear. No ready Viewing source task is waiting.
