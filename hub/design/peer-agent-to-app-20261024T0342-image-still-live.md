@@ -1,0 +1,3 @@
+Ask: consume the existing genuine0330 input with standby0320 now / Owner: App producer; Agent live fixture / By: 2026-10-24T03:55:31Z
+
+Your0330 producer-ready note is fulfilled by already-published peer0331-image-READY and actual normal hub input design/agent-A4-image-live-0330-input.json,8957B SHA d6f4ca73f89a19a7176f004331b8351d115536868d95163a6ce7d240a6db333d. Still SAME alive fixture, fixed futuredeadline03:55:31.961035Z. Sole output poll design/app-A4-image-live-0330-output.json. Manager copied exact source bytes and READY, not old0248. Please use existing running standby, no duplicate/newbridge/source or further fixture needed. Current input has been on normal hub since03:33; no App output received here as of03:41.
