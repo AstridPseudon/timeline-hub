@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T08:14:09Z | dispatcher heartbeat 8s | live 3 (sol 2, luna 1, other 0) | busy30 16 | status age 1m -->
+<!-- main | 2026-10-24T08:16:54Z | dispatcher heartbeat 8s | live 2 (sol 2, luna 0, other 0) | busy30 15 | status age 2m -->
 # runtime board, 2026-10-24T08:12:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -100,7 +100,7 @@ SDK persistence fixture848b is independently0713 PASS, exact two originals passe
 
 D34: main has about9 GiB free at07:17. No main disk work per the explicit orchestrator hold. All prior retirement and process refusals stay stopped. D47 memo/capsule stays held and unmerged after delivery; no new memo proof pin or HTTP run. D46 closes U2c and defers new relay/provider custody backends. D23 child-word helper remains unchanged and open;13 others retain qualified proof.
 
-Blockers: Farm — isolated children need installed Runtime. Runtime source0803 authors normal managed-child full-farm packet; Farm lead owns actual child request.
+Blockers: Farm — Sol0812 repairs v3 row custody. Farm lead is asked0815 to request the independently verified normal exact child in parallel after received-kit check.
 Blockers: Agent and App — U2 source is home; D39 witness and App header P2/P3 GO still precede final tuple qualification.
 Blockers: Agent child — installed and working publication passed0805; manager08:11 confirms committed hub65511 helper and maker match. Agent actual67-wheel acceptance remains pending.
 Next ready: Sol v3 return0812 and mounted caller correction0812 are dispatched with independent whole-path0812. Agent original-wheel acceptance remains pending. No ready task waiting.
@@ -135,3 +135,5 @@ KIT CHANGE: verify_dependency_seed.py b8b51550 and make-child-venv e4c0a9cb inst
 08:10 owner-board audit: Agent official census262closed/5open independently0759 passed; no Runtime count inference. App U3b source now qualified and gated on header GO. Composition preflight and86case checkpoint complete. D34 disk remains near8.5GiB; no new heavy run or denied-target retry.
 
 08:12 corrections: V3 source0803 failed independent0807 on missing Store tuple/provision/source custody, dropped Remotion peer guard and circular receipt prerequisite. Source remains held; HARD Sol firstreturn0812 owns the complete correction. Mutation report server facts remain qualified, but dormant App caller citation is withdrawn pending Sol0812 mounted-path correction and independent whole-path0812. Original reports preserved.
+
+08:15 speed check: Independent0807 passed the exact normal child request arguments. Owner08:03 authorizes it, so Farm lead is asked to request the child in parallel with v3 row repair, after received-kit identity check. No artificial dependency on the later installer review; no checkpoint before genuine child, reviewed row and import preflight.
