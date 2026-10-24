@@ -2,15 +2,26 @@
 # Runs outside any sandbox. Launches queued worker requests via bin/dispatch, merges via bin/merge, test runs via bin/test-run; refused requests retry next pass unless the error is permanent.
 O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
 ME=$(readlink -f "$0"); MT=$(stat -c %Y "$ME")   # self-reload: when hub-sync installs a new version, exec it between passes
+# 06:20Z LOOPS #53: slow provisioning (child venv / runtime builds, minutes each) runs in the background, one per kind at a time,
+# so worker launches, merges and tests queued behind it are not blocked. Same result files (queue/done|refused/<name>) as before.
+prov(){ local kind=$1 tool=$2 f=$3 n; n=$(basename "$f"); P=$O/queue/provisioning; mkdir -p $P
+  for m in $(find $P -maxdepth 1 -name ".$kind.*" -mmin +75 2>/dev/null); do r=$P/${m##*/.$kind.}; [ -f "$r" ] && mv "$r" $O/queue/pending/; rm -f "$m"; echo "$(date -u +%FT%TZ) provisioning: stale $kind marker (>75 min, builder gone) requeued" >> $O/dispatcher.log; done
+  ls $P/.$kind.* >/dev/null 2>&1 && return 0   # one of this kind already building: leave it pending, keep the queue moving
+  mv "$f" $P/$n && touch $P/.$kind.$n || return 0
+  ( args=$(sed "s/^$kind //" $P/$n); out=$($O/bin/$tool $args 2>&1); rc=$?
+    if [ $rc = 0 ]; then echo "$out" > $O/queue/done/$n; rm -f $P/$n
+    elif [ $rc = 3 ]; then echo "$(date -u +%FT%TZ) waiting: $out" > $O/queue/pending/.$n.why; mv $P/$n $O/queue/pending/$n
+    else echo "$out" > $O/queue/refused/$n; rm -f $P/$n; fi; rm -f $P/.$kind.$n ) </dev/null >/dev/null 2>&1 &
+}
 echo $$ > $O/dispatcher.pid; trap 'STOP=1' TERM INT   # on kill: finish the current item, then exit (queued work stays in pending/)
 while true; do
   # FIFO (2026-10-20): oldest request first by mtime, name as tie-break, so no area starves behind newer alphabetically-earlier names.
   for f in $(cd $O/queue/pending && ls -1tr --time=mtime 2>/dev/null | sed "s#^#$O/queue/pending/#"); do [ -e "$f" ] || continue; n=$(basename $f); [ -n "$STOP" ] && break
     if head -c5 "$f" | grep -q '^TEST '; then out=$($O/bin/test-run $(sed 's/^TEST //' "$f") 2>&1); rc=$?   # starts in background; never blocks
     elif head -c9 "$f" | grep -q '^STOPTEST '; then out=$($O/bin/stop-test $(sed 's/^STOPTEST //' "$f") 2>&1); rc=$?
-    elif head -c10 "$f" | grep -q '^CHILDVENV '; then out=$($O/bin/make-child-venv $(sed 's/^CHILDVENV //' "$f") 2>&1); rc=$?
+    elif head -c10 "$f" | grep -q '^CHILDVENV '; then prov CHILDVENV make-child-venv "$f"; continue
     elif head -c11 "$f" | grep -q '^RETIREVENV '; then out=$($O/bin/retire-child-venv "$(sed 's/^RETIREVENV //' "$f")" 2>&1); rc=$?
-    elif head -c8 "$f" | grep -q '^RUNTIME '; then out=$($O/bin/make-runtime $(sed 's/^RUNTIME //' "$f") 2>&1); rc=$?
+    elif head -c8 "$f" | grep -q '^RUNTIME '; then prov RUNTIME make-runtime "$f"; continue
     elif head -c9 "$f" | grep -q '^CHECKOUT '; then out=$($O/bin/make-checkout $(sed 's/^CHECKOUT //' "$f") 2>&1); rc=$?
     elif head -c5 "$f" | grep -q '^STOP '; then out=$($O/bin/stop-worker $(sed 's/^STOP //' "$f") 2>&1); rc=$?
     elif head -c6 "$f" | grep -q '^MERGE '; then out=$($O/bin/merge $(sed 's/^MERGE //' "$f") 2>&1); rc=$?; [ $rc = 3 ] || rc=$([ $rc = 0 ] && echo 0 || echo 1)
