@@ -60,7 +60,7 @@ def comfy(tmp_path, monkeypatch):
     user_output = tmp_path / "user-output"
     user_output.mkdir()
     state = SimpleNamespace(schema=schema, calls=[], prompts=[], pending=False,
-                            output=user_output, histories={}, output_hashes={})
+                            output=user_output, histories={}, output_hashes={}, history_images=None)
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_args):
@@ -102,8 +102,9 @@ def comfy(tmp_path, monkeypatch):
                 filename = f"astrid_{len(state.prompts)}.png"
                 Image.new("RGB", (16, 16), (len(state.prompts), 10, 20)).save(user_output / filename)
                 state.output_hashes[filename] = hashlib.sha256((user_output / filename).read_bytes()).hexdigest()
+                images = state.history_images or [{"filename": filename, "subfolder": "", "type": "output"}]
                 state.histories[prompt_id] = {
-                    "outputs": {"2": {"images": [{"filename": filename, "subfolder": "", "type": "output"}]}},
+                    "outputs": {str(index + 2): {"images": [image]} for index, image in enumerate(images)},
                     "status": {"status_str": "success", "completed": True, "messages": []},
                 }
                 self.send({"prompt_id": prompt_id, "number": len(state.prompts), "node_errors": {}})
@@ -127,6 +128,7 @@ def comfy(tmp_path, monkeypatch):
 def test_real_server_url_writes_managed_result_and_records_fresh_seed(comfy, tmp_path):
     action = importlib.import_module("astrid.packs.vibecomfy.actions.run.run")
     seeds = []
+    output_names = []
     original_workflow = comfy.workflow.read_bytes()
     for number in range(2):
         out = tmp_path / f"attempt-{number}" / "outputs"
@@ -140,11 +142,19 @@ def test_real_server_url_writes_managed_result_and_records_fresh_seed(comfy, tmp
         assert (out / manifest["managed_generation_result_path"]).is_file()
         result = next(row for row in manifest["outputs"] if row["role"] == "result")
         original = comfy.output / f"astrid_{number + 1}.png"
+        output_names.append(original.name)
         assert hashlib.sha256((out / result["path"]).read_bytes()).digest() == hashlib.sha256(original.read_bytes()).digest()
         assert hashlib.sha256(original.read_bytes()).hexdigest() == comfy.output_hashes[original.name]
     assert seeds[0] != seeds[1]
+    assert len(set(output_names)) == 2
     assert [prompt["1"]["inputs"]["seed"] for prompt in comfy.prompts] == seeds
     assert not [call for call in comfy.calls if call[0] == "POST" and call[1] != "/prompt"]
+    assert not [
+        call for call in comfy.calls
+        if call[1] in {"/api/free", "/queue/clear"}
+        or (call[1] == "/queue" and isinstance(call[2], dict) and call[2].get("clear"))
+    ]
+    assert not [call for call in comfy.calls if call[1] == "/interrupt"]
     assert comfy.workflow.read_bytes() == original_workflow
 
 
@@ -234,6 +244,60 @@ def test_server_mode_fails_closed_without_managed_result(comfy, tmp_path, monkey
     assert not comfy.prompts
 
 
+@pytest.mark.parametrize("comfy_url", ["http://192.168.1.9:8188", "http://example.com:8188"])
+def test_local_server_rejects_non_loopback_before_execution(comfy, tmp_path, comfy_url):
+    with pytest.raises((ValueError, production_engine.ProductionEngineError)):
+        production_engine.run_workflow_result_path(
+            comfy.workflow, tmp_path / "attempt" / "outputs", task_identity="task-1",
+            comfy_url=comfy_url, comfy_output_dir=str(comfy.output), profile_id="local_server",
+        )
+    assert not comfy.prompts
+
+
+def test_multiple_outputs_without_filename_prefix_fail_closed(comfy, tmp_path):
+    workflow = _workflow()
+    workflow["last_node_id"] = 3
+    source = workflow["nodes"][0]
+    workflow["nodes"].append({
+        "id": 3, "type": "SaveImage", "pos": [300, 150], "size": [200, 100],
+        "flags": {}, "order": 2, "mode": 0,
+        "inputs": [{"name": "images", "type": "IMAGE", "link": 2}],
+        "outputs": [], "properties": {"Node name for S&R": "SaveImage"}, "widgets_values": [""],
+    })
+    workflow["links"].append([2, source["id"], 0, 3, 0, "IMAGE"])
+    comfy.workflow.write_text(json.dumps(workflow))
+    Image.new("RGB", (16, 16), (50, 20, 10)).save(comfy.output / "second.png")
+    comfy.history_images = [
+        {"filename": "astrid_1.png", "subfolder": "", "type": "output"},
+        {"filename": "second.png", "subfolder": "", "type": "output"},
+    ]
+
+    with pytest.raises(production_engine.ProductionEngineError, match="managed_generation_result_path"):
+        production_engine.run_workflow_result_path(
+            comfy.workflow, tmp_path / "attempt" / "outputs", task_identity="task-1",
+            comfy_url=comfy.url, comfy_output_dir=str(comfy.output), profile_id="local_server",
+        )
+
+
+@pytest.mark.parametrize("escape_kind", ["parent", "symlink"])
+def test_output_path_escape_fails_closed(comfy, tmp_path, escape_kind):
+    outside = tmp_path / "outside.png"
+    Image.new("RGB", (16, 16), (70, 20, 10)).save(outside)
+    if escape_kind == "parent":
+        image = {"filename": "../outside.png", "subfolder": "", "type": "output"}
+    else:
+        (comfy.output / "escape.png").symlink_to(outside)
+        image = {"filename": "escape.png", "subfolder": "", "type": "output"}
+    comfy.history_images = [image]
+
+    with pytest.raises(Exception, match="(?i)escape|outside|symlink|path|unsafe|managed"):
+        production_engine.run_workflow_result_path(
+            comfy.workflow, tmp_path / "attempt" / "outputs", task_identity="task-1",
+            comfy_url=comfy.url, comfy_output_dir=str(comfy.output), profile_id="local_server",
+        )
+    assert not (tmp_path / "attempt" / "outputs").exists() or not list((tmp_path / "attempt" / "outputs").glob("**/outside.png"))
+
+
 def test_local_session_pins_environment_and_host_owned_configuration(comfy, tmp_path, monkeypatch):
     runtime = importlib.import_module("vibecomfy.runtime.run")
     monkeypatch.setenv("VIBECOMFY_WARM", "always")
@@ -312,7 +376,8 @@ def test_child_termination_and_host_release_contain_only_our_prompt(comfy, tmp_p
             assert signal.is_set()
         getattr(process, termination)()
         process.communicate(timeout=15)
-        assert adapter.release(reason="child_stopped")["released"] is True
+        release_reason = "host_deadline" if termination == "kill" else "child_stopped"
+        assert adapter.release(reason=release_reason)["released"] is True
     finally:
         if process.poll() is None:
             process.kill()
