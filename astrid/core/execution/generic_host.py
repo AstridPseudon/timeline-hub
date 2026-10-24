@@ -8437,6 +8437,10 @@ class GenericPackHost:
         import_roots: list[str] = []
         if isinstance(admission, Mapping):
             raw_import_roots = admission.get("python_path_roots")
+            if raw_import_roots is not None and not isinstance(raw_import_roots, (list, tuple)):
+                raise HostError("admitted Python import roots must be a list")
+            if raw_import_roots and not admission.get("source_digest"):
+                raise HostError("admitted Python import roots require a source digest")
             if isinstance(raw_import_roots, (list, tuple)):
                 source_roots = tuple(
                     Path(str(value)).expanduser().resolve()
@@ -8446,8 +8450,8 @@ class GenericPackHost:
                 for raw_root in raw_import_roots:
                     import_root = Path(str(raw_root)).expanduser().resolve()
                     if not import_root.is_dir() or (
-                        source_roots
-                        and not any(import_root.is_relative_to(source_root) for source_root in source_roots)
+                        not source_roots
+                        or not any(import_root.is_relative_to(source_root) for source_root in source_roots)
                     ):
                         raise HostError("admitted Python import root is outside the source fence")
                     import_roots.append(str(import_root))
@@ -8459,6 +8463,12 @@ class GenericPackHost:
                 dict.fromkeys((*network_hook_roots, package_parent, *_dependency_pythonpath(), *import_roots))
             )
             env[ASTRID_PACKS_PATH] = os.pathsep.join(str(root) for root in self.pack_roots)
+        else:
+            # Installed children must retain the isolated product environment;
+            # only the roots already fenced by admission may join it.
+            env.pop("PYTHONPATH", None)
+            if network_hook_roots or import_roots:
+                env["PYTHONPATH"] = os.pathsep.join(dict.fromkeys((*network_hook_roots, *import_roots)))
         broker_endpoint = str((child_env or {}).get("ASTRID_BROKER_PROXY") or "")
         argv = [sys.executable, "-m", "astrid.core.execution.generic_host_worker", str(request_path)]
         inherited_fds = ()
