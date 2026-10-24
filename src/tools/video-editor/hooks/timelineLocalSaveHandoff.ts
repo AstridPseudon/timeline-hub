@@ -392,9 +392,12 @@ export function createTimelineLocalSaveHandoff(options: {
             refuse('prepared media needs the Runtime project media selection. Draft retained; reload the timeline, then import the media again');
           }
           const duplicateVideo = Boolean(prepared.afterClipId && prepared.asset.mediaType === 'video');
-          // File drops remove only the transient uploading action; the parent
-          // clip/registry checks below still reject authored clip removal.
-          if ((!duplicateVideo && prepared.afterClipId) || prepared.replaceClipId || prepared.removeClipIds?.length
+          // File drops may remove only their transient uploading action. The
+          // command caller separately proves that the action exists locally;
+          // this handoff still refuses authored IDs and non-drop removals.
+          if ((prepared.removeClipId !== undefined
+            && (duplicateVideo || !prepared.removeClipId.startsWith('uploading-')))
+            || (!duplicateVideo && prepared.afterClipId) || prepared.replaceClipId || prepared.removeClipIds?.length
             || prepared.forceNewTrack || prepared.insertAtTop || prepared.pinnedShotGroupsOverride
             || (!duplicateVideo && prepared.asset.mediaType !== 'image')) {
             refuse('prepared media currently supports an ordinary image add on an existing visual track. Draft retained; reload the timeline, then choose Add media');
@@ -404,6 +407,9 @@ export function createTimelineLocalSaveHandoff(options: {
           const clips = config.clips;
           const nextClips = nextConfig.clips;
           if (!Array.isArray(clips) || !Array.isArray(nextClips)) refuse('prepared media clip collection is unavailable');
+          if (prepared.removeClipId !== undefined && clips.some(clip => object(clip) && clip.id === prepared.removeClipId)) {
+            refuse('prepared media cannot remove an authored parent clip. Draft retained; reload the timeline, then choose Add media');
+          }
           const row = duplicateVideo ? nextClips.find(clip => object(clip) && clip.id === gestureBasis.clipId) : nextClips.at(-1);
           if (!object(row) || row.id !== gestureBasis.clipId || row.asset !== prepared.asset.assetKey
             || clips.some(clip => object(clip) && clip.id === row.id)

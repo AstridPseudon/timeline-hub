@@ -86,6 +86,15 @@ async function environment(children = false, raw: boolean | 'property' = false, 
   return { source, initial, scope, outboxes, send, session, receipt, handoff, prepareDisplay };
 }
 
+function preparedImageCommand(removeClipId?: string) {
+  return { type: 'place-prepared-media' as const, payload: { at: 0, trackId: 'V1',
+    ...(removeClipId !== undefined ? { removeClipId } : {}), asset: {
+      assetKey: 'import-image', mediaType: 'image' as const, durationSeconds: null, source: 'registered' as const,
+      entry: { file: 'import.png', type: 'image/png' }, mediaSelection: { asset: 'import-image',
+        generation_id: 'generation', variant_id: 'variant', object_id: `sha256:${'a'.repeat(64)}`, catalog_digest: `sha256:${'b'.repeat(64)}` },
+    } } };
+}
+
 describe('upstream local document handoff', () => {
   it('retains the upstream video preview whose row lacks the hold required by Python media add', async () => {
     const env = await environment();
@@ -132,6 +141,53 @@ describe('upstream local document handoff', () => {
     expect(env.session.getDocument()).toMatchObject({ parent_revision: { payload: { config: { clips: [
       { id: row.id, asset: 'import-image' },
     ] } } } });
+    await env.session.dispose();
+  });
+
+  it('proves the mounted command caller rejects an unknown uploading id before handoff', async () => {
+    const env = await environment(false, false, ['authored'], undefined, undefined, false, false, false, true);
+    const current = await buildTimelineData(env.source.config, env.source.registry, undefined, 1, undefined, env.source.head);
+    const skeletonId = 'uploading-1729800000000-test';
+    current.rows[0].actions.push({ id: skeletonId, start: 0, end: 2, effectId: `effect-${skeletonId}` });
+    current.meta[skeletonId] = { asset: 'uploading:drop.png', track: 'V1', clipType: 'hold', hold: 2 };
+    const eventBus = new TimelineEventBus();
+    let capture: Promise<void> | undefined;
+    const offSave = eventBus.on('scheduleSave', (next, options) => {
+      capture = env.handoff.capture({ config: next.config, registry: next.registry, head: next.head }, options?.gestureBasis);
+    });
+    const lostEdit = vi.fn();
+    const offLost = eventBus.on('lostEdit', lostEdit);
+    const mounted = renderHook(() => useTimelineCommit({ eventBus, initialData: current,
+      lastSavedSignatureRef: { current: current.stableSignature } }));
+    try {
+      act(() => mounted.result.current.applyEdit({ type: 'prepared-media', command: preparedImageCommand(skeletonId) }, { semantic: true }));
+      await expect(capture).resolves.toBeUndefined();
+
+      const beforeUnknown = mounted.result.current.dataRef.current;
+      act(() => mounted.result.current.applyEdit({ type: 'prepared-media', command: preparedImageCommand('uploading-not-present') }, { semantic: true }));
+      expect(mounted.result.current.dataRef.current).toBe(beforeUnknown);
+      expect(lostEdit).toHaveBeenCalledOnce();
+    } finally {
+      offLost(); offSave(); mounted.unmount(); await env.session.dispose();
+    }
+  });
+
+  it.each([
+    ['an authored parent id with the transient prefix', false, ['uploading-authored'], 'uploading-authored'],
+    ['a child-owned visual track id with the transient prefix', true, ['authored'], 'uploading-child-title'],
+  ])('refuses prepared media cleanup of %s', async (_label, children, rawIds, removeClipId) => {
+    const env = await environment(children, true, rawIds, undefined, undefined, false, false, false, true);
+    const command = preparedImageCommand(removeClipId);
+    command.payload.at = 3;
+    const next = structuredClone(env.source);
+    next.config.clips = next.config.clips.filter(clip => clip.id !== removeClipId);
+    next.config.clips.push({ id: 'imported-image', track: 'V1', at: 3, hold: 5, clipType: 'hold', asset: 'import-image' });
+    next.registry.assets['import-image'] = { file: 'import.png', type: 'image/png' };
+    await expect(env.handoff.capture(next,
+      { kind: 'prepared-media', config: env.source.config, registry: env.source.registry, clipId: 'imported-image', command }))
+      .rejects.toThrow();
+    expect(env.session.getDocument()).toEqual(env.initial.canonicalDocument);
+    expect((await env.outboxes.list(env.scope))[0].intents).toEqual([]);
     await env.session.dispose();
   });
 
