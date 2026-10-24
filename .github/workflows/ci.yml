@@ -16,7 +16,10 @@ jobs:
           cache: pip
       - run: python -m pip install -e '.[test]'
       - name: Verify native realm creation, ownership, and rollback
-        run: python -m pytest -q tests/test_realm_creation_publication.py
+        run: >-
+          python -m pytest -q
+          tests/test_realm_creation_publication.py
+          tests/test_platform_windows.py::test_windows_directory_mutex_uses_global_user_scoped_identity
 
   unit:
     runs-on: ${{ matrix.os }}
