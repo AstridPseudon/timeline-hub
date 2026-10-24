@@ -1,0 +1,9 @@
+fixture=evidence/d83-prep-return-2034/registry-row.scope-fixtures
+scope_labels=actual-integrated-head,source-candidate-donor2
+positive_bash_n=0
+positive_exit=17
+positive_stub_calls=1
+poison_bash_n=0
+poison_exit=nonzero
+poison_stub_calls=0
+original_execution=none

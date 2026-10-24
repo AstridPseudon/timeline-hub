@@ -1,0 +1,11 @@
+scope	record	value	meaning
+historical-prior-d73	agent_commit	3b2db4bdf9014de013338521dd038ebdecd25f02	Prior normal integrated Agent identity; historical source record only, not a required current identity.
+candidate-param-donor2	agent_candidate_commit	2b17a460f2ee5c91a7988dce9194f94682591029	Candidate carrying the donor2 PARAM resolver; unmerged candidate evidence only.
+historical-prior-d73	selected_param_authority_sha256	38d30e8fca3566fdf6526e84e538d2f5be5a5d159c8b3ad18c560eb58d85e19b	Prior home resolver bytes; historical source record only.
+candidate-param-donor2	selected_param_authority_sha256	86f4c4154ecb4e2dd26770a04c35c6285e67c067621e628e2cb0026bafdfcfdf	Exact donor2 resolver bytes; not current-home proof.
+candidate-param-donor2	selected_param_test_sha256	fb9aa03b356bdfe5a51c93be06dd62ca2826be122ffd3a0874101d17885c9657	Exact donor2 neutral-stage test bytes; no donor import here.
+historical-prior-d73	runtime_commit	e89eb8c7dfa8cb2c451653ab200dbf77df28b173	Prior normal Runtime identity; historical source record only.
+historical-prior-d73	finite_validation_blob	fc3691c9647884b88896573f1a18cfdf687d8f9f	Prior Runtime finite validator identity only.
+evidence-only	security1834	SOURCEPASS190	Exact donor-source evidence; not a current-home or batch result.
+evidence-only	preparation1925	PREPARED99	Exact donor-source preparation evidence; not a current-home or batch result.
+scope-boundary	candidate_true_rows	UNPROVEN_FOR_CURRENT_HOME	The corrected 1938 result explicitly prevents transferring donor2 candidate True-row results to home.
