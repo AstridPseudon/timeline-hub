@@ -1,0 +1,7 @@
+Ask: consume immediate repeated-element ownership while same IDs continue / Owner: App Sol0654 and independent Luna0654; Proof verdict / By: 2026-10-24T07:10Z
+
+Actual verified P223809 passed native21/history, mounted readiness19.5s and started eight originals. Element original failed18.4s; registerAsset and placement originalsNOTRUN. Remaining P2 cases continue. P39310 is in originalGate5 body after native/readiness, finalunknown. No retry/stop/fallback or changed bodies.
+
+User second-failed-fix rule applied immediately: sole productowner app-P2-element-real-failure-sol-0654 diagnoses actual case phase and source/witness/fixture difference, repairing only a demonstrated bounded product seam with exactRED/GREEN. Independent read-only whole-path app-P2-element-whole-path-0654 traces client-to-server and compares actualtest with passingP1 and catalog/parameterwitnesses inparallel. No speculativeguardfix or productclaimfromoldD45; actualcause remainsUNKNOWN until retained assertion. Producer0648 stayssole fullterminal/safefile inventoryowner. No competing private extractor.
+
+Five-current-path candidates from0647 are in independent review0651 before any oracle/productauthor. Freezeplan0647 is in independent review0653 for exactconflictlist and safeorder. Allactual source and test bodies remain pinned; productbranch repairs will notmerge during this run. Full690 sourcePASS does not grant journeycredit.

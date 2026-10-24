@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T06:51:56Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 0m -->
-# app board, 2026-10-24T06:51Z
+<!-- app | 2026-10-24T06:55:05Z | dispatcher heartbeat 13s | live 3 (sol 1, luna 2, other 0) | busy30 13 | status age 1m -->
+# app board, 2026-10-24T06:54Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -83,11 +83,13 @@
 | P2-P3-target | Qualify product source dispatch target | Sol; D21 | Final source guards PASS | merged | app-P2-P3-source-target-sol-0644 | [15 source control blocks PASS, 43KB fixture.](../../design/app-P2-P3-source-target-sol-0644.md) Correct target exact663; wrong artifact tree refuses. | Source663 / HOME9b810 |
 
 | P2-five-final-precheck | Precheck five original never-run paths | Luna; independent review | Author0647 complete | review | app-P2-five-oracle-review-0651 | Four candidate strict helper mismatches need whole-helper validation. Popup SWAP aligned. No source edits or live proof. | 9b810408cc |
-| U3b-freeze-plan | Prepare upstream delta and merge order | Luna | Orchestrator 06:45 ask | doing | app-U3b-freeze-plan-0647 | Read-only delta to local upstream 2a288; conflict preview and final gate plan. Actual merge remains frozen. | Plan only |
+| U3b-freeze-plan | Prepare upstream delta and merge order | Luna; independent review | Author0647 complete | review | app-U3b-freeze-plan-review-0653 | Draft18 commits and111paths; reviewer checks ancestry, exact nine-file conflicts and commands. Actual merge remains gated. | Plan only |
+
+| P2-element-current-failure | Resolve repeated actual element failure | Sol; independent Luna | Actual23809 element FAIL | doing | Sol0654; whole path0654 | Original element failed18.4s; precise assertion pending. Sol owns any demonstrated source repair, Luna traces full path independently. | Selected663 / HOME9b810 |
 
 Integration: 9b810408ccf8aadbca708dd0bc461afc19576427, tree 9a37265f0286128df7e6240a9df9877d959474af. Exact whole tree equals independently reviewed timing candidate 6635416195. All reviewed catalog, parameter, popup, parent, P3 setup and oracle repairs remain present.
 
-Next ready: Sole producer0648 qualifies actual23809/9310 terminal results. Wait same IDs. Five-current-gestureprecheck0647 and freezeplan0647 active in parallel.
+Next ready: Sole producer0648 qualifies actual23809/9310 terminal results. Wait same IDs. Five-current-path review0651 and freezeplan review0653 active in parallel.
 Blockers: Freeze — U3b waits P2/P3 and final freeze.
 
 P2/P3: Verified product-target requests23809 and9310 submitted06:47:59Z. Wait same IDs. Prior20674/10144 wrong artifact target failed source preflight in6s, all originalsNOTRUN. Correct target qualified15 controls0644. D45 pair is consumed. P213583 failed three with five not run; P34065 failed first original reset after readiness passed. Every original guard, wait, intended-field, reload, undo and tail remains required.
