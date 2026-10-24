@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T04:12:26Z | dispatcher heartbeat 5s | live 3 (sol 2, luna 1, other 0) | busy30 19 | status age 0m -->
+<!-- agent | 2026-10-24T04:14:39Z | dispatcher heartbeat 2s | live 1 (sol 1, luna 0, other 0) | busy30 18 | status age 1m -->
 # agent board, 2026-10-24T04:11:37Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -64,8 +64,8 @@ Next ready: Consume current reviews, merge image fixture, then one new image wit
 Evidence: Earlier detailed results remain in [the archived board](archive-v2/STATUS-20261024T0055Z.md) and the existing design handoffs. Worker final messages are copied unchanged into design.
 D32: Exact upstream comparison completed. Independent review rejected all 25 proposed pre-existing credits. All 267 remain ours; no known-gap or whole-suite PASS claim.
 Later: D37 dormant A4 capture subsets remain unchanged in delivery; no new provider migration. Source reviews and full-gate failure counts remain separate.
-Capacity: Three light workers queued0407; current disk is above8 GB. No duplicate full or heavy run. Viewing owns headless and retained-caller authors.
+Capacity: Sol U2c0410, Luna D44fixture0414 and Sol D40orchestrator0414 are active. Disk is above8 GB; no duplicate heavy/full. Viewing owns headless, ABA and33 callers.
 Count: 125 of 267 open after independent0358 correction;142 bounded closures, all267 tagged ours. Corrected full artifact0407 is in progress. Farm checkpoint pending.
-Blockers: Farm — return the H30 checkpoint on an actual published integration head with exact original node outcomes. No duplicate full suite here.
+Blockers: Farm / Runtime — H30 first attempt ran zero tests. Runtime kit0358 unblocks the single supported Farm checkpoint; return exact original outcomes on a published Agent head.
 Later: D40 installed qualification proceeds through one genuine managed source tuple after reviewed route and fixture setup. Seven H3 originals need the same current installed input; no overlay.
 D44: Resolved04:05. Edited occurrence forks; untouched sibling keeps exact source identity. Luna0414 adapts only the authorized predicate and reports the behavior entry.
