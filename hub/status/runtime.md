@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T22:50:17Z | dispatcher heartbeat 11s | live 2 (sol 1, luna 1, other 0) | busy30 9 | status age 0m -->
-# runtime board, 2026-10-24T22:50:16Z
+<!-- main | 2026-10-24T22:53:47Z | dispatcher heartbeat 11s | live 3 (sol 1, luna 2, other 0) | busy30 10 | status age 2m -->
+# runtime board, 2026-10-24T22:51:20Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -191,7 +191,7 @@
 | F-final-upstream-installer | Keep fresh upstream installer tests | Luna | Author checklist checks passed | merged | rt-F-final-upstream-installer-2216 | Exact 08e6 object and paths verified; 92 targets and guards preserved. [Report](../../design/runtime-final-upstream-installer-2216.md) | Private checklist only |
 
 | F-final-rehearsal | Rehearse fresh upstream delivery | Luna | Critical timing and App priority | gated:critical-capacity | rt-F-final-rehearsal-2219 BLOCKED | App shallow-parent traversal stopped staging. No ZIP. Private input fix resumes after critical sample; raw temp loss disclosed. | Source unchanged |
-| F-final-matrix | Prepare pinned venue commands | Luna | Agent2236 handoff received | ready | Durable2228; next finite join | Ten-venue runner controls passed. New Agent handoff names current five and final three selectors; join waits capacity. No install or body. | Private; final tuple pending |
+| F-final-matrix | Join exact Agent venue handoff | Luna | Agent2236 handoff complete | doing | rt-F-matrix-Agent-2252 | Private ten-venue runner consumes exact current five versus final three selector inputs. Pending tuple and render stay explicit. No install or body. | Private candidate |
 
 | P2-spare-venue | Run four assigned main diagnostics | Luna / main service | Exact pinned package resolution | doing | rt-P2-main-dependency-2250 | Node and collection blockers resolved; build stopped before readiness or gestures. Parent, SWAP, single and bulk remain main exclusive. | No original result yet |
 
@@ -209,12 +209,14 @@ Blockers: Runtime P4 — Sol2240 fixes recursive assembly before proof lookup, m
 Blockers: App P2 — element7131 pending observation remains open. Popup5083 reaches acceptedHTTP200 and strict receipt guards, then digest equality fails; App2239 reviews exact raw numeric hashing correction. App owns asset/placement; main owns parent/SWAP/single/bulk.
 Blockers: Main profile — Luna2250 resolves existing pinned Composition package;2238 exposed shared0.0.2 missing animations export before any original. No safety refusal or product finding. [Report](../../design/runtime-main-profile-2238.md).
 Blockers: Final cut — D59 requires all lanes core0/regressions0, final pinned P1–P5/core, D69 and genuine installed render. Private final candidates remain uninstalled. Rehearsal retry waits heavy8.5GB threshold and critical priority.
-Next ready: Security review immediately when2240 returns. Agent2236 matrix handoff is ready to join into private2228 runner when capacity opens; final tuple remains pending.
+Next ready: Security review immediately when2240 returns. Luna2252 now joins Agent2236 handoff into private runner; final tuple remains pending.
 
 Venues: App P1/P2/P3 and final P2 tour; Agent P4; main P5/Composition. Spare main four diagnostics use fixedbceb/039f/732/635f only. D73 captures tuple once, genuine checkout receipts and preflight precede body. Newer heads do not invalidate an in-flight run.
 Delivery: Runtime merge, Agent merge, authentic App manifest command with schema digest equality, App merge. D65/D67/D72 docs installed. D77 render and D62 submit-completeness known gap remain explicit.
 Later: E1/E3, AgentE2 and D79 paused until ZIP. D42 cross-request memo held; V4 cut, D14/D23 deferred; unsafe D34 cleanup held. D56 Farm/schema access stopped. All historical safety/access/cleanup/process refusals remain stopped.
-Disk: 8145801216 available bytes at last read; cap2 conservatively by GiB. No ended clean non-KEEP Runtime worktree eligible. Guarded routine maintenance follows existing tools; no historical refused target retry.
+Disk: 8145801216 available bytes at last read; cap4 by D74 GB thresholds; reserved security slot remains. No ended clean non-KEEP Runtime worktree eligible. Guarded routine maintenance follows existing tools; no historical refused target retry.
 
-live 2 queued or running / cap 2; ready-undispatched 1 capacity held. HARD Sol2240 owns history authorization assembly; Luna2250 owns main setup and four diagnostics. Matrix finite join is the one ready capacity-held row; no unowned critical row.
+live 3 / cap 4; ready-undispatched 0. HARD Sol2240 owns history authorization assembly; Luna2250 owns main profile/four diagnostics; Luna2252 owns finite Agent matrix join. One security slot reserved.
 Pass 2026-10-24T22:50:16Z: Read PLAN/common, header through H49, inbox through605296 bytes, App/Agent actual boards and dispatcher returns. Consumed2238 setup result and dispatched2250 immediately. Published exact report and peer2250. Actual Agent7c48 four R2 closure retained; no stale Agent input blocker. No duplicate original, product edits by manager or denied route.
+
+Intake 2026-10-24T22:51:20Z: consumed inbox through605296 bytes. App2240 delayed main-READY note is already fulfilled by2232/2238/2250; no stale App need gate. Agent2242 handoff dispatched immediately to2252; no registry/body. No new source release.
