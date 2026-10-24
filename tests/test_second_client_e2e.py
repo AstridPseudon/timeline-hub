@@ -8,9 +8,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from runtime_protocol.daemon import RuntimeDaemon, WORKER_ACTOR
+from runtime_protocol.daemon import WORKER_ACTOR, RuntimeDaemon
 from runtime_protocol.store import RealmStore
-
 
 ROOT = Path(__file__).parents[1]
 FIXTURE = ROOT / "conformance" / "second-client-core-v1.yaml"
@@ -59,8 +58,6 @@ def _build_actor() -> None:
     assert INDEPENDENT_CLIENT_SMOKE.is_file(), f"independent TypeScript smoke was not emitted at {INDEPENDENT_CLIENT_SMOKE}"
 
 
-# fake-second-product.ts exits 1: its createProjectShot (RT02) and legacy composition publication (D04) get 410.
-@pytest.mark.xfail(strict=True, raises=subprocess.CalledProcessError, reason="[declared-xfail:second-client-core] RT02/D04 held: direct shot writes and legacy timeline publication are retired (410); the actor is ported with their replacements")
 def test_second_client_core_journey_is_executable(daemon: RuntimeDaemon) -> None:
     _build_actor()
     smoke = subprocess.run(["node", str(INDEPENDENT_CLIENT_SMOKE)], cwd=ROOT, check=True, capture_output=True, text=True)
