@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T10:59:50Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 24 | status age 0m -->
-# app board, 2026-10-24T10:58Z
+<!-- app | 2026-10-24T11:03:31Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 24 | status age 3m -->
+# app board, 2026-10-24T11:00Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -58,12 +58,12 @@
 | U4p-D39-test-identity | Refresh strict current producer identity | Luna | Sol1022 caller repair | doing | Identity1035 | Change only one stale digest literal to exact approved D39 producer; all original semantic assertions remain. Cumulative independent review follows. | Earlyfreeze only |
 
 | P2-final-caller | Bind only P2 to actual pure target | Luna; independent review | Source1036 and custody1035 PASS | doing | Source return1054 | Author1043 refuses recycled proof path. Actual exact detached checkout ready; sole return1054 preserves source/target guards and current P3. | Two artifacts only |
-| P3-fault-order | Preserve strict lost-ACK ordering | Proof harness | Sol1040 confirms exact retry A | blocked:app2 | Peer1046; Proof owner requested | Gate5 fulfills recovery while P1 holds it across restart. Preserve original assertions; Proof owns deterministic fault timing. No new original released. | No source edit yet |
+| P3-fault-order | Preserve strict lost-ACK ordering | Proof Luna; independent review | Sol1040 and actual3896 NO-GO | doing | ap2-P3-fault-order-source-1053 | Proof source1053 active. Exact retry A confirmed; helper-only fault ordering preserves strict original assertions and real recovery. | Source82cb |
 
 Integration: HOME d6ed8cbda1 includes independently reviewed own-only popup84b08 and retained diagnostic01ea. Exact current pure-product qualification1036 is running. Earlier P3 pure82cb qualified20 controls/types/lint/list and original3896 now terminal. Source qualification gives no live gate credit.
 
 Blockers: App — sole P2 caller return1054 fixes recycled-target admission using actual exact detached receipt. Pure source1036 and custody1035 PASS; independent review and installation follow.
-Blockers: Proof — exact retry A confirmed by Sol1040. Peer1046 asks strict Gate5 fault-order repair; App independent1046 qualifies same-ID cause/custody before safe publication. No repeat.
+Blockers: Proof — strict P3 fault-order source1053 is active after actual3896 independent NO-GO. App1046 cause/custody PASS and6 safe files published; no repeat released.
 Blockers: Freeze — home U3b waits P2/P3 GO. Current earlybranch e8a has sole independent cumulative1058; ONE D49 App-service full checkpoint follows PASS.
 Next ready: Caller return1054 and earlyfreeze currentjoin1045 are active; independent cumulative reviews dispatch on completion. ActualP3 cause/custody1046 review active; Proof fault-order owner requested.
 
@@ -106,3 +106,5 @@ Pass10:47Z: normal strict identity1035 finalizeda432,15tests/types/lintPASS; ear
 Pass10:54Z: caller1043 source binding/60guards passed but correctly refused recycledproof1036 path. Supported exact Appd6ed detachedKEEP receipt created. Sole Luna return1054 recovers only two worker-authored1043 artifacts while normal finalization is pending, authenticates existing proofmeta/ref plus actual checkout and preserves wrong-artifact refusals. No row install or original. Cleanup recycled4 more finished clean worktrees; Sweep3 removed0. Free disk about11GB; refused routes untouched.
 
 Pass10:58Z: INBOX consumed1455554 bytes including Proof1047; all asks already owned. Earlyfreeze real merge finalizede8a/treec94; independent cumulative1058 dispatched immediately. Authenticated upstream readiness wait is retained as ordinary U3 acceptance, no scope decision owed. Independent1046 source/cause/custodyPASS;6 safe JSONs copied byte-exact with600 mode and origin map. Proof1056 peer supplies terminal inputs and strict fault-order ownership. Actual P2 caller source return1054 active; no original request or homefreeze merge.
+
+Pass11:00Z: INBOX consumed1457257 bytes through Proof1048; corrected packet/range ask already fulfilled by independent1046 and safe publication1056. Proof board now owns actual fault-order author1053 and independent3896 NO-GO; old blocked:app2 ownership wait cleared. Sole App caller1054 and early cumulative1058 are active. No original request.
