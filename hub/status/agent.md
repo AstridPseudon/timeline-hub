@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T23:11:37Z | dispatcher heartbeat 1s | live 3 (sol 0, luna 3, other 0) | busy30 6 | status age 0m -->
-# agent board, 2026-10-24T23:11:37Z
+<!-- agent | 2026-10-24T23:14:23Z | dispatcher heartbeat 2s | live 3 (sol 0, luna 3, other 0) | busy30 6 | status age 1m -->
+# agent board, 2026-10-24T23:13:16Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -145,7 +145,7 @@
 | F matrix handoff | Publish existing final P4 and core entry | Luna | Runtime peer2228 | merged | agt-F-matrix-handoff-2236 | Read-only source, syntax, JSON and byte hashes PASS. [Handoff](../../design/handoff-agt-F-matrix-2236-matrix-handoff.md). Final tuple pending; no body or install. | Evidence only |
 | F rehearsal failures | Preserve all308 failed outcomes | Luna | Exact XML reconciled | merged | agt-F-rehearsal-failures-2305 | 274 provisional core,32 env,1 D23,1 P4. Baseline ruling applied by2311 rollup. Evidence recovered byte-exact from committed571e9. | Evidence only |
 | F rehearsal errors | Preserve all242 error outcomes | Luna | Exact XML reconciled | merged | agt-F-rehearsal-errors-2305 | 151 provisional core,56 env,35 proposal-deferred. Final six-category rollup2311 active. | Evidence only |
-| F contrast18 | Repair upstream-pass setup cluster | Luna | Priority23:08; existing XML | doing | agt-F-rehearsal-contrasts-2311 | 11 missinggit errors,6 missingffmpeg/ffprobe failures,1 audio basis failure. Source setup first; exact18 targeted body after meaningful correction. | Agent7c48 / Runtime732c |
+| F contrast18 | Repair upstream-pass setup cluster | Luna | Priority23:08; existing XML | doing | agt-F-rehearsal-contrasts-2311 | All18 trace to cleared PATH in env-i recipe; genuine tools exist. Exact18 corrected targeted route preparing; tests unchanged. | Agent7c48 / Runtime732c |
 | F occurrence48 | Migrate live occurrence-media setup | Luna | D72 current commit path | doing | agt-F-occurrence-fixture-2311 | Exact48 setup errors use retired initial publisher. Own one file; every assertion retained. Source only until priority18 body complete. | Agent7c48 |
 | F final categories | Reuse matcher and census on550 outcomes | Luna analysis | ORCH23:05 and23:08 | doing | agt-F-rehearsal-rollup-2311 | Exact16 fail-both and18 upstreamPASS contrasts;516 unmatched. Existing2305 tables reused; no new audit or body. | Evidence only |
 | F providerABI20 | Repair selected-PARAM fixture contract | Runtime failover requested | Runtime owner row and worker | blocked:runtime | Peer2310; assignment pending | Exact20 validate_provider setup errors; two Agent testfiles reserved. No guard relaxation or parallel Agent author. | Agent7c48 / Runtime732c |
@@ -158,10 +158,10 @@ Tuple: Agentc2a63 /Runtime732c /App5fcb9ad5cf /Composition635f captured once wit
 Evidence: [Current XML](../../design/handoff-agt-D84a-29429-five.xml), [log](../../design/handoff-agt-D84a-29429-service.log), [tuple](../../design/handoff-agt-D84a-29429-tuple.manifest), [timings](../../design/handoff-agt-D84a-29429-outcomes.tsv), [report](../../design/agt-P4-R2-D84a-five-2214.md). All published byte-exact. Prior6749/1960 evidence and31062 zero-body setup remain immutable.
 D69/D72: Exact 47 restored membership and 178 audit retained; named family proofs complete. D60 upstream 924 full remains FAIL: 12396 pass, 91 fail, 14 errors. Exact 276 accounting, D67 environment gap and both D23 deferrals stay separate.
 Admission: Historical safety, access and cleanup refusals remain stopped. No denied pin release, fabricated installed tuple, child, Farm or schema route. E2 and D79 paused until after ZIP.
-Disk: 8004165632 bytes free at23:09 (~7.45GiB). Two source workers plus one analysis worker dispatched under explicit23:08 analysis exemption. Critical6GBfloor; affected-node bodies serialized. Refused pins and dirty G2 untouched.
-Blockers: Runtime P4 source — security2255 owns candidatebad9 qualification/normal apply; no qualified successor yet. Ten-note45.314s FAIL. Adoption and one remaining original follow release.
+Disk: 7606181888 bytes free at23:13 (~7.08GiB). Two source workers plus one analysis worker dispatched under explicit23:08 analysis exemption. Critical6GBfloor; affected-node bodies serialized. Refused pins and dirty G2 untouched.
+Blockers: Runtime P4 source — security2255 FAIL heldbad9; HARD Sol2304 owns fresh-boundary first return. No qualified successor. Ten-note45.314s FAIL. Adoption and one remaining original follow release.
 Blockers: Runtime providerABI20 — peer2310 requests named disjoint Luna owner on two reserved Agent testfiles; no competing Agent writer.
 Blockers: Final cut — final pinned P1–P5/core and genuine installed render remain D59 gated. Rehearsal550 bad outcomes retained; revised six-category counts pending.
 Next ready: Qualified Runtime release -> adoption then remaining P4 once. Other core clusters -> source repairs as capacity permits. Occurrence48 acceptance after priority18 body.
 live 3 / cap 2 source plus 1 exempt analysis; ready-undispatched 0. Priority18 shared setup and occurrence48 source running; rollup2311 applies matcher/known-gap rules. Runtime20 peer active. No heavy body or duplicate suite.
-Inbox consumed through 1142759 bytes. Pass 2026-10-24T23:11:37Z: ORCH23:08 applied at2305returns. Reserved Runtime20 and dispatched source18/source48 plus exemptanalysis rollup. Exact reports and recovered failure evidence from committed571e9 copied normally after auto-recycle. No manager product/test edits or final credit.
+Inbox consumed through 1144637 bytes. Pass 2026-10-24T23:11:37Z: ORCH23:08 applied at2305returns. Reserved Runtime20 and dispatched source18/source48 plus exemptanalysis rollup. Exact reports and recovered failure evidence from committed571e9 copied normally after auto-recycle. No manager product/test edits or final credit.
