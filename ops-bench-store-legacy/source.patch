@@ -1,0 +1,86 @@
+--- a/bin/bench_store.py
++++ b/bin/bench_store.py
+@@ -356 +356,2 @@
+-    def _delete_owned(self, path, entry):
++    @contextlib.contextmanager
++    def _deletion_authority(self, path, entry):
+@@ -357,0 +359 @@
++            yield None
+@@ -384,0 +387,10 @@
++            yield root_fd
++        finally:
++            os.close(root_fd)
++
++    def _delete_owned(self, path, entry):
++        with self._deletion_authority(path, entry) as root_fd:
++            if root_fd is None:
++                return
++            marker = path / '.bench-owner.json'
++            root_info = os.fstat(root_fd)
+@@ -427,2 +438,0 @@
+-        finally:
+-            os.close(root_fd)
+@@ -550 +560,13 @@
+-                self._roll(journal, journal['kind'] == 'eviction')
++                # Validate deletion authority before touching any projection/index.
++                # Keep these descriptors through recovery; deletion checks again.
++                with contextlib.ExitStack() as authority:
++                    targets = []
++                    if journal['kind'] == 'eviction':
++                        targets = [(Path(journal['before']['entries'][eid]['path']),
++                                    journal['before']['entries'][eid]) for eid in journal['victims']]
++                    elif journal['new']:
++                        e = journal['new']
++                        targets = [(Path(e['path']), e), (self.root / 'staging' / e['key'], e)]
++                    for path, entry in targets:
++                        authority.enter_context(self._deletion_authority(path, entry))
++                    self._roll(journal, journal['kind'] == 'eviction')
+--- a/bin/request-runtime
++++ b/bin/request-runtime
+@@ -13,0 +14,10 @@
++# Recovery has no target/adoption argument: only the store journal can confer
++# deletion authority. An absent or legacy store is never initialized here.
++if [ "${1:-}" = --recover-store ]; then
++  [ "$#" -eq 1 ] || { echo 'REFUSED: --recover-store takes no arguments' >&2; exit 2; }
++  if ! (set -C; printf 'BENCHRECOVER\n' > "$O/queue/pending/bench-store-recovery"); then
++    echo 'REFUSED: store recovery is already queued or queue is unsafe' >&2; exit 2
++  fi
++  echo "store recovery queued; result in $O/queue/done/bench-store-recovery"
++  exit 0
++fi
+--- a/bin/dispatcher-daemon
++++ b/bin/dispatcher-daemon
+@@ -3,0 +4,22 @@
++W=/home/user/work
++
++dispatch_request() {
++  local f=$1
++    if head -c5 "$f" | grep -q '^TEST '; then out=$($O/bin/test-run $(sed 's/^TEST //' "$f") 2>&1); rc=$?   # starts in background; never blocks
++    elif head -c9 "$f" | grep -q '^STOPTEST '; then out=$($O/bin/stop-test $(sed 's/^STOPTEST //' "$f") 2>&1); rc=$?
++    elif head -c10 "$f" | grep -q '^CHILDVENV '; then out=$($O/bin/make-child-venv $(sed 's/^CHILDVENV //' "$f") 2>&1); rc=$?
++    elif head -c11 "$f" | grep -q '^RETIREVENV '; then out=$($O/bin/retire-child-venv "$(sed 's/^RETIREVENV //' "$f")" 2>&1); rc=$?
++    elif head -c12 "$f" | grep -q '^BENCHRECOVER'; then
++      if [ "$(cat "$f")" = BENCHRECOVER ]; then
++        out=$(python3 -I "$O/bin/bench_store.py" --root "$W/bench-store" --tests-dir "$O/tests" recover 2>&1); rc=$?
++      else out='REFUSED: invalid store recovery request'; rc=2; fi
++    elif head -c8 "$f" | grep -q '^RUNTIME '; then out=$($O/bin/make-runtime $(sed 's/^RUNTIME //' "$f") 2>&1); rc=$?
++    elif head -c9 "$f" | grep -q '^CHECKOUT '; then out=$($O/bin/make-checkout $(sed 's/^CHECKOUT //' "$f") 2>&1); rc=$?
++    elif head -c5 "$f" | grep -q '^STOP '; then out=$($O/bin/stop-worker $(sed 's/^STOP //' "$f") 2>&1); rc=$?
++    elif head -c6 "$f" | grep -q '^MERGE '; then out=$($O/bin/merge $(sed 's/^MERGE //' "$f") 2>&1); rc=$?; [ $rc = 3 ] || rc=$([ $rc = 0 ] && echo 0 || echo 1)
++    else out=$(eval "$O/bin/dispatch $(cat $f)" 2>&1); rc=$?; fi
++}
++
++# Sourcing exposes the same request branch without starting a daemon.
++if [[ "${BASH_SOURCE[0]}" != "$0" ]]; then return; fi
++
+@@ -9,9 +31 @@
+-    if head -c5 "$f" | grep -q '^TEST '; then out=$($O/bin/test-run $(sed 's/^TEST //' "$f") 2>&1); rc=$?   # starts in background; never blocks
+-    elif head -c9 "$f" | grep -q '^STOPTEST '; then out=$($O/bin/stop-test $(sed 's/^STOPTEST //' "$f") 2>&1); rc=$?
+-    elif head -c10 "$f" | grep -q '^CHILDVENV '; then out=$($O/bin/make-child-venv $(sed 's/^CHILDVENV //' "$f") 2>&1); rc=$?
+-    elif head -c11 "$f" | grep -q '^RETIREVENV '; then out=$($O/bin/retire-child-venv "$(sed 's/^RETIREVENV //' "$f")" 2>&1); rc=$?
+-    elif head -c8 "$f" | grep -q '^RUNTIME '; then out=$($O/bin/make-runtime $(sed 's/^RUNTIME //' "$f") 2>&1); rc=$?
+-    elif head -c9 "$f" | grep -q '^CHECKOUT '; then out=$($O/bin/make-checkout $(sed 's/^CHECKOUT //' "$f") 2>&1); rc=$?
+-    elif head -c5 "$f" | grep -q '^STOP '; then out=$($O/bin/stop-worker $(sed 's/^STOP //' "$f") 2>&1); rc=$?
+-    elif head -c6 "$f" | grep -q '^MERGE '; then out=$($O/bin/merge $(sed 's/^MERGE //' "$f") 2>&1); rc=$?; [ $rc = 3 ] || rc=$([ $rc = 0 ] && echo 0 || echo 1)
+-    else out=$(eval "$O/bin/dispatch $(cat $f)" 2>&1); rc=$?; fi
++    dispatch_request "$f"

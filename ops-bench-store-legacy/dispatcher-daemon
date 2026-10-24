@@ -1,0 +1,51 @@
+#!/bin/bash
+# Runs outside any sandbox. Launches queued worker requests via bin/dispatch, merges via bin/merge, test runs via bin/test-run; refused requests retry next pass unless the error is permanent.
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+W=/home/user/work
+
+dispatch_request() {
+  local f=$1
+    if head -c5 "$f" | grep -q '^TEST '; then out=$($O/bin/test-run $(sed 's/^TEST //' "$f") 2>&1); rc=$?   # starts in background; never blocks
+    elif head -c9 "$f" | grep -q '^STOPTEST '; then out=$($O/bin/stop-test $(sed 's/^STOPTEST //' "$f") 2>&1); rc=$?
+    elif head -c10 "$f" | grep -q '^CHILDVENV '; then out=$($O/bin/make-child-venv $(sed 's/^CHILDVENV //' "$f") 2>&1); rc=$?
+    elif head -c11 "$f" | grep -q '^RETIREVENV '; then out=$($O/bin/retire-child-venv "$(sed 's/^RETIREVENV //' "$f")" 2>&1); rc=$?
+    elif head -c12 "$f" | grep -q '^BENCHRECOVER'; then
+      if [ "$(cat "$f")" = BENCHRECOVER ]; then
+        out=$(python3 -I "$O/bin/bench_store.py" --root "$W/bench-store" --tests-dir "$O/tests" recover 2>&1); rc=$?
+      else out='REFUSED: invalid store recovery request'; rc=2; fi
+    elif head -c8 "$f" | grep -q '^RUNTIME '; then out=$($O/bin/make-runtime $(sed 's/^RUNTIME //' "$f") 2>&1); rc=$?
+    elif head -c9 "$f" | grep -q '^CHECKOUT '; then out=$($O/bin/make-checkout $(sed 's/^CHECKOUT //' "$f") 2>&1); rc=$?
+    elif head -c5 "$f" | grep -q '^STOP '; then out=$($O/bin/stop-worker $(sed 's/^STOP //' "$f") 2>&1); rc=$?
+    elif head -c6 "$f" | grep -q '^MERGE '; then out=$($O/bin/merge $(sed 's/^MERGE //' "$f") 2>&1); rc=$?; [ $rc = 3 ] || rc=$([ $rc = 0 ] && echo 0 || echo 1)
+    else out=$(eval "$O/bin/dispatch $(cat $f)" 2>&1); rc=$?; fi
+}
+
+# Sourcing exposes the same request branch without starting a daemon.
+if [[ "${BASH_SOURCE[0]}" != "$0" ]]; then return; fi
+
+ME=$(readlink -f "$0"); MT=$(stat -c %Y "$ME")   # self-reload: when hub-sync installs a new version, exec it between passes
+echo $$ > $O/dispatcher.pid; trap 'STOP=1' TERM INT   # on kill: finish the current item, then exit (queued work stays in pending/)
+while true; do
+  # FIFO (2026-10-20): oldest request first by mtime, name as tie-break, so no area starves behind newer alphabetically-earlier names.
+  for f in $(cd $O/queue/pending && ls -1tr --time=mtime 2>/dev/null | sed "s#^#$O/queue/pending/#"); do [ -e "$f" ] || continue; n=$(basename $f); [ -n "$STOP" ] && break
+    dispatch_request "$f"
+    if [ $rc = 0 ]; then echo "$out" > $O/queue/done/$n; rm -f $f
+    elif [ $rc = 3 ]; then echo "$(date -u +%FT%TZ) waiting: $out" > $O/queue/pending/.$n.why   # resource limit: retry later
+    else echo "$out" > $O/queue/refused/$n; rm -f $f; fi
+  done
+  # READY refill (2026-10-20): an area below 5 live workers gets its oldest READY item (bin/request-ready) queued, one per area per pass.
+  for a in agent runtime app viewing app2; do R=$O/managers/$a/ready; [ -d $R ] && [ ! -e $O/managers/$a/REMOTE ] || continue
+    case $a in agent) p=agt;; runtime) p=rt;; app) p=app;; viewing) p=vw;; app2) p=ap2;; esac
+    live=0; for d in $O/workers/$p-*/; do [ -f $d/running ] && [ ! -e $d/IMPORTED ] && live=$((live+1)); done
+    q=$(grep -l . $O/queue/pending/$p-* 2>/dev/null | grep -v '/\.' | wc -l)   # already-queued dispatches count toward the target
+    [ $((live+q)) -lt 5 ] || continue; r=$(ls -1tr $R 2>/dev/null | grep -v '^\.' | head -1); [ -n "$r" ] || continue
+    if [ -e $O/workers/$r ] || [ -e $O/queue/pending/$r ]; then mv $R/$r $O/queue/refused/$r.ready-dup; else mv $R/$r $O/queue/pending/$r; echo "$(date -u +%FT%TZ) READY $a live=$live -> queued $r" >> $O/dispatcher.log; fi
+  done
+  # reap: managers' finished rounds
+  [ -n "$STOP" ] && exit 0; date -u +%FT%TZ > $O/dispatcher.heartbeat
+  if [ -f $O/CODEX_UNAVAILABLE ] && [ $(( $(date +%s) - $(stat -c %Y $O/.codex-probe 2>/dev/null || echo 0) )) -ge 1200 ]; then touch $O/.codex-probe
+    timeout 120 codex exec -m gpt-5.6-luna -c model_reasoning_effort=low -s read-only --skip-git-repo-check -C /tmp "Reply with exactly: ok" 2>/dev/null | grep -qx ok && \
+      { mv $O/CODEX_UNAVAILABLE $O/codex-unavailable-$(date -u +%Y%m%dT%H%MZ).resolved; echo "$(date -u +%FT%TZ) Codex works again; fallback lifted" >> $O/dispatcher.log; }; fi
+  [ "$(stat -c %Y "$ME" 2>/dev/null)" != "$MT" ] && bash -n "$ME" && exec "$ME"
+  sleep 15
+done
