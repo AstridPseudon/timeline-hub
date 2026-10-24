@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T04:30:33Z | dispatcher heartbeat 13s | live 4 (sol 0, luna 4, other 0) | busy30 14 | status age 1m -->
-# app board, 2026-10-24T04:30Z
+<!-- app | 2026-10-24T04:33:24Z | dispatcher heartbeat 4s | live 3 (sol 0, luna 3, other 0) | busy30 14 | status age 2m -->
+# app board, 2026-10-24T04:31Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -59,7 +59,7 @@
 | P2-five-static | Check five original not-run gestures | Luna; independent review | Review 0357 PASS | merged | app-P2-five-review-0357 | Static review finds transition clears and single-occurrence placement gaps. Authors 0411 and 0410 assigned. Asset and swap still need live proof. | Report only |
 | P2-parent-transition | Land verified parent and transition edits | Luna port; independent review | Own scope 0422 PASS | doing | app-P2-parent-current-packet-0430 | Only reviewed five-file diff ports to current integration, excluding held wrapper ancestry. Integrated 292-test qualification follows. | Donor53b77c3949 |
 
-| P2-single-child-placement | Declare occurrence ADD creation claims | Luna; independent review | Exact audit0420 FAIL | doing | app-A3-created-claims-return-0424 | No transport fills missing created claims. Prior341 tests retained; incorrect envelope PASS cannot qualify actual submitted command. | 561a792a held |
+| P2-single-child-placement | Declare occurrence ADD creation claims | Luna; independent review | First return0424 complete | review | app-A3-created-claims-review-0431 | Author342 tests, three types and lint passed. New and registered assets covered. Actual submitted claims and Agent capture reviewed together. | Source0424 |
 Safety: Historical cleanup, graph and publication denials stand. Managers write boards, briefs and shared reports; workers own product changes.
 Delivery legacy subset: Keep transcriptAssociateCapture.ts and its unchanged 397-line, 40-assertion test, plus required helpers, under D31.
 Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-handoff-0029.md), [image review](/home/user/timeline-hub/hub/design/app-A2-image-created-review-0133.md), [A4 cut map](/home/user/timeline-hub/hub/design/app-A4-current-cut-census-0042.md).
