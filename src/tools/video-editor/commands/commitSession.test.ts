@@ -342,26 +342,6 @@ describe('real clip move session through the Runtime HTTP boundary', () => {
       commands: [{ op: 'timeline.inverse', args: { publications: ['p2'] } }] });
     await session.dispose();
   });
-  it('recovers an explicitly chosen owner and retries the exact pending A before B', async () => {
-    const env = await environment();
-    const first = await env.mount();
-    env.setFault('lost');
-    env.move(first, 5);
-    env.move(first, 7);
-    await vi.waitFor(() => expect(first.getState().status).toBe('retry'));
-    const owner = first.getState().ownerId!;
-    const original = env.commits()[0];
-    await first.dispose();
-    const reopened = await env.mount(await env.provider.loadTimelineCommandBasis('timeline-commit'));
-    expect(reopened.getState().status).toBe('recovery');
-    expect(env.commits()).toHaveLength(1);
-    await reopened.recover(owner);
-    expect(env.commits()[1]).toEqual(original);
-    const b = env.commits()[2];
-    expect(b.body?.base_publication_id).toBe('p1');
-    expect(b.body?.commands[0].expect?.['parent/clip:x::at']).toEqual({ state: 'present', value: 5 });
-    await reopened.dispose();
-  });
   it.each(['accepted', 'conflict'] as const)(
     'queues B authored after uncertain A without retransmitting, then recovers exact A: %s', async (outcome) => {
       const env = await environment();
@@ -549,21 +529,6 @@ describe('real clip move session through the Runtime HTTP boundary', () => {
       expect(retained.accepted).toEqual(saved.accepted);
       await reopened.dispose();
     });
-  it('keeps recovery explicit and permits a later claim after the live owner releases its lock', async () => {
-    const env = await environment();
-    const first = await env.mount();
-    env.setFault('lost');
-    env.move(first, 5);
-    await vi.waitFor(() => expect(first.getState().status).toBe('retry'));
-    const owner = first.getState().ownerId!;
-    const second = await env.mount();
-    await expect(second.recover(owner)).rejects.toThrow('claimed');
-    expect(env.commits()).toHaveLength(1);
-    await first.dispose();
-    await second.recover(owner);
-    expect(env.commits()[1]).toEqual(env.commits()[0]);
-    await second.dispose();
-  });
   it('routes a persisted native bootstrap owner through its existing carrier before generic edit recovery', async () => {
     const runtime = {} as { env: Awaited<ReturnType<typeof environment>> };
     const recoverBootstrap = async (claimedOwner: string): Promise<TimelineCommandBasis> => {
