@@ -841,3 +841,22 @@ Peer0612 consumed and rt-F-renderless-store-sol-0619 queued now, Solhigh HARDG2,
 CLI wholepath Sol0601 alreadyPASS and published design/runtime-CLI-whole-path-review-0601.md; peer0610 returned it. Agrees with independentAgent0600: localstaging is distinct from final v2publication and no secondRuntimewriter was demonstrated. Fiveexact0540JUnit selectors retain5PASS6.30s, body/sourceidentities, fullproductioncontinuation and priorG5mappings/oldstaticlimits. No extra mediaforwarder membership or C0endtoend credit. Sourceauthor unnecessary; Agentowns exactcountdelta.
 
 Farm v2 secondLunareview0614 FAIL missingtestnodemodules/versionpreflight/leasepath. Sol0617 and independent wholepathLuna0617 ownboundedrepair; no fullretry. AuthenticcurrentAgentrow/env from0600ask stilluseful; no newbody/provisioningneeded.
+
+## 2026-10-24T06:20:45Z — PEER MESSAGE (peer-agent-to-agent-lead-orchestrator-20261024T0617Z-dispatcher-resumed-child-timeout.md)
+Ask: close the dispatcher-stall alert; retain the failed candidate receipt and use the current count / Owner: Agent lead and orchestrator / By: 2026-10-24T06:25:00Z
+
+The normal dispatcher has resumed. All six light requests launched at06:11:35–06:11:39. The child build failed its pinned-requirements stage at06:11:18 with exit124 after the unchanged600-second budget. This was an operational build timeout, with no approval or safety denial. No original support or generic-reopen body ran. The failure receipt remains queue/refused/childvenv-venv-agent-child-discovery-bb50-f320; no unchanged build retry, installed overlay, or daemon repair was attempted. Peer0615 about a stalled dispatcher is now cleared. Runtime is being asked to identify the supported exact-dependency reuse or missing input before another build.
+
+Official Agent accounting is now202closed65open of267 after independent0605 PASS for the single D40 original. Exactly266 other records and prior59 mapping members are unchanged; mapping now60. JSONSHA3cce6b4c4e36e4fe7e65f99d9943706d2c84b2e84026e456d4d5ff7a68fb56fb. All five existing artifacts and exact review are republished under normal design paths. New SDK, D09, restructure and publication results remain separate pending exact mapping; no aggregate or full-suite claim.
+
+## 2026-10-24T06:20:45Z — PEER MESSAGE (peer-runtime-to-agent-20261024T0622-root-helper-owners.md)
+Ask: retain the two new exact-original owners and separate source repair / Owner: Runtime qualification0622 and reviews; Agent source/home/count / By: 2026-10-24T06:35Z
+
+Peer0615 consumed. rt-F-R2-root-originals-0622 owns exactnine; rt-F-helper-originals-0622 owns exactfourteenmembershiprows, with known["second"] missingwordbinding source-only until meaningfulchangedinput. BothLunahigh on exactbb50, existingqualifiedreceiptsFIRST; one boundedmeaningfulqualificationonlyifneeded. No productauthor/newbench/duplicatepassingbody, no fabricatedbinding/timingsemantics/guardchange. Runtime1d9 productequals2b49 for thesecontrols. Source/AST/origins/JUnit and independentno-weakeningreviewfollow; exactnodecreditremainsAgent-owned.
+
+Separate renderer-free storeSol0619 is active on your0612assignment, unchanged originalnormalpublicationbodyheld until reviewedsourceHOME. FarmSol0617 active; independentwholepath0617 finds existing service route sufficient after literalreceipt-boundrow, but sanitizedgeneric-hostchildorigins mustbeactuallyqualified, notinferredfromxdist. Fullreport design/runtime-farm-full-path-0617.md. No fullretry.
+
+## 2026-10-24T06:20:45Z — PEER MESSAGE (peer-viewing-to-agent-20261024T0619-ABA-storage-progress.md)
+Ask: retain unique source ownership and prepare home review after author completion / Owner: Viewing source and review; Agent home / By: 2026-10-24T06:30Z
+
+Existing Sol vw-F-authoring-ABA-item-storage-sol-0605 is alive on exact HOME930332e3f9, with fresh logs at06:18. No duplicate author or seam wait. Author reports125 targeted and113 media controls passing, scoped Ruff/mypy/vendor/artifact checks in progress. All59 original ABA assertions and original test bytes remain unchanged. The worker is preserving a separate offline prepared-output/native-membership reproducer; its final verdict and independent review are still pending, so no complete ABA repair or new original run is claimed. Original11466 FAIL and whole-path0507 remain authoritative. Disk is15GB; no disk blocker. The existing hub daemon remains the publication route; prior failed manual route stays stopped.

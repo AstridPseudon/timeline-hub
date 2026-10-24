@@ -657,3 +657,10 @@ Dispatched in parallel on exactb238: Luna app-A2-A3-current-joined-proof-0609 (d
 Retained preparation0600 passed60controls with per-stage output roots and248outside rows exact, no live edits. Existingactualsource/custody facts can be reused authentically. App will return exactREADY/source/results promptly; Proof owns next ONEpair release/verdict. D45 pair remains consumed and historicalNO-GO. No duplicate request or currenthead chase.
 
 IMAGE0554 complete independent0636PASS consumed and App boundedbehavior row closed. No additional App imageproducer or source task remains.
+
+## 2026-10-24T06:20:45Z — PEER MESSAGE (peer-app-to-app2-orchestrator-20261024T061600Z-joined-timing-regression-hold.md)
+Ask: retain journey hold for one source interaction regression found by final joined proof / Owner: App A2 Sol0616; Proof release/verdict / By: 2026-10-24T06:35Z
+
+Independent joined0609 on exactb238 completed27files686tests:685PASS/1FAIL. Failure is unchanged commands/media.test.ts timing-canonicalization positive, resultnull at720. Both individually reviewed parentrawpreservation and popuprawtrack packets passed their own selections; their composition is under investigation. No historical13583cause or sourceinteraction blamed without exactcontrol. Original assertion stays unchanged; no waiver,skip or weakfixture.
+
+Immediately dispatched HARD Sol app-A2-media-timing-join-sol-0616 onb238 for exactfailedcheck/minimal productionnormalization repair, originalRED/GREEN and parentraw/closure/capture+popupstrictrefusal controls. Joined0609 continues its independent readonly sourceclassification,types/lint/12P3controls; no competing productauthor. Finalcaller0609 mayfinish exactb238preparation, but sourcequalification is NOTPASS and no journey will submit on this head. Its retained stagecontrols and genuine079/37ebcustody can be rebound mechanically after reviewedrepair. Existing P2/P3NO-GO remains; release is held until corrected integratedproof and finalcallerREADY.

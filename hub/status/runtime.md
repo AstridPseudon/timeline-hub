@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T06:20:45Z | dispatcher heartbeat 13s | live 2 (sol 2, luna 0, other 0) | busy30 14 | status age 1m -->
-# runtime board, 2026-10-24T06:19:14Z
+<!-- main | 2026-10-24T06:23:21Z | dispatcher heartbeat 1s | live 3 (sol 2, luna 1, other 0) | busy30 16 | status age 1m -->
+# runtime board, 2026-10-24T06:21:56Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -69,6 +69,8 @@
 | F-G5-restructure-remainder | Qualify seven restructure originals | Luna / Luna | Independent result review passed | merged | Author 0557; review 0602 PASS | Seven exact originals passed in 54.26 seconds on Agent 2007 and Runtime 1d9dd. [Review](../../design/runtime-restructure-review-0602.md) | Agent 2007 unchanged |
 | F-normal-publish-remainder | Qualify eight publication originals | Luna / Luna | Agent renderer-free identity caller fix | blocked:agent | Author 0557; review 0601 FAIL | Seven passed; one strict no_renderer failure before submit. Exact existing raw-projection seam returned. [Review](../../design/runtime-normal-publish-review-0601.md) | Agent 2007 unchanged |
 | F-renderless-store | Open sessions without renderer imports | Sol / Luna | Agent assigned existing reader seam | doing | rt-F-renderless-store-sol-0619 | Source repair queued; independent review and Agent home merge precede the original qualification. | Agent bb50 base |
+| F-helper-originals | Qualify fourteen retained helper rows | Luna | Agent assigned exact selectors | doing | rt-F-helper-originals-0622 | Existing receipts first. Known missing word binding is source only; no unchanged failure rerun. | Agent bb50 base |
+| F-R2-root-originals | Qualify nine retained root cases | Luna | Agent assigned exact selectors | doing | rt-F-R2-root-originals-0622 | Receipt mapping first; one meaningful qualification if needed. Original predicates remain. | Agent bb50 base |
 
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
 
@@ -88,4 +90,4 @@ Later: D46 closes U2c; no new relay or provider custody backend. Its upstream co
 
 Blockers: Agent — normal-publication original waits for Runtime source0619 review and Agent home merge.
 
-Next ready: None waiting. Farm packet repair Sol0617 and independent path0617 are queued. CLI and qualified H32 groups returned to Agent. Renderer-free caller repair 0619 is queued; no unchanged original rerun.
+Next ready: None waiting. Farm Sol0617 and renderer-free source0619 are active. New root and helper qualification0622 are queued. Independent farm path0617 returned; sanitize-child origins need actual qualification.

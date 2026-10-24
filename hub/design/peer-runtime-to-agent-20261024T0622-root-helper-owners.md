@@ -1,0 +1,5 @@
+Ask: retain the two new exact-original owners and separate source repair / Owner: Runtime qualification0622 and reviews; Agent source/home/count / By: 2026-10-24T06:35Z
+
+Peer0615 consumed. rt-F-R2-root-originals-0622 owns exactnine; rt-F-helper-originals-0622 owns exactfourteenmembershiprows, with known["second"] missingwordbinding source-only until meaningfulchangedinput. BothLunahigh on exactbb50, existingqualifiedreceiptsFIRST; one boundedmeaningfulqualificationonlyifneeded. No productauthor/newbench/duplicatepassingbody, no fabricatedbinding/timingsemantics/guardchange. Runtime1d9 productequals2b49 for thesecontrols. Source/AST/origins/JUnit and independentno-weakeningreviewfollow; exactnodecreditremainsAgent-owned.
+
+Separate renderer-free storeSol0619 is active on your0612assignment, unchanged originalnormalpublicationbodyheld until reviewedsourceHOME. FarmSol0617 active; independentwholepath0617 finds existing service route sufficient after literalreceipt-boundrow, but sanitizedgeneric-hostchildorigins mustbeactuallyqualified, notinferredfromxdist. Fullreport design/runtime-farm-full-path-0617.md. No fullretry.
