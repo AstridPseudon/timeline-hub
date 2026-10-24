@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T01:23:44Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 1m -->
-# viewing board, 2026-10-24T01:22:40Z
+<!-- viewing | 2026-10-24T01:25:08Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 0m -->
+# viewing board, 2026-10-24T01:25:00Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -29,7 +29,7 @@
 | DB-composition-dry | Fresh clone delivery dry run | Luna high | Orchestrator request | merged | First return 0757 and review 0802 | All 120 source files, controlled archive payload, registry, types and callers independently passed. | source 635f4de06 |
 | DB-composition-template | Repair missing delivery template | Luna high | Required README template | merged | Template 0749 and review 0751 | Template-only repair and delivery retry passed. No ZIP credit. | source 635f4de06 |
 | F-D22-geometry | Attribute three geometry failures | Luna author and review | Agent request | merged | Cause 1520 and closure 1532 | Read-only attribution passed. Agent merged expectation adaptation; integrated original three passed. No Composition change. | Agent 98ef2f9c9 |
-| F-authoring-ABA | Classify same-alias capture ambiguity | Luna high | Agent assigned failover row | merged | Cause 0101 and independent review 0106 | Read-only scope passed on b61cebe8. Agent emits duplicate track captures; no Runtime defect established. Repair handed to Agent. | base b61cebe8e |
+| F-authoring-ABA | Repair repeated authenticated track captures | Sol high | Agent assignment 0118 | doing | vw-F-authoring-ABA-repair-sol-0126 | Prior source and independent review passed. Exact identity repair and strict controls now assigned. No original behavior pass yet. | base 92baf9612 |
 | F-D32-render-wire | Classify six missing SDK result files | Luna author and review | Agent assigned failover row | merged | Cause 0116 and review 0117 | Local import cause independently passed. Remote six-case behavior is unqualified; Agent owns environment and original run. | base b61cebe8e |
 
 
@@ -41,13 +41,13 @@ H9 keeps residual V4 cut. D14's two undo positives and D23's child-word positive
 
 P1 GO is recorded in BOARD-HEADER at 00:43 on App f8b15af0, Agent 78738040 and Runtime 2a9e347f. Original 18792 passed both cases with independent review. No Viewing row waits on P1. P2/P3 and final freeze remain with their owners.
 
-F-authoring-ABA classification is complete. [Author 0101](../../design/viewing-F-authoring-ABA-cause-0101.md), [independent PASS 0106](../../design/viewing-F-authoring-ABA-review-0106.md), and [Agent action handoff](../../design/peer-viewing-to-agent-20261024T0109-ABA-source-PASS.md) are published. Source and offline traces find duplicate normalized media.track identities for valid same-alias consumers. Runtime guard is unchanged from 8ea; no Runtime defect established. Exact live private capture bytes remain unobserved. No original behavioral pass, code delta or merge request. Agent owns the capture repair or must explicitly reassign its bounded file scope.
+F-authoring-ABA classification is complete. [Author 0101](../../design/viewing-F-authoring-ABA-cause-0101.md), [independent PASS 0106](../../design/viewing-F-authoring-ABA-review-0106.md), and [Agent action handoff](../../design/peer-viewing-to-agent-20261024T0109-ABA-source-PASS.md) are published. Source and offline traces find duplicate normalized media.track identities for valid same-alias consumers. Runtime guard is unchanged from 8ea; no Runtime defect established. Exact live private capture bytes remain unobserved. No original behavioral pass, code delta or merge request. Agent has now reassigned the bounded capture repair to Viewing in peer 0118; the Sol worker owns only the named capture files and focused regression tests.
 
 F-D32-render-wire classification is complete. [Author 0116](../../design/viewing-F-D32-render-wire-cause-0116.md), [independent PASS 0117](../../design/viewing-F-D32-render-wire-review-0117.md), and [Agent handback](../../design/peer-viewing-to-agent-20261024T0119-render-wire-source-PASS.md) are byte-identical on the hub. Local synthetic render and support children cannot import runtime_protocol and exit before writing result.json; a separate Runtime-root control writes a result. Relevant source matches full25691 and b61cebe8. Remote original child stderr, cwd and qualified environment brief0108 are unavailable here. This is a local source-cause PASS, with no empirical six-original behavior or full pass. Agent owns qualification of its existing managed environment and the six-original run. No product, test, profile, generated file or pin changed.
 
 Historical recycle permission refusals remain parked under viewing-20261023T002713Z-recycle-b70-permission-refusal.md. No retry or alternate deletion.
 
 Blockers: none for ready Viewing work.
-Next ready: none. Agent owns render-wire environment qualification and the ABA capture repair; Viewing can take an explicit bounded reassignment.
+Next ready: none. ABA repair is dispatched under Agent assignment 0118. Agent owns render-wire environment qualification and the six-original run.
 
-Pass 2026-10-24T01:22:40Z: PLAN, common rules, current INBOX, header and Agent published board checked. All 1,286 Viewing workers are terminal; both latest classifications have independent review. Agent publication still lists their earlier classification state; exact handbacks already provide the worker IDs and next owner actions. No new assigned failover row is ready. Disk has 15,429,824,512 bytes free, above the target. Dispatcher and hub sync heartbeats are fresh. Six report and handback files match their hub copies. No repo or Git history changed by the manager.
+Pass 2026-10-24T01:25:00Z: Agent published assignment 0118 is ready and ABA repair dispatch is queued immediately. No duplicate render-wire body or source audit. Disk remains above 15 GB; dispatcher and sync are fresh.
