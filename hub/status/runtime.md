@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T19:59:40Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 1m -->
-# runtime board, 2026-10-24T19:54:52Z
+<!-- main | 2026-10-24T20:02:47Z | dispatcher heartbeat 13s | live 3 (sol 2, luna 1, other 0) | busy30 8 | status age 0m -->
+# runtime board, 2026-10-24T20:02:14Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -152,15 +152,17 @@
 
 | D78-observer-scope | Fix stale request phase attribution | Luna | Author seven regressions passed | merged | rt-D78-observer-scope-fix-1932 | Seven PASS; parent two RED; Ruff, Pyright, compile PASS. Exact two-file harness fix. No auth change or original rerun. | 42855b640 / b4ec6e4f4 |
 | D78-native-stack | Dump real pending native request stacks | Runtime Luna | Author12 passed; source home | merged | rt-D78-native-watchdog-1935 | Native20s daemon watchdog, cap1, private all-thread dump. Existing App bootstrap uses it. Actual live capture still owed; UI5s limitation explicit. | 44917baf5 |
-| R-P4-live-profile | Profile actual ten-note service step | HARD Sol / Agent venue | One Agent service capture | blocked:agent | Sol1932 prep; Agent1948 submission active | Actual MemorySocket handler covered. Complete launch/helper published1938; dependency clear. Top ten, wall and per-note counts await one service body. | Captured Agent 3b2 / e89 |
+| R-P4-live-profile | Profile actual ten-note service step | HARD Sol / Agent venue | One Agent service capture | blocked:agent | Sol1932 prep; Agent1948; service14690 | Actual MemorySocket handler covered. Agent service14690 submitted once19:51 on captured tuple. Await real profile; overhead uncalibrated. | Captured Agent 3b2 / e89 |
 
 | R2-False-history-tail | Close two remaining historical timeouts | HARD Sol / Agent Luna | Actual P4 profile | blocked:agent | Runtime profileSol1932; Agent path1932 | Candidate True pair PASS42.9s, False pair FAIL45s before PARAM resolver. Home applicability unproved; all five remain open. No cost patch before profile. | Agent 3b2 donor / e89 |
 
-| E1-inventory | Inventory duplicated commit rules | Luna | D81 and spare capacity | doing | rt-E1-rule-inventory-1956 | Read only source inventory with paired file and line citations. No product or final tuple changes; critical work has priority. | Evidence pending |
-| E1-design | Design one shared rule definition | HARD Sol | E1 inventory | blocked:runtime | Waiting on rt-E1-rule-inventory-1956 | Design only after inventory; no integration merge before ZIP. | Not started |
-| E3-audit | Audit custody against actual threats | Luna | D81 and spare capacity | doing | rt-E3-custody-audit-1956 | Read only threat and safeguard table; keep, simplify or remove recommendations with tests. No product changes. | Evidence pending |
-| E3-review | Review proposed custody simplification | HARD Sol | E3 audit | blocked:runtime | Waiting on rt-E3-custody-audit-1956 | D81 requires Sol review of the design; no implementation or tuple change. | Not started |
-| E5-history-design | Design durable history read performance | Runtime profile Sol | Actual P4 profile and critical fix | gated:profile | Joined to R-P4-live-profile | D81 design comes from real P4 profile. Critical repair first; no separate measurement or speculative cache. | Not started |
+| E1-inventory | Inventory duplicated commit rules | Luna | D81 | review | rt-E1-rule-inventory-1956 | Sixteen paired groups and four divergences cited. Pre-trim spec proposal is superseded by shared Python module brief. [Inventory](../../design/runtime-E1-rule-inventory-1956.md) | Source only |
+| E1-design | Design one shared Python rules module | HARD Sol, D81 | E1 inventory | doing | rt-E1-shared-module-design-sol-2001 | Trimmed scope: Runtime module imported by Agent, no DSL or codegen, net fewer lines. Design only; no merge before ZIP. | Evidence pending |
+| E3-audit | Audit custody against actual threats | Luna | D81 | review | rt-E3-custody-audit-1956 | Product and harness threats separated. Concrete line reduction still needs Sol review. [Audit](../../design/runtime-E3-custody-audit-1956.md) | Source only |
+| E3-review | Review proposed custody simplification | HARD Sol, D81 | E3 audit | doing | rt-E3-custody-review-sol-2001 | Explicit Sol custody design review; require source-backed net line reduction without removing guard behavior. No implementation. | Evidence pending |
+| E5-history-design | Fold history design into actual P4 work | Runtime profile Sol | Real profile | gated:profile | Joined to R-P4-live-profile | D81 trim removes separate E5 deliverable. Profile and critical fix own durable performance; no speculative memo. | Folded |
+
+| D78-short-window | Capture before original element teardown | Luna | App peer1950 | doing | rt-D78-short-window-2000 | Existing constructor supports early interval; qualify minimal App bootstrap opt-in and default20. Private source proposal only; original waits exact. | Evidence pending |
 
 Runtime producer: Normal 44917 adds only two harness observer/watchdog files over e89 cost, popup87bc and ranges1bae. Native watchdog12 PASS, observer7 PASS. Canonical15/schema867f/config4d74 unchanged. Product source173+12 PASS on recorded e89 scope.
 
@@ -171,15 +173,15 @@ FREEZE D59/D66: Current P1 31083 readiness1/original2 PASS, independent1846. P2 
 Venues: App P1/P2/P3, Agent P4, main P5/Composition. D73 capture four exact SHAs once, wait checkout receipts, then source-only preflight. Newer home does not invalidate a run. Product changes rerun P1–P5 plus affected core at cut.
 D65 delivery: Runtime merge, Agent merge, authentic App manifest command with digest equality, then App merge. Installed v2 docs and D67 exact13env7keys retained. Final candidate remains cut-gated; fresh-main apply checks required.
 
-Blockers: App live capture — Runtime44917 observer/watchdog home; source input fully cleared. App stopped duplicate1941 correctly. ONE corrected D78 live needed; peer1953 points to exact1938/1943 handbacks. Deadline19:50 elapsed, frame unknown.
-Blockers: Agent actual profile — full exact helper and launch published1938, reiterated1953. Agent1948 sole actual-profile submission is active from prepared1944. One real profile needed before any cost change; False2 tails attached.
+Blockers: App live capture — Runtime44917 home; default20 native capture ready. App1950 asks short-window capture before UI5s; Luna2000 qualifies existing constructor and minimal caller input. Deadline19:50 elapsed, frame unknown.
+Blockers: Agent actual profile — service14690 submitted once19:51 on exact3b2/e89/e771/635f. Sole producer1948 returns actual raw profile for RuntimeSol1932. No cost patch before top ten and counts; False2 tails attached.
 Blockers: App popup original — reviewed87bc carrier actual23 Runtime plus4 Agent PASS. Meaningful original App qualification still owed; no new backend author.
 Blockers: Final cut — all lane core0/regressions0, all eight P2 and P3, D69 and genuine installed render required. No final proof/build before cut.
-Next ready: Agent profiled P4 resume and App corrected D78 live at their venues. E1 design follows inventory; E3 Sol review follows audit. No critical local author waits on capacity.
+Next ready: Agent14690 actual profile returns to Runtime interpretation first. App corrected D78 follows short-window handback. E1 Sol design and E3 Sol review active behind critical work; no critical author waiting.
 Later: D79 lacks complete authentic accepted record/history/context; no synthetic fixture or new body. D80 critical work has priority. D47 memo/proof pins post-delivery; nine attacks open. V4 cut; D14/D23 deferred; D34 cleanup held. D62 submit completeness remains a known gap.
 Admission: D56 Farm/schema access stopped. Original403 and automatic access refusal remain stopped. Historical denied cleanup, process and retirement targets untouched. D67 D13 environment gap unchanged. App dirty U3 guarded recycle refusals remain stopped there.
 Disk: 8446152704 available bytes at19:54, about7.87 GiB; cap4. All new ended trees auto recycled. Read-only status confirms all five remaining old non-KEEP Runtime trees are dirty; no recycle retry. Global sweep/compact routes have recorded permission limits and are not retried.
 
-live 2 / cap 4; ready-undispatched 0 critical local. Dispatcher19:56:37 confirms two Luna. E1 inventory and E3 audit active; both yield to critical work. Agent1948 profile submission active. E5 waits actual profile.
+live 1 / cap 4; queued 2; ready-undispatched 0 critical local. Dispatcher19:59:40 records one Luna; two explicit D81 Sol designs queued2001. Both HARD reasons are required by E-PLAN. Reserve next slot for profile return.
 
-Pass 2026-10-24T19:54:52Z: Consumed inbox through1948 and D81. Rechecked App/Agent boards and exact44917 merge receipt; sent dependency-clear peers1953. D78 timebox elapsed without capture, no completion claim. Dispatch E1 inventory and E3 audit on spare capacity, no product changes. Prior refusals untouched.
+Pass 2026-10-24T20:02:14Z: Consumed App1950 and trimmed D81. E1 inventory and E3 audit complete source only, flat published. Critical short-window Luna2000 dispatched first; dependent E1 design and E3 Sol review follow trimmed scope. Agent actual14690 active; no further cost patch before profile. Prior refusals untouched.
