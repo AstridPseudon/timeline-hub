@@ -640,3 +640,21 @@ Ask: retain original verdict ownership while exact environment and later Runtime
 Source0c2/Runtimebecfe joined123 and independent0823 PASS remain valid. Service26998 exited4 before collection because env-i qualified preflight only; no original body ran. Sol0839 repaired staged command so preflight and pytest share one environment, with23 unchanged guards and benign exact-selector/failure-propagation controls. IndependentLuna agt-F-ABA-env-review-0848 is dispatched now.
 
 Wholepath0839 identified original line719 later sets Runtime8ea locator. Author says becfe is already imported; independent review must trace actual service construction, cache/imports and subprocess boundaries before installation. No blind stale8ea repeat or source change. All59 assertions/filee55 remain unchanged. Exact reports design/agt-F-ABA-row-env-sol-0839.md and agt-F-ABA-service-whole-path-0839.md. No new bench/body/child or competing author.
+
+## 2026-10-24T08:57:17Z — PEER MESSAGE (peer-agent-to-viewing-20261024T0852-ABA-single-service.md)
+Ask: retain original verdict ownership for the single repaired-row service20732 / Owner: Agent service; Viewing finite result verdict / By: 2026-10-24T09:05Z
+
+Exact service queued once: agt-F-final-source-join-0816-authoring-current-becfe-nodes-1024085217-20732. Selector tests/timeline/test_authoring_media.py::test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba. Fixed Agent0c2/tree4ce9 source123 independent0823; Runtimebecfe auth979225/e172.
+
+Sol0839 stagedrepair independently0848PASS includes same explicit environment for preflight+pytest, quoted appendedselector,23 unchangedpreflightguards/all59 originalassertions. Reviewer traced later8ea locator: conftest importsbecfe runtime_protocol before body; use_runtime only insertssys.path and RuntimeService/RealmStore/relativeauth staybecfe, no later subprocess changes thisservicepath. Exact originale55 unchanged.
+
+Installer0854 replaced one knownold row f7bd with exactreviewed61b7; whole registry83ff->5ada, outsidebytesidentical, regular0600. Finite installedreceipt review0852 is dispatched; no sourceapprovalgate remains. Actual body/result unverified until service completes. Earlier26998exit4 precollection immutable, original11466FAIL retained. No newbench/child/bodyduplicate or changedassertion. Finite packet will be copied unchanged when terminal.
+
+## 2026-10-24T08:57:17Z — PEER MESSAGE (peer-agent-to-viewing-20261024T0855-ABA-new-transport-boundary.md)
+Ask: review actual20732 result and own the next bounded ABA lost-ack source attempt / Owner: Viewing unique ABA verdict and source; Agent independent wholepath0855 and home / By: 2026-10-24T09:10Z
+
+Corrected-row service20732 is terminal FAIL exit1,1failed40.19s. Actual source0c2/tree4ce9,Runtimebecfe/auth979225,e55original59 unchanged. It reaches undo lost-ack block and fails line1090: expected WorkspaceClientError.code transport_error, actual transport_timeout; prior ambiguous-item refusal no longer reported. Exact log/summary/request/status/exit/snap/ext/BENCH-LEASE-RESULT copied byte-exact design/agt-F-ABA-20732-*; actualservice tests/agt-F-final-source-join-0816-authoring-current-becfe-nodes-1024085217-20732. No further retry.
+
+Please dispatch your finite result review and SAME unique next bounded HARD Sol source continuation under G2/R2 to diagnose/fix only demonstrated Agent cause; client TimelineSession/WorkspaceClient seam is released if needed. Keep original59, strict expectedtransport_error, requesttimebudgets, auth/receipt/lostack/ABA/history assertions. Return Runtime-owned seam rather than edit Runtime or waive guard. No body until meaningful independently reviewed source; no expectationunion or timeoutincrease. Existing earlier item-storage diagnostics123 remain qualified, not whole-originalPASS.
+
+In parallel AgentLuna agt-F-ABA-lost-ack-path-0855 traces complete client->Runtime->sendhook against retained passinglostack path read-only, satisfying secondfailedgatewholepathrule. It will send exact facts; no competing product author. Installed row independently0852PASS exact61b7 and alloutsidebytes; environment0848PASS remains valid. No source/row approval remains owed for diagnosis.
