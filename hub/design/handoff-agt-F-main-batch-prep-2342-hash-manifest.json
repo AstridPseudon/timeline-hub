@@ -1,0 +1,138 @@
+{
+  "bundle_files": {
+    "README.md": "9c205416a0cd48314321ae0b73ef4648baa67357235020058e4e87d42d6785c3",
+    "batch-manifest.json": "4f0aecfdc053704d725c7e56c64bad6a542a3184a3922d0dc81b5f78fe3a2511",
+    "main-affected-batch-recipe.sh": "662e0a67b651e6aef20ef3282b1b1562994e47be6027e02dfb8bd9f16534b02d",
+    "membership.tsv": "6e5abdea213501c3e883c03ccc5a12f710e6f5379fad94026c92f2d8f1c0d83a",
+    "selector-argv.txt": "5ba94b1f12f9f45f3cee5fe36c6f703ed0389d60a12643713df4cad039e9a758",
+    "source-manifest.json": "8a5856585fc75cc9e03646b319634cfd0e387119d8455610bef451cef8108c45",
+    "submit-input.env": "becd6e99db07c8ee07da69417adec9f87c42fe449fde0e78cf218b336bce61a9"
+  },
+  "current_source_files": {
+    "astrid/sdk/timeline/_selected_param_authority.py": "86f4c4154ecb4e2dd26770a04c35c6285e67c067621e628e2cb0026bafdfcfdf",
+    "tests/editing_conformance/test_commit_runtime_m1.py": "a95ee868774b20b093c015eef40b48a12f695ddaa9c06d6f1a8b8329b2092776",
+    "tests/editing_conformance/test_commit_runtime_occurrence_media.py": "482d87db620fe482c3f993dfa416de93972f1a6d53d757f52595e236d790e285",
+    "tests/editing_conformance/test_commit_runtime_parent_auto_completion.py": "be1e54226f86500f0ffd864c62db11ea18a55dcc1c8e5c6f85b94fe4bdf8ced1",
+    "tests/editing_conformance/test_commit_runtime_parent_media.py": "9d79b56977e4e7c92d36ba49fde1a39ebde1822b3e1c0e9a4c5f3d5764bd5b4e",
+    "tests/editing_conformance/test_commit_runtime_shared_inverse.py": "ad4156b53c3ed96e034ff289c16411e57168f920f248b36e9b290b41af490806",
+    "tests/editing_conformance/test_native_batch_ingress.py": "1c6cbd9b10d452b1a4893600a4dbaa68517adc8868c140a4441a819cd9e18669",
+    "tests/editing_conformance/test_native_sheet_ordinary_runtime.py": "e001ccb91bc88807e77a86e753ff90713698b5ad85e2c4811398f61df112cad4",
+    "tests/editing_conformance/test_native_word_anchor.py": "ab07f5b9cda3a42d0c9273917b46d9486c39b453b979d2ad5d39df5528d4179f",
+    "tests/editing_conformance/test_next_command_cohort_runtime.py": "752bdf0d7aed2c2a86d1b8b32d606d5d03d6b77b69dfcaab9718a85a661677e3",
+    "tests/editing_conformance/test_word_binding_recipe.py": "4722227e6e347778bb491f4f660e0a8d049ee074026b23e43de939a65d47142a",
+    "tests/packs/timeline/test_cli_document_commit.py": "e5ffb3e24a6fb13d6b9111d5fceb93ce1d5138eb0b9aaa4bef0b5d70cdef3865",
+    "tests/sdk/test_selected_param_neutral_stage.py": "eeb87d727f6b0f194fd1bbbe74f7b7023c02686520bf29d0822d67fe6a1507d9",
+    "tests/sdk/test_timeline_capture_projection.py": "d9f79e7ea2add6229331948487da8069d0a484ae996b1016f9b1f7aef287abf6",
+    "tests/sdk/test_timeline_numeric_revision_runtime.py": "d715740334878c67d39af14263bc9e14e67c3124fb8d71706616ddac180f41c6",
+    "tests/sdk/test_wc6_completion_capture.py": "d4888723f78c2e37f5a22c7584decc57d16e81c155c429943a3eed38a5c1d0ec"
+  },
+  "external_inputs": {
+    "agent_board": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/agent/STATUS.md",
+      "role": "agent_board",
+      "sha256": "e7b8b1dbdf04d30021542b926470affd4a3d6c38e09e108ebab4bca1205cb116"
+    },
+    "commit_v2": {
+      "path": "/home/user/work/runtime/contract/commit-v2.md",
+      "role": "commit_v2",
+      "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7"
+    },
+    "d86_families": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md",
+      "role": "d86_families",
+      "sha256": "1bf10859a30e94e01c93d0149169a435af9ec959c61c48311493b8558548d2c8"
+    },
+    "matrix_command": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-matrix-2236-final-p4-three-selector.command.sh",
+      "role": "matrix_command",
+      "sha256": "08ce890cc876acf3686b164f7a02dc7064f16fa8fea98914cfbcc25b0169c748"
+    },
+    "matrix_handoff": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-matrix-2236-matrix-handoff.md",
+      "role": "matrix_handoff",
+      "sha256": "3f7b5f6b638f5392f802196e00f1e41a3dd44e35a0489ee313c712af1de14348"
+    },
+    "matrix_pending_env": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-matrix-2236-final-p4-pending-input.env",
+      "role": "matrix_pending_env",
+      "sha256": "a700903f5274c674ecd5ee31d8e0fff0c02f41b538e30afebb2398c3c831c974"
+    },
+    "matrix_report": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-matrix-handoff-2236-report.md",
+      "role": "matrix_report",
+      "sha256": "0608ca392a5b27e376c061de57d4222a3208989dbac752c6b05f164c18cfd320"
+    },
+    "pinned_launcher": {
+      "path": "/home/user/work/agent/tools/p4-d73-pinned-launch.sh",
+      "role": "pinned_launcher",
+      "sha256": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1"
+    },
+    "plan": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md",
+      "role": "plan",
+      "sha256": "bdff6fbea3f6021af1f739eaff0c91650f90a17c34dccb62fb76d120eceb5075"
+    },
+    "rehearsal_actualargv": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-actualargv.txt",
+      "role": "rehearsal_actualargv",
+      "sha256": "5024cb2773850175511a6dcaa791720896415701d96093c6f63544d5ead10033"
+    },
+    "rehearsal_actualargv_body": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-actualargv-body.sh",
+      "role": "rehearsal_actualargv_body",
+      "sha256": "72752364639991afa87987cc767fb3bc6f2eabaf6821a9b92e5a6af3e0307859"
+    },
+    "rehearsal_manifest": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-own-rehearsal.manifest",
+      "role": "rehearsal_manifest",
+      "sha256": "902e628ff2720a5a949e089f1939cb3984f0f544cd2175dfbce351ba1dda682c"
+    },
+    "rehearsal_poison_count": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-core-rehearsal-2234/evidence/poisoned-stub.count",
+      "role": "rehearsal_poison_count",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "rehearsal_poison_exit": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-core-rehearsal-2234/evidence/poisoned-stub.exit",
+      "role": "rehearsal_poison_exit",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    "rehearsal_positive_count": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-core-rehearsal-2234/evidence/positive-stub.count",
+      "role": "rehearsal_positive_count",
+      "sha256": "04d540922ee4c86ca1c488ee84bd212f8ec5deceb222eef48701938a669394c3"
+    },
+    "rehearsal_positive_exit": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-core-rehearsal-2234/evidence/positive-stub.exit",
+      "role": "rehearsal_positive_exit",
+      "sha256": "54183f4323f377b737433a1e98229ead0fdc686f93bab057ecb612daa94002b5"
+    },
+    "rehearsal_zero_body_receipt": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-core-rehearsal-2234-zero-body-receipt.txt",
+      "role": "rehearsal_zero_body_receipt",
+      "sha256": "8eb7695c8e3a8863bd32bf9a55f8b6e5745548ab84bf86d934661c42480fecae"
+    },
+    "rollup_json": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-rehearsal-rollup-return-2320-rehearsal-rollup.json",
+      "role": "rollup_json",
+      "sha256": "6d2bb5d9bd5d6a371e9c6b2f19be5631a0250e0d417fd3a0b35747b3f213d7bc"
+    },
+    "rollup_parity": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-rehearsal-rollup-return-2320-rehearsal-rollup-parity.json",
+      "role": "rollup_parity",
+      "sha256": "e9d4dfcb210413c97bb1913a94661fd3ab393b41d9e41dd214ac18beae97477c"
+    },
+    "rollup_tsv": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-rehearsal-rollup-return-2320-rehearsal-rollup.tsv",
+      "role": "rollup_tsv",
+      "sha256": "5fdefc7f09ec13f2cdf16f3c870a114e9c7097a224afd6127ea8b2f370d87722"
+    }
+  },
+  "pending_final_hashes": [
+    "source files after source join",
+    "four-repo D73 manifest and receipts",
+    "normal MAIN temporary profile"
+  ],
+  "schema": "astrid.timeline.main-affected-batch-hashes/v1",
+  "status": "SOURCE_ONLY_HASHES_OBSERVED_FINAL_PENDING"
+}
