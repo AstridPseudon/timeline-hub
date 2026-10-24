@@ -1,39 +1,42 @@
 #!/usr/bin/env python3
-"""Prepare/run the one original discovery qualification row.
+"""Run the unchanged discovery row through the normal managed test service.
 
-This runner is deliberately fail-closed.  It never falls back to the older
-3b5c child, never adds a source checkout to product imports, and never wraps
-the production caller.  The ``--child`` phase is launched with the exact
-installed child interpreter and uses the existing
-``renderer_execution_environment`` fixture before invoking pytest.
+The worker snapshot owns this runner; the separate bb50 carrier owns the test
+and source bytes. Both entry and installed phases resolve the normal managed
+child registration. A script digest is an accidental-call check, not authority.
 """
 
 from __future__ import annotations
 
 import argparse
 import ast
-import base64
-import csv
 import hashlib
 import importlib.util
 import json
+import marshal
 import os
 import re
 import subprocess
 import sys
+import tarfile
 import time
+import types
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 ORCH = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch")
-WORKER = ORCH / "workers/agt-F-discovery-child-bind-0603"
-EVIDENCE = Path(os.environ.get("DISCOVERY_EVIDENCE", str(WORKER / "evidence")))
-SCRATCH = Path(os.environ.get("DISCOVERY_TMPDIR", os.environ.get("TMPDIR", str(WORKER / "tmpdir"))))
-RECEIPT = ORCH / "tests/provision/venv-agent-child-discovery-bb50-f320.txt"
+SOURCE = Path("/home/user/work/wt/agt-pin-bb50a43c")
+RUNTIME = Path("/home/user/work/wt/rt-pin-f3208b26")
+CHILD_NAME = "venv-agent-child-discovery-bb50-f320"
+RECEIPT = ORCH / "tests/provision" / (CHILD_NAME + ".txt")
+MAKER = ORCH / "bin/make-child-venv"
+MAKER_SHA256 = "c887a1bef4831f2ca5a43372ee28430000b2f20b9d290bffb237f27ffc404ff2"
+SCRATCH = Path(os.environ.get("TMPDIR", "/tmp"))
+EVIDENCE = Path(os.environ.get("DISCOVERY_EVIDENCE", str(SCRATCH / "discovery-evidence")))
 TARGET = "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_unsupported_timelines_with_clip_reasons"
-TARGET_FILE = ROOT / "tests/packs/rendering/test_threejs_backend.py"
-
+TARGET_FILE = SOURCE / TARGET.split("::")[0]
 EXPECTED_AGENT = "bb50a43c915ec00c05c5ee34569a040bab8e817c"
 EXPECTED_RUNTIME = "f3208b26b53c4d7053e5464eaa7c5e15b1505812"
 EXPECTED_PROFILE = "agent-remotion-v3-819acf-1110"
@@ -52,40 +55,45 @@ EXPECTED_TARGET_FUNCTION_SHA256 = "ca54f2d5059bb3b5cca1e8ee43156df6762d3a86739ca
 EXPECTED_TARGET_ASSERTIONS_SHA256 = (
     "087c80d0211e714a7c073d12adb2e260d5de299ba3d251ac31b853562eb6de1e"
 )
-EXPECTED_ORIGIN_SHA256 = {
-    "astrid": "a8374cb5b08949bf8d87d0b44701289c0b2798be1655e125ee0bff8ddda0da33",
-    "astrid-runtime": "9349a54831e0b760c13ca31bdbf2f19cf162abe3960037c74c7623e606fdef3b",
-}
-EXPECTED_CLIENT_FILES = {
-    "astrid_runtime_client/__init__.py": "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2",
-    "astrid_runtime_client/contract_metadata.py": "a79b2e12de96ec8f2c4bf7b6811ccb3538baf18ca839172f7a3d7bf525029aae",
-    "astrid_runtime_client/generated.py": "9b5686c388347108898956c3475b16960e2434d64adcefcc71a26fc269cdd904",
-    "astrid_runtime_client/timeline_commit_types.py": "88c67d9eb650b445b8ad04c9011c1f44f1ec5e9f72a4a733050515de7ec0b616",
-}
 EXPECTED_CLIENT_IDENTITY_SHA256 = "10fc7e77b3ab381df46108b68ead23864d2f679fa069b41d113629efc1135a9e"
-DECLARED_ENV_KEYS = (
-    "HOME",
-    "LANG",
-    "LC_ALL",
+# Values are restricted to this declared environment; never dump ambient secrets.
+SAFE_ENV_KEYS = (
     "PATH",
     "PYTHONPATH",
-    "PYTHONDONTWRITEBYTECODE",
-    "TMPDIR",
     "ASTRID_HOST_EXECUTION_PROFILE",
-    "ASTRID_RUNTIME_CHECKOUT",
-    "ASTRID_RUNTIME_SOURCE_ROOT",
     "ASTRID_REMOTION_PROJECT_DIR",
     "ASTRID_NODE_EXECUTABLE",
     "ASTRID_TEST_NODE_MODULES",
+)
+DECLARED_ENV_KEYS = (
+    *SAFE_ENV_KEYS,
+    "HOME",
+    "LANG",
+    "LC_ALL",
+    "TMPDIR",
+    "PYTHONDONTWRITEBYTECODE",
+    "ASTRID_RUNTIME_CHECKOUT",
+    "ASTRID_RUNTIME_SOURCE_ROOT",
     "ASTRID_TIMELINE_SCHEMA_PYTHONPATH",
 )
-REQUIRED_PRODUCT_FILES = (
-    "astrid/core/pack/discovery.py",
-    "astrid/sdk/rendering.py",
-    "astrid/core/rendering/transport.py",
-    "astrid/core/rendering/registry.py",
-    "astrid/packs/rendering/rendering/renderers/threejs/run.py",
-    "astrid/packs/rendering/rendering/renderers/threejs/renderer.yaml",
+PRODUCT_MODULES = (
+    "astrid",
+    "astrid.sdk.rendering",
+    "astrid.core.pack.discovery",
+    "astrid.core.rendering.registry",
+    "astrid.core.rendering.transport",
+    "astrid.core.rendering.contracts",
+    "astrid.core.rendering.remotion_runtime",
+    "astrid.core.rendering.service",
+    "astrid.core.timeline.banodoco_schema",
+    "astrid.core.subprocess_env",
+    "astrid.packs.rendering.shared.rendering_backend",
+    "astrid.packs.rendering.rendering.renderers.threejs.run",
+    "astrid.packs.rendering.rendering.renderers.remotion.run",
+    "astrid.packs.rendering.actions.render.run",
+    "astrid_runtime_client",
+    "astrid_runtime",
+    "runtime_protocol",
 )
 
 
@@ -97,29 +105,35 @@ def sha(path: Path) -> str:
     return sha_bytes(path.read_bytes())
 
 
-def git(*args: str, cwd: Path = ROOT) -> str:
+def git(*args: str, cwd: Path = SOURCE) -> str:
     return subprocess.check_output(["git", *args], cwd=cwd, text=True).strip()
 
 
-def scrub(text: str) -> str:
-    text = re.sub(
+def write_json(name: str, value: Any) -> None:
+    data = json.dumps(value, indent=2, sort_keys=True, default=str) + "\n"
+    try:
+        EVIDENCE.mkdir(parents=True, exist_ok=True)
+        (EVIDENCE / name).write_text(data, encoding="utf-8")
+    except OSError:
+        # The normal service captures stderr durably even if artifact setup fails.
+        print(name + "=" + data, file=sys.stderr)
+        raise
+
+
+def scrub(value: str) -> str:
+    return re.sub(
         r"(?i)(api[_-]?key|authorization|credential|password|secret|token)\s*[:=]\s*[^\s,;]+",
         r"\1=[redacted]",
-        text,
-    )
-    return text.replace("\x00", "\ufffd")[:65536]
+        value,
+    ).replace("\x00", "\ufffd")[:65536]
 
 
-def write_json(name: str, value: Any) -> None:
-    EVIDENCE.mkdir(parents=True, exist_ok=True)
-    (EVIDENCE / name).write_text(
-        json.dumps(value, indent=2, sort_keys=True, default=str) + "\n",
-        encoding="utf-8",
-    )
-
-
-def error_record(exc: Exception) -> dict[str, str]:
+def error_record(exc: BaseException) -> dict[str, str]:
     return {"type": type(exc).__name__, "message": scrub(str(exc))}
+
+
+def declared(env: dict[str, str]) -> dict[str, str | None]:
+    return {key: env.get(key) for key in DECLARED_ENV_KEYS}
 
 
 def body_facts(path: Path) -> dict[str, Any]:
@@ -130,7 +144,9 @@ def body_facts(path: Path) -> dict[str, Any]:
         if isinstance(node, ast.FunctionDef)
         and node.name == "test_threejs_support_rejects_unsupported_timelines_with_clip_reasons"
     )
-    assertions = [node for node in ast.walk(function) if isinstance(node, ast.Assert)]
+    assertions: list[ast.stmt] = [
+        node for node in ast.walk(function) if isinstance(node, ast.Assert)
+    ]
     reasons_calls = sorted(
         node.lineno
         for node in ast.walk(function)
@@ -165,131 +181,184 @@ def body_facts(path: Path) -> dict[str, Any]:
 
 
 def source_facts() -> dict[str, Any]:
-    return {
-        "agent_head": git("rev-parse", "HEAD"),
-        "agent_status": git("status", "--porcelain", "--untracked-files=all").splitlines(),
-        "runtime_head": git("rev-parse", "HEAD", cwd=Path("/home/user/work/wt/rt-pin-f3208b26")),
-        "runtime_status": git(
-            "status",
-            "--porcelain",
-            "--untracked-files=all",
-            cwd=Path("/home/user/work/wt/rt-pin-f3208b26"),
-        ).splitlines(),
-        "discovery_sha256": sha(ROOT / "astrid/core/pack/discovery.py"),
-        "discovery_test_sha256": sha(ROOT / "tests/packs/test_pack_discovery_single_scan.py"),
-        "target_body": body_facts(TARGET_FILE),
-    }
-
-
-def require_clean_sources() -> None:
-    for name, repo in (
-        ("Agent", ROOT),
-        ("Runtime", Path("/home/user/work/wt/rt-pin-f3208b26")),
+    facts: dict[str, Any] = {"runner_sha256": sha(Path(__file__)), "runner_root": str(ROOT)}
+    for name, root, commit in (
+        ("agent", SOURCE, EXPECTED_AGENT),
+        ("runtime", RUNTIME, EXPECTED_RUNTIME),
     ):
-        status = git("status", "--porcelain", "--untracked-files=all", cwd=repo)
-        if status:
-            raise RuntimeError(f"{name} source tree is dirty: {status.splitlines()[:5]}")
-
-
-def canonical_origin_sha(value: dict[str, Any], child: Path, expected_root: Path) -> str:
-    info = value.get("dir_info", value.get("directory_info", {}))
-    canonical = {
-        "dir_info": info,
-        "url": "file://<candidate-child>/" + expected_root.relative_to(child).as_posix(),
+        if root != root.resolve(strict=True):
+            raise RuntimeError(f"{name} source carrier is linked")
+        head = git("rev-parse", "HEAD", cwd=root)
+        status = git("status", "--porcelain", "--untracked-files=all", cwd=root)
+        facts[name] = {"root": str(root), "head": head, "status": status}
+        if head != commit or status:
+            raise RuntimeError(f"{name} source carrier mismatch or dirty tree: {facts[name]}")
+    target = body_facts(TARGET_FILE)
+    expected = {
+        "file_sha256": EXPECTED_TARGET_FILE_SHA256,
+        "function_ast_sha256": EXPECTED_TARGET_FUNCTION_SHA256,
+        "assertions_ast_sha256": EXPECTED_TARGET_ASSERTIONS_SHA256,
+        "assertion_count": 9,
+        "support_invocation_count": 10,
+        "transition_invocation": 6,
     }
-    return sha_bytes(json.dumps(canonical, sort_keys=True, separators=(",", ":")).encode())
+    if any(target[key] != value for key, value in expected.items()):
+        raise RuntimeError("original body hash/assertions/support/transition changed")
+    for relative, wanted in (
+        ("astrid/core/pack/discovery.py", EXPECTED_DISCOVERY_SHA256),
+        ("tests/packs/test_pack_discovery_single_scan.py", EXPECTED_DISCOVERY_TEST_SHA256),
+    ):
+        if sha(SOURCE / relative) != wanted:
+            raise RuntimeError(f"pinned source hash changed: {relative}")
+    facts["body"] = target
+    return facts
 
 
-def reviewed_run_gate(reviewed_harness_sha256: str | None, gate: Path | None) -> dict[str, str]:
-    actual = sha(Path(__file__).resolve())
-    if reviewed_harness_sha256 != actual:
-        raise RuntimeError("reviewed harness SHA is required and must match this source")
-    if gate is None or not gate.is_file():
-        raise RuntimeError("manager run gate is required for the original body")
-    lines = gate.read_text(encoding="utf-8").splitlines()
-    entries: dict[str, str] = {}
-    for line in lines:
-        if "=" not in line:
-            raise RuntimeError("manager run gate has a malformed line")
-        key, value = line.split("=", 1)
-        if key in entries or not value:
-            raise RuntimeError("manager run gate has duplicate or empty entries")
-        entries[key] = value
-    if entries.get("status") != "approved":
-        raise RuntimeError("manager run gate is not approved")
-    if entries.get("mode") != "run":
-        raise RuntimeError("manager run gate is not for the original run")
-    if entries.get("harness_sha256") != actual:
-        raise RuntimeError("manager run gate does not name this reviewed harness")
-    return {"path": str(gate), "sha256": sha(gate), "harness_sha256": actual}
+def load_store() -> Any:
+    spec = importlib.util.spec_from_file_location("bench_store", ORCH / "bin/bench_store.py")
+    if spec is None or spec.loader is None:
+        raise RuntimeError("normal bench store helper unavailable")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module.Store("/home/user/work/bench-store", ORCH / "tests")
 
 
-def resolve_child() -> Path:
-    if not RECEIPT.is_file():
-        raise RuntimeError(f"candidate receipt is unavailable: {RECEIPT}")
-    text = RECEIPT.read_text(encoding="utf-8")
-    if "status=passed" not in text.splitlines():
-        raise RuntimeError("candidate receipt is not a passed normal-queue result")
-    origin = next(
-        (line.split("=", 1)[1] for line in text.splitlines() if line.startswith("astrid=")),
-        None,
+def client_identity() -> str:
+    files = git(
+        "ls-tree",
+        "-r",
+        "--name-only",
+        EXPECTED_RUNTIME,
+        "packages/python/astrid_runtime_client/",
+        cwd=RUNTIME,
+    ).splitlines()
+    rows = [
+        path
+        + "="
+        + sha_bytes(
+            subprocess.check_output(["git", "show", EXPECTED_RUNTIME + ":" + path], cwd=RUNTIME)
+        )
+        for path in files
+    ]
+    identity = "\n".join(rows)
+    if not rows or sha_bytes(identity.encode()) != EXPECTED_CLIENT_IDENTITY_SHA256:
+        raise RuntimeError("immutable Runtime client tuple mismatch")
+    return identity
+
+
+def resolve_child() -> tuple[Path, dict[str, Any]]:
+    entries = load_store().registration_entries(CHILD_NAME)
+    children = [entry for entry in entries if entry["component"] == "child"]
+    if len(children) != 1:
+        raise RuntimeError("normal registration must bind exactly one child")
+    entry = children[0]
+    child = Path(entry["path"])
+    identity = {
+        "agent_sha": EXPECTED_AGENT,
+        "backend_sha": EXPECTED_RUNTIME,
+        "client_tuple": dict(line.split("=", 1) for line in client_identity().splitlines()),
+    }
+    if entry["identity"] != identity or child != child.resolve(strict=True):
+        raise RuntimeError("managed child tuple/root mismatch")
+    report = (child / ".provision-report").read_bytes()
+    if RECEIPT.read_bytes() != report:
+        raise RuntimeError("normal transactional provision receipt differs from child")
+    lines = report.decode().splitlines()
+    for key, value in (
+        ("status", "passed"),
+        ("agent_sha", EXPECTED_AGENT),
+        ("runtime_sha", EXPECTED_RUNTIME),
+        ("runtime_client_identity_sha256", EXPECTED_CLIENT_IDENTITY_SHA256),
+    ):
+        if [line for line in lines if line.startswith(key + "=")] != [key + "=" + value]:
+            raise RuntimeError(f"duplicate/missing/wrong provision receipt identity: {key}")
+    return child, {"entry": entry, "receipt": str(RECEIPT), "receipt_sha256": sha_bytes(report)}
+
+
+def installed_custody(child: Path) -> dict[str, Any]:
+    # Reuse the normal maker's full verifier, including all Agent/Runtime RECORD
+    # rows, immutable snapshots, complete module sets and unowned-file rejection.
+    # No caller-selected path, synthetic RECORD, installation or provisioning.
+    if sha(MAKER) != MAKER_SHA256:
+        raise RuntimeError("normal maker verifier changed; review runner binding")
+    source = MAKER.read_text()
+    start, end = "# STORE_VERIFY_BEGIN\n", "# STORE_VERIFY_END\n"
+    if source.count(start) != 1 or source.count(end) != 1:
+        raise RuntimeError("normal maker verifier boundaries are ambiguous")
+    verifier = source.split(start, 1)[1].split(end, 1)[0]
+    subprocess.run(
+        [
+            "/usr/bin/python3",
+            "-I",
+            "-",
+            str(child),
+            client_identity(),
+            str(SOURCE),
+            EXPECTED_AGENT,
+            str(RUNTIME),
+            EXPECTED_RUNTIME,
+            "/home/user/work",
+            "/usr/bin/python3.13",
+        ],
+        input=verifier,
+        text=True,
+        check=True,
+        timeout=180,
     )
-    if not origin:
-        raise RuntimeError("candidate receipt has no installed astrid origin")
-    marker = "/lib/python3.13/site-packages/astrid/"
-    if marker not in origin:
-        raise RuntimeError(f"candidate origin is not a Python 3.13 site package: {origin}")
-    child = Path(origin.split(marker, 1)[0])
-    if "child-" not in child.name or not child.is_dir():
-        raise RuntimeError(f"candidate child root is invalid: {child}")
-    return child
-
-
-def declared(env: dict[str, str]) -> dict[str, str | None]:
-    return {key: env.get(key) for key in DECLARED_ENV_KEYS}
-
-
-def initial_before() -> dict[str, Any]:
-    return {
-        "status": "before-execution",
-        "runner_sha256": sha(Path(__file__).resolve()),
-        "root": str(ROOT),
-        "source": source_facts(),
-        "expected": {
-            "agent": EXPECTED_AGENT,
-            "runtime": EXPECTED_RUNTIME,
-            "client_identity_sha256": EXPECTED_CLIENT_IDENTITY_SHA256,
-            "profile": EXPECTED_PROFILE,
-            "node": str(NODE),
-            "node_version": EXPECTED_NODE_VERSION,
-            "composition_archive_sha256": EXPECTED_COMPOSITION_ARCHIVE_SHA256,
-            "package_lock_sha256": EXPECTED_PACKAGE_LOCK_SHA256,
-            "origin_sha256": EXPECTED_ORIGIN_SHA256,
-            "discovery_sha256": EXPECTED_DISCOVERY_SHA256,
-            "discovery_test_sha256": EXPECTED_DISCOVERY_TEST_SHA256,
-            "target_file_sha256": EXPECTED_TARGET_FILE_SHA256,
-            "target_function_sha256": EXPECTED_TARGET_FUNCTION_SHA256,
-            "target_assertions_sha256": EXPECTED_TARGET_ASSERTIONS_SHA256,
-        },
-        "receipt": {
-            "path": str(RECEIPT),
-            "exists": RECEIPT.is_file(),
-            "sha256": sha(RECEIPT) if RECEIPT.is_file() else None,
-        },
+    for marker, expected in (
+        (".astrid-source-commit", EXPECTED_AGENT),
+        (".astrid-runtime-source-commit", EXPECTED_RUNTIME),
+        (".astrid-runtime-client-identity", client_identity()),
+    ):
+        if (child / marker).read_text().rstrip("\n") != expected:
+            raise RuntimeError(f"installed marker mismatch: {marker}")
+    site = child / "lib/python3.13/site-packages"
+    metadata = {
+        str(path.relative_to(child)): sha(path)
+        for pattern in ("*.dist-info/RECORD", "*.dist-info/direct_url.json")
+        for path in site.glob(pattern)
     }
+    caches = {}
+    for package in ("astrid", "astrid_runtime_client", "astrid_runtime", "runtime_protocol"):
+        for cache in (site / package).rglob("*.pyc"):
+            # PYTHONDONTWRITEBYTECODE prevents writes, not reads. The maker
+            # permits unhashed pip bytecode; verify its code against the pinned
+            # source as well, without changing Python's normal startup policy.
+            source_path = Path(importlib.util.source_from_cache(str(cache)))
+            data = cache.read_bytes()
+            if (
+                not source_path.is_file()
+                or len(data) < 16
+                or data[:4] != importlib.util.MAGIC_NUMBER
+                or int.from_bytes(data[4:8], "little") & ~3
+            ):
+                raise RuntimeError(f"invalid installed product cache: {cache}")
+            code = marshal.loads(data[16:])
+            if not isinstance(code, types.CodeType):
+                raise RuntimeError(f"installed cache is not module bytecode: {cache}")
+            optimization = re.search(r"\.opt-([12])\.pyc$", cache.name)
+            compiled = compile(
+                source_path.read_bytes(),
+                code.co_filename,
+                "exec",
+                dont_inherit=True,
+                optimize=int(optimization[1]) if optimization else 0,
+            )
+            if code != compiled:
+                raise RuntimeError(f"installed cached code differs from pinned source: {cache}")
+            caches[str(cache.relative_to(child))] = sha_bytes(data)
+    return {"maker_sha256": sha(MAKER), "metadata": metadata, "bytecode": caches}
 
 
 def child_environment(child: Path) -> dict[str, str]:
-    shim = SCRATCH / "import-shim"
-    if shim.exists() and not shim.is_dir():
-        raise RuntimeError(f"private import shim is not a directory: {shim}")
+    shim = SCRATCH / "discovery-import-shim"
     shim.mkdir(parents=True, exist_ok=True)
     for name in ("tests", "scripts"):
-        link = shim / name
-        target = ROOT / name
+        link, target = shim / name, SOURCE / name
         if link.exists() or link.is_symlink():
             if link.resolve() != target.resolve():
-                raise RuntimeError(f"import shim link mismatch: {link}")
+                raise RuntimeError(f"private test import shim mismatch: {link}")
         else:
             link.symlink_to(target, target_is_directory=True)
     return {
@@ -298,11 +367,12 @@ def child_environment(child: Path) -> dict[str, str]:
         "LC_ALL": "C.UTF-8",
         "PYTHONDONTWRITEBYTECODE": "1",
         "TMPDIR": str(SCRATCH),
+        "DISCOVERY_EVIDENCE": str(EVIDENCE),
         "PYTHONPATH": str(shim),
         "PATH": f"{child / 'bin'}:{NODE.parent}:/usr/bin:/bin",
         "ASTRID_HOST_EXECUTION_PROFILE": "installed",
-        "ASTRID_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-f3208b26",
-        "ASTRID_RUNTIME_SOURCE_ROOT": "/home/user/work/wt/rt-pin-f3208b26",
+        "ASTRID_RUNTIME_CHECKOUT": str(RUNTIME),
+        "ASTRID_RUNTIME_SOURCE_ROOT": str(RUNTIME),
         "ASTRID_REMOTION_PROJECT_DIR": str(PROFILE),
         "ASTRID_NODE_EXECUTABLE": str(NODE),
         "ASTRID_TEST_NODE_MODULES": str(PROFILE / "node_modules"),
@@ -310,388 +380,359 @@ def child_environment(child: Path) -> dict[str, str]:
     }
 
 
-def verify_record(site: Path) -> dict[str, Any]:
-    records = sorted(site.glob("astrid-*.dist-info/RECORD"))
-    if len(records) != 1:
-        raise RuntimeError(f"expected one astrid RECORD, found {records}")
-    rows = {row[0]: row for row in csv.reader(records[0].read_text().splitlines()) if row}
-    checked: dict[str, Any] = {}
-    for relative, expected in EXPECTED_CLIENT_FILES.items():
-        row = rows.get(relative)
-        path = site / relative
-        if row is None or not path.is_file():
-            raise RuntimeError(f"client RECORD row/file missing: {relative}")
-        actual = sha(path)
-        if actual != expected:
-            raise RuntimeError(f"client identity mismatch: {relative}")
-        wanted = "sha256=" + base64.urlsafe_b64encode(bytes.fromhex(actual)).decode().rstrip("=")
-        if row[1] != wanted:
-            raise RuntimeError(f"client RECORD digest mismatch: {relative}")
-        checked[relative] = {"sha256": actual, "record": row}
-    return {"path": str(records[0]), "sha256": sha(records[0]), "checked": checked}
-
-
-def verify_direct_urls(child: Path, site: Path) -> dict[str, Any]:
-    direct: dict[str, Any] = {}
-    for name, suffix in (("astrid", "/agent"), ("astrid-runtime", "/runtime")):
-        matches = sorted(site.glob(f"{name.replace('-', '_')}-*.dist-info/direct_url.json"))
-        if len(matches) != 1:
-            raise RuntimeError(f"expected one {name} direct_url.json, found {matches}")
-        value = json.loads(matches[0].read_text(encoding="utf-8"))
-        url = value.get("url", "")
-        expected_root = (
-            child / ".child-venv-source-venv-agent-child-discovery-bb50-f320" / suffix[1:]
-        )
-        if (
-            not url.startswith("file://")
-            or Path(url.removeprefix("file://")).resolve() != expected_root.resolve()
-        ):
-            raise RuntimeError(f"{name} direct_url does not bind the discovery child source: {url}")
-        info = value.get("dir_info", value.get("directory_info", {}))
-        if info.get("editable", False):
-            raise RuntimeError(f"{name} is editable")
-        origin_sha256 = canonical_origin_sha(value, child, expected_root)
-        if origin_sha256 != EXPECTED_ORIGIN_SHA256[name]:
-            raise RuntimeError(f"{name} direct_url identity mismatch")
-        direct[name] = {
-            "path": str(matches[0]),
-            "sha256": sha(matches[0]),
-            "canonical_sha256": origin_sha256,
-            "value": value,
-        }
-    return direct
-
-
-def run_child(
-    mode: str,
-    reviewed_harness_sha256: str | None,
-    manager_run_gate: Path | None,
-) -> int:
-    child = Path(sys.prefix).resolve()
+def import_origins(child: Path) -> dict[str, str]:
     site = child / "lib/python3.13/site-packages"
-    preflight: dict[str, Any] = {
-        "status": "started",
-        "argv": sys.argv,
-        "mode": mode,
-        "cwd": os.getcwd(),
-        "env_keys": sorted(os.environ),
-        "declared_env": declared(dict(os.environ)),
-        "timings": {"start_monotonic": time.monotonic()},
+    origins = {}
+    for name in PRODUCT_MODULES:
+        spec = importlib.util.find_spec(name)
+        if spec is None or spec.origin is None:
+            raise RuntimeError(f"missing production import: {name}")
+        path = Path(spec.origin).resolve(strict=True)
+        if not path.is_relative_to(site):
+            raise RuntimeError(f"production import escaped installed child: {name}={path}")
+        origins[name] = str(path)
+    shared = importlib.util.find_spec("banodoco_timeline_schema")
+    expected_shared = SCHEMA_SITE / "banodoco_timeline_schema/__init__.py"
+    if shared is None or shared.origin is None or Path(shared.origin).resolve() != expected_shared:
+        raise RuntimeError("shared schema import differs from the fixed profile schema root")
+    origins["banodoco_timeline_schema"] = str(expected_shared)
+    return origins
+
+
+def profile_facts() -> dict[str, Any]:
+    archive = (
+        PROFILE
+        / "artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz"
+    )
+    lock = PROFILE / "package-lock.json"
+    if (
+        sha(archive) != EXPECTED_COMPOSITION_ARCHIVE_SHA256
+        or sha(lock) != EXPECTED_PACKAGE_LOCK_SHA256
+    ):
+        raise RuntimeError("fixed Composition archive/profile lock mismatch")
+    package_manifest = json.loads((PROFILE / "package.json").read_text())
+    locked_root = json.loads(lock.read_text())["packages"][""]
+    for key in ("dependencies", "devDependencies"):
+        if package_manifest.get(key, {}) != locked_root.get(key, {}):
+            raise RuntimeError(f"profile package manifest differs from fixed lock: {key}")
+    if package_manifest["dependencies"]["@banodoco/timeline-composition"] != "file:" + str(
+        archive.relative_to(PROFILE)
+    ):
+        raise RuntimeError("profile does not select the pinned Composition archive")
+    composition = PROFILE / "node_modules/@banodoco/timeline-composition"
+    installed = {}
+    with tarfile.open(archive) as package:
+        for member in package:
+            if member.isdir():
+                continue
+            relative = Path(member.name)
+            if not member.isfile() or relative.parts[0] != "package" or ".." in relative.parts:
+                raise RuntimeError("unexpected Composition archive member")
+            relative = Path(*relative.parts[1:])
+            content = package.extractfile(member)
+            if content is None or (composition / relative).read_bytes() != content.read():
+                raise RuntimeError(f"installed Composition differs from pinned archive: {relative}")
+            installed[str(relative)] = sha(composition / relative)
+    if {str(p.relative_to(composition)) for p in composition.rglob("*") if p.is_file()} != set(
+        installed
+    ):
+        raise RuntimeError("installed Composition has extra/missing files")
+    if (
+        subprocess.check_output([str(NODE), "--version"], text=True).strip()
+        != EXPECTED_NODE_VERSION
+    ):
+        raise RuntimeError("fixed Node20 version mismatch")
+    # Resolve peers from the actual installed Composition, not from its manifest
+    # alone or from an arbitrary caller override.
+    script = """const fs=require('fs'), path=require('path'), {createRequire}=require('module');
+const root=process.argv[1], req=createRequire(root+'/package.json');
+const own=req('@banodoco/timeline-composition/package.json');
+const from=createRequire(req.resolve('@banodoco/timeline-composition/package.json'));
+const lock=JSON.parse(fs.readFileSync(root+'/package-lock.json'));
+function identity(resolve,name,want) {
+ const entry=resolve.resolve(name.startsWith('@types/') ? name+'/package.json' : name);
+ let dir=path.dirname(entry), file;
+ while(dir!==path.dirname(dir)) { const p=path.join(dir,'package.json');
+  if(fs.existsSync(p)&&JSON.parse(fs.readFileSync(p)).name===name){file=p;break;}
+  dir=path.dirname(dir);
+ }
+ if(!file)throw Error('missing package '+name);
+ const pkg=JSON.parse(fs.readFileSync(file));
+ if(pkg.version!==want||!fs.realpathSync(file).startsWith(fs.realpathSync(root)+'/node_modules/'))
+   throw Error('package identity/root mismatch '+name);
+ return {version:pkg.version,entry:fs.realpathSync(entry),package:fs.realpathSync(file)};
+}
+const rows={root:{},peers:{}};
+for(const name of Object.keys(lock.packages[''].dependencies))
+ rows.root[name]=identity(req,name,lock.packages['node_modules/'+name].version);
+for(const [name,want] of Object.entries(own.peerDependencies)) {
+ rows.peers[name]=identity(from,name,want);
+ if(rows.peers[name].entry!==identity(req,name,want).entry)
+  throw Error('Composition resolves another peer '+name);
+}
+console.log(JSON.stringify(rows));"""
+    peers = json.loads(subprocess.check_output([str(NODE), "-e", script, str(PROFILE)], text=True))
+    return {
+        "path": str(PROFILE),
+        "node": str(NODE),
+        "node_version": EXPECTED_NODE_VERSION,
+        "lock_sha256": sha(lock),
+        "archive_sha256": sha(archive),
+        "composition_files": installed,
+        "peers": peers,
+        "schema_files": {
+            str(path.relative_to(SCHEMA_SITE)): sha(path)
+            for path in (SCHEMA_SITE / "banodoco_timeline_schema").rglob("*")
+            if path.is_file()
+        },
     }
-    write_json("preflight.json", preflight)
+
+
+def custody(child: Path, installed: bool) -> dict[str, Any]:
+    resolved, provision = resolve_child()
+    if child != resolved:
+        raise RuntimeError("managed child changed during execution")
+    facts: dict[str, Any] = {
+        "source": source_facts(),
+        "provision": provision,
+        "installed": installed_custody(child),
+    }
+    if installed:
+        facts["origins"] = import_origins(child)
+        facts["profile"] = profile_facts()
+    return facts
+
+
+def run_installed(mode: str, evidence: dict[str, Any]) -> int:
+    from astrid.core.rendering import transport
+    from astrid.core.subprocess_env import build_child_subprocess_env
+    from tests.packs.conftest import renderer_execution_environment
+
+    fixture = renderer_execution_environment.__wrapped__()
+    next(fixture)
     try:
-        if git("rev-parse", "HEAD") != EXPECTED_AGENT:
-            raise RuntimeError("author source is not the expected bb50 candidate")
-        if (
-            git("rev-parse", "HEAD", cwd=Path("/home/user/work/wt/rt-pin-f3208b26"))
-            != EXPECTED_RUNTIME
-        ):
-            raise RuntimeError("Runtime source is not the expected f320 candidate")
-        require_clean_sources()
-        if not site.is_dir() or not Path(sys.executable).is_relative_to(child):
-            raise RuntimeError("child interpreter is not the candidate installed venv")
-        if (child / ".astrid-source-commit").read_text().strip() != EXPECTED_AGENT:
-            raise RuntimeError("installed child source marker mismatch")
-        if (child / ".astrid-runtime-source-commit").read_text().strip() != EXPECTED_RUNTIME:
-            raise RuntimeError("installed child Runtime marker mismatch")
-        if sha(ROOT / "astrid/core/pack/discovery.py") != EXPECTED_DISCOVERY_SHA256:
-            raise RuntimeError("discovery source hash changed")
-        if (
-            sha(ROOT / "tests/packs/test_pack_discovery_single_scan.py")
-            != EXPECTED_DISCOVERY_TEST_SHA256
-        ):
-            raise RuntimeError("discovery test source hash changed")
-        target = body_facts(TARGET_FILE)
-        if (
-            target["file_sha256"] != EXPECTED_TARGET_FILE_SHA256
-            or target["function_ast_sha256"] != EXPECTED_TARGET_FUNCTION_SHA256
-            or target["assertions_ast_sha256"] != EXPECTED_TARGET_ASSERTIONS_SHA256
-            or target["assertion_count"] != 9
-            or target["support_invocation_count"] != 10
-            or target["transition_invocation"] != 6
-        ):
-            raise RuntimeError("original qualification body/hash/count guard failed")
-        preflight["target_body_before"] = target
-        preflight["source_files"] = {}
-        for relative in REQUIRED_PRODUCT_FILES:
-            source = ROOT / relative
-            installed = site / relative
-            if source.read_bytes() != installed.read_bytes():
-                raise RuntimeError(f"source/install product bytes differ: {relative}")
-            preflight["source_files"][relative] = {
-                "source_sha256": sha(source),
-                "installed_sha256": sha(installed),
-            }
-        names = (
-            "astrid",
-            "astrid.sdk.rendering",
-            "astrid.core.pack.discovery",
-            "astrid.core.rendering.registry",
-            "astrid.core.rendering.transport",
-            "astrid.packs.rendering.rendering.renderers.threejs.run",
-            "astrid_runtime_client",
-            "runtime_protocol",
-        )
-        origins = {
-            name: str(importlib.util.find_spec(name).origin)
-            for name in names
-            if importlib.util.find_spec(name) is not None
+        caller = dict(os.environ)
+        projected = build_child_subprocess_env(base=caller, parent=caller)
+        actual = transport._build_environment(None)
+        if actual != projected or "ASTRID_HOST_EXECUTION_PROFILE" in actual:
+            raise RuntimeError("production transport environment projection changed")
+        evidence["production_environment"] = {
+            "caller": declared(caller),
+            "projected": declared(projected),
+            "actual": declared(actual),
         }
-        if set(origins) != set(names) or any(
-            not Path(origin).resolve().is_relative_to(site.resolve()) for origin in origins.values()
-        ):
-            raise RuntimeError(f"product import escaped installed site-packages: {origins}")
-        preflight["import_origins"] = origins
-        preflight["record"] = verify_record(site)
-        preflight["direct_urls"] = verify_direct_urls(child, site)
-        identity = (child / ".astrid-runtime-client-identity").read_text(encoding="utf-8").strip()
-        if sha_bytes(identity.encode()) != EXPECTED_CLIENT_IDENTITY_SHA256:
-            raise RuntimeError("runtime client identity marker mismatch")
-        archive = (
-            PROFILE
-            / "artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz"
-        )
-        if sha(archive) != EXPECTED_COMPOSITION_ARCHIVE_SHA256:
-            raise RuntimeError("Remotion composition archive changed")
-        if sha(PROFILE / "package-lock.json") != EXPECTED_PACKAGE_LOCK_SHA256:
-            raise RuntimeError("Remotion graph package lock changed")
-        if not (PROFILE / "node_modules").is_dir() or not NODE.is_file():
-            raise RuntimeError("qualified Remotion graph or Node is unavailable")
-        node_version = subprocess.check_output([str(NODE), "--version"], text=True).strip()
-        if node_version != EXPECTED_NODE_VERSION:
-            raise RuntimeError(f"Node version mismatch: {node_version}")
-        preflight["profile"] = {
-            "path": str(PROFILE),
-            "node": str(NODE),
-            "node_version": node_version,
-            "node_modules": str(PROFILE / "node_modules"),
-            "composition_archive_sha256": sha(archive),
-            "package_lock_sha256": sha(PROFILE / "package-lock.json"),
-        }
-
-        from astrid.core.rendering import transport
-        from astrid.core.subprocess_env import build_child_subprocess_env
-        from tests.packs.conftest import renderer_execution_environment
-
-        fixture = renderer_execution_environment.__wrapped__()
-        next(fixture)
-        try:
-            caller_env = dict(os.environ)
-            projected = build_child_subprocess_env(base=caller_env, parent=caller_env)
-            actual = transport._build_environment(None)
-            if actual != projected:
-                raise RuntimeError(
-                    "transport environment differs from production policy projection"
-                )
-            if "ASTRID_HOST_EXECUTION_PROFILE" in actual:
-                raise RuntimeError("caller HOSTPROFILE was not intentionally dropped")
-            preflight["fixture"] = {
-                "caller_declared_env": declared(caller_env),
-                "projected_declared_env": declared(projected),
-                "actual_declared_env": declared(actual),
-                "caller_env_keys": sorted(caller_env),
-                "projected_env_keys": sorted(projected),
-                "actual_env_keys": sorted(actual),
-                "dropped_caller_hostprofile": "ASTRID_HOST_EXECUTION_PROFILE" not in actual,
-            }
-        finally:
-            try:
-                next(fixture)
-            except StopIteration:
-                pass
-        preflight["status"] = "passed"
-        preflight["timings"]["end_monotonic"] = time.monotonic()
-        if mode == "preflight":
-            write_json("preflight.json", preflight)
-            return 0
-        preflight["run_gate"] = reviewed_run_gate(reviewed_harness_sha256, manager_run_gate)
-        write_json("preflight.json", preflight)
-        (EVIDENCE / "body-started").write_text(
-            time.strftime("%Y-%m-%dT%H:%M:%SZ"), encoding="utf-8"
-        )
-        command = [
-            str(Path(sys.executable)),
-            "-P",
-            "-m",
-            "pytest",
-            "--import-mode=importlib",
-            "-q",
-            "-oaddopts=",
-            "-pno:cacheprovider",
-            "--timeout=45",
-            TARGET,
-        ]
-        started = time.monotonic()
-        completed = subprocess.run(
-            command,
-            cwd=ROOT,
-            env=dict(os.environ),
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        finished = time.monotonic()
-        result = {
-            "status": "passed" if completed.returncode == 0 else "failed",
-            "argv": command,
-            "cwd": str(ROOT),
-            "env_keys": sorted(os.environ),
-            "returncode": completed.returncode,
-            "timings": {
-                "start_monotonic": started,
-                "end_monotonic": finished,
-                "elapsed": finished - started,
-            },
-            "stdout": {
-                "sha256": sha_bytes(completed.stdout.encode()),
-                "text": scrub(completed.stdout),
-            },
-            "stderr": {
-                "sha256": sha_bytes(completed.stderr.encode()),
-                "text": scrub(completed.stderr),
-            },
-            "result_paths": [str(path) for path in SCRATCH.rglob("*support-result.json")],
-        }
-        write_json("result.json", result)
-        return completed.returncode
-    except Exception as exc:  # noqa: BLE001 - retain durable failure evidence
-        preflight["status"] = "failed"
-        preflight["failure"] = {"type": type(exc).__name__, "message": scrub(str(exc))}
-        preflight["timings"]["end_monotonic"] = time.monotonic()
-        write_json("preflight.json", preflight)
-        write_json(
-            "result.json",
-            {
-                "status": "blocked-before-body",
-                "argv": None,
-                "cwd": str(ROOT),
-                "env_keys": sorted(os.environ),
-                "returncode": 2,
-                "failure": preflight["failure"],
-                "timings": preflight["timings"],
-                "stdout": {"sha256": None, "text": ""},
-                "stderr": {"sha256": None, "text": ""},
-                "result_paths": [],
-            },
-        )
-        return 2
     finally:
         try:
-            before = json.loads((EVIDENCE / "before.json").read_text(encoding="utf-8"))
-        except Exception as exc:  # noqa: BLE001 - after evidence must survive setup failures
-            before = {"source": {}, "failure": error_record(exc)}
-        try:
-            source_after = source_facts()
-            target_after = body_facts(TARGET_FILE)
-        except Exception as exc:  # noqa: BLE001 - after evidence must survive setup failures
-            source_after = {"failure": error_record(exc)}
-            target_after = {"failure": error_record(exc)}
-        post = {
-            "status": "after-execution",
-            "source": source_after,
-            "target_body_after": target_after,
-            "target_body_unchanged": target_after == before.get("source", {}).get("target_body"),
-            "runtime_status": git(
-                "status",
-                "--porcelain",
-                "--untracked-files=all",
-                cwd=Path("/home/user/work/wt/rt-pin-f3208b26"),
-            ).splitlines(),
-            "body_started": (EVIDENCE / "body-started").is_file(),
-        }
-        write_json("postflight.json", post)
-
-
-def run_parent(
-    mode: str,
-    reviewed_harness_sha256: str | None,
-    manager_run_gate: Path | None,
-) -> int:
-    try:
-        before = initial_before()
-    except Exception as exc:  # noqa: BLE001 - before evidence must survive setup failures
-        before = {"status": "before-execution-failed", "failure": error_record(exc)}
-    write_json("before.json", before)
-    started = time.monotonic()
-    child = None
-    completed: subprocess.CompletedProcess[str] | None = None
-    failure: dict[str, str] | None = None
-    command: list[str] | None = None
-    environment: dict[str, str] = {}
-    gate: dict[str, str] | None = None
-    try:
-        if mode == "run":
-            gate = reviewed_run_gate(reviewed_harness_sha256, manager_run_gate)
-        else:
-            gate = None
-        child = resolve_child()
-        environment = child_environment(child)
-        command = [
-            str(child / "bin/python"),
-            "-P",
-            str(Path(__file__).resolve()),
-            "--child",
-            mode,
-        ]
-        if reviewed_harness_sha256 is not None:
-            command.extend(["--reviewed-harness-sha256", reviewed_harness_sha256])
-        if manager_run_gate is not None:
-            command.extend(["--manager-run-gate", str(manager_run_gate)])
-        completed = subprocess.run(
-            command,
-            cwd=ROOT,
-            env=environment,
-            capture_output=True,
-            text=True,
-            check=False,
+            next(fixture)
+        except StopIteration:
+            pass
+    if mode == "preflight":
+        return 0
+    command = [
+        str(Path(sys.executable)),
+        "-P",
+        "-m",
+        "pytest",
+        "--import-mode=importlib",
+        "-q",
+        "-oaddopts=",
+        "-pno:cacheprovider",
+        "--timeout=45",
+        "--basetemp=" + str(SCRATCH / "pytest"),
+        "--junitxml=" + str(EVIDENCE / "junit.xml"),
+        TARGET,
+    ]
+    evidence["body_argv"] = command
+    write_json("installed-before.json", evidence)
+    with subprocess.Popen(
+        command,
+        cwd=SOURCE,
+        env=dict(os.environ),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    ) as process:
+        evidence.update(
+            body_status="UNKNOWN", pytest_started_monotonic=time.monotonic(), pytest_pid=process.pid
         )
-        returncode = completed.returncode
-    except Exception as exc:  # noqa: BLE001 - retain durable failure evidence
-        returncode = 2
-        failure = {"type": type(exc).__name__, "message": scrub(str(exc))}
-    finally:
-        finished = time.monotonic()
-        after = {
-            "status": "completed" if failure is None else "blocked-before-child",
-            "child": str(child) if child else None,
-            "argv": command if child else None,
-            "cwd": str(ROOT),
-            "env_keys": sorted(environment) if child else [],
-            "returncode": returncode,
-            "timings": {
-                "start_monotonic": started,
-                "end_monotonic": finished,
-                "elapsed": finished - started,
-            },
-            "stdout": (
-                {"sha256": sha_bytes(completed.stdout.encode()), "text": scrub(completed.stdout)}
-                if completed
-                else {"sha256": None, "text": ""}
-            ),
-            "stderr": (
-                {"sha256": sha_bytes(completed.stderr.encode()), "text": scrub(completed.stderr)}
-                if completed
-                else {"sha256": None, "text": ""}
-            ),
-            "failure": failure,
-            "manager_gate": gate if failure is None and mode == "run" else None,
-        }
-        write_json("after.json", after)
-    return returncode
+        write_json("installed-started.json", evidence)
+        stdout, stderr = process.communicate()
+        evidence.update(
+            body_exit=process.returncode,
+            stdout=scrub(stdout),
+            stderr=scrub(stderr),
+            pytest_finished_monotonic=time.monotonic(),
+        )
+    print(scrub(stdout), end="")
+    print(scrub(stderr), end="", file=sys.stderr)
+    return process.returncode
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("mode", nargs="?", choices=("run", "preflight"), default="run")
-    parser.add_argument("--child", action="store_true")
-    parser.add_argument("--reviewed-harness-sha256")
-    parser.add_argument("--manager-run-gate", type=Path)
-    args = parser.parse_args()
-    EVIDENCE.mkdir(parents=True, exist_ok=True)
-    if args.child:
-        SCRATCH.mkdir(parents=True, exist_ok=True)
-        return run_child(args.mode, args.reviewed_harness_sha256, args.manager_run_gate)
-    return run_parent(args.mode, args.reviewed_harness_sha256, args.manager_run_gate)
+    started = time.monotonic()
+    # This label only keeps early child failures from overwriting parent evidence;
+    # resolve_child() below is always required before any installed execution.
+    phase = "parent" if Path(sys.prefix) == Path("/usr") else "installed"
+    code = 2
+    child = None
+    before = None
+    record: dict[str, Any] = {
+        "argv": sys.argv,
+        "cwd": os.getcwd(),
+        "environment": declared(dict(os.environ)),
+        "six_safe_environment": {key: os.environ.get(key) for key in SAFE_ENV_KEYS},
+        "source": None,
+        "provision": None,
+        "origins": {"status": "NOTCHECKED"},
+        "custody_before": None,
+        "body_status": "NOTRUN",
+        "junit": {"status": "NOTRUN", "path": None},
+        "result_paths": [],
+        "started_monotonic": started,
+        "expected": {
+            "agent": EXPECTED_AGENT,
+            "agent_carrier": str(SOURCE),
+            "runtime": EXPECTED_RUNTIME,
+            "runtime_carrier": str(RUNTIME),
+            "candidate_name": CHILD_NAME,
+            "provision_receipt": str(RECEIPT),
+            "client_identity_sha256": EXPECTED_CLIENT_IDENTITY_SHA256,
+            "target": TARGET,
+            "target_file_sha256": EXPECTED_TARGET_FILE_SHA256,
+            "function_sha256": EXPECTED_TARGET_FUNCTION_SHA256,
+            "assertions_sha256": EXPECTED_TARGET_ASSERTIONS_SHA256,
+            "assertions": 9,
+            "support_calls": 10,
+            "transition_invocation": 6,
+            "watchdog_seconds": 45,
+            "profile": str(PROFILE),
+            "node": str(NODE),
+            "node_version": EXPECTED_NODE_VERSION,
+            "composition_archive_sha256": EXPECTED_COMPOSITION_ARCHIVE_SHA256,
+            "package_lock_sha256": EXPECTED_PACKAGE_LOCK_SHA256,
+        },
+    }
+    try:
+        # Write a minimal before record before parsing or accessing any dependency.
+        write_json(phase + "-before.json", record)
+        parser = argparse.ArgumentParser()
+        parser.add_argument("mode", choices=("run", "preflight"))
+        parser.add_argument("--reviewed-harness-sha256", required=True)
+        # These are row declarations only; custody always uses the constants and
+        # normal store, never caller-provided equality as source authority.
+        parser.add_argument("--source-carrier", choices=(str(SOURCE),), required=True)
+        parser.add_argument("--runtime-carrier", choices=(str(RUNTIME),), required=True)
+        parser.add_argument("--candidate-name", choices=(CHILD_NAME,), required=True)
+        parser.add_argument("--managed-profile", choices=(str(PROFILE),), required=True)
+        args = parser.parse_args()
+        if args.reviewed_harness_sha256 != sha(Path(__file__)):
+            raise RuntimeError("reviewed script digest mismatch (accidental-call check)")
+        record["source"] = source_facts()
+        write_json(phase + "-before.json", record)
+        child, provision = resolve_child()
+        record["provision"] = provision
+        installed = Path(sys.prefix).resolve() == child
+        phase = "installed" if installed else "parent"
+        before = custody(child, installed)
+        record["custody_before"] = before
+        record["source"] = before["source"]
+        record["origins"] = before.get("origins", {"status": "child-not-started"})
+        write_json(phase + "-before.json", record)
+        if installed:
+            wanted_env = child_environment(child)
+            if dict(os.environ) != wanted_env:
+                raise RuntimeError(
+                    "installed execution environment differs from fixed normal route"
+                )
+            code = run_installed(args.mode, record)
+        else:
+            environment = child_environment(child)
+            command = [
+                str(child / "bin/python"),
+                "-P",
+                str(Path(__file__).resolve()),
+                *sys.argv[1:],
+            ]
+            record["child_argv"] = command
+            record["child_cwd"] = str(SOURCE)
+            record["child_environment"] = declared(environment)
+            write_json("parent-before.json", record)
+            completed = subprocess.run(
+                command, cwd=SOURCE, env=environment, capture_output=True, text=True, check=False
+            )
+            code = completed.returncode
+            record.update(stdout=scrub(completed.stdout), stderr=scrub(completed.stderr))
+            print(scrub(completed.stdout), end="")
+            print(scrub(completed.stderr), end="", file=sys.stderr)
+            result = EVIDENCE / "installed-result.json"
+            if result.is_file():
+                installed_result = json.loads(result.read_text())
+                for key in ("body_status", "body_exit", "body_argv", "junit", "result_paths"):
+                    if key in installed_result:
+                        record[key] = installed_result[key]
+            else:
+                raise RuntimeError("installed child did not produce a result record")
+    except (Exception, SystemExit) as exc:  # noqa: BLE001 - durable setup failure evidence
+        record["failure"] = error_record(exc)
+        print(json.dumps(record["failure"]), file=sys.stderr)
+        code = 2
+    finally:
+        try:
+            if child is not None:
+                after = custody(child, phase == "installed")
+                record["custody_after"] = after
+                if before is None or after != before:
+                    raise RuntimeError(
+                        "post-body source/provision/install/profile/import custody changed"
+                    )
+            else:
+                record["source_after"] = source_facts()
+        except Exception as exc:  # noqa: BLE001 - postcheck failure must change exit status
+            record["postcheck_failure"] = error_record(exc)
+            code = 2
+        if phase == "installed":
+            try:
+                record["result_paths"] = [
+                    str(path) for path in SCRATCH.rglob("*support-result.json")
+                ]
+                junit = EVIDENCE / "junit.xml"
+                if junit.is_file():
+                    record["junit"] = {"path": str(junit), "sha256": sha(junit)}
+                    cases = ET.parse(junit).findall(".//testcase")
+                    targets = [case for case in cases if case.get("name") == TARGET.split("::")[1]]
+                    ran_target = len(targets) == 1
+                    record["body_status"] = "NOTRUN"
+                    if ran_target:
+                        case = targets[0]
+                        errors = case.findall("error")
+                        if case.find("skipped") is None and not any(
+                            "failed on setup" in error.get("message", "") for error in errors
+                        ):
+                            record["body_status"] = "UNKNOWN" if errors else "FINISHED"
+                    record["junit"]["target_recorded"] = ran_target
+                elif record["body_status"] != "NOTRUN":
+                    record["junit"] = {"status": "unavailable", "path": str(junit)}
+                if code == 0 and record["body_status"] not in ("FINISHED", "NOTRUN"):
+                    raise RuntimeError("pytest success without a completed original target record")
+                if code == 0 and "body_argv" in record and record["body_status"] != "FINISHED":
+                    raise RuntimeError(
+                        "original target was not executed; a skip/setup error is not a pass"
+                    )
+            except Exception as exc:  # noqa: BLE001 - preserve partial artifacts on every failure
+                record["artifact_failure"] = error_record(exc)
+                code = 2
+        record.update(
+            exit_code=code, finished_monotonic=time.monotonic(), elapsed=time.monotonic() - started
+        )
+        print(f"discovery {phase}: exit={code} body={record['body_status']} evidence={EVIDENCE}")
+        try:
+            write_json(phase + "-after.json", record)
+            write_json(phase + "-result.json", record)
+        except OSError as exc:
+            code = 2
+            record.update(exit_code=2, evidence_failure=error_record(exc))
+            print("discovery-evidence-failure=" + json.dumps(record, default=str), file=sys.stderr)
+    return code
 
 
 if __name__ == "__main__":
