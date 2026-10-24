@@ -1,1 +1,1 @@
-LEAD 2026-10-24T01:18Z | up | P1 GO stands; App merged A4 commits (aca94f, 7135ac722a), more A4 work in flight | P2 run 10973 and P3 run 14249 failed (exit 2), App cause worker 0105 checking, no repeat | disk 8.5G, nothing to free
+LEAD 2026-10-24T01:50Z | up | P1 GO stands | P2 and P3 cause named: pass native, history, bootstrap, then fail at outbox wait; blocked on Runtime fix, one run held | A4 merging on App | disk 8.5G
