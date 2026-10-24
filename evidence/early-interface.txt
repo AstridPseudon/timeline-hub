@@ -1,0 +1,122 @@
+F externaltrust: SOURCE assessment (blocked on Runtime counterpart)
+
+Agent base: b61cebe8e0d6e062f15da922f3812d7b6718f12e.
+Inspected Runtime: /home/user/work/wt/rt-pin-8ea0766f,
+8ea0766f5e9fb23cea26c7398770a8aaac06b258.
+Also inspected current /home/user/work/runtime at
+458595850c354f4403dabc58a72b98bebbc2c3a3: no external-pack source handoff
+was found there either. Its verified_host_launch.py is byte-identical to the
+qualified pin (SHA256 1368a001ee635ea4b634d03687d68a50862afe9b57ab946656ed9e3bf0fe2bd6).
+No failed 07b/3d86 changes have been ported.
+
+Existing ordinary production handoff:
+- astrid/sdk/host_bootstrap.py:1411 reads active_source_inventory() locally;
+  inventory_identity is calculated from that result, then supplied to the host.
+- astrid/core/pack/source_setup.py:212 permits ASTRID_SOURCE_STATE to select
+  the local state file. active_source_inventory():422 verifies local checkout
+  state; source_inventory_identity():439 hashes locally supplied records.
+  Neither operation obtains a Runtime-held admission or source capture.
+- generic_host.py:5235 accepts source_inventory_identity as a constructor
+  string; :5278 stores it. CLI :13763/:13827 forwards the argument.
+  _startup_identity_attestation():5187 only copies it into a diagnostic.
+- GenericPackHost.admit():6010 returns ordinary mappings containing locally
+  discovered definition/capability_digest/source_digest/source_root/
+  source_roots/python_path_roots. run_task():8997 independently constructs
+  the same local network_admission; :9639 passes it to invoke_capability().
+  No Runtime-owned managed-source inventory/root/file map enters this path.
+- invoke_capability():8416 rehashes roots from that mapping. :8439 accepts
+  Python roots from the mapping; :8470 writes the mutable JSON request file.
+  generic_host_worker.py:99 reads that JSON, checks the supplied digests,
+  then dispatches. Equal path/payload/digest does not establish provenance.
+
+What Runtime actually authenticates:
+- runtime_protocol/service.py:create_task():5379 admits capability digest,
+  execution request, project and data input objects. It rejects caller-supplied
+  execution_binding (:5400), and reserves Runtime delegation fields (:5389).
+  These identify tasks, attempts, placement and data; they do not bind a managed
+  external executable root, repository revision or per-file source inventory.
+- register_executor():6785 authenticates executor identity, but source_digest,
+  dependency_digest and source_epoch are body fields (:6816, :6864), not an
+  independent Runtime measurement of managed executable source.
+- remote_worker_deployment.py:331/:417 accepts source_inventory_identity as
+  a string; project_launch():848 projects it to CLI. This adds no provenance.
+
+Existing retained loader authority (different scope):
+- runtime_protocol/verified_host_launch.py:HostLaunchVerifier.verify():289
+  requires an injected authority_resolver plus protected_materialization.
+  It retains reviewed import inventories, source components and a lease;
+  claim():363 consumes its opaque result once. MappedImports/_SourceLoader
+  (:521/:571) compile bytes read against retained pins, avoiding a later
+  source reopen between hash and compilation.
+- That authority selects/starts the GenericHost installation itself. Its
+  private payload contains mapping/host_argv, not a task-specific external
+  pack admission. launch_from_binding():636 installs the finder in the host;
+  invoke_capability() launches a separate worker without this retained map.
+  There is no existing private parameter here for an opaque Runtime-issued
+  managed-pack capture. Extending the mapping with caller/local inventory
+  would invent the exact trust forbidden by this task.
+- TrustedLocalHostLaunchVerifier (:475) explicitly disclaims immutable-source
+  and TOCTOU guarantees; its local observation is not a protection lease.
+- Agent executor/runner.py:334/:350 has _PackSourceLoader/_PackSourceFinder
+  for Python actions under an opaque module prefix. It reads mutable paths at
+  import time (:347), after the mapping-based admission check (:406). The
+  prefix isolates names; it is not a Runtime-issued source capture, and this
+  action loader is not the legacy external orchestrator's module loader.
+
+Missing ordinary Runtime counterpart, requiring owner action:
+An existing authenticated Runtime task/attempt handoff must retain and deliver
+the authorized external pack identity (including acquisition/revision and root
+identity, not only equal bytes/path), its complete executable inventory and
+captured bytes or verified immutable snapshot, with collision and ancestor
+identity enforcement until consumption. The child must consume those exact
+bytes through the existing loader; no ambient PYTHONPATH or newly asserted CLI
+inventory can substitute. This is a description of the missing authority,
+not a proposed public schema, client field, new API, or guard waiver.
+
+Assessment: no such external-source handoff is present in the inspected normal
+caller, task admission, host launch or worker input. A generic_host.py-only
+change cannot supply independent Runtime provenance while preserving the
+installed external positive. Do not port the failed ancestry or add blanket -I:
+-I ignores PYTHONPATH and the worker currently depends on it in source mode.
+Escalate the missing private Runtime counterpart before authorizing product work.
+
+Bounded verification on this fresh base:
+- Qualified pytest environment from the brief, with timeout 45, selected only:
+  tests/test_generic_host.py::test_admitted_definition_and_source_are_fenced_before_child_dispatch
+  tests/test_generic_host.py::test_external_pack_import_root_is_fenced_before_direct_command
+  tests/core/execution/test_generic_host_actions_v3.py::test_whole_pack_mutation_invalidates_admission
+  tests/core/execution/test_generic_host_actions_v3.py::test_admission_identity_is_required
+  Result: 12 passed in 35.24s.
+- Independent /tmp/w-218b61fdb3/external_trust_probe.py intercepted only
+  spawn_task_scope (no child, socket, fake Runtime authority or installed
+  positive claim). All six source-mode probes reached launch: forged foreign
+  roots plus recomputed digest; descendant module symlink; top-level astrid,
+  astrid_runtime_client and runtime_protocol packages; source mutation in the
+  launch callback after validation. This demonstrates missing host refusal,
+  not successful execution/shadowing in an installed child.
+- Origins: Agent generic_host and astrid_runtime_client from this worktree;
+  runtime_protocol from /home/user/work/wt/rt-pin-8ea0766f.
+- generic_host.py SHA256 (current and git show HEAD):
+  fc020cc2f6256642203fc4d36a9bb661265fa9a9589d386a46963528d11791d3.
+  Product/test/client/pin/artifact git diff against HEAD is empty. No blanket
+  -I change or new code exists to explain/introduce the prior 60-case failure.
+- Scoped Ruff: 101 diagnostics. Private Mypy: 139 diagnostics. Both exit 1,
+  with exact parent diagnostic identities compared (Ruff via parent stdin,
+  Mypy via a byte-identical git-show parent file under TMPDIR and a separate
+  private cache). Added=0, removed=0 in both; no clean quality claim is made.
+- vendor_lock.py check runtime.lock.json --producer rt-pin-34eac004: PASS.
+  artifact_manifest.py --check: PASS. git diff --check: PASS.
+- No full/cohort/original-positive retry, installation, provisioning, bench,
+  shared dependency mutation, public API/schema/client/pin or test edit.
+
+Qualification handback:
+The existing c886 child is the old Agent c36/Runtime abd47 tuple, not this
+base or a candidate implementation. No candidate installed tuple is requested
+until the missing Runtime authority and source implementation are reviewed.
+Then the dispatcher must supply the supported installed candidate Agent wheel,
+matching Runtime producer and truthful reviewed release/profile/import mapping
+that includes the admitted managed source. Qualify the unchanged original
+external orchestrator positive through its normal caller, with exact candidate
+wheel/RECORD/profile/host/runtime/module origins. Reusing c886 while labeling it
+candidate code, adding PYTHONPATH under -I, or hand-installing an overlay would
+not provide that evidence. Existing original full-suite failures remain open.
