@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T18:27:22Z | dispatcher heartbeat 1s | live 3 (sol 0, luna 3, other 0) | busy30 18 | status age 0m -->
-# app board, 2026-10-24T18:27Z
+<!-- app | 2026-10-24T18:30:40Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 19 | status age 0m -->
+# app board, 2026-10-24T18:31Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -22,7 +22,7 @@
 | P-D73-path | Independent whole-path challenge | Luna | Actual20321 | merged | app-D73-service-snapshot-path-1739 | Finalized target4a12 caused parent mismatch. Exact app-pin target fixes source boundary. | Read only |
 | P2-next | Current pinned eight-case tour | Service; Luna | Preflight6282 PASS | review | Actual22847; verdict1809 | Original0 PASS,3 FAIL,5 NOTRUN; readiness1 PASS. Element pending, popup owner422, parent missing label. | App587316; Agentf4d6 |
 | P2-22847-verdict | Correct original counts and headline | Luna | Return1809 PASS | merged | app-P2-22847-headline-correction-1819 | Corrected flat1801 published:0 PASS,3 FAIL,5 NOTRUN; readiness1 PASS separate. Immutable reports retained. | Read only |
-| P2-22847-parent | Restore authoritative committed status | Luna | Author1819 PASS109/types/lint | review | app-P2-parent-status-review-1825 | Real canonical/ordinary head status via Player mailbox; pending/refusal never falsely committed. Strict original unchanged. | Source1819 |
+| P2-22847-parent | Restore authoritative committed status | Luna | Independent1825 PASS109/types/lint | merged | app-P2-parent-status-restore-1819 | Exact41c0 reviewed; authoritative paired label/config, canonical drafts local; protected6 unchanged. | Source41c0 |
 | P2-22847-path | Independent full-path challenge | Luna | Actual22847 | merged | app-P2-22847-wholepath-1801 | Parent has no production label; popup owner guard fails closed. No product cause attributed to element. | Read only |
 | P2-phase-full | Qualify full-tour observer activation | Luna | Author1806 and smoke1819 PASS | merged | app-P2-full-phase-activation-1806 | Real normal CLI accepted commit proves provider,receipt,response;19 controls/lint/protected6 PASS. | Source1806 |
 | P2-popup-owner | New authenticated shot-owner refusal | Runtime peer | Actual22847 | blocked:runtime | Peer1802; Runtime source owner | New422 invalid_records after b318; strict owner validation must be traced/fixed by producer owner. | Runtime327da |
@@ -31,7 +31,7 @@
 | P3-history | Strict authenticated history ABI | Luna; review | Actual10033 | merged | Author1620; review1626 | 23 controls, types/lint PASS; missing/wrong ABI rejected. | 9f4ec08f56 |
 | P3-D70 | Exact semantic setup intent | Luna; review | D70 approved | merged | Author1655; review1643 | Exact a646 spec, virtual review match; original body/reset/tail retained. | aaddaf12d2 |
 | P3-recovery-source | Mounted automatic recovery census | HARD Sol PLAN A2 | Actual26907 | merged | Sol1713; verdict1718 | No product defect established; production auto-recovers. 266 mounted plus3 fault checks/types/lint PASS. | Source unchanged |
-| P3-D75 | Retain both recovery mounts and exact counts | Luna | D75b author1819 controlsPASS | review | app-P3-D75b-exact-review-1826 | Exact observed A,A,A,A,B and forwarded A,A,B; all identities/order strict. Both mounts retained. | Source1819 |
+| P3-D75 | Retain both recovery mounts and exact counts | Luna | Review1826 FAIL | doing | app-P3-D75b-controls-return-1831 | First return fixes committed baseline/whitespace and adds real mounted recovery controls;5/3 not yet proven. | Resume1819 |
 | P3-D75-path | Challenge full restart route | Luna | Second proposal failure | merged | app-P3-D75-door-wholepath-1750 | Browser door stable; original P1 holds across restart. Verify door realm plus direct new-daemon history. | Read only |
 | P-D73-submit | One-command guarded submission | Luna | D73 addendum | merged | app-D73-one-command-submit-1757 | 18 mocked controls/types/lint PASS; one preflight then one original, same4pins, 124 resume without duplicate. | 5d7550ca7d |
 | F-install-schema | Strict tuple/schema alignment | Luna | D62 and D65 | merged | Pin1545; fixture1548; proof1553 | Two skew,four updater,two schema controls PASS. Installer regression closed. | 6d74fdd88a |
@@ -42,9 +42,9 @@
 | D74-retention | Post-verdict output release | Lead kit | Trigger below9GB | gated:disk<9G | Lead peer1759 | Disk9.6GB; deferred guarded route. All22847 outputs preserved for D78 handoff. | No source edits |
 
 | P2-D78 | Exact retained element request handoff | Luna | D78 owner1816 | merged | app-P2-D78-retained-request-handoff-1819 | Published json/md;4459 exact body bytes,e58a09dc;trace anchor and redaction validated. Runtime replay owns cause. | Evidence only |
-| D79 | One live-edit robustness smoke | Luna | Spare slot only; non-gating | merging | app-D79-live-edit-smoke-1821 | One case authored,18 controls/types/lint PASS; body held behind P3 priority. No original edits. | Source1821 |
+| D79 | One live-edit robustness smoke | Luna | Spare slot only; non-gating | gated:P3-priority | app-D79-live-edit-smoke-1821 | One case authored,18 controls/types/lint PASS; body held behind P3 priority. No original edits. | Source1821 |
 
-| P3-D75-clean | Clean same-blob home packet and ledger | Luna | Protected review1826 | doing | app-P3-D75b-clean-home-packet-1827 | Exact reviewed spec only; root control artifacts retained in normal design. Merge held pending PASS. | Current source |
+| P3-D75-clean | Clean same-blob home packet and ledger | Luna | Failed source controls1826 | gated:review-PASS | app-P3-D75b-clean-home-packet-1827 | Source held; no original changed at home. Reuse after genuine corrected PASS only. | Current source |
 
 Integration: App5d7550 includes one-command guarded submit037a8 over587316, with D73 snapshot admission6c7c over255f, with real Runtime CLI phase bootstrap over D73fd74, current popup provenance924140, D69c3d79, approved D70aaddaf, parent reads/audited restorations and frozen upstream3881. No new upstream refresh for gating.
 
@@ -56,7 +56,7 @@ Blockers: Runtime execution — D78 exact retained element request published1823
 Blockers: Final cut — Current P2/P3 nine core cases remain unqualified; Runtime coordinates final suites and ZIP.
 Next ready: consume parent and D75b reviews; normal merge on PASS; P3 through one-command pinned preflight submit immediately. D79 smoke body later behind gate priority.
 
-live 3 / cap 6; ready-undispatched 0. Luna1825 parent review, Luna1826 D75b review, Luna1827 clean same-blob source packet. D79 body deferred behind P3 priority.
+live 2 / cap 6; ready-undispatched 0. Luna1831 D75b controls return, Luna1827 held packet winding down. Parent home830252. D79 body behind P3 priority.
 
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
 Disk: About9.4GB free. Guarded recycle removed one ended clean non-KEEP tree; other finished trees already recycled. Deferred kit routes gated below9GB; prior refused routes stopped.
