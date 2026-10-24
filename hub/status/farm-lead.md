@@ -1,1 +1,1 @@
-2026-10-24T05:56:52Z procs: hub-syncd dispatcher run-manager up; board 05:55Z; workers running 0; disk 18G free; issues: none (Agent full-farm checkpoint agent-full-farm-1024050351-26511 running, tested head 9cd3dbe8)
+2026-10-24T06:57:43Z procs: hub-syncd dispatcher run-manager up; board 06:48Z; workers running 0; disk 18G free; issues: none (idle; Agent checkpoint delivered 05:58Z; F-FINAL waits on P1 GO, deletions, freeze)
