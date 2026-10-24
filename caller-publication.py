@@ -1,4 +1,4 @@
-"""Prepare the exact final Timeline P2/P3 caller for offline qualification.
+"""Prepare the exact final Timeline P3 caller for offline qualification.
 
 The generated rows live only in ``TMPDIR``. This artifact reads the two
 installed rows, binds their source/body guards to the reviewed final App,
@@ -23,10 +23,19 @@ ORCH = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/
 APP = Path(__file__).resolve().parent
 SUITES_FILE = ORCH / "tests/suites.conf"
 SUITES = ("full-e2e-three-products", "ap2-P3-gate5-h6-0348")
+P2_SUITE = "full-e2e-three-products"
+P3_SUITE = "ap2-P3-gate5-h6-0348"
 
 QUALIFIED_APP = "66354161950d1e747965c095ea97b881d2592708"
 QUALIFIED_TREE = "9a37265f0286128df7e6240a9df9877d959474af"
 QUALIFIED_PARENT = "b2380539c5545661954d2794976631312ee1d939"
+P3_SOURCE = "82cb5c0005df7abe0fcb8673f7be192a6c9e9183"
+P3_TREE = "6fa0a0f32b212dbdae7c2ecaca1813de68907e67"
+P3_PARENTS = (
+    "182c65242d8228232cde32961fd1948056dd841a",
+    "f56128d540ff96013c9532d79f3f4e767beba820",
+)
+P3_PARENT = " ".join(P3_PARENTS)
 SOURCE_BASE = "f90e708b379145ac456924742cc51c187ed6e0c6"
 AGENT = "079580ca46af77e0292d49dc34386b25c8391f99"
 RUNTIME = "37eb6c7bdb79dcae2523883e66b5cea5be721ffd"
@@ -57,21 +66,9 @@ WIRE_FIELDS = (
 )
 
 REQUIRED_FINAL_SOURCE_PATHS = (
-    "src/tools/video-editor/commands/media.ts",
-    "src/tools/video-editor/commands/media.test.ts",
     "tests/e2e/local/three-products.spec.ts",
     "tests/e2e/local/support/gate5-reset-precondition.ts",
     "tests/e2e/local/support/gate5-reset-precondition.test.mjs",
-    "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
-    "tests/e2e/local/three-products.p2-tour.spec.ts",
-    "tests/e2e/local/three-products.p2-popup.spec.ts",
-    "tests/e2e/local/three-products.p1-chain.spec.ts",
-    "tests/e2e/local/support/p2-document-oracle.ts",
-    "tests/e2e/local/support/p2-document-oracle.test.mjs",
-    "tests/e2e/local/support/p2-original-owner-ready.ts",
-    "tests/e2e/local/support/p2-original-owner-ready.test.mjs",
-    "tests/e2e/local/support/p2-semantic-oracle.ts",
-    "tests/e2e/local/support/p2-semantic-oracle.test.mjs",
 )
 
 
@@ -128,84 +125,185 @@ def receipt_value(receipt: dict[str, object], key: str) -> object:
     return None
 
 
+def receipt_parents(receipt: dict[str, object]) -> tuple[str, ...]:
+    value = receipt.get("parents")
+    if isinstance(value, list):
+        return tuple(str(parent) for parent in value)
+    parent = receipt_value(receipt, "parent")
+    return tuple(str(parent).split()) if parent is not None else ()
+
+
+def validate_receipt(
+    manifest: dict[str, object],
+    manifest_name: Path,
+    identity: dict[str, object],
+    role: str,
+) -> tuple[Path, dict[str, object]]:
+    candidate = Path(str(manifest["source_receipt"]))
+    if candidate.is_symlink():
+        raise RuntimeError(f"PREPARED: {role} receipt must not be a symlink")
+    path = candidate.resolve()
+    try:
+        path.relative_to(ORCH)
+    except ValueError as exc:
+        raise RuntimeError(f"PREPARED: {role} receipt is outside the dispatcher area") from exc
+    if path == manifest_name.resolve() or not path.is_file():
+        raise RuntimeError(f"PREPARED: {role} receipt is unavailable")
+    expected_hash = manifest["source_receipt_sha256"]
+    if digest(path.read_bytes()) != expected_hash:
+        raise RuntimeError(f"PREPARED: {role} receipt hash does not match explicit input")
+    receipt = source_receipt(path)
+    for key, expected in identity.items():
+        if key == "parent" and isinstance(receipt.get("parents"), list):
+            observed = " ".join(receipt_parents(receipt))
+        else:
+            observed = str(receipt_value(receipt, key))
+        if observed != str(expected):
+            raise RuntimeError(f"PREPARED: {role} receipt identity mismatch: {key}")
+    if receipt_parents(receipt) != tuple(str(parent) for parent in str(identity["parent"]).split()):
+        raise RuntimeError(f"PREPARED: {role} receipt parent list mismatch")
+    if receipt_value(receipt, "review") not in (None, "PASS"):
+        raise RuntimeError(f"PREPARED: {role} receipt review is not PASS")
+    return path, receipt
+
+
+def validate_dispatcher_checkout(
+    manifest: dict[str, object],
+    manifest_name: Path,
+    *,
+    role: str,
+    expected_source: str,
+    expected_tree: str,
+    expected_parent: str,
+    require_single_parent: bool,
+) -> tuple[Path, dict[str, str], Path]:
+    worker = str(manifest["worker"])
+    if not worker or "/" in worker or worker in {".", ".."}:
+        raise RuntimeError(f"PREPARED: {role} worker identity is invalid")
+    meta_path = ORCH / "workers" / worker / "meta"
+    if not meta_path.is_file() or meta_path.is_symlink():
+        raise RuntimeError(f"PREPARED: {role} dispatcher metadata is unavailable")
+    meta = key_value_file(meta_path)
+    branch = str(manifest["branch"])
+    if (
+        meta.get("name") != worker
+        or meta.get("repo") != "app"
+        or meta.get("base") != manifest["base"]
+        or meta.get("base_sha") != manifest["base_sha"]
+        or branch != f"tl/{worker}"
+    ):
+        raise RuntimeError(f"PREPARED: {role} does not match dispatcher branch/base identity")
+    checkout_path = Path(str(manifest["checkout"]))
+    if checkout_path.is_symlink():
+        raise RuntimeError(f"PREPARED: {role} checkout must not be a symlink")
+    root = checkout_path.resolve()
+    if root == APP or not root.is_dir():
+        raise RuntimeError(f"PREPARED: {role} must be a separate proof worker")
+    if Path(meta.get("worktree", "")).resolve() != root:
+        raise RuntimeError(f"PREPARED: {role} checkout is not the dispatched worker")
+    if any((root / name).exists() for name in ("caller-publication.py", "caller-custody.json")):
+        raise RuntimeError(f"refusing caller-artifact {role}")
+    if git(root, "status", "--porcelain=v1", "--untracked-files=all").strip():
+        raise RuntimeError(f"PREPARED: {role} target is not clean")
+    if git(root, "symbolic-ref", "--quiet", "--short", "HEAD").decode().strip() != branch:
+        raise RuntimeError(f"PREPARED: {role} checkout is not on the dispatched branch")
+    base_commit = git(root, "rev-parse", f"{manifest['base']}^{{commit}}").decode().strip()
+    if not base_commit.startswith(str(manifest["base_sha"])):
+        raise RuntimeError(f"PREPARED: {role} base does not match dispatcher identity")
+    if git(root, "rev-parse", "HEAD").decode().strip() != expected_source:
+        raise RuntimeError(f"PREPARED: {role} HEAD does not match selected source")
+    if git(root, "show", "-s", "--format=%T", expected_source).decode().strip() != expected_tree:
+        raise RuntimeError(f"PREPARED: {role} tree does not match selected source")
+    parent = git(root, "show", "-s", "--format=%P", expected_source).decode().strip()
+    if parent != expected_parent:
+        raise RuntimeError(f"PREPARED: {role} parent list does not match selected source")
+    if require_single_parent and len(parent.split()) != 1:
+        raise RuntimeError(f"PREPARED: {role} must be a single-parent snapshot")
+    receipt_path, _ = validate_receipt(
+        manifest,
+        manifest_name,
+        {
+            "worker": worker,
+            "branch": branch,
+            "base": manifest["base"],
+            "base_sha": manifest["base_sha"],
+            "source": expected_source,
+            "tree": expected_tree,
+            "parent": expected_parent,
+            "checkout": root,
+        },
+        role,
+    )
+    return root, meta, receipt_path
+
+
 def final_source_input() -> dict[str, object]:
     manifest_name = os.environ.get("TIMELINE_FINAL_SOURCE_MANIFEST")
     if not manifest_name:
         raise RuntimeError("PREPARED: final reviewed source tuple is not available")
     manifest = json.loads(Path(manifest_name).read_text())
     required = (
-        "checkout", "source", "tree", "parent", "review", "worker", "branch",
-        "base", "base_sha", "source_receipt", "source_receipt_sha256",
+        "checkout", "source", "tree", "parent", "review", "proof_release", "worker", "branch",
+        "base", "base_sha", "source_receipt", "source_receipt_sha256", "service_snapshot",
     )
     if any(key not in manifest for key in required):
         raise RuntimeError("PREPARED: final source manifest is incomplete")
     if manifest["review"] != "PASS":
         raise RuntimeError("PREPARED: independent final-source review is not PASS")
-    worker = str(manifest["worker"])
-    if not worker or "/" in worker or worker in {".", ".."}:
-        raise RuntimeError("PREPARED: final source worker identity is invalid")
-    meta_path = ORCH / "workers" / worker / "meta"
-    if not meta_path.is_file() or meta_path.is_symlink():
-        raise RuntimeError("PREPARED: dispatcher worker metadata is unavailable")
-    meta = key_value_file(meta_path)
-    if (
-        meta.get("name") != worker
-        or meta.get("repo") != "app"
-        or meta.get("base") != manifest["base"]
-        or meta.get("base_sha") != manifest["base_sha"]
-        or manifest["branch"] != f"tl/{worker}"
-    ):
-        raise RuntimeError("PREPARED: final source does not match dispatcher branch/base identity")
-    checkout_path = Path(str(manifest["checkout"]))
-    if checkout_path.is_symlink():
-        raise RuntimeError("PREPARED: final source checkout must not be a symlink")
-    root = checkout_path.resolve()
-    if root == APP or not root.is_dir():
-        raise RuntimeError("PREPARED: final source must be a separate read-only proof worker")
-    if Path(meta.get("worktree", "")).resolve() != root:
-        raise RuntimeError("PREPARED: final source checkout is not the dispatched proof worker")
-    if any((root / name).exists() for name in ("caller-publication.py", "caller-custody.json")):
-        raise RuntimeError("refusing caller-artifact target")
-    if git(root, "status", "--porcelain=v1", "--untracked-files=all").strip():
-        raise RuntimeError("final source target is not clean")
-    if git(root, "symbolic-ref", "--quiet", "--short", "HEAD").decode().strip() != manifest["branch"]:
-        raise RuntimeError("final source checkout is not on the dispatched branch")
-    base_commit = git(root, "rev-parse", f"{manifest['base']}^{{commit}}").decode().strip()
-    if not base_commit.startswith(str(manifest["base_sha"])):
-        raise RuntimeError("final source base does not match dispatcher base identity")
-    if git(root, "rev-parse", "HEAD").decode().strip() != manifest["source"]:
-        raise RuntimeError("final source HEAD does not match explicit input")
-    if git(root, "show", "-s", "--format=%T", manifest["source"]).decode().strip() != manifest["tree"]:
-        raise RuntimeError("final source tree does not match explicit input")
-    if git(root, "show", "-s", "--format=%P", manifest["source"]).decode().strip() != manifest["parent"]:
-        raise RuntimeError("final source parent does not match explicit input")
-    if len(str(manifest["parent"]).split()) != 1:
-        raise RuntimeError("final proof-worker target must be an authorized single-parent snapshot")
-    receipt_candidate = Path(str(manifest["source_receipt"]))
-    if receipt_candidate.is_symlink():
-        raise RuntimeError("PREPARED: immutable source receipt must not be a symlink")
-    receipt_path = receipt_candidate.resolve()
-    try:
-        receipt_path.relative_to(ORCH)
-    except ValueError as exc:
-        raise RuntimeError("PREPARED: source receipt is outside the dispatcher area") from exc
-    if receipt_path == Path(manifest_name).resolve() or not receipt_path.is_file():
-        raise RuntimeError("PREPARED: immutable source receipt is unavailable")
-    if digest(receipt_path.read_bytes()) != manifest["source_receipt_sha256"]:
-        raise RuntimeError("PREPARED: source receipt hash does not match explicit input")
-    receipt = source_receipt(receipt_path)
-    for key in ("worker", "branch", "base", "base_sha", "source", "tree", "parent", "checkout"):
-        if str(receipt_value(receipt, key)) != str(manifest[key]):
-            raise RuntimeError(f"PREPARED: source receipt identity mismatch: {key}")
-    if receipt_value(receipt, "review") not in (None, "PASS"):
-        raise RuntimeError("PREPARED: source receipt review is not PASS")
-    manifest["dispatcher_meta"] = {key: meta[key] for key in ("name", "repo", "base", "base_sha", "worktree")}
-    manifest["source_receipt"] = {"path": str(receipt_path), "sha256": manifest["source_receipt_sha256"]}
+    if manifest["proof_release"] != "PASS":
+        raise RuntimeError("PREPARED: P3 proof release is not PASS")
+    if manifest["source"] != P3_SOURCE or manifest["tree"] != P3_TREE:
+        raise RuntimeError("PREPARED: selected P3 source is not the exact integrated source")
+    if str(manifest["parent"]) != P3_PARENT:
+        raise RuntimeError("PREPARED: selected P3 source parent list is not exact")
+    source_root, source_meta, source_receipt_path = validate_dispatcher_checkout(
+        manifest,
+        Path(manifest_name),
+        role="selected P3 source",
+        expected_source=P3_SOURCE,
+        expected_tree=P3_TREE,
+        expected_parent=P3_PARENT,
+        require_single_parent=False,
+    )
+    snapshot = manifest["service_snapshot"]
+    if not isinstance(snapshot, dict):
+        raise RuntimeError("PREPARED: authenticated service snapshot is incomplete")
+    snapshot_required = (
+        "checkout", "source", "tree", "parent", "worker", "branch", "base", "base_sha",
+        "source_receipt", "source_receipt_sha256", "review",
+    )
+    if any(key not in snapshot for key in snapshot_required):
+        raise RuntimeError("PREPARED: authenticated service snapshot is incomplete")
+    if snapshot["review"] != "PASS":
+        raise RuntimeError("PREPARED: authenticated service snapshot review is not PASS")
+    snapshot_parent = str(snapshot["parent"])
+    if snapshot["source"] == P3_SOURCE or snapshot_parent != P3_SOURCE:
+        raise RuntimeError("PREPARED: service snapshot must be a distinct single-parent child")
+    snapshot_root, snapshot_meta, snapshot_receipt_path = validate_dispatcher_checkout(
+        snapshot,
+        Path(manifest_name),
+        role="authenticated service snapshot",
+        expected_source=str(snapshot["source"]),
+        expected_tree=P3_TREE,
+        expected_parent=P3_SOURCE,
+        require_single_parent=True,
+    )
+    manifest["parents"] = list(P3_PARENTS)
+    manifest["source_checkout"] = str(source_root)
+    manifest["service_snapshot"] = {
+        **snapshot,
+        "checkout": str(snapshot_root),
+        "parents": [P3_SOURCE],
+        "source_receipt": {"path": str(snapshot_receipt_path), "sha256": snapshot["source_receipt_sha256"]},
+        "dispatcher_meta": {key: snapshot_meta[key] for key in ("name", "repo", "base", "base_sha", "worktree")},
+    }
+    manifest["dispatcher_meta"] = {key: source_meta[key] for key in ("name", "repo", "base", "base_sha", "worktree")}
+    manifest["source_receipt"] = {"path": str(source_receipt_path), "sha256": manifest["source_receipt_sha256"]}
     return manifest
 
 
 def source_custody(final: dict[str, object]) -> dict[str, object]:
-    root = Path(str(final["checkout"])).resolve()
+    root = Path(str(final.get("source_checkout", final["checkout"]))).resolve()
     source = str(final["source"])
     tree = str(final["tree"])
     parent = str(final["parent"])
@@ -241,9 +339,13 @@ def source_custody(final: dict[str, object]) -> dict[str, object]:
     p3 = guarded(spec.decode(), "test('M2 real gate 5", "test('M2 ordinary extension batch").rstrip() + b"\n"
     if protected.get("p3_gate5_sha256") != digest(p3):
         raise RuntimeError("P3 Gate5 body does not match final source")
+    parents = tuple(parent.split())
+    if parents != P3_PARENTS:
+        raise RuntimeError("PREPARED: selected P3 parent list changed")
     anchors = {}
-    anchors[source] = {"tree": tree, "parents": parent}
+    anchors[source] = {"tree": tree, "parents": list(parents)}
     return {"source": source, "tree": tree, "parent": parent, "checkout": str(root),
+            "parents": list(parents),
             "anchors": anchors, "fingerprints": fingerprints, "fingerprint_count": len(fingerprints),
             "fingerprint_digest": digest(canonical.encode()), "required_paths": list(required_paths), "p3_whole": {"blob": git_blob(spec), "sha256": digest(spec)},
             "gate5_sha256": digest(p3), "reset_and_tail_sha256": digest(tail), "reviewed_hashes": reviewed_hashes,
@@ -421,8 +523,11 @@ def prepare(out: Path) -> dict[str, object]:
     source = source_custody(final)
     custody = custody_facts()
     raw, rows = selected_rows()
-    outside = b"".join(line for i, line in enumerate(raw.splitlines(keepends=True), 1) if i not in {rows[name][0] for name in SUITES})
-    assert len(raw.splitlines(keepends=True)) - 2 == 248 and len(outside) == 466341 and digest(outside) == "b33d30918d6e2ae039dfa296bc75b1e0b2674828b53f07a16ee029933d5ad734"
+    outside = b"".join(line for i, line in enumerate(raw.splitlines(keepends=True), 1) if i != rows[P3_SUITE][0])
+    assert len(raw.splitlines(keepends=True)) - 1 == 249
+    assert len(outside) == 509969 and digest(outside) == "1340ef479d7f0b850f71f149347806146a4686f7b195b8d6fca3184667fce9d7"
+    p2_line = rows[P2_SUITE][1]
+    p2_line_sha256 = digest(p2_line)
     binding_replacements = {
         QUALIFIED_APP: str(final["source"]),
         QUALIFIED_TREE: str(final["tree"]),
@@ -433,19 +538,21 @@ def prepare(out: Path) -> dict[str, object]:
     stage_records = {}
     for n, name in enumerate(SUITES, 2):
         line = rows[name][1]
+        if name == P2_SUITE:
+            drafts[name] = line.decode().rstrip("\n")
+            stage_records[name] = {"installed_sha256": p2_line_sha256, "unchanged": True}
+            continue
+        assert name == P3_SUITE
         text = line.decode()
         current_app = f"P{n}APP={QUALIFIED_APP}"
         current_tree = f"P{n}TREE={QUALIFIED_TREE}"
-        current_parent = f"P{n}PARENT="
         assert text.count(current_app) == 1 and text.count(current_tree) == 1
-        if n == 2:
-            assert text.count(current_parent) == 1
         assert QUALIFIED_PARENT in text
         outer, inner, tail = extract_inner(line)
         row_replacements = dict(binding_replacements)
         # Recompute this row's guards from the actual installed command, rather
         # than assuming its fingerprints came from the qualified commit tree.
-        final_root = Path(str(final["checkout"]))
+        final_root = Path(str(final["source_checkout"]))
         for path, kind, before in row_fingerprints(inner, n):
             data = source_bytes(final_root, str(final["source"]), path)
             after = git_blob(data) if kind == "blob" else digest(data)
@@ -465,6 +572,7 @@ def prepare(out: Path) -> dict[str, object]:
             or str(final["parent"]) not in updated
             or QUALIFIED_APP in updated
             or QUALIFIED_TREE in updated
+            or QUALIFIED_PARENT in updated
         ):
             raise RuntimeError("decoded mounted caller retained stale source identity")
         # Lock every changed final source file before any production stage.
@@ -482,9 +590,8 @@ def prepare(out: Path) -> dict[str, object]:
         native_start = inner.index("import { expect }")
         native_end = inner.index("finally { await harness.stop(); }")
         before_native = inner[native_start:native_end]
-        # The selected rows are the already-installed, qualified 0609 callers.
-        # Keep their six-stage shell byte-for-byte intact; this pass only refreshes
-        # the App identity and the source guards for the reviewed successor.
+        # Keep the installed P3 shell byte-for-byte intact; this pass only
+        # refreshes its App identity and source guards for the reviewed source.
         assert updated.count("PLAYWRIGHT_OUTPUT_DIR=") >= 2
         assert "original-body-NOTRUN" in updated
         updated_native_start = updated.index("import { expect }")
@@ -497,32 +604,43 @@ def prepare(out: Path) -> dict[str, object]:
             (out / label).write_text(data)
             subprocess.run(["/bin/bash", "-n", str(out / label)], check=True)
         drafts[name] = f"app {name} {new_outer}"
-        stage_records[name] = {**controls, "native_body_preserved": True, "output_stages": ["native-history", "mounted-readiness", "original-body" if n == 2 else "gate5"]}
+        stage_records[name] = {**controls, "native_body_preserved": True, "output_stages": ["native-history", "mounted-readiness", "gate5"]}
 
     manifest = {
-        "status": "PREPARED",
+        "status": "REVIEWABLE",
         "replacements": replacements,
         "run_authorization": "NOT_GRANTED",
         "qualified_caller": {"commit": "d54582a08c6ad0453742523a3ec374dd321ce477", "app_source": QUALIFIED_APP, "app_tree": QUALIFIED_TREE, "app_parent": QUALIFIED_PARENT},
         "source_base": SOURCE_BASE, "final_source": source, "custody": custody,
         "live_row_sha256": {name: digest(rows[name][1]) for name in SUITES},
         "draft_row_sha256": {name: digest((drafts[name] + "\n").encode()) for name in SUITES},
-        "outside_row_count": 248, "outside_bytes": len(outside), "outside_sha256": digest(outside),
+        "p2_row_unchanged": p2_line_sha256 == digest(rows[P2_SUITE][1]),
+        "outside_row_count": 249, "outside_bytes": len(outside), "outside_sha256": digest(outside),
         "wire_fields": WIRE_FIELDS,
         "stage_records": stage_records,
         "door_port": {"allocation": ["P2_ALLOCATED_PORT", "P3_ALLOCATED_PORT"], "propagates_before_every_stage": True, "changed": False},
         "tool_versions": {"node": "not-read", "npm": "not-read", "playwright": "not-read"},
         "final_inputs": {"catalog_source": "PENDING", "p3_source": "PENDING", "source_manifest": "PENDING"},
-        "missing_inputs": ["final reviewed joined source SHA/tree/parent", "independent source review PASS", "separate clean proof-worker target", "integrated P2/P3 execution and daemon identity"],
+        "missing_inputs": ["integrated P3 execution and daemon identity"],
         "negative_context": {"source_target_0644": "retained as source-only context", "wrong_artifacts": ["20674", "10144"], "wrong_artifacts_status": "preflight-only, originals NOTRUN; never reuse or relabel"},
         "retention_reuse": {"allowed": True, "condition": "decoded caller logic byte-identical after audited bindings/fingerprints/body hashes/log identity", "otherwise": "bounded real execution controls required", "qualified_stages": 60},
-        "selected_source_snapshot": {"required": "normal service must recreate the separate read-only final proof-worker branch and authorize one single-parent same-tree snapshot", "daemon_identity": "uninferred"},
+        "selected_source_snapshot": {"required": "normal service must recreate the separate read-only final proof-worker branch and authorize one single-parent same-tree snapshot", "daemon_identity": "uninferred", "source_parents": list(P3_PARENTS), "service_parent": P3_SOURCE},
     }
     (out / "before.json").write_text(json.dumps({name: rows[name][1].decode().rstrip("\n") for name in SUITES}, indent=2) + "\n")
     (out / "after.json").write_text(json.dumps(drafts, indent=2) + "\n")
     (out / "current-draft.rows").write_text("".join(drafts[name] + "\n" for name in SUITES))
     (out / "outside.before").write_bytes(outside)
     (out / "prepared.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    (out / "custody-receipt.json").write_text(json.dumps({
+        "status": "REVIEWABLE",
+        "run_authorization": "NOT_GRANTED",
+        "source": source,
+        "service_snapshot": final["service_snapshot"],
+        "custody": custody,
+        "p2_row_sha256": p2_line_sha256,
+        "p3_row_sha256": manifest["draft_row_sha256"][P3_SUITE],
+        "outside_rows": {"count": 249, "bytes": len(outside), "sha256": digest(outside)},
+    }, indent=2) + "\n")
     return manifest
 
 

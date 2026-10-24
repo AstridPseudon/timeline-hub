@@ -14,22 +14,32 @@
     "app_parent": "b2380539c5545661954d2794976631312ee1d939",
     "logic_reuse": "conditional-byte-identical-after-audited-binding"
   },
+  "p3_only_binding": {
+    "selected_source": "82cb5c0005df7abe0fcb8673f7be192a6c9e9183",
+    "selected_tree": "6fa0a0f32b212dbdae7c2ecaca1813de68907e67",
+    "selected_parents": [
+      "182c65242d8228232cde32961fd1948056dd841a",
+      "f56128d540ff96013c9532d79f3f4e767beba820"
+    ],
+    "service_snapshot": "required authenticated same-tree single-parent child of selected source",
+    "p2_row": "installed byte-exact and not rebound"
+  },
   "not_final_candidates": {
     "current_integration": "182c65242d8228232cde32961fd1948056dd841a",
     "popup_review": "63e3956746e696ad816482fbb6bd7c079e332d0a",
     "p3_packet": "f56128d540ff96013c9532d79f3f4e767beba820",
-    "adoption": "none; explicit final joined source input is still required"
+    "adoption": "none; explicit P3 source, custody and service snapshot inputs are still required"
   },
   "existing_suite_rows": {
     "full-e2e-three-products": {
-      "installed_sha256": "23fba456948b68f04e14ec0cf1659f27071c6cd00d6b6fa05d579476842f5b97"
+      "installed_sha256": "1fe55269347c878c986263b93afedccd6a198952d61858794ce84f0304f01fd1"
     },
     "ap2-P3-gate5-h6-0348": {
-      "installed_sha256": "84e0e7d3b296fc55c202e3e2ddbbcaafd0da66626a5beb538a4d012dbea80f9"
+      "installed_sha256": "4ae8ae786cefd6be2aedb901a539fe81eb77a299ae4c246a8cd31c429440798d"
     },
-    "outside_rows": 248,
-    "outside_bytes": 466341,
-    "outside_sha256": "b33d30918d6e2ae039dfa296bc75b1e0b2674828b53f07a16ee029933d5ad734",
+    "outside_rows": 249,
+    "outside_bytes": 509969,
+    "outside_sha256": "1340ef479d7f0b850f71f149347806146a4686f7b195b8d6fca3184667fce9d7",
     "draft_sha256": "PENDING_FINAL_SOURCE_REDERIVATION"
   },
   "wire_fields": {
@@ -73,35 +83,25 @@
       "worker": "required existing ORCH/workers/<worker>/meta identity",
       "branch": "must be tl/<worker> and match the dispatched clean checkout",
       "base": "must match dispatcher meta base/base_sha",
-      "source_receipt": "required hashed immutable receipt carrying worker, branch, base, source, tree, parent, checkout",
-      "review": "manifest PASS is insufficient without matching dispatcher metadata and source receipt"
+      "source_receipt": "required hashed immutable receipt carrying worker, branch, base, source, tree, parent list, checkout",
+      "review": "manifest PASS is insufficient without matching dispatcher metadata and source receipt",
+      "proof_release": "required PASS; absence leaves caller PREPARED",
+      "service_snapshot": "required normal authenticated same-tree single-parent child; never fabricate one"
     },
-    "final_source": "PENDING",
-    "final_tree": "PENDING",
-    "final_parent": "PENDING",
-    "independent_review": "PENDING",
+    "final_source": "82cb5c0005df7abe0fcb8673f7be192a6c9e9183",
+    "final_tree": "6fa0a0f32b212dbdae7c2ecaca1813de68907e67",
+    "final_parent": "182c65242d8228232cde32961fd1948056dd841a f56128d540ff96013c9532d79f3f4e767beba820",
+    "independent_review": "PASS",
     "required_reviewed_paths": [
-      "src/tools/video-editor/commands/media.ts",
-      "src/tools/video-editor/commands/media.test.ts",
       "tests/e2e/local/three-products.spec.ts",
       "tests/e2e/local/support/gate5-reset-precondition.ts",
-      "tests/e2e/local/support/gate5-reset-precondition.test.mjs",
-      "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
-      "tests/e2e/local/three-products.p2-tour.spec.ts",
-      "tests/e2e/local/three-products.p2-popup.spec.ts",
-      "tests/e2e/local/three-products.p1-chain.spec.ts",
-      "tests/e2e/local/support/p2-document-oracle.ts",
-      "tests/e2e/local/support/p2-document-oracle.test.mjs",
-      "tests/e2e/local/support/p2-original-owner-ready.ts",
-      "tests/e2e/local/support/p2-original-owner-ready.test.mjs",
-      "tests/e2e/local/support/p2-semantic-oracle.ts",
-      "tests/e2e/local/support/p2-semantic-oracle.test.mjs"
+      "tests/e2e/local/support/gate5-reset-precondition.test.mjs"
     ],
     "protected_hashes": {
-      "d50_tail_sha256": "PENDING_FINAL_SOURCE_REDERIVATION",
+      "d50_tail_sha256": "5ede6f374857a66a327da3cea0e85de0457a04267003f3f66e3d40ee4f380912",
       "known_reviewed_reference": "5ede6f374857a66a327da3cea0e85de0457a04267003f3f66e3d40ee4f380912",
-      "p3_gate5_sha256": "PENDING_FINAL_SOURCE_REDERIVATION",
-      "p2_body_hashes": "PENDING_FINAL_SOURCE_REDERIVATION"
+      "p3_gate5_sha256": "e6cf20b09e412df16f82265b0b855c426123e93b44861bd0b7770dcf82d751d4",
+      "p2_body_hashes": "retained from installed P2 row; no P2 rebinding"
     },
     "no_obsolete_hash_reuse": true
   },
@@ -132,12 +132,8 @@
     "wrong_artifact_result": "preflight-only exit 2; originals NOTRUN; immutable and never relabeled"
   },
   "missing_final_inputs": [
-    "actual final reviewed joined source SHA/tree/parent",
-    "source fingerprints and spec/body hashes rederived from that tree",
-    "independent review PASS for the joined source",
-    "separate read-only pure final-integrated proof-worker target",
-    "existing dispatcher worker metadata, branch/base identity, and hashed immutable source receipt",
-    "normal-service single-parent same-tree snapshot authorization",
-    "integrated P2/P3 proof and actual daemon identity"
+    "hashed immutable source custody receipt",
+    "normal authenticated same-tree single-parent service snapshot and receipt",
+    "P3 proof release and actual daemon identity"
   ]
 }
