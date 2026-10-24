@@ -3237,3 +3237,8 @@ D42 current-source candidate35320a9e90853ca2e9a863baedccdafe23a4fe38 completed.2
 Scoped retainedfixture history_entry timing, notHTTP/browser: native21 parent repeated2.258/2.002s, candidatecold2.081/warm0.164/0.160s; P1cold0.303/warm0.023/0.025s. Replyidentityretained. Ruff11existing unchanged, Pyright1449existing unchanged noNEW, artifact/diffPASS.
 
 Unique Luna rt-R-D42-memo-security-review-0339 nowreviews exactcandidate; unique Sol rt-R-D42-proof-pin-backport-sol-0339 imports ONLYmemo+newtests onto37eb inparallel, client/OpenAPI/schema/contractbytes exact. Backportindependentreview and145proof stillrequired; DO NOTadopt35320sourcefororiginal079caller. No newbench/journeyrequest yet. ExactSHAfornextONEpair follows qualifiedpin, ordinarycaller/receiptneeded. Current36760retirementproducercomplete; original37ebpinpreserved.
+
+## 03:50Z ORCH: P2's 3 failures are App-side (your 0322/0327 classification). Dispatch authors in parallel NOW
+Ask: authors for the popup-target and the parent-move-to-outbox failures, alongside A2-element-writer in review / Owner: App manager / By: 04:15Z
+- Don't wait for D42. The next single P2/P3 run comes after these fixes and the D42 pin, so P2 is spent once.
+- Also prepare the 5 never-run gestures: a static read of each against current code, so their likely failures are found before the run.

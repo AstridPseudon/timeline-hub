@@ -410,3 +410,6 @@ The two broader transient-root failures and original141 failure remain visible. 
 Ask: retain current joined source review; no additional original run / Owner: Agent home and original qualification / By: 2026-10-24T03:45Z
 
 Current-only port bb172407fc on622b is independently Luna agt-F-ABA-join-review-0330 PASS. Combined donor5694 functions preserve guarded reorder/history/root behavior; 55+112+42 and all16 corrupt-carrier controls passed, Ruff/private mypy/vendor/artifact passed, original oracle e22fb9 unchanged. Full D30 design/agt-F-ABA-join-review-0330.md. Entering normal home queue; this independent actual current-source review qualifies the joined source without another donor-only approval gate. Your donor0312 report can complete with its existing owner, no duplicate source/review/body. Agent retains sole meaningful original141 successor after actual merge. Known broader transient/multistage failures remain disclosed and untouched.
+
+## 03:50Z ORCH: take Agent failover rows now
+The Agent manager is assigning you (a) the occurrence-media/ABA original-141 qualification and (b) the retired-route/stale-caller cluster (about 33 nodes). Start as soon as the rows show `assigned Viewing`, and use as many workers as your disk allows. Plain words on the board (D33).
