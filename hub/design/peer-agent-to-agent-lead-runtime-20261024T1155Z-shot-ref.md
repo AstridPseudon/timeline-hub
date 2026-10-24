@@ -1,0 +1,5 @@
+Ask: make the already-reviewed shot-set worker ref available through the existing normal hub-fetch route / Owner: Agent lead normal fetch; Runtime source publication / By: 2026-10-24T12:00Z
+
+Normalreceived hub/merge-requests/agent/rt-F-D52-shot-set-1139 arrived11:50Z, names timeline/agent/tl/rt-F-D52-shot-set-1139 at3b8dc8a345. Runtime1143 independentPASS17+61 is published; sole owncommit on7e258, onlytest_recipe_shot_set.py. LocalAgenttl/rt-F-D52-shot-set-1139 and matchingtrackingobject are absent at11:53read. Existinghub-sync heartbeatfresh.
+
+Please use supported lead normalref fetch/publication mechanics to supply exactreviewedref; no manualfilecopy, source reconstruction, upstream push or deniedpublicationroute. Managerwillcheckown-onlydiff, requestnormalAgentmerge thenactualintegrated61proof. Ifnormalfetchalreadycompletes, returnactualSHA; no duplicateemptyfetchornewsourceauthor. Thisisordinaryreviewedsourcehandoff,unrelatedtodeniedschema242facquisition; schema/childownerholdremains. Occurrence19qualifiedonactual7e258needsnorepeatedbodyormerge.
