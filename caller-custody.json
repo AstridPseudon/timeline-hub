@@ -5,31 +5,61 @@
   "purpose": "Final integrated App caller preparation; production caller uses the generated candidate only after authentic custody admission.",
   "source_tuple": {
     "app": {
-      "source": "d99396bca7c3853435cfa5a5991f5b1073187be4",
-      "tree": "3311baa327c8963d007cfc3a1b2f04617085f3b3",
+      "source": "cca3deb361e8fbbc62ddf491d5fd09c7e542b99f",
+      "tree": "911956d49c42021f11d21e9cf69e9e9478ab569a",
       "parents": [
-        "602f8b1f58593302829fb449d0ded62a91462a22",
-        "5a9ff97cf036efdd409c559dbd0334ff7a5639b8"
+        "d99396bca7c3853435cfa5a5991f5b1073187be4",
+        "8a712d39c74e92ff10886007ae5135d4f316e92e"
       ],
-      "ref": "HEAD"
+      "ref": "tl/integration"
     },
     "agent": {
-      "source": "b0e18d03caaa4a479431786f4377f8222c268dd2",
-      "tree": "720acec9d7c6243924221420e986b63d049973a1",
+      "source": "cba425b61958f380f25b7bdea83d23c92f627761",
+      "tree": "d19ce2e55ce9f29e18a504fb9c97178764272bbe",
+      "parents": [
+        "de2d1aadbec1b9f4bfb76dcc70c62d2f192cb0a5",
+        "9746c9254ad288945e01ecad25f71689a6231a42"
+      ],
       "ref": "tl/integration"
     },
     "runtime": {
       "source": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
       "tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89",
+      "parents": [
+        "46eb068c5adf663270512aca8a4bdd62c1488e6d",
+        "c021f13afb655225570e3f0323f00a55132e8643"
+      ],
       "ref": "tl/integration"
     }
   },
   "bindings": {
     "runtime_producer": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
     "app_consumer_files": 14,
-    "agent_consumer_files": 14,
+    "agent_consumer_files": 15,
     "schema_sha256": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
-    "normal_refs_authenticated": true
+    "normal_refs_authenticated": true,
+    "agent_ref": "tl/integration",
+    "runtime_ref": "tl/integration",
+    "producer": {
+      "source": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+      "tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89",
+      "ref": "tl/integration",
+      "files": {
+        "packages/typescript/src/contract-metadata.ts": "1028aaeca1cd15f860994c1e830ba69f55405e648841877eff4d43f466f40c79",
+        "packages/typescript/src/generated.ts": "7be7f351d485fdb24a7ebb0329fea7c65037675b11a96c581d33e60a14a581a4",
+        "packages/typescript/src/timeline-commit-types.ts": "bf4728831e35bdfec96ffa0188feb439f3c89a2aecfa8682925019eba5855470"
+      }
+    },
+    "app_consumer": {
+      "source": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+      "file_count": 14,
+      "lock_sha256": "f481e6daebb90561ee0b796765524d7ade8f01f0adb8953d8c77a30fdb1ba70e"
+    },
+    "agent_consumer": {
+      "source": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+      "file_count": 15,
+      "lock_sha256": "5030ef40874ee0ccb1a4b60b5a5fbc3ed771e8499d44bee5fdfce76f8a0ce5a"
+    }
   },
   "registry": {
     "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
@@ -56,6 +86,37 @@
       "full-e2e-three-products": 71,
       "ap2-P3-gate5-h6-0348": 141
     },
+    "dry_source_preflight": {
+      "status": "PASS",
+      "command": "actual decoded P2 source guard via caller-dry-preflight.py",
+      "phase": "source_identity_tree_target_bindings",
+      "duration_seconds": 0.248,
+      "returncode": 0,
+      "target": {
+        "checkout": "/home/user/work/app",
+        "source": "cca3deb361e8fbbc62ddf491d5fd09c7e542b99f",
+        "tree": "911956d49c42021f11d21e9cf69e9e9478ab569a",
+        "parents": [
+          "d99396bca7c3853435cfa5a5991f5b1073187be4",
+          "8a712d39c74e92ff10886007ae5135d4f316e92e"
+        ]
+      },
+      "refusals": [],
+      "not_run": [
+        "child", "import", "native", "build", "browser", "backend",
+        "provision", "schema", "HTTP", "original"
+      ]
+    },
+    "candidate_hashes": {
+      "full-e2e-three-products": {
+        "decoded_sha256": "750944227c8be87c795969e655a56c7466f45fc6db855389ebaecb2abd7f0d2d",
+        "wrapped_sha256": "8698795299d2f589dffa09035a54536256d64b06a9a5bd7c170000669f314377"
+      },
+      "ap2-P3-gate5-h6-0348": {
+        "decoded_sha256": "ff773d37cd141c0f4d4e4a9cccd9a1511ba60905efdf1c94fc8a400180f6015b",
+        "wrapped_sha256": "ebf045bb9c9342d060482a5944d7c535d2d575f28c3ee0fc0d7383b6b742a358"
+      }
+    },
     "bash_n": "decoded and wrapped candidates",
     "candidate_lifetime": "private temporary output only; no registry installation"
   },
@@ -70,7 +131,7 @@
   },
   "preservation": {
     "p2_cases": 8,
-    "p3": "strict request/reply, reads, receipts, history, undo, restart, stage-output, wait, and failure guards retained",
+    "p3": "strict v2 request/reply, reads, receipts, history, undo, restart, stage-output, wait, port and failure guards retained",
     "legacy_route_traffic": 0,
     "registry_mutation": false
   },
@@ -86,14 +147,13 @@
   "blocked": {
     "owner": "tuple coordinator / Agent and Runtime owners",
     "status": "STOPPED",
-    "reason": "Automatic access refusal remains in force; required custody is not present.",
-    "prohibited_bypass": "alternate fetch, schema request, child or preload request, receipt patch, historical child reuse, or pin reuse"
+    "reason": "Automatic schema access refusal remains in force; final child, backend, graph, coordinator and live-run custody is not present.",
+    "prohibited_bypass": "no new child, schema, preload, alternate fetch, old receipt patch, old child reuse, or historical tuple reuse"
   },
   "full_run": {
     "id": "app-U3b-F-reviewed-join-1146-full-1024120556-16138",
-    "source": "5a9ff97cf036efdd409c559dbd0334ff7a5639b8",
-    "tree": "3311baa327c8963d007cfc3a1b2f04617085f3b3",
     "status": "RUNNING_OR_UNVERIFIED",
-    "terminal_claim": false
+    "terminal_claim": false,
+    "source_authentication": "not used for final source authentication; authenticate any service snapshot only after it exists"
   }
 }

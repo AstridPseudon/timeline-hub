@@ -1,0 +1,94 @@
+"""Execute only a candidate caller's read-only source identity phase."""
+
+from __future__ import annotations
+
+import os
+from pathlib import Path
+import subprocess
+import time
+from typing import Any
+
+
+class DryPreflightError(RuntimeError):
+    """The candidate source phase refused or was not safely bounded."""
+
+
+def _guard(body: str, stage: str) -> str:
+    marker = f'printf "%s\\n" "$P{stage}APP"'
+    start = body.find(marker)
+    if start < 0:
+        raise DryPreflightError("decoded candidate has no App identity guard")
+    end_marker = f'test -f "$P{stage}O/queue/done'
+    end = body.find(end_marker, start)
+    if end < 0:
+        raise DryPreflightError("decoded candidate has no bounded custody boundary")
+    guard = body[start:end]
+    forbidden = (
+        "mkdir ", "npm ", "node ", "python", "pytest", "playwright",
+        "curl ", "nc ", "listen(", "import ", "build", "native", "browser",
+        "backend", "provision", "http", "original-body",
+    )
+    if any(token in guard.lower() for token in forbidden):
+        raise DryPreflightError("source phase contains setup, execution, or external custody work")
+    return guard + f'if test -n "$P{stage}FAIL"; then printf "source guard refusals:%s\\n" "$P{stage}FAIL" >&2; exit 2; fi;'
+
+
+def dry_source_preflight(
+    body: str,
+    *,
+    app: dict[str, Any],
+    agent: dict[str, Any],
+    runtime: dict[str, Any],
+    target: Path,
+) -> dict[str, Any]:
+    """Run the decoded candidate's actual source/target/binding guard.
+
+    The extracted prefix ends before child, import, backend, graph, service,
+    and original-body custody.  Missing later custody therefore remains a
+    PREPARED blocker and cannot turn this read-only source PASS into READY.
+    """
+    stage = "2"
+    guard = _guard(body, stage)
+    target = target.resolve()
+    if not target.is_dir() or target.is_symlink():
+        raise DryPreflightError(f"source target is unavailable: {target}")
+    prefix = "\n".join(
+        (
+            "set -u",
+            f'P{stage}O={app["orch"]!s}',
+            f'P{stage}A={agent["source"]}',
+            f'P{stage}R={runtime["source"]}',
+            f'P{stage}APP={app["source"]}',
+            f'P{stage}TREE={app["tree"]}',
+            f'P{stage}PARENT={" ".join(app["parents"])!r}',
+            f'P{stage}AG={agent["checkout"]}',
+            f'P{stage}RT={runtime["checkout"]}',
+            'P2FAIL=""',
+            'p2fail(){ P2FAIL="$P2FAIL $1"; };',
+            guard,
+        )
+    )
+    started = time.monotonic()
+    result = subprocess.run(
+        ["/bin/bash", "-c", prefix],
+        cwd=target,
+        env={"PATH": os.environ.get("PATH", "/usr/bin:/bin"), "LC_ALL": "C"},
+        text=True,
+        capture_output=True,
+        timeout=20,
+        check=False,
+    )
+    elapsed = round(time.monotonic() - started, 3)
+    if result.returncode:
+        detail = (result.stderr or result.stdout).strip().splitlines()[-1:]
+        raise DryPreflightError(f"candidate source guard refused: {detail}")
+    return {
+        "status": "PASS",
+        "duration_seconds": elapsed,
+        "returncode": result.returncode,
+        "phase": "source_identity_tree_target_bindings",
+        "command": "actual decoded P2 source guard via caller-dry-preflight.py",
+        "target": {"checkout": str(target), "source": app["source"], "tree": app["tree"], "parents": app["parents"]},
+        "refusals": [],
+        "not_run": ["child", "import", "native", "build", "browser", "backend", "provision", "schema", "HTTP", "original"],
+    }

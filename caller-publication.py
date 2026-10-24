@@ -13,7 +13,9 @@ PREPARED rather than READY.
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -26,20 +28,42 @@ from typing import Any
 
 ORCH = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch")
 SUITES = ORCH / "tests/suites.conf"
-APP = Path(__file__).resolve().parent
+ARTIFACT = Path(__file__).resolve().parent
+APP = Path(os.environ.get("TIMELINE_APP_CHECKOUT", "/home/user/work/app"))
 AGENT = Path(os.environ.get("TIMELINE_AGENT_CHECKOUT", "/home/user/work/agent"))
 RUNTIME = Path(os.environ.get("TIMELINE_RUNTIME_CHECKOUT", "/home/user/work/runtime"))
 
-APP_COMMIT = "d99396bca7c3853435cfa5a5991f5b1073187be4"
-APP_TREE = "3311baa327c8963d007cfc3a1b2f04617085f3b3"
+APP_COMMIT = "cca3deb361e8fbbc62ddf491d5fd09c7e542b99f"
+APP_TREE = "911956d49c42021f11d21e9cf69e9e9478ab569a"
 APP_PARENTS = (
-    "602f8b1f58593302829fb449d0ded62a91462a22",
-    "5a9ff97cf036efdd409c559dbd0334ff7a5639b8",
+    "d99396bca7c3853435cfa5a5991f5b1073187be4",
+    "8a712d39c74e92ff10886007ae5135d4f316e92e",
 )
-AGENT_COMMIT = "b0e18d03caaa4a479431786f4377f8222c268dd2"
-AGENT_TREE = "720acec9d7c6243924221420e986b63d049973a1"
+AGENT_COMMIT = "cba425b61958f380f25b7bdea83d23c92f627761"
+AGENT_TREE = "d19ce2e55ce9f29e18a504fb9c97178764272bbe"
+AGENT_PARENTS = (
+    "de2d1aadbec1b9f4bfb76dcc70c62d2f192cb0a5",
+    "9746c9254ad288945e01ecad25f71689a6231a42",
+)
 RUNTIME_COMMIT = "becfe6db88b2cc034dba3fafa6c050117cdf2b06"
 RUNTIME_TREE = "7edc08e3fe94edcbc8ef695c479f4de301789b89"
+LEGACY_AGENT_TREE = "1094bf3662c785e4b21eddf7e3ae980da79b1af1"
+LEGACY_AGENT_TREE_P3 = "2deab1a1494fbccfce5e9235412bacb8a949c0cd"
+LEGACY_RUNTIME_TREE = "be4114705127f9ee9e86b26cd6de3f467e771c01"
+LEGACY_CHILD_NAMES = (
+    "venv-agent-child-app-popup-333b-37eb-1016",
+    "venv-agent-child-app-ready-079-37eb-0256",
+)
+LEGACY_REMOTION_NAMES = ("agent-remotion-app-ready-079-37eb-0258",)
+LEGACY_P3_PARENT = "2e3c8f65a8628127cd283ed26116f7bcb2977b83 2357df925a660dde6624149b8e8a6e1dbf09da98"
+
+_DRY_PREFLIGHT_SPEC = importlib.util.spec_from_file_location(
+    "caller_dry_preflight", ARTIFACT / "caller-dry-preflight.py"
+)
+if _DRY_PREFLIGHT_SPEC is None or _DRY_PREFLIGHT_SPEC.loader is None:
+    raise RuntimeError("PREPARED: dry preflight helper is unavailable")
+_DRY_PREFLIGHT = importlib.util.module_from_spec(_DRY_PREFLIGHT_SPEC)
+_DRY_PREFLIGHT_SPEC.loader.exec_module(_DRY_PREFLIGHT)
 
 P2_SUITE = "full-e2e-three-products"
 P3_SUITE = "ap2-P3-gate5-h6-0348"
@@ -109,23 +133,28 @@ def facts(root: Path, commit: str, tree: str, label: str, *, parents: tuple[str,
         require(actual_parents == parents, f"{label} parent mismatch: {actual_parents} != {parents}")
     dirty = [line for line in git(root, "status", "--porcelain=v1", "--untracked-files=all").splitlines() if line]
     require(not dirty, f"{label} checkout is dirty: {dirty[:3]}")
-    return {"checkout": str(root), "source": actual, "tree": actual_tree, "parents": list(actual_parents), "ref": "HEAD"}
+    return {
+        "checkout": str(root), "source": actual, "tree": actual_tree,
+        "parents": list(actual_parents), "ref": git(root, "branch", "--show-current") or "HEAD",
+    }
 
 
 def app_facts() -> dict[str, Any]:
-    # The worker's own checkout is the exact approved source.  Its only later
-    # changes are the two private caller artifacts, so authenticate the Git
-    # commit/tree/parents rather than requiring a clean worktree after edits.
-    require(git(APP, "rev-parse", "HEAD") == APP_COMMIT, "App source is not the approved integrated commit")
-    require(git(APP, "show", "-s", "--format=%T", "HEAD") == APP_TREE, "App tree is not the approved integrated tree")
-    require(tuple(git(APP, "show", "-s", "--format=%P", "HEAD").split()) == APP_PARENTS, "App parents are not exact")
-    dirty = []
-    for line in git(APP, "status", "--porcelain=v1", "--untracked-files=all").splitlines():
-        if line:
-            name = line[3:] if len(line) > 3 else ""
-            require(name in {"caller-publication.py", "caller-custody.json"}, f"unexpected App target change: {line}")
-            dirty.append(line)
-    return {"checkout": str(APP), "source": APP_COMMIT, "tree": APP_TREE, "parents": list(APP_PARENTS), "ref": "HEAD", "private_changes": dirty}
+    # The production source is the clean normal integration checkout, never
+    # this caller-artifact worktree.  A later harness commit may advance the
+    # artifact branch without changing the product source target.
+    require(APP != ARTIFACT, "App source checkout must not be the caller artifact")
+    source = git(APP, "rev-parse", "HEAD")
+    tree = git(APP, "show", "-s", "--format=%T", "HEAD")
+    parents = tuple(git(APP, "show", "-s", "--format=%P", "HEAD").split())
+    require(source == APP_COMMIT, f"App source is not the approved integrated commit: {source}")
+    require(tree == APP_TREE, f"App tree is not the approved integrated tree: {tree}")
+    require(parents == APP_PARENTS, f"App parents are not exact: {parents}")
+    require(not git(APP, "status", "--porcelain=v1", "--untracked-files=all"), "App source checkout is dirty")
+    return {
+        "checkout": str(APP), "source": source, "tree": tree, "parents": list(parents),
+        "ref": git(APP, "branch", "--show-current") or "HEAD", "orch": str(ORCH),
+    }
 
 
 def read_lock(root: Path) -> dict[str, Any]:
@@ -266,6 +295,8 @@ def rebind(name: str, body: str) -> tuple[str, dict[str, str]]:
         body = set_assignment(body, key, value)
     if name == P2_SUITE:
         body = set_assignment(body, "P2PARENT", repr(" ".join(APP_PARENTS)))
+    else:
+        body = body.replace(LEGACY_P3_PARENT, " ".join(APP_PARENTS))
     body = set_assignment(body, f"{prefix}AG", "${TIMELINE_AGENT_CHECKOUT:?}")
     body = set_assignment(body, f"{prefix}RT", "${TIMELINE_RUNTIME_CHECKOUT:?}")
     body = set_assignment(body, "CN", "${TIMELINE_CHILD_NAME:?}")
@@ -275,6 +306,9 @@ def rebind(name: str, body: str) -> tuple[str, dict[str, str]]:
         old[f"{prefix}R"]: RUNTIME_COMMIT,
         old[f"{prefix}APP"]: APP_COMMIT,
         old[f"{prefix}TREE"]: APP_TREE,
+        LEGACY_AGENT_TREE: AGENT_TREE,
+        LEGACY_AGENT_TREE_P3: AGENT_TREE,
+        LEGACY_RUNTIME_TREE: RUNTIME_TREE,
     }
     if old_parent:
         replacements[old_parent.strip("'\"")] = " ".join(APP_PARENTS)
@@ -286,7 +320,11 @@ def rebind(name: str, body: str) -> tuple[str, dict[str, str]]:
         if match:
             variables[key] = match.group(1).strip("'\"")
     body, guard_count = refresh_source_guards(body, variables)
-    for forbidden in (old[f"{prefix}A"], old[f"{prefix}R"], old[f"{prefix}APP"], old[f"{prefix}TREE"]):
+    body = refresh_encoded_guards(body)
+    for forbidden in (
+        old[f"{prefix}A"], old[f"{prefix}R"], old[f"{prefix}APP"], old[f"{prefix}TREE"],
+        LEGACY_AGENT_TREE, LEGACY_AGENT_TREE_P3, LEGACY_RUNTIME_TREE,
+    ):
         require(forbidden not in body, f"{name} candidate retained stale source identity {forbidden}")
     body = (
         'test -n "${TIMELINE_AGENT_CHECKOUT:-}" && test -n "${TIMELINE_RUNTIME_CHECKOUT:-}" && '
@@ -295,6 +333,50 @@ def rebind(name: str, body: str) -> tuple[str, dict[str, str]]:
         + body
     )
     return body, {"agent_old": old[f"{prefix}A"], "runtime_old": old[f"{prefix}R"], "app_old": old[f"{prefix}APP"], "tree_old": old[f"{prefix}TREE"], "source_guard_count": str(guard_count)}
+
+
+def refresh_wrapper_bindings(text: str, old: dict[str, str]) -> str:
+    replacements = {
+        old["agent_old"]: AGENT_COMMIT,
+        old["runtime_old"]: RUNTIME_COMMIT,
+        old["app_old"]: APP_COMMIT,
+        old["tree_old"]: APP_TREE,
+        LEGACY_AGENT_TREE: AGENT_TREE,
+        LEGACY_AGENT_TREE_P3: AGENT_TREE,
+        LEGACY_RUNTIME_TREE: RUNTIME_TREE,
+        LEGACY_CHILD_NAMES[0]: "${TIMELINE_CHILD_NAME:?}",
+        LEGACY_CHILD_NAMES[1]: "${TIMELINE_CHILD_NAME:?}",
+        LEGACY_REMOTION_NAMES[0]: "${TIMELINE_REMOTION_NAME:?}",
+        LEGACY_P3_PARENT: " ".join(APP_PARENTS),
+    }
+    for before, after in replacements.items():
+        text = text.replace(before, after)
+    return text
+
+
+def refresh_encoded_guards(text: str) -> str:
+    """Re-encode retained custody code with the current tuple identities."""
+    legacy = {
+        "079580ca46af77e0292d49dc34386b25c8391f99": AGENT_COMMIT,
+        "333b44b1a1b8be72d4d101391b7636c508419109": AGENT_COMMIT,
+        "37eb6c7bdb79dcae2523883e66b5cea5be721ffd": RUNTIME_COMMIT,
+        LEGACY_AGENT_TREE: AGENT_TREE,
+        LEGACY_AGENT_TREE_P3: AGENT_TREE,
+        LEGACY_RUNTIME_TREE: RUNTIME_TREE,
+    }
+
+    def replace(match: re.Match[str]) -> str:
+        encoded = match.group("encoded")
+        decoded = base64.b64decode(encoded, validate=True).decode()
+        for before, after in legacy.items():
+            decoded = decoded.replace(before, after)
+        return match.group("prefix") + base64.b64encode(decoded.encode()).decode() + match.group("suffix")
+
+    return re.sub(
+        r'(?P<prefix>base64\.b64decode\(\\?")(?P<encoded>[A-Za-z0-9+/=]+)(?P<suffix>\\?"\))',
+        replace,
+        text,
+    )
 
 
 def syntax_check(outer: str, body: str, directory: Path, label: str) -> dict[str, Any]:
@@ -326,12 +408,27 @@ def custody_requirements() -> list[dict[str, str]]:
 
 def negative(mode: str) -> int:
     try:
-        if mode in {"wrong-source", "stale"}:
+        if mode in {"wrong-source", "stale", "app"}:
             facts(APP, "0" * 40, APP_TREE, "negative App", parents=APP_PARENTS)
+        elif mode == "agent":
+            facts(AGENT, "0" * 40, AGENT_TREE, "negative Agent", parents=AGENT_PARENTS)
+        elif mode == "runtime":
+            facts(RUNTIME, "0" * 40, RUNTIME_TREE, "negative Runtime")
         elif mode == "tree":
             facts(APP, APP_COMMIT, "0" * 40, "negative App", parents=APP_PARENTS)
         elif mode == "target":
             facts(Path("/tmp"), AGENT_COMMIT, AGENT_TREE, "negative target")
+        elif mode == "body":
+            source = app_facts()
+            agent = facts(AGENT, AGENT_COMMIT, AGENT_TREE, "Agent", parents=AGENT_PARENTS)
+            runtime = facts(RUNTIME, RUNTIME_COMMIT, RUNTIME_TREE, "Runtime")
+            _, body, _ = extract_row(next(line for line in SUITES.read_text().splitlines(True) if line.startswith(f"app {P2_SUITE} ")))
+            rebound, _ = rebind(P2_SUITE, body)
+            rebound = rebound.replace(AGENT_TREE, "0" * 40, 1)
+            try:
+                _DRY_PREFLIGHT.dry_source_preflight(rebound, app=source, agent=agent, runtime=runtime, target=APP)
+            except _DRY_PREFLIGHT.DryPreflightError as exc:
+                raise PreparedError(str(exc)) from exc
         elif mode == "receipt":
             require(False, "exact normal tuple receipt is absent")
         elif mode == "registry":
@@ -347,7 +444,7 @@ def negative(mode: str) -> int:
 
 def prepare() -> dict[str, Any]:
     source = app_facts()
-    agent = facts(AGENT, AGENT_COMMIT, AGENT_TREE, "Agent")
+    agent = facts(AGENT, AGENT_COMMIT, AGENT_TREE, "Agent", parents=AGENT_PARENTS)
     runtime = facts(RUNTIME, RUNTIME_COMMIT, RUNTIME_TREE, "Runtime")
     bindings = check_runtime_lock()
     registry, rows = installed_rows()
@@ -356,8 +453,24 @@ def prepare() -> dict[str, Any]:
     for name in (P2_SUITE, P3_SUITE):
         outer, body, suffix = extract_row(rows[name])
         rebound, old = rebind(name, body)
-        candidate_outer = outer[: outer.index("$(bash -c ") + len("$(bash -c ")] + shlex.quote(rebound) + suffix
-        candidates[name] = {"source_row_sha256": registry["rows"][name]["sha256"], "rebound": old, "syntax": syntax_check(candidate_outer, rebound, tmp, name)}
+        dry = None
+        if name == P2_SUITE:
+            dry = _DRY_PREFLIGHT.dry_source_preflight(
+                rebound,
+                app=source,
+                agent=agent,
+                runtime=runtime,
+                target=APP,
+            )
+        candidate_outer = (
+            outer[: outer.index("$(bash -c ") + len("$(bash -c ")]
+            + shlex.quote(rebound)
+            + refresh_wrapper_bindings(suffix, old)
+        )
+        syntax = syntax_check(candidate_outer, rebound, tmp, name)
+        candidates[name] = {"source_row_sha256": registry["rows"][name]["sha256"], "rebound": old, "syntax": syntax}
+        if dry is not None:
+            candidates[name]["dry_preflight"] = dry
     custody = custody_requirements()
     result = {
         "status": "PREPARED",
@@ -378,7 +491,12 @@ def prepare() -> dict[str, Any]:
         "wire_fields": {"request": REQUEST_FIELDS, "reply": REPLY_FIELDS, "reply_shape": "full {data,receipt}"},
         "required_custody": custody,
         "blocked": {"owner": "tuple coordinator / Agent and Runtime owners", "reason": "current normal custody and coordinator receipts are absent; admissions refusal remains STOPPED", "bypass": "none; no alternate fetch, child, preload, receipt patch, or historical reuse"},
-        "full_run": {"id": "app-U3b-F-reviewed-join-1146-full-1024120556-16138", "source": "5a9ff97cf036efdd409c559dbd0334ff7a5639b8", "tree": APP_TREE, "status": "RUNNING_OR_UNVERIFIED", "claim": "no terminal result claimed"},
+        "full_run": {
+            "id": "app-U3b-F-reviewed-join-1146-full-1024120556-16138",
+            "status": "RUNNING_OR_UNVERIFIED",
+            "claim": "no terminal result claimed",
+            "source_authentication": "not used for final source authentication; authenticate any service snapshot only after it exists",
+        },
         "tmpdir": str(tmp),
     }
     (tmp / "caller-custody.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
@@ -388,7 +506,7 @@ def prepare() -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--negative", choices=("wrong-source", "stale", "tree", "target", "receipt", "registry"))
+    parser.add_argument("--negative", choices=("wrong-source", "stale", "app", "agent", "runtime", "tree", "target", "body", "receipt", "registry"))
     args = parser.parse_args()
     try:
         return negative(args.negative) if args.negative else (prepare() and 0)
