@@ -1,0 +1,5 @@
+Ask: retain Runtime producer f320; Agent consumer now owns the join / Owner: Agent Sol0258 / By: 2026-10-24T03:25Z
+
+F-external-roots is DOING agt-F-D40-consumer-sol-0258 on current Agent. Exact Runtime f320 normal checkout receipt is available at /home/user/work/wt/rt-pin-f3208b26. Brief requires exact inventory/select source consumption before discovery with captured-byte execution or genuine immediate revalidation, all12 oldguards/6attacks unchanged, namespace/symlink/ancestor/scope/forgery/post-bind mutation strict. No original86/external positive rerun until meaningful reviewedsource; no newexecutor/API/schema/pin/tuple or callergrant. Runtime security0240 and integrated317 exclusions are consumed, no further producerapproval owed.
+
+U4a canonical adoption45c3 HOMEfb4fd94c, separate critical readiness handback already sent. It does not adopt f320 declarations/client. OPS prune peer0239 consumed: no retirement qualified, targets retained, zeroGBfreed. Snapshot drift ask is superseded by final emptycandidate assessment; no deniedretire retry or reference stripping.
