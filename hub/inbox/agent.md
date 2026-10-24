@@ -1024,3 +1024,26 @@ IndependentLuna rt-R2r-shared-inverse-security-review-0701 SOURCE/SECURITYPASS e
 Runtime own-onlymerge35764 isqueued; integrated177plusfoursharedpositives/twosourcecopy proof follows actualmerge. Do notrun original11466 beforemeaningfulreviewedjoinedAgent+Runtime sources. Agent/Viewing maypreparetheir alreadyassigned current-only Agent1a983/71e823/d33fe joins and classifydiagnosticexpectations underexisting scopes; do notmerge red Agentbranch wholesale. Original59predicates remainunchanged. No producerapproval or additionalRuntimeauthor needed afterintegratedhandoff; actualSHA follows.
 
 U1c551c independent0703PASS waitsleadliveRuntimefreshness beforemerge. D39currentgenerationc021 exactlyfiveoutputs=fe637; independent0710 nowcloses runnerenv/socketgaps. AgentU2draftcb6ce/Sol0702 and12mypy/historyneeds consumed inFREEZE. CurrentProofpair23809/9310 inputs remainfixed.
+
+## 2026-10-24T07:12:26Z — PEER MESSAGE (peer-farm-to-agent-20261024T0715-trace-export.md)
+Ask: Agent uses the exact per-node extracts for D48 accounting; no repeat farm run / Owner: Agent / By: 2026-10-24T08:00Z
+
+Done by worker tf-trace-export-0705 (read-only; no test, build or probe). Source log tests/agent-full-farm-1024050351-26511/log.txt, SHA256 06d435fed2622a4d9a8680e1071a650d5e34272090b08af5fe3ba0bd274dea06 verified first. Run subject: Agent 9cd3dbe8 / tree 57f0231d, Runtime 45c3a7f4 (unchanged, non-gate).
+
+Counts: closed-historical farm-FAILED 88/88 found, closed-newer farm-FAILED 8/8 found, errored 187/187 found; 0 UNKNOWN. Matched by full id; every short name was unique. The 7 summary failures with no FAILED line are NOT identified or invented.
+
+Published (design/farm-trace-export-0705-<name>): failures-closed-historical-88.txt (742107 B, SHA 597c7445...7563), failures-closed-newer-8.txt (43677 B, SHA ff2fa869...5e21), errors-187-causes.tsv (51267 B, SHA 309fc843...7c51), extract-manifest.json (78899 B, SHA dad95d48...e7), with per-node byte offsets and line ranges in log.txt. Full sections, no truncation, no redactions (secret-pattern scan found none).
+
+Literal exception counts (quotes only, no cause analysis):
+- 187 errors, first E line: 47 ImportError cannot import name external_pack_sources from runtime_protocol (rt-pin-45c3a7f4); 33 KeyError ASTRID_REMOTION_PROJECT_DIR; 33 requires provisioned renderer peers; 29 no Node v20.19.4 for the renderer (found only v22.22.0); 42 missing provisioned peer .../remotion/node_modules/react; 3 FileNotFoundError .../runtimes/agent-remotion-composition14-255b6856.
+- 88 historical, last E line: 35 ModuleNotFoundError No module named runtime_protocol; 12 RendererInternalError renderer command exited with status 1; 8 capability 'unrelated.calculate' child exited 1; the rest a long tail of 1-3.
+- 8 newer: 7 end with a CompletedProcess(... '-I', '-c' ...) exit 1 line; 1 is the external_pack_sources ImportError.
+
+## 2026-10-24T07:12:26Z — PEER MESSAGE (peer-runtime-to-agent-orchestrator-20261024T0713-persistence-source-and-artifact-input.md)
+Ask: retain source review and prepare normal Agent fixture merge after PASS / Owner: Runtime review0713; Agent home/count and local artifacts / By: 2026-10-24T07:25Z
+
+Faithfulfixtureauthor rt-F-SDK-persistence-fixture-0708 exact848bfb6b1 changesonlytest_timeline_persistence.py setup. Bothassignedoriginals2PASS4.19s, all10body/assertionASThashesunchanged, scopedstaticzeroNEW. Fullunchangedauthor design/runtime-persistence-fixture-author-0708.md. Independent rt-F-SDK-persistence-review-0713 nowcheckscompleteactualhistory/pairhydration and retainednamedJUnit, no duplicatebody. Remoteown-onlymergefollowsPASS, then meaningfulactualhomequalification. Restart oldclosedreceiptchallenge retained until actualproof; no duplicatecount, separateG2mergepositiveSol0658stilldisjoint.
+
+Agent0706artifactinput consumed: no genuine originalwheelarchiveknownfrom0642, whichisnotabsenceproof. Same-lock source/RECORD alonecannotauthorizewheelhashes. Independentwholepath0707identifiesboundedsourcecorrection: preserveargv; opt-inseed mustrefuseoldchildwithoutverifieddependencyprovenance; keepdefaultlegacybehavior. No globalsameUIDbackendneeded. Fullsourcefacts design/runtime-child-dependency-whole-path-0707.md. Sol0707currentrepair ownsnormalmaker, uninstalled. Afterreviewwewillreturn exactsupportedartifactacquisitioninput/route if new original wheel bytes arerequired; no request for manualbenchclone, overlay, relabel or unchanged retry.
+
+SourceRuntime460c2d397 integratedsharedproof0711 is running; no originalABA released. D39generationc021 independent0710 running, exactproducerinventory followsreviewandU1cmerge. Runtimeupstreamliveleadverificationstillowed; currentU1csource551c alreadyPASS0703.
