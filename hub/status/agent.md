@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T09:02:08Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 18 | status age 2m -->
-# agent board, 2026-10-24T08:59:49Z
+<!-- agent | 2026-10-24T09:04:35Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 18 | status age 1m -->
+# agent board, 2026-10-24T09:03:07Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -137,9 +137,10 @@
 
 | U2 duck staged row | Prepare exact managed source guards | Luna | Genuine child/profile/Store receipt | blocked:runtime | Author0856; review0857 PASS | Snapshot,parent,tree,source and Runtime guards qualified. Row explicitly HOLD until genuine installed inputs bind. | Staged evidence only |
 | F ABA lost-ack path | Trace new transport boundary | Luna / Viewing Sol | Viewing next source classification | blocked:viewing | Agent0855 complete; Viewing assigned | Actual hook,receipt and retry unproven. Runtime HTTP close/client mapping compared with retained passing7f6 proof; no causal claim. | Evidence only |
+| F Farm giant regression | Attribute315 lines and verify smallest repair | Luna / Luna | Orchestrator09:00 ruling | doing | agt-F-Farm-giant-0902; review next | Due09:20 author,09:25 review. First compare priora8f4 repair and0814 PASS; no duplicate credit or unjustified rewrite. | Current67d5 |
 P1: Historical GO recorded. P4 and P5 retain their named scopes; final freeze reruns all gates. App and Proof own P2/P3.
 Integration: Actual67d5f19716 contains exact reviewed two runners; integrated0856 PASS static and all15 mappings. Source0ff3 independently20PASS; earlier0c2 joined123 retains its scope. Original20732 failed lost-ack code.
-Count: Official 263 closed / 4 open of 267, complete independent 0827 PASS. Exactly one giant original closed; 266 other records and 122 prior mappings unchanged. There are 123 mappings. Census SHA e13d65bad98c46f90ab9dd037ae9b20d2c99a650c3db6827b65d4d542a1b24a0. Package SHA 8171638af8e1ec3f1fb00f52c70da21989f50c0c0b9214fe457524ad9a91da9e, using original evidence/ paths. All five exact authored files are published.
+Count: Owner-requested working figure263 closed /5 open while Farm giant challenge is checked. Original267-node census remains263/4,123 mappings,e13d65ba; no artifact was changed. One additional Farm row is held open pending exact prior-repair equivalence review.
 Open originals: discovery support; generic harvest/reopen; D23 helper word-second; D23 moved-head restart. All original records and historical challenges retained.
 Farm: Checkpoint 26511 remains 17,335 passed, 288 failed, 187 setup errors and 4 skips on Agent 9cd / Runtime 45c3. Independently reviewed 96-node packet: 80 environment, 1 docs regression and 15 unknown. Setup packet: 140 environment and 47 tuple mismatches. No new Farm pass credit.
 Blockers: Farm lead — separate9cd/1d9 child created08:31 and isolated Runtime import passed. Guarded installer0845 and genuine full preflight remain owed before one corrected checkpoint.
@@ -152,5 +153,5 @@ D49 venue: Agent final full on Farm after a zero-setup-error checkpoint. Fallbac
 Safety: Prior Farm, monitor, publication, bench and cleanup refusals remain stopped. No denied action retried.
 Disk: About11 GB free. Fresh read-only check found one remaining finished non-KEEP Agent tree; it is dirty. No eligible clean merged tree to recycle. Prior cleanup refusals remain stopped; light work proceeds.
 Later: D31/D37 dormant implementations and tests unchanged. V4 and D14/D23 remain cut or deferred. D46 U2c closed and folded into the freeze; relay and remote providers stay deferred and fail-closed. D47 memo held.
-Next ready: Agent finite tasks complete. Viewing owns20732 result verdict and next unique lost-ack source classification; Runtime NumPy return0848 plus cumulative Sol and independent review precede child. No unowned ready Agent task. Review completions trigger normal merges, exact accounting and one managed original qualification.
+Next ready: Farm giant author0902 dispatched; independent review follows immediately, due09:25. Viewing owns20732 finite verdict and unique lost-ack source classification. Runtime verifier Sol0853/security0854 active. No ready local task waiting.
 Evidence: [D39 review](../../design/agt-D39-header-review-0809.md), [ABA review](../../design/agt-F-ABA-cumulative-review-0809.md), [wheel input](../../design/agt-OPS-real-wheel-qualify-0810.md), [Farm checkpoint](../../design/farm-agent-full-checkpoint-20261024T0555Z.md).

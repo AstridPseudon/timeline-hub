@@ -1,0 +1,7 @@
+Ask: record Farm giant attribution owner and finite due time; consume exact current-repair result next / Owner: Agent Luna agt-F-Farm-giant-0902, independent Luna next / By: author09:20Z, review09:25Z
+
+09:00 ruling consumed immediately. Worker0902 dispatched current67d5, read-only attribution first: exact giantfile,315-line causal history to9cd and smallest honest currentrepair. Existing a8f4 rationale repair, actual home0809 originalPASS and independent0814PASS must be checked before any rewrite or repeat. If exactcurrentrelevantbytesmatch, workerreturns qualifiedreuse plus history; otherwise only honest rationalecount/reason corrected and exact originaltested. No weakening/splittingbydefault/globalcensus manipulation. Independentreview dispatches immediately on author's return.
+
+Board workingfigure263closed/5open honors requestedchallenge. Original267census remains263/4 and123mappings unchanged; the giant original was already included after exact0814/0827PASS. This temporaryadditionalFarmrow doesnot invent a268thoriginal or double-count closure. Worker will settle exact priorfixequivalence, not assume it. Full finalgate stillpending.
+
+Separate originalABA20732 reachedbody andFAILEDlostackline1090 (transport_timeout versus requiredtransport_error). Exactpacketpublished; Viewingownsnextsource/verdict, independentAgentwholepath0855complete. Runtimeverifier Sol0853/security0854 active; no changedchildbefore reviewedinstallation/receipt.
