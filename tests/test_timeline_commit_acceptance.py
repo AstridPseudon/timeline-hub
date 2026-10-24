@@ -304,7 +304,7 @@ def test_legacy_rebased_receipt_and_history_keep_v2_metadata_absent_after_restar
     assert json.loads(service.store.conn.execute(
         "SELECT metadata_json FROM timeline_commit_history WHERE publication_id=?",
         (rebased["receipt"]["receipt_id"],),
-    ).fetchone()[0]) == {"rationale": "Move clip"}
+    ).fetchone()[0]) == {"rationale": "Move clip", "recorder_abi": 1}
 
     service.close()
     restarted = RuntimeService(root)
