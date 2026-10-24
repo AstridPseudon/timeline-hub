@@ -133,7 +133,7 @@ export function AstridStatusSection({ isOpen }: { isOpen: boolean }) {
               </>
             )}
 
-            {(loadFailed || !connected && status !== 'set_up' && status !== 'connecting') && (
+            {(loadFailed || !connected && status !== 'connecting' && status !== 'needs_permission') && (
               <a className="text-sm text-muted-foreground underline underline-offset-4" href={ASTRID_HELP_URL} target="_blank" rel="noreferrer">Get help</a>
             )}
 

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import './ToolbarPointer.css';
 
-/** How far the arrow climbs towards the toolbar, and how far it reaches sideways. It points the general way, not at a pixel. */
+/** The install arrow climbs towards the toolbar; the permission arrow reaches the viewport's top-left corner. */
 const POINTER_RISE = 150;
 const POINTER_REACH = 96;
 /** Never closer than this to the viewport's edge, so the head and the label stay on screen. */
@@ -18,8 +19,8 @@ function pointerGeometry(card: DOMRect, corner: ToolbarPointerCorner): PointerGe
   const side = corner === 'top-right' ? 1 : -1;
   const sx = corner === 'top-right' ? card.right - 64 : card.left + 64;
   const sy = card.top - 10;
-  const ex = side === 1 ? sx + POINTER_REACH : Math.max(EDGE_MARGIN, sx - POINTER_REACH);
-  const ey = Math.max(EDGE_MARGIN, sy - POINTER_RISE);
+  const ex = side === 1 ? Math.min(width - EDGE_MARGIN, sx + POINTER_REACH) : EDGE_MARGIN;
+  const ey = corner === 'top-left' ? EDGE_MARGIN : Math.max(EDGE_MARGIN, sy - POINTER_RISE);
   const c1x = sx;
   const c1y = sy - (sy - ey) * 0.55;
   const c2x = ex - (ex - sx) * 0.4;
@@ -46,7 +47,7 @@ function pointerGeometry(card: DOMRect, corner: ToolbarPointerCorner): PointerGe
 /**
  * The install dialog's hand-drawn arrow, for any card that has to say "look up there": it leaves the card towards the
  * browser's toolbar, so it is drawn across the whole viewport and redrawn whenever the window or the card moves. Its
- * parent is the card it leaves; nothing above it may be transformed (the svg is `position: fixed`).
+ * anchor stays with the card; the SVG is portaled to the body so card animations cannot change its fixed coordinates.
  *
  * `tone` is the surface it is drawn over: `backdrop` for a dialog's dimmed backdrop, `page` for the page background.
  */
@@ -61,10 +62,10 @@ export function ToolbarPointer({
   tone?: 'backdrop' | 'page';
   className?: string;
 }) {
-  const svgRef = useRef<SVGSVGElement>(null);
+  const anchorRef = useRef<HTMLSpanElement>(null);
   const [geometry, setGeometry] = useState<PointerGeometry | null>(null);
   useEffect(() => {
-    const card = svgRef.current?.parentElement;
+    const card = anchorRef.current?.parentElement;
     if (!card) return;
     let disposed = false;
     const measure = () => {
@@ -80,15 +81,15 @@ export function ToolbarPointer({
       window.removeEventListener('resize', measure);
     };
   }, [corner]);
-  return (
-    <svg
-      ref={svgRef}
+  return <>
+    <span ref={anchorRef} hidden />
+    {createPortal(<svg
       className={`astrid-toolbar-pointer ${className}`.trim()}
       data-tone={tone}
       data-corner={corner}
       aria-hidden="true"
       // Out of flow, so a card's own spacing rules (`space-y-*` margins) must not move it.
-      style={{ margin: 0 }}
+      style={{ margin: 0, zIndex: 100101 }}
       width={geometry?.width}
       height={geometry?.height}
       fill="none"
@@ -100,6 +101,6 @@ export function ToolbarPointer({
           <text className="astrid-toolbar-pointer-label" x={geometry.labelX} y={geometry.labelY} textAnchor={geometry.labelAnchor}>{label.toUpperCase()}</text>
         </>
       ) : null}
-    </svg>
-  );
+    </svg>, document.body)}
+  </>;
 }

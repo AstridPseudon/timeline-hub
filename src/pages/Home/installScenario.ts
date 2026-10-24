@@ -11,7 +11,8 @@ export type InstallScenario = 'chromium' | 'unsupported' | 'mobile';
 export function detectInstallScenario(): InstallScenario {
   const platform = detectPlatform();
   const browser = detectBrowser();
-  if (detectDeviceType(platform) !== 'desktop' || !isDesktopPlatform(platform)) return 'mobile';
+  if (detectDeviceType(platform) !== 'desktop') return 'mobile';
+  if (!isDesktopPlatform(platform)) return 'unsupported';
   if (browser === 'chrome' || browser === 'edge') return 'chromium';
   return 'unsupported';
 }

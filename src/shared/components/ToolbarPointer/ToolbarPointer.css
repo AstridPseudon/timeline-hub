@@ -1,6 +1,6 @@
 /* The hand-drawn arrow from a card to the browser's toolbar (install dialog, permission card). */
 .astrid-toolbar-pointer {
-  /* Spans the viewport (nothing above it is transformed), so the arrow can leave the card. */
+  /* Portaled to the body so card transforms never offset the viewport coordinates. */
   position: fixed;
   inset: 0;
   overflow: visible;

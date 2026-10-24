@@ -66,6 +66,19 @@ it('admits the bundled world and applies all three stages with only shipped asse
   expect(pane).toHaveAttribute('data-tasks-pane', 'true');
   expect(pane).toHaveAttribute('data-pane-side', 'right');
   const main = screen.getByRole('main', { name: 'Lantern Valley guided demo' });
+  const header = screen.getByTestId('video-editor-header');
+  expect(header.nextElementSibling).toBe(main);
+  expect(within(header).getAllByTestId('editor-project-timeline-selectors')).toHaveLength(1);
+  expect(within(header).getAllByRole('combobox')).toHaveLength(1);
+  expect(within(header).getByRole('combobox', { name: 'Select project' })).toHaveTextContent('Onboarding project');
+  expect(within(header).getByRole('combobox', { name: 'Select project' })).toBeDisabled();
+  expect(within(header).queryByRole('combobox', { name: 'Select timeline' })).not.toBeInTheDocument();
+  expect(within(header).getByRole('button', { name: 'Project settings' })).toBeDisabled();
+  expect(within(header).getByRole('button', { name: 'New project' })).toBeDisabled();
+  expect(within(header).getByRole('button', { name: 'Settings' })).toBeDisabled();
+  const previewNavigation = within(screen.getByTestId('video-editor-preview-navigation-controls'));
+  expect(previewNavigation.getByRole('combobox', { name: 'Select timeline' })).toHaveTextContent('Lantern Valley');
+  expect(previewNavigation.getByRole('combobox', { name: 'Select timeline' })).toBeDisabled();
   // The same right-pane width used by the connected editor reserves the second desktop column.
   expect(main).toHaveStyle({ '--tasks-pane-width': '300px' });
   expect(main.lastElementChild).toBe(pane);

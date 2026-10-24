@@ -1,13 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { RadioGroup, RadioGroupItem } from '@/shared/components/ui/radio-group.tsx';
 import { SegmentedControl, SegmentedControlItem } from '@/shared/components/ui/segmented-control.tsx';
 import { runInstallPrompt, useInstallPromptSignals, useStandaloneStatus } from '@/shared/hooks/platformInstall/signals.ts';
 import { detectInstallScenario } from '@/pages/Home/installScenario.ts';
-import type { WindowMode } from '@/shared/components/RuntimeConnection/copy.ts';
+import { LOCAL_SETUP, type WindowMode } from '@/shared/components/RuntimeConnection/copy.ts';
 import { EditorCard } from '@/shared/components/RuntimeConnection/EditorCard.tsx';
 import { EditorCardLayer } from '@/shared/components/RuntimeConnection/EditorCardLayer.tsx';
-import { writeWelcomePhase } from './welcomeProgress.ts';
+import { readWelcomePhase, writeWelcomePhase } from './welcomeProgress.ts';
 
 export type { WindowMode };
 export type RunMode = 'hosted' | 'local';
@@ -20,33 +20,46 @@ interface Props {
   readonly setRunMode: (mode: RunMode) => void;
 }
 
-const ASTRID_REPO = 'https://github.com/banodoco/astrid-app';
-
 export function WelcomeRunMode({ onContinue, windowMode, setWindowMode, runMode, setRunMode }: Props) {
   const { deferredPrompt, consumeDeferredPrompt } = useInstallPromptSignals();
   const standalone = useStandaloneStatus();
   const scenario = detectInstallScenario();
-  const canInstall = !standalone && scenario === 'chromium' && deferredPrompt !== null;
+  const [installUnavailable, setInstallUnavailable] = useState(false);
+  const canInstall = !standalone && scenario === 'chromium' && deferredPrompt !== null && !installUnavailable;
   const [opened, setOpened] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const continueHere = () => onContinue('connection');
+  const continueHere = () => {
+    onContinue('connection');
+  };
   const copyForChromium = async () => {
     await navigator.clipboard.writeText(window.location.href);
     setCopied(true);
   };
   const installApp = async () => {
     if (!deferredPrompt) return continueHere();
+    const previousPhase = readWelcomePhase();
     writeWelcomePhase('connection');
     try {
       const { outcome } = await runInstallPrompt(deferredPrompt);
       consumeDeferredPrompt(deferredPrompt);
       if (outcome === 'accepted') setOpened(true);
-      else continueHere();
-    } catch { continueHere(); }
+      else {
+        writeWelcomePhase(previousPhase);
+        setInstallUnavailable(true);
+      }
+    } catch {
+      consumeDeferredPrompt(deferredPrompt);
+      writeWelcomePhase(previousPhase);
+      setInstallUnavailable(true);
+    }
   };
 
-  if (opened) return <main aria-label="Astrid opened in its own window">
+  useEffect(() => {
+    if (opened && standalone) onContinue('connection');
+  }, [opened, standalone, onContinue]);
+
+  if (opened && !standalone) return <main aria-label="Astrid opened in its own window">
     <EditorCardLayer cardKey="opened">
       <EditorCard title="Astrid opened in its own window" sentence="Carry on there. You can close this tab.">
         <a href="#continue" className="text-[13px] text-muted-foreground underline underline-offset-4 hover:text-foreground" onClick={event => { event.preventDefault(); continueHere(); }}>Continue here instead</a>
@@ -57,7 +70,7 @@ export function WelcomeRunMode({ onContinue, windowMode, setWindowMode, runMode,
   const buttonLabel = runMode === 'local'
     ? 'Set up with your agent'
     : canInstall && windowMode === 'app-window'
-      ? 'Install app and continue'
+      ? 'Install and continue'
       : standalone ? 'Continue' : 'Continue in this tab';
 
   return <main aria-label="How to run Astrid">
@@ -76,13 +89,14 @@ export function WelcomeRunMode({ onContinue, windowMode, setWindowMode, runMode,
                   <span className="mt-1 block text-[13px] leading-5 text-muted-foreground">The editor stays up to date and connects to Astrid on your computer, where your files, models and agent run.</span>
                 </span>
               </label>
-              {runMode === 'hosted' && canInstall && <div className="flex items-center gap-2.5 px-3.5 pb-3.5 pl-[43px]">
-                <span className="text-[13px] text-muted-foreground">Open in</span>
-                <SegmentedControl value={windowMode} onValueChange={value => setWindowMode(value as WindowMode)} size="sm" aria-label="Open in">
-                  <SegmentedControlItem value="app-window">App window</SegmentedControlItem>
-                  <SegmentedControlItem value="browser-tab">Browser tab</SegmentedControlItem>
+              {runMode === 'hosted' && canInstall && <div className="space-y-2 px-3.5 pb-3.5 pl-[43px]">
+                <SegmentedControl value={windowMode} onValueChange={value => setWindowMode(value as WindowMode)} size="sm" aria-label="How to open Astrid">
+                  <SegmentedControlItem value="app-window">Install as app</SegmentedControlItem>
+                  <SegmentedControlItem value="browser-tab">Stay in browser</SegmentedControlItem>
                 </SegmentedControl>
+                <p className="text-[13px] leading-5 text-muted-foreground">{windowMode === 'app-window' ? "Its own window and a Dock or taskbar icon. Nothing to download; it's still astrid.haus." : 'Keep using it in this tab.'}</p>
               </div>}
+              {runMode === 'hosted' && installUnavailable && <p className="px-3.5 pb-3.5 pl-[43px] text-[13px] leading-5 text-muted-foreground">Not installed. You can install it any time from the install icon in the address bar.</p>}
               {runMode === 'hosted' && scenario === 'unsupported' && <p className="px-3.5 pb-3.5 pl-[43px] text-[13px] text-muted-foreground">Needs Chrome or Edge to reach your computer.</p>}
             </div>
             <div className={`rounded-xl border transition-colors ${runMode === 'local' ? 'border-primary/70 bg-primary/[0.06]' : 'border-border hover:border-foreground/25 hover:bg-muted/40'}`}>
@@ -93,7 +107,7 @@ export function WelcomeRunMode({ onContinue, windowMode, setWindowMode, runMode,
                     <span id="welcome-title-local" className="text-[15px] font-medium text-foreground">Run everything on your computer</span>
                     <span className="rounded-full bg-muted px-2 py-px text-[11px] text-muted-foreground">Most control</span>
                   </span>
-                  <span className="mt-1 block text-[13px] leading-5 text-muted-foreground">The editor runs on your machine too: no browser permission, works offline, and you can change Astrid itself. Your agent sets it up from <a className="underline underline-offset-4 hover:text-foreground" href={ASTRID_REPO} target="_blank" rel="noreferrer">github.com/banodoco/astrid-app</a>.</span>
+                  <span className="mt-1 block text-[13px] leading-5 text-muted-foreground">The editor runs on your machine too: no browser permission, works offline, and you can change Astrid itself. GitHub <a className="underline underline-offset-4 hover:text-foreground" href={LOCAL_SETUP.repoUrl} target="_blank" rel="noreferrer">here</a>.</span>
                 </span>
               </label>
             </div>

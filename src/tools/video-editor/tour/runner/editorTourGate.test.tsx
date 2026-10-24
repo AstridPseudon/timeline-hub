@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   RuntimeConnectionGate,
@@ -47,14 +47,17 @@ beforeEach(() => {
 afterEach(() => {
   exitEditorTour();
   localStorage.clear();
+  vi.restoreAllMocks();
 });
 
 describe('the editor tour and the connection gate', () => {
   it('does not start a second tour when the connected editor mounts or its connection card leaves', async () => {
     const runtime = fakeRuntime();
+    vi.spyOn(navigator, 'platform', 'get').mockReturnValue('MacIntel');
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36');
     let leave: (() => void) | null = null;
     render(
-      <RuntimeConnectionProvider gated fetchImpl={runtime.fetchImpl} permissions={{ query: vi.fn(async () => ({ state: 'granted', onchange: null })) } as never} pollIntervalMs={10}>
+      <RuntimeConnectionProvider gated fetchImpl={runtime.fetchImpl} permissions={{ query: vi.fn(async () => ({ state: 'granted', onchange: null })) } as never} pollIntervalMs={60_000}>
         <RuntimeConnectionGate
           panel={({ state }, exit) => {
             leave = exit ? exit.left : null;
@@ -66,10 +69,13 @@ describe('the editor tour and the connection gate', () => {
       </RuntimeConnectionProvider>,
     );
 
-    await waitFor(() => expect(screen.getByTestId('panel')).toHaveTextContent('set_up'));
+    await waitFor(() => expect(runtime.fetchImpl).toHaveBeenCalledTimes(1));
+    fireEvent.focus(window);
+    await waitFor(() => expect(screen.getByTestId('panel')).toHaveTextContent('not_running'));
     expect(getEditorTourState().status).toBe('idle');
 
     runtime.start();
+    fireEvent.focus(window);
     // Connected: the editor is mounted beneath the card, which has not left yet.
     await waitFor(() => expect(screen.getByTestId('editor')).toBeInTheDocument());
     await waitFor(() => expect(leave).not.toBeNull());

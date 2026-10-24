@@ -51,7 +51,7 @@ import { AstridVideoEditorShell } from "@/tools/video-editor/components/AstridVi
 import {
   ProjectTimelinePicker,
 } from "@/shared/components/ProjectTimelineSelectors.tsx";
-import { ProjectHeaderActions } from "@/shared/components/ProjectHeaderActions.tsx";
+import { ProjectHeaderControls } from "@/shared/components/ProjectHeaderControls.tsx";
 import {
   AstridRuntimeClient,
   RuntimeUnavailableError,
@@ -77,7 +77,7 @@ import { useEditorTourHost } from "@/tools/video-editor/tour/runner/useEditorTou
 import { EditorTourSlot } from "@/tools/video-editor/tour/timeline/editorTourSlot.tsx";
 import { EditorTourTimelineDriver } from "@/tools/video-editor/tour/timeline/EditorTourTimelineDriver.tsx";
 import { createEditorTourDataProvider } from "@/tools/video-editor/tour/timeline/tourDataProvider.ts";
-import { EDITOR_TOUR_PROJECT_NAME, EDITOR_TOUR_TIMELINE_ID, EDITOR_TOUR_TIMELINE_NAME } from "@/tools/video-editor/tour/timeline/tourStages.ts";
+import { tourHeaderProps } from "@/tools/video-editor/tour/timeline/tourHeaderProps.ts";
 
 type ProviderSelection = {
   dataProvider: DataProvider;
@@ -155,15 +155,16 @@ function useVideoEditorProviderSelection({
 function useEditorTourSelection(): ProviderSelection | null {
   const running = useEditorTourRunning();
   const runId = useEditorTour((state) => state.runId);
+  const { timelineId, timelineName } = tourHeaderProps();
   return useMemo(() => running ? {
     dataProvider: createEditorTourDataProvider(),
     projectId: null,
     projectSlug: null,
-    timelineId: EDITOR_TOUR_TIMELINE_ID,
-    timelineName: EDITOR_TOUR_TIMELINE_NAME,
+    timelineId,
+    timelineName,
     userId: null,
     remountKey: `tour:${runId}`,
-  } : null, [running, runId]);
+  } : null, [running, runId, timelineId, timelineName]);
 }
 
 export default function VideoEditorPage() {
@@ -344,6 +345,7 @@ export default function VideoEditorPage() {
   });
 
   const tourSelection = useEditorTourSelection();
+  const tourHeader = tourSelection ? tourHeaderProps() : null;
   // Register explicit replays; first-run welcome already finished before this editor opens.
   useEditorTourHost();
   const providerSelection = tourSelection ?? userProviderSelection;
@@ -719,13 +721,11 @@ export default function VideoEditorPage() {
         return a.name.localeCompare(b.name);
       })
       .map(({ editTime: _editTime, ...row }) => row),
-    projectId: projectId,
-    timelineId: timelineId,
+    projectId: tourHeader ? tourHeader.projectId : projectId,
+    timelineId: tourHeader ? tourHeader.timelineId : timelineId,
     // The tour is not a project of the user's: its header names win and the pickers stay shut.
-    projectName: tourSelection ? EDITOR_TOUR_PROJECT_NAME : selectedProject?.name,
-    timelineName: tourSelection
-      ? tourSelection.timelineName
-      : selectedTimeline?.name?.trim() || selectedTimeline?.slug,
+    projectName: tourHeader ? tourHeader.projectName : selectedProject?.name,
+    timelineName: tourHeader ? tourHeader.timelineName : selectedTimeline?.name?.trim() || selectedTimeline?.slug,
     projectsLoading:
       runtimeDiscovery.projectsQuery.isLoading,
     // The timeline list waits on the project list; a timeline named by the URL
@@ -749,31 +749,27 @@ export default function VideoEditorPage() {
     onSetPrimaryTimeline: handleSetPrimaryTimeline,
     settingPrimaryTimelineId,
     onRetry: () => void handleRuntimeRetry(),
-    disabled: isSwitchBlockedBySave || !!tourSelection,
+    disabled: isSwitchBlockedBySave || !!tourHeader?.disabled,
     onOpenChange: setSelectorsOpen,
   };
   const runtimeProjectControls = (
-    <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">
-      <img
-        src="/astrid-favicon.svg"
-        alt="Astrid"
-        className="h-[30px] w-[30px] shrink-0"
-        data-testid="astrid-project-row-logo"
-        data-boot-mink-target=""
-      />
-      <ProjectTimelinePicker
-        {...runtimePickerProps}
-        showProjectLabel={false}
-        showTimelineSelector={false}
-      />
-      <ProjectHeaderActions
-        selectedProject={selectedProject}
-        onProjectCreated={() => void runtimeDiscovery.projectsQuery.refetch()}
-        onProjectUpdated={() => void runtimeDiscovery.projectsQuery.refetch()}
-        disabled={isSwitchBlockedBySave || runtimeDiscovery.projectsQuery.isLoading}
-        confirmNavigation={() => confirmRemountRef.current()}
-      />
-    </div>
+    <ProjectHeaderControls
+      projects={runtimePickerProps.projects}
+      projectId={runtimePickerProps.projectId}
+      projectName={runtimePickerProps.projectName}
+      projectsLoading={runtimePickerProps.projectsLoading}
+      projectsError={runtimePickerProps.projectsError}
+      onRetry={runtimePickerProps.onRetry}
+      onOpenChange={runtimePickerProps.onOpenChange}
+      onSelectProject={runtimePickerProps.onSelectProject}
+      selectedProject={selectedProject}
+      pickerDisabled={runtimePickerProps.disabled}
+      actionsDisabled={isSwitchBlockedBySave || runtimeDiscovery.projectsQuery.isLoading || !!tourHeader?.disabled}
+      onProjectCreated={() => void runtimeDiscovery.projectsQuery.refetch()}
+      onProjectUpdated={() => void runtimeDiscovery.projectsQuery.refetch()}
+      confirmNavigation={() => confirmRemountRef.current()}
+      logoBootTarget
+    />
   );
   const runtimeTimelineControls = (
     <>
@@ -794,6 +790,7 @@ export default function VideoEditorPage() {
     runtimeDiscovery.projectsQuery.error?.message, runtimeDiscovery.timelinesQuery.error?.message,
     isSwitchBlockedBySave, extensionUnsaved, mountedSaveStatus, creatingFirstTimeline, settingPrimaryTimelineId,
     runtimeRetrying, nativeRecovery.retrying,
+    tourHeader?.projectName, tourHeader?.timelineName, tourHeader?.disabled,
   ]);
 
   useEffect(() => {

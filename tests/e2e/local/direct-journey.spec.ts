@@ -26,7 +26,7 @@
  *
  * App contract the UI cases assert (A2.S and A2.P chose these names):
  *   [data-testid="runtime-connection-status"][data-state="connected"]   the status container: nothing visible while connected (screen-reader text only)
- *   [data-testid="runtime-not-connected"]                               the connection panel (permission, blocked, set up, not running, restart needed)
+ *   [data-testid="runtime-not-connected"]                               the connection panel (permission, blocked, unanswered, update needed)
  *   a button named "Connect" in the permission panel                    triggers Chrome's local-network prompt
  *   a visible install/update command and a button named "Copy" inside that panel
  *   a button named "Reload" in the "Astrid restarted" card; the "Astrid stopped" card clears by itself
@@ -214,14 +214,15 @@ test.describe('the bare domain (App)', () => {
 });
 
 test.describe('first time and returning panels (App)', () => {
-  test('a fresh profile shows "Connect Astrid on this computer", and after one connection the same profile shows "Astrid isn\'t running"', async ({ page, harness }) => {
+  test('a fresh granted profile and a returning profile see the same single unanswered card', async ({ page, harness }) => {
     // Same context for both phases, so localStorage carries over; the fixture context is fresh, so nothing is remembered at the start.
     await harness.stopRuntime();
     try {
       await openApp(page, harness);
       const panel = page.locator(UI.panel);
       await expect(panel).toBeVisible();
-      await expect(panel.getByRole('heading', { name: 'Connect Astrid on this computer' })).toBeVisible();
+      await expect(panel.getByRole('heading', { name: "Astrid isn't answering on this computer" })).toBeVisible();
+      await expect(panel.getByText("Your coding agent can start it, or install it if it isn't there yet.")).toBeVisible();
       await expect(panel.getByRole('code')).toHaveText('curl -fsSL https://astrid.haus/install | sh');
       await expect(panel.getByRole('button', { name: UI.copy })).toBeVisible();
 
@@ -230,44 +231,64 @@ test.describe('first time and returning panels (App)', () => {
 
       await harness.stopRuntime();
       await page.reload();
-      await expect(panel.getByRole('heading', { name: "Astrid isn't running" })).toBeVisible();
+      await expect(panel.getByRole('heading', { name: "Astrid isn't answering on this computer" })).toBeVisible();
+      await expect(panel.getByText("Your coding agent can start it, or install it if it isn't there yet.")).toBeVisible();
       await expect(panel.getByRole('button', { name: UI.copy })).toBeVisible();
       await expect(panel.getByRole('code')).toHaveText('curl -fsSL https://astrid.haus/install | sh');
-      await expect(panel.getByText('Connect Astrid on this computer')).toHaveCount(0);
+      await expect(panel.getByText('Set up Astrid on this computer')).toHaveCount(0);
     } finally {
       await harness.resetToHealthy();
     }
   });
 });
 
-// Fresh profiles see setup before any local-network prompt or door request. The installer handoff remains explicit.
+// Fresh profiles see the permission explanation before any door request. The installer handoff starts the same prompt automatically.
 test.describe('permission gate and readiness (App)', () => {
-  test('a fresh profile sees setup before any permission prompt or door request', async ({ browser, harness }) => {
+  test('a fresh profile sees the permission explanation before Connect asks Chrome, and the installer handoff still starts it', async ({ browser, harness }) => {
     const context = await browser.newContext(); // no grant: the permission reads `prompt`
     try {
       const page = await context.newPage();
       const doorRequests = await openApp(page, harness);
       expect(await readLocalNetworkState(page)).toBe('prompt');
       const panel = page.locator(UI.panel);
-      await expect(panel).toHaveAttribute('data-state', 'set_up');
-      await expect(panel.getByRole('code')).toHaveText('curl -fsSL https://astrid.haus/install | sh');
-      await expect(panel.getByRole('button', { name: UI.connect })).toHaveCount(0);
-      expect(doorRequests, 'a fresh profile does not probe the door while showing setup').toEqual([]);
+      await expect(panel).toHaveAttribute('data-state', 'permission');
+      await expect(panel.getByRole('heading', { name: 'Connect to Astrid on this computer' })).toBeVisible();
+      await expect(panel.getByText('Chrome will ask to let astrid.haus reach Astrid on this computer. Choose Allow.')).toBeVisible();
+      await expect(panel.getByRole('button', { name: UI.connect })).toBeVisible();
+      await expect(panel.getByRole('code')).toHaveCount(0);
+      expect(doorRequests, 'a fresh profile does not probe the door before Connect').toEqual([]);
 
-      // The installer handoff asks Chrome at once. Chrome holds the door request until the person answers its prompt, and headless
-      // Chromium has no prompt (it fails the request instead, which sends the page back to setup), so the test holds the request
+      // Connect asks Chrome. Chrome holds the door request until the person answers its prompt, and headless
+      // Chromium has no prompt (it fails the request instead, leaving the permission screen in place), so the test holds the request
       // the way the prompt does and releases it with the grant.
       const heldRequests: Route[] = [];
       let promptOpen = true;
       await page.route(`http://127.0.0.1:${DOOR_PORT}/**`, (route) => (promptOpen ? void heldRequests.push(route) : void route.continue()));
-      await page.goto(`${harness.origin}/?connect=1#continue`);
-      await expect(page.locator(UI.panel).getByRole('heading', { name: 'Choose Allow in Chrome' })).toBeVisible();
-      await expect.poll(() => heldRequests.length, { message: 'the page asked the door once the installer handoff took it in' }).toBeGreaterThan(0);
+      await panel.getByRole('button', { name: UI.connect }).click();
+      await expect(panel).toHaveAttribute('data-state', 'pending');
+      await expect(panel.getByRole('heading', { name: 'Choose Allow in Chrome' })).toBeVisible();
+      await expect.poll(() => heldRequests.length, { message: 'Connect asked the door while Chrome’s prompt is open' }).toBeGreaterThan(0);
       promptOpen = false;
       await context.grantPermissions([LOCAL_NETWORK_PERMISSION], { origin: harness.origin });
       await Promise.all(heldRequests.splice(0).map((route) => route.continue().catch(() => undefined)));
       await expectConnected(page);
       expect(doorRequests.length).toBeGreaterThan(0);
+
+      // Clearing the grant simulates a fresh permission prompt for the installer handoff. Its URL flag starts Connect itself.
+      await context.clearPermissions();
+      const installerRequests: Route[] = [];
+      let installerPromptOpen = true;
+      await page.unroute(`http://127.0.0.1:${DOOR_PORT}/**`);
+      await page.route(`http://127.0.0.1:${DOOR_PORT}/**`, (route) => (installerPromptOpen ? void installerRequests.push(route) : void route.continue()));
+      await page.goto(`${harness.origin}/?connect=1#continue`);
+      await expect(page.locator(UI.panel)).toHaveAttribute('data-state', 'pending');
+      await expect(page.locator(UI.panel).getByRole('heading', { name: 'Choose Allow in Chrome' })).toBeVisible();
+      await expect.poll(() => installerRequests.length, { message: 'the installer handoff starts the permission request' }).toBeGreaterThan(0);
+      installerPromptOpen = false;
+      await context.grantPermissions([LOCAL_NETWORK_PERMISSION], { origin: harness.origin });
+      await Promise.all(installerRequests.splice(0).map((route) => route.continue().catch(() => undefined)));
+      await expectConnected(page);
+      expect(installerRequests.length).toBe(0);
     } finally {
       await context.close();
     }
@@ -300,7 +321,7 @@ test.describe('permission gate and readiness (App)', () => {
     }
   });
 
-  test('G1 browser half: a door that listens before its Runtime is ready shows "not running", then connects by itself once it is', async ({ page, harness }) => {
+  test('G1 browser half: a door that listens before Astrid is ready shows one unanswered card, then connects by itself', async ({ page, harness }) => {
     // Listening is not readiness: without the product credential the door answers `runtime_unavailable`, as it does
     // between the daemon starting and `astrid-runtime up` provisioning that credential.
     harness.withdrawProductCredential();
@@ -308,9 +329,9 @@ test.describe('permission gate and readiness (App)', () => {
       await openApp(page, harness);
       await page.evaluate(() => { (window as unknown as { __noReload: boolean }).__noReload = true; });
       const panel = page.locator(UI.panel);
-      await expect(panel.getByRole('heading', { name: "Astrid isn't running" })).toBeVisible();
-      await expect(panel.getByText('Give these instructions to your coding agent to start it again. Your work is kept.')).toBeVisible();
-      await expect(panel.getByText('Connect Astrid on this computer')).toHaveCount(0);
+      await expect(panel.getByRole('heading', { name: "Astrid isn't answering on this computer" })).toBeVisible();
+      await expect(panel.getByText("Your coding agent can start it, or install it if it isn't there yet.")).toBeVisible();
+      await expect(panel.getByText('Set up Astrid on this computer')).toHaveCount(0);
       await expect(panel).not.toContainText(/Runtime|workspace|realm|gateway|door|reload/i);
       const notReadyReadings = harness.audit().filter((entry) => entry.path === '/v1/health' && entry.status === 503).length;
       expect(notReadyReadings, 'the listening door answered the health checks it could not serve yet').toBeGreaterThan(0);

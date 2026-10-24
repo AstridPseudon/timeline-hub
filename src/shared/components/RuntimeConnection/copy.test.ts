@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { agentInstructions, installCommand, localSetupInstructions, LOCAL_SETUP } from './copy.ts';
+import { agentInstructions, installCommand, localSetupInstructions, localSetupSteps, LOCAL_SETUP } from './copy.ts';
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -31,9 +31,13 @@ describe('update handoff', () => {
 });
 
 describe('onboarding instructions', () => {
-  it('ends web instructions with the chosen window mode', () => {
-    expect(agentInstructions('install', 'https://astrid.haus', 'app-window')).toMatch(/When Astrid is running, open it in the installed Astrid app if it exists, otherwise https:\/\/astrid\.haus in my browser\.$/);
-    expect(agentInstructions('install', 'https://astrid.haus', 'browser-tab')).toMatch(/When Astrid is running, open it at https:\/\/astrid\.haus in my browser\.$/);
+  it.each(['install', 'update'] as const)('ends %s instructions with the same browser handoff', mode => {
+    const text = agentInstructions(mode, 'https://astrid.haus');
+    expect(text).toContain('If the installer couldn\'t open a browser, open https://astrid.haus/?connect=1.');
+    expect(text).toContain('My astrid.haus tab connects by itself once Astrid answers; if it shows a Connect button, click it.');
+    expect(text).toContain('Tell me to choose Allow if Chrome or Edge asks');
+    expect(agentInstructions(mode, 'https://preview.example')).toContain('the page at https://preview.example can connect');
+    expect(agentInstructions(mode, 'https://preview.example')).toContain('If the installer couldn\'t open a browser, open https://astrid.haus/?connect=1.');
   });
 
   it('returns the fully local instructions', () => {
@@ -47,10 +51,11 @@ describe('onboarding instructions', () => {
     expect(text).toContain(LOCAL_SETUP.startCommand);
   });
 
-  it('uses the set-up title that matches the permission screen', async () => {
-    const { RUNTIME_CONNECTION_COPY } = await import('./copy.ts');
-    expect(RUNTIME_CONNECTION_COPY.setUp.title).toBe('Set up Astrid on this computer');
-    expect(RUNTIME_CONNECTION_COPY.permission.title).toBe('Connect to Astrid on this computer');
+  it('local setup step five gives one browser address to open', () => {
+    const step = localSetupSteps()[4];
+    expect(step.line).toBe('Open this address in your browser. The editor opens with your project.');
+    expect(step.command).toBe(LOCAL_SETUP.openUrl);
+    expect(step.commandLabel).toBe('Copy the address');
   });
 
   it('local setup start command is defined', () => {

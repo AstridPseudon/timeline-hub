@@ -9,12 +9,14 @@ describe('welcome entry', () => {
     ['/tools/video-editor?connect=1', 'tour', 'connection'],
     ['/tools/video-editor?connect=1', 'complete', 'connection'],
     ['/tools/video-editor?connect=1', null, 'connection'],
+    ['/tools/video-editor?connect=1', 'local', 'local'],
     ['/tools/video-editor?project=p', 'tour', 'editor'],
     ['/tools/video-editor?timeline=t', 'tour', 'editor'],
     ['/tools/video-editor?localProject=p', 'tour', 'editor'],
     ['/tools/video-editor?localTimeline=t', 'tour', 'editor'],
     ['/tools/video-editor?project=p&connect=1', 'tour', 'editor'],
     ['/tools/video-editor?connect=0', 'local', 'local'],
+    ['/tools/video-editor?connect=1', 'local', 'local', true],
     ['/tools/video-editor', 'tour', 'tour', true],
     ['/tools/video-editor', 'choose', 'connection', true],
     ['/tools/video-editor', 'local', 'local', true],
@@ -39,6 +41,10 @@ describe('welcome entry', () => {
       progress.writeWelcomePhase(phase);
       expect(progress.readWelcomePhase()).toBe(phase);
     }
+    progress.writeWelcomePhase(null);
+    expect(progress.readWelcomePhase()).toBeNull();
+    expect(localStorage.getItem('astrid:welcome-v1')).toBeNull();
+    progress.writeWelcomePhase('local');
     expect(progress.completeWelcome({ projectId: 'p', timelineId: 't' })).toBe('/tools/video-editor?project=p&timeline=t');
     expect(localStorage.getItem('astrid:welcome-v1')).toBe('complete');
     expect(localStorage.getItem('astrid-setup-complete')).toBeNull();
