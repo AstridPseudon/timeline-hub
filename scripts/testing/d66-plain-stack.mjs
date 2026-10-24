@@ -33,9 +33,19 @@ export const suites = {
     grep: 'P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo$',
     retainRuntimeLogs: true,
   },
+  'p2-popup-add': {
+    files: ['tests/e2e/local/three-products.p2-popup.spec.ts'], count: 1,
+    grep: 'P2 popup mounted ADD on selected child uses shared occurrence fork and A2 commit$',
+    retainRuntimeLogs: true,
+  },
   'p2-popup-swap': {
     files: ['tests/e2e/local/three-products.p2-popup.spec.ts'], count: 1,
     grep: 'P2 popup mounted SWAP on selected child uses authenticated old/new media selections$',
+    retainRuntimeLogs: true,
+  },
+  'p2-parent-move': {
+    files: ['tests/e2e/local/three-products.p2-tour.spec.ts'], count: 1,
+    grep: 'P2 mounted single parent move: v2 commit, exact field delta, reload and guarded Undo$',
     retainRuntimeLogs: true,
   },
   'p2-transition-none-single': {
