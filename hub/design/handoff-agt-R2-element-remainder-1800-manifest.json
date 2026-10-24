@@ -1,0 +1,26 @@
+[
+  {
+    "source": "workers/agt-G4-D72-home-1754/evidence/d72-home-historical-remainder.md",
+    "published": "design/handoff-agt-R2-element-remainder-1754.md",
+    "bytes": 5116,
+    "sha256": "0fdd596a3df580118d374be48ed258dd489cea97781acf00a9552840fb93710b"
+  },
+  {
+    "source": "workers/agt-G4-D72-element-sol-1717/evidence/controls.xml",
+    "published": "design/handoff-agt-R2-element-1717-controls.xml",
+    "bytes": 253243,
+    "sha256": "0ff469d9f0664d75dd3e9799093c6c14f77c4947cb76ec38d5707c344db9d4de"
+  },
+  {
+    "source": "workers/agt-G4-D72-element-sol-1717/evidence/controls.log",
+    "published": "design/handoff-agt-R2-element-1717-controls.log",
+    "bytes": 244886,
+    "sha256": "a21c6d83bff3eba24e2b56756307d8d44bbbb79f2cc024bcc9109fb88301c79d"
+  },
+  {
+    "source": "workers/agt-G4-D72-element-sol-1717/evidence/controls-failure-summary.txt",
+    "published": "design/handoff-agt-R2-element-1717-failure-summary.txt",
+    "bytes": 1533,
+    "sha256": "bcba13418c5af85f8bc9cdc26173e73a4cc5a385130eb2265d599dc3694028fb"
+  }
+]
