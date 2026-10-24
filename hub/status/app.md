@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T06:34:13Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 3m -->
-# app board, 2026-10-24T06:31Z
+<!-- app | 2026-10-24T06:36:53Z | dispatcher heartbeat 1s | live 2 (sol 0, luna 2, other 0) | busy30 9 | status age 0m -->
+# app board, 2026-10-24T06:36Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -19,8 +19,8 @@
 | readiness-after-bootstrap | Qualify history and bootstrap readiness | App source; Proof verdict | D45 actual stage PASS | merged | Caller 0446; producer 0454; Proof 0508 | Both D45 readiness leaves passed; P3 test 16.7 seconds. Gate failures are downstream. Historical causes stay bounded. | c0fe / 079 / 37eb |
 | P-door-port-alloc | Allocate door port per run | Luna; D21 | Resolved | merged | app-P2-P3-door-allocation-0039 | [Node 20 allocation, shared stage value and failure checks passed.](/home/user/timeline-hub/hub/design/app-P2-P3-door-allocation-0039.md) | Harness rows only |
 | readiness-upstream-check | Check f38e candidate | Sol; Luna review | Review 0057 PASS | merged | App Sol 0046; Luna 0057 | No census or attempt-root signature supports attribution. Exact patch is unavailable locally; historical cause remains unknown. | Report only |
-| P2 | Eight original gesture cases | App service; Proof verdict | Corrected proof and caller | blocked:app | Joined 0629; caller 0623; Proof verdict | D45 13583 failed three; five not run. Repairs and timing correction are HOME. Conditional release 0615 applies after checks pass. | 9b810408cc source |
-| P3 | Original Gate-5 journey | App service; Proof verdict | Corrected proof and caller | blocked:app | Joined 0629; caller 0623; Proof verdict | Reviewed setup is HOME. Live 4065 remains NO-GO. Caller retains original reset and full downstream tail. | bb5ee / ae7 / 9b810408cc join |
+| P2 | Eight original gesture cases | App service; Proof verdict | Corrected proof and caller PASS | doing | Actual 20674; target check 0636 | Source preflight exit2 in6s. All eight originals NOTRUN. Caller artifact target refused correctly; exact product-target correction active. | Selected 663; HOME 9b810 |
+| P3 | Original Gate-5 journey | App service; Proof verdict | Corrected proof and caller PASS | doing | Actual 10144; target check 0636 | Source preflight exit2 in6s. Gate5 NOTRUN. Same wrong artifact target refused; no body or guard change. | Selected 663; HOME 9b810 |
 | A2-parent-media-closure | Preserve untouched child closure | Sol; Luna review | Resolved | merged | app-A2-parent-media-integrated-0035 | [299 tests, types, lint and external producer passed.](/home/user/timeline-hub/hub/design/app-A2-parent-media-integrated-0035.md) | 1b0428db7d |
 | A2-image-created | Declare genuine image creations | Sol; Luna review | Review 0133 PASS | merged | app-A2-image-created-sol-0126 | Independent 261 tests and producer 28, three types and lint passed. Clip and new authored registry alias claims match provider. Joined proof 0150 passed 448 tests, three types and lint. | b3a84dea71 / 1c5cc47bf6 |
 | A4-image-live | Complete source-bound image witness | Luna producer; Agent independent review | Independent 0636 PASS | merged | App producer0520; Agent0554 and0636 | [Actual acceptance, retry, refusals, undo, history and canonical restore PASS.](../../design/agt-A4-image-result-review-0636.md) Direct Runtime service scope. | App1c5cc / Agent2007 / Runtime8ea |
@@ -77,20 +77,22 @@
 | P2-five-current-paths | Recheck five original never-run paths | Luna; independent Luna | Review 0525 PASS | merged | app-P2-current-path-repro-review-0525 | All five real selectors and mounted paths confirmed. No prior static gap remains. Browser upload, dispatch, reload and undo stay unknown. | Report only |
 | A2-parent-materialization | Preserve untouched move data and basis | Sol; Luna review | Reviews 0536 and 0545 PASS | merged | app-A2-parent-materialization-sol-0525 | Reviewed packet is HOME. Mounted ready and delayed owner requests passed; 273 plus 161 tests, three types and lint. Integrated joined proof follows source merges. | 5e242c64e3 / 7551bb2146 |
 | P2-P3-stage-retention | Preserve earlier stage diagnostic files | Luna; D21 | Final caller qualified | merged | app-P2-P3-source-rebind-0623 | [Source guards, custody, logic equality and installed rows PASS.](../../design/app-P2-P3-source-rebind-0623.md) Existing 60 controls and six real stages retained. | Selected 6635416195; HOME 9b810408cc |
-| App-current-real-path-proof | Qualify all final mounted caller repairs | Luna | Media correction merged | doing | app-A2-A3-corrected-integrated-0629 | Corrected 27-file union, Gate5 controls, types and lint queued. Prior b238 result retained as 685 PASS and one FAIL, with no pre-existing waiver. | 9b810408cc |
+| App-current-real-path-proof | Qualify all final mounted caller repairs | Luna | Independent correction merged | merged | app-A2-A3-corrected-integrated-0629 | [27 files, 690 tests, Gate5 12 controls, three types and lint PASS.](../../design/app-A2-A3-corrected-integrated-0629.md) Donor and protected blobs pass. | 9b810408cc |
 
 | A2-media-timing-join | Preserve prepared media canonical timing | Sol; Luna review | Independent 0623 PASS | merged | app-A2-media-timing-review-0623 | [252 tests, all 26 media tests, three types and lint passed.](../../design/app-A2-media-timing-review-0623.md) Original timing assertion unchanged. | 6635416195 / 9b810408cc |
+| P2-P3-target | Qualify product source dispatch target | Luna; D21 | Source and caller PASS | doing | app-P2-P3-target-custody-0636 | Exact product663 target; wrong artifact d545 negative. No guard or suite changes. | Source663 / HOME9b810 |
+
 Integration: 9b810408ccf8aadbca708dd0bc461afc19576427, tree 9a37265f0286128df7e6240a9df9877d959474af. Exact whole tree equals independently reviewed timing candidate 6635416195. All reviewed catalog, parameter, popup, parent, P3 setup and oracle repairs remain present.
 
-Next ready: Corrected integrated worker 0629 running; final caller 0623 READY on selected 6635416195 with exact HOME 9b810408cc tree. Submit exactly one P2 and one P3 after both checks pass under Proof conditional release 0615. No further approval roundtrip.
-Blockers: App — corrected integrated qualification 0629 must pass before the released pair. Final caller 0623 is READY.
+Next ready: D21 target custody 0636 qualifies exact product branch before corrected dispatch. Producer0634 returns actual preflight NOTRUN facts; no repeat of terminal IDs.
+Blockers: App — exact product dispatch target qualification0636 must pass; caller artifact tree was correctly refused.
 Blockers: Freeze — U3b waits P2/P3 and final freeze.
 
-P2/P3: D45 pair is consumed. P213583 failed three with five not run; P34065 failed first original reset after readiness passed. Every original guard, wait, intended-field, reload, undo and tail remains required.
+P2/P3: Requests 20674 and10144 failed source preflight in6s, before setup or originals. Target correction0636 is active; original meaningful pair still awaits correct source target. D45 pair is consumed. P213583 failed three with five not run; P34065 failed first original reset after readiness passed. Every original guard, wait, intended-field, reload, undo and tail remains required.
 P1: GO at00:43 on Appf8, Agent787 and Runtime2a9 with original18792 and independent0036/0040. Final freeze reruns all gates on final heads.
 IMAGE0554: independent0636 PASS closes the bounded direct RuntimeService behavior on App1c5cc, Agent2007 and Runtime8ea. App commit/blob metadata mislabel remains disclosed. No HTTP/auth or broader gate credit.
 
 Delivery: D31 retains transcriptAssociateCapture.ts, unchanged397-line/40-assertion test and required helpers. D37 retains dormant raw-birth and same-order track implementations/tests unchanged with existing ledger entries. D47 memo/capsule remains deferred and held unmerged.
 Safety: Historical cleanup, graph and publication denials stand. Managers write boards, briefs and shared reports; workers own product changes. No refused cleanup or compact retry.
-Disk: About12GB available. Recycled finished catalog0524 via bin/recycle. Sweep3 completed; capped output did not retain its removal count. Remaining historical U3 trees were previously refused and stay untouched.
+Disk: About 12 GB available. Recent finished review worktrees are already recycled; three ordinary recycle checks returned no worktree. Recycled finished catalog0524 via bin/recycle. Sweep3 completed; capped output did not retain its removal count. Remaining historical U3 trees were previously refused and stay untouched.
 Evidence: [catalog final review](../../design/app-A3-catalog-final-cumulative-review-0603.md), [parameter review](../../design/app-A2-element-cumulative-review-0554.md), [popup review](../../design/app-A3-popup-cumulative-review-0547.md), [parent review](../../design/app-A2-parent-optional-review-return-0545.md), [P3 final review](../../design/handoff-ap2-P3-reset-final-review-0553.md), [retained caller preparation](../../design/app-P2-P3-retained-caller-prep-0600.md), [IMAGE result](../../design/agt-A4-image-result-review-0636.md).
