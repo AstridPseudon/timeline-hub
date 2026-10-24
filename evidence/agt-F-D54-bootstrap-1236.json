@@ -1,0 +1,2283 @@
+{
+  "schema": "timeline.agent.d54.d57.bootstrap-render-transport.classification.v1",
+  "task": "agt-F-D54-bootstrap-1236",
+  "base": "tl/integration",
+  "decision_basis": {
+    "plan": "PLAN.md §3 R1/R2/G2; actual core end-state",
+    "board": "published normal BOARD-HEADER.md D54/D54a/D56/D57",
+    "contract": "design/commit-v2.md §§1–5",
+    "regression_baseline": "upstream25359ed68",
+    "source": "design/agent-F-D52-classification-1132.json",
+    "selection_rule": "owner exactly Agent execution/bootstrap environment OR Agent rendering result transport",
+    "header_limitation": "The requested repository-local BOARD-HEADER path was absent; the normal publication was read. No unstated rule was inferred."
+  },
+  "package": {
+    "owners": [
+      "Agent execution/bootstrap environment",
+      "Agent rendering result transport"
+    ],
+    "exact_node_count": 42,
+    "owner_counts": {
+      "Agent execution/bootstrap environment": 36,
+      "Agent rendering result transport": 6
+    },
+    "group_partition": [
+      {
+        "name": "Agent R2/provider",
+        "count": 60
+      },
+      {
+        "name": "Agent occurrence/media fixture seams",
+        "count": 66
+      },
+      {
+        "name": "Agent/Farm profile setup",
+        "count": 45
+      },
+      {
+        "name": "Agent provider-fixture/D13/D23 helpers",
+        "count": 23
+      },
+      {
+        "name": "Agent unresolved/census/generated artifacts",
+        "count": 40
+      },
+      {
+        "name": "Agent execution/bootstrap/render transport",
+        "count": 42
+      }
+    ],
+    "group_sum": 276,
+    "groups_disjoint": true,
+    "scope_counts": {
+      "core": 0,
+      "non-core": 42
+    },
+    "disposition_counts": {
+      "env": 0,
+      "pre-existing": 0,
+      "dead-scope": 0,
+      "deferred": 0,
+      "REGRESSION": 0,
+      "UNPROVEN": 42
+    },
+    "intersection": {
+      "core": {
+        "env": 0,
+        "pre-existing": 0,
+        "dead-scope": 0,
+        "deferred": 0,
+        "REGRESSION": 0,
+        "UNPROVEN": 0
+      },
+      "non-core": {
+        "env": 0,
+        "pre-existing": 0,
+        "dead-scope": 0,
+        "deferred": 0,
+        "REGRESSION": 0,
+        "UNPROVEN": 42
+      }
+    },
+    "baseline_need": {
+      "unresolved_nodes": 42,
+      "exact": "The exact 42 selectors below need retained upstream25359ed68 PASS/FAIL evidence. No regression or pre-existing credit is claimed.",
+      "rule": "upstream PASS + ours FAIL => REGRESSION; upstream FAIL => pre-existing; no matching evidence => UNPROVEN"
+    }
+  },
+  "records": [
+    {
+      "node_id": "tests/core/execution/test_generic_host_actions_v3.py::test_private_child_command_preserves_entrypoint_and_original_bridge[-c]",
+      "status": "failed",
+      "terminal_order": 2,
+      "source_file": "tests/core/execution/test_generic_host_actions_v3.py",
+      "selector": "test_private_child_command_preserves_entrypoint_and_original_bridge[-c]",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33793,
+        3466354,
+        3466487
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33793 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/core/execution/test_generic_host_actions_v3.py::test_private_child_command_preserves_entrypoint_and_original_bridge[-m]",
+      "status": "failed",
+      "terminal_order": 3,
+      "source_file": "tests/core/execution/test_generic_host_actions_v3.py",
+      "selector": "test_private_child_command_preserves_entrypoint_and_original_bridge[-m]",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33794,
+        3466487,
+        3466620
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33794 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/core/execution/test_generic_host_actions_v3.py::test_private_child_command_preserves_entrypoint_and_original_bridge[script]",
+      "status": "failed",
+      "terminal_order": 4,
+      "source_file": "tests/core/execution/test_generic_host_actions_v3.py",
+      "selector": "test_private_child_command_preserves_entrypoint_and_original_bridge[script]",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33795,
+        3466620,
+        3466757
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33795 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/core/execution/test_worker_startup_identity.py::test_sanitized_child_import_proves_current_host_sdk_version_and_vendored_client",
+      "status": "failed",
+      "terminal_order": 5,
+      "source_file": "tests/core/execution/test_worker_startup_identity.py",
+      "selector": "test_sanitized_child_import_proves_current_host_sdk_version_and_vendored_client",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 retained traceback/source offset; no current pass or deletion proof",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "Restore the captured runtime import surface (runtime_protocol/astrid) and rerun this exact node.",
+      "confidence": "medium",
+      "missing_fact": "No current c2b exact result and/or literal caller proof",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": [
+        3021,
+        3248,
+        1502166,
+        1515217,
+        "74293949ef3d236805e72b402e1c30046f359b4d52aa3101bfe7d8f6eb4a92eb"
+      ],
+      "summary_offset": [
+        33796,
+        3466757,
+        3466898
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:L3021-L3248 (summary L33796)",
+        "retained"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/core/pack/test_source_setup.py::test_real_outer_command_inventory_route_retains_sibling_creator_waits_and_graph",
+      "status": "failed",
+      "terminal_order": 49,
+      "source_file": "tests/core/pack/test_source_setup.py",
+      "selector": "test_real_outer_command_inventory_route_retains_sibling_creator_waits_and_graph",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 retained traceback/source offset; no current pass or deletion proof",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "Restore the captured runtime import surface (runtime_protocol/astrid) and rerun this exact node.",
+      "confidence": "medium",
+      "missing_fact": "No current c2b exact result and/or literal caller proof",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": [
+        7739,
+        7776,
+        1797581,
+        1800311,
+        "ea0688b0d7c8cea32c6c0379bf6c9ab2f42dfea29643d5bd7fe6fc6a17207957"
+      ],
+      "summary_offset": [
+        33840,
+        3473133,
+        3473258
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:L7739-L7776 (summary L33840)",
+        "retained"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/core/pack/test_source_setup.py::test_real_filtered_command_root_cf_pin_preserves_all_four_inventory_operations",
+      "status": "failed",
+      "terminal_order": 50,
+      "source_file": "tests/core/pack/test_source_setup.py",
+      "selector": "test_real_filtered_command_root_cf_pin_preserves_all_four_inventory_operations",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 retained traceback/source offset; no current pass or deletion proof",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "Restore the captured runtime import surface (runtime_protocol/astrid) and rerun this exact node.",
+      "confidence": "medium",
+      "missing_fact": "No current c2b exact result and/or literal caller proof",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": [
+        7776,
+        7826,
+        1800311,
+        1803692,
+        "ae453db82cbea3dc3ec59644c20b31914a3e9c9c63b15ea65cc2771c34129a30"
+      ],
+      "summary_offset": [
+        33841,
+        3473258,
+        3473382
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:L7776-L7826 (summary L33841)",
+        "retained"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/core/execution/test_remotion_host_session.py::test_two_public_command_workers_settle_task_leases_then_host_drains_original",
+      "status": "failed",
+      "terminal_order": 51,
+      "source_file": "tests/core/execution/test_remotion_host_session.py",
+      "selector": "test_two_public_command_workers_settle_task_leases_then_host_drains_original",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 retained traceback/source offset; no current pass or deletion proof",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "Restore the captured runtime import surface (runtime_protocol/astrid) and rerun this exact node.",
+      "confidence": "medium",
+      "missing_fact": "No current c2b exact result and/or literal caller proof",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": [
+        7826,
+        11363,
+        1803692,
+        2032796,
+        "3807c4adf8c25d47ef5b77453fe2c26f7a37dd98d6b37d36d6cd11e5f7ebc6c4"
+      ],
+      "summary_offset": [
+        33842,
+        3473382,
+        3473518
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:L7826-L11363 (summary L33842)",
+        "retained"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/core/rendering/test_conformance.py::test_minimal_render_wire_parity",
+      "status": "failed",
+      "terminal_order": 52,
+      "source_file": "tests/core/rendering/test_conformance.py",
+      "selector": "test_minimal_render_wire_parity",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent rendering result transport",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33843,
+        3473518,
+        3473599
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33843 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/core/rendering/test_conformance.py::test_request_sensitive_support_wire_parity",
+      "status": "failed",
+      "terminal_order": 53,
+      "source_file": "tests/core/rendering/test_conformance.py",
+      "selector": "test_request_sensitive_support_wire_parity",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent rendering result transport",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33844,
+        3473599,
+        3473691
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33844 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/core/rendering/test_conformance.py::test_passthrough_audio_wire_parity",
+      "status": "failed",
+      "terminal_order": 54,
+      "source_file": "tests/core/rendering/test_conformance.py",
+      "selector": "test_passthrough_audio_wire_parity",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent rendering result transport",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33845,
+        3473691,
+        3473775
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33845 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/core/rendering/test_conformance.py::test_no_audio_wire_parity - ...",
+      "status": "failed",
+      "terminal_order": 55,
+      "source_file": "tests/core/rendering/test_conformance.py",
+      "selector": "test_no_audio_wire_parity - ...",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent rendering result transport",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33846,
+        3473775,
+        3473856
+      ],
+      "historical_reconciliation": [
+        null,
+        null,
+        "new_or_different_terminal_bad_node"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33846 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/core/rendering/test_conformance.py::test_attachment_wire_parity",
+      "status": "failed",
+      "terminal_order": 56,
+      "source_file": "tests/core/rendering/test_conformance.py",
+      "selector": "test_attachment_wire_parity",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent rendering result transport",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33847,
+        3473856,
+        3473933
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33847 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/core/rendering/test_conformance.py::test_intentional_failure_wire_parity",
+      "status": "failed",
+      "terminal_order": 57,
+      "source_file": "tests/core/rendering/test_conformance.py",
+      "selector": "test_intentional_failure_wire_parity",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent rendering result transport",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33848,
+        3473933,
+        3474019
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33848 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/core/rendering/test_freeze.py::test_freeze_real_ffmpeg_transport_one_video_one_committed_sidecar",
+      "status": "failed",
+      "terminal_order": 58,
+      "source_file": "tests/core/rendering/test_freeze.py",
+      "selector": "test_freeze_real_ffmpeg_transport_one_video_one_committed_sidecar",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33849,
+        3474019,
+        3474129
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33849 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/core/rendering/test_service.py::test_real_ffmpeg_renders_through_generic_service[nominal]",
+      "status": "failed",
+      "terminal_order": 69,
+      "source_file": "tests/core/rendering/test_service.py",
+      "selector": "test_real_ffmpeg_renders_through_generic_service[nominal]",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33860,
+        3475551,
+        3475654
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33860 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/core/rendering/test_service.py::test_real_ffmpeg_renders_through_generic_service[with-audio]",
+      "status": "failed",
+      "terminal_order": 70,
+      "source_file": "tests/core/rendering/test_service.py",
+      "selector": "test_real_ffmpeg_renders_through_generic_service[with-audio]",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33861,
+        3475654,
+        3475760
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33861 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/core/rendering/test_service.py::test_real_ffmpeg_audio_reactive_through_generic_service",
+      "status": "failed",
+      "terminal_order": 71,
+      "source_file": "tests/core/rendering/test_service.py",
+      "selector": "test_real_ffmpeg_audio_reactive_through_generic_service",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33862,
+        3475760,
+        3475861
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33862 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/packs/rendering/test_builtin_registration.py::test_real_ffmpeg_render_through_registered_backend",
+      "status": "failed",
+      "terminal_order": 127,
+      "source_file": "tests/packs/rendering/test_builtin_registration.py",
+      "selector": "test_real_ffmpeg_render_through_registered_backend",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33918,
+        3482843,
+        3482953
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33918 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/packs/rendering/test_ffmpeg_backend.py::test_manifest_command_dispatches_from_pack_root",
+      "status": "failed",
+      "terminal_order": 128,
+      "source_file": "tests/packs/rendering/test_ffmpeg_backend.py",
+      "selector": "test_manifest_command_dispatches_from_pack_root",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33919,
+        3482953,
+        3483054
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33919 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/packs/rendering/test_remotion_backend.py::test_manifest_command_runs_from_owning_pack_root",
+      "status": "failed",
+      "terminal_order": 131,
+      "source_file": "tests/packs/rendering/test_remotion_backend.py",
+      "selector": "test_manifest_command_runs_from_owning_pack_root",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33922,
+        3483306,
+        3483410
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33922 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_accepts_empty_and_exact_text_fields",
+      "status": "failed",
+      "terminal_order": 132,
+      "source_file": "tests/packs/rendering/test_threejs_backend.py",
+      "selector": "test_threejs_support_accepts_empty_and_exact_text_fields",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33923,
+        3483410,
+        3483521
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33923 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_unsupported_timelines_with_clip_reasons",
+      "status": "failed",
+      "terminal_order": 133,
+      "source_file": "tests/packs/rendering/test_threejs_backend.py",
+      "selector": "test_threejs_support_rejects_unsupported_timelines_with_clip_reasons",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33924,
+        3483521,
+        3483644
+      ],
+      "historical_reconciliation": [
+        "active_owner",
+        "call",
+        "original_open_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33924 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_non_rendered_audio_ownership",
+      "status": "failed",
+      "terminal_order": 134,
+      "source_file": "tests/packs/rendering/test_threejs_backend.py",
+      "selector": "test_threejs_support_rejects_non_rendered_audio_ownership",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33925,
+        3483644,
+        3483756
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33925 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_accepts_window_and_rejects_fps_mismatch",
+      "status": "failed",
+      "terminal_order": 135,
+      "source_file": "tests/packs/rendering/test_threejs_backend.py",
+      "selector": "test_threejs_support_accepts_window_and_rejects_fps_mismatch",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33926,
+        3483756,
+        3483871
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33926 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/packs/rendering/test_threejs_backend.py::test_threejs_identity_invariants_never_claim_remotion",
+      "status": "failed",
+      "terminal_order": 136,
+      "source_file": "tests/packs/rendering/test_threejs_backend.py",
+      "selector": "test_threejs_identity_invariants_never_claim_remotion",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33927,
+        3483871,
+        3483979
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33927 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/packs/rendering/test_threejs_backend.py::test_threejs_own_namespace_config_is_strict",
+      "status": "failed",
+      "terminal_order": 137,
+      "source_file": "tests/packs/rendering/test_threejs_backend.py",
+      "selector": "test_threejs_own_namespace_config_is_strict",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33928,
+        3483979,
+        3484077
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33928 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/packs/test_vibecomfy_ir_bridge.py::test_t9_actual_executor_child_loads_pinned_callable_and_settles_output",
+      "status": "failed",
+      "terminal_order": 139,
+      "source_file": "tests/packs/test_vibecomfy_ir_bridge.py",
+      "selector": "test_t9_actual_executor_child_loads_pinned_callable_and_settles_output",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33930,
+        3484175,
+        3484294
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33930 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/packs/test_vibecomfy_ir_bridge.py::test_t9_absent_explicit_activation_preserves_production_dispatch[False]",
+      "status": "failed",
+      "terminal_order": 140,
+      "source_file": "tests/packs/test_vibecomfy_ir_bridge.py",
+      "selector": "test_t9_absent_explicit_activation_preserves_production_dispatch[False]",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33931,
+        3484294,
+        3484414
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33931 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/packs/test_vibecomfy_ir_bridge.py::test_t9_absent_explicit_activation_preserves_production_dispatch[True]",
+      "status": "failed",
+      "terminal_order": 141,
+      "source_file": "tests/packs/test_vibecomfy_ir_bridge.py",
+      "selector": "test_t9_absent_explicit_activation_preserves_production_dispatch[True]",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33932,
+        3484414,
+        3484533
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33932 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/packs/test_vibecomfy_ir_bridge.py::test_t9_child_uses_explicit_pinned_fixture_outside_product_root[None]",
+      "status": "failed",
+      "terminal_order": 142,
+      "source_file": "tests/packs/test_vibecomfy_ir_bridge.py",
+      "selector": "test_t9_child_uses_explicit_pinned_fixture_outside_product_root[None]",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33933,
+        3484533,
+        3484651
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33933 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[success]",
+      "status": "failed",
+      "terminal_order": 145,
+      "source_file": "tests/packs/h3_av/test_character_swap_cpu_boundary.py",
+      "selector": "test_cpu_host_readiness_identity_reaches_real_installed_guard[success]",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33936,
+        3484894,
+        3485027
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33936 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_revision]",
+      "status": "failed",
+      "terminal_order": 146,
+      "source_file": "tests/packs/h3_av/test_character_swap_cpu_boundary.py",
+      "selector": "test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_revision]",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 retained traceback/source offset; no current pass or deletion proof",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "Restore the captured runtime import surface (runtime_protocol/astrid) and rerun this exact node.",
+      "confidence": "medium",
+      "missing_fact": "No current c2b exact result and/or literal caller proof",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": [
+        18850,
+        18936,
+        2483096,
+        2488676,
+        "7eea0c18f496729d001ed7bba0fc3ac4344e0394895e90aa97b039f0e0adac8d"
+      ],
+      "summary_offset": [
+        33937,
+        3485027,
+        3485169
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:L18850-L18936 (summary L33937)",
+        "retained"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_content]",
+      "status": "failed",
+      "terminal_order": 147,
+      "source_file": "tests/packs/h3_av/test_character_swap_cpu_boundary.py",
+      "selector": "test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_content]",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 retained traceback/source offset; no current pass or deletion proof",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "Restore the captured runtime import surface (runtime_protocol/astrid) and rerun this exact node.",
+      "confidence": "medium",
+      "missing_fact": "No current c2b exact result and/or literal caller proof",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": [
+        18936,
+        19022,
+        2488676,
+        2494254,
+        "b9fa0da157f2aef169ce1b3d2cf2de09c457952a1d822f530fd81a67b382ead8"
+      ],
+      "summary_offset": [
+        33938,
+        3485169,
+        3485310
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:L18936-L19022 (summary L33938)",
+        "retained"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift]",
+      "status": "failed",
+      "terminal_order": 148,
+      "source_file": "tests/packs/h3_av/test_character_swap_cpu_boundary.py",
+      "selector": "test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift]",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 retained traceback/source offset; no current pass or deletion proof",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "Restore the captured runtime import surface (runtime_protocol/astrid) and rerun this exact node.",
+      "confidence": "medium",
+      "missing_fact": "No current c2b exact result and/or literal caller proof",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": [
+        19022,
+        19108,
+        2494254,
+        2499830,
+        "d42f6952ecccf536a364c67e2ca0a14717264fb03c905899276f9f7d7b850295"
+      ],
+      "summary_offset": [
+        33939,
+        3485310,
+        3485450
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:L19022-L19108 (summary L33939)",
+        "retained"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[content_drift]",
+      "status": "failed",
+      "terminal_order": 149,
+      "source_file": "tests/packs/h3_av/test_character_swap_cpu_boundary.py",
+      "selector": "test_cpu_host_readiness_identity_reaches_real_installed_guard[content_drift]",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 retained traceback/source offset; no current pass or deletion proof",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "Restore the captured runtime import surface (runtime_protocol/astrid) and rerun this exact node.",
+      "confidence": "medium",
+      "missing_fact": "No current c2b exact result and/or literal caller proof",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": [
+        19108,
+        19194,
+        2499830,
+        2505404,
+        "4ffc6bf4ace368e584ec778c030824a99a1b0d06283dc2944d65bbe28841407d"
+      ],
+      "summary_offset": [
+        33940,
+        3485450,
+        3485589
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:L19108-L19194 (summary L33940)",
+        "retained"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]",
+      "status": "failed",
+      "terminal_order": 150,
+      "source_file": "tests/packs/h3_av/test_character_swap_cpu_boundary.py",
+      "selector": "test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 retained traceback/source offset; no current pass or deletion proof",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "Restore the captured runtime import surface (runtime_protocol/astrid) and rerun this exact node.",
+      "confidence": "medium",
+      "missing_fact": "No current c2b exact result and/or literal caller proof",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": [
+        19194,
+        19280,
+        2505404,
+        2510980,
+        "cfa227d5d68961cd7ac1d75bb0560014511066921520a949c55c521b45b9bf4f"
+      ],
+      "summary_offset": [
+        33941,
+        3485589,
+        3485729
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:L19194-L19280 (summary L33941)",
+        "retained"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[profile_hash_drift]",
+      "status": "failed",
+      "terminal_order": 151,
+      "source_file": "tests/packs/h3_av/test_character_swap_cpu_boundary.py",
+      "selector": "test_cpu_host_readiness_identity_reaches_real_installed_guard[profile_hash_drift]",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 retained traceback/source offset; no current pass or deletion proof",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "Restore the captured runtime import surface (runtime_protocol/astrid) and rerun this exact node.",
+      "confidence": "medium",
+      "missing_fact": "No current c2b exact result and/or literal caller proof",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": [
+        19280,
+        19366,
+        2510980,
+        2516564,
+        "348f0e802b71690f304d328a1be9043bf01dfd1510e29fa952f43dc1cb2a8609"
+      ],
+      "summary_offset": [
+        33942,
+        3485729,
+        3485873
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:L19280-L19366 (summary L33942)",
+        "retained"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/reshape/test_doctor_contract_shapes.py::test_smoke_doctor_lane_accepts_both_payload_shapes[observed-with-ok]",
+      "status": "failed",
+      "terminal_order": 167,
+      "source_file": "tests/reshape/test_doctor_contract_shapes.py",
+      "selector": "test_smoke_doctor_lane_accepts_both_payload_shapes[observed-with-ok]",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33958,
+        3488115,
+        3488237
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33958 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/reshape/test_doctor_contract_shapes.py::test_smoke_doctor_lane_accepts_both_payload_shapes[observed-without-ok]",
+      "status": "failed",
+      "terminal_order": 168,
+      "source_file": "tests/reshape/test_doctor_contract_shapes.py",
+      "selector": "test_smoke_doctor_lane_accepts_both_payload_shapes[observed-without-ok]",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33959,
+        3488237,
+        3488362
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33959 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/test_conftest_environment.py::test_bootstrap_environment_is_accepted_by_the_remotion_probe_context",
+      "status": "failed",
+      "terminal_order": 180,
+      "source_file": "tests/test_conftest_environment.py",
+      "selector": "test_bootstrap_environment_is_accepted_by_the_remotion_probe_context",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 summary-only; no retained traceback/source offset; no cause invented",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "First establish the current production caller, exact test input, and missing cause from focused source/evidence; do not prescribe a repair or deletion until those facts are proven.",
+      "confidence": "low",
+      "missing_fact": "Current production caller, exact test input, and missing cause are not established by retained evidence",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": null,
+      "summary_offset": [
+        33971,
+        3489562,
+        3489674
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:summary L33971 (traceback not retained)",
+        "summary_only"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/test_installer_service_repair_integration.py::test_repair_restarts_real_runtime_for_failed_service_and_preserves_healthy_pids[False-0]",
+      "status": "failed",
+      "terminal_order": 217,
+      "source_file": "tests/test_installer_service_repair_integration.py",
+      "selector": "test_repair_restarts_real_runtime_for_failed_service_and_preserves_healthy_pids[False-0]",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 retained traceback/source offset; no current pass or deletion proof",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "Restore the captured runtime import surface (runtime_protocol/astrid) and rerun this exact node.",
+      "confidence": "medium",
+      "missing_fact": "No current c2b exact result and/or literal caller proof",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": [
+        30708,
+        30802,
+        3268460,
+        3273755,
+        "35360a60e6025d4613970ed1bfb8a5fd88f0a8fca91b15af135e72231b0c0598"
+      ],
+      "summary_offset": [
+        34008,
+        3494749,
+        3494897
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:L30708-L30802 (summary L34008)",
+        "retained"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    },
+    {
+      "node_id": "tests/test_installer_service_repair_integration.py::test_repair_restarts_real_runtime_for_failed_service_and_preserves_healthy_pids[True-1]",
+      "status": "failed",
+      "terminal_order": 218,
+      "source_file": "tests/test_installer_service_repair_integration.py",
+      "selector": "test_repair_restarts_real_runtime_for_failed_service_and_preserves_healthy_pids[True-1]",
+      "family": "missinginput/environment",
+      "category": "ours-live",
+      "classification_proof": "full9758 retained traceback/source offset; no current pass or deletion proof",
+      "production_caller": "Not established by retained evidence; no caller invented",
+      "owner": "Agent execution/bootstrap environment",
+      "next_action": "Restore the captured runtime import surface (runtime_protocol/astrid) and rerun this exact node.",
+      "confidence": "medium",
+      "missing_fact": "No current c2b exact result and/or literal caller proof",
+      "current_repair_scope": "ours-live node repair/qualification only; no broad deletion/cross-repo inference",
+      "traceback": [
+        30802,
+        31586,
+        3273755,
+        3321516,
+        "bfd0cfe797bfaf5fe66f1980f48fe8ce10767295dad38416ae43ef49d1f6ed5e"
+      ],
+      "summary_offset": [
+        34009,
+        3494897,
+        3495044
+      ],
+      "historical_reconciliation": [
+        "proven_passed",
+        "call",
+        "original_closed_observed_bad"
+      ],
+      "source_evidence": [
+        "missinginput/environment",
+        "missinginput/environment",
+        "log.txt:L30802-L31586 (summary L34009)",
+        "retained"
+      ],
+      "d54_classification": {
+        "scope": "non-core",
+        "scope_evidence": "The actual D54 end-state core is EditCommand, commit door, undo/redo, history, split/trim/move/placement/occurrence, show/sheet/visualize, App save path, and Agent editing runner/rebase/inverse. This node is a rendering/bootstrap/host/pack/service/doctor/installer concern and its asserted property is outside that end-state model.",
+        "disposition": "UNPROVEN",
+        "disposition_evidence": "The retained D52 record is ours-live routing evidence only. No retained exact same-selector result on upstream 25359ed68 is available for this node.",
+        "environment": "not-qualified",
+        "pre_existing": "UNPROVEN",
+        "pre_existing_evidence": "Requires the exact same selector to FAIL on upstream 25359ed68; absent.",
+        "dead_scope": "not-assigned",
+        "dead_scope_evidence": "No retired/dormant production caller plus exclusive-test proof is present.",
+        "deferred": "not-assigned",
+        "deferred_evidence": "No owner-deferred D23 mapping applies.",
+        "REGRESSION": "UNPROVEN",
+        "regression_status": "UNPROVEN",
+        "regression_evidence": "Requires exact selector PASS on upstream 25359ed68 and FAIL on ours; absent. Historical proven_passed reconciliation is not a current upstream comparison.",
+        "missing_baseline": "Run or retrieve the retained exact upstream25359ed68 counterpart for this selector, preserving its assertion and environment; classify PASS+ours FAIL as REGRESSION, FAIL as pre-existing, otherwise retain UNPROVEN."
+      }
+    }
+  ],
+  "integrity": {
+    "package_membership_exact_owner": true,
+    "package_membership_unique": true,
+    "status_preserved": true,
+    "terminal_order_preserved": true,
+    "source_file_and_selector_preserved": true,
+    "summary_offsets_preserved": true,
+    "traceback_offsets_preserved": true,
+    "source_membership_preserved": true,
+    "scope_disjoint": true,
+    "six_package_groups_sum_276": true,
+    "no_pre_existing_credit": true,
+    "no_dead_scope_credit": true,
+    "no_deferred_credit": true,
+    "no_regression_without_upstream_pass": true,
+    "ours_live_not_equated_with_regression": true,
+    "no_absent_traceback_inference": true
+  },
+  "evidence_only": true,
+  "probes_or_tests_run": false
+}
+
