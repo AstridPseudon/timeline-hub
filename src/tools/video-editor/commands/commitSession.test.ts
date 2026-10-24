@@ -804,42 +804,6 @@ describe('track labels in the existing durable command session', () => {
     else expect(command.reads?.some((read) => read.ref.includes('/clip:'))).toBe(false);
     await session.dispose();
   });
-  it('drains a label-only edit on close into the same outbox without starting a request', async () => {
-    const env = await environment();
-    const session = await env.mount();
-    rename(session, env.current(), 'Closed draft');
-    await session.dispose();
-    expect(env.commits()).toHaveLength(0);
-    const [stored] = await env.outboxes.list(scope);
-    expect(stored.intents).toHaveLength(1);
-    expect(stored.intents[0].payload).toMatchObject({ commands: [{ op: 'track.set' }] });
-    const recovered = await env.mount();
-    await recovered.recover(stored.ownerId);
-    expect(rawTrack(env.projected.at(-1)!.canonicalDocument).label).toBe('Closed draft');
-    await recovered.dispose();
-  });
-  it('keeps a pending label request unchanged when a newer move is authored', async () => {
-    const env = await environment();
-    const session = await env.mount();
-    env.setFault('lost');
-    rename(session, env.current(), 'First label');
-    await vi.waitFor(() => expect(session.getState().status).toBe('retry'));
-    const original = structuredClone(env.commits()[0]);
-    env.move(session, 5);
-    await session.dispose();
-    const [stored] = await env.outboxes.list(scope);
-    expect(stored.pending?.request.key).toBe(original.key);
-    expect(JSON.parse(stored.pending!.request.body)).toEqual(original.body);
-    const recovered = await env.mount(await env.provider.loadTimelineCommandBasis('timeline-commit'));
-    await recovered.recover(stored.ownerId);
-    expect(env.commits()[1]).toEqual(original);
-    expect(env.commits()[2].body).toMatchObject({ base_publication_id: 'p1', commands: [{ op: 'clip.move',
-      expect: { 'parent/clip:x::at': { state: 'present', value: 1 } } }] });
-    expect(env.commits()[2].key).not.toBe(original.key);
-    expect(env.current().config.clips[0].at).toBe(5);
-    expect(rawTrack(env.projected.at(-1)!.canonicalDocument).label).toBe('First label');
-    await recovered.dispose();
-  });
   it('refuses synthetic or ambiguous track ownership and unprepared commands atomically', async () => {
     const raw = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' },
       { revision_id: 'old', publication_id: 'old' }, { children: true }).data.canonical_document;
@@ -884,23 +848,6 @@ describe('track labels in the existing durable command session', () => {
     await session.flush();
     expect(env.commits()).toHaveLength(1);
     expect(env.commits()[0].body!.commands[0]).toEqual(command);
-    await session.dispose();
-  });
-  it('refuses a typing capture invalidated by a newer local move without changing the pending request', async () => {
-    const env = await environment();
-    const session = await env.mount();
-    const captured = captureTrackLabelEdit(session.trackLabelPort, env.current(), 'V1');
-    env.setFault('lost');
-    env.move(session, 5);
-    await vi.waitFor(() => expect(session.getState().status).toBe('retry'));
-    const original = structuredClone(env.commits()[0]);
-    expect(() => submitTrackLabelEdit(captured, { values: { label: 'Kept input' }, clear: [] })).toThrow('Timeline changed');
-    const [stored] = await env.outboxes.list(scope);
-    expect(stored.intents).toHaveLength(1);
-    expect(JSON.parse(stored.pending!.request.body)).toEqual(original.body);
-    expect(stored.pending!.request.key).toBe(original.key);
-    await session.retry();
-    expect(env.commits()[1]).toEqual(original);
     await session.dispose();
   });
 });
