@@ -26,10 +26,21 @@ from tests.sdk.test_timeline_commit_provider import runtime_abi as runtime_abi
 
 @pytest.fixture
 def source_control():
+    return make_source_control(shared=False)
+
+
+def make_source_control(*, shared, native_items=True):
     baseline, old, new, verified = inputs()
     parent = baseline['parent_revision']
-    parent['payload']['occurrences'] = parent['payload']['occurrences'][:1]
+    if not shared:
+        parent['payload']['occurrences'] = parent['payload']['occurrences'][:1]
     parent['content_digest'] = _digest(parent['payload'])
+    if not native_items:
+        for image in baseline['shot_revisions']:
+            image['payload']['items'] = []
+            image['content_digest'] = _digest(image['payload'])
+        baseline['dependency_manifest'] = _manifest(baseline['shot_revisions'],
+            baseline['internal_timeline_revisions'], baseline['dependency_manifest']['media'], [])
     new['asset'] = old['asset']
     verified[1]['selection']['asset'] = old['asset']
     realm = MediaRealm(baseline, verified)
@@ -47,6 +58,126 @@ def source_control():
 
     created = create_runtime_commit_service().commit(context, MediaPort(realm, context))
     return realm, baseline, created
+
+
+@pytest.fixture(params=[(True, False), (True, True), (False, False), (False, True)],
+                ids=['native-item-accept', 'native-item-preview', 'ordinary-media-accept', 'ordinary-media-preview'])
+def shared_inverse_packet(request, monkeypatch):
+    """Generated offline packets, not an original11466 or Runtime acceptance."""
+    native_items, dry_run = request.param
+    realm, baseline, created = make_source_control(shared=True, native_items=native_items)
+    assert len(baseline['parent_revision']['payload']['occurrences']) == 2
+    assert len({row['shot_revision_id'] for row in
+                baseline['parent_revision']['payload']['occurrences']}) == 1
+    captures, prepared = [], []
+    complete = DetachedPort.preview if dry_run else DetachedPort.accept
+
+    def capture(port, packet):
+        captures.append(copy.deepcopy(packet))
+
+    def finish(port, packet):
+        prepared.append((copy.deepcopy(port.context['request']), copy.deepcopy(packet)))
+        return complete(port, packet)
+
+    monkeypatch.setattr(DetachedPort, 'capture_sequential_execution', capture, raising=False)
+    monkeypatch.setattr(DetachedPort, 'preview' if dry_run else 'accept', finish)
+    submit(realm, undo(created['receipt']['receipt_id']), reads=[], dry_run=dry_run)
+    request_body, packet = prepared[0]
+    source = created['data']['canonical_document']
+    history = {row['publication_id']: row for row in realm.entries
+               if row['publication_id'] == created['receipt']['receipt_id']}
+    return request_body, packet, captures[0], source, history, baseline
+
+
+def test_two_shared_occurrences_inverse_accept_and_preview(shared_inverse_packet, monkeypatch):
+    # R1/R2 must preserve this positive expectation across native identity
+    # turnover and shared-source reachability; current refusal is not success.
+    request, prepared, capture, source, history, baseline = shared_inverse_packet
+    monkeypatch.setitem(sys.modules, 'runtime_protocol', runtime_protocol)
+    validate_sequential_capture(request, prepared, capture, source, source, history=history)
+    assert prepared['canonical_document'] == baseline
+
+
+def test_shared_stage_diagnostic_preserves_all_native_sites(shared_inverse_packet, monkeypatch):
+    from runtime_protocol.timeline_commit_auth import _inverse_stage_ranges
+
+    _, prepared, _, source, history, _ = shared_inverse_packet
+    monkeypatch.setitem(sys.modules, 'runtime_protocol', runtime_protocol)
+    record, = prepared['records']['commands']
+    entry, = history.values()
+    original, = entry['records']['commands']
+    historical = [(write['ref'], write['path']) for write in reversed(original['writes'])]
+    actual = [(write['ref'], write['path']) for write in record['writes']]
+    differences = [(old, new) for old, new in zip(historical, actual) if old != new]
+    assert len(actual) == len(historical)
+    assert len(record['bindings']) > 0
+    if differences:
+        (old, new), = differences
+        assert old == (OWNER + '/shot', ['payload', 'items', 'item_id:item-1', 'media_id'])
+        state = State(bundle_from_document(source))
+        assert new == (old[0], [*old[1][:2], 'item_id:' + next(iter(state.shot_item_map(old[0]))), 'media_id'])
+        with pytest.raises(CommandError, match='unknown published item identity'):
+            state.get(*old)
+        assert state.get(*new)['state'] == 'present'
+        with pytest.raises(CommitRejected, match='native write membership differs'):
+            _inverse_stage_ranges(prepared['records']['steps'][0], prepared['records'], history)
+    else:
+        assert _inverse_stage_ranges(prepared['records']['steps'][0], prepared['records'], history)
+
+
+def test_historical_item_site_does_not_observe_current_published_item(shared_inverse_packet, monkeypatch):
+    from runtime_protocol.timeline_commit_auth import _inverse_stage_boundaries, _inverse_stage_ranges, images
+
+    _, prepared, _, source, history, _ = copy.deepcopy(shared_inverse_packet)
+    monkeypatch.setitem(sys.modules, 'runtime_protocol', runtime_protocol)
+    record, = prepared['records']['commands']
+    original, = next(iter(history.values()))['records']['commands']
+    # A diagnostic alteration only: restoring source spelling passes membership
+    # but cannot make that absent path a truthful sequential value observation.
+    for write, historical in zip(record['writes'], reversed(original['writes'])):
+        write['path'] = copy.deepcopy(historical['path'])
+    step, = prepared['records']['steps']
+    assert _inverse_stage_ranges(step, prepared['records'], history)
+    before, after = images(source), images(prepared['canonical_document'])
+    message = ('write differs from its sequential input' if any(
+        write['path'][:2] == ['payload', 'items'] for write in original['writes'])
+        else 'source materialization is outside its physical turnover')
+    with pytest.raises(CommitRejected, match=message):
+        _inverse_stage_boundaries(before, after, step, prepared['records'], after, before, history)
+
+
+@pytest.mark.parametrize('shared_inverse_packet', [(False, False), (False, True)], indirect=True)
+@pytest.mark.parametrize('damage', ['native-site', 'foreign-owner', 'native-order', 'native-range',
+                                  'effect-range', 'source-publication', 'source-step', 'source-command'])
+def test_native_stage_membership_and_partition_stay_strict(shared_inverse_packet, monkeypatch, damage):
+    from runtime_protocol.timeline_commit_auth import _inverse_stage_ranges
+
+    _, prepared, _, _, history, _ = copy.deepcopy(shared_inverse_packet)
+    monkeypatch.setitem(sys.modules, 'runtime_protocol', runtime_protocol)
+    records = prepared['records']
+    step, = records['steps']
+    record, = records['commands']
+    assert _inverse_stage_ranges(step, records, history)
+    binding, = [item for item in record['bindings'] if item['key'] == 'inverse.stage']
+    boundary = binding['boundary']
+    if damage == 'native-site':
+        record['writes'][0]['path'].append('forged')
+    elif damage == 'foreign-owner':
+        record['writes'][0]['ref'] = record['writes'][0]['ref'].replace('occ-a', 'occ-b')
+    elif damage == 'native-order':
+        record['writes'].reverse()
+    elif damage == 'native-range':
+        boundary['native_write_range'][1] -= 1
+    elif damage == 'effect-range':
+        boundary['effect_range'][0] = 1
+    elif damage == 'source-publication':
+        boundary['publication_id'] = 'foreign-publication'
+    elif damage == 'source-step':
+        boundary['step_id'] = 'foreign-step'
+    else:
+        boundary['command_ordinals'] = [1]
+    with pytest.raises(CommitRejected):
+        _inverse_stage_ranges(step, records, history)
 
 
 @pytest.mark.parametrize('dry_run', [False, True])
