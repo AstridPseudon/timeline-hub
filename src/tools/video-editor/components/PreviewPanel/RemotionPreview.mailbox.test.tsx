@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
 import React, { createRef } from 'react';
-import { act, cleanup, render } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { RemotionPreview, type PreviewHandle } from './RemotionPreview';
+import type { PreviewRevision } from './previewRevision.ts';
 import type { ResolvedTimelineConfig } from '@/tools/video-editor/types';
 
 vi.mock('@/tools/video-editor/compositions/TimelineRenderer', () => ({ TimelineRenderer: () => null }));
@@ -79,13 +80,21 @@ function settle() {
   }
   expect(raf.size, 'finite RAF work exhausted').toBe(0);
 }
-function preview(initial: ResolvedTimelineConfig) {
+function preview(initial: ResolvedTimelineConfig, initialRevision?: PreviewRevision) {
   const ref = createRef<PreviewHandle>();
   const container = createRef<HTMLDivElement>();
   const onTimeUpdate = vi.fn();
-  const draw = (c: ResolvedTimelineConfig) => <RemotionPreview ref={ref} config={c} onTimeUpdate={onTimeUpdate} playerContainerRef={container} />;
+  const draw = (c: ResolvedTimelineConfig, revision = initialRevision) => (
+    <RemotionPreview
+      ref={ref}
+      config={c}
+      previewRevision={revision}
+      onTimeUpdate={onTimeUpdate}
+      playerContainerRef={container}
+    />
+  );
   const view = render(draw(initial));
-  return { ref, view, replace: (c: ResolvedTimelineConfig) => view.rerender(draw(c)) };
+  return { ref, view, replace: (c: ResolvedTimelineConfig, revision?: PreviewRevision) => view.rerender(draw(c, revision)) };
 }
 beforeEach(() => {
   vi.useFakeTimers();
@@ -209,4 +218,22 @@ it('cancels pending mailbox and paused timer work on unmount', () => {
   expect(raf.size).toBe(0);
   settle();
   expect(boundary.applied).not.toContain(b);
+});
+
+it('labels the delivered authoritative committed revision', () => {
+  preview(config('accepted'), { kind: 'committed', revisionId: 'p2-tour631' });
+
+  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Committed p2-tour631');
+  expect(boundary.props.inputProps.previewRevision).toEqual({ kind: 'committed', revisionId: 'p2-tour631' });
+});
+
+it('keeps a pending local preview from claiming the accepted revision', () => {
+  const h = preview(config('accepted'), { kind: 'committed', revisionId: 'accepted-before' });
+
+  h.replace(config('pending'), { kind: 'local', baseRevisionId: 'accepted-before' });
+  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Committed accepted-before');
+
+  advance(150);
+  expect(screen.getByTestId('preview-revision-label')).toHaveTextContent('Unsaved local · based on accepted-before');
+  expect(boundary.props.inputProps.previewRevision).toEqual({ kind: 'local', baseRevisionId: 'accepted-before' });
 });
