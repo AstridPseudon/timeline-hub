@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T09:14:19Z | dispatcher heartbeat 8s | live 2 (sol 0, luna 2, other 0) | busy30 14 | status age 1m -->
-# agent board, 2026-10-24T09:13:16Z
+<!-- agent | 2026-10-24T09:16:47Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 15 | status age 0m -->
+# agent board, 2026-10-24T09:16:32Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -136,14 +136,15 @@
 | U2 duck acceptance | Qualify the original managed music workflow | Luna | Exact G4 installed child | blocked:runtime | Home 0832; result review 0840 | Product source has 20 passes. Original 17 assertions unchanged; managed body remains held. | 0ff3d103fb |
 
 | U2 duck staged row | Prepare exact managed source guards | Luna | Genuine child/profile/Store receipt | blocked:runtime | Author0856; review0857 PASS | Snapshot,parent,tree,source and Runtime guards qualified. Row explicitly HOLD until genuine installed inputs bind. | Staged evidence only |
-| F ABA lost-ack path | Preserve exact undo flight on transport errors | Sol / Luna | Integrated targeted proof | merging | Viewing0859; independent0906 PASS17 | Own-only80-line test commit queued. Distinct timeout and connection loss,30-second budget and immutable replay retained; no original repair claim. | f966c9ea6a |
-| F Farm giant regression | Attribute315 lines and verify smallest repair | Luna / Luna | Final causal delta review | review | Source0904 PASS; cause0909; review0914 | Missing31 lines are inherited before D40;284 D40 plus31 equals315. Exact delta check active; current repair already qualifies. | Existing8c5ae21/a8f4 |
+| F ABA lost-ack path | Preserve exact undo flight on transport errors | Sol / Luna | Integrated targeted proof | doing | Viewing0906 PASS17; home0916 | Own-onlyf966 mergedba55. Six offline transport controls retain budget and replay; original Runtime boundary remains unresolved. | ba55ac1e9e |
+| F Farm giant regression | Attribute315 lines and verify smallest repair | Luna / Luna | Exact repair and causal reviews PASS | merged | Source0904; cause0909/0914 PASS | Current14,330 and rationale match prior PASS. Farm315=31 inherited+284 D40; laterU2+17. No new source,body or count credit. | Existing8c5ae21/a8f4 |
+| OPS shared schema input | Return genuine installed distribution provenance | Luna | Runtime peer0910 | doing | agt-OPS-schema-input-0918 | Bounded metadata,RECORD,direct_url and recorded source facts only. No package action,probe or new child. Due09:25. | Existing passing venv |
 P1: Historical GO recorded. P4 and P5 retain their named scopes; final freeze reruns all gates. App and Proof own P2/P3.
 Integration: Actual67d5f19716 contains exact reviewed two runners; integrated0856 PASS static and all15 mappings. Source0ff3 independently20PASS; earlier0c2 joined123 retains its scope. Original20732 failed lost-ack code.
-Count: Owner-requested working figure263 closed /5 open while Farm giant challenge is checked. Original267-node census remains263/4,123 mappings,e13d65ba; no artifact was changed. One additional Farm row is held open pending exact prior-repair equivalence review.
+Count: Official263 closed /4 open of267 restored after independent current-repair0904 and causal0914 PASS. Exactly123 mappings remain; census e13d65ba unchanged. Farm giant was an already repaired original, so no duplicate closure or new census artifact.
 Open originals: discovery support; generic harvest/reopen; D23 helper word-second; D23 moved-head restart. All original records and historical challenges retained.
 Farm: Checkpoint 26511 remains 17,335 passed, 288 failed, 187 setup errors and 4 skips on Agent 9cd / Runtime 45c3. Independently reviewed 96-node packet: 80 environment, 1 docs regression and 15 unknown. Setup packet: 140 environment and 47 tuple mismatches. No new Farm pass credit.
-Blockers: Farm and Runtime — separate9cd/1d9 child and row are installed; full preflight refuses shared schema and astrid_runtime. Runtime0906 and independent wholepath0906 own correction before checkpoint.
+Blockers: Farm and Runtime — full preflight refuses shared schema; actual astrid_runtime absence is unconfirmed. Agent source-input0918 active; Runtime owns normal maker implementation after current Sol verifier finishes.
 Blockers: Runtime private verifier — child failed installed NumPy RECORD. First correction49c9 failed independent0840 on containment, grammar and stale baseline; return0848 active. No child retry before clean review and install.
 Runtime: Producer becfe is independently qualified and all 15 Agent mappings now match. Shared authority is qualified on 460c and its exact-auth descendant becfe. Runtime has all 36 original failures closed at recorded scopes.
 App: Complete IMAGE 0554 and independent 0636 PASS retained at direct RuntimeService scope. No additional producer or realm; no inferred original-node credit.
@@ -153,5 +154,5 @@ D49 venue: Agent final full on Farm after a zero-setup-error checkpoint. Fallbac
 Safety: Prior Farm, monitor, publication, bench and cleanup refusals remain stopped. No denied action retried.
 Disk: About11 GB free. Fresh read-only check found one remaining finished non-KEEP Agent tree; it is dirty. No eligible clean merged tree to recycle. Prior cleanup refusals remain stopped; light work proceeds.
 Later: D31/D37 dormant implementations and tests unchanged. V4 and D14/D23 remain cut or deferred. D46 U2c closed and folded into the freeze; relay and remote providers stay deferred and fail-closed. D47 memo held.
-Next ready: Giant causal-return0909 is running after exact current-fix PASS. Viewing control review0906 and Runtime ABA completion source are next; Runtime verifier Sol0853 precedes final security. No unowned ready local task.
+Next ready: Shared-schema input0918 dispatched immediately; transport home0916 running. Runtime owns ABA post-provider diagnosis and verifier Sol0853/final review. Giant priority row closed by independent exact repair and causal evidence.
 Evidence: [D39 review](../../design/agt-D39-header-review-0809.md), [ABA review](../../design/agt-F-ABA-cumulative-review-0809.md), [wheel input](../../design/agt-OPS-real-wheel-qualify-0810.md), [Farm checkpoint](../../design/farm-agent-full-checkpoint-20261024T0555Z.md).
