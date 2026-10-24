@@ -1,7 +1,8 @@
 # Runtime farm-agent-full v2 source packet
 
 This is a reviewable normal-route packet only. It does not install, provision,
-initialize the live Store, edit the live registry, or run the Agent suite.
+initialize or reinitialize the Store, edit the live registry, or run the Agent
+suite.
 
 ## Settled checkpoint facts
 
@@ -60,30 +61,43 @@ env -u RUNTIME_AGENT_CHECKOUT -u RUNTIME_RUNTIME_CHECKOUT \
 ```
 
 The returned receipt must be the source of the final managed profile path,
-`ASTRID_REMOTION_PROJECT_DIR`, Node v20.19.4/npm 10.8.2 carrier, and actual
-runtime/Agent/module origins. Do not handforge a managed identity from these
-arguments.
+`FARM_RECEIPT_MANAGED_PROFILE`/`ASTRID_REMOTION_PROJECT_DIR`, Node
+v20.19.4/npm 10.8.2 carrier, and actual Runtime/Agent/module origins. Do not
+handforge a managed identity from these arguments. The packet row is an
+incomplete rendering template until that receipt exists: it refuses a missing
+profile or missing `node_modules/react` peer and has no ambient-profile
+fallback.
 
 ## Safe installer sequence
 
 1. Verify the packet manifest, the installed `bench_store.py` hash, the
    authentic `remotion-env-nodes` row/env attachments from the predecessor
-   packet, the existing `agent full` row, and all current registry bytes.
-2. Save a UTC private backup. Refuse if `/home/user/work/bench-store` exists,
-   is partial, or is a symlink; refuse registry drift rather than replacing a
-   stale whole config.
-3. Call `Store.initialize(root, ORCH/tests)` once through the installed API,
-   then use its public read. Do not initialize or adopt an existing store.
+   packet, the existing `agent full` row, exactly one existing `agent
+   full-farm` row, and all current registry bytes.
+2. Save a UTC private backup. Refuse a missing, partial, or symlinked
+   `/home/user/work/bench-store`; this pass expects the already existing Store
+   and must not initialize, reinitialize, adopt, or replace it. Refuse registry
+   drift rather than replacing a stale whole config.
+3. Open the existing Store through `Store(root, ORCH/tests)` and validate it
+   through public reads (`registered`, `registration_entries`, and
+   `names_for_suite`). Do not call `Store.initialize`.
 4. Let the normal maker create or authenticate the managed Runtime entry. A
    receipt with Runtime `45c3` or missing `external_pack_sources` is a source
-   mismatch and stops the operation.
-5. From a fresh post-maker baseline, append exactly `registration-row.txt`
-   with the existing atomic API. Preserve the original full row and every
-   byte outside the one new row. The new full-farm row is unmanaged; the
-   maker’s Runtime row remains managed.
-6. Return pre/post hashes, exact appended bytes, outside-byte comparison,
+   mismatch and stops the operation. Bind its authentic managed profile path
+   as `FARM_RECEIPT_MANAGED_PROFILE`; do not invent or infer that path.
+5. From the fresh post-maker baseline, under `store.mutex()`, replace the one
+   existing `agent full-farm` row with the exact LF-terminated contents of
+   `registration-row.txt` using the existing atomic API. Preserve the original
+   `agent full` row and every byte outside that one row. Do not append a
+   duplicate or replace the whole config. The new full-farm row is unmanaged;
+   the maker’s Runtime row remains managed. Roll back only this replacement if
+   post-update public validation fails and the file still equals the exact
+   post-update snapshot.
+6. Return pre/post hashes, the exact replaced bytes, outside-byte comparison,
    Store owner/index validation, normal receipts, and actual source/module
-   origins. Only Farm may then request the one later checkpoint.
+   origins. Only Farm may then request the one later checkpoint. The production
+   caller must select this row through `test-run`; no separate synthetic full
+   environment establishes host validity.
 
 Any refusal, drift, wrong source, partial initialization, or permission denial
 stops the sequence. Use only the installed Store recovery route for an
