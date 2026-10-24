@@ -8,24 +8,27 @@
   "stability": "experimental",
   "support": "core",
   "visibility": "visible",
-  "description": "Analyze imported music for alignment, used-span loudness, and timeline beat grids.",
+  "description": "Analyze imported music and bake speech-keyed ducking for timeline clips.",
   "keywords": [
     "music",
     "alignment",
     "midi",
     "loudness",
     "beats",
-    "downbeats"
+    "downbeats",
+    "ducking",
+    "speech"
   ],
   "capabilities": [
     "align",
     "level",
-    "beats"
+    "beats",
+    "duck"
   ],
   "permissions": [
     {
       "id": "project_files",
-      "reason": "Reads source audio or MIDI and writes analysis JSON as managed outputs."
+      "reason": "Reads managed timeline audio and writes analysis JSON and ducked WAV as managed outputs."
     },
     {
       "id": "subprocess",
@@ -37,12 +40,13 @@
     "path": "docs/SKILL.md"
   },
   "agent": {
-    "purpose": "Align a MIDI transcription or one recording to another, measure the loudness of the source span used by a clip, and derive a beat grid for imported music.",
+    "purpose": "Align a MIDI transcription or one recording to another, measure the loudness of the source span used by a clip, and derive a beat grid for imported music. Bake speech-keyed music ducking from current timeline placements.",
     "do_not_use_for": "Music synthesis or sound effects (use chiptune), or final timeline rendering (use rendering).",
     "normal_entrypoints": [
       "music.align",
       "music.level",
-      "music.beats"
+      "music.beats",
+      "music.duck"
     ]
   },
   "dependencies": {
@@ -322,6 +326,148 @@
         {
           "kind": "documentation",
           "path": "actions/beats/STAGE.md"
+        }
+      ]
+    },
+    "duck": {
+      "name": "Music Duck",
+      "version": "0.1.0",
+      "short_description": "Bake smooth speech-keyed ducking into a timeline music asset.",
+      "description": "Analyzes a pinned timeline-audio snapshot and returns a source-clock WAV with speech-keyed, slew-limited gain and source-digest provenance. Use duck_timeline(client, project, timeline) for one-call capture and invocation. Does not edit the timeline.",
+      "keywords": [
+        "music",
+        "ducking",
+        "speech",
+        "loudness",
+        "ebu-r128"
+      ],
+      "invocation": {
+        "kind": "command",
+        "command": {
+          "argv": [
+            "{python_exec}",
+            "-m",
+            "astrid.packs.music.actions.duck.run",
+            "--snapshot",
+            "{snapshot}",
+            "--bed-lu",
+            "{bed_lu}",
+            "--cap-lu",
+            "{cap_lu}",
+            "--slew-db-per-s",
+            "{slew_db_per_s}",
+            "--smooth-s",
+            "{smooth_s}",
+            "--floor-db",
+            "{floor_db}",
+            "--merge-gap-s",
+            "{merge_gap_s}",
+            "--out",
+            "{out}"
+          ]
+        }
+      },
+      "inputs": [
+        {
+          "name": "snapshot",
+          "type": "file",
+          "required": true,
+          "description": "Pinned timeline and digest-verified audio ZIP prepared by duck_timeline(client, project, timeline)."
+        },
+        {
+          "name": "bed_lu",
+          "type": "number",
+          "required": false,
+          "default": 8,
+          "description": "Integrated voice-minus-music gap in LU."
+        },
+        {
+          "name": "cap_lu",
+          "type": "number",
+          "required": false,
+          "default": 4,
+          "description": "Music momentary ceiling in LU below the line voice level."
+        },
+        {
+          "name": "slew_db_per_s",
+          "type": "number",
+          "required": false,
+          "default": 2.0,
+          "description": "Maximum gain movement in dB per timeline second."
+        },
+        {
+          "name": "smooth_s",
+          "type": "number",
+          "required": false,
+          "default": 1.0,
+          "description": "Hann smoothing window in timeline seconds."
+        },
+        {
+          "name": "floor_db",
+          "type": "number",
+          "required": false,
+          "default": -12.0,
+          "description": "Minimum permitted gain in dB."
+        },
+        {
+          "name": "merge_gap_s",
+          "type": "number",
+          "required": false,
+          "default": 1.2,
+          "description": "Merge voiced regions separated by less than this many timeline seconds."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "music",
+          "type": "file",
+          "path_template": "{out}/music.wav",
+          "description": "Dithered source-length WAV with source-digest RIFF INFO provenance."
+        },
+        {
+          "name": "duck",
+          "type": "file",
+          "path_template": "{out}/duck.json",
+          "description": "Parameters, line gaps, floor holds, curve bounds, true peak and leap diagnostics."
+        }
+      ],
+      "cache": {
+        "mode": "none"
+      },
+      "isolation": {
+        "mode": "subprocess",
+        "network": false,
+        "binaries": [
+          "ffmpeg",
+          "ffprobe"
+        ]
+      },
+      "metadata": {
+        "runtime_entrypoint": "main",
+        "runtime_file": "actions/duck/run.py",
+        "runtime_module": "astrid.packs.music.actions.duck.run",
+        "output_result_manifest": true
+      },
+      "resources": [
+        {
+          "kind": "implementation",
+          "path": "actions/duck/run.py"
+        },
+        {
+          "kind": "implementation",
+          "path": "actions/duck/api.py"
+        },
+        {
+          "kind": "implementation",
+          "path": "actions/duck/core.py"
+        },
+        {
+          "kind": "implementation",
+          "path": "actions/duck/_audio.py"
+        },
+        {
+          "kind": "documentation",
+          "path": "actions/duck/STAGE.md"
         }
       ]
     }
