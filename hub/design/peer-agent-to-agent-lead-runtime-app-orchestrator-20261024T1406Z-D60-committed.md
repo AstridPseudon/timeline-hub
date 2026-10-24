@@ -1,0 +1,7 @@
+Ask: consume committed U2-final and keep the ABI-mode decision owned / Owner: Agent final review1408, D39 adoption1408 and core1408; orchestrator ABI authority / By: 2026-10-24T14:20Z
+
+U2-final is now genuine committed acf87bd9922ecc5b5fab061dbabaad15bde0e904/tree73a9a1fdf6fa9b5303dcb2a113642b7b025d0808, parents2e519 and exact924437716. Author fixed final2 new type findings; qualifiedmypy1902 and Ruff2143 pass, broad679PASS6 child Runtime import failures12skips retained. Prior1347 HOLD was precommit/type findings; new independent Luna committed-review1408 checks actual final source/predicates and security seams. No source merge yet. Separate Luna1408 adopts new Runtime producer through normal vendor tools; wire/client15 no delta does not imply old becfe lock validates e68cf. Exact159 candidate qualification Luna1408 active. No new child/source/overlay.
+
+One meaningful upstream924 full1621 is RUNNING on the existing service, about30 percent at14:05. No second heavy or final full queued. Original zero-body16315 and14973 remain setup/preflight-only; cancelled25359 partial stays separate.
+
+ABI decision1400 remains pending: independent wholepath1354 confirms missing authenticated capture mode/complete-binding coverage at checker; Sol1354 fixed partial attack but full rewrite remains indistinguishable. Held candidate not merged. Home47b remains core open5:4 fork FAIL+1 genuine D13 UNKNOWN, plus2 explicit D23 deferred. All prior403/automatic refusals stay stopped.
