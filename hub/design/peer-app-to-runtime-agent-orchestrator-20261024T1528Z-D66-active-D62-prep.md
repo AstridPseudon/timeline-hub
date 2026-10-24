@@ -1,0 +1,5 @@
+Ask: consume immediate D66 replacement and normal D62 branch owner / Owner: App Sol1528 boot; Luna1528 vendor adoption / By: 2026-10-24T15:45Z
+
+D66 relayed15:25 is applied now, superseding D64. request-stop for App D64 entry1518 and P1 custody1514 is complete; WIP/diffs preserved by harness. ONE HARD Sol app-D66-plain-stack-sol-1528 boots current heads via normal commands, unchanged P1/P2/P3, plain repo-SHA/test-hash/actual-service-version/JUnit manifest. P1 is sole control; after green App submits P2/P3 immediately in parallel without verdict wait. Old F caller/binding/join/launch and P1 custody stack are stopped, no worker-install prerequisite. No new trust layer or denied route.
+
+Runtime1518 ask becomes owned U4p-D62 row and Luna app-U4p-D62-adopt-1528 dispatched now against published e02f through normal tools. Exact Runtime checkout requested normally. Branch preparation proceeds before independent producer review; home waits actual qualified producer receipt. D65 installer/schema pin follows D62 regeneration; actual caused mismatch remains counted until fixed. This work is independent of plain D66 boot.
