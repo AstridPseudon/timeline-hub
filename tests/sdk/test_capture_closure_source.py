@@ -137,66 +137,105 @@ def test_forged_candidate_digest_is_not_certified_by_capture_labels(client):
         prepare(client, authoring_preview=preview, capture_authority={"canonical": True})
 
 
-@pytest.mark.parametrize("working_copy", [False, True])
-def test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies(client, monkeypatch, tmp_path, working_copy):
-    """Real SDK enrichment/publication and host handoff; Runtime admission doubled."""
+@pytest.mark.parametrize("working_copy", [False, True], ids=["saved-ref", "candidate-ref"])
+def test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies(tmp_path, working_copy):
+    """Real SDK enrichment/publication and host handoff through accepted Runtime closure."""
     import hashlib
     import json
+    from contextlib import contextmanager
     from types import SimpleNamespace
 
     from astrid.core.execution.generic_host import GenericPackHost
     from astrid.sdk.invocation import _invoke_internal_result
-    from tests.sdk.test_visualize_authority_objects import Runtime
+    from tests.sdk.test_capture_source_runtime import open_source_runtime
 
-    runtime = Runtime()
-    from tests.timeline.test_authoring_bundle import AUDIO, OLD, _digest, _replace_values
+    @contextmanager
+    def source_runtime():
+        source = open_source_runtime(tmp_path)
+        try:
+            yield next(source)
+        finally:
+            next(source, None)
 
-    payloads = {OLD: b'exact source picture', AUDIO: b'exact source audio'}
-    replacements = {old: 'sha256:' + hashlib.sha256(data).hexdigest() for old, data in payloads.items()}
-    for old, data in payloads.items():
-        runtime.objects[replacements[old]] = data
-    client.parent = _replace_values(client.parent, replacements)
-    client.shots = _replace_values(client.shots, replacements)
-    client.internals = _replace_values(client.internals, replacements)
-    for row in [client.parent, *client.shots, *client.internals]:
-        row['content_digest'] = _digest(row['payload'])
-    # Keep the real prepare_filmstrip and immutable closure opener. Only the
-    # transport read surface and registry admission are fixture-owned.
-    runtime._remote._transport.__dict__.update({name: getattr(client, name) for name in (
-        'get_project', 'list_timelines', 'get_project_parent_composition_revision',
-        'get_project_shot_revision', 'get_project_timeline_revision')})
-    inputs = {"view": "filmstrip", "timeline_ref": client.timeline_id,
-              "composed_capture": True, "revision_id": "parent-1"}
-    if working_copy:
-        inputs['authoring_preview'] = candidate(client)
-    result = _invoke_internal_result('rendering.timeline_visualize', kind='executor', project='demo',
-                                     client=runtime, inputs=inputs)
-    assert runtime.created, result.error
-    admitted = runtime.created[-1]
-    context = admitted['spec']['authority_context']
-    assert 'authority_object' not in context and 'capture_snapshot' not in context
-    ref = context['capture_snapshot_ref']
-    assert ref['source_kind'] == ('working_copy' if working_copy else 'revision')
-    raw = runtime.objects[ref['digest']]
-    assert ref['digest'] == 'sha256:' + hashlib.sha256(raw).hexdigest()
-    snapshot = json.loads(raw)
-    authority = snapshot['metadata']['capture_authority']
-    assert authority['expansion']['shots'][0]['content_digest']
-    assert authority['expansion']['children'][0]['config_hash']
-    if working_copy:
-        assert ref['working_copy']['candidate_digest'] == snapshot['metadata']['working_copy']['candidate_digest']
-        assert admitted['spec']['inputs']['authoring_preview'] == inputs['authoring_preview']
-        assert admitted['spec']['inputs']['authoring_preview']['candidate'] == inputs['authoring_preview']['candidate']
-    else:
-        assert 'authoring_preview' not in admitted['spec']['inputs']
-        assert ref['revision_id'] == 'parent-1'
-        assert ref['revision_digest'] == client.parent['content_digest']
-    assert ref['digest'] in admitted['input_manifest']
-    host = GenericPackHost(pack_roots=[tmp_path], client=SimpleNamespace(get_object=lambda key: runtime.objects['sha256:' + key]))
-    values = host._materialize_inputs({'spec': admitted['spec'], 'input_object_ids': admitted['input_manifest']}, tmp_path / 'attempt')
-    assert values.timeline_source.read()['ref'] == ref
-    assert values.timeline_source.read()['authority'] == authority
-    assert values.timeline_source.read()['snapshot'] == snapshot
+    with source_runtime() as runtime:
+        # Adapt the existing accepted Runtime task resource to the generated
+        # SDK task seam; Runtime still owns publication, validation and claim.
+        runtime.created = []
+
+        class Tasks:
+            def create(inner, **request):
+                response = runtime.service.create_task({
+                    "project": request["project_id"],
+                    "capability_id": request["capability"],
+                    "input_object_ids": request["input_manifest"],
+                    "spec": request["spec"],
+                    **({"idempotency_key": request["idempotency_key"]}
+                       if request.get("idempotency_key") else {}),
+                })
+                task_id = response["task"]["id"]
+                claim = runtime.service.claim_next({
+                    "executor_id": "probe",
+                    "capability_ids": [request["capability"]],
+                    "runtime_epoch": runtime.service.health()["runtime_epoch"],
+                })
+                assert claim["task_id"] == task_id
+                task = response["task"]
+                admitted = {
+                    **task,
+                    # The generated SDK task result exposes the admitted
+                    # capability spec directly; Runtime stores it under its
+                    # task envelope. Keep this adapter local to the case.
+                    "spec": task["spec"]["spec"],
+                    "input_manifest": list(task["spec"]["input_object_ids"]),
+                }
+                runtime.created.append(admitted)
+                return SimpleNamespace(ok=True, data=admitted, error=None)
+
+        runtime.tasks = Tasks()
+        runtime.snapshot(working_copy)
+        inputs = {"view": "filmstrip", "timeline_ref": runtime.timeline_id,
+                  "composed_capture": True, "revision_id": runtime.parent_revision_id}
+        if working_copy:
+            inputs["authoring_preview"] = runtime.authoring_preview
+        result = _invoke_internal_result(
+            "rendering.timeline_visualize", kind="executor", project=runtime.project_id,
+            client=runtime, inputs=inputs,
+        )
+        assert runtime.created, result.error
+        admitted = runtime.created[-1]
+        context = admitted["spec"]["authority_context"]
+        assert "authority_object" not in context and "capture_snapshot" not in context
+        ref = context["capture_snapshot_ref"]
+        assert ref["source_kind"] == ("working_copy" if working_copy else "revision")
+        raw = runtime.get_object(ref["digest"])
+        assert ref["digest"] == "sha256:" + hashlib.sha256(raw).hexdigest()
+        snapshot = json.loads(raw)
+        authority = snapshot["metadata"]["capture_authority"]
+        assert authority["expansion"]["shots"][0]["content_digest"]
+        assert authority["expansion"]["children"][0]["config_hash"]
+        if working_copy:
+            assert ref["working_copy"]["candidate_digest"] == snapshot["metadata"]["working_copy"]["candidate_digest"]
+            assert admitted["spec"]["inputs"]["authoring_preview"] == inputs["authoring_preview"]
+            assert admitted["spec"]["inputs"]["authoring_preview"]["candidate"] == inputs["authoring_preview"]["candidate"]
+        else:
+            assert "authoring_preview" not in admitted["spec"]["inputs"]
+            assert ref["revision_id"] == runtime.parent_revision_id
+            parent = runtime.get_project_parent_composition_revision(
+                runtime.project_id, runtime.timeline_id, runtime.parent_revision_id
+            )
+            assert ref["revision_digest"] == parent["content_digest"]
+        assert ref["digest"] in admitted["input_manifest"]
+        host = GenericPackHost(
+            pack_roots=[tmp_path],
+            client=SimpleNamespace(get_object=lambda key: runtime.get_object("sha256:" + key)),
+        )
+        values = host._materialize_inputs(
+            {"spec": admitted["spec"], "input_object_ids": admitted["input_manifest"]},
+            tmp_path / "attempt",
+        )
+        assert values.timeline_source.read()["ref"] == ref
+        assert values.timeline_source.read()["authority"] == authority
+        assert values.timeline_source.read()["snapshot"] == snapshot
 
 
 @pytest.mark.parametrize('working_copy', [False, True])
