@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T08:16:54Z | dispatcher heartbeat 8s | live 2 (sol 2, luna 0, other 0) | busy30 15 | status age 2m -->
-# runtime board, 2026-10-24T08:12:00Z
+<!-- main | 2026-10-24T08:19:38Z | dispatcher heartbeat 7s | live 2 (sol 1, luna 1, other 0) | busy30 15 | status age 1m -->
+# runtime board, 2026-10-24T08:18:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -77,7 +77,7 @@
 | FREEZE | Coordinate final tuple and proofs | Runtime manager | D48 and D49 | doing | Runtime0721; Agent0755; App0738 | Runtime qualified. Agent U2 source PASS and home; App draft PASS waits GO. Composition checkpoint86 passed; Farm v3 under review. | Runtime becfe6db8 |
 | OPS-child-observability | Retain bounded maker failure evidence | Luna | Independent installed proof passed | merged | Review 0730; installed 0735; live 0739 PASS | All four live, publication and committed copies match reviewed bytes. Real child and bootstrap remain unqualified. | 33fc06bbd installed |
 | OPS-wheel-acquisition | Verify normal original-wheel acquisition | Luna | Independent source review passed | merged | Author 0743; review 0747 PASS; Agent 0733 | Standard hash-locked pip operation qualified from source. Input must survive maker snapshot; no actual wheels or child credit. | Source facts only |
-| R-commit-response | Verify mounted mutation caller facts | Sol / Luna | Correct active App path | doing | Sol return0812; whole path0812 | Prior server facts stand. App found dormant caller citation; mounted save shape under review. No latency or source-change conclusion. | Read only |
+| R-commit-response | Verify mounted mutation caller facts | Sol / Luna | Final independent verification | review | Sol0812; whole path0812; final0818 | Nonempty mounted element edit emits one atomic doc.patch and one step with declared reads. No latency conclusion. | Read only |
 | OPS-wheel-layout | Match legitimate wheel metadata names | Luna | Actual wheels and received publication | review | Installed0801; independent0805 | Helper and maker installed atomically with backups. Independent live and publication review pending; actual67 wheels pending. | b330264b9 installed |
 
 Runtime full: 0 of 36 original failures open; exact integrated proofs and independent accounting remain recorded above. No new full-suite PASS. Current producer is becfe6db88b2cc034dba3fafa6c050117cdf2b06 after normal U1c and D39 merges. Readonly integrated worker0721 passed409 cases on this exact head; source reviews0703 and0710 remain PASS. Shared inverse source is separately qualified on460c by177 Runtime cases and six shared/source-copy controls, with no original ABA or HTTP credit.
@@ -103,7 +103,7 @@ D34: main has about9 GiB free at07:17. No main disk work per the explicit orches
 Blockers: Farm — Sol0812 repairs v3 row custody. Farm lead is asked0815 to request the independently verified normal exact child in parallel after received-kit check.
 Blockers: Agent and App — U2 source is home; D39 witness and App header P2/P3 GO still precede final tuple qualification.
 Blockers: Agent child — installed and working publication passed0805; manager08:11 confirms committed hub65511 helper and maker match. Agent actual67-wheel acceptance remains pending.
-Next ready: Sol v3 return0812 and mounted caller correction0812 are dispatched with independent whole-path0812. Agent original-wheel acceptance remains pending. No ready task waiting.
+Next ready: Sol v3 correction0812 runs; mounted caller final review0818 is queued. Farm lead owns parallel child request; Agent owns original-wheel acceptance. No ready task waiting.
 Later: Viewing owns the original ABA joined-source verdict. Runtime shared-auth handoff0715 is complete; no competing Runtime author or original body. D34 disk work and D47 memo resume only under their stated conditions.
 
 Later: Agent peer0714 classifies the separate moved-head persistence original as existing D23 child-word scope. It remains unchanged and visibly open; no new journal/publish repair or duplicate body. This does not alter the two Runtime fixture selectors.
