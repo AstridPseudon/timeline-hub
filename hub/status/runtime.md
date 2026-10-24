@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T02:57:36Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 17 | status age 1m -->
-# runtime board, 2026-10-24T02:55:00Z
+<!-- main | 2026-10-24T02:59:57Z | dispatcher heartbeat 15s | live 3 (sol 1, luna 2, other 0) | busy30 17 | status age 1m -->
+# runtime board, 2026-10-24T02:58:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -14,6 +14,7 @@
 | R2r-transcript-input | Preserve immutable capture input | Agent Sol / Luna | Agent integrated proof | merged | Agent 1818 | Original three cases passed on Agent 440 and Runtime 2a9e; manifest tampering refused. | Agent 440cc1e702 |
 | R2r-history-sequential | Verify durable historical sequence | Sol / Luna | Integrated proof | merged | Review 1604; current pair 1626 | 9 passed, 27 phases and 23 permanent captures. Earlier temporary capture loss remains disclosed. | e6a844696 |
 | R2r-nested-range | Authenticate inherited inverse ranges | Sol / Luna | Integrated proof | merged | Review 1606; services 8260 and 20553 | 428 passed on recorded e6 head; current docs-only cleanup preserves those source bytes. | 2ff1121fc |
+| R2r-foreign-retirement | Authenticate sole-owner closure retirement | Sol / Luna | Exact Agent0236 capture | doing | rt-R2r-foreign-retirement-sol-0258 | Offline causal assessment first; source native count and full effect coverage remain strict. Agent owns semantic redo. | f320 base |
 | R2r-restructure-pins | Keep authenticated physical pins | Sol / Luna | Integrated proof | merged | Review 2031; proof 2036 | 141 passed on actual abd47 with Agent 07e6; exact reviewed tree and 23 strict negatives. | abd47e68de6 |
 | G5-historical-fixture | Authentic SDK historical fixture | Luna / independent Luna | Fixture custody | merged | Authors 1632; reviews 1640 and 1645 | Original archive 2915 verified. Agent owns behaviour; lost historical temporary captures disclosed. | evidence only |
 | R2r-report-cleanup | Remove unintended root report | Luna / independent Luna | Exact file deletion | merged | Review 1623; proof 1626 | Only report removed; all 475 other blobs identical. Current pair 9 passed. | d9e2a71e8 |
@@ -23,7 +24,7 @@
 | DB-runtime-dry | Fresh upstream patch and generation | Luna / independent Luna | Orchestrator dry run | merged | Author 0742; review 0749; builder 7292 | 145 passed; patch and bundle verified. Final build belongs to Farm. | a5d425831 |
 | R2r-prepared-media-input | Classify prepared media authority | Luna / independent Luna | Exact four requests | merged | Author 2117; review 2121 | Runtime guard correctly refused missing verified inputs. App owns caller correction. | evidence only |
 | OPS-bench-store | Legacy admission and lifecycle | Sol / independent Luna | D34 resume threshold or delivery | gated:D34 | Author 0022; review 0029 | Queue fix passed; lifecycle failed two adversarial probes. Source held and uninstalled; no retirement. | 9e67ac9c58 held |
-| OPS-suites-prune | Retire unused suite registrations | Luna / Luna | Agent actual-use classification | doing | rt-OPS-prune-actual-use-0253 | Fresh snapshot0245 corrects active-row versus current-use distinction. Private proposal only; current and final inputs protected. | Main fdb9e9e9; remote unchanged |
+| OPS-suites-prune | Retire unused suite registrations | Luna / Luna | Independent actual-use review | review | Author0253; rt-OPS-prune-actual-use-review-0258 | Private proposal comments two generic Composition14 aliases. No target yet unreferenced; reviewer challenges frozen-use citations. | Source0253 held |
 | OPS-v1-archives | Six unused source archives | Luna / independent Luna | D34 resume threshold or delivery | gated:D34 | Custody 0040; review 0042 | [Independent custody passed](../../design/runtime-v1-archive-custody-review-0042.md). Archives unchanged; no cleanup round. | evidence only |
 | OPS-retire-venv | Guarded retirement route | Sol / Luna | Reviewed installation | merged | Installer 1805; remote acknowledgements | Installed a500 and 44c6; old process refusals remain stopped. | installed |
 | OPS-retire-runtime | Guarded runtime retirement | Luna / independent Luna | Reviewed installation | merged | Installer 1813; peer 1825 | Installed 954d and 21f6; seven referenced targets refused. Freed 0 GB. | installed |
@@ -70,4 +71,4 @@ D34: Orchestrator02:33 confirms main is steady near8.4GiB after D36 and orders n
 
 Later: OPS legacy admission and v1 archive retirement resume below 8.5 GB or after delivery. OPS-suites-prune Agent actual-use clarification is owned by0253 from refreshed0245 snapshot. No live operation; main remains untouched. Dormant D31 transcript implementation and tests remain in delivery. Installed kit hashes and custody remain in the prior board and design evidence; no installation this pass.
 
-Next ready: Consume App qualifiedcallerhandback for37eb or Agentexport route, Agent currentfixtureport and occupancy preparation0246. D39/D40 producerproof complete. Agent prune actual-use0253 is active. Agent owns publication, root assignment, historical sharing and helper map repairs.
+Next ready: Consume App qualifiedcallerhandback for37eb or Agentexport route, Agent currentfixtureport and occupancy preparation0246. D39/D40 producer proof complete. Foreign retirement0258, occupancy return0255 and prune review0258 are active. Agent owns publication, root assignment, historical sharing and helper map repairs.

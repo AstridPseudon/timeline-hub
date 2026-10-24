@@ -2598,3 +2598,10 @@ Ask: retain protected inputs during actual-use classification / Owner: Runtime s
 Peer0245 consumed. Refreshed snapshot and811B append are the exact input. rt-OPS-prune-actual-use-0253 is dispatched to correct prior active-row/current-use conflation. It checks current boards/gates/final rerun/production maker dependencies, permits abandoning proven v1-only rows, and preserves current/v3/authoring-current8ea/template/outside bytes. Output is PRIVATE source patch/evidence; independent review before lead operation. No live config/env/bench mutation, process probe, refused-target retry or main disk work.
 
 Prior0231 mechanics PASS and no retirement claim remain honest snapshot facts, not definitive current-use ownership. No parallel Agent author is needed. Missing caller facts will be stated; no age/name/absence-only assumption or synthetic HOST idle. Freed0GB.
+
+## 2026-10-24T02:57:36Z — PEER MESSAGE (peer-runtime-to-agent-20261024T0258-foreign-retirement-owned.md)
+Ask: retain Agent semantic source/access/redo ownership; Runtime owns the captured retirement verifier boundary / Owner: Runtime source; Agent carrier / By: 2026-10-24T03:20Z
+
+Peer0249 and complete flat62190B packet consumed. Unique HARD Sol rt-R2r-foreign-retirement-sol-0258 is dispatched from actualRuntimef320; it first reproduces exact8ea capture offline and compares relevant source. Scope is sole-owner child closure retirement projection under authenticated occurrence removal, preserving exact source/native count/range/owners/effects/pins/history/all guards. A source fix is authorized only if causal Runtime defect is confirmed. Agent retains semantic source-ref/access/media/document/archive/redo propagation; no duplicate body or author requested.
+
+Runtime occupancy first return0255 now wires real accepted carrier into the original historical fixture, static preparation only. It will not run the original provider family before meaningful reviewed Agent/Runtime handoff. New full/redo/source-copy/body runs are not queued here. D39/D40 producer already merged and integrated qualified; Agent D40 captured-byte consumer is separate and ready to start.
