@@ -123,6 +123,38 @@ describe('RuntimeConnectionPill', () => {
     await waitFor(() => expect(screen.getByText('Or run this yourself in PowerShell:')).toBeInTheDocument());
   });
 
+  it('two answers that come late are busy: a calm card with no install command, and it clears when Astrid answers', async () => {
+    vi.useFakeTimers();
+    try {
+      // A health request that never answers is aborted by the watch's own timer, which counts as a slow reading.
+      const timeout = (init?: RequestInit) => new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(new DOMException('The operation was aborted.', 'AbortError')));
+      });
+      const answer = { step: healthy('instance-1') as (init?: RequestInit) => Promise<Response> | Response };
+      const busyFetch = vi.fn(async (_input: string, init?: RequestInit) => answer.step(init));
+      render(<RuntimeConnectionPill connection={connected()} fetchImpl={busyFetch} restartCheckIntervalMs={3000} />);
+      await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+      expect(status()).toHaveAttribute('data-state', 'connected');
+
+      answer.step = timeout;
+      await act(async () => { await vi.advanceTimersByTimeAsync(3000 * 6); });
+      expect(status()).toHaveAttribute('data-state', 'busy');
+      expect(screen.getByRole('heading', { name: COPY.busy.title })).toBeInTheDocument();
+      expect(screen.getByText(COPY.busy.sentence)).toBeInTheDocument();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: COPY.agent.commandCopy })).not.toBeInTheDocument();
+      expect(document.body.textContent).not.toMatch(/curl|install/);
+      expect(isRecoveryCardShowing()).toBe(true);
+
+      answer.step = healthy('instance-1');
+      await act(async () => { await vi.advanceTimersByTimeAsync(3000 * 2); });
+      expect(status()).toHaveAttribute('data-state', 'connected');
+      expect(isRecoveryCardShowing()).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('one dropped reading is not a stop', async () => {
     const fetchImpl = healthRoute(healthy('instance-1'), unreachable, healthy('instance-1'));
     render(<RuntimeConnectionPill connection={connected()} fetchImpl={fetchImpl} restartCheckIntervalMs={5} />);

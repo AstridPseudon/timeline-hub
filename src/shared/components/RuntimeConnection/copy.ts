@@ -146,6 +146,8 @@ export interface RuntimeConnectionCopy {
   readonly phone: Message & { readonly button: string; readonly copied: string };
   /** Screen-reader text of the status container while connected, and the line App settings shows then. */
   readonly connected: { readonly sentence: string };
+  /** Connected, and the health check answers too slowly: Astrid is running under load. The card clears itself. */
+  readonly busy: Message;
   /** Connected, and the health check stopped answering. The card clears itself when Astrid is back. */
   readonly stopped: Message;
   /** Connected, and Astrid restarted (or changed) under the page. */
@@ -234,6 +236,11 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
 
   connected: {
     sentence: 'Connected to Astrid',
+  },
+
+  busy: {
+    title: 'Astrid is busy',
+    sentence: "It's still running and will catch up. Your changes are kept.",
   },
 
   stopped: {

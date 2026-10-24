@@ -32,8 +32,8 @@ function CardText({ title, sentence }: { title: string; sentence: string }) {
 
 /**
  * What the connected page says about Astrid, bottom-right. While Astrid is up it says nothing visible: the
- * editor already shows the project, and a "Connected" badge went stale the moment Astrid stopped. Two cards replace it:
- * "Astrid stopped" (it clears itself when Astrid is back) and "Astrid restarted" (Reload). The editor stays mounted with
+ * editor already shows the project, and a "Connected" badge went stale the moment Astrid stopped. Three cards replace it:
+ * "Astrid is busy" (answering late, clears itself), "Astrid stopped" (it clears itself when Astrid is back) and "Astrid restarted" (Reload). The editor stays mounted with
  * its draft either way. Renders nothing while not connected (the gate shows the panel then).
  */
 export function RuntimeConnectionPill({
@@ -58,6 +58,14 @@ export function RuntimeConnectionPill({
     return (
       <div data-testid="runtime-connection-status" data-state="connected" className="sr-only">
         {COPY.connected.sentence}
+      </div>
+    );
+  }
+
+  if (restart === 'busy') {
+    return (
+      <div data-testid="runtime-connection-status" data-state="busy" role="status" className={CARD_CLASS} style={CARD_STYLE}>
+        <CardText title={COPY.busy.title} sentence={COPY.busy.sentence} />
       </div>
     );
   }
