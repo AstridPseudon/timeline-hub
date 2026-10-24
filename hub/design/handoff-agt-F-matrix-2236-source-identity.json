@@ -1,0 +1,52 @@
+{
+  "handoff": "F/P4 D59 matrix input",
+  "final_tuple": "PENDING",
+  "agent_current": {
+    "path": "/home/user/work/wt/agt-F-matrix-handoff-2236",
+    "sha": "7c485e5b612a31a9b4f6e9a67163612a4a3313d4",
+    "tree": "742a1195e33b1b94cbd7d817c5b4d8167c4a20d5",
+    "tested_actual_sha": "c2a63bbee9369b84bec7f4bfec06f447df02c27b",
+    "tested_actual_tree": "742a1195e33b1b94cbd7d817c5b4d8167c4a20d5",
+    "current_tree_equals_tested_tree": true
+  },
+  "runtime_current": {
+    "path": "/home/user/work/runtime",
+    "sha": "732c48c6f5a9441a65c61b24595d454a1cd3e180",
+    "tree": "7ed0559c6f0a05954427cc668e303b6cd2f51586"
+  },
+  "app_current": {
+    "path": "/home/user/work/app",
+    "sha": "bceb0350326f22beefdde5c5ba275412bb09b419",
+    "tree": "46ad4dde505a376e22026c3377615a5fca05a55e"
+  },
+  "composition_current": {
+    "path": "/home/user/work/composition",
+    "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "actual_29429_tuple": {
+    "agent_sha": "c2a63bbee9369b84bec7f4bfec06f447df02c27b",
+    "agent_tree": "742a1195e33b1b94cbd7d817c5b4d8167c4a20d5",
+    "runtime_sha": "732c48c6f5a9441a65c61b24595d454a1cd3e180",
+    "runtime_tree": "7ed0559c6f0a05954427cc668e303b6cd2f51586",
+    "app_sha": "5fcb9ad5cf8af93709d682ab994bcdb1af207f07",
+    "app_tree": "8f6c14f184297659b4bc0500c8d18f84c42baeee",
+    "composition_sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "launcher_source": {
+    "path": "/home/user/work/wt/agt-F-matrix-handoff-2236/tools/p4-d73-pinned-launch.sh",
+    "sha256": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1",
+    "git_blob": "2844cec15b97fa995ecaf120961fc891b8e13b1c"
+  },
+  "installer_source": {
+    "path": "/home/user/work/wt/agt-F-matrix-handoff-2236/tools/install_p4_launcher.py",
+    "sha256": "46595ea2b6e0738736ebf181f731930144737ac8d39902e4903b94e23c2c94f2",
+    "git_blob": "eb43fe81c426f2a85797d7cee491b8e822490eda"
+  },
+  "schema": {
+    "path": "/home/user/work/venv-agent/lib/python3.13/site-packages",
+    "digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b"
+  },
+  "original_p4_test_hash_actual_29429": "495911538a8dfc789d2674c97ba1be8cc2e63f001ce65f5eb5cdd07a34b81f06"
+}

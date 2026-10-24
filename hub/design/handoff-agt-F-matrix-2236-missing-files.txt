@@ -1,0 +1,6 @@
+PENDING final four-repository tuple and fresh final checkout receipts.
+PENDING final three-selector P4 service XML, log, exit and receipt (no final body run).
+PENDING refreshed final-core body XML, log, exit and service receipt (worker 2234 owns the active rehearsal).
+PENDING installed final D73/final-core registry rows and CAS backup (installer not executed).
+PENDING genuine D77 render environment and receipt.
+No missing file is inferred to be a pass or substituted with a stale literal SHA.
