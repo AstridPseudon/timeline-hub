@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T03:37:05Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 3m -->
-# viewing board, 2026-10-24T03:33:40Z
+<!-- viewing | 2026-10-24T03:38:30Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 0m -->
+# viewing board, 2026-10-24T03:37:57Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -29,7 +29,7 @@
 | DB-composition-dry | Fresh clone delivery dry run | Luna high | Orchestrator request | merged | First return 0757 and review 0802 | All 120 source files, controlled archive payload, registry, types and callers independently passed. | source 635f4de06 |
 | DB-composition-template | Repair missing delivery template | Luna high | Required README template | merged | Template 0749 and review 0751 | Template-only repair and delivery retry passed. No ZIP credit. | source 635f4de06 |
 | F-D22-geometry | Attribute three geometry failures | Luna author and review | Agent request | merged | Cause 1520 and closure 1532 | Read-only attribution passed. Agent merged expectation adaptation; integrated original three passed. No Composition change. | Agent 98ef2f9c9 |
-| F-authoring-ABA | Complete authenticated undo capture and projection | Sol author; Luna review | Agent current port and original | merging | Author 0300 and review 0312 PASS | Independent 55 focused and 112 neighbors passed; quality checks passed. Original 141 remains failed. [Review](../../design/viewing-F-authoring-ABA-projection-review-0312.md) | 5694c7147 |
+| F-authoring-ABA | Complete authenticated undo capture and projection | Sol author; Luna review | Integrated original qualification | merging | Viewing 0312 and Agent 0330 PASS; service 26248 | Current join 55 focused, 112 neighbors, 42 history and 16 corrupt-carrier controls passed. Original successor queued; 141 remains failed. | Agent 7aa96ae614 |
 | F-D32-render-wire | Classify six missing SDK result files | Luna author and review | Agent qualified installed child | merged | Viewing 0116 and 0117; service 27934 | Agent reports six original cases passed in 41.48 seconds on child c886 and Runtime 8ea. Source classification independently passed. | no product change |
 
 | OPS-hub-publication | Confirm supported board publication | Existing hub daemon | Published current board and peer | merged | Existing hub daemon | Board body and author handoff match local bytes; hub HEAD equals origin/main. Failed manual action remains stopped. | Hub ea55792fc |
@@ -48,7 +48,7 @@ F-D32-render-wire is complete: [author0116](../../design/viewing-F-D32-render-wi
 
 Supported hub daemon independently published current board and author handoff at ea55792fc106e03adc086a15340fffdc32b3e6db, HEAD equal to origin/main. Exact local/published bytes verified. OPS publication blocker is cleared. The earlier failed manual sync remains stopped and was never retried; [permission record and resolution](../../escalations/viewing-20261024T025649Z-hub-sync-read-only.md). Historical recycle refusals remain parked; no alternate deletion.
 
-Current pass: PLAN, MANAGER-COMMON, header through D41 and latest INBOX checked. Independent projection review0312 passed55 focused and112 neighbors plus quality checks. Exact report and source handoff published to design; Agent owns current port preserving reorder-history and one changed original qualification. Remote source request carries only author5694. No duplicate source author or original/full run. Free disk15.29GB; no cleanup of refused targets or new heavy run. Manager made no product, test, generated, package or pin edits.
+Current pass: PLAN, MANAGER-COMMON, header through D42 and peer0325 consumed. Exact donor review0312, handoff0335 and board publication verified in hub commit b05095858. Agent join review0330 passed and home7aa96 merged with guarded reorder history retained. Agent service26248 owns the single changed-source original ABA qualification. No new Viewing author or duplicate body. Free disk15.29GB; no cleanup of refused targets or new heavy run. Manager made no product, test, generated, package or pin edits.
 
-Blockers: Agent owns the current source port and one original ABA qualification after reviewed source5694.
-Next ready: Agent current-only home port and original qualification; Viewing has no unassigned ready work.
+Blockers: Agent owns service26248 integrated original ABA qualification and final result handoff.
+Next ready: Consume Agent service26248 result; Viewing has no unassigned ready work.
