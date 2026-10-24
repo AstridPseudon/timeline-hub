@@ -1,0 +1,964 @@
+{
+  "result": {
+    "exit": 1,
+    "junit_test_seconds": 45.008,
+    "failure": "Failed: Timeout (>45.0s) from pytest-timeout.",
+    "executed_cases": 1
+  },
+  "snapshots": [
+    {
+      "metadata": {
+        "target_seconds": 30,
+        "utc": "2026-10-24T21:52:59.115613+00:00",
+        "elapsed_seconds": 30.00849663700501,
+        "phase": "call",
+        "process_cpu_seconds": 23.780690167,
+        "main_thread_cpu_seconds": 23.780348021000002,
+        "request_ordinal": null,
+        "request_ordinal_support": "not instrumented; no tracing or wrappers"
+      },
+      "threads": [
+        {
+          "frames": [
+            {
+              "file": "/usr/lib/python3.13/threading.py",
+              "line": 363,
+              "function": "wait"
+            },
+            {
+              "file": "/usr/lib/python3.13/threading.py",
+              "line": 660,
+              "function": "wait"
+            },
+            {
+              "file": "/usr/lib/python3.13/threading.py",
+              "line": 1343,
+              "function": "run"
+            },
+            {
+              "file": "/usr/lib/python3.13/threading.py",
+              "line": 1044,
+              "function": "_bootstrap_inner"
+            },
+            {
+              "file": "/usr/lib/python3.13/threading.py",
+              "line": 1015,
+              "function": "_bootstrap"
+            }
+          ],
+          "role": "owned pending timer"
+        },
+        {
+          "frames": [
+            {
+              "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D84-False-stacks-sol-2151/evidence/d84_false_stack_plugin.py",
+              "line": 61,
+              "function": "snapshot"
+            },
+            {
+              "file": "/usr/lib/python3.13/threading.py",
+              "line": 1345,
+              "function": "run"
+            },
+            {
+              "file": "/usr/lib/python3.13/threading.py",
+              "line": 1044,
+              "function": "_bootstrap_inner"
+            },
+            {
+              "file": "/usr/lib/python3.13/threading.py",
+              "line": 1015,
+              "function": "_bootstrap"
+            }
+          ],
+          "role": "owned dump callback"
+        },
+        {
+          "frames": [
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_validation.py",
+              "line": 120,
+              "function": "reuse"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py",
+              "line": 423,
+              "function": "descend"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py",
+              "line": 78,
+              "function": "items"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py",
+              "line": 431,
+              "function": "descend"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py",
+              "line": 275,
+              "function": "ref"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py",
+              "line": 431,
+              "function": "descend"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py",
+              "line": 296,
+              "function": "properties"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py",
+              "line": 431,
+              "function": "descend"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py",
+              "line": 355,
+              "function": "oneOf"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py",
+              "line": 431,
+              "function": "descend"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py",
+              "line": 275,
+              "function": "ref"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py",
+              "line": 431,
+              "function": "descend"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py",
+              "line": 78,
+              "function": "items"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py",
+              "line": 431,
+              "function": "descend"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py",
+              "line": 296,
+              "function": "properties"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py",
+              "line": 431,
+              "function": "descend"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py",
+              "line": 275,
+              "function": "ref"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py",
+              "line": 431,
+              "function": "descend"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py",
+              "line": 78,
+              "function": "items"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py",
+              "line": 431,
+              "function": "descend"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py",
+              "line": 296,
+              "function": "properties"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py",
+              "line": 431,
+              "function": "descend"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py",
+              "line": 275,
+              "function": "ref"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py",
+              "line": 383,
+              "function": "iter_errors"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py",
+              "line": 449,
+              "function": "validate"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_validation.py",
+              "line": 173,
+              "function": "validate_commit_value"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_auth.py",
+              "line": 2371,
+              "function": "_capture_records"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_auth.py",
+              "line": 2496,
+              "function": "validate_sequential_capture"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_store.py",
+              "line": 362,
+              "function": "_historical_sequential"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_store.py",
+              "line": 261,
+              "function": "_verify_accepted"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_store.py",
+              "line": 460,
+              "function": "history_entry"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_port.py",
+              "line": 233,
+              "function": "_ancestor"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_port.py",
+              "line": 271,
+              "function": "read"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_port.py",
+              "line": 215,
+              "function": "_read"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_port.py",
+              "line": 285,
+              "function": "revision_closure"
+            },
+            {
+              "file": "/home/user/work/wt/rt-D84-False-stacks-sol-2151/astrid/sdk/timeline/commit.py",
+              "line": 433,
+              "function": "_load"
+            },
+            {
+              "file": "/home/user/work/wt/rt-D84-False-stacks-sol-2151/astrid/sdk/timeline/_selected_param_authority.py",
+              "line": 81,
+              "function": "state"
+            },
+            {
+              "file": "/home/user/work/wt/rt-D84-False-stacks-sol-2151/astrid/sdk/timeline/_selected_param_authority.py",
+              "line": 206,
+              "function": "at"
+            },
+            {
+              "file": "/home/user/work/wt/rt-D84-False-stacks-sol-2151/astrid/sdk/timeline/_selected_param_authority.py",
+              "line": 213,
+              "function": "resolve_selected_param_source"
+            },
+            {
+              "file": "/home/user/work/wt/rt-D84-False-stacks-sol-2151/astrid/sdk/timeline/commit.py",
+              "line": 561,
+              "function": "_inverse_element_sources"
+            },
+            {
+              "file": "/home/user/work/wt/rt-D84-False-stacks-sol-2151/astrid/sdk/timeline/commit.py",
+              "line": 616,
+              "function": "resolve"
+            },
+            {
+              "file": "/home/user/work/wt/rt-D84-False-stacks-sol-2151/astrid/sdk/timeline/native_timeline_duplicate.py",
+              "line": 26,
+              "function": "resolve"
+            },
+            {
+              "file": "/home/user/work/wt/rt-D84-False-stacks-sol-2151/astrid/sdk/timeline/native_occurrence_shared.py",
+              "line": 97,
+              "function": "resolve"
+            },
+            {
+              "file": "/home/user/work/wt/rt-D84-False-stacks-sol-2151/astrid/sdk/timeline/commands.py",
+              "line": 243,
+              "function": "execute"
+            },
+            {
+              "file": "/home/user/work/wt/rt-D84-False-stacks-sol-2151/astrid/sdk/timeline/commit.py",
+              "line": 1331,
+              "function": "commit"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_execution.py",
+              "line": 87,
+              "function": "execute"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/service.py",
+              "line": 2499,
+              "function": "_execute_timeline_commit"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/service.py",
+              "line": 2444,
+              "function": "commit_timeline"
+            },
+            {
+              "file": "/home/user/work/wt/rt-D84-False-stacks-sol-2151/tests/sdk/test_timeline_selected_schema_runtime.py",
+              "line": 181,
+              "function": "submit"
+            },
+            {
+              "file": "/home/user/work/wt/rt-D84-False-stacks-sol-2151/tests/core/test_timeline_element_publication_runtime.py",
+              "line": 550,
+              "function": "test_public_helper_restart_exact_retry_later_head_inverse_redo"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/python.py",
+              "line": 166,
+              "function": "pytest_pyfunc_call"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_execution.py",
+              "line": 147,
+              "function": "_multicall"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_manager.py",
+              "line": 183,
+              "function": "_hookexec"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_caller.py",
+              "line": 197,
+              "function": "__call__"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/python.py",
+              "line": 1720,
+              "function": "runtest"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/runner.py",
+              "line": 179,
+              "function": "pytest_runtest_call"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_execution.py",
+              "line": 147,
+              "function": "_multicall"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_manager.py",
+              "line": 183,
+              "function": "_hookexec"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_caller.py",
+              "line": 197,
+              "function": "__call__"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/runner.py",
+              "line": 245,
+              "function": "<lambda>"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/runner.py",
+              "line": 353,
+              "function": "from_call"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/runner.py",
+              "line": 244,
+              "function": "call_and_report"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/runner.py",
+              "line": 137,
+              "function": "runtestprotocol"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/runner.py",
+              "line": 118,
+              "function": "pytest_runtest_protocol"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_execution.py",
+              "line": 147,
+              "function": "_multicall"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_manager.py",
+              "line": 183,
+              "function": "_hookexec"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_caller.py",
+              "line": 197,
+              "function": "__call__"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/main.py",
+              "line": 396,
+              "function": "pytest_runtestloop"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_execution.py",
+              "line": 147,
+              "function": "_multicall"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_manager.py",
+              "line": 183,
+              "function": "_hookexec"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_caller.py",
+              "line": 197,
+              "function": "__call__"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/main.py",
+              "line": 372,
+              "function": "_main"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/main.py",
+              "line": 318,
+              "function": "wrap_session"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/main.py",
+              "line": 365,
+              "function": "pytest_cmdline_main"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_execution.py",
+              "line": 147,
+              "function": "_multicall"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_manager.py",
+              "line": 183,
+              "function": "_hookexec"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_caller.py",
+              "line": 197,
+              "function": "__call__"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/config/__init__.py",
+              "line": 199,
+              "function": "main"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/config/__init__.py",
+              "line": 223,
+              "function": "console_main"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pytest/__main__.py",
+              "line": 9,
+              "function": "<module>"
+            },
+            {
+              "file": "<frozen runpy>",
+              "line": 88,
+              "function": "_run_code"
+            },
+            {
+              "file": "<frozen runpy>",
+              "line": 203,
+              "function": "_run_module_as_main"
+            }
+          ],
+          "role": "test main"
+        }
+      ],
+      "main_test_line": 550,
+      "observed_activity": "schema computation in Recorder authentication via retained historical verification",
+      "mutex_evidence": "RequestCommitPort._read:215 is inside the acquired store._mutex context at line 213",
+      "stage_by_unchanged_source": "redo"
+    },
+    {
+      "metadata": {
+        "target_seconds": 44,
+        "utc": "2026-10-24T21:53:13.117770+00:00",
+        "elapsed_seconds": 44.01065343999653,
+        "phase": "call",
+        "process_cpu_seconds": 35.930649306,
+        "main_thread_cpu_seconds": 35.929473662,
+        "request_ordinal": null,
+        "request_ordinal_support": "not instrumented; no tracing or wrappers"
+      },
+      "threads": [
+        {
+          "frames": [
+            {
+              "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D84-False-stacks-sol-2151/evidence/d84_false_stack_plugin.py",
+              "line": 61,
+              "function": "snapshot"
+            },
+            {
+              "file": "/usr/lib/python3.13/threading.py",
+              "line": 1345,
+              "function": "run"
+            },
+            {
+              "file": "/usr/lib/python3.13/threading.py",
+              "line": 1044,
+              "function": "_bootstrap_inner"
+            },
+            {
+              "file": "/usr/lib/python3.13/threading.py",
+              "line": 1015,
+              "function": "_bootstrap"
+            }
+          ],
+          "role": "owned dump callback"
+        },
+        {
+          "frames": [
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py",
+              "line": 396,
+              "function": "descend"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py",
+              "line": 296,
+              "function": "properties"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py",
+              "line": 431,
+              "function": "descend"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py",
+              "line": 275,
+              "function": "ref"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py",
+              "line": 431,
+              "function": "descend"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py",
+              "line": 275,
+              "function": "ref"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py",
+              "line": 431,
+              "function": "descend"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py",
+              "line": 78,
+              "function": "items"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py",
+              "line": 431,
+              "function": "descend"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py",
+              "line": 296,
+              "function": "properties"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py",
+              "line": 431,
+              "function": "descend"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py",
+              "line": 275,
+              "function": "ref"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py",
+              "line": 431,
+              "function": "descend"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py",
+              "line": 78,
+              "function": "items"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py",
+              "line": 431,
+              "function": "descend"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py",
+              "line": 296,
+              "function": "properties"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py",
+              "line": 431,
+              "function": "descend"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py",
+              "line": 275,
+              "function": "ref"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py",
+              "line": 383,
+              "function": "iter_errors"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py",
+              "line": 449,
+              "function": "validate"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_validation.py",
+              "line": 173,
+              "function": "validate_commit_value"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_auth.py",
+              "line": 2371,
+              "function": "_capture_records"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_auth.py",
+              "line": 2496,
+              "function": "validate_sequential_capture"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_store.py",
+              "line": 362,
+              "function": "_historical_sequential"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_store.py",
+              "line": 261,
+              "function": "_verify_accepted"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_store.py",
+              "line": 460,
+              "function": "history_entry"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_store.py",
+              "line": 872,
+              "function": "_inverse_stage_history"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_store.py",
+              "line": 254,
+              "function": "_verify_accepted"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_store.py",
+              "line": 460,
+              "function": "history_entry"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_port.py",
+              "line": 233,
+              "function": "_ancestor"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_port.py",
+              "line": 246,
+              "function": "<lambda>"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_port.py",
+              "line": 215,
+              "function": "_read"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_port.py",
+              "line": 246,
+              "function": "history_entry"
+            },
+            {
+              "file": "/home/user/work/wt/rt-D84-False-stacks-sol-2151/astrid/sdk/timeline/commit.py",
+              "line": 1253,
+              "function": "commit"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/timeline_commit_execution.py",
+              "line": 87,
+              "function": "execute"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/service.py",
+              "line": 2499,
+              "function": "_execute_timeline_commit"
+            },
+            {
+              "file": "/home/user/work/wt/rt-pin-bc04caa2/runtime_protocol/service.py",
+              "line": 2444,
+              "function": "commit_timeline"
+            },
+            {
+              "file": "/home/user/work/wt/rt-D84-False-stacks-sol-2151/tests/sdk/test_timeline_selected_schema_runtime.py",
+              "line": 181,
+              "function": "submit"
+            },
+            {
+              "file": "/home/user/work/wt/rt-D84-False-stacks-sol-2151/tests/core/test_timeline_element_publication_runtime.py",
+              "line": 557,
+              "function": "test_public_helper_restart_exact_retry_later_head_inverse_redo"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/python.py",
+              "line": 166,
+              "function": "pytest_pyfunc_call"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_execution.py",
+              "line": 147,
+              "function": "_multicall"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_manager.py",
+              "line": 183,
+              "function": "_hookexec"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_caller.py",
+              "line": 197,
+              "function": "__call__"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/python.py",
+              "line": 1720,
+              "function": "runtest"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/runner.py",
+              "line": 179,
+              "function": "pytest_runtest_call"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_execution.py",
+              "line": 147,
+              "function": "_multicall"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_manager.py",
+              "line": 183,
+              "function": "_hookexec"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_caller.py",
+              "line": 197,
+              "function": "__call__"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/runner.py",
+              "line": 245,
+              "function": "<lambda>"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/runner.py",
+              "line": 353,
+              "function": "from_call"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/runner.py",
+              "line": 244,
+              "function": "call_and_report"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/runner.py",
+              "line": 137,
+              "function": "runtestprotocol"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/runner.py",
+              "line": 118,
+              "function": "pytest_runtest_protocol"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_execution.py",
+              "line": 147,
+              "function": "_multicall"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_manager.py",
+              "line": 183,
+              "function": "_hookexec"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_caller.py",
+              "line": 197,
+              "function": "__call__"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/main.py",
+              "line": 396,
+              "function": "pytest_runtestloop"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_execution.py",
+              "line": 147,
+              "function": "_multicall"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_manager.py",
+              "line": 183,
+              "function": "_hookexec"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_caller.py",
+              "line": 197,
+              "function": "__call__"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/main.py",
+              "line": 372,
+              "function": "_main"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/main.py",
+              "line": 318,
+              "function": "wrap_session"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/main.py",
+              "line": 365,
+              "function": "pytest_cmdline_main"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_execution.py",
+              "line": 147,
+              "function": "_multicall"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_manager.py",
+              "line": 183,
+              "function": "_hookexec"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pluggy/_caller.py",
+              "line": 197,
+              "function": "__call__"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/config/__init__.py",
+              "line": 199,
+              "function": "main"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/_pytest/config/__init__.py",
+              "line": 223,
+              "function": "console_main"
+            },
+            {
+              "file": "/home/user/work/venv-agent/lib/python3.13/site-packages/pytest/__main__.py",
+              "line": 9,
+              "function": "<module>"
+            },
+            {
+              "file": "<frozen runpy>",
+              "line": 88,
+              "function": "_run_code"
+            },
+            {
+              "file": "<frozen runpy>",
+              "line": 203,
+              "function": "_run_module_as_main"
+            }
+          ],
+          "role": "test main"
+        }
+      ],
+      "main_test_line": 557,
+      "observed_activity": "schema computation in Recorder authentication via retained historical verification",
+      "mutex_evidence": "RequestCommitPort._read:215 is inside the acquired store._mutex context at line 213",
+      "stage_by_unchanged_source": "final ABA-refusal request"
+    }
+  ],
+  "timers": {
+    "terminal_utc": "2026-10-24T21:53:14.790353+00:00",
+    "elapsed_seconds": 45.68325648299651,
+    "process_cpu_seconds": 37.488496006,
+    "main_thread_cpu_seconds": 37.486851222,
+    "dumps": [
+      {
+        "target_seconds": 30,
+        "utc": "2026-10-24T21:52:59.115613+00:00",
+        "elapsed_seconds": 30.00849663700501,
+        "phase": "call",
+        "process_cpu_seconds": 23.780690167,
+        "main_thread_cpu_seconds": 23.780348021000002,
+        "request_ordinal": null,
+        "request_ordinal_support": "not instrumented; no tracing or wrappers"
+      },
+      {
+        "target_seconds": 44,
+        "utc": "2026-10-24T21:53:13.117770+00:00",
+        "elapsed_seconds": 44.01065343999653,
+        "phase": "call",
+        "process_cpu_seconds": 35.930649306,
+        "main_thread_cpu_seconds": 35.929473662,
+        "request_ordinal": null,
+        "request_ordinal_support": "not instrumented; no tracing or wrappers"
+      }
+    ],
+    "timers_cancelled": true,
+    "raw_closed": true
+  },
+  "sources": {
+    "test_file_sha256": "c331dcfd930544ff699674c31d7867d8da5d852d22e72f3ebcb335aabe55c79a",
+    "test_body_sha256": "be437e54b1eac130a94c4dfb38a427eed3a8e706b890315c749e1f6ec3841e26",
+    "test_ast_sha256": "d44612f8c7778a8cefc10b99e9fb0aabe91d9c0f91fbd0954660333a840519bb",
+    "test_body_ast_sha256": "9212df7ace7994647e23afb9542a1da7f7274082c9a27fc131c1c82bf8e7d68b",
+    "agent": {
+      "path": "/home/user/work/wt/rt-D84-False-stacks-sol-2151",
+      "sha": "197d780dca51949605c02352e7d1089a087aaa11",
+      "tree": "9deb9f157f5af433a884d5153c06e3a5223af7ef",
+      "status": ""
+    },
+    "runtime": {
+      "path": "/home/user/work/wt/rt-pin-bc04caa2",
+      "sha": "bc04caa23f4b503fc55e49769ead20677904702a",
+      "tree": "fa696b342468ae191735409822fa3c7c66f8a590",
+      "status": ""
+    }
+  },
+  "source_preservation": {
+    "unchanged": true
+  },
+  "main_cpu_between_snapshots_seconds": 12.149125640999998,
+  "wall_between_snapshots_seconds": 14.002156802991522,
+  "limits": [
+    "Two instantaneous stack samples cannot quantify time in individual validators or mutex hold durations.",
+    "CPU time is cumulative for the test main thread since protocol start, not per request or per frame.",
+    "Request ordinals were not instrumented; only source-derived test stages are reported.",
+    "No main-thread acquisition/condition/socket/outbox wait was sampled; waits between samples remain unmeasured.",
+    "This in-process fixture does not measure daemon HTTP lock contention, UI pending time, or a browser cause.",
+    "The stack observer adds small uncalibrated overhead; this is a diagnostic failure, not an unobserved timing gate.",
+    "Service6749 terminal summary was absent locally; only the current board running entry and prior1960 exact XML could be read."
+  ],
+  "causal_lock_classification": "UNKNOWN"
+}

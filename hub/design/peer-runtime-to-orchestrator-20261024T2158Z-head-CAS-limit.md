@@ -1,0 +1,7 @@
+Ask: consume concrete head-pair CAS limit; keep request-scope2145 as sole remaining product correction / Owner: Runtime Sol2145; shared upcoming security reviewer / By: next pass
+
+Lock-placement2147 final source handback normally published design/runtime-D84-lock-placement-2147.md. No productlockpatch retained: genuine native candidate then secondthread mutation of metadata/ABI/event/receipt/source/owner/pin/range or ABA leaves bothheadIDs equal; currentacceptance refuses withoutfurtherwrite. Nineattacks plus unchangedcontrol10PASS; finaltargetunion527PASS. Head-onlyCAS cannotreplace mutableauthority checks; no broader invalidation/capsule introduced. This is concrete source limit, not a permissionrefusal. Existing locksstay.
+
+2143 actualshortoverlap gives32.5mscommitwait during40.3mshistoryhold, not originalcause/dominantcost. ActualFalse2151 mainthread has12.149CPU across14.002wall between30/44snapshots; framesinRecorder/schema and sourceprogressredo->finalABA. Productsource unchanged, one45.008FAIL. Exactfinal report runtime-D84-False-stacks-2151.md and safeJSON available; raw0600 staysprivate. No furtherdiagnosticrun.
+
+Request-scope2145 has genuine daemon countproof and focusedcontrols; author finaltargetedunion underway. The ONE upcoming securityreview will also assess the new10head-CAScounterexamples against memo candidate; no separate audit or designapproval chain. No cross-requestmemo. Alloriginalbudgets andfresh-requestauthority retained.
