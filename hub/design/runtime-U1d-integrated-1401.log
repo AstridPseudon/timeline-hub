@@ -1,0 +1,323 @@
+.ssssssss.s............................................................. [ 15%]
+.................x............x......................................... [ 31%]
+........................................................................ [ 47%]
+........................................................................ [ 62%]
+........................................................................ [ 78%]
+........................................................................ [ 94%]
+...........................                                              [100%]
+declared skips (9):
+  SKIP tests/test_platform_windows.py::test_windows_detached_child_inherits_job_handle: [declared:windows-process-and-lock-apis] native Windows process and lock APIs
+  SKIP tests/test_platform_windows.py::test_windows_detached_owner_clears_job_handle_inheritance: [declared:windows-process-and-lock-apis] native Windows process and lock APIs
+  SKIP tests/test_platform_windows.py::test_windows_directory_mutex_lock_contends_and_releases: [declared:windows-process-and-lock-apis] native Windows process and lock APIs
+  SKIP tests/test_platform_windows.py::test_windows_directory_mutex_recovers_after_owner_process_exits: [declared:windows-process-and-lock-apis] native Windows process and lock APIs
+  SKIP tests/test_platform_windows.py::test_windows_lockfileex_exclusive_and_unlock: [declared:windows-process-and-lock-apis] native Windows process and lock APIs
+  SKIP tests/test_platform_windows.py::test_windows_overlapped_has_native_pointer_size_layout: [declared:windows-process-and-lock-apis] native Windows process and lock APIs
+  SKIP tests/test_platform_windows.py::test_windows_process_identity_proves_exited_retained_child_absent: [declared:windows-process-and-lock-apis] native Windows process and lock APIs
+  SKIP tests/test_platform_windows.py::test_windows_process_identity_uses_creation_time_and_bounded_sid: [declared:windows-process-and-lock-apis] native Windows process and lock APIs
+  SKIP tests/test_platform_windows.py::test_windows_spawn_assigns_job_before_resuming_child: [declared:windows-process-and-lock-apis] native Windows process and lock APIs
+declared xfails (2):
+  XFAIL tests/test_runtime_domains.py::test_generated_direct_timeline_shot_reference_writers_remain_retired: [declared-xfail:runtime-domains-update] direct timeline update writer remains retired
+  XFAIL tests/test_runtime_domains.py::test_generated_python_client_timeline_publication_is_retired_pending_commit_replacement: [declared-xfail:runtime-domains-publication] RT02/D04 held: legacy timeline publication (update_timeline) is retired (410); restored by the /v1 commit replacement
+UNDECLARED SKIP tests/test_runtime_domains.py::test_generated_direct_timeline_shot_reference_writers_remain_retired: self = <astrid_runtime_client.generated.WorkspaceClient object at 0x7fe15f23fe70>
+method = 'PATCH', path = '/v1/timelines/timeline'
+body = b'{"expected_version": 1, "shots": [{"shot_id": "shot", "start_ms": 0, "duration_ms": 100}]}'
+headers = {'Content-Type': 'application/json', 'Idempotency-Key': 'timeline-update'}
+expected = (200, 201), response_reader = None
+
+    def _request(self, method: str, path: str, *, body: bytes | None = None, headers: Mapping[str, str] | None = None, expected: tuple[int, ...] = (200,), response_reader: Callable[[Any], bytes] | None = None) -> tuple[int, Mapping[str, str], bytes]:
+        request_headers = {"Accept": "application/json", **dict(headers or {})}
+        request_id = request_headers.setdefault("X-Request-ID", f"request-{uuid.uuid4().hex}")
+        if self.token:
+            request_headers.setdefault("Authorization", f"Bearer {self.token}")
+        reading_response = False
+        try:
+            if self._transport:
+                status, response_headers, response_body = self._transport(method, path, request_headers, body)
+                if response_reader is not None:
+                    reading_response = True
+                    with io.BytesIO(response_body) as response:
+                        response_body = response_reader(response)
+                    reading_response = False
+            else:
+                request = urllib.request.Request(self.base_url + path, data=body, headers=request_headers, method=method)
+>               with _urlopen_loopback(request, timeout=self.timeout) as response:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/python/astrid_runtime_client/generated.py:664: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+packages/python/astrid_runtime_client/generated.py:40: in _urlopen_loopback
+    return opener.open(request, timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/urllib/request.py:495: in open
+    response = meth(req, response)
+               ^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/urllib/request.py:604: in http_response
+    response = self.parent.error(
+/usr/lib/python3.13/urllib/request.py:533: in error
+    return self._call_chain(*args)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/urllib/request.py:466: in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <urllib.request.HTTPDefaultErrorHandler object at 0x7fe15f5489b0>
+req = <urllib.request.Request object at 0x7fe15f1a2990>
+fp = <http.client.HTTPResponse object at 0x7fe15fb0b190>, code = 410
+msg = 'Gone', hdrs = <http.client.HTTPMessage object at 0x7fe15f5705f0>
+
+    def http_error_default(self, req, fp, code, msg, hdrs):
+>       raise HTTPError(req.full_url, code, msg, hdrs, fp)
+E       urllib.error.HTTPError: HTTP Error 410: Gone
+
+/usr/lib/python3.13/urllib/request.py:613: HTTPError
+
+The above exception was the direct cause of the following exception:
+
+client = <astrid_runtime_client.generated.WorkspaceClient object at 0x7fe15f23fe70>
+payload = {'expected_version': 1, 'shots': [{'shot_id': 'shot', 'start_ms': 0, 'duration_ms': 100}]}
+
+    def _retired_timeline_update(client, payload):
+        try:
+>           return legacy_call(client, "PATCH", "/v1/timelines/timeline", payload, key="timeline-update")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_runtime_domains.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/http_helpers.py:11: in legacy_call
+    return client._json(client._request(method, path, body=json.dumps(payload).encode(), headers=headers, expected=(200, 201))[2])
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <astrid_runtime_client.generated.WorkspaceClient object at 0x7fe15f23fe70>
+method = 'PATCH', path = '/v1/timelines/timeline'
+body = b'{"expected_version": 1, "shots": [{"shot_id": "shot", "start_ms": 0, "duration_ms": 100}]}'
+headers = {'Content-Type': 'application/json', 'Idempotency-Key': 'timeline-update'}
+expected = (200, 201), response_reader = None
+
+    def _request(self, method: str, path: str, *, body: bytes | None = None, headers: Mapping[str, str] | None = None, expected: tuple[int, ...] = (200,), response_reader: Callable[[Any], bytes] | None = None) -> tuple[int, Mapping[str, str], bytes]:
+        request_headers = {"Accept": "application/json", **dict(headers or {})}
+        request_id = request_headers.setdefault("X-Request-ID", f"request-{uuid.uuid4().hex}")
+        if self.token:
+            request_headers.setdefault("Authorization", f"Bearer {self.token}")
+        reading_response = False
+        try:
+            if self._transport:
+                status, response_headers, response_body = self._transport(method, path, request_headers, body)
+                if response_reader is not None:
+                    reading_response = True
+                    with io.BytesIO(response_body) as response:
+                        response_body = response_reader(response)
+                    reading_response = False
+            else:
+                request = urllib.request.Request(self.base_url + path, data=body, headers=request_headers, method=method)
+                with _urlopen_loopback(request, timeout=self.timeout) as response:
+                    status, response_headers = response.status, dict(response.headers)
+                    reading_response = response_reader is not None
+                    response_body = response.read() if response_reader is None else response_reader(response)
+                    reading_response = False
+        except urllib.error.HTTPError as error:
+            if reading_response:
+                raise
+            if response_reader is None:
+>               raise _decode_error(error.code, error.read(), request_id=request_id) from error
+E               astrid_runtime_client.generated.ApiError: retired_route: legacy timeline writes are retired; submit EditCommands through commitTimeline
+
+packages/python/astrid_runtime_client/generated.py:673: ApiError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = PosixPath('/tmp/w-e544618a1f/pytest-of-root/pytest-0/test_generated_direct_timeline0')
+
+    @pytest.mark.xfail(strict=True, raises=_RetiredTimelineUpdate,
+                      reason="[declared-xfail:runtime-domains-update] direct timeline update writer remains retired")
+    def test_generated_direct_timeline_shot_reference_writers_remain_retired(tmp_path):
+        """Keep the former direct-writer expectations until their command paths land."""
+        RealmStore.initialize(tmp_path / "realm").close()
+        daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+        try:
+            client = WorkspaceClient(daemon.endpoint, daemon.token)
+            project = client.create_project("Settings", idempotency_key="project", slug="settings", metadata={"theme": "dark"})
+            object_row = client.ingest_project_object(project.project_id, b"managed", media_type="application/octet-stream", idempotency_key="media", filename="managed.bin")
+            client.create_timeline(project.project_id, "timeline", idempotency_key="timeline")
+>           saved = _retired_timeline_update(
+                client, {"expected_version": 1, "shots": [{"shot_id": "shot", "start_ms": 0, "duration_ms": 100}]}
+            )
+
+tests/test_runtime_domains.py:573: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+client = <astrid_runtime_client.generated.WorkspaceClient object at 0x7fe15f23fe70>
+payload = {'expected_version': 1, 'shots': [{'shot_id': 'shot', 'start_ms': 0, 'duration_ms': 100}]}
+
+    def _retired_timeline_update(client, payload):
+        try:
+            return legacy_call(client, "PATCH", "/v1/timelines/timeline", payload, key="timeline-update")
+        except ApiError as error:
+            if (
+                error.status == 410
+                and error.code == "retired_route"
+                and error.message == "legacy timeline writes are retired; submit EditCommands through commitTimeline"
+                and error.details.get("reason") == "timeline_commit_required"
+            ):
+>               raise _RetiredTimelineUpdate(
+                    error.status, error.code, error.message, error.request_id, error.details
+                ) from error
+E               tests.test_runtime_domains._RetiredTimelineUpdate: retired_route: legacy timeline writes are retired; submit EditCommands through commitTimeline
+
+tests/test_runtime_domains.py:39: _RetiredTimelineUpdate
+UNDECLARED SKIP tests/test_runtime_domains.py::test_generated_python_client_timeline_publication_is_retired_pending_commit_replacement: self = <astrid_runtime_client.generated.WorkspaceClient object at 0x7fe15f501400>
+method = 'PATCH', path = '/v1/timelines/timeline-1'
+body = b'{"expected_version": 1, "shots": [{"shot_id": "shot-1", "start_ms": 0, "duration_ms": 1000, "reference_ids": []}]}'
+headers = {'Content-Type': 'application/json', 'Idempotency-Key': 'timeline-1-update'}
+expected = (200, 201), response_reader = None
+
+    def _request(self, method: str, path: str, *, body: bytes | None = None, headers: Mapping[str, str] | None = None, expected: tuple[int, ...] = (200,), response_reader: Callable[[Any], bytes] | None = None) -> tuple[int, Mapping[str, str], bytes]:
+        request_headers = {"Accept": "application/json", **dict(headers or {})}
+        request_id = request_headers.setdefault("X-Request-ID", f"request-{uuid.uuid4().hex}")
+        if self.token:
+            request_headers.setdefault("Authorization", f"Bearer {self.token}")
+        reading_response = False
+        try:
+            if self._transport:
+                status, response_headers, response_body = self._transport(method, path, request_headers, body)
+                if response_reader is not None:
+                    reading_response = True
+                    with io.BytesIO(response_body) as response:
+                        response_body = response_reader(response)
+                    reading_response = False
+            else:
+                request = urllib.request.Request(self.base_url + path, data=body, headers=request_headers, method=method)
+>               with _urlopen_loopback(request, timeout=self.timeout) as response:
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/python/astrid_runtime_client/generated.py:664: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+packages/python/astrid_runtime_client/generated.py:40: in _urlopen_loopback
+    return opener.open(request, timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/urllib/request.py:495: in open
+    response = meth(req, response)
+               ^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/urllib/request.py:604: in http_response
+    response = self.parent.error(
+/usr/lib/python3.13/urllib/request.py:533: in error
+    return self._call_chain(*args)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/urllib/request.py:466: in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <urllib.request.HTTPDefaultErrorHandler object at 0x7fe15f537250>
+req = <urllib.request.Request object at 0x7fe15f438f50>
+fp = <http.client.HTTPResponse object at 0x7fe15fb29ed0>, code = 410
+msg = 'Gone', hdrs = <http.client.HTTPMessage object at 0x7fe15f571d10>
+
+    def http_error_default(self, req, fp, code, msg, hdrs):
+>       raise HTTPError(req.full_url, code, msg, hdrs, fp)
+E       urllib.error.HTTPError: HTTP Error 410: Gone
+
+/usr/lib/python3.13/urllib/request.py:613: HTTPError
+
+The above exception was the direct cause of the following exception:
+
+client = <astrid_runtime_client.generated.WorkspaceClient object at 0x7fe15f501400>
+timeline_id = 'timeline-1'
+payload = {'expected_version': 1, 'shots': [{'shot_id': 'shot-1', 'start_ms': 0, 'duration_ms': 1000, 'reference_ids': []}]}
+
+    def _retired_timeline_publication(client, timeline_id, payload):
+        try:
+>           return legacy_call(client, "PATCH", f"/v1/timelines/{timeline_id}", payload, key=f"{timeline_id}-update")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_runtime_domains.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/http_helpers.py:11: in legacy_call
+    return client._json(client._request(method, path, body=json.dumps(payload).encode(), headers=headers, expected=(200, 201))[2])
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <astrid_runtime_client.generated.WorkspaceClient object at 0x7fe15f501400>
+method = 'PATCH', path = '/v1/timelines/timeline-1'
+body = b'{"expected_version": 1, "shots": [{"shot_id": "shot-1", "start_ms": 0, "duration_ms": 1000, "reference_ids": []}]}'
+headers = {'Content-Type': 'application/json', 'Idempotency-Key': 'timeline-1-update'}
+expected = (200, 201), response_reader = None
+
+    def _request(self, method: str, path: str, *, body: bytes | None = None, headers: Mapping[str, str] | None = None, expected: tuple[int, ...] = (200,), response_reader: Callable[[Any], bytes] | None = None) -> tuple[int, Mapping[str, str], bytes]:
+        request_headers = {"Accept": "application/json", **dict(headers or {})}
+        request_id = request_headers.setdefault("X-Request-ID", f"request-{uuid.uuid4().hex}")
+        if self.token:
+            request_headers.setdefault("Authorization", f"Bearer {self.token}")
+        reading_response = False
+        try:
+            if self._transport:
+                status, response_headers, response_body = self._transport(method, path, request_headers, body)
+                if response_reader is not None:
+                    reading_response = True
+                    with io.BytesIO(response_body) as response:
+                        response_body = response_reader(response)
+                    reading_response = False
+            else:
+                request = urllib.request.Request(self.base_url + path, data=body, headers=request_headers, method=method)
+                with _urlopen_loopback(request, timeout=self.timeout) as response:
+                    status, response_headers = response.status, dict(response.headers)
+                    reading_response = response_reader is not None
+                    response_body = response.read() if response_reader is None else response_reader(response)
+                    reading_response = False
+        except urllib.error.HTTPError as error:
+            if reading_response:
+                raise
+            if response_reader is None:
+>               raise _decode_error(error.code, error.read(), request_id=request_id) from error
+E               astrid_runtime_client.generated.ApiError: retired_route: legacy timeline writes are retired; submit EditCommands through commitTimeline
+
+packages/python/astrid_runtime_client/generated.py:673: ApiError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = PosixPath('/tmp/w-e544618a1f/pytest-of-root/pytest-0/test_generated_python_client_t0')
+
+    @pytest.mark.xfail(
+        strict=True,
+        raises=_RetiredTimelinePublication,
+        reason="[declared-xfail:runtime-domains-publication] RT02/D04 held: legacy timeline publication (update_timeline) is retired (410); restored by the /v1 commit replacement",
+    )
+    def test_generated_python_client_timeline_publication_is_retired_pending_commit_replacement(tmp_path):
+        RealmStore.initialize(tmp_path / "realm").close()
+        daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support").start()
+        try:
+            client = WorkspaceClient(daemon.endpoint, daemon.token)
+            project = client.create_project("Domain Project", idempotency_key="domain-project")
+            timeline = client.create_timeline(project.project_id, "timeline-1", idempotency_key="timeline-1")
+            assert timeline["version"] == 1
+>           saved = _retired_timeline_publication(
+                client,
+                "timeline-1",
+                {"expected_version": 1, "shots": [{"shot_id": "shot-1", "start_ms": 0, "duration_ms": 1000, "reference_ids": []}]},
+            )
+
+tests/test_runtime_domains.py:280: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+client = <astrid_runtime_client.generated.WorkspaceClient object at 0x7fe15f501400>
+timeline_id = 'timeline-1'
+payload = {'expected_version': 1, 'shots': [{'shot_id': 'shot-1', 'start_ms': 0, 'duration_ms': 1000, 'reference_ids': []}]}
+
+    def _retired_timeline_publication(client, timeline_id, payload):
+        try:
+            return legacy_call(client, "PATCH", f"/v1/timelines/{timeline_id}", payload, key=f"{timeline_id}-update")
+        except ApiError as error:
+            if (
+                error.status == 410
+                and error.code == "retired_route"
+                and error.message == "legacy timeline writes are retired; submit EditCommands through commitTimeline"
+                and error.details.get("reason") == "timeline_commit_required"
+            ):
+>               raise _RetiredTimelinePublication(
+                    error.status, error.code, error.message, error.request_id, error.details
+                ) from error
+E               tests.test_runtime_domains._RetiredTimelinePublication: retired_route: legacy timeline writes are retired; submit EditCommands through commitTimeline
+
+tests/test_runtime_domains.py:55: _RetiredTimelinePublication
+448 passed, 9 skipped, 2 xfailed in 201.92s (0:03:21)

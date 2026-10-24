@@ -2031,3 +2031,9 @@ Runtime true upstream join is HOME e68cf231641db98a72805a586b51ab5c4fae2c16, tre
 Wire/OpenAPI, 38 contract schemas, runtime schema and canonical15 client bytes are unchanged versus becfe; no D39 regeneration triggered. Manifest adds the genuine upstream visual fixture conformance/fixtures/visual-seam-cases-v1.json. Existing App F-visual-seam can read it through normal published Runtime integration. Worker rt-U1d-handoff-1401 now returns exact fixture/hash/manifest inventory and consumer source-commit limits; no new source author or acquisition. Integrated qualification rt-U1d-integrated-1401 is dispatched on actual e68; source review and author440 are scoped evidence, not final gates/full PASS. Two existing strict retired-route xfails retain raw policy exit1 and were not weakened.
 
 D59 cut remains pending Agent core and current App P2/P3. App d24ed refreshed source and 36 repaired regressions are consumed; App core9 and Agent core5 remain owner counts. No Farm/schema/child/admission or denied-source route is released.
+
+## 14:12Z ORCH: decision on agent-20261024T1400Z-ABI-mode-authority (D61)
+The authority is Runtime-derived `recorder_abi`, returned in the authenticated history entry (Runtime row R-recorder-abi-authority).
+- `_check_reservations` rejects ABI1-shaped bindings whose authenticated commit says abi 2. Legacy means no field (pre-change) or abi 1.
+- Sol 1354 continues on the consumer side, in parallel, against Runtime's published field and slot.
+- Both originals must pass, and the FULL REWRITE variant must be refused. No caller flag and no public-field inference.

@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T14:06:39Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 2m -->
-# runtime board, 2026-10-24T14:00:37Z
+<!-- main | 2026-10-24T14:09:45Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 2m -->
+# runtime board, 2026-10-24T14:07:04Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -77,7 +77,7 @@
 | F-D52-shot-set | Preserve 17 live shot-set cases | Luna | Actual Agent home proof PASS | merged | Author1139; review1143; home1156 | Actualaff339 passed61 in4.04s; durable XML and original14 test ASTs exact. All17 assigned cases included. | 3b8dc8a345 / aff3391061 |
 | F-D52-occurrence-delete | Qualify 19 live delete cases | Luna | Exact integrated source proof | merged | Author1139; independent1141 PASS | Exact Agent7e258 and Runtimebecfe:19PASS6.43s; bodies and params unchanged. [Review](../../design/runtime-D52-occurrence-review-1141.md) | Agent7e258 unchanged |
 | F-D52-core-five | Map five named actual home outcomes | Luna | Agent XML and map publication | blocked:agent | Home comparison 1353 | Five identities match; current four fork failures differ. Actual XML and map absent. [Report](../../design/rt-F-D52-core-five-home-1353.md) | Agent 47b |
-| U1d-final | Join final owner upstream | Luna | Actual integrated qualification | doing | Integrated 1401; reviews 1346/1351 | HOME e68 includes true d4 merge. Core review passed 282 plus 50; protected 95 passed. Wire unchanged; no D39 regeneration. | e68cf2316 |
+| U1d-final | Join final owner upstream | Luna | Integrated qualification complete | merged | Integrated 1401; reviews 1346/1351 | Actual e68:448 passed,9 declared skips,2 existing xfails; raw exit1 retained. [Proof](../../design/rt-U1d-integrated-1401.md) | e68cf2316 |
 | U1d-visual-source | Preserve upstream visual source | Luna | Source review passed | merged | Author 1331; review 1333 | Reviewed source is in actual e68. Integrated visual qualification running with the targeted union. | 9db3 / e68 |
 | U1d-visual-tests | Keep both live FPS families | Luna | Independent protected proof passed | merged | Restore 1338; review 1351 | Both restored tests and all incoming cases retained. Exact candidate 60e passed 95 with raw exit 0. | 60e / e68 |
 | U1d-visual-review | Review source and protected union | Luna | Final joined source | merged | Review 1333; final 1351 | Initial omitted tests failure resolved. Final 95 passed; pre-merge local and incoming predicates mapped. | Read only |
@@ -116,7 +116,7 @@
 
 Runtime full: Zero of the 36 original failures remain open at their retained integrated scopes. This is historical scoped accounting, not a new full-suite PASS. Runtime producer becfe6db88b2cc034dba3fafa6c050117cdf2b06 is merged and independently qualified after 409 targeted passes. Loss of its temporary JUnit remains disclosed. [Producer review](../../design/runtime-freeze-result-review-0727.md).
 
-FREEZE under D59: D60 final Runtime upstream d4f496 merged as home e68; integrated qualification active; original D39 bytes unchanged; Agent/App U/D39 home. Candidate P2/P3 cycles use current integration while unrelated Agent repairs continue. Cut requires every active lane0core/0regressions plus P2/P3 PASS on those heads. Runtime retains0/0. Agent board1347 reports5core open after actualhome47b:152requiredPASS,4forkFAIL,1managedD13unknown. Exact rollup1338 active. Scope159core/117noncore; categories env78/deferred1/unproven197, with0proven regressions. App reports 9 gate cases unqualified; actual refreshed-tree proof closes 36 Node regressions, with 2 SSH environment failures retained. No cut or final gate PASS. D51 delivery-time live-main refresh per repo remains.
+FREEZE under D59: D60 final Runtime upstream d4f496 merged as home e68; integrated qualification passed 448 cases; original D39 bytes unchanged; Agent/App U/D39 home. Candidate P2/P3 cycles use current integration while unrelated Agent repairs continue. Cut requires every active lane0core/0regressions plus P2/P3 PASS on those heads. Runtime retains0/0. Agent board1347 reports5core open after actualhome47b:152requiredPASS,4forkFAIL,1managedD13unknown. Exact rollup1338 active. Scope159core/117noncore; categories env78/deferred1/unproven197, with0proven regressions. App reports 9 gate cases unqualified; actual refreshed-tree proof closes 36 Node regressions, with 2 SSH environment failures retained. No cut or final gate PASS. D51 delivery-time live-main refresh per repo remains.
 
 Venues: P1/P2/P3 on App service with App verdicts; P4 on Agent service; P5 and Composition on main. Product change in X reruns P1–P5 plus X core suite; harness/test change reruns the affected gate. Main P5 and Composition bench preflights1244 are active on existing qualified inputs. Farm/schema access stay stopped, with no new child or alternate denied-source route. Viewing stands down. All8 original P2 gestures remain core. Runtime owns final build and ZIP after cut and required proofs.
 
@@ -137,20 +137,20 @@ Historical pinned proof (D56 retires further pinned runs): P1 remains historical
 Provider completion: Runtime 0915 and independent 0923 retain original cause, hook firing, durable acceptance and request correlation UNKNOWN. Nine controls passed; temporary JUnit loss remains disclosed. Original 20732/11466 remain failed and all 59 predicates unchanged. Viewing capture source 30cf passed independent 19; Agent owns home and runner wiring. No new Runtime source or original body is requested. [Source review](../../design/runtime-provider-completion-review-0923.md).
 
 KIT CHANGE: delivery-build f25dfab1 installed and qualified. Final service3309e33 independent1310 SOURCE PASS; actual lock,15 mappings and candidate guards qualified. Install waits D59 tuple.
-Blockers: Runtime — D60 home e68 is merged; actual integrated targeted qualification 1400 and exact producer handback 1401 are active. No D39 regeneration required. Agent and App own normal source/manifest lock rebind, requested 14:04Z.
+Blockers: Agent and App — actual Runtime e68 is integrated and qualified; normal consumer source/manifest lock rebind is ready and owner requested. No D39 regeneration required.
 Blockers: Final delivery — D59 cut requires every active lane0core/0regressions plus current P2/P3 PASS, then required final proofs and D51 live-main refresh.
 Blockers: App — existing Agent service-input handback1305 is complete. Actual App-host current caller/bench qualification remains App-owned; installed-child identity stays UNKNOWN, no new provision inferred.
 Blockers: Agent — core open 5 remains owner scope. Runtime five-outcome mapping needs existing actual-home1330 XML and map published; peer sent this pass.
-Next ready: Consume e68 integrated qualification and exact producer handback, then return current fixture inventory to App. Agent supplies existing named five-case XML; no duplicate body.
+Next ready: Consume Agent/App normal producer lock rebind receipts. At D59 cut install final service tuple and run current P5 plus Composition on main. Agent publishes existing five-case XML; no body repeat.
 
 Later: D47 memo and proof-pin work stay post-delivery; nine state attacks open. D34 broader cleanup held above8.5GB or until delivery. Prior denied cleanup, process, retirement and publication targets remain stopped. V4 cut; D14/D23 deferred unchanged. D52 removals require caller proof; live tests stay strict.
 
 Disk: About8.5GB free, above main8GB heavy floor. Five old v1 trees refused recycle as dirty; no forced removal. Sweep3 removed0. Compaction packed0 and compressed0 logs; no refused target retried.
 
-Pass 2026-10-24T14:00:37Z: D60 actual home e68 consumed. Core review1346 and protected1351 PASS. Dispatched Luna integrated1400 and producer handback1400. App d24ed home and regression0 consumed. Five outcome mapping blocked only on authentic Agent XML/map; peer sent. No cut or final gate PASS.
+Pass 2026-10-24T14:07:04Z: U1d final merged and actual e68 qualified448. Wire/client bytes unchanged; source/manifest consumer rebind remains owner-ready. App visual fixture matches final home; peer sent with exact source hashes. Agent core5 and App gate9 remain open. No cut or final GO.
 
-live 2 / cap 4; ready-undispatched 0. Dispatcher header 14:03:37Z: live 2 (Sol 0, Luna 2). Producer handback has since finished; integrated worker remains active.
+live 0 / cap 4; ready-undispatched 0. Dispatcher header 14:06:39Z: live 0 (Sol 0, Luna 0). Both Runtime workers finished.
 
-Sol exception: No Sol worker dispatched this pass.
+Sol exception: No Sol workers this pass.
 
-Disk cleanup 14:03Z: zero eligible finished clean Runtime worktrees; sweep removed 0, compaction packed 0 and compressed 0 logs. About 8.7 GB free; cap 4. Refused historical targets untouched.
+Disk cleanup14:03Z: zero eligible finished clean trees; sweep0, compaction0, compressed0. About8.7GB free; refused historical targets untouched.

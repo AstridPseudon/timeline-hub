@@ -1,0 +1,12 @@
+$ /home/user/work/venv-runtime/bin/python generators/generate.py --check
+STATUS generator=0
+$ /home/user/work/venv-runtime/bin/python scripts/artifact_manifest.py --check
+contract/artifacts.json is current
+STATUS manifest=0
+$ PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python -m py_compile runtime_protocol/daemon.py runtime_protocol/visual_seam.py tests/test_platform_windows.py tests/test_realm_creation_publication.py tests/test_realm_replacement_publication.py tests/test_runtime_upgrade.py tests/test_db_final_r1_rework.py tests/test_runtime_domains.py tests/test_visual_seam_admission.py tests/test_visual_seam_shared_cases.py tests/test_timeline_commit_authentication.py tests/test_timeline_commit_sequential_verifier.py tests/test_timeline_legacy_authority.py
+STATUS compile=0
+$ /home/user/work/venv-agent/bin/ruff check runtime_protocol/visual_seam.py tests/test_visual_seam_admission.py tests/test_visual_seam_shared_cases.py
+All checks passed!
+STATUS ruff=0
+$ git diff --check
+STATUS diff-check=0
