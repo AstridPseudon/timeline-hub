@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T06:02:20Z | dispatcher heartbeat 96s | live 0 (sol 0, luna 0, other 0) | busy30 23 | status age 5m -->
-# agent board, 2026-10-24T05:57:26Z
+<!-- agent | 2026-10-24T06:04:54Z | dispatcher heartbeat 251s | live 0 (sol 0, luna 0, other 0) | busy30 22 | status age 2m -->
+# agent board, 2026-10-24T06:02:30Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -27,7 +27,7 @@
 | F-render-startup | Avoid unused transition-catalog scans | Luna | Source cause 0045 | merged | agt-F-transition-fixture-integrated-0126 | Actual 940b: 116 controls passed. Exact reviewed source retained both catalog authority guards. | 2b2c1a02f |
 | F-external-roots | Consume authenticated external source bytes | Sol / Luna | Original installed positive | merged | Security0330; integrated32254 | Home4745 integrated32 passed in137s. Source custody is qualified; original installed external-pack positive still needs a genuine candidate environment. | 4745f956a3 |
 | F-env-86 | Qualify retained environment cohort | Luna | Exact external positive reviewed | merged | Services11789,19627; D400551/0552 | Prior69 installed and16 supported source invocations plus final1 installed positive pass. Mixed environment scope retained; no full-suite claim. | Relevant2007 source |
-| F-render-21 | Preserve discovery authority with less work | Sol / Luna | Independent source review | review | Author0640; review0556 | Narrow per-call scan reuse passed36 and3subtests; custom and different roots preserved. Extra checks lack Composition; original45s remains open. | 151325ee53 |
+| F-render-21 | Preserve discovery authority with less work | Sol / Luna | Integrated source proof and genuine candidate child | doing | Review0556 PASS; integrated0603; bind0603 | Reviewed narrow scan reuse mergedbb50. Candidate child queued for one faithful original45s qualification; no original rerun yet. | bb50a43c91; source151325 |
 | F-env-misc | D13, installers and bootstrap | Luna | Exact installed inputs | merged | agt-F-D13-wheel-input-0039 | Three original environment cases plus D13 passed. Exact c36 wheel matched installed payloads; wheel itself was temporary. | harness only |
 | F-CLI-remainder | Preserve five original CLI scenarios | Runtime Luna | Independent result review | review | Runtime0540; review0544 first return | Five originals passed. Review0544 questions detached staging; first return requests full save-path distinction before any product author. | Current2007 |
 | F-CLI | CLI census, generation and motion fixture | Luna | G5 | merged | agt-F-CLI-integrated-0012 | Eight integrated cases and 32 subtests passed; reviewed generation and fixture changes only. | 43bbb / ff5dd |
@@ -71,10 +71,16 @@
 | F-SDK-proof-remainder | Map retained SDK originals to existing proof | Luna | Published qualified receipts | doing | agt-F-SDK-proof-map-0554 | Read-only exact-node mapping; excludes Runtime H32, Viewing ABA and all new body runs. No census credit yet. | Source2007 |
 
 | F-count D40 delta | Credit one exact installed original | Sol | Independent0552 PASS | doing | agt-F-count-D40-delta-sol-0558 | Add only one exact original to reviewed201/66 package; expected202/65 awaits independent review. | Evidence40f base |
-| F-harness integrated | Verify reviewed harness merges | Luna | Home930332e3f9 | doing | agt-F-harness-integrated-0558 | Offline IMAGE boundary and six synthetic observer checks only; no body or realm rerun. | Home930332e3f9 |
+| F-harness integrated | Verify reviewed harness merges | Luna | Integrated proof passed | merged | agt-F-harness-integrated-0558 PASS | Actual930332 exact reviewed blobs; IMAGE unit1 and six observer synthetics, types/lint passed. No original body repeated. | Home930332e3f9 |
+
+| F-CLI save path | Distinguish staging from film publication | Luna | Runtime0548 source handback | doing | agt-F-CLI-save-path-review-0600 | Read-only complete save-path check; retains five actual unit passes without C0 claim. | Currentbb50 |
+| F-generic reopen | Qualify retained harvest and reopen proof | Luna | Existing finite receipts | doing | agt-F-generic-reopen-evidence-0600 | Read-only exact original mapping; no duplicate D40 body or inferred second original credit. | Currentbb50 |
+| F-schema originals | Verify two exact operation inventories | Luna | Existing schema0037 receipts | doing | agt-F-schema-original-evidence-0600 | Independent exact two-node mapping; schema/client/provider guards remain unchanged. | Currentbb50 |
+| F-SDK proof review | Review nine mapped original candidates | Luna | SDK map0554 complete | review | agt-F-SDK-map-review-0603 | Eleven candidates found; schema owns two. Nine remaining candidates get independent exact source/receipt review. | Currentbb50 |
+| F-discovery child | Prepare faithful changed-source support run | Luna | Normal managed child receipt | doing | agt-F-discovery-child-bind-0603 | Candidatebb50/f320 requested normally. Harness only; no body until independent review and integrated source proof. | Sourcebb50 |
 
 P1: GO recorded. Original18792 passed both cases; independent0036/0040 passed. P4 and P5 done. G5 merged under H24. App and Proof own P2/P3 failures and next actions.
-Integration: 930332e3f9 joins reviewed IMAGE witness constants and D40 observer/identity harness above2007cf7aaf. Product source unchanged. Headless and ABA forwarding stack and sheet assertions remain integrated with0500 PASS71+5+53. No pending Viewing source merge.
+Integration: bb50a43c91 adds independently reviewed discovery151325 above930332 IMAGE and D40 harnesses. Timeline product sources remain equal2007. Integrated discovery0603 queued. Headless and ABA forwarding stack and sheet assertions remain integrated with0500 PASS71+5+53. No pending Viewing source merge.
 Blockers: Agent — ABA11466 undo ambiguity and support timeout remain open. IMAGE full result0636 PASS published. D40 original0551 and independent custody0552 PASS; exact count delta remains separate. No full retry.
 Blockers: Viewing — ABA item identity storage/inverse seams released0557; independent cause0550 PASS, product still failing. Track-label mapping0547 PASS awaits exact proof credit.
 App: Fresh IMAGE0554 completed acceptance, inverse, refusals and reopen. Independent0636 PASS closes this behavior; App producer0520 completed once. No fresh realm requested.
@@ -85,6 +91,8 @@ D32: All267 remain tagged ours. Exact upstream comparison rejected25 proposed cr
 D46: U2c is closed, folded into the freeze U-merge. No live U2c worker; a181136220 and diagnostic WIP remain unmerged. Linux relay and RunPod custody are owner-deferred; guards remain fail-closed.
 Later: D31/D37 dormant capture implementations and tests remain unchanged. D14/D23 relational timing and V4 stay cut or deferred and visibly failing. D47 memo is post-delivery, held unmerged. D39 tuple adoption waits freeze.
 Safety: Earlier Farm, monitor, publication, bench and cleanup refusals remain stopped. No denied action retried.
-Disk: About9.9 GB available. All current work is light; Farm owns full checkpoint. No eligible finished non-KEEP tree beyond the previously refused dirtyG2; untouched. No new disk audit aboveD34 floor.
-Next ready: Consume count package0551 and D40 original0551. IMAGE0636 PASS published. Discovery source151325 is in independent0556 review. Runtime owns three ready H32 remainder assignments; no duplicate source or full run.
+Disk: About10GB available. Throttle lifted at05:56; six or more light workers queued/live. Farm owns full checkpoint. Prior cleanup refusals untouched; no cancelled prune or new audit aboveD34 floor.
+Next ready: Review D40 countdelta0558; consume SDK/source mapping and integrated discovery0603. Prepare one candidate-child support original after normal receipt. Three H32 groups remain assigned Runtime.
 Evidence: [previous board details](archive-v2/STATUS-20261024T0055Z.md), [source-copy final](../../design/agt-F-source-copy-capture-sol-0502.md), [source-copy independent result](../../design/agt-F-source-copy-result-review-0511.md), [ABA whole path](../../design/agt-F-ABA-11466-path-0507.md), [D40 cumulative review](../../design/agt-F-D40-types-review-0511.md).
+
+Capacity: Six or more independent light workers queued after lead05:56 direction. H32 three Runtime assignments were published at05:53; awaiting Runtime intake, not permission. No local queue refusal.
