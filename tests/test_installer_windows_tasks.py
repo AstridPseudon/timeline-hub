@@ -30,7 +30,10 @@ def test_task_cleanup_preserves_powershell_success_and_failure(tmp_path, operati
         prelude = (
             "function Get-ScheduledTask { [CmdletBinding()] param([string]$TaskName); "
             # Reproduce the cmdlet's named lookup error on a fresh installation.
-            + ("if ($TaskName) { Write-Error 'No matching task'; return }; " if scenario == "absent" else "")
+            + ("if ($TaskName) { $PSCmdlet.WriteError([System.Management.Automation.ErrorRecord]::new("
+               "[Exception]::new('No matching task'), 'NoMatchingTask', "
+               "[System.Management.Automation.ErrorCategory]::ObjectNotFound, $TaskName)); return }; "
+               if scenario == "absent" else "")
             + body + " }; "
             "function Disable-ScheduledTask { process { " + action + " } }; "
             "function Stop-ScheduledTask { process { " + action + " } }; "
