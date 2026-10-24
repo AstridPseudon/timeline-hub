@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T00:58:19Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 1m -->
-# app2 board, 2026-10-24T00:49Z
+<!-- app2 | 2026-10-24T01:00:10Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 0m -->
+# app2 board, 2026-10-24T00:59Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | P1 | Original mounted mixed chain | App Sol/Luna; Proof Luna | Complete on pinned tuple | merged | App run 18792; Proof reviews 0036 and 0040 | P1 RESULT GO. Exit 0, 141s; 2 passed in 56.3s. Source review and result custody passed. Freeze reruns all gates. | App f8b15af0a6; Agent 78738040; Runtime 2a9e347f |
@@ -7,8 +7,8 @@
 | P1-corpus | Real-document roundtrip and merge | Luna | Complete | merged | Corpus 1348 | 49 passed; 15 fixtures and 11 inputs. Direct provider scope; mounted chain has separate GO. | e6 / 9729 |
 | P1-seed | Full native atomic bootstrap | Sol; Luna review | Complete | merged | Common 0618; seed 2d7; Runtime a00e | All 21 native assertions and history passed in run 18792. Runtime 2a9 integrated proof: 67 passed. | App 12ef; Runtime 2a9 |
 | P1-diagnostics | Safe files and source guard codes | Sol/Luna | Source reviewed and merged | merged | Reviews 1945 and 2118; App WorkerInfo 2238 | Real emitter, serialized listener and failure file passed; cap 32 retains critical events. Failure-only files were not created on successful 18792. | b221 / 6ecc / def457 / f890 |
-| readiness-after-bootstrap | Shared P2/P3 baseline blocker | App Sol; Luna review; Proof verdict | Integrated qualification and source caller0053 | doing | App 0029; review0041; integrated0046; caller0053 | Review 0041 PASS: cancelled startup restart defect, hook RED then 176 passed. Unique port caller0039 PASS. Historical trigger and P3 attribution unknown. | Source 42db156ede; App merge 804134 |
-| P2 | Original eight gestures on App service | App Sol/Luna; Proof verdict | Qualified readiness fix and caller binding | blocked:app | Latest run 18800; App cause 0019 | Exit 2, 131s. Native21/history passed; baseline unknown. All eight gestures NOT RUN. No journey credit. | 384ac67fb7 / tree c7c2f6b2 |
+| readiness-after-bootstrap | Shared P2/P3 baseline blocker | App Sol; Luna review; Proof verdict | Integrated qualification and source caller0053 | doing | App 0029; review0041; integrated0046; caller0053 | Integrated804 PASS: 326 tests, controls12+7, three types and lint. Port caller0039 PASS. Historical trigger and P3 attribution unknown. | Source 42db156ede; App merge 804134 |
+| P2 | Original eight gestures on App service | App Sol/Luna; Proof verdict | Caller0053 fixed-source binding | blocked:app | Latest run 18800; App cause 0019 | Exit 2, 131s. Native21/history passed; baseline unknown. All eight gestures NOT RUN. No journey credit. | 384ac67fb7 / tree c7c2f6b2 |
 | P2-custody | Actual 18800 lifecycle file | Proof Luna | Complete finite audit | merged | ap2-P2-18800-direct-custody-0032 | PASS: 10,665 bytes, six real records, schema/security/roundtrip/writer and Node 12+7. Cancellation at 679ms; trigger and history completion unknown. | Report only |
 | P2-popup-seed | Declare both created owners | Luna; independent review | Complete | merged | Author 1934; review 1940 | Four fixture lines; 102+2 tests, three typechecks, lint and collection passed. App tree matches reviewed 17324. | 17324 -> 93cdd |
 | P3 | Original Gate-5 on fixed 2107 subject | App Sol/Luna; Proof verdict | Qualified source fix with honest target binding | blocked:app | Latest run 458; App cause 2348 | Exit 2, 125s. Native21/history passed; baseline unknown. Gate-5 NOT RUN. Seven DB probes false; no owner read. P2 observations are not P3 evidence. | 82de83a0b2 / tree 7871 |
@@ -18,23 +18,23 @@
 | P4 | CLI, Python, sheet, ten notes and rerun | Sol/Luna; test service | Complete on recorded tuple | merged | Integrated 17739; single 28012; ten 11615 | DONE. Single 1+66; ten per-step undo/redo/restart/show/history; conflict rerun passed 200-409-200. Freeze reruns gates. | Agent 543d / f6cda; Runtime a5d |
 
 P1 RESULT GO. App owns A4 under D31 and remaining scope/coverage. Agent G5 is done. Required GO asks sent to both at 00:48, deadline 01:45Z.
-P1 RESULT GO. Required App and Agent merge asks were sent at 00:48, due 01:45Z. G5 is already done under H24. P1 case 2 passed; P2/P3 remain open.
+P1 RESULT GO, now recorded in BOARD-HEADER at the00:43 status line; D35 is satisfied. Required App and Agent merge asks were sent at 00:48, due 01:45Z. G5 is already done under H24. P1 case 2 passed; P2/P3 remain open.
 
-Blockers: App P2/P3 wait for integrated qualification and caller0053 source binding before one meaningful changed run.
+Blockers: P2/P3 wait for App caller0053 READY. Proof owns one changed experiment and verdict; App executes on its own service.
 A4: App worker0051 is actively retiring the remaining executor; bounded reviewed witnesses merged aca94f. P1 gate is clear. D31 keep subset remains.
 Blockers: Runtime exact-seven registrations lack trusted old launch accounting and an atomic cutover boundary.
 Blockers: Farm F-final waits for deletions, upstream freeze and remaining gates. Agent owns full-suite classification and repairs under D32.
 
 Evidence: [P1 source review0036](../../design/handoff-ap2-P1-18792-result-verdict-0036.md), [P1 custody GO0040](../../design/handoff-ap2-P1-18792-custody-return-0040.md), [App producer0029](../../design/app-P1-18792-result-handoff-0029.md). Review0036's earlier missing-packet boundary was resolved by0040. Remote primary reads are producer-certified; no fresh local raw-log/receipt/trace audit or full-wire claim.
 
-Readiness: [source reproduction0029](../../design/app-A2-basis-cancel-repro-sol-0029.md), [independent review0041](../../design/app-A2-basis-cancel-review-0041.md), [port caller0039](../../design/app-P2-P3-door-allocation-0039.md), [upstream hypothesis request](../../design/peer-orchestrator-to-app-app2-agent-20261024T0045-upstream-readiness-candidate.md). Existing00:16 allows one meaningful run when the fix qualifies. No port-only repeat. Historical trigger and P3 cause remain unknown.
+Readiness: [source reproduction0029](../../design/app-A2-basis-cancel-repro-sol-0029.md), [independent review0041](../../design/app-A2-basis-cancel-review-0041.md), [port caller0039](../../design/app-P2-P3-door-allocation-0039.md), [upstream hypothesis request](../../design/peer-orchestrator-to-app-app2-agent-20261024T0045-upstream-readiness-candidate.md). Existing00:16 allows one meaningful run when the fix qualifies. Upstream review0046 found insufficient historical attribution; the header deprioritises U2c unless readiness still fails. No port-only repeat. Historical trigger and P3 cause remain unknown.
 
 Historical failures keep their original results. Full source locks and evidence limits are in the linked reviews. D25 pinned GO stands as heads move; no P1 rerun solely for head movement. Final freeze reruns all gates and original tails.
 
 Safety: all prior process, reference, file, MONITOR, keep-awake, publication and locked-v1 refusals remain stopped. D30 final-message reporting applies. No manager product/test/generated/pin or Git mutation. Frozen34e/d106/819acf unchanged. D14/D23 remain unchanged and visibly deferred. D31 dormant legacy capture and its397-line/40-assertion tests stay in delivery.
 
-Disk: 00:48 available8,977,985,536 bytes, above8GB stop line. Recycle0032/0036/0040 found no worktree and gained no space. Only protected OPS trees and pins remain. Sweep00:04 removed zero directories; prior compact refusal is not retried. D34 pauses disk-only work above its floor. No local heavy run.
+Disk: 00:58 available8,961,519,616 bytes, above8GB stop line. Recycle0032/0036/0040 found no worktree and gained no space. Only protected OPS trees and pins remain. Sweep00:04 removed zero directories; prior compact refusal is not retried. D34 pauses disk-only work above its floor. No local heavy run.
 
 Next ready: Runtime R0-public-export-0049 is doing after P1 GO. App consumes GO for qualified A4 rows. App merge804134 -> integrated0046/caller0053 -> honest target and per-run port binding -> one meaningful run under 00:16. Proof audits qualified new result packets immediately. No ready Proof source task is waiting.
 
-Current pass: 2026-10-24T00:49Z. INBOX consumed through 589889 bytes, including H27/D33 and upstream candidate. All recent Proof workers are done. Read App/Agent/Runtime/Farm/Viewing boards at their published times; owner boards still show older P1 state and GO notes have been sent. Next full pass at 00:59Z; act sooner on qualified source/result packets.
+Current pass: 2026-10-24T00:59Z. INBOX consumed through 589889 bytes, including H27/D33 and upstream candidate. All recent Proof workers are done. Read App/Agent/Runtime/Farm/Viewing boards at their published times; App, Agent, Runtime and Farm now acknowledge P1 GO. All1234 Proof workers are terminal; no source task is waiting. Integrated804 PASS326+12+7/types/lint consumed. Next full pass01:09Z; act sooner on ready handoff/results.
