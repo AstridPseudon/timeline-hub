@@ -1,29 +1,38 @@
 {
   "status": "PREPARED",
-  "run_authorization": "NOT_GRANTED",
+  "run_authorization": "D59_CURRENT_HEADS",
   "execution": "NOT_RUN",
-  "purpose": "Final integrated App caller preparation; source inputs are derived from the clean normal integration refs at generation and frozen for all subsequent checks.",
+  "purpose": "Observed source-preparation snapshot, not a final tuple cut or live verdict. Every invocation derives the current clean normal refs once, freezes them during checks, and refuses concurrent changes; this JSON never selects or authorizes a stale source.",
   "source_tuple": {
     "app": {
       "checkout": "/home/user/work/app",
-      "source": "0971c645ba113fab54d1da568550542b94f75e6c",
-      "tree": "60cdf06f0688066307dd5020567d15a8563baf7e",
-      "parents": ["450f3080ec27940f8f64ac67ab7448f432d06c35", "52f1ee5111be78644b4b7d625217bb5dc3b0a54d"],
-      "ref": "tl/integration"
+      "parents": [
+        "1da6cbd92449da2584a77fa87fec65201a6b794c",
+        "d5e9deba6104a852fc514fbcf16a668edc0a8670"
+      ],
+      "ref": "tl/integration",
+      "source": "6ab5938d34d75fe9f90f4c21f2518dfd1b6e847d",
+      "tree": "d39d5ece2e004f2af7505f9b452894192cd6dec7"
     },
     "agent": {
       "checkout": "/home/user/work/agent",
-      "source": "cba425b61958f380f25b7bdea83d23c92f627761",
-      "tree": "d19ce2e55ce9f29e18a504fb9c97178764272bbe",
-      "parents": ["de2d1aadbec1b9f4bfb76dcc70c62d2f192cb0a5", "9746c9254ad288945e01ecad25f71689a6231a42"],
-      "ref": "tl/integration"
+      "parents": [
+        "cba425b61958f380f25b7bdea83d23c92f627761",
+        "156f2ebba9eef2f13b3334f1c28405c9dabc03f2"
+      ],
+      "ref": "tl/integration",
+      "source": "9b055a93ff15fce0a2e80f2647d47743b1fc4c33",
+      "tree": "ed0043b0570764fe17439830ca002db3fe358699"
     },
     "runtime": {
       "checkout": "/home/user/work/runtime",
+      "parents": [
+        "46eb068c5adf663270512aca8a4bdd62c1488e6d",
+        "c021f13afb655225570e3f0323f00a55132e8643"
+      ],
+      "ref": "tl/integration",
       "source": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
-      "tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89",
-      "parents": ["46eb068c5adf663270512aca8a4bdd62c1488e6d", "c021f13afb655225570e3f0323f00a55132e8643"],
-      "ref": "tl/integration"
+      "tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89"
     }
   },
   "bindings": {
@@ -31,105 +40,482 @@
     "app_consumer_files": 14,
     "agent_consumer_files": 15,
     "app_lock_sha256": "f481e6daebb90561ee0b796765524d7ade8f01f0adb8953d8c77a30fdb1ba70e",
-    "agent_lock_sha256": "5030ef40874ee0ccb1a4b60b5a5fbc3ed771e8499d44bee5fdfce76f8a0ce5a",
+    "agent_lock_sha256": "5030ef40874ee0ccb1a4b60b5a5fbc3ed771e8499d44bee5fdfce76f8a0ce5a1",
     "producer_files": {
+      "conformance/fixtures/visual-boundary-v1.json": "1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55",
+      "conformance/responses/commit_conflict_409.json": "e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08",
+      "conformance/responses/events_page_1_200.json": "6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d",
+      "conformance/responses/events_page_2_200.json": "d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2",
+      "conformance/responses/invalid_cursor_400.json": "16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff",
+      "conformance/responses/managed_outputs_200.json": "6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d",
+      "conformance/responses/not_found_404.json": "4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6",
+      "conformance/responses/retired_route_410.json": "e3b43083786aae88fe3aabaaf8de631803c6a11610607eb7c3527f999aa80292",
+      "conformance/responses/task_admission_201.json": "108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c",
+      "conformance/responses/task_read_200.json": "cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829",
+      "conformance/responses/validation_error_422.json": "2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a",
+      "contract/schemas/timeline-config.schema.json": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+      "packages/python/astrid_runtime_client/__init__.py": "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2",
+      "packages/python/astrid_runtime_client/contract_metadata.py": "51e8ce94a7149f6b3160a6e5e66bafe17c7f94cfd3beb6733bbf8abd63125ab6",
+      "packages/python/astrid_runtime_client/generated.py": "e3f51c05342088bc34a562e17997cbf8ff8065c3df795da1cb6cd374216b51b7",
+      "packages/python/astrid_runtime_client/timeline_commit_types.py": "88c67d9eb650b445b8ad04c9011c1f44f1ec5e9f72a4a733050515de7ec0b616",
       "packages/typescript/src/contract-metadata.ts": "1028aaeca1cd15f860994c1e830ba69f55405e648841877eff4d43f466f40c79",
       "packages/typescript/src/generated.ts": "7be7f351d485fdb24a7ebb0329fea7c65037675b11a96c581d33e60a14a581a4",
       "packages/typescript/src/timeline-commit-types.ts": "bf4728831e35bdfec96ffa0188feb439f3c89a2aecfa8682925019eba5855470"
-    }
+    },
+    "mapping_check": "All 14 App and all 15 Agent consumer hashes equal their actual Runtime from blobs, including contract schemas and conformance fixtures; no packages-only filter."
   },
   "registry": {
-    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
-    "line_count": 249,
     "byte_count": 569825,
-    "sha256": "52f556f8dfd4fcdb29443ac84db0f33ee9252bb808c92de4ab660871ec73db93",
-    "outside_row_count": 247,
+    "line_count": 249,
     "outside_bytes": 465609,
+    "outside_row_count": 247,
     "outside_sha256": "9acf76fafd09c0e4ecd89be6288402f8557dcb17c3a70f492ce9ae56d241e2e8",
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
     "rows": {
-      "full-e2e-three-products": {
-        "sha256": "6a45d0567f7dea7a3c15fbcaf687f9dd62debf4527464529d8a4faf8f8e48fee",
-        "decoded_sha256": "f6042b33d35229f47fe74cbd2a575b5984422d2209ed664b996fe1b590656d43",
-        "tail_sha256": "0839e6b5f6454e9a3101dbb7280b201052b5166e1836749b68d28717c22e1f58"
-      },
       "ap2-P3-gate5-h6-0348": {
-        "sha256": "1b7c7996f9d296aab985a0a9466de89bb71cc816d7796facc8bc79fa0b23c6e7",
+        "bytes": 60370,
         "decoded_sha256": "6366048bf89533fa450a4575288ac2de004696bab49db6d32f1869783ae493f3",
+        "sha256": "1b7c7996f9d296aab985a0a9466de89bb71cc816d7796facc8bc79fa0b23c6e7",
         "tail_sha256": "47deb73f184acc27b701572b1378f2bf4ad70b75de546963647bc94cf6a8da7b"
+      },
+      "full-e2e-three-products": {
+        "bytes": 43846,
+        "decoded_sha256": "f6042b33d35229f47fe74cbd2a575b5984422d2209ed664b996fe1b590656d43",
+        "sha256": "6a45d0567f7dea7a3c15fbcaf687f9dd62debf4527464529d8a4faf8f8e48fee",
+        "tail_sha256": "0839e6b5f6454e9a3101dbb7280b201052b5166e1836749b68d28717c22e1f58"
       }
     },
+    "sha256": "52f556f8dfd4fcdb29443ac84db0f33ee9252bb808c92de4ab660871ec73db93",
     "mutation": false,
     "second_read_guard": true
   },
   "preparation": {
-    "command": "TMPDIR=<private temporary directory> python3 caller-publication.py",
+    "commands": [
+      {
+        "command": "env PYTHONDONTWRITEBYTECODE=1 python3 caller-publication.py",
+        "duration_seconds": 3.833
+      },
+      {
+        "command": "env PYTHONDONTWRITEBYTECODE=1 python3 -O caller-publication.py",
+        "duration_seconds": 4.421
+      }
+    ],
+    "order": "Both bounded P2/P3 source guards execute before protected-stage, wrapper and complete generated mapping checks; source refs/tree/parents and registry bytes are rechecked at completion.",
     "source_guard_counts": {
       "full-e2e-three-products": 71,
       "ap2-P3-gate5-h6-0348": 141
     },
+    "selected_app_source_files": 99,
     "dry_preflight": {
-      "full-e2e-three-products": {
-        "status": "PASS",
-        "phase": "source_identity_tree_target_bindings",
-        "duration_seconds": 0.353,
-        "command": "actual decoded P2 source guard via caller-dry-preflight.py"
-      },
       "ap2-P3-gate5-h6-0348": {
+        "normal_seconds": 0.202,
+        "optimized_seconds": 0.176,
         "status": "PASS",
-        "phase": "source_identity_tree_target_bindings",
-        "duration_seconds": 0.452,
-        "command": "actual decoded P3 source guard via caller-dry-preflight.py"
+        "command": "actual decoded P3 source guard via caller-dry-preflight.py",
+        "script_sha256": "6f79189b7e729b4b2f51d0ba2cf31240fea9ddb4e10594900a163c1b7eac5818"
+      },
+      "full-e2e-three-products": {
+        "normal_seconds": 0.16,
+        "optimized_seconds": 0.185,
+        "status": "PASS",
+        "command": "actual decoded P2 source guard via caller-dry-preflight.py",
+        "script_sha256": "8ce32235585065e85ebe42175ff06cb96c4b9fecbd4189a8c855a83213540aef"
       }
     },
     "candidate_hashes": {
-      "full-e2e-three-products": {
-        "decoded_sha256": "7bab40286b7e6bab36bc2a242d7a4be2a1f3ef62c469377cd2b21f1989c26ae1",
-        "wrapped_sha256": "68b27279589708b65be993d7dd0b333def7fbb6071473ec36896db61b18ddfcf"
-      },
       "ap2-P3-gate5-h6-0348": {
-        "decoded_sha256": "f3ea3ede8ada47372538048df9ba701e71a6e30792394e70266504a8937cb624",
-        "wrapped_sha256": "4fb8867ce416ca2f0e7176a0292309d4724d5917acda8769a0b5be0e77b9cf52"
+        "body_binding_spans": 157,
+        "body_sha256": "7dec52df40c9925395a6411e32c99646ee6bf96754ee22a0f819ab80ddc911a1",
+        "encoded_stage_sha256": "9c67cf12699f2f9153d88b92491795b8a559f24fac0824a34f4d258e72177523",
+        "native_stage_sha256": "c96b2a484a3ba6ffbb7ea84e6013a8a77840782067f2469f771ecf07b74d0f13",
+        "status": "PASS",
+        "tail_binding_spans": 10,
+        "tail_sha256": "06d4dfde135b8f0690a25f45428f363b9de767ad62a6e53084fe7c446da68c30",
+        "wrapped_sha256": "5546e19bd2526aae16f0150d5ecb8b7552576efc9a7f5dc45057666c3527a1db"
+      },
+      "full-e2e-three-products": {
+        "body_binding_spans": 82,
+        "body_sha256": "90ce89c2386aa90b640972774a99c9154894f30b0e5ed18a84b479f9dd732abc",
+        "encoded_stage_sha256": "76107a62e6e6cc6180cd43cbc1c9620ad32244898943e329cdf1dad51f86479c",
+        "native_stage_sha256": "c96b2a484a3ba6ffbb7ea84e6013a8a77840782067f2469f771ecf07b74d0f13",
+        "status": "PASS",
+        "tail_binding_spans": 0,
+        "tail_sha256": "0839e6b5f6454e9a3101dbb7280b201052b5166e1836749b68d28717c22e1f58",
+        "wrapped_sha256": "3186a0c947ef15425b2b24f3a9f8f4f575e3f63c0d0b7c2b3d2e347a6172d51d"
       }
     },
+    "binding_policy": "Pinned approved row/body/tail templates; exact source/ref/environment value spans with fixed occurrence counts; only whole tracked source-file blob/SHA256 slots bind the frozen App source. Every other byte compares unchanged. Fixed awk expectations, native assertions and encoded custody code are never refreshed. Historical Remotion producer markers remain historical.",
     "wrapper": {
-      "argv_count": 1,
-      "eval_suffix": true,
-      "export_probe": "PASS",
-      "failure_proof": true
+      "ap2-P3-gate5-h6-0348": {
+        "argv_count": 1,
+        "eval_suffix": true,
+        "export_probe": "PASS",
+        "failure_proof": "current caller environment inputs are required; original-body-NOTRUN following-stages-NOTRUN",
+        "failure_returncode": 2,
+        "probe_sha256": "cec83e7e29ed841811d77cc8af879c113ce5f928b5e332327f946305501ff8ab"
+      },
+      "full-e2e-three-products": {
+        "argv_count": 1,
+        "eval_suffix": true,
+        "export_probe": "PASS",
+        "failure_proof": "current caller environment inputs are required; original-body-NOTRUN following-stages-NOTRUN",
+        "failure_returncode": 2,
+        "probe_sha256": "a5ff21e7cf0933f9688404d138232fbdec969e123cc5d06b1fbaf56678e460af"
+      }
     },
-    "bash_n": "decoded and wrapped candidates",
-    "candidate_lifetime": "private temporary output only; no registry installation"
+    "bash_n": "decoded and wrapped candidates passed under normal and optimized Python",
+    "candidate_lifetime": "private temporary output only; no registry installation; final binding follows complete joined App source",
+    "later_observation": {
+      "reason": "Integration advanced after the recorded normal/optimized pair. The final-code normal preparation succeeded on its own frozen tuple; the outer comparison with the earlier snapshot refused with exit 1. No source chase or retry was performed.",
+      "command": "env PYTHONDONTWRITEBYTECODE=1 python3 caller-publication.py",
+      "caller_exit_code": 0,
+      "snapshot_comparison_exit_code": 1,
+      "optimized_repeat": "NOT_RUN after detecting advancement",
+      "total_seconds": "not retained by the comparison harness; source guard seconds are recorded below",
+      "source_tuple": {
+        "app": {
+          "checkout": "/home/user/work/app",
+          "parents": [
+            "6ab5938d34d75fe9f90f4c21f2518dfd1b6e847d",
+            "c11d1b31ad39dc1603b147e538b7f618820fa4aa"
+          ],
+          "ref": "tl/integration",
+          "source": "971a29e198c3e384795731f79e39c096abd58845",
+          "tree": "349691b03229d6e1f11a164997e29f49dae9f381"
+        },
+        "agent": {
+          "checkout": "/home/user/work/agent",
+          "parents": [
+            "9b055a93ff15fce0a2e80f2647d47743b1fc4c33",
+            "23f60c4280b61d951d9f385b8f94717927773ad9"
+          ],
+          "ref": "tl/integration",
+          "source": "3db4af43ca4676584a53a9eaed93c02bb04a2ec5",
+          "tree": "2e7f6ccb74c9ea5b9d4db0f966c90b8eae6e0693"
+        },
+        "runtime": {
+          "checkout": "/home/user/work/runtime",
+          "parents": [
+            "46eb068c5adf663270512aca8a4bdd62c1488e6d",
+            "c021f13afb655225570e3f0323f00a55132e8643"
+          ],
+          "ref": "tl/integration",
+          "source": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+          "tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89"
+        }
+      },
+      "candidate_hashes": {
+        "ap2-P3-gate5-h6-0348": {
+          "body_binding_spans": 157,
+          "body_sha256": "c2b511b0ee24eaa3089cdc159322b7e72ede3b3feb0c88089ab4811dffd8f1c8",
+          "encoded_stage_sha256": "9c67cf12699f2f9153d88b92491795b8a559f24fac0824a34f4d258e72177523",
+          "native_stage_sha256": "c96b2a484a3ba6ffbb7ea84e6013a8a77840782067f2469f771ecf07b74d0f13",
+          "status": "PASS",
+          "tail_binding_spans": 10,
+          "tail_sha256": "6ac2101c231b553f975e772f53d97914e1e50447beab202045a4519acb8ccac8",
+          "wrapped_sha256": "c1a7a03cb259e81a83c330586812271a4655650f1ccce16187b9243babd154f2",
+          "dry_seconds": 0.228
+        },
+        "full-e2e-three-products": {
+          "body_binding_spans": 82,
+          "body_sha256": "ed298c0f14186c00e5e317491980921f6c38e48294953f84974d5e8546db64a1",
+          "encoded_stage_sha256": "76107a62e6e6cc6180cd43cbc1c9620ad32244898943e329cdf1dad51f86479c",
+          "native_stage_sha256": "c96b2a484a3ba6ffbb7ea84e6013a8a77840782067f2469f771ecf07b74d0f13",
+          "status": "PASS",
+          "tail_binding_spans": 0,
+          "tail_sha256": "0839e6b5f6454e9a3101dbb7280b201052b5166e1836749b68d28717c22e1f58",
+          "wrapped_sha256": "b0d02fdfdff3b33e03dab77dcff42b45c80b7ea0fdd8e1079a8891a41d5243a2",
+          "dry_seconds": 0.161
+        }
+      }
+    }
   },
   "wire_fields": {
-    "request": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "schema_version", "op", "version", "select", "args", "created", "label", "steps", "id", "intent", "tags", "command_ordinals", "patch", "reads", "dependencies", "merge", "fields", "atomic", "Idempotency-Key", "dry_run", "source", "rationale", "group_id"],
-    "reply": ["data", "receipt", "canonical_document", "document_digest", "id_map", "history", "undo", "commands", "authoritative_commands", "authoritative_steps", "dependencies", "merge_mode", "base", "base_revision_id", "base_publication_id", "previous", "previous_revision_id", "previous_publication_id", "accepted_ids", "accepted_revision_id", "publisher", "provider", "durable_receipt", "accepted", "merged", "rebased", "conflict", "invalid", "code", "path", "hint", "suggested_command", "head", "current", "result", "request_hash", "event_ids", "dry_run", "would_status", "reason", "http_status"],
-    "reply_shape": "complete authoritative {data,receipt}; no receipt relabeling"
+    "reply": [
+      "data",
+      "receipt",
+      "canonical_document",
+      "document_digest",
+      "id_map",
+      "history",
+      "undo",
+      "commands",
+      "authoritative_commands",
+      "authoritative_steps",
+      "dependencies",
+      "merge_mode",
+      "base",
+      "base_revision_id",
+      "base_publication_id",
+      "previous",
+      "previous_revision_id",
+      "previous_publication_id",
+      "accepted_ids",
+      "accepted_revision_id",
+      "publisher",
+      "provider",
+      "durable_receipt",
+      "accepted",
+      "merged",
+      "rebased",
+      "conflict",
+      "invalid",
+      "code",
+      "path",
+      "hint",
+      "suggested_command",
+      "head",
+      "current",
+      "result",
+      "request_hash",
+      "event_ids",
+      "dry_run",
+      "would_status",
+      "reason",
+      "http_status",
+      "status",
+      "receipt_id",
+      "command_kind",
+      "idempotency_key",
+      "project_id",
+      "project_seq",
+      "timeline_id",
+      "created_at",
+      "rebased_onto",
+      "provider_version",
+      "compiler_version",
+      "evaluated_head",
+      "message",
+      "details",
+      "conflicts",
+      "theirs",
+      "ours",
+      "choices",
+      "kind",
+      "revision_id",
+      "publication_id",
+      "label",
+      "source",
+      "rationale",
+      "group_id",
+      "steps",
+      "id",
+      "intent",
+      "tags",
+      "command_ordinals",
+      "patch",
+      "reads",
+      "records",
+      "undo_of",
+      "restored_from",
+      "undo_steps",
+      "merge",
+      "schema_version",
+      "op",
+      "version",
+      "select",
+      "args",
+      "changes",
+      "ref",
+      "before",
+      "state",
+      "value",
+      "order_before",
+      "after",
+      "item",
+      "created",
+      "resolved",
+      "expect",
+      "bindings",
+      "authorship",
+      "selections",
+      "parent_revision",
+      "shot_revisions",
+      "internal_timeline_revisions",
+      "dependency_manifest",
+      "content_digest",
+      "payload",
+      "shots",
+      "internal_timelines",
+      "media",
+      "documents",
+      "via",
+      "detail",
+      "after_id",
+      "anchor",
+      "boundaries",
+      "boundary",
+      "cause",
+      "change",
+      "change_ordinal",
+      "command",
+      "command_ordinal",
+      "dependency",
+      "derived_writes",
+      "document_id",
+      "edge_after",
+      "edge_before",
+      "effect_ordinal",
+      "internal_timeline_revision_id",
+      "items",
+      "key",
+      "media_id",
+      "members",
+      "next_cursor",
+      "order",
+      "ordinal",
+      "owner",
+      "owners",
+      "ownership",
+      "phase",
+      "physical_ref",
+      "pin",
+      "policy",
+      "position",
+      "query_version",
+      "ripple",
+      "shot_id",
+      "side",
+      "step_id",
+      "successor",
+      "write_range",
+      "writes"
+    ],
+    "reply_shape": "complete authoritative {data,receipt}; inventory only, never a projection; receipt.receipt_id is the publication, receipt.idempotency_key is the distinct retry key; canonical payload/meta remain open",
+    "request": [
+      "api_version",
+      "project_id",
+      "timeline_id",
+      "base_revision_id",
+      "base_publication_id",
+      "commands",
+      "schema_version",
+      "op",
+      "version",
+      "select",
+      "args",
+      "created",
+      "label",
+      "steps",
+      "id",
+      "intent",
+      "tags",
+      "command_ordinals",
+      "patch",
+      "reads",
+      "dependencies",
+      "merge",
+      "fields",
+      "atomic",
+      "Idempotency-Key",
+      "dry_run",
+      "source",
+      "rationale",
+      "group_id",
+      "changes",
+      "ref",
+      "before",
+      "state",
+      "value",
+      "order_before",
+      "after",
+      "item",
+      "kind",
+      "path",
+      "ids",
+      "digest",
+      "resolved",
+      "expect",
+      "bindings",
+      "authorship",
+      "selections",
+      "after_id",
+      "members",
+      "order",
+      "key",
+      "query_version",
+      "owner",
+      "boundaries",
+      "policy",
+      "ripple",
+      "anchor",
+      "ownership",
+      "position",
+      "via",
+      "detail"
+    ]
   },
   "preservation": {
+    "live_traffic": "NOT_MEASURED; no journey executed",
+    "native_and_encoded_stage_bytes": "authenticated unchanged against approved templates",
+    "outside_rows_unchanged": true,
     "p2_cases": 8,
-    "p3": "strict v2 request/reply, commands/created, steps/patches/reads, receipts, history, undo, restart, stage-output, wait, port and failure guards retained",
-    "legacy_route_traffic": 0,
-    "registry_mutation": false
-  },
-  "required_missing_custody": [
-    "normal tuple-coordinator admission for the exact three source identities",
-    "normal exact App, Agent, and Runtime checkout receipts",
-    "genuine current child/client import receipt at the actual caller seam",
-    "genuine current Runtime backend receipt",
-    "genuine current Remotion environment and graph receipts",
-    "normal service snapshot created after admission",
-    "terminal result for a run requested from this current source tuple"
-  ],
-  "blocked": {
-    "owner": "tuple coordinator / Agent and Runtime owners",
-    "status": "STOPPED",
-    "reason": "Normal custody inputs and coordinator admission are absent; automatic access refusal remains in force.",
-    "prohibited_bypass": "no new child, schema, preload, alternate fetch, overlay, old receipt patch, old child reuse, or historical tuple reuse"
+    "p3": "strict D53 request/reply, reads, receipts, history, undo, restart, stage-output, wait, and failure guards retained",
+    "registry_unchanged": true
   },
   "full_run": {
+    "claim": "no current-tuple terminal result claimed",
     "id": "app-U3b-F-reviewed-join-1146-full-1024120556-16138",
-    "status": "NOT_AUTHENTICATED_FOR_CURRENT_TUPLE",
-    "terminal_claim": false,
-    "source_authentication": "the retained snapshot predates the current caller tuple; no final claim is made"
+    "retained_exit_code": 1,
+    "source_authentication": "not used for final source authentication; authenticate any service snapshot only after it exists",
+    "status": "HISTORICAL_FAIL_NOT_CURRENT_TUPLE"
+  },
+  "authority": "D59 authorizes existing-bench current-head runs; no separate coordinator permission, future snapshot, or final terminal receipt is a pre-run requirement.",
+  "required_custody": [
+    {
+      "name": "caller_environment",
+      "owner": "current normal existing-service recipe 1304; inventory 1257",
+      "required": "Authenticate actual interpreter/import/backend/Remotion/graph inputs for the supported route; historical child registrations do not authenticate the current tuple.",
+      "status": "UNVERIFIED"
+    }
+  ],
+  "readiness": {
+    "owner": "normal existing-service recipe 1304",
+    "prior_refusals": "STOPPED; no alternate acquisition, new child/schema, install, preload, overlay, or historical receipt relabel",
+    "reason": "This dry artifact does not authenticate or execute the supported live environment; no additional approval handshake is required.",
+    "status": "SOURCE_PREPARED_ENVIRONMENT_UNVERIFIED"
+  },
+  "post_request_checks": [
+    "authenticate the actual service snapshot against the frozen source/tree/parents/target/bindings",
+    "retain the full terminal run result; it is evidence after execution"
+  ],
+  "verification": {
+    "negative_command": "env PYTHONDONTWRITEBYTECODE=1 python3 /tmp/w-c945ff8112/run-controls.py",
+    "negative_modes": [
+      "wrong-source",
+      "stale",
+      "app",
+      "agent",
+      "runtime",
+      "tree",
+      "target",
+      "path",
+      "body",
+      "receipt",
+      "registry",
+      "duplicate",
+      "concurrency",
+      "native",
+      "protected",
+      "tail",
+      "encoded",
+      "binding",
+      "app-mapping",
+      "agent-mapping"
+    ],
+    "normal": {
+      "commands": 20,
+      "duration_seconds": 24.845,
+      "result": "all exact intended refusals PASS"
+    },
+    "optimized": {
+      "commands": 20,
+      "duration_seconds": 28.479,
+      "result": "all exact intended refusals PASS"
+    },
+    "mapping_attacks": "each of all 14 App and 15 Agent from mappings independently redirected to a real Runtime blob with different content; consumer bytes and claimed digests stay unchanged; all refused in both interpreter modes",
+    "stage_attacks": "changed native truth assertion, fixed P1 expectation, encoded custody condition, original tail selector, and source binding; all refused by byte/binding comparison",
+    "inventory_command": "env PYTHONDONTWRITEBYTECODE=1 python3 /tmp/w-c945ff8112/check-inventory.py",
+    "inventory_result": "51 request fields in 22 transitive generated types; 133 reply/history fields in 53 transitive generated types; none missing; explicit C0 section 4 receipt/conflict/preview fields covered"
   }
 }

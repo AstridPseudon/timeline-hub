@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
 from pathlib import Path
 import re
@@ -59,7 +60,8 @@ def dry_source_preflight(
     guard = _guard(body, stage)
     body_match = re.search(rf"(?:^|;)\s*P{stage}BODY=([^;]+)", body)
     source_body = body_match.group(1).strip("'\"") if body_match else ""
-    if not target.is_absolute() or target.is_symlink() or target.resolve() != target or not target.is_dir():
+    if (target != Path(app["checkout"]) or not target.is_absolute() or target.is_symlink()
+            or target.resolve() != target or not target.is_dir()):
         raise DryPreflightError(f"source target is unavailable: {target}")
     prefix = "\n".join(
         (
@@ -98,6 +100,8 @@ def dry_source_preflight(
         "returncode": result.returncode,
         "phase": "source_identity_tree_target_bindings",
         "command": f"actual decoded P{stage} source guard via caller-dry-preflight.py",
+        "argv": ["/bin/bash", "-c", prefix],
+        "script_sha256": hashlib.sha256(prefix.encode()).hexdigest(),
         "target": {"checkout": str(target), "source": app["source"], "tree": app["tree"], "parents": app["parents"]},
         "refusals": [],
         "not_run": ["child", "import", "native", "build", "browser", "backend", "provision", "schema", "HTTP", "original"],

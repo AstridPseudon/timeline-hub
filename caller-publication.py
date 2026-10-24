@@ -5,9 +5,9 @@ Agent, and Runtime checkouts, reads the installed P2/P3 rows as templates,
 rebinds their source and target guards to those authenticated identities, and
 syntax-checks the decoded and wrapped candidates.  It never starts a service,
 allocates a port, opens HTTP, launches a browser, installs a package, or
-submits a request.  Final child, backend, Remotion, graph, and coordinator
-receipts are custody inputs and the absence of any of them keeps the result
-PREPARED rather than READY.
+submits a request. D59 authorizes current-head runs. Actual environment inputs
+remain bounded by the supported caller; service snapshots are checked only
+after a request exists. This artifact makes no live execution claim.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ import hashlib
 import importlib.util
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import shlex
 import stat
@@ -46,6 +46,7 @@ AGENT_PARENTS: tuple[str, ...] = ()
 RUNTIME_COMMIT = ""
 RUNTIME_TREE = ""
 RUNTIME_PARENTS: tuple[str, ...] = ()
+SOURCE_BINDINGS: dict[str, dict[str, str]] = {}
 # Fixed installed inputs from the independently reviewed 1238 snapshot.
 REGISTRY_SHA256 = "52f556f8dfd4fcdb29443ac84db0f33ee9252bb808c92de4ab660871ec73db93"
 APPROVED_ROWS = {
@@ -63,11 +64,7 @@ APPROVED_ROWS = {
 LEGACY_AGENT_TREE = "1094bf3662c785e4b21eddf7e3ae980da79b1af1"
 LEGACY_AGENT_TREE_P3 = "2deab1a1494fbccfce5e9235412bacb8a949c0cd"
 LEGACY_RUNTIME_TREE = "be4114705127f9ee9e86b26cd6de3f467e771c01"
-LEGACY_CHILD_NAMES = (
-    "venv-agent-child-app-popup-333b-37eb-1016",
-    "venv-agent-child-app-ready-079-37eb-0256",
-)
-LEGACY_REMOTION_NAMES = ("agent-remotion-app-ready-079-37eb-0258",)
+LEGACY_P3_CHILD = "venv-agent-child-app-ready-079-37eb-0256"
 LEGACY_P3_PARENT = "2e3c8f65a8628127cd283ed26116f7bcb2977b83 2357df925a660dde6624149b8e8a6e1dbf09da98"
 
 _DRY_PREFLIGHT_SPEC = importlib.util.spec_from_file_location(
@@ -80,20 +77,30 @@ _DRY_PREFLIGHT_SPEC.loader.exec_module(_DRY_PREFLIGHT)
 
 P2_SUITE = "full-e2e-three-products"
 P3_SUITE = "ap2-P3-gate5-h6-0348"
-SOURCE_PATHS = (
-    "tests/e2e/local/three-products.spec.ts",
-    "tests/e2e/local/support/gate5-reset-precondition.ts",
-    "tests/e2e/local/support/gate5-reset-precondition.test.mjs",
-    "tests/e2e/local/support/gate5-fault-order.ts",
-    "tests/e2e/local/support/gate5-fault-order.test.mjs",
+CUSTODY_PREFIX = (
+    'test -n "${TIMELINE_AGENT_CHECKOUT:-}" && test -n "${TIMELINE_RUNTIME_CHECKOUT:-}" && '
+    'test -n "${TIMELINE_CHILD_NAME:-}" && test -n "${TIMELINE_REMOTION_NAME:-}" || '
+    '{ echo "current caller environment inputs are required; original-body-NOTRUN '
+    'following-stages-NOTRUN" >&2; exit 2; }; '
 )
+NATIVE_SHA256 = "c96b2a484a3ba6ffbb7ea84e6013a8a77840782067f2469f771ecf07b74d0f13"
+ENCODED_SHA256 = {
+    P2_SUITE: "76107a62e6e6cc6180cd43cbc1c9620ad32244898943e329cdf1dad51f86479c",
+    P3_SUITE: "9c67cf12699f2f9153d88b92491795b8a559f24fac0824a34f4d258e72177523",
+}
 
+# Descriptive inventories only: never project, truncate or rewrite an envelope.
 REQUEST_FIELDS = [
     "api_version", "project_id", "timeline_id", "base_revision_id",
     "base_publication_id", "commands", "schema_version", "op", "version",
     "select", "args", "created", "label", "steps", "id", "intent", "tags",
     "command_ordinals", "patch", "reads", "dependencies", "merge", "fields",
     "atomic", "Idempotency-Key", "dry_run", "source", "rationale", "group_id",
+    "changes", "ref", "before", "state", "value", "order_before", "after", "item",
+    "kind", "path", "ids", "digest", "resolved", "expect", "bindings", "authorship", "selections",
+    "after_id", "members", "order", "key", "query_version", "owner", "boundaries", "policy",
+    "ripple", "anchor", "ownership", "position",
+    "via", "detail",
 ]
 REPLY_FIELDS = [
     "data", "receipt", "canonical_document", "document_digest", "id_map", "history", "undo", "commands",
@@ -103,6 +110,22 @@ REPLY_FIELDS = [
     "durable_receipt", "accepted", "merged", "rebased", "conflict", "invalid", "code", "path",
     "hint", "suggested_command", "head", "current", "result", "request_hash", "event_ids",
     "dry_run", "would_status", "reason", "http_status",
+    "status", "receipt_id", "command_kind", "idempotency_key", "project_id", "project_seq",
+    "timeline_id", "created_at", "rebased_onto", "provider_version", "compiler_version",
+    "evaluated_head", "message", "details", "conflicts", "theirs", "ours", "choices", "kind",
+    "revision_id", "publication_id", "label", "source", "rationale", "group_id", "steps",
+    "id", "intent", "tags", "command_ordinals", "patch", "reads", "records", "undo_of",
+    "restored_from", "undo_steps", "merge", "schema_version", "op", "version", "select", "args",
+    "changes", "ref", "before", "state", "value", "order_before", "after", "item", "created",
+    "resolved", "expect", "bindings", "authorship", "selections", "parent_revision",
+    "shot_revisions", "internal_timeline_revisions", "dependency_manifest", "content_digest",
+    "payload", "shots", "internal_timelines", "media", "documents", "via", "detail",
+    "after_id", "anchor", "boundaries", "boundary", "cause", "change", "change_ordinal",
+    "command", "command_ordinal", "dependency", "derived_writes", "document_id", "edge_after",
+    "edge_before", "effect_ordinal", "internal_timeline_revision_id", "items", "key", "media_id",
+    "members", "next_cursor", "order", "ordinal", "owner", "owners", "ownership", "phase",
+    "physical_ref", "pin", "policy", "position", "query_version", "ripple", "shot_id", "side",
+    "step_id", "successor", "write_range", "writes",
 ]
 
 
@@ -196,6 +219,7 @@ def freeze_tuple(source: dict[str, Any], agent: dict[str, Any], runtime: dict[st
     APP_COMMIT, APP_TREE, APP_PARENTS = source["source"], source["tree"], tuple(source["parents"])
     AGENT_COMMIT, AGENT_TREE, AGENT_PARENTS = agent["source"], agent["tree"], tuple(agent["parents"])
     RUNTIME_COMMIT, RUNTIME_TREE, RUNTIME_PARENTS = runtime["source"], runtime["tree"], tuple(runtime["parents"])
+    SOURCE_BINDINGS.clear()
 
 
 def app_facts() -> dict[str, Any]:
@@ -221,32 +245,44 @@ def check_runtime_lock() -> dict[str, Any]:
     agent_lock = read_lock(AGENT)
     for label, lock in (("App", app_lock), ("Agent", agent_lock)):
         require(lock.get("source_commit") == RUNTIME_COMMIT, f"{label} runtime lock producer is not {RUNTIME_COMMIT}")
-    app_files = app_lock.get("files", {})
-    agent_files = agent_lock.get("files", {})
-    require(isinstance(app_files, dict) and isinstance(agent_files, dict), "runtime lock files are not objects")
     producer_files: dict[str, str] = {}
-    for destination, entry in app_files.items():
-        if not isinstance(entry, dict) or not str(entry.get("sha256", "")).startswith("sha256:"):
-            fail(f"invalid App lock entry: {destination}")
-        source_path = str(entry.get("from", ""))
-        expected = str(entry["sha256"])[len("sha256:"):]
-        actual = file_sha(APP / destination)
-        require(actual == expected, f"App runtime consumer hash mismatch: {destination}")
-        if source_path.startswith("packages/"):
-            source_bytes = subprocess.check_output(["git", "-C", str(RUNTIME), "show", f"{RUNTIME_COMMIT}:{source_path}"])
-            producer_files[source_path] = sha256(source_bytes)
-            require(producer_files[source_path] == expected, f"Runtime producer mismatch: {source_path}")
-    for destination, entry in agent_files.items():
-        if not isinstance(entry, dict) or not str(entry.get("sha256", "")).startswith("sha256:"):
-            fail(f"invalid Agent lock entry: {destination}")
-        expected = str(entry["sha256"])[len("sha256:"):]
-        actual = file_sha(AGENT / destination)
-        require(actual == expected, f"Agent runtime consumer hash mismatch: {destination}")
+    consumers: dict[str, Any] = {}
+    for label, root, lock, count in (("app", APP, app_lock, 14), ("agent", AGENT, agent_lock, 15)):
+        files = lock.get("files")
+        require(isinstance(files, dict) and len(files) == count, f"{label} runtime lock file inventory changed")
+        mappings = {}
+        for destination, entry in files.items():
+            require(isinstance(entry, dict), f"invalid {label} lock entry: {destination}")
+            source_path = entry.get("from")
+            digest = entry.get("sha256", "")
+            require(isinstance(digest, str) and re.fullmatch(r"sha256:[0-9a-f]{64}", digest) is not None,
+                    f"invalid {label} lock digest: {destination}")
+            for path in (destination, source_path):
+                require(isinstance(path, str) and bool(path) and not PurePosixPath(path).is_absolute()
+                        and ".." not in PurePosixPath(path).parts and str(PurePosixPath(path)) == path,
+                        f"invalid {label} mapping path: {path}")
+            expected = digest[len("sha256:"):]
+            require(file_sha(root / destination) == expected, f"{label} runtime consumer hash mismatch: {destination}")
+            if source_path not in producer_files:
+                producer_files[source_path] = sha256(git_bytes(RUNTIME, RUNTIME_COMMIT, source_path))
+            require(producer_files[source_path] == expected, f"Runtime producer mismatch: {label} {source_path}")
+            mappings[destination] = {"from": source_path, "sha256": expected}
+        consumers[label + "_consumer"] = {
+            "source": lock["source_commit"], "file_count": len(files),
+            "lock_sha256": file_sha(root / "runtime.lock.json"), "mappings": mappings,
+        }
     return {
-        "producer": {"source": RUNTIME_COMMIT, "tree": RUNTIME_TREE, "ref": NORMAL_REF, "parents": list(RUNTIME_PARENTS), "files": producer_files},
-        "app_consumer": {"source": app_lock["source_commit"], "file_count": len(app_files), "lock_sha256": file_sha(APP / "runtime.lock.json")},
-        "agent_consumer": {"source": agent_lock["source_commit"], "file_count": len(agent_files), "lock_sha256": file_sha(AGENT / "runtime.lock.json")},
+        "producer": {"source": RUNTIME_COMMIT, "tree": RUNTIME_TREE, "ref": NORMAL_REF,
+                     "parents": list(RUNTIME_PARENTS), "files": producer_files},
+        **consumers,
     }
+
+
+def git_bytes(root: Path, commit: str, path: str) -> bytes:
+    try:
+        return subprocess.check_output(["git", "-C", str(root), "show", f"{commit}:{path}"], stderr=subprocess.DEVNULL)
+    except (OSError, subprocess.CalledProcessError) as exc:
+        fail(f"producer blob unavailable: {root} {commit}:{path}: {exc}")
 
 
 def extract_row(line: str) -> tuple[str, str, str]:
@@ -300,147 +336,147 @@ def assignment(body: str, key: str) -> str:
     return match.group(1)
 
 
-def set_assignment(body: str, key: str, value: str) -> str:
-    pattern = rf"((?:^|;)\s*{re.escape(key)}=)[^;]*"
-    result, count = re.subn(pattern, rf"\g<1>{value}", body, count=1)
-    require(count == 1, f"suite row lacks unique {key} assignment")
+def literal_edits(text: str, before: str, after: str, count: int) -> list[tuple[int, int, str]]:
+    matches = list(re.finditer(re.escape(before), text))
+    require(len(matches) == count, f"binding occurrence count changed: {before}")
+    return [(match.start(), match.end(), after) for match in matches]
+
+
+def selected_file(path: str) -> dict[str, str]:
+    require(not PurePosixPath(path).is_absolute() and ".." not in PurePosixPath(path).parts,
+            f"unbounded App binding path: {path}")
+    data = git_bytes(APP, APP_COMMIT, path)
+    require(regular_bytes(APP / path) == data, f"App binding differs from frozen source: {path}")
+    result = {"blob": hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest(),
+              "sha256": sha256(data)}
+    require(path not in SOURCE_BINDINGS or SOURCE_BINDINGS[path] == result, f"App binding changed during checks: {path}")
+    SOURCE_BINDINGS[path] = result
     return result
 
 
-def refresh_source_guards(body: str, variables: dict[str, str]) -> tuple[str, int]:
-    """Recompute every App blob/digest guard in the installed row template."""
-    count = 0
+def binding_edits(name: str, template: str, *, tail: bool = False) -> list[tuple[int, int, str]]:
+    """Only binding value spans in the pinned template may change.
 
-    def git_guard(match: re.Match[str]) -> str:
-        nonlocal count
-        path = match.group("path").strip("'\"")
-        if path.startswith("$"):
-            variable = path.removeprefix("$").strip("{}")
-            path = variables.get(variable, path)
-        require((APP / path).is_file(), f"source guard path is missing from integrated App: {path}")
-        value = git(APP, "hash-object", "--", path)
-        count += 1
-        return match.group("prefix") + value
+    Source digests bind whole tracked files at the frozen App commit. Expectations
+    such as the retained awk case digests, native assertions, selectors and waits
+    are outside these spans and must remain byte-identical.
+    """
+    require(name in APPROVED_ROWS and bool(APP_COMMIT), "unfrozen or unknown candidate")
+    require(sha256(template.encode()) == APPROVED_ROWS[name][2 if tail else 1],
+            f"unapproved {'tail' if tail else 'body'} template: {name}")
+    p2 = name == P2_SUITE
+    if tail and p2:
+        return []
+    prefix = "P2" if p2 else "P3"
+    # Literal source/ref slots, with exact multiplicities from approved rows.
+    slots = [
+        ("333b44b1a1b8be72d4d101391b7636c508419109" if p2 else "079580ca46af77e0292d49dc34386b25c8391f99",
+         AGENT_COMMIT, 3 if tail else 1),
+        ("37eb6c7bdb79dcae2523883e66b5cea5be721ffd", RUNTIME_COMMIT, 3 if tail else 1),
+        (LEGACY_AGENT_TREE if p2 else LEGACY_AGENT_TREE_P3, AGENT_TREE, 1),
+        (LEGACY_RUNTIME_TREE, RUNTIME_TREE, 1),
+    ]
+    if tail:
+        slots.extend([
+            (LEGACY_P3_CHILD, '"${TIMELINE_CHILD_NAME:?}"', 1),
+            ("/home/user/work/wt/rt-pin-34eac004", '"${TIMELINE_RUNTIME_CHECKOUT:?}"', 1),
+        ])
+    else:
+        slots.extend([
+            ("d6ed8cbda122d810d5836ebfce3c56c10e76e9b4" if p2 else "602f8b1f58593302829fb449d0ded62a91462a22",
+             APP_COMMIT, 1 if p2 else 4),
+            ("542b772e6deed676b917f857708445b7d37a5aa8" if p2 else "a38844975865110cd2c026dc10fd7aa1ea488e71",
+             APP_TREE, 1 if p2 else 2),
+            ("cad736828b4890a4df5fff42a22bfa4851a0ecfc 01ea81395a9bb8f091262a9d8275407675188fe6" if p2 else LEGACY_P3_PARENT,
+             " ".join(APP_PARENTS), 1 if p2 else 2),
+        ])
+    edits = [edit for before, after, count in slots for edit in literal_edits(template, before, after, count)]
+    if tail:
+        return sorted(edits)
+    for key, value in ((prefix + "AG", '"${TIMELINE_AGENT_CHECKOUT:?}"'),
+                       (prefix + "RT", '"${TIMELINE_RUNTIME_CHECKOUT:?}"'),
+                       ("CN", '"${TIMELINE_CHILD_NAME:?}"'), ("RN", '"${TIMELINE_REMOTION_NAME:?}"')):
+        matches = list(re.finditer(rf"(?:^|;)\s*{key}=([^;]*)", template))
+        require(len(matches) == 1, f"nonunique environment binding: {key}")
+        edits.append((*matches[0].span(1), value))
+    for algorithm, width, expected_count in (("git hash-object", 40, 67 if p2 else 84),
+                                              ("sha256sum", 64, 4 if p2 else 57)):
+        pattern = rf"{algorithm} -- (?P<path>[^ )|]+)[^;\n]*?=\s*(?P<digest>[0-9a-f]{{{width}}})(?![0-9a-f])"
+        matches = list(re.finditer(pattern, template))
+        require(len(matches) == expected_count, f"source binding inventory changed: {name} {algorithm}")
+        for match in matches:
+            path = match.group("path")
+            if path == '"$P3BODY"':
+                require(assignment(template, "P3BODY") == "tests/e2e/local/three-products.spec.ts", "P3 source path changed")
+                path = "tests/e2e/local/three-products.spec.ts"
+            value = selected_file(path)["blob" if width == 40 else "sha256"]
+            edits.append((*match.span("digest"), value))
+    return sorted(edits)
 
-    def sha_guard(match: re.Match[str]) -> str:
-        nonlocal count
-        path = match.group("path").strip("'\"")
-        if path.startswith("$"):
-            variable = path.removeprefix("$").strip("{}")
-            path = variables.get(variable, path)
-        require((APP / path).is_file(), f"digest guard path is missing from integrated App: {path}")
-        value = file_sha(APP / path)
-        count += 1
-        return match.group("prefix") + value
 
-    body = re.sub(
-        r"(?P<prefix>git hash-object -- (?P<path>[^ )|]+)[^;\n]*?=\s*)[0-9a-f]{40}(?![0-9a-f])",
-        git_guard,
-        body,
-    )
-    body = re.sub(
-        r"(?P<prefix>sha256sum -- (?P<path>[^ )|]+)[^;\n]*?=\s*)[0-9a-f]{64}(?![0-9a-f])",
-        sha_guard,
-        body,
-    )
-    require(count > 0, "no source guards were found in the installed rows")
-    return body, count
+def render_bindings(template: str, edits: list[tuple[int, int, str]]) -> str:
+    parts = []
+    end = 0
+    for start, stop, value in edits:
+        require(end <= start < stop <= len(template), "overlapping or unbounded binding edits")
+        parts.extend((template[end:start], value))
+        end = stop
+    return "".join(parts) + template[end:]
+
+
+def compare_bindings(template: str, candidate: str, edits: list[tuple[int, int, str]], label: str) -> None:
+    """Compare every unchanged span and each exact authenticated replacement."""
+    require(len(candidate) == len(template) + sum(len(value) - (stop - start) for start, stop, value in edits),
+            f"{label} protected length changed")
+    original_at = candidate_at = 0
+    for start, stop, value in edits:
+        require(original_at <= start < stop <= len(template), f"{label} unbounded binding")
+        unchanged = template[original_at:start]
+        require(candidate[candidate_at:candidate_at + len(unchanged)] == unchanged, f"{label} protected bytes changed")
+        candidate_at += len(unchanged)
+        require(candidate[candidate_at:candidate_at + len(value)] == value, f"{label} unauthenticated binding")
+        candidate_at += len(value)
+        original_at = stop
+    require(candidate[candidate_at:] == template[original_at:], f"{label} protected final bytes changed")
+
+
+def native_stage(body: str) -> str:
+    matches = list(re.finditer(r"node --import tsx --input-type=module -e '(.*?)' >", body, re.S))
+    require(len(matches) == 1, "native stage boundary changed")
+    return matches[0].group(0)
+
+
+def authenticate_candidate(name: str, row: str, outer: str, body: str) -> dict[str, Any]:
+    require(sha256(row.encode()) == APPROVED_ROWS[name][0], f"unapproved original row: {name}")
+    original_outer, original, tail = extract_row(row)
+    candidate_outer, decoded, candidate_tail = extract_row(f"app {name} {outer}\n")
+    require(decoded == body and candidate_outer == outer, f"{name} wrapped payload differs")
+    seam = "$(bash -c "
+    require(outer[:outer.index(seam)] == original_outer[:original_outer.index(seam)], f"{name} outer prefix changed")
+    require(body.startswith(CUSTODY_PREFIX), f"{name} missing bounded environment guard")
+    body_edits = binding_edits(name, original)
+    tail_edits = binding_edits(name, tail, tail=True)
+    compare_bindings(original, body[len(CUSTODY_PREFIX):], body_edits, name + " body")
+    compare_bindings(tail, candidate_tail, tail_edits, name + " tail")
+    original_native, candidate_native = native_stage(original), native_stage(body)
+    require(sha256(original_native.encode()) == NATIVE_SHA256 and candidate_native == original_native,
+            f"{name} native/protected stage changed")
+    encoded = re.findall(r'base64\.b64decode\(\\?"([A-Za-z0-9+/=]+)\\?"\)', body)
+    require(len(encoded) == 1 and sha256(base64.b64decode(encoded[0], validate=True)) == ENCODED_SHA256[name],
+            f"{name} encoded custody stage changed")
+    return {"status": "PASS", "body_sha256": sha256(body.encode()), "tail_sha256": sha256(candidate_tail.encode()),
+            "native_stage_sha256": NATIVE_SHA256, "encoded_stage_sha256": ENCODED_SHA256[name],
+            "body_binding_spans": len(body_edits), "tail_binding_spans": len(tail_edits)}
 
 
 def rebind(name: str, body: str) -> tuple[str, dict[str, str]]:
-    for marker in ("original-body-NOTRUN", "following-stages-NOTRUN"):
-        require(marker in body, f"{name} lost required failure guard: {marker}")
-    for marker in ("PLAYWRIGHT_OUTPUT_DIR", "mkdir -p"):
-        require(marker in body, f"{name} lost required output guard: {marker}")
-    prefix = "P2" if name == P2_SUITE else "P3"
-    old = {key: assignment(body, key) for key in (f"{prefix}A", f"{prefix}R", f"{prefix}APP", f"{prefix}TREE")}
-    old_parent = assignment(body, f"{prefix}PARENT") if name == P2_SUITE else None
-    for key, value in ((f"{prefix}A", AGENT_COMMIT), (f"{prefix}R", RUNTIME_COMMIT), (f"{prefix}APP", APP_COMMIT), (f"{prefix}TREE", APP_TREE)):
-        body = set_assignment(body, key, value)
-    if name == P2_SUITE:
-        body = set_assignment(body, "P2PARENT", repr(" ".join(APP_PARENTS)))
-    else:
-        body = body.replace(LEGACY_P3_PARENT, " ".join(APP_PARENTS))
-    body = set_assignment(body, f"{prefix}AG", "${TIMELINE_AGENT_CHECKOUT:?}")
-    body = set_assignment(body, f"{prefix}RT", "${TIMELINE_RUNTIME_CHECKOUT:?}")
-    body = set_assignment(body, "CN", "${TIMELINE_CHILD_NAME:?}")
-    body = set_assignment(body, "RN", "${TIMELINE_REMOTION_NAME:?}")
-    replacements = {
-        old[f"{prefix}A"]: AGENT_COMMIT,
-        old[f"{prefix}R"]: RUNTIME_COMMIT,
-        old[f"{prefix}APP"]: APP_COMMIT,
-        old[f"{prefix}TREE"]: APP_TREE,
-        LEGACY_AGENT_TREE: AGENT_TREE,
-        LEGACY_AGENT_TREE_P3: AGENT_TREE,
-        LEGACY_RUNTIME_TREE: RUNTIME_TREE,
-    }
-    if old_parent:
-        replacements[old_parent.strip("'\"")] = " ".join(APP_PARENTS)
-    for before, after in replacements.items():
-        body = body.replace(before, after)
-    variables = {}
-    for key in ("P2BODY", "P3BODY"):
-        match = re.search(rf"(?:^|;)\s*{key}=([^;]*)", body)
-        if match:
-            variables[key] = match.group(1).strip("'\"")
-    body, guard_count = refresh_source_guards(body, variables)
-    body = refresh_encoded_guards(body)
-    for forbidden in (
-        old[f"{prefix}A"], old[f"{prefix}R"], old[f"{prefix}APP"], old[f"{prefix}TREE"],
-        LEGACY_AGENT_TREE, LEGACY_AGENT_TREE_P3, LEGACY_RUNTIME_TREE,
-    ):
-        require(forbidden not in body, f"{name} candidate retained stale source identity {forbidden}")
-    body = (
-        'test -n "${TIMELINE_AGENT_CHECKOUT:-}" && test -n "${TIMELINE_RUNTIME_CHECKOUT:-}" && '
-        'test -n "${TIMELINE_CHILD_NAME:-}" && test -n "${TIMELINE_REMOTION_NAME:-}" || '
-        '{ echo "final tuple custody inputs are required" >&2; exit 2; }; '
-        + body
-    )
-    return body, {"agent_old": old[f"{prefix}A"], "runtime_old": old[f"{prefix}R"], "app_old": old[f"{prefix}APP"], "tree_old": old[f"{prefix}TREE"], "source_guard_count": str(guard_count)}
+    edits = binding_edits(name, body)
+    rebound = CUSTODY_PREFIX + render_bindings(body, edits)
+    return rebound, {"binding_spans": str(len(edits))}
 
 
-def refresh_wrapper_bindings(text: str, old: dict[str, str]) -> str:
-    replacements = {
-        old["agent_old"]: AGENT_COMMIT,
-        old["runtime_old"]: RUNTIME_COMMIT,
-        old["app_old"]: APP_COMMIT,
-        old["tree_old"]: APP_TREE,
-        LEGACY_AGENT_TREE: AGENT_TREE,
-        LEGACY_AGENT_TREE_P3: AGENT_TREE,
-        LEGACY_RUNTIME_TREE: RUNTIME_TREE,
-        LEGACY_CHILD_NAMES[0]: "${TIMELINE_CHILD_NAME:?}",
-        LEGACY_CHILD_NAMES[1]: "${TIMELINE_CHILD_NAME:?}",
-        LEGACY_REMOTION_NAMES[0]: "${TIMELINE_REMOTION_NAME:?}",
-        LEGACY_P3_PARENT: " ".join(APP_PARENTS),
-    }
-    for before, after in replacements.items():
-        text = text.replace(before, after)
-    return text
-
-
-def refresh_encoded_guards(text: str) -> str:
-    """Re-encode retained custody code with the current tuple identities."""
-    legacy = {
-        "079580ca46af77e0292d49dc34386b25c8391f99": AGENT_COMMIT,
-        "333b44b1a1b8be72d4d101391b7636c508419109": AGENT_COMMIT,
-        "37eb6c7bdb79dcae2523883e66b5cea5be721ffd": RUNTIME_COMMIT,
-        LEGACY_AGENT_TREE: AGENT_TREE,
-        LEGACY_AGENT_TREE_P3: AGENT_TREE,
-        LEGACY_RUNTIME_TREE: RUNTIME_TREE,
-    }
-
-    def replace(match: re.Match[str]) -> str:
-        encoded = match.group("encoded")
-        decoded = base64.b64decode(encoded, validate=True).decode()
-        for before, after in legacy.items():
-            decoded = decoded.replace(before, after)
-        return match.group("prefix") + base64.b64encode(decoded.encode()).decode() + match.group("suffix")
-
-    return re.sub(
-        r'(?P<prefix>base64\.b64decode\(\\?")(?P<encoded>[A-Za-z0-9+/=]+)(?P<suffix>\\?"\))',
-        replace,
-        text,
-    )
+def refresh_wrapper_bindings(name: str, tail: str) -> str:
+    return render_bindings(tail, binding_edits(name, tail, tail=True))
 
 
 def syntax_check(outer: str, body: str, directory: Path, label: str) -> dict[str, Any]:
@@ -455,43 +491,61 @@ def syntax_check(outer: str, body: str, directory: Path, label: str) -> dict[str
 
 
 def wrapper_check(outer: str, body: str, label: str) -> dict[str, Any]:
-    """Prove the retained row still has the one-argument bash-c wrapper seam."""
+    """Exercise the actual wrapper seam with only its final export statements."""
     marker = "$(bash -c "
     start = outer.index(marker) + len(marker)
-    end = outer.index(")\" && eval", start)
+    end = outer.index(')" && eval', start)
     argv = shlex.split(outer[start:end])
     require(len(argv) == 1 and argv[0] == body, f"{label} wrapper changed bash-c argv")
-    suffix = outer[end:]
-    require(")\" && eval" in suffix, f"{label} wrapper lost eval suffix")
-    require(("export" in body) and ("P2" in body or "P3" in body), f"{label} wrapper lost exports")
-    require("original-body-NOTRUN" in body and "following-stages-NOTRUN" in body,
-            f"{label} wrapper lost failure proof")
-    probe = subprocess.run(
-        ["/bin/bash", "-c", 'printf "%s\\n" "$#:$1"; export TIMELINE_WRAPPER_PROBE=ok; test "$TIMELINE_WRAPPER_PROBE" = ok', "wrapper", "payload"],
-        text=True, capture_output=True, check=False,
-    )
-    require(probe.returncode == 0 and probe.stdout.strip() == "1:payload", f"{label} bash-c argv/export probe failed")
-    return {"argv_count": len(argv), "eval_suffix": True, "export_probe": "PASS", "failure_proof": True}
+    prefix = "P2" if label == P2_SUITE else "P3"
+    seam_end = end + len(f')" && eval "${prefix}_ENV"')
+    require(outer[end:seam_end] == f')" && eval "${prefix}_ENV"', f"{label} wrapper lost eval suffix")
+    exports = re.findall(r'printf "export %s=%q\\n" [^;]*;', body)
+    require(len(exports) == (1 if prefix == "P2" else 2), f"{label} export inventory changed")
+    variables = sorted(set(re.findall(r'\$([A-Za-z_][A-Za-z0-9_]*)', " ".join(exports))))
+    # The shell function inspects the real wrapped argv without executing its
+    # payload, then emits the candidate's unchanged export statements.
+    probe = "\n".join([
+        'set -eu',
+        f'EXPECTED={shlex.quote(body)}',
+        *[f'{key}={shlex.quote("probe " + key + "; literal $value")}' for key in variables],
+        'bash(){ test "$#" = 2 && test "$1" = -c && test "$2" = "$EXPECTED" || return 9;',
+        *exports, '}', outer[:seam_end],
+        f'test "$TIMELINE_BUNDLE_AGENT_HEAD" = "${prefix}A"',
+        f'test "$TIMELINE_BUNDLE_RUNTIME_HEAD" = "${prefix}R"',
+        f'test "$ASTRID_CHECKOUT" = "${prefix}AG"',
+        f'test "$ASTRID_RUNTIME_CHECKOUT" = "${prefix}RT"',
+        'test "$ASTRID_PYTHON" = "$CPY" && test "$ASTRID_RUNTIME_PYTHON" = "$CPY"',
+        'test "${PLAYWRIGHT_OUTPUT_DIR+x}" = x',
+        'printf "%s\\n" wrapper-argv-export-PASS',
+    ])
+    result = subprocess.run(["/bin/bash", "-c", probe], text=True, capture_output=True, timeout=10, check=False,
+                            env={"PATH": "/usr/bin:/bin", "LC_ALL": "C"})
+    require(result.returncode == 0 and result.stdout.strip() == "wrapper-argv-export-PASS",
+            f"{label} wrapped argv/export probe failed: {result.stderr}")
+    # Empty environment inputs force the authenticated prefix to exit before
+    # any original stage; the real outer && chain must propagate that failure.
+    require(body.startswith(CUSTODY_PREFIX), f"{label} failure prefix changed")
+    failure = subprocess.run(["/bin/bash", "-c", outer], text=True, capture_output=True, timeout=10, check=False,
+                             env={"PATH": "/usr/bin:/bin", "LC_ALL": "C"})
+    require(failure.returncode == 2 and not failure.stdout and "original-body-NOTRUN" in failure.stderr
+            and "following-stages-NOTRUN" in failure.stderr, f"{label} wrapped failure did not stop safely")
+    return {"argv_count": len(argv), "eval_suffix": True, "export_probe": "PASS", "failure_returncode": 2,
+            "failure_proof": failure.stderr.strip(), "probe_sha256": sha256(probe.encode())}
 
 
 def custody_requirements() -> list[dict[str, str]]:
-    required = [
-        ("tuple_coordinator_admission", "normal coordinator admission for the exact App/Agent/Runtime tuple"),
-        ("app_checkout_receipt", "normal exact App checkout receipt for the approved source"),
-        ("agent_checkout_receipt", "normal exact Agent checkout receipt for the approved source"),
-        ("runtime_checkout_receipt", "normal exact Runtime checkout receipt for the approved source"),
-        ("genuine_child_identity", "genuine current child identity and client import receipt"),
-        ("runtime_backend_identity", "genuine current Runtime backend identity and receipt"),
-        ("remotion_identity", "genuine current Remotion environment identity and receipt"),
-        ("graph_receipt", "genuine current graph receipt tied to the exact tuple"),
-        ("service_snapshot", "normal service snapshot created after custody admission"),
-        ("full_16138_terminal", "terminal result for the integrated 16138 run"),
+    # These are facts used by the retained template route, not permission gates
+    # on the ordinary working-venv recipe owned by service-input task 1304.
+    return [
+        {"name": "caller_environment", "status": "UNVERIFIED",
+         "required": "Authenticate actual interpreter/import/backend/Remotion/graph inputs for the supported route; historical child registrations do not authenticate the current tuple.",
+         "owner": "current normal existing-service recipe 1304; inventory 1257"},
     ]
-    return [{"name": name, "status": "MISSING", "required": description} for name, description in required]
 
 
 def negative(mode: str) -> int:
-    global SUITES, REGISTRY_SHA256
+    global SUITES, REGISTRY_SHA256, read_lock
     try:
         source = app_facts()
         agent = facts(AGENT, label="Agent")
@@ -516,7 +570,71 @@ def negative(mode: str) -> int:
             except _DRY_PREFLIGHT.DryPreflightError as exc:
                 raise PreparedError(str(exc)) from exc
         elif mode == "receipt":
-            require(False, "exact normal tuple receipt is absent")
+            exact_record(ARTIFACT / "caller-custody.json", "0" * 64)
+        elif mode in {"native", "protected", "tail", "encoded", "binding"}:
+            _, rows = installed_rows()
+            for name, row in rows.items():
+                outer, template, suffix = extract_row(row)
+                body, _ = rebind(name, template)
+                tail = refresh_wrapper_bindings(name, suffix)
+                seam = outer[:outer.index("$(bash -c ") + len("$(bash -c ")]
+                wrapped = seam + shlex.quote(body) + tail
+                authenticate_candidate(name, row, wrapped, body)
+                if mode == "native":
+                    before, after = "expect(seed.headRevisionId).toBeTruthy();", "expect(seed.headRevisionId).toBeFalsy();"
+                elif mode == "protected":
+                    # Fixed P1 expectation, unlike a source-file digest slot.
+                    if name == P2_SUITE:
+                        continue
+                    before = "eecdb2b41f66ecfe16a3d564f701c3138e39dd214b473c98635c6f7da51cbd72"
+                    after = "0" * 64
+                elif mode == "binding":
+                    before, after = APP_TREE, "0" * 40
+                elif mode == "encoded":
+                    match = re.search(r'base64\.b64decode\(\\?"([A-Za-z0-9+/=]+)\\?"\)', body)
+                    require(match is not None, "negative encoded boundary unavailable")
+                    before = match.group(1)
+                    decoded = base64.b64decode(before).replace(b"!= 1", b"== 1", 1)
+                    after = base64.b64encode(decoded).decode()
+                else:
+                    before, after = "npm run test:e2e:three-products", "npm run test:e2e:three-products --list"
+                victim = tail if mode == "tail" else body
+                require(before in victim and before != after, f"negative {mode} mutation not applied")
+                if mode == "tail":
+                    tail = tail.replace(before, after, 1)
+                else:
+                    body = body.replace(before, after, 1)
+                wrapped = seam + shlex.quote(body) + tail
+                try:
+                    authenticate_candidate(name, row, wrapped, body)
+                except PreparedError as exc:
+                    require("protected" in str(exc) or "unauthenticated binding" in str(exc),
+                            f"negative {mode} refused for unrelated reason: {exc}")
+                    print(f"NEGATIVE {mode} {name}: REFUSED: {exc}")
+                else:
+                    raise SystemExit(f"negative {mode} unexpectedly accepted: {name}")
+            return 0
+        elif mode in {"app-mapping", "agent-mapping"}:
+            check_runtime_lock()
+            root = APP if mode == "app-mapping" else AGENT
+            original_reader = read_lock
+            lock = original_reader(root)
+            for destination, entry in lock["files"].items():
+                altered = json.loads(json.dumps(lock))
+                other = next(value for value in lock["files"].values() if value["sha256"] != entry["sha256"])
+                altered["files"][destination]["from"] = other["from"]
+                read_lock = lambda checkout: altered if checkout == root else original_reader(checkout)
+                try:
+                    check_runtime_lock()
+                except PreparedError as exc:
+                    require(f"Runtime producer mismatch: {'app' if root == APP else 'agent'} {other['from']}" in str(exc),
+                            f"negative {mode} refused for unrelated reason: {exc}")
+                else:
+                    raise SystemExit(f"negative {mode} unexpectedly accepted: {destination}")
+                finally:
+                    read_lock = original_reader
+            print(f"NEGATIVE {mode}: REFUSED all {len(lock['files'])} cross-source mappings with unchanged consumer bytes/digests")
+            return 0
         elif mode == "registry":
             snapshot, _ = installed_rows()
             require(snapshot["outside_sha256"] == "0" * 64, "registry outsider bytes changed")
@@ -552,6 +670,8 @@ def negative(mode: str) -> int:
         else:
             fail(f"unknown negative control: {mode}")
     except PreparedError as exc:
+        if mode in {"native", "protected", "tail", "encoded", "binding", "app-mapping", "agent-mapping"}:
+            raise SystemExit(f"negative {mode} baseline or mutation setup failed: {exc}") from exc
         print(f"NEGATIVE {mode}: REFUSED: {exc}")
         return 0
     raise SystemExit(f"negative control unexpectedly accepted: {mode}")
@@ -562,10 +682,11 @@ def prepare() -> dict[str, Any]:
     agent = facts(AGENT, label="Agent")
     runtime = facts(RUNTIME, label="Runtime")
     freeze_tuple(source, agent, runtime)
-    bindings = check_runtime_lock()
     registry, rows = installed_rows()
     tmp = Path(tempfile.mkdtemp(prefix="timeline-final-tuple-", dir=os.environ.get("TMPDIR", "/tmp")))
     candidates: dict[str, Any] = {}
+    prepared: dict[str, tuple[str, str, dict[str, str], dict[str, Any]]] = {}
+    # Execute both bounded source phases before deeper binding/wrapper checks.
     for name in (P2_SUITE, P3_SUITE):
         outer, body, suffix = extract_row(rows[name])
         rebound, old = rebind(name, body)
@@ -580,41 +701,61 @@ def prepare() -> dict[str, Any]:
         candidate_outer = (
             outer[: outer.index("$(bash -c ") + len("$(bash -c ")]
             + shlex.quote(rebound)
-            + refresh_wrapper_bindings(suffix, old)
+            + refresh_wrapper_bindings(name, suffix)
         )
+        prepared[name] = candidate_outer, rebound, old, dry
+    for name, (candidate_outer, rebound, old, dry) in prepared.items():
+        preservation = authenticate_candidate(name, rows[name], candidate_outer, rebound)
         syntax = syntax_check(candidate_outer, rebound, tmp, name)
         candidates[name] = {
             "source_row_sha256": registry["rows"][name]["sha256"],
             "rebound": old,
+            "preservation": preservation,
             "syntax": syntax,
             "wrapper": wrapper_check(candidate_outer, rebound, name),
             "dry_preflight": dry,
         }
+    bindings = check_runtime_lock()
+    for path in tuple(SOURCE_BINDINGS):
+        selected_file(path)
     unchanged_registry(registry)
+    require(app_facts() == source, "App normal tuple changed during checks")
+    require(facts(AGENT, AGENT_COMMIT, AGENT_TREE, "Agent", parents=AGENT_PARENTS) == agent,
+            "Agent normal tuple changed during checks")
+    require(facts(RUNTIME, RUNTIME_COMMIT, RUNTIME_TREE, "Runtime", parents=RUNTIME_PARENTS) == runtime,
+            "Runtime normal tuple changed during checks")
     custody = custody_requirements()
     result = {
         "status": "PREPARED",
-        "run_authorization": "NOT_GRANTED",
+        "run_authorization": "D59_CURRENT_HEADS",
+        "authority": "D59 authorizes existing-bench current-head runs; no separate coordinator permission, future snapshot, or final terminal receipt is a pre-run requirement.",
         "execution": "NOT_RUN",
         "source": source,
         "agent": agent,
         "runtime": runtime,
         "bindings": bindings,
+        "source_bindings": dict(SOURCE_BINDINGS),
         "registry": registry,
         "candidates": candidates,
         "preservation": {
             "p2_cases": 8,
             "p3": "strict D53 request/reply, reads, receipts, history, undo, restart, stage-output, wait, and failure guards retained",
-            "legacy_route_traffic": 0,
-            "registry_mutation": False,
+            "live_traffic": "NOT_MEASURED; no journey executed",
+            "registry_unchanged": True,
+            "outside_rows_unchanged": True,
+            "native_and_encoded_stage_bytes": "authenticated unchanged against approved templates",
         },
         "wire_fields": {"request": REQUEST_FIELDS, "reply": REPLY_FIELDS, "reply_shape": "full {data,receipt}"},
         "required_custody": custody,
-        "blocked": {"owner": "tuple coordinator / Agent and Runtime owners", "reason": "current normal custody and coordinator receipts are absent; admissions refusal remains STOPPED", "bypass": "none; no alternate fetch, child, preload, receipt patch, or historical reuse"},
+        "readiness": {"status": "SOURCE_PREPARED_ENVIRONMENT_UNVERIFIED", "owner": "normal existing-service recipe 1304",
+                      "reason": "This dry artifact does not authenticate or execute the supported live environment; no additional approval handshake is required.",
+                      "prior_refusals": "STOPPED; no alternate acquisition, new child/schema, install, preload, overlay, or historical receipt relabel"},
+        "post_request_checks": ["authenticate the actual service snapshot against the frozen source/tree/parents/target/bindings", "retain the full terminal run result; it is evidence after execution"],
         "full_run": {
             "id": "app-U3b-F-reviewed-join-1146-full-1024120556-16138",
-            "status": "RUNNING_OR_UNVERIFIED",
-            "claim": "no terminal result claimed",
+            "status": "HISTORICAL_FAIL_NOT_CURRENT_TUPLE",
+            "retained_exit_code": 1,
+            "claim": "no current-tuple terminal result claimed",
             "source_authentication": "not used for final source authentication; authenticate any service snapshot only after it exists",
         },
         "tmpdir": str(tmp),
@@ -626,11 +767,11 @@ def prepare() -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--negative", choices=("wrong-source", "stale", "app", "agent", "runtime", "tree", "target", "path", "body", "receipt", "registry", "duplicate", "concurrency"))
+    parser.add_argument("--negative", choices=("wrong-source", "stale", "app", "agent", "runtime", "tree", "target", "path", "body", "receipt", "registry", "duplicate", "concurrency", "native", "protected", "tail", "encoded", "binding", "app-mapping", "agent-mapping"))
     args = parser.parse_args()
     try:
         return negative(args.negative) if args.negative else (prepare() and 0)
-    except PreparedError as exc:
+    except (PreparedError, _DRY_PREFLIGHT.DryPreflightError) as exc:
         print(str(exc), file=os.sys.stderr)
         return 2
 
