@@ -12,7 +12,7 @@ import type { TimelineDraftRecord } from '../../../../src/tools/video-editor/dat
 import type { OutboxRecord } from '../../../../src/tools/video-editor/commands/commitOutbox.ts';
 import { clearMountedBootstrapFailure, MountedBootstrapError, recordMountedBootstrapFailure, retainMountedBootstrapDiagnostics, type MountedBootstrapDiagnosticTestInfo, type MountedBootstrapStage } from '../mounted-readiness-safety.ts';
 import { MOUNTED_DIAGNOSTIC_MAX_RECORDS, mountedDiagnosticInitScript } from '../p1-diagnostic-safety.ts';
-import { ElementApplyDiagnosticCollector, installElementApplyDiagnostic, retainElementApplyDiagnostic } from './p2-element-diagnostic.ts';
+import { closeElementApplyDiagnosticContext, elementApplyDiagnosticPageFixture } from './p2-element-diagnostic.ts';
 
 export const UI = {
   status: '[data-testid="runtime-connection-status"]',
@@ -84,18 +84,9 @@ export const test = base.extend<object, { harness: DirectHarness; browser: Brows
   }, { scope: 'worker' }],
   context: async ({ browser, harness }, use) => {
     const context = await browser.newContext(harness.contextOptions as Parameters<Browser['newContext']>[0]);
-    try { await use(context); } finally { await context.close(); }
+    try { await use(context); } finally { await closeElementApplyDiagnosticContext(context); }
   },
-  page: async ({ context }, use, testInfo) => {
-    const page = await context.newPage();
-    const collector = new ElementApplyDiagnosticCollector();
-    await installElementApplyDiagnostic(page, collector);
-    try { await use(page); }
-    finally {
-      await retainElementApplyDiagnostic(testInfo, page, collector, testInfo.status);
-      await page.close().catch(() => {});
-    }
-  },
+  page: elementApplyDiagnosticPageFixture,
 });
 
 export async function currentHead(harness: DirectHarness): Promise<string> {
