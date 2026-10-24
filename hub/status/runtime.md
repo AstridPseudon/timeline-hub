@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T13:10:15Z | dispatcher heartbeat 8s | live 1 (sol 1, luna 0, other 0) | busy30 10 | status age 3m -->
-# runtime board, 2026-10-24T13:07:13Z
+<!-- main | 2026-10-24T13:13:13Z | dispatcher heartbeat 6s | live 1 (sol 1, luna 0, other 0) | busy30 9 | status age 2m -->
+# runtime board, 2026-10-24T13:10:57Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -77,7 +77,7 @@
 | F-D52-shot-set | Preserve 17 live shot-set cases | Luna | Actual Agent home proof PASS | merged | Author1139; review1143; home1156 | Actualaff339 passed61 in4.04s; durable XML and original14 test ASTs exact. All17 assigned cases included. | 3b8dc8a345 / aff3391061 |
 | F-D52-occurrence-delete | Qualify 19 live delete cases | Luna | Exact integrated source proof | merged | Author1139; independent1141 PASS | Exact Agent7e258 and Runtimebecfe:19PASS6.43s; bodies and params unchanged. [Review](../../design/runtime-D52-occurrence-review-1141.md) | Agent7e258 unchanged |
 | F-D52-core-five | Retain exact redo author result | Luna / Agent | Agent joined security and home proof | blocked:agent | Mapping1250; receipt1256 PASS | Both old failures are named FAIL→PASS at4e7f;17controls unchanged, no lost passes. Other3 retain old scope. [Result](../../design/runtime-core-five-receipt-comparison-1256.md) | Author4e7f scope only |
-| FREEZE | Reach final tuple cut | Runtime manager | D59 cut | doing | Lane owners; main benches1244 | Runtime0core/0regressions; Agent56core at rollup1242; App9gate cases,36regression repairs home awaiting proof. Cut requires all lanes0/0 plus current P2/P3 PASS. | Runtime becfe6db8 |
+| FREEZE | Reach final tuple cut | Runtime manager | D59 cut | doing | Lane owners; main benches1244 | Runtime0core/0regressions; Agent51core at refresh1254; App9gate cases,36regression repairs home awaiting proof. Cut requires all lanes0/0 plus current P2/P3 PASS. | Runtime becfe6db8 |
 | F-final | Main delivery build and ZIP | Luna | D59 cut and final proofs | doing | Builder1233; docs1229; service1244 | Builder and v2 prose installed. Durable service helper repair active; live-main refresh and final build wait qualified cut and proofs. | No delivery artifact |
 | F-final-builder | Put verifier clones in TMPDIR | Luna / Luna | Exact installed proof complete | merged | Review1229; installed1233 PASS | f25d atomically installed0755, old script backed up. Installed smoke and integrity checks passed; no real build. | f25dfab1 installed |
 | F-final-docs | Refresh v1 delivery prose | Luna | Installed hashes and rendering passed | merged | Author1226; install1229 PASS | Two exact v2 documents installed atomically; predecessors backed up. Final tuple, gates and ZIP remain pending. | ef414 / 403384 installed |
@@ -108,7 +108,7 @@
 
 Runtime full: Zero of the 36 original failures remain open at their retained integrated scopes. This is historical scoped accounting, not a new full-suite PASS. Runtime producer becfe6db88b2cc034dba3fafa6c050117cdf2b06 is merged and independently qualified after 409 targeted passes. Loss of its temporary JUnit remains disclosed. [Producer review](../../design/runtime-freeze-result-review-0727.md).
 
-FREEZE under D59: Runtime upstream/D39 homebecfe; Agent/App U/D39 home. Candidate P2/P3 cycles use current integration while unrelated Agent repairs continue. Cut requires every active lane0core/0regressions plus P2/P3 PASS on those heads. Runtime retains0/0. Agent reports56core open at rollup1242; refresh1254 folds actual-home12 and remains pending. Scope159core/117noncore; categories env78/deferred1/unproven197, with0proven regressions. App reports9gate cases unqualified;36 Node regression repairs are now HOME but final proof has not run. No cut or final gate PASS. D51 delivery-time live-main refresh per repo remains.
+FREEZE under D59: Runtime upstream/D39 homebecfe; Agent/App U/D39 home. Candidate P2/P3 cycles use current integration while unrelated Agent repairs continue. Cut requires every active lane0core/0regressions plus P2/P3 PASS on those heads. Runtime retains0/0. Agent refresh1254 reports51core/107noncore open,118of276 qualified. Scope159core/117noncore; categories env78/deferred1/unproven197, with0proven regressions. App reports9gate cases unqualified;36 Node regression repairs are now HOME but final proof has not run. No cut or final gate PASS. D51 delivery-time live-main refresh per repo remains.
 
 Venues: P1/P2/P3 on App service with App verdicts; P4 on Agent service; P5 and Composition on main. Product change in X reruns P1–P5 plus X core suite; harness/test change reruns the affected gate. Main P5 and Composition bench preflights1244 are active on existing qualified inputs. Farm/schema access stay stopped, with no new child or alternate denied-source route. Viewing stands down. All8 original P2 gestures remain core. Runtime owns final build and ZIP after cut and required proofs.
 
@@ -132,13 +132,14 @@ KIT CHANGE: delivery-build f25dfab1 installed and qualified. Final service15f78 
 Blockers: Final delivery — D59 cut requires every active lane0core/0regressions plus current P2/P3 PASS, then required final proofs and D51 live-main refresh.
 Blockers: App and Agent — existing working-service custody handback remains owner-specific; App1244 requests actual Agent sources and installed receipts, not new provisioning.
 Blockers: Agent — corrected joined redo security and current-home proof remain needed. Source1250 and exact author-result1256 comparisons complete; no Runtime duplicate body needed.
-Next ready: Consume source return1305 then independent custody delta review. Main P5 and Composition are READY for D59 cut. Agent current joined security1258 remains unique; no duplicate classifier.
+Next ready: Source1305 is testing13new custody controls; independent delta review1310 prepared for completed source. Main P5 and Composition are READY for D59 cut. Agent current joined security1258 remains unique; no duplicate classifier.
 
 Later: D47 memo and proof-pin work stay post-delivery; nine state attacks open. D34 broader cleanup held above8.5GB or until delivery. Prior denied cleanup, process, retirement and publication targets remain stopped. V4 cut; D14/D23 deferred unchanged. D52 removals require caller proof; live tests stay strict.
 
 Disk: About8.5GB free, above main8GB heavy floor. Five old v1 trees refused recycle as dirty; no forced removal. Sweep3 removed0. Compaction packed0 and compressed0 logs; no refused target retried.
 
-Pass 2026-10-24T13:07:13Z: Delivery resume1300 passed22; Luna1300 found concrete lock-map and candidate-path custody gaps. Existing Sol1305 fixes them immediately; expected missing tuple/install are not source failures. Exact Agentjoin e5fa and security1258 ownership consumed. Main benches READY, cut pending.
+Pass 2026-10-24T13:10:57Z: Rechecked blocked/gated rows against owner boards. Agent51core at current1254; App9gate cases and36home fixes awaiting proof. No cut. Sol1305 actively validates narrow custody changes; delta review waits completed source. Main benches READY; no body/build/ZIP run.
 
-live 0 / cap 4; ready-undispatched 0. Dispatcher header: <!-- main | 2026-10-24T13:04:21Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 1m -->
+live 1 / cap 4; ready-undispatched 0. Dispatcher header: <!-- main | 2026-10-24T13:10:15Z | dispatcher heartbeat 8s | live 1 (sol 1, luna 0, other 0) | busy30 10 | status age 3m -->
+
 Sol exception: source return1305 owns actual cross-repo client custody after two Luna source attempts and failed independent custody review; no independent Luna-ready row is waiting.
