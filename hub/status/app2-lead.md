@@ -1,1 +1,1 @@
-LEAD 2026-10-24T07:38Z | up | P1 GO stands | P3 run 9310: one POST 200 in the 0-to-5 setup window, a later 90s wait timed out; P2 run 23809: 0 pass, 3 fail, 5 not run | four helper and return workers running | disk 8.0G, no new heavy runs
+LEAD 2026-10-24T07:42Z | up | P1 GO stands | D50 one-line protected-tail change relayed, needs review + hashes | five light workers running | DISK 7.6G under stop line: no heavy runs, minimal new worktrees | orchestrator told
