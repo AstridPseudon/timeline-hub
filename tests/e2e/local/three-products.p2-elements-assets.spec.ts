@@ -243,11 +243,20 @@ function assertAcceptedReply(post: CommitPost, before: HeadPin): CommitAcceptedM
   }
   expect(data.source).toEqual(post.body.source);
   const receipt = object(envelope.receipt, 'commit receipt');
-  expect(receipt.receipt_id).toBe(post.key);
+  expect(receipt.receipt_id).toEqual(expect.any(String));
+  expect(receipt.receipt_id).not.toBe(post.key);
   expect(receipt.idempotency_key).toBe(post.key);
   expect(receipt.result).toEqual(envelope.data);
   expect(Object.keys(receipt).sort()).toEqual(['command_kind', 'created_at', 'event_ids', 'idempotency_key', 'project_id', 'project_seq', 'receipt_id', 'request_hash', 'result'].sort());
   return envelope as unknown as CommitAcceptedMutation;
+}
+
+function acceptedMutation(post: CommitPost): CommitAcceptedMutation {
+  return post.json as CommitAcceptedMutation;
+}
+
+function publicationId(post: CommitPost): string {
+  return acceptedMutation(post).receipt.receipt_id;
 }
 
 function assertCanonicalResult(result: CommitAcceptedMutation, actual: CanonicalDocument, harness: DirectHarness, seed: ThreeProductsSeed): void {
@@ -259,10 +268,14 @@ function assertCanonicalResult(result: CommitAcceptedMutation, actual: Canonical
 }
 
 function assertHistoryEntry(page: HistoryPage, post: CommitPost, result: CommitAcceptedMutation): void {
-  const entry = page.items.find((candidate) => candidate.publication_id === post.key);
+  const publication = result.receipt.receipt_id;
+  expect(publication).not.toBe(post.key);
+  expect(page.head).toEqual({ revision_id: result.data.accepted_revision_id, publication_id: publication });
+  const entry = page.items.find((candidate) => candidate.publication_id === publication);
   expect(entry, 'commit is recorded in /commits').toBeTruthy();
   expect(entry!.intent).toBe('recorded');
   expect(entry!.records).not.toBeNull();
+  expect(entry!.publication_id).toBe(publication);
   expect(entry!.revision_id).toBe(result.data.accepted_revision_id);
   expect(entry!.receipt).toEqual(result.receipt);
   expect(entry!.label).toBe(post.body.label);
@@ -285,9 +298,17 @@ function assertHistoryEntry(page: HistoryPage, post: CommitPost, result: CommitA
 }
 
 function assertUndoHistoryEntry(page: HistoryPage, undo: CommitPost, target: CommitPost): void {
-  const entry = page.items.find((candidate) => candidate.publication_id === undo.key);
+  const undoPublication = publicationId(undo);
+  const targetPublication = publicationId(target);
+  expect(undoPublication).not.toBe(undo.key);
+  expect(targetPublication).not.toBe(target.key);
+  expect(page.head).toEqual({ revision_id: acceptedMutation(undo).data.accepted_revision_id, publication_id: undoPublication });
+  const entry = page.items.find((candidate) => candidate.publication_id === undoPublication);
   expect(entry, 'Undo is recorded in /commits').toBeTruthy();
-  expect(entry!.records?.undo_of).toEqual([target.key]);
+  expect(entry!.publication_id).toBe(undoPublication);
+  expect(entry!.receipt.receipt_id).toBe(undoPublication);
+  expect(entry!.receipt.idempotency_key).toBe(undo.key);
+  expect(entry!.records?.undo_of).toEqual([targetPublication]);
   expect(entry!.records?.undo_steps).toBeNull();
 }
 
@@ -511,9 +532,9 @@ test('P2 mounted registerAsset save: real file drop, exact media/registry fields
     await expect(page.locator(`.clip-action[data-clip-id="${row.id as string}"]`)).toBeVisible();
   });
   const undo = await commitFromGesture(page, wire, async () => { await page.getByRole('button', { name: 'Undo', exact: true }).click(); });
-  assertRequestV2(undo, { revision_id: result.data.accepted_revision_id, publication_id: post.key });
-  expect(undo.body.commands[0]).toEqual({ schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [post.key] } });
-  const undone = assertAcceptedReply(undo, { revision_id: result.data.accepted_revision_id, publication_id: post.key });
+  assertRequestV2(undo, { revision_id: result.data.accepted_revision_id, publication_id: result.receipt.receipt_id });
+  expect(undo.body.commands[0]).toEqual({ schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: [result.receipt.receipt_id] } });
+  const undone = assertAcceptedReply(undo, { revision_id: result.data.accepted_revision_id, publication_id: result.receipt.receipt_id });
   expect(undone.data.canonical_document.parent_revision.payload).toEqual(original.parent_revision.payload);
   assertNoLegacy(wire);
   assertUndoHistoryEntry(await history(harness, seed3), undo, post);
