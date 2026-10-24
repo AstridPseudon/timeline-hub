@@ -1,0 +1,166 @@
+{
+  "schema": "timeline.p2.safe-runtime-handoff.v1",
+  "case": "p2-element-22971",
+  "result": "runtime_pending_observed",
+  "correlation": {
+    "element_request_ordinal": 3,
+    "basis": [
+      "request ordinal 3 is the only captured dispatch with provider observed and accept, receipt, and http_response UNKNOWN",
+      "the retained element diagnostic has one apply-1 scoped-commit correlation and remains pending through teardown",
+      "request ordinals 1 and 2 have observed accept, receipt, and HTTP response terminal phases"
+    ],
+    "successful_seed_owns_watchdog_dump": false,
+    "pending_window_ms": {
+      "request_start_to_test_outcome": 4526,
+      "request_start_to_page_close": 4592,
+      "source": "element diagnostic elapsedMs"
+    }
+  },
+  "limits": {
+    "ui_assertion_ms": 5000,
+    "sdk_transport_ms": 30000,
+    "outer_harness_ms": 120000,
+    "phase_max_events": 128,
+    "phase_records_retained": 123,
+    "phase_truncated": false,
+    "phase_max_requests": 8,
+    "phase_requests_observed": 3,
+    "interpretation": "observed_pending_window_not_permanent_hang",
+    "sdk_limit_reached": "UNKNOWN",
+    "outer_limit_reached": "UNKNOWN"
+  },
+  "ordered_phases": [
+    "handler_entry",
+    "authorization",
+    "coordinator_admission",
+    "coordinator_lock",
+    "provider",
+    "accept",
+    "receipt",
+    "http_response"
+  ],
+  "requests": [
+    {
+      "request_ordinal": 1,
+      "role": "successful_setup_or_seed",
+      "last_phase": "http_response",
+      "truncated": false,
+      "phases": {
+        "handler_entry": {"count": 1, "start_ms": 2212.961, "end_ms": 4409.977, "duration_ms": 2197.016, "status": "observed"},
+        "authorization": {"count": 14, "start_ms": 2318.233, "end_ms": 3902.554, "duration_ms": 1584.321, "status": "observed"},
+        "coordinator_admission": {"count": 1, "start_ms": 2330.335, "end_ms": 4409.034, "duration_ms": 2078.699, "status": "observed"},
+        "coordinator_lock": {"count": 1, "start_ms": 2330.523, "end_ms": 4408.683, "duration_ms": 2078.160, "status": "observed"},
+        "provider": {"count": 1, "start_ms": 2353.185, "end_ms": 3894.328, "duration_ms": 1541.143, "status": "observed"},
+        "accept": {"count": 1, "start_ms": 3357.180, "end_ms": 3894.029, "duration_ms": 536.849, "status": "observed"},
+        "receipt": {"count": 1, "start_ms": 3367.615, "end_ms": 3893.413, "duration_ms": 525.798, "status": "observed"},
+        "http_response": {"count": 2, "start_ms": 4409.588, "end_ms": 4410.948, "duration_ms": 1.360, "status": "observed"}
+      }
+    },
+    {
+      "request_ordinal": 2,
+      "role": "successful_setup_or_seed",
+      "last_phase": "http_response",
+      "truncated": false,
+      "phases": {
+        "handler_entry": {"count": 1, "start_ms": 10782.133, "end_ms": 32669.134, "duration_ms": 21887.001, "status": "observed"},
+        "authorization": {"count": 23, "start_ms": 11164.292, "end_ms": 26701.135, "duration_ms": 15536.843, "status": "observed"},
+        "coordinator_admission": {"count": 1, "start_ms": 11259.868, "end_ms": 32664.713, "duration_ms": 21404.845, "status": "observed"},
+        "coordinator_lock": {"count": 1, "start_ms": 11260.455, "end_ms": 32663.732, "duration_ms": 21403.277, "status": "observed"},
+        "provider": {"count": 1, "start_ms": 11443.132, "end_ms": 26641.103, "duration_ms": 15197.971, "status": "observed"},
+        "accept": {"count": 1, "start_ms": 19953.721, "end_ms": 26639.896, "duration_ms": 6686.175, "status": "observed"},
+        "receipt": {"count": 1, "start_ms": 20140.846, "end_ms": 26636.575, "duration_ms": 6495.729, "status": "observed"},
+        "http_response": {"count": 2, "start_ms": 32667.635, "end_ms": 32676.819, "duration_ms": 9.184, "status": "observed"}
+      }
+    },
+    {
+      "request_ordinal": 3,
+      "role": "element_apply",
+      "last_phase": "authorization",
+      "truncated": false,
+      "phases": {
+        "handler_entry": {"count": 1, "start_ms": 50507.091, "end_ms": null, "duration_ms": null, "status": "observed"},
+        "authorization": {"count": 5, "start_ms": 50550.453, "end_ms": 50616.787, "duration_ms": 66.334, "status": "observed"},
+        "coordinator_admission": {"count": 1, "start_ms": 50563.125, "end_ms": null, "duration_ms": null, "status": "observed"},
+        "coordinator_lock": {"count": 1, "start_ms": 50563.814, "end_ms": null, "duration_ms": null, "status": "observed"},
+        "provider": {"count": 1, "start_ms": 50590.316, "end_ms": null, "duration_ms": null, "status": "observed"},
+        "accept": {"count": 0, "start_ms": null, "end_ms": null, "duration_ms": null, "status": "UNKNOWN"},
+        "receipt": {"count": 0, "start_ms": null, "end_ms": null, "duration_ms": null, "status": "UNKNOWN"},
+        "http_response": {"count": 0, "start_ms": null, "end_ms": null, "duration_ms": null, "status": "UNKNOWN"}
+      }
+    }
+  ],
+  "safe_runtime_frame": {
+    "phase": "provider",
+    "wait_category": "historical_sequential_capture_jsonschema_validation",
+    "primary": "runtime_protocol/timeline_commit_validation.py:173 validate_commit_value",
+    "call_chain": [
+      "runtime_protocol/timeline_commit_auth.py:2371 _capture_records",
+      "runtime_protocol/timeline_commit_auth.py:2496 validate_sequential_capture",
+      "runtime_protocol/timeline_commit_store.py:362 _historical_sequential",
+      "runtime_protocol/timeline_commit_store.py:261 _verify_accepted",
+      "runtime_protocol/timeline_commit_execution.py:63 _lookup",
+      "runtime_protocol/timeline_commit_execution.py:101 execute",
+      "runtime_protocol/service.py:2499 _execute_timeline_commit",
+      "runtime_protocol/service.py:2444 commit_timeline",
+      "runtime_protocol/server.py:311 _timeline_commit"
+    ]
+  },
+  "watchdog_dump": {
+    "mode": "all_python_threads_watchdog",
+    "watchdog_seconds": 2,
+    "max_watchdog_captures": 1,
+    "owner_request_ordinal": 3,
+    "bytes": 7469,
+    "mode_bits": "0600",
+    "sha256": "68ed3dbd9c4470994b249bf29e6eba77d93dd4e3378799cd4b02022b12681658",
+    "phase_sink_bytes": 14417,
+    "phase_sink_sha256": "926c3bcef4ca818f1ad46b88e37925caed2e08077f08aefd9bf047601c6b8f2b",
+    "ui_diagnostic_bytes": 2344,
+    "ui_diagnostic_sha256": "375772880f677c9e3ed43354ffe5a1d864873d3397d13cace67dccfb4ef4f78b"
+  },
+  "source_and_pins": {
+    "service_source_head": "a8b25b66460ff9e4155989e49b42f9e05c8264fd",
+    "service_source_tree": "4f73d76b21b95e682847ff5e436c2048d05dc35a",
+    "service_source_clean": true,
+    "app_head": "ce1cd9c439ee5fdf0f6d8801f7825235fb03a761",
+    "app_tree": "4f73d76b21b95e682847ff5e436c2048d05dc35a",
+    "agent_head": "b2cb12cf3ae251492bbf9d40b7e38c13dbc95cf2",
+    "agent_tree": "8645860ba6e469b6cf6a3251dc672d2d79beac50",
+    "runtime_head": "dc55b8bc6e638acd9e5031ff6b51b50cd2e2b63c",
+    "runtime_tree": "0f941b27dc3396adbf41683e8ae30d77fc8b8768",
+    "composition_head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "provider": "astrid-v1",
+    "compiler": "authoring-bundle-1",
+    "protocol": "workspace.v1",
+    "runtime_server": "AstridRuntime/0.1 Python/3.13.16"
+  },
+  "manifest_and_junit": {
+    "manifest_sha256": "be00bc42ce681c7a22c95a904ff8657354f7de2732fa9ef5960084fc78c78374",
+    "element_junit_sha256": "725b78ea0e87693d30a30aa8cb299071a307648978625c247a6aeba5dc98a6c2",
+    "readiness_junit_sha256": "4ea8d047f61085bc59073cdcc08afc8132c4c6e21b3c427e18bfe65d1956c9a8",
+    "element_tests": 1,
+    "element_failures": 1,
+    "element_time_s": 23.066,
+    "readiness_tests": 1,
+    "readiness_failures": 0,
+    "readiness_time_s": 10.088
+  },
+  "checks": {
+    "protected_element_source_sha256_before": "c0624a04200c40acaf6866d270d9b9b9665b33173565ee709df384ddcdc0e797",
+    "protected_element_source_sha256_after": "c0624a04200c40acaf6866d270d9b9b9665b33173565ee709df384ddcdc0e797",
+    "protected_readiness_source_sha256_before": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+    "protected_readiness_source_sha256_after": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+    "focused_app_controls": "PASS: 3 files, 100 tests; retained from prior author, not rerun",
+    "eslint": "PASS: retained from prior author, not rerun",
+    "git_diff_check": "PASS: no App source changes",
+    "broad_suite": "NOT RUN",
+    "new_collection": "NOT RUN"
+  },
+  "privacy": {
+    "published_fields": "allowlist_only",
+    "private_artifacts": "retained_in_place",
+    "raw_material_export": false
+  }
+}
