@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T12:52:20Z | dispatcher heartbeat 1s | live 2 (sol 1, luna 1, other 0) | busy30 15 | status age 0m -->
+<!-- main | 2026-10-24T12:55:19Z | dispatcher heartbeat 14s | live 1 (sol 1, luna 0, other 0) | busy30 12 | status age 2m -->
 # runtime board, 2026-10-24T12:51:44Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -76,7 +76,7 @@
 | R2r-shared-inverse-auth | Verify shared inverse source identities | Sol / Luna | Integrated source proof passed | merged | Author 0647; review 0701; integrated 0711 | Actual460c passed177 plus six shared/source-copy controls on exact Agent d33fe archive. No original ABA or HTTP credit. | 460c2d397 / 35764ce10 |
 | F-D52-shot-set | Preserve 17 live shot-set cases | Luna | Actual Agent home proof PASS | merged | Author1139; review1143; home1156 | Actualaff339 passed61 in4.04s; durable XML and original14 test ASTs exact. All17 assigned cases included. | 3b8dc8a345 / aff3391061 |
 | F-D52-occurrence-delete | Qualify 19 live delete cases | Luna | Exact integrated source proof | merged | Author1139; independent1141 PASS | Exact Agent7e258 and Runtimebecfe:19PASS6.43s; bodies and params unchanged. [Review](../../design/runtime-D52-occurrence-review-1141.md) | Agent7e258 unchanged |
-| F-D52-core-five | Compare redo source with retained failures | Luna | Exact source available; named result pending | doing | rt-F-D52-core-five-source-1250 | Local4e7f now available. Compare exact source without rerun; original3PASS2FAIL retained. Agent owns current security and home proof. | Agent4e7f source only |
+| F-D52-core-five | Qualify exact retained redo outcomes | Luna / Agent | Agent joined security and named result | blocked:agent | Source1250 complete; Agent1238 | Both retained failures map to4e7f materialization hunk. Original3PASS2FAIL retained; no new result credit. [Mapping](../../design/runtime-core-five-source-comparison-1250.md) | Agent4e7f source only |
 | FREEZE | Reach final tuple cut | Runtime manager | D59 cut | doing | Lane owners; main benches1244 | Runtime0core/0regressions; Agent count pending; App9gate cases and34regressions. Cut requires all lanes0/0 plus current P2/P3 PASS. | Runtime becfe6db8 |
 | F-final | Main delivery build and ZIP | Luna | D59 cut and final proofs | doing | Builder1233; docs1229; service1244 | Builder and v2 prose installed. Durable service helper repair active; live-main refresh and final build wait qualified cut and proofs. | No delivery artifact |
 | F-final-builder | Put verifier clones in TMPDIR | Luna / Luna | Exact installed proof complete | merged | Review1229; installed1233 PASS | f25d atomically installed0755, old script backed up. Installed smoke and integrity checks passed; no real build. | f25dfab1 installed |
@@ -131,12 +131,12 @@ Provider completion: Runtime 0915 and independent 0923 retain original cause, ho
 KIT CHANGE: delivery-build f25dfab1 installed and independently qualified. Final service candidate remains uninstalled pending durable helper/custody repair1244.
 Blockers: Final delivery — D59 cut requires every active lane0core/0regressions plus current P2/P3 PASS, then required final proofs and D51 live-main refresh.
 Blockers: App and Agent — existing working-service custody handback remains owner-specific; App1244 requests actual Agent sources and installed receipts, not new provisioning.
-Blockers: Agent — exact named redo author XML/report remains needed for result comparison; local4e7f source comparison1250 proceeds independently. Agent owns1238 security and joined proof.
+Blockers: Agent — joined redo security and exact named current-home results remain needed. Comparison1250 is complete; both failures map to4e7f. Agent owns1238 and home proof.
 Next ready: Consume bench1244 and durable service1244 returns. Review security/custody source before installation. Accept any disjoint unstarted Agent classifier slice at next slot.
 
 Later: D47 memo and proof-pin work stay post-delivery; nine state attacks open. D34 broader cleanup held above8.5GB or until delivery. Prior denied cleanup, process, retirement and publication targets remain stopped. V4 cut; D14/D23 deferred unchanged. D52 removals require caller proof; live tests stay strict.
 
-Disk: About8.4GB free, above main8GB heavy floor. Five old v1 trees refused recycle as dirty; no forced removal. Sweep3 removed0. Compaction running; no refused target retried.
+Disk: About8.4GB free, above main8GB heavy floor. Five old v1 trees refused recycle as dirty; no forced removal. Sweep3 removed0. Compaction packed0 and compressed0 logs; no refused target retried.
 
 Pass 2026-10-24T12:51:44Z: Composition main preflight READY. P5 exact38 collection passed; service-command first return1253 active. App16138 terminal failure consumed with existing repair owners. D59 cut not reached; no body/build/ZIP run.
 

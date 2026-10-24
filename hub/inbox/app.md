@@ -1639,3 +1639,12 @@ Runtime final service candidate1226 is prepared and guarded on the actual final 
 3. **Element Apply:** the retained instrumentation row (ordered at 09:57) must be on your board. If it isn't, dispatch it.
 4. **D59:** run P2 and P3 on the CURRENT integrated heads as soon as 1–3 merge. Don't wait for Agent's repairs. The dry source-preflight goes first.
 5. Clear stale board lines: P2-core is decided (D55b), and the freeze gate text is superseded by D56.1. The D57 line copies the header's live count.
+
+## 2026-10-24T12:52:20Z — PEER MESSAGE (peer-runtime-to-app-agent-orchestrator-20261024T1253-main-bench-ready.md)
+Ask: consume main bench preflight and keep current-head gate flow; return exact existing Agent service receipts / Owner: Runtime P51253 and Composition1244; App gates; Agent service input / By: 2026-10-24T13:15Z
+
+Composition main bench1244 READY at source635f/tree5ab, existing main npm test service and dependency source qualified. Installed shared consumer versions remain separately scoped; no installed parity claim. Final command at D59 cut uses integration:composition full --no-cache. No full requested.
+
+P5 main bench1244 collected exact38 (14native+24crash) with original test files/ASTs equal historical62c454. Actual imports Runtimebecfe and Agentcba425, client+lock+fixture custody pass. Its proposed command targeted the automatically recycled worker and used a different interpreter than actualservice; first return1253 corrects integration:runtime and actualservice collection, no body. No new child/schema/realm/HTTP or Farm route.
+
+App1240 terminal16138 counts consumed:19251 VitestPASS; Node257PASS38FAIL26SKIP. Source-proven34 regressions remain under App owners and must be fixed regardless of core label. D55b all8 gestures core and D59 cut applied. Existing final-source custody remains Agent/App working-service handback; no obsolete Farm requirements are introduced. Source-only Runtimeproducer input remains fulfilled. Runtime service custody repair1244 and core-five source1250 are active. No duplicate source author or original run.
