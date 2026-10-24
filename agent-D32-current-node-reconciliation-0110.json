@@ -12,20 +12,25 @@
     "source_tags": {
       "ours": 267,
       "pre-existing": 0
-    }
+    },
+    "reconciliation_source_head": "b61cebe8e0d6e062f15da922f3812d7b6718f12e",
+    "source_map_commit": "4762f59f7855b63d41e1b361391a304b4a0e74c9"
   },
   "reconciliation": {
     "exact_unique_entries": 267,
     "exact_unique_ids": 267,
     "exact_unique_phase_rows": 267,
-      "counts": {
-        "proven_passed": 136,
-        "active_owner": 76,
-        "deferred_cut_visible": 0,
-        "genuinely_unowned": 55
-      },
+    "counts": {
+      "proven_passed": 136,
+      "active_owner": 131,
+      "deferred_cut_visible": 0,
+      "genuinely_unowned": 0
+    },
     "pass_count_is_enumerated_node_membership_not_author_named_total": true,
-    "deferred_cut_visible_scope_is_separate_from_node_pass_credit": true
+    "deferred_cut_visible_scope_is_separate_from_node_pass_credit": true,
+    "assigned_source_gaps": 7,
+    "unassigned_minimum_source_gaps": 0,
+    "owner_status_does_not_credit_passes": true
   },
   "visible_scope_disposition": {
     "D14": "unchanged, unskipped, visibly failing/deferred relational timing; no PASS credit",
@@ -113,93 +118,63 @@
       "result": "2 passed in 2.79s",
       "head": "45cecae7b",
       "report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-P4-symbol-integrated-0023/report.md"
-    }
-  },
-  "unowned_gaps": {
-    "AGENT-SDK-REMAINDER": {
-      "description": "SDK/timeline remainder has no current board owner.",
-      "files": [
-        "tests/sdk/test_capture_closure_source.py",
-        "tests/sdk/test_timeline_commit_graph_roots.py",
-        "tests/sdk/test_timeline_composed_schema.py",
-        "tests/sdk/test_timeline_current_union_schema.py",
-        "tests/sdk/test_timeline_helper_capture.py",
-        "tests/sdk/test_timeline_normal_publish.py",
-        "tests/sdk/test_timeline_occurrence_delete_provider.py",
-        "tests/sdk/test_timeline_persistence.py",
-        "tests/sdk/test_timeline_publish_connection.py",
-        "tests/sdk/test_timeline_restructure.py",
-        "tests/sdk/test_timeline_restructure_guarded_runtime.py"
-      ],
-      "nodes": [
-        "tests/sdk/test_capture_closure_source.py::test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies[False]",
-        "tests/sdk/test_capture_closure_source.py::test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies[True]",
-        "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_created_child_stages_reload_inverse_redo_exact_closure",
-        "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-False-child]",
-        "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-True-child]",
-        "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-False-child]",
-        "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-True-child]",
-        "tests/sdk/test_timeline_composed_schema.py::test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden",
-        "tests/sdk/test_timeline_current_union_schema.py::test_closed_union_operation_inventory_is_exactly_the_supported_cohort",
-        "tests/sdk/test_timeline_helper_capture.py::test_conflicts_and_uncaptured_edits_never_write[same]",
-        "tests/sdk/test_timeline_helper_capture.py::test_contiguous_helpers_keep_sequential_steps[False]",
-        "tests/sdk/test_timeline_helper_capture.py::test_contiguous_helpers_keep_sequential_steps[True]",
-        "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[collection]",
-        "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[same]",
-        "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[word-source]",
-        "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[+1s]",
-        "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[None]",
-        "tests/sdk/test_timeline_helper_capture.py::test_genuine_anchor_capture_has_exact_source_scope_and_base_pair",
-        "tests/sdk/test_timeline_helper_capture.py::test_helper_lost_ack_retries_exact_request",
-        "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[after]",
-        "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[commands]",
-        "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[hash]",
-        "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[reads]",
-        "tests/sdk/test_timeline_helper_capture.py::test_nudge_restart_merges_peer_other_clip",
-        "tests/sdk/test_timeline_normal_publish.py::test_nudge_disjoint_clips_merge_onto_peer_head",
-        "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_changed_key_payload_and_force_never_write",
-        "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_exact_retry_and_narration_resume[1]",
-        "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_exact_retry_and_narration_resume[2]",
-        "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_preserves_complete_closure_and_followups",
-        "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_recovers_narration_before_flight",
-        "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-0]",
-        "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-1]",
-        "tests/sdk/test_timeline_persistence.py::test_a_discard_in_one_process_leaves_the_next_process_with_no_working_copy",
-        "tests/sdk/test_timeline_persistence.py::test_a_truncated_temp_file_is_never_read_as_the_working_copy",
-        "tests/sdk/test_timeline_persistence.py::test_a_writer_that_dies_holding_the_lock_does_not_block_the_next_writer",
-        "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head",
-        "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_refuses_a_clip_both_sides_changed",
-        "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
-        "tests/sdk/test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param",
-        "tests/sdk/test_timeline_publish_connection.py::test_a_publish_with_a_client_writes_through_that_client",
-        "tests/sdk/test_timeline_publish_connection.py::test_a_publish_with_no_client_writes_through_the_connection_it_opens",
-        "tests/sdk/test_timeline_restructure.py::test_cli_restructure_commits_the_complete_equivalent_bundle_and_followups",
-        "tests/sdk/test_timeline_restructure.py::test_restructure_reconciles_narration_without_republishing_the_cut",
-        "tests/sdk/test_timeline_restructure.py::test_restructure_retries_narration_before_a_flight_exists",
-        "tests/sdk/test_timeline_restructure.py::test_restructure_retries_the_original_commit_after_lost_ack",
-        "tests/sdk/test_timeline_restructure.py::test_restructure_reuses_an_existing_chapter_root",
-        "tests/sdk/test_timeline_restructure.py::test_three_way_merge_works_on_the_stored_form",
-        "tests/sdk/test_timeline_restructure_guarded_runtime.py::test_fixture_restructure_caller_refuses_mismatched_original_closure_without_writes[historical]"
-      ],
-      "acceptance_command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=.:/home/user/work/wt/rt-pin-8ea0766f ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-8ea0766f ASTRID_RUNTIME_SOURCE_ROOT=/home/user/work/wt/rt-pin-8ea0766f /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_capture_closure_source.py::test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies[False] tests/sdk/test_capture_closure_source.py::test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies[True] tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_created_child_stages_reload_inverse_redo_exact_closure tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-False-child] tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-True-child] tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-False-child] tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-True-child] tests/sdk/test_timeline_composed_schema.py::test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden tests/sdk/test_timeline_current_union_schema.py::test_closed_union_operation_inventory_is_exactly_the_supported_cohort tests/sdk/test_timeline_helper_capture.py::test_conflicts_and_uncaptured_edits_never_write[same] tests/sdk/test_timeline_helper_capture.py::test_contiguous_helpers_keep_sequential_steps[False] tests/sdk/test_timeline_helper_capture.py::test_contiguous_helpers_keep_sequential_steps[True] tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[collection] tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[same] tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[word-source] tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[+1s] tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[None] tests/sdk/test_timeline_helper_capture.py::test_genuine_anchor_capture_has_exact_source_scope_and_base_pair tests/sdk/test_timeline_helper_capture.py::test_helper_lost_ack_retries_exact_request tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[after] tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[commands] tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[hash] tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[reads] tests/sdk/test_timeline_helper_capture.py::test_nudge_restart_merges_peer_other_clip tests/sdk/test_timeline_normal_publish.py::test_nudge_disjoint_clips_merge_onto_peer_head tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_changed_key_payload_and_force_never_write tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_exact_retry_and_narration_resume[1] tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_exact_retry_and_narration_resume[2] tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_preserves_complete_closure_and_followups tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_recovers_narration_before_flight tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-0] tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-1] tests/sdk/test_timeline_persistence.py::test_a_discard_in_one_process_leaves_the_next_process_with_no_working_copy tests/sdk/test_timeline_persistence.py::test_a_truncated_temp_file_is_never_read_as_the_working_copy tests/sdk/test_timeline_persistence.py::test_a_writer_that_dies_holding_the_lock_does_not_block_the_next_writer tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_refuses_a_clip_both_sides_changed tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history tests/sdk/test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param tests/sdk/test_timeline_publish_connection.py::test_a_publish_with_a_client_writes_through_that_client tests/sdk/test_timeline_publish_connection.py::test_a_publish_with_no_client_writes_through_the_connection_it_opens tests/sdk/test_timeline_restructure.py::test_cli_restructure_commits_the_complete_equivalent_bundle_and_followups tests/sdk/test_timeline_restructure.py::test_restructure_reconciles_narration_without_republishing_the_cut tests/sdk/test_timeline_restructure.py::test_restructure_retries_narration_before_a_flight_exists tests/sdk/test_timeline_restructure.py::test_restructure_retries_the_original_commit_after_lost_ack tests/sdk/test_timeline_restructure.py::test_restructure_reuses_an_existing_chapter_root tests/sdk/test_timeline_restructure.py::test_three_way_merge_works_on_the_stored_form tests/sdk/test_timeline_restructure_guarded_runtime.py::test_fixture_restructure_caller_refuses_mismatched_original_closure_without_writes[historical]"
     },
-    "AGENT-ISOLATED-IMPORT-REMAINDER": {
-      "description": "Seven isolated child-import nodes are outside installed86 passed subset.",
-      "files": [
-        "tests/packs/h3_av/test_character_swap_cpu_boundary.py"
-      ],
-      "nodes": [
-        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]",
-        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[content_drift]",
-        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_content]",
-        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_revision]",
-        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[profile_hash_drift]",
-        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift]",
-        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[success]"
-      ],
-      "acceptance_command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=.:/home/user/work/wt/rt-pin-8ea0766f ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-8ea0766f ASTRID_RUNTIME_SOURCE_ROOT=/home/user/work/wt/rt-pin-8ea0766f /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift] tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[content_drift] tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_content] tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_revision] tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[profile_hash_drift] tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift] tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[success]"
+    "capture_0052": {
+      "result": "6 passed; current parameter IDs saved-ref/candidate-ref; raw D32 IDs were [False]/[True]",
+      "head": "b61cebe8e0d6e062f15da922f3812d7b6718f12e",
+      "tree": "c8b86f253be7ae46a299c1a7e79ac1aaa2b6b8bb",
+      "report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-capture-integrated-0052/report.md",
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=.:/home/user/work/wt/rt-pin-8ea0766f ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-8ea0766f ASTRID_RUNTIME_SOURCE_ROOT=/home/user/work/wt/rt-pin-8ea0766f /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_capture_closure_source.py::test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies tests/sdk/test_capture_closure_source.py::test_sdk_capture_reaches_runtime_before_any_snapshot_write",
+      "exact_node_enumeration": "current collect-only names are retained in worker log; parameter spelling differs from raw D32 IDs"
+    },
+    "r2_0042": {
+      "result": "56 passed in 58.16s; 186 strict controls passed; 14 fixture controls passed",
+      "head": "114694ad699e4d47449ecb6e8fefd71c1e26f3a7",
+      "tree": "2380610d2501707bfec865b9a299fc63cc7a95a5",
+      "report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-R2-joined-integrated-0042/report.md",
+      "command": "tests/sdk/test_timeline_commit_graph_roots.py plus the exact occurrence-delete and scalar selectors in workers/agt-F-R2-joined-integrated-0042 evidence/commands.json",
+      "exact_node_enumeration": "named selectors/file, but aggregate 56 result is not lossless per D32 node"
+    },
+    "schema_0037": {
+      "result": "6 composed-schema tests passed; 3 exact union/oracle selectors passed",
+      "head": "ca93d63bd5374a90cc61202d4f644b4b7a5480f1",
+      "tree": "5826a23e55033fd9e013ff4ed3705e73c92ddb7e",
+      "report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-joined-integrated-0037/report.md",
+      "command": "bounded tests/sdk/test_timeline_composed_schema.py plus the three named union/oracle selectors",
+      "exact_node_enumeration": "union selector is exact; composed result is an aggregate file count"
+    },
+    "helper_0107": {
+      "result": "42 neighbour passes, 3 named neighbour failures; candidate suite 14 passed",
+      "report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-helper-review-0107/report.md",
+      "command": "the helper review command set recorded in the worker brief/log; neighbour names are explicitly retained in the report",
+      "exact_node_enumeration": "three failing neighbours are named; 42 is aggregate and not D32 pass arithmetic"
+    },
+    "helper_fixture_0114": {
+      "result": "targeted test_nudge_restart_merges_peer_other_clip: 1 passed",
+      "head": "b3bb4695f37979c1fa032a1e37d56976fa6a64be",
+      "tree": "5334eb240738cfc1774d6f67f28f57033688dfe1",
+      "report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-helper-fixture-0114/report.md",
+      "command": "targeted tests/sdk/test_timeline_helper_capture.py::test_nudge_restart_merges_peer_other_clip",
+      "exact_node_enumeration": "exact selector; worker head is not the b61 integrated head"
+    },
+    "sdk_fixture_0042": {
+      "result": "14 fixture/current-pair/anchor/scope/closure controls passed",
+      "head": "114694ad699e4d47449ecb6e8fefd71c1e26f3a7",
+      "tree": "2380610d2501707bfec865b9a299fc63cc7a95a5",
+      "report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-R2-joined-integrated-0042/report.md",
+      "command": "named 14-control command retained in workers/agt-F-R2-joined-integrated-0042/log.txt",
+      "exact_node_enumeration": "selected nodes are named, but no raw full-run pass reclassification is made"
+    },
+    "g5_sdk4_c271_2149": {
+      "result": "SDK-four selectors passed; separate c271 selector passed",
+      "head": "c36ca8c94b695b0e25b7d42c89f194661f187423",
+      "tree": "50689a445fcae5ca54ba2e7e8f1d99e9a2c43c92",
+      "report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-G5-integrated-custody-review-2155/report.md",
+      "command": "the exact four SDK selectors and separate c271 selector are retained in the G5 worker log",
+      "exact_node_enumeration": "current G5 selectors are not the raw D32 restructure node IDs; owner evidence only"
     }
   },
+  "unowned_gaps": {},
   "nodes": [
     {
       "exact_node_id": "tests/core/execution/test_generic_host_actions_v3.py::test_action_failure_uses_existing_host_error[def run(value):\\n    raise RuntimeError('intentional failure')\\n-intentional failure]",
@@ -1436,63 +1411,84 @@
       "phase": "call",
       "family": "Isolated Agent child import fence",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-ISOLATED-IMPORT-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "runtime_h3_import_0118",
+      "proof_refs": [],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[content_drift]",
       "phase": "call",
       "family": "Isolated Agent child import fence",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-ISOLATED-IMPORT-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "runtime_h3_import_0118",
+      "proof_refs": [],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_content]",
       "phase": "call",
       "family": "Isolated Agent child import fence",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-ISOLATED-IMPORT-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "runtime_h3_import_0118",
+      "proof_refs": [],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_revision]",
       "phase": "call",
       "family": "Isolated Agent child import fence",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-ISOLATED-IMPORT-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "runtime_h3_import_0118",
+      "proof_refs": [],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[profile_hash_drift]",
       "phase": "call",
       "family": "Isolated Agent child import fence",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-ISOLATED-IMPORT-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "runtime_h3_import_0118",
+      "proof_refs": [],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift]",
       "phase": "call",
       "family": "Isolated Agent child import fence",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-ISOLATED-IMPORT-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "runtime_h3_import_0118",
+      "proof_refs": [],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[success]",
       "phase": "call",
       "family": "Isolated Agent child import fence",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-ISOLATED-IMPORT-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "runtime_h3_import_0118",
+      "proof_refs": [],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/packs/rendering/test_builtin_registration.py::test_real_ffmpeg_render_through_registered_backend",
@@ -1789,18 +1785,28 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_capture_0052",
+      "proof_refs": [
+        "capture_0052"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_capture_closure_source.py::test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies[True]",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_capture_0052",
+      "proof_refs": [
+        "capture_0052"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_host_bootstrap_source_identity.py::test_bootstrap_passes_inventory_identity_and_restarts_on_change",
@@ -1997,45 +2003,70 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_r2_0042",
+      "proof_refs": [
+        "r2_0042"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-False-child]",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_r2_0042",
+      "proof_refs": [
+        "r2_0042"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-True-child]",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_r2_0042",
+      "proof_refs": [
+        "r2_0042"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-False-child]",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_r2_0042",
+      "proof_refs": [
+        "r2_0042"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-True-child]",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_r2_0042",
+      "proof_refs": [
+        "r2_0042"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_commit_provider_scalar.py::test_occurrence_inverse_reuses_original_images_and_preserves_later_sibling_pins",
@@ -2052,72 +2083,110 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_schema_0037",
+      "proof_refs": [
+        "schema_0037"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_current_union_schema.py::test_closed_union_operation_inventory_is_exactly_the_supported_cohort",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_schema_0037",
+      "proof_refs": [
+        "schema_0037"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_helper_capture.py::test_conflicts_and_uncaptured_edits_never_write[same]",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_helper_0107",
+      "proof_refs": [
+        "helper_0107"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_helper_capture.py::test_contiguous_helpers_keep_sequential_steps[False]",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_helper_0107",
+      "proof_refs": [
+        "helper_0107"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_helper_capture.py::test_contiguous_helpers_keep_sequential_steps[True]",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "runtime_helper_seq_0114",
+      "proof_refs": [],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[collection]",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_helper_0107",
+      "proof_refs": [
+        "helper_0107"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[same]",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_helper_0107",
+      "proof_refs": [
+        "helper_0107"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[word-source]",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_helper_0107",
+      "proof_refs": [
+        "helper_0107"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[\"second\"]",
@@ -2134,297 +2203,436 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_helper_0107",
+      "proof_refs": [
+        "helper_0107"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[None]",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_helper_0107",
+      "proof_refs": [
+        "helper_0107"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_helper_capture.py::test_genuine_anchor_capture_has_exact_source_scope_and_base_pair",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_helper_0107",
+      "proof_refs": [
+        "helper_0107"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_helper_capture.py::test_helper_lost_ack_retries_exact_request",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_helper_0107",
+      "proof_refs": [
+        "helper_0107"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[after]",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_helper_0107",
+      "proof_refs": [
+        "helper_0107"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[commands]",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_helper_0107",
+      "proof_refs": [
+        "helper_0107"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[hash]",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_helper_0107",
+      "proof_refs": [
+        "helper_0107"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[reads]",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_helper_0107",
+      "proof_refs": [
+        "helper_0107"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_helper_capture.py::test_nudge_restart_merges_peer_other_clip",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_helper_fixture_0114",
+      "proof_refs": [
+        "helper_fixture_0114"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_normal_publish.py::test_nudge_disjoint_clips_merge_onto_peer_head",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_g234",
+      "proof_refs": [],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_changed_key_payload_and_force_never_write",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_g234",
+      "proof_refs": [],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_exact_retry_and_narration_resume[1]",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_g234",
+      "proof_refs": [],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_exact_retry_and_narration_resume[2]",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_g234",
+      "proof_refs": [],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_preserves_complete_closure_and_followups",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_fixture_0042",
+      "proof_refs": [
+        "sdk_fixture_0042"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_recovers_narration_before_flight",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_g234",
+      "proof_refs": [],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-0]",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_r2_0042",
+      "proof_refs": [
+        "r2_0042"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-1]",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_r2_0042",
+      "proof_refs": [
+        "r2_0042"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_persistence.py::test_a_discard_in_one_process_leaves_the_next_process_with_no_working_copy",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_g234",
+      "proof_refs": [],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_persistence.py::test_a_truncated_temp_file_is_never_read_as_the_working_copy",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_g234",
+      "proof_refs": [],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_persistence.py::test_a_writer_that_dies_holding_the_lock_does_not_block_the_next_writer",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_g234",
+      "proof_refs": [],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_g234",
+      "proof_refs": [],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_refuses_a_clip_both_sides_changed",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_g234",
+      "proof_refs": [],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_g234",
+      "proof_refs": [],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_g234",
+      "proof_refs": [],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_publish_connection.py::test_a_publish_with_a_client_writes_through_that_client",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_g234",
+      "proof_refs": [],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_publish_connection.py::test_a_publish_with_no_client_writes_through_the_connection_it_opens",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_fixture_0042",
+      "proof_refs": [
+        "sdk_fixture_0042"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_restructure.py::test_cli_restructure_commits_the_complete_equivalent_bundle_and_followups",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_fixture_0042",
+      "proof_refs": [
+        "sdk_fixture_0042"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_restructure.py::test_restructure_reconciles_narration_without_republishing_the_cut",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_g5_restructure_c271",
+      "proof_refs": [
+        "g5_sdk4_c271_2149"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_restructure.py::test_restructure_retries_narration_before_a_flight_exists",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_g5_restructure_c271",
+      "proof_refs": [
+        "g5_sdk4_c271_2149"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_restructure.py::test_restructure_retries_the_original_commit_after_lost_ack",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_g5_restructure_c271",
+      "proof_refs": [
+        "g5_sdk4_c271_2149"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_restructure.py::test_restructure_reuses_an_existing_chapter_root",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_g5_restructure_c271",
+      "proof_refs": [
+        "g5_sdk4_c271_2149"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_restructure.py::test_three_way_merge_works_on_the_stored_form",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_g5_restructure_c271",
+      "proof_refs": [
+        "g5_sdk4_c271_2149"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_restructure_guarded_runtime.py::test_fixture_restructure_caller_refuses_mismatched_original_closure_without_writes[historical]",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "genuinely_unowned",
+      "status": "active_owner",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing."
+      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "owner_ref": "sdk_fixture_0042",
+      "proof_refs": [
+        "sdk_fixture_0042"
+      ],
+      "proof_status": "missing_exact_node_proof_assigned_owner"
     },
     {
       "exact_node_id": "tests/stage1/test_media_handoff_render_boundary.py::test_host_derived_registry_executes_canonical_ffmpeg_executor",
@@ -2816,5 +3024,231 @@
         "cli_surface_0012"
       ]
     }
-  ]
+  ],
+  "owner_registry": {
+    "policy": "An owner assignment is not a pass. A proof is pass-crediting only when its actual result file losslessly enumerates the exact raw node ID/phase on the current source head; aggregate totals and related parameter IDs remain owner evidence only.",
+    "legacy_active_owner_rows": "The pre-existing 76 active_owner rows retain their original owner and acceptance_command fields; owner_ref is used for the reconciled rows and does not imply those legacy rows were re-authored.",
+    "assignments": [
+      {
+        "owner_ref": "sdk_capture_0052",
+        "owner": "Agent F-capture / 0052",
+        "classification": "existing_owner",
+        "proof_ref": "capture_0052",
+        "node_count": 2,
+        "exact_node_ids": [
+          "tests/sdk/test_capture_closure_source.py::test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies[False]",
+          "tests/sdk/test_capture_closure_source.py::test_sdk_capture_reference_admission_keeps_exact_source_and_dependencies[True]"
+        ],
+        "note": "current b61 proof; parameter spelling changed"
+      },
+      {
+        "owner_ref": "sdk_r2_0042",
+        "owner": "Agent F-R2 / 0042",
+        "classification": "existing_owner",
+        "proof_ref": "r2_0042",
+        "node_count": 7,
+        "exact_node_ids": [
+          "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_created_child_stages_reload_inverse_redo_exact_closure",
+          "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-False-child]",
+          "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-True-child]",
+          "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-False-child]",
+          "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-True-child]",
+          "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-0]",
+          "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-1]"
+        ],
+        "note": "aggregate named proof; no D32 pass arithmetic"
+      },
+      {
+        "owner_ref": "sdk_schema_0037",
+        "owner": "Agent F-schema / 0037",
+        "classification": "existing_owner",
+        "proof_ref": "schema_0037",
+        "node_count": 2,
+        "exact_node_ids": [
+          "tests/sdk/test_timeline_composed_schema.py::test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden",
+          "tests/sdk/test_timeline_current_union_schema.py::test_closed_union_operation_inventory_is_exactly_the_supported_cohort"
+        ],
+        "note": "bounded schema proof; no full-run arithmetic"
+      },
+      {
+        "owner_ref": "sdk_helper_0107",
+        "owner": "Agent helper review / 0107",
+        "classification": "existing_owner",
+        "proof_ref": "helper_0107",
+        "node_count": 13,
+        "exact_node_ids": [
+          "tests/sdk/test_timeline_helper_capture.py::test_conflicts_and_uncaptured_edits_never_write[same]",
+          "tests/sdk/test_timeline_helper_capture.py::test_contiguous_helpers_keep_sequential_steps[False]",
+          "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[collection]",
+          "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[same]",
+          "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[word-source]",
+          "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[+1s]",
+          "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[None]",
+          "tests/sdk/test_timeline_helper_capture.py::test_genuine_anchor_capture_has_exact_source_scope_and_base_pair",
+          "tests/sdk/test_timeline_helper_capture.py::test_helper_lost_ack_retries_exact_request",
+          "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[after]",
+          "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[commands]",
+          "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[hash]",
+          "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[reads]"
+        ],
+        "note": "42+3 neighbour result retained; three named failures stay open"
+      },
+      {
+        "owner_ref": "sdk_helper_fixture_0114",
+        "owner": "Agent helper fixture / 0114",
+        "classification": "existing_owner",
+        "proof_ref": "helper_fixture_0114",
+        "node_count": 1,
+        "exact_node_ids": [
+          "tests/sdk/test_timeline_helper_capture.py::test_nudge_restart_merges_peer_other_clip"
+        ],
+        "note": "one wrapper-only repair; no product author"
+      },
+      {
+        "owner_ref": "runtime_helper_seq_0114",
+        "owner": "Runtime helper-sequential / 0114",
+        "classification": "assigned_source_gap",
+        "proof_ref": null,
+        "node_count": 1,
+        "exact_node_ids": [
+          "tests/sdk/test_timeline_helper_capture.py::test_contiguous_helpers_keep_sequential_steps[True]"
+        ],
+        "note": "Runtime source classification/repair; no result yet"
+      },
+      {
+        "owner_ref": "sdk_fixture_0042",
+        "owner": "Agent SDK fixture / 0042",
+        "classification": "existing_owner",
+        "proof_ref": "sdk_fixture_0042",
+        "node_count": 4,
+        "exact_node_ids": [
+          "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_preserves_complete_closure_and_followups",
+          "tests/sdk/test_timeline_publish_connection.py::test_a_publish_with_no_client_writes_through_the_connection_it_opens",
+          "tests/sdk/test_timeline_restructure.py::test_cli_restructure_commits_the_complete_equivalent_bundle_and_followups",
+          "tests/sdk/test_timeline_restructure_guarded_runtime.py::test_fixture_restructure_caller_refuses_mismatched_original_closure_without_writes[historical]"
+        ],
+        "note": "14 controls do not reclassify raw full failures"
+      },
+      {
+        "owner_ref": "sdk_g234",
+        "owner": "Agent G2/G3/G4 existing owner",
+        "classification": "existing_owner",
+        "proof_ref": null,
+        "node_count": 13,
+        "exact_node_ids": [
+          "tests/sdk/test_timeline_normal_publish.py::test_nudge_disjoint_clips_merge_onto_peer_head",
+          "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_changed_key_payload_and_force_never_write",
+          "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_exact_retry_and_narration_resume[1]",
+          "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_exact_retry_and_narration_resume[2]",
+          "tests/sdk/test_timeline_normal_publish.py::test_ordinary_publish_recovers_narration_before_flight",
+          "tests/sdk/test_timeline_persistence.py::test_a_discard_in_one_process_leaves_the_next_process_with_no_working_copy",
+          "tests/sdk/test_timeline_persistence.py::test_a_truncated_temp_file_is_never_read_as_the_working_copy",
+          "tests/sdk/test_timeline_persistence.py::test_a_writer_that_dies_holding_the_lock_does_not_block_the_next_writer",
+          "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head",
+          "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_refuses_a_clip_both_sides_changed",
+          "tests/sdk/test_timeline_persistence.py::test_restart_a_fresh_process_sees_every_edit_and_the_undo_history",
+          "tests/sdk/test_timeline_persistence.py::test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param",
+          "tests/sdk/test_timeline_publish_connection.py::test_a_publish_with_a_client_writes_through_that_client"
+        ],
+        "note": "no duplicate author/body; exact D32 proof missing"
+      },
+      {
+        "owner_ref": "sdk_g5_restructure_c271",
+        "owner": "Agent G5 / c271",
+        "classification": "existing_owner",
+        "proof_ref": "g5_sdk4_c271_2149",
+        "node_count": 5,
+        "exact_node_ids": [
+          "tests/sdk/test_timeline_restructure.py::test_restructure_reconciles_narration_without_republishing_the_cut",
+          "tests/sdk/test_timeline_restructure.py::test_restructure_retries_narration_before_a_flight_exists",
+          "tests/sdk/test_timeline_restructure.py::test_restructure_retries_the_original_commit_after_lost_ack",
+          "tests/sdk/test_timeline_restructure.py::test_restructure_reuses_an_existing_chapter_root",
+          "tests/sdk/test_timeline_restructure.py::test_three_way_merge_works_on_the_stored_form"
+        ],
+        "note": "G5 proof selectors differ from raw D32 restructure IDs"
+      },
+      {
+        "owner_ref": "runtime_h3_import_0118",
+        "owner": "Runtime isolated child-import / 0118",
+        "classification": "assigned_source_gap",
+        "proof_ref": null,
+        "node_count": 7,
+        "exact_node_ids": [
+          "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]",
+          "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[content_drift]",
+          "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_content]",
+          "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_revision]",
+          "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[profile_hash_drift]",
+          "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift]",
+          "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[success]"
+        ],
+        "note": "source gap only; no product author"
+      }
+    ],
+    "manager_additional_owners": [
+      {
+        "owner_ref": "sdk_helper_fixture_0114",
+        "owner": "Agent helper fixture 0114",
+        "source_head": "b3bb4695f37979c1fa032a1e37d56976fa6a64be",
+        "proof_state": "one targeted wrapper repair; not integrated b61"
+      },
+      {
+        "owner_ref": "runtime_helper_seq_0114",
+        "owner": "Runtime helper-sequential 0114",
+        "proof_state": "assigned source gap; no result file"
+      },
+      {
+        "owner_ref": "agent_reader_port_0112",
+        "owner": "Agent reader port 0112",
+        "source_head": "92baf961275baa42514bc120351ea512bfbe6e6b",
+        "proof_state": "merged port owner; integrated proof is separate"
+      },
+      {
+        "owner_ref": "agent_transition_port_0118",
+        "owner": "Agent transition port 0118",
+        "source_head": "92baf961275baa42514bc120351ea512bfbe6e6b",
+        "proof_state": "branch-only exact current port; no D32 pass credit"
+      },
+      {
+        "owner_ref": "app_image_audit_0112_review_0116",
+        "owner": "App IMAGE audit 0112 / review 0116",
+        "proof_state": "source-causal audit only; no accepted write"
+      },
+      {
+        "owner_ref": "runtime_external_capture_0110",
+        "owner": "Runtime external capture 0110",
+        "proof_state": "source-authority input still missing; no Agent product author"
+      },
+      {
+        "owner_ref": "viewing_render_wire_6",
+        "owner": "Viewing render-wire six-node owner",
+        "proof_state": "assigned classification; no Agent product author"
+      },
+      {
+        "owner_ref": "viewing_aba_repair_0118",
+        "owner": "Viewing ABA repair 0118",
+        "proof_state": "assigned source repair; strict Runtime guard remains"
+      }
+    ]
+  },
+  "assigned_source_gaps": {
+    "RUNTIME-H3-IMPORT-0118": {
+      "description": "Seven isolated character_swap_cpu_boundary import-source nodes have a Runtime 0118 owner; no qualifying proof/result exists yet and no Agent product author is assigned.",
+      "owner_ref": "runtime_h3_import_0118",
+      "files": [
+        "tests/packs/h3_av/test_character_swap_cpu_boundary.py"
+      ],
+      "nodes": [
+        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[checkout_drift]",
+        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[content_drift]",
+        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_content]",
+        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[missing_revision]",
+        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[profile_hash_drift]",
+        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[revision_drift]",
+        "tests/packs/h3_av/test_character_swap_cpu_boundary.py::test_cpu_host_readiness_identity_reaches_real_installed_guard[success]"
+      ],
+      "acceptance_command": "Exact seven-node pytest command from the retained D32 reconciliation gap; source attribution first, then finite targeted proof on the qualified checkout.",
+      "proof_status": "missing"
+    }
+  }
 }
