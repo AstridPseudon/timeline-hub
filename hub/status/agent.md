@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T09:46:02Z | dispatcher heartbeat 4s | live 6 (sol 1, luna 5, other 0) | busy30 12 | status age 0m -->
-# agent board, 2026-10-24T09:45:33Z
+<!-- agent | 2026-10-24T09:48:38Z | dispatcher heartbeat 9s | live 7 (sol 1, luna 6, other 0) | busy30 12 | status age 0m -->
+# agent board, 2026-10-24T09:47:46Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -41,7 +41,7 @@
 | F-G4-occupancy | Faithful historical shared placement | Sol / Luna | Runtime image diagnosis | merged | Qualification0424; review0430 PASS | Last-owner and production session passed2 in14.05s onRuntime2b49. Two separate source-copy redo guards remain unqualified; no Runtime family credit. | 12701589ab; home9f2da582a6 |
 | F-authoring-neighbors | Restore seven publication behaviors | Luna | First home qualification | merged | Port0256; integrated0302 PASS | Actual66d:60 passed in6.41s, stable home origins and clean tree. Eleven migrations,seven original neighbors and42 reorder/history controls. | 66d85b5db8 |
 | F-authoring shared alias | Preserve untouched sibling identity under D44 | Luna | Explicit scope decision D44 | merged | Author0414; independent0418 PASS | Original1 passed in4.96s; other10 predicates byte-identical. Exact edited fork and untouched source pins verified; D44 behavior entered in authored deletion ledger. | 5d3a147bcc; home5c97e35b05 |
-| F-authoring-ABA | Complete guarded undo and ABA | Sol / Luna | Runtime completion and replay boundary | blocked:runtime | Viewing0859; Runtime peer0906 | Original20732 failed assertion42;43–59 unrun. Viewing found no Agent product defect; Runtime post-provider replay owns next diagnosis. | Source0c2 / Runtimebecfe |
+| F-authoring-ABA | Complete guarded undo and ABA | Sol / Luna | Meaningful request capture | review | Runtime 0923; Agent capture 0945 | Primary cause unknown after source review. Original 20732 failed assertion42; 43–59 unrun. Capture proposal is under review. | Source 0c2; Runtime becfe |
 | F-D32-render-wire | Six original SDK wire results | Luna / service | Existing installed child | merged | Service 27934 | Six original cases passed in 41.48s; body hashes, 19 source identities, import origins and read-only profile retained. | 521c source |
 | F-helper-sequential | Repair sequential replay map | Sol / Luna | Integrated proof passed | merged | Source184dc; review0224; integrated0232 | Actual8a8d:12focused, Ruff2145 and mypy1909 passed; vendor/artifact passed. Original True and False passed on exact reviewed source. | 184dc20a70 |
 | F-D32-h3-import | Seven guards on current installed child | Luna | Independent result review passed | merged | Qualified0508; review0517 PASS | Seven originals passed once on child3b5c; installedba8f and current9cd relevant bytes match. Exact scope retained for next count delta. | Source9cd; installedba8f |
@@ -146,6 +146,8 @@
 | R1 popup pin repair | Preserve gate client bytes with source fix | Sol / Luna | 079 failure reviewed; source in review | doing | agt-R1-popup-079-backport-sol-0943 | Draft D41 branch from 079 now; qualify exact client and schema bytes. No selected pin changes before review. | Base 079; source 4f6 |
 
 | R1 static gates | Tighten exact static baseline | Luna / Luna | Source 4f6 independently passed | review | Author 0940; independent 0948 | Parent and current both 2143; zero new diagnostics. Normal generated baseline and strict mypy pass; cumulative review due 10:05. | Baseline branch 0940 |
+
+| F provider undo | Classify six existing source failures | Luna | Exact before and after packets | doing | agt-F-provider-undo-classify-0952 | Four provider and two recipe undo cases fail on base and candidate. Outside original 267 map; no count change. Due 10:15. | Home ba55; source 4f6 |
 
 P1: Historical GO recorded. P4 and P5 retain their named scopes; final freeze reruns all gates. App and Proof own P2/P3.
 Integration: ba55ac1e9e adds only reviewed offline transport tests, integrated0916 PASS17. Runner67d5 static PASS; product0ff3 independently20PASS; earlier0c2 joined123 retains its scope. Original20732 failed at lost-ack error code.
