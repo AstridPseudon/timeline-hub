@@ -194,9 +194,12 @@ def run(payload_path: str | Path, *, captured=None) -> int:
     if captured is not None:
         selected, contents = captured
         chosen = selected["definition"]
-        if (chosen["capability_id"] != capability_id
+        source_root = Path(admission["source_root"])
+        if (chosen["capability_kind"] != kind or chosen["capability_id"] != capability_id
                 or chosen["definition_digest"] != _capability_digest(definition_payload)
-                or Path(admission["source_root"]) != Path(selected["source"]["root"])):
+                or (source_root != Path(selected["source"]["root"])
+                    if kind == "executor" else
+                    source_root != (Path(selected["source"]["root"]) / chosen["path"]).parent)):
             raise ValueError("external worker definition differs from Runtime selection")
     _verify_action_admission(definition_payload, admission)
     expected_source = str(admission.get("source_digest") or "")
@@ -232,6 +235,7 @@ def run(payload_path: str | Path, *, captured=None) -> int:
         result = run_orchestrator(
             _request_object(request_payload, kind=kind, capability_id=capability_id),
             OrchestratorRegistry([validate_orchestrator_definition(definition_payload)]),
+            _captured_source=captured,
         )
 
     result_path = Path(str(payload["result_path"]))
