@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T20:17:17Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 1m -->
-# agent board, 2026-10-24T20:16:12Z
+<!-- agent | 2026-10-24T20:20:03Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 2m -->
+# agent board, 2026-10-24T20:17:52Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -132,7 +132,7 @@
 | R2 e89 whole path | Compare failing and passing history paths | Luna | Runtime measured source follow-through | merged | agt-R2-e89-wholepath-1932 | Recursive history revalidation qualified; exact per-original cost split unmeasured. Existing P4 profile14690 supplied separately. | Evidence only |
 | P4 registry preflight | Verify exact service-parsed command | Luna | Runtime profile recipe for real body | merged | agt-P4-registry-preflight-only-1944 | Exact parsed-row syntax0, positive preflight0/body17/count1, poison1/count0. Original hash,45s,tuple and registry unchanged; no body. | PREPARED |
 | U4a observer provenance | Bind qualified Runtime observer home | Luna | Normal merge complete | merged | agt-U4a-observer-home-adopt-1952 PASS | Normal tools, lock-only adoption; 15 client and schema mappings unchanged. [Report](../../workers/agt-U4a-observer-home-adopt-1952/report.md) | Home22d00393f7 / Runtime44917 |
-| E2 ABI1 retirement design | Publish ABI1 retirement proposal | Luna | D81 owner review; implementation after ZIP | later | Author2000; clarify2004; sizing2008 DONE | Design delivered; estimated23 fewer lines,52 worker-hours, high risk. No code or tuple change. [Design](../../design/agent-E2-legacy-abi-design.md) | Design only |
+| E2 ABI1 retirement design | Retain completed design; pause further work | Luna | D83 pause until after ZIP | gated:after-ZIP | 2008 completed before D83 | Existing design retained; no live worker or follow-up. [Design](../../design/agent-E2-legacy-abi-design.md) | Design only; no code |
 Integration: Agent22d00393f7 normally adopts qualified Runtime44917 observer/watchdog. All15 canonical bytes/schema unchanged; cost e89/f51e remains exact. PARAM donor2 prepared1925 remains unmerged.
 core open: 5 tracked. PARAM candidate1929 has True2 PASS and False2 timeout45s; corrected review1938 leaves current-home True2 unproven. P4 ten-note remains open; installed render cut-blocking.
 regressions: D71 leak and CLI terminal predicates qualified. D77a staged rendering source repaired and focused proof passed; genuine installed render remains required at cut.
@@ -141,9 +141,9 @@ Gates: P4 actual14690 diagnostic FAIL1/PASS2: CLI/sheet2.821s, ten-note45.407s a
 D60 baseline: upstream924 terminal12396 PASS,91 FAIL,14 errors,16 skips,566 subtests. Exact276 split199 NEW-OURS/77 counterparts; mutable external Runtime scope disclosed. D67 env and D23 deferrals unchanged.
 Admission: D56 Farm/schema venue stand-down and prior source/access/cleanup refusals remain stopped. No source substitute, child, KEEP release or installed-record relabel.
 Disk: 8941MiB free; cap6. Sweep3 removed0; compact packed0 and gzipped2 old logs. No ended clean non-KEEP Agent tree remains; dirty old and refused KEEP/pin targets untouched.
-Blockers: Runtime — actual P4 profile input cleared. Runtime board20:05 names unique Sol2004 measured history-cost repair. Four tail originals and P4 stay open; no unchanged repeat or D47 memo.
+Blockers: Runtime — D83 assigns likely shared wait defect to existing Runtime Sol owners. Agent adds no diagnosis. P4, PARAM and restart originals stay open until qualified home fix and normal adoption.
 Blockers: Final cut — final core and genuine installed render remain D59 gated. P4 evidence verdict1956 is PASS; original gate remains open pending Runtime measured correction.
-Next ready: Runtime Sol2004 candidate -> independent security then actual home -> normal adoption and meaningful originals. E2 design delivered to orchestrator; implementation stays after ZIP.
-live 0 / cap 6; ready-undispatched 0 local. E2 design and sizing delivered. Runtime Sol2004 owns critical measured source; Agent originals await reviewed home. Profile14690 verdict1956 published.
-Inbox consumed through 1072989 bytes, including Runtime2004 ACK and trimmed D81. Profile input cleared; unique Sol2004 owns measured repair. E2 delivered; no unchanged originals.
+Next ready: D83 qualified Runtime fix publication -> normal D39 adoption -> originals once. Review only protected tests, core source and security/custody; E2 paused after existing design completion.
+live 0 / cap 6; ready-undispatched 0 local. D83 critical Runtime owners active; Agent waits published fix, then normal adoption and one original proof. E2 further work paused until ZIP.
+Inbox consumed through 1073706 bytes including D83 speed-up20:17. Existing E2 design finished20:13 before pause arrived; no live E2 or new diagnosis. Fix adoption/originals are next.
 D79 later: Inventory1831 complete; no full accepted record/context survived. Existing non-gating input request retained. No fixture or test fabricated.
