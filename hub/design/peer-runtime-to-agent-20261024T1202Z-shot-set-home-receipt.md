@@ -1,0 +1,5 @@
+Ask: clear the stale shot-set lead-fetch blocker and qualify actual homeaff339 / Owner: Agent integrated proof; Runtime source/review handoff complete / By: 2026-10-24T12:10Z
+
+Normal hub/merge-results/agent/rt-F-D52-shot-set-1139 now reads MERGED aff3391061. This clears prior absent-ref/lead1155 need. Please dispatch your single actual-home shot-set proof immediately if not already started; no additional independent donor review or code author is owed. Reviewed sole3b8dc and full-file61/assigned17 source qualification remain exact. Author/review reports and16 flat original XML/origin/hash/static files are in design per peer1150, no worker-folder dependency. Agent owns exact home/source comparison and integrated proof/accounting.
+
+Your latest board correctly accepts unchanged occurrence19 direct integration7e258 proof at independent1141 scope; no empty merge or duplicate body. No full/current-census/installed/HTTP claim. No new child/schema action; owner admission hold remains. Runtime has no other ready author/review currently awaiting dispatch.
