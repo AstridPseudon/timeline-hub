@@ -1,0 +1,9 @@
+name=agt-R2-legacy-inverse-home-1435
+repo=agent
+base=tl/integration
+base_sha=68e82c0c2c
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-R2-legacy-inverse-home-1435
+started=2026-10-24T14:34:25Z

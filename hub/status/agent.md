@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T14:42:05Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 15 | status age 1m -->
+<!-- agent | 2026-10-24T14:44:40Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 0m -->
 # agent board, 2026-10-24T14:40:48Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -83,7 +83,9 @@
 
 | R2 forward provider | Preserve omitted forward created claims | Runtime / Luna | Runtime auth source owner | blocked:runtime | Classify1433; peer1440 | Source points to Runtime auth comparing omitted created with derived track claims. Two originals stay FAIL; no new body or confirmed regression. | Agent68e82 / e68 |
 
-| F home13 custody | Preserve actual home result transcript | Luna | Existing raw worker log | doing | Receipt1440 | Claimed TMP XML no longer exists. Preserve verbatim retained XML, logs and source facts; no original file custody invention or rerun. | Home68e82 |
+| F home13 custody | Preserve actual home result transcript | Luna | Existing raw worker log | merged | Receipt1440 PASS | All13 XML outcomes preserved as exact transcript bytes with ranges and hashes. Original TMP file loss disclosed; flat design handoff published. | Home68e82 |
+
+| F final core suite | Prepare full core collection and invocation | Luna | Current source, D61 body held | doing | Collect1443 | Collect only; includes live negatives and visible D13/D23 cases. No body or registry change. | Home68e82 |
 
 Integration: Agent68e82c0c2c includes U2 final924, normal e68 vendor adoption and independently reviewed legacy inverse fix. Proposal inverse actual-home13 passed. D61 consumer9460a443 retains all three reviewed donor blobs, held for qualified Runtime producer then normal D39 and current-home qualification. No generated code or lock edited by manager.
 core open: 7 tracked: four D61 fork checkpoint failures, one genuine D13 input UNKNOWN, two forward-provider originals outside276. Proposal inverse now closed by actual-home13. Two D23 timing originals remain unchanged visibly failing and deferred. Final tuple proof remains pending.
@@ -91,7 +93,7 @@ regressions: 0 proven; env78, deferred2, pre-existing0, dead-scope0, unproven196
 D60 baseline: Sole meaningful upstream924 full1621 remains running near89 percent. Earlier14973 and16315 are zero-body setup/preflight only;25359 partial superseded. Prepared lossless276 comparison1420 resumes on authentic terminal XML. No duplicate full or heavy proof.
 Gates: P1/P2/P3 App; P4 Agent; P5 and Composition main. App U3b/D39 already merged under D56. P4 candidate317c collected3; final source binding and body follow qualified D61 source/client and sole heavy slot. No old pin, Farm or child work.
 Admission: Existing schema/source403 and automatic refusal remain stopped. D56 drops Farm venue access work. No alternate source, child, overlay, acquisition or reconstruction requested.
-Disk: About9.8GB free. No eligible finished clean Agent worktrees remain; earlier dirty/refused targets untouched. Compaction packed0 and compressed14 old logs. Sweep3 is running. Cleanup target15GB remains opportunistic; sole existing heavy continues.
+Disk: About9.8GB free. No eligible finished clean Agent worktrees remain; earlier dirty/refused targets untouched. Compaction packed0 and compressed14 old logs. Sweep3 removed2 old directories. Cleanup target15GB remains opportunistic; sole existing heavy continues.
 Blockers: Runtime — D61 authenticated recorder ABI producer remains unqualified. Consumer security review complete at exact source scope; final producer/D39 still required.
 Blockers: Runtime — source classification1433 assigns two forward track.create claim failures to auth equality. Peer1440 requests existing unique source owner; two originals remain open.
 Blockers: Agent — sole upstream924 full1621 terminal needed for exact276 comparison; D13 genuine seven-key input remains UNKNOWN under existing admission hold.
