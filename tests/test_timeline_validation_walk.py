@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import copy
 import sys
+import threading
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 from test_timeline_schema_resolution import _errors, _validators
 from test_timeline_validation_cost import _packet
 
+from runtime_protocol import timeline_commit_validation as validation
 from runtime_protocol.errors import ValidationError
 from runtime_protocol.timeline_commit_validation import (
     finite_json,
@@ -71,6 +73,30 @@ def test_finite_walk_preserves_key_checks_and_reverse_child_error_order():
         finite_json({"first": (), "last": cycle})
     with pytest.raises(ValidationError, match="only finite JSON"):
         finite_json([cycle, ()])
+
+
+def test_finite_walk_snapshots_siblings_before_synchronized_nested_mutation(
+    monkeypatch,
+):
+    value = [0.0, [1.0]]
+    nested_float_reached = threading.Event()
+    release_nested_float = threading.Event()
+    original_isfinite = validation.math.isfinite
+
+    def synchronized_isfinite(item):
+        if item == 1.0:
+            nested_float_reached.set()
+            assert release_nested_float.wait(5)
+        return original_isfinite(item)
+
+    monkeypatch.setattr(validation.math, "isfinite", synchronized_isfinite)
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        worker = pool.submit(finite_json, value)
+        assert nested_float_reached.wait(5)
+        value[0] = float("inf")
+        release_nested_float.set()
+        worker.result(timeout=5)
 
 
 def test_concurrent_validation_rechecks_independent_mutations_without_changing_inputs():

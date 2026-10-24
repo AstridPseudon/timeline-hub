@@ -34,7 +34,9 @@ def finite_json(value) -> None:
             active.add(id(item))
             # Keep only container frames; scalar children need no pending tuples.
             parents.append((item, children))
-            children = reversed(item.values() if kind is dict else item)
+            # Capture sibling references when entering a container, matching
+            # the eager pending stack without allocating one tuple per child.
+            children = reversed(tuple(item.values() if kind is dict else item))
             break
         else:
             if not parents:
