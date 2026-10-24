@@ -47,7 +47,7 @@ def _write_audio(path: Path, *, voice: bool = False) -> Path:
 @pytest.fixture
 def duck_runtime(tmp_path, real_runtime, monkeypatch):
     """The real-runtime fixture owns daemon teardown, including failed host setup."""
-    daemon = real_runtime()
+    daemon = real_runtime(authoring_profile="astrid")
     monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "support"))
     host = GenericPackHost(
         pack_roots=[PACK], client=RuntimeProtocolClient(daemon.endpoint, daemon.worker_token),

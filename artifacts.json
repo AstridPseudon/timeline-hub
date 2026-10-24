@@ -54,7 +54,7 @@
     "astrid/packs/astrid_motion/rendering/elements/effects/am-tweet/element.yaml": "sha256:be1a09967880f5f2e3fcb91eed17317a73bbe34eaf13f433907c5a0eeb9744f5",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-type/component.tsx": "sha256:2d9fdb33fb995d5fc049cac431048b3a7a82e13d863eae2fd13c17533ce032b9",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-type/element.yaml": "sha256:8a78e98f4cf2fefd54f2559123e49c6f9dc396865144cf110a8a280cce4eec8b",
-    "astrid/packs/astrid_motion/rendering/elements/effects/am-type/position-keys.ts": "sha256:2e7775b541c786975d3c0267da237eec5fef38b4bcbb08f3ae77c7c09a952fb7",
+    "astrid/packs/astrid_motion/rendering/elements/effects/am-type/position-keys.ts": "sha256:2965b083cfc0035e46bc82658c09806a98f50038400f4047c6b8c541f5809c9b",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-ui-sketch/component.tsx": "sha256:8e1219af8d926dd352507d6cdb2dddba1b876bfbe95ac5c580c6d0644f7a8b90",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-ui-sketch/element.yaml": "sha256:e7281271f6a17d75100e5266877330501198f328c0f2972f281e1d0a5c109ae8",
     "astrid/packs/local/rendering/elements/boundary.ts": "sha256:cc8a8700a08cb1991f00bc1f0d231aa7f256227fb86cfe474f530827ae010fe7",
@@ -168,5 +168,5 @@
     "schemas/public-boundary/fixtures/redaction.json": "sha256:d827821a8b1c1bd9b50fa695550deeb770175e283b9949635d1c85ee03bece46"
   },
   "producer": "astrid-agent",
-  "version": "sha256:ecfd340e25dbf31d9ebdae49040a6bebcaa9dddefa25bdd821f84fbf252a6a91"
+  "version": "sha256:dbb057d0066dab5d2ef6af58fbae3350b011da50e51a3f667414f1f5f7d1e879"
 }
