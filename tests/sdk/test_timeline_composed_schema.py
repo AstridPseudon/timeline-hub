@@ -39,6 +39,24 @@ PROVIDER_ONLY_ARGS = {
     },
     'occurrence.place-shared': {'occurrence_id': 'copied-occurrence', 'on': 0},
     'occurrence.fork': {'shot_id': 'shot-fork'},
+    'timeline.restructure': {},
+    'clip.duplicate-media': {
+        'id': 'copied-media',
+        'old_media': {
+            'asset': 'old-asset',
+            'generation_id': 'old-generation',
+            'variant_id': 'old-variant',
+            'object_id': 'sha256:' + '0' * 64,
+            'catalog_digest': 'sha256:' + '1' * 64,
+        },
+        'media': {
+            'asset': 'new-asset',
+            'generation_id': 'new-generation',
+            'variant_id': 'new-variant',
+            'object_id': 'sha256:' + '2' * 64,
+            'catalog_digest': 'sha256:' + '3' * 64,
+        },
+    },
 }
 
 
