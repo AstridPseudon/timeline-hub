@@ -1,5 +1,7 @@
 """Installer staging must consume the schema artifact pinned by Remotion."""
 
+import base64
+import hashlib
 import json
 import tarfile
 from pathlib import Path
@@ -7,6 +9,11 @@ from pathlib import Path
 from astrid.installer.backend import Backend
 
 ROOT = Path(__file__).parents[1]
+
+
+def _integrity(path: Path) -> str:
+    digest = base64.b64encode(hashlib.sha512(path.read_bytes()).digest()).decode("ascii")
+    return "sha512-" + digest
 
 
 def test_staging_installs_the_npm_locked_schema_before_declaring_services(tmp_path, monkeypatch):
@@ -129,25 +136,35 @@ def test_remotion_lock_pins_the_immutable_composition_public_entry():
             assert "package/" + target.removeprefix("./") in files
 
 
-# D66 restore of upstream-924 selector 10444.  This exact positive remains
-# visible because no approved deletion ledger entry covers the upstream pin.
+# D72 migration of upstream-924 selector 10444 to the approved local
+# Composition artifact and Runtime-owned canonical schema.
 def test_d66_upstream_remotion_lock_pins_the_transitive_schema_package():
     package = json.loads((ROOT / "remotion/package.json").read_text(encoding="utf-8"))
     lock = json.loads((ROOT / "remotion/package-lock.json").read_text(encoding="utf-8"))
     composition = lock["packages"]["node_modules/@banodoco/timeline-composition"]
-    schema = lock["packages"]["node_modules/@banodoco/timeline-schema"]
+    composition_spec = package["dependencies"]["@banodoco/timeline-composition"]
+    artifact = ROOT / "remotion" / composition_spec.removeprefix("file:")
 
-    assert package["dependencies"]["@banodoco/timeline-composition"] == (
-        "https://github.com/banodoco/timeline-composition/archive/refs/tags/v0.0.6.tar.gz"
+    assert composition_spec.startswith("file:artifacts/")
+    assert composition["version"] == "0.0.14"
+    assert composition["resolved"] == composition_spec
+    assert composition["integrity"] == _integrity(artifact)
+    assert composition["integrity"] == (
+        "sha512-Ajl7lyCbJqbbOpHKEr2xlhFw85hWyirlTU1Dq63BNNUdHYfqgzLXljmudP359uKH6yBxSBMPTDoHLxgiDt65oQ=="
     )
-    assert composition["dependencies"]["@banodoco/timeline-schema"] == (
-        "https://github.com/banodoco/timeline-schema/archive/refs/tags/v0.0.1.tar.gz"
+
+    runtime_lock = json.loads((ROOT / "runtime.lock.json").read_text(encoding="utf-8"))
+    schema_pin = runtime_lock["files"]["astrid/core/timeline/schema/timeline-config.schema.json"]
+    canonical_schema = ROOT / "astrid/core/timeline/schema/timeline-config.schema.json"
+    assert schema_pin["from"] == "contract/schemas/timeline-config.schema.json"
+    assert schema_pin["sha256"] == "sha256:" + hashlib.sha256(canonical_schema.read_bytes()).hexdigest()
+    assert schema_pin["sha256"] == (
+        "sha256:4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd"
     )
-    assert schema["version"] == "0.0.1"
-    assert schema["resolved"] == (
-        "https://github.com/banodoco/timeline-schema/archive/refs/tags/v0.0.1.tar.gz"
-    )
-    assert schema["integrity"] == (
-        "sha512-m7oUjUV+q1dPb78N6+5B3iayTXkV/WBrQLxNDrlt32j4GXY2sQOIOwpGBw4kNjjngVpSwSaAGneQKUWCgUS8lQ=="
-    )
+
+    assert "node_modules/@banodoco/timeline-schema" not in lock["packages"]
+    assert "node_modules/@banodoco/timeline-theme-2rp" not in lock["packages"]
+    assert "@banodoco/timeline-schema" not in package["dependencies"]
+    with tarfile.open(artifact) as archive:
+        assert not any("timeline-schema" in member.name for member in archive.getmembers())
 
