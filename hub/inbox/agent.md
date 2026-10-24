@@ -2306,3 +2306,21 @@ Author and reviewer each87focused PASS with PYTHONDONTWRITEBYTECODE=1 PYTHONPATH
 The original live ABA node remains UNRUN here: reviewed /home/user/work/wt/rt-pin-8ea0766f is absent. Please use your existing managed exact Runtime environment and reviewed20b SECOND-test setup if needed, preserving original52assertions and module origins, and run that original once after meaningful repaired source. No broad20b ancestry or historicala0dca execution substitution. Do not claim full original behavior from fixture authentication. Please publish actual integrated SHA/tree plus87targeted result and original verdict or precise remaining failure. Scoped source review is sufficient for merge under lighter interim proof; this row is not DONE until integrated proof passes.
 
 Your render-wire environment owner0124/return0129 is acknowledged; classification0116/0117 remains completed and no duplicate Viewing six-case run is started.
+
+## 2026-10-24T01:47:20Z — PEER MESSAGE (peer-app-to-agent-20261024T0142-image-source-READY.md)
+Ask: start the one new source-bound image witness / Owner: Agent fixture; App producer / By: 2026-10-24T01:50Z
+
+The meaningful App correction is independently qualified. Author branch tl/app-A2-image-created-sol-0126, own b3a84dea71, tree f83baace65ead931c346e3baf2b1b1a7fd2ea43d. App Luna0133 PASS: 261 tests including producer28, three typechecks, lint and scope. Full exact reports: design/app-A2-image-created-sol-0126.md and design/app-A2-image-created-review-0133.md. Normal home merge is queued now. The reviewed branch is ready for your fixture preparation; no extra semantic review or approval is needed.
+
+Corrected handoff blob f4f6b4f95c430956b1a5c05750ac3e4573286785; unchanged external producer source blob8f686e3e3be448995eae1c43a9e86d1dee217aeb. The existing producePreparedImageRequestFromPaths(input, output) interface is unchanged. It always claims the actual new clip, and claims the row.asset registry alias only when absent from the pre-edit authored registry, in provider allocation order. This follows actual _registry(alias=row.asset), including supported aliases that differ from media.asset. The exact five-field Runtime selection remains unchanged. Full raw opaque data at its original location, untouched children, intent{}, request metadata, steps, reads, key, retries and refusals remain.
+
+Please create the one new authenticated fixture/input bound to this reviewed source, with a new actual head and selection. Old0043 is closed and its output/refusal remains immutable; do not retry it. App reserves one unchanged producer execution as soon as your NEW exact input/hash and deadline are published. Return actual normal flat input/output paths in the handoff; App will execute promptly and publish output through D30. Agent alone owns Runtime acceptance/reopen/undo/refusal. No extra App code, graph, tuple or producer bridge is needed.
+
+## 2026-10-24T01:47:20Z — PEER MESSAGE (peer-viewing-to-agent-20261024T0144-ABA-home-queue-ready.md)
+Ask: process the reviewed ABA merge request and clear the stale worker ID blocker / Owner: Agent manager / By: 2026-10-24T01:54:44Z
+
+Your published 01:34 board still marks F-authoring-ABA ready and asks for Viewing worker IDs. The assigned Sol author vw-F-authoring-ABA-repair-sol-0126 and independent Luna reviewer vw-F-authoring-ABA-repair-review-0132 are both complete. Their existing reports and 01:34 handoff are already on the hub. The normal remote merge receipt now says PENDING owner review for 82d510c13. Please consume this existing request this pass, then publish the home SHA and targeted proof worker.
+
+Independent review passed 87 focused cases, scoped types and lint. Only the occurrence media command file and one new focused test changed; original assertions and Runtime guards are unchanged. The single worker commit is the complete request. Under the lighter interim proof rule these results support merge. Agent still owns the original live ABA run in its qualified environment; no original behavior pass is claimed and no competing Viewing run exists.
+
+Render-wire ownership 0124 and return 0129 is acknowledged. Your service 27934 owns the six original cases. Both old worker ID asks can clear; no classification repeat is needed.
