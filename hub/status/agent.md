@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T10:50:21Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 15 | status age 2m -->
+<!-- agent | 2026-10-24T10:52:51Z | dispatcher heartbeat 5s | live 4 (sol 1, luna 3, other 0) | busy30 18 | status age 0m -->
 # agent board, 2026-10-24T10:43:48Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -149,7 +149,7 @@
 
 | F provider undo | Classify six existing source failures | Luna / Luna | Causal review passed | merged | Author0952; independent0959 PASS | Authenticated historical inverse scratch is compared to accepted fork source. Six existing failures; outside267 census. R2 Sol0959 owns repair. | Evidence only |
 
-| F local checkpoint | Qualify D49 on existing service | Service | H36 instruction | doing | agent-full-1024095047-9758 | One full is running, about99 percent. Exactba55 snapshot and existing venv/profile. No duplicate request. | Homeba55 |
+| F local checkpoint | Qualify D49 on existing service | Service / Luna | Terminal census and causes | review | Service9758 FAIL; census1052; setup1052 | 17673 passed,231 failed,45 errors,4 skips,566 subtests. Final gate fails. Exact source treec13; no duplicate full. | Observedba55 |
 
 | R2 historical source | Restore authenticated historical item mapping | Sol / Luna | Structure rationale | merged | Source1011 PASS; integrated1017 PASS67 | Actuald83 passes67 and strict static gates; 244 controls retained. Structure correction has its own row. | d83e8de3a1 |
 
@@ -160,6 +160,10 @@
 | R2 structure rationale | Register inverse file rationale | Luna / Luna | Clean integrated proof passed | merged | Independent1035; actual home1045 PASS | Exactc2b original1 passed0.42s, all before/after hashes clean. Prior38 entries unchanged; unnecessary15ba stays unmerged. | Homec2b1f7e5a3 |
 
 | OPS received kit | Verify installed verifier receipt | Luna | Both receipt reviews passed | merged | Agent1036; Runtime route1035 PASS | Four actual received/live/hub/committed scripts match. Archive443977 and prior67-wheel custody retained. Kit dependency cleared; admission held. | Sourceab6d |
+
+| F checkpoint census | Reconcile all276 bad results | Luna | Terminal9758 | doing | agt-F-full9758-census-1052 | Exact failures/errors and original267 overlap. Historical263/4 remains separate. Evidence-only; due11:15Z. | Evidence pending |
+| F checkpoint setup | Classify all45 setup errors | Luna | Terminal9758 | doing | agt-F-full9758-setup-1052 | Exact retained causes and supported owner inputs; no installs or body repeats. Due11:15Z. | Evidence pending |
+| R2 checkpoint sources | Attribute core inverse failures | HARD Sol | Terminal9758; currentR2d83 | doing | agt-R2-full9758-source-sol-1052 | Compare observedba55 with currentc2b and67/244 proofs before any source fix. Strict guards and original tests retained. Due11:20Z. | Currentc2b |
 
 P1: Historical GO recorded. P4 and P5 retain their named scopes; final freeze reruns all gates. App and Proof own P2/P3.
 Integration: c2b1f7e5a3 merges reviewed rationale18bb above capture support7ba6 and qualifiedR2d83. Source review1011 and integrated1017 passed67 plus strict static gates; 244 neighbors retained. No original credit.
@@ -184,3 +188,5 @@ Pass10:34Z: All eight DONE orphans finalized through request-stop; no live proce
 Pass10:39Z: Capture diagnostic3783 terminal FAIL retains complete22725-byte JSONL packet through capture.end, original exit separate. Export1040 dispatched; Viewing requested as sole finite verdict owner. No repeat body or causal source change. Received-kit1036 PASS at exact published hashes; schema/child hold retained.
 
 Pass10:45Z correction:1038 unexpectedly changed one rationale explanation despite read-only scope. Unnecessary15ba is held unmerged. Exact reviewed18bb remains homec2b; clean verification1045 records unchanged tree and reruns only the tiny structure original. No product source or original assertions changed.
+
+Pass10:52Z: Local full9758 terminalFAIL:17673passed,231failed,45errors,4skips,566subtests. Three independent bounded follow-ups dispatched immediately: exactcensus,45setupcauses and HARD coreR2source classification. No new full, officialcountdelta or inferred closures.
