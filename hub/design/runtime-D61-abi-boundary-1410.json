@@ -1,0 +1,15 @@
+{
+  "status": "coordination_required_before_schema_regeneration; validation_source_not_yet_sound",
+  "base": "e68cf231641db98a72805a586b51ab5c4fae2c16",
+  "persisted_slot": "proposed timeline_commit_history.metadata_json.recorder_abi, cross-checked against timeline.commit.accepted payload.recorder_abi in existing hashed event chain",
+  "history_json_path": "$.items[*].recorder_abi (private port.history_entry(publication_id)[recorder_abi])",
+  "accept_time_validated_source": "No sound complete-coverage discriminator currently exists. Agent CommitPatch.v2 selects from sealed request doc.patch or label/steps/merge/reads, but Runtime _is_v2_request is annotation detection only and validate_bindings skips absent physical_ref. A single Recorder schema accepts both modes. Proposed new validation must establish complete binding coverage, not merely classify annotation presence.",
+  "covered_validation_record_commitment": "Existing records_digest commits exact records in hashed accepted event; proposed accepted event must additionally commit exact recorder_abi plus sealed request_hash, publisher/scope, and acceptance context. Replay/history must compare metadata authority and validate coverage again.",
+  "backward_behavior": "Only pre-change commits with no authority field/event fact fall back to ABI1; missing one side of a new authority pair must reject. Genuine ABI1 remains accepted.",
+  "schema_change": true,
+  "wire_change": true,
+  "client_change": true,
+  "exact_schema_impact": "contract/schemas/timeline-commit.json $defs.HistoryEntry currently additionalProperties:false; optional recorder_abi integer enum [1,2] required. No extensible authenticated history slot exists. Event payload is generic JSON. No request/accepted-result/preview change proposed. Generated Runtime DTO/bundle, Python/TypeScript client DTOs, schema digest/artifact manifest and OpenAPI derived digest stamps need D39 coordination.",
+  "agent_private_consumer_seam": "Agent commit.py _check_reservations restore_native_fork uses authenticated history entry recorder_abi; AcceptedRecords/load_boundary already receives entry. Consumer must compare candidate records with authenticated original history and refuse stripped/FULL REWRITE when original recorder_abi=2. No Agent edits here.",
+  "remaining_contract_fact": "Must establish Runtime-validated complete recorder coverage while retaining existing accepted ABI1 and annotated fixture behavior. Neither absence of physical fields nor caller flags establish ABI1."
+}
