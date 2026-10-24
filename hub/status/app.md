@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T04:16:32Z | dispatcher heartbeat 8s | live 2 (sol 1, luna 1, other 0) | busy30 15 | status age 5m -->
-# app board, 2026-10-24T04:11Z
+<!-- app | 2026-10-24T04:19:10Z | dispatcher heartbeat 13s | live 4 (sol 2, luna 2, other 0) | busy30 16 | status age 0m -->
+# app board, 2026-10-24T04:17Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -23,7 +23,7 @@
 | P3 | Original Gate-5 journey | App service; Proof verdict | D42 reviewed fix and caller | doing | Test3362; Runtime0322 and App0325 | FAIL exit2/147s at outbox readiness. Gate5 not run. No repeat. | Fixed App804 |
 | A2-parent-media-closure | Preserve untouched child closure | Sol; Luna review | Resolved | merged | app-A2-parent-media-integrated-0035 | [299 tests, types, lint and external producer passed.](/home/user/timeline-hub/hub/design/app-A2-parent-media-integrated-0035.md) | 1b0428db7d |
 | A2-image-created | Declare genuine image creations | Sol; Luna review | Review 0133 PASS | merged | app-A2-image-created-sol-0126 | Independent 261 tests and producer 28, three types and lint passed. Clip and new authored registry alias claims match provider. Joined proof 0150 passed 448 tests, three types and lint. | b3a84dea71 / 1c5cc47bf6 |
-| A4-image-live | Complete source-bound image witness | Luna producer; Agent fixture | Agent fixture helper correction | blocked:agent | Agent0348; App0320 complete | Actual request accepted and retried; raw opaque and three children preserved. Later foreign helper failed; inverse and refusals not run. | Fixed1c5cc / outputd4b3 |
+| A4-image-live | Complete source-bound image witness | Luna producer; Agent fixture | Agent fixture review and proof PASS | doing | app-A4-image-producer-standby-0419 | New producer reserved before fresh fixture. Agent helper passed 17 plus 7 controls. Old0330 acceptance remains partial and immutable. | Fixed1c5cc / outputd4b3 retained |
 | A2-video-caller | Normalized video duplication | Sol; Luna review | Resolved | merged | app-A2-video-integrated-2350 | 217 integrated tests and three typechecks passed. Agent provider is merged; no old raw-positive parity claim. | a714a4cc11 |
 | U3b-draft | Final upstream composition | Sol; Luna review | P2/P3 and final freeze | gated:freeze | app-U3b-current-join-2053 | Reviewed branch stays isolated. Refresh live upstream refs at freeze; do not merge during pinned proof. | Branch only |
 | F-App-full | Full suite before retirement | Test service; Luna review | Resolved for historical head | merged | app-F-D19-current-full-1230 | 18,819 tests passed on exact 12ef. A final qualification follows actual retirement and freeze. | 12ef320545 |
@@ -52,20 +52,20 @@
 | readiness-D42-coalesce | Reuse same-head pending basis read | Sol; Luna review | Independent0355 PASS | merged | app-readiness-element-join-sol-0351 | Exact reviewed tree integrated; joined332 tests and independent108, three types/lint passed. No live run claimed. | e492d963ba |
 | readiness-whole-path | Independently investigate client to server | Sol; Luna review | Review0336 PASS | merged | app-readiness-whole-path-review-0336 | [Source path and causal limits independently verified; missing clock and await joins remain.](../../design/app-readiness-whole-path-review-0336.md) | Report only |
 | A4-final-census | Verify zero reachable legacy writers | Luna; independent review | Review0345 FAIL | doing | Popup source0349 assigned | Original zero-writer claim withdrawn. Actual scoped popup fallback identified; independent element proof remains valid. | Report only |
-| A2-popup-wrapper | Move scoped popup saves onto A2 outbox | Sol; Luna review | Author 0349 complete | review | app-A2-popup-wrapper-review-0408 | Author 340 tests, three types and lint passed. Genuine mounted path and missing-authority refusal covered; independent review active. | 6efdb11993 |
+| A2-popup-wrapper | Bind scoped popup saves to verified source | Sol; Luna review | Review 0408 FAIL | doing | app-A2-popup-binding-return-sol-0417 | Context and missing source-head guards require repair. Original wrapper held; cumulative independent review follows first return. | 6efdb11993 held |
 | readiness-D42-caller | Prepare qualified D42 caller | Sol | Qualified Runtime memo proof pin | blocked:runtime | app-readiness-D42-caller-sol-0348 | Draft24+28+4 and4 extra controls passed; exact old receipts checked. Shared rows unchanged; final pin and keyed child required. | Draft only |
 | P2-parent-outbox | Reproduce parent move dispatch boundary | Sol | Existing source controls | doing | app-P2-parent-transition-resume-sol-0411 | Mirrored parent passes; child and top-level forms reproduce preappend refusals. Original historical trigger remains unknown. | Held controls |
 | P2-popup-target | Correct rendered popup target lookup | Luna; Proof review | Independent 0359 PASS | blocked:app2 | Proof request 0408 | Real projector proves occurrence-prefixed ID. Proof owns only rendered selector change; raw command and canonical assertions stay. | Report only |
 | P2-five-static | Check five original not-run gestures | Luna; independent review | Review 0357 PASS | merged | app-P2-five-review-0357 | Static review finds transition clears and single-occurrence placement gaps. Authors 0411 and 0410 assigned. Asset and swap still need live proof. | Report only |
 | P2-parent-transition | Preserve closure on parent and transition edits | Sol | Wrapper 6efdb joined by manager | doing | app-P2-parent-transition-resume-sol-0411 | Committed wrapper dependency delivered. Parent moves and both transition clears retain verified child closure; review follows. | Work in progress |
 
-| P2-single-child-placement | Use occurrence carrier for child placement | Luna | Committed wrapper 6efdb | doing | app-A3-single-child-placement-0410 | Genuine single-occurrence path emits patch while original requires occurrence.add-media. Provider-only scope; parent worker owns handoff. | Work in progress |
+| P2-single-child-placement | Use occurrence carrier for child placement | Luna; independent review | Author 0410 complete | review | app-A3-single-child-review-0416 | Author 341 tests, three types and lint passed. Independent command-shape, creation-claim and authority review active. Wrapper remains held. | 561a792a51 |
 Safety: Historical cleanup, graph and publication denials stand. Managers write boards, briefs and shared reports; workers own product changes.
 Delivery legacy subset: Keep transcriptAssociateCapture.ts and its unchanged 397-line, 40-assertion test, plus required helpers, under D31.
 Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-handoff-0029.md), [image review](/home/user/timeline-hub/hub/design/app-A2-image-created-review-0133.md), [A4 cut map](/home/user/timeline-hub/hub/design/app-A4-current-cut-census-0042.md).
 Integration: e492d963ba; joined 332 and independent 108 tests, three types and lint passed. Element migration is integrated; original old804 element failure is not directly reproduced.
 Blockers: Runtime — Review0357 found another warm-cache closure bypass. Correction0403 and whole-path audit0403 are active; pin and HTTP release remain held.
 Blockers: Freeze — U3b waits P2/P3 and final freeze.
-Next ready: Wrapper review0408; parent and transition author0411; child placement0410; Proof popup lookup request0408. Qualify D42 caller once Runtime pin and HTTP release arrive. No repeat now.
+Next ready: Wrapper binding return0417; parent and transition author0411; child review0416; Proof popup lookup request0408. Qualify D42 caller once Runtime pin and HTTP release arrive. No repeat now.
 Disk: 11.06 GiB available before this pass cleanup. No finished non-KEEP clean worktree remains. Prior dirty U3 and compact refusals stand; sweep3 removed zero directories. Freed zero GB.
-Blockers: Agent — Image helper0348 must qualify before a future producer reservation. Actual0330 output and partial acceptance remain immutable.
+
