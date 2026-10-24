@@ -29,7 +29,7 @@ vi.mock('./sections/PreferencesSection', () => ({ PreferencesSection: () => <div
 
 import { SettingsModal } from './SettingsModal';
 
-type Status = 'connected' | 'connecting' | 'blocked' | 'not_running' | 'update_needed';
+type Status = 'connected' | 'connecting' | 'needs_permission' | 'blocked' | 'not_running' | 'update_needed';
 
 function connection(status: Status, overrides: Record<string, unknown> = {}) {
   const state = status === 'connected'
@@ -42,7 +42,6 @@ function connection(status: Status, overrides: Record<string, unknown> = {}) {
     connectedBefore: true,
     isBooting: false,
     isChecking: false,
-    awaitingConnect: false,
     realmName: status === 'connected' ? 'My Studio' : null,
     schemaDigest: status === 'connected' ? SCHEMA_DIGEST : null,
     connect: vi.fn(),
@@ -108,11 +107,11 @@ describe('SettingsModal Astrid status', () => {
   });
 
   it('offers Connect while the browser has not been asked, and nothing else checks then', () => {
-    const value = connection('connecting', { awaitingConnect: true });
+    const value = connection('needs_permission');
     connectionMock.value = value;
     const section = renderSettings();
 
-    expect(within(section).getByRole('status')).toHaveTextContent(STATUS_COPY.connecting);
+    expect(within(section).getByRole('status')).toHaveTextContent(COPY.permission.title);
     expect(within(section).getByText(withBrowser(COPY.permission.sentence))).toBeInTheDocument();
     expect(within(section).queryByText('Runtime')).toBeNull();
     fireEvent.click(within(section).getByRole('button', { name: COPY.permission.connect }));

@@ -2,6 +2,8 @@
  * "Take me in": the landing page's "use it right here" click already says the person wants the app, so the boot gate
  * should go straight to Chrome's local-network prompt instead of explaining it first. The click sets a one-shot flag in
  * `sessionStorage` (it survives the navigation into the app and goes with the tab); the gate takes it on mount.
+ * Hosted onboarding also arms the gate from its durable `connection` phase through `connectOnEntry`: a newly opened
+ * installed-app window shares that phase in localStorage, but cannot rely on the installing tab's sessionStorage.
  */
 const AUTO_CONNECT_KEY = 'astrid.runtime.autoConnect';
 

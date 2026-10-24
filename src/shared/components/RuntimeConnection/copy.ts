@@ -10,9 +10,10 @@ import { detectPlatform } from '@/shared/hooks/platformInstall/platformDetection
  * Rules for this file:
  * - Screen headings, body text, command lines and Copy labels live here.
  * - Routine recovery text says Astrid; first-run explanation names Runtime so people understand what they are connecting.
- * - Straight apostrophes only: the journey matches `Astrid isn't running` exactly.
- * - Gate states name their screens: connecting, blocked, set_up, not_running, update_needed and connected.
- *   Permission, pending and phone screens come from browser context. Polling never adds a checking indicator.
+ * - Straight apostrophes only: the journey matches card headings exactly.
+ * - Gate states name their screens: connecting, needs_permission (permission/pending), blocked, phone, unsupported, not_running,
+ *   update_needed and connected.
+ *   Permission/pending share a state; device and browser capability are decided by the provider. Polling never adds a checking indicator.
  * - The setup, repair and update screens all show the command that matches the state and OS, and nothing about opening a terminal.
  * - Each phrase the journey looks for (`tests/e2e/local/direct-journey.spec.ts`) appears in one element of its
  *   panel only, so a text locator finds exactly one match.
@@ -38,16 +39,59 @@ export const ASTRID_COMMANDS = {
   windowsUpdate: '& ([scriptblock]::Create((irm https://astrid.haus/install.ps1))) --update',
 } as const;
 
+export const ASTRID_REPO_URL = 'https://github.com/banodoco/astrid-app';
+const LOCAL_SETUP_DIRECTORY = 'astrid-app';
+
 /** The fully local setup: the editor's source, how to start it, and where it serves. */
 export const LOCAL_SETUP = {
   macLinuxInstaller: ASTRID_COMMANDS.macLinux,
   windowsInstaller: ASTRID_COMMANDS.windows,
-  repoUrl: 'https://github.com/banodoco/astrid-app',
-  cloneCommand: 'git clone https://github.com/banodoco/astrid-app.git',
+  repoUrl: ASTRID_REPO_URL,
+  repoDirectory: LOCAL_SETUP_DIRECTORY,
+  cloneCommand: `git clone ${ASTRID_REPO_URL}.git`,
+  changeDirectoryCommand: `cd ${LOCAL_SETUP_DIRECTORY}`,
+  installDependenciesCommand: 'npx -y npm@11 ci',
   startCommand: 'npm run dev:local',
   /** The first-open address resumes at connection: `entryFor` sends `?connect=1` straight there. */
   openUrl: 'http://127.0.0.1:5180/tools/video-editor?connect=1',
 } as const;
+
+export interface LocalSetupStep {
+  readonly line: string;
+  readonly command?: string;
+  readonly commandLabel?: string;
+  readonly hint?: string;
+}
+
+/** The concise, human-readable version of the fully local setup, using the same commands as the agent handoff. */
+export function localSetupSteps(): readonly LocalSetupStep[] {
+  const L = LOCAL_SETUP;
+  const windows = detectPlatform() === 'windows';
+  return [
+    {
+      line: `Install Astrid: in ${windows ? 'PowerShell' : 'Terminal'} run`,
+      command: windows ? L.windowsInstaller : L.macLinuxInstaller,
+      commandLabel: 'Copy the install command',
+      ...(windows ? { hint: 'If pasting gives nothing, select the command and press Ctrl+C.' } : {}),
+    },
+    { line: "Install Git and Node.js 20 (20.19 or newer), if you don't have them." },
+    {
+      line: 'Get the editor:',
+      command: [L.cloneCommand, L.changeDirectoryCommand, L.installDependenciesCommand].join('\n'),
+      commandLabel: 'Copy the editor setup commands',
+    },
+    {
+      line: 'Start it, and leave that terminal open:',
+      command: L.startCommand,
+      commandLabel: 'Copy the start command',
+    },
+    {
+      line: 'Open this address in your browser. The editor opens with your project.',
+      command: L.openUrl,
+      commandLabel: 'Copy the address',
+    },
+  ];
+}
 
 export type WindowMode = 'app-window' | 'browser-tab';
 
@@ -56,10 +100,10 @@ export function localSetupInstructions(): string {
   return [
     'Please set up Astrid to run fully on this computer, including the editor, so I can change Astrid itself. Do the work yourself and verify the result.',
     `1. Install or repair Astrid with the official installer. Fetch and read the script before running it. macOS/Linux: \`${L.macLinuxInstaller}\`. Windows PowerShell: \`${L.windowsInstaller}\`. Keep my existing workspace, projects, media, credentials, and agent instructions. The installer may open astrid.haus; finish this setup in the local editor below.`,
-    `2. Get the editor's code from ${L.repoUrl}. Install Git and Node.js 20.19 or newer in the Node 20 release line if needed. Clone with \`${L.cloneCommand}\`, then \`cd astrid-app\` and \`npx -y npm@11 ci\`. If a clone already exists, preserve its changes and update it to \`main\` without discarding work; use \`git pull --ff-only origin main\` when it can fast-forward and resolve any divergence before continuing.`,
+    `2. Get the editor's code from ${L.repoUrl}. Install Git and Node.js 20.19 or newer in the Node 20 release line if needed. Clone with \`${L.cloneCommand}\`, then \`${L.changeDirectoryCommand}\` and \`${L.installDependenciesCommand}\`. If a clone already exists, preserve its changes and update it to \`main\` without discarding work; use \`git pull --ff-only origin main\` when it can fast-forward and resolve any divergence before continuing.`,
     `3. In that clone, run \`${L.startCommand}\` in a terminal that stays open. This starts the source editor on port 5180, checks the installed Runtime and selected workspace, and connects through the editor's own server. Keep the existing hosted door for https://astrid.haus; do not change its origin or turn it off. If the launcher reports a problem, diagnose it and repair through the official installer when needed. Do not delete or replace my workspace or credentials.`,
-    `4. Open ${L.openUrl} in my browser and confirm it shows Connected. This first-open address resumes at connection because I already completed the tour. Verify \`/api/runtime/v1/health\` and \`/api/runtime/v1/realm\` through http://127.0.0.1:5180 and confirm the editor uses my existing Runtime workspace. No browser local-network permission is needed for this route. Do not claim success if any check could not be run; tell me the actual result.`,
-    `5. Tell me the absolute path of the clone so you or I can edit it. Source edits appear through Vite's normal development workflow. To start later: \`cd\` to that clone and run \`${L.startCommand}\`, then open the local address it prints. To stop the editor: Ctrl+C in its terminal. That stops the editor and proxy, plus any Runtime it started; a Runtime it attached to keeps running for astrid.haus. To update the editor: stop it, save or commit local source changes, then run \`git pull --ff-only origin main\`, \`npx -y npm@11 ci\`, and \`${L.startCommand}\`. To update the Runtime and agent: use \`${ASTRID_COMMANDS.macLinuxUpdate}\` on macOS/Linux, or \`${ASTRID_COMMANDS.windowsUpdate}\` in Windows PowerShell, then restart the editor. Read the update script before running it. The local editor can open offline after its dependencies are installed; online models and providers still need internet.`,
+    `4. Open ${L.openUrl} in my browser. The editor opens with my project. This first-open address resumes at connection because I already completed the tour. Verify \`/api/runtime/v1/health\` and \`/api/runtime/v1/realm\` through http://127.0.0.1:5180 and confirm the editor uses my existing Runtime workspace. No browser local-network permission is needed for this route. Do not claim success if any check could not be run; tell me the actual result.`,
+    `5. Tell me the absolute path of the clone so you or I can edit it. Source edits appear through Vite's normal development workflow. To start later: \`cd\` to that clone and run \`${L.startCommand}\`, then open the local address it prints. To stop the editor: Ctrl+C in its terminal. That stops the editor and proxy, plus any Runtime it started; a Runtime it attached to keeps running for astrid.haus. To update the editor: stop it, save or commit local source changes, then run \`git pull --ff-only origin main\`, \`${L.installDependenciesCommand}\`, and \`${L.startCommand}\`. To update the Runtime and agent: use \`${ASTRID_COMMANDS.macLinuxUpdate}\` on macOS/Linux, or \`${ASTRID_COMMANDS.windowsUpdate}\` in Windows PowerShell, then restart the editor. Read the update script before running it. The local editor can open offline after its dependencies are installed; online models and providers still need internet.`,
   ].join('\n');
 }
 
@@ -80,7 +124,7 @@ export const UPDATE_ROUTES = {
 } as const;
 
 /** A complete handoff: retain an existing workspace and diagnose failures before retrying. */
-export function agentInstructions(mode: CommandMode, pageOrigin: string, windowMode: WindowMode = 'browser-tab'): string {
+export function agentInstructions(mode: CommandMode, pageOrigin: string): string {
   const windows = detectPlatform() === 'windows';
   const command = installCommand(mode);
   return [
@@ -95,7 +139,8 @@ export function agentInstructions(mode: CommandMode, pageOrigin: string, windowM
       : null,
     'If installation or startup fails, read the log path printed by the installer, diagnose the actual cause and resolve it before retrying. Keep the existing workspace selection and data root connected; do not infer that no installation exists merely because the browser cannot reach it.',
     `The installer verifies Astrid and opens astrid.haus. Tell me to choose Allow if Chrome or Edge asks, and confirm Astrid shows Connected. Setup guide: ${SETUP_GUIDE_URL}`,
-    `When Astrid is running, open it ${windowMode === 'app-window' ? 'in the installed Astrid app if it exists, otherwise https://astrid.haus in my browser' : 'at https://astrid.haus in my browser'}.`,
+    "If the installer couldn't open a browser, open https://astrid.haus/?connect=1.",
+    'My astrid.haus tab connects by itself once Astrid answers; if it shows a Connect button, click it.',
   ].filter((part): part is string => part !== null).join('\n\n');
 }
 
@@ -123,6 +168,7 @@ export interface RuntimeConnectionCopy {
     readonly connect: string;
     readonly allowTitle: string;
     readonly allowDetails: string;
+    readonly installTitle: string;
     /** The browser's prompt is open: nothing to press, so no button. */
     readonly pending: Message & { readonly pointer: string };
   };
@@ -131,18 +177,15 @@ export interface RuntimeConnectionCopy {
     readonly steps: readonly [string, string];
     readonly footer: string;
   };
-  /**
-   * Nothing answers and this browser has never connected. The browser can't tell a new computer from a cleared
-   * browser, a private window or another browser, so the screen never says Astrid isn't installed.
-   */
-  readonly setUp: Message;
-  /** Nothing answers on a return visit, or the gateway answered on this page. */
+  /** Repeated probes went unanswered with permission granted. */
   readonly notRunning: Message;
   readonly updateNeeded: Message;
   /** Lead-in above the update screen when a chat reply from this computer's Astrid is out of date. */
   readonly chatNeedsUpdate: string;
   /** A phone can never reach Astrid on a computer: the link goes there instead. */
   readonly phone: Message & { readonly button: string; readonly copied: string };
+  /** A desktop browser that cannot request local-network access. */
+  readonly unsupported: Message & { readonly button: string; readonly copied: string };
   /** Screen-reader text of the status container while connected, and the line App settings shows then. */
   readonly connected: { readonly sentence: string };
   /** Connected, and the health check answers too slowly: Astrid is running under load. The card clears itself. */
@@ -182,9 +225,10 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
 
   permission: {
     title: 'Connect to Astrid on this computer',
-    sentence: '{browser} will ask to reach your computer. Choose Allow.',
+    sentence: '{browser} will ask to let astrid.haus reach Astrid on this computer. Choose Allow.',
     connect: 'Connect',
     allowTitle: 'What does this allow?',
+    installTitle: "Don't have Astrid yet?",
     allowDetails: "This page can talk to Astrid running on your computer, and nothing else. Astrid only lets it work with your Astrid projects, media and jobs. It can't open your other files or apps. Chat messages go to your own agent on this computer. Your work never passes through our servers.",
     pending: {
       title: 'Choose Allow in {browser}',
@@ -204,14 +248,9 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
     footer: 'Come back here and it opens by itself.',
   },
 
-  setUp: {
-    title: 'Set up Astrid on this computer',
-    sentence: 'Your coding agent can set Astrid up, or reconnect the one you have.',
-  },
-
   notRunning: {
-    title: "Astrid isn't running",
-    sentence: 'Give these instructions to your coding agent to start it again. Your work is kept.',
+    title: "Astrid isn't answering on this computer",
+    sentence: "Your coding agent can start it, or install it if it isn't there yet.",
   },
 
   updateNeeded: {
@@ -227,6 +266,13 @@ export const RUNTIME_CONNECTION_COPY: RuntimeConnectionCopy = {
     sentence: 'Astrid runs on a computer, so open this page there.',
     button: 'Send the link to your computer',
     copied: 'Link copied',
+  },
+
+  unsupported: {
+    title: 'Open Astrid in Chrome or Edge',
+    sentence: 'This browser cannot connect to Astrid on your computer.',
+    button: 'Copy link for Chrome or Edge',
+    copied: 'Copied. Open it in Chrome or Edge.',
   },
 
   connected: {

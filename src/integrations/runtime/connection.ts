@@ -109,11 +109,15 @@ export function isRuntimeMode(apiBaseUrl: string | null | undefined): boolean {
 /** The boot gate's view of the connection; each status names one screen. */
 export type RuntimeConnectionState =
   | { status: 'connecting' }
+  /** Permission has never been asked: the page has no evidence about this computer. */
+  | { status: 'needs_permission' }
   | { status: 'connected'; realm: Pick<Realm, 'realm_id' | 'display_name'> }
-  /** Two failed readings without evidence of an existing install. */
-  | { status: 'set_up' }
-  /** Astrid connected before, or the gateway answered on this page. */
+  /** Granted permission and at least two unanswered probes. */
   | { status: 'not_running' }
+  /** This device cannot run Astrid locally. */
+  | { status: 'phone' }
+  /** This browser cannot request local-network access. */
+  | { status: 'unsupported' }
   /** Runtime schema is not accepted by this hosted app. */
   | { status: 'update_needed' }
   /** The browser's local-network permission is denied. */

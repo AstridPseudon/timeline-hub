@@ -21,7 +21,7 @@ vi.mock('./WelcomeRunMode', () => ({ WelcomeRunMode: ({ onContinue, runMode, set
 vi.mock('./WelcomeLocalSetup', () => ({ WelcomeLocalSetup: ({ onBack }: { onBack: () => void }) => <><h1>Have your agent set it up</h1><button onClick={onBack}>Back</button></> }));
 import { WelcomeFlow } from './WelcomeFlow';
 beforeEach(() => {
-  localStorage.clear(); spies.record.mockClear(); spies.connected.mockClear();
+  localStorage.clear(); sessionStorage.clear(); spies.record.mockClear(); spies.connected.mockClear();
   vi.spyOn(navigator, 'platform', 'get').mockReturnValue('MacIntel');
   vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Macintosh) Chrome/131.0.0.0 Safari/537.36');
   window.history.replaceState({}, '', '/tools/video-editor');
@@ -64,6 +64,14 @@ it('returns from the local screen with local selected, including after loading t
   fireEvent.click(screen.getByText('Back'));
   expect(await screen.findByText('How do you want to run Astrid?')).toBeInTheDocument();
   expect(screen.getByText('local')).toBeInTheDocument();
+});
+
+it('keeps a saved local setup when an installer connection handoff arrives', async () => {
+  localStorage.setItem('astrid:welcome-v1', 'local');
+  render(<WelcomeFlow entry="connection" />);
+  expect(await screen.findByText('Have your agent set it up')).toBeInTheDocument();
+  expect(localStorage.getItem('astrid:welcome-v1')).toBe('local');
+  expect(spies.connected).not.toHaveBeenCalled();
 });
 
 it.each([['local editor', { localBuild: true }], ['phone', { localBuild: false }]])('%s goes from the tour straight to connection', async (_name, props) => {

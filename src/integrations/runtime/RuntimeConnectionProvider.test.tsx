@@ -6,12 +6,14 @@ import {
   RuntimeConnectionGate,
   RuntimeConnectionProvider,
   useRuntimeConnection,
+  PROBE_TIMEOUT_MS,
   type RuntimeConnectionPanelExit,
   type RuntimeConnectionValue,
 } from './RuntimeConnectionProvider.tsx';
 import type { PermissionsLike } from './localNetworkPermission.ts';
 import { autoConnectRequested, requestAutoConnect } from './autoConnectRequest.ts';
 import { RuntimeConnectionPanel } from '@/shared/components/RuntimeConnection/RuntimeConnectionPanel.tsx';
+import { RUNTIME_CONNECTION_COPY as CONNECTION_COPY } from '@/shared/components/RuntimeConnection/copy.ts';
 import { RUNTIME_ACCEPTED_SCHEMA_DIGESTS, RUNTIME_SCHEMA_DIGEST } from './contract-metadata.ts';
 
 const REALM = { realm_id: 'realm-1', display_name: 'Direct Journey' };
@@ -51,6 +53,11 @@ function fakeGateway() {
   return { calls, fetchImpl, routes, down, up, gatewayDown };
 }
 
+/** Flush React's queued work without tying the test to the probe's internal promise chain. */
+async function flushReactWork() {
+  await act(async () => {});
+}
+
 function fakePermissions(initial: string) {
   const status: { state: string; onchange: ((this: unknown, event: Event) => unknown) | null } = { state: initial, onchange: null };
   const permissions: PermissionsLike = { query: vi.fn(async () => status) };
@@ -70,6 +77,21 @@ function Probe() {
   return <span data-testid="status">{latest.state.status}</span>;
 }
 
+function PanelProbe() {
+  latest = useRuntimeConnection();
+  return <>
+    <RuntimeConnectionPanel connection={latest} />
+    <span data-testid="status">{latest.state.status}</span>
+  </>;
+}
+
+function RecordingProbe({ states }: { states: RuntimeConnectionValue['state'][] }) {
+  const connection = useRuntimeConnection();
+  latest = connection;
+  states.push(connection.state);
+  return <span data-testid="status">{connection.state.status}</span>;
+}
+
 function renderProvider(
   gateway: ReturnType<typeof fakeGateway>,
   permissions: PermissionsLike | undefined,
@@ -78,6 +100,18 @@ function renderProvider(
   return render(
     <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={permissions} pollIntervalMs={10} {...props}>
       <Probe />
+    </RuntimeConnectionProvider>,
+  );
+}
+
+function renderPanelProvider(
+  gateway: ReturnType<typeof fakeGateway>,
+  permissions: PermissionsLike | undefined,
+  props: Partial<React.ComponentProps<typeof RuntimeConnectionProvider>> = {},
+) {
+  return render(
+    <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={permissions} pollIntervalMs={10} {...props}>
+      <PanelProbe />
     </RuntimeConnectionProvider>,
   );
 }
@@ -95,6 +129,7 @@ class MemoryStorage {
 beforeEach(() => {
   Object.defineProperty(window, 'localStorage', { configurable: true, value: new MemoryStorage() });
   Object.defineProperty(window, 'sessionStorage', { configurable: true, value: new MemoryStorage() });
+  window.history.replaceState({}, '', '/tools/video-editor');
   vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue(
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
   );
@@ -177,8 +212,7 @@ describe('granted', () => {
     await waitFor(() => expect(status()).toBe('update_needed'));
     expect(gateway.calls.map((url) => url.replace(/^.*\/api\/runtime/, ''))).toEqual(['/v1/health']);
 
-    // A mismatch remains visible while the normal interval waits. There is no immediate retry loop.
-    await new Promise((resolve) => setTimeout(resolve, 25));
+    // The long interval has not been ticked, so there is no immediate retry loop.
     expect(status()).toBe('update_needed');
     expect(gateway.calls).toHaveLength(1);
 
@@ -220,25 +254,85 @@ describe('granted', () => {
     expect(gateway.calls.map((url) => url.replace(/^.*\/api\/runtime/, ''))).toEqual(['/v1/health', '/v1/realm']);
   });
 
-  it('fresh profile stays connecting after one silent reading, then two show setup', async () => {
+  it('fresh profile reaches not_running after two granted-permission failures', async () => {
     const gateway = fakeGateway();
     gateway.down();
     renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
     await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(1));
     expect(status()).toBe('connecting');
+    await flushReactWork();
     await act(async () => { window.dispatchEvent(new Event('focus')); });
-    await waitFor(() => expect(status()).toBe('set_up'));
-    expect(latest.state).toEqual({ status: 'set_up' });
+    await waitFor(() => expect(status()).toBe('not_running'));
+    expect(latest.state).toMatchObject({ status: 'not_running' });
     expect(latest.isBooting).toBe(false);
   });
 
+  it('a request timeout is a slow check, does not count as failure, and leaves booting', async () => {
+    const gateway = fakeGateway();
+    gateway.down();
+    let expireProbe: () => void = () => {};
+    const realSetTimeout = window.setTimeout.bind(window);
+    vi.spyOn(window, 'setTimeout').mockImplementation(((handler: TimerHandler, ms?: number, ...args: unknown[]) => {
+      if (ms === PROBE_TIMEOUT_MS) {
+        expireProbe = () => typeof handler === 'function' ? handler(...args) : undefined;
+        return realSetTimeout(() => {}, ms);
+      }
+      return realSetTimeout(handler, ms, ...args);
+    }) as typeof window.setTimeout);
+    let calls = 0;
+    const fetchImpl = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (calls++ > 0) return gateway.fetchImpl(input);
+      return new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true });
+      });
+    }) as unknown as typeof fetch;
+    renderProvider({ ...gateway, fetchImpl }, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
+
+    await waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(1));
+    act(() => expireProbe());
+    await waitFor(() => expect(latest.isBooting).toBe(false));
+    expect(latest.state).toEqual({ status: 'connecting' });
+
+    await act(async () => { window.dispatchEvent(new Event('focus')); });
+    await waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(2));
+    await flushReactWork();
+    expect(latest.state).toEqual({ status: 'connecting' });
+
+    await act(async () => { window.dispatchEvent(new Event('focus')); });
+    await waitFor(() => expect(latest.state.status).toBe('not_running'));
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+  });
+
   it('keeps the permission prompt for any browser that supports the local-network permission', async () => {
-    vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 Firefox/153.0');
     const gateway = fakeGateway();
     const permissions = fakePermissions('prompt');
     renderProvider(gateway, permissions.permissions);
-    await waitFor(() => expect(latest.awaitingConnect).toBe(true));
+    await waitFor(() => expect(latest.state.status).toBe('needs_permission'));
     expect(permissions.permissions.query).toHaveBeenCalled();
+    expect(gateway.fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it('classifies a real Firefox user agent as unsupported without querying permission or probing', async () => {
+    vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (X11; Linux x86_64; rv:153.0) Gecko/20100101 Firefox/153.0');
+    const gateway = fakeGateway();
+    const permissions = fakePermissions('prompt');
+    renderProvider(gateway, permissions.permissions);
+
+    await waitFor(() => expect(latest.state.status).toBe('unsupported'));
+    act(() => latest.connect());
+    expect(permissions.permissions.query).not.toHaveBeenCalled();
+    expect(gateway.fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it('classifies a real phone user agent as phone without querying permission or probing', async () => {
+    vi.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36');
+    const gateway = fakeGateway();
+    const permissions = fakePermissions('granted');
+    renderProvider(gateway, permissions.permissions);
+
+    await waitFor(() => expect(latest.state.status).toBe('phone'));
+    act(() => latest.connect());
+    expect(permissions.permissions.query).not.toHaveBeenCalled();
     expect(gateway.fetchImpl).not.toHaveBeenCalled();
   });
 
@@ -254,7 +348,7 @@ describe('granted', () => {
       </RuntimeConnectionProvider>,
     );
 
-    await waitFor(() => expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'set_up'));
+    await waitFor(() => expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'not_running'));
     const panel = screen.getByTestId('runtime-not-connected');
     const rendered = panel.innerHTML;
     let release: (response: Response) => void = () => {};
@@ -276,6 +370,7 @@ describe('granted', () => {
     renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
     await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(1));
     expect(status()).toBe('connecting');
+    await flushReactWork();
     await act(async () => { window.dispatchEvent(new Event('focus')); });
 
     await waitFor(() => expect(status()).toBe('not_running'));
@@ -285,7 +380,10 @@ describe('granted', () => {
   it.each([503, 502])('gateway down body at HTTP %i establishes Astrid is installed', async (httpStatus) => {
     const gateway = fakeGateway();
     gateway.gatewayDown('runtime_unavailable', httpStatus);
-    renderProvider(gateway, fakePermissions('granted').permissions);
+    renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
+    await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(1));
+    await flushReactWork();
+    await act(async () => { window.dispatchEvent(new Event('focus')); });
     await waitFor(() => expect(status()).toBe('not_running'));
     expect(latest.state).toEqual({ status: 'not_running' });
   });
@@ -298,17 +396,21 @@ describe('granted', () => {
     expect(status()).toBe('connecting');
 
     gateway.down();
+    await flushReactWork();
     await act(async () => { window.dispatchEvent(new Event('focus')); });
     await waitFor(() => expect(status()).toBe('not_running'));
     expect(latest.state).toEqual({ status: 'not_running' });
   });
 
-  it('shows the same restart line as not_running after a runtime identity mismatch', async () => {
+  it('requires two gateway restart readings before showing not_running', async () => {
     const code = 'runtime_identity_mismatch';
     const gateway = fakeGateway();
     gateway.gatewayDown(code);
     renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
     await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(1));
+    expect(status()).toBe('connecting');
+    await flushReactWork();
+    await act(async () => { window.dispatchEvent(new Event('focus')); });
     await waitFor(() => expect(status()).toBe('not_running'));
     expect(latest.state).toEqual({ status: 'not_running' });
   });
@@ -316,33 +418,50 @@ describe('granted', () => {
   it('a 503 with no readable body remains a transient check, not a stopped verdict', async () => {
     const gateway = fakeGateway();
     gateway.routes['/v1/health'] = () => new Response('<html></html>', { status: 503 });
-    renderProvider(gateway, fakePermissions('granted').permissions);
+    renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
+    await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(1));
+    await flushReactWork();
+    await act(async () => { window.dispatchEvent(new Event('focus')); });
 
-    await waitFor(() => expect(status()).toBe('set_up'));
-    expect(latest.state).toEqual({ status: 'set_up' });
+    await waitFor(() => expect(status()).toBe('not_running'));
+    expect(latest.state).toEqual({ status: 'not_running' });
   });
 
-  it('a foreign Not found error stays silent, so two readings still show setup', async () => {
+  it('a foreign Not found error stays silent, so two readings still show not_running', async () => {
     const gateway = fakeGateway();
     gateway.routes['/v1/health'] = () => json({ error: 'Not found' }, 404);
     renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
     await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(1));
     expect(status()).toBe('connecting');
+    await flushReactWork();
     await act(async () => { window.dispatchEvent(new Event('focus')); });
-    await waitFor(() => expect(status()).toBe('set_up'));
-    expect(latest.state).toEqual({ status: 'set_up' });
+    await waitFor(() => expect(status()).toBe('not_running'));
+    expect(latest.state).toEqual({ status: 'not_running' });
   });
 
   it('recovers by the interval, with no reload, and stops probing once connected', async () => {
     const gateway = fakeGateway();
     gateway.down();
-    renderProvider(gateway, fakePermissions('granted').permissions);
-    await waitFor(() => expect(status()).toBe('set_up'));
+    const POLL_MS = 654_321;
+    let tick: () => void = () => {};
+    const realSetInterval = window.setInterval.bind(window);
+    vi.spyOn(window, 'setInterval').mockImplementation(((handler: TimerHandler, ms?: number, ...args: unknown[]) => {
+      if (ms !== POLL_MS) return realSetInterval(handler, ms, ...args);
+      tick = () => (handler as () => void)();
+      return realSetInterval(() => {}, ms);
+    }) as typeof window.setInterval);
+    renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: POLL_MS });
+    await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(1));
+    await flushReactWork();
+    await act(async () => { window.dispatchEvent(new Event('focus')); });
+    await waitFor(() => expect(status()).toBe('not_running'));
 
     gateway.up();
+    await act(async () => { tick(); });
     await waitFor(() => expect(status()).toBe('connected'));
     const settled = gateway.calls.length;
-    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 60)); });
+    await act(async () => { tick(); window.dispatchEvent(new Event('focus')); });
+    await flushReactWork();
     expect(gateway.calls).toHaveLength(settled);
   });
 
@@ -351,8 +470,9 @@ describe('granted', () => {
     gateway.down();
     renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
     await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(1));
+    await flushReactWork();
     await act(async () => { window.dispatchEvent(new Event('focus')); });
-    await waitFor(() => expect(status()).toBe('set_up'));
+    await waitFor(() => expect(status()).toBe('not_running'));
 
     gateway.up();
     await act(async () => { window.dispatchEvent(new Event('focus')); });
@@ -365,7 +485,7 @@ describe('app entry preference', () => {
 
   it('is remembered once the gate connects, so the next visit to the bare domain goes straight in', async () => {
     const gateway = fakeGateway();
-    renderProvider(gateway, fakePermissions('granted').permissions);
+    renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 10 });
     await waitFor(() => expect(status()).toBe('connected'));
     expect(window.localStorage.getItem(PREFERENCE_KEY)).toBe('1');
   });
@@ -373,20 +493,20 @@ describe('app entry preference', () => {
   it('is not remembered while Astrid is absent, or before Connect is pressed', async () => {
     const gateway = fakeGateway();
     gateway.down();
-    const { unmount } = renderProvider(gateway, fakePermissions('granted').permissions);
-    await waitFor(() => expect(status()).toBe('set_up'));
+    const { unmount } = renderProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 10 });
+    await waitFor(() => expect(status()).toBe('not_running'));
     expect(window.localStorage.getItem(PREFERENCE_KEY)).toBeNull();
     unmount();
 
     renderProvider(fakeGateway(), fakePermissions('prompt').permissions);
-    await waitFor(() => expect(latest.awaitingConnect).toBe(true));
+    await waitFor(() => expect(latest.state.status).toBe('needs_permission'));
     expect(window.localStorage.getItem(PREFERENCE_KEY)).toBeNull();
   });
 
   it('is not set by a same-origin build, which has no gate', async () => {
     const { RuntimeConnectionProvider: Provider } = await import('./RuntimeConnectionProvider.tsx');
     render(<Provider permissions={{ query: vi.fn() }}><div /></Provider>);
-    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 20)); });
+    await flushReactWork();
     expect(window.localStorage.getItem(PREFERENCE_KEY)).toBeNull();
   });
 
@@ -398,31 +518,70 @@ describe('app entry preference', () => {
 });
 
 describe('prompt', () => {
-  it('shows setup on a fresh browser without probing or asking permission', async () => {
+  it('shows the permission screen on a fresh browser without probing or asking permission', async () => {
     const gateway = fakeGateway();
-    renderProvider(gateway, fakePermissions('prompt').permissions);
+    renderPanelProvider(gateway, fakePermissions('prompt').permissions);
 
     await waitFor(() => expect(latest.isBooting).toBe(false));
-    expect(latest.awaitingConnect).toBe(true);
-    expect(latest.state).toEqual({ status: 'set_up' });
-    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 50)); });
+    expect(latest.state.status).toBe('needs_permission');
+    expect(latest.state).toEqual({ status: 'needs_permission' });
+    expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'permission');
+    expect(screen.getByRole('heading', { name: 'Connect to Astrid on this computer' })).toBeInTheDocument();
+    expect(screen.queryByText(CONNECTION_COPY.waiting)).not.toBeInTheDocument();
+    await flushReactWork();
     window.dispatchEvent(new Event('focus'));
     expect(gateway.fetchImpl).not.toHaveBeenCalled();
   });
 
-  it('sends nothing until an explicit connect(), then connects', async () => {
+  it('Connect on the permission screen starts the prompt probe and connects', async () => {
     const gateway = fakeGateway();
-    renderProvider(gateway, fakePermissions('prompt').permissions);
+    let releaseHealth: (response: Response) => void = () => {};
+    gateway.routes['/v1/health'] = () => new Promise<Response>((resolve) => { releaseHealth = resolve; });
+    renderPanelProvider(gateway, fakePermissions('prompt').permissions);
 
-    await waitFor(() => expect(latest.state.status).toBe('set_up'));
+    await waitFor(() => expect(latest.state.status).toBe('needs_permission'));
+    expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'permission');
+    expect(gateway.fetchImpl).not.toHaveBeenCalled();
 
-    act(() => latest.connect());
+    fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
     await waitFor(() => expect(latest.isChecking).toBe(true));
+    expect(gateway.fetchImpl).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'pending');
+    expect(screen.getByRole('heading', { name: 'Choose Allow in Chrome' })).toBeInTheDocument();
+    expect(screen.queryByText(CONNECTION_COPY.waiting)).not.toBeInTheDocument();
+
+    releaseHealth(json({ status: 'ok', protocol: 'workspace.v1', schema_digest: RUNTIME_SCHEMA_DIGEST }));
     await waitFor(() => expect(status()).toBe('connected'));
-    expect(latest.awaitingConnect).toBe(false);
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe('1');
   });
 
-  it('shows connecting while the browser prompt is open, and ignores a second connect()', async () => {
+  it('keeps the not-running waiting line while granted permission schedules polling', async () => {
+    const gateway = fakeGateway();
+    gateway.down();
+    renderPanelProvider(gateway, fakePermissions('granted').permissions);
+
+    await waitFor(() => expect(latest.state.status).toBe('not_running'));
+    expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'not_running');
+    expect(screen.getByText(CONNECTION_COPY.waiting)).toBeInTheDocument();
+  });
+
+  it('a failed Connect probe stays in needs_permission while permission remains prompt', async () => {
+    const gateway = fakeGateway();
+    gateway.down();
+    renderPanelProvider(gateway, fakePermissions('prompt').permissions);
+
+    await waitFor(() => expect(latest.state.status).toBe('needs_permission'));
+    expect(gateway.fetchImpl).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
+
+    await waitFor(() => expect(latest.isChecking).toBe(false));
+    expect(latest.state).toEqual({ status: 'needs_permission' });
+    expect(latest.state.status).toBe('needs_permission');
+    expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'permission');
+    expect(screen.getByRole('button', { name: 'Connect' })).toBeInTheDocument();
+  });
+
+  it('keeps needs_permission while the browser prompt is open, and ignores a second connect()', async () => {
     const gateway = fakeGateway();
     let release: (response: Response) => void = () => {};
     gateway.routes['/v1/health'] = () => new Promise<Response>((resolve) => { release = resolve; });
@@ -430,7 +589,7 @@ describe('prompt', () => {
     await waitFor(() => expect(latest.isBooting).toBe(false));
 
     act(() => latest.connect());
-    await waitFor(() => expect(status()).toBe('connecting'));
+    await waitFor(() => expect(status()).toBe('needs_permission'));
     expect(latest.isBooting).toBe(false);
     expect(latest.isChecking).toBe(true);
     act(() => latest.connect());
@@ -448,15 +607,15 @@ describe('prompt', () => {
 
     act(() => latest.connect());
     await waitFor(() => expect(latest.isChecking).toBe(false));
-    expect(latest.state).toEqual({ status: 'set_up' });
-    expect(latest.awaitingConnect).toBe(true);
+    expect(latest.state).toEqual({ status: 'needs_permission' });
+    expect(latest.state.status).toBe('needs_permission');
   });
 
   it('the browser granting the permission starts probing without a click', async () => {
     const gateway = fakeGateway();
     const permission = fakePermissions('prompt');
     renderProvider(gateway, permission.permissions);
-    await waitFor(() => expect(latest.awaitingConnect).toBe(true));
+    await waitFor(() => expect(latest.state.status).toBe('needs_permission'));
     expect(gateway.fetchImpl).not.toHaveBeenCalled();
 
     act(() => permission.change('granted'));
@@ -481,10 +640,10 @@ describe('prompt', () => {
       return (base as unknown as (i: RequestInfo | URL) => Promise<Response>)(input);
     }) as unknown as typeof fetch;
     renderProvider({ ...gateway, fetchImpl }, permission.permissions);
-    await waitFor(() => expect(latest.awaitingConnect).toBe(true));
+    await waitFor(() => expect(latest.state.status).toBe('needs_permission'));
 
     act(() => latest.connect());
-    await waitFor(() => expect(status()).toBe('connecting'));
+    await waitFor(() => expect(status()).toBe('needs_permission'));
     expect(fetchImpl).toHaveBeenCalledTimes(1);
 
     act(() => permission.change('granted'));
@@ -493,14 +652,14 @@ describe('prompt', () => {
     expect(latest.state).toEqual({ status: 'connected', realm: REALM });
   });
 
-  it('an unsupported local-network permission query counts as granted and probes directly', async () => {
+  it('a rejected permission query on Chromium reports unsupported and never probes', async () => {
     const gateway = fakeGateway();
     const throwing: PermissionsLike = { query: vi.fn(async () => { throw new TypeError('unknown permission name'); }) };
     renderProvider(gateway, throwing);
 
-    await waitFor(() => expect(status()).toBe('connected'));
-    expect(latest.awaitingConnect).toBe(false);
-    expect(gateway.fetchImpl).toHaveBeenCalled();
+    await waitFor(() => expect(latest.state.status).toBe('unsupported'));
+    expect(throwing.query).toHaveBeenCalled();
+    expect(gateway.fetchImpl).not.toHaveBeenCalled();
   });
 
   it('a refusal during connect() is read from the permission: denied becomes blocked', async () => {
@@ -522,7 +681,6 @@ describe('denied', () => {
     renderProvider(gateway, fakePermissions('denied').permissions);
 
     await waitFor(() => expect(status()).toBe('blocked'));
-    expect(latest.awaitingConnect).toBe(false);
     act(() => latest.connect());
     window.dispatchEvent(new Event('focus'));
     expect(gateway.fetchImpl).not.toHaveBeenCalled();
@@ -546,8 +704,8 @@ describe('storage', () => {
     const gateway = fakeGateway();
     gateway.down();
     renderProvider(gateway, fakePermissions('granted').permissions);
-    await waitFor(() => expect(status()).toBe('set_up'));
-    expect(latest.state).toEqual({ status: 'set_up' });
+    await waitFor(() => expect(status()).toBe('not_running'));
+    expect(latest.state).toEqual({ status: 'not_running' });
 
     gateway.up();
     await waitFor(() => expect(status()).toBe('connected'));
@@ -571,7 +729,7 @@ describe('gate', () => {
       </RuntimeConnectionProvider>,
     );
 
-    await waitFor(() => expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'set_up'));
+    await waitFor(() => expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'not_running'));
     expect(screen.queryByTestId('app')).toBeNull();
     expect(mounted).not.toHaveBeenCalled();
 
@@ -590,7 +748,7 @@ describe('gate', () => {
         </RuntimeConnectionGate>
       </RuntimeConnectionProvider>,
     );
-    await waitFor(() => expect(screen.getByTestId('runtime-not-connected')).toHaveTextContent(/^set_up$/));
+    await waitFor(() => expect(screen.getByTestId('runtime-not-connected')).toHaveTextContent(/^not_running$/));
   });
 
   it('takes a panel and a pill as render props', async () => {
@@ -606,7 +764,7 @@ describe('gate', () => {
         </RuntimeConnectionGate>
       </RuntimeConnectionProvider>,
     );
-    await waitFor(() => expect(screen.getByTestId('custom-panel')).toHaveTextContent('set_up'));
+    await waitFor(() => expect(screen.getByTestId('custom-panel')).toHaveTextContent('not_running'));
     expect(screen.queryByTestId('custom-pill')).toBeNull();
 
     gateway.up();
@@ -648,14 +806,14 @@ describe('gate: the panel on its way out', () => {
     const gateway = fakeGateway();
     gateway.down();
     gate(gateway);
-    await waitFor(() => expect(screen.getByTestId('panel')).toHaveTextContent('set_up'));
+    await waitFor(() => expect(screen.getByTestId('panel')).toHaveTextContent('not_running'));
     const panel = screen.getByTestId('panel');
 
     gateway.up();
     await waitFor(() => expect(screen.getByTestId('app')).toBeInTheDocument());
     // The same element, still on the screen it was showing, now on its way out.
     expect(screen.getByTestId('panel')).toBe(panel);
-    expect(panel).toHaveTextContent('set_up');
+    expect(panel).toHaveTextContent('not_running');
     expect(panel).toHaveAttribute('data-exit');
 
     fireEvent.click(screen.getByRole('button', { name: 'left' }));
@@ -677,7 +835,7 @@ describe('gate: the panel on its way out', () => {
         </RuntimeConnectionGate>
       </RuntimeConnectionProvider>,
     );
-    await waitFor(() => expect(screen.getByTestId('panel')).toHaveTextContent('set_up'));
+    await waitFor(() => expect(screen.getByTestId('panel')).toHaveTextContent('not_running'));
     gateway.up();
     await waitFor(() => expect(screen.getByTestId('app')).toBeInTheDocument());
     await waitFor(() => expect(screen.queryByTestId('panel')).toBeNull());
@@ -695,29 +853,30 @@ describe('gate: the panel on its way out', () => {
 });
 
 describe('gate: the landing page already asked to go in', () => {
-  /** A panel that shows the state the gate hands it, so the test sees explainer versus Chrome's prompt. */
-  const panel = ({ state, awaitingConnect, isChecking, connect }: RuntimeConnectionValue) => (
-    state.status === 'set_up' && !isChecking
-      ? <p data-testid="setup">set_up</p>
-      : awaitingConnect && !isChecking
-      ? <button type="button" data-testid="explainer" onClick={connect}>Connect</button>
-      : <p data-testid="panel-state">{awaitingConnect ? 'pending' : 'other'}</p>
+  /** A small panel that exposes whether the gate presented permission or an in-flight browser prompt. */
+  const panel = ({ state, isChecking }: RuntimeConnectionValue) => (
+    state.status === 'needs_permission' && isChecking
+      ? <p data-testid="panel-state">pending</p>
+      : state.status === 'needs_permission'
+      ? <p data-testid="permission">permission</p>
+      : <p data-testid="panel-state">{state.status}</p>
   );
-  const renderGate = (gateway: ReturnType<typeof fakeGateway>, permission: string) => render(
-    <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions(permission).permissions} pollIntervalMs={10}>
+  const renderGate = (gateway: ReturnType<typeof fakeGateway>, permission: string, pollIntervalMs = 10) => render(
+    <RuntimeConnectionProvider gated fetchImpl={gateway.fetchImpl} permissions={fakePermissions(permission).permissions} pollIntervalMs={pollIntervalMs}>
+      <Probe />
       <RuntimeConnectionGate panel={leavesAtOnce(panel)}>
         <div data-testid="app" />
       </RuntimeConnectionGate>
     </RuntimeConnectionProvider>,
   );
 
-  it('connects at once with the flag set and the permission still to be asked, and never shows the explainer', async () => {
+  it('starts the permission request at once with the handoff flag, without showing an explainer', async () => {
     requestAutoConnect();
     const gateway = fakeGateway();
     renderGate(gateway, 'prompt');
 
     await waitFor(() => expect(screen.getByTestId('app')).toBeInTheDocument());
-    expect(screen.queryByTestId('explainer')).toBeNull();
+    expect(screen.queryByTestId('permission')).toBeNull();
     expect(gateway.fetchImpl).toHaveBeenCalled();
     // One-shot: the flag is used up.
     expect(autoConnectRequested()).toBe(false);
@@ -734,6 +893,27 @@ describe('gate: the landing page already asked to go in', () => {
     expect(autoConnectRequested()).toBe(false);
   });
 
+  it('uses the installer query itself as authorization when session storage is unavailable', async () => {
+    window.history.replaceState({}, '', '/tools/video-editor?timeline=timeline-7&connect=1#frame-42');
+    Object.defineProperty(window.sessionStorage, 'setItem', {
+      configurable: true,
+      value: () => { throw new Error('session storage is blocked'); },
+    });
+    Object.defineProperty(window.sessionStorage, 'getItem', {
+      configurable: true,
+      value: () => { throw new Error('session storage is blocked'); },
+    });
+    const gateway = fakeGateway();
+    gateway.routes['/v1/health'] = () => new Promise<Response>(() => {});
+    renderGate(gateway, 'prompt');
+
+    await waitFor(() => expect(screen.getByTestId('panel-state')).toHaveTextContent('pending'));
+    expect(gateway.fetchImpl).toHaveBeenCalledTimes(1);
+    expect(window.location.search).toBe('?timeline=timeline-7');
+    expect(window.location.hash).toBe('#frame-42');
+    expect(autoConnectRequested()).toBe(false);
+  });
+
   it('keeps the installer handoff on the permission screen while Chrome\'s prompt is open', async () => {
     requestAutoConnect();
     const gateway = fakeGateway();
@@ -741,16 +921,21 @@ describe('gate: the landing page already asked to go in', () => {
     renderGate(gateway, 'prompt');
 
     await waitFor(() => expect(screen.getByTestId('panel-state')).toHaveTextContent('pending'));
-    expect(screen.queryByTestId('explainer')).toBeNull();
+    expect(screen.queryByTestId('permission')).toBeNull();
   });
 
-  it('shows setup on a fresh direct visit without asking permission or probing', async () => {
+  it('shows the permission screen on a fresh direct visit without asking permission or probing', async () => {
     const gateway = fakeGateway();
-    renderGate(gateway, 'prompt');
+    gateway.down();
+    window.sessionStorage.clear();
+    renderGate(gateway, 'prompt', 600_000);
 
-    await waitFor(() => expect(screen.getByTestId('setup')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByTestId('permission')).toHaveTextContent('permission'));
+    expect(latest.state).toEqual({ status: 'needs_permission' });
     expect(gateway.fetchImpl).not.toHaveBeenCalled();
-    expect(screen.queryByTestId('explainer')).toBeNull();
+    await flushReactWork();
+    expect(latest.state).toEqual({ status: 'needs_permission' });
+    expect(screen.getByTestId('permission')).toBeInTheDocument();
   });
 
   it('with the permission already granted or denied the flag has nothing to do, and does not linger', async () => {
@@ -763,7 +948,7 @@ describe('gate: the landing page already asked to go in', () => {
     }
   });
 
-  it('a later permission reset shows the explainer again, because the flag was used up', async () => {
+  it('a later permission reset shows the permission screen again, because the flag was used up', async () => {
     requestAutoConnect();
     const gateway = fakeGateway();
     gateway.down();
@@ -777,7 +962,7 @@ describe('gate: the landing page already asked to go in', () => {
     await waitFor(() => expect(autoConnectRequested()).toBe(false));
     permissions.change('denied');
     permissions.change('prompt');
-    await waitFor(() => expect(screen.getByTestId('explainer')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByTestId('permission')).toBeInTheDocument());
   });
 
   it('survives storage that refuses to be read', () => {
@@ -788,24 +973,201 @@ describe('gate: the landing page already asked to go in', () => {
   });
 });
 
+describe('permission and setup evidence matrix', () => {
+  const permissions = ['prompt', 'granted', 'denied'] as const;
+  const entries = ['none', 'onboarding-continue', 'installer-query'] as const;
+  const outcomes = ['answers', 'no-answer', 'slow'] as const;
+  const cases = permissions.flatMap((permission) => [false, true].flatMap((connectedBefore) => entries.flatMap((entry) => outcomes.map((outcome) => ({
+    permission,
+    connectedBefore,
+    entry,
+    outcome,
+  })))));
+
+  const assertNoEvidencePayload = (states: readonly RuntimeConnectionValue['state'][]) => {
+    for (const state of states) expect(state).not.toHaveProperty('evidence');
+  };
+
+  it.each(cases)('$permission, connectedBefore=$connectedBefore, $entry, Runtime $outcome', async ({ permission: initialPermission, connectedBefore, entry, outcome }) => {
+    const observedStates: RuntimeConnectionValue['state'][] = [];
+    if (connectedBefore) window.localStorage.setItem(STORAGE_KEY, '1');
+    if (entry === 'installer-query') window.history.replaceState({}, '', '/tools/video-editor?timeline=timeline-7&connect=1#frame-42');
+
+    const gateway = fakeGateway();
+    if (outcome !== 'answers') gateway.down();
+    const permission = fakePermissions(initialPermission);
+    const expireProbes: (() => void)[] = [];
+    let timedOutProbes = 0;
+    const realSetTimeout = window.setTimeout.bind(window);
+    if (outcome === 'slow') {
+      vi.spyOn(window, 'setTimeout').mockImplementation(((handler: TimerHandler, ms?: number, ...args: unknown[]) => {
+        if (ms === PROBE_TIMEOUT_MS) {
+          expireProbes.push(() => {
+            timedOutProbes += 1;
+            if (typeof handler === 'function') handler(...args);
+          });
+          return realSetTimeout(() => {}, ms);
+        }
+        return realSetTimeout(handler, ms, ...args);
+      }) as typeof window.setTimeout);
+    }
+    let heldPromptProbe = false;
+    const fetchImpl = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (initialPermission === 'prompt' && String(input).endsWith('/v1/health') && !heldPromptProbe) {
+        heldPromptProbe = true;
+        return new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true });
+        });
+      }
+      if (outcome === 'slow' && timedOutProbes < 2) {
+        return new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true });
+        });
+      }
+      return gateway.fetchImpl(input);
+    }) as unknown as typeof fetch;
+
+    render(
+      <RuntimeConnectionProvider gated fetchImpl={fetchImpl} permissions={permission.permissions} pollIntervalMs={600_000}>
+        <RecordingProbe states={observedStates} />
+      <RuntimeConnectionGate connectOnEntry={entry === 'onboarding-continue'} panel={(connection, exit) => <RuntimeConnectionPanel connection={connection} exit={exit} />}>
+          <div data-testid="app" />
+        </RuntimeConnectionGate>
+      </RuntimeConnectionProvider>,
+    );
+
+    if (entry === 'installer-query') {
+      await waitFor(() => expect(window.location.search).not.toContain('connect=1'));
+      expect(window.location.href).toContain('#frame-42');
+    }
+
+    if (initialPermission === 'denied') {
+      await waitFor(() => expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'blocked'));
+      expect(fetchImpl).not.toHaveBeenCalled();
+      expect(screen.queryByRole('button', { name: 'Connect' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: /Set up Astrid|Astrid isn't (?:running|answering)/ })).not.toBeInTheDocument();
+      assertNoEvidencePayload(observedStates);
+      return;
+    }
+
+    if (initialPermission === 'prompt' && entry === 'none') {
+      await waitFor(() => expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'permission'));
+      expect(latest.state).toEqual({ status: 'needs_permission' });
+      expect(fetchImpl).not.toHaveBeenCalled();
+      expect(screen.queryByRole('heading', { name: /Set up Astrid|Astrid isn't (?:running|answering)/ })).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
+    }
+
+    if (initialPermission === 'prompt') {
+      await waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(1));
+      expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'pending');
+      expect(screen.queryByRole('heading', { name: /Set up Astrid|Astrid isn't (?:running|answering)/ })).not.toBeInTheDocument();
+      // The first probe is held open as if Chrome's prompt were still visible. Granting permission aborts it and
+      // lets the granted-permission probe produce the actual answered or silent result below.
+      if (outcome === 'answers') gateway.up();
+      act(() => permission.change('granted'));
+    }
+
+    if (initialPermission === 'prompt' && entry !== 'none') {
+      expect(screen.queryByRole('heading', { name: /Set up Astrid|Astrid isn't (?:running|answering)/ })).not.toBeInTheDocument();
+    }
+
+    if (outcome === 'answers') {
+      await waitFor(() => expect(screen.getByTestId('app')).toBeInTheDocument());
+      expect(latest.state).toMatchObject({ status: 'connected' });
+      expect(screen.getByTestId('app')).toBeInTheDocument();
+      assertNoEvidencePayload(observedStates);
+      return;
+    }
+
+    if (outcome === 'slow') {
+      await waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(initialPermission === 'prompt' ? 2 : 1));
+      act(() => expireProbes[0]!());
+      await waitFor(() => expect(latest.isBooting).toBe(false));
+      expect(latest.state).toEqual({ status: 'connecting' });
+      await act(async () => { window.dispatchEvent(new Event('focus')); });
+      await waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(initialPermission === 'prompt' ? 3 : 2));
+      act(() => expireProbes[1]!());
+      await waitFor(() => expect(latest.isBooting).toBe(false));
+      expect(latest.state).toEqual({ status: 'connecting' });
+      await act(async () => { window.dispatchEvent(new Event('focus')); });
+      await waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(initialPermission === 'prompt' ? 4 : 3));
+      await waitFor(() => expect(latest.isBooting).toBe(false));
+      expect(latest.state).toEqual({ status: 'connecting' });
+      await act(async () => { window.dispatchEvent(new Event('focus')); });
+      await waitFor(() => expect(latest.state.status).toBe('not_running'));
+      expect(latest.state).toEqual({ status: 'not_running' });
+      expect(latest.connectedBefore).toBe(connectedBefore);
+      assertNoEvidencePayload(observedStates);
+      return;
+    }
+
+    // A single failed reading remains connecting. A second real failure produces one recovery screen.
+    await waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(initialPermission === 'prompt' ? 2 : 1));
+    await flushReactWork();
+    expect(latest.state.status).toBe('connecting');
+    expect(latest.state).not.toHaveProperty('evidence');
+    expect(screen.queryByRole('heading', { name: /Set up Astrid|Astrid isn't (?:running|answering)/ })).not.toBeInTheDocument();
+    assertNoEvidencePayload(observedStates);
+    await act(async () => { window.dispatchEvent(new Event('focus')); });
+    await waitFor(() => expect(latest.state.status).toBe('not_running'));
+    const finalStatus = 'not_running';
+    expect(latest.state).toEqual({ status: finalStatus });
+    expect(latest.connectedBefore).toBe(connectedBefore);
+    assertNoEvidencePayload(observedStates);
+    expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', finalStatus);
+    expect(screen.queryByTestId('app')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: "Astrid isn't answering on this computer" })).toBeInTheDocument();
+  });
+
+  it('resets failed readings when permission leaves and returns to granted', async () => {
+    const gateway = fakeGateway();
+    gateway.down();
+    const permission = fakePermissions('granted');
+    renderProvider(gateway, permission.permissions, { pollIntervalMs: 600_000 });
+
+    await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(1));
+    await flushReactWork();
+    expect(latest.state.status).toBe('connecting');
+
+    act(() => permission.change('denied'));
+    await waitFor(() => expect(latest.state.status).toBe('blocked'));
+    act(() => permission.change('prompt'));
+    await waitFor(() => expect(latest.state.status).toBe('needs_permission'));
+    act(() => permission.change('granted'));
+
+    await waitFor(() => expect(gateway.fetchImpl).toHaveBeenCalledTimes(2));
+    await flushReactWork();
+    expect(latest.state.status).toBe('connecting');
+    expect(latest.state).not.toHaveProperty('evidence');
+    await act(async () => { window.dispatchEvent(new Event('focus')); });
+    await waitFor(() => expect(latest.state.status).toBe('not_running'));
+    expect(latest.state).toEqual({ status: 'not_running' });
+  });
+});
+
 describe('same-origin build', () => {
-  it('is not gated: children render at once and nothing is probed', async () => {
+  it('is not gated: children render at once and the gate leaves installer intent untouched', async () => {
     const fetchSpy = vi.fn();
     vi.stubGlobal('fetch', fetchSpy);
     const permissionsQuery = vi.fn();
+    window.history.replaceState({}, '', '/tools/video-editor?timeline=timeline-7&connect=1#frame-42');
     const { RuntimeConnectionGate: Gate, RuntimeConnectionProvider: Provider } = await import('./RuntimeConnectionProvider.tsx');
     render(
       <Provider permissions={{ query: permissionsQuery }}>
-        <Gate>
+        <Gate connectOnEntry>
           <div data-testid="app" />
         </Gate>
       </Provider>,
     );
 
     expect(screen.getByTestId('app')).toBeInTheDocument();
-    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 20)); });
+    await flushReactWork();
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(permissionsQuery).not.toHaveBeenCalled();
+    expect(autoConnectRequested()).toBe(false);
+    expect(window.location.search).toBe('?timeline=timeline-7&connect=1');
+    expect(window.location.hash).toBe('#frame-42');
     vi.unstubAllGlobals();
   });
 

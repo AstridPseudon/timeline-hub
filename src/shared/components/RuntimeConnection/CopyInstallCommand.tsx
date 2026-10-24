@@ -2,12 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { Check, Copy } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { writeClipboardTextSafe } from '@/shared/lib/browser/clipboard.ts';
-import { agentInstructions, installCommand, RUNTIME_CONNECTION_COPY, UPDATE_ROUTES, withCommandShell, type CommandMode, type WindowMode } from './copy.ts';
+import { agentInstructions, installCommand, RUNTIME_CONNECTION_COPY, UPDATE_ROUTES, withCommandShell, type CommandMode } from './copy.ts';
 
 export interface CopyInstallCommandProps {
   /** `install` for setup/repair and `update` for an incompatible Astrid. */
   readonly mode?: CommandMode;
-  readonly windowMode?: WindowMode;
 }
 
 type CopyStatus = 'idle' | 'copied' | 'failed';
@@ -51,16 +50,29 @@ export function CopyFallback({ text, label }: { text: string; label: string }) {
   );
 }
 
+/** A selectable command with the shared copy action and a selected-text fallback if clipboard access fails. */
+export function CopyCommandRow({ command, label, copiedLabel = label }: { readonly command: string; readonly label: string; readonly copiedLabel?: string }) {
+  const commandCopy = useCopyAction(command);
+  return <>
+    <div className="flex min-w-0 items-start gap-2 rounded-lg border border-border bg-background/70 py-1 pl-3 pr-1">
+      <pre className="min-w-0 flex-1 whitespace-pre-wrap [overflow-wrap:anywhere] font-mono text-xs leading-5 text-foreground"><code>{command}</code></pre>
+      <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground" aria-label={commandCopy.status === 'copied' ? copiedLabel : label} title={label} onClick={() => void commandCopy.copy()}>
+        {commandCopy.status === 'copied' ? <Check aria-hidden="true" className="h-4 w-4" /> : <Copy aria-hidden="true" className="h-4 w-4" />}
+      </Button>
+    </div>
+    {commandCopy.status === 'failed' && <CopyFallback text={command} label={label} />}
+  </>;
+}
+
 /**
  * Agent handoff first, as the one primary action; the manual command is the quiet alternative under it, with its own
  * copy action. Nothing else: the card around it says what the instructions are for.
  */
-export function CopyInstallCommand({ mode = 'install', windowMode = 'browser-tab' }: CopyInstallCommandProps) {
+export function CopyInstallCommand({ mode = 'install' }: CopyInstallCommandProps) {
   const copy = RUNTIME_CONNECTION_COPY.agent;
-  const instructions = agentInstructions(mode, window.location.origin, windowMode);
+  const instructions = agentInstructions(mode, window.location.origin);
   const command = installCommand(mode);
   const agentCopy = useCopyAction(instructions);
-  const commandCopy = useCopyAction(command);
   const agentCopied = agentCopy.status === 'copied';
 
   return (
@@ -74,13 +86,7 @@ export function CopyInstallCommand({ mode = 'install', windowMode = 'browser-tab
       </div>
       <div className="space-y-1.5 text-left">
         <p className="text-xs text-muted-foreground">{withCommandShell(mode === 'update' ? copy.terminalAlternativeUpdate : copy.terminalAlternative)}</p>
-        <div className="flex min-w-0 items-center gap-2 rounded-lg border border-border bg-background/70 py-1 pl-3 pr-1">
-          <pre className="min-w-0 flex-1 whitespace-pre-wrap [overflow-wrap:normal] overflow-x-auto font-mono text-xs leading-5 text-foreground"><code>{command}</code></pre>
-          <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground" aria-label={commandCopy.status === 'copied' ? copy.commandCopied : copy.commandCopy} title={copy.commandCopy} onClick={() => void commandCopy.copy()}>
-            {commandCopy.status === 'copied' ? <Check aria-hidden="true" className="h-4 w-4" /> : <Copy aria-hidden="true" className="h-4 w-4" />}
-          </Button>
-        </div>
-        {commandCopy.status === 'failed' && <CopyFallback text={command} label={copy.commandCopy} />}
+        <CopyCommandRow command={command} label={copy.commandCopy} copiedLabel={copy.commandCopied} />
         {mode === 'update' && <p className="pt-1 text-xs text-muted-foreground">{UPDATE_ROUTES.source}</p>}
       </div>
     </div>

@@ -7,15 +7,15 @@ const AVATAR_SRC = '/astrid-app-icon-192.png';
 
 /** The optional footer strip at the bottom of an editor card. */
 export function EditorCardFoot({ children }: { readonly children: ReactNode }) {
-  return <div className="flex min-h-12 items-center justify-center gap-2 border-t border-border/70 bg-muted/40 px-[22px] py-3 text-[13px] text-muted-foreground">{children}</div>;
+  return <div className="flex min-h-12 shrink-0 items-center justify-center gap-2 border-t border-border/70 bg-muted/40 px-[22px] py-3 text-[13px] text-muted-foreground">{children}</div>;
 }
 
 /** A centered onboarding or recovery card with Astrid's icon and serif heading. */
-export function EditorCard({ title, sentence, children, foot, topLeft }: { readonly title: ReactNode; readonly sentence?: ReactNode; readonly children?: ReactNode; readonly foot?: ReactNode; readonly topLeft?: ReactNode }) {
-  return <div className="relative overflow-hidden rounded-[18px] border border-border bg-card text-center shadow-[0_24px_60px_-24px_rgb(37_36_31/0.45),0_2px_8px_rgb(37_36_31/0.08)]">
+export function EditorCard({ title, sentence, children, foot, topLeft, scrollContent = false }: { readonly title: ReactNode; readonly sentence?: ReactNode; readonly children?: ReactNode; readonly foot?: ReactNode; readonly topLeft?: ReactNode; readonly scrollContent?: boolean }) {
+  return <div className={cn('relative overflow-hidden rounded-[18px] border border-border bg-card text-center shadow-[0_24px_60px_-24px_rgb(37_36_31/0.45),0_2px_8px_rgb(37_36_31/0.08)]', scrollContent && 'flex max-h-[calc(100dvh-2rem)] flex-col')}>
     {topLeft && <div className="absolute left-3 top-3">{topLeft}</div>}
-    <div className="space-y-4 p-[22px] pt-[26px]">
-      <header className="grid justify-items-center gap-3">
+    <div className={cn('space-y-4 p-[22px] pt-[26px]', scrollContent && 'flex min-h-0 flex-col space-y-3 p-4 pt-5 sm:p-5')}>
+      <header className="grid shrink-0 justify-items-center gap-3">
         {/* The icon file carries its own rounded tile and shadow, as the install dialog shows it at this size. */}
         <img src={AVATAR_SRC} alt="" className="-mb-1.5 h-[76px] w-[76px]" />
         <div className="space-y-1">
@@ -23,7 +23,7 @@ export function EditorCard({ title, sentence, children, foot, topLeft }: { reado
           {sentence != null && <p className="text-balance text-sm leading-6 text-muted-foreground">{sentence}</p>}
         </div>
       </header>
-      {children}
+      {scrollContent ? <div className="min-h-0 space-y-3 overflow-y-auto overscroll-contain">{children}</div> : children}
     </div>
     {foot}
   </div>;

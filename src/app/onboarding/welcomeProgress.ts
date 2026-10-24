@@ -27,15 +27,19 @@ export function readWelcomePhase(): WelcomePhase | null {
   } catch { return memoryPhase; }
 }
 
-export function writeWelcomePhase(phase: WelcomePhase): void {
+export function writeWelcomePhase(phase: WelcomePhase | null): void {
   memoryPhase = phase;
-  try { localStorage.setItem(WELCOME_PROGRESS_KEY, phase); } catch { /* This visit still progresses. */ }
+  try {
+    if (phase === null) localStorage.removeItem(WELCOME_PROGRESS_KEY);
+    else localStorage.setItem(WELCOME_PROGRESS_KEY, phase);
+  } catch { /* This visit still progresses. */ }
 }
 
 /** Pick the only owner for this URL and phase. Work links take precedence over onboarding. */
 export function entryFor(url: URL, phase: WelcomePhase | null, localBuild = false): WelcomeEntry {
   if (url.pathname !== APP_ENTRY_PATH) return 'editor';
   if (['project', 'timeline', 'localProject', 'localTimeline'].some(key => url.searchParams.has(key))) return 'editor';
+  if (phase === 'local') return 'local';
   if (url.searchParams.get('connect') === '1') return 'connection';
   if (localBuild && phase === 'choose') return 'connection';
   return phase === 'complete' ? 'editor' : phase ?? 'tour';
