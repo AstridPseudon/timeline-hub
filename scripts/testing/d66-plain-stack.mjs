@@ -24,15 +24,27 @@ const suites = {
 };
 
 const normalHomes = {
+  app: root,
   agent: process.env.D66_NORMAL_AGENT_HOME ?? '/home/user/work/agent',
   runtime: process.env.D66_NORMAL_RUNTIME_HOME ?? '/home/user/work/runtime',
+  composition: process.env.D66_NORMAL_COMPOSITION_HOME ?? '/home/user/work/composition',
 };
 
-const checkoutPrefixes = { agent: 'agt-pin', runtime: 'rt-pin' };
+const sourceRoles = ['app', 'agent', 'runtime', 'composition'];
+const checkoutPrefixes = { app: 'app-pin', agent: 'agt-pin', runtime: 'rt-pin', composition: 'vw-pin' };
 
 const selectedEnvironment = {
+  app: ['D66_APP_CHECKOUT'],
   agent: ['D66_AGENT_CHECKOUT', 'ASTRID_CHECKOUT'],
   runtime: ['D66_RUNTIME_CHECKOUT', 'ASTRID_RUNTIME_CHECKOUT'],
+  composition: ['D66_COMPOSITION_CHECKOUT'],
+};
+
+const pinEnvironment = {
+  app: ['D66_APP_SHA', 'D66_APP_TREE'],
+  agent: ['D66_AGENT_SHA', 'D66_AGENT_TREE'],
+  runtime: ['D66_RUNTIME_SHA', 'D66_RUNTIME_TREE'],
+  composition: ['D66_COMPOSITION_SHA', 'D66_COMPOSITION_TREE'],
 };
 
 function git(dir, args) {
@@ -48,17 +60,7 @@ export function exactCheckoutPath(role, head, checkoutRoot = '/home/user/work/wt
 }
 
 function missingCheckoutError(role, head, checkout) {
-  return new Error(`D66 ${role} current normal HEAD ${head} needs a detached exact checkout at ${checkout}; request-checkout ${role} ${head} "D66 current ${role} source"`);
-}
-
-function sourcePath(env, role, normalState) {
-  const key = selectedEnvironment[role].find((candidate) => env[candidate]?.trim());
-  const requested = key
-    ? env[key].trim()
-    : exactCheckoutPath(role, normalState.head);
-  if (!key && !existsSync(requested)) throw missingCheckoutError(role, normalState.head, requested);
-  if (!path.isAbsolute(requested)) throw new Error(`D66 ${role} source must be an absolute checkout path: ${requested}`);
-  return { key: key ?? 'automatic exact checkout route', requested };
+  return new Error(`D66 ${role} exact checkout is unavailable at ${checkout}; request-checkout ${role} ${head} "D66 exact ${role} source"`);
 }
 
 /** Pure control shared by the launcher and its focused tests. */
@@ -71,6 +73,41 @@ export function validateSelectedSource({ role, selected, normal, normalState, se
     throw new Error(`D66 ${role} source is not the current normal head: selected ${selectedState.head}/${selectedState.tree}, current ${normalState.head}/${normalState.tree}; use detached exact checkout ${exactCheckoutPath(role, normalState.head)}`);
   }
   return { checkout: selected, head: selectedState.head, tree: selectedState.tree, normal_home: normal, normal_head: normalState.head, normal_tree: normalState.tree };
+}
+
+function validateObjectId(value, label) {
+  if (!/^[0-9a-f]{40}$/.test(value ?? '')) throw new Error(`D66 ${label} must be a full 40-character SHA`);
+  return value;
+}
+
+/** Validate one immutable source against the submit-time pin, without reading its normal home. */
+export function validatePinnedSource({ role, selected, normal, expectedHead, expectedTree, selectedState }) {
+  validateObjectId(expectedHead, `${role} SHA`);
+  validateObjectId(expectedTree, `${role} tree`);
+  if (!selected || !path.isAbsolute(selected)) throw new Error(`D66 ${role} source must be an absolute exact checkout path`);
+  if (selected === normal) throw new Error(`D66 ${role} source must be a per-request checkout, not its mutable normal home`);
+  if (selectedState.root !== selected) throw new Error(`D66 ${role} source root mismatch: ${selectedState.root}`);
+  if (selectedState.branch) throw new Error(`D66 ${role} source must be detached: ${selected}`);
+  if (selectedState.dirty) throw new Error(`D66 ${role} source is dirty: ${selected}`);
+  if (selectedState.head !== expectedHead || selectedState.tree !== expectedTree) {
+    throw new Error(`D66 ${role} source does not match its submit-time pin: selected ${selectedState.head}/${selectedState.tree}, pinned ${expectedHead}/${expectedTree}`);
+  }
+  return { checkout: selected, head: expectedHead, tree: expectedTree, normal_home: normal };
+}
+
+export function validatePinnedSources({ sources, appRootState = null }) {
+  for (const role of sourceRoles) {
+    const source = sources?.[role];
+    if (!source) throw new Error(`D66 ${role} exact source is required`);
+    validatePinnedSource({ role, selected: source.checkout, normal: source.normal_home,
+      expectedHead: source.head, expectedTree: source.tree,
+      selectedState: source.state ?? { root: source.checkout, head: source.head, tree: source.tree, branch: null, dirty: false } });
+  }
+  if (appRootState && appRootState.tree !== sources.app.tree) {
+    throw new Error(`D66 App service tree does not match its submit-time pin: ${appRootState.tree}/${sources.app.tree}`);
+  }
+  if (appRootState?.dirty) throw new Error('D66 App service source is dirty');
+  return sources;
 }
 
 function checkoutState(checkout) {
@@ -88,29 +125,39 @@ function checkoutState(checkout) {
   return state;
 }
 
-function selectSources(env = process.env) {
+function selectPinnedSources(env = process.env) {
   const selected = {};
-  for (const role of ['agent', 'runtime']) {
+  for (const role of sourceRoles) {
+    const [headKey, treeKey] = pinEnvironment[role];
+    const expectedHead = env[headKey]?.trim();
+    const expectedTree = env[treeKey]?.trim();
+    validateObjectId(expectedHead, `${role} SHA`);
+    validateObjectId(expectedTree, `${role} tree`);
     const normal = realpathSync(normalHomes[role]);
-    const normalState = checkoutState(normal);
-    const requested = sourcePath(env, role, normalState).requested;
+    const key = selectedEnvironment[role].find((candidate) => env[candidate]?.trim());
+    const requested = key?.trim() ?? exactCheckoutPath(role, expectedHead);
+    if (!key && !existsSync(requested)) throw missingCheckoutError(role, expectedHead, requested);
+    if (!path.isAbsolute(requested)) throw new Error(`D66 ${role} source must be an absolute checkout path: ${requested}`);
     const selectedRoot = realpathSync(requested);
-    selected[role] = validateSelectedSource({
-      role, selected: selectedRoot, normal,
-      normalState, selectedState: checkoutState(selectedRoot),
+    const state = checkoutState(selectedRoot);
+    selected[role] = validatePinnedSource({
+      role, selected: selectedRoot, normal, expectedHead, expectedTree, selectedState: state,
     });
+    selected[role].state = state;
   }
+  validatePinnedSources({ sources: selected, appRootState: checkoutState(root) });
   return selected;
 }
 
 function assertSourcesUnchanged(sources) {
-  for (const role of ['agent', 'runtime']) {
+  for (const role of sourceRoles) {
     const state = checkoutState(sources[role].checkout);
     assert.equal(state.head, sources[role].head, `D66 ${role} checkout HEAD changed during run`);
     assert.equal(state.tree, sources[role].tree, `D66 ${role} checkout tree changed during run`);
     assert.equal(state.branch, null, `D66 ${role} checkout became attached during run`);
     assert.equal(state.dirty, false, `D66 ${role} checkout became dirty during run`);
   }
+  validatePinnedSources({ sources, appRootState: checkoutState(root) });
 }
 
 function requireExecutable(file, label) {
@@ -137,21 +184,103 @@ function importReadback(sources, python, pythonpath) {
 }
 
 function repoHeads(sources) {
-  return { app: git(root, ['rev-parse', 'HEAD']), agent: sources.agent.head, runtime: sources.runtime.head, composition: git('/home/user/work/composition', ['rev-parse', 'HEAD']) };
+  return Object.fromEntries(sourceRoles.map((role) => [role, sources[role].head]));
 }
 
 function repoTrees(sources) {
-  return { app: git(root, ['rev-parse', 'HEAD^{tree}']), agent: sources.agent.tree, runtime: sources.runtime.tree, composition: git('/home/user/work/composition', ['rev-parse', 'HEAD^{tree}']) };
+  return Object.fromEntries(sourceRoles.map((role) => [role, sources[role].tree]));
+}
+
+function shellQuote(value) {
+  return `'${String(value).replaceAll("'", "'\\''")}'`;
+}
+
+function receiptPath(role, head) {
+  return path.join(orch, 'queue', 'done', `checkout-${role}-${head}`);
+}
+
+/** Capture the four source identities once, before requesting any checkout. */
+export function captureSubmitPins(paths = normalHomes) {
+  const pins = {};
+  for (const role of sourceRoles) {
+    const checkout = realpathSync(paths[role]);
+    const state = checkoutState(checkout);
+    if (state.dirty) throw new Error(`D66 ${role} submit source is dirty: ${checkout}`);
+    pins[role] = { checkout, head: state.head, tree: state.tree };
+  }
+  return pins;
+}
+
+export function buildSubmitPlan({ name, target, paths = normalHomes } = {}) {
+  assert(suites[name], 'choose p1, p2, p2-element or p3');
+  if (!target || target.startsWith('integration:')) throw new Error('D66 submit requires an exact App proof-worker target');
+  const pins = captureSubmitPins(paths);
+  const checkouts = Object.fromEntries(sourceRoles.map((role) => [role, exactCheckoutPath(role, pins[role].head)]));
+  const checkoutRequests = sourceRoles.map((role) => ({
+    role, head: pins[role].head, checkout: checkouts[role],
+    command: [path.join(orch, 'bin', 'request-checkout'), role, pins[role].head, `D66 exact ${role} source`],
+    receipt: receiptPath(role, pins[role].head),
+  }));
+  return { name, target, pins, checkouts, checkoutRequests,
+    service: serviceRecipe({ name, target, pins, checkouts }) };
+}
+
+export function serviceRecipe({ name, target, pins, checkouts }) {
+  const env = sourceRoles.flatMap((role) => [
+    `D66_${role.toUpperCase()}_SHA=${shellQuote(pins[role].head)}`,
+    `D66_${role.toUpperCase()}_TREE=${shellQuote(pins[role].tree)}`,
+    `D66_${role.toUpperCase()}_CHECKOUT=${shellQuote(checkouts[role])}`,
+  ]);
+  return `${env.join(' ')} ${shellQuote(node)} --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs ${shellQuote(name)}`;
+}
+
+function receiptCheckout(receipt, role, head) {
+  const text = readFileSync(receipt, 'utf8').trim();
+  const match = text.match(/(?:created|exists):\s+(\S+)(?:\s+\(detached at |\s+at\s+)([0-9a-f]{40})/);
+  if (!match || match[2] !== head) throw new Error(`D66 ${role} checkout receipt is missing or tampered: ${receipt}`);
+  return match[1];
+}
+
+export async function waitForSubmitReceipts(plan, { waitMs = 300_000, pollMs = 250 } = {}) {
+  const deadline = Date.now() + waitMs;
+  const resolved = {};
+  for (const request of plan.checkoutRequests) {
+    while (!existsSync(request.receipt) && Date.now() < deadline) await new Promise((resolve) => setTimeout(resolve, pollMs));
+    if (!existsSync(request.receipt)) throw new Error(`D66 ${request.role} checkout receipt did not arrive: ${request.receipt}`);
+    const receiptCheckoutPath = realpathSync(receiptCheckout(request.receipt, request.role, request.head));
+    assert.equal(receiptCheckoutPath, request.checkout, `D66 ${request.role} receipt selected the wrong checkout`);
+    const state = checkoutState(receiptCheckoutPath);
+    validatePinnedSource({ role: request.role, selected: receiptCheckoutPath, normal: realpathSync(normalHomes[request.role]),
+      expectedHead: plan.pins[request.role].head, expectedTree: plan.pins[request.role].tree, selectedState: state });
+    resolved[request.role] = receiptCheckoutPath;
+  }
+  return resolved;
+}
+
+async function submit(name) {
+  const target = process.env.D66_SUBMIT_TARGET;
+  const suiteName = process.env.D66_SUBMIT_SUITE ?? `d66-${name}-exact-submit`;
+  if (!target) throw new Error('D66 submit requires D66_SUBMIT_TARGET, an exact App proof-worker target');
+  const plan = buildSubmitPlan({ name, target });
+  for (const request of plan.checkoutRequests) execFileSync(request.command[0], request.command.slice(1), { stdio: 'inherit' });
+  await waitForSubmitReceipts(plan, { waitMs: Number(process.env.D66_CHECKOUT_WAIT_MS ?? 300_000) });
+  const appState = checkoutState(root);
+  if (appState.head !== plan.pins.app.head || appState.tree !== plan.pins.app.tree || appState.dirty) {
+    throw new Error('D66 App proof-worker source moved after submit-time capture; refusing an unpinned service request');
+  }
+  console.log(`D66 exact service recipe (register as ${suiteName}): ${plan.service}`);
+  console.log(`After registering that exact recipe, submit only now: ${path.join(orch, 'bin', 'request-test')} ${target} ${suiteName}`);
 }
 
 async function main() {
   const [name, mode = 'run'] = process.argv.slice(2);
   assert(suites[name], 'choose p1, p2, p2-element or p3');
-  assert(['run', '--collect', '--launch'].includes(mode), 'unknown mode');
+  assert(['run', '--collect', '--launch', '--submit'].includes(mode), 'unknown mode');
+  if (mode === '--submit') return submit(name);
   const suite = suites[name];
   // Collection is a source-independent descriptor check. Service launch still
   // requires the detached exact current Agent/Runtime checkouts below.
-  const sources = mode === '--collect' ? null : selectSources();
+  const sources = mode === '--collect' ? null : selectPinnedSources();
   if (sources) assertSourcesUnchanged(sources);
   const agentPython = requireExecutable(process.env.ASTRID_PYTHON ?? '/home/user/work/venv-agent/bin/python', 'Agent Python');
   const runtimePython = requireExecutable(process.env.ASTRID_RUNTIME_PYTHON ?? '/home/user/work/venv-runtime/bin/python', 'Runtime Python');
