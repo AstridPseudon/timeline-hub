@@ -45,7 +45,9 @@ class _RemoteTimelineRevisionMixin:
             bundle_from_document,
         )
 
-        opened = self.open_composition(project, ref, revision_id=revision_id, limit=1)
+        opened = self.open_composition(
+            project, ref, revision_id=revision_id, limit=1, _raw_projection=True,
+        )
         if not opened.ok or not isinstance(opened.data, Mapping):
             return opened
         native = opened.data.get("native_inspection") if isinstance(opened.data.get("native_inspection"), Mapping) else {}
