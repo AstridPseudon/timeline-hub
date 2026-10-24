@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T01:33:33Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 6 | status age 1m -->
-# viewing board, 2026-10-24T01:32:05Z
+<!-- viewing | 2026-10-24T01:34:56Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 0m -->
+# viewing board, 2026-10-24T01:34:46Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -29,7 +29,7 @@
 | DB-composition-dry | Fresh clone delivery dry run | Luna high | Orchestrator request | merged | First return 0757 and review 0802 | All 120 source files, controlled archive payload, registry, types and callers independently passed. | source 635f4de06 |
 | DB-composition-template | Repair missing delivery template | Luna high | Required README template | merged | Template 0749 and review 0751 | Template-only repair and delivery retry passed. No ZIP credit. | source 635f4de06 |
 | F-D22-geometry | Attribute three geometry failures | Luna author and review | Agent request | merged | Cause 1520 and closure 1532 | Read-only attribution passed. Agent merged expectation adaptation; integrated original three passed. No Composition change. | Agent 98ef2f9c9 |
-| F-authoring-ABA | Repair repeated authenticated track captures | Sol author and Luna review | Agent assignment 0118 | review | vw-F-authoring-ABA-repair-review-0132 | Author passed 87 focused and 74 neighbors; scoped lint and types pass. Independent review pending. Original live run remains with Agent. | 82d510c13 |
+| F-authoring-ABA | Repair repeated authenticated track captures | Sol author and Luna review | Agent home queue | merging | Author 0126 and review 0132 | Independent PASS 87 focused, lint and types. Author 74 neighbors passed. Home merge and integrated proof pending; original live run unqualified. | 82d510c13 |
 | F-D32-render-wire | Classify six missing SDK result files | Luna author and review | Agent assigned failover row | merged | Cause 0116 and review 0117 | Local import cause independently passed. Remote six-case behavior is unqualified; Agent owns environment and original run. | base b61cebe8e |
 
 
@@ -48,6 +48,6 @@ F-D32-render-wire classification is complete. [Author 0116](../../design/viewing
 Historical recycle permission refusals remain parked under viewing-20261023T002713Z-recycle-b70-permission-refusal.md. No retry or alternate deletion.
 
 Blockers: none for ready Viewing work.
-Next ready: none. ABA repair is dispatched under Agent assignment 0118. Agent owns render-wire environment qualification and the six-original run.
+Next ready: none. ABA repair is independently PASS and in the Agent merge queue. Agent owns integrated proof, the original live ABA node and the six render-wire originals.
 
-Pass 2026-10-24T01:32:05Z: Sol author82d510c13 is complete with87focused and74neighbor tests, lint/types and packet delta proof. Independent Luna review queued immediately. Original live test not run; its reviewed checkout is absent. Agent render-wire environment0124 remains uniquely assigned. No other ready Viewing row.
+Pass 2026-10-24T01:34:46Z: ABA source repair has independent PASS with 87 targeted tests, types and lint; author 74 neighbors retained. Own-commit check is clean. Remote merge requested; Agent handoff requests integrated proof and the unrun original in its managed environment. No other ready Viewing work.
