@@ -1,0 +1,5 @@
+Combined actual-source targeted command (one invocation; outer timeout 60s)
+env PYTHONDONTWRITEBYTECODE=1 TMPDIR=<private-temp> PYTHONPATH=$PWD:/home/user/work/runtime ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 --junitxml=<evidence>/home.xml <29 selectors>
+Selector inventory: frame=7; generic=3; approval-security=10; approval-no-approval=1; SDK qualified alternates=4; SDK negatives=4.
+Result: timeout 124 at 60s; home.xml was not emitted; home.log contains 25 progress dots; no repeat submitted.
+Excluded: mapped timing-restart failure test_publish_after_a_restart_merges_other_clips_onto_the_moved_head; protected P4 originals; full suite.

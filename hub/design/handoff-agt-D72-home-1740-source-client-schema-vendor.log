@@ -1,0 +1,37 @@
+D72 current source/client/schema/vendor checks
+agent-status=
+runtime-status=
+runtime-head=327da207ed30880fe2ae0cd0b116722bb2c6f7a6
+runtime-contract-commit-v2=257024df6fa93be767f0c74ee10014a6770c4fcb
+runtime-timeline-commit-schema=d94415a7d57e7d113223a425c076af7b1a8a4248
+runtime-contract-shapes-unchanged-from-parent=YES
+
+loaded origins
+astrid=/home/user/work/wt/agt-F-D72-home-1740/astrid/__init__.py
+astrid.core.timeline.authoring_bundle=/home/user/work/wt/agt-F-D72-home-1740/astrid/core/timeline/authoring_bundle.py
+astrid.sdk.timeline.checkout=/home/user/work/wt/agt-F-D72-home-1740/astrid/sdk/timeline/checkout.py
+astrid.packs.rendering.shared.runtime_stitch=/home/user/work/wt/agt-F-D72-home-1740/astrid/packs/rendering/shared/runtime_stitch.py
+astrid_runtime_client=/home/user/work/wt/agt-F-D72-home-1740/astrid_runtime_client/__init__.py
+banodoco_timeline_schema=/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py
+
+scoped diff check
+diff-check=0
+
+SDK current AST deletion/preservation
+common_top_level_nodes=194
+common_ast_mismatches=[]
+deleted_top_level_nodes=
+tests/sdk/test_intent_app_astrid.py:test_merge_keeps_a_film_namespace_key_outside_the_known_list_in_the_namespace_r4_original
+tests/sdk/test_intent_app_astrid.py:test_three_way_legacy_head_is_not_a_conflict_and_keeps_intent_r4_original
+tests/sdk/test_runtime_response_conformance.py:test_publish_conflict_409_maps_to_conflict_and_keeps_its_details_r4_route
+tests/sdk/test_timeline_checkout.py:test_three_way_merges_disjoint_edits_and_refuses_overlapping_ones_r4_original
+tests/sdk/test_timeline_persistence.py:test_publish_after_a_restart_merges_other_clips_onto_the_moved_head_r4_original
+tests/sdk/test_timeline_publish_connection.py:FakeClient
+tests/sdk/test_timeline_publish_connection.py:FakeTransport
+tests/sdk/test_timeline_publish_connection.py:test_a_publish_with_a_client_writes_through_that_client_r4_original
+tests/sdk/test_timeline_publish_connection.py:test_a_publish_with_no_client_writes_through_the_connection_it_opens_r4_original
+tests/sdk/test_timeline_restructure.py:test_three_way_merge_works_on_the_stored_form_r4_original
+tests/sdk/test_timeline_store_fixes.py:test_publish_merge_flags_a_parent_config_key_changed_differently_and_force_wins_r4_original
+tests/sdk/test_timeline_store_fixes.py:test_publish_merge_keeps_candidate_parent_config_changes_next_to_head_changes_r4_original
+
+status-after-checks=

@@ -1,0 +1,45 @@
+D72 actual integrated source audit
+head=f4d6c72ce336da66813fc39828187bccbaf80a5b
+branch=tl/agt-F-D72-home-1740
+status-before=
+
+ancestry
+4f01572d4d549d48f97092cf241bb567c2ef9665 ancestor=YES
+712093ec908e71584f16b4303115bdaaf460a2d7 ancestor=YES
+c3cbc3859621d15e03435cdd36d54b35229927f6 ancestor=YES
+7b67da63291324283ceb13db1512442887eebfdd ancestor=YES
+
+reviewed candidate/current blobs
+frame|tests/packs/rendering/test_live_scene_composition.py|candidate=3c0bfbaaa7b7a8b73ee0d90f1b2a20b58aec6efd|current=3c0bfbaaa7b7a8b73ee0d90f1b2a20b58aec6efd|equal=YES
+generic|tests/packs/video_editing/test_runtime_publication_chain.py|candidate=01606523ff9f4b54138d6f6a5309b0b32282bb84|current=01606523ff9f4b54138d6f6a5309b0b32282bb84|equal=YES
+approval-source|astrid/core/timeline/authoring_bundle.py|candidate=e329c565bbaea9acac81c71929b7f3c3cadd0a17|current=e329c565bbaea9acac81c71929b7f3c3cadd0a17|equal=YES
+approval-test|tests/timeline/test_authoring_bundle.py|candidate=4e4c9e61cd94707b3ec7d03f7ad1b862511a9275|current=4e4c9e61cd94707b3ec7d03f7ad1b862511a9275|equal=YES
+approval-security|tests/timeline/test_authoring_bundle_approval_security.py|candidate=d660d49e202f3552032922c4f372e745cbb925c1|current=d660d49e202f3552032922c4f372e745cbb925c1|equal=YES
+sdk|tests/sdk/test_intent_app_astrid.py|candidate=f4340808ab449502159a5345bb25ed7b1eb49f7e|current=f4340808ab449502159a5345bb25ed7b1eb49f7e|equal=YES
+sdk|tests/sdk/test_runtime_response_conformance.py|candidate=6dae28323aeb7552f66fb60ab0fee9a3aebfd540|current=6dae28323aeb7552f66fb60ab0fee9a3aebfd540|equal=YES
+sdk|tests/sdk/test_timeline_checkout.py|candidate=75a9fae98485d8b0e71261039664c4bdcaf9f7a5|current=75a9fae98485d8b0e71261039664c4bdcaf9f7a5|equal=YES
+sdk|tests/sdk/test_timeline_persistence.py|candidate=4eab80b30d8ffb2f52a211d86774cfdc256b9a20|current=4eab80b30d8ffb2f52a211d86774cfdc256b9a20|equal=YES
+sdk|tests/sdk/test_timeline_publish_connection.py|candidate=c5496c4bb988bf1fba3ec3aaa82f13fb8d160460|current=c5496c4bb988bf1fba3ec3aaa82f13fb8d160460|equal=YES
+sdk|tests/sdk/test_timeline_restructure.py|candidate=516ff30c2b0a14c91db846c21f42a5b707bec9ff|current=516ff30c2b0a14c91db846c21f42a5b707bec9ff|equal=YES
+sdk|tests/sdk/test_timeline_store_fixes.py|candidate=dfd1de6876a44f580350120199066aa2a0be799d|current=dfd1de6876a44f580350120199066aa2a0be799d|equal=YES
+
+contract and integration invariants
+contract-commit-v2-current=HEAD:contract/commit-v2.md
+ABSENT
+contract-commit-v2-parent=HEAD^1:contract/commit-v2.md
+ABSENT
+contract-commit-v2-unchanged=YES
+runtime-source=/home/user/work/runtime
+runtime-marker=327da207ed30880fe2ae0cd0b116722bb2c6f7a6
+current-source-marker=f4d6c72ce336da66813fc39828187bccbaf80a5b
+frozen-r4-sdk=11caf1d9de291d76f491cf69f7942606b7471d7a
+
+original-to-current AST mapping anchors
+tests/timeline/test_authoring_bundle.py|test_approval_is_bound_to_candidate_and_base_revision->test_d66_upstream_approval_is_bound_to_candidate_and_base_revision|old={'assert': 3, 'raises': 1, 'args': 0, 'decorators': 0}|current={'assert': 8, 'raises': 1, 'args': 1, 'decorators': 0}
+tests/timeline/test_authoring_bundle.py|test_frozen_render_restart_then_approval_promotion_is_single_generation->test_d66_upstream_frozen_render_restart_then_approval_promotion_is_single_generation|old={'assert': 8, 'raises': 0, 'args': 1, 'decorators': 0}|current={'assert': 9, 'raises': 0, 'args': 1, 'decorators': 0}
+tests/sdk/test_timeline_checkout.py|test_three_way_merges_disjoint_edits_and_refuses_overlapping_ones->test_three_way_merges_disjoint_edits_and_refuses_overlapping_ones|old={'assert': 3, 'raises': 0, 'args': 0, 'decorators': 0}|current={'assert': 3, 'raises': 1, 'args': 1, 'decorators': 0}
+tests/sdk/test_timeline_persistence.py|test_restart_a_fresh_process_sees_every_edit_and_the_undo_history->test_restart_a_fresh_process_sees_every_edit_and_the_undo_history|old={'assert': 10, 'raises': 0, 'args': 1, 'decorators': 0}|current={'assert': 10, 'raises': 0, 'args': 1, 'decorators': 0}
+tests/sdk/test_timeline_persistence.py|test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param->test_two_writers_in_separate_processes_merge_different_clips_and_refuse_the_same_param|old={'assert': 4, 'raises': 1, 'args': 1, 'decorators': 0}|current={'assert': 4, 'raises': 1, 'args': 1, 'decorators': 0}
+tests/sdk/test_timeline_persistence.py|test_publish_after_a_restart_refuses_a_clip_both_sides_changed->test_publish_after_a_restart_refuses_a_clip_both_sides_changed|old={'assert': 2, 'raises': 1, 'args': 1, 'decorators': 0}|current={'assert': 2, 'raises': 1, 'args': 1, 'decorators': 1}
+
+status-after-audit=

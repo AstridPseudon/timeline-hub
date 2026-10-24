@@ -1,0 +1,37 @@
+[
+  {
+    "source": "workers/agt-F-D72-home-1740/evidence/home.command.txt",
+    "copy": "design/handoff-agt-D72-home-1740-home.command.txt",
+    "sha256": "d85833b6cb740854915bb53478f5a66e27aaa6b3f0c4a6094a431302b11a47ae"
+  },
+  {
+    "source": "workers/agt-F-D72-home-1740/evidence/home.exit",
+    "copy": "design/handoff-agt-D72-home-1740-home.exit",
+    "sha256": "73660c103cc736e1ca220b29723dc1d0f5792d05e83b5728862923986a5b10d2"
+  },
+  {
+    "source": "workers/agt-F-D72-home-1740/evidence/home.log",
+    "copy": "design/handoff-agt-D72-home-1740-home.log",
+    "sha256": "faef95e5209912038581bfe9e8aca6990b58fd4f4b26ed96e67042bd41ccb581"
+  },
+  {
+    "source": "workers/agt-F-D72-home-1740/evidence/source-audit.log",
+    "copy": "design/handoff-agt-D72-home-1740-source-audit.log",
+    "sha256": "4c5b89a1bfecdf0e7a8a3d75221f1e41af91ee3d84e3368a33c0837cfd980606"
+  },
+  {
+    "source": "workers/agt-F-D72-home-1740/evidence/source-client-schema-vendor.log",
+    "copy": "design/handoff-agt-D72-home-1740-source-client-schema-vendor.log",
+    "sha256": "eaa10991ea060e028e039d1eb5696cf3378e838b1a150b9044012567b08dd1ad"
+  },
+  {
+    "source": "workers/agt-F-D72-home-1740/evidence/pre-test-state.txt",
+    "copy": "design/handoff-agt-D72-home-1740-pre-test-state.txt",
+    "sha256": "409309aa66ff50dd3dbb658532d237dbbff97815b4268cfe46b4ae9d56a2d98e"
+  },
+  {
+    "source": "workers/agt-F-D72-home-1740/evidence/post-test-state.txt",
+    "copy": "design/handoff-agt-D72-home-1740-post-test-state.txt",
+    "sha256": "4ce820e4fb0d24b00d22c1cacb89b1c2d18e8f70daccfa59d195b5afd6a8a37c"
+  }
+]
