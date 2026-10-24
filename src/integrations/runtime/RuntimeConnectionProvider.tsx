@@ -198,6 +198,8 @@ export function RuntimeConnectionProvider({
   const inFlight = useRef<AbortController | null>(null);
   /** The untimed probe `connect()` started while the permission was not yet granted: the one a grant must replace. */
   const promptProbe = useRef<AbortController | null>(null);
+  /** A timed probe's untimed slow follow-up: an explicit Connect takes priority over it. */
+  const slowProbe = useRef<AbortController | null>(null);
   /** Sticky once a probe connects (set in `runProbe`, before the render): no probe starts after it. */
   const connectedRef = useRef(false);
   const permissionRef = useRef(permission);
@@ -210,6 +212,7 @@ export function RuntimeConnectionProvider({
     return () => {
       mounted.current = false;
       inFlight.current?.abort();
+      slowProbe.current = null;
     };
   }, []);
 
@@ -236,11 +239,17 @@ export function RuntimeConnectionProvider({
     };
   }, [gated, canConnect, permissions]);
 
-  const runProbe = useCallback(async (untimed: boolean) => {
+  const runProbe = useCallback(async function runProbe(untimed: boolean, explicit = false) {
+    if (explicit && inFlight.current && inFlight.current === slowProbe.current) {
+      inFlight.current.abort();
+      inFlight.current = null;
+      slowProbe.current = null;
+    }
     if (inFlight.current || connectedRef.current) return;
     const controller = new AbortController();
     inFlight.current = controller;
     if (untimed && permissionRef.current !== 'granted') promptProbe.current = controller;
+    if (untimed && !explicit && permissionRef.current === 'granted') slowProbe.current = controller;
     setIsChecking(untimed);
     const timer = untimed ? undefined : setTimeout(() => controller.abort(new DOMException('Runtime probe timed out', 'TimeoutError')), PROBE_TIMEOUT_MS);
     let result: RuntimeProbeOutcome;
@@ -253,6 +262,7 @@ export function RuntimeConnectionProvider({
     if (inFlight.current !== controller) return;
     inFlight.current = null;
     if (promptProbe.current === controller) promptProbe.current = null;
+    if (slowProbe.current === controller) slowProbe.current = null;
     if (!mounted.current) return;
     setIsChecking(false);
     if (connectedRef.current) return;
@@ -261,6 +271,7 @@ export function RuntimeConnectionProvider({
     if (result.kind === 'connected') {
       connectedRef.current = true;
     }
+    if (result.kind === 'slow' && !untimed && permissionRef.current === 'granted') void runProbe(true);
     // A failed request held behind a browser question is not evidence that Astrid is absent.
     if (permissionRef.current === 'granted' && result.kind !== 'slow') {
       setFailedReadings((previous) => result.kind === 'connected' ? 0 : previous + 1);
@@ -319,7 +330,7 @@ export function RuntimeConnectionProvider({
 
   const connect = useCallback(() => {
     if (!gated || !canConnect || connectedRef.current || permissionRef.current === null || permissionRef.current === 'denied' || permissionRef.current === 'unsupported') return;
-    void runProbe(true);
+    void runProbe(true, true);
   }, [gated, canConnect, runProbe]);
 
   const value = useMemo<RuntimeConnectionValue>(() => {

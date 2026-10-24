@@ -71,6 +71,31 @@ function fakePermissions(initial: string) {
   };
 }
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => { resolve = res; reject = rej; });
+  return { promise, resolve, reject };
+}
+
+function captureProbeTimeouts() {
+  const expirations: (() => void)[] = [];
+  const waitingLines: (() => void)[] = [];
+  const realSetTimeout = window.setTimeout.bind(window);
+  vi.spyOn(window, 'setTimeout').mockImplementation(((handler: TimerHandler, ms?: number, ...args: unknown[]) => {
+    if (ms === PROBE_TIMEOUT_MS) {
+      expirations.push(() => typeof handler === 'function' ? handler(...args) : undefined);
+      return 0;
+    }
+    if (ms === 1000) {
+      waitingLines.push(() => typeof handler === 'function' ? handler(...args) : undefined);
+      return 0;
+    }
+    return realSetTimeout(handler, ms, ...args);
+  }) as typeof window.setTimeout);
+  return { expirations, showWaitingLine: () => waitingLines[0]?.() };
+}
+
 let latest: RuntimeConnectionValue;
 function Probe() {
   latest = useRuntimeConnection();
@@ -267,7 +292,7 @@ describe('granted', () => {
     expect(latest.isBooting).toBe(false);
   });
 
-  it('a request timeout is a slow check, does not count as failure, and leaves booting', async () => {
+  it('a request timeout stays connecting while the untimed retry makes its first reading', async () => {
     const gateway = fakeGateway();
     gateway.down();
     let expireProbe: () => void = () => {};
@@ -292,8 +317,6 @@ describe('granted', () => {
     act(() => expireProbe());
     await waitFor(() => expect(latest.isBooting).toBe(false));
     expect(latest.state).toEqual({ status: 'connecting' });
-
-    await act(async () => { window.dispatchEvent(new Event('focus')); });
     await waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(2));
     await flushReactWork();
     expect(latest.state).toEqual({ status: 'connecting' });
@@ -301,6 +324,175 @@ describe('granted', () => {
     await act(async () => { window.dispatchEvent(new Event('focus')); });
     await waitFor(() => expect(latest.state.status).toBe('not_running'));
     expect(fetchImpl).toHaveBeenCalledTimes(3);
+  });
+
+  it('follows a slow probe with an untimed probe, keeps the waiting state, and connects on its late answer', async () => {
+    const { expirations, showWaitingLine } = captureProbeTimeouts();
+    let tickInterval: () => void = () => {};
+    const realSetInterval = window.setInterval.bind(window);
+    vi.spyOn(window, 'setInterval').mockImplementation(((handler: TimerHandler, ms?: number, ...args: unknown[]) => {
+      if (ms === 600_000) {
+        tickInterval = () => typeof handler === 'function' ? handler(...args) : undefined;
+        return 0;
+      }
+      return realSetInterval(handler, ms, ...args);
+    }) as typeof window.setInterval);
+    const firstStarted = deferred<void>();
+    const followupStarted = deferred<AbortSignal | undefined>();
+    const realmStarted = deferred<void>();
+    const healthAnswer = deferred<Response>();
+    const realmAnswer = deferred<Response>();
+    let healthCalls = 0;
+    const fetchImpl = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).endsWith('/v1/health')) {
+        if (healthCalls++ === 0) {
+          firstStarted.resolve();
+          return new Promise<Response>((_resolve, reject) => init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true }));
+        }
+        followupStarted.resolve(init?.signal);
+        return healthAnswer.promise;
+      }
+      realmStarted.resolve();
+      return realmAnswer.promise;
+    }) as unknown as typeof fetch;
+    render(
+      <RuntimeConnectionProvider gated fetchImpl={fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={600_000}>
+        <Probe />
+        <RuntimeConnectionGate panel={(connection, exit) => <RuntimeConnectionPanel connection={connection} exit={exit} />}>
+          <div data-testid="app" />
+        </RuntimeConnectionGate>
+      </RuntimeConnectionProvider>,
+    );
+
+    await firstStarted.promise;
+    act(() => showWaitingLine());
+    expect(screen.getByText(CONNECTION_COPY.connecting.sentence)).toBeInTheDocument();
+    expect(expirations).toHaveLength(1);
+    let followupSignal: AbortSignal | undefined;
+    await act(async () => {
+      expirations[0]!();
+      followupSignal = await followupStarted.promise;
+    });
+    await flushReactWork();
+
+    expect(followupSignal?.aborted).toBe(false);
+    expect(expirations).toHaveLength(1);
+    expect(latest.state).toEqual({ status: 'connecting' });
+    expect(latest.isChecking).toBe(true);
+    expect(screen.getByText(CONNECTION_COPY.connecting.sentence)).toBeInTheDocument();
+    act(() => {
+      window.dispatchEvent(new Event('focus'));
+      tickInterval();
+    });
+    await flushReactWork();
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      healthAnswer.resolve(json({ status: 'ok', schema_digest: RUNTIME_SCHEMA_DIGEST }));
+      await realmStarted.promise;
+      realmAnswer.resolve(json(REALM));
+    });
+    expect(latest.state).toEqual({ status: 'connected', realm: REALM });
+  });
+
+  it('records an untimed refusal as a failure, then resumes timed probes', async () => {
+    const { expirations } = captureProbeTimeouts();
+    const firstStarted = deferred<void>();
+    const followupStarted = deferred<void>();
+    const nextProbeStarted = deferred<void>();
+    let healthCalls = 0;
+    const fetchImpl = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).endsWith('/v1/health')) {
+        const call = healthCalls++;
+        if (call === 0) {
+          firstStarted.resolve();
+          return new Promise<Response>((_resolve, reject) => init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true }));
+        }
+        if (call === 1) {
+          followupStarted.resolve();
+          return Promise.resolve(json({ error: 'runtime_unavailable' }, 503));
+        }
+        nextProbeStarted.resolve();
+        return Promise.reject(new TypeError('Failed to fetch'));
+      }
+      throw new Error(`unexpected request ${String(input)}`);
+    }) as unknown as typeof fetch;
+    renderProvider({ ...fakeGateway(), fetchImpl }, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
+
+    await firstStarted.promise;
+    await act(async () => {
+      expirations[0]!();
+      await followupStarted.promise;
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(latest.state).toEqual({ status: 'connecting' });
+    expect(expirations).toHaveLength(1);
+
+    await act(async () => {
+      window.dispatchEvent(new Event('focus'));
+      await nextProbeStarted.promise;
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(expirations).toHaveLength(2);
+    expect(latest.state).toEqual({ status: 'not_running' });
+  });
+
+  it('aborts the untimed slow follow-up when unmounted', async () => {
+    const { expirations } = captureProbeTimeouts();
+    const firstStarted = deferred<void>();
+    const followupStarted = deferred<AbortSignal | undefined>();
+    let healthCalls = 0;
+    const fetchImpl = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+      if (healthCalls++ === 0) {
+        firstStarted.resolve();
+      } else {
+        followupStarted.resolve(init?.signal);
+      }
+      return new Promise<Response>((_resolve, reject) => init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true }));
+    }) as unknown as typeof fetch;
+    const view = renderProvider({ ...fakeGateway(), fetchImpl }, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
+
+    await firstStarted.promise;
+    let followupSignal: AbortSignal | undefined;
+    await act(async () => {
+      expirations[0]!();
+      followupSignal = await followupStarted.promise;
+    });
+    expect(followupSignal?.aborted).toBe(false);
+    act(() => view.unmount());
+    expect(followupSignal?.aborted).toBe(true);
+  });
+
+  it('lets explicit Connect replace the untimed slow follow-up', async () => {
+    const { expirations } = captureProbeTimeouts();
+    const firstStarted = deferred<void>();
+    const followupStarted = deferred<AbortSignal | undefined>();
+    const connectStarted = deferred<void>();
+    let healthCalls = 0;
+    const fetchImpl = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input).endsWith('/v1/health')) {
+        const call = healthCalls++;
+        if (call === 0) firstStarted.resolve();
+        if (call === 1) followupStarted.resolve(init?.signal);
+        if (call === 2) connectStarted.resolve();
+      }
+      return new Promise<Response>((_resolve, reject) => init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true }));
+    }) as unknown as typeof fetch;
+    renderProvider({ ...fakeGateway(), fetchImpl }, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
+
+    await firstStarted.promise;
+    let followupSignal: AbortSignal | undefined;
+    await act(async () => {
+      expirations[0]!();
+      followupSignal = await followupStarted.promise;
+      latest.connect();
+      await connectStarted.promise;
+    });
+    expect(followupSignal?.aborted).toBe(true);
+    expect(fetchImpl).toHaveBeenCalledTimes(3);
+    expect(expirations).toHaveLength(1);
   });
 
   it('keeps the permission prompt for any browser that supports the local-network permission', async () => {
@@ -1019,7 +1211,7 @@ describe('permission and setup evidence matrix', () => {
           init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true });
         });
       }
-      if (outcome === 'slow' && timedOutProbes < 2) {
+      if (outcome === 'slow' && timedOutProbes === 0) {
         return new Promise<Response>((_resolve, reject) => {
           init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')), { once: true });
         });
@@ -1085,16 +1277,11 @@ describe('permission and setup evidence matrix', () => {
       act(() => expireProbes[0]!());
       await waitFor(() => expect(latest.isBooting).toBe(false));
       expect(latest.state).toEqual({ status: 'connecting' });
-      await act(async () => { window.dispatchEvent(new Event('focus')); });
       await waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(initialPermission === 'prompt' ? 3 : 2));
-      act(() => expireProbes[1]!());
-      await waitFor(() => expect(latest.isBooting).toBe(false));
+      await flushReactWork();
       expect(latest.state).toEqual({ status: 'connecting' });
       await act(async () => { window.dispatchEvent(new Event('focus')); });
       await waitFor(() => expect(fetchImpl).toHaveBeenCalledTimes(initialPermission === 'prompt' ? 4 : 3));
-      await waitFor(() => expect(latest.isBooting).toBe(false));
-      expect(latest.state).toEqual({ status: 'connecting' });
-      await act(async () => { window.dispatchEvent(new Event('focus')); });
       await waitFor(() => expect(latest.state.status).toBe('not_running'));
       expect(latest.state).toEqual({ status: 'not_running' });
       expect(latest.connectedBefore).toBe(connectedBefore);
