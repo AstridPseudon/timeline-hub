@@ -1,0 +1,7 @@
+registry=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf
+match_count=1
+row_sha256=1f17165ef66214234080d2d893391171123653f37eb3c17a6f7310f462c57e23
+bash_n=0
+tuple_sha256=edcf7d0a01a949dd60b2c1984afbecb2608772be343094a8d9f2b0bfbfa58ed4
+poison_sha256=c18ff73b832494834efbfa5242dfe859d3bd893c8962c60acb292ffaf0cb778b
+current_registry_sha256=ad72a53f20f1786e5f284e0f030e41e8418b080f119b368fb14b8085c2f534e9

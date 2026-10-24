@@ -1,0 +1,15 @@
+agent_sha=3b2db4bdf9014de013338521dd038ebdecd25f02
+agent_tree=c84907010418e1c0a9ca0d46900c106ba771736e
+runtime_sha=e89eb8c7dfa8cb2c451653ab200dbf77df28b173
+runtime_tree=19972951e7043f0a0929c8413fbe4be9250ec303
+app_sha=e771ce1426022d1a10bab93323d40222c5ce9c3d
+app_tree=dee028ae1df533aca2525ba47178d8f2d285aaf6
+composition_sha=635f4de06fda22a85fc2e4cfc764d0153a4c9f40
+composition_tree=5ab5191a296980a0a6bcd1178ab6902d6478a148
+agent_path=/home/user/work/wt/agt-pin-3b2db4bd
+runtime_path=/home/user/work/wt/rt-pin-e89eb8c7
+app_path=/home/user/work/wt/app-pin-e771ce14
+composition_path=/home/user/work/wt/vw-pin-635f4de0
+node_version=v20.19.4
+composition_version=0.0.14
+original_p4_test_hash=8e336b1ce059770f63e3026e0ee9fc0a3f29bd6e557fbba4725138065c453753

@@ -1,0 +1,4 @@
+--- tuple byte identity ---
+current_tuple_sha256=edcf7d0a01a949dd60b2c1984afbecb2608772be343094a8d9f2b0bfbfa58ed4
+source_1933_tuple_sha256=edcf7d0a01a949dd60b2c1984afbecb2608772be343094a8d9f2b0bfbfa58ed4
+byte_identical_to_1933_tuple=true

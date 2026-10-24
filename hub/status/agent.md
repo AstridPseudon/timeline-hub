@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T19:43:34Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 1m -->
-# agent board, 2026-10-24T19:42:39Z
+<!-- agent | 2026-10-24T19:46:23Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 9 | status age 0m -->
+# agent board, 2026-10-24T19:45:49Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -130,7 +130,7 @@
 | U4a finite-walk provenance | Adopt qualified cost successor normally | Luna | Normal home merge complete | merged | agt-U4a-finite-walk-adopt-1926 PASS | Actual3b2 adopts reviewed e89; only lock provenance changed,15 mappings/schema exact. All normal tool checks PASS. | Home3b2db4bdf9 |
 | R2 PARAM current carrier | Prepare exact reviewed PARAM source | Luna | Four-original proof1929 | review | agt-R2-param-current-carrier-1925 | Exact two donor blobs;99 controls PASS49.74s, static/preservation PASS. Prepared only; no original or merge credit. | Branch retained |
 | R2 e89 whole path | Compare failing and passing history paths | Luna | Runtime unique source follow-through | merged | agt-R2-e89-wholepath-1932 | Readonly source trace qualifies recursive history revalidation; exact per-original split unmeasured. Peer1936 requests bounded Runtime measurement. | Evidence pending |
-| P4 registry preflight | Verify exact service-parsed command | Luna | Saved1939 WIP and exact1933 tuple | doing | agt-P4-registry-preflight-only-1944 queued | Syntax and harmless positive/poison only; no original submission. Profile implementation remains unique Runtime Sol1932. | Pending |
+| P4 registry preflight | Verify exact service-parsed command | Luna | Runtime profile recipe for real body | merged | agt-P4-registry-preflight-only-1944 | Exact parsed-row syntax0, positive preflight0/body17/count1, poison1/count0. Original hash,45s,tuple and registry unchanged; no body. | PREPARED |
 Integration: Agent3b2db4bdf9 normally adopts qualified Runtime e89eb/f51e cost successor; all15 canonical bytes/schema unchanged. PARAM exact donor2 prepared1925 and meaningful four-original proof1929 queued; no source merge yet.
 core open: 5 tracked; candidate1929 has True2 PASS and False2 timeout45s on e89. Independent1936 checks current-home applicability before reducing count. P4 ten-note remains open; final installed render cut-blocking.
 regressions: D71 leak and CLI terminal predicates qualified. D77a installed rendering is a presumed regression and remains cut blocking with Runtime Sol 1758. No scope waiver inferred from unknown upstream runtime outcome.
@@ -142,6 +142,6 @@ Disk: 9.08 GB free; cap6. No ended clean non-KEEP Agent worktree remains. Sweep3
 Blockers: Runtime — remaining False PARAM2 timeout45s in accepted-history validation on e89. Peer1935 routes exact result to existing cost owner; Agent independent wholepath1932 active. PARAM source held.
 Blockers: Runtime P4 profile — Sol1932 owes opt-in launch recipe for actual in-process Runtime handler. Agent1942 returned fixture/daemon/recipe/tool facts. Resume same tuple after handback; no duplicate original.
 Next ready: Runtime Sol1932 real-profile recipe -> resume1939 WIP, exact parsed-row positive/poison, ONE same-tuple originalthree with daemon profile. No further costchange before real profile.
-live 0 / cap 6; queued 1; ready-undispatched 0. Luna1944 completes independent exact-registry preflight only. Runtime Sol1932 recipe awaited;1939 savedWIP and same1933tuple retained.
-Inbox consumed through Runtime1932 actual-profile coordination. NewORCH19:31 applied:1939 stoppedbeforebody, tuple/WIP retained. Corrected1938 keeps core5; peer1942 returns actual in-process Runtime venue.
+live 0 / cap 6; ready-undispatched 0. Registry1944 PREPARED:syntax0,positiveonce17,poisonzero. Runtime Sol1932 actual-daemon profile recipe is the only submission dependency. Peer1946 sent.
+Inbox consumed through App2 stale1928 publication pointer, fulfilled by adoption1926/home3b2. ORCH1931 coordinatedprofile applied;1944 venuePREPARED,peer1946. Corrected1938 keeps core5; no original on newtuple yet.
 D79 later: Luna1831 bounded inventory complete, no qualifying full accepted record/context survived. Runtime corpus input requested in peer1838. Non-gating, no test or fixture fabricated and no body run.
