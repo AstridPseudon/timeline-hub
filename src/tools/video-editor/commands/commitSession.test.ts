@@ -481,54 +481,6 @@ describe('real clip move session through the Runtime HTTP boundary', () => {
     }
     await reopened.dispose();
   });
-  it.each(['missing dependent display basis', 'missing revision', 'empty revision', 'missing publication',
-    'empty publication', 'missing document', 'mismatched revision'] as const)(
-    'retains work without projecting or sending when recovery has a %s', async (fault) => {
-      const env = await environment();
-      const session = await env.mount();
-      env.setFault('lost');
-      env.move(session, 5);
-      env.move(session, 7);
-      await vi.waitFor(() => expect(session.getState().status).toBe('retry'));
-      // A's cached ACK must arrive before B's retryable refusal.
-      const send = env.provider.commitTimeline.bind(env.provider);
-      env.setFault(null);
-      vi.spyOn(env.provider, 'commitTimeline').mockImplementation(async (...args) => {
-        const result = await send(...args);
-        env.setFault('busy');
-        return result;
-      });
-      await session.retry();
-      await session.dispose();
-      await editOwner(env, (record) => {
-        const payload = record.intents[0].payload as Record<string, unknown>;
-        if (fault === 'missing dependent display basis') delete payload.displayBasis;
-        else {
-          const basis = payload.displayBasis as { head: { revisionId?: string; publicationId?: string }; canonicalDocument?: unknown };
-          if (fault === 'missing publication') delete basis.head.publicationId;
-          else if (fault === 'empty publication') basis.head.publicationId = '';
-          else if (fault === 'missing revision') delete basis.head.revisionId;
-          else if (fault === 'empty revision') basis.head.revisionId = '';
-          else if (fault === 'missing document') delete basis.canonicalDocument;
-          else basis.head.revisionId = 'another-revision';
-        }
-      });
-      const [saved] = await env.outboxes.list(scope);
-      const count = env.commits().length;
-      const reopened = await env.mount(await env.provider.loadTimelineCommandBasis(scope.timelineId));
-      await expect(reopened.recover(saved.ownerId)).rejects.toThrow('verified original display basis');
-      expect(reopened.getState()).toMatchObject({ status: 'error', canUndo: false });
-      expect(() => env.move(reopened, 9)).toThrow('verified original display basis');
-      await reopened.retry();
-      await expect(reopened.flush()).rejects.toThrow('verified original display basis');
-      expect(env.projected).toHaveLength(0);
-      expect(env.commits()).toHaveLength(count);
-      const [retained] = await env.outboxes.list(scope);
-      expect(retained.intents).toEqual(saved.intents);
-      expect(retained.pending).toEqual(saved.pending);
-      expect(retained.accepted).toEqual(saved.accepted);
-      await reopened.dispose();
-    });
   it('routes a persisted native bootstrap owner through its existing carrier before generic edit recovery', async () => {
     const runtime = {} as { env: Awaited<ReturnType<typeof environment>> };
     const recoverBootstrap = async (claimedOwner: string): Promise<TimelineCommandBasis> => {

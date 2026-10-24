@@ -81,6 +81,7 @@ export async function createLocalSaveSession(options: Options) {
   let generation = 0;
   let adoptedAcceptance: string | undefined;
   let replaying = false;
+  let recoveryError: unknown;
   let writeError: unknown;
   let state: LocalSaveState = { status: 'saved', recoverableOwners: [] };
 
@@ -91,6 +92,7 @@ export async function createLocalSaveSession(options: Options) {
     options.changed(clone(state));
   }
   function assertOpen() {
+    if (!closed && recoveryError) throw recoveryError;
     if (closed || !box) throw new Error('Local save session is closed or awaiting recovery');
   }
   function checkBasis(value: TimelineCommandBasis) {
@@ -218,14 +220,19 @@ export async function createLocalSaveSession(options: Options) {
     let fail!: (error: unknown) => void;
     const mounted = new Promise<void>((resolve, reject) => { ready = resolve; fail = reject; });
     const hold = async (claimed: ClaimedOutbox, id: string) => {
-      box = claimed;
-      state = { status: 'saved', recoverableOwners: [], ownerId: id };
       record = await claimed.read();
+      // A valid accepted prefix cannot authenticate the original dependent drafts.
+      for (const intent of record.intents) {
+        try { checkBasis(saveOf(intent.payload).displayBasis); }
+        catch { throw new Error('Local saves require a verified original display basis for recovery'); }
+      }
       if (record.accepted) {
         const result = record.accepted.value as unknown as TimelineCommitResult;
         basis = { head: result.accepted, canonicalDocument: result.canonicalDocument, graph: result.graph };
         checkBasis(basis);
       }
+      box = claimed;
+      state = { status: 'saved', recoverableOwners: [], ownerId: id };
       // A recovered accepted prefix must win over its old optimistic suffix,
       // including when the next request already has uncertain durable bytes.
       replaying = !!record.accepted && record.intents.length > 0;
@@ -236,6 +243,7 @@ export async function createLocalSaveSession(options: Options) {
         const prepared = await options.prepareDisplay(clone(displayBasis), clone(document));
         if (!closed) prepared.adopt();
       }
+      recoveryError = undefined;
       publish(record.intents.length ? 'dirty' : 'saved');
       ready();
       await new Promise<void>((resolve) => { release = resolve; if (closed) resolve(); });
@@ -243,7 +251,14 @@ export async function createLocalSaveSession(options: Options) {
     lifetime = (ownerId ? storage.recover(options.scope, ownerId, (claimed) => hold(claimed, ownerId))
       : storage.create(options.scope, hold)).catch((error) => { fail(error); });
     try { await mounted; }
-    catch (error) { box = undefined; lifetime = undefined; throw error; }
+    catch (error) {
+      await lifetime;
+      box = undefined;
+      lifetime = undefined;
+      recoveryError = error;
+      publish('error', { message: errorMessage(error) });
+      throw error;
+    }
   }
 
   const owners = (await storage.list(options.scope)).filter((owner) => owner.intents.length || owner.pending);
