@@ -241,7 +241,8 @@ def test_closed_union_operation_inventory_is_exactly_the_supported_cohort():
     # These approved semantic commands are provider-registered but have no
     # frozen wire-schema tuple; the closed union remains exactly the 30
     # published tuples below.
-    provider_only = {'occurrence.fork', 'occurrence.place-shared', 'timeline.duplicate'}
+    provider_only = {'occurrence.fork', 'occurrence.place-shared', 'timeline.duplicate',
+                     'timeline.restructure', 'clip.duplicate-media'}
     assert set(operations()) - set(actual) == provider_only
     assert set(actual) == expected
     assert set(operations()) == (
