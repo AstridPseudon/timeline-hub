@@ -1,8 +1,8 @@
 """A headless shell holding authored content is never overwritten by publication.
 
-The shell is installed by direct rows (a historical image). Current authenticated
-same-ID adoption refuses an authored scope before invoking the provider; supported
-empty/bootstrap and commit paths remain covered separately.
+The shell is installed by direct rows (a historical image). D16 retains the exact
+legacy publication requests and proves their earlier retired-route refusal, not
+the removed stale-head/content predicates. Positives use bootstrap and commits.
 """
 from __future__ import annotations
 
@@ -12,13 +12,12 @@ from pathlib import Path
 
 import pytest
 
-from runtime_protocol.errors import ConflictError, RetiredRouteError
+from runtime_protocol.errors import RetiredRouteError
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit_baseline import verify_baseline
 from runtime_protocol.timeline_commit_port import digest, route_path
 from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
-from runtime_protocol.timeline_commit_store import timeline_scope_is_empty
 from runtime_protocol.util import canonical_json
 
 AUTHORED = {
@@ -28,12 +27,6 @@ AUTHORED = {
     "occurrences": [],
 }
 EMPTY = {"config": {}, "registry": {}, "clips": [], "occurrences": []}
-AUTHORED_COMMIT = {
-    "config": {"clips": [], "tracks": [{"id": "authored", "kind": "visual"}]},
-    "registry": {},
-    "clips": [],
-    "occurrences": [],
-}
 
 
 class CountingProvider:
@@ -58,8 +51,8 @@ def service(tmp_path, astrid_importable):
     runtime = RuntimeService(root)
     project = runtime.create_project({"slug": "shell", "name": "Shell"}, idempotency_key="project")["id"]
     # Preserve the historical headless shell shape: the timeline aggregate
-    # exists, but its publication authority is absent until the provider is
-    # registered and the authenticated adoption boundary is exercised.
+    # exists, but its publication authority is absent. Registering the provider
+    # does not make an unpublished historical source admissible.
     runtime.create_timeline(project, "main", idempotency_key="create-main")
     provider = CountingProvider(load_timeline_commit_provider("astrid"))
     setattr(runtime, "test_provider", provider)
@@ -89,20 +82,26 @@ def _commit(runtime, project, key, *, base, replacement):
     document = runtime._timeline_commits()[0].revision_closure(
         project, "main", base["head_revision_id"] if "head_revision_id" in base else base["revision_id"]
     )
-    change = {
-        "op": "set",
-        "ref": "parent",
-        "path": [],
-        "before": {"state": "present", "value": copy.deepcopy(document["parent_revision"]["payload"])},
-        "value": copy.deepcopy(replacement),
-    }
+    payload = document["parent_revision"]["payload"]
+    # Removing bootstrap's config.clips also removes its synchronized root
+    # mirror. Restore the original authored root clips explicitly afterward.
+    changes = [
+        {"op": "set", "ref": "parent", "path": ["config"],
+         "before": {"state": "present", "value": copy.deepcopy(payload["config"])},
+         "value": copy.deepcopy(replacement["config"])},
+        {"op": "set", "ref": "parent", "path": ["registry"],
+         "before": {"state": "present", "value": copy.deepcopy(payload["registry"])},
+         "value": copy.deepcopy(replacement["registry"])},
+        {"op": "set", "ref": "parent", "path": ["clips"],
+         "before": {"state": "absent"}, "value": copy.deepcopy(replacement["clips"])},
+    ]
     command = {
         "schema_version": 1,
         "op": "doc.patch",
         "version": "1",
         "select": None,
-        "created": ["parent/track:authored"],
-        "args": {"changes": [change]},
+        "created": ["parent/asset:a", "parent/clip:edited"],
+        "args": {"changes": changes},
     }
     return runtime.commit_timeline(
         project,
@@ -121,7 +120,7 @@ def _commit(runtime, project, key, *, base, replacement):
                 "intent": "prove current publication authority",
                 "tags": ["headless"],
                 "command_ordinals": [0],
-                "patch": [change],
+                "patch": copy.deepcopy(changes),
                 "reads": [],
             }],
             "merge": "fields",
@@ -138,17 +137,11 @@ def _commit(runtime, project, key, *, base, replacement):
     )
 
 
-def _refused_headless_create(runtime, project, key):
-    # The current authenticated same-ID caller rejects an authored shell at
-    # adoption. Keep the exact scope predicate visible even though the public
-    # service deliberately exposes the stable aggregate conflict envelope.
-    assert not timeline_scope_is_empty(runtime.store.conn, "main", project_id=project)
-    calls = runtime.__dict__["test_provider"].calls
-    with pytest.raises(ConflictError) as error:
-        runtime.create_timeline(project, "main", idempotency_key=key)
-    assert error.value.status == 409
-    assert error.value.details == {"timeline_id": "main"}
-    assert runtime.__dict__["test_provider"].calls == calls
+def _assert_retired(error):
+    assert error.status == 410
+    assert error.code == "retired_route"
+    assert isinstance(error.details, dict)
+    assert error.details["reason"] == "timeline_commit_required"
 
 
 def _legacy_publish_empty(runtime, project, key):
@@ -167,7 +160,12 @@ def _legacy_publish_empty(runtime, project, key):
 
 
 def _dump(runtime):
-    return tuple(runtime.store.conn.iterdump())
+    return (
+        tuple(runtime.store.conn.iterdump()),
+        tuple((str(path.relative_to(runtime.cas.root)), path.read_bytes())
+              for path in sorted(runtime.cas.root.rglob("*")) if path.is_file()),
+        runtime.__dict__["test_provider"].calls,
+    )
 
 
 def _stored(runtime):
@@ -180,7 +178,9 @@ def test_empty_default_over_authored_headless_shell_is_refused_untouched(service
     original = _stored(runtime)
     before = _dump(runtime)
     for key in ("empty-default", "empty-default"):  # the retry is refused the same way
-        _refused_headless_create(runtime, project, key)
+        with pytest.raises(RetiredRouteError) as error:
+            _legacy_publish_empty(runtime, project, key)
+        _assert_retired(error.value)
         assert _dump(runtime) == before
     assert _stored(runtime) == original
     assert json.loads(original) == AUTHORED
@@ -191,7 +191,9 @@ def test_empty_default_over_empty_headless_shell_is_refused_untouched(service):
     runtime, project = service
     _shell(runtime, project, EMPTY)
     before = _dump(runtime)
-    _refused_headless_create(runtime, project, "empty-default")
+    with pytest.raises(RetiredRouteError) as error:
+        _legacy_publish_empty(runtime, project, "empty-default")
+    _assert_retired(error.value)
     assert _dump(runtime) == before
 
 
@@ -234,11 +236,14 @@ def test_empty_parent_over_hidden_nonempty_content_of_a_headless_timeline_is_ref
     fixture = json.loads((Path(__file__).parent / "fixtures" / "headless_hidden_content_candidate.json").read_text())
     content = {"slug": "edited", "config": fixture["hiddenAuthored"], "registry": {"assets": {}}}
     _hide_content(runtime, project, content)
+    assert runtime.get_project_timeline(project, "main")["head_revision_id"] is None
     body = {**copy.deepcopy(fixture["submitted"]), "project_id": project, "timeline_id": "main"}
     assert body["parent_composition"] == fixture["submitted"]["parent_composition"]
     before = _dump(runtime)
     for key in ("repair-shell", "repair-shell"):  # the retry is refused the same way
-        _refused_headless_create(runtime, project, key)
+        with pytest.raises(RetiredRouteError) as error:
+            runtime.publish_parent_composition(project, "main", body, idempotency_key=key)
+        _assert_retired(error.value)
         assert _dump(runtime) == before
     stored = runtime.store.conn.execute("SELECT content_json FROM project_documents WHERE id='timeline:main'").fetchone()[0]
     assert json.loads(stored) == content
@@ -270,19 +275,20 @@ def test_cas_correct_republish_after_reading_the_head_is_accepted(service):
         "revision_id": first["data"]["head_revision_id"],
         "publication_id": first["data"]["head_publication_id"],
     }
-    again = _commit(runtime, project, "second", base=head, replacement=AUTHORED_COMMIT)
+    again = _commit(runtime, project, "second", base=head, replacement=AUTHORED)
     assert again["data"]["status"] == "accepted"
     assert again["data"]["previous_revision_id"] == first["data"]["head_revision_id"]
     assert again["data"]["previous_publication_id"] == first["data"]["head_publication_id"]
-    assert again["data"]["canonical_document"]["parent_revision"]["payload"] == AUTHORED_COMMIT
+    assert again["data"]["canonical_document"]["parent_revision"]["payload"] == AUTHORED
     assert again["receipt"]["result"] == again["data"]
     history = runtime.list_timeline_commits(project, "main", authorize=lambda: None)["items"]
     entry = next(item for item in history if item["publication_id"] == again["receipt"]["receipt_id"])
     assert entry["receipt"] == again["receipt"]
     assert entry["records"]["commands"][0]["command"] == again["data"]["commands"][0]
-    assert entry["records"]["commands"][0]["created"] == [{
-        "kind": "track", "owner": "parent", "ref": "parent/track:authored",
-    }]
+    assert entry["records"]["commands"][0]["created"] == [
+        {"kind": "asset", "owner": "parent", "ref": "parent/asset:a"},
+        {"kind": "clip", "owner": "parent", "ref": "parent/clip:edited"},
+    ]
     event = runtime.store.conn.execute(
         "SELECT kind, payload_json FROM timeline_events WHERE id=?",
         (again["receipt"]["event_ids"][-1],),
@@ -303,7 +309,7 @@ def test_cas_correct_republish_after_reading_the_head_is_accepted(service):
         "SELECT content_digest, commit_manifest_json FROM parent_composition_revisions WHERE id=?",
         (again["data"]["accepted_revision_id"],),
     ).fetchone()["content_digest"] == again["data"]["canonical_document"]["parent_revision"]["content_digest"]
-    assert _commit(runtime, project, "second", base=head, replacement=AUTHORED_COMMIT) == again
+    assert _commit(runtime, project, "second", base=head, replacement=AUTHORED) == again
     assert runtime.__dict__["test_provider"].calls == 1
 
 
@@ -337,7 +343,9 @@ def test_headless_timeline_with_scoped_rows_refuses_empty_publish_untouched(serv
     _scoped_rows(runtime, project, kind)
     before = _dump(runtime)
     for key in ("scope-deny", "scope-deny"):  # the retry is refused the same way
-        _refused_headless_create(runtime, project, key)
+        with pytest.raises(RetiredRouteError) as error:
+            _legacy_publish_empty(runtime, project, key)
+        _assert_retired(error.value)
         assert _dump(runtime) == before
 
 
