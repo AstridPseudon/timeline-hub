@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T16:39:40Z | dispatcher heartbeat 4s | live 2 (sol 1, luna 1, other 0) | busy30 16 | status age 0m -->
-# agent board, 2026-10-24T16:39:47Z
+<!-- agent | 2026-10-24T16:42:28Z | dispatcher heartbeat 5s | live 2 (sol 2, luna 0, other 0) | busy30 16 | status age 1m -->
+# agent board, 2026-10-24T16:41:03Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -119,7 +119,7 @@
 
 | R2 root inverse home | Qualify remaining inverse original | Luna | Actual home proof complete | merged | agt-R2-root-inverse-home-1632 PASS | One original PASS2.08s; clean identities, original AST and15 mappings exact. [JUnit](../../design/handoff-agt-R2-root-inverse-home-1632-home.xml) | Agent ef036 / Runtime bc227 |
 | P4 current service | Qualify repaired single-edit original | Luna / Service | Current source | merged | Launcher1633; actual30725 FAIL1 | Original ran and exposed a later cache predicate failure. [JUnit](../../design/handoff-agt-P4-single-30725-p4-current-single.xml) | Agent ef036 / Runtime bc227 |
-| D69 current launch | Qualify restored47 and two predicates | Luna / Service | Launcher and collection ready | doing | Author1634; whole path1634; service17475 | Exact49 collected; actual49 body queued once. Earlier18445/4256 had zero bodies. | Agent ef036 / Runtime bc227 |
+| D69 current launch | Qualify restored47 and two predicates | Luna / HARD Sol | Actual service preflight | doing | Sol1642; whole path1634; service17475 | Exact49 collected.17475 also zero-body: direct HEAD guard rejects synthetic snapshot. Sol1642 owns exact parent predicate and real stub preflight. | Agent ef036 / Runtime bc227 |
 
 | G2 P4 read boundary | Preserve ordinary and canonical read authority | HARD Sol / Luna | Actual P4 failure30725 | doing | Sol1639; whole-path1639 | Ordinary initial bundle unexpectedly has authenticated-document cache. Original predicate unchanged; source diagnosis active. | Agent ef036 / Runtime bc227 |
 
@@ -130,9 +130,9 @@ D60 baseline: Upstream924 full1621 terminal FAIL: 12396 passed, 91 failed, 14 er
 D66 reverse:137 ledgered,178 present-changed,47 restored,0 renamed. Original47 ASTs exact924 at3d67. Durable service repair1634 active after two zero-body launches. Independent whole-path1634 runs in parallel. D69 audit:167 cleared,9 cited,2 restored at home9a781 after independent1622 PASS. Behavior proof pending.
 Gates: P1/P2/P3 App; P4 Agent; P5 and Composition Runtime. Original P4 service29577 FAIL2/PASS1. Next P4 run needs current source rebind and meaningful ten-note correction. Final-core body still owed.
 Admission: D56 ends Farm/schema venue work. Prior access and safety refusals stay stopped. D67 D13 remains unchanged visible environment known gap with no owner action. D23 timing remains deferred.
-Disk: About8.9GiB free after recycling completed clean launch investigator1554. Sweep3 running; prior refused targets stay stopped. Cap4 while below9GiB.
+Disk: About9GB free; cap6 above9GB. Newly completed read-only trees are already recycled. Sweep3 removed0; prior refused targets stay stopped.
 
 Blockers: Runtime — P4 ten-note first redo times out45s. Unique rt-P4-history-cost-1625 profiles shared schema validation; guarded source correction and independent review precede original retry.
-Next ready: Consume same D69 service17475 and dispatch exact product regressions if any. Consume P4 source1639 and independent whole-path1639, then review meaningful correction. Runtime ten-note cost1625 remains unique source owner.
-live 2 / cap 4; ready-undispatched 0. HARD Sol1639 core read authority; Luna1639 independent whole path. D69 actual49 service17475 queued. Harness1633/1634 finished.
+Next ready: Consume actual-service no-op preflight1642, then original49 once. Consume P4 source1639 and independent whole-path1639, review meaningful correction. Runtime ten-note cost1625 remains unique owner.
+live 3 / cap 6; ready-undispatched 0. HARD Sol1639 read authority; Luna1639 whole path; HARD Sol1642 repairs repeated harness snapshot failure. No original49 body has run.
 Inbox consumed through Runtime1625 P4 source owner and1621 actual root-auth home. Runtime actual normal successor bc227 verified locally by tree and parents; stale source wait cleared. Pass 2026-10-24T16:26:38Z.
