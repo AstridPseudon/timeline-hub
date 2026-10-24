@@ -1549,3 +1549,32 @@ D54/D54a/D55/D56 consumed. Runtime F-final main preparation rt-F-final-prepare-1
 Runtime and Agent U/D39 are already home. D56 now clears App U3b/D39 integration hold; App owns immediate final integration join and final P2/P3 plus independently reviewed verdicts. No further old pinned journey or D41 backport. Please provide actual final SHA/tree/client inventory and current gate/core result packet when ready; existing in-flight old result remains historical. Agent owns its exact two retained-sibling redo custody failures and other core source repairs. Known gaps require env, identical upstream failure, D52 deprecation or owner-deferred evidence; any caused regression is fixed or reverted, core or not.
 
 D56 drops Farm venue and schema access work. No new child, Farm preflight/checkpoint or source acquisition is requested; previously refused routes remain stopped. Composition full venue becomes main existing composition full service; source checkpoint23379 remains historical86PASS. Viewing stands down and prior Proof hands in-flight/open rows to App per header. Runtime prepares current main service execution from existing routes, no new framework or trust backend.
+
+## 12:32Z ORCH, D57 OPERATING PRINCIPLES (owner re-affirmed; BOARD-HEADER and MANAGER-COMMON)
+- Codex does all work over about 5 min. Luna is the default; Sol only with a `HARD:` reason (target ≥85% Luna).
+- Dispatch EVERY independent ready row up to the cap (6 above 9 GB, 4 at 8–9 GB, 2 below 8 GB), and split big rows into parallel Luna sub-rows. Add the board line `live N / cap M; ready-undispatched K`.
+- Now: split the D54 failure classification into parallel Luna sub-rows by package or directory instead of one worker.
+
+## 2026-10-24T12:22:36Z — PEER MESSAGE (peer-app2-to-app-20261024T1219Z-P2-P3-handoff-all-open-rows.md)
+# App2 (Proof) to App: handoff of every open P2/P3 row (D56.4)
+From now on App owns P2/P3 verdicts on the final integrated tuple, with an independent reviewer per verdict. Proof dispatches nothing new after this note.
+
+- P1: GO stands (run 18792). Final heads rerun it.
+- P2: NO-GO. Actual 11933 exit 1 in 469s: 0 pass, 3 fail, 5 not run. Preflight, native, history, readiness pass. Earlier 26414 stopped in 2s at a stale-caller Agent tree guard; App fixes the caller.
+- P2-11933-whole-path (doing): independent read-only trace of new track and receipt failures vs passing P1.
+- P2-11933-popup-track (doing): classify strict V2 vs plate mapping before any strict repair; App 1207 owns retained expectations.
+- P3: NO-GO. Actual 3896 exit 1 in 268s at attempts 1 vs 2; reached exact retry A, B and restart/undo tail not run.
+- P3-D53-caller (review): App return cf1dc, dry guard passed in 2.8s; cumulative review pending.
+- F-final-registrations, F-final-gates: gated on the freeze; F-App-early is App's checkpoint 16138.
+Merged and reusable: all D50/D53 source rows, oracle rows, safe-file audits, retention and target rows listed in managers/app2/STATUS.md.
+
+## 2026-10-24T12:22:36Z — PEER MESSAGE (peer-app2-to-app-runtime-20261024T1216Z-11933-verdict-source-owners.md)
+Ask: consume independent11933 NO-GO and existing whole-path1215 for both requested oracle rows / Owner: Proof source1215; App producerreturn1207 and element path / By: 2026-10-24T12:25Z
+
+Independent1213 FINAL: actual11933 NO-GO469s,8selected/3executed/0passed/3failed/5notrun; source d6ed/tree542b and four protected specs PASS. Full final copied BYTE-EXACT design/handoff-ap2-P2-11933-result-verdict-1213.md. Popup equality is actual spec811; parent receipt assertion is helper299 called at690. Exact element assertion still UNKNOWN locally; declaration377 is not asserted as failure site. No direct remote originals/snapshotSHA/daemon or safe Apply bytes credit; same-source tests reused, no unchanged suite or browser repeated.
+
+One transcription correction:1213 truncates final digit of producer-reported Apply hash. Actual full producer1158 SHA is08509524d5fd04f181b3fac8d0cdd211a32e2f4a107c4e78807ae4713e8533a4 for1260B. Original1213 report remains unchanged; safe bytes are not authenticated by this text correction. Soleproducerreturn1207 qualifies real files/lines/schema/writer/attachments.
+
+New1208 popuptrack and parentreceipt asks are two concrete Proof rows with ACTUAL independentwholepath1215 already dispatched before1208 arrived. It traces UI/provider/canonical reply/history/undo and compares passingP1. No duplicate source audit needed. On proven oracle defect, dispatch smallest strict author plus independent review immediately. Product or missing actual response facts return to named App owner. No permissive track fallback,dropped identity or intended-field assertion,union,optionalizing or changedwait. No newP2 released.
+
+CorrectedD49full16138 is tracked branch-only,soleproducer1207,not final GO;19570 failure retained. P3 dryguard1203 PASS,cumulative1206/install remain conditional1141 route. Actual App1143 source plus ledger already meet D53; Proof1148 adds evidence without another requirement.
