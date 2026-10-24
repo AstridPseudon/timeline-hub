@@ -1,0 +1,106 @@
+{
+  "schema": "timeline.agent.r2.d54.evidence-packet.v1",
+  "task": "agt-R2-D54-result-export-1304",
+  "read_only": true,
+  "base": {
+    "branch": "tl/agt-R2-cumulative-join-1238",
+    "commit": "e5fa8aac0eea52d7e5cedae49cafe81e5c03b810",
+    "tree": "aeeeecd4bb8997f9ecc418f4dd52cff3936d1860"
+  },
+  "current_integration_separate": {
+    "branch": "tl/integration",
+    "path": "/home/user/work/agent",
+    "commit": "cba425b61958f380f25b7bdea83d23c92f627761",
+    "tree": "d19ce2e55ce9f29e18a504fb9c97178764272bbe"
+  },
+  "source_manifest": [
+    {
+      "label": "original-1210-base",
+      "commit": "d7efe3c49021daf33ae740e3a8bb4d6f02a5f3b1",
+      "tree": "5df4d0bc48c5aebecd40a77297ff1e87c13d9028",
+      "files": [
+        {"path": "tests/sdk/test_timeline_inverse_fork_guard.py", "blob": "a7cb4b52d1fdacb11248d7cde47f6a8f964de73f", "size": 14410, "sha256": "8302871093213098be70496272b51fba529296e78bb6bc1e53cc608e868a93c6"},
+        {"path": "astrid/sdk/timeline/_commit_patch.py", "blob": "a7b103bf38b6ec860f481948f74810d06ee86b75", "size": 69321, "sha256": "506def3b046b96180954223d8334c33ae50274ca2e0cdf575e5a701d7bc46c07"},
+        {"path": "astrid/sdk/timeline/_step_undo.py", "blob": "5c390de538b5a596273f1d9d3153709add20385e", "size": 28529, "sha256": "f94ef32c53f4ef1e84067e20fe403f1aff4a16e21629795d8ffb3f4ffd072e75"},
+        {"path": "astrid/sdk/timeline/inverse.py", "blob": "bc0ee7725f88fdc7a34274d6068b5e58b4212f4b", "size": 69025, "sha256": "89963f7ec5e9838556aa98deef685fa1db169832cba5e2e54e644216a80d56db"},
+        {"path": "astrid/sdk/timeline/_doc_patch.py", "blob": "1cba1169922565a3365f905e63e56b864a5c00e0", "size": 30032, "sha256": "46fcc1a7e9fc83bca5bc1386eaeca94c98a670161bc628088b0d16ef5caf8a2e"}
+      ]
+    },
+    {
+      "label": "held-reviewer1258-joined",
+      "commit": "e5fa8aac0eea52d7e5cedae49cafe81e5c03b810",
+      "tree": "aeeeecd4bb8997f9ecc418f4dd52cff3936d1860",
+      "files": [
+        {"path": "tests/sdk/test_timeline_inverse_fork_guard.py", "blob": "a7cb4b52d1fdacb11248d7cde47f6a8f964de73f", "size": 14410, "sha256": "8302871093213098be70496272b51fba529296e78bb6bc1e53cc608e868a93c6"},
+        {"path": "astrid/sdk/timeline/_commit_patch.py", "blob": "620ced06c6bf161b3f58877ec5ca9b0ef5b3cd52", "size": 74832, "sha256": "49a3fd8aaab7ad0b8d3c7d95f6406374dc6980d3d913fd8dfdd52f8f5cd12450"},
+        {"path": "astrid/sdk/timeline/_step_undo.py", "blob": "57c246395cf662d831f100522f2ce45c0bb5b708", "size": 29712, "sha256": "a38bb078ecd2579399f131fa0a08a9bedd339226f92b9d8ac27de2b6d27827a6"},
+        {"path": "astrid/sdk/timeline/inverse.py", "blob": "b5ac471ef2d679de198b8cddada20d4140648179", "size": 69109, "sha256": "0702cda4d096589e34485295cb40ffe00b0f11692bbb01fbfa5228daa1da69d4"},
+        {"path": "astrid/sdk/timeline/_doc_patch.py", "blob": "1cba1169922565a3365f905e63e56b864a5c00e0", "size": 30032, "sha256": "46fcc1a7e9fc83bca5bc1386eaeca94c98a670161bc628088b0d16ef5caf8a2e"}
+      ]
+    },
+    {
+      "label": "actual-current-integration",
+      "commit": "cba425b61958f380f25b7bdea83d23c92f627761",
+      "tree": "d19ce2e55ce9f29e18a504fb9c97178764272bbe",
+      "files": [
+        {"path": "tests/sdk/test_timeline_inverse_fork_guard.py", "blob": "a7cb4b52d1fdacb11248d7cde47f6a8f964de73f", "size": 14410, "sha256": "8302871093213098be70496272b51fba529296e78bb6bc1e53cc608e868a93c6"},
+        {"path": "astrid/sdk/timeline/_commit_patch.py", "blob": "a7b103bf38b6ec860f481948f74810d06ee86b75", "size": 69321, "sha256": "506def3b046b96180954223d8334c33ae50274ca2e0cdf575e5a701d7bc46c07"},
+        {"path": "astrid/sdk/timeline/_step_undo.py", "blob": "5c390de538b5a596273f1d9d3153709add20385e", "size": 28529, "sha256": "f94ef32c53f4ef1e84067e20fe403f1aff4a16e21629795d8ffb3f4ffd072e75"},
+        {"path": "astrid/sdk/timeline/inverse.py", "blob": "bc0ee7725f88fdc7a34274d6068b5e58b4212f4b", "size": 69025, "sha256": "89963f7ec5e9838556aa98deef685fa1db169832cba5e2e54e644216a80d56db"},
+        {"path": "astrid/sdk/timeline/_doc_patch.py", "blob": "96ebaec0d26ac33133e06d9c1ef6b5f02f287a6c", "size": 28372, "sha256": "28408a7f50ef6441b139ca7762a6246188aa293f5889b0d2d73f39266673acab"}
+      ]
+    }
+  ],
+  "review_provenance": {
+    "reviewer": "agt-R2-cumulative-security-review-1258",
+    "commit": "e5fa8aac0eea52d7e5cedae49cafe81e5c03b810",
+    "tree": "aeeeecd4bb8997f9ecc418f4dd52cff3936d1860",
+    "result": "scoped PASS only",
+    "production_caller": "confirmed: inverse.py -> _materialization_sites and _step_undo.py",
+    "unresolved": "null-payload and null-config positives remain red/open"
+  },
+  "contract_scope": {
+    "request": [
+      "api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id",
+      "commands", "label", "steps(id,label,intent,tags,command_ordinals,patch,reads)",
+      "merge(fields|atomic)", "reads", "dry_run", "source", "rationale", "group_id", "Idempotency-Key"
+    ],
+    "replies": [
+      "accepted/merged", "canonical closure", "IDs/digests", "commands", "id_map", "records",
+      "steps", "dependencies", "effects", "bindings", "history", "durable receipt",
+      "dry-run would_status/null receipt", "conflict reason/head", "invalid code/path/hint/suggested_command"
+    ],
+    "production_caller_uses_it": true
+  },
+  "file_manifest": [
+    {"path": "current-rollup-1254-report.md", "size": 972, "sha256": "847303caab3a36b9f1b3538ddf61cc332ba41b596bae057e3ce0a2175d0f01f6", "exact": true},
+    {"path": "current-rollup-1254-worker-log.txt", "size": 3396919, "sha256": "4440fe07fb9c67ed3b2b4ebb38497eb94469dd459aa78d9456ff31e882a2f2c4", "exact": true},
+    {"path": "held-e5fa-test-timeline-inverse-fork-guard.py", "size": 14410, "sha256": "8302871093213098be70496272b51fba529296e78bb6bc1e53cc608e868a93c6", "exact": true},
+    {"path": "original-1210-baseline-commit-patch.py", "size": 69321, "sha256": "506def3b046b96180954223d8334c33ae50274ca2e0cdf575e5a701d7bc46c07", "exact": true},
+    {"path": "original-1210-baseline-step-undo.py", "size": 28529, "sha256": "f94ef32c53f4ef1e84067e20fe403f1aff4a16e21629795d8ffb3f4ffd072e75", "exact": true},
+    {"path": "original-1210-baseline.xml", "size": 72304, "sha256": "882049c8217cce76aa6bdad2404342f6327c76bf7776419834c8b78bc7461397", "exact": true},
+    {"path": "original-1210-commands.txt", "size": 4268, "sha256": "05458475112aadff7eaafed79b72926a6a2b28451b07bd136bd5c7c42c761b06", "exact": true},
+    {"path": "original-1210-comparison.json", "size": 5613, "sha256": "d90a58a2f9571efc80a5305d5b29dae36013176d1da16d241b0ab96631391d47", "exact": true},
+    {"path": "original-1210-final.xml", "size": 57582, "sha256": "afb530a0750a0c9400041cee57c96275a6010dec3b7f3b03f3a54c7fc5141b1b", "exact": true},
+    {"path": "original-1210-redo-neighbours.xml", "size": 33176, "sha256": "d97f1d9701c187fbdfc4943dc0605d96f193fca17e21534aa9194138e703f6ff", "exact": true},
+    {"path": "original-1210-report.md", "size": 1187, "sha256": "ef0459d3272c5bf48889e76d707e8e38ba78d8f4f93d543b3088178fd48a8068", "exact": true},
+    {"path": "original-1210-source-blobs.json", "size": 1079, "sha256": "a582286110a3af2967630f7ee768406643d1635eff2c12bc03abdbed09a91b5a", "exact": true},
+    {"path": "original-1210-source.patch", "size": 11406, "sha256": "ce85c73982ed5bce21d8d4d64c705e5899c8a6fbbd36c2f65be207a10db51f3b", "exact": true},
+    {"path": "reviewer-1258-author336.xml", "size": 55858, "sha256": "1afc47e1ead0de39473ce2feaca8c8dc3a2926e607c369ead647f4fb115c6709", "exact": true},
+    {"path": "reviewer-1258-inverse9.xml", "size": 1855, "sha256": "9eb322a00d5badaeb70f470d648d7973e813f9f06104953c53258fd7ad383987", "exact": true},
+    {"path": "reviewer-1258-m1ten.xml", "size": 2265, "sha256": "c2b93b90da8a1dc38afa442a8232134e4440c661d92817515ab79eea3d863fe3", "exact": true},
+    {"path": "reviewer-1258-neighbors203.xml", "size": 35608, "sha256": "5a54d526189fcd0c54de82742cbaa38f74d58a5e91b4122536f79acdcc410bc2", "exact": true},
+    {"path": "reviewer-1258-opaque3.xml", "size": 789, "sha256": "2a6aa93f109d7a09e51c87aab637d82ed6b13d16ae80aa55122e5ca392df20e8", "exact": true},
+    {"path": "reviewer-1258-report.md", "size": 2217, "sha256": "ffd9d6ba9ad16e996ef58efb6d85021ea5fcaaf87b547efb3ffc0f45e7089b0d", "exact": true},
+    {"path": "reviewer-1258-strict17.xml", "size": 2854, "sha256": "d00f49cb21697bdb687825eb9ca18c7d2b43c1c8218c8ada1525d6282efdc119", "exact": true},
+    {"path": "runtime-1253-source-handback.md", "size": 1587, "sha256": "6bb52528eb16096977962c5a54e9ef68ecd253b323cc24d04235f0e0414cdefc", "exact": true},
+    {"path": "named-outcomes.json", "exact": false, "kind": "packet_metadata"},
+    {"path": "packet-manifest.json", "exact": false, "kind": "packet_metadata"}
+  ],
+  "unknowns": [
+    "The original d54-current-rollup-1254.json file was not retained; its worker log and published report are retained, so the exact JSON file hash is UNKNOWN.",
+    "No separately retained AST serialization exists for the two named tests; no AST bytes were reconstructed.",
+    "No tests, source execution, imports, lint, mypy, full suite, or new qualification were run by this worker."
+  ],
+  "claims_not_made": ["full PASS", "core PASS", "new test credit", "null-mirror closure"]
+}

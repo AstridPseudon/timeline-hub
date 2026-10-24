@@ -1,1 +1,1 @@
-2026-10-24T12:39:33Z agent lead: daemons up, heartbeat fresh, 4 workers running (D54 package classifiers), board 12:31Z (10 doing/12 review/4 ready, already dispatched), D57 line present, no stuck-DONE, disk 9.5G, upstream tip MOVED to 0d5d16af6f (25359ed68 is ancestor; orchestrator told)
+2026-10-24T13:13:25Z agent lead: daemons up, heartbeat fresh, 5 workers running, board 13:01Z (7 doing/15 review/0 ready), upstream-25359 baseline full queued 13:11Z, D54 counts env78/def1/pre0/dead0/unproven197/regr0 proven (sent), no stuck-DONE, disk 9.0G, upstream tip 0d5d16af6f

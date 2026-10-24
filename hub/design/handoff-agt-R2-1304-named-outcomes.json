@@ -1,0 +1,91 @@
+{
+  "schema": "timeline.agent.r2.d54.named-outcomes.v1",
+  "task": "agt-R2-D54-result-export-1304",
+  "read_only": true,
+  "source_scope": {
+    "held_candidate_commit": "e5fa8aac0eea52d7e5cedae49cafe81e5c03b810",
+    "held_candidate_tree": "aeeeecd4bb8997f9ecc418f4dd52cff3936d1860",
+    "actual_current_integration_commit": "cba425b61958f380f25b7bdea83d23c92f627761",
+    "actual_current_integration_tree": "d19ce2e55ce9f29e18a504fb9c97178764272bbe",
+    "named_test_blob": "a7cb4b52d1fdacb11248d7cde47f6a8f964de73f",
+    "named_test_sha256": "8302871093213098be70496272b51fba529296e78bb6bc1e53cc608e868a93c6",
+    "named_test_ast_artifact": "UNKNOWN; no separately retained AST serialization; exact source/blob evidence is retained",
+    "production_caller": "e5fa astrid/sdk/timeline/inverse.py::_validate_materializations -> _commit_patch._materialization_sites, with _step_undo imports/calls",
+    "superseded_author": "4e7f source/result is superseded by custody author ba0 plus joined e5fa independent reviewer1258"
+  },
+  "tests": [
+    {
+      "id": "tests/sdk/test_timeline_inverse_fork_guard.py::test_fork_output_guard_allows_independent_parent_edit_and_preview_redo",
+      "rollup_order": 182,
+      "package": "media",
+      "scope": "core",
+      "rollup_disposition": "UNPROVEN",
+      "rollup_qualified": false,
+      "rollup_qualification_receipts": [],
+      "rollup_membership": true,
+      "original1210_baseline": "failure",
+      "original1210_final": "pass",
+      "reviewer1258_author336": "pass",
+      "already_present_in_rollup": true,
+      "already_credited_in_rollup": false,
+      "new_test_credit": false,
+      "double_count": false
+    },
+    {
+      "id": "tests/sdk/test_timeline_inverse_fork_guard.py::test_valid_fork_history_distinguishes_output_consumers_from_retained_sibling[retained-sibling]",
+      "rollup_order": 183,
+      "package": "media",
+      "scope": "core",
+      "rollup_disposition": "UNPROVEN",
+      "rollup_qualified": false,
+      "rollup_qualification_receipts": [],
+      "rollup_membership": true,
+      "original1210_baseline": "failure",
+      "original1210_final": "pass",
+      "reviewer1258_author336": "pass",
+      "already_present_in_rollup": true,
+      "already_credited_in_rollup": false,
+      "new_test_credit": false,
+      "double_count": false
+    }
+  ],
+  "current_rollup_verification": {
+    "exact_rollup_json": "UNKNOWN; original evidence/d54-current-rollup-1254.json was not retained",
+    "retained_worker_log": "current-rollup-1254-worker-log.txt; contains the recorded exact JSON diff",
+    "total_ids": 276,
+    "unique_ids": true,
+    "order": "1..276 exact",
+    "current_qualified": 118,
+    "current_open": 158,
+    "current_core_open": 51,
+    "current_non_core_open": 107,
+    "named_nodes_receipt_intersection": [],
+    "receipt_intersections": [
+      {"id": "shot-set1156", "matched": 17, "qualified": 17, "mode": "integrated_source"},
+      {"id": "occurrence-delete1141", "matched": 19, "qualified": 19, "mode": "integrated_source"},
+      {"id": "open-session1153", "matched": 19, "qualified": 19, "mode": "integrated_source"},
+      {"id": "M2media1149", "matched": 17, "qualified": 17, "mode": "integrated_source"},
+      {"id": "public-redo1140", "matched": 10, "qualified": 7, "mode": "integrated_source"},
+      {"id": "step1124", "matched": 14, "qualified": 14, "mode": "integrated_source"},
+      {"id": "artifacts1201", "matched": 2, "qualified": 2, "mode": "integrated_source"},
+      {"id": "authoring-media1213", "matched": 7, "qualified": 7, "mode": "integrated_source"},
+      {"id": "remotion1206", "matched": 1, "qualified": 1, "mode": "integrated_source"},
+      {"id": "joined-source1134", "matched": 31, "qualified": 0, "mode": "source_only"},
+      {"id": "captured-history1124", "matched": 15, "qualified": 0, "mode": "source_only"},
+      {"id": "tamper-exact5", "matched": 5, "qualified": 0, "mode": "source_only"},
+      {"id": "native-five1158", "matched": 5, "qualified": 0, "mode": "source_only_custom"},
+      {"id": "capability-home1207", "matched": 7, "qualified": 0, "mode": "source_only"},
+      {"id": "capability-census1213", "matched": 7, "qualified": 0, "mode": "source_only"},
+      {"id": "M1-held1105", "matched": 25, "qualified": 0, "mode": "source_only"},
+      {"id": "actual-home1242", "matched": 12, "qualified": 12, "mode": "actual_home_durable_xml"},
+      {"id": "bootstrap-env1242", "matched": 42, "qualified": 0, "mode": "exact_source_reconciliation"}
+    ],
+    "null_mirror_controls": "2 remain red/open; no full/core PASS claim"
+  },
+  "evidence_files": {
+    "original_xml": ["original-1210-baseline.xml", "original-1210-final.xml", "original-1210-redo-neighbours.xml"],
+    "reviewer_xml": ["reviewer-1258-author336.xml", "reviewer-1258-m1ten.xml", "reviewer-1258-neighbors203.xml", "reviewer-1258-inverse9.xml", "reviewer-1258-strict17.xml", "reviewer-1258-opaque3.xml"],
+    "source_and_origins": ["original-1210-source-blobs.json", "original-1210-source.patch", "original-1210-baseline-commit-patch.py", "original-1210-baseline-step-undo.py", "held-e5fa-test-timeline-inverse-fork-guard.py"],
+    "reports": ["original-1210-report.md", "reviewer-1258-report.md", "current-rollup-1254-report.md", "runtime-1253-source-handback.md"]
+  }
+}
