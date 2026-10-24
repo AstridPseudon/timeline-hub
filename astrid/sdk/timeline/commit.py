@@ -525,6 +525,51 @@ def _hydrate(port, bundle, calls=(), *, inverse_records=(), inverse_sources=()):
     return schema_inputs
 
 
+def _inverse_element_sources(port, records, *, context):
+    """Recover restored PARAM declarations from their accepted input boundary."""
+    from ._collections import AcceptedRecords
+    from ._command_state import CommandError, State
+    from ._selected_param_authority import resolve_selected_param_source
+    from ._step_undo import entry_records
+    from .inverse import coalesce
+
+    if not records:
+        return []
+    if not isinstance(records, AcceptedRecords):
+        raise CommandError('element inverse needs accepted boundaries', kind='history_unavailable')
+    writes = coalesce(records)
+    params = {write['ref'] for write in writes if write['path'][:1] == ['params']}
+    restored = {write['ref']: write['before']['value'] for write in writes
+                if write['ref'] in params and write['path'] in (['elementRef'], ['element_ref'])
+                and write['before']['state'] == 'present' and write['before'] != write['after']
+                and isinstance(write['before']['value'], dict)
+                and write['before']['value'].get('packId')}
+    sources = []
+    for entry in records.entries:
+        refs = {write['ref'] for record in entry_records(records, entry) for write in record['writes']
+                if write['ref'] in restored and write['path'] in (['elementRef'], ['element_ref'])}
+        if not refs:
+            continue
+        before, _ = records.load_boundary(entry)
+        state = State(before)
+        for ref in sorted(refs):
+            selected = restored.pop(ref)
+            row = state.entity(ref, optional=True)
+            if row is None or (row.get('elementRef') or row.get('element_ref')) != selected:
+                raise CommandError('restored element differs from accepted input',
+                                   kind='history_unavailable', ref=ref)
+            authority = resolve_selected_param_source(
+                port, context=context, through=entry['previous'], select=ref)
+            if (authority['element'] != selected or authority['source'] not in before[
+                    'source_mapping']['_runtime_document']['dependency_manifest']['documents']):
+                raise CommandError('restored element source differs from accepted input',
+                                   kind='history_unavailable', ref=ref)
+            sources.append((authority['source'], selected, authority['object']))
+    if restored:
+        raise CommandError('restored element boundary is unavailable', kind='history_unavailable')
+    return sources
+
+
 def _schema_resolver(port, inputs, inverse_records, *, context, through):
     """Resolve bytes at the real command stage, never by simulating handlers."""
     from astrid.core.element.project_packs import admitted_element_snapshot_descriptor
@@ -552,12 +597,12 @@ def _schema_resolver(port, inputs, inverse_records, *, context, through):
             selected = (command['args']['elementRef'] if command['op'] == 'clip.set-element'
                         else row.get('elementRef') or row.get('element_ref'))
             if isinstance(selected, dict) and selected.get('packId'):
-                required.append((command['args']['schema_source'], selected))
+                required.append((command['args']['schema_source'], selected, None))
         elif command['op'] == 'timeline.inverse':
             for record in inverse_records:
                 snapshots = [dep['pin'] for dep in record['dependencies']
                              if dep['key'] == 'params.snapshot']
-                required.extend((pin['source'], pin['element']) for pin in snapshots)
+                required.extend((pin['source'], pin['element'], pin['object']) for pin in snapshots)
                 # Older accepted PARAM records already contain exact source and identity reads.
                 if not snapshots and record['command']['op'] == 'clip.set-params':
                     pin = record['command']['args'].get('schema_source')
@@ -567,8 +612,9 @@ def _schema_resolver(port, inputs, inverse_records, *, context, through):
                                 and read['path'] in (['elementRef'], ['element_ref'])}
                     selected = identity.get('elementRef') or identity.get('element_ref')
                     if pin and isinstance(selected, dict) and selected.get('packId'):
-                        required.append((pin, selected))
-        for pin, selected in required:
+                        required.append((pin, selected, None))
+            required.extend(_inverse_element_sources(port, inverse_records, context=context))
+        for pin, selected, retained_object in required:
             matches = [(verified, objects) for verified, objects in inputs
                        if verified['pin'] == pin and verified['document']['content'].get(
                            'pack_id') == selected.get('packId')]
@@ -579,6 +625,9 @@ def _schema_resolver(port, inputs, inverse_records, *, context, through):
                           if all(item.get(key) == selected.get(key)
                                  for key in ('id', 'kind', 'revision'))]
             descriptor = admissions[0].get('snapshot_object') if len(admissions) == 1 else None
+            if retained_object is not None and descriptor != retained_object:
+                raise CommandError('retained PARAM snapshot association is unavailable',
+                                   kind='history_unavailable')
             snapshot = None
             if descriptor is not None:
                 _require(callable(getattr(port, 'document_object', None)),
