@@ -37,7 +37,7 @@ TD=/tmp/w-$(echo -n $N | md5sum | cut -c1-10); mkdir -p $TD; echo $TD > $D/tmpdi
         (cd $WT && timeout $(( END - $(date +%s) )) "${CL[@]}" --resume $SID) 2>>$D/log.txt | tee $D/report.md >> $D/log.txt; RC=${PIPESTATUS[0]}; done
     echo $RC > $D/exit
   else
-  timeout $((TMO*60)) codex exec -m "$M" -c model_reasoning_effort="$E" -s workspace-write "${NETCFG[@]}" -C $WT --skip-git-repo-check \
+  timeout $((TMO*60)) codex exec --ephemeral -m "$M" -c model_reasoning_effort="$E" -s workspace-write "${NETCFG[@]}" -C $WT --skip-git-repo-check \
    --add-dir /home/user/work --add-dir /home/user/peteromallet --add-dir /home/user/banodoco --add-dir $O -o $D/report.md - > $D/log.txt 2>&1; echo $? > $D/exit
   fi
   # merge ancestry (2026-10-20): if the manager/worker wrote workers/<N>/merge-parent (a commit sha, e.g. origin/main's tip), the final
