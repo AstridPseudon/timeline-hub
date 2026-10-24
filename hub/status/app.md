@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T15:43:39Z | dispatcher heartbeat 9s | live 2 (sol 1, luna 1, other 0) | busy30 9 | status age 0m -->
+<!-- app | 2026-10-24T15:47:19Z | dispatcher heartbeat 0s | live 2 (sol 1, luna 1, other 0) | busy30 9 | status age 2m -->
 # app board, 2026-10-24T15:33Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -44,7 +44,7 @@
 | P3-current-verdict | Judge same-ID preflight failure | Luna | Producer 1435 terminal | merged | Verdict 1438 NO-GO | Exact 1689: exit 2 in 1 second; 0 PASS, 0 product FAIL, Gate5 NOTRUN. All original stages unrun; source matches pure target. | Current be98 |
 | F-node-current | Verify prior Node regressions | Luna | Refreshed home tree | merged | Node1345 PASS36; ENV2 | 33 verifier,marker guard and both release nodes pass. Two extension SSH setup failures remain explicit. | d24ed69dcd |
 | F-visual-seam | Qualify shared upstream seam fixture | Luna | Final Runtime fixture identity | merged | Fixture1356 PASS; exact e68 blob | All10 cases pass on App d24. Actual Runtime e68 fixture equals qualified f69 blob; no copies or source edits. | App d24; Runtime e68 |
-| F-install-schema | Align installer schema after D62 | Luna; release owner | D65 after D62 regeneration | blocked:runtime | Source1507; escalation1514 retained | Caused schema regression stays counted. D65 defers manifest pin until D62 client/schema regenerated. | No source delta |
+| F-install-schema | Align installer schema after D62 | Luna | Actual App and Agent D62 homes | doing | app-D65-final-manifest-pin-1545 | Both homes now adopted. Existing guarded tool writes tuple pins once; unchanged strict skew test must pass. | App95cf; Agent5777 |
 | F-current-full | Full checkpoint on refreshed source | Luna; App service | Actual be98 pure source | merged | Producer1446; actual8158 FAIL | Exit1/1203s. Vitest19256 PASS/1 FAIL installer schema. Node NOTRUN after Vitest short-circuit. Source and full parents verified. | be98aac54e |
 | F-App-full | Corrected App checkpoint terminal | App service; Luna producer | Same actual16138 | merged | Terminal producer1227 | FAIL exit1/1665s. Vitest19251PASS;Node257PASS38FAIL26SKIP. Final full GO remains open. | 5a9ff97cf0 |
 | F-core-map | Map App core suites and old failures | Luna | D54/D54a | merged | Return1233 | Historical19570 groups fixed or D52 removed. Home upstream behavior UNKNOWN; no false pre-existing claim. | cca3deb361 |
@@ -90,5 +90,5 @@ Current actual requests: [P2 12541](../../tests/app-P2-P3-e68-current-pure-targe
 Current full request: [App full 8158](../../tests/app-P2-P3-e68-current-pure-target-1409-full-1024144535-8158/request). Base be98/tree2839; exact pure1409 target. This is the one current refreshed checkpoint; historical16138 stays separate.
 
 Blockers: App — D66 normal boot now has current Agent5777 and App95cf D62 clients. Sol1528 owns control P1; P2/P3 parallel immediately on green.
-Blockers: App — actual8b32 normal adoption1539 runs now; D65 pin follows App adoption and actual refreshed Agent tuple. Runtime producer need cleared.
+Blockers: App — D65 manifest pin1545 runs now after actual App95cf and Agent5777 D62 homes. Release decision cleared; strict schema regression remains until proof.
 Next ready: Consume D66 boot commands or exact P1 ID; submit/wait P1 once, then P2/P3 parallel on green. Merge normal D62 adoption after producer handback.
