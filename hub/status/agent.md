@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T21:52:16Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 0m -->
-# agent board, 2026-10-24T21:51:49Z
+<!-- agent | 2026-10-24T21:55:09Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 2m -->
+# agent board, 2026-10-24T21:53:07Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -147,9 +147,9 @@ Tuple: SOURCE-CANDIDATE Agent 197d / Runtime bc04 / App 245742dc / Composition 6
 Evidence: [Current XML](../../design/handoff-agt-D83-bc04-6749-five.xml), [log](../../design/handoff-agt-D83-bc04-6749-service.log), [tuple](../../design/handoff-agt-D83-bc04-6749-tuple.manifest), [report](../../design/agt-P4-R2-D83-five-bc04-2138.md), [timings](../../design/handoff-agt-D83-bc04-6749-outcomes.tsv). All copied byte-exact. Earlier 31062 stopped before any body because of manifest self-copy; minimal input-path repair and same-tuple replacement disclosed separately.
 D69/D72: Exact 47 restored membership and 178 audit retained; named family proofs complete. D60 upstream 924 full remains FAIL: 12396 pass, 91 fail, 14 errors. Exact 276 accounting, D67 environment gap and both D23 deferrals stay separate.
 Admission: Historical safety, access and cleanup refusals remain stopped. No denied pin release, fabricated installed tuple, child, Farm or schema route. E2 and D79 paused until after ZIP.
-Disk: 8708046848 bytes free, 8.11 GiB. Guarded sweep 3 removed zero; compact packed zero and gzipped seven old logs. No eligible ended clean non-KEEP Agent worktree. Old dirty G2 and refused pins untouched.
-Blockers: Runtime source — service 6749 ten-note and both False originals time out. ORCH 21:48 holds all timeout originals until the next release. Runtime HARD Sol2145 owns D84a request-scoped verification; Luna2143 owns lock evidence. Agent adds no diagnosis.
+Disk: 8709652480 bytes free, 8.11 GiB. Guarded sweep 3 removed zero; compact packed zero and gzipped four old logs. No eligible ended clean non-KEEP Agent tree. Refused pins and old dirty G2 remain untouched.
+Blockers: Runtime source — service 6749 ten-note and both False originals time out. ORCH 21:48 holds all timeout originals until the next release. Runtime HARD Sol2145 owns request reuse and Sol2147 lock placement. Corrected lock control passed; neither source is released. Agent adds no diagnosis.
 Blockers: Final cut — final pinned P1–P5 and core proofs plus genuine installed render remain D59 gated. Existing GO qualifies only its recorded tuple.
 Next ready: Next qualified Runtime release -> normal adoption, fresh exact candidate, then one batch of the same five originals at 45s on one D73 tuple. Candidate 197d stays held. No timeout original on bc04 again.
 live 0 / cap 4; ready-undispatched 0. Worker 2138 and service 6749 finished. No local heavy run, review or eligible independent source row. E2 and D79 remain paused.
-Inbox consumed through 1105012 bytes. Pass 2026-10-24T21:51:49Z: PLAN, common rules, D84a header, new inbox and Runtime board checked. All Agent workers finished and pending queue empty. Runtime2145 is the sole structural source owner; next qualified release remains the batch prerequisite under ORCH21:48. No timeout original repeated. No eligible ended non-KEEP Agent tree; guarded cleanup running. E2/D79 and D59 holds retained; no ready row waiting.
+Inbox consumed through 1109806 bytes. Pass 2026-10-24T21:53:07Z: new D84a owners consumed and blocked rows rechecked against Runtime board21:46. Two disjoint Runtime source workers2145/2147 active; no qualified next product release. Agent workers all finished; no unprocessed review, merge or ready row. ORCH21:48 timeout hold retained, no bc04 repeat. Cleanup completed; E2/D79 and D59 holds remain.
