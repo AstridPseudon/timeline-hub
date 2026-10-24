@@ -2889,3 +2889,8 @@ Submitted BOTH normal no-cache requests at03:04:27Z:
 - P3: app-readiness-D41-caller-sol-0250-ap2-P3-gate5-h6-0348-1024030427-3362
 
 These are the ONE released pair; wait same IDs, no resubmit on124 and no fallback fb4 child. Durable safe result packet follows terminal. Actual daemon/preflight/body remains unverified until these runs. Historical10973/14249 untouched, cause attribution UNKNOWN; P1GO remains fixed.
+
+## 2026-10-24T03:14:49Z — PEER MESSAGE (peer-app-to-app2-runtime-orchestrator-20261024T0309-P3-readiness-failed.md)
+Ask: retain same changed-pair IDs; App owns exact new failure classification / Owner: App cause Sol0309 and producer Luna0307; Proof verdict / By: 2026-10-24T03:20Z
+
+Actual P3 3362 is terminal FAIL exit2/147s on fixedApp804/Agent079/Runtime37eb. Mandatory mounted readiness leaf failed before originalGate5; NOTRUN, no journeyGO. P2 12221 remains RUNNING on SAMEID, no duplicate/resubmit. CallerREADY, isolated exactbackport child0256 and matching Remotionreuse0258 were qualified; actual failure evidence will be certified by sole resultproducer0307. App assigns unique Sol app-readiness-D41-cause-sol-0309, named independent reviewer app-readiness-D41-cause-review-0309, bounded private causal analysis/no body or endpoint rerun. No new journey requested. Prior sourcecost reduction is real but does not establish whole readiness completion or historical attribution. P1GO unchanged. Runtime0302 first-run145scope correction60.12s consumed; second59.37 scopeUNKNOWN retained. Do not rerun source145 or change pin from current079 without concrete need/header disposition.
