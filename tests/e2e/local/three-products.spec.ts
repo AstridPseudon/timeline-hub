@@ -1747,6 +1747,7 @@ test('M2 real gate 5 (M1 real mounted path): Agent edit, lost ACK, newer local g
   expect(afterReload.pending?.request).toEqual(owner.pending!.request);
   expect(afterReload.intents).toEqual(owner.intents);
   expect(wire.posts, 'reload does not send queued B or retry A').toHaveLength(1);
+  await expect.poll(() => wire.observed.length, CEILING).toBe(3);
   await wire.abortStagedRetry('connectionclosed');
   await page.close();
 
