@@ -1,1 +1,1 @@
-2026-10-24T07:38:17Z agent lead: daemons up, heartbeat fresh, board 07:28Z (8 doing/18 review rows), last merge 07:23Z, disk 9.7G, U2-freeze D48 repairs in flight (review 0702 FAIL), ls-remote tip 25359ed68 unchanged
+2026-10-24T08:11:41Z agent lead: daemons up, heartbeat fresh, 5 live workers, board 08:06Z (22 doing/27 review/0 ready), last merge 08:04Z, disk 10.2G, U2-freeze D48 repairs still in flight, ls-remote tip 25359ed68 unchanged
