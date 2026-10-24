@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T03:15:31Z | dispatcher heartbeat 0s | live 1 (sol 1, luna 0, other 0) | busy30 19 | status age 0m -->
-# app board, 2026-10-24T03:14Z
+<!-- app | 2026-10-24T03:18:10Z | dispatcher heartbeat 6s | live 2 (sol 2, luna 0, other 0) | busy30 21 | status age 1m -->
+# app board, 2026-10-24T03:16Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -58,12 +58,14 @@ Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-han
 | A2-element-writer | Move registered element adapter saves to A2 | Sol; Luna review | Census 0300 | doing | app-A2-element-handoff-sol-0314 | Prior scope confirmed missing parent-element basis on child documents. Scope expanded to existing handoff/hooks; preserve original full head and closure. | Current integration |
 | A4-protocol-joined | Qualify merged protocol packets | Luna | Three reviewed merges | merged | app-A4-protocol-joined-proof-0306 | Exact a645 passed 139 tests, three typechecks, lint and donor identities. Remaining 35 original declarations unchanged; failed packets unmerged. | a64587176d |
 
-| P2-P3-result-handoff | Publish same-ID changed-pair evidence | Luna | Actual terminal artifacts | doing | app-P2-P3-D41-result-handoff-0307 | Producer reads actual 12221 and 3362 only, qualifies safe files and source custody. Proof owns independent gate verdict. | App804 / Agent079 / Runtime37eb |
+| P2-P3-result-handoff | Publish same-ID changed-pair evidence | Luna | Actual terminal artifacts | merged | app-P2-P3-D41-result-handoff-0307 | Terminal P2 three failed, five not run; P3 Gate5 not run. Full producer and three qualified P3 safe files published for Proof. | App804 / Agent079 / Runtime37eb |
 
-| readiness-D41-cause | Classify changed-pair readiness failure | Sol; Luna review | Actual retained artifacts | doing | app-readiness-D41-cause-sol-0309 | P3 failed before Gate5; P2 still running. Named independent reviewer 0309 follows; no new body or source fix without evidence. | App804 / Agent079 / Runtime37eb |
+| readiness-D41-cause | Classify changed-pair readiness failure | Sol; Luna review | Actual retained artifacts | doing | app-readiness-D41-cause-sol-0309 | P3 first history completed in 3.56 seconds; later immutable/history reads unfinished in trace. Exact await and trigger unknown. Independent review0309 queued. | App804 / Agent079 / Runtime37eb |
+
+| readiness-phase-diagnostics | Correlate exact bootstrap read phases | Sol; Luna review | Retained cause report 0309 | doing | app-readiness-phase-diagnostics-sol-0318 | Narrow safe dependency-change and generation-linked loader phases; preserve behavior, waits, bodies and cap. No actual run authorised. | Fixed App804 branch |
 
 Blockers: U3b awaits P2/P3 and the final freeze.
-Blockers: App producer0307 and causeSol0309 classify terminal P2 12221 and P3 3362. P2 passed readiness; P3 did not. No new run; Proof owns verdict.
+Blockers: App causal review0309 and Proof verdict review classify terminal P2 12221 and P3 3362. Exact P3 unresolved await remains unknown; no repeat run.
 
 Next ready: Publish changed-pair evidence, classify the exact failed readiness boundary, and finish the reachable element adapter migration. D37 dormant originals stay unchanged.
 Integration: a64587176d. Current recovery packet passed 106 tests, three types and lint before its exact merge. Exports and lifecycle joined proof passed 108 plus 105 tests, three types, lint and governance. Historical joined proof 0150 remains bound to 1c5cc47bf6.
