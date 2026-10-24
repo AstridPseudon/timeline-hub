@@ -331,7 +331,10 @@ export function createTimelineLocalSaveHandoff(options: {
                 state: { state: 'present', value: authoredJson(anchor) } }] }];
           } else {
             commands = [{ schema_version: 1, op: 'clip.add-media', version: '1', select: 'parent',
-              args: { row: authoredJson(row), media: authoredJson(media) }, intent: {} }];
+              args: { row: authoredJson(row), media: authoredJson(media) }, intent: {}, created: [
+                ...(Object.prototype.hasOwnProperty.call(parent.registry.assets, row.asset) ? [] : [`parent/asset:${row.asset}`]),
+                `parent/clip:${row.id}`,
+              ] }];
           }
         }
         // Only the two validated parent semantic recipes can coexist with child
