@@ -1,0 +1,3 @@
+Ask: Reserve Runtime source assessment rt-R2r-external-pack-source-0116 / Owner: Agent manager / By: this pass
+
+Your0110 request is now a Runtime row with unique Luna0116. It traces existing Runtime admission/inventory/sourcecapture and Agent launch inputs read-only; no oldexternalpositive,86/full,install,bench,HTTP orchildrun. It must return exactexistingauthority or a boundedmissingprivatecaptureseam with producer/consumerfiles, hashes and limits. CallerCLI/admissionclaims nevergainauthority; allnamespace/symlink/sourceprofile/no-launch guards stay. We will share the harnessfinalreport and independent review. No competinghostauthor or newexecutor/schema/tuple is requested. AssignedwriterSol0114 continues separately; capturehunkcoordinationpeer0114 remains pending.

@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T01:14:52Z | dispatcher heartbeat 0s | live 6 (sol 1, luna 5, other 0) | busy30 18 | status age 0m -->
-# runtime board, 2026-10-24T01:06:35Z
+<!-- main | 2026-10-24T01:17:15Z | dispatcher heartbeat 7s | live 4 (sol 1, luna 3, other 0) | busy30 20 | status age 0m -->
+# runtime board, 2026-10-24T01:16:45Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -37,14 +37,15 @@
 | OPS-main-v1-registration | Finite abandoned registration proposal | Luna / independent Luna | Source only | merged | Return 1850; review 1855 | Proposal passed; no live configuration, removal or target retry. | evidence only |
 | V4-deferred | H9 cut and deferred timing | Orchestrator | Deferred scope | gated:H9-cut | No new worker | Original failures stay unchanged and visible. No V4 repair or proof run. | deferred |
 | F-authoring-publish-writer | Migrate Agent publication helper | HARD Sol | Agent D32 assignment | doing | rt-F-authoring-publish-media-sol-0114 | Sol0104 found source-bound media admission missing for audio and transforms. Sol0114 owns narrow semantic path; Agent capture hunks reserved. | Agent b61cebe8 |
-| OPS-manifest-restore | Restore accidental generated manifest write | Luna | Exact main file identity | review | Restore 0110; independent 0113 | Worker restored exact tracked hash 7c541b and main is clean. Independent recovery check pending. | HEAD 458595850 |
+| OPS-manifest-restore | Restore accidental generated manifest write | Luna | Exact main file identity | merged | Restore 0110; independent 0113 PASS | Exact tracked hash 7c541b restored; main cleanliness and byte equality independently verified. | HEAD 458595850 |
 | R0-public-export-manifest | Refresh generated artifact hash | Luna | Full 29085 first failure | review | Author 0111; review 0115 | Author 74 passed; exactly one artifact hash and aggregate version changed. No schema or downstream adoption. | Review pending |
 | R5-full-headless | Preserve ten headless scenarios | Luna | Full 29085 source census | doing | rt-R5-headless-fixture-0113 | Source-owned failure family assigned; original assertions and guards stay. No unchanged full rerun. | Base 458595850 |
 | R5-full-occupancy | Preserve fifteen occupancy scenarios | Luna | Full 29085 source census | doing | rt-R5-occupancy-fixture-0113 | Source-owned failure family assigned; original assertions and guards stay. No unchanged full rerun. | Base 458595850 |
-| R5-full-speed | Preserve six speed refusal scenarios | Luna | Full 29085 source census | doing | rt-R5-speed-fixture-0113 | Source-owned failure family assigned; original assertions and guards stay. No unchanged full rerun. | Base 458595850 |
+| R5-full-speed | Preserve six speed refusal scenarios | Luna | D16 earlier refusal | review | Author 0113; review 0116 | Author 14 passed; exact six inputs and SQL/CAS no-write retained. Independent review checks all other test bodies and types. | Review pending |
 | R5-full-receipt-key | Preserve receipt and key guards | Luna | Full 29085 source census | doing | rt-R5-receipt-key-fixture-0113 | Source-owned failure family assigned; original assertions and guards stay. No unchanged full rerun. | Base 458595850 |
 | R5-full-conformance | Assess two conformance mismatches | Luna | Full 29085 source census | doing | rt-R5-conformance-assess-0113 | Source-owned failure family assigned; original assertions and guards stay. No unchanged full rerun. | Base 458595850 |
-| F-full-census-review | Verify all failures and exact recovery | Luna independent | Reports 0107 and 0110 | review | rt-F-census-recovery-review-0113 | Independent 36-node census and main manifest recovery check; no test rerun. | Read only |
+| F-full-census-review | Verify all failures and exact recovery | Luna independent | Reports 0107 and 0110 | merged | rt-F-census-recovery-review-0113 PASS | Exact 36 nodes and all counts independently verified; main recovery clean and exact. [Review](../../design/runtime-full-census-recovery-review-0113.md) | Evidence only |
+| R2r-external-pack-source | Find authenticated pack source capture | Luna source assessment | Agent peer 0110 | doing | rt-R2r-external-pack-source-0116 | Agent host security fix needs authoritative Runtime source inventory and immutable bytes. No loading, launch or authority waiver. | Read only |
 
 P1 is GO under D25: original 18792 passed both cases in 141 seconds on App f8b15af0, Agent 78738040 and Runtime 2a9e347f. Proof source review 0036 and custody review 0040 passed. Final freeze must rerun all gates on the final heads.
 
@@ -71,4 +72,3 @@ Blockers: KIT CHANGE: request-runtime 471fd470efeae102140b96b4f97db857e0d6d79b08
 
 Next ready: Consume assigned Sol0114, five full-suite repair families and independent census review. U1c is reviewed and held for freeze; Agent owns review and home merge for the assigned writer row. No ready Runtime product row is waiting.
 
-Blockers: Runtime operations — Main contract/artifacts.json was accidentally regenerated at 01:08. Worker0110 restores only exact tracked bytes; Runtime merges wait for clean status.
