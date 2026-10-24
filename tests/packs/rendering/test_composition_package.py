@@ -12,7 +12,7 @@ import pytest
 
 from astrid.core.element.registry import ElementRegistry
 from astrid.core.element.schema import ElementDefinition
-from astrid.core.rendering import remotion_runtime
+from astrid.core.rendering import _local_schema, remotion_runtime
 from scripts import gen_effect_registry
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -141,16 +141,13 @@ def test_launch_input_binding_reuses_built_package_readiness(tmp_path):
     _stage_locked_package(project)
     (project / "package.json").write_text("{}")
     (project / "package-lock.json").write_text("{}")
-    schema = tmp_path / "schema" / "banodoco_timeline_schema"
-    schema.mkdir(parents=True)
-    for name in remotion_runtime._REQUIRED_SCHEMA_FILES:
-        (schema / name).write_text("{}")
+    schema = ROOT / _local_schema.SCHEMA_RELATIVE_PATH
     node = tmp_path / "node"
     node.write_text("#!/bin/sh\n")
     node.chmod(0o755)
     environment = {
         remotion_runtime.NODE_EXECUTABLE_ENV: str(node),
-        remotion_runtime.TIMELINE_SCHEMA_PYTHONPATH_ENV: str(schema.parent),
+        remotion_runtime.TIMELINE_SCHEMA_PYTHONPATH_ENV: str(schema),
     }
     assert remotion_runtime._runtime_inputs(project, environment, sys.executable, {})
     (project / "node_modules/@banodoco/timeline-composition/dist/evaluation.js").unlink()

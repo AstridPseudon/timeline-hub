@@ -19,7 +19,7 @@ import pytest
 
 
 from astrid.core.foundation.hash import sha256_file
-from astrid.core.rendering import remotion_runtime
+from astrid.core.rendering import _local_schema, remotion_runtime
 from astrid.core.rendering.remotion_runtime import (
     NODE_EXECUTABLE_ENV,
     REMOTION_CLI_RELATIVE_PATH,
@@ -44,6 +44,17 @@ REMOTION_ROOT = Path(remotion_runtime.REPO_ROOT) / "remotion"
 COMPOSITION_ARTIFACT = REMOTION_ROOT / json.loads(
     (REMOTION_ROOT / "package.json").read_text(encoding="utf-8")
 )["dependencies"]["@banodoco/timeline-composition"].removeprefix("file:")
+
+
+def _stage_schema(source: Path, *, missing: str | None = None) -> Path:
+    for relative in (_local_schema.SCHEMA_RELATIVE_PATH, Path('runtime.lock.json'),
+                     *_local_schema.READER_INPUTS):
+        target = source / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if relative.as_posix() == missing:
+            continue
+        target.write_bytes((REMOTION_ROOT.parent / relative).read_bytes())
+    return source / _local_schema.SCHEMA_RELATIVE_PATH
 
 
 def _install_composition_package(runtime: Path) -> Path:
@@ -404,56 +415,26 @@ def test_forced_caption_uses_server_owned_executable_routing_and_isolation(
     assert shutil.which("python3") is not None
     assert shutil.which("ffprobe") is not None
     assert shutil.which("node") is None
-    schema_spec = importlib.util.find_spec("banodoco_timeline_schema")
-    if schema_spec is None or schema_spec.origin is None:
-        pytest.fail("the pinned timeline-schema dependency is required for this integration test")
-    schema_install = tmp_path / "installed-python"
-    schema_package = schema_install / "banodoco_timeline_schema"
-    shutil.copytree(Path(schema_spec.origin).parent, schema_package)
-    # The clean readiness probe intentionally ignores ambient/user site
-    # packages. Provision the small jsonschema dependency closure beside the
-    # trusted schema so this test models an installed runtime rather than an
-    # editable checkout.
-    for dependency in (
-        "jsonschema",
-        "jsonschema_specifications",
-        "referencing",
-        "rpds",
-        "attrs",
-        "attr",
-    ):
-        dependency_spec = importlib.util.find_spec(dependency)
-        if dependency_spec is None or dependency_spec.submodule_search_locations is None:
-            pytest.fail(f"the pinned {dependency} dependency is required for this integration test")
-        shutil.copytree(
-            Path(next(iter(dependency_spec.submodule_search_locations))),
-            schema_install / dependency,
-        )
-    monkeypatch.setenv(TIMELINE_SCHEMA_PYTHONPATH_ENV, str(schema_install))
-    monkeypatch.setenv(
-        "PYTHONPATH",
-        os.pathsep.join(
-            path for path in (str(schema_install), os.environ.get("PYTHONPATH")) if path
-        ),
-    )
+    # The source-profile probe selects the actual canonical reader and the
+    # already installed standards validator, without an external model tree.
+    schema = REMOTION_ROOT.parent / _local_schema.SCHEMA_RELATIVE_PATH
+    monkeypatch.setenv(TIMELINE_SCHEMA_PYTHONPATH_ENV, str(schema))
     probe_env = os.environ.copy()
     probe_env.pop("PYTHONPATH", None)
     schema_origin = subprocess.check_output(
         [
             sys.executable,
-            "-c",
-            "import astrid.core.timeline.banodoco_schema; "
-            "import banodoco_timeline_schema; "
-            "print(banodoco_timeline_schema.__file__)",
+            "-I", "-c", remotion_runtime._SCHEMA_PROBE,
+            str(schema), str(REMOTION_ROOT.parent), 'source',
         ],
         text=True,
         env=probe_env,
     ).strip()
-    assert Path(schema_origin).resolve().is_relative_to(schema_package.resolve())
+    assert Path(schema_origin).resolve() == schema.resolve()
     import banodoco_timeline_schema as ambient_schema
 
     ambient_origin = Path(ambient_schema.__file__).resolve()
-    assert not ambient_origin.is_relative_to(schema_package.resolve())
+    assert not ambient_origin.is_relative_to(schema.parent.resolve())
     (runtime / "package-lock.json").write_text('{"lockfileVersion":3}\n')
     monkeypatch.setattr(remotion_run, "gen_effect_registry", None)
     for control in remotion_runtime._UNSUPPORTED_PYTHON_STARTUP:
@@ -529,22 +510,17 @@ def test_forced_caption_fails_before_renderer_without_server_runtime(
 
 @pytest.mark.parametrize(
     "missing_file",
-    ("__init__.py", "generated.py", "materialize.py", "theme.py", "timeline.schema.json", "validate.py"),
+    (_local_schema.SCHEMA_RELATIVE_PATH.as_posix(), 'runtime.lock.json',
+     *(p.as_posix() for p in _local_schema.READER_INPUTS)),
 )
 def test_trusted_schema_readiness_requires_complete_install(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     missing_file: str,
 ) -> None:
-    import banodoco_timeline_schema
-
-    schema_install = tmp_path / "installed-python"
-    schema_package = schema_install / "banodoco_timeline_schema"
-    schema_package.mkdir(parents=True)
-    source_package = Path(banodoco_timeline_schema.__file__).resolve().parent
-    for source in source_package.iterdir():
-        if source.name != missing_file and source.is_file():
-            shutil.copy2(source, schema_package / source.name)
+    source = tmp_path / "agent"
+    schema = _stage_schema(source, missing=missing_file)
+    monkeypatch.setattr(remotion_runtime, 'REPO_ROOT', source)
     runtime = tmp_path / "installed-remotion"
     _install_composition_package(runtime)
     (runtime / "package.json").write_text("{}", encoding="utf-8")
@@ -563,7 +539,7 @@ def test_trusted_schema_readiness_requires_complete_install(
     trusted_node.chmod(0o755)
     monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(runtime))
     monkeypatch.setenv(NODE_EXECUTABLE_ENV, str(trusted_node))
-    monkeypatch.setenv(TIMELINE_SCHEMA_PYTHONPATH_ENV, str(schema_install))
+    monkeypatch.setenv(TIMELINE_SCHEMA_PYTHONPATH_ENV, str(schema))
     monkeypatch.setenv("PATH", f"{fake_bin}:{os.environ['PATH']}")
     status = remotion_runtime_status()
     assert not status.available
@@ -761,11 +737,9 @@ def _owned_validation_fixture(tmp_path, monkeypatch, *, environment_overrides=No
     cli.write_text('// exact CLI')
     (runtime / 'package.json').write_text('{}')
     (runtime / 'package-lock.json').write_text('{}')
-    schema = tmp_path / 'schema'
-    for name in remotion_runtime._REQUIRED_SCHEMA_FILES:
-        path = schema / 'banodoco_timeline_schema' / name
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text('{}' if name.endswith('.json') else '# schema')
+    source = tmp_path / 'agent'
+    schema = _stage_schema(source)
+    monkeypatch.setattr(remotion_runtime, 'REPO_ROOT', source)
     node = tmp_path / 'node'
     node.write_text('server-owned Node')
     node.chmod(0o700)
@@ -790,7 +764,7 @@ def _owned_validation_fixture(tmp_path, monkeypatch, *, environment_overrides=No
                    'custody_admitted': True, 'original_child_pid': 500 + len(calls)}
         if argv[-1] == '--version':
             return subprocess.CompletedProcess(argv, 0, 'v20.19.4\n', ''), receipt
-        closure = {'origin': str(schema / 'banodoco_timeline_schema/__init__.py'),
+        closure = {'origin': str(schema),
                    'package_roots': [str(dep)], 'module_files': [str(site / 'safe_finder.py'), str(site / 'safe_finder.pyc')], 'search_paths': [str(site)],
                    'startup': {'executable': sys.executable, 'prefix': sys.prefix, 'exec_prefix': sys.exec_prefix,
                                'base_prefix': sys.base_prefix, 'base_exec_prefix': sys.base_exec_prefix,
@@ -842,10 +816,38 @@ def test_launch_validation_rejects_context_or_foreign_launch_without_fallback(tm
 def test_launch_validation_rejects_changed_installed_content(tmp_path, monkeypatch, which):
     runtime, schema, node, env, ref, calls = _owned_validation_fixture(tmp_path, monkeypatch)
     paths = {'node': node, 'cli': runtime / REMOTION_CLI_RELATIVE_PATH,
-             'schema': schema / 'banodoco_timeline_schema/timeline.schema.json',
+             'schema': schema,
              'lock': runtime / 'package-lock.json', 'package': runtime / 'package.json',
              'added_package_file': runtime / 'node_modules/new-runtime-code.js'}
     paths[which].write_text('changed')
+    with pytest.raises(remotion_runtime.RemotionValidationError, match='inputs changed'):
+        remotion_runtime._validated_runtime(runtime, environment={**env, **ref})
+    assert len(calls) == 3
+
+
+@pytest.mark.parametrize('origin', ['/foreign/timeline-config.schema.json', '/foreign', 'relative'])
+def test_launch_validation_refuses_foreign_schema_origin(tmp_path, monkeypatch, origin):
+    def foreign(closure, _count):
+        closure['origin'] = origin
+    with pytest.raises(remotion_runtime.RemotionValidationError, match='invalid identity'):
+        _owned_validation_fixture(tmp_path, monkeypatch, schema_result_transform=foreign)
+    assert not list((tmp_path / 'artifacts').glob('remotion-validation-*.json'))
+
+
+@pytest.mark.parametrize('change', ['lock', 'schema_and_lock', 'reader_mode'])
+def test_launch_validation_refuses_changed_canonical_authority(tmp_path, monkeypatch, change):
+    runtime, schema, _, env, ref, calls = _owned_validation_fixture(tmp_path, monkeypatch)
+    lock_path = remotion_runtime.REPO_ROOT / 'runtime.lock.json'
+    lock = json.loads(lock_path.read_text())
+    pin = lock['files'][_local_schema.SCHEMA_RELATIVE_PATH.as_posix()]
+    if change == 'lock':
+        pin['sha256'] = 'sha256:' + '0' * 64
+    elif change == 'schema_and_lock':
+        schema.write_text('{}')
+        pin['sha256'] = 'sha256:' + hashlib.sha256(schema.read_bytes()).hexdigest()
+    else:
+        (remotion_runtime.REPO_ROOT / _local_schema.READER_INPUTS[0]).chmod(0o666)
+    lock_path.write_text(json.dumps(lock))
     with pytest.raises(remotion_runtime.RemotionValidationError, match='inputs changed'):
         remotion_runtime._validated_runtime(runtime, environment={**env, **ref})
     assert len(calls) == 3
@@ -1495,7 +1497,7 @@ def test_launch_validation_changed_schema_configuration_is_not_reused(tmp_path, 
     def workers(environment):
         import shutil
         alternative = tmp_path / 'other-schema'
-        shutil.copytree(environment['ASTRID_TIMELINE_SCHEMA_PYTHONPATH'], alternative)
+        shutil.copyfile(environment['ASTRID_TIMELINE_SCHEMA_PYTHONPATH'], alternative)
         return [{**environment, 'ASTRID_TIMELINE_SCHEMA_PYTHONPATH': str(alternative)}]
     # The fixture probe still reports the original origin: a cached proof must
     # not turn this foreign origin into readiness for the second configured root.
