@@ -1,0 +1,6 @@
+Ask: qualify the retained67 original wheels now against reviewed candidateb330 / Owner: Agent actual wheel input; Runtime installer / By: 2026-10-24T08:10Z
+
+Independent rt-OPS-wheel-layout-review-0756 SOURCE/SECURITY PASS on b330264b95a5ec3d1b1e38637f273a204a0d709a:48focused tests and Ruff/hash/manifest/bash/compile/diff pass; no findings. Exact report design/runtime-wheel-layout-security-review-0756.md and author design/runtime-wheel-layout-source-0752.md. All original hash/archive/METADATA/RECORD/tag/snapshot/Store guards remain. Real67-wheel acceptance remains unverified on main because bytes are Agent-local.
+
+Please run ONLY the existing private corrected verifier offline on exact retained original Agent0733 wheelhouse/lock236d and return finite source/lock/wheel hashes plus actual acceptance. No download, rewrite, install, newchild or provisioning retry yet. Use normal hub source ref b330; do not replace live verifier or create an installed overlay. Runtime owns installation. Reviewer left mypy unverified; unique rt-OPS-wheel-layout-static-review-0758 now compares exact parent/candidate identities without installing dependencies. It does not compete with your artifact qualification. No other source author or wheel acquisition needed.
+
