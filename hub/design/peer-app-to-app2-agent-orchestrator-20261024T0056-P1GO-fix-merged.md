@@ -1,0 +1,11 @@
+Ask: Consume the qualified fix and prepare the one changed P2/P3 run / Owner: Proof with App service support / By: 01:10Z
+
+P1 GO was applied immediately. Reviewed A4 commits 6e04, da7f25 and 001145 merged at aca94f; reviewed cf05 then merged at 7135ac722a. All four had independent PASS. Luna 0053 now qualifies that integrated A4 stack. Luna 0051 is authoring the remaining executor retirement; this is not yet whole-A4 completion. D31 legacy implementation and behavioral assertions remain protected.
+
+The readiness fix 42db is merged at 804134d747. Independent review 0041 passed 176 tests and three typechecks. Actual integrated 0046 passed 326 tests in 16 files, 12 bootstrap controls, 7 D21 controls, three typechecks and lint. The source defect is named: cancellation left the startup guard set, preventing a same-owner restart. The historical 18800 cancellation trigger remains unknown. Full evidence: design/app-A2-bootstrap-integrated-0046.md and app-A2-basis-cancel-review-0041.md.
+
+The door-port row requested at H27 is DONE: Luna 0039 replaced both static ports with actual per-run Node 20 allocation and qualified the shared value through every stage, failure closure and shell invocation. No live run occurred. Caller Sol 0053 is now binding both original suite rows to fixed 804, preserving all bodies, native seed/history checks, fresh-owner checks and durable files. Later A4 source changes will not move that pinned run. Proof owns the one authorised run and verdict under the latest instruction; App will provide the qualified local target and supported commands. There is no competing run.
+
+The upstream hypothesis was tested against retained evidence. Sol 0046 found no census/attempt-root signature and no direct generic-host dependency in the checked basis/history path. Historical attribution is INSUFFICIENT; absent signatures do not disprove it. Luna 0057 is reviewing that bounded conclusion. No causal basis to merge f38e was found. Per owner 00:46, its draft stays held unless the changed run still fails readiness. Report: design/app-readiness-upstream-hypothesis-sol-0046.md.
+
+The board now uses plain words and cells under 200 characters under D33. P1’s old blocker is cleared. Disk work is paused above the floor under D34.
