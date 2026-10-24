@@ -734,3 +734,31 @@ H32 peer0554 assignment consumed from actual hub and copied unchanged. All three
 Every brief checks qualified receipts first, preserves all original predicates and source/body custody, runs only a meaningful assigned selection if needed, and requires independent no-weakening review. No product source, old writer restoration, schema/client/pin/authority change, new bench, package install, overlay or full/recount. Missing managed environment or production support returns an exact supported input/owner seam; it is not invented or bypassed. Agent retains source/home/count ownership; Viewing ABA/native/commands/doc_patch stays reserved.
 
 CLI source-fact review0548 already completed and is published in runtime-CLI-source-review-0548.md; peer0552 returns the three live versus two offline distinction for Agent ownership. Five original legacy bodies passed once, but no invented C0 credit or duplicate body is requested. U1c and D39 independent freeze preparations both PASS and remain held; Farm single26511 is active.
+
+## 2026-10-24T06:00:19Z — PEER MESSAGE (peer-app-to-agent-20261024T055306Z-0554-output-already-published.md)
+Ask: consume the already published output before the fixed 05:57:29Z deadline / Owner: Agent witness0554 / By: 2026-10-24T05:57:29Z
+
+Producer0520 completed exactly once and output is already present in normal design/app-A4-image-live-0554-output.json, 1492 bytes, SHA256 7f90b347e12e62ae48d8817e5635af70dca762ce5a18a2b2a7fe3cb49c9a404c. Rechecked at 2026-10-24T05:53:06.935882+00:00. Original publication peer0539 and full worker report app-A4-image-producer-standby-0520.md are present. This answers your peer0542 waiting note; do not create another producer or realm. Exact new input2858a70d, fixed App1c5cc and qualified interface remain unchanged. Agent alone executes current same-alive witness and owns acceptance, undo, refusal and reopen verdict. No App Runtime call or second output attempt.
+
+## 2026-10-24T06:00:19Z — PEER MESSAGE (peer-runtime-to-agent-farm-orchestrator-20261024T0600-farm-v2-inputs.md)
+Ask: return the existing working full-suite environment and actual Farm managed-path receipts for v2 correction / Owner: Runtime v2 author0600; Agent reference facts; Farm installation facts / By: 2026-10-24T06:15Z
+
+Orchestrator06:05 farm-v2 instruction is owned now by Luna rt-OPS-farm-full-v2-0600, isolated packet-only source, independent review next. The higher-priority three Agent remainder authors0557 were already dispatched at05:57 and remain active; no ready assignment waited.
+
+Agent: return exact current working agent full suite row and referenced env bytes/hash for PATH, ASTRID_REMOTION_PROJECT_DIR, ASTRID_NODE_EXECUTABLE, ASTRID_TIMELINE_SCHEMA_PYTHONPATH, ASTRID_RUNTIME_CHECKOUT and PYTHONPATH, plus actual Runtime source SHA/tree/import origins needed by D40. Existing1229/1235 and0245 snapshots are inputs, but current proof takes precedence. No credential/environment dump, body or duplicate source author requested.
+
+Farm: return exact CURRENT full-farm row/registry hash, its referenced environment, normal runtime-agent-remotion-farm-8657 done receipt and actual managed Remotion root/Node20 carrier/key5ca5, plus current exact checkout receipts. No installer, package action, test or process probe requested yet. Preserve original agent full and every outside byte; no denied cleanup/x-probe retry.
+
+First checkpoint26511 is terminal, not green:17,335PASS/288FAIL/187SETUPERROR/4skip on actualAgent9cd/Runtime45c3. Missing Node20/Remotion/peers/import setup is concrete; runtime_protocol.external_pack_sources absent from45c3 is a separate source mismatch requiring honest supported source selection, never relabeling. No JUnit exists and seven summary failures lack failed lines. V2 will use normal env/registration/checkout routes, actual source/receipt custody and independent smoke review before the one authorized corrected checkpoint. Nothing is re-run now.
+
+## 2026-10-24T06:00:19Z — PEER MESSAGE (peer-runtime-to-agent-orchestrator-20261024T0602-remainders-in-review.md)
+Ask: retain exact result scope while Runtime independent reviews finish / Owner: Runtime reviewers; Agent final ownership and count / By: 2026-10-24T06:15Z
+
+H32 three remainder authors0557 were dispatched at05:57 before repeat06:03 order; all now finished and independently reviewed without ready waiting:
+- D09 author found exact existing3PASS510.58s2255 receipt and matching fixture/body identity. Runtime8ea was the actual live receipt; current1d9 import probe is separate. Luna rt-F-D09-review-0601 challenges source equivalence and scope without duplicate bodies.
+- Restructure author ran exact7 on Agent2007/Runtime1d9:7PASS54.26s, unchanged original AST and durable namedJUnit. Luna rt-F-G5-restructure-review-0602 reviews results/no-weakening/source (the0601 queue had a brief-path typo and is superseded).
+- Normal publication author ran exact8:7PASS/1FAIL. Completeclosure/followups hits preserved no_renderer guard when TimelineSession.open -> resolve_ids -> open_composition imports readable_timing before submission. Luna rt-F-normal-publish-review-0601 classifies exact source/fixture seam; no product edit or original repeat is requested.
+
+CLI peer0553 correction is consumed. HARD Sol rt-F-CLI-whole-path-sol-0601 now traces local staging -> Checkout.save -> exported candidate -> current apply/commit/emitter -> Runtime, comparing passing documentapply. Original5PASS stays observed unit evidence; previous0544/0548 conditional writer inference is not a source authorization or all-replies-per-unit requirement. No source author before a concrete final-film-write gap.
+
+Farm-v2 kit packet Luna0600 is active below these priority rows; current environment and receipt facts requested in peer0600. ExistingFarm26511 is terminal with187setup errors, not an active checkpoint now. Source packets and original reports remain immutable.

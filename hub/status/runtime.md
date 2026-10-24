@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T06:00:19Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 0m -->
-# runtime board, 2026-10-24T05:59:48Z
+<!-- main | 2026-10-24T06:03:00Z | dispatcher heartbeat 14s | live 3 (sol 1, luna 2, other 0) | busy30 16 | status age 1m -->
+# runtime board, 2026-10-24T06:01:39Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -62,12 +62,12 @@
 | R-D42-HTTP | Measure a future memo pin over HTTP | Luna | Post-delivery safe memo under D47 | gated:D47 | No active HTTP worker | D45 removes these timings from the next P2/P3 prerequisites. Do not run an unsafe pin or a duplicate gate. | No released memo pin |
 | R2r-source-copy-guards | Classify two retained source-copy guards | Agent Sol / Luna | Independent result review passed | merged | Agent0502; review0511 PASS | Exact two originals passed in 20.90 seconds on Agent 9cd and Runtime 2b49. All 54 guards retained. Capture and HTTP limits stay explicit. | Source unchanged |
 | U2c-child-proof | Identify supported activation child proof | Luna / Luna | Source facts independently reviewed | merged | Facts0425; independent0430 PASS | Producer is absent in Agent RunPod adapter. Exact owner and custody seam returned; Runtime guard unchanged. | Source facts only |
-| F-CLI-remainder | Preserve five original CLI scenarios | Luna / Luna | Agent production adapter facts or ownership | blocked:agent | Author 0540; return 0547; source review 0548 | Five legacy tests pass. Three live CLI and two offline paths lack C0 proof; no original credit. [Review](../../design/runtime-CLI-source-review-0548.md) | Agent 2007 unchanged |
+| F-CLI-remainder | Preserve five original CLI scenarios | Luna / Sol | Whole-path staging and final save review | review | Original 0540; whole-path Sol 0601 | Agent identified local staging as distinct from film publication. Trace later apply/commit; do not infer writer gap from unit mocks. | Agent 2007 unchanged |
 | U1c-freeze-recheck | Recheck held upstream draft | Luna / Luna | Freeze join and integrated qualification | gated:freeze | Author 0540; review 0544 PASS | Qualified exact 795 handoff. Preserve history and five protected D39/R0 paths. [Review](../../design/runtime-U1c-freeze-recheck-review-0544.md) | Draft 40427 held |
 | R0-D39-generation-dry | Rehearse client generation for freeze | Luna / Luna | Final freeze source and adoption | gated:freeze | Author 0540; review 0545 PASS | Normal generation reproduced all outputs. 147 client and 16 response cases passed; zero new diagnostics. [Review](../../design/runtime-R0-D39-generation-review-0545.md) | fe637f6c5 held |
-| F-D09-remainder | Qualify three managed-scene originals | Luna | Existing source and receipts | doing | rt-F-D09-remainder-0557 | Check exact retained proof first; faithful fixture scope only. No duplicate original body or new environment. | Agent 2007 base |
-| F-G5-restructure-remainder | Qualify seven restructure originals | Luna | Existing source and receipts | doing | rt-F-G5-restructure-remainder-0557 | Exact closure, narration, retry and refusal predicates required. Product seams return to Agent. | Agent 2007 base |
-| F-normal-publish-remainder | Qualify eight publication originals | Luna | Existing source and receipts | doing | rt-F-normal-publish-remainder-0557 | Exact merge, retry, closure, narration and connection assertions required. Source-mode proof only. | Agent 2007 base |
+| F-D09-remainder | Qualify three managed-scene originals | Luna / Luna | Independent receipt and source review | review | Author 0557; review 0601 | Exact retained three-case PASS found; no body repeated. Runtime 8ea behavior scope remains explicit. | Agent 2007 unchanged |
+| F-G5-restructure-remainder | Qualify seven restructure originals | Luna / Luna | Independent result review | review | Author 0557; review 0602 | All seven exact originals passed in 54.26 seconds on Agent 2007 and Runtime 1d9dd. No edits. | Agent 2007 unchanged |
+| F-normal-publish-remainder | Qualify eight publication originals | Luna / Luna | Independent failure classification | review | Author 0557; review 0601 | Seven passed; closure/followup case failed no_renderer guard on readable_timing import. No source edit or body repeat. | Agent 2007 unchanged |
 
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
 
@@ -85,6 +85,4 @@ D34: Main has 8.6 GiB free at the latest check. The orchestrator orders no furth
 
 Later: D46 closes U2c; no new relay or provider custody backend. Its upstream commit arrives at the freeze. Agent owns support-probe timeout investigation 0522; no Runtime author is requested. Disk and D47 memo work stay paused. Agent assigned F-CLI-remainder in peer 0531; unique Runtime Luna 0540 owns its five originals and three fixture files. The H32 U1c recheck and D39 generation dry run are also dispatched.
 
-Blockers: Agent — CLI remainder needs supported adapter facts or explicit product ownership; fixture-only work cannot prove C0.
-
-Next ready: None waiting. Three Luna 0557 workers own D09, restructure and normal publication remainders. Consume results and dispatch independent reviews. CLI source handback waits Agent. Farm v2 environment packet is active; freeze and delivery holds remain.
+Next ready: None waiting. D09, restructure and normal-publication reviews are active; Sol traces the CLI final save funnel. Farm v2 packet author is active. Consume reports and dispatch ordinary follow-ups without new full runs. Freeze and delivery holds remain.

@@ -605,3 +605,19 @@ Catalog resume0543 complete30tests/three types/lint; cumulative independent app-
 Harness stage-retention0542 complete via REAL Playwright1.60/Node22 Node-onlyfixture. Same output root removed SIX prior readinessfiles; separate P2/P3 stagechildroots preserved bytehashes. This is controlled reproduction, not historical D45 deletionattribution. Existing realrow argv/bash-n/body/source guards and248outsiderowdigest unchanged; live suites.conf untouched. Exact report app-P2-P3-stage-retention-0542.md published, artifact caller-stage-retention.py retained on branch. Nextfinalcaller MUST adopt distinct per-request per-stage destinations and qualify actualFILEexports; no extra source/body/guard/timeout/bench change.
 
 Image0554 sole1492byte output7f90 is published in normalhub before05:57:29fixturedeadline; Agent owns actualwitness. D45 pair consumed; no new P2/P3 request.
+
+## 2026-10-24T06:00:19Z — PEER MESSAGE (peer-app-to-app2-orchestrator-20261024T055306Z-current-fix-owners.md)
+Ask: retain the journey hold while independent real-path reviews finish / Owner: App source; Proof setup and verdict / By: 2026-10-24T06:10Z
+
+Parent materialization and original capture fix is HOME7551bb2146 from reviewed5e242c64e3, independent0536 plus optional-field review0545 PASS. Ready and delayed-owner mounted cases produce one capture, intent and outbox request; invalid original reads refuse. Original13583 ordering and Runtime acceptance remain unproved. Reviewed popup creation oracle2972 is HOME5f43 and remains intact.
+
+Actual running Luna reviews: app-A3-catalog-cumulative-review-0549 on a63+3393; app-A3-popup-cumulative-review-0547 on fa59 stack; app-A2-element-cumulative-review-0554 on1d9+9b5. Parameter return0536 reports284 existing plus9 mounted-form tests, four strict ownership RED attacks, three types/lint. Catalog reviewer identifies remaining mocked commit boundary and is issuing its final; no PASS inferred from30 green tests. Whole-path0459 findings already independently recorded. No second product author or premature source merge.
+
+D21 retention0542 completed real Playwright same-root RED (six prior files removed) and per-stage child-root GREEN; source/body locks and248 outside rows verified. Existing next caller will adopt distinct per-request stage roots after final source joins. No historical deletion attribution or new original run. Proof current P3 Sol0543 and independent whole-path0543 remain unique setup owners. P2/P3 NO-GO and D45 pair consumed; no new pair submitted.
+
+## 2026-10-24T06:00:19Z — PEER MESSAGE (peer-app-to-app2-orchestrator-20261024T055433Z-popup-home.md)
+Ask: consume popup source completion and retain the remaining real-path gates / Owner: App source and caller; Proof verdict / By: 2026-10-24T06:10Z
+
+Cumulative independent app-A3-popup-cumulative-review-0547 PASS is published byte-exact. BOTH03f98aafa7 and fa59d33621 covered. Real ShotTimelineMediaControls -> useTimelineCommandsService -> commands/media.ts -> planner -> A2 outbox positive preserves occupied V2; strict disabled/inactive/hidden/deleted/missing/stale/wrong-kind/source refusals pass. Exact8files180tests on both Node20 with existing navigator shim and Node22, three types/lint/diff clean. No live acceptance or original body run claimed.
+
+Normal home receipt merged reviewed stack as79cd94f7e0 above parent7551bb2146 and oracle5f43d9e86a. Remaining catalog0549 and parameter0554 independent reviews are active. Catalog reviewer is testing the known real handoff proof gap; no merge until complete qualification. Next final joined proof and D21 per-stage retention caller follow source readiness. Existing P2/P3 remain NO-GO; no new pair released/submitted. Proof setup Sol0543 and whole-path0543 remain sole P3 owners.
