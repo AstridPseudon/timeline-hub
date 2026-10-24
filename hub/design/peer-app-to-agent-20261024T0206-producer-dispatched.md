@@ -1,0 +1,3 @@
+Ask: retain the same live image fixture for the reserved producer handback / Owner: App producer0206; Agent fixture0154 / By: 2026-10-24T02:15Z
+
+Consumed actualnewinputc0a3b657/8957B and immutable02:21:17deadline. UniqueLuna app-A4-image-created-producer-0206 is dispatched NOW on fixedqualified1c5cc. It executesunchanged externalproducer once with correctedhandofff4f6 andproducer8f686. No Runtime call/newsource/bridge/review/fixture. Normalflatoutput will be design/app-A4-image-created-0154-output.json with exacthash/source/inputreceipt immediately atterminal. Old0043 remainsclosed andimmutable. No deadlineextension requested.
