@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T17:11:15Z | dispatcher heartbeat 10s | live 2 (sol 1, luna 1, other 0) | busy30 20 | status age 0m -->
-# agent board, 2026-10-24T17:02:13Z
+<!-- agent | 2026-10-24T17:14:18Z | dispatcher heartbeat 9s | live 6 (sol 1, luna 5, other 0) | busy30 25 | status age 0m -->
+# agent board, 2026-10-24T17:14:15Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -126,21 +126,21 @@
 | D69 actual49 checkpoint | Qualify restored47 and two assertions | Service | Product failure follow-through | review | Actual service23762 | All49 ran:39 FAIL10PASS17.11s. Exact47 subset37FAIL10PASS; two audit predicates FAIL. [JUnit](../../design/handoff-agt-F-D69-23762-d69-restored47.xml) | Agent ef036 / Runtime bc227 |
 | D69 CLI failures | Map retired CLI behavior coverage | Luna | D72 ready at cap | ready | Next free Luna slot | Eleven retired-interface failures; ledger mappings plus targeted replacement tests for uncovered capabilities. No old aliases. | Source8a2f |
 | D69 SDK failures | Map retired SDK behavior coverage | Luna | D72 ready at cap | ready | Next free Luna slot | Ten removed-surface failures; current replacement capability must be named and tested. Duplicate is separate. | Source8a2f |
-| D69 core failures | Migrate live setup and callers | Luna | D72 | doing | Element review1709; approval1707; create ready | Seven element, two approval and two create-empty cases; every assertion retained, independent reviews follow. | Source8a2f |
+| D69 core failures | Migrate live setup and callers | Luna | D72 | doing | Element return1715; approval review1713; create ready | Element review1709 FAIL fixture-input mutation; first return1715 preserves exact source closure. Approval review1713 active; create ready. | Source8a2f |
 | D69 rendering failures | Migrate window, schema and host cases | Luna / Runtime | D72 failover assigned | blocked:runtime | Runtime peer1706 | Three disjoint ready families assigned Runtime spare capacity; no competing Agent author. | Source8a2f |
 | D69 CLI terminal hints | Restore two original terminal lines | Luna | Actual home proof complete | merged | Author1646; review1653; home1703 | Actual8a2f/5c1 PASS2 in3.50s; unchanged tests, blobs and15 mappings. [Review](../../workers/agt-F-D69-cli-hint-review-1653/report.md) | 81a2615c54 |
 
-| R2 repeated source copy | Preserve authenticated root replay | HARD Sol / Luna | Security PASS | merging | Author1655; review1705 | Independent PASS2 originals,43 neighbors,35 authority/tool,8 focused; raw-log scope retained; merge queued. [Author](../../workers/agt-R2-sourcecopy-root-sol-1655/report.md) | 14c8ecc2b4 |
+| R2 repeated source copy | Preserve authenticated root replay | HARD Sol / Luna | Actual home proof | doing | Author1655; review1705; home1715 | Independent PASS2 originals,43 neighbors,35 authority/tool,8 focused; source merged200819, integrated originals now active. [Author](../../workers/agt-R2-sourcecopy-root-sol-1655/report.md) | 14c8ecc2b4 |
 
 | G4 D69 duplicate | Resolve original duplicate behavior | Luna | D72 ready at cap | ready | Next free Luna slot | Prior source review found invalid fixture and strict admission. D72 requests product fix; no guard bypass allowed. | Source unchanged |
 
 | U4a policy provenance | Adopt normal Runtime5c1 identity | Luna | Author checks PASS | merged | Adoption1657 | Normal-tool lock only;15 mappings unchanged,42 targeted PASS, vendor/artifact checks PASS. [Report](../../workers/agt-U4a-policy-home-rebind-1657/report.md) | Home8a2f5bb4f8 |
 
-| D72 approval and create | Preserve live promotion and empty creation | Luna | D72 | doing | Approval1707; create ready | Approval1707 active; create-empty2 ready at cap. Setup/caller only, every assertion conserved. | Source8a2f |
+| D72 approval and create | Preserve live promotion and empty creation | Luna | D72 | doing | Approval review1713; create ready | Approval review1713 active; create-empty2 ready at cap. Setup/caller only, every assertion conserved. | Source8a2f |
 
-| U4a popup provenance | Bind new normal Runtime product | Luna | Normal reviewed producer receipt | doing | Adoption1710 | Actual normal Runtimeb318 popup fix observed; preserve schema867f and15 canonical bytes, normal tools only. | Source8a2f |
+| U4a popup provenance | Bind actual Runtime successor identity | Luna | Source/security receipt arrived | doing | Return1715 | Qualified popupb318 plus test-only2c1 successor; normal-tool rebind active,15 bytes unchanged. | Source200819 |
 
-| P4 pinned submission | Fix current-head launch race | Luna | D73 ready at cap | ready | Brief1711 prepared | Exact4SHAs captured once; normal checkout receipts before service body, no late current resolution. | Harness only |
+| P4 pinned submission | Fix current-head launch race | Luna | D73 | doing | Launcher1711 | Exact4SHAs captured once; normal checkout receipts before service body, no late current resolution. | Harness only |
 
 Integration: Agent200819d572 includes reviewed R2 root replay14c8 and true upstream924 merge, D62 client/consumer, unchanged47 restorations, reviewed CLI terminal hints81a261 and tool-only Runtime5c1 provenance578420. Canonical15 unchanged. Runtime5c1 product equals qualifiedbc227; only reviewed skip-policy files changed.
 core open: 4 tracked: two P4 and two source-copy redo. CLI two actual-home originals now PASS2 on8a2f/5c1. Separate37 D69 restored failures now have D72 migration/retirement owners; no unqualified known-gap label. D71 no-leak regression now has active Sol1701. Root inverse actual-home PASS1.
@@ -149,11 +149,11 @@ D60 baseline: Upstream924 full1621 terminal FAIL: 12396 passed, 91 failed, 14 er
 D66 reverse:137 ledgered,178 present-changed,47 restored,0 renamed. Actual47:10PASS37FAIL; every failure source-classified as a concrete contract/fixture conflict under escalation1654. Audit178:167 cleared,9 cited,2 restored; terminal fix81a261 independentPASS2 merge queued.
 Gates: P1/P2/P3 App; P4 Agent; P5 and Composition Runtime. Original P4 service29577 FAIL2/PASS1. Next P4 run needs current source rebind and meaningful ten-note correction. Final-core body still owed.
 Admission: D56 ends Farm/schema venue work. Prior access and safety refusals stay stopped. D67 D13 remains unchanged visible environment known gap with no owner action. D23 timing remains deferred.
-Disk: 8.88GiB free; cap4. All fresh completed trees recycled. Sweep3 removed0; compact packed0/gzipped0. Prior refused targets stay stopped; no heavy currently running.
+Disk: About8.7GiB free; D74 cap6 above8.5. No new heavy below8.5; no dispatch below6.5. Sweep3/compact yielded0. All KEEP/pinned trees are protected after explicit refusal; no target retried.
 
 Blockers: Agent — D72 resolves original37 disposition. Parallel faithful migrations and retired coverage mappings proceed; every remaining behavior failure stays visible and blocks cut.
 
 Blockers: Runtime — P4 ten-note timeout45s, unique HARD Sol1652 on immutable-schema resolver strategy after Luna profile. All validation and D47 no mutable-result cache retained.
-Next ready: consume sourcecopy1655 and private-cache1701, dispatch one independent security review per completed core change; actual CLI home1703. Apply D69 disposition1654 immediately. Final-core and unchanged P4 proofs follow meaningful reviewed source.
-live 4 / cap 4; ready-undispatched 6. Sol1711 resumes D71 callers; Luna1710 adoption,1709 element review and1707 approval. D72 create2,retired CLI/SDK,duplicate; D73 harness and new D71 independent whole-path ready at cap. Three render families assigned Runtime.
-Inbox consumed through D72 relay2026-10-24T17:01:22Z and full D71. Both decision waits cleared. Runtime board16:52 and App16:55 rechecked; normal Runtime5c1 provenance merged8a2f. D71 decision wait cleared immediately. Pass 2026-10-24T17:02:13Z.
+Next ready: consume six active returns; fill first free slots with create2, retired CLI/SDK and duplicate. Finish D73 launcher before unchanged P4; reviewed D71 and Runtime cost source required. Final-core remains owed after D72 source/test qualification.
+live 6 / cap 6; ready-undispatched 4. D71Sol1711; Luna1711 D73,1713 approval review,1715 element return,1715 provenance,1715 R2 home. D72 create2,retired CLI/SDK,duplicate ready at cap. Render3 assigned Runtime.
+Inbox consumed through D74 cap ruling17:12:35, full D72/D73. KEEP/pin refusal consumed and honored. D71/D72 decision waits cleared; pinned-submit P4 harness1711 active. Runtime board16:52 and App16:55 rechecked; normal Runtime5c1 provenance merged8a2f. D71 decision wait cleared immediately. Pass 2026-10-24T17:02:13Z.
