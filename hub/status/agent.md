@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T16:36:52Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 17 | status age 1m -->
-# agent board, 2026-10-24T16:35:54Z
+<!-- agent | 2026-10-24T16:39:40Z | dispatcher heartbeat 4s | live 2 (sol 1, luna 1, other 0) | busy30 16 | status age 0m -->
+# agent board, 2026-10-24T16:39:47Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -118,11 +118,13 @@
 | U4a root-auth successor | Bind qualified Runtime provenance | Luna | Normal merge complete | merged | agt-U4a-root-auth-rebind-1630 PASS | Lock-only tool update; 15 mappings unchanged, vendor/artifact checks PASS. [Report](../../workers/agt-U4a-root-auth-rebind-1630/report.md) | ef0363985e |
 
 | R2 root inverse home | Qualify remaining inverse original | Luna | Actual home proof complete | merged | agt-R2-root-inverse-home-1632 PASS | One original PASS2.08s; clean identities, original AST and15 mappings exact. [JUnit](../../design/handoff-agt-R2-root-inverse-home-1632-home.xml) | Agent ef036 / Runtime bc227 |
-| P4 current service | Prepare repaired single-edit original | Luna | Actual current tuple | doing | agt-P4-current-home-service-1633 | Refresh existing rows; single original and full P4 retain45s and genuine JUnit. No body in worker. | Agent ef036 / Runtime bc227 |
-| D69 current launch | Repair service selector handoff | Luna | Restores and assertions merged | doing | Author1634; whole path1634 | Two prior service attempts ran zero bodies. Current tuple and path-style selectors need qualification. | WIP98148 |
+| P4 current service | Qualify repaired single-edit original | Luna / Service | Current source | merged | Launcher1633; actual30725 FAIL1 | Original ran and exposed a later cache predicate failure. [JUnit](../../design/handoff-agt-P4-single-30725-p4-current-single.xml) | Agent ef036 / Runtime bc227 |
+| D69 current launch | Qualify restored47 and two predicates | Luna / Service | Launcher and collection ready | doing | Author1634; whole path1634; service17475 | Exact49 collected; actual49 body queued once. Earlier18445/4256 had zero bodies. | Agent ef036 / Runtime bc227 |
+
+| G2 P4 read boundary | Preserve ordinary and canonical read authority | HARD Sol / Luna | Actual P4 failure30725 | doing | Sol1639; whole-path1639 | Ordinary initial bundle unexpectedly has authenticated-document cache. Original predicate unchanged; source diagnosis active. | Agent ef036 / Runtime bc227 |
 
 Integration: Agent ef0363985e includes true upstream924, normal Runtime8b32 adoption, reviewed recorder consumer, 47 unchanged upstream test restorations and reviewed P4 parser default. Runtime root-auth successor is actual local normal bc227 with exact reviewed tree1d410 and expected parents. Normal provenance adoption1630 merged; one actual-home inverse original1632 dispatched.
-core open: 2 tracked: P4 single edit and ten-note timeout. Remaining inverse original is actual ef036/bc227 PASS1 in2.08s. Parser source merged with36 independent controls; original confirmation pending. Prior five/54 scopes retained; final-core body owed.
+core open: 2 tracked: P4 single edit fails cache boundary at assertion113 on actual30725; ten-note times out45s. Root inverse original PASS1 in2.08s. Parser predicate now passes. Prior five/54 scopes retained; final-core body owed.
 regressions: 0 currently open at qualified scope. Order181 repaired and actual d27b PASS16. Restored47 behavior proof is pending; any failure gets a product owner under D69. Other upstream PASS contrasts need cut confirmation.
 D60 baseline: Upstream924 full1621 terminal FAIL: 12396 passed, 91 failed, 14 errors, 16 skips, 566 subtests. Exact276:199 NEW-OURS and77 counterparts. Mutable external Runtime scope remains disclosed.
 D66 reverse:137 ledgered,178 present-changed,47 restored,0 renamed. Original47 ASTs exact924 at3d67. Durable service repair1634 active after two zero-body launches. Independent whole-path1634 runs in parallel. D69 audit:167 cleared,9 cited,2 restored at home9a781 after independent1622 PASS. Behavior proof pending.
@@ -131,6 +133,6 @@ Admission: D56 ends Farm/schema venue work. Prior access and safety refusals sta
 Disk: About8.9GiB free after recycling completed clean launch investigator1554. Sweep3 running; prior refused targets stay stopped. Cap4 while below9GiB.
 
 Blockers: Runtime — P4 ten-note first redo times out45s. Unique rt-P4-history-cost-1625 profiles shared schema validation; guarded source correction and independent review precede original retry.
-Next ready: Consume inverse original1632; request P4 single on prepared current service1633. Consume D69 launcher/whole-path1634, then one actual49 body. Consume unique Runtime ten-note profile1625 and qualified correction; no unchanged original repeat.
-live 3 / cap 4; ready-undispatched 0. Luna: P4 service1633, D69 repair1634 and whole-path1634. Inverse1632 finished PASS. No local Sol.
+Next ready: Consume same D69 service17475 and dispatch exact product regressions if any. Consume P4 source1639 and independent whole-path1639, then review meaningful correction. Runtime ten-note cost1625 remains unique source owner.
+live 2 / cap 4; ready-undispatched 0. HARD Sol1639 core read authority; Luna1639 independent whole path. D69 actual49 service17475 queued. Harness1633/1634 finished.
 Inbox consumed through Runtime1625 P4 source owner and1621 actual root-auth home. Runtime actual normal successor bc227 verified locally by tree and parents; stale source wait cleared. Pass 2026-10-24T16:26:38Z.

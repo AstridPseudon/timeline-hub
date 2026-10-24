@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="4.115" timestamp="2026-10-24T16:37:06.995174+00:00" hostname="vm"><testcase classname="tests.editing_conformance.test_p4_cli_sheet_v2_runtime" name="test_cli_sheet_v2_runtime_preserves_document_and_reads_back" time="2.885"><failure message="AssertionError: assert '_runtime_document' not in {'_runtime_document': {'dependency_manifest': {'documents': [], 'internal_timelines': [], 'media': [], 'shots': []}, '...n_id': 'p4-cli-sheet-baseline'}, 'project_id': 'd7bec9bfd67d4300805959811482198b', ...}, 'placements': {}, 'shots': {}}">runtime = namespace(calls=[(b'{"api_version":1,"project_id":"d7bec9bfd67d4300805959811482198b","timeline_id":"film","base_revisi...ab3c41279f4e299d25fce41e'}, path=PosixPath('/tmp/pytest-of-root/pytest-8/test_cli_sheet_v2_runtime_pres0/outbox.json'))
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-8/test_cli_sheet_v2_runtime_pres0')
+capsys = &lt;_pytest.capture.CaptureFixture object at 0x7fe4981b2a50&gt;
+
+    def test_cli_sheet_v2_runtime_preserves_document_and_reads_back(
+        runtime, tmp_path, capsys
+    ):
+        source, seeded = _seed_initial_bundle(runtime)
+        client = runtime.client()
+        session = TimelineSession.open(runtime.project, "film", client=client)
+        original = copy.deepcopy(session._bundle(session.outbox.read()))
+        # `registry` is a Runtime-managed canonical envelope field; all authored
+        # source fields remain the exact SDK fixture payload.
+        expected_parent = copy.deepcopy(source["parent"])
+        expected_parent.setdefault("registry", {})
+        assert original["parent"] == expected_parent
+    
+        sheet = NativeSheet.export(session)
+        sheet_path = tmp_path / "edited.sheet"
+        sheet_path.write_text(edit_cell(sheet.text, "parent/clip:a", "5"), encoding="utf-8")
+    
+        parsed = build_parser(client).parse_args([
+            "apply", "film", str(sheet_path), "--project", runtime.project,
+            "--json", "--idempotency-key", "p4-cli-sheet-v2",
+        ])
+        assert parsed.native is False
+        assert parsed.handler(parsed) == 0
+        reply = json.loads(capsys.readouterr().out)
+    
+        assert reply["ok"] is True
+        assert reply["data"]["status"] == "accepted"
+        assert len(runtime.calls) == 1
+        request = json.loads(runtime.calls[0][0])
+        assert runtime.calls[0][1] == "p4-cli-sheet-v2"
+    
+        expected_command = capture_move(original, "parent/clip:a", 5)
+        expected_bundle = execute(original, [expected_command]).bundle
+        accepted_document = reply["data"]["canonical_document"]
+        accepted = bundle_from_document(accepted_document)
+        assert accepted["parent"] == expected_bundle["parent"]
+        assert accepted["parent"]["clips"][1] == original["parent"]["clips"][1]
+        assert accepted["parent"]["config"] == original["parent"]["config"]
+        assert accepted["placements"] == original["placements"]
+        assert accepted["shots"] == original["shots"]
+        # The ordinary revision read has no authenticated document cache; execute
+        # preserves that boundary. Opening an accepted canonical document adds it.
+        assert "_runtime_document" not in source["source_mapping"]
+&gt;       assert "_runtime_document" not in original["source_mapping"]
+E       AssertionError: assert '_runtime_document' not in {'_runtime_document': {'dependency_manifest': {'documents': [], 'internal_timelines': [], 'media': [], 'shots': []}, '...n_id': 'p4-cli-sheet-baseline'}, 'project_id': 'd7bec9bfd67d4300805959811482198b', ...}, 'placements': {}, 'shots': {}}
+
+tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py:113: AssertionError</failure></testcase></testsuite></testsuites>
