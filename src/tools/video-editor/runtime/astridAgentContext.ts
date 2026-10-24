@@ -75,6 +75,7 @@ export function buildAstridAgentContextSnapshot(
   editorContext: AgentChatEditorContext,
   attachments: readonly AgentTurnAttachment[] = [],
   logicalRequestId?: string,
+  capturedProjectAuthoring?: ReturnType<typeof projectPackContext>,
 ): AstridAgentContextSnapshot {
   const assets = attachments.map((attachment) => ({
     clip_id: attachment.clipId,
@@ -122,7 +123,7 @@ export function buildAstridAgentContextSnapshot(
     },
     editor: {
       tool: 'video-editor',
-      deep_link: editorContext.deepLink ?? currentDeepLink(),
+      deep_link: editorContext.deepLink !== undefined ? editorContext.deepLink : currentDeepLink(),
     },
     ...(assets.length > 0
       ? {
@@ -133,7 +134,7 @@ export function buildAstridAgentContextSnapshot(
         }
       : {}),
     ...(editorContext.elementContext ? { elements: editorContext.elementContext } : {}),
-    ...(editorContext.projectId ? {project_authoring: projectPackContext(editorContext.projectId)} : {}),
+    ...(editorContext.projectId ? {project_authoring: capturedProjectAuthoring ?? projectPackContext(editorContext.projectId)} : {}),
     tool_access: {
       authority: 'astrid-runtime',
     families: ['projects', 'timelines', 'media', 'tasks', 'runs', 'elements'],

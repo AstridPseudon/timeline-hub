@@ -1,4 +1,4 @@
-import { refreshProjectElementContext } from '../runtime/admitted-elements';
+import { projectPackContext, refreshProjectElementContext } from '../runtime/admitted-elements';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { type AcpModelCatalog, type ProjectChatState } from '@/integrations/astrid/acpRoutes.ts';
 import { BridgeRouteError, BridgeTransportFailure } from '@/integrations/astrid/transport.ts';
@@ -71,6 +71,7 @@ type CapturedAgentRequest = {
   routingProjectId: string | undefined;
   editorContext: Omit<AgentChatEditorContext, 'elementOperationAdapter' | 'liveSceneOperationPort'>;
   hostOperationRefs: Pick<AgentChatEditorContext, 'elementOperationAdapter' | 'liveSceneOperationPort'>;
+  projectAuthoring?: ReturnType<typeof projectPackContext>;
 };
 
 type AgentSendCommand =
@@ -91,7 +92,9 @@ function cloneAgentRequest(input: SendMessageInput, sessionId: string, context: 
     projectSlug: context.projectSlug,
     timelineId,
     timelineName: timelineSelected ? context.timelineName : null,
-    ...(context.deepLink !== undefined ? { deepLink: context.deepLink } : {}),
+    deepLink: context.deepLink !== undefined
+      ? context.deepLink
+      : typeof globalThis.location?.href === 'string' ? globalThis.location.href : null,
     ...(summary ? { timelineSummary: summary } : {}),
     ...(timelineSelected && context.elementContext ? { elementContext: structuredClone(context.elementContext) } : {}),
   };
@@ -104,6 +107,7 @@ function cloneAgentRequest(input: SendMessageInput, sessionId: string, context: 
     sessionId,
     routingProjectId,
     editorContext: serializableContext,
+    ...(context.projectId ? { projectAuthoring: structuredClone(projectPackContext(context.projectId)) } : {}),
     hostOperationRefs: {
       ...(timelineSelected && context.elementOperationAdapter ? { elementOperationAdapter: context.elementOperationAdapter.captureForTurn?.() ?? context.elementOperationAdapter } : {}),
       ...(timelineSelected && context.liveSceneOperationPort ? { liveSceneOperationPort: context.liveSceneOperationPort } : {}),
@@ -589,6 +593,7 @@ export class AstridAgentSessionStore {
     projectId: string | undefined = editorContext.projectId ?? undefined,
     isCurrent: () => boolean = () => true,
     scopeSignal?: AbortSignal,
+    capturedProjectAuthoring?: ReturnType<typeof projectPackContext>,
   ): Promise<void> {
     this.assertCanStartTurn(sessionId);
     if (this.activePrompts.has(sessionId)) throw new Error('An ACP prompt is already active for this session');
@@ -651,9 +656,9 @@ export class AstridAgentSessionStore {
       checkCurrent();
       const astridAgentContext = await import('@/tools/video-editor/runtime/astridAgentContext.ts');
       if (signal.aborted) return;
-      const contextSnapshot = astridAgentContext.buildAstridAgentContextSnapshot(editorContext, input.attachments ?? [], input.requestId);
+      const contextSnapshot = astridAgentContext.buildAstridAgentContextSnapshot(editorContext, input.attachments ?? [], input.requestId, capturedProjectAuthoring);
       const context = astridAgentContext.serializeAstridAgentContext(contextSnapshot);
-      const sceneBinding = sceneScopeForRequest(sessionId, globalThis.crypto.randomUUID(), editorContext);
+      const sceneBinding = sceneScopeForRequest(sessionId, contextSnapshot.request_id, editorContext);
       if (sceneBinding) {
         sceneScope = sceneBinding.scope;
         scenePort = sceneBinding.port;
@@ -1316,7 +1321,7 @@ export function useSendMessage(
           && scopeRef.current.projectId === dispatchScope.projectId && scopeRef.current.timelineId === dispatchScope.timelineId;
         try {
           await agentStore.prompt(request.sessionId, request.input, editorContextForRequest(request), request.routingProjectId,
-            isDispatchCurrent, scopeLifetime.controller.signal);
+            isDispatchCurrent, scopeLifetime.controller.signal, request.projectAuthoring);
           if (isDispatchCurrent()) lastMessageRef.current = null;
           return request;
         } catch (error) {
