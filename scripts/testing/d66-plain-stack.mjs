@@ -21,6 +21,8 @@ const suites = {
   },
   p3: { files: ['tests/e2e/local/three-products.spec.ts'], count: 1,
     grep: 'M2 real gate 5 \\(M1 real mounted path\\): Agent edit, lost ACK, newer local gesture, exact retry, restart and undo preserve intent$' },
+  'live-edit-smoke': { files: ['tests/e2e/local/three-products.live-edit-smoke.spec.ts'], count: 1,
+    grep: 'D79 live-edit smoke: Agent edit arrives during a held drag and remote undo stays safe$' },
 };
 
 const normalHomes = {
