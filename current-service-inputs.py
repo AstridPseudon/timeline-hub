@@ -330,15 +330,28 @@ def environment_snapshot() -> dict[str, str]:
 
 
 def runtime_bindings(runtime_head: str) -> dict[str, Any]:
-    result: dict[str, Any] = {"runtime_producer": runtime_head, "consumers": {}}
+    result: dict[str, Any] = {"runtime_producer": runtime_head, "consumers": {}, "pending": []}
     producer_files: dict[str, str] = {}
     for role, count in RUNTIME_LOCKS.items():
         root = Path(CHECKOUTS[role])
         lock_path = root / "runtime.lock.json"
         lock = json.loads(read_text(lock_path))
         files = lock.get("files")
-        require(lock.get("source_commit") == runtime_head and isinstance(files, dict) and len(files) == count,
-                f"{role} Runtime lock is not the current producer mapping")
+        source_commit = lock.get("source_commit")
+        require(isinstance(source_commit, str) and re.fullmatch(r"[0-9a-f]{40}", source_commit),
+                f"{role} Runtime lock has no valid source commit")
+        require(isinstance(files, dict) and len(files) == count,
+                f"{role} Runtime lock file inventory changed")
+        current = source_commit == runtime_head
+        if not current:
+            result["pending"].append({
+                "role": role,
+                "checkout": str(root),
+                "lock": str(lock_path),
+                "observed_source_commit": source_commit,
+                "required_source_commit": runtime_head,
+                "reason": f"{role} runtime.lock.json still names {source_commit}; U4a must adopt {runtime_head} through the normal sync tool",
+            })
         mappings = {}
         for destination, entry in files.items():
             require(isinstance(entry, dict) and isinstance(entry.get("from"), str), f"invalid {role} Runtime mapping")
@@ -346,14 +359,21 @@ def runtime_bindings(runtime_head: str) -> dict[str, Any]:
             require(re.fullmatch(r"sha256:[0-9a-f]{64}", digest) is not None, f"invalid {role} Runtime digest")
             require(sha256(root / destination) == digest[7:], f"{role} consumer hash mismatch: {destination}")
             source = entry["from"]
-            producer = subprocess.run(["git", "-C", CHECKOUTS["runtime"], "show", f"{runtime_head}:{source}"],
+            producer = subprocess.run(["git", "-C", CHECKOUTS["runtime"], "show", f"{source_commit}:{source}"],
                                       capture_output=True, check=False)
-            require(producer.returncode == 0, f"Runtime producer blob unavailable: {source}")
+            require(producer.returncode == 0, f"{role} declared producer blob unavailable: {source}")
             producer_hash = hashlib.sha256(producer.stdout).hexdigest()
-            require(producer_hash == digest[7:], f"Runtime producer mismatch: {role} {source}")
-            producer_files[source] = producer_hash
+            require(producer_hash == digest[7:], f"{role} declared producer mismatch: {source}")
+            if current:
+                producer_files[source] = producer_hash
             mappings[destination] = {"from": source, "sha256": producer_hash}
-        result["consumers"][role] = {"file_count": len(files), "lock_sha256": sha256(lock_path), "mappings": mappings}
+        result["consumers"][role] = {
+            "file_count": len(files),
+            "lock_sha256": sha256(lock_path),
+            "source_commit": source_commit,
+            "status": "CURRENT" if current else "PENDING_ADOPTION",
+            "mappings": mappings,
+        }
     result["producer_files"] = producer_files
     return result
 
@@ -383,10 +403,13 @@ def authenticate_current(recipe: dict[str, Any]) -> dict[str, Any]:
     bindings = check_runtime_bindings(recipe)
     after = current_sources()
     require(before == after, "source tuple moved during qualification; refuse concurrent facts")
+    status = "pending_agent_runtime_adoption" if bindings["pending"] else "qualified_existing_inputs_not_live"
+    authenticated_recipe = deepcopy(recipe)
+    authenticated_recipe["status"] = status
     return {
-        **deepcopy(recipe),
+        **authenticated_recipe,
         "_authenticated_snapshot": {
-            "digest": hashlib.sha256(canonical_recipe(recipe)).hexdigest(),
+            "digest": hashlib.sha256(canonical_recipe(authenticated_recipe)).hexdigest(),
             "source": before,
             "checks": {"probes": probes, "client": client, "remotion": remotion, "composition": graph,
                         "runtime_bindings": bindings},
@@ -430,11 +453,14 @@ def main() -> int:
     refresh_requested = "--refresh" in sys.argv[1:]
     recipe = refresh() if refresh_requested else json.loads(read_text(RECIPE_PATH))
     authenticated = authenticate_current(recipe)
+    pending = authenticated["_authenticated_snapshot"]["checks"]["runtime_bindings"]["pending"]
     print(json.dumps({
         "status": "REFRESHED" if refresh_requested else "PASS",
+        "qualification": authenticated["status"],
         "source": authenticated["source"],
         "runtime_bindings": authenticated["_authenticated_snapshot"]["checks"]["runtime_bindings"],
         "probes": authenticated["_authenticated_snapshot"]["checks"]["probes"],
+        "pending_adoption": pending,
         "service_execution": "not run",
     }, sort_keys=True, indent=2))
     return 0

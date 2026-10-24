@@ -1,7 +1,7 @@
 {
   "recipe_version": 1,
-  "qualified_at": "2026-10-24T13:56:30Z",
-  "status": "qualified_existing_inputs_not_live",
+  "qualified_at": "2026-10-24T14:17:40Z",
+  "status": "pending_agent_runtime_adoption",
   "scope": "P2/P3/U4p current normal working-venv service inputs",
   "policy": {
     "authority": "PLAN \u00a73 P2/P3/U4p, D59",
@@ -14,22 +14,22 @@
     "app": {
       "checkout": "/home/user/work/app",
       "ref": "tl/integration",
-      "head": "d24ed69dcdbd464159a1b6db27403ce6a96be2e5",
-      "tree": "ead5ba0d4f755cf3d38c8312d9d91478eeeebe45",
+      "head": "be98aac54e275282467d85f79d3beb4665416039",
+      "tree": "2839c7e7841d1c0897fd8e7c12f0c848d94e3979",
       "parents": [
-        "971a29e198c3e384795731f79e39c096abd58845",
-        "fe0e040b266f29d8e242450a4bc28cb723d333d2"
+        "d24ed69dcdbd464159a1b6db27403ce6a96be2e5",
+        "94d89d36e3760af41602a545f775fb9aeeb7f0ef"
       ],
       "clean": true
     },
     "agent": {
       "checkout": "/home/user/work/agent",
       "ref": "tl/integration",
-      "head": "47b744dfe908dba1b9b09251d7fa2da3eb0530a6",
-      "tree": "68a7300422373c66b6d314a8b6ba917d0fbddd65",
+      "head": "5ffc1f4dfa8d691d6ade0797d0c941a1bbc649cc",
+      "tree": "73a9a1fdf6fa9b5303dcb2a113642b7b025d0808",
       "parents": [
-        "3db4af43ca4676584a53a9eaed93c02bb04a2ec5",
-        "04a4841aeedbc3156009a73988a4dc49e126c44e"
+        "47b744dfe908dba1b9b09251d7fa2da3eb0530a6",
+        "acf87bd9922ecc5b5fab061dbabaad15bde0e904"
       ],
       "clean": true,
       "remotion_tree": "b01dca9b3b24f54093c20b7c5657316f997725db"
@@ -37,11 +37,11 @@
     "runtime": {
       "checkout": "/home/user/work/runtime",
       "ref": "tl/integration",
-      "head": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
-      "tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89",
+      "head": "e68cf231641db98a72805a586b51ab5c4fae2c16",
+      "tree": "a2cbedd185c7e576e20ed060d993deba17111b78",
       "parents": [
-        "46eb068c5adf663270512aca8a4bdd62c1488e6d",
-        "c021f13afb655225570e3f0323f00a55132e8643"
+        "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+        "60e7838d8b4735a41686f82fb081969e75363c0b"
       ],
       "clean": true
     }
@@ -97,7 +97,7 @@
       "/home/user/work/runtime/packages/python/astrid_runtime_client"
     ],
     "runtime_artifacts": {
-      "/home/user/work/runtime/contract/artifacts.json": "2f3d56b6f83834b4529ecb86657e2a5948bce072342bf46f9a2ab983cae369c3",
+      "/home/user/work/runtime/contract/artifacts.json": "f74b0e3041fe45422e6f4f349ee65401fe7222cacefdfa782aaac59354ff4d20",
       "/home/user/work/runtime/contract/component-manifest.json": "1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5",
       "/home/user/work/runtime/contract/schemas/timeline-config.schema.json": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
       "/home/user/work/runtime/runtime_protocol/schemas/timeline-commit-bundle.json": "b6a1550487dad7c83970d88f26ec3e8a74852cf8c57c20f3cd021847a075b39c"
@@ -347,11 +347,13 @@
     "ASTRID_TIMELINE_SCHEMA_PYTHONPATH": "/home/user/work/venv-agent/lib/python3.13/site-packages"
   },
   "runtime_bindings": {
-    "runtime_producer": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+    "runtime_producer": "e68cf231641db98a72805a586b51ab5c4fae2c16",
     "consumers": {
       "app": {
         "file_count": 14,
-        "lock_sha256": "f481e6daebb90561ee0b796765524d7ade8f01f0adb8953d8c77a30fdb1ba70e",
+        "lock_sha256": "1d3d33e137c4bb8e0552c4a09ad9c764dab39df602276c3de7b3faaf5d3a1f1a",
+        "source_commit": "e68cf231641db98a72805a586b51ab5c4fae2c16",
+        "status": "CURRENT",
         "mappings": {
           "src/integrations/runtime/fixtures/responses/commit_conflict_409.json": {
             "from": "conformance/responses/commit_conflict_409.json",
@@ -414,6 +416,8 @@
       "agent": {
         "file_count": 15,
         "lock_sha256": "5030ef40874ee0ccb1a4b60b5a5fbc3ed771e8499d44bee5fdfce76f8a0ce5a1",
+        "source_commit": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+        "status": "PENDING_ADOPTION",
         "mappings": {
           "astrid/core/timeline/schema/timeline-config.schema.json": {
             "from": "contract/schemas/timeline-config.schema.json",
@@ -478,6 +482,16 @@
         }
       }
     },
+    "pending": [
+      {
+        "role": "agent",
+        "checkout": "/home/user/work/agent",
+        "lock": "/home/user/work/agent/runtime.lock.json",
+        "observed_source_commit": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+        "required_source_commit": "e68cf231641db98a72805a586b51ab5c4fae2c16",
+        "reason": "agent runtime.lock.json still names becfe6db88b2cc034dba3fafa6c050117cdf2b06; U4a must adopt e68cf231641db98a72805a586b51ab5c4fae2c16 through the normal sync tool"
+      }
+    ],
     "producer_files": {
       "conformance/responses/commit_conflict_409.json": "e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08",
       "conformance/responses/events_page_1_200.json": "6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d",
@@ -492,12 +506,7 @@
       "packages/typescript/src/contract-metadata.ts": "1028aaeca1cd15f860994c1e830ba69f55405e648841877eff4d43f466f40c79",
       "packages/typescript/src/generated.ts": "7be7f351d485fdb24a7ebb0329fea7c65037675b11a96c581d33e60a14a581a4",
       "packages/typescript/src/timeline-commit-types.ts": "bf4728831e35bdfec96ffa0188feb439f3c89a2aecfa8682925019eba5855470",
-      "contract/schemas/timeline-config.schema.json": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
-      "packages/python/astrid_runtime_client/__init__.py": "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2",
-      "packages/python/astrid_runtime_client/contract_metadata.py": "51e8ce94a7149f6b3160a6e5e66bafe17c7f94cfd3beb6733bbf8abd63125ab6",
-      "packages/python/astrid_runtime_client/generated.py": "e3f51c05342088bc34a562e17997cbf8ff8065c3df795da1cb6cd374216b51b7",
-      "packages/python/astrid_runtime_client/timeline_commit_types.py": "88c67d9eb650b445b8ad04c9011c1f44f1ec5e9f72a4a733050515de7ec0b616",
-      "conformance/fixtures/visual-boundary-v1.json": "1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55"
+      "contract/schemas/timeline-config.schema.json": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd"
     }
   }
 }

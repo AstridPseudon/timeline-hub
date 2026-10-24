@@ -95,6 +95,12 @@ _SERVICE_RECIPE = _local_module("current-service-inputs.py", "current_service_in
 
 P2_SUITE = "full-e2e-three-products"
 P3_SUITE = "ap2-P3-gate5-h6-0348"
+PURE_TARGET_META = Path(
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/"
+    "scratchpad/orch/workers/app-P2-P3-e68-current-pure-target-1409/meta"
+)
+PURE_TARGET_NAME = "app-P2-P3-e68-current-pure-target-1409"
+PURE_TARGET_BRANCH = "tl/app-P2-P3-e68-current-pure-target-1409"
 CUSTODY_PREFIX = (
     'test -n "${TIMELINE_AGENT_CHECKOUT:-}" && test -n "${TIMELINE_RUNTIME_CHECKOUT:-}" && '
     'test -n "${TIMELINE_CHILD_NAME:-}" && test -n "${TIMELINE_REMOTION_NAME:-}" || '
@@ -705,6 +711,18 @@ def normal_service_facts(source: dict[str, Any], agent: dict[str, Any], runtime:
     """Read and authenticate the actual normal working-service inputs."""
 
     recipe = _SERVICE_CONTROL.recipe()
+    pending = recipe.get("status") == "pending_agent_runtime_adoption"
+    pending_bindings = recipe.get("runtime_bindings", {}).get("pending", [])
+    if pending:
+        require(isinstance(pending_bindings, list) and pending_bindings,
+                "pending service recipe has no recorded adoption dependency")
+        dependency = pending_bindings[0]
+        fail(
+            "normal caller environment is not ready: Agent U4a adoption is pending; "
+            f"{dependency.get('lock')} still names {dependency.get('observed_source_commit')} "
+            f"instead of Runtime {dependency.get('required_source_commit')}; "
+            "run the normal sync tool in the Agent integration worktree and refresh again"
+        )
     for name, facts_value in (("app", source), ("agent", agent), ("runtime", runtime)):
         expected = recipe["source"][name]
         require(expected["checkout"] == facts_value["checkout"], f"normal recipe checkout mismatch: {name}")
@@ -735,6 +753,113 @@ def normal_service_facts(source: dict[str, Any], agent: dict[str, Any], runtime:
     }
     bindings = _WORKING_BINDING.authenticated_bindings(recipe)
     return recipe, bindings, checks
+
+
+def pure_target_facts(source: dict[str, Any]) -> dict[str, Any]:
+    """Authenticate the separate read-only pure target without using it as a checkout."""
+
+    require(PURE_TARGET_META.is_file() and not PURE_TARGET_META.is_symlink(),
+            f"pure target metadata is unavailable: {PURE_TARGET_META}")
+    fields = {}
+    for line in regular_bytes(PURE_TARGET_META).decode("utf-8").splitlines():
+        if "=" in line:
+            key, value = line.split("=", 1)
+            fields[key] = value
+    require(fields.get("name") == PURE_TARGET_NAME, "pure target metadata name changed")
+    require(fields.get("base") == source["source"], "pure target metadata does not name the current App source")
+    require(fields.get("base_sha") == source["source"][:10], "pure target metadata base abbreviation changed")
+    return {
+        "name": PURE_TARGET_NAME,
+        "branch": PURE_TARGET_BRANCH,
+        "metadata": str(PURE_TARGET_META),
+        "checkout": source["checkout"],
+        "source": source["source"],
+        "tree": source["tree"],
+        "parents": source["parents"],
+        "target_use": "read-only source identity; never a product checkout or service target",
+    }
+
+
+def source_preflight() -> dict[str, Any]:
+    """Run only the source/target phases while Agent U4a adoption is pending."""
+
+    source = app_facts()
+    agent = facts(AGENT, label="Agent")
+    runtime = facts(RUNTIME, label="Runtime")
+    freeze_tuple(source, agent, runtime)
+    target = pure_target_facts(source)
+    registry, rows = installed_rows()
+    wire = wire_inventory()
+    tmp = Path(tempfile.mkdtemp(prefix="timeline-source-preflight-", dir=os.environ.get("TMPDIR", "/tmp")))
+    candidates: dict[str, Any] = {}
+    for name in (P2_SUITE, P3_SUITE):
+        outer, body, suffix = extract_row(rows[name])
+        rebound, _ = rebind(name, body)
+        dry = _DRY_PREFLIGHT.dry_source_preflight(
+            rebound,
+            app=source,
+            agent=agent,
+            runtime=runtime,
+            target=APP,
+            stage="2" if name == P2_SUITE else "3",
+        )
+        candidate_outer = (
+            outer[: outer.index("$(bash -c ") + len("$(bash -c ")]
+            + shlex.quote(rebound)
+            + refresh_wrapper_bindings(name, suffix)
+        )
+        preservation = authenticate_candidate(name, rows[name], candidate_outer, rebound)
+        syntax = syntax_check(candidate_outer, rebound, tmp, "source-" + name)
+        candidates[name] = {
+            "source_row_sha256": registry["rows"][name]["sha256"],
+            "decoded_template_sha256": registry["rows"][name]["decoded_sha256"],
+            "candidate_body_sha256": sha256(rebound.encode()),
+            "candidate_outer_sha256": sha256(candidate_outer.encode()),
+            "preservation": preservation,
+            "syntax": syntax,
+            "wrapper": {
+                "status": "NOT_RUN_PENDING_ADOPTION",
+                "reason": "The real wrapper/export seam is checked only after the normal Agent environment adapter can authenticate the e68 lock mapping.",
+            },
+            "dry_preflight": dry,
+        }
+    unchanged_registry(registry)
+    require(app_facts() == source, "App normal tuple changed during source preflight")
+    require(facts(AGENT, AGENT_COMMIT, AGENT_TREE, "Agent", parents=AGENT_PARENTS) == agent,
+            "Agent normal tuple changed during source preflight")
+    require(facts(RUNTIME, RUNTIME_COMMIT, RUNTIME_TREE, "Runtime", parents=RUNTIME_PARENTS) == runtime,
+            "Runtime normal tuple changed during source preflight")
+    result = {
+        "status": "SOURCE_PREPARED_AGENT_ADOPTION_PENDING",
+        "execution": "NOT_RUN",
+        "source": source,
+        "agent": agent,
+        "runtime": runtime,
+        "pure_target": target,
+        "wire_fields": wire,
+        "registry": registry,
+        "candidates": candidates,
+        "pending_dependency": {
+            "lock": str(AGENT / "runtime.lock.json"),
+            "observed_source_commit": json.loads(regular_bytes(AGENT / "runtime.lock.json")).get("source_commit"),
+            "required_source_commit": RUNTIME_COMMIT,
+            "reason": "Agent U4a must adopt Runtime e68 through the normal sync tool; the old lock is not relabeled.",
+        },
+        "preflight_scope": "source_identity_tree_target_bindings only; child/import/native/build/browser/backend/provision/schema/HTTP/original not run",
+        "prepare_commands": {
+            "refresh": "PYTHONDONTWRITEBYTECODE=1 python3 current-service-inputs.py --refresh",
+            "source": "PYTHONDONTWRITEBYTECODE=1 python3 caller-publication.py --dry-source",
+            "source_optimized": "PYTHONDONTWRITEBYTECODE=1 python3 -O caller-publication.py --dry-source",
+            "full_prepare_after_adoption": "PYTHONDONTWRITEBYTECODE=1 python3 caller-publication.py",
+            "full_prepare_after_adoption_optimized": "PYTHONDONTWRITEBYTECODE=1 python3 -O caller-publication.py",
+        },
+        "positive_baseline": "NOT_ESTABLISHED; normal environment adoption is pending",
+        "service_execution": "NOT_RUN",
+        "tmpdir": str(tmp),
+    }
+    (ARTIFACT / "caller-custody.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
+    print(json.dumps(result, indent=2, sort_keys=True))
+    return result
 
 
 def join_environment(name: str, template: str, stage: str, recipe: dict[str, Any]) -> tuple[str, dict[str, Any]]:
@@ -1102,10 +1227,13 @@ def prepare() -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--dry-source", action="store_true", help="run only source/target preflight; never prepare service bindings")
     parser.add_argument("--negative", choices=("wrong-source", "stale", "app", "agent", "runtime", "tree", "target", "path", "body", "receipt", "registry", "duplicate", "concurrency", "native", "protected", "tail", "encoded", "binding", "app-mapping", "agent-mapping", "inventory-missing", "inventory-extra"))
     args = parser.parse_args()
     try:
-        return negative(args.negative) if args.negative else (prepare() and 0)
+        if args.negative:
+            return negative(args.negative)
+        return (source_preflight() if args.dry_source else prepare()) and 0
     except (PreparedError, _DRY_PREFLIGHT.DryPreflightError, _WORKING_BINDING.BindingError) as exc:
         print(str(exc), file=os.sys.stderr)
         return 2

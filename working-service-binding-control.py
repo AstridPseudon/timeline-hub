@@ -113,7 +113,47 @@ def assert_launch_bindings(binding, result: dict[str, object], stage: str) -> No
 
 def main() -> int:
     binding = module()
+    inputs = service_inputs()
     base = recipe()
+    if base.get("status") == "pending_agent_runtime_adoption":
+        pending = base.get("runtime_bindings", {}).get("pending", [])
+        mutations = []
+        for role in ("app", "agent", "runtime"):
+            mutated = copy.deepcopy(base)
+            mutated["source"][role]["ref"] = "origin/main"
+            mutations.append((f"wrong ref: {role}", mutated))
+            mutated = copy.deepcopy(base)
+            mutated["source"][role]["parents"][0] = "0" * 40
+            mutations.append((f"wrong parent: {role}", mutated))
+        mutated = copy.deepcopy(base)
+        mutated["interpreters"]["agent"]["path"] = "/tmp/not-the-qualified-python"
+        mutations.append(("wrong Agent interpreter origin", mutated))
+        mutated = copy.deepcopy(base)
+        mutated["composition"]["file_map_sha256"] = "0" * 64
+        mutations.append(("wrong Composition graph", mutated))
+        mutated = copy.deepcopy(base)
+        mutated["runtime_bindings"]["consumers"]["agent"]["source_commit"] = "0" * 40
+        mutations.append(("wrong Agent Runtime mapping", mutated))
+        refused = []
+        for label, mutated in mutations:
+            try:
+                inputs.authenticate_current(mutated)
+            except (OSError, RuntimeError, ValueError, json.JSONDecodeError):
+                refused.append(label)
+            else:
+                raise AssertionError(f"pending source control unexpectedly accepted: {label}")
+        print(json.dumps({
+            "status": "PENDING_AGENT_RUNTIME_ADOPTION",
+            "positive_baseline": "NOT_ESTABLISHED",
+            "controls": {
+                "source_recipe": "PASS",
+                "environment_adapter": "REFUSED_PENDING_ADOPTION",
+                "source_negative_controls": f"PASS ({len(refused)}/{len(mutations)} refused)",
+            },
+            "pending_dependency": pending,
+            "live_execution": "NOT_RUN",
+        }, indent=2, sort_keys=True))
+        return 0
     template_rows = rows()
     reports = {}
     for name, (_outer, template) in template_rows.items():
