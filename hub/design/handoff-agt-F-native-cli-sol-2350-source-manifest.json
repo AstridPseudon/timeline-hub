@@ -1,0 +1,72 @@
+{
+  "baseline": "b9f0140619736758b08f93f9353932b6db0af3ad",
+  "candidate": "working tree (unchanged)",
+  "files": {
+    "tests/editing_conformance/test_native_batch_ingress.py": {
+      "baseline_sha256": "c3ece0310d594e82ae1d1643cf9571fd395ddb2c56dc6b2e171d990f49da3f53",
+      "candidate_sha256": "c3ece0310d594e82ae1d1643cf9571fd395ddb2c56dc6b2e171d990f49da3f53",
+      "identical": true,
+      "in_memory_compile": "PASS (not executed)"
+    },
+    "astrid/packs/timeline/cli.py": {
+      "baseline_sha256": "48f19bb420447d8f60773f36ce4d3319e99c9b9d7ad41eb335031bdcfadf6ce0",
+      "candidate_sha256": "48f19bb420447d8f60773f36ce4d3319e99c9b9d7ad41eb335031bdcfadf6ce0",
+      "identical": true,
+      "in_memory_compile": "PASS (not executed)"
+    },
+    "astrid/packs/timeline/cli_native.py": {
+      "baseline_sha256": "f53472cca88dcf4d00ac3936117eb332c9ce73aa1901d2b83e61cc6421da861c",
+      "candidate_sha256": "f53472cca88dcf4d00ac3936117eb332c9ce73aa1901d2b83e61cc6421da861c",
+      "identical": true,
+      "in_memory_compile": "PASS (not executed)"
+    },
+    "astrid/sdk/timeline/commit_session.py": {
+      "baseline_sha256": "69b3468956cadc9549a495ac8a7aae6cf98ced0db0bcb0b33e63175addbd3503",
+      "candidate_sha256": "69b3468956cadc9549a495ac8a7aae6cf98ced0db0bcb0b33e63175addbd3503",
+      "identical": true,
+      "in_memory_compile": "PASS (not executed)"
+    },
+    "astrid/sdk/timeline/sync.py": {
+      "baseline_sha256": "e0b9aa8815623299aaf24547f0f6bcff9178c2db59ed5cc178a1bdc18a58c254",
+      "candidate_sha256": "e0b9aa8815623299aaf24547f0f6bcff9178c2db59ed5cc178a1bdc18a58c254",
+      "identical": true,
+      "in_memory_compile": "PASS (not executed)"
+    }
+  },
+  "conservation": {
+    "assigned_selectors": [
+      "tests/editing_conformance/test_native_batch_ingress.py::test_batch_original_claims_one_publication_reload_inverse[cli-False]",
+      "tests/editing_conformance/test_native_batch_ingress.py::test_batch_original_claims_one_publication_reload_inverse[cli-True]",
+      "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[disjoint-False]",
+      "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[disjoint-True]",
+      "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[relevant-False]",
+      "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[relevant-True]",
+      "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[aba-False]",
+      "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[aba-True]",
+      "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[delete-recreate-False]",
+      "tests/editing_conformance/test_native_batch_ingress.py::test_file_lost_ack_restart_exact_retry_before_original_suffix[delete-recreate-True]",
+      "tests/editing_conformance/test_native_batch_ingress.py::test_file_uses_original_pair_after_peer_advances_head[disjoint-False]",
+      "tests/editing_conformance/test_native_batch_ingress.py::test_file_uses_original_pair_after_peer_advances_head[disjoint-True]",
+      "tests/editing_conformance/test_native_batch_ingress.py::test_file_uses_original_pair_after_peer_advances_head[relevant-False]",
+      "tests/editing_conformance/test_native_batch_ingress.py::test_file_uses_original_pair_after_peer_advances_head[relevant-True]",
+      "tests/editing_conformance/test_native_batch_ingress.py::test_file_refusal_is_atomic_and_keeps_file[claims]",
+      "tests/editing_conformance/test_native_batch_ingress.py::test_file_refusal_is_atomic_and_keeps_file[late-invalid]",
+      "tests/editing_conformance/test_native_batch_ingress.py::test_file_refusal_is_atomic_and_keeps_file[media]",
+      "tests/editing_conformance/test_native_batch_ingress.py::test_file_refusal_is_atomic_and_keeps_file[empty]",
+      "tests/editing_conformance/test_native_batch_ingress.py::test_file_refusal_is_atomic_and_keeps_file[envelope]",
+      "tests/editing_conformance/test_native_batch_ingress.py::test_file_parser_requires_both_original_pins_and_describes_registry",
+      "tests/editing_conformance/test_native_batch_ingress.py::test_captured_file_retry_refuses_boolean_to_number_claim[reads]",
+      "tests/editing_conformance/test_native_batch_ingress.py::test_captured_file_retry_refuses_boolean_to_number_claim[expect]",
+      "tests/editing_conformance/test_native_batch_ingress.py::test_file_preview_keeps_batch_for_one_real_publication",
+      "tests/editing_conformance/test_native_batch_ingress.py::test_batch_capture_never_refreshes_after_concurrent_ack"
+    ],
+    "selector_count": 24,
+    "baseline_candidate_all_test_functions_equal": true,
+    "original_ancestor_test_functions_changed_before_this_worker": [
+      "test_file_parser_requires_both_original_pins_and_describes_registry"
+    ],
+    "baseline_test_ast_sha256": "937621830a4331478fa91f707dfe1258b7476d0d7988df6068576573bcb78032",
+    "candidate_test_ast_sha256": "937621830a4331478fa91f707dfe1258b7476d0d7988df6068576573bcb78032",
+    "new_selectors": []
+  }
+}
