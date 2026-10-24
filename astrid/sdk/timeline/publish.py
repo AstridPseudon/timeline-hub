@@ -10,20 +10,49 @@ import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Mapping
 
-from astrid.sdk import timeline_intent as intent
 from astrid.core.timeline.cuts import (
     clip_duration,
 )
-
+from astrid.sdk import timeline_intent as intent
+from astrid.sdk import (
+    timeline_transcripts as _transcripts,  # module access: its functions resolve at call time
+)
 from astrid.sdk.timeline import journal as _journal
 from astrid.sdk.timeline import store as _store
-from astrid.sdk.timeline._common import (EDITABLE_NOTE, TimelineEditError, _num, _r)
-from astrid.sdk.timeline.doc import (_row_start, _set_length, _strip_derived)
+from astrid.sdk.timeline._common import EDITABLE_NOTE, TimelineEditError, _num, _r
+from astrid.sdk.timeline.authoring_commit import response_data
+from astrid.sdk.timeline.doc import _row_start, _set_length, _strip_derived
 from astrid.sdk.timeline.model import Voice
-from astrid.sdk import timeline_transcripts as _transcripts  # module access: its functions resolve at call time
-
 
 _NARRATION_MEDIA_TYPE = "text/plain; charset=utf-8"
+
+
+def _media_admission_inputs(base: Mapping[str, Any], candidate: Mapping[str, Any], client: Any) -> list[dict[str, Any]]:
+    """Capture the Runtime inputs required by an ordinary authored candidate."""
+    from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
+    from astrid.sdk.timeline._command_state import equal
+    from astrid.sdk.timeline.native_media_admission import registry_selections
+
+    source = base["source_mapping"]["_runtime_document"]
+    publication = compile_authoring_candidate(candidate).publication
+    inputs = [{"pin": copy.deepcopy(pin)} for pin in publication["dependency_manifest"]["media"]
+              if pin not in source["dependency_manifest"]["media"]]
+    old_selections = list(registry_selections(base))
+    for association in registry_selections(candidate):
+        if association in old_selections:
+            continue
+        selected = response_data(client.get_project_media_selection(
+            candidate["project_id"],
+            {key: association[key] for key in ("asset", "generation_id", "variant_id")},
+        ))
+        if not equal({key: selected.get(key) for key in association}, association):
+            raise TimelineEditError("Runtime catalog association differs from the candidate media")
+        pin = {"media_id": selected["object_id"], "content_digest": selected["object_id"]}
+        value = {"pin": pin, "selection": selected}
+        inputs = [row for row in inputs if row != {"pin": pin}]
+        if value not in inputs:
+            inputs.append(value)
+    return inputs
 
 
 def _narration_descriptor(text: str) -> tuple[dict[str, Any], bytes]:
@@ -217,7 +246,7 @@ class _PublishMixin:
                 if receipt.get("idempotency_key") == key:
                     accepted = entry
                     if (receipt["result"].get("label") != (message or "Timeline edit")
-                            or not all(record["command"]["op"] == "doc.patch"
+                            or not all(record["command"]["op"] in {"doc.patch", "media.admit"}
                                        for record in (entry.get("records") or {}).get("commands", []))):
                         raise TimelineEditError("the idempotency key belongs to a different timeline commit")
         if flight is not None and accepted is not None and not changed:
@@ -256,6 +285,19 @@ class _PublishMixin:
         captured_helpers = _journal.helper_batch(self, base, candidate)
         if captured_helpers is not None:
             commands = captured_helpers[0]
+        authored_command_count = len(commands)
+        media_inputs: list[dict[str, Any]] = []
+        if commands:
+            prior_commands = ((accepted or {}).get("receipt") or {}).get("result", {}).get("commands", [])
+            prior_media = [copy.deepcopy(call) for call in prior_commands if call.get("op") == "media.admit"]
+            if prior_media:
+                commands.extend(prior_media)
+                media_inputs = copy.deepcopy(prior_media[-1]["args"]["inputs"])
+            else:
+                media_inputs = _media_admission_inputs(base, candidate, client)
+            if media_inputs and not prior_media:
+                commands.append({"schema_version": 1, "op": "media.admit", "version": "1",
+                                 "select": None, "args": {"inputs": media_inputs}})
         # Acknowledged cuts can still have an unstarted narration follow-up.
         # Recover their identity from Runtime history, never a second journal.
         for entry in entries:
@@ -280,14 +322,20 @@ class _PublishMixin:
                         "idempotency_key": key, "structure": "unchanged"}
             return {"old_head": base_revision, "new_head": base_revision,
                     "structure": "unchanged", "idempotency_key": key}
+        steps = captured_helpers[1] if captured_helpers is not None else [
+            {"id": "edit", "label": message or "Timeline edit", "intent": message,
+             "tags": [], "command_ordinals": list(range(authored_command_count)),
+             "patch": [copy.deepcopy(change) for call in commands if call["op"] == "doc.patch"
+                       for change in call["args"]["changes"]],
+             "reads": [{"kind": "scope", "ref": "timeline", "path": []}]}
+        ]
+        if media_inputs:
+            steps.append({"id": "media", "label": "Capture timeline media", "intent": "",
+                          "tags": [], "command_ordinals": [authored_command_count], "patch": []})
         result = session.submit(commands, label=message or "Timeline edit",
             merge="fields" if captured_helpers is not None else "atomic",
             reads=captured_helpers[1][0]["reads"] if captured_helpers is not None else None,
-            steps=captured_helpers[1] if captured_helpers is not None else [
-                   {"id": "edit", "label": message or "Timeline edit", "intent": message,
-                    "tags": [], "command_ordinals": list(range(len(commands))),
-                    "patch": [copy.deepcopy(change) for call in commands for change in call["args"]["changes"]],
-                    "reads": [{"kind": "scope", "ref": "timeline", "path": []}]}],
+            steps=steps,
             expected_state=state, base=base_pair, idempotency_key=key,
             evaluation={"kind": "checkout-publish", "count": 0, "candidate_digest": candidate_digest})
         return {"old_head": result["data"].get("previous_revision_id"),
@@ -656,7 +704,7 @@ class _PublishMixin:
             "fps": self.fps,
             "duration_s": self.duration,
             "cuts": [{"n": c.n, "start": _r(c.start), "end": _r(c.end), "shot": c.shot,
-                      "picture": c.picture.id if c.picture else None, "layers": [l.id for l in c.layers]} for c in self.cuts],
+                      "picture": c.picture.id if c.picture else None, "layers": [layer.id for layer in c.layers]} for c in self.cuts],
             "words": [[w.id, w.text, w.start, w.end] for w in self.words()],
         }
         for sid in self._shot_ids():
