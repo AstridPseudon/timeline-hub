@@ -19,6 +19,7 @@ from ._command_state import (
     State,
     equal,
     logical_address,
+    one,
     overlaps,
     present,
     root_identity,
@@ -27,7 +28,66 @@ from ._recording import Recording, guard, selection
 from ._root_inverse import arrange_restored, clip_cache_stages, occurrence_orders, recover_source
 
 
+def _inverse_item_path(state, ref, path, records):
+    if (not ref.endswith('/shot') or list(path[:2]) != ['payload', 'items']
+            or len(path) < 3 or not path[2].startswith('item_id:')
+            or not isinstance(records, AcceptedRecords)):
+        return path
+    from ._step_undo import entry_records
+
+    identity = path[2].split(':', 1)[1]
+    current = state.shot_item_map(ref)
+    candidates = set()
+    for entry in records.entries:
+        commands = entry_records(records, entry)
+        captures = [capture for command in commands for capture in [*command['writes'], *command['reads']]
+                    if capture['ref'] == ref and capture['path'][:3] == list(path[:3])]
+        if not captures:
+            continue
+        before, after = records.load_boundary(entry)
+        prior = State(before, closures=state.closures)
+        mapping = prior.shot_item_map(ref)
+        if identity not in mapping:
+            raise CommandError('inverse item is outside its recorded input', kind='history_unavailable', ref=ref)
+        # The source codec is placement-local and stable across main's
+        # materialization. A different owner's map cannot authorize this path.
+        if prior.occurrence(ref.removesuffix('/shot'))['shot_id'] != state.occurrence(
+                ref.removesuffix('/shot'))['shot_id']:
+            raise CommandError('inverse item owner changed', kind='inverse_conflict', ref=ref)
+        resolver = getattr(records, 'address_resolver', None)
+        shot = state.occurrence(ref.removesuffix('/shot'))['shot_id']
+        source = state.bundle['source_mapping']['shots'][shot]
+        exact = any(equal(source, boundary['source_mapping']['shots'].get(shot)) for boundary in (before, after))
+        if not exact and resolver is not None:
+            physical = 'shot-revision:' + source['revision_id']
+            bound = {resolver(capture, ref, path)[0] for capture in captures}
+            for command in commands:
+                for binding in command.get('bindings', []):
+                    if (binding.get('key') == 'commit.materialization' and binding.get('owner') == ref
+                            and resolver(binding, binding['physical_ref'], ())[0] in bound):
+                        bound.add(resolver(binding, binding['successor'], ())[0])
+            if physical not in bound:
+                raise CommandError('inverse item binding changed', kind='inverse_conflict', ref=ref)
+        elif not exact:
+            raise CommandError('inverse item source changed', kind='inverse_conflict', ref=ref)
+        candidates.update(key for key, local in current.items() if local == mapping[identity])
+    if len(candidates) != 1:
+        raise CommandError('inverse item correspondence is unavailable', kind='inverse_conflict', ref=ref)
+    return [*path[:2], 'item_id:' + candidates.pop(), *path[3:]]
+
+
+class _ItemState(State):
+    def __init__(self, state, records):
+        super().__init__(state.bundle, closures=state.closures)
+        self.records = records
+
+    def get(self, ref, path):
+        return super().get(ref, _inverse_item_path(self, ref, path, self.records))
+
+
 def _physical_state(state, ref, path, records):
+    if ref.endswith('/shot') and list(path[:2]) == ['payload', 'items'] and len(path) > 2:
+        return _ItemState(state, records)
     if (ref != 'parent' or list(path) != ['occurrences']
             or not isinstance(records, AcceptedRecords)
             or getattr(records, 'address_resolver', None) is None):
@@ -44,7 +104,10 @@ def _physical_state(state, ref, path, records):
 
 
 def _set_physical(state, ref, path, value, records):
+    path = _inverse_item_path(state, ref, path, records)
     projected = _physical_state(state, ref, path, records)
+    if isinstance(projected, _ItemState):
+        projected = state
     if projected is not state:
         _validate_occurrences(state, value)
     projected.set(ref, path, value)
@@ -70,12 +133,15 @@ def _validate_occurrences(state, value):
 
 @contextmanager
 def _recording_storage(ctx, ref, path, records):
+    path = _inverse_item_path(ctx.state, ref, path, records)
     original, captured = ctx.state, ctx.input_state
-    projected = _physical_state(original, ref, path, records)
-    captured_view = _physical_state(captured, ref, path, records) if captured is not None else None
+    projected = (_physical_state(original, ref, path, records)
+                 if ref == 'parent' and list(path) == ['occurrences'] else original)
+    captured_view = (_physical_state(captured, ref, path, records)
+                     if captured is not None and projected is not original else captured)
     ctx.state, ctx.input_state = projected, captured_view
     try:
-        yield
+        yield path
         if ctx.state is not original:
             value = ctx.state.get(ref, path)
             _validate_occurrences(original, value)
@@ -107,7 +173,8 @@ def _patch(state, path, replacement, *, insertion_order=None, append_text=False)
                 raise CommandError('ambiguous collection alias', kind='identity_conflict')
             node = matches[0]
         elif isinstance(node, list):
-            node = node[int(token)]
+            node = (one(node, 'item_id', token.split(':', 1)[1])
+                    if token.startswith('item_id:') else node[int(token)])
         elif isinstance(node, dict):
             if token not in node:
                 if replacement == ABSENT:
@@ -147,7 +214,8 @@ def _patch(state, path, replacement, *, insertion_order=None, append_text=False)
             raise CommandError('collection alias insertion needs historical order', kind='history_unavailable')
         return present(value)
     if isinstance(node, list):
-        index = int(path[-1])
+        index = (node.index(one(node, 'item_id', path[-1].split(':', 1)[1]))
+                 if path[-1].startswith('item_id:') else int(path[-1]))
         if replacement['state'] == 'absent':
             node.pop(index)
         else:
@@ -203,6 +271,11 @@ def _root_addresses(records, state=None):
 
 def coalesce(records, state=None, *, cache_stages=None):
     """Retain first-before/last-after, folding descendants into authored roots."""
+    if (state is None and isinstance(records, AcceptedRecords)
+            and any(write['ref'].endswith('/shot') and write['path'][:2] == ['payload', 'items']
+                    for record in records for write in record['writes'])):
+        _, after = records.load_boundary(records.entries[-1])
+        state = State(after)
     root_address = _root_addresses(records, state)
     registry_writes = [write for record in records for write in record['writes']
                        if write['ref'] == 'parent' and write['path'][:1] == ['registry']]
@@ -215,6 +288,7 @@ def coalesce(records, state=None, *, cache_stages=None):
     physical_clips = any(ABSENT in (write['before'], write['after']) for write in clip_writes)
     direct_clips = bool(clip_writes) and clip_writes[0]['before'] != ABSENT
     addresses = {}
+    origins = {}
 
     def source_address(write):
         # A direct registry write targets physical storage. Folding it into a
@@ -235,6 +309,32 @@ def coalesce(records, state=None, *, cache_stages=None):
     def value_address(write):
         captured = addresses.get(id(write))
         return captured[1] if captured is not None else source_address(write)
+
+    def fold(aggregate, leaf, replacement, *, side, insertion_order=None, append_text=False):
+        prefix, path = value_address(aggregate)[1], value_address(leaf)[1]
+        if (aggregate['ref'].startswith('shot:') and '/' not in aggregate['ref']
+                and leaf['ref'].endswith('/shot')
+                and (leaf['path'][:2] == ['payload', 'items']
+                     or leaf['path'] == ['payload'] and isinstance(replacement.get('value'), dict)
+                     and replacement['value'].get('items'))):
+            projection = state
+            if isinstance(records, AcceptedRecords):
+                from ._step_undo import entry_records
+
+                projection = None
+                for entry in records.entries:
+                    if any(record is origins[id(leaf)] for record in entry_records(records, entry)):
+                        before, _ = records.load_boundary(entry)
+                        projection = State(before)
+                        break
+            if projection is None:
+                raise CommandError('item folding requires its source state', kind='history_unavailable')
+            mapping = projection.shot_item_map(leaf['ref'])
+            path = tuple('item_id:' + mapping[token.split(':', 1)[1]]
+                         if isinstance(token, str) and token.startswith('item_id:') else token for token in path)
+            replacement = projection.project_shot_items(leaf['ref'], leaf['path'], replacement)
+        return _patch(aggregate[side], path[len(prefix):], replacement,
+                      insertion_order=insertion_order, append_text=append_text)
 
     result = []
     for record in records:
@@ -285,6 +385,7 @@ def coalesce(records, state=None, *, cache_stages=None):
             address = source_address(write)
             # Keep the source-stage address even after later storage changes.
             addresses[id(write)] = write, address
+            origins[id(write)] = record
             if write['ref'] == 'parent' and write['path'] == ['clips']:
                 direct_clips = write['after'] != ABSENT
             if (physical_clips and write['ref'].startswith('parent/clip:')
@@ -309,8 +410,7 @@ def coalesce(records, state=None, *, cache_stages=None):
                     # the same recorded append/boundary proof as staged inverse.
                     orders = restoration_orders(records, only=record)
                     insertion_order = [member(ref)[2] for ref in orders[entity[:2]][1]]
-                ancestor['after'] = _patch(ancestor['after'], address[1][len(value_address(ancestor)[1]):],
-                                           write['after'], insertion_order=insertion_order,
+                ancestor['after'] = fold(ancestor, write, write['after'], side='after', insertion_order=insertion_order,
                                            append_text=(ancestor['before'] == ABSENT
                                                and ancestor['path'] == ['payload', 'text_bindings']))
                 continue
@@ -324,8 +424,7 @@ def coalesce(records, state=None, *, cache_stages=None):
                     def historical_order(entity=entity):
                         return [member(ref)[2] for ref in restoration_orders(records)[entity[:2]][0]]
                     insertion_order = historical_order
-                write['before'] = _patch(write['before'], value_address(old)[1][len(address[1]):], old['before'],
-                                         insertion_order=insertion_order)
+                write['before'] = fold(write, old, old['before'], side='before', insertion_order=insertion_order)
                 result.remove(old)
             result.append(write)
     return result
@@ -959,8 +1058,8 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
     deferred_selections = []
     for record in records:
         for read in record['reads']:
-            with _recording_storage(ctx, read['ref'], read['path'], records):
-                ctx.read(read['ref'], read['path'])
+            with _recording_storage(ctx, read['ref'], read['path'], records) as path:
+                ctx.read(read['ref'], path)
         for selected in record['selections']:
             # A grouped inverse can restore a track after its create selection
             # is replayed. Keep the original membership claim, but defer only
@@ -1005,8 +1104,8 @@ def apply_inverse(ctx, records, intervening_records, *, staged_records=()):
                         raise CommandError('inverse stage membership/order changed',
                                            kind='selection_changed', ref=owner)
             for write in reversed([*record['writes'], *caches.get(id(record), [])]):
-                with _recording_storage(ctx, write['ref'], write['path'], records):
-                    _restore_write(ctx, write)
+                with _recording_storage(ctx, write['ref'], write['path'], records) as path:
+                    _restore_write(ctx, {**write, 'path': path})
             for (owner, kind), (original, _) in stage_orders.items():
                 if original is None:
                     guard(ctx.state, 'parent', ['clips'], ABSENT, kind='history_unavailable')

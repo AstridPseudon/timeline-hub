@@ -287,6 +287,84 @@ class State:
         elif value['shot_id'] not in self.bundle['shots']:
             raise CommandError('occurrence references missing shot', kind='identity_conflict', ref=ref)
 
+    def shot_item_map(self, ref):
+        """Use the existing verified input to authenticate placement-local items."""
+        from .commit import bundle_from_document
+
+        owner = ref.removesuffix('/shot')
+        shot = self.occurrence(owner)['shot_id']
+        document = self.bundle['source_mapping'].get('_runtime_document')
+        if document is None:
+            raise CommandError('shot item source is unavailable', kind='history_unavailable', ref=ref)
+        baseline = bundle_from_document(document)
+        original = one(baseline['placements'], 'occurrence_id', owner.removeprefix('occurrence:'))
+        source = self.bundle['source_mapping']['shots'].get(shot)
+        expected = baseline['source_mapping']['shots'].get(original['shot_id'])
+        if shot != original['shot_id'] or source is None or not equal(source, expected):
+            raise CommandError('shot item source changed', kind='identity_conflict', ref=ref)
+        mapping = source.get('item_id_map')
+        if (not isinstance(mapping, dict)
+                or any(not isinstance(key, str) or not key or not isinstance(value, str) or not value
+                       for key, value in mapping.items())
+                or len(set(mapping.values())) != len(mapping)):
+            raise CommandError('shot item map is ambiguous', kind='identity_conflict', ref=ref)
+        # Main leaves an un-copied shot's authenticated map empty. Its exact
+        # verified item identities are already local; absence of a map is not this case.
+        if not mapping and shot == source['shot_id']:
+            rows = baseline['shots'][shot]['payload'].get('items', [])
+            mapping = {row['item_id']: row['item_id'] for row in rows}
+        for payload in (baseline['shots'][shot]['payload'], self.bundle['shots'][shot]['payload']):
+            self._item_ids(payload.get('items', []), set(mapping.values()), ref)
+        return mapping
+
+    @staticmethod
+    def _item_ids(rows, expected, ref):
+        if not isinstance(rows, list):
+            raise CommandError('shot items must be an array', kind='identity_conflict', ref=ref)
+        ids = [row.get('item_id') if isinstance(row, dict) else None for row in rows]
+        if (any(not isinstance(identity, str) or not identity for identity in ids)
+                or len(set(ids)) != len(ids) or set(ids) != expected):
+            raise CommandError('shot item correspondence changed', kind='identity_conflict', ref=ref)
+
+    def project_shot_items(self, ref, path, state):
+        """Project item-bearing aggregates without changing stored item identities."""
+        if state['state'] != 'present' or tuple(path[:1]) != ('payload',):
+            return state
+        from astrid.core.timeline.authoring_bundle import _remap_known_item_references
+
+        mapping = self.shot_item_map(ref)
+        value = state['value']
+        if len(path) == 1 and isinstance(value, dict) and 'items' in value:
+            self._item_ids(value['items'], set(mapping), ref)
+            return present(_remap_known_item_references(value, mapping))
+        if list(path) == ['payload', 'items']:
+            self._item_ids(value, set(mapping), ref)
+            return present(_remap_known_item_references({'items': value}, mapping)['items'])
+        if len(path) == 3 and path[2].startswith('item_id:'):
+            identity = path[2].split(':', 1)[1]
+            if not isinstance(value, dict) or value.get('item_id') != identity or identity not in mapping:
+                raise CommandError('shot item replacement changed identity', kind='identity_conflict', ref=ref)
+            return present(_remap_known_item_references({'items': [value]}, mapping)['items'][0])
+        if len(path) == 4 and path[3] in ('item_id', 'id'):
+            identity = path[2].split(':', 1)[1]
+            if value != identity or identity not in mapping:
+                raise CommandError('shot item identity cannot change', kind='identity_conflict', ref=ref)
+            return present(mapping[identity])
+        return state
+
+    def _shot_item_path(self, ref, path):
+        if (not ref.endswith('/shot') or tuple(path[:2]) != ('payload', 'items')
+                or len(path) < 3 or not path[2].startswith('item_id:')):
+            return path
+        mapping = self.shot_item_map(ref)
+        identity = path[2].split(':', 1)[1]
+        if identity not in mapping:
+            raise CommandError('unknown published item identity', kind='identity_conflict', ref=ref, path=path)
+        shot = self.occurrence(ref.removesuffix('/shot'))['shot_id']
+        rows = self.bundle['shots'][shot]['payload']['items']
+        row = one(rows, 'item_id', mapping[identity])
+        return [*path[:2], str(rows.index(row)), *path[3:]]
+
     def get(self, ref, path):
         if ref == 'parent' and list(path) == ['occurrences']:
             return present(copy.deepcopy(self.bundle['placements']))
@@ -313,8 +391,12 @@ class State:
             owner = ref.removesuffix('/shot')
             shot = self.occurrence(owner)['shot_id']
             mapping = self.bundle['source_mapping']['shots'].get(shot, {}).get('item_id_map', {})
+            if (tuple(path[:2]) == ('payload', 'items')
+                    or list(path) == ['payload'] and self.bundle['shots'][shot]['payload'].get('items')):
+                mapping = self.shot_item_map(ref)
             value = {'payload': _remap_known_item_references(self.bundle['shots'][shot]['payload'],
                                                            {v: k for k, v in mapping.items()})}
+        path = self._shot_item_path(ref, path)
         for key in path:
             if isinstance(value, dict) and key in value:
                 value = value[key]
@@ -498,9 +580,17 @@ class State:
                 rows.append(copy.deepcopy(state["value"]))
             return
         value = self.entity(ref)
-        if ref.endswith('/shot') and tuple(path[:1]) == ('payload',) and len(path) > 1:
+        if ref.endswith('/shot') and tuple(path[:1]) == ('payload',):
             # Only the occurrence's own shot root; display IDs never select it.
             shot = self.occurrence(ref.removesuffix('/shot'))['shot_id']
+            if (tuple(path[:2]) == ('payload', 'items') or len(path) == 1):
+                state = self.project_shot_items(ref, path, state)
+            path = self._shot_item_path(ref, path)
+            if len(path) == 1:
+                if state['state'] != 'present' or not isinstance(state['value'], dict):
+                    raise CommandError('shot payload requires an object', ref=ref, path=path)
+                self.bundle['shots'][shot]['payload'] = copy.deepcopy(state['value'])
+                return
             value, path = self.bundle['shots'][shot]['payload'], tuple(path[1:])
         for key in path[:-1]:
             if (state['state'] == 'absent' and isinstance(value, dict)
