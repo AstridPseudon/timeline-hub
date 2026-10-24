@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T22:15:39Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 1m -->
-# runtime board, 2026-10-24T22:13:47Z
+<!-- main | 2026-10-24T22:18:48Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 6 | status age 3m -->
+# runtime board, 2026-10-24T22:15:49Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -188,6 +188,8 @@
 | D84-False-stacks | Capture actual False case at30s and44s | HARD Sol | Actual source unchanged | merged | rt-D84-False-stacks-sol-2151 | Both samples schema computation;12.149CPU/14.002wall. Original45.008FAIL retained. [Report](../../design/runtime-D84-False-stacks-2151.md) | Evidence only |
 | F-final-D84-core-prep | Include current core tests in final candidate | Luna | Author harness checks passed | merged | rt-F-final-D84-core-prep-2207 | Private 92 Python plus TS; five added files collect 89 nodes. Static and D73 stubs pass. [Report](../../design/runtime-final-D84-core-prep-2207.md) | Private candidate only |
 
+| F-final-upstream-installer | Keep fresh upstream installer tests | Luna | D68 owner request | doing | rt-F-final-upstream-installer-2216 | Private checklist only. Require both installer files on applied fresh Agent source; no gate merge, body or build now. | Candidate only |
+
 Runtime producer: RELEASED 732c48c6f5a9441a65c61b24595d454a1cd3e180, tree 7ed0559c6f0a05954427cc668e303b6cd2f51586. Three product hashes exactly match the independent security review. Canonical 15 files and schema867f are unchanged. Actual release receipts and hashes are in [release](../../design/runtime-D84a-release-2205.md).
 
 core open: Original P4 ten-note 45-second result and original App element/popup/parent responses remain open. Agent retains five historical home scopes; all eight P2 cases remain unqualified. Source controls do not close original behavior. Final Runtime core suite remains owed.
@@ -208,7 +210,9 @@ Venues: App P1/P2/P3; Agent P4; main P5/Composition. D73 captures four exact SHA
 Delivery: Runtime merge, Agent merge, authentic App manifest command and digest equality, then App merge. Installed v2 docs and D67 bindings stay qualified. Private final candidates remain cut-gated;2207 refreshes inventory only and leaves the tuple PENDING.
 Later: E1/E3 and Agent E2 designs retained; further E/D79 paused until ZIP. All cross-request D42 memo and proof pins remain held. V4 cut, D14/D23 deferred, unsafe D34 cleanup held, D62 submit completeness known gap.
 Admission: D56 Farm/schema access stopped. Original403 and historical access, cleanup, process and retirement refusals remain stopped. D67 D13 environment gap and App dirty-U3 refusals remain unchanged.
-Disk: Last read 8600858624 available bytes, 8.01 GiB; cap4 conservatively. No ended clean non-KEEP Runtime worktree is eligible. Guarded sweep3 is active; compact follows. Historical refused targets remain stopped; 15GB target not reached.
+Disk: Last read 8600858624 available bytes, 8.01 GiB; cap4 conservatively. No ended clean non-KEEP Runtime worktree is eligible. Guarded sweep3 removed zero; compact is active. Historical refused targets remain stopped; 15GB target not reached.
 
-live 0 / cap 4; ready-undispatched 0. Dispatcher bin/workers shows all Runtime tasks done, including2207. Receiving original tasks belong to their existing lane owners; final bodies and installation stay D59-gated.
-Pass 2026-10-24T22:13:47Z: Read PLAN/common, new inbox through576785bytes, header and owner boards. App asset/placement source repairs accepted HOME with browser proof still open. Runtime732 product blobs remain released and actual home clean. Consumed2207 harness completion without a redundant review under D56; private92+TS inventory remains PENDING tuple and uninstalled. Published exact author report. No new source, duplicate original or denied route.
+live 1 / cap 4; ready-undispatched 0. New Luna2216 handles the owner’s disjoint fresh-upstream installer checklist. Source732 is released. Receiving originals belong to existing lane owners; final bodies stay D59-gated.
+Pass 2026-10-24T22:13:47Z: Read PLAN/common, new inbox through577361bytes, header and owner boards. App asset/placement source repairs accepted HOME with browser proof still open. Runtime732 product blobs remain released and actual home clean. Consumed2207 harness completion without a redundant review under D56; private92+TS inventory remains PENDING tuple and uninstalled. Published exact author report. No new source, duplicate original or denied route.
+
+Intake 2026-10-24T22:15:49Z: Orchestrator fresh Agent08e6b90511 packaging overlap became owned row F-final-upstream-installer and dispatched Luna2216 immediately. Gating source is frozen. No upstream fetch or merge requested.
