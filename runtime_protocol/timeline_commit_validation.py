@@ -8,6 +8,7 @@ import json
 import math
 from functools import cache, lru_cache
 from importlib.resources import files
+from typing import Protocol, cast
 
 from .errors import ValidationError
 from .util import canonical_json
@@ -48,6 +49,14 @@ def digest(value):
     return "sha256:" + hashlib.sha256(canonical_json(value).encode()).hexdigest()
 
 
+class _ValidatorWithResolver(Protocol):
+    _resolver: object
+
+
+def _validator_resolver(validator):
+    return cast(_ValidatorWithResolver, validator)._resolver
+
+
 @cache
 def _schema_resources():
     from referencing import Registry, Resource
@@ -64,7 +73,9 @@ def _schema_resources():
     )
     registry = Registry(retrieve=unavailable)
     for uri, schema in bundle["resources"].items():
-        resource = Resource.from_contents(schema, default_specification=DRAFT202012)
+        resource = Resource.from_contents(
+            copy.deepcopy(schema), default_specification=DRAFT202012
+        )
         registry = registry.with_resource(uri, resource)
         if resource.id() is not None:
             registry = registry.with_resource(resource.id(), resource)
@@ -81,7 +92,9 @@ def _validator(definition: str):
     validator = Draft202012Validator(
         {"$ref": bundle["root"] + "#/$defs/" + definition}, registry=registry
     )
-    return validator.evolve(_resolver=_reuse_schema_resolution(getattr(validator, "_resolver")))
+    return validator.evolve(
+        _resolver=_reuse_schema_resolution(_validator_resolver(validator))
+    )
 
 
 def _reuse_schema_resolution(resolver):

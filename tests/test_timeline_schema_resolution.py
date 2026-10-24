@@ -59,7 +59,9 @@ def _validators(resources, root):
     )
     original = Draft202012Validator({"$ref": root}, registry=registry)
     cached = original.evolve(
-        _resolver=validation._reuse_schema_resolution(getattr(original, "_resolver"))
+        _resolver=validation._reuse_schema_resolution(
+            validation._validator_resolver(original)
+        )
     )
     return original, cached
 
@@ -67,6 +69,35 @@ def _validators(resources, root):
 def _errors(validator, value):
     return [(list(e.path), list(e.schema_path), e.message)
             for e in validator.iter_errors(value)]
+
+
+def test_installed_schema_copy_survives_nested_resource_replacement():
+    packet = _packet()
+    bundle, registry = validation._schema_resources()
+    root = bundle["root"]
+    cached = validation._validator("CommitRequest")
+    native = Draft202012Validator(
+        {"$ref": root + "#/$defs/CommitRequest"}, registry=registry
+    )
+
+    nested_uri = next(
+        uri for uri in bundle["resources"] if uri.endswith("edit-command.json")
+    )
+    installed = registry.resolver().lookup(nested_uri).contents
+    installed_before = copy.deepcopy(installed)
+    bundle["resources"][nested_uri].clear()
+    bundle["resources"][nested_uri].update(
+        {"$id": installed_before["$id"], "type": "null"}
+    )
+    assert installed == installed_before
+
+    valid = packet["request"]
+    invalid = copy.deepcopy(valid)
+    invalid["commands"][0]["version"] = None
+    for value in (valid, invalid):
+        assert _errors(cached, value) == _errors(native, value)
+    assert not _errors(cached, valid)
+    assert _errors(cached, invalid)
 
 
 def test_resolution_preserves_nested_ids_relative_uris_anchors_and_ref_siblings():
