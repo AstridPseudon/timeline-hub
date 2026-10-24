@@ -1,0 +1,131 @@
+{
+  "status": "PREPARED",
+  "run_authorization": "NOT_GRANTED",
+  "artifact": {
+    "branch": "tl/app-P2-P3-caller-prep-0841",
+    "purpose": "mechanical source/body refresh of the existing qualified caller",
+    "original_run": false,
+    "caller_artifacts_only": ["caller-publication.py", "caller-custody.json"]
+  },
+  "qualified_caller_0623": {
+    "artifact_commit": "d54582a08c6ad0453742523a3ec374dd321ce477",
+    "app_source": "66354161950d1e747965c095ea97b881d2592708",
+    "app_tree": "9a37265f0286128df7e6240a9df9877d959474af",
+    "app_parent": "b2380539c5545661954d2794976631312ee1d939",
+    "logic_reuse": "conditional-byte-identical-after-audited-binding"
+  },
+  "not_final_candidates": {
+    "current_integration": "182c65242d8228232cde32961fd1948056dd841a",
+    "popup_review": "63e3956746e696ad816482fbb6bd7c079e332d0a",
+    "p3_packet": "f56128d540ff96013c9532d79f3f4e767beba820",
+    "adoption": "none; explicit final joined source input is still required"
+  },
+  "existing_suite_rows": {
+    "full-e2e-three-products": {
+      "installed_sha256": "23fba456948b68f04e14ec0cf1659f27071c6cd00d6b6fa05d579476842f5b97"
+    },
+    "ap2-P3-gate5-h6-0348": {
+      "installed_sha256": "84e0e7d3b296fc55c202e3e2ddbbcaafd0da66626a5beb538a4d012dbea80f9"
+    },
+    "outside_rows": 248,
+    "outside_bytes": 466341,
+    "outside_sha256": "b33d30918d6e2ae039dfa296bc75b1e0b2674828b53f07a16ee029933d5ad734",
+    "draft_sha256": "PENDING_FINAL_SOURCE_REDERIVATION"
+  },
+  "wire_fields": {
+    "request": [
+      "api_version", "scope", "project_id", "timeline_id", "base_revision_id", "base_publication_id",
+      "commands", "op", "version", "select", "args", "created", "label", "steps", "id", "intent",
+      "tags", "command_ordinals", "patch", "reads", "merge", "fields", "atomic", "Idempotency-Key"
+    ],
+    "reply": [
+      "data", "receipt", "status", "canonical_document", "document_digest", "id_map", "authoritative_commands",
+      "commands", "base", "base_revision_id", "base_publication_id", "previous", "previous_revision_id",
+      "previous_publication_id", "accepted_ids", "accepted_revision_id", "publisher", "provider_version",
+      "compiler_version", "steps", "merge_mode", "rebased_onto", "accepted", "merged", "conflict", "invalid",
+      "auth", "rebased", "source", "rationale", "group_id"
+    ],
+    "forbidden_invention": ["identity_map", "digest"]
+  },
+  "mechanical_controls": {
+    "argv": "argc=2",
+    "allocated_ports": ["P2_ALLOCATED_PORT", "P3_ALLOCATED_PORT"],
+    "native_history_stage": "preserved",
+    "history_and_owner_guards": "preserved",
+    "connected_check": "preserved",
+    "original_body_guard": "original-body-NOTRUN fail-fast marker preserved",
+    "gate5_tail": "preserve and rederive from final reviewed source",
+    "legacy_route_traffic": "zero",
+    "source_guard_policy": "every changed final source blob is guarded before setup/stages",
+    "changed_input": "source/body mismatch refuses before original body",
+    "wrong_artifact": "caller-artifact target and dirty target refuse before original body",
+    "bash_n": "each decoded and wrapped row",
+    "real_execution": "not run",
+    "backend_execution": "not run"
+  },
+  "source_rederivation": {
+    "final_manifest": "required explicit input TIMELINE_FINAL_SOURCE_MANIFEST",
+    "final_source": "PENDING",
+    "final_tree": "PENDING",
+    "final_parent": "PENDING",
+    "independent_review": "PENDING",
+    "required_reviewed_paths": [
+      "src/tools/video-editor/commands/media.ts",
+      "src/tools/video-editor/commands/media.test.ts",
+      "tests/e2e/local/three-products.spec.ts",
+      "tests/e2e/local/support/gate5-reset-precondition.ts",
+      "tests/e2e/local/support/gate5-reset-precondition.test.mjs",
+      "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+      "tests/e2e/local/three-products.p2-tour.spec.ts",
+      "tests/e2e/local/three-products.p2-popup.spec.ts",
+      "tests/e2e/local/three-products.p1-chain.spec.ts",
+      "tests/e2e/local/support/p2-document-oracle.ts",
+      "tests/e2e/local/support/p2-document-oracle.test.mjs",
+      "tests/e2e/local/support/p2-original-owner-ready.ts",
+      "tests/e2e/local/support/p2-original-owner-ready.test.mjs",
+      "tests/e2e/local/support/p2-semantic-oracle.ts",
+      "tests/e2e/local/support/p2-semantic-oracle.test.mjs"
+    ],
+    "protected_hashes": {
+      "d50_tail_sha256": "PENDING_FINAL_SOURCE_REDERIVATION",
+      "known_reviewed_reference": "5ede6f374857a66a327da3cea0e85de0457a04267003f3f66e3d40ee4f380912",
+      "p3_gate5_sha256": "PENDING_FINAL_SOURCE_REDERIVATION",
+      "p2_body_hashes": "PENDING_FINAL_SOURCE_REDERIVATION"
+    },
+    "no_obsolete_hash_reuse": true
+  },
+  "retained_custody": {
+    "agent": "079580ca46af77e0292d49dc34386b25c8391f99",
+    "agent_tree": "2deab1a1494fbccfce5e9235412bacb8a949c0cd",
+    "runtime": "37eb6c7bdb79dcae2523883e66b5cea5be721ffd",
+    "runtime_tree": "be4114705127f9ee9e86b26cd6de3f467e771c01",
+    "child": "venv-agent-child-app-ready-079-37eb-0256",
+    "remotion": "agent-remotion-app-ready-079-37eb-0258",
+    "remotion_tree": "b01dca9b3b24f54093c20b7c5657316f997725db",
+    "client_file_count": 4,
+    "runtime_backend_file_count": 78,
+    "runtime_backend_digest": "d70ce25e13e02c1b805e682e7e098fba78cc6732f90c482a84bf074ab98ef2bb",
+    "graph_file_count": 80,
+    "graph_digest": "ac0bf2a252d3f3a7640ed2a0b555b8a91ff81671a3b70074ed27676357edbbc9",
+    "daemon_identity": "UNINFERRED_BY_SOURCE_PREPARATION"
+  },
+  "retention_reuse_limits": {
+    "qualified_stages": 60,
+    "reuse_only_if": "decoded caller logic and all retained stage bytes compare equal after audited source bindings, fingerprints, expected body hashes, and log identity are refreshed",
+    "if_logic_changes": "bounded real execution controls are required",
+    "not_claimed": ["READY", "service execution", "browser journey", "backend execution", "integrated proof"]
+  },
+  "negative_context": {
+    "source_target_0644": "source-only target context; not an execution target",
+    "wrong_artifact_requests": ["20674", "10144"],
+    "wrong_artifact_result": "preflight-only exit 2; originals NOTRUN; immutable and never relabeled"
+  },
+  "missing_final_inputs": [
+    "actual final reviewed joined source SHA/tree/parent",
+    "source fingerprints and spec/body hashes rederived from that tree",
+    "independent review PASS for the joined source",
+    "separate read-only pure final-integrated proof-worker target",
+    "normal-service single-parent same-tree snapshot authorization",
+    "integrated P2/P3 proof and actual daemon identity"
+  ]
+}
