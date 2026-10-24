@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run the unchanged discovery row through the normal managed test service.
 
-The worker snapshot owns this runner; the separate bb50 carrier owns the test
+The worker snapshot owns this runner; the separate pinned carrier owns the test
 and source bytes. Both entry and installed phases resolve the normal managed
 child registration. A script digest is an accidental-call check, not authority.
 """
@@ -27,9 +27,9 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 ORCH = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch")
-SOURCE = Path("/home/user/work/wt/agt-pin-bb50a43c")
-RUNTIME = Path("/home/user/work/wt/rt-pin-f3208b26")
-CHILD_NAME = "venv-agent-child-discovery-bb50-f320"
+SOURCE = Path("/home/user/work/wt/agt-pin-0c2c28da")
+RUNTIME = Path("/home/user/work/wt/rt-pin-becfe6db")
+CHILD_NAME = "venv-agent-child-final-0c2c-becfe"
 RECEIPT = ORCH / "tests/provision" / (CHILD_NAME + ".txt")
 MAKER = ORCH / "bin/make-child-venv"
 MAKER_SHA256 = "c887a1bef4831f2ca5a43372ee28430000b2f20b9d290bffb237f27ffc404ff2"
@@ -37,8 +37,8 @@ SCRATCH = Path(os.environ.get("TMPDIR", "/tmp"))
 EVIDENCE = Path(os.environ.get("DISCOVERY_EVIDENCE", str(SCRATCH / "discovery-evidence")))
 TARGET = "tests/packs/rendering/test_threejs_backend.py::test_threejs_support_rejects_unsupported_timelines_with_clip_reasons"
 TARGET_FILE = SOURCE / TARGET.split("::")[0]
-EXPECTED_AGENT = "bb50a43c915ec00c05c5ee34569a040bab8e817c"
-EXPECTED_RUNTIME = "f3208b26b53c4d7053e5464eaa7c5e15b1505812"
+EXPECTED_AGENT = "0c2c28da4f9733a1becc134f95219ae3079fc50e"
+EXPECTED_RUNTIME = "becfe6db88b2cc034dba3fafa6c050117cdf2b06"
 EXPECTED_PROFILE = "agent-remotion-v3-819acf-1110"
 PROFILE = Path("/home/user/work/runtimes") / EXPECTED_PROFILE
 NODE = Path("/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node")
@@ -55,7 +55,7 @@ EXPECTED_TARGET_FUNCTION_SHA256 = "ca54f2d5059bb3b5cca1e8ee43156df6762d3a86739ca
 EXPECTED_TARGET_ASSERTIONS_SHA256 = (
     "087c80d0211e714a7c073d12adb2e260d5de299ba3d251ac31b853562eb6de1e"
 )
-EXPECTED_CLIENT_IDENTITY_SHA256 = "10fc7e77b3ab381df46108b68ead23864d2f679fa069b41d113629efc1135a9e"
+EXPECTED_CLIENT_IDENTITY_SHA256 = "d79568df4fe4bed2a217b519d73824e8fd1ca17f61dfe0ce8492f1903764eb44"
 # Values are restricted to this declared environment; never dump ambient secrets.
 SAFE_ENV_KEYS = (
     "PATH",
