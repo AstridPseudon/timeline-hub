@@ -1,0 +1,20 @@
+**Finding: a production App projection-boundary defect, established by source tracing—not a bridge-only failure or proven D18-invalid fixture.** No product, test, fixture, dependency, or input changes were made.
+
+- **Provenance correction:** Agent’s new reports confirm genuine historical Runtime custody. More precisely, Agent `c36ca8c9`’s [fixture helper](/home/user/work/agent/tests/editing_conformance/test_commit_runtime_parent_media.py:112) loads the authenticated pre-cut backup, then creates `visual` with `opaque` through `capture_track_create` and ordinary `commit_timeline` at lines 167–170. Its `accept` wrapper delegates to the original port unchanged at lines 143–145. Thus `opaque` is fixture-added canonical data, rather than necessarily an original backup field.
+- **Admissibility:** closed current track serialization alone does not prove this untouched canonical field may be discarded. Contract §2 distinguishes unknown controls from preserved open document fields ([line 80](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/commit-v2.md:80)); D12/D12a scope new validation to changed or invalidated values. Provider [final validation](/home/user/work/agent/astrid/sdk/timeline/validation.py:521) checks track identity, without a closed-key rejection, and receives the authoritative baseline from [commit.py](/home/user/work/agent/astrid/sdk/timeline/commit.py:1181). An unrelated `clip.add-media` can preserve this track unchanged. No fresh IMAGE acceptance was observed.
+- **Exact App boundary:** [RuntimeDataProvider](/home/user/work/wt/app-A2-image-projection-facts-sol-2357/src/integrations/runtime/dataProvider.ts:1456) retains raw config/tracks; loading adds output defaults, not track projection. [buildTimelineData](/home/user/work/wt/app-A2-image-projection-facts-sol-2357/src/tools/video-editor/lib/timeline-data.ts:530) also retains track keys. Prepared-media preview passes `base.tracks` into [rowsToConfig](/home/user/work/wt/app-A2-image-projection-facts-sol-2357/src/tools/video-editor/commands/media.ts:538), which invokes serialization. That serializer [rejects unexpected track keys before projection](/home/user/work/wt/app-A2-image-projection-facts-sol-2357/src/tools/video-editor/lib/timeline-domain.ts:2729). The bridge reaches the same boundary. Production rejection is a source-derived conclusion; it was not rerun.
+
+**Smallest owner action:** implement an explicit canonical-to-UI track projection using the existing `sanitizeTrackDefinitionSnapshot` on a separate display copy, consistently for production loading and bridge input/capture baselines. Preserve the complete raw canonical document, including `opaque`, as the session/outbox basis. Do not strip or relocate canonical fields, relax Runtime guards, or change the wire contract.
+
+Proposed RED/GREEN coverage: load the immutable canonical shape, place the prepared image through production preview/capture, and assert one intended `clip.add-media`, no track patch, and unchanged canonical `opaque`. Preserve existing closed-wire validation tests and the full request/reply envelope. This proposal remains unimplemented and unverified.
+
+Verification:
+
+- `sha256sum …/design/agent-A4-image-live-2315-input.json` → `e61c49fe584c416aa6df63156950b2158b4f72ae626460491ca9cdbce863b01d`.
+- `wc -c …/design/agent-A4-image-live-2315-input.json` → **8,957 bytes**.
+- `git diff --exit-code` → **0**; worktree unchanged.
+- No tests, producer retries, backend/browser runs, or test-service requests executed, as scoped.
+
+Audit heads: App `4ded7eefdbcbeaf0d6cecc58e55f7083004167d2`; Runtime `abd47e68de6d7a36bec8ac4f0f6e0bc01d98d14e`; current Agent `f88cc5242d4b6c87b97a83878b86ec3168daa3db`, with original fixture helper checked using `git show c36ca8c9:…`.
+
+The old fixture closed at **23:35:25 UTC**. Its input and failed App outcome remain source evidence only. Exact original runner code was unavailable locally; report/peer custody statements were read, not independently replayed. Commit message and `DONE` were written.
