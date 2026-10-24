@@ -1,0 +1,64 @@
+test agt-F-final-source-join-0816-authoring-current-becfe-nodes-1024085217-20732: fail exit=1 in 43s — authoring-current-becfe-nodes on agt-F-final-source-join-0816 (agent tree 4ce9de35768c75d38db16882423313fb5047eb5f)
+cmd: cd /home/user/work/wt/agt-pin-0c2c28da && env -i HOME=/root LANG=C.UTF-8 LC_ALL=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="/home/user/work/wt/agt-pin-0c2c28da:/home/user/work/wt/rt-pin-becfe6db" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/local/bin:/usr/bin:/bin ASTRID_AGENT_SOURCE_ROOT=/home/user/work/wt/agt-pin-0c2c28da ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-becfe6db ASTRID_RUNTIME_SOURCE_ROOT=/home/user/work/wt/rt-pin-becfe6db ASTRID_REMOTION_PROJECT_DIR=/home/user/work/runtimes/agent-remotion-v3-819acf-1110 ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_TEST_NODE_MODULES=/home/user/work/runtimes/agent-remotion-v3-819acf-1110/node_modules ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages /bin/bash --noprofile --norc -c '/home/user/work/venv-agent/bin/python -P -c '"'"'import hashlib,json,os,subprocess; from pathlib import Path; import astrid,runtime_protocol,astrid_runtime_client; import astrid.core.timeline.banodoco_schema as schema; import banodoco_timeline_schema as shared_schema; from runtime_protocol import timeline_commit_auth as auth; root=Path(os.environ["ASTRID_AGENT_SOURCE_ROOT"]).resolve(); runtime=Path(os.environ["ASTRID_RUNTIME_CHECKOUT"]).resolve(); profile=Path(os.environ["ASTRID_REMOTION_PROJECT_DIR"]).resolve(); node=Path(os.environ["ASTRID_NODE_EXECUTABLE"]).resolve(); auth_path=Path(auth.__file__).resolve(); assert root==Path("/home/user/work/wt/agt-pin-0c2c28da"); assert Path(astrid.__file__).resolve()==root/"astrid/__init__.py"; assert Path(runtime_protocol.__file__).resolve()==runtime/"runtime_protocol/__init__.py"; assert auth_path==runtime/"runtime_protocol/timeline_commit_auth.py"; assert Path(astrid_runtime_client.__file__).resolve()==root/"astrid_runtime_client/__init__.py"; assert Path(schema.__file__).resolve()==root/"astrid/core/timeline/banodoco_schema.py"; assert Path(shared_schema.__file__).resolve()==Path("/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py"); assert subprocess.run([str(node),"--version"],capture_output=True,text=True,check=True).stdout.strip()=="v20.19.4"; assert subprocess.run(["git","-C",str(root),"rev-parse","HEAD"],capture_output=True,text=True,check=True).stdout.strip()=="0c2c28da4f9733a1becc134f95219ae3079fc50e"; assert subprocess.run(["git","-C",str(root),"rev-parse","HEAD^{tree}"],capture_output=True,text=True,check=True).stdout.strip()=="4ce9de35768c75d38db16882423313fb5047eb5f"; assert subprocess.run(["git","-C",str(root),"rev-parse","HEAD:tests/timeline/test_authoring_media.py"],capture_output=True,text=True,check=True).stdout.strip()=="e55be12f88d23fddba3dd36614eb91745c1f8adf"; assert subprocess.run(["git","-C",str(root),"status","--porcelain","--untracked-files=all"],capture_output=True,text=True,check=True).stdout==""; assert subprocess.run(["git","-C",str(runtime),"rev-parse","HEAD"],capture_output=True,text=True,check=True).stdout.strip()=="becfe6db88b2cc034dba3fafa6c050117cdf2b06"; assert subprocess.run(["git","-C",str(runtime),"rev-parse","HEAD^{tree}"],capture_output=True,text=True,check=True).stdout.strip()=="7edc08e3fe94edcbc8ef695c479f4de301789b89"; assert subprocess.run(["git","-C",str(runtime),"status","--porcelain","--untracked-files=all"],capture_output=True,text=True,check=True).stdout==""; assert subprocess.run(["git","-C",str(runtime),"rev-parse","HEAD:runtime_protocol/timeline_commit_auth.py"],capture_output=True,text=True,check=True).stdout.strip()=="979225ab8fdf7f6de1fcea4e7576b60b49b8b5f1"; assert hashlib.sha256(auth_path.read_bytes()).hexdigest()=="e172f8c56d81e8039570ba5a07fc7121fba623b305e7c7a0b529d90c5dcccb70"; assert subprocess.run(["git","-C",str(runtime),"rev-parse","HEAD:tests/test_timeline_shared_inverse_authority.py"],capture_output=True,text=True,check=True).stdout.strip()=="e9827aa49e3ca59f58335c60a1e8483390d0a0e1"; assert subprocess.run(["git","-C",str(runtime),"cat-file","-e","a0dca16975dfe8f5e762703b99d9791a16cf7fd7^{commit}"],check=False).returncode==0; lock=profile/"package-lock.json"; package=json.loads((profile/"package.json").read_text()); archive=profile/package["dependencies"]["@banodoco/timeline-composition"].removeprefix("file:"); assert hashlib.sha256(lock.read_bytes()).hexdigest()=="f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d"; assert hashlib.sha256(archive.read_bytes()).hexdigest()=="819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234"; assert json.loads((profile/"node_modules/@banodoco/timeline-composition/package.json").read_text())["version"]=="0.0.14"; assert profile.is_dir() and Path(os.environ["ASTRID_TEST_NODE_MODULES"]).is_dir(); print("ORIGINS",Path(astrid.__file__).resolve(),Path(runtime_protocol.__file__).resolve(),Path(auth.__file__).resolve(),Path(astrid_runtime_client.__file__).resolve(),Path(schema.__file__).resolve(),Path(shared_schema.__file__).resolve(),sep="\\n "); print("AGENT",root); print("RUNTIME",runtime); print("RUNTIME_AUTH_BLOB",subprocess.run(["git","-C",str(runtime),"rev-parse","HEAD:runtime_protocol/timeline_commit_auth.py"],capture_output=True,text=True,check=True).stdout.strip()); print("RUNTIME_AUTH_FILE_SHA256",hashlib.sha256(auth_path.read_bytes()).hexdigest()); print("PROFILE",profile); print("PROFILE_LOCK_SHA256",hashlib.sha256(lock.read_bytes()).hexdigest()); print("PROFILE_ARCHIVE_SHA256",hashlib.sha256(archive.read_bytes()).hexdigest()); print("PROFILE_COMPOSITION_VERSION","0.0.14")'"'"' && exec /home/user/work/venv-agent/bin/python -P -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 -m integration "$@"' authoring-current-becfe-nodes tests/timeline/test_authoring_media.py::test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba
+counts: 1 failed in 40.19s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agt-F-final-source-join-0816-authoring-current-becfe-nodes-1024085217-20732/log.txt ---
+        assert any(row['receipt']['receipt_id'] == publication['receipt']['receipt_id'] for row in history['items'])
+    
+        reloaded = tmp_path / 'reloaded.json'
+        run_script('checkout', '--project', project, '--timeline', 'film', '--file', str(reloaded))
+        reloaded_document = json.loads(reloaded.read_text())
+        assert reloaded_document['base_parent']['revision_id'] == published_document['parent_revision']['revision_id']
+        assert reloaded_document['shots'][first_id]['internal_timeline']['registry']['assets']['picture-1']['media_id'] == new_digest
+        assert reloaded_document['shots'][first_id]['payload']['text_bindings'] == original_narration
+        assert next(
+            row for row in reloaded_document['shots'][first_id]['payload']['text_bindings']
+            if row['kind'] == 'voiceover_script'
+        ) == voiceover_pin
+    
+        from runtime_protocol.server import RuntimeHandler
+    
+        original_send = RuntimeHandler._send
+        lost = {'done': False}
+        undo_wire = []
+    
+        def lose_undo_ack(handler, status, payload=None, **kwargs):
+            if (status == 200 and handler.command == 'POST' and handler.path.endswith('/commit')
+                    and handler.headers.get('Idempotency-Key') == 'wc6-undo'
+                    and getattr(handler, '_defer_response', False) and not lost['done']):
+                undo_wire.append({
+                    'key': handler.headers['Idempotency-Key'],
+                    'body': handler._prefetched_body,
+                })
+                lost['done'] = True
+                # Match the M1 real-HTTP seam: commit_timeline has durably
+                # accepted the edit, but no response bytes have been sent.
+                raise ConnectionError('WC6 proof dropped undo response after durable acceptance')
+            if (handler.command == 'POST' and handler.path.endswith('/commit')
+                    and handler.headers.get('Idempotency-Key') == 'wc6-undo'
+                    and getattr(handler, '_defer_response', False)):
+                undo_wire.append({
+                    'key': handler.headers['Idempotency-Key'],
+                    'body': handler._prefetched_body,
+                })
+            return original_send(handler, status, payload, **kwargs)
+    
+        monkeypatch.setattr(RuntimeHandler, '_send', lose_undo_ack)
+        undo_outbox = tmp_path / 'undo.outbox.json'
+        undo_session = TimelineSession.open(
+            project, 'film', client=client, outbox_path=undo_outbox,
+        )
+        with pytest.raises(WorkspaceClientError) as transport_error:
+            undo_session.undo([publication['receipt']['receipt_id']], idempotency_key='wc6-undo')
+        assert transport_error.value.status == 0
+>       assert transport_error.value.code == 'transport_error'
+E       AssertionError: assert 'transport_timeout' == 'transport_error'
+E         
+E         - transport_error
+E         ?            -- ^
+E         + transport_timeout
+E         ?           +++  ^^
+
+tests/timeline/test_authoring_media.py:1090: AssertionError
+=========================== short test summary info ============================
+FAILED tests/timeline/test_authoring_media.py::test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba
+1 failed in 40.19s

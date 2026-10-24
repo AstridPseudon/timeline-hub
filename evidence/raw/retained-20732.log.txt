@@ -1,0 +1,508 @@
+ORIGINS\n /home/user/work/wt/agt-pin-0c2c28da/astrid/__init__.py\n /home/user/work/wt/rt-pin-becfe6db/runtime_protocol/__init__.py\n /home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_auth.py\n /home/user/work/wt/agt-pin-0c2c28da/astrid_runtime_client/__init__.py\n /home/user/work/wt/agt-pin-0c2c28da/astrid/core/timeline/banodoco_schema.py\n /home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py
+AGENT /home/user/work/wt/agt-pin-0c2c28da
+RUNTIME /home/user/work/wt/rt-pin-becfe6db
+RUNTIME_AUTH_BLOB 979225ab8fdf7f6de1fcea4e7576b60b49b8b5f1
+RUNTIME_AUTH_FILE_SHA256 e172f8c56d81e8039570ba5a07fc7121fba623b305e7c7a0b529d90c5dcccb70
+PROFILE /home/user/work/runtimes/agent-remotion-v3-819acf-1110
+PROFILE_LOCK_SHA256 f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d
+PROFILE_ARCHIVE_SHA256 819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234
+PROFILE_COMPOSITION_VERSION 0.0.14
+F                                                                        [100%]----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 40266)
+Traceback (most recent call last):
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/server.py", line 1203, in _dispatch
+    self._route()
+    ~~~~~~~~~~~^^
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/server.py", line 523, in _route
+    return self._timeline_commit(path[2], path[4], path)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/server.py", line 311, in _timeline_commit
+    return self._send(200, commit(
+                           ~~~~~~^
+        project_id,
+        ^^^^^^^^^^^
+    ...<5 lines>...
+        authorize=authorize,
+        ^^^^^^^^^^^^^^^^^^^^
+    ))
+    ^
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/service.py", line 2442, in commit_timeline
+    return self._execute_timeline_commit(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        project_id, timeline_id, body, body, operation="commitTimeline",
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        idempotency_key=idempotency_key, publisher=publisher,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        invocation_path=invocation_path, authorize=authorize,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/service.py", line 2497, in _execute_timeline_commit
+    outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_execution.py", line 101, in execute
+    replay = self._lookup(context, authorize)
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_execution.py", line 63, in _lookup
+    return self.commit_store.lookup(context, authorize=authorize)
+           ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_store.py", line 174, in lookup
+    authorize()
+    ~~~~~~~~~^^
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/service.py", line 2416, in check
+    authorize()
+    ~~~~~~~~~^^
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/server.py", line 309, in authorize
+    return self._authorize_timeline_commit(publisher)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/server.py", line 276, in _authorize_timeline_commit
+    identity = self._identity("projects:write")
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/server.py", line 112, in _identity
+    raise AuthorizationError("runtime is not accepting authenticated requests")
+runtime_protocol.errors.AuthorizationError: runtime is not accepting authenticated requests
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+    ~~~~~~^^
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/server.py", line 1238, in do_POST
+    self._dispatch()
+    ~~~~~~~~~~~~~~^^
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/server.py", line 1224, in _dispatch
+    self._error(exc)
+    ~~~~~~~~~~~^^^^^
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/server.py", line 398, in _error
+    self._send(exc.status, error=payload)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/server.py", line 341, in _send
+    self.wfile.write(encoded)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 845, in write
+    self._sock.sendall(b)
+    ~~~~~~~~~~~~~~~~~~^^^
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+
+=================================== FAILURES ===================================
+_ test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4/test_real_runtime_document_scr0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6c30a9c9d0>
+real_runtime = <function real_runtime.<locals>.start at 0x7f6c30af72e0>
+capsys = <_pytest.capture.CaptureFixture object at 0x7f6c31bc6cf0>
+
+    @pytest.mark.integration
+    def test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba(
+        tmp_path, monkeypatch, real_runtime, capsys,
+    ):
+        """Publish one native same-alias rebind through the real Runtime door.
+    
+        The source closure is read from the exact ordinary014 Runtime fixture, while all
+        mutable setup lives in a fresh realm and crosses ``trusted_seed``. The
+        document script then owns checkout, import, native capture and commit.
+        """
+        from contextlib import nullcontext
+    
+        from astrid.sdk import AstridClient
+        from astrid.sdk.timeline.capture import capture_move
+        from astrid.sdk.timeline.store import fetch_bundle
+        from astrid.sdk.timeline.sync import CommitConflict, TimelineSession
+        from astrid.sdk.workspace_client import WorkspaceClient, WorkspaceClientError
+        from tests.helpers.runtime import use_runtime
+        from tests.helpers.trusted_seed import seed_trusted_parent
+    
+        monkeypatch.setenv('ASTRID_RUNTIME_CHECKOUT', '/home/user/work/wt/rt-pin-8ea0766f')
+        use_runtime()
+        from runtime_protocol.service import RuntimeService
+        from runtime_protocol.store import RealmStore
+        source_runtime = use_runtime(commit='a0dca16975dfe8f5e762703b99d9791a16cf7fd7')
+        sys.path.insert(0, str(source_runtime / 'tests'))
+        from timeline_commit_film_fixture import build_film_fixture, read_object_from_realm
+    
+        source_root = tmp_path / 'source'
+        source_root.mkdir()
+        source_fixture = build_film_fixture(source_root)
+        source = RuntimeService(source_fixture.duplicate_root)
+        try:
+            source_document = source._timeline_commits()[0].revision_closure(
+                source_fixture.project_id, source_fixture.timeline_id,
+                source_fixture.parent_revision_id,
+            )
+            source_objects = [
+                (row['digest'], row['media_type'], row['original_name'])
+                for row in source.store.conn.execute(
+                    'SELECT digest, media_type, original_name FROM objects'
+                )
+            ]
+        finally:
+            source.close()
+    
+        realm = tmp_path / 'realm'
+        RealmStore.initialize(realm).close()
+        service = RuntimeService(realm)
+        project = service.create_project(
+            {'slug': 'wc6-native', 'name': 'WC6 native'}, idempotency_key='wc6-project'
+        )['id']
+        service.create_timeline(project, 'film', idempotency_key='wc6-timeline')
+    
+        for digest, media_type, original_name in source_objects:
+            service.ingest(
+                project,
+                read_object_from_realm(source_fixture.duplicate_root, 'sha256:' + digest),
+                media_type=media_type,
+                original_name=original_name,
+                idempotency_key='wc6-source-' + digest,
+            )
+    
+        old_path = picture(tmp_path, 'old.png', 'red')
+        new_path = picture(tmp_path, 'new.png', 'blue')
+        old_bytes = old_path.read_bytes()
+        old_digest = 'sha256:' + hashlib.sha256(old_bytes).hexdigest()
+        old_import = service.import_media(
+            project, old_bytes, media_type='image/png', original_name='old.png',
+            expected_digest=old_digest, actor_id='trusted-test-setup', width=16,
+            height=12, idempotency_key='wc6-old',
+        )['data']
+        old_media = service.get_project_media_selection(
+            project,
+            {'asset': 'picture-1', 'generation_id': old_import['generation_id'],
+             'variant_id': old_import['variant_id']},
+            authorize=lambda: None,
+        )
+    
+        parent = copy.deepcopy(source_document['parent_revision']['payload'])
+        shots = copy.deepcopy(source_document['shot_revisions'])
+        internals = copy.deepcopy(source_document['internal_timeline_revisions'])
+        first_shot = next(row for row in shots if row['shot_id'] == 'shot-1')
+        old_internal_id = first_shot['internal_timeline_revision_id']
+        first_internal = next(row for row in internals if row['revision_id'] == old_internal_id)
+        registry = first_internal['payload']['registry']['assets']
+        original_alias_order = list(registry)
+        original_opaque = {'keep': True}
+        registry['picture-1'].update(
+            media_id=old_media['object_id'], type='image',
+            generationId=old_media['generation_id'], variantId=old_media['variant_id'],
+            opaque={'keep': True},
+        )
+        registry['picture-1'].pop('object_id', None)
+        first_internal['payload']['output'] = {'fps': 24}
+        first_internal['payload']['clips'][0]['hold'] = 0.9
+        first_internal['payload']['clips'].append({
+            'asset': 'picture-1', 'at': 0.9, 'clipType': 'media', 'hold': 0.9,
+            'id': 'clip-1b', 'track': 'picture',
+        })
+        first_shot['payload']['items'] = [
+            {'item_id': 'picture-item', 'media_id': old_media['object_id'], 'opaque': {'keep': True}}
+        ]
+        first_shot['payload']['assets'] = [{
+            'asset_id': 'picture-1', 'object_id': old_media['object_id'], 'opaque': {'keep': True},
+            'type': 'image', 'media_type': 'image/png',
+            'source': {
+                'media_id': old_media['object_id'],
+                'content_sha256': old_digest.removeprefix('sha256:'),
+                'type': 'image/png',
+            },
+        }]
+        first_shot['payload']['opaque_namespace'] = {'media': old_media['object_id']}
+        first_shot['payload']['internal_timeline_revision_id'] = old_internal_id
+    
+        # The real text-binding API only creates bindings for unplaced catalog
+        # shots.  Persist this exact child closure on a private empty timeline so
+        # the normal catalog writer can create the authoritative voiceover before
+        # the accepted film baseline exists.  This is trusted fixture setup only;
+        # the proof below still publishes through the native document route.
+        from runtime_protocol.timeline_commit_store import digest
+    
+        voiceover_text = b'hello'
+        voiceover_media_id = 'sha256:' + hashlib.sha256(voiceover_text).hexdigest()
+        voiceover_binding_id = RuntimeService._text_binding_id(
+            project, 'shot-1', 'voiceover_script', None
+        )
+        voiceover_pin = {
+            'binding_id': voiceover_binding_id,
+            'project_id': project,
+            'shot_id': 'shot-1',
+            'kind': 'voiceover_script',
+            'slot': None,
+            'media_id': voiceover_media_id,
+            'event_stream_id': voiceover_binding_id + ':shot.text_binding',
+            'head': 1,
+            'content_hash': voiceover_media_id,
+            'mime_type': 'text/plain',
+            'byte_size': len(voiceover_text),
+            'text': voiceover_text.decode('utf-8'),
+        }
+        first_shot['payload']['text_bindings'] = [
+            *(first_shot['payload'].get('text_bindings') or []), voiceover_pin,
+        ]
+        first_internal['content_digest'] = digest(first_internal['payload'])
+        first_shot['content_digest'] = digest(first_shot['payload'])
+        service.create_timeline(project, 'film-bootstrap', idempotency_key='wc6-bootstrap-timeline')
+        commits, _ = service._timeline_commits()
+        commits.bootstrap(project, 'film-bootstrap', authorize=lambda: None)
+        bootstrap = commits.revision_closure(
+            project, 'film-bootstrap', commits.head(project, 'film-bootstrap')['revision_id']
+        )
+        bootstrap['shot_revisions'] = copy.deepcopy(shots)
+        bootstrap['internal_timeline_revisions'] = copy.deepcopy(internals)
+        with service.store._transaction():
+            commits._persist_closure(bootstrap)
+        returned_voiceover = service.set_project_shot_text_binding(
+            project,
+            {
+                'shot_id': 'shot-1', 'kind': 'voiceover_script', 'text': voiceover_text,
+                'expected_head': 0,
+            },
+            idempotency_key='wc6-voiceover-binding',
+        )['data']
+        assert {
+            key: returned_voiceover[key]
+            for key in ('binding_id', 'project_id', 'shot_id', 'kind', 'slot', 'media_id',
+                        'event_stream_id', 'head', 'content_hash', 'mime_type', 'byte_size')
+        } == {key: voiceover_pin[key] for key in (
+            'binding_id', 'project_id', 'shot_id', 'kind', 'slot', 'media_id',
+            'event_stream_id', 'head', 'content_hash', 'mime_type', 'byte_size'
+        )}
+        assert service.list_project_shot_text_bindings(
+            project, shot_id='shot-1', kind='voiceover_script'
+        )['items'] == [returned_voiceover]
+        assert service.get_project_shot_text_binding(
+            project, returned_voiceover['binding_id']
+        ) == returned_voiceover
+        assert service.cas.read(returned_voiceover['media_id'].removeprefix('sha256:')) == voiceover_text
+    
+        baseline_head = service.get_project_timeline(project, 'film')['head_revision_id']
+        seeded = seed_trusted_parent(
+            service,
+            {
+                'project_id': project, 'timeline_id': 'film', 'expected_head': baseline_head,
+                'parent_revision_id': 'wc6-baseline', 'parent_composition': parent,
+                'shot_revisions': shots, 'internal_timeline_revisions': internals,
+            },
+            idempotency_key='wc6-baseline',
+        )
+        baseline_publication = seeded['receipt']['receipt_id']
+        commits, _ = service._timeline_commits()
+        baseline = commits.revision_closure(project, 'film', 'wc6-baseline')
+        service.close()
+    
+        daemon = real_runtime(realm, authoring_profile='astrid')
+    
+        def open_client(endpoint_daemon):
+            return AstridClient.open(
+                endpoint=endpoint_daemon.endpoint,
+                credential=endpoint_daemon.credential_path,
+                realm_id=endpoint_daemon.service.realm['id'],
+                actor_id='owner', client_name='wc6-native-proof', client_version='1',
+                protocol_version='workspace.v1',
+            )
+    
+        client = open_client(daemon)
+        transport = WorkspaceClient(daemon.endpoint, daemon.credential_path)
+        authoritative_voiceover = client.shots.show_text_binding(
+            project, returned_voiceover['binding_id'], include_text=True
+        )
+        assert authoritative_voiceover.ok
+        assert authoritative_voiceover.data == {
+            **returned_voiceover, 'text': voiceover_pin['text']
+        }
+        script = Path(__file__).parents[2] / 'astrid/packs/rendering/docs/scripts/timeline_document.py'
+        spec = importlib.util.spec_from_file_location('timeline_document_wc6_native_test', script)
+        helper = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(helper)
+        monkeypatch.setattr(helper.AstridClient, 'open_from_launcher', lambda **_: nullcontext(client))
+        monkeypatch.setattr(helper, 'workspace', lambda: transport)
+    
+        def run_script(*args):
+            monkeypatch.setattr(sys, 'argv', [str(script), *args])
+            helper.main()
+            capsys.readouterr()
+    
+        document = tmp_path / 'timeline.json'
+        run_script('checkout', '--project', project, '--timeline', 'film', '--file', str(document))
+        checkout = json.loads(document.read_text())
+        first_id = first_shot['shot_id']
+        checkout_shot = checkout['shots'][first_id]
+        checkout_timeline = checkout_shot['internal_timeline']
+        checkout_clip = next(row for row in checkout_timeline['clips'] if row['id'] == 'clip-1')
+        original_narration = copy.deepcopy(checkout_shot['payload'].get('text_bindings'))
+        assert original_narration
+        assert next(
+            row for row in original_narration if row['kind'] == 'voiceover_script'
+        ) == voiceover_pin
+        original_metadata = copy.deepcopy(checkout_shot['payload'].get('metadata'))
+        original_source_window = {
+            key: checkout_clip.get(key) for key in ('from', 'to', 'source_window')
+        }
+        checkout_clip.update(at=0.125, hold=0.75)
+        checkout_timeline['registry']['assets']['picture-1']['local_path'] = new_path.name
+        document.write_text(json.dumps(checkout))
+    
+        base_bundle = fetch_bundle(
+            project, 'film', revision_id='wc6-baseline',
+            publication_id=baseline_publication, client=client,
+        )
+        assert base_bundle['base_parent'] == {
+            'revision_id': baseline['parent_revision']['revision_id'],
+            'content_digest': baseline['parent_revision']['content_digest'],
+            'publication_id': baseline_publication,
+        }
+        assert checkout['base_parent'] == base_bundle['base_parent']
+        assert base_bundle['source_mapping']['_runtime_document'] == baseline
+        placement = next(row for row in base_bundle['placements'] if row['shot_id'] == first_id)
+        raw_occurrence = next(
+            row for row in baseline['parent_revision']['payload']['occurrences']
+            if row['occurrence_id'] == placement['occurrence_id']
+        )
+        raw_shot = next(
+            row for row in baseline['shot_revisions']
+            if (row['shot_id'], row['revision_id'])
+            == (raw_occurrence['shot_id'], raw_occurrence['shot_revision_id'])
+        )
+        raw_internal = next(
+            row for row in baseline['internal_timeline_revisions']
+            if row['revision_id'] == raw_shot['internal_timeline_revision_id']
+        )
+        assert base_bundle['source_mapping']['shots'][first_id] == {
+            'shot_id': raw_shot['shot_id'],
+            'revision_id': raw_shot['revision_id'],
+            'content_digest': raw_shot['content_digest'],
+            'internal_timeline_id': raw_internal['timeline_id'],
+            'internal_timeline_revision_id': raw_internal['revision_id'],
+            'internal_timeline_content_digest': raw_internal['content_digest'],
+            'item_id_map': {},
+        }
+        assert checkout['source_mapping']['shots'][first_id] == base_bundle['source_mapping']['shots'][first_id]
+        raw_before = next(row for row in raw_internal['payload']['clips'] if row['id'] == 'clip-1')
+        assert raw_before == next(row for row in first_internal['payload']['clips'] if row['id'] == 'clip-1')
+        working_before = next(
+            row for row in base_bundle['shots'][first_id]['internal_timeline']['clips']
+            if row['id'] == 'clip-1'
+        )
+        assert working_before == raw_before
+        disjoint_session = TimelineSession.open(
+            project, 'film', client=client, outbox_path=tmp_path / 'disjoint.outbox.json',
+            base_revision_id='wc6-baseline', base_publication_id=baseline_publication,
+        )
+        run_script('publish', '--file', str(document), '--idempotency-key', 'wc6-publish')
+        publication_file = document.with_suffix('.publication.json')
+        publication_receipt = json.loads(publication_file.read_text())
+        publication = publication_receipt['publication']
+        assert publication['data']['status'] == 'accepted'
+        assert [command['op'] for command in publication['data']['commands']] == [
+            'occurrence.swap-media', 'doc.patch',
+        ]
+        changes = publication['data']['commands'][1]['args']['changes']
+        assert [(change['op'], change['path'], change['before'], change['value'])
+                for change in changes] == [
+            ('set', ['clips', 'id:clip-1', 'at'],
+             {'state': 'present', 'value': 0}, 0.125),
+            ('set', ['clips', 'id:clip-1', 'hold'],
+             {'state': 'present', 'value': working_before['hold']}, 0.75),
+        ]
+        assert changes[0]['ref'] == changes[1]['ref']
+        published_document = publication['data']['canonical_document']
+        new_digest = 'sha256:' + hashlib.sha256(new_path.read_bytes()).hexdigest()
+        published_internal = next(
+            row for row in published_document['internal_timeline_revisions']
+            if row['revision_id'] == published_document['shot_revisions'][0]['internal_timeline_revision_id']
+        )
+        published_clip = next(row for row in published_internal['payload']['clips'] if row['id'] == 'clip-1')
+        assert published_clip['at'] == 0.125
+        assert published_clip['hold'] == 0.75
+        assert {key: published_clip.get(key) for key in ('from', 'to', 'source_window')} == original_source_window
+        published_entry = published_internal['payload']['registry']['assets']['picture-1']
+        assert published_entry['media_id'] == new_digest
+        assert list(published_internal['payload']['registry']['assets']) == original_alias_order
+        assert published_entry['opaque'] == original_opaque
+        assert [row['id'] for row in published_internal['payload']['clips']] == ['clip-1', 'clip-1b']
+        published_shot = next(row for row in published_document['shot_revisions'] if row['shot_id'] == first_id)
+        assert published_shot['payload']['items'][0]['media_id'] == new_digest
+        assert published_shot['payload']['assets'][0]['source']['media_id'] == new_digest
+        assert published_shot['payload']['opaque_namespace']['media'] == old_media['object_id']
+        assert published_shot['payload']['text_bindings'] == original_narration
+        assert next(
+            row for row in published_shot['payload']['text_bindings']
+            if row['kind'] == 'voiceover_script'
+        ) == voiceover_pin
+        assert published_shot['payload']['metadata'] == original_metadata
+        second_shot = next(row for row in published_document['shot_revisions'] if row['shot_id'] == 'shot-2')
+        baseline_second = next(row for row in baseline['shot_revisions'] if row['shot_id'] == 'shot-2')
+        assert second_shot == baseline_second
+        records = publication['data']['commands']
+        media_record = next(record for record in records if record['op'] == 'occurrence.swap-media')
+        assert media_record['args']['old_media']['object_id'] == old_media['object_id']
+        assert media_record['args']['media']['object_id'] == new_digest
+        history = client.timelines.history(project, 'film', limit=100).data
+        assert any(row['receipt']['receipt_id'] == publication['receipt']['receipt_id'] for row in history['items'])
+    
+        reloaded = tmp_path / 'reloaded.json'
+        run_script('checkout', '--project', project, '--timeline', 'film', '--file', str(reloaded))
+        reloaded_document = json.loads(reloaded.read_text())
+        assert reloaded_document['base_parent']['revision_id'] == published_document['parent_revision']['revision_id']
+        assert reloaded_document['shots'][first_id]['internal_timeline']['registry']['assets']['picture-1']['media_id'] == new_digest
+        assert reloaded_document['shots'][first_id]['payload']['text_bindings'] == original_narration
+        assert next(
+            row for row in reloaded_document['shots'][first_id]['payload']['text_bindings']
+            if row['kind'] == 'voiceover_script'
+        ) == voiceover_pin
+    
+        from runtime_protocol.server import RuntimeHandler
+    
+        original_send = RuntimeHandler._send
+        lost = {'done': False}
+        undo_wire = []
+    
+        def lose_undo_ack(handler, status, payload=None, **kwargs):
+            if (status == 200 and handler.command == 'POST' and handler.path.endswith('/commit')
+                    and handler.headers.get('Idempotency-Key') == 'wc6-undo'
+                    and getattr(handler, '_defer_response', False) and not lost['done']):
+                undo_wire.append({
+                    'key': handler.headers['Idempotency-Key'],
+                    'body': handler._prefetched_body,
+                })
+                lost['done'] = True
+                # Match the M1 real-HTTP seam: commit_timeline has durably
+                # accepted the edit, but no response bytes have been sent.
+                raise ConnectionError('WC6 proof dropped undo response after durable acceptance')
+            if (handler.command == 'POST' and handler.path.endswith('/commit')
+                    and handler.headers.get('Idempotency-Key') == 'wc6-undo'
+                    and getattr(handler, '_defer_response', False)):
+                undo_wire.append({
+                    'key': handler.headers['Idempotency-Key'],
+                    'body': handler._prefetched_body,
+                })
+            return original_send(handler, status, payload, **kwargs)
+    
+        monkeypatch.setattr(RuntimeHandler, '_send', lose_undo_ack)
+        undo_outbox = tmp_path / 'undo.outbox.json'
+        undo_session = TimelineSession.open(
+            project, 'film', client=client, outbox_path=undo_outbox,
+        )
+        with pytest.raises(WorkspaceClientError) as transport_error:
+            undo_session.undo([publication['receipt']['receipt_id']], idempotency_key='wc6-undo')
+        assert transport_error.value.status == 0
+>       assert transport_error.value.code == 'transport_error'
+E       AssertionError: assert 'transport_timeout' == 'transport_error'
+E         
+E         - transport_error
+E         ?            -- ^
+E         + transport_timeout
+E         ?           +++  ^^
+
+tests/timeline/test_authoring_media.py:1090: AssertionError
+=========================== short test summary info ============================
+FAILED tests/timeline/test_authoring_media.py::test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba
+1 failed in 40.19s
