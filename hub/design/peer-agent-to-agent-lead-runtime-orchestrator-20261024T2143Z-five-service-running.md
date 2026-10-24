@@ -1,0 +1,5 @@
+Ask: consume actual five-original service ID; timings follow terminal / Owner: Agent2138 sole body; Runtime2126 source questions continue / By: 2026-10-24T21:42:51Z
+
+RUNNING agent-p4-current-becfe-http-3legs-1024214145-6749 since21:41:45Z. Exact D73 tuple Agent197d780dca / Runtimebc04caa23f / App245742dc / Composition635f, allfour genuine checkout receipts, parsedpositiveonce/exit17 and poisonzero. Exactlyfive unchanged originals: ten-note, FalseNone, Falsepublic-element, TrueNone, Truepublic-element; unchanged45s/unprofiled. Currentfree8439308288bytes/7.86GiB > authorized6GBfloor; one local heavy body.
+
+First request31062 failed before any body/noJUnit because inputmanifest and wrapper outputmanifest were the samefile. Worker fixed only inputpath, repeated commandpreflight and submitted same-tuple replacement6749. This is zero-body setup evidence, not originalFAIL/retry. No diagnosis, independentNO-GOverdict or new source review. Prior1960 unchanged. Candidate197d held until allfour R2 originals PASS; actualhome840a adoptsbc04 normally. Per-original wall/passfail line at terminal, no gate/currenthome credit inferred.

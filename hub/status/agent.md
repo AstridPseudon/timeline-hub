@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T21:40:58Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 3 | status age 2m -->
-# agent board, 2026-10-24T21:38:46Z
+<!-- agent | 2026-10-24T21:43:47Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 3 | status age 1m -->
+# agent board, 2026-10-24T21:42:51Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -137,17 +137,19 @@
 | U4a D83 schema setup | Adopt qualified schema setup home | Luna | Normal tools passed | merged | agt-U4a-D83-schema-setup-adopt-2038 | Lock-only adoption merged b2cb; all 15 mappings and schema/config unchanged. Reviewed validator blobs exact. Originals held for D83 consolidation. | b2cb12cf3a |
 | U4a D83 history | Adopt merged history successor | Luna | Normal merge complete | merged | agt-U4a-D83-history-adopt-2051 | Actual5fc1 adopts security-PASS dc55 normally. Lock only; all15 mappings/schema/config and tool checks PASS. Publication hold resolved. | 5fc1f300fb |
 | U4a D83 metadata | Adopt released Runtime metadata fix | Luna | Normal home merge complete | merged | agt-U4a-D83-metadata-adopt-2131 | Lock only; all15 mappings, vendor/artifact/diff checks PASS. Normal home840a verified. | 840a58a70a |
-| P4 / R2 bc04 five | Run five timeout originals once | Luna / Service | Four exact checkouts and preflight | doing | agt-P4-R2-D83-five-bc04-2138 | Assigned21:38; unchanged45s, unprofiled, one body. D74a6GB floor clears obsolete8.5GB hold. | Candidate197d / Runtimebc04 |
+| P4 / R2 bc04 five | Run five timeout originals once | Luna / Service | Four exact checkouts and preflight | doing | agt-P4-R2-D83-five-bc04-2138 | Service6749 running; five originals,45s unchanged. Earlier31062 zero-body wrapper error retained; same-tuple replacement only. | Candidate197d / Runtimebc04 |
 Integration: Agent840a58a70a normally adopts released Runtimebc04caa23f. All15 canonical files, schema867f and config4d74 unchanged. Held candidate197d carries exact reviewed donor2 plus identical normal lock; fresh99 controls pass.
 core open: Five historical scopes remain unqualified at current home. Prior1960 has three actual failures and two True candidate-only passes. Allfour R2 originals must pass before normal candidate merge.
 regressions: Named D71/D72 repairs retain their exact qualified scopes. D77a source controls pass; genuine installed render remains D59 cut-blocking.
-Gates: Prior1960 NO-GO: CLI/sheet2.994s PASS; ten-note45.439s FAIL; rerun9.162s PASS; False45.008s/45.007s FAIL; True42.153s/42.608s PASS. Current five onbc04 preparing; all budgets unchanged.
-Tuple: New SOURCE-CANDIDATE Agent197d / Runtimebc04; App/Composition captured once by batch2138 with genuine checkout receipts. Actual home840a lacks held PARAM donor. No final/current-home proof inferred.
+Gates: Prior1960 NO-GO: CLI/sheet2.994s PASS; ten-note45.439s FAIL; rerun9.162s PASS; False45.008s/45.007s FAIL; True42.153s/42.608s PASS. Current five onbc04 RUNNING as6749; all budgets unchanged.
+Tuple: New SOURCE-CANDIDATE Agent197d / Runtimebc04; App245742dc / Composition635f captured once with genuine checkout receipts. Actual home840a lacks held PARAM donor. No final/current-home proof inferred.
 Evidence: [Prior1960 XML](../../design/handoff-agt-D83-1960-seven.xml), [carrier report](../../workers/agt-R2-D83-metadata-carrier-2131/report.md), [adoption](../../workers/agt-U4a-D83-metadata-adopt-2131/report.md). New batch evidence stays in worker2138 until copied byte-exact.
 D69/D72: Exact47 restored and178 audited retained; named family proofs complete. Upstream924 full remains FAIL12396PASS91FAIL14errors. Exact276, D67env and bothD23 deferrals remain separate.
 Admission: All historical safety/access/cleanup refusals remain stopped. No denied pin release, fabricated installed tuple, child/Farm/schema route. E2/D79 paused untilZIP.
-Disk: Measured8897818624 bytes,8.29GiB. D74a explicit21:34 ruling allows this critical batch at6GB; no disk blocker. Old dirtyG2 and refused pins untouched; no eligible ended clean Agent worktree known.
+Disk: Measured8439308288 bytes,7.86GiB. Sweep3 removed0; compact packed0 and gzipped7 old logs. D74a explicit21:34 ruling allows this critical batch at6GB; no disk blocker. Old dirtyG2 and refused pins untouched; no eligible ended clean Agent worktree known.
 Blockers: Final cut — final pinned P1–P5/core and genuine installed render remain D59 gated. Existing gate GO qualifies only its recorded tuple.
-Next ready: Batch2138 genuine fourpins and positiveonce/poisonzero -> submit ONE five-original service request. NO-GO automatic timing summary; GO normal candidate merge and one independent verdict. No new diagnosis.
+Next ready: Same-ID6749 terminal -> exact per-original timing line and authentic evidence publication. NO-GO automatic timing summary; GO normal candidate merge and one independent verdict. No new diagnosis.
 live 1 / cap 4; ready-undispatched 0. Batch2138 is the only active local worker/heavy request owner. No E/D79 follow-up beforeZIP.
 Inbox consumed through 1098305 bytes. Pass 2026-10-24T21:38:46Z: PLAN/common/header and Runtime board read. ORCH21:34 floor ruling applied; source prep2131 complete, adoption normally merged840a. Assigned one fresh five-case batch2138 immediately;1960 remains immutable NO-GO.
+
+Current pass 2026-10-24T21:42:51Z: Service agent-p4-current-becfe-http-3legs-1024214145-6749 running exactfive. Previous31062 zero bodies/noXML: wrapper copied inputmanifest to itself; worker fixed inputpath, reran parsedpositive/poison and submitted same-tuple replacement. No meaningful original duplicated.
