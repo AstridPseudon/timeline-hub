@@ -696,6 +696,15 @@ function mediaAssetId(row: Record<string, unknown>): string | null {
   return typeof value === 'string' && value.length > 0 ? value : null;
 }
 
+function mediaSelectionIdentity(registry: unknown, asset: string): { generationId: string; variantId: string } | null {
+  const entry = object(object(registry)?.assets)?.[asset];
+  const generationId = object(entry)?.generation_id ?? object(entry)?.generationId;
+  const variantId = object(entry)?.variant_id ?? object(entry)?.variantId;
+  return typeof generationId === 'string' && typeof variantId === 'string'
+    ? { generationId, variantId }
+    : null;
+}
+
 function mediaRowWithoutAsset(row: Record<string, unknown>): Record<string, unknown> {
   const result = structuredClone(row);
   delete result.asset;
@@ -747,31 +756,49 @@ async function sharedPopupMediaCommands(
   mediaProvider: PopupLocalSaveProvider,
 ): Promise<SharedPopupMediaCommands | null> {
   const parent = object(before.parent_revision.payload);
-  const occurrence = Array.isArray(parent?.occurrences)
-    ? parent.occurrences.find((value) => object(value)?.occurrence_id === occurrenceId)
-    : undefined;
-  const occurrenceRecord = object(occurrence);
+  const occurrences = Array.isArray(parent?.occurrences) ? parent.occurrences : [];
+  const matched = occurrences.filter((value) => object(value)?.occurrence_id === occurrenceId);
+  const occurrenceRecord = matched.length === 1 ? object(matched[0]) : null;
   if (!occurrenceRecord) throw new Error('Popup save has no unique physical occurrence binding');
-  const shot = before.shot_revisions.find((candidate) => candidate.shot_id === occurrenceRecord.shot_id
-    && candidate.revision_id === occurrenceRecord.shot_revision_id);
+  const owners = occurrences.map((value) => {
+    const row = object(value);
+    const shots = before.shot_revisions.filter((candidate) => candidate.shot_id === row?.shot_id
+      && candidate.revision_id === row?.shot_revision_id);
+    if (shots.length !== 1) throw new Error('Popup save has no unique child shot revision binding');
+    const shot = shots[0];
+    const pins = before.dependency_manifest.shots.filter((pin) => pin.revision_id === shot.revision_id);
+    if (pins.length !== 1 || pins[0].shot_id !== shot.shot_id
+      || pins[0].content_digest !== shot.content_digest
+      || pins[0].internal_timeline_revision_id !== shot.internal_timeline_revision_id
+      || (own(object(shot.payload), 'internal_timeline_revision_id')
+        && object(shot.payload)!.internal_timeline_revision_id !== shot.internal_timeline_revision_id)) {
+      throw new Error('Popup save has an inconsistent child shot pin');
+    }
+    return { row: row!, shot };
+  });
+  const shot = owners.find((owner) => owner.row === occurrenceRecord)?.shot;
   if (!shot) throw new Error('Popup save has no unique child shot revision binding');
   const internal = before.internal_timeline_revisions.filter((candidate) => (
     candidate.revision_id === shot.internal_timeline_revision_id));
   if (internal.length !== 1) throw new Error('Popup save has no unique child timeline root binding');
+  const pins = before.dependency_manifest.internal_timelines.filter((pin) => pin.revision_id === internal[0].revision_id);
+  if (pins.length !== 1 || pins[0].timeline_id !== internal[0].timeline_id
+    || pins[0].content_digest !== internal[0].content_digest) {
+    throw new Error('Popup save has an inconsistent child timeline pin');
+  }
   const shared = Array.isArray(parent?.occurrences) && parent.occurrences.filter((value) => {
     const row = object(value);
     return row?.shot_revision_id !== undefined && before.shot_revisions.some((candidate) => (
       candidate.shot_id === row?.shot_id && candidate.revision_id === row?.shot_revision_id
         && candidate.internal_timeline_revision_id === internal[0].revision_id));
   }).length > 1;
-  if (!shared) return null;
-
   const displayed = composition.occurrences.find((candidate) => candidate.occurrenceId === occurrenceId);
   if (!displayed || displayed.shotId !== shot.shot_id || displayed.revisionId !== shot.revision_id
-    || object(displayed.revision.internal_timeline_revision)?.revision_id !== internal[0].revision_id) {
+    || object(displayed.revision.internal_timeline_revision)?.revision_id !== internal[0].revision_id
+    || object(displayed.revision.internal_timeline_revision)?.content_digest !== internal[0].content_digest) {
     throw new Error('Popup displayed occurrence differs from its verified physical closure pin');
   }
-  if (!mediaProvider.getProjectMediaSelection) {
+  if (shared && !mediaProvider.getProjectMediaSelection) {
     throw new Error('Popup occurrence isolation requires a registered per-occurrence fork before editing the shared image');
   }
   const rawTimeline = object(internal[0].payload);
@@ -783,28 +810,39 @@ async function sharedPopupMediaCommands(
   const added = [...nextRows.entries()].filter(([id]) => !oldRows.has(id));
   const changed = [...nextRows.entries()].filter(([id, row]) => oldRows.has(id)
     && mediaAssetId(oldRows.get(id)!) !== mediaAssetId(row));
+  // An unshared child can use the same registered occurrence carrier as a
+  // shared child, but only for a genuine media birth. Any other edit remains
+  // on the existing document/patch path below.
+  if (!shared && (added.length !== 1 || changed.length !== 0)) return null;
   if (added.length > 1 || changed.length > 1 || (added.length === 0 && changed.length === 0)) {
     throw new Error('Shared popup edits require one occurrence media ADD or SWAP');
   }
-  const forkShotId = `shot-fork-${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`}`;
-  const fork: CommitRequest['commands'][number] = {
-    schema_version: 1, op: 'occurrence.fork', version: '1', select: `occurrence:${occurrenceId}`,
-    args: { shot_id: forkShotId }, intent: { ownership: 'occurrence' }, created: [`shot:${forkShotId}`],
-  };
+  const forkShotId = shared
+    ? `shot-fork-${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`}`
+    : null;
+  const fork = forkShotId ? {
+    schema_version: 1 as const, op: 'occurrence.fork', version: '1', select: `occurrence:${occurrenceId}`,
+    args: { shot_id: forkShotId },
+    intent: { ownership: 'occurrence' as const },
+    created: [`shot:${forkShotId}`],
+  } : null;
   if (added.length === 1) {
     const [id, row] = added[0];
     const asset = mediaAssetId(row);
     if (!asset) throw new Error('Shared popup media ADD has no stable asset identity');
+    if (!shared && !mediaSelectionIdentity(nextRegistry, asset)) return null;
     const media = await projectMediaSelection(mediaProvider, composition.projectId, asset, nextRegistry);
     const addRow = mediaRowWithoutAsset(row);
     addRow.id = id;
     addRow.asset = asset;
-    return { commands: [fork, {
+    const add: CommitRequest['commands'][number] = {
       schema_version: 1, op: 'occurrence.add-media', version: '1', select: `occurrence:${occurrenceId}`,
       args: { row: toOutboxJson(addRow), media }, intent: { ownership: 'occurrence' },
-    }] };
+    };
+    return { commands: fork ? [fork, add] : [add] };
   }
   const [id, row] = changed[0];
+  if (!fork) throw new Error('Shared popup media requires the occurrence fork carrier');
   const old = oldRows.get(id)!;
   const oldAsset = mediaAssetId(old);
   const newAsset = mediaAssetId(row);
