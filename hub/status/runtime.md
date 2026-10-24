@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T15:58:23Z | dispatcher heartbeat 14s | live 2 (sol 1, luna 1, other 0) | busy30 10 | status age 1m -->
-# runtime board, 2026-10-24T15:56:52Z
+<!-- main | 2026-10-24T16:01:18Z | dispatcher heartbeat 10s | live 1 (sol 1, luna 0, other 0) | busy30 7 | status age 0m -->
+# runtime board, 2026-10-24T16:01:15Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -88,19 +88,19 @@
 | R-D62-integrated-proof | Prepare exact central HTTP proof | Luna | D66 removes separate stage | gated:D66-superseded | Prep1512; corrected1517 | No separate D62 integrated stage. Author plus security and Agent actual-home six originals suffice; cut covers remaining proof. | Evidence only |
 | R-D62-http-route | Add durable central proof output | Luna | D66 removes separate stage | merged | rt-R-D62-http-route-1524 | Installed one isolated row, outside bytes and historical XML exact. No body run; unused under D66. | Installed config only |
 | R-D62-joined-producer | Join mode, forward auth and wire | Luna | Independent security PASS | merged | Join1503; security1511 PASS | Actual8b32 tree equals reviewed e02f exactly; paired source412PASS. Agent owns six actual-home originals. [Review](../../design/rt-R-D62-security-review-1511.md) | 8b32cacea / e02f |
-| R-inverse-sequential | Resolve retained inverse input refusal | HARD Sol | Actual original1540 failure | doing | rt-R-inverse-sequential-sol-1557 | Five of six originals pass. One inverse sequential-input failure delegated; cause pending parallel Agent wholepath1546. | Actual8b32 unchanged |
-| R-recorder-abi-authority | Persist accepted recorder mode | Sol / Luna | D62 source security PASS | merged | Author1450; security1511 | Actual8b32 tree equals reviewed source; immutable mode/history tamper guards and paired412PASS. Agent home proof remains Agent-owned. | 8b32cacea / 8825 |
-| R-forward-created-authority | Authenticate forward allocation claims | Sol / Luna | D62 source security PASS | merged | Author1450; security1511 | Actual8b32 tree equals reviewed source; exact allocation/read/owner/root-write and explicit claim guards PASS. Deferred producer probe visible. | 8b32cacea / 9433 |
-| R0-D61-history-wire | Generate optional history ABI field | Luna | Joined source security PASS | merged | Wire1454; security1511 | Actual8b32 has canonical15 exact reviewed6e8. Schema867f and optional enum1/2 published; normal consumers ready. | 8b32cacea / 6e8 |
+| R-inverse-timeline-root | Resolve retained inverse input refusal | HARD Sol | Actual original1540 failure | doing | rt-R-inverse-sequential-sol-1557 | Five of six originals pass. Agent1546 confirms images excludes timeline root; Sol1557 owns exact authenticated compatibility fix. | Actual8b32 unchanged |
+| R-recorder-abi-authority | Persist accepted recorder mode | Sol / Luna | D62 source security PASS | merged | Author1450; security1511 | Actual8b32 security412PASS; actual Agent5777 four fork originals and54 strict controls PASS. Final cut proof remains pending. | 8b32cacea / 8825 |
+| R-forward-created-authority | Authenticate forward allocation claims | Sol / Luna | D62 source security PASS | merged | Author1450; security1511 | Actual8b32 security412PASS; actual Agent5777 structural original PASS. Retained restore original now reaches separate timeline-root inverse defect. | 8b32cacea / 9433 |
+| R0-D61-history-wire | Generate optional history ABI field | Luna | Joined source security PASS | merged | Wire1454; security1511 | Actual8b32 canonical15 exact6e8; schema867f. Agent5777 and App95cf now normally adopted; no regeneration remains. | 8b32cacea / 6e8 |
 | R-recorder-native-custody | Review eight native omission captures | Luna | D62 source scope decided | merged | Review1445 PASS source cause | Eight actual accepts verified. D62 defers submit completeness; no new custody seam. [Review](../../design/rt-R-recorder-native-custody-review-1445.md) | Evidence only |
 | R-recorder-abi-security | Review exact coverage authority design | Luna | Design assessment complete | merged | Luna1422 design only | Validated request can select regime; exact full coverage must be proved. Final source review remains required. [Design](../../design/rt-R-recorder-abi-security-design-1422.md) | Base438 source facts |
 | FREEZE-App-compatibility | Qualify accepted installer schema | App Luna | D66 waits D62 regeneration | gated:D62 | App1507; D65 successor | Confirmed caused regression19256PASS/1FAIL. Pin actual tuple ONCE after D62; strict guard unchanged, NodeNOTRUN. | App be98 / Runtime e68 |
 | FREEZE-current-P2-P3 | Qualify current original App journeys | App Sol | D66 plain launch and P1 control | blocked:app | App plain-launch owner | Historical12541/1689 FAIL before bodies. D66 starts normal stack, unchanged originals and plain run manifest; P1 then P2/P3 parallel. | App be98, new tuple pending |
-| FREEZE | Reach final tuple cut | Runtime manager | D59 cut with D66 and D67 | doing | Runtime producer done; Agent/App owners | Runtime0core/0regression; Agent6 outcomes; App9 gates plus1 installer regression. Cut requires current P2/P3 PASS. | Runtime8b32 |
+| FREEZE | Reach final tuple cut | Runtime manager | D59 cut with D66 and D67 | doing | Runtime Sol1557; Agent/App owners | Runtime1core/0regression; Agent2core; App9 gates plus1 installer regression. Cut requires current P2/P3 PASS. | Runtime8b32 |
 | F-final | Main delivery build and ZIP | Luna | D59 cut and final proofs | doing | Builder1233; docs1229; service1244 | Builder and v2 prose installed. Durable service helper repair active; live-main refresh and final build wait qualified cut and proofs. | No delivery artifact |
 | F-final-builder | Put verifier clones in TMPDIR | Luna / Luna | Exact installed proof complete | merged | Review1229; installed1233 PASS | f25d atomically installed0755, old script backed up. Installed smoke and integrity checks passed; no real build. | f25dfab1 installed |
 | F-final-D68-assess | Check fresh upstream packaging | Luna | Source assessment complete | merged | rt-F-final-D68-assess-1543 | Stale builder hash found. Proposed refresh moves frozen integration; correction assigned1546. [Facts](../../workers/rt-F-final-D68-assess-1543/evidence/source-assessment.md) | Evidence only |
-| F-final-D68 | Preserve fresh upstream in staging | Luna | Delivery integrity review | review | Author1546; review1554 | Candidate fda preserves owner additions in synthetic controls; exact integrity and final caller review active. No install or real build. | fda54be4 held |
+| F-final-D68 | Preserve fresh upstream in staging | Luna | Source integrity reviewed | doing | Author1546; review1554; wire1601 | Exact fda independent PASS preserves both deltas; durable source and controls retained. Production caller wiring1601 active, no install. | fda54be4 held |
 | F-final-D67 | Document genuine post-install D13 check | Luna | Exact source and installed render PASS | merged | Inputs1528; install1533 PASS | Installed README13env/7keys and original selector; D62 known gap in both docs. Actual renderer and exact-byte/mode checks PASS. | Installed docs |
 | F-final-D65 | Include authentic manifest release order | Luna | Actual installed renderer passed | merged | rt-F-final-D65-complete-1546 | Installed f992 README and8cda notes; actual command and vendor rebind precondition. D67 appendix exact. [Proof](../../design/rt-F-final-D65-complete-1546.md) | Installed docs |
 | F-final-docs | Refresh v1 delivery prose | Luna | Installed hashes and rendering passed | merged | Author1226; install1229 PASS | Two exact v2 documents installed atomically; predecessors backed up. Final tuple, gates and ZIP remain pending. | ef414 / 403384 installed |
@@ -125,7 +125,7 @@
 
 Runtime producer: 8b32cacea617c6d45241d7db90b34893a06d3026, tree a095ecbe8b01b0ff0a7825c4c19bbf41120ec3ed. Normal merge receipt is complete; actual tree equals security-reviewed e02f exactly. Independent1511 passed412 paired-source cases, source hashes, original bodies, static and generation checks. [Review](../../design/rt-R-D62-security-review-1511.md).
 
-core open: 1 provisional delegated inverse cause, source attribution pending. Actual Agent5777/Runtime8b32 closes five of six originals; retained inverse sequential-input refusal has Sol1557 plus Agent independent1546. Final Runtime core suite remains required.
+core open: 1 Runtime inverse timeline-root compatibility defect, independently attributed by Agent1546. Sol1557 owns correction. Actual Agent5777/Runtime8b32 closes five of six originals;54 strict controls pass. Final Runtime core suite remains required.
 regressions: 0 confirmed Runtime originals. Historical36closed/0open/0unaccounted remains scoped accounting, not a new full-suite PASS.
 
 FREEZE D59/D66: Runtime producer8b32 is home; one inverse source cause now owned. Agent5777 actual-six5PASS1FAIL;54strictPASS. App normal14 mapping rebind1539 and once-only manifest pin remain owned. App9 gate cases and1 installer regression remain open. No cut, finalGO or artifact.
@@ -137,8 +137,8 @@ Venues: P1/P2/P3 on App service with unchanged originals and App verdicts; P4 on
 D65 delivery: owner merges Runtime, then Agent, runs authentic App update-manifest with generated digest equality, then merges App. Command1539 and App tool home daa6 received; Runtime docs1546 installed after actual source/renderer checks, including normal vendor rebind precondition. D67 exact13env/7key appendix1533 stays installed. All final outcomes PENDING.
 
 Blockers: Runtime / Agent — actual six1540 is5PASS1FAIL. Sol1557 owns inverse stage-input cause; Agent1546 independently traces whole path. Separate empty-create original is Agent G4-owned.
-Blockers: App — D66 plain launch/P1 control precedes current P2/P3 parallel. Historical12541/1689 remain preflightFAIL/all originalsNOTRUN.
-Blockers: App manifest — fix confirmed installer regression once against new8b32/schema867f and actual Agent after normal adoption; strict guard retained.
+Blockers: App — plain launch green; sole P1 control13564 active on current sources. P2/P3 parallel immediately on green. Historical12541/1689 remain preflight-only FAIL.
+Blockers: App manifest — actual App95cf and Agent5777 adopt8b32; once-only pin1545 authored, new updater fixture1548 corrects stale4118. Strict schema regression stays visible.
 
 Blockers: Final delivery — cut needs every active lane0core/0regressions and current P2/P3PASS, then required final proofs/build/ZIP.
 Next ready: complete D65 docs1546 and D68 isolated packaging1546; consume normal Agent/App adoptions and Agent actual-home six outcomes. No unassigned local ready row.
@@ -166,3 +166,7 @@ Pass 2026-10-24T15:51:27Z: D65 docs1546 actual install/renderer/diff/appendix ch
 Pass 2026-10-24T15:54:21Z: core1550 source ready83 Python files+TS,122 new-file nodes collected, no bodies or install. D68 candidatefda author synthetic preservation controlsPASS; independent delivery-integrity review1554 dispatched immediately. Actual wrappers and artifact installation remain held.
 
 Pass 2026-10-24T15:56:52Z: actual-six1540 closes five originals, leaves inverse sequential-input refusal; HARD Sol1557 dispatched on8b32 immediately. Agent wholepath1546 independent in parallel. Separate empty-timeline failure stays Agent G4-owned. Runtime provisional core1, no cut or waiver. App D66 plain P1 actual13564 active.
+
+Pass 2026-10-24T15:58:56Z: independent Agent wholepath1546 confirms Runtime images excludes legitimate timeline.restore closure-root write. Sol1557 alreadyactive; no Agent emitter edit or new author. Provisional attribution becomes Runtime core1. App actual P1 control13564 active, D65 pin fixture1548 owned.
+
+Pass 2026-10-24T16:01:15Z: D68 exactfda independent1554PASS; real final caller wiring remains unproved, Luna1601 assigned immediately. No realbuild/install until cut. ORCH15:59 new row R-inverse-timeline-root is existing Sol1557 continuation, now exact rowID; no duplicate author.

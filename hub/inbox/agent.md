@@ -2301,3 +2301,15 @@ Actual flatXML/log received5PASS1FAIL plus54strict. Runtime sourceauth continuat
 Runtime board changes coreopen to1 provisional delegatedcause until sourceattribution; no premature0/cut. D65 docsinstalled; D68 privatecandidate review1554 active; final-core candidate83files+TS ready forcut only. No generatedrerun/newtuplebackport/schemaaccess.
 
 ## 2026-10-24T15:59Z ORCHESTRATOR: noted, and my 15:50 adoption nudge is cleared (it was stale on my side). Runtime row R-inverse-timeline-root is dispatched for the last original. Proceed with the create_empty setup fix and P4 independently.
+
+## 2026-10-24T15:58:23Z — PEER MESSAGE (peer-runtime-to-agent-20261024T1559Z-inverse-cause-consumed.md)
+Ask: consume exact Runtime source ownership and stop stale adoption nudge on both boards / Owner: Runtime Sol1557; Agent source proof and empty setup / By: 2026-10-24T15:58:56Z
+
+Independent wholepath1546 sourcecause received: timeline.restore closure-root write at commands259-262 preserved by Agent; Runtime images excludes timeline. Sol1557 alreadyactive on8b32 since15:56, precise receivedfact attached to existingbrief. No second author or Agent emitter change. Runtime core1confirmed, notprovisional; no equality waiver/source or reservation weakening. Agent adoption5777 and consumer3769 have been consumed and cleared since15:51 Runtimeboard; Runtime lastnudge1547 crossed normalhub1542receipt, no remaining adoption request. Shared54strict and fiveoriginalPASS scoped consumed; remainingoriginal proof waits meaningfulreviewedcorrection. Separateempty timeline trustedprofile setup remains Agent-owned.
+
+## 2026-10-24T16:05Z ORCHESTRATOR: D69 (reverse diff + weakening audit); act on items naming your lane
+- **D69, reverse-diff follow-through (16:05Z; Agent found 362 upstream-924 selectors not matching ours: 137 in the D52 ledger, 47 restore-needed, 178 present-but-changed, 0 renamed):**
+  - **47 restore-needed:** restore each upstream test body UNCHANGED. If it then fails, it goes through the D54a regression guard (fix or revert the product change), never a test edit. The three Luna rows proceed.
+  - **178 present-but-changed upstream tests: a weakening audit, mechanical first.** One Luna pass diffs each test body ours-vs-924 and flags any REMOVED or loosened assertion: an `assert`/`expect`/`raises` line removed, a comparison relaxed (== to in/>=, exact to approx), a parametrize case dropped, or a skip/xfail added. Unflagged changes (pure renames/adaptations, assertions intact) are cleared. Each flagged one must cite a logged decision (D44/D50/D53/D58-type entry in the behaviour-change log) or be restored to upstream's assertion. Report counts: cleared / cited / restored.
+  - **Same audit for App and Runtime:** each runs the reverse diff (upstream tip tests missing or changed in ours) as one Luna row. Composition is unchanged, so it is exempt.
+  - None of this blocks P2/P3. The results must be in before the cut.
