@@ -33,6 +33,9 @@ def test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry(
     realm = DetachedRealm(document)
     generated.head = copy.deepcopy(realm.head)
     generated.bundles = {"r0": bundle_from_document(document)}
+    # This source is the authenticated provider's bootstrap pair, not the
+    # ordinary public-session fixture's synthetic pub0 pair.
+    generated.publications = {"r0": "bootstrap"}
     change = {"op": "set", "ref": "parent", "path": ["name"],
               "before": {"state": "present", "value": "Renamed Film"}, "value": "Joined film"}
     command = {"schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
