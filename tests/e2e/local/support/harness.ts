@@ -11,7 +11,7 @@
  */
 import { spawn, execFileSync, type ChildProcess } from 'node:child_process';
 import { createHash, randomBytes, randomUUID, X509Certificate } from 'node:crypto';
-import { accessSync, constants as fsConstants, createReadStream, existsSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { accessSync, chmodSync, constants as fsConstants, createReadStream, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createServer as createHttpsServer, type Server as HttpsServer } from 'node:https';
 import { request as httpRequest, type IncomingHttpHeaders } from 'node:http';
 import { createServer as createNetServer } from 'node:net';
@@ -48,6 +48,9 @@ export const BIG_DOWNLOAD_BYTES = 60 * 1024 * 1024;
 export const BIG_UPLOAD_BYTES = 200 * 1024 * 1024;
 /** Keep the App's reference sibling clear of the retained gesture moves. */
 export const THREE_PRODUCTS_REFERENCE_AT = 15;
+const P2_PHASE_BOOTSTRAP_DIR = path.resolve(REPO_ROOT, 'scripts/testing');
+const P2_PHASE_CAPTURE_HELPER = 'tests/helpers/p2_commit_phase_capture.py';
+export const P2_PHASE_CAPTURE_FILE = 'p2-commit-phase.jsonl';
 
 /** Selected-parameter child processes receive a private credential path, never its bearer value. */
 export function selectedParamCliEnv(base: NodeJS.ProcessEnv, credentialFile: string): NodeJS.ProcessEnv {
@@ -80,6 +83,46 @@ export function runtimePython(): string | null {
   }
   const python = path.join(RUNTIME_CHECKOUT, '.venv', 'bin', 'python');
   return existsSync(python) ? python : null;
+}
+
+export interface P2CommitPhaseCaptureConfig {
+  directory: string;
+  sink: string;
+  helper: string;
+}
+
+/** Resolve the private, bounded observer destination selected by D66. */
+export function p2CommitPhaseCaptureConfig(runtimeLogDir: string | undefined, launchOrdinal = 1): P2CommitPhaseCaptureConfig | null {
+  const raw = runtimeLogDir?.trim();
+  if (!raw) return null;
+  if (!path.isAbsolute(raw)) throw new Error('D66 Runtime log directory must be an absolute path under TMPDIR');
+  const directory = path.resolve(raw);
+  const temporary = path.resolve(tmpdir());
+  const relative = path.relative(temporary, directory);
+  if (!relative || relative.startsWith('..') || path.isAbsolute(relative)) throw new Error('D66 Runtime log directory must be a private child of TMPDIR');
+  if (!Number.isInteger(launchOrdinal) || launchOrdinal < 1) throw new Error('P2 Runtime phase launch ordinal must be positive');
+  const suffix = launchOrdinal === 1 ? '' : `-${launchOrdinal}`;
+  return {
+    directory,
+    sink: path.join(directory, `${P2_PHASE_CAPTURE_FILE.slice(0, -'.jsonl'.length)}${suffix}.jsonl`),
+    helper: path.join(RUNTIME_CHECKOUT, P2_PHASE_CAPTURE_HELPER),
+  };
+}
+
+function prepareP2CommitPhaseCapture(runtimeLogDir: string | undefined): string | undefined {
+  const config = p2CommitPhaseCaptureConfig(runtimeLogDir);
+  if (!config) return undefined;
+  mkdirSync(config.directory, { recursive: true, mode: 0o700 });
+  const directory = lstatSync(config.directory);
+  if (!directory.isDirectory() || directory.isSymbolicLink()) throw new Error(`D66 Runtime log directory is not a private directory: ${config.directory}`);
+  chmodSync(config.directory, 0o700);
+  try {
+    const sink = lstatSync(config.sink);
+    throw new Error(`P2 Runtime phase sink already exists: ${config.sink} (${sink.isSymbolicLink() ? 'symlink' : 'file'})`);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+  }
+  return config.directory;
 }
 
 /** Why the harness cannot run here, or null when it can. */
@@ -508,6 +551,8 @@ export class DirectHarness {
   private timelineAuthoring = false;
   private authoringPython?: string;
   private runtimeLifecycle?: RuntimeLifecycleObservation;
+  private phaseCaptureDirectory?: string;
+  private phaseCaptureLaunchOrdinal = 0;
   private seedInitialized = false;
   private seedHead?: { revisionId: string; publicationId: string };
 
@@ -580,6 +625,7 @@ export class DirectHarness {
       } else {
         mkdirSync(this.supportDir, { recursive: true, mode: 0o700 });
         this.realmId = await this.createRealm();
+        this.phaseCaptureDirectory = prepareP2CommitPhaseCapture(process.env.D66_RUNTIME_LOG_DIR);
         await this.startRuntime();
         // The door listens from the start and answers `runtime_unavailable` until the product credential exists.
         this.productToken = await this.provisionCredential(PRODUCT_ACTOR, path.basename(this.credentialPath));
@@ -594,9 +640,18 @@ export class DirectHarness {
 
   // -- Runtime -------------------------------------------------------------------------------
 
-  private runtimeEnv(): NodeJS.ProcessEnv {
+  private runtimeEnv(captureSink?: string): NodeJS.ProcessEnv {
     const agent = path.resolve(process.env.ASTRID_CHECKOUT ?? path.join(REPO_ROOT, '..', 'astrid-agent'));
-    return { PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1', PYTHONPATH: [RUNTIME_CHECKOUT, agent].join(path.delimiter) };
+    const env: NodeJS.ProcessEnv = { PYTHONDONTWRITEBYTECODE: '1', PYTHONUNBUFFERED: '1', PYTHONPATH: [RUNTIME_CHECKOUT, agent].join(path.delimiter) };
+    if (captureSink) {
+      const config = p2CommitPhaseCaptureConfig(this.phaseCaptureDirectory);
+      if (!config) throw new Error('P2 Runtime phase capture sink requested without its private directory');
+      env.PYTHONPATH = [P2_PHASE_BOOTSTRAP_DIR, RUNTIME_CHECKOUT, agent].join(path.delimiter);
+      env.ASTRID_P2_COMMIT_PHASE_CAPTURE = '1';
+      env.ASTRID_P2_COMMIT_PHASE_CAPTURE_SINK = captureSink;
+      env.ASTRID_P2_COMMIT_PHASE_CAPTURE_HELPER = config.helper;
+    }
+    return env;
   }
 
   /** Health identifies the running instance; the authenticated realm route identifies its realm. */
@@ -638,11 +693,17 @@ export class DirectHarness {
       startedAt: timestamp(), launchInterpreter: interpreter, launchModule: 'runtime_protocol.cli', launchProfile: profile,
     };
     this.runtimeLifecycle = lifecycle;
+    let captureSink: string | undefined;
+    if (this.timelineAuthoring && this.phaseCaptureDirectory) {
+      this.phaseCaptureLaunchOrdinal += 1;
+      const config = p2CommitPhaseCaptureConfig(this.phaseCaptureDirectory, this.phaseCaptureLaunchOrdinal);
+      captureSink = config?.sink;
+    }
     let managed: Managed;
     try {
       managed = spawnGroup(interpreter, ['-m', 'runtime_protocol.cli', 'start', '--root', this.realmDir, '--support-root', this.supportDir, '--port', String(port), '--display-name', 'Direct Journey',
       '--door-origin', this.origin, '--door-port', String(this.doorPort), '--door-credential-file', this.credentialPath, '--door-audit-log', this.auditPath,
-      ...(this.timelineAuthoring ? ['--authoring-profile', 'astrid'] : [])], { cwd: this.tmp, env: this.runtimeEnv() });
+      ...(this.timelineAuthoring ? ['--authoring-profile', 'astrid'] : [])], { cwd: this.tmp, env: this.runtimeEnv(captureSink) });
     } catch {
       lifecycle.failure = { code: 'startup_failed', class: 'startup', stage: 'spawn' };
       throw new Error('Runtime start failed');
