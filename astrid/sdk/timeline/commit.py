@@ -938,6 +938,7 @@ class RuntimeCommitService:
         from astrid.sdk.timeline._commit_patch import inverse_address_resolver, rebase_patch
         from astrid.sdk.timeline._step_undo import check_later_steps, select_inverse_records
         from astrid.sdk.timeline.commands import CommandError, execute
+        from astrid.sdk.timeline.native_media_admission import capture_media_admissions
         from astrid.sdk.timeline.producer import capture_producer
         from astrid.sdk.timeline.rebase import replay
 
@@ -957,6 +958,7 @@ class RuntimeCommitService:
                 if call.get('op') == 'timeline.inverse' and isinstance(call.get('args'), dict):
                     call['args'].pop('steps', None)
                 validate_command(call)
+            verified_media.extend(capture_media_admissions(port, calls))
             verified_producer = capture_producer(port, request)
             for command_index, call in enumerate(calls):
                 if call['op'] == 'text-binding.set' and 'text' in call['args']:

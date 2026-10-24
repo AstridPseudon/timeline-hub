@@ -310,6 +310,10 @@ def verify_media(ctx, ref, before, after):
     source = ctx.state.bundle['source_mapping']['_runtime_document']
     allowed = {pin['media_id'] for pin in source['dependency_manifest']['media']}
     allowed.update(row.get('selection', {}).get('object_id') for row in ctx.verified_media)
+    allowed.update(row['object_id'] for row in ctx.verified_media
+                   if row.get('pin') == {'media_id': row.get('object_id'),
+                                         'content_digest': row.get('object_id')}
+                   and isinstance(row.get('object_id'), str))
     if media(after) - media(before) - allowed:
         raise CommandError('patch references media outside Runtime-verified inputs', kind='dependency_changed', ref=ref)
 

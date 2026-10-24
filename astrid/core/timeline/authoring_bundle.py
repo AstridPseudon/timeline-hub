@@ -42,16 +42,27 @@ class UnsupportedAuthoringEditError(AuthoringBundleError):
 
 @runtime_checkable
 class AuthoringCandidateWriter(Protocol):
-    """The existing Runtime publication port consumed by candidate commits."""
+    """Existing authenticated Runtime reads and the canonical commit port."""
 
-    def publish_parent_composition(
+    def commit_timeline(
         self,
         project_id: str,
         timeline_id: str,
-        publication: Mapping[str, Any],
+        body: Mapping[str, Any],
         *,
         idempotency_key: str,
     ) -> Any: ...
+
+    def list_timeline_commits(self, project_id: str, timeline_id: str, *, cursor: str | None = None,
+                              limit: int = 50) -> Any: ...
+
+    def get_project_parent_composition_revision(self, project_id: str, timeline_id: str, revision: str) -> Any: ...
+
+    def get_project_shot_revision(self, project_id: str, shot_id: str, revision: str) -> Any: ...
+
+    def get_project_timeline_revision(self, project_id: str, timeline_id: str, revision: str) -> Any: ...
+
+    def get_project_media_selection(self, project_id: str, selection: Mapping[str, Any]) -> Any: ...
 
 
 def authoring_contract() -> dict[str, Any]:
@@ -1826,7 +1837,7 @@ def publish_authoring_candidate(
     idempotency_key: str,
     media_imports: Sequence[Mapping[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    """Compile and publish through the existing atomic Runtime boundary.
+    """Compile and publish through Runtime's guarded v2 commit boundary.
 
     Optional ``media_imports`` are receipts from the existing catalog import
     helper, used only for feedback. Without them, catalog counts stay unknown.
@@ -1835,16 +1846,27 @@ def publish_authoring_candidate(
     if not isinstance(idempotency_key, str) or not idempotency_key:
         raise AuthoringBundleError("idempotency_key must be a non-empty string")
     compilation = compile_authoring_candidate(candidate)
+    from astrid.sdk.timeline.authoring_commit import authoring_commit_request, response_data
+
     from .authoring_feedback import authoring_change_summary, publication_feedback
 
     summary = authoring_change_summary(candidate, media_imports=media_imports)
     publication = compilation.publication
-    result = writer.publish_parent_composition(
+    request = authoring_commit_request(candidate, writer)
+    envelope = writer.commit_timeline(
         publication["project_id"],
         publication["timeline_id"],
-        _copy(dict(publication)),
+        request,
         idempotency_key=idempotency_key,
     )
+    result = response_data(envelope)
+    if result.get('status') not in ('accepted', 'merged'):
+        raise AuthoringBundleError(f"authoring commit was not accepted: {result}")
+    document = result['canonical_document']
+    result.update(new_head=result['accepted_revision_id'], old_head=result['previous_revision_id'],
+                  dependency_manifest=document['dependency_manifest'])
+    if isinstance(envelope, Mapping) and 'receipt' in envelope:
+        result['receipt'] = _copy(envelope['receipt'])
     return {
         "candidate_digest": compilation.candidate_digest,
         "identity_mapping": _copy(dict(compilation.identity_mapping)),
