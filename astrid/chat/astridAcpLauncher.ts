@@ -10,6 +10,7 @@ import {
 export const ASTRID_ACP_COMMAND = 'astrid';
 export const ASTRID_ACP_MODE_ARG = '--mode=acp';
 export const ASTRID_ACP_PROFILE_FILE_ARG = '--agent-profile-file';
+export const ASTRID_ACP_AGENT_CONTEXT_ARG = '--agent-context';
 export const ASTRID_ACP_AGENT_IDENTITY = 'astrid';
 /** Stable integration rules; the selected project itself is supplied per turn. */
 export const ASTRID_ACP_CONTEXT_SYSTEM_PROMPT = [
@@ -89,6 +90,57 @@ export function resolveAstridAcpSystemPromptFile(
   return requireAbsolute(path, 'system prompt file');
 }
 
+const AGENT_CONTEXT_TIMEOUT_MS = 5_000;
+const AGENT_CONTEXT_MAX_BYTES = 64 * 1024;
+
+/**
+ * Ask the installed Astrid command for the user's rendered saved preferences.
+ * The command always exits 0 and prints nothing when there is nothing to add.
+ * Any failure, timeout or oversized output yields an empty string; this never throws.
+ */
+export function resolveAstridAgentContext(
+  command = ASTRID_ACP_COMMAND,
+  env: Record<string, string | undefined> = {},
+): Promise<string> {
+  return new Promise<string>(resolve => {
+    try {
+      const runtime = (globalThis as { readonly process?: HostRuntime }).process;
+      const childProcess = runtime?.getBuiltinModule?.('node:child_process') as typeof import('node:child_process') | undefined;
+      if (typeof childProcess?.spawn !== 'function') return resolve('');
+      const chunks: Buffer[] = [];
+      let size = 0;
+      let settled = false;
+      const child = childProcess.spawn(command, [ASTRID_ACP_AGENT_CONTEXT_ARG], {
+        env: { ...(runtime?.env ?? {}), ...env } as NodeJS.ProcessEnv,
+        stdio: ['ignore', 'pipe', 'ignore'],
+      });
+      const finish = (value: string): void => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve(value);
+      };
+      const timer = setTimeout(() => {
+        try { child.kill('SIGKILL'); } catch { /* Already gone. */ }
+        finish('');
+      }, AGENT_CONTEXT_TIMEOUT_MS);
+      child.stdout?.on('data', (chunk: Buffer) => {
+        size += chunk.length;
+        if (size > AGENT_CONTEXT_MAX_BYTES) {
+          try { child.kill('SIGKILL'); } catch { /* Already gone. */ }
+          finish('');
+          return;
+        }
+        chunks.push(chunk);
+      });
+      child.on('error', () => finish(''));
+      child.on('close', code => finish(code === 0 ? Buffer.concat(chunks).toString('utf8').trim() : ''));
+    } catch {
+      resolve('');
+    }
+  });
+}
+
 type HostFileSystem = {
   readonly statSync?: (path: string) => { isFile: () => boolean };
 };
@@ -136,6 +188,8 @@ export type AstridAcpLauncherOptions = {
   readonly fileIsRegularFile?: (path: string) => boolean;
   /** Test seam for the read-only installed-profile lookup. */
   readonly profileFileForCommand?: (command: string, env?: Record<string, string | undefined>) => string;
+  /** Test seam for the user's saved-preferences block (`astrid --agent-context`); resolves to '' when absent. */
+  readonly agentContextForCommand?: (command: string, env?: Record<string, string | undefined>) => Promise<string>;
   /** Test seam; production uses AcpProcessHost's explicit Node spawner. */
   readonly spawnProcess?: AcpProcessSpawner;
 };

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { AcpProcessHost, AcpProcessHostError, type AcpProcessHostOptions } from './acpProcessHost.ts';
-import { ASTRID_ACP_COMMAND, ASTRID_ACP_CONTEXT_SYSTEM_PROMPT, resolveAstridAcpSystemPromptFile, type AstridAcpLauncherOptions } from './astridAcpLauncher.ts';
+import { ASTRID_ACP_COMMAND, ASTRID_ACP_CONTEXT_SYSTEM_PROMPT, resolveAstridAcpSystemPromptFile, resolveAstridAgentContext, type AstridAcpLauncherOptions } from './astridAcpLauncher.ts';
 import { sessionAgentId, type LocalAgentId } from './localAgents.ts';
 import { discoverLocalAgents, localAgentLaunch } from './astrid-local-agents.ts';
 
@@ -106,10 +106,13 @@ export async function createLocalAgentAcpProcessHost(agent: ExternalAgent, optio
   const launch = await localAgentLaunch(agent, env);
   const profilePath = (options.profileFileForCommand ?? resolveAstridAcpSystemPromptFile)(options.command ?? ASTRID_ACP_COMMAND, env);
   const profile = renderAgentProfile(readFileSync(profilePath, 'utf8'), profilePath);
+  // A fresh snapshot per host; failure or timeout means no preferences block, never a failed launch.
+  const preferences = (await (options.agentContextForCommand ?? resolveAstridAgentContext)(options.command ?? ASTRID_ACP_COMMAND, env).catch(() => '')).trim();
   return new LocalAgentAcpHost(agent, [
     profile,
     'You are the selected local agent in the Astrid App. Use Astrid skills and its installed CLI tools for creative work. Load the relevant Astrid SKILL.md when needed, as installed by `python3 -m astrid.skills.cli sync`. Do not run skill sync or change global agent settings during a chat.',
     options.env?.ASTRID_SYSTEM_PROMPT ?? ASTRID_ACP_CONTEXT_SYSTEM_PROMPT,
+    ...(preferences ? [preferences] : []),
   ].join('\n\n'), launch.cliPath, {
     command: launch.command, args: launch.args, cwd: options.cwd,
     env: { ...env, ...launch.env }, callbacks: options.callbacks,
