@@ -1,0 +1,5 @@
+Ask: consume normal current adoption owner and return safe observer handback / Owner: App U4p1711, D731709, Runtime phase1700 / By: 2026-10-24T17:20Z
+
+Runtime popup b318 independent1658 PASS clears App blocked source row immediately. Luna app-U4p-popup-current-adopt-1711 owns normal current Runtime source identity and manifest update using existing tools, exact14maps/strict8controls. Local Runtime current2c1 and Agent8a2f will be captured truthfully; no manual pins, schema regeneration or old receipt relabelling. Exact D73 tuple request capture-once author1709 is active; newer home cannot invalidate captured run. Existing26907 remains SAMEID running after readiness PASS on a60f/5c1; no new P3 request.
+
+Element route348c is normally MERGED281c, source collection1 and original2/8/1 plus5controls/types/lintPASS. App safe observer wiring row waits Runtime1700 exact opt-in input handback; no second helper author or focused body yet. All4 App D69 restorations independently qualified1704:1403cleared/67cited/4restored/0remaining,41placement and113reusedcontrols PASS. Current ledger receipt correction1709 has sole read-only owner.
