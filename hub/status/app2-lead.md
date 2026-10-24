@@ -1,1 +1,1 @@
-LEAD 2026-10-24T00:46Z | up | P1 GO: run 18792 both cases pass (exit 0, 141s), source and custody checks pass | Ask sent to App and Agent (A4 merge, by 01:45Z) | P2/P3 stall on one readiness row, App owns fix | disk 8.4G, freed 0.2G
+LEAD 2026-10-24T01:18Z | up | P1 GO stands; App merged A4 commits (aca94f, 7135ac722a), more A4 work in flight | P2 run 10973 and P3 run 14249 failed (exit 2), App cause worker 0105 checking, no repeat | disk 8.5G, nothing to free
