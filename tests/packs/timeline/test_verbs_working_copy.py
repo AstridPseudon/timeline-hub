@@ -521,6 +521,27 @@ def test_a_refusal_from_the_head_lookup_is_one_plain_line(tmp_path, monkeypatch,
     assert "unstructured" not in err
 
 
+@pytest.mark.parametrize("argv", [
+    ["checkout", "t", "--project", "P"],
+    ["status", "t", "--project", "P"],
+    ["publish", "t", "--project", "P", "-m", "x"],
+])
+def test_a_refusal_from_the_head_lookup_is_one_plain_line_upstream_publish(tmp_path, monkeypatch, capsys, argv):
+    from astrid.sdk.timeline import store
+
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "data"))
+
+    def refuse(project, timeline, client=None):
+        raise TimelineEditError("could not open timeline 't' in project 'P': no such timeline")
+
+    monkeypatch.setattr(store, "resolve_ids", refuse)
+    monkeypatch.setattr(tc, "resolve_ids", refuse)
+    assert _run(*argv) == 2  # the guarded exit code, not a bug report
+    err = capsys.readouterr().err
+    assert err.strip() == "could not open timeline 't' in project 'P': no such timeline"
+    assert "unstructured" not in err
+
+
 # ---- the conflict message names the editor and says how to start over ----------------------
 
 def test_short_revision_strips_every_known_prefix():
@@ -570,3 +591,32 @@ def test_normal_commit_conflict_keeps_head_and_has_no_force_overwrite(
     with pytest.raises(SystemExit) as force:
         parser.parse_args(["apply", "t", str(edited_path), "--project", env.project, "--force"])
     assert force.value.code == 2
+
+
+@pytest.mark.parametrize("head, who", [
+    (EDITOR_HEAD, "the editor published 5fb2249e after your checkout (rev-0)"),
+    ("authoring-parent-revision-38cecaa5" + "f" * 24, "someone published 38cecaa5 after your checkout (rev-0)"),
+])
+def test_publish_conflict_names_the_writer_and_offers_discard_first(monkeypatch, head, who):
+    from astrid.sdk.timeline import store
+
+    class _Timelines:
+        def open_composition(self, *_args, **_kwargs):
+            return type("Shown", (), {"ok": True, "error": None,
+                                      "data": {"summary": {"head_revision_id": head}}})()
+
+    class _Client:
+        timelines = _Timelines()
+
+    monkeypatch.setattr(store, "fetch_bundle", lambda *_args, **_kwargs: copy.deepcopy(bundle()))
+    monkeypatch.setattr(store, "three_way", lambda _base, _head, candidate, force: (candidate, ["p/a-rocket (clip) moved 1.8s"]))
+
+    with pytest.raises(TimelineEditError) as refused:
+        store.publish_bundle(copy.deepcopy(bundle()), "key", client=_Client())
+    message = str(refused.value)
+
+    assert message.splitlines()[0].startswith(f"not published: {who}, and you both changed:")
+    assert "next: timelines discard t --project p, then timelines checkout t --project p --fresh, and re-apply your edit." in message
+    assert "  publish --force overwrites the newer published version." in message
+    assert "to overwrite theirs" not in message
+    assert "astrid.e\n" not in message and "astrid.e " not in message
