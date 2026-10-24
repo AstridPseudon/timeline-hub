@@ -1,7 +1,7 @@
 import { expect, type Response } from '@playwright/test';
 import { APP_ENTRY_ROUTE, dragTimelineClip, expectConnected, firstTrackName, openSeededTimeline, revisionBody, test as appTest } from './support/app.ts';
-import { ASTRID_PYTHON, AstridCli } from './support/astrid.ts';
-import { harnessUnavailableReason, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
+import { AstridCli } from './support/astrid.ts';
+import { harnessUnavailableReason, startDirectHarness, type DirectHarness, type ThreeProductsSeed } from './support/harness.ts';
 import type { CommitAcceptedMutation, HeadPin, HistoryPage } from '../../../src/integrations/runtime/timeline-commit-types.ts';
 
 const CEILING = { timeout: 90_000 };
@@ -10,6 +10,14 @@ const COMMITS = /\/v1\/projects\/[^/]+\/timelines\/[^/]+\/commit$/;
 const REMOTE_LABEL = 'Agent live D79 edit';
 
 const test = appTest.extend<object, { seed3: ThreeProductsSeed; astrid: AstridCli }>({
+  // Match the proven D66/P1 normal stack: P3 owns initialization of the
+  // common pristine Runtime shell, and the three-product seed is the first
+  // authored fixture on the Astrid profile.
+  // eslint-disable-next-line no-empty-pattern
+  harness: [async ({}, use) => {
+    const harness = await startDirectHarness({ deferTimelineInitialization: true });
+    try { await use(harness); } finally { await harness.stop(); }
+  }, { scope: 'worker', timeout: 240_000 }],
   seed3: [async ({ harness }, use) => { await use(await harness.seedThreeProducts()); }, { scope: 'worker', timeout: 240_000 }],
   astrid: [async ({ harness }, use) => { await use(await AstridCli.create(harness)); }, { scope: 'worker', timeout: 240_000 }],
 });
@@ -36,7 +44,6 @@ function remotePayloadSeen(response: Response): Promise<boolean> {
 }
 
 test('D79 live-edit smoke: Agent edit arrives during a held drag and remote undo stays safe', async ({ page, harness, astrid, seed3 }) => {
-  await harness.enableTimelineAuthoring(ASTRID_PYTHON);
   await astrid.preflight();
   await page.goto(`${harness.origin}${APP_ENTRY_ROUTE}`);
   await expectConnected(page);
