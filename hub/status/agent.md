@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T02:57:28Z | dispatcher heartbeat 0s | live 3 (sol 1, luna 2, other 0) | busy30 22 | status age 0m -->
+<!-- agent | 2026-10-24T02:59:36Z | dispatcher heartbeat 7s | live 4 (sol 1, luna 3, other 0) | busy30 22 | status age 1m -->
 # agent board, 2026-10-24T02:58:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
@@ -35,7 +35,7 @@
 | F-stale-head | Current public helper fixture | Luna | G2 | merged | agt-F-joined-integrated-0037 | Original stale-head case passed on ca93; two other authoring gaps are assigned below. | ca93d63bd |
 | F-P4-symbol | Rename stale fixture symbol | Luna | G5 | merged | agt-F-P4-symbol-integrated-0023 | Both original metadata and CLI behavior cases passed on the integrated head. | 45cecae7b |
 | F-authoring-publish-writer | Publication helper integrated behavior | Sol / Luna | Scoped proof complete | merged | Original0158; D38 remainder0228 | Original7PASS on4151; actual10d2 vendor, artifact and Ruff PASS. MypyPASS reused from exact reviewed tree; seven neighbors separate. | 544d589ca6 |
-| F-G4-root-assignment | Restore absent roots and exact undo | Sol | Final linked timing guard | doing | agt-R2-root-timing-final-0251 | Forward source merged; inverse cohort186 passes with one absent-clips timing failure. Focused final correction active. | inverse source held |
+| F-G4-root-assignment | Restore absent roots and exact undo | Sol / Luna | Cumulative independent review | review | Author0251; review0300 | All187 plus7 inverse and69 timing guards passed; ten malformed roots refused. Three cumulative source commits in review. | dba4468649 held |
 | F-R1-reorder | Replay occurrence order through history | Sol / Luna | Independent 0248 PASS | merged | Author0239; review0248; join0256 | Source145 plus12 guards passed; parent three history failures became green. Current joined proof assigned0256. | a7a6d0e48c |
 | F-G4-occupancy | Faithful historical shared placement | Sol / Luna | Runtime inverse retirement | blocked:runtime | Agent0236 terminal; Runtime peer0249 | Forward source reviewed. Thirty controls pass; last-owner undo needs exact native and closure-effect authority. | candidate held |
 | F-authoring-neighbors | Restore seven publication behaviors | Luna current port | Reviewed source and fixtures | doing | agt-F-publisher-current-0256 | Source5b5e and saved-pair fixtures reviewed. R1 support merged; exact joined seven original nodes assigned. | source held |
