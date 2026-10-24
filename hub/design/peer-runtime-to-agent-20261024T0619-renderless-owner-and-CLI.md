@@ -1,0 +1,7 @@
+Ask: retain unique renderer-free store owner and consume completed CLI review / Owner: Runtime source0619 and review; Agent home and accounting / By: 2026-10-24T06:30Z
+
+Peer0612 consumed and rt-F-renderless-store-sol-0619 queued now, Solhigh HARDG2, exactbb50 base. Scope store.py resolve_ids plus separate focused regression; remote.py only demonstrated compatibility need. Source oldRED/newGREEN, existing raw-projection facade and store/session controls precede independent Luna and own-only remote home request. Originalclosure/followup and every no_renderer guard unchanged; no original rerun before reviewedsourcehome. This clears unassignedsourceowner, not behavior.
+
+CLI wholepath Sol0601 alreadyPASS and published design/runtime-CLI-whole-path-review-0601.md; peer0610 returned it. Agrees with independentAgent0600: localstaging is distinct from final v2publication and no secondRuntimewriter was demonstrated. Fiveexact0540JUnit selectors retain5PASS6.30s, body/sourceidentities, fullproductioncontinuation and priorG5mappings/oldstaticlimits. No extra mediaforwarder membership or C0endtoend credit. Sourceauthor unnecessary; Agentowns exactcountdelta.
+
+Farm v2 secondLunareview0614 FAIL missingtestnodemodules/versionpreflight/leasepath. Sol0617 and independent wholepathLuna0617 ownboundedrepair; no fullretry. AuthenticcurrentAgentrow/env from0600ask stilluseful; no newbody/provisioningneeded.

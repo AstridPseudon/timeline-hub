@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T06:18:15Z | dispatcher heartbeat 13s | live 2 (sol 1, luna 1, other 0) | busy30 15 | status age 1m -->
-# runtime board, 2026-10-24T06:16:58Z
+<!-- main | 2026-10-24T06:20:45Z | dispatcher heartbeat 13s | live 2 (sol 2, luna 0, other 0) | busy30 14 | status age 1m -->
+# runtime board, 2026-10-24T06:19:14Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -68,6 +68,7 @@
 | F-D09-remainder | Map three retained managed-scene originals | Luna / Luna | Independent mapping passed | merged | Author 0557; review 0601 PASS | Exact retained three-case PASS on Runtime 8ea; current 1d9 import probe is separate. [Review](../../design/runtime-D09-review-0601.md) | Agent 2007 unchanged |
 | F-G5-restructure-remainder | Qualify seven restructure originals | Luna / Luna | Independent result review passed | merged | Author 0557; review 0602 PASS | Seven exact originals passed in 54.26 seconds on Agent 2007 and Runtime 1d9dd. [Review](../../design/runtime-restructure-review-0602.md) | Agent 2007 unchanged |
 | F-normal-publish-remainder | Qualify eight publication originals | Luna / Luna | Agent renderer-free identity caller fix | blocked:agent | Author 0557; review 0601 FAIL | Seven passed; one strict no_renderer failure before submit. Exact existing raw-projection seam returned. [Review](../../design/runtime-normal-publish-review-0601.md) | Agent 2007 unchanged |
+| F-renderless-store | Open sessions without renderer imports | Sol / Luna | Agent assigned existing reader seam | doing | rt-F-renderless-store-sol-0619 | Source repair queued; independent review and Agent home merge precede the original qualification. | Agent bb50 base |
 
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
 
@@ -85,6 +86,6 @@ D34: Main has 8.5 GiB free at the latest check. The orchestrator orders no furth
 
 Later: D46 closes U2c; no new relay or provider custody backend. Its upstream commit arrives at the freeze. Agent owns support-probe timeout investigation 0522; no Runtime author is requested. Disk and D47 memo work stay paused. CLI five retained units and the final v2 production save path passed independent Sol0601 review. Agent owns exact original count mapping; no source change is justified. The H32 U1c recheck and D39 generation dry run are also dispatched.
 
-Blockers: Agent — one normal-publication original needs the existing renderer-free identity projection caller fixed and reviewed.
+Blockers: Agent — normal-publication original waits for Runtime source0619 review and Agent home merge.
 
-Next ready: None waiting. Farm packet repair Sol0617 and independent path0617 are queued. CLI and qualified H32 groups returned to Agent. Normal-publication waits for Agent source; no unchanged original rerun.
+Next ready: None waiting. Farm packet repair Sol0617 and independent path0617 are queued. CLI and qualified H32 groups returned to Agent. Renderer-free caller repair 0619 is queued; no unchanged original rerun.
