@@ -1,17 +1,21 @@
-"""D61 recorder authority through real provider execution and Runtime history."""
+"""D62 accept-time recorder authority and authenticated Runtime history."""
 from __future__ import annotations
 
 import copy
 import json
 
 import pytest
+import test_timeline_commit_authentication as auth
+import test_timeline_commit_port as port_tests
 
 from runtime_protocol.errors import ProtocolError, RuntimeErrorBase
 from runtime_protocol.service import RuntimeService
 from runtime_protocol.store import RealmStore
 from runtime_protocol.timeline_commit_port import route_path
-from runtime_protocol.timeline_commit_validation import validate_commit_value
+from runtime_protocol.timeline_commit_validation import digest, validate_commit_value
 from runtime_protocol.util import canonical_json
+
+service = auth.service
 
 
 @pytest.fixture
@@ -105,10 +109,10 @@ def test_history_authority_requires_accepted_event_commitment(recorder, value):
 
 
 @pytest.mark.parametrize("full_rewrite", [False, True])
-def test_v2_recorder_cannot_enter_acceptance_as_legacy_bindings(recorder, monkeypatch, full_rewrite):
+def test_through_and_through_legacy_submission_is_classified_as_abi_one(recorder, monkeypatch, full_rewrite):
     from runtime_protocol.timeline_commit_port import RequestCommitPort
 
-    runtime, _project, fork, publish = recorder
+    runtime, project, fork, publish = recorder
     submitted = fork(True)
     accept = RequestCommitPort.accept
     reached = []
@@ -129,27 +133,22 @@ def test_v2_recorder_cannot_enter_acceptance_as_legacy_bindings(recorder, monkey
         return accept(port, value)
 
     monkeypatch.setattr(RequestCommitPort, "accept", attack)
-    before = tuple(runtime.store.conn.iterdump())
-    with pytest.raises(RuntimeErrorBase):
-        publish(submitted, "stripped")
+    result = publish(submitted, "stripped")
     assert reached
-    assert tuple(runtime.store.conn.iterdump()) == before
+    entry = runtime._timeline_commits()[0].history_entry(project, "film", result["receipt"]["receipt_id"])
+    assert entry["recorder_abi"] == 1
+    assert publish(submitted, "stripped") == result
 
 
 @pytest.mark.parametrize("private_capture", [False, True])
 @pytest.mark.parametrize("omitted", ["fork.source", "native_bindings", "reads", "selections"])
-def test_complete_native_coverage_cannot_be_inferred_from_remaining_physical_bindings(
+def test_native_coverage_omissions_at_submit_keep_abi_two(
         recorder, monkeypatch, private_capture, omitted):
-    """Keep full physical effect coverage while removing native obligations.
-
-    Raw semantic requests need not carry captured read/selection/binding claims.
-    An original/landing carrier copied from the rewritten records cannot supply
-    an independent expectation of what the native executor actually observed.
-    """
+    """D62 defers submit completeness; surviving physical records remain ABI2."""
     from runtime_protocol.timeline_commit_port import RequestCommitPort
     from runtime_protocol.timeline_commit_validation import digest
 
-    runtime, _project, fork, publish = recorder
+    runtime, project, fork, publish = recorder
     submitted = fork(True)
     for key in ("resolved", "reads", "selections", "bindings", "expect", "authorship"):
         submitted["commands"][0].pop(key, None)
@@ -198,11 +197,12 @@ def test_complete_native_coverage_cannot_be_inferred_from_remaining_physical_bin
         return accept(port, value)
 
     monkeypatch.setattr(RequestCommitPort, "accept", attack)
-    before = tuple(runtime.store.conn.iterdump())
-    with pytest.raises(RuntimeErrorBase):
-        publish(submitted, "missing-native-coverage")
+    result = publish(submitted, "missing-native-coverage")
     assert reached
-    assert tuple(runtime.store.conn.iterdump()) == before
+    entry = runtime._timeline_commits()[0].history_entry(project, "film", result["receipt"]["receipt_id"])
+    assert entry["recorder_abi"] == 2
+    assert entry["records"] == reached[0]["records"]
+    assert publish(submitted, "missing-native-coverage") == result
 
 
 def test_supported_genuine_legacy_acceptance_remains_replayable_after_restart(recorder):
@@ -214,6 +214,7 @@ def test_supported_genuine_legacy_acceptance_remains_replayable_after_restart(re
     assert [entry["records"]["commands"][0]["command"]["op"] for entry in recorded] == [
         "track.create", "occurrence.create"]
     assert all(entry.get("recorder_abi", 1) == 1 for entry in recorded)
+    assert all(entry["source"] == {"via": "python"} for entry in recorded)
     root = runtime.store.root
     runtime.close()
     restarted = RuntimeService(root)
@@ -229,12 +230,209 @@ def test_legacy_history_cannot_acquire_injected_mode_two(recorder):
     publication = commits.head(project, "film")["publication_id"]
     entry = commits.history_entry(project, "film", publication)
     assert entry["records"]["commands"][0]["command"]["op"] == "occurrence.create"
-    assert "recorder_abi" not in entry
+    assert entry["recorder_abi"] == 1
     metadata = json.loads(runtime.store.conn.execute(
         "SELECT metadata_json FROM timeline_commit_history WHERE publication_id=?", (publication,),
     ).fetchone()[0])
     metadata["recorder_abi"] = 2
     runtime.store.conn.execute("UPDATE timeline_commit_history SET metadata_json=? WHERE publication_id=?",
                                (canonical_json(metadata), publication))
+    with pytest.raises(ProtocolError, match="accepted commit record is corrupt"):
+        commits.history_entry(project, "film", publication)
+
+
+def _stored_acceptance(runtime, publication):
+    edge = runtime.store.conn.execute(
+        "SELECT * FROM timeline_commit_history WHERE publication_id=?", (publication,),
+    ).fetchone()
+    row = runtime.store.conn.execute(
+        "SELECT * FROM command_idempotency WHERE txn_id=?", (publication,),
+    ).fetchone()
+    event = runtime.store.conn.execute(
+        "SELECT * FROM timeline_events WHERE id=?", (json.loads(row["event_ids_json"])[-1],),
+    ).fetchone()
+    return edge, row, event
+
+
+def _replace_event(runtime, event, payload):
+    # Rehash this final event to isolate correspondence checks from chain checks.
+    hashed = {"timeline_id": event["timeline_id"], "kind": event["kind"], "payload": payload,
+              "previous_hash": event["previous_hash"], "created_at": event["created_at"]}
+    runtime.store.conn.execute("UPDATE timeline_events SET payload_json=?, event_hash=? WHERE id=?",
+                               (canonical_json(payload), digest(hashed)[7:], event["id"]))
+
+
+@pytest.mark.parametrize("abi", [1, 2])
+@pytest.mark.parametrize("moved", [False, True])
+def test_accept_and_merge_freeze_mode_and_bind_exact_records_request_and_metadata(service, abi, moved):
+    submitted = auth.body(service) if abi == 2 else port_tests.request(service, label="Unchanged")
+    if moved:
+        auth.commit(service, port_tests.request(service), key="advance")
+    if abi == 2:
+        auth.provider(service)
+    else:
+        service.test_provider.action = lambda context, port: port.accept(port_tests.prepared(context, port, same=True))
+    result = auth.commit(service, submitted)
+    assert result["data"]["status"] == ("merged" if moved else "accepted")
+    publication = result["receipt"]["receipt_id"]
+    edge, row, event = _stored_acceptance(service, publication)
+    metadata, payload = json.loads(edge["metadata_json"]), json.loads(event["payload_json"])
+    assert metadata["recorder_abi"] == payload["recorder_abi"] == abi
+    assert payload["records_digest"] == digest(json.loads(edge["records_json"]))
+    assert payload["request_hash"] == row["request_hash"] == result["receipt"]["request_hash"]
+    assert payload["metadata_digest"] == digest(metadata)
+    assert "recorder_abi" not in result["data"]
+    before = port_tests.rows(service)
+    assert auth.commit(service, submitted) == result
+    assert port_tests.rows(service) == before
+    commits = service._timeline_commits()[0]
+    history = commits.history_entry(service.test_project, "main", publication)
+    assert history["recorder_abi"] == abi
+    root = service.store.root
+    service.close()
+    restarted = RuntimeService(root)
+    try:
+        setattr(restarted, "test_project", service.test_project)
+        assert auth.commit(restarted, submitted) == result
+        assert restarted._timeline_commits()[0].history_entry(service.test_project, "main", publication) == history
+    finally:
+        restarted.close()
+
+
+def test_genuine_v2_preview_does_not_persist_recorder_authority(recorder):
+    runtime, _project, fork, publish = recorder
+    submitted = fork(True)
+    submitted["dry_run"] = True
+    before = tuple(runtime.store.conn.iterdump())
+    result = publish(submitted, "preview")
+    assert result["data"]["status"] == "preview"
+    assert result["data"]["would_status"] == "accepted"
+    assert result["receipt"] is None
+    assert "recorder_abi" not in result["data"]
+    assert tuple(runtime.store.conn.iterdump()) == before
+
+
+@pytest.mark.parametrize("value", [1, 2])
+def test_provider_cannot_supply_recorder_authority(service, value):
+    def inject(prepared):
+        prepared["recorder_abi"] = value
+
+    auth.provider(service, inject)
+    before = port_tests.rows(service)
+    with pytest.raises(RuntimeErrorBase):
+        auth.commit(service, auth.body(service))
+    assert port_tests.rows(service) == before
+
+
+@pytest.mark.parametrize("abi", [1, 2])
+def test_prechange_both_absent_is_legacy_without_reclassifying_records(service, abi):
+    submitted = auth.body(service) if abi == 2 else port_tests.request(service)
+    if abi == 2:
+        auth.provider(service)
+    result = auth.commit(service, submitted)
+    publication = result["receipt"]["receipt_id"]
+    edge, _row, event = _stored_acceptance(service, publication)
+    metadata, payload = json.loads(edge["metadata_json"]), json.loads(event["payload_json"])
+    metadata.pop("recorder_abi")
+    for key in ("recorder_abi", "request_hash", "metadata_digest"):
+        payload.pop(key)
+    service.store.conn.execute("UPDATE timeline_commit_history SET metadata_json=? WHERE publication_id=?",
+                               (canonical_json(metadata), publication))
+    _replace_event(service, event, payload)
+    entry = service._timeline_commits()[0].history_entry(service.test_project, "main", publication)
+    assert entry.get("recorder_abi", 1) == 1
+    assert auth.commit(service, submitted) == result
+    # Old metadata alone cannot introduce authority, even on physical records.
+    metadata["recorder_abi"] = 2
+    service.store.conn.execute("UPDATE timeline_commit_history SET metadata_json=? WHERE publication_id=?",
+                               (canonical_json(metadata), publication))
+    with pytest.raises(ProtocolError, match="accepted commit record is corrupt"):
+        service._timeline_commits()[0].history_entry(service.test_project, "main", publication)
+
+
+@pytest.mark.parametrize("damage", [
+    "metadata_absent", "event_absent", "both_absent", "event_mode", "request_hash", "metadata_digest",
+    "metadata_label", "records", "earlier_event", "private_capture",
+])
+def test_mode_commitment_rejects_unilateral_removal_and_metadata_records_or_chain_tamper(service, damage):
+    if damage == "private_capture":
+        from test_timeline_commit_sequential_verifier import _provider_with_capture
+        _provider_with_capture(service)
+    else:
+        auth.provider(service)
+    submitted = auth.body(service)
+    result = auth.commit(service, submitted)
+    publication = result["receipt"]["receipt_id"]
+    edge, _row, event = _stored_acceptance(service, publication)
+    metadata, payload = json.loads(edge["metadata_json"]), json.loads(event["payload_json"])
+    if damage in {"metadata_absent", "both_absent"}:
+        metadata.pop("recorder_abi")
+    if damage in {"event_absent", "both_absent"}:
+        payload.pop("recorder_abi")
+    if damage == "event_mode":
+        payload["recorder_abi"] = 1
+    if damage == "request_hash":
+        payload["request_hash"] = "0" * 64
+    if damage == "metadata_digest":
+        payload["metadata_digest"] = "sha256:" + "0" * 64
+    if damage == "metadata_label":
+        metadata["label"] = "Different label"
+    if damage == "private_capture":
+        metadata.pop("_sequential_execution")
+    if damage == "records":
+        records = json.loads(edge["records_json"])
+        records["commands"][0]["bindings"][0]["policy"] = "different"
+        service.store.conn.execute("UPDATE timeline_commit_history SET records_json=? WHERE publication_id=?",
+                                   (canonical_json(records), publication))
+    if damage == "earlier_event":
+        service.store.conn.execute("UPDATE timeline_events SET event_hash=? WHERE id=("
+                                   "SELECT MIN(id) FROM timeline_events WHERE timeline_id='main')", ("0" * 64,))
+    service.store.conn.execute("UPDATE timeline_commit_history SET metadata_json=? WHERE publication_id=?",
+                               (canonical_json(metadata), publication))
+    _replace_event(service, event, payload)
+    before = port_tests.rows(service)
+    with pytest.raises(ProtocolError, match="accepted commit record is corrupt"):
+        service._timeline_commits()[0].history_entry(service.test_project, "main", publication)
+    with pytest.raises(RuntimeErrorBase):
+        auth.commit(service, submitted)
+    assert port_tests.rows(service) == before
+
+
+@pytest.mark.parametrize("side", ["event", "both"])
+@pytest.mark.parametrize("value", [0, 3, True, False, None, "2", 2.0, {}, []])
+def test_event_mode_requires_integer_enum_even_with_rehashed_event(service, side, value):
+    auth.provider(service)
+    result = auth.commit(service, auth.body(service))
+    publication = result["receipt"]["receipt_id"]
+    edge, _row, event = _stored_acceptance(service, publication)
+    metadata, payload = json.loads(edge["metadata_json"]), json.loads(event["payload_json"])
+    payload["recorder_abi"] = copy.deepcopy(value)
+    if side == "both":
+        metadata["recorder_abi"] = copy.deepcopy(value)
+        payload["metadata_digest"] = digest(metadata)
+        service.store.conn.execute("UPDATE timeline_commit_history SET metadata_json=? WHERE publication_id=?",
+                                   (canonical_json(metadata), publication))
+    _replace_event(service, event, payload)
+    with pytest.raises(ProtocolError, match="accepted commit record is corrupt"):
+        service._timeline_commits()[0].history_entry(service.test_project, "main", publication)
+
+
+@pytest.mark.parametrize("full_rewrite", [False, True])
+def test_postaccept_stripping_and_fullrewrite_cannot_downgrade_frozen_mode(recorder, full_rewrite):
+    runtime, project, fork, publish = recorder
+    result = publish(fork(True), "fork")
+    publication = result["receipt"]["receipt_id"]
+    commits = runtime._timeline_commits()[0]
+    entry = commits.history_entry(project, "film", publication)
+    assert entry["recorder_abi"] == 2
+    for record in entry["records"]["commands"]:
+        legacy_keys = {"key", "ref", "policy", "dependencies"}
+        record["bindings"] = [{key: value for key, value in binding.items() if key in legacy_keys}
+                              for binding in record["bindings"]
+                              if not full_rewrite or binding["key"] != "commit.effect"]
+    assert entry["recorder_abi"] == 2
+    assert commits.history_entry(project, "film", publication)["recorder_abi"] == 2
+    runtime.store.conn.execute("UPDATE timeline_commit_history SET records_json=? WHERE publication_id=?",
+                               (canonical_json(entry["records"]), publication))
     with pytest.raises(ProtocolError, match="accepted commit record is corrupt"):
         commits.history_entry(project, "film", publication)
