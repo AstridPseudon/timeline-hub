@@ -83,6 +83,18 @@ def inverse(bundle, records, intervening=()):
         removal_commit(realm, [command], 'Invert collection edit')
         plan = execute(bundle, [command], inverse_records=selected,
                        intervening_records=[*later_records, *intervening])
+        accepted_before = bundle_from_document(
+            realm.documents[entry['previous']['revision_id']])
+        operation = entry['records']['commands'][0]['command']['op']
+        restore_projection = (
+            operation == 'clip.delete' and not State(bundle).collection('parent', 'clip')
+        ) or (
+            operation == 'timeline.inverse'
+            and not State(accepted_before).collection('parent', 'clip')
+        )
+        if restore_projection:
+            for key in ('base_parent', 'base_parent_payload', 'source_mapping'):
+                plan.bundle[key] = copy.deepcopy(accepted_before[key])
         _REMOVALS[id(plan.records)] = (plan.records, realm, realm.entries[-1],
                                       copy.deepcopy(plan.bundle))
         return plan
@@ -636,6 +648,13 @@ def test_materialization_alias_is_exact_for_arbitrary_source_ids():
 def recorded_removal(original, owner, kind, identities):
     from tests.editing_conformance.test_recipe_occurrence_media import MediaRealm
 
+    if owner == 'parent' and kind == 'clip':
+        document = document_from_bundle(original)
+        canonical = bundle_from_document(document)
+        original['base_parent'] = copy.deepcopy(canonical['base_parent'])
+        original['base_parent_payload'] = copy.deepcopy(canonical['base_parent_payload'])
+        original['source_mapping']['_runtime_document'] = copy.deepcopy(
+            canonical['source_mapping']['_runtime_document'])
     realm = MediaRealm(document_from_bundle(original), [])
     candidate = copy.deepcopy(original)
     rows = State(candidate).collection(owner, kind)
@@ -688,7 +707,14 @@ def removal_records(realm, entry, head):
 
 def accepted_boundaries(records, before, after):
     # The accepted entry supplies the boundary, never the caller's projections.
-    captured, realm, entry, previous = _REMOVALS[id(records)]
+    context = _REMOVALS.get(id(records))
+    if context is None or context[0] is not records:
+        from astrid.sdk.timeline._collections import AcceptedRecords
+
+        entry = {'records': {'commands': records,
+                             'undo_of': records[0]['command']['args']['publications']}}
+        return AcceptedRecords([entry], records, lambda _: (before, after))
+    captured, realm, entry, previous = context
     assert captured is records
     accepted = removal_records(realm, entry, after)
     _REMOVALS[id(accepted)] = (accepted, realm, entry, previous)

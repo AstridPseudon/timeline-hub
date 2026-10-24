@@ -173,6 +173,23 @@ def _native_mirror_partition(record, step, nested):
         # its full native input remains valid before that first compiler boundary.
         # A later config input must still contain the initial mirrored clips.
         state.set('parent', ['config'], config['before'])
+    elif (not root_input and config is not None
+            and record['writes'].index(config) < nested[0]['boundary']['native_write_range'][1]
+            and config['before'].get('state') == 'present'
+            and isinstance(config['before'].get('value'), dict)
+            and all(write['ref'] == 'parent' and write['path'] in (['clips'], ['config', 'clips'])
+                    for write in record['writes'][:record['writes'].index(config)])):
+        # The ancestor input follows earlier native clip writes in this stage.
+        # Reverse those exact descendants to recover its complete initial image.
+        image = copy.deepcopy(config['before']['value'])
+        for write in reversed(record['writes'][:record['writes'].index(config)]):
+            if write['path'] != ['config', 'clips']:
+                continue
+            if not equal(value_at(image, 'parent', ['clips']), write['after']):
+                raise CommandError('nested inverse config input differs from history',
+                                   kind='history_unavailable')
+            replace_at(image, 'parent', ['clips'], write['before'])
+        state.set('parent', ['config'], present(image))
     mirrored = (isinstance(state.bundle['parent'].get('clips'), list)
                 and equal(state.get('parent', ['config', 'clips']), state.get('parent', ['clips'])))
     cursor, result = 0, []
