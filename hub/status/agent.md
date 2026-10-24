@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T01:54:47Z | dispatcher heartbeat 4s | live 3 (sol 1, luna 2, other 0) | busy30 22 | status age 1m -->
-# agent board, 2026-10-24T01:53:19Z
+<!-- agent | 2026-10-24T01:57:14Z | dispatcher heartbeat 12s | live 5 (sol 1, luna 4, other 0) | busy30 24 | status age 0m -->
+# agent board, 2026-10-24T01:55:49Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -15,7 +15,7 @@
 | G5 | Retire superseded Agent writers | Luna / Sol | H24 criteria | merged | agt-G5-integrated-custody-review-2155 | 350 cases, four SDK cases and c271 passed. Raw packet loss is disclosed in the retained report. | c36ca8c94 |
 | P4 owner | Single edit, ten steps, conflict rerun | Proof | G2, G3, R2 | merged | Proof services 28012, 11615, 17739 | All three original HTTP legs passed on integrated heads. No duplicate run here. | e837 / 543d |
 | F-full | Post-G5 full suite | Luna | Remaining fixes | blocked:agent | Full 25691; census review 2346 | 17,159 passed; 262 failed; 5 errors; 4 skips. All 267 failing nodes verified. No full retry. | c36ca8c94 |
-| F-D32 | Exact upstream failure comparison | Luna | Host fetch complete | doing | agt-F-D32-baseline-0148 | All 267 remain ours until identical failure on exact upstream 90d and no project change touching it are proven. | evidence only |
+| F-D32 | Independent upstream failure comparison | Luna | Exact 90d baseline | review | agt-F-D32-baseline-review-0154 | Author proposes 25 pre-existing of 267. Independent review must prove identical failures and no relevant product change; no credit yet. | evidence only |
 | F-G2-pair | Preserve exact public publication pair | Sol | G2 | merged | agt-F-joined-integrated-0037 | Actual ca93: 15 joined checks passed, including five pair controls. | 61727f / 8563 |
 | F-R2-owner | Nested order and sibling successors | Sol / Luna | R2 | merged | agt-F-R2-joined-integrated-0042 | Actual 1146: 56 plus 14 passed. Independent 186 strict controls remain valid on exact source. | e53d9f36b |
 | F-SDK-closure | Repair the public reader fixture | Luna | G2 pair | merged | agt-F-SDK-fixture-review-0037 | Exact fixture independently passed; joined 14 controls passed on 1146. | 5e6823577 |
@@ -33,13 +33,13 @@
 | F-schema | Registered provider-operation census | Luna | Frozen schema | merged | agt-F-joined-integrated-0037 | Six schema cases and three exact union selectors passed; schema and provider guards unchanged. | 7cc6e74c2 |
 | F-stale-head | Current public helper fixture | Luna | G2 | merged | agt-F-joined-integrated-0037 | Original stale-head case passed on ca93; two other authoring gaps are assigned below. | ca93d63bd |
 | F-P4-symbol | Rename stale fixture symbol | Luna | G5 | merged | agt-F-P4-symbol-integrated-0023 | Both original metadata and CLI behavior cases passed on the integrated head. | 45cecae7b |
-| F-authoring-publish-writer | Current publication helper port | Luna after Sol; review PASS | Reviewed ten-file source | doing | agt-F-publish-current-port-0152 | Independent 0148: original first plus six controls 7 passed, zero new static findings. Current-only source port active. | 5aee reviewed |
-| F-authoring-ABA | Original same-alias rebind and undo | Luna / service | Reviewed source and fixture merged | doing | agt-F-ABA-integrated-0150 | Home bc38 contains exact reviewed source and 52-assertion fixture. One original live run plus integrated 87 controls queued. | 61d53 / c3af |
+| F-authoring-publish-writer | Current publication helper port | Luna after Sol; review PASS | Reviewed current-only port | merging | agt-F-publish-current-port-0152 | Exact reviewed port: original first plus six controls 7 passed in 9.51s. Current rendererless and ABA fixture retained; normal merge queued. | own port only |
+| F-authoring-ABA | Resolve exact raw-before assertion | Luna | Captured accepted publication | review | agt-F-ABA-boundary-review-0154 | Integrated original: 1 failed, 87 passed. Before hold expected 1.8 versus prepared 0.9; later undo/retry/ABA not reached. | bc38aa3eb3 |
 | F-D32-render-wire | Six original SDK wire results | Luna / service | Existing installed child | merged | Service 27934 | Six original cases passed in 41.48s; body hashes, 19 source identities, import origins and read-only profile retained. | 521c source |
-| F-helper-sequential | Capture actual helper replay-map refusal | Luna | Existing diagnostic seam | doing | agt-F-helper-capture-0149 | Actual failure inputs were lost; inventory 0144 excludes numeric and old captures. One bounded observed diagnostic is queued. | no product change |
+| F-helper-sequential | Correct diagnostic capture serializer | Luna | Lost actual map | doing | agt-F-helper-observer-return-0154 | Observer 0149 failed its float serializer; actual map not retained. Incremental finite capture return owns one new diagnostic. | no product change |
 | F-D32-h3-import | Seven isolated child-import cases | Luna | Existing installed child | merged | agt-F-h3-env-0137 | All seven original fault cases passed in 3.60s; preflight/postflight, body and source identities retained. | 521c source |
 | F-ruff-baseline | Record one fewer Ruff finding | Luna | Strict static gate | merged | agt-F-static-integrated-0130 | Actual 521c: make ruff passed 2,147/2,147 and make mypy passed 1,911/1,911. Protected source and pins verified. | 4511f3d81 |
-| A4 IMAGE | Actual App request and Runtime acceptance | Luna / App | App created claims | blocked:app | Agent audit 0112; review 0116 PASS | Missing asset and clip claims reproduced the exact Runtime refusal. App source correction requested; old fixture closed. | 1146 / 22ef |
+| A4 IMAGE | New actual App and Runtime witness | Luna / App | Reviewed created-claim correction | doing | agt-A4-image-created-current-0154 | App b3a84 source independently passed 261 cases. One new genuine fixture prepares input; old fixture and refusal stay closed. | bc38 / b3a84 |
 | D31 | Dormant transcript capture subset | — | Follow-up funding | gated:D31 | No active author | Keep the 397-line test suite and implementation unchanged. Literal production reachability is NO. | unchanged |
 | V4 / D14 / D23 | Cut and deferred relational timing | — | Scope decisions | gated:H9 | No repair worker | Keep original tests unchanged, unskipped and visibly failing. No V4 or relational-timing completion claim. | unchanged |
 | U2c | Exact upstream readiness draft | Luna | Source object fetched | doing | agt-U2c-readiness-port-0148 | Exact f38e source is now available. Four-file port and focused tests only; no cause or merge claim. | branch only |
@@ -47,10 +47,10 @@ P1: GO. Original service 18792 passed both cases; Proof reviews 0036 and 0040 pa
 Integration: bc38aa3eb37008e97bcd85833ac9001eb6523d5f, tree 14b3e85f69ec41bbb9979bba572aeef93a70aa8d. Frozen 34e client, d106 schema and 819acf artifact unchanged.
 Blockers: Agent full waits for the remaining owned fixes and finite qualifications. D32 baseline comparison is active; no full retry.
 Blockers: Runtime external-source producer waits for its orchestrator decision 0143; Agent host consumer remains unchanged.
-Blockers: IMAGE acceptance waits for App created-claim correction; Agent source audit and independent review passed. The old fixture is closed.
+Blockers: App producer waits for the new Agent image input; reviewed created-claim source is received. No old fixture is reused.
 Blockers: Agent owns remaining helper evidence, ABA fixture/live proof and rendering timeout. All peer worker IDs are received.
 Safety: Earlier Farm, monitor, publication and bench permission refusals remain stopped. No denied action was retried here.
-Disk: Sweep removed zero eligible old temp directories; compaction found no eligible scratch. About 9 GB remains, above the 8 GB heavy-run floor. Refused or referenced benches stay untouched.
+Disk: About 7.6 GB free. New heavy runs pause below 8 GB; source work and small targeted checks continue. Existing sweep/compact freed no eligible old artifacts; refused benches remain untouched.
 Next ready: Consume ABA fixture and publication reviews, then current-only port and original integrated proof. U2c and D32 comparison run independently.
 Evidence: Earlier detailed results remain in [the archived board](archive-v2/STATUS-20261024T0055Z.md) and the existing design handoffs. Worker final messages are copied unchanged into design.
-D32: Upstream 90d is fetched. Baseline comparison 0148 is active; all 267 remain ours pending exact proof. No pre-existing credit yet.
+D32: Exact 90d baseline is available. Author proposes 25 pre-existing; independent proof of signatures and relevant source changes is required. All 267 remain ours until review.
