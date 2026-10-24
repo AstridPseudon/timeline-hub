@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T09:04:35Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 18 | status age 1m -->
-# agent board, 2026-10-24T09:03:07Z
+<!-- agent | 2026-10-24T09:07:04Z | dispatcher heartbeat 15s | live 1 (sol 0, luna 1, other 0) | busy30 18 | status age 1m -->
+# agent board, 2026-10-24T09:06:03Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -41,7 +41,7 @@
 | F-G4-occupancy | Faithful historical shared placement | Sol / Luna | Runtime image diagnosis | merged | Qualification0424; review0430 PASS | Last-owner and production session passed2 in14.05s onRuntime2b49. Two separate source-copy redo guards remain unqualified; no Runtime family credit. | 12701589ab; home9f2da582a6 |
 | F-authoring-neighbors | Restore seven publication behaviors | Luna | First home qualification | merged | Port0256; integrated0302 PASS | Actual66d:60 passed in6.41s, stable home origins and clean tree. Eleven migrations,seven original neighbors and42 reorder/history controls. | 66d85b5db8 |
 | F-authoring shared alias | Preserve untouched sibling identity under D44 | Luna | Explicit scope decision D44 | merged | Author0414; independent0418 PASS | Original1 passed in4.96s; other10 predicates byte-identical. Exact edited fork and untouched source pins verified; D44 behavior entered in authored deletion ledger. | 5d3a147bcc; home5c97e35b05 |
-| F-authoring-ABA | Complete guarded undo and ABA | Sol / Luna | Viewing next source classification | blocked:viewing | Service20732; Agent wholepath0855 | Original failed at lost ack: transport_timeout versus required transport_error.59 assertions unchanged. No retry. | Source0c2c28da4f |
+| F-authoring-ABA | Complete guarded undo and ABA | Sol / Luna | Viewing source and independent review | doing | Viewing Sol0859; result Luna0859 | Original20732 failed at lost ack. Strict error code and59 assertions retained; next source diagnosis owns exact client seam. | Source0c2c28da4f |
 | F-D32-render-wire | Six original SDK wire results | Luna / service | Existing installed child | merged | Service 27934 | Six original cases passed in 41.48s; body hashes, 19 source identities, import origins and read-only profile retained. | 521c source |
 | F-helper-sequential | Repair sequential replay map | Sol / Luna | Integrated proof passed | merged | Source184dc; review0224; integrated0232 | Actual8a8d:12focused, Ruff2145 and mypy1909 passed; vendor/artifact passed. Original True and False passed on exact reviewed source. | 184dc20a70 |
 | F-D32-h3-import | Seven guards on current installed child | Luna | Independent result review passed | merged | Qualified0508; review0517 PASS | Seven originals passed once on child3b5c; installedba8f and current9cd relevant bytes match. Exact scope retained for next count delta. | Source9cd; installedba8f |
@@ -136,8 +136,8 @@
 | U2 duck acceptance | Qualify the original managed music workflow | Luna | Exact G4 installed child | blocked:runtime | Home 0832; result review 0840 | Product source has 20 passes. Original 17 assertions unchanged; managed body remains held. | 0ff3d103fb |
 
 | U2 duck staged row | Prepare exact managed source guards | Luna | Genuine child/profile/Store receipt | blocked:runtime | Author0856; review0857 PASS | Snapshot,parent,tree,source and Runtime guards qualified. Row explicitly HOLD until genuine installed inputs bind. | Staged evidence only |
-| F ABA lost-ack path | Trace new transport boundary | Luna / Viewing Sol | Viewing next source classification | blocked:viewing | Agent0855 complete; Viewing assigned | Actual hook,receipt and retry unproven. Runtime HTTP close/client mapping compared with retained passing7f6 proof; no causal claim. | Evidence only |
-| F Farm giant regression | Attribute315 lines and verify smallest repair | Luna / Luna | Orchestrator09:00 ruling | doing | agt-F-Farm-giant-0902; review next | Due09:20 author,09:25 review. First compare priora8f4 repair and0814 PASS; no duplicate credit or unjustified rewrite. | Current67d5 |
+| F ABA lost-ack path | Trace new transport boundary | Luna / Viewing Sol | Unique source continuation | doing | Agent0855 complete; Viewing Sol0859 | Independent facts handed to live unique source owner. Hook,receipt and retry remain unproven; no unchanged rerun. | Evidence only |
+| F Farm giant regression | Attribute315 lines and verify smallest repair | Luna / Luna | Independent exact-source review | review | Author0902; review0904 | Existingrepair found; current source,rationale,test match prior qualified scope. Review checks causal commits and full hashes before closure. Due09:25. | Existing8c5ae21/a8f4 |
 P1: Historical GO recorded. P4 and P5 retain their named scopes; final freeze reruns all gates. App and Proof own P2/P3.
 Integration: Actual67d5f19716 contains exact reviewed two runners; integrated0856 PASS static and all15 mappings. Source0ff3 independently20PASS; earlier0c2 joined123 retains its scope. Original20732 failed lost-ack code.
 Count: Owner-requested working figure263 closed /5 open while Farm giant challenge is checked. Original267-node census remains263/4,123 mappings,e13d65ba; no artifact was changed. One additional Farm row is held open pending exact prior-repair equivalence review.
@@ -153,5 +153,5 @@ D49 venue: Agent final full on Farm after a zero-setup-error checkpoint. Fallbac
 Safety: Prior Farm, monitor, publication, bench and cleanup refusals remain stopped. No denied action retried.
 Disk: About11 GB free. Fresh read-only check found one remaining finished non-KEEP Agent tree; it is dirty. No eligible clean merged tree to recycle. Prior cleanup refusals remain stopped; light work proceeds.
 Later: D31/D37 dormant implementations and tests unchanged. V4 and D14/D23 remain cut or deferred. D46 U2c closed and folded into the freeze; relay and remote providers stay deferred and fail-closed. D47 memo held.
-Next ready: Farm giant author0902 dispatched; independent review follows immediately, due09:25. Viewing owns20732 finite verdict and unique lost-ack source classification. Runtime verifier Sol0853/security0854 active. No ready local task waiting.
+Next ready: Farm giant independent0904 is running. Viewing Sol0859 and result Luna0859 own ABA; Runtime Sol0853 is correcting caller gaps before final security review. All local ready tasks dispatched.
 Evidence: [D39 review](../../design/agt-D39-header-review-0809.md), [ABA review](../../design/agt-F-ABA-cumulative-review-0809.md), [wheel input](../../design/agt-OPS-real-wheel-qualify-0810.md), [Farm checkpoint](../../design/farm-agent-full-checkpoint-20261024T0555Z.md).
