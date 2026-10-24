@@ -250,7 +250,17 @@ def test_bootstrap_register_observe_commit_and_same_incarnation_recovery(residen
 
     def ready(handle):
         observation = observe_ready(handle)
-        assert events[-1] == "acknowledged"
+        if witness.service._latest_remote_activation(witness.task_id) is None:
+            client = RuntimeProtocolClient(witness.daemon.endpoint, witness.daemon.worker_credential_path.read_text().strip())
+            client._authenticate_worker(witness.reference.executor_id)
+            denied = client.claim_next(executor_id=witness.reference.executor_id,
+                                       capability_ids=[witness.reference.capability_identity.capability_id],
+                                       idempotency_key="precommit-claim", target=witness.reference.effective_target)
+            assert denied.waiting_reason == "remote_activation_missing"
+            assert getattr(denied, "attempt_id", None) is None
+            assert witness.service.task(witness.task_id)["task"]["status"] == "queued"
+            events.append("enabled_registered_observed_claim_denied")
+        assert events[-1] in {"acknowledged", "enabled_registered_observed_claim_denied"}
         # Only after the private ACK does Runtime enable the credential the host registers with.
         RuntimeProtocolClient(witness.daemon.endpoint, witness.daemon.worker_credential_path.read_text().strip()
                               )._authenticate_worker(witness.reference.executor_id)
@@ -264,7 +274,11 @@ def test_bootstrap_register_observe_commit_and_same_incarnation_recovery(residen
         result = record(task_id, qualification, **kwargs)
         events.append("commit" if first else "replayed_commit")
         if lost_reply and first:
-            raise EOFError("committed response lost")  # Runtime replays the identical request
+            deadline = time.monotonic() + 5
+            while witness.service.task(task_id)["task"]["status"] == "queued" and time.monotonic() < deadline:
+                time.sleep(0.02)
+            assert witness.service.task(task_id)["task"]["status"] != "queued"
+            raise EOFError("committed response lost after host claim")
         return result
 
     monkeypatch.setattr(witness.preparer, "acknowledge", private_ack)
@@ -294,19 +308,23 @@ def test_bootstrap_register_observe_commit_and_same_incarnation_recovery(residen
     ).fetchone()[0] == 1
 
 
-@pytest.mark.parametrize("failure", ["ack", "cleanup"])
+@pytest.mark.parametrize("failure", ["ack", "ready", "cleanup"])
 def test_precommit_failure_revokes_before_stopping_exact_host(resident_host, monkeypatch, failure):
-    """A private ACK that fails before Runtime accepts leaves nothing committed: revoke, then stop the host."""
+    """Pre-qualification failure preserves the exact local custody decision and cleanup state."""
     witness = resident_host
     parked = witness.launcher.park(witness.reference, target=witness.reference.effective_target)
     abort = witness.preparer.abort
     stopped = []
     def fail(*args, **kwargs):
         raise OSError("deliberate precommit failure")
-    monkeypatch.setattr(witness.preparer, "acknowledge", fail)
+    if failure == "ack":
+        monkeypatch.setattr(witness.preparer, "acknowledge", fail)
+    elif failure == "ready":
+        monkeypatch.setattr(witness.inspector, "observe_ready", fail)
     def stop(handle):
-        assert witness.service._latest_remote_activation(witness.task_id) is None
-        assert witness.daemon.credentials.actor_metadata(witness.reference.executor_id) is None
+        if failure != "ready":
+            assert witness.service._latest_remote_activation(witness.task_id) is None
+            assert witness.daemon.credentials.actor_metadata(witness.reference.executor_id) is None
         stopped.append(handle)
         if failure == "cleanup":
             raise OSError("cannot confirm exact cleanup")
@@ -317,7 +335,13 @@ def test_precommit_failure_revokes_before_stopping_exact_host(resident_host, mon
     assert stopped == [parked.handle]
     cleanup_uncertain = failure == "cleanup" or parked.handle.cleanup_error is not None
     assert witness.launcher.activation_state == ("unknown" if cleanup_uncertain else "inactive")
-    assert witness.service.task(witness.task_id)["task"]["status"] == "queued"
+    if failure == "ready":
+        assert witness.service._latest_remote_activation(witness.task_id) is not None
+        assert witness.daemon.credentials.actor_metadata(witness.reference.executor_id) is not None
+    else:
+        assert witness.service._latest_remote_activation(witness.task_id) is None
+        assert witness.daemon.credentials.actor_metadata(witness.reference.executor_id) is None
+        assert witness.service.task(witness.task_id)["task"]["status"] == "queued"
 
 
 def _owned_parked_handle(tmp_path):
@@ -344,6 +368,84 @@ def _forbid_group_and_census(monkeypatch):
         pytest.fail("abort of a retained child must not signal a numeric group or re-observe its identity")
     monkeypatch.setattr(os, "killpg", forbidden)
     monkeypatch.setattr(host_bootstrap, "_parked_host_identity_matches", forbidden)
+
+
+@pytest.mark.parametrize("child_exits", [True, False], ids=["child-exit-race", "unverifiable-live-host"])
+@pytest.mark.parametrize("has_primary", [True, False], ids=["primary-error", "no-primary-error"])
+def test_abort_preserves_primary_failure_without_signaling_after_failed_identity(
+    tmp_path, monkeypatch, child_exits, has_primary,
+):
+    """Failed identity observation retains the original failure and uncertainty."""
+    process = host_bootstrap.popen_owned_group(
+        [sys.executable, "-c", "import sys; sys.stdin.buffer.read(1)"],
+        stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+    )
+    control = SimpleNamespace(close=lambda: None)
+    primary = OSError("original private ACK failed")
+    preparer = host_bootstrap._ParkedPackHostPreparer(lambda reference: None)
+    handle = host_bootstrap._ParkedPackHostHandle(
+        process, control, None,
+        {"pid": process.pid, "process_birth_id": host_bootstrap._host_birth_identity(process.pid),
+         "ready_file": str(tmp_path / "not-ready.json")},
+        "test-operation", "test-channel",
+    )
+    preparer._handle = handle
+    observed = []
+    original_identity = host_bootstrap._parked_host_identity_matches
+    original_kill = os.kill
+
+    def failed_identity(state):
+        assert state["pid"] == process.pid and process.poll() is None
+        observed.append("identity")
+        if child_exits:
+            process.stdin.close()
+            assert process.wait(timeout=3) == 0
+            return original_identity(state)
+        return False
+
+    def forbidden_signal(*args, **kwargs):
+        observed.append("signal")
+        pytest.fail("failed identity observation must not authorize signaling")
+
+    def observe_without_signaling(pid, sig):
+        if sig == 0:
+            return original_kill(pid, sig)
+        forbidden_signal(pid, sig)
+
+    try:
+        with monkeypatch.context() as patch:
+            patch.setattr(host_bootstrap, "_parked_host_identity_matches", failed_identity)
+            patch.setattr(os, "kill", observe_without_signaling)
+            patch.setattr(os, "killpg", forbidden_signal)
+            if has_primary:
+                with pytest.raises(OSError) as caught:
+                    try:
+                        raise primary
+                    except OSError:
+                        preparer.abort(handle)
+                        raise
+                assert caught.value is primary
+            elif child_exits:
+                preparer.abort(handle)
+            else:
+                with pytest.raises(host_bootstrap.PackHostBootstrapError) as caught:
+                    preparer.abort(handle)
+                assert caught.value is handle.cleanup_error
+        if child_exits:
+            assert handle.cleanup_error is None
+            assert primary.__cause__ is None
+        else:
+            assert isinstance(handle.cleanup_error, host_bootstrap.PackHostBootstrapError)
+            assert "cannot be verified safely" in str(handle.cleanup_error)
+            if has_primary:
+                assert handle.cleanup_error is primary.__cause__
+        assert observed == ["identity"]
+        assert not Path(handle.state["ready_file"]).exists()
+        assert (process.poll() is not None) == child_exits
+    finally:
+        if not process.stdin.closed:
+            process.stdin.close()
+        process.wait(timeout=3)
 
 
 def test_abort_stops_the_retained_child_without_a_census_or_group_signal(tmp_path, monkeypatch):
@@ -424,6 +526,21 @@ def test_independent_readiness_rejects_changed_evidence(resident_host, monkeypat
     assert witness.service._latest_remote_activation(witness.task_id) is not None
     assert witness.daemon.credentials.actor_metadata(witness.reference.executor_id) is not None
     assert not parked.handle.aborted and parked.handle.cleanup_error is None
+
+
+def test_remote_provider_identity_stays_fail_closed_without_provider_authority(resident_host, monkeypatch):
+    """D46: a local machine observation cannot be promoted into a RunPod identity claim."""
+    witness = resident_host
+    parked = witness.launcher.park(witness.reference, target=witness.reference.effective_target)
+    witness.inspector.provider_observer = lambda handle: {
+        "account_ref": "unsupported-test-provider",
+        "pod_id": "unsupported-test-pod",
+    }
+    try:
+        with pytest.raises(host_bootstrap.PackHostBootstrapError, match="provider identity changed"):
+            witness.inspector.observe(parked.handle)
+    finally:
+        witness.inspector.provider_observer = None
 
 
 def test_uncertain_commit_preserves_exact_host_and_credential(resident_host, monkeypatch):
