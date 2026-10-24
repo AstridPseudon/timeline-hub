@@ -42,17 +42,37 @@ P3_SOURCE_WORKER = "ap2-P3-D53-clean-apply-1123"
 P3_SOURCE_BRANCH = f"tl/{P3_SOURCE_WORKER}"
 P3_SOURCE_REPO = Path("/home/user/work/app")
 P3_SOURCE_META = ORCH / "workers" / P3_SOURCE_WORKER / "meta"
+P3_SOURCE_AUTHOR_REPORT = ORCH / "design/handoff-ap2-P3-D53-clean-apply-1123.md"
 P3_SOURCE_REVIEW = ORCH / "design/handoff-ap2-P3-D53-final-review-1126.md"
 P3_SOURCE_QUEUE = ORCH / "queue" / f".remote-app-{P3_SOURCE_WORKER}"
+P3_SOURCE_META_SHA256 = "c39086db5e4f60ea4f046bcfaa98c0ac459d12929b773f1d375a95af8a022c3f"
+P3_SOURCE_AUTHOR_REPORT_SHA256 = "5ae31800903dfa5f7652b912e78d99307b421890740afd8f0fd508d196e73b6d"
+P3_SOURCE_REVIEW_SHA256 = "88b3aff6c159990e8950bf257e4ce98d2b821ebb65a6e91b79c540e798fe09f8"
+P3_SOURCE_QUEUE_SHA256 = "a27d4266d4a6ed1068f064703cab5811c5816bc38986bc535081d0fea541d840"
+
+P3_PURE_WORKER = "app-P3-D53-pure-integrated-1143"
+P3_PURE_BRANCH = f"tl/{P3_PURE_WORKER}"
+P3_PURE_REPORT = ORCH / "workers" / P3_PURE_WORKER / "report.md"
+P3_PURE_META = ORCH / "workers" / P3_PURE_WORKER / "meta"
+P3_PURE_ENDED = ORCH / "workers" / P3_PURE_WORKER / "ended"
+P3_PURE_QUEUE = ORCH / "queue" / "done" / P3_PURE_WORKER
+P3_PURE_DONE = ORCH / "workers" / P3_PURE_WORKER / "DONE"
+P3_PURE_REPORT_SHA256 = "7ddf4f5759a12f6dad7e6ff7b58c768843848e311ef71ba15ce5788d228de5fc"
+P3_PURE_META_SHA256 = "a62684c39634490ecd65105debd23e7f8bf20cd092bd20e1c7762ba1f645ffda"
+P3_PURE_ENDED_SHA256 = "ffcdfc4efc8536b92bbeabc7895e530f441891040c3d7978d6c9199e46a831c4"
+P3_PURE_QUEUE_SHA256 = "6085d793604d8b744a937d3bd54f041243f88106f0537d08c511897b85e645af"
+P3_PURE_DONE_SHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
 # The merged HOME is an observed input.  Its full identity is captured at
-# preparation time and must still match at the final CAS read.  The pure
-# qualification receipt is intentionally separate and may be absent.
+# preparation time and must still match at the final CAS read.  Pure
+# qualification is a separate fixed worker record, never caller input.
 FINAL_HOME = Path("/home/user/work/app")
 FINAL_SOURCE_MANIFEST_ENV = "TIMELINE_P3_FINAL_SOURCE_MANIFEST"
 PURE_PROOF_MANIFEST_ENV = "TIMELINE_P3_PURE_PROOF_MANIFEST"
 FINAL_HOME_BASE = "2e3c8f65a8628127cd283ed26116f7bcb2977b83"
 FINAL_HOME_REQUIRED_PARENTS = (FINAL_HOME_BASE, P3_SOURCE)
+FINAL_HOME_CHECKOUT_RECEIPT = ORCH / "queue" / "done" / "checkout-app-602f8b1f58593302829fb449d0ded62a91462a22"
+FINAL_HOME_CHECKOUT_RECEIPT_SHA256 = "bb462c89a7679a43dfcd855fe36c47c97c2d37dd0be8a674508ace8ed9223327"
 RETAINED_OUTSIDE_BEFORE = Path("/tmp/w-8922952ec4/app-P3-solo-return-1011/outside.before")
 EXPECTED_REMOVED_ROW = "agent venv-agent-child-app-p3-079-2a9-2147-full"
 SOURCE_BASE = D53_BASE
@@ -139,19 +159,32 @@ def key_value_file(path: Path) -> dict[str, str]:
     return values
 
 
+def exact_record(path: Path, expected_sha256: str, label: str) -> bytes:
+    """Read only a fixed, recorded evidence file with its full immutable hash."""
+    if path.is_symlink() or not path.is_file():
+        raise RuntimeError(f"PREPARED: {label} evidence is unavailable")
+    data = path.read_bytes()
+    if digest(data) != expected_sha256:
+        raise RuntimeError(f"PREPARED: {label} evidence hash is not authentic")
+    return data
+
+
 def reviewed_d53_source() -> dict[str, object]:
     """Authenticate the reviewed author branch and independent final review."""
-    for path in (P3_SOURCE_META, P3_SOURCE_REVIEW, P3_SOURCE_QUEUE):
-        if path.is_symlink() or not path.is_file():
-            raise RuntimeError(f"PREPARED: D53 review evidence is unavailable: {path.name}")
+    exact_record(P3_SOURCE_META, P3_SOURCE_META_SHA256, "D53 dispatcher metadata")
+    author_report = exact_record(P3_SOURCE_AUTHOR_REPORT, P3_SOURCE_AUTHOR_REPORT_SHA256, "D53 author report")
+    review_bytes = exact_record(P3_SOURCE_REVIEW, P3_SOURCE_REVIEW_SHA256, "D53 independent review")
+    queue_bytes = exact_record(P3_SOURCE_QUEUE, P3_SOURCE_QUEUE_SHA256, "D53 normal dispatch record")
     meta = key_value_file(P3_SOURCE_META)
     if meta.get("name") != P3_SOURCE_WORKER or meta.get("repo") != "app":
         raise RuntimeError("PREPARED: D53 dispatcher metadata is not for the App worker")
     if meta.get("base") != "tl/integration" or meta.get("base_sha") != D53_BASE:
         raise RuntimeError("PREPARED: D53 dispatcher base is not exact")
-    if P3_SOURCE_QUEUE.read_text().strip() != P3_SOURCE[:9]:
+    if queue_bytes.decode() != f"{P3_SOURCE[:9]}\n":
         raise RuntimeError("PREPARED: D53 remote source marker is not exact")
-    review = P3_SOURCE_REVIEW.read_text()
+    if not author_report.startswith(b"Implemented P3 D53 in the three allowed paths:\n"):
+        raise RuntimeError("PREPARED: D53 author report is not the fixed worker report")
+    review = review_bytes.decode()
     required_review = (
         "## Result: PASS", P3_SOURCE, "sole parent", D53_BASE,
         "Full spec: `26c1ae", "D53 guard: `15b580",
@@ -171,33 +204,64 @@ def reviewed_d53_source() -> dict[str, object]:
     return {
         "checkout": str(root), "source": P3_SOURCE, "tree": P3_TREE, "parent": P3_PARENT,
         "parents": list(P3_PARENTS), "worker": P3_SOURCE_WORKER, "branch": P3_SOURCE_BRANCH,
-        "dispatcher_meta": {"path": str(P3_SOURCE_META), "name": meta["name"], "repo": meta["repo"], "base": meta["base"], "base_sha": meta["base_sha"]},
-        "source_review": str(P3_SOURCE_REVIEW), "source_queue": str(P3_SOURCE_QUEUE),
+        "dispatcher_meta": {"path": str(P3_SOURCE_META), "sha256": P3_SOURCE_META_SHA256, "name": meta["name"], "repo": meta["repo"], "base": meta["base"], "base_sha": meta["base_sha"]},
+        "author_report": {"path": str(P3_SOURCE_AUTHOR_REPORT), "sha256": P3_SOURCE_AUTHOR_REPORT_SHA256},
+        "source_review": {"path": str(P3_SOURCE_REVIEW), "sha256": P3_SOURCE_REVIEW_SHA256},
+        "source_queue": {"path": str(P3_SOURCE_QUEUE), "sha256": P3_SOURCE_QUEUE_SHA256},
     }
 
 
 def pure_proof_input(final: dict[str, object]) -> dict[str, object] | None:
-    path_name = os.environ.get(PURE_PROOF_MANIFEST_ENV)
-    if not path_name:
-        return None
-    path = Path(path_name)
-    if path.is_symlink() or not path.is_file():
-        raise RuntimeError("PREPARED: pure proof manifest is unavailable")
-    try:
-        proof = json.loads(path.read_text())
-    except json.JSONDecodeError as exc:
-        raise RuntimeError("PREPARED: pure proof manifest is not JSON") from exc
-    if not isinstance(proof, dict) or proof.get("status") != "PASS":
-        raise RuntimeError("PREPARED: pure proof manifest is not PASS")
-    if proof.get("source") != final["source"] or proof.get("tree") != final["tree"]:
-        raise RuntimeError("PREPARED: pure proof source identity differs from final HOME")
-    if proof.get("parents") != final["parents"]:
-        raise RuntimeError("PREPARED: pure proof parent identity differs from final HOME")
-    return {"path": str(path), "sha256": digest(path.read_bytes()), "status": proof["status"]}
+    if os.environ.get(PURE_PROOF_MANIFEST_ENV):
+        raise RuntimeError("PREPARED: caller-supplied pure proof manifests are unsupported")
+    report = exact_record(P3_PURE_REPORT, P3_PURE_REPORT_SHA256, "pure D53 qualification report")
+    exact_record(P3_PURE_META, P3_PURE_META_SHA256, "pure D53 worker metadata")
+    ended_bytes = exact_record(P3_PURE_ENDED, P3_PURE_ENDED_SHA256, "pure D53 worker completion")
+    queue_bytes = exact_record(P3_PURE_QUEUE, P3_PURE_QUEUE_SHA256, "pure D53 normal dispatch record")
+    exact_record(P3_PURE_DONE, P3_PURE_DONE_SHA256, "pure D53 completion marker")
+    meta = key_value_file(P3_PURE_META)
+    if meta != {
+        "name": P3_PURE_WORKER,
+        "repo": "app",
+        "base": "602f8b1f58593302829fb449d0ded62a91462a22",
+        "base_sha": final["source"][:10],
+        "model": "gpt-5.6-luna",
+        "effort": "high",
+        "heavy": "0",
+        "worktree": f"/home/user/work/wt/{P3_PURE_WORKER}",
+        "started": "2026-10-24T11:43:08Z",
+    }:
+        raise RuntimeError("PREPARED: pure D53 worker metadata facts are not exact")
+    if queue_bytes.decode() != f"dispatched {P3_PURE_WORKER} in /home/user/work/wt/{P3_PURE_WORKER} (base {final['source']})\n":
+        raise RuntimeError("PREPARED: pure D53 dispatch record is not exact")
+    if ended_bytes != b"2026-10-24T11:49:28Z\n":
+        raise RuntimeError("PREPARED: pure D53 worker completion is not exact")
+    root = Path(str(final["source_checkout"]))
+    if git(root, "rev-parse", P3_PURE_BRANCH).decode().strip() != final["source"]:
+        raise RuntimeError("PREPARED: pure D53 worker branch is not the final source")
+    report_text = report.decode()
+    required_report = (
+        "## PASS — P3/A2 D53 integrated qualification",
+        f"HEAD={final['source']}", f"tree `{final['tree']}`",
+        f"parents `{final['parents'][0]}` and `{final['parents'][1]}`",
+        "D53 contains exactly three paths, byte-identical to `2357`",
+        "23/23 passed", "Worker-authored D53 ledger:", "MERGED602f; integrated PASS.",
+        "live GO remains unverified",
+    )
+    if any(marker not in report_text for marker in required_report):
+        raise RuntimeError("PREPARED: pure D53 report facts are not exact")
+    return {
+        "status": "PASS", "worker": P3_PURE_WORKER, "branch": P3_PURE_BRANCH,
+        "source": final["source"], "tree": final["tree"], "parents": final["parents"],
+        "report": {"path": str(P3_PURE_REPORT), "sha256": P3_PURE_REPORT_SHA256},
+        "meta": {"path": str(P3_PURE_META), "sha256": P3_PURE_META_SHA256},
+        "ended": {"path": str(P3_PURE_ENDED), "sha256": P3_PURE_ENDED_SHA256, "at": ended_bytes.decode().strip()},
+        "dispatch_queue": {"path": str(P3_PURE_QUEUE), "sha256": P3_PURE_QUEUE_SHA256},
+    }
 
 
 def final_source_input() -> dict[str, object]:
-    """Capture final HOME by full SHA; pure proof is a separate later input."""
+    """Capture final HOME by full SHA and fixed pure-proof provenance."""
     if os.environ.get("TIMELINE_FINAL_SOURCE_MANIFEST"):
         raise RuntimeError("PREPARED: generic final source manifests are unsupported")
     root = FINAL_HOME
@@ -212,10 +276,22 @@ def final_source_input() -> dict[str, object]:
     parents = tuple(git(root, "show", "-s", "--format=%P", source).decode().strip().split())
     if len(source) != 40 or parents != FINAL_HOME_REQUIRED_PARENTS:
         raise RuntimeError("PREPARED: final HOME is not the reviewed D52 plus D53 merge")
+    checkout_receipt = exact_record(
+        FINAL_HOME_CHECKOUT_RECEIPT,
+        FINAL_HOME_CHECKOUT_RECEIPT_SHA256,
+        "final HOME checkout receipt",
+    )
+    expected_checkout_receipt = (
+        f"created /home/user/work/wt/app-pin-602f8b1f "
+        f"(detached at {source}, KEEP)\n"
+    ).encode()
+    if checkout_receipt != expected_checkout_receipt:
+        raise RuntimeError("PREPARED: final HOME checkout receipt identity is not exact")
     final = {
         "checkout": str(root), "source_checkout": str(root), "source": source, "tree": tree,
         "parent": " ".join(parents), "parents": list(parents), "worker": "final-home",
         "branch": "tl/integration", "service_snapshot": "UNKNOWN — created by the normal test-run after request",
+        "checkout_receipt": {"path": str(FINAL_HOME_CHECKOUT_RECEIPT), "sha256": FINAL_HOME_CHECKOUT_RECEIPT_SHA256},
     }
     proof = pure_proof_input(final)
     final["pure_proof"] = proof
@@ -304,6 +380,7 @@ def source_custody(final: dict[str, object]) -> dict[str, object]:
     anchors = {P3_SOURCE: {"tree": P3_TREE, "parents": list(P3_PARENTS)}, source: {"tree": tree, "parents": list(parents)}}
     return {"source": source, "tree": tree, "parent": parent, "checkout": str(root),
             "parents": list(parents),
+            "checkout_receipt": final.get("checkout_receipt"),
             "pure_proof": final.get("pure_proof"),
             "pure_proof_status": final.get("pure_proof_status"),
             "reviewed_source": reviewed, "anchors": anchors, "fingerprints": fingerprints, "fingerprint_count": len(fingerprints),

@@ -21,10 +21,30 @@
       "2e3c8f65a8628127cd283ed26116f7bcb2977b83",
       "2357df925a660dde6624149b8e8a6e1dbf09da98"
     ],
+    "source_status": "READY — exact normal HOME/source and fixed pure worker PASS records",
     "service_snapshot": "UNKNOWN — created by the normal test-run after request",
-    "pure_proof": "MISSING — normal pure qualification receipt is not an input yet",
+    "pure_proof": {
+      "status": "PASS",
+      "worker": "app-P3-D53-pure-integrated-1143",
+      "branch": "tl/app-P3-D53-pure-integrated-1143",
+      "source": "602f8b1f58593302829fb449d0ded62a91462a22",
+      "tree": "a38844975865110cd2c026dc10fd7aa1ea488e71",
+      "parents": [
+        "2e3c8f65a8628127cd283ed26116f7bcb2977b83",
+        "2357df925a660dde6624149b8e8a6e1dbf09da98"
+      ],
+      "report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-D53-pure-integrated-1143/report.md",
+      "report_sha256": "7ddf4f5759a12f6dad7e6ff7b58c768843848e311ef71ba15ce5788d228de5fc",
+      "meta": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-D53-pure-integrated-1143/meta",
+      "meta_sha256": "a62684c39634490ecd65105debd23e7f8bf20cd092bd20e1c7762ba1f645ffda",
+      "ended": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P3-D53-pure-integrated-1143/ended",
+      "ended_sha256": "ffcdfc4efc8536b92bbeabc7895e530f441891040c3d7978d6c9199e46a831c4",
+      "dispatch_queue": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/app-P3-D53-pure-integrated-1143",
+      "dispatch_queue_sha256": "6085d793604d8b744a937d3bd54f041243f88106f0537d08c511897b85e645af"
+    },
     "pure_proof_metadata": {
-      "manifest_env": "TIMELINE_P3_PURE_PROOF_MANIFEST",
+      "manifest_env": "TIMELINE_P3_PURE_PROOF_MANIFEST (rejected)",
+      "caller_manifest_authority": "REJECTED; fixed worker records are authoritative",
       "required_status": "PASS",
       "required_source": "602f8b1f58593302829fb449d0ded62a91462a22",
       "required_tree": "a38844975865110cd2c026dc10fd7aa1ea488e71",
@@ -32,7 +52,7 @@
         "2e3c8f65a8628127cd283ed26116f7bcb2977b83",
         "2357df925a660dde6624149b8e8a6e1dbf09da98"
       ],
-      "status": "MISSING"
+      "status": "PRESENT — fixed worker report/meta/ended/branch and normal dispatch record"
     },
     "p2_row": "live current row authenticated byte-exact and not rebound"
   },
@@ -44,36 +64,30 @@
   },
   "existing_suite_rows": {
     "full-e2e-three-products": {
-      "installed_sha256": "11b2eebf5a610670623c4a7f958dfa799841da088bc9ccb13aa146dab60575da"
+      "installed_sha256": "6a45d0567f7dea7a3c15fbcaf687f9dd62debf4527464529d8a4faf8f8e48fee"
     },
     "ap2-P3-gate5-h6-0348": {
       "installed_sha256": "23226c274dbdbb8750f009cb89d7920db40eb49513af906df7b4f76d9a7a3bf0"
     },
     "outside_rows": 248,
-    "outside_bytes": 509279,
-    "outside_sha256": "5092b26317865501bf3f7c7c2cb1af4c4bded6bb312cb939ce40999de97ec752",
+    "outside_bytes": 509455,
+    "outside_sha256": "b9c97fbbfd26fa4d6d2ed3fac150196fc3fbae24deade990624196f0c5423fee",
     "registry_snapshot": {
       "line_count": 249,
-      "byte_count": 569327,
-      "sha256": "bf9e6f1ba32089456eeacfd2e34105db4a0e4227ea108c78b07c9b240b2ccfde",
+      "byte_count": 569503,
+      "sha256": "fa6ec51a5556af78c10f9d32f1cda853f498555422e3e4b7f05ecfd7b3729494",
       "outside_row_count": 248,
-      "outside_bytes": 509279,
-      "outside_sha256": "5092b26317865501bf3f7c7c2cb1af4c4bded6bb312cb939ce40999de97ec752",
-      "p2_row_sha256": "11b2eebf5a610670623c4a7f958dfa799841da088bc9ccb13aa146dab60575da"
+      "outside_bytes": 509455,
+      "outside_sha256": "b9c97fbbfd26fa4d6d2ed3fac150196fc3fbae24deade990624196f0c5423fee",
+      "p2_row_sha256": "6a45d0567f7dea7a3c15fbcaf687f9dd62debf4527464529d8a4faf8f8e48fee"
     },
     "retained_before_evidence": {
-      "status": "VERIFIED",
+      "status": "UNAVAILABLE",
       "path": "/tmp/w-8922952ec4/app-P3-solo-return-1011/outside.before",
-      "row_count": 249,
-      "bytes": 509969,
-      "sha256": "1340ef479d7f0b850f71f149347806146a4686f7b195b8d6fca3184667fce9d7",
-      "removed_keys": ["agent venv-agent-child-app-p3-079-2a9-2147-full"],
-      "added_keys": [],
-      "changed_common_keys": [],
-      "parallel_p2_change": true
+      "evidence_limit": "retained-before registry bytes were unavailable; only the live snapshot is authoritative"
     },
-    "draft_sha256": "1b7c7996f9d296aab985a0a9466de89bb71cc816d7796facc8bc79fa0b23c6e7",
-    "live_p2_row_sha256": "11b2eebf5a610670623c4a7f958dfa799841da088bc9ccb13aa146dab60575da"
+    "draft_sha256": "6a45d0567f7dea7a3c15fbcaf687f9dd62debf4527464529d8a4faf8f8e48fee",
+    "live_p2_row_sha256": "6a45d0567f7dea7a3c15fbcaf687f9dd62debf4527464529d8a4faf8f8e48fee"
   },
   "wire_fields": {
     "request": [
@@ -124,8 +138,22 @@
     "final_source": "602f8b1f58593302829fb449d0ded62a91462a22",
     "final_tree": "a38844975865110cd2c026dc10fd7aa1ea488e71",
     "final_parent": "2e3c8f65a8628127cd283ed26116f7bcb2977b83 2357df925a660dde6624149b8e8a6e1dbf09da98",
+    "checkout_receipt": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-app-602f8b1f58593302829fb449d0ded62a91462a22",
+      "sha256": "bb462c89a7679a43dfcd855fe36c47c97c2d37dd0be8a674508ace8ed9223327"
+    },
     "source_worker": "final-home (reviewed D53 source ap2-P3-D53-clean-apply-1123)",
     "source_checkout": "/home/user/work/app",
+    "source_proof_records": {
+      "author_report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-ap2-P3-D53-clean-apply-1123.md",
+      "author_report_sha256": "5ae31800903dfa5f7652b912e78d99307b421890740afd8f0fd508d196e73b6d",
+      "dispatcher_meta": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/ap2-P3-D53-clean-apply-1123/meta",
+      "dispatcher_meta_sha256": "c39086db5e4f60ea4f046bcfaa98c0ac459d12929b773f1d375a95af8a022c3f",
+      "independent_review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-ap2-P3-D53-final-review-1126.md",
+      "independent_review_sha256": "88b3aff6c159990e8950bf257e4ce98d2b821ebb65a6e91b79c540e798fe09f8",
+      "normal_dispatch": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/.remote-app-ap2-P3-D53-clean-apply-1123",
+      "normal_dispatch_sha256": "a27d4266d4a6ed1068f064703cab5811c5816bc38986bc535081d0fea541d840"
+    },
     "reviewed_d53_source": "2357df925a660dde6624149b8e8a6e1dbf09da98",
     "reviewed_d53_tree": "50070be219d9d16954aaaf237b1e7287b76187c1",
     "reviewed_d53_parent": "d6ed8cbda122d810d5836ebfce3c56c10e76e9b4",
@@ -180,7 +208,7 @@
     "qualified_stages": 60,
     "reuse_only_if": "decoded caller logic and all retained stage bytes compare equal after audited source bindings, fingerprints, expected body hashes, and log identity are refreshed",
     "if_logic_changes": "bounded real execution controls are required",
-    "not_claimed": ["READY", "service execution", "browser journey", "backend execution", "integrated proof"]
+    "not_claimed": ["service execution", "browser journey", "backend execution", "live GO"]
   },
   "negative_context": {
     "source_target_0644": "source-only target context; not an execution target",
@@ -189,6 +217,7 @@
   },
   "missing_final_inputs": [
     "integrated P3 execution and actual daemon identity",
-    "normal test-run service snapshot (UNKNOWN before request)"
+    "normal test-run service snapshot (UNKNOWN before request)",
+    "live execution and daemon identity"
   ]
 }
