@@ -45,9 +45,16 @@ found); `errors[]` per port and endpoint.
 - Saved setup and scan agree: carry on. They disagree (other folder, workflow
   gone, nothing on that port): rediscover, use what's true now, and update
   preferences after the next success.
-- No server: ComfyUI isn't running, or it's on another port. Ask them to
-  start it, or for the port (`--ports 8188,8000,PORT`). ComfyUI Desktop's port
-  varies.
+- `Operation not permitted` / `Permission denied`: the agent's sandbox may
+  have blocked loopback access. Retry the same command through the agent's
+  normal permission-request flow; don't change permission defaults or tell
+  the user to restart ComfyUI. A denied request means report the access block.
+  Astrid CLI calls also need access to Runtime storage outside the sandbox;
+  a `runtime_acquisition_lock_unavailable` there can need the same approval,
+  rather than an Astrid reinstall.
+- No server (connection refused or timed out): ComfyUI isn't running, or it's
+  on another port. Ask them to start it, or for the port
+  (`--ports 8188,8000,PORT`). ComfyUI Desktop's port varies.
 - Several servers: ask which one.
 - VibeComfy package missing: don't install it. It ships with Astrid, so tell
   the user to run the normal Astrid update in a terminal outside chat
@@ -85,6 +92,8 @@ run the copy; don't also pass `prompt` if it would land on the wrong node. Each
 tweak is a new file and a new content-addressed workflow, so history is kept.
 An unknown `workflow_inputs` name fails before queueing and lists the valid
 names, which also tells you what was detected.
+Don't infer a missing node from its name alone: let `vibecomfy.run` check the
+live server before queueing and record any failure in task history.
 
 ### Run, follow, stop
 
@@ -119,8 +128,10 @@ with these fields; Claude Code, Codex and Hermes run
 - Workflows with several save nodes need a `filename_prefix` on each, or the
   run fails closed.
 
-Admission returns immediately with the task id. For stills, follow in the same
-turn with a limit, and tell the user they can watch it in their ComfyUI window:
+Admission returns the task id. If the shell tool reports a still-running
+process/session, wait on that same handle; don't submit the invocation again.
+For stills, follow in the same turn with a limit, and tell the user they can
+watch it in their ComfyUI window:
 
 ```sh
 astrid tasks follow TASK_ID --project PROJECT --timeout-seconds 600
@@ -152,6 +163,8 @@ fails with a list like `missing nodes: X (pack SLUG); missing models: FILE
 (Loader.field, node N)`. Tell the user what's missing and what you'll install
 in one message, and go ahead when they agree. Always install into their
 ComfyUI, with their ComfyUI's Python (the scan's `python`; ask if it's null).
+If the owning pack is unknown, offer to identify it before installing; don't
+invent an install slug.
 
 - Nodes, when `manager_present` is true: ask them to use ComfyUI → Manager →
   Install Missing Custom Nodes → Restart. Manager installs into the right
