@@ -1,0 +1,1743 @@
+{
+  "base": {
+    "dependency_manifest": {
+      "documents": [],
+      "internal_timelines": [
+        {
+          "content_digest": "sha256:570f70c637f215ba4e5592d93663f07ff78fe373e830c47ee9c7c9f04e3c304d",
+          "revision_id": "authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+          "timeline_id": "source"
+        }
+      ],
+      "media": [],
+      "shots": [
+        {
+          "content_digest": "sha256:b83f5092559ac2ff8895bd04b08fe0a9071a89b156c767e2f76be04c67f4305c",
+          "internal_timeline_revision_id": "authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+          "revision_id": "authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+          "shot_id": "shared"
+        }
+      ]
+    },
+    "internal_timeline_revisions": [
+      {
+        "content_digest": "sha256:570f70c637f215ba4e5592d93663f07ff78fe373e830c47ee9c7c9f04e3c304d",
+        "payload": {
+          "clips": [],
+          "output": {},
+          "registry": {
+            "assets": {}
+          },
+          "tracks": []
+        },
+        "revision_id": "authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+        "timeline_id": "source"
+      }
+    ],
+    "parent_revision": {
+      "content_digest": "sha256:0b80e11773e545985319f2eec651aa9d16e379bbd710ff7b13ce7a1a6b3e33a1",
+      "payload": {
+        "clips": [],
+        "config": {
+          "clips": [],
+          "tracks": [
+            {
+              "id": "picture",
+              "kind": "visual"
+            }
+          ]
+        },
+        "occurrences": [
+          {
+            "duration_ms": 10000.0,
+            "gain": 1,
+            "occurrence_id": "shared-copy",
+            "placement": {
+              "start_ms": 12000.0,
+              "track": "picture"
+            },
+            "shot_id": "shared",
+            "shot_revision_id": "authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+            "source_offset": 0,
+            "speed": 1,
+            "track": "picture"
+          }
+        ],
+        "registry": {}
+      },
+      "revision_id": "authoring-parent-revision-f4378d3612c58fa5ed816cad28d8e7a4b34897efa42a74b76a0bb567ffd05f9f"
+    },
+    "project_id": "17191555788a4895980dd79dc75c6659",
+    "schema_version": 1,
+    "shot_revisions": [
+      {
+        "content_digest": "sha256:b83f5092559ac2ff8895bd04b08fe0a9071a89b156c767e2f76be04c67f4305c",
+        "internal_timeline_revision_id": "authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+        "payload": {
+          "internal_timeline_revision_id": "authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+          "items": [],
+          "name": "Shared"
+        },
+        "revision_id": "authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+        "shot_id": "shared"
+      }
+    ],
+    "timeline_id": "destination"
+  },
+  "continuations": {},
+  "history": {
+    "txn-5400d90eb09746b2b9a378cff44ae3f0": {
+      "compiler_version": "authoring-bundle-1",
+      "group_id": "copy",
+      "intent": "recorded",
+      "label": "Copy source",
+      "merge": "atomic",
+      "merge_mode": "atomic",
+      "previous": {
+        "publication_id": "txn-6096320315d743a5be59a371a0d0dbe0",
+        "revision_id": "authoring-parent-revision-c0ca5dfe7fcf5838f49f674b80212b023f44d3be7966c446859befd4ec80ac97"
+      },
+      "provider_version": "astrid-v1",
+      "publication_id": "txn-5400d90eb09746b2b9a378cff44ae3f0",
+      "publisher": "editor",
+      "rationale": "D17",
+      "reads": [],
+      "receipt": {
+        "command_kind": "timeline.commit",
+        "created_at": "2026-10-24T02:38:41.513+00:00",
+        "event_ids": [
+          "8"
+        ],
+        "idempotency_key": "shared",
+        "project_id": "17191555788a4895980dd79dc75c6659",
+        "project_seq": [
+          8,
+          8
+        ],
+        "receipt_id": "txn-5400d90eb09746b2b9a378cff44ae3f0",
+        "request_hash": "24efe3e044cff24696fbdeefab8b43024dfadb92f52c7da2a2c66387402f65d3",
+        "result": {
+          "accepted_revision_id": "authoring-parent-revision-f4378d3612c58fa5ed816cad28d8e7a4b34897efa42a74b76a0bb567ffd05f9f",
+          "base_publication_id": "txn-6096320315d743a5be59a371a0d0dbe0",
+          "base_revision_id": "authoring-parent-revision-c0ca5dfe7fcf5838f49f674b80212b023f44d3be7966c446859befd4ec80ac97",
+          "canonical_document": {
+            "dependency_manifest": {
+              "documents": [],
+              "internal_timelines": [
+                {
+                  "content_digest": "sha256:570f70c637f215ba4e5592d93663f07ff78fe373e830c47ee9c7c9f04e3c304d",
+                  "revision_id": "authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+                  "timeline_id": "source"
+                }
+              ],
+              "media": [],
+              "shots": [
+                {
+                  "content_digest": "sha256:b83f5092559ac2ff8895bd04b08fe0a9071a89b156c767e2f76be04c67f4305c",
+                  "internal_timeline_revision_id": "authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+                  "revision_id": "authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+                  "shot_id": "shared"
+                }
+              ]
+            },
+            "internal_timeline_revisions": [
+              {
+                "content_digest": "sha256:570f70c637f215ba4e5592d93663f07ff78fe373e830c47ee9c7c9f04e3c304d",
+                "payload": {
+                  "clips": [],
+                  "output": {},
+                  "registry": {
+                    "assets": {}
+                  },
+                  "tracks": []
+                },
+                "revision_id": "authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+                "timeline_id": "source"
+              }
+            ],
+            "parent_revision": {
+              "content_digest": "sha256:0b80e11773e545985319f2eec651aa9d16e379bbd710ff7b13ce7a1a6b3e33a1",
+              "payload": {
+                "clips": [],
+                "config": {
+                  "clips": [],
+                  "tracks": [
+                    {
+                      "id": "picture",
+                      "kind": "visual"
+                    }
+                  ]
+                },
+                "occurrences": [
+                  {
+                    "duration_ms": 10000.0,
+                    "gain": 1,
+                    "occurrence_id": "shared-copy",
+                    "placement": {
+                      "start_ms": 12000.0,
+                      "track": "picture"
+                    },
+                    "shot_id": "shared",
+                    "shot_revision_id": "authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+                    "source_offset": 0,
+                    "speed": 1,
+                    "track": "picture"
+                  }
+                ],
+                "registry": {}
+              },
+              "revision_id": "authoring-parent-revision-f4378d3612c58fa5ed816cad28d8e7a4b34897efa42a74b76a0bb567ffd05f9f"
+            },
+            "project_id": "17191555788a4895980dd79dc75c6659",
+            "schema_version": 1,
+            "shot_revisions": [
+              {
+                "content_digest": "sha256:b83f5092559ac2ff8895bd04b08fe0a9071a89b156c767e2f76be04c67f4305c",
+                "internal_timeline_revision_id": "authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+                "payload": {
+                  "internal_timeline_revision_id": "authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+                  "items": [],
+                  "name": "Shared"
+                },
+                "revision_id": "authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+                "shot_id": "shared"
+              }
+            ],
+            "timeline_id": "destination"
+          },
+          "commands": [
+            {
+              "args": {
+                "occurrence_id": "shared-copy",
+                "on": 12,
+                "source_occurrence_id": "one",
+                "source_ref": {
+                  "content_digest": "sha256:b6541c3b8c4a6fc920aeacedf31258f0cf6859072f2e9748d7ea1601ebb267fd",
+                  "project_id": "17191555788a4895980dd79dc75c6659",
+                  "publication_id": "txn-ab028f7d3bb6480cbe8476359832b500",
+                  "revision_id": "authoring-parent-revision-3723384bc1a1be4662de446fd1611cfa7b88bb65d9e998bf049c9dc4d00b85c4",
+                  "timeline_id": "source"
+                }
+              },
+              "authorship": {
+                "occurrence:shared-copy::": "direct"
+              },
+              "bindings": {},
+              "created": [
+                "occurrence:shared-copy"
+              ],
+              "expect": {
+                "occurrence:shared-copy::": {
+                  "state": "absent"
+                }
+              },
+              "intent": {
+                "ownership": "occurrence"
+              },
+              "op": "occurrence.place-shared",
+              "reads": [
+                {
+                  "path": [
+                    "config",
+                    "pinnedShotGroups"
+                  ],
+                  "ref": "parent",
+                  "state": {
+                    "state": "absent"
+                  }
+                },
+                {
+                  "path": [],
+                  "ref": "parent/collection:occurrence",
+                  "state": {
+                    "state": "present",
+                    "value": {
+                      "container": "array"
+                    }
+                  }
+                },
+                {
+                  "path": [],
+                  "ref": "parent/track:picture",
+                  "state": {
+                    "state": "present",
+                    "value": {
+                      "id": "picture",
+                      "kind": "visual"
+                    }
+                  }
+                },
+                {
+                  "path": [],
+                  "ref": "occurrence:shared-copy",
+                  "state": {
+                    "state": "absent"
+                  }
+                }
+              ],
+              "resolved": [],
+              "schema_version": 1,
+              "select": "parent",
+              "selections": [
+                {
+                  "boundaries": [],
+                  "key": "collection.occurrences",
+                  "members": [],
+                  "order": [],
+                  "owner": "parent",
+                  "policy": "guard-membership",
+                  "query_version": 1
+                }
+              ],
+              "version": "1"
+            }
+          ],
+          "compiler_version": "authoring-bundle-1",
+          "document_digest": "sha256:6f95bf20451871135cdd2dc7c9ef7d1ab0408ed4cb818adc66e52d2f8ad3b651",
+          "group_id": "copy",
+          "id_map": {},
+          "label": "Copy source",
+          "merge_mode": "atomic",
+          "previous_publication_id": "txn-6096320315d743a5be59a371a0d0dbe0",
+          "previous_revision_id": "authoring-parent-revision-c0ca5dfe7fcf5838f49f674b80212b023f44d3be7966c446859befd4ec80ac97",
+          "provider_version": "astrid-v1",
+          "publisher": "editor",
+          "rationale": "D17",
+          "rebased_onto": null,
+          "source": {
+            "via": "python"
+          },
+          "status": "accepted",
+          "steps": [
+            {
+              "command_ordinals": [
+                0
+              ],
+              "dependencies": [
+                {
+                  "kind": "field",
+                  "path": [
+                    "config",
+                    "pinnedShotGroups"
+                  ],
+                  "ref": "parent",
+                  "state": {
+                    "state": "absent"
+                  }
+                },
+                {
+                  "kind": "collection",
+                  "members": [],
+                  "order": [],
+                  "path": [
+                    "occurrences"
+                  ],
+                  "ref": "parent"
+                },
+                {
+                  "kind": "field",
+                  "path": [
+                    "config",
+                    "tracks",
+                    "id:picture"
+                  ],
+                  "ref": "parent",
+                  "state": {
+                    "state": "present",
+                    "value": {
+                      "id": "picture",
+                      "kind": "visual"
+                    }
+                  }
+                },
+                {
+                  "kind": "scope",
+                  "path": [],
+                  "ref": "timeline"
+                }
+              ],
+              "id": "copy",
+              "intent": "Keep full source",
+              "label": "Copy source",
+              "patch": [
+                {
+                  "before": {
+                    "state": "absent"
+                  },
+                  "op": "set",
+                  "path": [],
+                  "ref": "internal-revision:authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+                  "value": {
+                    "clips": [],
+                    "output": {},
+                    "registry": {
+                      "assets": {}
+                    },
+                    "tracks": []
+                  }
+                },
+                {
+                  "before": {
+                    "state": "absent"
+                  },
+                  "op": "set",
+                  "path": [],
+                  "ref": "shot-revision:authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+                  "value": {
+                    "internal_timeline_revision_id": "authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+                    "items": [],
+                    "name": "Shared"
+                  }
+                },
+                {
+                  "before": {
+                    "state": "present",
+                    "value": []
+                  },
+                  "op": "set",
+                  "path": [
+                    "occurrences"
+                  ],
+                  "ref": "parent",
+                  "value": [
+                    {
+                      "duration_ms": 10000.0,
+                      "gain": 1,
+                      "occurrence_id": "shared-copy",
+                      "placement": {
+                        "start_ms": 12000.0,
+                        "track": "picture"
+                      },
+                      "shot_id": "shared",
+                      "shot_revision_id": "authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+                      "source_offset": 0,
+                      "speed": 1,
+                      "track": "picture"
+                    }
+                  ]
+                }
+              ],
+              "reads": [],
+              "tags": [
+                "copy"
+              ]
+            }
+          ]
+        }
+      },
+      "records": {
+        "commands": [
+          {
+            "bindings": [
+              {
+                "boundary": {
+                  "base_publication_id": "txn-6096320315d743a5be59a371a0d0dbe0",
+                  "base_revision_id": "authoring-parent-revision-c0ca5dfe7fcf5838f49f674b80212b023f44d3be7966c446859befd4ec80ac97",
+                  "command_ordinal": 0,
+                  "evaluated_head": {
+                    "publication_id": "txn-6096320315d743a5be59a371a0d0dbe0",
+                    "revision_id": "authoring-parent-revision-c0ca5dfe7fcf5838f49f674b80212b023f44d3be7966c446859befd4ec80ac97"
+                  },
+                  "phase": "effect",
+                  "side": "after",
+                  "step_id": "copy"
+                },
+                "content_digest": "sha256:570f70c637f215ba4e5592d93663f07ff78fe373e830c47ee9c7c9f04e3c304d",
+                "dependencies": [],
+                "effect_ordinal": 0,
+                "key": "commit.effect",
+                "owners": [
+                  "occurrence:shared-copy/shot"
+                ],
+                "path": [],
+                "physical_ref": "internal-revision:authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+                "policy": "fixed",
+                "ref": "internal-revision:authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+                "revision_id": "authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+                "step_id": "copy"
+              },
+              {
+                "boundary": {
+                  "base_publication_id": "txn-6096320315d743a5be59a371a0d0dbe0",
+                  "base_revision_id": "authoring-parent-revision-c0ca5dfe7fcf5838f49f674b80212b023f44d3be7966c446859befd4ec80ac97",
+                  "command_ordinal": 0,
+                  "evaluated_head": {
+                    "publication_id": "txn-6096320315d743a5be59a371a0d0dbe0",
+                    "revision_id": "authoring-parent-revision-c0ca5dfe7fcf5838f49f674b80212b023f44d3be7966c446859befd4ec80ac97"
+                  },
+                  "phase": "effect",
+                  "side": "after",
+                  "step_id": "copy"
+                },
+                "content_digest": "sha256:b83f5092559ac2ff8895bd04b08fe0a9071a89b156c767e2f76be04c67f4305c",
+                "dependencies": [],
+                "effect_ordinal": 1,
+                "key": "commit.effect",
+                "owners": [
+                  "occurrence:shared-copy/shot"
+                ],
+                "path": [],
+                "physical_ref": "shot-revision:authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+                "policy": "fixed",
+                "ref": "shot-revision:authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+                "revision_id": "authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+                "step_id": "copy"
+              },
+              {
+                "boundary": {
+                  "base_publication_id": "txn-6096320315d743a5be59a371a0d0dbe0",
+                  "base_revision_id": "authoring-parent-revision-c0ca5dfe7fcf5838f49f674b80212b023f44d3be7966c446859befd4ec80ac97",
+                  "command_ordinal": 0,
+                  "evaluated_head": {
+                    "publication_id": "txn-6096320315d743a5be59a371a0d0dbe0",
+                    "revision_id": "authoring-parent-revision-c0ca5dfe7fcf5838f49f674b80212b023f44d3be7966c446859befd4ec80ac97"
+                  },
+                  "phase": "effect",
+                  "side": "before",
+                  "step_id": "copy"
+                },
+                "content_digest": "sha256:516cbdc0672e7a86f26c2205bf86b28013739d184356565883ec54db2f8d9395",
+                "dependencies": [],
+                "effect_ordinal": 2,
+                "key": "commit.effect",
+                "path": [
+                  "occurrences"
+                ],
+                "physical_ref": "parent",
+                "policy": "fixed",
+                "ref": "parent",
+                "revision_id": "authoring-parent-revision-c0ca5dfe7fcf5838f49f674b80212b023f44d3be7966c446859befd4ec80ac97",
+                "step_id": "copy"
+              },
+              {
+                "boundary": {
+                  "base_publication_id": "txn-6096320315d743a5be59a371a0d0dbe0",
+                  "base_revision_id": "authoring-parent-revision-c0ca5dfe7fcf5838f49f674b80212b023f44d3be7966c446859befd4ec80ac97",
+                  "command_ordinal": 0,
+                  "evaluated_head": {
+                    "publication_id": "txn-6096320315d743a5be59a371a0d0dbe0",
+                    "revision_id": "authoring-parent-revision-c0ca5dfe7fcf5838f49f674b80212b023f44d3be7966c446859befd4ec80ac97"
+                  },
+                  "phase": "effect",
+                  "side": "after",
+                  "step_id": "copy"
+                },
+                "content_digest": "sha256:0b80e11773e545985319f2eec651aa9d16e379bbd710ff7b13ce7a1a6b3e33a1",
+                "dependencies": [],
+                "effect_ordinal": 2,
+                "key": "commit.effect",
+                "path": [
+                  "occurrences"
+                ],
+                "physical_ref": "parent",
+                "policy": "fixed",
+                "ref": "parent",
+                "revision_id": "authoring-parent-revision-f4378d3612c58fa5ed816cad28d8e7a4b34897efa42a74b76a0bb567ffd05f9f",
+                "step_id": "copy"
+              },
+              {
+                "boundary": {
+                  "base_publication_id": "txn-6096320315d743a5be59a371a0d0dbe0",
+                  "base_revision_id": "authoring-parent-revision-c0ca5dfe7fcf5838f49f674b80212b023f44d3be7966c446859befd4ec80ac97",
+                  "command_ordinal": 0,
+                  "evaluated_head": {
+                    "publication_id": "txn-6096320315d743a5be59a371a0d0dbe0",
+                    "revision_id": "authoring-parent-revision-c0ca5dfe7fcf5838f49f674b80212b023f44d3be7966c446859befd4ec80ac97"
+                  },
+                  "phase": "input",
+                  "step_id": "copy"
+                },
+                "content_digest": "sha256:516cbdc0672e7a86f26c2205bf86b28013739d184356565883ec54db2f8d9395",
+                "dependencies": [],
+                "key": "commit.atomic",
+                "path": [],
+                "physical_ref": "parent",
+                "policy": "fixed",
+                "ref": "timeline",
+                "revision_id": "authoring-parent-revision-c0ca5dfe7fcf5838f49f674b80212b023f44d3be7966c446859befd4ec80ac97"
+              }
+            ],
+            "command": {
+              "args": {
+                "occurrence_id": "shared-copy",
+                "on": 12,
+                "source_occurrence_id": "one",
+                "source_ref": {
+                  "content_digest": "sha256:b6541c3b8c4a6fc920aeacedf31258f0cf6859072f2e9748d7ea1601ebb267fd",
+                  "project_id": "17191555788a4895980dd79dc75c6659",
+                  "publication_id": "txn-ab028f7d3bb6480cbe8476359832b500",
+                  "revision_id": "authoring-parent-revision-3723384bc1a1be4662de446fd1611cfa7b88bb65d9e998bf049c9dc4d00b85c4",
+                  "timeline_id": "source"
+                }
+              },
+              "authorship": {
+                "occurrence:shared-copy::": "direct"
+              },
+              "bindings": {},
+              "created": [
+                "occurrence:shared-copy"
+              ],
+              "expect": {
+                "occurrence:shared-copy::": {
+                  "state": "absent"
+                }
+              },
+              "intent": {
+                "ownership": "occurrence"
+              },
+              "op": "occurrence.place-shared",
+              "reads": [
+                {
+                  "path": [
+                    "config",
+                    "pinnedShotGroups"
+                  ],
+                  "ref": "parent",
+                  "state": {
+                    "state": "absent"
+                  }
+                },
+                {
+                  "path": [],
+                  "ref": "parent/collection:occurrence",
+                  "state": {
+                    "state": "present",
+                    "value": {
+                      "container": "array"
+                    }
+                  }
+                },
+                {
+                  "path": [],
+                  "ref": "parent/track:picture",
+                  "state": {
+                    "state": "present",
+                    "value": {
+                      "id": "picture",
+                      "kind": "visual"
+                    }
+                  }
+                },
+                {
+                  "path": [],
+                  "ref": "occurrence:shared-copy",
+                  "state": {
+                    "state": "absent"
+                  }
+                }
+              ],
+              "resolved": [],
+              "schema_version": 1,
+              "select": "parent",
+              "selections": [
+                {
+                  "boundaries": [],
+                  "key": "collection.occurrences",
+                  "members": [],
+                  "order": [],
+                  "owner": "parent",
+                  "policy": "guard-membership",
+                  "query_version": 1
+                }
+              ],
+              "version": "1"
+            },
+            "created": [
+              {
+                "kind": "occurrence",
+                "owner": "parent",
+                "ref": "occurrence:shared-copy"
+              }
+            ],
+            "dependencies": [
+              {
+                "key": "shared.foreign",
+                "kind": "authority",
+                "pin": {
+                  "source_occurrence_id": "one",
+                  "source_ref": {
+                    "content_digest": "sha256:b6541c3b8c4a6fc920aeacedf31258f0cf6859072f2e9748d7ea1601ebb267fd",
+                    "project_id": "17191555788a4895980dd79dc75c6659",
+                    "publication_id": "txn-ab028f7d3bb6480cbe8476359832b500",
+                    "revision_id": "authoring-parent-revision-3723384bc1a1be4662de446fd1611cfa7b88bb65d9e998bf049c9dc4d00b85c4",
+                    "timeline_id": "source"
+                  }
+                },
+                "policy": "exact"
+              },
+              {
+                "key": "shared.shot",
+                "kind": "entity",
+                "pin": {
+                  "revision_id": "authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+                  "shot_id": "shared"
+                },
+                "policy": "exact"
+              }
+            ],
+            "derived_writes": [],
+            "ordinal": 0,
+            "reads": [
+              {
+                "path": [
+                  "config",
+                  "pinnedShotGroups"
+                ],
+                "ref": "parent",
+                "state": {
+                  "state": "absent"
+                }
+              },
+              {
+                "path": [],
+                "ref": "parent/collection:occurrence",
+                "state": {
+                  "state": "present",
+                  "value": {
+                    "container": "array"
+                  }
+                }
+              },
+              {
+                "path": [],
+                "ref": "parent/track:picture",
+                "state": {
+                  "state": "present",
+                  "value": {
+                    "id": "picture",
+                    "kind": "visual"
+                  }
+                }
+              },
+              {
+                "path": [],
+                "ref": "occurrence:shared-copy",
+                "state": {
+                  "state": "absent"
+                }
+              }
+            ],
+            "selections": [
+              {
+                "boundaries": [],
+                "key": "collection.occurrences",
+                "members": [],
+                "order": [],
+                "owner": "parent",
+                "policy": "guard-membership",
+                "query_version": 1
+              }
+            ],
+            "writes": [
+              {
+                "after": {
+                  "state": "present",
+                  "value": {
+                    "duration_ms": 10000.0,
+                    "gain": 1,
+                    "occurrence_id": "shared-copy",
+                    "placement": {
+                      "start_ms": 12000.0,
+                      "track": "picture"
+                    },
+                    "shot_id": "shared",
+                    "source_offset": 0,
+                    "speed": 1,
+                    "track": "picture"
+                  }
+                },
+                "before": {
+                  "state": "absent"
+                },
+                "path": [],
+                "ref": "occurrence:shared-copy"
+              }
+            ]
+          }
+        ],
+        "label": "Copy source",
+        "merge_mode": "atomic",
+        "restored_from": null,
+        "schema_version": 1,
+        "steps": [
+          {
+            "command_ordinals": [
+              0
+            ],
+            "dependencies": [
+              {
+                "kind": "field",
+                "path": [
+                  "config",
+                  "pinnedShotGroups"
+                ],
+                "ref": "parent",
+                "state": {
+                  "state": "absent"
+                }
+              },
+              {
+                "kind": "collection",
+                "members": [],
+                "order": [],
+                "path": [
+                  "occurrences"
+                ],
+                "ref": "parent"
+              },
+              {
+                "kind": "field",
+                "path": [
+                  "config",
+                  "tracks",
+                  "id:picture"
+                ],
+                "ref": "parent",
+                "state": {
+                  "state": "present",
+                  "value": {
+                    "id": "picture",
+                    "kind": "visual"
+                  }
+                }
+              },
+              {
+                "kind": "scope",
+                "path": [],
+                "ref": "timeline"
+              }
+            ],
+            "id": "copy",
+            "intent": "Keep full source",
+            "label": "Copy source",
+            "patch": [
+              {
+                "before": {
+                  "state": "absent"
+                },
+                "op": "set",
+                "path": [],
+                "ref": "internal-revision:authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+                "value": {
+                  "clips": [],
+                  "output": {},
+                  "registry": {
+                    "assets": {}
+                  },
+                  "tracks": []
+                }
+              },
+              {
+                "before": {
+                  "state": "absent"
+                },
+                "op": "set",
+                "path": [],
+                "ref": "shot-revision:authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+                "value": {
+                  "internal_timeline_revision_id": "authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+                  "items": [],
+                  "name": "Shared"
+                }
+              },
+              {
+                "before": {
+                  "state": "present",
+                  "value": []
+                },
+                "op": "set",
+                "path": [
+                  "occurrences"
+                ],
+                "ref": "parent",
+                "value": [
+                  {
+                    "duration_ms": 10000.0,
+                    "gain": 1,
+                    "occurrence_id": "shared-copy",
+                    "placement": {
+                      "start_ms": 12000.0,
+                      "track": "picture"
+                    },
+                    "shot_id": "shared",
+                    "shot_revision_id": "authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+                    "source_offset": 0,
+                    "speed": 1,
+                    "track": "picture"
+                  }
+                ]
+              }
+            ],
+            "reads": [],
+            "tags": [
+              "copy"
+            ]
+          }
+        ],
+        "undo_of": [],
+        "undo_steps": null
+      },
+      "revision_id": "authoring-parent-revision-f4378d3612c58fa5ed816cad28d8e7a4b34897efa42a74b76a0bb567ffd05f9f",
+      "source": {
+        "via": "python"
+      },
+      "steps": [
+        {
+          "command_ordinals": [
+            0
+          ],
+          "dependencies": [
+            {
+              "kind": "field",
+              "path": [
+                "config",
+                "pinnedShotGroups"
+              ],
+              "ref": "parent",
+              "state": {
+                "state": "absent"
+              }
+            },
+            {
+              "kind": "collection",
+              "members": [],
+              "order": [],
+              "path": [
+                "occurrences"
+              ],
+              "ref": "parent"
+            },
+            {
+              "kind": "field",
+              "path": [
+                "config",
+                "tracks",
+                "id:picture"
+              ],
+              "ref": "parent",
+              "state": {
+                "state": "present",
+                "value": {
+                  "id": "picture",
+                  "kind": "visual"
+                }
+              }
+            },
+            {
+              "kind": "scope",
+              "path": [],
+              "ref": "timeline"
+            }
+          ],
+          "id": "copy",
+          "intent": "Keep full source",
+          "label": "Copy source",
+          "patch": [
+            {
+              "before": {
+                "state": "absent"
+              },
+              "op": "set",
+              "path": [],
+              "ref": "internal-revision:authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+              "value": {
+                "clips": [],
+                "output": {},
+                "registry": {
+                  "assets": {}
+                },
+                "tracks": []
+              }
+            },
+            {
+              "before": {
+                "state": "absent"
+              },
+              "op": "set",
+              "path": [],
+              "ref": "shot-revision:authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+              "value": {
+                "internal_timeline_revision_id": "authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+                "items": [],
+                "name": "Shared"
+              }
+            },
+            {
+              "before": {
+                "state": "present",
+                "value": []
+              },
+              "op": "set",
+              "path": [
+                "occurrences"
+              ],
+              "ref": "parent",
+              "value": [
+                {
+                  "duration_ms": 10000.0,
+                  "gain": 1,
+                  "occurrence_id": "shared-copy",
+                  "placement": {
+                    "start_ms": 12000.0,
+                    "track": "picture"
+                  },
+                  "shot_id": "shared",
+                  "shot_revision_id": "authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+                  "source_offset": 0,
+                  "speed": 1,
+                  "track": "picture"
+                }
+              ]
+            }
+          ],
+          "reads": [],
+          "tags": [
+            "copy"
+          ]
+        }
+      ]
+    }
+  },
+  "prepared": {
+    "canonical_document": {
+      "dependency_manifest": {
+        "documents": [],
+        "internal_timelines": [],
+        "media": [],
+        "shots": []
+      },
+      "internal_timeline_revisions": [],
+      "parent_revision": {
+        "content_digest": "sha256:516cbdc0672e7a86f26c2205bf86b28013739d184356565883ec54db2f8d9395",
+        "payload": {
+          "clips": [],
+          "config": {
+            "clips": [],
+            "tracks": [
+              {
+                "id": "picture",
+                "kind": "visual"
+              }
+            ]
+          },
+          "occurrences": [],
+          "registry": {}
+        },
+        "revision_id": "authoring-parent-revision-c0ca5dfe7fcf5838f49f674b80212b023f44d3be7966c446859befd4ec80ac97"
+      },
+      "project_id": "17191555788a4895980dd79dc75c6659",
+      "schema_version": 1,
+      "shot_revisions": [],
+      "timeline_id": "destination"
+    },
+    "compiler_version": "authoring-bundle-1",
+    "document_digest": "sha256:f954993ff9b3587673315a8d6293057728c4630bd970787c303726ea79a8a528",
+    "expected_head": {
+      "publication_id": "txn-5400d90eb09746b2b9a378cff44ae3f0",
+      "revision_id": "authoring-parent-revision-f4378d3612c58fa5ed816cad28d8e7a4b34897efa42a74b76a0bb567ffd05f9f"
+    },
+    "id_map": {},
+    "provider_version": "astrid-v1",
+    "records": {
+      "commands": [
+        {
+          "bindings": [
+            {
+              "boundary": {
+                "command_ordinals": [
+                  0
+                ],
+                "effect_range": [
+                  0,
+                  3
+                ],
+                "native_write_range": [
+                  0,
+                  1
+                ],
+                "publication_id": "txn-5400d90eb09746b2b9a378cff44ae3f0",
+                "step_id": "copy"
+              },
+              "dependencies": [],
+              "key": "inverse.stage",
+              "policy": "fixed",
+              "ref": "parent"
+            },
+            {
+              "boundary": {
+                "base_publication_id": "txn-5400d90eb09746b2b9a378cff44ae3f0",
+                "base_revision_id": "authoring-parent-revision-f4378d3612c58fa5ed816cad28d8e7a4b34897efa42a74b76a0bb567ffd05f9f",
+                "command_ordinal": 0,
+                "evaluated_head": {
+                  "publication_id": "txn-5400d90eb09746b2b9a378cff44ae3f0",
+                  "revision_id": "authoring-parent-revision-f4378d3612c58fa5ed816cad28d8e7a4b34897efa42a74b76a0bb567ffd05f9f"
+                },
+                "phase": "effect",
+                "side": "before",
+                "step_id": "copy"
+              },
+              "content_digest": "sha256:0b80e11773e545985319f2eec651aa9d16e379bbd710ff7b13ce7a1a6b3e33a1",
+              "dependencies": [],
+              "effect_ordinal": 0,
+              "key": "commit.effect",
+              "path": [
+                "occurrences"
+              ],
+              "physical_ref": "parent",
+              "policy": "fixed",
+              "ref": "parent",
+              "revision_id": "authoring-parent-revision-f4378d3612c58fa5ed816cad28d8e7a4b34897efa42a74b76a0bb567ffd05f9f",
+              "step_id": "copy"
+            },
+            {
+              "boundary": {
+                "base_publication_id": "txn-5400d90eb09746b2b9a378cff44ae3f0",
+                "base_revision_id": "authoring-parent-revision-f4378d3612c58fa5ed816cad28d8e7a4b34897efa42a74b76a0bb567ffd05f9f",
+                "command_ordinal": 0,
+                "evaluated_head": {
+                  "publication_id": "txn-5400d90eb09746b2b9a378cff44ae3f0",
+                  "revision_id": "authoring-parent-revision-f4378d3612c58fa5ed816cad28d8e7a4b34897efa42a74b76a0bb567ffd05f9f"
+                },
+                "phase": "effect",
+                "side": "after",
+                "step_id": "copy"
+              },
+              "content_digest": "sha256:516cbdc0672e7a86f26c2205bf86b28013739d184356565883ec54db2f8d9395",
+              "dependencies": [],
+              "effect_ordinal": 0,
+              "key": "commit.effect",
+              "path": [
+                "occurrences"
+              ],
+              "physical_ref": "parent",
+              "policy": "fixed",
+              "ref": "parent",
+              "revision_id": "authoring-parent-revision-c0ca5dfe7fcf5838f49f674b80212b023f44d3be7966c446859befd4ec80ac97",
+              "step_id": "copy"
+            },
+            {
+              "boundary": {
+                "base_publication_id": "txn-5400d90eb09746b2b9a378cff44ae3f0",
+                "base_revision_id": "authoring-parent-revision-f4378d3612c58fa5ed816cad28d8e7a4b34897efa42a74b76a0bb567ffd05f9f",
+                "command_ordinal": 0,
+                "evaluated_head": {
+                  "publication_id": "txn-5400d90eb09746b2b9a378cff44ae3f0",
+                  "revision_id": "authoring-parent-revision-f4378d3612c58fa5ed816cad28d8e7a4b34897efa42a74b76a0bb567ffd05f9f"
+                },
+                "phase": "effect",
+                "side": "before",
+                "step_id": "copy"
+              },
+              "content_digest": "sha256:b83f5092559ac2ff8895bd04b08fe0a9071a89b156c767e2f76be04c67f4305c",
+              "dependencies": [],
+              "effect_ordinal": 1,
+              "key": "commit.effect",
+              "owners": [
+                "occurrence:shared-copy/shot"
+              ],
+              "path": [],
+              "physical_ref": "shot-revision:authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+              "policy": "fixed",
+              "ref": "shot-revision:authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+              "revision_id": "authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+              "step_id": "copy"
+            },
+            {
+              "boundary": {
+                "base_publication_id": "txn-5400d90eb09746b2b9a378cff44ae3f0",
+                "base_revision_id": "authoring-parent-revision-f4378d3612c58fa5ed816cad28d8e7a4b34897efa42a74b76a0bb567ffd05f9f",
+                "command_ordinal": 0,
+                "evaluated_head": {
+                  "publication_id": "txn-5400d90eb09746b2b9a378cff44ae3f0",
+                  "revision_id": "authoring-parent-revision-f4378d3612c58fa5ed816cad28d8e7a4b34897efa42a74b76a0bb567ffd05f9f"
+                },
+                "phase": "effect",
+                "side": "before",
+                "step_id": "copy"
+              },
+              "content_digest": "sha256:570f70c637f215ba4e5592d93663f07ff78fe373e830c47ee9c7c9f04e3c304d",
+              "dependencies": [],
+              "effect_ordinal": 2,
+              "key": "commit.effect",
+              "owners": [
+                "occurrence:shared-copy/shot"
+              ],
+              "path": [],
+              "physical_ref": "internal-revision:authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+              "policy": "fixed",
+              "ref": "internal-revision:authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+              "revision_id": "authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+              "step_id": "copy"
+            },
+            {
+              "boundary": {
+                "base_publication_id": "txn-5400d90eb09746b2b9a378cff44ae3f0",
+                "base_revision_id": "authoring-parent-revision-f4378d3612c58fa5ed816cad28d8e7a4b34897efa42a74b76a0bb567ffd05f9f",
+                "command_ordinal": 0,
+                "evaluated_head": {
+                  "publication_id": "txn-5400d90eb09746b2b9a378cff44ae3f0",
+                  "revision_id": "authoring-parent-revision-f4378d3612c58fa5ed816cad28d8e7a4b34897efa42a74b76a0bb567ffd05f9f"
+                },
+                "phase": "input",
+                "step_id": "copy"
+              },
+              "content_digest": "sha256:570f70c637f215ba4e5592d93663f07ff78fe373e830c47ee9c7c9f04e3c304d",
+              "dependencies": [],
+              "key": "commit.atomic",
+              "owners": [
+                "occurrence:shared-copy/shot"
+              ],
+              "path": [],
+              "physical_ref": "internal-revision:authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+              "policy": "fixed",
+              "ref": "internal-revision:authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+              "revision_id": "authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc"
+            },
+            {
+              "boundary": {
+                "base_publication_id": "txn-5400d90eb09746b2b9a378cff44ae3f0",
+                "base_revision_id": "authoring-parent-revision-f4378d3612c58fa5ed816cad28d8e7a4b34897efa42a74b76a0bb567ffd05f9f",
+                "command_ordinal": 0,
+                "evaluated_head": {
+                  "publication_id": "txn-5400d90eb09746b2b9a378cff44ae3f0",
+                  "revision_id": "authoring-parent-revision-f4378d3612c58fa5ed816cad28d8e7a4b34897efa42a74b76a0bb567ffd05f9f"
+                },
+                "phase": "input",
+                "step_id": "copy"
+              },
+              "content_digest": "sha256:0b80e11773e545985319f2eec651aa9d16e379bbd710ff7b13ce7a1a6b3e33a1",
+              "dependencies": [],
+              "key": "commit.atomic",
+              "path": [],
+              "physical_ref": "parent",
+              "policy": "fixed",
+              "ref": "parent",
+              "revision_id": "authoring-parent-revision-f4378d3612c58fa5ed816cad28d8e7a4b34897efa42a74b76a0bb567ffd05f9f"
+            },
+            {
+              "boundary": {
+                "base_publication_id": "txn-5400d90eb09746b2b9a378cff44ae3f0",
+                "base_revision_id": "authoring-parent-revision-f4378d3612c58fa5ed816cad28d8e7a4b34897efa42a74b76a0bb567ffd05f9f",
+                "command_ordinal": 0,
+                "evaluated_head": {
+                  "publication_id": "txn-5400d90eb09746b2b9a378cff44ae3f0",
+                  "revision_id": "authoring-parent-revision-f4378d3612c58fa5ed816cad28d8e7a4b34897efa42a74b76a0bb567ffd05f9f"
+                },
+                "phase": "input",
+                "step_id": "copy"
+              },
+              "content_digest": "sha256:b83f5092559ac2ff8895bd04b08fe0a9071a89b156c767e2f76be04c67f4305c",
+              "dependencies": [],
+              "key": "commit.atomic",
+              "owners": [
+                "occurrence:shared-copy/shot"
+              ],
+              "path": [],
+              "physical_ref": "shot-revision:authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+              "policy": "fixed",
+              "ref": "shot-revision:authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+              "revision_id": "authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515"
+            }
+          ],
+          "command": {
+            "args": {
+              "publications": [
+                "txn-5400d90eb09746b2b9a378cff44ae3f0"
+              ]
+            },
+            "authorship": {
+              "occurrence:shared-copy::": "direct"
+            },
+            "bindings": {},
+            "created": [],
+            "expect": {
+              "occurrence:shared-copy::": {
+                "state": "present",
+                "value": {
+                  "duration_ms": 10000.0,
+                  "gain": 1,
+                  "occurrence_id": "shared-copy",
+                  "placement": {
+                    "start_ms": 12000.0,
+                    "track": "picture"
+                  },
+                  "shot_id": "shared",
+                  "source_offset": 0,
+                  "speed": 1,
+                  "track": "picture"
+                }
+              }
+            },
+            "intent": {},
+            "op": "timeline.inverse",
+            "reads": [
+              {
+                "path": [
+                  "config",
+                  "pinnedShotGroups"
+                ],
+                "ref": "parent",
+                "state": {
+                  "state": "absent"
+                }
+              },
+              {
+                "path": [],
+                "ref": "parent/collection:occurrence",
+                "state": {
+                  "state": "present",
+                  "value": {
+                    "container": "array"
+                  }
+                }
+              },
+              {
+                "path": [],
+                "ref": "parent/track:picture",
+                "state": {
+                  "state": "present",
+                  "value": {
+                    "id": "picture",
+                    "kind": "visual"
+                  }
+                }
+              },
+              {
+                "path": [],
+                "ref": "occurrence:shared-copy",
+                "state": {
+                  "state": "present",
+                  "value": {
+                    "duration_ms": 10000.0,
+                    "gain": 1,
+                    "occurrence_id": "shared-copy",
+                    "placement": {
+                      "start_ms": 12000.0,
+                      "track": "picture"
+                    },
+                    "shot_id": "shared",
+                    "source_offset": 0,
+                    "speed": 1,
+                    "track": "picture"
+                  }
+                }
+              }
+            ],
+            "resolved": [],
+            "schema_version": 1,
+            "select": null,
+            "selections": [
+              {
+                "boundaries": [
+                  "occurrence:shared-copy"
+                ],
+                "key": "collection.occurrences",
+                "members": [
+                  "occurrence:shared-copy"
+                ],
+                "order": [
+                  "occurrence:shared-copy"
+                ],
+                "owner": "parent",
+                "policy": "guard-membership",
+                "query_version": 1
+              }
+            ],
+            "version": "1"
+          },
+          "created": [],
+          "dependencies": [],
+          "derived_writes": [],
+          "ordinal": 0,
+          "reads": [
+            {
+              "path": [
+                "config",
+                "pinnedShotGroups"
+              ],
+              "ref": "parent",
+              "state": {
+                "state": "absent"
+              }
+            },
+            {
+              "path": [],
+              "ref": "parent/collection:occurrence",
+              "state": {
+                "state": "present",
+                "value": {
+                  "container": "array"
+                }
+              }
+            },
+            {
+              "path": [],
+              "ref": "parent/track:picture",
+              "state": {
+                "state": "present",
+                "value": {
+                  "id": "picture",
+                  "kind": "visual"
+                }
+              }
+            },
+            {
+              "path": [],
+              "ref": "occurrence:shared-copy",
+              "state": {
+                "state": "present",
+                "value": {
+                  "duration_ms": 10000.0,
+                  "gain": 1,
+                  "occurrence_id": "shared-copy",
+                  "placement": {
+                    "start_ms": 12000.0,
+                    "track": "picture"
+                  },
+                  "shot_id": "shared",
+                  "source_offset": 0,
+                  "speed": 1,
+                  "track": "picture"
+                }
+              }
+            }
+          ],
+          "selections": [
+            {
+              "boundaries": [
+                "occurrence:shared-copy"
+              ],
+              "key": "collection.occurrences",
+              "members": [
+                "occurrence:shared-copy"
+              ],
+              "order": [
+                "occurrence:shared-copy"
+              ],
+              "owner": "parent",
+              "policy": "guard-membership",
+              "query_version": 1
+            }
+          ],
+          "writes": [
+            {
+              "after": {
+                "state": "absent"
+              },
+              "before": {
+                "state": "present",
+                "value": {
+                  "duration_ms": 10000.0,
+                  "gain": 1,
+                  "occurrence_id": "shared-copy",
+                  "placement": {
+                    "start_ms": 12000.0,
+                    "track": "picture"
+                  },
+                  "shot_id": "shared",
+                  "source_offset": 0,
+                  "speed": 1,
+                  "track": "picture"
+                }
+              },
+              "path": [],
+              "ref": "occurrence:shared-copy"
+            }
+          ]
+        }
+      ],
+      "label": "Copy source",
+      "merge_mode": "atomic",
+      "restored_from": null,
+      "schema_version": 1,
+      "steps": [
+        {
+          "command_ordinals": [
+            0
+          ],
+          "dependencies": [
+            {
+              "kind": "field",
+              "path": [
+                "config",
+                "pinnedShotGroups"
+              ],
+              "ref": "parent",
+              "state": {
+                "state": "absent"
+              }
+            },
+            {
+              "kind": "collection",
+              "members": [
+                "shared-copy"
+              ],
+              "order": [
+                "shared-copy"
+              ],
+              "path": [
+                "occurrences"
+              ],
+              "ref": "parent"
+            },
+            {
+              "kind": "field",
+              "path": [
+                "config",
+                "tracks",
+                "id:picture"
+              ],
+              "ref": "parent",
+              "state": {
+                "state": "present",
+                "value": {
+                  "id": "picture",
+                  "kind": "visual"
+                }
+              }
+            },
+            {
+              "kind": "field",
+              "path": [
+                "occurrences",
+                "occurrence_id:shared-copy"
+              ],
+              "ref": "parent",
+              "state": {
+                "state": "present",
+                "value": {
+                  "duration_ms": 10000.0,
+                  "gain": 1,
+                  "occurrence_id": "shared-copy",
+                  "placement": {
+                    "start_ms": 12000.0,
+                    "track": "picture"
+                  },
+                  "shot_id": "shared",
+                  "source_offset": 0,
+                  "speed": 1,
+                  "track": "picture"
+                }
+              }
+            },
+            {
+              "kind": "scope",
+              "path": [],
+              "ref": "internal-revision:authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc"
+            },
+            {
+              "kind": "scope",
+              "path": [],
+              "ref": "parent"
+            },
+            {
+              "kind": "scope",
+              "path": [],
+              "ref": "shot-revision:authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515"
+            }
+          ],
+          "id": "copy",
+          "intent": "Keep full source",
+          "label": "Copy source",
+          "patch": [
+            {
+              "before": {
+                "state": "present",
+                "value": [
+                  {
+                    "duration_ms": 10000.0,
+                    "gain": 1,
+                    "occurrence_id": "shared-copy",
+                    "placement": {
+                      "start_ms": 12000.0,
+                      "track": "picture"
+                    },
+                    "shot_id": "shared",
+                    "shot_revision_id": "authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+                    "source_offset": 0,
+                    "speed": 1,
+                    "track": "picture"
+                  }
+                ]
+              },
+              "op": "set",
+              "path": [
+                "occurrences"
+              ],
+              "ref": "parent",
+              "value": []
+            },
+            {
+              "before": {
+                "state": "present",
+                "value": {
+                  "internal_timeline_revision_id": "authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+                  "items": [],
+                  "name": "Shared"
+                }
+              },
+              "op": "remove",
+              "path": [],
+              "ref": "shot-revision:authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515"
+            },
+            {
+              "before": {
+                "state": "present",
+                "value": {
+                  "clips": [],
+                  "output": {},
+                  "registry": {
+                    "assets": {}
+                  },
+                  "tracks": []
+                }
+              },
+              "op": "remove",
+              "path": [],
+              "ref": "internal-revision:authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc"
+            }
+          ],
+          "reads": [],
+          "tags": [
+            "copy"
+          ]
+        }
+      ],
+      "undo_of": [
+        "txn-5400d90eb09746b2b9a378cff44ae3f0"
+      ],
+      "undo_steps": null
+    },
+    "semantic_events": []
+  },
+  "request": {
+    "api_version": 1,
+    "base_publication_id": "txn-5400d90eb09746b2b9a378cff44ae3f0",
+    "base_revision_id": "authoring-parent-revision-f4378d3612c58fa5ed816cad28d8e7a4b34897efa42a74b76a0bb567ffd05f9f",
+    "commands": [
+      {
+        "args": {
+          "publications": [
+            "txn-5400d90eb09746b2b9a378cff44ae3f0"
+          ]
+        },
+        "op": "timeline.inverse",
+        "schema_version": 1,
+        "select": null,
+        "version": "1"
+      }
+    ],
+    "dry_run": false,
+    "group_id": "copy",
+    "label": "Copy source",
+    "merge": "atomic",
+    "project_id": "17191555788a4895980dd79dc75c6659",
+    "rationale": "D17",
+    "reads": [],
+    "source": {
+      "via": "python"
+    },
+    "steps": [
+      {
+        "command_ordinals": [
+          0
+        ],
+        "id": "copy",
+        "intent": "Keep full source",
+        "label": "Copy source",
+        "patch": [],
+        "reads": [],
+        "tags": [
+          "copy"
+        ]
+      }
+    ],
+    "timeline_id": "destination"
+  },
+  "sequential": null,
+  "source": {
+    "dependency_manifest": {
+      "documents": [],
+      "internal_timelines": [
+        {
+          "content_digest": "sha256:570f70c637f215ba4e5592d93663f07ff78fe373e830c47ee9c7c9f04e3c304d",
+          "revision_id": "authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+          "timeline_id": "source"
+        }
+      ],
+      "media": [],
+      "shots": [
+        {
+          "content_digest": "sha256:b83f5092559ac2ff8895bd04b08fe0a9071a89b156c767e2f76be04c67f4305c",
+          "internal_timeline_revision_id": "authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+          "revision_id": "authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+          "shot_id": "shared"
+        }
+      ]
+    },
+    "internal_timeline_revisions": [
+      {
+        "content_digest": "sha256:570f70c637f215ba4e5592d93663f07ff78fe373e830c47ee9c7c9f04e3c304d",
+        "payload": {
+          "clips": [],
+          "output": {},
+          "registry": {
+            "assets": {}
+          },
+          "tracks": []
+        },
+        "revision_id": "authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+        "timeline_id": "source"
+      }
+    ],
+    "parent_revision": {
+      "content_digest": "sha256:0b80e11773e545985319f2eec651aa9d16e379bbd710ff7b13ce7a1a6b3e33a1",
+      "payload": {
+        "clips": [],
+        "config": {
+          "clips": [],
+          "tracks": [
+            {
+              "id": "picture",
+              "kind": "visual"
+            }
+          ]
+        },
+        "occurrences": [
+          {
+            "duration_ms": 10000.0,
+            "gain": 1,
+            "occurrence_id": "shared-copy",
+            "placement": {
+              "start_ms": 12000.0,
+              "track": "picture"
+            },
+            "shot_id": "shared",
+            "shot_revision_id": "authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+            "source_offset": 0,
+            "speed": 1,
+            "track": "picture"
+          }
+        ],
+        "registry": {}
+      },
+      "revision_id": "authoring-parent-revision-f4378d3612c58fa5ed816cad28d8e7a4b34897efa42a74b76a0bb567ffd05f9f"
+    },
+    "project_id": "17191555788a4895980dd79dc75c6659",
+    "schema_version": 1,
+    "shot_revisions": [
+      {
+        "content_digest": "sha256:b83f5092559ac2ff8895bd04b08fe0a9071a89b156c767e2f76be04c67f4305c",
+        "internal_timeline_revision_id": "authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+        "payload": {
+          "internal_timeline_revision_id": "authoring-timeline-revision-a34537a28c38c5d649e3ac97f5e2ec93c2edc7699491a28f641d6bbc960b15dc",
+          "items": [],
+          "name": "Shared"
+        },
+        "revision_id": "authoring-shot-revision-fdb884cb6c117fe3e82083148143c9f1a5ccb5a7a02518a10b0b8b27d5f10515",
+        "shot_id": "shared"
+      }
+    ],
+    "timeline_id": "destination"
+  }
+}
