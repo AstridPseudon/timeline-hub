@@ -1,0 +1,60 @@
+U2c independent cause review
+Base: 699236a28581017c4d928137331e4893a1534bea
+Scope: source/history review only; no readiness, P2/P3, activation, full, browser, or gate rerun.
+
+Reviewed nodes: tests/integrations/test_generic_host_activation_acceptance.py
+- test_real_parked_process_inspection_preserves_identity_guards
+- test_bootstrap_register_observe_commit_and_same_incarnation_recovery[False]
+- test_bootstrap_register_observe_commit_and_same_incarnation_recovery[True]
+- test_precommit_failure_revokes_before_stopping_exact_host[ack]
+- test_precommit_failure_revokes_before_stopping_exact_host[cleanup]
+- test_independent_readiness_rejects_changed_evidence[ready_marker]
+- test_independent_readiness_rejects_changed_evidence[registration]
+- test_independent_readiness_rejects_changed_evidence[provider]
+- test_uncertain_commit_preserves_exact_host_and_credential
+- test_abort_preserves_primary_failure_without_signaling_after_failed_identity[primary-error-child-exit-race]
+- test_abort_preserves_primary_failure_without_signaling_after_failed_identity[primary-error-unverifiable-live-host]
+- test_abort_preserves_primary_failure_without_signaling_after_failed_identity[no-primary-error-child-exit-race]
+- test_abort_preserves_primary_failure_without_signaling_after_failed_identity[no-primary-error-unverifiable-live-host]
+- test_real_disabled_bearer_fails_handshake_and_enabled_bearer_becomes_ready
+- test_local_host_control_is_separate_and_survives_multiple_bounded_requests
+
+Runtime producer history:
+- d181fbc305a0cdad90bc5d0379c959f508e0dc70 introduced
+  RuntimeDaemon(..., production_worker_credentials=...) and the scoped worker
+  credential path.
+- 1ac2a3670da2d381e1a9b931260be1ffe769ad64 hardened its rotation/lifecycle.
+- 8c9b77dd5d2f2ad3b7022073aecfcedd9b0e7614 removed the switch and the fixture
+  owner-token alias; current Runtime always provisions the scoped worker actor.
+- R4 candidate-runtime 31c7ac3a predates 8c9b77d and still has the old switch.
+  U1c 40427e8b/8ea0766f and current Runtime 36760ee0 include the removal.
+
+Relevant source hashes at review base:
+- astrid/sdk/host_bootstrap.py d22111c08a70022ad8163a3ca4d21049c473e51c
+- astrid/core/execution/generic_host.py fe24418e41187a3f4e3c4891e7fe66ad9c28b4af
+- astrid/core/execution/process_group.py ae13872fb00c6e95ef26350ddad2bd1d20128a43
+- tests/integrations/test_generic_host_activation_acceptance.py a4d8eb598075a952ee036282e5b58289e0fc6a91
+- tests/helpers/runtime.py d5d7480ff182af67dd4cbc5a8fece92bfe9aff1b
+- R4 candidate Runtime runtime_protocol/daemon.py 539195824cbd5925311b46f8e132e07bb40252e3
+- U1c/current Runtime runtime_protocol/daemon.py 3d29579fe2308c27c39d4961ee11988bd522ae6b
+
+Review result:
+- 9 setup errors and the disabled-bearer failure are stale Agent fixture use of
+  production_worker_credentials=True; Runtime raises TypeError before the
+  readiness body. Smallest faithful adaptation: remove the two keyword uses
+  in this test file only. Keep real_runtime/new_runtime_daemon and the existing
+  worker_credential_path/credential authority. No shim or Runtime API revival.
+- 4 abort failures expose a real Agent source gap: abort() closes/signals before
+  calling _parked_host_identity_matches. The promised behavior is to observe
+  identity first, refuse signaling while a live host is unverifiable, preserve
+  the primary exception, and allow the child-exit race only after positive wait
+  proof. Smallest follow-up source file: astrid/sdk/host_bootstrap.py; tests
+  remain unchanged. No implementation was made in this review.
+- The local-control failure is sandbox FD wrapping: socket.socket(fileno=fd)
+  raises PermissionError in the worker thread. It is not classifier refusal.
+  Validate via the central test service outside the sandbox (or a dispatched
+  --net worker); do not classify this PermissionError as product behavior.
+
+Checks:
+- git diff --check: pass
+- git status/diff: clean; no Agent source or test changes.
