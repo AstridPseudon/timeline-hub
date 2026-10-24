@@ -12,6 +12,7 @@ from astrid.core.receipts.contract import CommandReceipt
 from astrid.core.timeline.authoring_bundle import open_authoring_bundle
 from astrid.sdk.contracts import DomainResult, ErrorObject
 from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.commit import bundle_from_document
 from astrid.sdk.timeline_elements import update_parent_element
 from tests.core import test_project_packs
 
@@ -65,9 +66,12 @@ def setup_owner(monkeypatch, configured=None):
         'registry': {'assets': {}}, 'occurrences': []}
     digest = 'sha256:' + hashlib.sha256(json.dumps(
         payload, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
-    bundle = open_authoring_bundle({'project_id': 'project', 'timeline_id': 'timeline',
-        'revision_id': 'head', 'payload': payload, 'content_digest': digest},
-        shot_revisions=[], internal_timeline_revisions=[])
+    # Match open_bundle's canonical source metadata; the original payload is unchanged.
+    bundle = bundle_from_document({'schema_version': 1, 'project_id': 'project', 'timeline_id': 'timeline',
+        'parent_revision': {'revision_id': 'head', 'payload': payload, 'content_digest': digest},
+        'shot_revisions': [], 'internal_timeline_revisions': [],
+        'dependency_manifest': {'shots': [], 'internal_timelines': [], 'media': [], 'documents': []}})
+    bundle['source_mapping']['_runtime_document'] = copy.deepcopy(bundle['source_mapping']['_runtime_document'])
     owner = Mock()
     owner._client._last_handshake = {'realm_id': 'realm', 'actor_id': 'author'}
     owner.open_composition.return_value = DomainResult.success({
@@ -107,13 +111,23 @@ def test_sameclip_exacthead_publication_preserves_closure_and_user_params(monkey
     assert result.ok, result.error
     body = owner.commit.call_args.args[2]
     assert body['base_revision_id'] == 'head' and body['base_publication_id'] == 'publication'
-    assert [c['op'] for c in body['commands']] == ['clip.set-element', 'clip.set', 'clip.set-params']
+    assert [c['op'] for c in body['commands']] == [
+        'clip.set-element', 'clip.set', 'clip.set-params', 'doc.patch']
     assert body['commands'][0]['args'] == {
         'elementRef': ref, 'schema_source': body['commands'][2]['args']['schema_source']}
     assert body['commands'][1]['args'] == {'values': {'hold': 6}, 'clear': []}
     assert body['commands'][2]['args']['values'] == {'chaos': .8}
     assert body['commands'][2]['args']['schema_source']['document_id'] in {
         document for project, document in configured.rows}
+    assert body['commands'][3]['args'] == {'changes': [{
+        'op': 'remove', 'ref': 'parent', 'path': ['config', 'app', 'elements', 'reveal'],
+        'before': {'state': 'present', 'value': {'source': 'legacy recovery bytes'}}}]}
+    assert body['reads'] == [{
+        'kind': 'collection', 'ref': 'parent', 'path': ['clips'],
+        'members': ['effect', 'media'], 'order': ['effect', 'media']}, *[
+        {'kind': 'field', 'ref': 'parent', 'path': ['clips', 'id:' + row['id'], field],
+         'state': {'state': 'present', 'value': row[field]} if field in row else {'state': 'absent'}}
+        for row in original['parent']['clips'] for field in ('elementRef', 'element_ref')]]
     assert owner.commit.call_args.kwargs == {'idempotency_key': 'edit-element'}
     assert result.data == {
         'project_id': 'project', 'timeline_id': 'timeline', 'expected_head': 'head',
@@ -123,7 +137,7 @@ def test_sameclip_exacthead_publication_preserves_closure_and_user_params(monkey
             'params': {'color': '#ff6b6b', 'seed': 15}}}
     assert result.receipt.receipt_id == 'accepted-receipt'
     assert result.idempotency_key == 'edit-element'
-    # Mirrors are compiler projections. This helper never patches or prunes them.
+    # The native prefix preserves open config; only the final patch retires the orphan.
     plan = execute(bundle, body['commands'][:2], schema_inputs=owner.schema_inputs, realm_id='realm')
     assert plan.bundle['parent']['clips'][1] == bundle['parent']['clips'][1]
     assert plan.bundle['parent']['clips'][0]['opaque'] == {'keep': [None, False]}
@@ -202,11 +216,15 @@ def test_element_only_without_existing_params(monkeypatch, configured, params, e
     clip.pop('params')
     if existing is not None:
         clip['params'] = existing
+    bundle['parent']['config']['clips'] = copy.deepcopy(bundle['parent']['clips'])
     result = update(owner, ref, params=params)
     assert result.ok, result.error
     assert result.data['params'] == {}
     calls = owner.commit.call_args.args[2]['commands']
-    assert [call['op'] for call in calls] == ['clip.set-element']
+    assert [call['op'] for call in calls] == ['clip.set-element', 'doc.patch']
+    assert calls[1]['args'] == {'changes': [{
+        'op': 'remove', 'ref': 'parent', 'path': ['config', 'app', 'elements', 'reveal'],
+        'before': {'state': 'present', 'value': {'source': 'legacy recovery bytes'}}}]}
     plan = execute(bundle, calls, schema_inputs=owner.schema_inputs, realm_id='realm')
     assert ('params' in plan.bundle['parent']['clips'][0]) == (existing is not None)
     assert all(write['path'][0] != 'params' for record in plan.records for write in record['writes'])
