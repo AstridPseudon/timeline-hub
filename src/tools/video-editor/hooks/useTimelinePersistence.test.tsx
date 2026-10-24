@@ -16,6 +16,8 @@ vi.mock('@/tools/video-editor/data/timelineDraftIndexedDb.ts', async (importOrig
   return { ...actual, saveTimelineDraft: vi.fn(actual.saveTimelineDraft) };
 });
 import { useTimelinePersistence, TimelineSaveBarrierError, type UseTimelinePersistenceResult } from './useTimelinePersistence';
+import { useClipEditing } from './useClipEditing';
+import { useTimelineCommit } from './useTimelineCommit';
 import { useTimelineOps } from './useTimelineOps';
 import { TimelineEventBus } from './useTimelineEventBus';
 import {
@@ -36,17 +38,19 @@ import { BRIDGE_REQUEST_TIMEOUT_MS } from '../data/bridgeContract';
 import { clearTimelineDraft, loadTimelineDraft, saveTimelineDraft, type TimelineDraftRecoveryMetadata } from '@/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import type { AssetRegistry } from '../types';
 import type { TimelineBundleEnvelope } from '../data/typed/timelineBundle';
-import { acceptedCommit } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
+import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
 import { createCommitOutbox, toOutboxJson } from '../commands/commitOutbox.ts';
 import { createLocalSaveSession } from '../commands/localSaveSession.ts';
 import { createTimelineLocalSaveHandoff, type TimelineLocalSaveHandoff } from './timelineLocalSaveHandoff.ts';
+
+const contractFixture = vi.hoisted(() => ({ digest: 'sha256:unsupported-test-fixture' }));
 
 // This case asserts the retained-draft path when the generated v2 contract is
 // unavailable. Keep that condition explicit instead of inheriting the current
 // full-v2 digest from the joined generated metadata.
 vi.mock('@/integrations/runtime/generated-contract-metadata.ts', async (importOriginal) => ({
   ...await importOriginal<typeof import('@/integrations/runtime/generated-contract-metadata.ts')>(),
-  SCHEMA_DIGEST: 'sha256:unsupported-test-fixture',
+  get SCHEMA_DIGEST() { return contractFixture.digest; },
 }));
 
 // Keep these inputs aligned with useTimelinePersistence's private save timing
@@ -264,6 +268,132 @@ function makeBundle(text: string): TimelineBundleEnvelope {
 }
 
 describe('useTimelinePersistence — interaction gating', () => {
+  for (const { children, topLevel, gesture } of [
+    { children: false, topLevel: false },
+    { children: false, topLevel: true },
+    { children: true, topLevel: false },
+    { children: true, topLevel: true },
+  ].flatMap(basis => ['move', 'single', 'bulk'].map(gesture => ({ ...basis, gesture })))) {
+    // A2/P2 requires ordinary parent moves with retained child closures and
+    // top-level authored clips to reach the outbox. Keep the success contract.
+    it(`P2 parent ${gesture} reaches the durable outbox (children=${children}, topLevel=${topLevel})`, async () => {
+      contractFixture.digest = 'sha256:35c2d9c5e0b51ab8d8b7a4f4dbafbdfcb13d232d7bd22fff21cf73e250398d4c';
+      const config = createDefaultTimelineConfig();
+      config.clips = [{ id: 'clip-parent-move', at: 0, track: 'V1', clipType: 'media', asset: 'parent-image', from: 0, to: 3, speed: 1,
+        transition: { type: 'crossfade', duration: 0.5 } },
+        { id: 'reference', at: 20, track: 'V1', clipType: 'media', asset: 'parent-image', from: 0, to: 3, speed: 1,
+          transition: { type: 'crossfade', duration: 0.5 } }];
+      const original = await buildTimelineData(config, { assets: { 'parent-image': { file: 'parent.png', type: 'image/png' } } },
+        undefined, 1, undefined, { projectId: 'project-commit', timelineId: 'timeline-1', headRevisionId: 'r0', headPublicationId: 'p0' });
+      const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' },
+        { timelineId: 'timeline-1', children }).data.canonical_document;
+      document.parent_revision.payload = { ...document.parent_revision.payload,
+        config: JSON.parse(JSON.stringify(config)), clips: JSON.parse(JSON.stringify(config.clips)),
+        registry: structuredClone(original.registry), opaque: { keep: null } };
+      if (topLevel) delete document.parent_revision.payload.config.clips;
+      document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
+      const initial = { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: document };
+      const scope = { realmId: 'realm', actorId: 'actor', projectId: 'project-commit', timelineId: 'timeline-1' };
+      const outboxes = createCommitOutbox({ indexedDB: createFakeIndexedDB(), exclusiveLock: async (_key, work) => work() });
+      const selectedIds = gesture === 'bulk' ? ['clip-parent-move', 'reference'] : ['clip-parent-move'];
+      const edited = buildDataFromCurrentRegistry({ ...original.config,
+        clips: original.config.clips.map(clip => !selectedIds.includes(clip.id) ? clip
+          : gesture === 'move' ? { ...clip, at: 5 } : { ...clip, transition: undefined }) }, original);
+      const landed = structuredClone(document);
+      for (const list of [landed.parent_revision.payload.clips, landed.parent_revision.payload.config.clips]) {
+        if (!Array.isArray(list)) continue;
+        for (const clip of list as Array<Record<string, unknown>>) {
+          if (!selectedIds.includes(clip.id as string)) continue;
+          if (gesture === 'move') clip.at = 5;
+          else delete clip.transition;
+        }
+      }
+      landed.parent_revision.revision_id = 'r1';
+      landed.parent_revision.content_digest = fixtureDigest(landed.parent_revision.payload);
+      const response = acceptedCommit({ revision_id: 'r1', publication_id: 'p1' }, { revision_id: 'r0', publication_id: 'p0' },
+        { timelineId: 'timeline-1', children });
+      response.data.canonical_document = landed;
+      const send = vi.fn<NonNullable<DataProvider['commitTimeline']>>(async () => ({ response, accepted: { revisionId: 'r1', publicationId: 'p1' },
+        canonicalDocument: landed, graph: {}, receipt: response.receipt }));
+      const adopted = vi.fn();
+      const local = await createLocalSaveSession({ scope, initial, document: toOutboxJson(document), outboxes, send,
+        loadLatest: vi.fn(async () => initial), changed: vi.fn(), prepareDisplay: async (basis) => ({
+          document: toOutboxJson(basis.canonicalDocument), adopt: adopted,
+        }) });
+      const handoff = createTimelineLocalSaveHandoff({ initial,
+        source: { config: original.config, registry: original.registry, head: original.head }, session: local,
+        adopted: (basis) => ({ receipt: { configVersion: 2, head: { ...original.head!,
+          headRevisionId: basis.head.revisionId, headPublicationId: basis.head.publicationId } },
+        source: { config: edited.config, registry: edited.registry, head: { ...original.head!,
+          headRevisionId: basis.head.revisionId, headPublicationId: basis.head.publicationId } } }) });
+      const capture = vi.spyOn(handoff, 'capture');
+      const append = vi.spyOn(local, 'appendDocument');
+      const harness = setup({ initialData: original, localDocumentSave: handoff });
+      const oldHeadWriter = vi.fn();
+      harness.provider.saveTimelineAtHead = oldHeadWriter;
+      const eventBus = new TimelineEventBus();
+      const caller = renderHook(() => {
+        const commit = useTimelineCommit({ eventBus, initialData: original, lastSavedSignatureRef: { current: '' } });
+        return useClipEditing({ dataRef: commit.dataRef, resolvedConfig: commit.data?.resolvedConfig ?? null,
+          selectedClipId: 'clip-parent-move', selectedTrack: null, currentTime: 0,
+          selectClip: vi.fn(), setSelectedTrackId: vi.fn(), applyEdit: commit.applyEdit });
+      });
+      const unsubscribe = eventBus.on('scheduleSave', (data, options) => {
+        harness.dataRef.current = data;
+        harness.result.current.scheduleSave(data, options);
+      });
+      try {
+        act(() => {
+          if (gesture === 'single') caller.result.current.handleSelectedClipChange({ transition: undefined });
+          else if (gesture === 'bulk') caller.result.current.handleUpdateClipsDeep(selectedIds, () => ({ transition: undefined }));
+          else {
+            harness.dataRef.current = edited;
+            harness.result.current.scheduleSave(edited, { gestureBasis: {
+              kind: 'move', clipId: original.config.clips[0].id, trackId: 'V1',
+              config: original.config, registry: original.registry,
+            } });
+          }
+        });
+        expect(capture).toHaveBeenCalledTimes(1);
+        expect(capture.mock.calls[0][0].head).toEqual(original.head);
+        expect(harness.dataRef.current?.config.clips[0].at).toBe(gesture === 'move' ? 5 : 0);
+        await act(async () => { await harness.result.current.flushPendingSave(); });
+        expect(append).toHaveBeenCalledTimes(1);
+        expect(send).toHaveBeenCalledTimes(1);
+        const request = send.mock.calls[0][0];
+        expect(request).toMatchObject({ project_id: scope.projectId, timeline_id: scope.timelineId,
+          base_revision_id: 'r0', base_publication_id: 'p0', source: { via: 'app' }, dry_run: false,
+          commands: [{ op: 'doc.patch', created: [] }], merge: 'fields' });
+        const changes = gesture === 'move' ? [{
+          op: 'set', ref: 'parent', path: ['clips', 'id:clip-parent-move', 'at'],
+          before: { state: 'present', value: 0 }, value: 5,
+        }] : selectedIds.map(id => ({ op: 'remove', ref: 'parent', path: ['clips', `id:${id}`, 'transition'],
+          before: { state: 'present', value: { type: 'crossfade', duration: 0.5 } } }));
+        expect(request.commands[0].args.changes).toEqual(changes);
+        expect(request.steps).toMatchObject([{ command_ordinals: [0], patch: request.commands[0].args.changes }]);
+        expect(request.reads).toContainEqual({ kind: 'field', ref: 'parent',
+          path: [...(topLevel ? [] : ['config']), 'clips', 'id:clip-parent-move', gesture === 'move' ? 'at' : 'transition'],
+          state: { state: 'present', value: gesture === 'move' ? 0 : { type: 'crossfade', duration: 0.5 } } });
+        if (gesture !== 'move') expect(request.steps[0].reads).toEqual(request.reads);
+        expect((await outboxes.list(scope))[0].accepted).toBeTruthy();
+        expect(local.getDocument()).toEqual(landed);
+        expect(local.getDocument()).toMatchObject({ shot_revisions: document.shot_revisions,
+          internal_timeline_revisions: document.internal_timeline_revisions,
+          dependency_manifest: document.dependency_manifest });
+        expect(adopted).toHaveBeenCalledTimes(1);
+        expect(oldHeadWriter).not.toHaveBeenCalled();
+        expect(harness.saveTimeline).not.toHaveBeenCalled();
+        expect(harness.loadTimeline).not.toHaveBeenCalled();
+      } finally {
+        unsubscribe();
+        caller.unmount();
+        harness.unmount();
+        await local.dispose();
+        contractFixture.digest = 'sha256:unsupported-test-fixture';
+      }
+    });
+  }
+
   it('keeps an unsupported child ownership edit visible and recoverable without entering either writer', async () => {
     const original = makeTimelineData('flattened-child');
     original.head = { projectId: 'project-commit', timelineId: 'timeline-1', headRevisionId: 'r0', headPublicationId: 'p0' };
