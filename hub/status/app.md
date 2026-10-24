@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T20:18:03Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 2m -->
-# app board, 2026-10-24T20:15Z
+<!-- app | 2026-10-24T20:21:29Z | dispatcher heartbeat 6s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 0m -->
+# app board, 2026-10-24T20:20Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -45,7 +45,7 @@
 | P2-D78 | Exact retained element request handoff | Luna | D78 owner1816 | merged | app-P2-D78-retained-request-handoff-1819 | Published json/md;4459 exact body bytes,e58a09dc;trace anchor and redaction validated. Runtime replay owns cause. | Evidence only |
 | D79 | One live edit robustness smoke | Luna; Service | Normal D66 auth | review | app-D79-normal-auth-resume-1922 | Actual25704 readiness PASS; smoke setup invalid bearer before all three assertions. Duplicate29954 cancelled before tests; both outputs kept. | App7098 |
 
-| D79-extension | Agent turn versus user edit cases | Luna | Owner19:50 extension | doing | app-D79-inflight-edit-extension-2012 | Source-only new disjoint merge and same-field conflict cases. No original/body or gate credit; yields to critical work. | Source pending |
+| D79-extension | Agent turn versus user edit cases | Luna | D83 pause until ZIP | gated:ZIP | Author2012 held; return2018 later | Source2012 has test.fail and placeholder, rejected. No merge or browser credit. Resume genuine SDK conflict cases only after ZIP. | Branch held |
 | E4 | History and undo design dropped | Luna | D81 trimmed20:02 | gated:dropped | app-E4-history-undo-design-2005 stopped | New instruction received just after dispatch; normal stop requested immediately. Preserve WIP, no integration merge. | No product edits |
 | D79-session | Repair smoke auth and submit race | Luna | Actual25704 setup failure | merged | app-D79-session-and-submit-race-1931 | Versioned scoped credentials and same plan lock;21 D66,9 parser,3 setup controls/types/lint PASS. No browser credit. | f6a21c2852 |
 
@@ -66,7 +66,7 @@
 | P2-D80-bulk | Transition bulk clear alone | Luna; Service | Preflight17367 PASS | review | Actual25054; producer1855 | Readiness PASS, original fixture transport_timeout before gesture. All five actual diagnostics complete, no gate credit. | App3c29 |
 
 | P2-D78-live | One unchanged element gesture with stacks | Service; Luna | Preflight9965 PASS | review | Actual13100; producer1856 | Exit1/213s; readiness PASS, native-seed timeout before element.128safe phase records published; no stack/PID captured. All output retained. | App3c29 |
-| P2-D80-seed | Six native seed transport timeouts | Runtime HARD Sol | Safe prefix hash280f | doing | Runtime1924; App path1910 | All six stop before gestures. Actual phase interpretation active, no proven common cause. Source capture seam handback awaited. | Captured Runtime1bae |
+| P2-D80-seed | Native seed wait blocks gestures | Runtime HARD Sol | Actual14383 safe stack qualified | blocked:runtime | Runtime native wait owner; App capture complete | D83 names Runtime wait bug top priority. No more P2 runs until meaningful fix home; then isolated eight gestures before one full tour. | Runtime fix pending |
 | P2-D78-wire | Wire published pending-request stack helper | Luna | Author focused checks PASS | merged | app-P2-D78-stack-wire-1859 | Helper exact8fe211, published patch and normal-stage activation;20Node/helper/activation controls, types/lint PASS. No actual dump claimed. | Home7098c7eeb5 |
 | P2-D80-path | Attribute native-seed boundary from App | Luna | Four retained setup failures | merged | app-P2-D80-native-seed-path-1910 | Request reaches Runtime; SDK30s timeout, App process120s. Relevant paths equal passingP1. No App repair justified; Runtime cost/progress unknown. | Source unchanged |
 | P2-D78-native-capture | Runtime native watchdog | Runtime Luna | Author12 PASS | merged | Runtime1932 and1935 | Normal44917 includes attribution fixes and daemon watchdog. Native source wait cleared; actual live14383 uses this helper. | Runtime44917 |
@@ -79,7 +79,9 @@
 
 | P3-envelope-apply | Qualify and apply strict D82 patch | Luna independent | D82 and corrected2005 | merged | app-P3-envelope-qualify-apply-2010 | Independent qualification and exact application PASS. Normal mergec184bd; only protected assertion/helper changed, real ledger updated. | Source7dcbfda408 |
 
-| P3-D82-original | Current original with strict recorded command | Luna; Service | Homec184bd; D74a | doing | app-P3-D82-pinned-original-2015 | Queued normal one-command four-pin capture, preflight then one original. No D78 overlap; actual ID follows submit. | Spec93c2bf4c |
+| P3-D82-original | Current original with strict recorded command | Luna; Service | Preflight11918 PASS | doing | Actual15493; producer2015 | Submitted20:17Z, exact Appc184bd/Agent22d003/Runtime44917/Composition635f. One original, no D78 overlap, same-ID wait. | Spec93c2bf4c |
+
+| P3-D83-diagnostic | Temporary soft-assertion Gate5 copy | Luna | Owner D83 | doing | app-P3-D83-diagnostic-harness-2020 | Harness-only temporary copy; six originals unchanged. Prepare one diagnostic to surface all mismatches. Current15493 remains running. | Source pending |
 
 Integration: App e771 adds independently reviewed intermediate recovery readiness poll, exact spec736fd381. App7098 includes author-qualified D79 stack helper, fixture and normal-stage activation for future runs. App3c29 includes author-tested five D80 one-case descriptors. App2bd162 includes reviewed D75b both-mount recovery; parent status830252; D79 setup49f6; full phase38f39. App5d7550 includes one-command guarded submit037a8 over587316, with D73 snapshot admission6c7c over255f, with real Runtime CLI phase bootstrap over D73fd74, current popup provenance924140, D69c3d79, approved D70aaddaf, parent reads/audited restorations and frozen upstream3881. No new upstream refresh for gating.
 
@@ -88,13 +90,14 @@ regressions: 0 confirmed open App source findings. D69 all four restorations hom
 
 
 Blockers: Final cut — all eight P2 and one P3 core cases remain unqualified. Runtime coordinates final suites and ZIP after current gate proof.
-Next ready: Producer2015 submits ONE original P3 on normal c184bd after fresh four-pin source preflight. D78 real-frame input qualified; Runtime owns causal interpretation. No unchanged D78 rerun.
+Blockers: Runtime native wait — actual14383 frame/phase input complete. D83 requires meaningful Runtime wait fix home before next P2 isolated gesture.
+Next ready: Current P3 actual15493 finishes. D83 author2020 prepares diagnostic harness; normal merge then ONE diagnostic. No independent NO-GO verdict under D83. D79 paused until ZIP, E4 dropped.
 
-live 2 / cap 4; ready-undispatched 0. Critical P3 original producer2015 and source-only D79 extension2012 active. D78 verdict complete. E4 stopped and dropped. Caps adjust on current disk; running requests finish.
+live 2 / cap 2; ready-undispatched 0. Producer2015 and critical diagnostic author2020 active. No P2/D78 rerun before Runtime fix; no non-critical dispatch.
 
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
-Disk: Current7.665GB after D78 terminal, before next P3 build. Guarded scan found no finished clean non-KEEP App worktree remaining. Six stale pins previously released. D74a permits critical gates/D78 down to6.0GB. Cleanup1939 verifies stale KEEP pins and archives dirty abandoned U3 work before guarded recycle; classifier refusal stops. Orphan graph and prior denied routes stay stopped; all run evidence retained.
-Inbox consumed through1697326 bytes, including Agent1915 adoption homee39de and Runtime1920 capture request. Owner boards Runtime19:18 and Agent19:16 rechecked: popup87bc and cost e89 are home; original P2 source outcomes remain unqualified. Peer1934 closes App capture disposition at honest limits.
+Disk: Current6.932GB after D78 terminal, before next P3 build. Guarded scan found no finished clean non-KEEP App worktree remaining. Six stale pins previously released. D74a permits critical gates/D78 down to6.0GB. Cleanup1939 verifies stale KEEP pins and archives dirty abandoned U3 work before guarded recycle; classifier refusal stops. Orphan graph and prior denied routes stay stopped; all run evidence retained.
+Inbox consumed through1698388 bytes, including Agent1915 adoption homee39de and Runtime1920 capture request. Owner boards Runtime19:18 and Agent19:16 rechecked: popup87bc and cost e89 are home; original P2 source outcomes remain unqualified. Peer1934 closes App capture disposition at honest limits.
 Evidence: [D73 path](../../design/app-D73-service-snapshot-path-1739.md), [corrected P3 proposal](../../design/app-P3-recovery-proposal-return-1736.md), [same-ID source-only20321](../../design/app-P2-element20321-phase-producer-1737.md), [P1 current verdict](../../design/app-P1-26312-current-verdict-1616.md), [D69 final](../../design/app-U3-D69-home-and-preflight-1704.md).
 
 
