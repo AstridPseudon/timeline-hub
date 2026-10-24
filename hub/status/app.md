@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T21:57:23Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 1m -->
-# app board, 2026-10-24T21:57Z
+<!-- app | 2026-10-24T22:00:39Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 0m -->
+# app board, 2026-10-24T22:00Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -99,7 +99,7 @@
 | P2-D83-parent-move | Parent move isolated original | Luna; Service | Preflight20867 PASS | review | App2058; actual837 | Readiness1 PASS, original1 ERROR at response wait90000ms. Source attribution queued for next slot; no gate credit. | Appce1cd9; Agent5fc1 |
 | P2-parent-837 | Attribute parent response wait | Luna | Actual837 | blocked:runtime | App2125; Runtime cost and lock Sol2126 | Request3 reached historical validation; no App fix.102 controls/types/lint/protected6 PASS. Report and peer2131 published. | Source unchanged |
 | P2-asset-12674 | Attribute exact missing asset response | Luna | Actual12674 completed Runtime phases | merged | app-P2-asset-12674-cause-2131 | No browser commit sent. Media import/select completed; drop crossed ownership before transport. Exact report published. | Source unchanged |
-| A3-asset-owner | Preserve asset drop ownership | Luna; independent review | Actual 12674 | review | app-A3-asset-drop-rereview-2154 | Author return PASS96/types/lint; old target v2 RED/current v1 GREEN and missing-row negatives. Independent re-review dispatched on first space return. | Source c88d4ff held |
+| A3-asset-owner | Preserve asset drop ownership | Luna; independent review | Actual 12674 | merging | app-A3-asset-drop-rereview-2154 | Independent PASS96 required plus162 neighbors/types/lint. Old target RED and malformed-row negatives qualified. Normal author merge queued. | Source c88d4ff queued |
 | A3-placement-locator | Attribute placement dropzone | Luna | Actual 28255; D84 | merged | app-A3-placement-locator-2143 | Source attribution complete: helper raw IDs differ from mounted occurrence-qualified action IDs. No product edit. | Source unchanged |
 | P2-D83-asset | RegisterAsset isolated original | Luna; Service | Preflight PASS | review | App2058; actual12674 | Readiness1 PASS, original1 ERROR at commitFromGesture responsewait90000. Author2125 compares actual source boundary. | Appce1cd9; Agent5fc1 |
 | P2-D83-placement | Automatic placement isolated original | Luna; Service | Preflight29256 PASS | review | App2058; actual28255 | Readiness1PASS, original1FAIL visible locator in dropFileIn358 before intended save. No gate credit. Retained for next source qualification. | Appce1cd9; Agent5fc1 |
@@ -116,10 +116,10 @@ regressions: One confirmed App asset ownership finding open. Source fixes and un
 
 Blockers: Runtime — element11589 on adoptedbc04 still fails applied status after5s. Per owner21:33, hold remaining bodies until the next meaningful qualified Runtime release. Normal7aa603 has identical product bytes, so it does not clear this hold.
 Blockers: Final cut — all eight isolated P2 cases must pass before one full tour. Runtime coordinates final pinned tuple, P1–P5/core rerun matrix, genuine installed render and ZIP.
-Next ready: Asset re-review2154 terminal PASS queues author merge. Placement2152 normal merge complete00918dc720; exact tree matches reviewed author. No P3 or D79 work.
+Next ready: Asset re-review2154 PASS; normal author merge receipt next. Placement2152 normal merge complete00918dc720; exact tree matches reviewed author. No P3 or D79 work.
 
-live 1 / cap 2; ready-undispatched 0. Asset re-review2154 dispatched immediately after placement tree released space above6GB. Placement merged00918dc720. No browser body active.
-Disk: 6.168 GB last measured. Both source workers started above6GB; no further dispatch below6GB. D74a critical small-source floor6GB used; no new dispatch below6GB. Guarded scan found zero ended clean nonKEEP App trees. Prior dirtyU3, compact, graph, publication and source-access refusal targets remain stopped; no alternate cleanup route used. All run evidence retained.
+live 0 / cap 2; ready-undispatched 0. Asset2154 PASS and author merge queued. Placement merged00918dc720. No browser body active; owner Runtime release hold remains.
+Disk: 5.847 GB last measured. Both source workers started above6GB; no further dispatch below6GB. D74a critical small-source floor6GB used; no new dispatch below6GB. Expanded scan across all local worker records found zero ended clean nonKEEP trees. Prior dirtyU3, compact, graph, publication and source-access refusal targets remain stopped; no alternate cleanup route used. All run evidence retained.
 Safety: Prior refusals stay stopped. No new refusal in this pass.
-Inbox consumed through 1743791 bytes. PLAN, common rules, C0, header and Runtime/Agent owner boards rechecked. Runtime D84a request-scope2145 and lock-placement2147 are disjoint active owners; no new qualified product successor published. All blocked Runtime rows retain their actual dependency.
+Inbox consumed through 1746129 bytes. PLAN, common rules, C0, header and Runtime/Agent owner boards rechecked. Runtime D84a request-scope2145 and lock-placement2147 are disjoint active owners; no new qualified product successor published. All blocked Runtime rows retain their actual dependency.
 Evidence: [Asset review FAIL](../../design/app-A3-asset-drop-review-2143.md), [placement attribution](../../design/app-A3-placement-locator-2143.md), [selector proposal](../../design/app-P2-placement-selector-proposal-2147.md), [exact patch](../../design/app-P2-placement-selector-proposal-2147.patch).
