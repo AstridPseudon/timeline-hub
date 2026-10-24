@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T16:13:27Z | dispatcher heartbeat 1s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 1m -->
-# runtime board, 2026-10-24T16:11:51Z
+<!-- main | 2026-10-24T16:16:35Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 1m -->
+# runtime board, 2026-10-24T16:15:33Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -77,7 +77,9 @@
 | F-D52-shot-set | Preserve 17 live shot-set cases | Luna | Actual Agent home proof PASS | merged | Author1139; review1143; home1156 | Actualaff339 passed61 in4.04s; durable XML and original14 test ASTs exact. All17 assigned cases included. | 3b8dc8a345 / aff3391061 |
 | F-D52-occurrence-delete | Qualify 19 live delete cases | Luna | Exact integrated source proof | merged | Author1139; independent1141 PASS | Exact Agent7e258 and Runtimebecfe:19PASS6.43s; bodies and params unchanged. [Review](../../design/runtime-D52-occurrence-review-1141.md) | Agent7e258 unchanged |
 | F-D52-core-five | Map five named actual home outcomes | Luna | Authentic XML and map verified | merged | Receipt 1418 PASS | All five named cases PASS on actual47b/becfe. Current four fork failures are distinct. [Receipt](../../design/rt-F-D52-core-five-receipt-1418.md) | Agent 47b |
-| U1-D69-test-audit | Preserve upstream test predicates | Luna | D69 before cut | doing | rt-U1-D69-test-audit-1603 | Exact d4f reverse inventory and mechanical assertion audit. Read only; finite restore rows follow any uncited loss. | Current8b32 |
+| U1-D69-test-audit | Preserve upstream test predicates | Luna | Seven restorations before cut | merged | rt-U1-D69-test-audit-1603 | Missing16:9 mapped,7 restore. Changed129:75 clear,54 cited. Two skip markers cited;12 dynamic scopes explicit. [Audit](../../design/rt-U1-D69-test-audit-1603.md) | Source facts only |
+| U1-D69-restore-guard | Restore two skip guard originals | Luna | Exact upstream bodies | doing | rt-U1-D69-restore-guard-1613 | Two missing upstream test functions. Bodies and every old predicate preserved; source cause returned if red. | Pending |
+| U1-D69-restore-registry | Restore five registry originals | Luna | Exact upstream bodies | doing | rt-U1-D69-restore-registry-1613 | Five missing upstream test functions. Bodies and every old predicate preserved; no skip policy change authorized. | Pending |
 | U1d-final | Join final owner upstream | Luna | Integrated qualification complete | merged | Integrated 1401; reviews 1346/1351 | Actual e68:448 passed,9 declared skips,2 existing xfails; raw exit1 retained. [Proof](../../design/rt-U1d-integrated-1401.md) | e68cf2316 |
 | U1d-visual-source | Preserve upstream visual source | Luna | Source review passed | merged | Author 1331; review 1333 | Reviewed source is in actual e68. Integrated visual qualification running with the targeted union. | 9db3 / e68 |
 | U1d-visual-tests | Keep both live FPS families | Luna | Independent protected proof passed | merged | Restore 1338; review 1351 | Both restored tests and all incoming cases retained. Exact candidate 60e passed 95 with raw exit 0. | 60e / e68 |
@@ -142,7 +144,8 @@ Blockers: Runtime / Agent — actual six1540 is5PASS1FAIL. Sol1557 owns inverse 
 Blockers: App — P1 actual13564 FAIL before split POST. Sol1600 plus independent wholepath1600 own cause; P2/P3 parallel only after changed P1 green. No duplicate original.
 
 
-Blockers: Final delivery — cut needs every active lane0core/0regressions and current P2/P3PASS, then required final proofs/build/ZIP.
+Blockers: Runtime D69 — seven upstream tests await unchanged restorations and protected reviews: guard2 and registry5, both Luna1613 active.
+Blockers: Final delivery — cut needs every active lane0core/0regressions, current P2/P3PASS and D69 completion, then required final proofs/build/ZIP.
 Next ready: finish Sol1557 and dispatch prepared security1606 immediately; finish D68 finalcaller1601 and D69 audit1603. D65 docs and normal D62 adoptions complete; no local ready row unassigned.
 
 Later: D47 memo and proof pins remain post-delivery; nine state attacks open. V4 cut; D14/D23 deferred unchanged. D34 broader cleanup remains held. D62 submit completeness is an explicit known gap in the Runtime behavior-change ledger.
@@ -151,7 +154,7 @@ Admission: D56 stops Farm and schema-access work. Exact403 and automatic access 
 
 Disk: about8.6GB, above main8GB heavy floor. Newly finished1543,1533,1511 already absent. Sweep3 freed0; compact packed0 and compressed7 old logs. No old refused target retry or forced removal.
 
-live 3 / cap 4; ready-undispatched 0. Copied dispatcher header16:04:17Z reports1 Sol/2 Luna. Sol1557, D68 caller1601 and D69 audit1603 active. Review1606 brief ready for author commit.
+live 2 / cap 4; ready-undispatched 0. Copied dispatcher header16:13:27Z reports0 Sol/2 Luna. Security1606 and join1612 active then; both restoration1613 requests now dispatched. No local ready row waiting.
 
 Pass 2026-10-24T15:34:02Z: PLAN/common/header D62–D67 and peer boards consumed. SecurityPASS412 -> normal merge8b32 completed and exact producer handed to Agent/App immediately. Separate D62 proof removed perD66. D67 docs installer1533 active; D65 missing command assigned App. No final proof or delivery claim.
 
@@ -182,3 +185,5 @@ Pass 2026-10-24T16:09:13Z: actual App6d74 sourcequalification1553PASS closes con
 Pass 2026-10-24T16:11:07Z: Sol1557 completed760269; author28focused+333strict+oneoriginalPASS, staticPASS. Security1606 dispatched immediately on exactcommit before normalmerge. D68caller1601 authorPASS now source-ready, finaltuple/install/build stillheld. D69 audit1603 active.
 
 Pass 2026-10-24T16:11:51Z: finalcore newinverse guard file is a real source addition. Luna1612 assigned coherent private84file+TS/D68candidate join immediately, no actualsource or registry writes. Security1606 and audit1603 continue undercap4.
+
+Pass 2026-10-24T16:13:35Z: D69audit1603 completed missing16=>9mapped/7restore, changed129=>75clear/54cited. Disjoint Luna1613 guard2 and registry5 restorations dispatched immediately undercap4. Exactupstream protectedbodies retained; redsourcecause returns finiteowner, no assertionweakening. Security1606 and finalcandidate1612 alsoactive.
