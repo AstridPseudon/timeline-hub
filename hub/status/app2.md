@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-24T08:57:42Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 0m -->
+<!-- app2 | 2026-10-24T08:59:46Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 0m -->
 # app2 board, 2026-10-24T08:59Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -18,11 +18,11 @@
 | P2/P3-retention | Preserve each request and stage output | App Sol; D21 | Caller0623 READY | merged | Prep0600; caller0609; rebind0623 | Source/custody controls and248 outside rows passed. Six real retention stages proved separate stage roots. Current producer retains eight safe files. | Caller artifacts separate from product |
 | P2/P3-target | Admit exact product dispatch target | App Sol; D21 | Target0644 PASS | merged | App0644 | Fifteen source controls passed: real source and modeled snapshot admitted; wrong artifact rejected. Existing bench custody reused. | Exact663 / tree9a3726 |
 | P2/P3-preflight-facts | Preserve wrong-target failures | App producer; Proof0649 | Actual20674 and10144 terminal | merged | Producer0634 | Both exit2 in6 seconds at source guard; all original cases and prior stages not run. No product failure inferred. | Artifactd545 refused |
-| P2/P3-next-caller | Qualify next exact product pair | App Luna; joined Luna | Popup return review, home join and actual target | doing | App caller0841; joined proof | Conditional release0850 names existing checks. One P2 and one P3 follow actual PASS; no extra permission roundtrip. Prior IDs immutable. | PREPARED only; no run |
+| P2/P3-next-caller | Qualify next exact product pair | App Luna; joined Luna | Popup source and caller first return | doing | App caller0853; joined proof | Review0850 FAIL: stale mounted source binding and unauthenticated target. First return0853 owns correction; no rows or runs. | b5fc held |
 | P2/P3-terminal | Review current same-ID terminal packet | Independent Luna | Verdict0709 complete | merged | ap2-P2-P3-verified-result-verdict-0709 | Independent P2 and P3 NO-GO, exact counts, element390 correction, source preservation and primary custody limits qualified. | Exact663 / 079 / 37eb |
 | P2/P3-safe-files | Audit eight current safe files | Independent Luna; App review | Direct schema audit and custody correction PASS | merged | Proof0717; App0733 and0741 | All eight hashes/schema pass. Lifecycle is224B INCLUDING LF and matches exact writer/attachments. Earlier225/no-LF claim is corrected. | Same actual23809 and9310 |
 | P2-element-current | Qualify mounted mutation source | Runtime Sol; independent Luna | Final review0818 PASS | merged | Runtime0812 and0818; App0814 | Mounted atomic patch caller qualified. No retained handler or receipt link; actual terminal outcome remains unknown. | Exact663 /079 /37eb |
-| P2-popup-current | Qualify full authoritative popup reply | App Sol; independent whole path | Second review0840 FAIL | doing | HARD Sol0846; wholepath0846 | Real mounted POST reached; mock echoes commands and lacks full effects/dependencies. Source63e stays held pending exact cumulative proof. | 63e held; no live credit |
+| P2-popup-current | Qualify full authoritative popup reply | App Sol; independent whole path | Second review0840 FAIL; whole path complete | doing | HARD Sol0846; wholepath0846 | Whole path0846 confirms incomplete provider reply witness. Sole Sol0846 builds genuine provider output; source63e remains held. | 63e held; no live credit |
 | P2-five-oracle | Classify five previously unrun paths | App independent Luna | Independent0651 complete | merged | App0651 | Four exact helper defects confirmed; SWAP aligned. Source and controlled transport only; no live gesture credit. | Exact9b810 / 079 / 37eb |
 | P2-transition-oracle | Strict single and bulk clear expectations | Luna; independent Luna | Source merged; combined proof follows | merged | Donor ac538; composition0737 | Independent0730 and0742 PASS. Normal App receipt28b0 includes exact reviewed transition delta; no browser credit. | ac538 / HOME28b0 |
 | P2-semantic-oracle | Strict asset and placement expectations | Sol; independent Luna | Composition0811 PASS; normal source receipt received | merged | Compose0805; independent0811 | Exact own075d over28b0. Twelve controls, three types, lint and list8 pass. Original tails preserved; no live credit. | 075d / HOME182c |
@@ -59,11 +59,11 @@ All eight current safe JSON hashes, schemas, bounds, security and correlations p
 
 D48/D49 final map0708 and independent0719 PASS establish existing source routes and App-host venue, not READY final execution. Runtime FREEZE coordinates final joins and D39 adoption. App host recipe0754 and independent0758 qualify preparation only. Actual App draft0834 and cumulative0838 now qualify source preparation for missing P4/P5 registrations; actual install is gated by final tuple/receipts. Exact final Agent source, actual registration installation, authenticated child/import custody and preflight remain pending. App U3b integration remains gated on P2/P3 GO. Final P1–P5, full venues and Farm F-final/ZIP follow qualified final heads.
 
-Blockers: App — Sol0846 and wholepath0846 qualify complete popup response after second review0840 FAIL; actual element terminal outcome remains unknown.
+Blockers: App — Sol0846 qualifies complete provider response after second review0840 FAIL; caller0853 corrects review0850 failures.
 Blockers: App — actual joined P3 qualification on HOME82cb follows reviewed popup merge. Existing HOME182c integrated0826 has passed.
 
 Blockers: Freeze — final tuple, actual App host inputs, final gates and D49 full checkpoints precede Farm F-final and ZIP.
-Next ready: Review Sol0846 on completion, then normal source merge, exact joined pure target and caller0841. Conditional pair0850 follows actual PASS; no further handshake or request yet.
+Next ready: Review Sol0846 and caller0853 on completion, then normal source merge, exact joined pure target and final caller binding. Conditional pair0850 follows actual PASS; no further handshake or request yet.
 
 Evidence: [Current terminal verdict0709](../../design/handoff-ap2-P2-P3-verified-result-verdict-0709.md), [source0649](../../design/handoff-ap2-P2-P3-current-source-verdict-0649.md), [tour review0742](../../design/handoff-ap2-P2-tour-compose-review-0742.md), [D50 review0747](../../design/handoff-ap2-P3-D50-created-review-0747.md), [actual P3 review0720](../../design/app-P3-parent-trace-review-0720.md), [lifecycle correction0741](../../design/app-P2-P3-lifecycle-review-0741.md), [final map review0719](../../design/handoff-ap2-P1-P5-final-map-review-0719.md).
 
