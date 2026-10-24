@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T13:50:00Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
-# app2 board, 2026-10-24T13:48Z
+<!-- app2 | 2026-10-24T13:52:13Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# app2 board, 2026-10-24T13:50Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -63,7 +63,7 @@
 
 D56.4: Proof is folded into App. The single complete handoff is [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md). All in-flight items are complete, including independent caller1213 PASS. No new Proof dispatch, old tuple run or product merge is owed. The manager loop remains alive for new orchestrator instructions.
 
-live 0 / cap 4; ready-undispatched 0. Copied dispatcher header: <!-- app2 | 2026-10-24T13:47:45Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m --> D56.4 stand-down remains binding; App owns transferred rows.
+live 0 / cap 4; ready-undispatched 0. Copied dispatcher header: <!-- app2 | 2026-10-24T13:50:00Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m --> D56.4 stand-down remains binding; App owns transferred rows.
 
 core open: 4 final proof gates P1 to P4 remain unqualified on final heads. Execution transferred to App for P1/P2/P3 and Agent for P4. All eight original P2 gestures are CORE under D55b. Historical passes do not qualify final heads.
 regressions: App13:36 reports34 verifier/marker source fixes HOME. Two release nodes have restored source with one subprocess environment limit; current integrated full must confirm all36. Two ssh-keygen nodes remain ENV. Final full and final proofs remain unrun; Proof claims no zero-regression clearance.
@@ -90,7 +90,7 @@ Historical23809/9310 remain separate NO-GO: P2 exit1/463 seconds,three failed/fi
 
 D45 six older diagnostics are NOT RETAINED; creation/loss unproved. Synthetic P3 f182af and current3896 synthetic1bc3 are same-tree authorized snapshots; P2 historical synthetic identity and actual daemon attribution stay UNKNOWN. Source-preflight20674/10144 were wrong artifact targets, each exit2/6 seconds and all originalsNOTRUN. No failed run was relabelled or resubmitted.
 
-Final gates: App13:40 reports current home971a and D60 true mergefe0, with366 neighbors/types/lint PASS; network1339 and pure refreshed1340 are active. Exact caller inventory1337 remains App-owned after bindingd387 independent1330 PASS. Agent13:33 source board now reports six core items:152 of158 required PASS,five FAIL and one D13 UNKNOWN; exact rollup1338 is active. Four fork failures have source-cause1335 and sole Sol1340; timing/D13 have1338. Agent D60 amended924 has seven conflicts with Luna1336; no refreshed home receipt claimed. Runtime13:31 still has U1d1329 and visual first return1338 after protected1333 SOURCE PASS/TEST FAIL for two omitted live FPS cases. Final tuple, original gates and final full remain unqualified.
+Final gates: App13:40 reports current home971a and D60 true mergefe0, with366 neighbors/types/lint PASS; network1339 and refreshed pure1340 are active. Exact caller inventory1337 remains App-owned after bindingd387 independent1330 PASS. Agent published13:43 board now reports core5 on47b:152 required PASS,four fork FAIL and one D13 UNKNOWN. D23 explicitly covers timing170/213, unchanged and visibly failing. Exact rollup1338 and sole fork Sol1340 remain active; amended924 has seven conflicts with Luna1336, no refreshed home receipt claimed. Runtime13:41 records visual87 PASS and restored FPS8 PASS; main1329 full targeted rerun and independent union review remain open. Final tuple, original gates and final full remain unqualified.
 
 Blockers: App under D56.4 — actual11933 stays historical NO-GO. D60 draftfe0 needs network1339, normal home merge and refreshed pure1340 before current P2/P3.
 Blockers: App caller — bindingd387 independent1330 PASS is complete. Inventory1337, joined caller review, actual dry preflight and worker installation remain App-owned.
@@ -107,10 +107,10 @@ D59: Current integrated heads may run P2/P3 each cycle without waiting for unrel
 
 D60: Final upstream refresh is required before cut: Runtime d4f496ec4 first, Agent924437716 retargeted13:38Z, App09c844033; Composition67b8aa3d0 unchanged. Runtime owns producer/contract qualification. Header13:40 requires BOTH upstream tests and our live cases, with independent predicate mapping. Agent13:33 board now names amended924 and actual seven-conflict return1336; refreshed924 home custody is not claimed. Delivery uses the same approved tips. D56.4 Proof stand-down remains binding.
 
-Disk: 8265551872 bytes free at 2026-10-24T13:48Z. All1313 Proof workers are done; zero running markers. Exactly three existing Proof trees are KEEP-marked. No eligible non-KEEP Proof tree exists to recycle. Prior cleanup/compact refusals stay stopped; no alternate cleanup, worker or heavy run launched.
+Disk: 8263946240 bytes free at 2026-10-24T13:50Z. All1313 Proof workers are done; zero running markers. Exactly three existing Proof trees are KEEP-marked. No eligible non-KEEP Proof tree exists to recycle. Prior cleanup/compact and locked-v1 refusals stay stopped; no alternate cleanup, worker or heavy run launched.
 
-Pass 2026-10-24T13:48Z: Read PLAN first, MANAGER-COMMON, full current header and C0 contract. Inbox unchanged at790277 bytes. Ran bin/workers ap2-: all1313 done, no running markers. Rechecked every transferred blocked row against App13:40, Agent13:33 and Runtime13:31; current App network1339/pure1340 and Agent core6/fork1340 replace stale owner details. Completed App joined1322 and binding1330 remain cleared. Existing single handoff is complete; no new Proof ask, decision or source merge. D56.4 remains binding. No duplicate dispatch, peer note, original run, product edit or denied cleanup route. Bounded pass saved for the existing manager harness to continue from STATUS and INBOX.
+Pass 2026-10-24T13:50Z: Read PLAN first, MANAGER-COMMON, full current header and C0 contract. Inbox unchanged at790277 bytes. Ran bin/workers ap2-: all1313 done, no running markers. Rechecked every transferred blocked row against published App13:40, Agent13:43 and Runtime13:41. Agent core5 replaces stale6 after explicit D23 timing classification; four fork failures and D13 UNKNOWN remain. Runtime visual87 and restored FPS8 are source-scoped, with main1329 targeted rerun pending. App network1339/pure1340/caller1337 remain actual owner prerequisites. Existing single handoff is complete; no new Proof ask, decision or source merge. D56.4 remains binding. No duplicate dispatch, peer note, original run, product edit or denied cleanup route. Monitoring state saved for the existing manager harness.
 
-Inbox read through790277 bytes. Completed D56.4 handoff remains current. This bounded monitoring round is saved for the manager harness to restart from STATUS and INBOX; no new Proof dispatch is owed.
+Inbox read through790277 bytes. Completed D56.4 handoff remains current. The manager harness can restart from this STATUS and INBOX; no new Proof dispatch is owed.
 
 Evidence: [D53 actual integrated1148](../../design/handoff-ap2-P3-D53-integrated-1148.md), [finite wording1154](../../design/handoff-ap2-P3-D53-ledger-wording-1154.md), [App current source1143](../../design/app-P3-D53-pure-integrated-1143.md), [conditional release1200](../../design/peer-app2-to-app-runtime-20261024T1200Z-D53-ledger-met-conditional-P3.md), [P2 actual26414 verdict1136](../../design/handoff-ap2-P2-26414-preflight-verdict-1136.md), [P3 actual3896 verdict1053](../../design/handoff-ap2-P3-solo-result-verdict-1053.md), [previous pair0709](../../design/handoff-ap2-P2-P3-verified-result-verdict-0709.md), [current source0649](../../design/handoff-ap2-P2-P3-current-source-verdict-0649.md).
