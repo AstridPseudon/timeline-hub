@@ -4,10 +4,13 @@ import io
 import json
 import os
 import subprocess
+import sys
 import zipfile
+from pathlib import Path
 
 import pytest
 
+from astrid.core.generation.vibecomfy_dependency import VIBECOMFY_ENGINE_REVISION
 from astrid.installer import tools
 from astrid.installer.backend import Backend
 
@@ -71,7 +74,8 @@ def repository(tmp_path):
 
 
 @pytest.mark.parametrize("as_url", [False, True])
-def test_local_sources_materialize_only_the_pinned_commit(repository, tmp_path, monkeypatch, as_url):
+@pytest.mark.parametrize("name", ["agent", "vibecomfy"])
+def test_local_sources_materialize_only_the_pinned_commit(repository, tmp_path, monkeypatch, as_url, name):
     repo, sha = repository
     (repo / "pyproject.toml").write_text("later commit\n", encoding="utf-8")
     git(repo, "add", ".")
@@ -84,7 +88,7 @@ def test_local_sources_materialize_only_the_pinned_commit(repository, tmp_path, 
     monkeypatch.setenv("GIT_INDEX_FILE", str(tmp_path / "wrong index"))
 
     destination = tmp_path / "installed"
-    assert tools.source("agent", sha, destination, repo=repo.as_uri() if as_url else str(repo)) == destination
+    assert tools.source(name, sha, destination, repo=repo.as_uri() if as_url else str(repo)) == destination
 
     assert (destination / "pyproject.toml").read_text() == "pinned source\n"
     assert (destination / "nested" / "file.txt").read_text() == "nested content\n"
@@ -107,14 +111,16 @@ def test_manifest_rejects_nonlocal_or_ambiguous_source_repositories(repo):
         tools.validate_manifest(value)
 
 
-@pytest.mark.parametrize("name", ["agent", "runtime"])
+@pytest.mark.parametrize("name", ["agent", "runtime", "vibecomfy"])
 @pytest.mark.parametrize("as_url", [False, True])
 def test_manifest_accepts_local_source_overrides_and_preserves_pins(tmp_path, name, as_url):
     value = manifest()
+    value["vibecomfy"] = {"sha": VIBECOMFY_ENGINE_REVISION}
     repo = tmp_path / "source checkout"
     value[name]["repo"] = repo.as_uri() if as_url else str(repo)
     assert tools.validate_manifest(value) is value
-    assert value[name]["sha"] == ("a" if name == "agent" else "b") * 40
+    assert value[name]["sha"] == {"agent": "a" * 40, "runtime": "b" * 40,
+                                  "vibecomfy": VIBECOMFY_ENGINE_REVISION}[name]
 
 
 @pytest.mark.parametrize("sha", ["main", "a" * 7, "A" * 40, "a" * 39 + "/"])
@@ -183,14 +189,17 @@ def test_local_source_cleans_failed_extraction(repository, tmp_path, monkeypatch
     assert not (tmp_path / "installed.source.tar").exists()
 
 
-def test_stage_uses_source_overrides_and_records_manifest(tmp_path, monkeypatch):
+@pytest.mark.parametrize("with_vibecomfy", [False, True])
+def test_stage_uses_source_overrides_and_records_manifest(tmp_path, monkeypatch, with_vibecomfy):
     value = manifest()
     value["agent"]["repo"] = str(tmp_path / "agent")
     value["runtime"]["repo"] = (tmp_path / "runtime").as_uri()
+    if with_vibecomfy:
+        value["vibecomfy"] = {"sha": "c" * 40, "repo": str(tmp_path / "vibecomfy")}
     backend = Backend(tmp_path / "program", tmp_path / "log", tmp_path / "uv")
     calls = []
 
-    def materialize(name, sha, destination, *, repo):
+    def materialize(name, sha, destination, *, repo=None):
         calls.append((name, sha, destination, repo))
         if name == "agent":
             (destination / "remotion/node_modules").mkdir(parents=True)
@@ -208,6 +217,86 @@ def test_stage_uses_source_overrides_and_records_manifest(tmp_path, monkeypatch)
 
     version = backend.stage(value, tmp_path / "program", tmp_path / "data")
 
-    assert calls == [(name, value[name]["sha"], version.root / directory, value[name]["repo"])
-                     for name, directory in (("agent", "a"), ("runtime", "r"))]
-    assert json.loads((version.root / "manifest.json").read_text()) == value
+    effective = {**value, "vibecomfy": value.get("vibecomfy", {"sha": VIBECOMFY_ENGINE_REVISION})}
+    assert calls == [(name, effective[name]["sha"], version.root / directory, effective[name].get("repo"))
+                     for name, directory in (("agent", "a"), ("runtime", "r"), ("vibecomfy", "v"))]
+    assert json.loads((version.root / "manifest.json").read_text()) == effective
+    assert ("vibecomfy" in value) is with_vibecomfy
+    assert "ASTRID_VIBECOMFY_CHECKOUT" not in version.env
+
+
+@pytest.mark.parametrize("pin", [None, {}, {"sha": None}, {"sha": "main"}, {"sha": "A" * 40}])
+def test_manifest_rejects_invalid_vibecomfy_pin(pin):
+    value = manifest()
+    value["vibecomfy"] = pin
+    with pytest.raises(ValueError, match="vibecomfy source must be pinned to a full git SHA"):
+        tools.validate_manifest(value)
+
+
+@pytest.mark.parametrize("repo", ["relative/path", "https://github.com/peteromallet/VibeComfy.git", None])
+def test_manifest_rejects_invalid_vibecomfy_repository(repo):
+    value = manifest()
+    value["vibecomfy"] = {"sha": VIBECOMFY_ENGINE_REVISION, "repo": repo}
+    with pytest.raises(ValueError, match="source repo"):
+        tools.validate_manifest(value)
+
+
+def test_legacy_manifest_needs_no_vibecomfy_entry():
+    value = manifest()
+    assert tools.validate_manifest(value) is value
+
+
+def test_vibecomfy_download_uses_the_pinned_fork(tmp_path, monkeypatch):
+    requests = []
+
+    def fetch(url, destination):
+        requests.append(url)
+        package = destination / "VibeComfy-source" / "vibecomfy"
+        package.mkdir(parents=True)
+        (package / "__init__.py").write_text("# installed source\n")
+
+    monkeypatch.setattr(tools, "fetch_archive", fetch)
+    destination = tmp_path / "v"
+    tools.source("vibecomfy", VIBECOMFY_ENGINE_REVISION, destination)
+    assert requests == [
+        f"https://github.com/peteromallet/VibeComfy/archive/{VIBECOMFY_ENGINE_REVISION}.tar.gz"
+    ]
+    assert (destination / "vibecomfy/__init__.py").is_file()
+
+
+def test_installed_vibecomfy_is_visible_to_pack_host_without_checkout(tmp_path, monkeypatch):
+    import importlib.util
+
+    from astrid.core.execution.generic_host import GenericPackHost, _install_host_vibecomfy_import_root
+    from astrid.core.generation import gpu_environment
+    from astrid.core.generation.vibecomfy_dependency import configured_vibecomfy_checkout
+
+    # Package discovery is independent of platform GPU qualification.
+    monkeypatch.setattr(gpu_environment, "windows_gpu_status", lambda *_args, **_kwargs: None)
+    root = Path(__file__).resolve().parents[1]
+    host = GenericPackHost(pack_roots=[root / "astrid/packs/vibecomfy"],
+                           capability_matrix=root / "config/astrid-beta-capabilities.json")
+    host.discover()
+    find_spec = importlib.util.find_spec
+    with monkeypatch.context() as missing:
+        missing.setattr(importlib.util, "find_spec", lambda name: None if name == "vibecomfy" else find_spec(name))
+        record, = host.preflight("vibecomfy.run")
+        assert record.preflight["packages"] == {"ok": False, "missing": ["vibecomfy"]}
+        assert not record.ready
+
+    # Stand in for uv's installed wheel, with no source checkout on sys.path.
+    site_packages = tmp_path / "site-packages"
+    package = site_packages / "vibecomfy"
+    package.mkdir(parents=True)
+    (package / "__init__.py").write_text("# installed wheel fixture\n")
+    monkeypatch.syspath_prepend(str(site_packages))
+    monkeypatch.delitem(sys.modules, "vibecomfy", raising=False)
+    monkeypatch.delenv("ASTRID_VIBECOMFY_CHECKOUT", raising=False)
+    monkeypatch.setenv("ASTRID_HOST_EXECUTION_PROFILE", "installed")
+    assert configured_vibecomfy_checkout() is None
+    assert _install_host_vibecomfy_import_root() is None
+    assert importlib.util.find_spec("vibecomfy").origin == str(package / "__init__.py")
+
+    record, = host.preflight("vibecomfy.run")
+    assert record.preflight["packages"] == {"ok": True, "missing": []}
+    assert record.ready

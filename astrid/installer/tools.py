@@ -15,6 +15,8 @@ import urllib.request
 import zipfile
 from pathlib import Path, PurePosixPath
 
+from ..core.generation.vibecomfy_dependency import VIBECOMFY_FORK_URL
+
 ENCODERS = {"libx264", "libx265", "libvpx-vp9", "libaom-av1", "libopus"}
 FILTERS = {"ebur128", "silencedetect", "astats", "signalstats", "blackdetect",
            "loudnorm", "psnr", "ssim", "scale", "fps", "aresample"}
@@ -54,11 +56,14 @@ def omp_source_url(repo: str, sha: str) -> str | None:
 def validate_manifest(value: dict) -> dict:
     if value.get("schema_version") != 1:
         raise ValueError("Unsupported install manifest.")
-    for name in ("agent", "runtime"):
-        if not re.fullmatch(r"[0-9a-f]{40}", value[name]["sha"]):
+    sources = ("agent", "runtime") + (("vibecomfy",) if "vibecomfy" in value else ())
+    for name in sources:
+        pin = value[name]
+        if (not isinstance(pin, dict) or not isinstance(pin.get("sha"), str)
+                or not re.fullmatch(r"[0-9a-f]{40}", pin["sha"])):
             raise ValueError(f"The {name} source must be pinned to a full git SHA.")
-        if "repo" in value[name]:
-            local_repository(value[name]["repo"])
+        if "repo" in pin:
+            local_repository(pin["repo"])
     for name in ("uv", "python", "bun", "node", "ffmpeg"):
         if not re.fullmatch(r"\d+\.\d+\.\d+", value["tools"][name]["version"]):
             raise ValueError(f"The {name} tool must have an exact version.")
@@ -217,7 +222,9 @@ def source(name: str, sha: str, destination: Path, *, repo: str | None = None) -
             extract(archive, staging)
             os.replace(staging, destination)
         else:
-            fetch_archive(f"https://github.com/banodoco/astrid-{name}/archive/{sha}.tar.gz", staging)
+            repository = (VIBECOMFY_FORK_URL.removesuffix(".git") if name == "vibecomfy"
+                          else f"https://github.com/banodoco/astrid-{name}")
+            fetch_archive(f"{repository}/archive/{sha}.tar.gz", staging)
             children = list(staging.iterdir())
             if len(children) != 1 or not children[0].is_dir():
                 raise ValueError(f"Unexpected {name} source archive layout.")

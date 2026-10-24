@@ -73,9 +73,10 @@ own credentials and qualified artifacts.
 
 ## Developer qualification with local Git sources
 
-Installer developers can exercise unpublished agent or Runtime commits with the
-same installer transaction. Copy the release install manifest, keep its pinned
-tool versions and assets, and add an optional `repo` to either source entry:
+Installer developers can exercise unpublished agent, Runtime, or VibeComfy
+commits with the same installer transaction. Copy the release install manifest,
+keep its pinned tool versions and assets, and add an optional `repo` to a source
+entry. For example:
 
 ```json
 {
@@ -86,6 +87,10 @@ tool versions and assets, and add an optional `repo` to either source entry:
   "runtime": {
     "sha": "89abcdef0123456789abcdef0123456789abcdef",
     "repo": "file:///absolute/path/to/scratch/astrid-runtime"
+  },
+  "vibecomfy": {
+    "sha": "31f90bb03d330283b76e7dbdda51197be787090d",
+    "repo": "/absolute/path/to/scratch/VibeComfy"
   }
 }
 ```
@@ -95,7 +100,12 @@ from the release manifest. `repo` accepts an absolute local directory or a local
 `file://` URL, including URL-encoded spaces. It does not accept remote Git URLs.
 Each `sha` must be the full lowercase 40-character commit ID available in that
 repository; branch names, abbreviated IDs, tree IDs, and annotated tag IDs fail.
-Omitting `repo` keeps the pinned GitHub archive download for that source.
+Omitting `repo` keeps the pinned GitHub archive download for that source. The
+optional `vibecomfy` entry follows the same validation and `git archive` rules
+as `agent` and `runtime`. If it is absent, the installer uses the default
+VibeComfy commit `31f90bb03d330283b76e7dbdda51197be787090d` from
+`peteromallet/VibeComfy`. The resolved manifest, including the selected source
+revision, is recorded with the installed version.
 
 Use scratch clones for candidate changes, commit those changes, and set each
 entry's `sha` from `git -C /absolute/path/to/scratch/repo rev-parse HEAD`. The
@@ -133,7 +143,15 @@ $env:ASTRID_INSTALL_MANIFEST_URL = 'http://127.0.0.1:17605/local-install-manifes
 Stop the local HTTP server after installation with Ctrl+C.
 
 This still downloads and installs the manifest's real tools and Python packages,
-registers the platform service, and verifies the installed Runtime. The selected
-manifest is recorded in the managed version directory. For an existing
-installation, add `--update` to qualify new source pins against an existing
-workspace, including the normal backup and rollback.
+registers the platform service, and verifies the installed Runtime. VibeComfy
+is installed with `--no-deps` beside the Runtime and agent, so it uses the
+normal installed Python package import path; no `ASTRID_VIBECOMFY_CHECKOUT`
+setting is needed. The selected manifest is recorded in the managed version
+directory. For an existing installation, add `--update` to qualify new source
+pins against an existing workspace, including the normal backup and rollback.
+
+Astrid's installer supplies VibeComfy. If an older installation reports that
+the package is missing, run the installer line with `--update` in a terminal
+outside chat. Repair keeps the installed program code, so repair alone will not
+add a missing package. The agent must not install VibeComfy or restart Astrid
+from inside a chat; a service restart ends the chat and can leave Astrid down.

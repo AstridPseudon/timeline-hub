@@ -29,6 +29,33 @@ Lock refresh requires `uv`; lock consumption requires only pip. Review every
 version and hash diff like source code. Never hand-edit one pin without
 regenerating the complete transitive lock.
 
+## Installer source pins and VibeComfy readiness
+
+The installer installs VibeComfy with `--no-deps` beside the Runtime and agent.
+The published `install-manifest.json` may pin a `vibecomfy` source entry; when
+it is absent, the installer uses `peteromallet/VibeComfy` at
+`31f90bb03d330283b76e7dbdda51197be787090d`. Before publishing this release,
+the release owner should:
+
+- Publish the agent commit and confirm the pinned VibeComfy commit is
+  reachable from its upstream repository.
+- Add the VibeComfy SHA to the published `install-manifest.json`. Refresh the
+  agent and Runtime pins for ordinary releases as well.
+- Qualify a clean install and a normal `--update`, confirming the pack host
+  imports the installed VibeComfy and `vibecomfy.run` reports package readiness
+  without an additional service restart. Repair retains installed code, so it
+  does not add VibeComfy to older installations; those users need `--update`
+  from a terminal outside chat.
+
+Dependency audit for the pinned VibeComfy revision: `httpx==0.28.1`,
+`pyyaml==6.0.3`, and `websockets==16.1.1` are satisfied by the Astrid runtime
+closure. `huggingface_hub[hf_xet]>=0.32.0` is missing from both
+`pyproject.toml` and `requirements/runtime.lock`, and `hf-xet` is absent as
+well. The release owner should add `huggingface_hub[hf_xet]>=0.32.0` to the
+`pyproject.toml` dependencies, then in a network-enabled release environment
+run `make lock-runtime`, `make lock-proof`, and `make lock-validate`. Review the
+full transitive versions and hashes in both regenerated locks before release.
+
 The m8 installed matrix also writes `astrid.release_toolchain.v1` evidence.
 It records the exact CPython patch and executable, GNU Make, Bash, Git, FFmpeg,
 FFprobe, and dependency-lock digests. A missing tool, Python-series mismatch,
