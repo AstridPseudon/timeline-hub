@@ -682,7 +682,7 @@ class NativeSheet:
             state = session._state()
             if state["pending"] or state["flight"] is not None:
                 raise SheetError("flush original pending intent before exporting another sheet")
-            sheet = cls(session._bundle(state), basis=state["base"], clip=clip, occurrence=occurrence)
+            sheet = cls(session._capture_bundle(state), basis=state["base"], clip=clip, occurrence=occurrence)
             state["sheet"] = {"bundle": sheet._bundle, "basis": sheet._basis}
             if sheet._selection:
                 state["sheet"]["selection"] = sheet._selection
@@ -872,7 +872,7 @@ class NativeSheet:
                 raise SheetError("flush original pending intent before applying another sheet")
         if not plan.commands:
             return plan
-        if not prefix and not equal(authored(session._bundle(state)), authored(self._bundle)):
+        if not prefix and not equal(authored(session._capture_bundle(state)), authored(self._bundle)):
             raise SheetError("sheet bundle differs from its pinned session basis")
         steps = [{"id": f"sheet-{index + 1}", "label": "Apply sheet", "intent": "",
                   "tags": ["sheet"], "command_ordinals": [index], "patch": []}

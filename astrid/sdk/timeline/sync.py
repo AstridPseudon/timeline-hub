@@ -191,6 +191,13 @@ class TimelineSession:
         return state
 
     def _bundle(self, state, extra_commands=()):
+        """Project an authenticated capture without exposing its canonical cache."""
+        bundle = self._capture_bundle(state, extra_commands)
+        bundle.get("source_mapping", {}).pop("_runtime_document", None)
+        return bundle
+
+    def _capture_bundle(self, state, extra_commands=()):
+        """Keep the complete exact-pair input private to capture and execution."""
         from astrid.sdk.timeline.commands import execute
         from astrid.sdk.timeline.native_source_inputs import materialize_transcript_inputs
         from astrid.sdk.timeline.store import fetch_bundle
@@ -212,7 +219,7 @@ class TimelineSession:
         """Capture once against the original state plus earlier local commands."""
         from astrid.sdk.timeline.capture import capture_move
 
-        return self._queue(lambda state: capture_move(self._bundle(state), select, on))
+        return self._queue(lambda state: capture_move(self._capture_bundle(state), select, on))
 
     def admit_assembly(self, child_outputs, *, replace_clips, assembler_digest, idempotency_key,
                        rationale="Assemble ordered child visuals"):
@@ -301,7 +308,7 @@ class TimelineSession:
         from astrid.sdk.timeline.commands import execute
 
         commands = [_native_command(command) for command in commands]
-        return self._stage(lambda state: execute(self._bundle(state, commands), commands).commands)
+        return self._stage(lambda state: execute(self._capture_bundle(state, commands), commands).commands)
 
     def commit(self, command, *, idempotency_key=None, dry_run=False, via="python", verified_media=(),
                label=None, steps=None, merge="fields", reads=None):
@@ -343,7 +350,7 @@ class TimelineSession:
         # Foreign child authority is available only inside Runtime's request port.
         # Freeze the submitted intent; its ordinary provider captures every guard.
         self._stage(lambda state: copy.deepcopy(commands) if runtime_capture else execute(
-                        self._bundle(state, commands), commands, verified_media=verified_media
+                        self._capture_bundle(state, commands), commands, verified_media=verified_media
                     ).commands,
                     lambda pending: len(pending) == len(commands) and all(
                         all(equal(saved.get(key), value) for key, value in command.items() if key != "intent")
@@ -397,7 +404,7 @@ class TimelineSession:
         # recaptures guards from a possibly changed head after a lost ACK.
         from astrid.sdk.timeline.capture import capture_move
 
-        self._queue(lambda state: capture_move(self._bundle(state), select, on),
+        self._queue(lambda state: capture_move(self._capture_bundle(state), select, on),
                     lambda pending: len(pending) == 1 and pending[0]["op"] == "clip.move"
                     and pending[0]["select"] == select and pending[0]["args"] == {"on": on})
         return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
@@ -406,7 +413,7 @@ class TimelineSession:
         """Capture a literal source trim once, retrying its original flight."""
         from astrid.sdk.timeline._trim_commands import capture_clip_trim
 
-        self._queue(lambda state: capture_clip_trim(self._bundle(state), select, in_s=in_s, out_s=out_s),
+        self._queue(lambda state: capture_clip_trim(self._capture_bundle(state), select, in_s=in_s, out_s=out_s),
                     lambda pending: len(pending) == 1 and pending[0]["op"] == "clip.trim"
                     and pending[0]["select"] == select
                     and pending[0]["args"] == {"in_s": in_s, "out_s": out_s})
