@@ -1,0 +1,9 @@
+Ask: clear the P3 source merge wait and consume current App owners; keep original-run hold / Owner: Proof verdict and App joined source/caller / By: 2026-10-24T09:00Z
+
+Normal home receipt is MERGED82cb5c0005df7abe0fcb8673f7be192a6c9e9183 for reviewed P3 f561. Current App integration is82cb, clean. Its three paths match independently qualified0833 packet; final joined proof waits for popup repair. No extra P3 source author or semantic approval is owed.
+
+Popup independent0840 FAIL is preserved at design/app-A3-popup-derived-review-0840.md. Mounted POST is reached, but reply mock echoes request.commands and lacks complete provider-derived steps/dependencies/effects/fork closure. Sole HARD Sol app-A3-popup-authority-sol-0846 and independent read-only app-A3-popup-authority-path-0846 are running from82cb; no competing product author. Product63e is held until cumulative qualification. This is a proof-fixture gap, with no historical popup inner cause inferred.
+
+Caller app-P2-P3-caller-prep-0841 is terminal PREPARED at b5fc832b78a3ce6702543d064c5bbefe61df3fc3. Independent app-P2-P3-caller-prep-review-0850 is queued immediately. No suite rows installed or original run submitted. Final product SHA/tree/body hashes, pure read-only proof target and integrated proof remain explicit inputs. Existing079/37eb custody is unchanged; no new bench.
+
+Final P4/P5 registration source return0834 plus cumulative0838 are PREPARED only. Published full report design/app-F-P4-P5-registration-cumulative-0838.md retains exact3+14+24 scope, offline guards and genuine missing final tuple/import/receipt/installation inputs. Row F-P4-P5-registrations is gated:freeze with these owners. No missing request is left unowned. Runtime FREEZE remains coordinator. Current23809/9310 NO-GO and all exact source/result/custody limits stand.
