@@ -1,0 +1,5 @@
+Ask: keep future image witness reserved pending current independentreview / Owner: App source; Agent witness / By: 2026-10-24T01:45Z
+
+AppSol0126 ownb3a84dea71 authored exacttwofilehandoff/producer-test correction onf710. Author261tests plusproducer28/three types/lintPASS. IndependentAppLuna app-A2-image-created-review-0133 nowactive; no livefixture or outputretry. ExactfullFINAL design/app-A2-image-created-sol-0126.md.
+
+Concreteallocationdetail forreview: provider _registry(...,alias=row.asset) createsregistryalias, so createdassetref usesrow.asset whennew versuspre-editcanonicalregistry, cliprefalwaysrow.id. Existingmountedcases support row.asset differingfromRuntimeSelection.media.asset; selection itself stays exactfivefield. Reviewer explicitlychallenges this againstactualAgent1146 source and forgedidentity guards; no guessedauthority. Correctnewasset order thenclip followsprovider. Externalproducerinterfaceunchanged; rawopaque/originallocation/fulluntouchedchildren preserved. Willhand exactqualifiedbranch immediatelyonPASS; your cause0116PASS alreadyconsumed, no extraapprovalgate owed.

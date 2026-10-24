@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T01:33:00Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 21 | status age 2m -->
-# app board, 2026-10-24T01:31Z
+<!-- app | 2026-10-24T01:35:35Z | dispatcher heartbeat 3s | live 3 (sol 0, luna 3, other 0) | busy30 23 | status age 1m -->
+# app board, 2026-10-24T01:35Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -9,9 +9,10 @@
 | A3 | Popup, placement and asset saves | Sol; Luna review | A2 | merged | App and Proof workers | Source qualifications passed. P2 live gesture proof remains pending. | See linked proofs |
 | P1 | Original mixed chain | App runner; Proof review | Resolved | merged | Test 18792; Proof 0036 and 0040 | GO at 00:43. Both cases passed; exit 0, 141 seconds. Fixed App f8 / Agent 787 / Runtime 2a9. | f8b15af0a6 |
 | A4 | Executor and capture retirement | Sol; Luna review | P1 GO: resolved | doing | Staged Sol0122; history Luna0125; proof0129 | Scalar integrated384 PASS. Preview152 and session57 independently passed and merged; joined proof0129 runs. Staged caller and history migrations continue. | 84330da5fd branch |
-| A2-staged-caller | Move staged generation onto current save | Sol | Existing prepared-media carrier | doing | app-A2-staged-caller-sol-0122 | Remove production dryRun/apply caller while preserving Runtime selection and staged placement behavior. | Branch pending |
+| A2-staged-caller | Move staged generation onto current save | Sol | Author279 PASS | review | app-A2-staged-review-0133 | Production staged drop now uses current addClip with exact Runtime selection. Independent review active. | 9969949827 branch |
+| A4-state | Retire state transaction runner API | Luna | Staged caller in review | doing | app-A4-state-runner-retirement-0135 | Remove the remaining state executor API while preserving current prepared saves and behavior tests. | Branch pending |
 | A4-history | Retire history runner execution | Luna | Author95 PASS | review | app-A4-history-review-0131 | Runner call removed. Independent review challenges snapshot behavior, guarded Runtime undo and all old assertions. | Worker branch |
-| A4-session-tests | Move five protocol tests to current save | Luna | Review0123 PASS | merging | Proof app-A4-preview-session-integrated-0129 | Five cases independently passed57/types/lint and merged. Joined integrated proof runs on8bd7. | 039fc35ed7 / 8bd7d59e19 |
+| A4-session-tests | Move five protocol tests to current save | Luna | Review0123 and proof0129 PASS | merged | Proof app-A4-preview-session-integrated-0129 | Five cases retained. Joined preview/session proof passed136 tests, three types and lint on8bd7. | 039fc35ed7 / 8bd7d59e19 |
 | A4-dormant-scope | Preserve dormant raw and track assertions | Orchestrator | Scope decision | blocked:orchestrator | Escalation 0116 | Same-order track write and raw-birth positives have no production caller. Tests and implementations stay unchanged. | No change |
 | A4-reviewed-stack | Ports and mounted witnesses | Luna | Review 0105 and integrated 0115 PASS | merged | app-A4-mounted-fixture-return-0059 | Independent and integrated 111 plus 33 tests passed on exact93d487. Types/lint passed; mocked authority limit retained. | 93d48799a2 |
 | A2-bootstrap-fix | Restart cancelled bootstrap | Sol; Luna review | Resolved | merged | app-A2-basis-cancel-repro-sol-0029 | [326 tests, three typechecks and lint passed.](/home/user/timeline-hub/hub/design/app-A2-bootstrap-integrated-0046.md) | 804134d747 |
@@ -21,7 +22,7 @@
 | P2 | Eight original gesture cases | App service; Proof verdict | Qualified fixed caller | doing | Test 10973; cause Sol 0105 | Exit 2 after 189 seconds. Native and history passed; bootstrap outbox wait failed. All eight original cases NOT RUN. Review 0105 PASS; safe files published. | Fixed 804134d747 |
 | P3 | Original Gate-5 journey | App service; Proof verdict | Qualified fixed caller | doing | Test 14249; cause Sol 0105 | Exit 2 after 194 seconds. Native and history passed; bootstrap outbox wait failed. Original Gate-5 NOT RUN. Review 0105 PASS; safe files published. | Fixed 804134d747 |
 | A2-parent-media-closure | Preserve untouched child closure | Sol; Luna review | Resolved | merged | app-A2-parent-media-integrated-0035 | [299 tests, types, lint and external producer passed.](/home/user/timeline-hub/hub/design/app-A2-parent-media-integrated-0035.md) | 1b0428db7d |
-| A2-image-created | Declare genuine image creations | Sol | Agent exact source finding | doing | app-A2-image-created-sol-0126 | Omitted created claims caused invalid_records. Emit clip and only genuinely new asset; old fixture remains closed. | Branch pending |
+| A2-image-created | Declare genuine image creations | Sol | Author261 PASS | review | app-A2-image-created-review-0133 | Emit clip and only new authored registry alias. Exact provider allocation and identity guards are under independent review. | b3a84dea71 branch |
 | A4-image-live | New authenticated image witness | App producer; Agent fixture | Reviewed created-claim correction | blocked:app | App Sol0126; Agent witness reserved | Agent identified omitted created claims; original refused without writes. New witness waits for qualified source, no old-fixture retry. | 22efcda3da |
 | A2-video-caller | Normalized video duplication | Sol; Luna review | Resolved | merged | app-A2-video-integrated-2350 | 217 integrated tests and three typechecks passed. Agent provider is merged; no old raw-positive parity claim. | a714a4cc11 |
 | U3b-draft | Final upstream composition | Sol; Luna review | P2/P3 and final freeze | gated:freeze | app-U3b-current-join-2053 | Reviewed branch stays isolated. Refresh live upstream refs at freeze; do not merge during pinned proof. | Branch only |
@@ -31,7 +32,7 @@ Blockers: U3b awaits P2/P3 and the final freeze.
 Blockers: Orchestrator owes bounded dormant track/raw-birth scope under D31; escalation app-20261024T0116-A4-dormant-assertion-scope.md. Other A4 cuts continue.
 Blockers: Runtime owns server history reproduction. App comparison0121 is complete and shared; independent0128 runs. No further P2/P3 journey.
 Blockers: App Sol0126 owns image created claims; Agent witness waits for qualified source. No duplicate producer or fixture is authorised.
-Next ready: Consume joined proof0129, staged0122, history0125 and image0126. Send comparison review0128 to Runtime. Apply bounded scope decision when delivered.
+Next ready: Consume staged/image/history reviews and state cut0135. Runtime owns server reproduction; App comparison and review are published. Await bounded scope decision.
 Integration: 8bd7d59e19; preview and session test cuts merged. Changed readiness experiments used fixed 804134d747. No source-head chase or repeat is authorised.
 Disk: Four clean finished worktrees recycled; exact byte delta was not recorded. Latest clean-tree checks freed0 GB; available11.87 GB. No protected or previously refused paths were touched.
 Safety: Historical cleanup, graph and publication denials stand. Managers write only boards, briefs and shared reports; workers own product changes.
