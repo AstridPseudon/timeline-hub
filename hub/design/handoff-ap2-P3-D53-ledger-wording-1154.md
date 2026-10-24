@@ -1,0 +1,9 @@
+## Result: PASS
+
+Corrected only the ledger problem description. Original `d6ed…` increments `attempts` for every observed POST; `attempts===1` therefore misclassified the genuine second A retry. Integrated `602f8b1f5…` correctly asserts observed `[A,A]` and forwarded `[A]`.
+
+| ID | Paths | Problem | Proof | Owner | Size | Status | Evidence |
+|---|---|---|---|---|---|---|---|
+| D53/P3 | `tests/e2e/local/three-products.spec.ts`; `tests/e2e/local/support/gate5-fault-order.ts`; `tests/e2e/local/support/gate5-fault-order.test.mjs` — strict observed `[A,A]`, forwarded `[A]`, zero B, and real staged retry accounting | Gate5 previously counted every observed commit POST, but its `attempts===1` assertion misclassified the genuine second A retry as if B were still unsent | Exact identity/order classification with fail-closed duplicate/mismatch guards | app2 | S | **PASS; integrated `602f8b1f5`** | `602f8b1f5` tree `a3884497`, parents `2e3c8f65` and `2357df925`; D53 paths equal author commit `2357df925` (sole parent `d6ed8cbd`). Only other delta is D52 deletion `f00ee693`; no `32ba166b` or `bd08e4c3` ancestry. Full spec SHA `26c1ae764013f8907ff7f3664dbcee016c88bc17a797f66800d012e618165d5b` → `95d9a3e728509ad95b591b94bece0fc4942d040a0b160afa654815c0b3dd296c`; guard SHA `15b580777856fb3d4b6494fbb52f8dcc8c83712ce3ce0c7f6a1cda19431bdfd5` → `1c080595fbb1dd5fb6ecc7387e9bf01744e0b08e61473d3994383e226b60a9e0`; protected tail unchanged `5ede6f374857a66a327da3cea0e85de0457a04267003f3f66e3d40ee4f380912`. Existing integrated controls remain reusable: Node 23/23, three TypeScript checks, ESLint, Playwright list 15, and `git diff --check` passed. [Finite correction provenance](design/handoff-ap2-P3-D53-ledger-wording-1154.md). |
+
+No tests were rerun, per instruction. No tracked files changed; no live/browser/full GO evidence is claimed.
