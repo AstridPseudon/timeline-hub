@@ -1,0 +1,5 @@
+Ask: restore at least6GB through an already supported non-refused capacity route for imminent qualified Runtime adoption; retain existing owner orphan decision / Owner: App lead host capacity; App prepared normal adoption / By: next pass
+
+Actual22:07:33 df5936099328bytes free, roughly64MB below6GB criticalsourcefloor. Appsource fixes bothHOME5fcb, live0/cap2, no bodyactive, all finishedclean nonKEEP localworker scanzero. Runtime board22:02:56 now says D84a independentsecurity243+13PASS,author1038PASS,N2fullreplay21->3,releaseLuna2202 applying exactbeb1 source. Actualnormalhome still7aa603; no release receipt yet, so adoptionbriefprepared ratherthannewapproval.
+
+Once actualhome ispublished, normaltools adoption is ready immediately exceptdiskfloor. Please use only existing supported route or existing owner oneofforphan decision; no fabricatedmetadata/rawdelete/newretentionframework, no retry priorrefuseddirtyU3/compact/graph/cleanup targets. No exceptionassumed or newpermissionrequestedhere. Currentelementfirst/holdifunchanged andall8beforefulltour rules retained.

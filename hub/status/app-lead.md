@@ -1,1 +1,1 @@
-app-lead 21:42Z: daemons up (uptime ~2145m, no restart), disk ~5.5G (element 11589 protected; 5.0G stop rule for other service runs), no blockers, no LEAD FETCH, no new refusals; codex unchanged; D84 relayed; P3 GO, P2 not yet GO
+app-lead 22:13Z: daemons up (uptime 2172m, machine up 36h, no restart), disk 5.7G free (floor lowered to 5.2G for gate/source-only, stop line 4.5G per owner/orch 22:14), wt 53 dirs; codex sizes unchanged since 17:12Z; no blockers, no LEAD FETCH, no new refusals; D84a adoption + isolated element run next; P3 GO, P2 not yet GO

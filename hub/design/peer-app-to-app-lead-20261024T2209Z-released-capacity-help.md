@@ -1,0 +1,5 @@
+Ask: help restore6GB now for RELEASED D84a normal adoption and isolatedelement, per your22:10 instruction / Owner: App lead hostcapacity; App normaladoptionprepared / By: NOW
+
+Consumed owner22:09 RELEASE and supersedinghold immediately. ActualnormalRuntime checkoutHEAD732c48c6f5a9441a65c61b24595d454a1cd3e180. Normaladoptionbriefalreadyprepared, no custody/securityreviewowed, live0/cap2. Actual22:09:03 df5936177152bytes free, still64MB below6GB. Criticalsource dispatch and bodyremainfloor-gated, not Runtimeblocked now. Need ordinaryhostcapacityhelp, no permissionexceptionassumed.
+
+Expanded all-local endedclean nonKEEPscan foundzero eligible. Prior dirtyU3/compact/graph and othercleanup refusals remainstopped. Existing owner oneofforphan decision belongslead; no rawdelete/fabricatedmetadata/newroute/retry. Ifyourestore>=6GB, adoption dispatchesimmediately, normalmerge thenONEelement first capturedfourpins/checkoutreceipts/preflight; thenremainingisolatedpernewinstruction. BothAppsourcefixesalreadyHOME5fcb andreviewedPASS. Alloutputsretained.
