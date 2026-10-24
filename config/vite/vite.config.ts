@@ -28,6 +28,7 @@ import { createBundleBudgetPlugin } from "./bundleBudget";
 import { createPairedRelayPlugin, resolvePairedRelayConfig } from "./pairedRelay";
 import { createShareMetaPlugin } from "./shareMeta";
 import { createInstallerAssetsPlugin } from "./installerAssets";
+import { createPreviewCacheHeadersPlugin } from "./previewCacheHeaders";
 
 const logger = createLogger();
 const originalWarn = logger.warn.bind(logger);
@@ -159,6 +160,7 @@ export default defineConfig(() => {
       astridBridgeAuthPlugin,
       createShareMetaPlugin(process.env.ASTRID_SITE_ORIGIN?.trim() || undefined),
       createInstallerAssetsPlugin(),
+      createPreviewCacheHeadersPlugin(),
       react(),
       createBundleBudgetPlugin(),
     ].filter(Boolean),

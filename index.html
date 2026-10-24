@@ -188,27 +188,39 @@
   <body>
     <div id="boot" aria-hidden="true"><div class="boot-paper"></div><div class="boot-mink"><span class="boot-mink-flight-y"><span class="boot-mink-flight-x"><span class="boot-mink-wipe"><span class="boot-mink-unwipe"><span class="boot-mink-window"><span class="boot-mink-strip"></span></span></span></span></span></span><span class="boot-mink-ground"><span></span></span></div></div>
     <div id="root"></div>
-    <script type="module" src="/src/app/main.tsx"></script>
-    
-    <!-- Service Worker Registration for PWA -->
-    <script type="module">
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          if (import.meta.env.DEV) {
-            const appWorkerUrl = new URL('/sw.js', window.location.href).href;
-            Promise.all([
-              navigator.serviceWorker.getRegistrations()
-                .then((registrations) => Promise.all(registrations
-                  .filter((registration) => [registration.active, registration.waiting, registration.installing]
-                    .some((worker) => worker?.scriptURL === appWorkerUrl))
-                  .map((registration) => registration.unregister()))),
-              'caches' in window ? caches.delete('astrid-v4') : Promise.resolve(),
-            ]).catch(() => { /* dev cleanup is best effort */ });
-            return;
-          }
+    <script id="app-entry" type="module" src="/src/app/main.tsx"></script>
+    <script>
+      document.getElementById('app-entry').addEventListener('error', function () {
+        var root = document.getElementById('root');
+        var boot = document.getElementById('boot');
+        if (boot) boot.remove();
+        var message = document.createElement('main');
+        var title = document.createElement('h1');
+        var link = document.createElement('a');
+        message.setAttribute('role', 'alert');
+        message.className = 'grid min-h-screen place-content-center gap-3 p-6 text-foreground';
+        title.textContent = 'Astrid could not load';
+        title.className = 'text-xl font-semibold';
+        link.textContent = 'Reload';
+        link.href = window.location.href;
+        message.append(title, link);
+        root.replaceChildren(message);
+      });
 
-          navigator.serviceWorker.register('/sw.js').catch(() => { /* silent */ });
-        });
+      if ('serviceWorker' in navigator) {
+        var appWorkerUrl = new URL('/sw.js', window.location.href).href;
+        navigator.serviceWorker.getRegistrations().then(function (registrations) {
+          return Promise.all(registrations.filter(function (registration) {
+            return [registration.active, registration.waiting, registration.installing]
+              .some(function (worker) { return worker && worker.scriptURL === appWorkerUrl; });
+          }).map(function (registration) { return registration.unregister(); }));
+        }).catch(function () {});
+      }
+      if ('caches' in window) {
+        caches.keys().then(function (names) {
+          return Promise.all(names.filter(function (name) { return name.indexOf('astrid-') === 0; })
+            .map(function (name) { return caches.delete(name); }));
+        }).catch(function () {});
       }
     </script>
   </body>

@@ -35,6 +35,7 @@ async function main(): Promise<void> {
   const owner = classifyBrowserEntry(new URL(window.location.href));
   if (owner === 'public') {
     const { renderPublicEntry } = await import('@/app/publicBootstrap.tsx');
+    clearPreloadReloadAfterRender(rootElement);
     renderPublicEntry(rootElement);
     releaseBootLayerWhenReady(rootElement);
     return;
@@ -44,6 +45,27 @@ async function main(): Promise<void> {
 }
 
 const PRELOAD_RELOAD_FLAG = 'astrid:preload-reloaded';
+
+/** Keep the reload guard only until a successful render has committed to the page. */
+function clearPreloadReloadAfterRender(rootElement: HTMLElement): void {
+  let observer: MutationObserver | undefined;
+  const existingChildren = new Set(rootElement.children);
+  const clear = () => {
+    const renderedApp = [...rootElement.children].some(
+      (child) => !existingChildren.has(child) && child.getAttribute('role') !== 'alert',
+    );
+    if (!renderedApp) return;
+    observer?.disconnect();
+    try {
+      sessionStorage.removeItem(PRELOAD_RELOAD_FLAG);
+    } catch {
+      // Storage can be unavailable; the current page is still usable.
+    }
+  };
+  observer = new MutationObserver(clear);
+  observer.observe(rootElement, { childList: true, subtree: true });
+  clear();
+}
 
 /**
  * A hashed chunk that 404s after a redeploy: reload once for the new build. The session flag keeps a
@@ -65,20 +87,20 @@ function showStartupFailure(rootElement: HTMLElement, error: unknown): void {
   console.error('Astrid failed to start', error);
   const container = document.createElement('main');
   container.setAttribute('role', 'alert');
-  container.style.cssText = 'min-height:100vh;display:grid;place-content:center;gap:12px;padding:24px;font:16px Inter, sans-serif;color:#ededf1;background:#101014';
+  container.className = 'grid min-h-screen place-content-center gap-3 p-6 text-foreground';
 
   const title = document.createElement('h1');
   title.textContent = 'Astrid could not start';
-  title.style.cssText = 'margin:0;font-size:20px';
+  title.className = 'text-xl font-semibold';
 
   const detail = document.createElement('p');
   detail.textContent = 'Astrid may have just been updated. Reload to try again.';
-  detail.style.cssText = 'max-width:560px;margin:0;line-height:1.5';
+  detail.className = 'max-w-prose text-muted-foreground';
 
   const button = document.createElement('button');
   button.type = 'button';
   button.textContent = 'Reload';
-  button.style.cssText = 'justify-self:start;padding:9px 14px;border:0;border-radius:6px;background:#fff;color:#111;font:inherit;cursor:pointer';
+  button.className = 'w-fit rounded-md bg-primary px-4 py-2 text-primary-foreground';
   button.addEventListener('click', () => window.location.reload());
 
   container.append(title, detail, button);
@@ -92,20 +114,20 @@ function showMigrationFailure(
 ): void {
   const container = document.createElement('main');
   container.setAttribute('role', 'alert');
-  container.style.cssText = 'min-height:100vh;display:grid;place-content:center;gap:12px;padding:24px;font:16px Inter, sans-serif;color:#ededf1;background:#101014';
+  container.className = 'grid min-h-screen place-content-center gap-3 p-6 text-foreground';
 
   const title = document.createElement('h1');
   title.textContent = 'Astrid could not prepare browser storage';
-  title.style.cssText = 'margin:0;font-size:20px';
+  title.className = 'text-xl font-semibold';
 
   const detail = document.createElement('p');
   detail.textContent = `Migration failed for ${store}. Your existing browser data is preserved. Retry to try again.`;
-  detail.style.cssText = 'max-width:560px;margin:0;line-height:1.5';
+  detail.className = 'max-w-prose text-muted-foreground';
 
   const button = document.createElement('button');
   button.type = 'button';
   button.textContent = 'Retry migration';
-  button.style.cssText = 'justify-self:start;padding:9px 14px;border:0;border-radius:6px;background:#fff;color:#111;font:inherit;cursor:pointer';
+  button.className = 'w-fit rounded-md bg-primary px-4 py-2 text-primary-foreground';
   button.addEventListener('click', () => {
     button.disabled = true;
     button.textContent = 'Retrying…';
@@ -127,6 +149,7 @@ async function startApp(rootElement: HTMLElement): Promise<void> {
   const welcomeEntry = entryFor(new URL(window.location.href), readWelcomePhase());
   if (welcomeEntry !== 'editor') {
     const { renderWelcome } = await import('@/app/onboarding/welcomeBootstrap.tsx');
+    clearPreloadReloadAfterRender(rootElement);
     renderWelcome(rootElement, welcomeEntry);
     releaseBootLayerWhenReady(rootElement);
     return;
@@ -143,6 +166,7 @@ async function startApp(rootElement: HTMLElement): Promise<void> {
   ]);
   initializeVideoEditorExtensionRuntime();
   await initializeWorkspaceRuntimeIdentity();
+  clearPreloadReloadAfterRender(rootElement);
   renderApp(rootElement);
   releaseBootLayerWhenReady(rootElement);
 }

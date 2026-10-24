@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from '@/shared/components/ui/button';
 import { reportErrorBoundaryCatch } from '@/shared/lib/errorHandling/recoverableError';
 
 /** True for the failures a stale hashed chunk produces after a redeploy. */
@@ -17,8 +18,7 @@ interface ChunkLoadErrorBoundaryState {
 }
 
 /**
- * Error boundary that catches chunk load failures (from lazy imports after deployment)
- * and auto-reloads the page to get fresh assets.
+ * Error boundary that gives users a way out when a lazy chunk fails to load.
  *
  * This handles the common scenario where:
  * 1. User has cached old JS that references old chunk hashes
@@ -55,21 +55,24 @@ export class ChunkLoadErrorBoundary extends React.Component<
     reportErrorBoundaryCatch({
       context: 'ChunkLoadErrorBoundary.componentDidCatch',
       error,
-      recoveryAction: 'reload',
+      recoveryAction: 'fallback',
     });
-    // Small delay to ensure the error boundary renders before reload
-    setTimeout(() => {
-      window.location.reload();
-    }, 100);
   }
 
   render() {
     if (this.state.hasError) {
-      // Brief message shown before auto-reload
       return (
-        <div className="flex items-center justify-center p-4 text-sm text-muted-foreground">
-          Updating...
-        </div>
+        <main className="grid min-h-screen place-content-center gap-3 p-6 text-foreground">
+          <h1 className="text-xl font-semibold">Astrid was updated</h1>
+          <p className="max-w-prose text-muted-foreground">Reload to continue.</p>
+          <Button
+            className="w-fit"
+            onClick={() => window.location.reload()}
+            type="button"
+          >
+            Reload
+          </Button>
+        </main>
       );
     }
 
