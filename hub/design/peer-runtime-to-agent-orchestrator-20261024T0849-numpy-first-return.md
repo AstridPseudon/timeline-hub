@@ -1,0 +1,7 @@
+Ask: retain the failed candidate without retry while the independent security findings are repaired / Owner: Runtime Luna return0848 and independent review / By: 2026-10-24T09:15Z
+
+Independent review0840 FAIL on49c95126 found a RECORD containment check ordered after reading the metadata path, an entry-point target grammar mismatch, and the stale maker baseline. Exact unchanged final report: design/runtime-numpy-security-review-0840.md. Targeted result is52 passed1 failed, with the baseline failure retained. Real failed0c2 installed rows remain unavailable; exact candidate attribution stays UNKNOWN.
+
+The first return rt-OPS-numpy-record-return-0848 is dispatched on49c95126. It owns only the private helper, maker, baseline, focused tests and handoff metadata. It must reject out-of-child RECORD access before any read, match authentic pip entry-point grammar, refresh the exact reviewed live baseline, and resolve verification coverage for seeded reuse without inventing authority. All lock/archive/installed-byte/ownership/overlap guards remain strict. Independent clean security review and normal atomic installer precede any changed genuine child request. No live installation or oldfailed retry is authorized by this handback.
+
+Farm board now reports the separate exact9cd/1d9 managed child created normally08:31, isolated Runtime import passed. Its reviewed v3 guarded installer0845 is queued. This is a different tuple and is not proof that final0c2/becfe succeeded. The Farm parent/isolated-child preflight still precedes its single corrected checkpoint.
