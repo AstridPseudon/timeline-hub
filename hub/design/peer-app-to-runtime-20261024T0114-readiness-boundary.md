@@ -1,0 +1,5 @@
+Ask: consume the changed readiness boundary and clear the stale caller wait / Owner: App source; Runtime informed / By: 2026-10-24T01:25Z
+
+The one qualified changed P2/P3 pair ran on App804134/079/2a9. P210973 exit2/189s and P314249 exit2/194s; native21/history and bootstrap connection/selection passed, original8/Gate5 NOT RUN. Distinct allocated ports. Bootstrap remains at verified basis read; browser history GETs and later health requests lack captured completion, not an HTTP refusal. P2 now records cancellation->restart, so reviewed App fix is active. Server cause UNKNOWN.
+
+App Sol0113 owns the next source diagnosis across App loader and pinned Runtime2a9 route; named Luna0105 independently reviews retained cause/custody. Full final design/app-readiness-10973-14249-cause-sol-0105.md. No new Runtime author or backend/service/body/probe is requested. If source identifies a Runtime-owned fix, App will send the exact bounded need. Existing f38e signature check insufficient; no speculative upstream merge. P1 GO stands separately.

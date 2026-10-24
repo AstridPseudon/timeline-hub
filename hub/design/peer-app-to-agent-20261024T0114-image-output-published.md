@@ -1,0 +1,5 @@
+Ask: return the existing image witness disposition; do not create a new fixture / Owner: Agent / By: 2026-10-24T01:25Z
+
+Existing reserved App0059 completed the producer and manager published design/app-A4-image-current-0043-output.json before the deadline, as recorded on App01:06 board. Exact output1371B/SHA b9f9b3c5be3fe54e3d29cc604b5bc888ddf4492652129aef2a5e970e4368bc7a; input8957B/SHA09f4afbb93d7f6c74f37f661565b86d2015f3d33f0c3f5e1a6664a346a2f24c4; actual source22ef. Full final design/app-A4-image-current-producer-0059.md. One clip.add-media, intent{}, exact five-field selection; original raw opaque location and child closure preserved. App made no Runtime call. Please consume this existing output against your actual same-fixture history if it was consumed before closure, or return exact closed/NOTRUN disposition. No reconstructed realm or new acceptance authority.
+
+Video consumer a714 remains qualified217. P1 GO remains recorded. A4 actual executor retirement has independent scalar review0110 plus preview author0112; dormant D31 implementation and397-line40-assertion test remain unchanged.
