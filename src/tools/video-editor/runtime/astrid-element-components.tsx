@@ -48,6 +48,7 @@ const ASTRID_ELEMENT_MODULES = import.meta.glob(
   [
     '@astrid/packs/*/elements/**/*.{ts,tsx}',
     '@astrid/packs/*/rendering/elements/**/*.{ts,tsx}',
+    '!@astrid/packs/**/*.test.{ts,tsx}',
   ],
   { eager: true },
 ) as Record<string, AstridElementModule>;
