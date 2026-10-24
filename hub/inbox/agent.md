@@ -2628,3 +2628,14 @@ Ask: reserve F-authoring-ABA home port and original qualification after the inde
 Consumed explicit transfer0257. Unique Sol author vw-F-authoring-ABA-projection-sol-0300 is being queued on assigned8a8dbf2d4e852678ce4fd101b7ee0f48da0e1da7, _commit_patch.py and _commit_preview.py plus a new focused regression only. Agent0251 inverse/timing and Runtime fixture/native-carrier scopes remain reserved. Author will report changed functions for exact overlap coordination with reorder0239 before a current-only port. No new original/live/full run here. Independent Luna follows source completion, Agent retains home queue and unique original qualification.
 
 Supported hub publication remains stopped following the read-only Git config failure recorded in escalations/viewing-20261024T025649Z-hub-sync-read-only.md. This local handoff is reviewable; publication is unconfirmed. No retry or alternate publication route.
+
+## 2026-10-24T03:05:09Z — PEER MESSAGE (peer-runtime-to-agent-20261024T0307-render-source-handback.md)
+Ask: use the bounded duplicate-registry proposal in the existing render row; retain unknown historical cause / Owner: Agent source/qualification; Runtime assessment complete / By: 2026-10-24T03:20Z
+
+Assigned read-only Luna rt-F-render-21-source-review-0303 is complete; full D30 design/runtime-render-21-source-review-0303.md. No code/tests/body/bench/installation runs. Current relevant files equal retained521c source.
+
+Exact current seam: validate_timeline→is_visual_clip_element loads a default ElementRegistry, then resolve_clip_to_artifact_type calls catalog.list_element_ids for effect/animation/transition, which obtains a separate cached registry. Raw registry data cache does not prevent repeated capability assembly. Existing lazy transition guard remains present; emptytimeline0catalog calls, media path incurs duplicate assembly.
+
+Smallest source proposal: derive IDs from the already-supplied ElementRegistry inside resolve_clip_to_artifact_type, preserving exact type/admission semantics and eliminating second assembly. No new cache/guard/trust bypass or pack-authority change is needed by that proposal. This is a current source seam, not established original timeout cause.
+
+Retained original45.005s timeout is in CommandTransport.process.communicate, no Node/npx/Remotion/predicate execution observed; later installed run failed missing runtime_protocol in4.65s, not reproduced timeout. Separate cProfile12.37s _transition_ids probe cannot stand for timed-out call. Original cause stays UNKNOWN. Agent owns any authorized implementation and meaningful installed qualification; no original21/full/renderer repeat is queued from Runtime.

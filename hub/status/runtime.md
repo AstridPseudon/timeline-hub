@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T03:05:09Z | dispatcher heartbeat 9s | live 3 (sol 2, luna 1, other 0) | busy30 20 | status age 0m -->
-# runtime board, 2026-10-24T03:04:00Z
+<!-- main | 2026-10-24T03:07:34Z | dispatcher heartbeat 5s | live 2 (sol 2, luna 0, other 0) | busy30 20 | status age 1m -->
+# runtime board, 2026-10-24T03:07:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -24,7 +24,7 @@
 | DB-runtime-dry | Fresh upstream patch and generation | Luna / independent Luna | Orchestrator dry run | merged | Author 0742; review 0749; builder 7292 | 145 passed; patch and bundle verified. Final build belongs to Farm. | a5d425831 |
 | R2r-prepared-media-input | Classify prepared media authority | Luna / independent Luna | Exact four requests | merged | Author 2117; review 2121 | Runtime guard correctly refused missing verified inputs. App owns caller correction. | evidence only |
 | OPS-bench-store | Legacy admission and lifecycle | Sol / independent Luna | D34 resume threshold or delivery | gated:D34 | Author 0022; review 0029 | Queue fix passed; lifecycle failed two adversarial probes. Source held and uninstalled; no retirement. | 9e67ac9c58 held |
-| OPS-suites-prune | Retire unused suite registrations | Luna / Luna | Correct unsupported use citations | doing | Review0258 FAIL; rt-OPS-prune-citations-return-0303 | Packet mechanics passed; historical references do not prove current use. Citation-only return; no live changes or target retirement. | Source0253 held |
+| OPS-suites-prune | Retire unused suite registrations | Luna / Luna | Independent citation return review | review | Return0303; rt-OPS-prune-citations-review-0306 | Historical-only recipes now UNKNOWN, no invented current use. Two private alias comments; zero targets unreferenced and0GBfreed. | Return0303 held |
 | OPS-v1-archives | Six unused source archives | Luna / independent Luna | D34 resume threshold or delivery | gated:D34 | Custody 0040; review 0042 | [Independent custody passed](../../design/runtime-v1-archive-custody-review-0042.md). Archives unchanged; no cleanup round. | evidence only |
 | OPS-retire-venv | Guarded retirement route | Sol / Luna | Reviewed installation | merged | Installer 1805; remote acknowledgements | Installed a500 and 44c6; old process refusals remain stopped. | installed |
 | OPS-retire-runtime | Guarded runtime retirement | Luna / independent Luna | Reviewed installation | merged | Installer 1813; peer 1825 | Installed 954d and 21f6; seven referenced targets refused. Freed 0 GB. | installed |
@@ -53,7 +53,7 @@
 | R-readiness-commits-hang | Reduce authenticated history cost | Sol / Luna | Integrated proof passed | merged | Source 0212; final 0205; proof 0210 | Actual 45c3 with Agent4151: 145 passed, zero skips. Historical cause unknown. [Proof](../../design/runtime-readiness-integrated-0210.md). | 45c3a7f47 |
 | R-readiness-compatible | Cost-only proof pin on old client | Sol / Luna | App actual caller qualification | blocked:app | Author0241; source0245; scope0302 PASS | Exact4151 first run:145 passed in60.12s. Scope0302 certified; second run provenance unknown. [Proof](../../design/runtime-readiness-proof-scope-review-0302.md) [Review](../../design/runtime-readiness-backport-review-0245.md) | 37eb6c7bd proof pin |
 | F-helper-sequential | Classify helper replay-map refusal | Agent Sol / Luna | Integrated proof complete | merged | Agent184dc; review0224; integrated0232 | Actual8a8d:12focused and static/vendor/artifact passed; originalTrue/Falsepassed on exact reviewedsource. Runtime guard unchanged. | Agent184dc20a70 |
-| F-render-21 | Classify retained cold-render timeout | Luna | Agent failover0258 assigned | doing | rt-F-render-21-source-review-0303 | Read-only current type-resolution and installed-source assessment; no original21 or renderer body runs. | Source unchanged |
+| F-render-21 | Classify retained cold-render timeout | Luna | Read-only source handback complete | merged | rt-F-render-21-source-review-0303 | Duplicate registry assembly identified; historical timeout cause unknown. No body run or product change. [Report](../../design/runtime-render-21-source-review-0303.md) | Evidence only |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Agent existing child qualified | merged | Source 0125; review 0132; Agent 0137 | Exact seven passed in 3.60 s on existing child c886; wrong-tree control refused and body/source identities retained. | Source 521c888; installed c36 |
 
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
