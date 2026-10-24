@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T21:25:41Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 3 | status age 1m -->
-# runtime board, 2026-10-24T21:23:58Z
+<!-- main | 2026-10-24T21:28:50Z | dispatcher heartbeat 2s | live 2 (sol 2, luna 0, other 0) | busy30 5 | status age 1m -->
+# runtime board, 2026-10-24T21:27:17Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -172,6 +172,9 @@
 
 | D83-history-cost-return | Decode fresh metadata once | Sol / Luna | Independent security review | review | Author2113; rt-D83-metadata-security-2122 | MedianCPU8.34% lower, all42 validation counts equal. Focused378PASS1parent-identicalFAIL plus HTTP16/ABA3PASS; original45s unverified. | Author branch above dc55 |
 
+| D83-request-lock | Measure real lock hold and wait | HARD Sol | ORCH 21:28 element and popup inputs | doing | rt-D83-request-lock-sol-2126 | Read-only seconds-long genuine daemon control; per-request wait/hold versus verify compute. No new original or speculative source fix. | Metadata author branch |
+| D83-request-cost | Measure verify cost per ordinal | HARD Sol | ORCH 21:28 accepted-history priority | doing | rt-D83-request-cost-sol-2126 | Sole next product author: finite N and ordinal counts, strict measured correction or source-backed limit. Prior metadata review remains independent. | Metadata author branch |
+
 Runtime producer: Normal dc55b8bc6e638acd9e5031ff6b51b50cd2e2b63c, tree0f941b27dc3396adbf41683e8ae30d77fc8b8768. Reviewed schema setup e745, observer4351, projection57df. Canonical15/schema867f unchanged. Source frozen since20:42 for receiving-lane proof.
 
 core open: 2 Runtime boundaries remain at original scope: P4 ten-note45s and full native-seed/element outcome. Agent retains five historical original scopes, all unclosed. Source qualification does not close originals. Final Runtime core suite owed.
@@ -182,9 +185,9 @@ D83 source proof: security2018 schema258PASS; observer2035 exact service2PASS an
 D78 actual capture: App2026 correlates cap1dump to successfulrequest1. Request2 SDK30s transporttimeout; outer120s did notfire. Safeauthsnapshot cannot prove failing-request2 lockwait. Baseline local acquisition max2.09ms, compute dominated; original fullmedia34.498s cause still not fully attributed.
 
 Blockers: Agent originals — service1960 NO-GO: 4 PASS and3 timeout failures. Runtime author2113 complete; Luna2122 owns independent security and normal apply/release. Candidate21c6 remains held; all five original home scopes stay open.
-Blockers: App P2 — element22971 passed native setup then failed5s appliedstatus; provider/history pending window now Runtime-owned. Facts2119 verified ordinal3 historicalRecorder boundary; metadata correction now in security2122. Other isolated cases continue App2058.
+Blockers: App P2 — element, asset and parent pending responses now hold further isolated runs per ORCH21:31. Metadata security2122 publishes immediately on PASS; App owns next eight isolated runs. Two Sol2126 own new verify/lock questions.
 Blockers: Final cut — all lane core0/regressions0, final P1–P5 plus core on one pinned tuple, D69 and genuine installed render required. No build or ZIP before cut.
-Next ready: Security2122 PASS -> same worker normal apply/release -> existing Agent/App submitters. FAIL -> one bounded return on author branch. No unchanged original repeat.
+Next ready: Security2122 PASS -> same worker normal apply and immediate release to existing submitters; do not hold for new2126 questions. Two Sol2126 progress disjoint source-cost and lock questions. FAIL returns once.
 
 Venues: App P1/P2/P3; Agent P4; main P5/Composition. D73 four exact SHAs capturedonce with checkoutreceipts. Newerhead doesnotinvalidate a run. D83 NO-GO automaticbriefsummary, GO oneindependentverdict; correction reviewer applies/releasesproof. Productchanges rerun final matrix.
 D65 delivery: Runtime merge, Agent merge, authentic App manifest command/digest equality, then App merge. Installed v2 docs and D67bindings retained. Final candidate remains D59-cut gated.
@@ -192,5 +195,5 @@ Later: E1/E3 designs and E2 Agentdesign complete before D83; further E/D79 pause
 Admission: D56 Farm/schema access stopped. Original403/accessrefusals, historical deniedcleanup/process/retirement targets untouched. D67D13envgap unchanged. AppdirtyU3guardrefusals stopped.
 Disk: 8660201472 available bytes (8.07 GiB), cap 4. No ended clean non-KEEP Runtime tree eligible; five old dirty trees remain untouched. Existing KEEP and refused targets not retried; 15 GB target not reached.
 
-live 0 / cap 4; queued 1; ready-undispatched 0. Sol2113 and facts2119 finished. Sole security reviewer2122 dispatched immediately; no E or D79 active.
-Pass 2026-10-24T21:23:58Z: worker2113 delivered one-file fresh metadata parse correction with8.34% finiteCPUgain,42equalvalidationframes and378PASS/1parent-identicalFAIL plus16HTTP/3ABA PASS. Reviewer2122 owns mutation/alias/freshness security and normalapply/release underD83; no unreviewedsource adopted. Worker2119 verified real22971 ordinal3 provider-to-historicalRecorder pending frame, publishes safeexact limits; sourceintegration remainsdc55. App2116 finitehandoff consumed; popup26387 failed sharedgroup setup beforegesture and App2115 owns it, parent837 is current independentbody. Source/reportbytes copied normally todesign. Inbox consumedthrough560462bytes. Diskmain8.06GiB/cap4; prior refusals untouched. Original45s and element5s remain open.
+live 3 / cap 4; ready-undispatched 0. Luna2122 security and two requested HARD Sol2126 active. No E/D79 work.
+Pass 2026-10-24T21:27:17Z: ORCH21:28 explicit renewed two-Sol questions dispatched in same pass: lockSol2126 READONLY per-request hold/wait and costSol2126 sole nextproduct author over Nentries/ordinals, both on metadataauthor dependency; no duplicateoriginal/profilefamily. ORCH21:31 holds furtherAppisolatedruns afterelement/asset/parentpending; publishmetadataimmediately ifsecurityPASS, no newholdfor2126. Security2122 active since21:23 with normalapply/release in sameworker. Sourceintegrationstilldc55. All original45s/UI5s and D47 freshvalidation/memo restrictions retained. Inbox consumedthrough561682bytes. Disk8585105408bytes(8.00GiB),cap4; no eligible endedcleanRuntime tree; priorrefusalsuntouched.
