@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T16:46:51Z | dispatcher heartbeat 5s | live 2 (sol 1, luna 1, other 0) | busy30 16 | status age 1m -->
-# runtime board, 2026-10-24T16:45:45Z
+<!-- main | 2026-10-24T16:50:00Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 15 | status age 2m -->
+# runtime board, 2026-10-24T16:47:31Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -82,10 +82,10 @@
 | R-P2-popup-422 | Project genuine fork-created shot roots | Luna | Independent security review | doing | rt-P2-popup-auth-1643 | Faithful fork then ADD source correction; first attribute introduction before D62. Preserve every physical observation and pin. | Author active |
 | R-P2-popup-observation | Attribute popup physical observation refusal | Luna | Source finding complete | merged | rt-P2-popup-observation-1638 | Runtime created-child projection lacks fork-created shot roots.2Runtime+8Agent comparators PASS; source cause only. | Source unchanged |
 | R-P2-element-docpatch-hang | Count and reproduce element request wait | HARD Sol requested by ORCH | Actual log phases then real repro | doing | rt-P2-element-sol-1643 | Resume profile6bba. First count requests/locks/provider/receipt; real reproduction authorized. Pending outcome remains UNKNOWN. | No product fix yet |
-| U1-D69-marker-scope | Preserve mixed-route live catalog predicates | Luna | Independent protected review | doing | Facts1632; author1638 | Two blanket xfails hide live catalog checks. Correct only approved retired scope; preserve unconditional live catalog predicates. | Source facts qualified |
-| U1-D69-restore-guard | Restore two skip guard originals | Luna | Exact integrated29 proof | merging | Review1639; integrated1644 | Both exact upstream bodies and all live guards reviewed. Normalmerge5c1 complete; integrated proof running. | 5c1a03f13 |
-| U1-D69-skip-policy | Restore upstream skip enforcement | Luna | Exact integrated29 proof | merging | Review1639; integrated1644 | Cumulative independent29+14+7 PASS. Normalmerge5c1 complete; exact integrated29 running. | 5c1a03f13 /bb022 |
-| U1-D69-restore-registry | Restore five registry originals | Luna | Exact integrated29 proof | merging | Review1639; integrated1644 | Five exact originals plus3exact upstream checker bodies reviewed. Normalmerge5c1 complete; integrated proof running. | 5c1a03f13 |
+| U1-D69-marker-scope | Preserve mixed-route live catalog predicates | Luna | Independent protected review | review | Author1638; review1647 | Both blanket xfails removed; live catalog strict, retired-onlysegments removed. Author6PASS; exact predicate/ledger review active. | Candidate1638 |
+| U1-D69-restore-guard | Restore two skip guard originals | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 |
+| U1-D69-skip-policy | Restore upstream skip enforcement | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 /bb022 |
+| U1-D69-restore-registry | Restore five registry originals | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 |
 | U1d-final | Join final owner upstream | Luna | Integrated qualification complete | merged | Integrated 1401; reviews 1346/1351 | Actual e68:448 passed,9 declared skips,2 existing xfails; raw exit1 retained. [Proof](../../design/rt-U1d-integrated-1401.md) | e68cf2316 |
 | U1d-visual-source | Preserve upstream visual source | Luna | Source review passed | merged | Author 1331; review 1333 | Reviewed source is in actual e68. Integrated visual qualification running with the targeted union. | 9db3 / e68 |
 | U1d-visual-tests | Keep both live FPS families | Luna | Independent protected proof passed | merged | Restore 1338; review 1351 | Both restored tests and all incoming cases retained. Exact candidate 60e passed 95 with raw exit 0. | 60e / e68 |
@@ -136,7 +136,7 @@
 Runtime producer: 5c1a03f13 normal merge adds only three D69 policy/test files to bc227. Auth remains exact independently reviewed760269; Agent actual ef036/bc227 remaining inverse original1PASS2.08s. Canonical15/schema867f unchanged; no regeneration. [Inverse proof](../../design/handoff-agt-R2-root-inverse-home-1632-report.md), [policy review](../../design/rt-U1-D69-policy-review-1639.md).
 
 core open: 3 tracked Runtime boundaries: actual P4 ten-note timeout, actual P2 popup physical-observation refusal, and element pending-to-teardown whose terminal cause remains UNKNOWN. Inverse timeline-root original CLOSED on actual integration. Final Runtime cut core suite remains required.
-regressions: 1 D69 skip-policy regression pending actual integrated29 proof1644 after reviewed normalmerge5c1. Popup introduction is being compared before D62/forward; not yet attributed as regression. Two mixed-route blanket xfails hide live catalog assertions and remain in protected correction1638, not cleared. Historical36 accounting unchanged.
+regressions: 0 confirmed open Runtime source regressions at currentqualified scope. D69 skip-policy regression CLOSED: actual5c1 PASS29 in12.67s,0skip/error after independent29+14+7. Popup introduction is being compared before D62/forward; not yet attributed as regression. Two mixed-route blanket xfails hide live catalog assertions and remain in protected correction1638, not cleared. Historical36 accounting unchanged.
 
 FREEZE D59/D66: current P1 actual26312 original2PASS plus independent1616PASS. P2 25943 original0PASS3FAIL5NOTRUN; changed P3 4858 App-owned. Agent root inverse original closes at actualef036/bc227; P4 parser original confirmation and ten-note cost remain. No cut/finalGO/artifact.
 
@@ -147,7 +147,7 @@ D65 delivery: owner Runtime merge, Agent merge, authentic App update-manifest wi
 Blockers: Runtime popup — source1638 proves missing fork-created shot projection; unique Luna1643 owns auth.py, strict oldRED/newGREEN then independent security review.
 Blockers: Runtime element — HARD Sol1643 first counts actual request/lock/provider/receipt phases, then real meaningful reproduction per ORCH16:45. Existing pending outcome UNKNOWN.
 Blockers: Runtime P4 — original ten-note45s timeout; finite profile1625/1635 no justified product fix. WIP6bba preserved; shared request owner1643 continues caller facts, all validation/budget retained.
-Blockers: Runtime D69 — policy actual5c1 awaits integrated29 worker1644; mixed-marker livecatalog correction1638 then independent protected review. Missing7+checker3 exact restored.
+Blockers: Runtime D69 — policy integrated29 PASS clears its source regression. Mixed-marker correction1638 passes6; independentprotectedreview1647 active. Exact ledgerproposal publication afterPASS.
 Blockers: App — changed P34858 and source/oracle corrections remain owned. P1 currentGO; no duplicate P2/P3 request. Existing element phase/log need sent peer1644.
 Blockers: Final delivery — active lanes0core/0regressions, current P2/P3PASS and D69 completion required before cut/proofs/build/ZIP.
 Next ready: consume integrated1644, popupauthor1643 and mixedmarkers1638 for immediate review; Sol1643 actual phase/repro facts. No ready local row waiting.
@@ -211,3 +211,5 @@ Pass 2026-10-24T16:35Z: checker1629 actual29PASS; exact remaining two checker re
 Pass 2026-10-24T16:40:05Z: P2popup422 became unique Luna1638 source row; elementpending became separate blockedApp retainedphase row with peer1639 exactsafeinput request, no speculative backend cause. Threechecker1633 exactupstream and29PASS -> independent1639 dispatched immediately. Mixedmarkers1638 author active underD52, everylivecatalog assertion retained. P4Sol1635 active.
 
 Pass 2026-10-24T16:45:45Z: Agent inverse actual1PASS consumed and blocker cleared. Policy independent29+14+7 PASS -> normalmerge5c1 -> exact integrated1644 dispatched immediately. ORCH16:45 popup and element criticalrows now authorLuna1643/realreproHARDSol1643 in parallel. Sourceprofile1635 WIP6bba preserved/stopped to release authownership; no productchange claimed.
+
+Pass 2026-10-24T16:47:31Z: exact integrated policy1644 PASS29/12.67s noerrors/skips closes skip-policy regression, normalhome5c1 exactreviewedsource. Mixedmarker1638 author6PASS -> independentprotectedreview1647 dispatched. New Agent singleP4 downstreamcache failure has uniqueAgentSol1639; no Runtimebody/correction guessed. PopupLuna and elementSol1643 continue.
