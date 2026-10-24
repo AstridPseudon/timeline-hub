@@ -89,44 +89,54 @@ ENCODED_SHA256 = {
     P3_SUITE: "9c67cf12699f2f9153d88b92491795b8a559f24fac0824a34f4d258e72177523",
 }
 
-# Descriptive inventories only: never project, truncate or rewrite an envelope.
+# Generated wire-property inventories.  The source-derived closure below must
+# equal these advertised sets; headers and enum values are metadata, not JSON
+# properties.  Never project, truncate or rewrite an envelope.
 REQUEST_FIELDS = [
-    "api_version", "project_id", "timeline_id", "base_revision_id",
-    "base_publication_id", "commands", "schema_version", "op", "version",
-    "select", "args", "created", "label", "steps", "id", "intent", "tags",
-    "command_ordinals", "patch", "reads", "dependencies", "merge", "fields",
-    "atomic", "Idempotency-Key", "dry_run", "source", "rationale", "group_id",
-    "changes", "ref", "before", "state", "value", "order_before", "after", "item",
-    "kind", "path", "ids", "digest", "resolved", "expect", "bindings", "authorship", "selections",
-    "after_id", "members", "order", "key", "query_version", "owner", "boundaries", "policy",
-    "ripple", "anchor", "ownership", "position",
-    "via", "detail",
+    "after_id", "anchor", "api_version", "args", "authorship",
+    "base_publication_id", "base_revision_id", "before", "bindings",
+    "boundaries", "command_ordinals", "commands", "created", "detail",
+    "dry_run", "expect", "group_id", "id", "intent", "key", "kind",
+    "label", "members", "merge", "op", "order", "order_before", "owner",
+    "ownership", "patch", "path", "policy", "position", "project_id",
+    "query_version", "rationale", "reads", "ref", "resolved", "ripple",
+    "schema_version", "select", "selections", "source", "state", "steps",
+    "tags", "timeline_id", "value", "version", "via",
 ]
 REPLY_FIELDS = [
-    "data", "receipt", "canonical_document", "document_digest", "id_map", "history", "undo", "commands",
-    "authoritative_commands", "authoritative_steps", "dependencies", "merge_mode", "base",
-    "base_revision_id", "base_publication_id", "previous", "previous_revision_id",
-    "previous_publication_id", "accepted_ids", "accepted_revision_id", "publisher", "provider",
-    "durable_receipt", "accepted", "merged", "rebased", "conflict", "invalid", "code", "path",
-    "hint", "suggested_command", "head", "current", "result", "request_hash", "event_ids",
-    "dry_run", "would_status", "reason", "http_status",
-    "status", "receipt_id", "command_kind", "idempotency_key", "project_id", "project_seq",
-    "timeline_id", "created_at", "rebased_onto", "provider_version", "compiler_version",
-    "evaluated_head", "message", "details", "conflicts", "theirs", "ours", "choices", "kind",
-    "revision_id", "publication_id", "label", "source", "rationale", "group_id", "steps",
-    "id", "intent", "tags", "command_ordinals", "patch", "reads", "records", "undo_of",
-    "restored_from", "undo_steps", "merge", "schema_version", "op", "version", "select", "args",
-    "changes", "ref", "before", "state", "value", "order_before", "after", "item", "created",
-    "resolved", "expect", "bindings", "authorship", "selections", "parent_revision",
-    "shot_revisions", "internal_timeline_revisions", "dependency_manifest", "content_digest",
-    "payload", "shots", "internal_timelines", "media", "documents", "via", "detail",
-    "after_id", "anchor", "boundaries", "boundary", "cause", "change", "change_ordinal",
-    "command", "command_ordinal", "dependency", "derived_writes", "document_id", "edge_after",
-    "edge_before", "effect_ordinal", "internal_timeline_revision_id", "items", "key", "media_id",
-    "members", "next_cursor", "order", "ordinal", "owner", "owners", "ownership", "phase",
-    "physical_ref", "pin", "policy", "position", "query_version", "ripple", "shot_id", "side",
-    "step_id", "successor", "write_range", "writes",
+    "accepted_revision_id", "after", "after_id", "anchor", "args", "authorship",
+    "base", "base_publication_id", "base_revision_id", "before", "bindings",
+    "boundaries", "boundary", "canonical_document", "cause", "change",
+    "change_ordinal", "choices", "code", "command", "command_kind",
+    "command_ordinal", "command_ordinals", "commands", "compiler_version",
+    "conflicts", "content_digest", "created", "created_at", "current", "data",
+    "dependencies", "dependency", "dependency_manifest", "derived_writes", "detail",
+    "details", "document_digest", "document_id", "documents", "edge_after",
+    "edge_before", "effect_ordinal", "evaluated_head", "event_ids", "expect",
+    "group_id", "head", "hint", "http_status", "id", "id_map", "idempotency_key",
+    "intent", "internal_timeline_revision_id", "internal_timeline_revisions",
+    "internal_timelines", "items", "key", "kind", "label", "media", "media_id",
+    "members", "merge", "merge_mode", "message", "next_cursor", "op", "order",
+    "order_before", "ordinal", "ours", "owner", "owners", "ownership",
+    "parent_revision", "patch", "path", "payload", "phase", "physical_ref",
+    "pin", "policy", "position", "previous", "previous_publication_id",
+    "previous_revision_id", "project_id", "project_seq", "provider_version",
+    "publication_id", "publisher", "query_version", "rationale", "reads", "reason",
+    "rebased_onto", "receipt", "receipt_id", "records", "ref", "request_hash",
+    "resolved", "restored_from", "result", "revision_id", "ripple", "schema_version",
+    "select", "selections", "shot_id", "shot_revisions", "shots", "side", "source",
+    "state", "status", "step_id", "steps", "successor", "suggested_command", "tags",
+    "theirs", "timeline_id", "undo_of", "undo_steps", "value", "version", "via",
+    "would_status", "write_range", "writes",
 ]
+WIRE_TYPE_PATH = "packages/typescript/src/timeline-commit-types.ts"
+APP_WIRE_TYPE_PATH = "src/integrations/runtime/timeline-commit-types.ts"
+WIRE_ROOTS = {"request": ("CommitRequest",), "reply_history": ("CommitOutcome", "HistoryPage")}
+WIRE_METADATA = {
+    "request_headers": ["Idempotency-Key"],
+    "request_enum_values": {"merge": ["fields", "atomic"]},
+    "reply_status_values": ["accepted", "merged", "rebased", "preview", "conflict", "refused", "invalid"],
+}
 
 
 class PreparedError(RuntimeError):
@@ -283,6 +293,169 @@ def git_bytes(root: Path, commit: str, path: str) -> bytes:
         return subprocess.check_output(["git", "-C", str(root), "show", f"{commit}:{path}"], stderr=subprocess.DEVNULL)
     except (OSError, subprocess.CalledProcessError) as exc:
         fail(f"producer blob unavailable: {root} {commit}:{path}: {exc}")
+
+
+def _type_aliases(source: str) -> dict[str, str]:
+    """Read the bounded generated TypeScript type-alias surface.
+
+    This deliberately handles only the generated file grammar: exported type
+    aliases terminated by a top-level semicolon.  It does not execute or
+    import TypeScript, and it treats index signatures and JSON/Record values as
+    open payloads with no advertised property names.
+    """
+    aliases: dict[str, str] = {}
+    declaration = re.compile(r"^export\s+type\s+([A-Za-z_$][A-Za-z0-9_$]*)\s*=\s*", re.MULTILINE)
+    for match in declaration.finditer(source):
+        depth = 0
+        quote = ""
+        escaped = False
+        end = match.end()
+        while end < len(source):
+            char = source[end]
+            if quote:
+                if escaped:
+                    escaped = False
+                elif char == "\\":
+                    escaped = True
+                elif char == quote:
+                    quote = ""
+            elif char in "'\"":
+                quote = char
+            elif char in "({[":
+                depth += 1
+            elif char in ")}]":
+                depth -= 1
+            elif char == ";" and depth == 0:
+                break
+            end += 1
+        require(end < len(source), f"unterminated generated type alias: {match.group(1)}")
+        aliases[match.group(1)] = source[match.end():end]
+    require(aliases, "generated wire type source has no exported type aliases")
+    return aliases
+
+
+def _object_regions(expression: str) -> list[str]:
+    regions: list[str] = []
+    starts: list[int] = []
+    quote = ""
+    escaped = False
+    for index, char in enumerate(expression):
+        if quote:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = ""
+        elif char in "'\"":
+            quote = char
+        elif char == "{":
+            starts.append(index)
+        elif char == "}" and starts:
+            regions.append(expression[starts.pop() + 1:index])
+    require(not starts, "unbalanced generated wire type object")
+    return regions
+
+
+def _top_level_members(region: str) -> list[str]:
+    members: list[str] = []
+    start = 0
+    depth = 0
+    quote = ""
+    escaped = False
+    for index, char in enumerate(region):
+        if quote:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = ""
+        elif char in "'\"":
+            quote = char
+        elif char in "({[":
+            depth += 1
+        elif char in ")}]":
+            depth -= 1
+        elif char == ";" and depth == 0:
+            members.append(region[start:index])
+            start = index + 1
+    members.append(region[start:])
+    return members
+
+
+def _generated_closure(source: str, roots: tuple[str, ...]) -> tuple[set[str], set[str]]:
+    aliases = _type_aliases(source)
+    types: set[str] = set()
+    fields: set[str] = set()
+    pending = list(roots)
+    while pending:
+        name = pending.pop()
+        if name in types:
+            continue
+        require(name in aliases, f"generated wire root is missing: {name}")
+        types.add(name)
+        expression = aliases[name]
+        for region in _object_regions(expression):
+            for member in _top_level_members(region):
+                property_match = re.match(
+                    r"(?:readonly\s+)?([A-Za-z_$][A-Za-z0-9_$-]*)(?:\?)?\s*:",
+                    member.strip(),
+                )
+                if property_match:
+                    fields.add(property_match.group(1))
+        for reference in re.findall(r"\b[A-Z][A-Za-z0-9_]*\b", expression):
+            if reference in aliases and reference not in types:
+                pending.append(reference)
+    return types, fields
+
+
+def _wire_source(root: Path, commit: str, path: str) -> str:
+    source = git_bytes(root, commit, path).decode("utf-8")
+    require(regular_bytes(root / path).decode("utf-8") == source,
+            f"generated wire type source differs from frozen {root}: {path}")
+    return source
+
+
+def wire_inventory() -> dict[str, Any]:
+    """Derive and authenticate the complete request/reply property closures."""
+    sources = {
+        "Runtime": _wire_source(RUNTIME, RUNTIME_COMMIT, WIRE_TYPE_PATH),
+        "App": _wire_source(APP, APP_COMMIT, APP_WIRE_TYPE_PATH),
+    }
+    derived: dict[str, dict[str, Any]] = {}
+    for owner, source in sources.items():
+        for name, roots in WIRE_ROOTS.items():
+            types, fields = _generated_closure(source, roots)
+            derived.setdefault(name, {})[owner] = {
+                "type_count": len(types), "types": sorted(types), "fields": sorted(fields),
+            }
+    for name, advertised in (("request", REQUEST_FIELDS), ("reply_history", REPLY_FIELDS)):
+        runtime = derived[name]["Runtime"]
+        app = derived[name]["App"]
+        require(runtime["types"] == app["types"], f"App/Runtime generated {name} type closure differs")
+        require(runtime["fields"] == app["fields"], f"App/Runtime generated {name} property closure differs")
+        actual = set(runtime["fields"])
+        expected = set(advertised)
+        missing = sorted(actual - expected)
+        extra = sorted(expected - actual)
+        require(not missing and not extra,
+                f"{name} advertised inventory mismatch: missing={missing} extra={extra}")
+        require(len(advertised) == len(expected), f"{name} advertised inventory contains duplicates")
+    return {
+        "provenance": {
+            "Runtime": {"checkout": str(RUNTIME), "commit": RUNTIME_COMMIT, "path": WIRE_TYPE_PATH,
+                         "roots": {key: list(value) for key, value in WIRE_ROOTS.items()}},
+            "App": {"checkout": str(APP), "commit": APP_COMMIT, "path": APP_WIRE_TYPE_PATH,
+                     "roots": {key: list(value) for key, value in WIRE_ROOTS.items()}},
+        },
+        "request": {"count": len(REQUEST_FIELDS), "fields": REQUEST_FIELDS,
+                     "generated_type_count": derived["request"]["Runtime"]["type_count"]},
+        "reply_history": {"count": len(REPLY_FIELDS), "fields": REPLY_FIELDS,
+                           "generated_type_count": derived["reply_history"]["Runtime"]["type_count"]},
+        "metadata": WIRE_METADATA,
+        "reply_shape": "complete authoritative {data,receipt}; inventory only, never a projection",
+    }
 
 
 def extract_row(line: str) -> tuple[str, str, str]:
@@ -635,6 +808,23 @@ def negative(mode: str) -> int:
                     read_lock = original_reader
             print(f"NEGATIVE {mode}: REFUSED all {len(lock['files'])} cross-source mappings with unchanged consumer bytes/digests")
             return 0
+        elif mode in {"inventory-missing", "inventory-extra"}:
+            advertised = REQUEST_FIELDS[:]
+            if mode == "inventory-missing":
+                REQUEST_FIELDS.pop()
+            else:
+                REQUEST_FIELDS.append("unexpected_advertised_field")
+            try:
+                wire_inventory()
+            except PreparedError as exc:
+                require("advertised inventory mismatch" in str(exc),
+                        f"negative {mode} refused for unrelated reason: {exc}")
+                print(f"NEGATIVE {mode}: REFUSED: {exc}")
+            else:
+                raise SystemExit(f"negative {mode} unexpectedly accepted")
+            finally:
+                REQUEST_FIELDS[:] = advertised
+            return 0
         elif mode == "registry":
             snapshot, _ = installed_rows()
             require(snapshot["outside_sha256"] == "0" * 64, "registry outsider bytes changed")
@@ -704,6 +894,7 @@ def prepare() -> dict[str, Any]:
             + refresh_wrapper_bindings(name, suffix)
         )
         prepared[name] = candidate_outer, rebound, old, dry
+    wire = wire_inventory()
     for name, (candidate_outer, rebound, old, dry) in prepared.items():
         preservation = authenticate_candidate(name, rows[name], candidate_outer, rebound)
         syntax = syntax_check(candidate_outer, rebound, tmp, name)
@@ -745,7 +936,7 @@ def prepare() -> dict[str, Any]:
             "outside_rows_unchanged": True,
             "native_and_encoded_stage_bytes": "authenticated unchanged against approved templates",
         },
-        "wire_fields": {"request": REQUEST_FIELDS, "reply": REPLY_FIELDS, "reply_shape": "full {data,receipt}"},
+        "wire_fields": wire,
         "required_custody": custody,
         "readiness": {"status": "SOURCE_PREPARED_ENVIRONMENT_UNVERIFIED", "owner": "normal existing-service recipe 1304",
                       "reason": "This dry artifact does not authenticate or execute the supported live environment; no additional approval handshake is required.",
@@ -767,7 +958,7 @@ def prepare() -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--negative", choices=("wrong-source", "stale", "app", "agent", "runtime", "tree", "target", "path", "body", "receipt", "registry", "duplicate", "concurrency", "native", "protected", "tail", "encoded", "binding", "app-mapping", "agent-mapping"))
+    parser.add_argument("--negative", choices=("wrong-source", "stale", "app", "agent", "runtime", "tree", "target", "path", "body", "receipt", "registry", "duplicate", "concurrency", "native", "protected", "tail", "encoded", "binding", "app-mapping", "agent-mapping", "inventory-missing", "inventory-extra"))
     args = parser.parse_args()
     try:
         return negative(args.negative) if args.negative else (prepare() and 0)
