@@ -253,7 +253,9 @@ def execute(bundle, commands, *, inverse_records=(), intervening_records=(), id_
                 raise CommandError("unsupported operation intention policy")
             ctx.record['command']['intent'] = dict(intent)
             operation.handler(ctx, command)
-            ctx.record['command']['resolved'] = [command['select']] if operation.singleton else []
+            singleton = operation.singleton and not (
+                command['op'] == 'occurrence.place-shared' and 'source_ref' in command['args'])
+            ctx.record['command']['resolved'] = [command['select']] if singleton else []
         elif command['op'] == 'timeline.restore':
             ctx.read('timeline')
             ctx.write('timeline', [], command['args'])

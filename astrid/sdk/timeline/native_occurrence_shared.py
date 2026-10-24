@@ -1,4 +1,4 @@
-"""Append a placement of an exact, authenticated same-timeline source."""
+"""Append a placement of an exact, authenticated source occurrence."""
 from __future__ import annotations
 
 import copy
@@ -6,13 +6,150 @@ import copy
 from ._command_state import CommandError, State, equal, root_identity
 from .capture import number
 from .native_occurrence_duplicate import OCCURRENCE_INTENT
+from .native_timeline_duplicate import SOURCE_REF
 
 PARAMETERS = {
     'type': 'object', 'required': ['occurrence_id', 'on'],
     'properties': {'occurrence_id': {'type': 'string', 'pattern': r'^(?!.*::)[^/]+$'},
-                   'on': {'type': 'number', 'minimum': 0}},
+                   'on': {'type': 'number', 'minimum': 0},
+                   'source_ref': SOURCE_REF,
+                   'source_occurrence_id': {'type': 'string', 'pattern': r'^(?!.*::)[^/]+$'}},
+    'dependentRequired': {'source_ref': ['source_occurrence_id'],
+                          'source_occurrence_id': ['source_ref']},
     'additionalProperties': False,
 }
+
+
+def resolve_source(port, resolver):
+    """Capture foreign authority through the same private port as duplication."""
+    from .native_timeline_duplicate import resolve_source as resolve_duplicate
+
+    resolver = resolve_duplicate(port, resolver)
+
+    def resolve(ctx):
+        from .commit import _hydrate, _require, bundle_from_document
+
+        inputs = resolver(ctx)
+        command = ctx.record['command']
+        claims = []
+        if command['op'] == 'occurrence.place-shared' and 'source_ref' in command['args']:
+            claims.append(command['args'])
+        ctx.shared_sources = []
+        for claim in claims:
+            ref = claim['source_ref']
+            document = port.source_revision_closure(copy.deepcopy(ref))
+            source = bundle_from_document(document)
+            _require((document['project_id'], document['timeline_id'],
+                      document['parent_revision']['revision_id'],
+                      document['parent_revision']['content_digest']) ==
+                     tuple(ref[key] for key in ('project_id', 'timeline_id', 'revision_id', 'content_digest')),
+                     'Runtime returned a different shared source')
+            rows = document['parent_revision']['payload']['occurrences']
+            matches = [row for row in rows if row['occurrence_id'] == claim['source_occurrence_id']]
+            if len(matches) != 1:
+                raise CommandError('shared source occurrence is missing or ambiguous', kind='identity_conflict')
+            row = matches[0]
+            exact = port.shot_closure(row['shot_id'], row['shot_revision_id'])
+            shot = next(image for image in document['shot_revisions']
+                        if (image['shot_id'], image['revision_id']) ==
+                        (row['shot_id'], row['shot_revision_id']))
+            internal = next(image for image in document['internal_timeline_revisions']
+                            if image['revision_id'] == shot['internal_timeline_revision_id'])
+            _require(exact['shot_revision'] == shot and exact['internal_timeline_revision'] == internal,
+                     'Runtime returned different shared child images')
+            for pin in document['dependency_manifest']['media']:
+                port.raw_media_info(copy.deepcopy(pin))
+            for captured in _hydrate(port, source):
+                if captured not in inputs:
+                    inputs.append(captured)
+            ctx.shared_sources.append((claim, source, row))
+        return inputs
+
+    return resolve
+
+
+def install_shared_source(bundle, document, row):
+    """Install exact physical compiler inputs without recording a child birth."""
+    identity = row['shot_id']
+    image = next(image for image in document['shot_revisions']
+                 if (image['shot_id'], image['revision_id']) == (identity, row['shot_revision_id']))
+    internal = next(child for child in document['internal_timeline_revisions']
+                    if child['revision_id'] == image['internal_timeline_revision_id'])
+    shot = {'shot_id': identity, 'payload': copy.deepcopy(image['payload']),
+            'base_payload': copy.deepcopy(image['payload']),
+            'internal_timeline': copy.deepcopy(internal['payload']),
+            'base_internal_timeline': copy.deepcopy(internal['payload'])}
+    origin = {'shot_id': identity, 'revision_id': image['revision_id'],
+              'content_digest': image['content_digest'], 'internal_timeline_id': internal['timeline_id'],
+              'internal_timeline_revision_id': internal['revision_id'],
+              'internal_timeline_content_digest': internal['content_digest'], 'item_id_map': {}}
+    mapping = bundle['source_mapping']
+    if identity in bundle['shots'] and (not equal(bundle['shots'][identity], shot)
+                                      or not equal(mapping['shots'].get(identity), origin)):
+        raise CommandError('shared physical identity has a different revision', kind='identity_conflict')
+    bundle['shots'][identity] = copy.deepcopy(shot)
+    mapping['shots'][identity] = copy.deepcopy(origin)
+    target = mapping['_runtime_document']
+    for key, images in (('shot_revisions', [image]), ('internal_timeline_revisions', [internal])):
+        for image in images:
+            prior = next((item for item in target[key] if item['revision_id'] == image['revision_id']), None)
+            if prior is not None and not equal(prior, image):
+                raise CommandError('shared immutable image changed', kind='identity_conflict')
+            if prior is None:
+                target[key].append(copy.deepcopy(image))
+    return identity
+
+
+def _place_foreign(ctx, command):
+    args, target = command['args'], ctx.state.bundle
+    ref = args['source_ref']
+    if (command['select'] != 'parent' or ref['project_id'] != target['project_id']
+            or ref['timeline_id'] == target['timeline_id']):
+        raise CommandError('shared source and destination scopes disagree', kind='dependency_changed')
+    sources = getattr(ctx, 'shared_sources', [])
+    if len(sources) != 1:
+        raise CommandError('shared placement requires Runtime-authenticated source', kind='dependency_changed')
+    _, source, row = sources[0]
+    if ctx.read('parent', ['config', 'pinnedShotGroups']) not in (None, []):
+        raise CommandError('legacy groups require recorded migration', kind='migration_needed')
+    ctx.select('collection.occurrences', 'parent')
+    track = row.get('track', row.get('placement', {}).get('track'))
+    destination_track = ctx.read('parent/track:' + str(track))
+    if not isinstance(destination_track, dict):
+        raise CommandError('shared destination track is unavailable', kind='identity_conflict')
+    document = source['source_mapping']['_runtime_document']
+    source_tracks = document['parent_revision']['payload'].get('config', {}).get('tracks', [])
+    source_track = next((item for item in source_tracks if item['id'] == track), None)
+    from ._common import AUDIO_KINDS
+
+    if source_track is None or ((source_track.get('kind') in AUDIO_KINDS)
+                                != (destination_track.get('kind') in AUDIO_KINDS)):
+        raise CommandError('shared destination track is incompatible', kind='identity_conflict')
+    identity = install_shared_source(target, document, row)
+    created = copy.deepcopy(row)
+    created.pop('shot_revision_id', None)
+    created.pop('revision_id', None)
+    created['occurrence_id'] = args['occurrence_id']
+    created['shot_id'] = identity
+    created.setdefault('placement', {})['start_ms'] = number(args['on'] * 1000, 'start_ms')
+    from astrid.core.timeline.authoring_bundle import _rederive_root_identity
+
+    _rederive_root_identity(created, target['project_id'], target['timeline_id'], row['shot_revision_id'])
+    claim = {key: copy.deepcopy(args[key]) for key in ('source_ref', 'source_occurrence_id')}
+    ctx.dependency('shared.foreign', 'authority', claim)
+    ctx.dependency('shared.shot', 'entity', {'shot_id': identity, 'revision_id': row['shot_revision_id']})
+    mapping = target['source_mapping']
+    manifest = mapping.setdefault('_copy_manifest', copy.deepcopy(mapping['_runtime_document']['dependency_manifest']))
+    for key in ('media', 'documents'):
+        for pin in document['dependency_manifest'][key]:
+            if pin not in manifest[key]:
+                manifest[key].append(copy.deepcopy(pin))
+            ctx.dependency('shared.' + key, 'media' if key == 'media' else 'source', pin)
+    captures = mapping.setdefault('pinned_documents', [])
+    for capture in source['source_mapping'].get('pinned_documents', []):
+        if capture not in captures:
+            captures.append(copy.deepcopy(capture))
+    ctx.create_entity('occurrence:' + created['occurrence_id'], kind='occurrence', owner='parent', value=created)
 
 
 def reopen_shared_source(bundle, owner):
@@ -79,6 +216,8 @@ def prepare_shared_inverse(ctx, records):
 
 
 def occurrence_place_shared(ctx, command):
+    if 'source_ref' in command['args']:
+        return _place_foreign(ctx, command)
     owner = command['select']
     root = root_identity(owner)
     if root is None or root[0] != 'occurrence':
@@ -116,3 +255,27 @@ def capture_occurrence_place_shared(bundle, owner, occurrence_id, *, on):
     return execute(bundle, [{'schema_version': 1, 'op': 'occurrence.place-shared', 'version': '1',
                              'select': owner, 'args': {'occurrence_id': occurrence_id, 'on': on},
                              'intent': OCCURRENCE_INTENT}]).commands[0]
+
+
+def foreign_shared_command(source_ref, source_occurrence_id, occurrence_id, *, on):
+    """Reserve only a destination occurrence; Runtime captures the child inputs."""
+    return {'schema_version': 1, 'op': 'occurrence.place-shared', 'version': '1', 'select': 'parent',
+            'args': {'source_ref': copy.deepcopy(source_ref), 'source_occurrence_id': source_occurrence_id,
+                     'occurrence_id': occurrence_id, 'on': on},
+            'created': ['occurrence:' + occurrence_id]}
+
+
+def restore_shared_record(bundle, record, output):
+    """Replay an accepted birth using its authenticated physical output closure."""
+    if record['command']['op'] != 'occurrence.place-shared':
+        return
+    if 'source_ref' not in record['command']['args']:
+        reopen_shared_source(bundle, record['command']['select'])
+        return
+    from .commit import document_from_bundle
+
+    document = document_from_bundle(output)
+    identity = record['command']['args']['occurrence_id']
+    row = next(row for row in document['parent_revision']['payload']['occurrences']
+               if row['occurrence_id'] == identity)
+    install_shared_source(bundle, document, row)
