@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-24T04:13:14Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 1 | status age 0m -->
+<!-- app2 | 2026-10-24T04:15:13Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 0m -->
 # app2 board, 2026-10-24T04:10Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -13,9 +13,10 @@
 | readiness-client-link | Compare P1 and native seed history | App Sol; Luna review | Complete retained comparison | merged | App0121; review0128 | Both histories contain two entries. Native seed has21 commands and child closure. Failed browser request counts remain unknown. | Report only |
 | P2 | Eight original gestures | App service; Proof Luna | Three App fixes and reviewed D42 pin | blocked:app | App12221; Proof0320 and0325 | NO-GO. Exit1,501 seconds. Readiness passed; three original cases failed and five were not run. | App804; Agent079; Runtime37eb |
 | P2-element | Original element head capture failure | App Sol; Luna review | Integrated proof and original failure coverage | blocked:app | Element0314; review0335; census0340 | Source merged after221 tests, types and lint. Exact original trigger remains unknown; source migration alone gives no P2 credit. | f90e708b37 |
-| P2-popup | Correct rendered popup target lookup | Proof Luna; independent review | App0359 classification PASS | doing | ap2-P2-popup-rendered-target-0413 | Author queued for two selector lookups only. Raw command and canonical IDs, complete assertions and timeouts stay unchanged. | Base e492d963ba |
+| P2-popup | Correct rendered popup target lookup | Proof Luna; independent review | App0359 classification PASS | doing | ap2-P2-popup-rendered-target-0413 | Author running for two selector lookups only. Raw command and canonical IDs, complete assertions and timeouts stay unchanged. | Base e492d963ba |
 | P2-parent | Original parent move response wait | App A2 | Causal reproduction and qualified fix | blocked:app | Parent0352; transition0401 | Mirrored move passes offline; child and top-level-only forms refuse before append. Follow-up owns actual transition comparison; cause unknown. | Proof804 |
 | P2-static | Five unrun original cases | App Luna | Independent0357 complete | merged | app-P2-five-review-0357 | Both transition removals and child placement have static gaps. Asset and swap pass static checks only. All five originals remain unrun. | Report only |
+| P2-placement | Single occurrence media placement | App Luna; independent review | Source correction and qualification | blocked:app | app-P2-single-placement-0410 | Source owner assigned to preserve original occurrence.add-media expectation. No spec or command oracle relaxation. | Source pending |
 | P2-transition | Single and bulk transition removal | App Sol | Faithful positive controls and source fix | blocked:app | app-P2-parent-transition-sol-0401 | Missing gesture basis reaches child-closure refusal. Shared files stay with wrapper0349 until its committed join. Original assertions retained. | Source pending |
 | P2-custody | Actual18800 lifecycle file | Proof Luna | Complete finite audit | merged | ap2-P2-18800-direct-custody-0032 | PASS.10,665 bytes and six actual records; security, schema, projection and writer checks passed. Cleanup trigger remains unknown. | Report only |
 | P2-popup-seed | Declare both created owners | Luna; independent review | Complete | merged | Author1934; review1940 | Four fixture lines;102 plus2 tests, three types, lint and collection passed. | 17324 to93cdd |
@@ -35,7 +36,7 @@ Next ready: Review popup author0413 immediately at completion, then normal remot
 
 Popup0408 ask consumed directly from normal hub before inbox delivery. Author0413 is queued on current App integration; no competing App spec author. Only rendered target lookups may change; genuine occurrence ID has no invented literal prefix. Independent review follows before normal own-only remote merge.
 
-Current authority: INBOX through626209 bytes, including03:50 instruction, is consumed. The next pair waits for all three App gesture fixes plus the D42 pin. App service remains the sole runner; Proof owns verdicts. No repeat or fallback pair is submitted. [Release prerequisites](../../design/peer-app2-to-app-runtime-orchestrator-20261024T0352-release-prerequisites.md).
+Current authority: INBOX through627518 bytes, including03:50 instruction, is consumed. The next pair waits for all three App gesture fixes plus the D42 pin. App service remains the sole runner; Proof owns verdicts. No repeat or fallback pair is submitted. [Release prerequisites](../../design/peer-app2-to-app-runtime-orchestrator-20261024T0352-release-prerequisites.md).
 
 Current evidence: [Original D41 review0320](../../design/handoff-ap2-P2-P3-D41-direct-verdict-0320.md), [cumulative custody0325](../../design/handoff-ap2-P2-P3-D41-custody-return-0325.md), [producer0307](../../design/app-P2-P3-D41-result-handoff-0307.md), [corrected cause0309](../../design/app-readiness-D41-cause-review-0309.md), [gesture review0327](../../design/app-P2-gesture-review-0327.md). Earlier failures retain their original outcomes. P2 readiness and P3 readiness have different outcomes and must stay separate.
 
