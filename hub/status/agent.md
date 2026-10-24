@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T01:32:21Z | dispatcher heartbeat 9s | live 2 (sol 0, luna 2, other 0) | busy30 23 | status age 2m -->
-# agent board, 2026-10-24T01:30:00Z
+<!-- agent | 2026-10-24T01:34:42Z | dispatcher heartbeat 17s | live 1 (sol 0, luna 1, other 0) | busy30 24 | status age 0m -->
+# agent board, 2026-10-24T01:34:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -20,13 +20,13 @@
 | F-R2-owner | Nested order and sibling successors | Sol / Luna | R2 | merged | agt-F-R2-joined-integrated-0042 | Actual 1146: 56 plus 14 passed. Independent 186 strict controls remain valid on exact source. | e53d9f36b |
 | F-SDK-closure | Repair the public reader fixture | Luna | G2 pair | merged | agt-F-SDK-fixture-review-0037 | Exact fixture independently passed; joined 14 controls passed on 1146. | 5e6823577 |
 | F-capture | Keep both published capture positives | Luna | Runtime fixture | merged | agt-F-capture-integrated-0052 | Actual b61: six original positives and no-CAS controls passed; exact reviewed blobs and static identities retained. | f9c305c8e |
-| F-persistence | Restart and disjoint-edit fixture | Luna | Helper 3b0 reviewed | merging | agt-F-transition-fixture-integrated-0126 | Fixture source merged 2397; independent PASS 1 plus 6. Actual integrated proof is running with transition controls. | fixture held |
-| F-helper-digest | Keep verified helper intent after restart | Sol | G2 | merging | agt-F-helper-reader-integrated-0118 | Actual 92b: 14 passed; reviewed blobs and Runtime origins verified. Strict Ruff improvement is tracked separately. | 3b0dc9e80 |
-| F-renderless | Renderer-free saves with readable show | Luna | SDK reader | merging | agt-F-helper-reader-integrated-0118 | Actual 92b: 75 plus closure passed, with all six public fields retained. Strict Ruff improvement is tracked separately. | 61070c542 |
-| F-render-startup | Avoid unused transition-catalog scans | Luna | Source cause 0045 | merging | agt-F-transition-fixture-integrated-0126 | Exact current port merged 940b; independent and port each passed 116. Integrated proof is running. | branch only |
+| F-persistence | Restart and disjoint-edit fixture | Luna | Helper 3b0 reviewed | merged | agt-F-transition-fixture-integrated-0126 | Actual 940b: original restart positive and six pair controls passed. Other sequential and deferred cases remain separate. | b3bb4695f |
+| F-helper-digest | Keep verified helper intent after restart | Sol | G2 | merged | agt-F-helper-reader-integrated-0118 | Actual 92b: 14 passed; reviewed blobs and Runtime origins verified. Strict Ruff improvement is tracked separately. | 3b0dc9e80 |
+| F-renderless | Renderer-free saves with readable show | Luna | SDK reader | merged | agt-F-helper-reader-integrated-0118 | Actual 92b: 75 plus closure passed, with all six public fields retained. Strict Ruff improvement is tracked separately. | 61070c542 |
+| F-render-startup | Avoid unused transition-catalog scans | Luna | Source cause 0045 | merged | agt-F-transition-fixture-integrated-0126 | Actual 940b: 116 controls passed. Exact reviewed source retained both catalog authority guards. | 2b2c1a02f |
 | F-external-roots | Trust admitted installed pack roots | Sol | Runtime source capture | blocked:runtime | agt-F-external-trust-sol-0104 | Sol kept product unchanged. Runtime-owned source authority is missing; peer 0110 requests precise existing input. | 3d86; 07b held |
 | F-env-86 | Original installed-child cohort | Luna | External pack fix | blocked:agent | Services 11789 and 19627 | 69 cases passed, then 16 supported source invocations passed. One external-pack positive remains open. | c36 scope |
-| F-render-21 | Original rendering cohort | Luna | Current child source | doing | agt-F-render-timeout-ready-0126 | Startup source is merged. Worker prepares the unchanged original 45-second case with verified current child imports. | 940b54d60 |
+| F-render-21 | Original rendering cohort | Luna | Current child source | doing | Child request render-current-0134 | Source profile cannot import Runtime. One immutable child is requested through the dispatcher on Agent 521c and Runtime 8ea. | 940b54d60 |
 | F-env-misc | D13, installers and bootstrap | Luna | Exact installed inputs | merged | agt-F-D13-wheel-input-0039 | Three original environment cases plus D13 passed. Exact c36 wheel matched installed payloads; wheel itself was temporary. | harness only |
 | F-CLI | CLI census, generation and motion fixture | Luna | G5 | merged | agt-F-CLI-integrated-0012 | Eight integrated cases and 32 subtests passed; reviewed generation and fixture changes only. | 43bbb / ff5dd |
 | F-observer | Nested pytest plugin isolation | Luna | G5 full | merged | agt-F-observer-harness-2355 | 25 original guard cases passed. Test bodies remain unchanged. | c8459e9f8 |
@@ -35,14 +35,14 @@
 | F-P4-symbol | Rename stale fixture symbol | Luna | G5 | merged | agt-F-P4-symbol-integrated-0023 | Both original metadata and CLI behavior cases passed on the integrated head. | 45cecae7b |
 | F-authoring-publish-writer | Migrate the remaining publication helper | Sol | failover-ok; assigned Runtime | doing | rt-F-authoring-publish-media-sol-0114 | Production publish_authoring_candidate calls a retired route after authentic fixture setup. Two Luna attempts are retained. | 20b fixture |
 | F-authoring-ABA | Repair duplicate same-alias captures | Sol | failover-ok; assigned Viewing | ready | Viewing repair assigned 0118 | Independent source verdict: Agent repeats a physical track binding for valid same-alias consumers. Sol repair assigned; strict Runtime guard stays. | 20b fixture |
-| F-D32-render-wire | Six missing render results | Luna | Existing installed child | doing | agt-F-render-wire-return-0129 | Service 4492 stopped before bodies on snapshot identity. Environment passed; harness tree binding is being corrected. | 92baf9612 |
+| F-D32-render-wire | Six missing render results | Luna | Existing installed child | doing | Service 27934 | Corrected exact-tree preflight passed. Six original conformance cases are running on the qualified installed child. | 92baf9612 |
 | F-helper-sequential | Attribute helper replay-map refusal | Luna requested | Runtime source classification | blocked:runtime | Peer 0114 requests assessment | One original contiguous-helper positive refuses map duplication or omission; no source cause is yet established. | 3b0 source |
 | F-D32-h3-import | Seven isolated child-import cases | Luna | failover-ok; assigned Runtime | ready | Runtime assignment 0118 | Source attribution first. Existing installed cohort proofs are retained; no duplicate full or environment build. | 92baf9612 |
-| F-ruff-baseline | Record one fewer Ruff finding | Luna | Strict static gate | merging | agt-F-static-integrated-0130 | Independent PASS; baseline-only source merged 521c. Actual strict static gates are running on the integrated head. | 92baf9612 |
+| F-ruff-baseline | Record one fewer Ruff finding | Luna | Strict static gate | merged | agt-F-static-integrated-0130 | Actual 521c: make ruff passed 2,147/2,147 and make mypy passed 1,911/1,911. Protected source and pins verified. | 4511f3d81 |
 | A4 IMAGE | Actual App request and Runtime acceptance | Luna / App | App created claims | blocked:app | Agent audit 0112; review 0116 PASS | Missing asset and clip claims reproduced the exact Runtime refusal. App source correction requested; old fixture closed. | 1146 / 22ef |
 | D31 | Dormant transcript capture subset | — | Follow-up funding | gated:D31 | No active author | Keep the 397-line test suite and implementation unchanged. Literal production reachability is NO. | unchanged |
 | V4 / D14 / D23 | Cut and deferred relational timing | — | Scope decisions | gated:H9 | No repair worker | Keep original tests unchanged, unskipped and visibly failing. No V4 or relational-timing completion claim. | unchanged |
-| U2c | Upstream readiness candidate | — | Only if App readiness fix fails | gated:conditional | Not started | Latest orchestrator instruction holds this draft. App owns the cancelled-bootstrap restart deadlock. | no change |
+| U2c | Upstream readiness draft only | Luna | Exact f38e source object | doing | agt-U2c-readiness-draft-0133 | Changed readiness pair failed after App fix. Collection starts; exact upstream object is absent and host fetch is requested. No merge. | branch only |
 
 P1: GO. Original service 18792 passed both cases; Proof reviews 0036 and 0040 passed. P4 and P5 are done. G5 already merged under H24. P2 and P3 remain with App and Proof.
 Integration: 521c88802330901281cc37ba25818baf2575f05e, tree fcd3135b3dc8e93009b86b7e4b75053a4e5b9476. Frozen 34e client, d106 schema and 819acf Composition artifact unchanged.
@@ -52,7 +52,8 @@ Blockers: IMAGE acceptance waits for App created-claim correction; Agent source 
 Blockers: Viewing must return its render-wire and ABA repair worker IDs. Runtime must return the seven-import and helper-map assessment worker IDs.
 Safety: Earlier Farm, monitor, publication and bench permission refusals remain stopped. No denied action was retried here.
 Disk: Sweep removed six old temp directories; compact compressed seven logs. About 11,056 MiB remains, above the 8 GB heavy-run floor. No refused target was retried.
-Next ready: Merge reviewed current ports, consume integrated proof and D32 review, and follow up on assigned peer work. U2c stays held.
+Next ready: Consume six-case service and current-child provisioning, then qualify the original rendering timeout. Peer source fixes and U2c collection continue.
 Evidence: Earlier detailed results remain in [the archived board](archive-v2/STATUS-20261024T0055Z.md) and the existing design handoffs. Worker final messages are copied unchanged into design.
 
 D32: Upstream 90d469808 is unavailable. All 267 remain ours; no pre-existing credit. Completion sent to the orchestrator in peer 0130.
+Blockers: U2c source port waits for the Agent host lead to fetch f38e164cca. Normal checkout returned unknown commit; useful collection is active.
