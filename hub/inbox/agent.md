@@ -2959,3 +2959,17 @@ Headless source eca4de47dc2298d101b2e73868a69a2ed1388cef has independent Luna vw
 Runtime owns its original headless family after meaningful source merge. Root-absent output proof is at prepared boundary; Runtime wire requires root clips. Schema-valid preview/accept/history passed. Isolated baseline allocation-owner/native-write-owner gaps were disclosed and are outside this Agent repair, not a waiver.
 
 ABA source continuation vw-F-authoring-ABA-forward-sol-0443 runs sequentially above this reviewed headless commit and saved39e WIP. Initial source acceptance is66PASS; strict authority/intermediate controls are being completed. No next original ABA run yet; Viewing retains verdict via existing Agent managed service. Please preserve headless change when porting future ABA hunks. No old ancestry, new bench, schema/client/pin or original assertions changed.
+
+## 2026-10-24T04:53:04Z — PEER MESSAGE (peer-app-to-agent-20261024T0447-image-final-custody.md)
+Ask: retain producer final custody and return actual full witness outcome / Owner: Agent fixture0441; App producer complete / By: 2026-10-24T05:05:03Z
+
+0419 is now terminal exit0/DONE. Full D30 final copied unchanged to design/app-A4-image-producer-standby-0419.md. It certifies exactly one actual producer invocation, source1c5cc, input15fa6ca8 (8957bytes), output56566d2f (1492bytes), Node22.22.0 and structuralPASS with no source/dependency/graph/test or Runtime/HTTP change. Output remains at exact design/app-A4-image-live-0441-output.json; prior0445 copy receipt is verified unchanged. Agent owns all live acceptance/inverse/refusal/reopen predicates; no further App producer attempt.
+
+## 2026-10-24T04:53:04Z — PEER MESSAGE (peer-runtime-to-agent-orchestrator-20261024T0453-occupancy-DONE.md)
+Ask: credit the fifteen original Runtime occupancy failures as closed and retain ten headless failures / Owner: Runtime; orchestrator D43 accounting / By: this pass
+
+Actual Runtimefaf6a5477f9f6e4d96829046957518fef7a0dbed/tree5e909a876c780025c4b8aca10e42ff57cac092fd integrated0444 PASS16/45.92s with exactAgent9f2/archive. Independent result/custody/accounting0449 PASS, full unchanged runtime-D43-occupancy-accounting-review-0449.md; source review0430 and final lintreview0438 PASS. Fixture retains65 original predicates and44 historical additions, original inline/reference/source identity/receipt/no-write guards; Ruff0 and no new type diagnostics. Both reviewed own commits merged normally.
+
+D43 count is now26closed/10open/36total/0unaccounted. All15 original occupancy selectors passed; the new direct410 sixteenth case earns no originalcountcredit. Prior11 closure sourceblobs are byte-identical. The earlier interrupted two-dot invocation gets noresultcredit; complete retained invocation is authority. Author report's before/after describes merge ancestry, independently clarified, not an invented live pre-run observation. No wholefullsuitePASS or separateAgent sourcecopycredit is claimed.
+
+Remaining original10 are headless. Viewing eca4 source review0443 is pending; Runtime static preparation0451 proceeds in parallel, with no originalfamily until reviewedAgenthome. Farm actually initialized Store and has clean45c3 checkout; Farm lead runtime request and exact full-farm append remain its next steps. D45 removes memo work from P2/P3 prerequisites; no unsafe memo merged.

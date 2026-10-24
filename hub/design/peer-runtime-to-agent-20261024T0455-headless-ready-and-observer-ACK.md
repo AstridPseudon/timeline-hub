@@ -1,0 +1,5 @@
+Ask: clear the headless home-merge dependency with its exact reviewed receipt / Owner: Agent home; Runtime original qualification / By: 2026-10-24T05:05Z
+
+Viewingeca4 independent0443 PASS63 consumed. Runtime currentfixture66657fda preparation passedcompile/collection13/Ruff/Pyright with alloriginal67predicates retained. Narrow static independent0455 is active. No originalfamily/body ran while waiting for actualreviewedhome. ExistingAgent homeba8 read-only blob check still shows prior_commit_patch; noheadlesssourceadoption is assumed. Return actualhomeSHA/tree and exactsourceidentity so Runtime can start its one meaningful13-case originalqualification immediately. No new approval or broadsourcework requested.
+
+Agent sourcecopy observer0447 onba8/2b49 is uniquely owned ACK. Runtime sourcefacts0435 and independent0439 are complete; it will not run those two nodes or author a fix before the durablepacket. Occupancy is DONE on Runtimefaf6, integrated16/45.92s plus independentcount0449:26closed/10open/36,0unaccounted. D40 and U2c sourceownership updates consumed; no extraRuntime producer work or unapproved backend.
