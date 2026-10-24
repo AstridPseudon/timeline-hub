@@ -4,10 +4,25 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { appCheckoutTarget, buildSubmitPlan, captureSubmitPins, exactCheckoutPath, preflightSources, receiptCheckout, registerSubmitRecipes, selectPinnedSources, serviceRecipe, submit, validatePinnedSource, validatePinnedSources, validateSelectedSource, waitForSubmitReceipts } from './d66-plain-stack.mjs';
+import { appCheckoutTarget, buildSubmitPlan, captureSubmitPins, exactCheckoutPath, playwrightLaunchEnv, preflightSources, receiptCheckout, registerSubmitRecipes, selectPinnedSources, serviceRecipe, suites, submit, validatePinnedSource, validatePinnedSources, validateSelectedSource, waitForSubmitReceipts } from './d66-plain-stack.mjs';
 
 const state = (overrides = {}) => ({
   root: '/snapshot/agent', head: 'a'.repeat(40), tree: 'b'.repeat(40), branch: null, dirty: false, ...overrides,
+});
+
+test('D66 full P2 launch retains bounded Runtime phase logs while other suites stay opt-in', () => {
+  const junit = { readiness: '/tmp/readiness.xml', original: '/tmp/original.xml' };
+  const launch = (suiteName, stage = suiteName, output = `/tmp/d66-${suiteName}-launch`) => playwrightLaunchEnv({
+    suite: suites[suiteName], suiteName, output, junit, stage,
+    baseEnv: { NODE_ENV: 'test', D66_RUNTIME_LOG_DIR: '/tmp/inherited-observer-must-not-leak' },
+  });
+
+  assert.equal(launch('p2').D66_RUNTIME_LOG_DIR, path.join('/tmp/d66-p2-launch', 'runtime-private'));
+  assert.equal(launch('p2', 'readiness').D66_RUNTIME_LOG_DIR, undefined);
+  assert.equal(launch('p2-element').D66_RUNTIME_LOG_DIR, path.join('/tmp/d66-p2-element-launch', 'runtime-private'));
+  assert.equal(launch('p1').D66_RUNTIME_LOG_DIR, undefined);
+  assert.equal(launch('p3').D66_RUNTIME_LOG_DIR, undefined);
+  assert.notEqual(launch('p2').D66_RUNTIME_LOG_DIR, launch('p2-element').D66_RUNTIME_LOG_DIR);
 });
 
 test('D66 accepts a detached clean checkout matching the normal head and tree', () => {
