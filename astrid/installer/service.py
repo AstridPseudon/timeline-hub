@@ -18,6 +18,10 @@ from .core import Version, read_json, write_json
 
 LABEL = "haus.astrid.runtime"
 TASK = "Astrid Runtime"
+# A named Get-ScheduledTask lookup reports a non-terminating error when absent.
+# Enumerating and filtering makes an absent task a successful no-op while still
+# propagating Task Scheduler access failures through ErrorActionPreference=Stop.
+TASK_QUERY = f"$t=Get-ScheduledTask | Where-Object {{ $_.TaskName -eq '{TASK}' -and $_.TaskPath -eq '\\' }}; "
 
 
 def platform_target() -> str:
@@ -176,7 +180,7 @@ class Service:
             if self.systemd() and self.path.exists():
                 self.run(["systemctl", "--user", "disable", "astrid.service"])
         else:
-            self.powershell(f"$t=Get-ScheduledTask -TaskName '{TASK}' -ErrorAction SilentlyContinue; if ($t) {{ $t | Disable-ScheduledTask | Out-Null }}")
+            self.powershell(TASK_QUERY + "if ($t) { $t | Disable-ScheduledTask | Out-Null }")
 
     def stop_foreground(self) -> None:
         """Stop a recorded fallback owner that has not published discovery yet."""
@@ -203,10 +207,10 @@ class Service:
             self.run(["systemctl", "--user", "stop", "astrid.service"])
         elif self.system == "win32":
             # Runtime's birth-checked down has already drained its children.
-            self.powershell(f"$t=Get-ScheduledTask -TaskName '{TASK}' -ErrorAction SilentlyContinue; if ($t -and $t.State -eq 'Running') {{ $t | Stop-ScheduledTask }}")
+            self.powershell(TASK_QUERY + "if ($t -and $t.State -eq 'Running') { $t | Stop-ScheduledTask }")
             deadline = time.monotonic() + 90
             while time.monotonic() < deadline:
-                state = self.powershell(f"$t=Get-ScheduledTask -TaskName '{TASK}' -ErrorAction SilentlyContinue; if ($t) {{ $t.State }}").strip()
+                state = self.powershell(TASK_QUERY + "if ($t) { $t.State }").strip()
                 if state != "Running":
                     return
                 time.sleep(0.2)
@@ -287,7 +291,7 @@ class Service:
 
     def unregister(self) -> None:
         if self.system == "win32":
-            self.powershell(f"$t=Get-ScheduledTask -TaskName '{TASK}' -ErrorAction SilentlyContinue; if ($t) {{ $t | Unregister-ScheduledTask -Confirm:$false }}")
+            self.powershell(TASK_QUERY + "if ($t) { $t | Unregister-ScheduledTask -Confirm:$false }")
         self.path.unlink(missing_ok=True)
         if self.system == "linux" and self.systemd():
             self.run(["systemctl", "--user", "daemon-reload"])
