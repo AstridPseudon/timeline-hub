@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T15:53:13Z | dispatcher heartbeat 14s | live 5 (sol 1, luna 4, other 0) | busy30 17 | status age 7m -->
-# agent board, 2026-10-24T15:45:31Z
+<!-- agent | 2026-10-24T15:56:45Z | dispatcher heartbeat 12s | live 2 (sol 1, luna 1, other 0) | busy30 19 | status age 2m -->
+# agent board, 2026-10-24T15:53:27Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -11,7 +11,7 @@
 | G2 / G3 | Public commit, emitter, CLI and sheet | Sol / Luna | R1, R2 | merged | G234 integrated0549 | Joined131 and live Runtime controls passed. P4 retains actual HTTP scope. | ea302e0f5 |
 | G4 | Remaining production writers | Sol / Luna | G2 | merged | G234; video; media admission0832 | Writer migration qualified; media admission20 passed on0ff3. Managed duck original remains held. | ea302e0f5; 0ff3d103fb |
 | G5 | Retire superseded writers | Luna / Sol | H24 criteria | merged | Custody review2155 | 350 cases, four SDK and c271 passed. Historical raw packet loss remains disclosed. | c36ca8c94 |
-| P4 owner | Single edit,ten steps and rerun | Luna / Service | Current binding and final source | doing | Readiness1311; binding1330 | Three exact HTTP selectors collected. Current47b source binding and guarded row installation active; no new body yet. | Current47b |
+| P4 owner | Single edit, ten steps and rerun | Luna / Sol / Service | Actual service launcher | doing | Service23496; Sol1554; whole path1554 | Service23496 exited1 before bodies; no JUnit. Current5777/8b32 installed rows need actual snapshot preflight repair. | Home5777 |
 | F original census | Keep exact historical267 records | Sol / Luna | Independent accounting | merged | Count0818; review0827 | 263 closed,4 open;123 exact mappings. Current full9758 remains a separate failed checkpoint. | Census e13d65ba |
 | F checkpoint9758 | Primary local full checkpoint | Service / Luna | D49 | review | Service9758; census1052/1058 | 17673 passed,231 failed,45 errors,4 skips,566 subtests. All276 bad IDs verified;119 tracebacks,157 summary only. | ba55 / treec13 |
 | F checkpoint setup | Correct profile setup | Luna / Luna | Source1052; review1105 | merged | Install1118; review1124 | All45 errors classified:3 loops and42 artifact mismatches. Actual registry18de/row0bdf verified; no full retry. | Candidate4a2a3472d1 |
@@ -77,11 +77,11 @@
 | Runtime five receipts | Publish actual home XML and map | Luna / Manager | Existing authentic1330 files | merged | Original home1330; handoff1409 | Two authentic files copied byte-exact to normal design publication, with full hashes. Runtime can qualify named membership without rerun. | Evidence only |
 
 | R2 proposal inverse | Emit complete inverse stage bindings | Luna | Actual integrated proof | merged | Author1421; review1426; home1435 | Actual68e82 PASS13 plus static checks. Original TMP XML gone; raw transcript XML retained. Custody worker1440 preserves existing bytes. | 68e82c0c2c |
-| P4 D60 home binding | Bind actual refreshed service source | Luna | Pending D61 source and heavy slot | doing | Combined harness1542 | Source dependency cleared; refresh existing P4 and core rows on actual5777/8b32. Preserve original3 and existing environment. No body before sole-heavy1540 clears. | Candidate317c superseded |
+| P4 D60 home binding | Bind current service source | Sol / Luna | Launcher repair | doing | Harness1542; Sol1554; whole path1554 | Actual installed current rows; local stub passed but service snapshot preflight failed before tests. | Home5777 /8b32 |
 
 | F D60 comparison | Compare exact276 against upstream924 | Luna | Terminal service1621 XML | merged | Terminal1452 PASS evidence | All276 exact:75 match,66 upstream FAIL9 PASS;201 absent UNKNOWN. Nine contrasts are eight current PASS and one D23. No current regression proved. | Agent924; Runtime launch becfe |
 
-| R2 forward provider | Preserve omitted forward created claims | HARD Runtime Sol | Runtime auth fix and proof | doing | Runtime1450; independent Agent1546 | Actual5777/8b32 structural retry original PASS; inverse/redo original FAIL at inverse stage sequential input. Runtime ACK retained; whole-path1546 active. | Home5777 /8b32 |
+| R2 forward provider | Validate inverse timeline root | HARD Runtime Sol / Agent Luna | Runtime auth owner | blocked:runtime | Whole path1546; Runtime peer1553 | Actual5777/8b32 five originals and54 guards PASS. One inverse FAIL; Runtime excludes timeline root from sequential input images. | Home5777 /8b32 |
 
 | F home13 custody | Preserve actual home result transcript | Luna | Existing raw worker log | merged | Receipt1440 PASS | All13 XML outcomes preserved as exact transcript bytes with ranges and hashes. Original TMP file loss disclosed; flat design handoff published. | Home68e82 |
 
@@ -97,26 +97,26 @@
 
 | F D63 final rollup | Fold corrected exact276 categories | Luna | Existing evidence only | merged | agt-F-D63-final-rollup-1517 | Exact276:199 NEW-OURS,77 counterparts.7 pre-existing causes qualified;59 cause-open. Published rollup predates actual181 PASS; board overlays it. | Evidence only |
 
-| F core service candidate | Prepare existing-service core invocation | Luna | Final producer body held | doing | WIP1525; first return1542 | Original worker hit output limit; WIP retained. First return repairs malformed literal hashes and binds actual5777/8b32; core+P4 candidate/install only. | Current5777 /8b32 |
+| F core service candidate | Prepare existing core invocation | Sol / Luna | Actual snapshot preflight | doing | Harness1542; launcher1554 | P4 and final-core rows installed. Both share failing preflight; no core bodies run or gate claim. | Home5777 /8b32 |
 
 | F D63 different causes | Resolve four retained cause exceptions | Luna | Existing evidence only | merged | agt-F-D63-different-causes-1528 | Allfour non-core cause-open; no proven current defect or regression. Existing bounded cause scopes preserved; no body repeated. | Evidence only |
 
-| F D66 reverse diff | Map missing upstream tests | Luna | Existing authentic924 XML | doing | Author1527; return1539 | First362 included208 still-present changed functions. Return corrects selector-existence counting;137 cited deletions and real missing scope under check. | Currentd27b /924 |
+| F D66 reverse diff | Restore missing upstream cases | Luna | Exact47 remaining rows | doing | Return1539; sdk1551; cli1551; other1551 | 137 ledger,178 present changed,47 restore needed,0 renamed. Three disjoint closures active; no bodies rerun. | Home5777 /924 |
 
 | U4a D62 preparation | Adopt normal generated ABI field | Luna | Runtime security then home merge | merged | Author1529; review1533 PASS; rebind1536 | Actual5777 binds qualified Runtime8b32,15 mappings exact. Independent37 PASS/39 default-lane deselections; rebind31 PASS. Six-original home proof1540 active. | Home57779274a0 |
 
-| G4 empty timeline | Classify real create_empty refusal | Luna | Exact current diagnostic | doing | agt-G4-empty-timeline-whole-path-1546 | Original creation returns history_unavailable on5777/8b32 and beforeconsumer0eda. Read-only production path classification; no second body. | Home5777 /8b32 |
+| G4 empty timeline | Configure real daemon provider | Luna | Normal merge and home proof | merging | Whole path1546; setup1551 | Trusted astrid profile setup fixes original: author1 PASS, mypy PASS, Ruff unchangedF841. Normal merge queued. | Worker1551 |
 
-Integration: Agent57779274a0 includes U2 final924, normal e68 vendor adoption and independently reviewed legacy inverse plus environment key fix. Proposal inverse actual-home13 passed. D61 consumer9460a443 normal merged3769 after Runtime8b32 source/security PASS. All three reviewed donor blobs retained; normal D39 actual-home rebind1536 and source review1533 PASS merged5777. Six-original actual-home1540 active. No generated code or lock edited by manager.
-core open: 2 actual5777/8b32: one retained inverse/redo original and one separate create_empty diagnostic. Originalsix has5 PASS1FAIL;54 strict controls PASS. D13ENV and two D23 deferred unchanged. Final cut proof pending.
-regressions: 0 currently open at named qualified scope; order181 proven regression repaired and actual d27b PASS16. Nine other upstream-PASS contrasts retain current PASS but need final cut confirmation. Exact276 now167 PASS107 open2 deferred; no final zero-regression closure claim.
-D60 baseline: Upstream924 full1621 terminal FAIL:12396 passed91 failed14 errors16 skips566 subtests. Corrected D63 comparison:77 counterparts (66 FAIL11 PASS),199 NEW-OURS. Missing selectors follow core rule; paired tracebacks retain exact limits. External Runtimebecfe launch later e68 is disclosed.
-Gates: P1/P2/P3 App; P4 Agent; P5 and Composition main. App U3b/D39 already merged under D56. P4 candidate317c collected3; final source binding and body follow qualified D61 source/client and sole heavy slot. No old pin, Farm or child work.
-Admission: Existing schema/source403 and automatic refusal remain stopped. D56 drops Farm venue access work. No alternate source, child, overlay, acquisition or reconstruction requested.
-Disk: About9.4GB free; cap6. Sweep3 removed0, compact packed0 and compressed4 old logs. No eligible finished clean tree; prior refused targets untouched. Target15GB is opportunistic, heavy stop floor8GB.
-Blockers: Runtime / Agent — Actual six proof closes five originals; remaining inverse stage-input refusal has existing Runtime owner and independent Agent whole-path1546. Separate G4 empty-timeline source1546 is owned.
-
-Blockers: Agent — D67 clears D13 blocker as ENV known gap; no owner action. D66 reverse diff1527 active; counts pending.
-Next ready: Consume actual-home six1540, finish D66 corrected missing scope1539, complete core/P4 registry1542. One heavy slot occupied by1540; P4/core follow promptly after meaningful source/result readiness.
-live 5 / cap 6; ready-undispatched 0. Luna1540 proof handoff,1539 reverse correction,1542 core/P4 harness and two1546 source investigations. No live Sol.
-Inbox consumed through Runtime1531 merged handback and15:40 ruling. Adoption/consumer already home5777 and six-proof1540 active before nudge. Last pass 2026-10-24T15:20:04Z.
+Integration: Agent57779274a0 includes true U2-final924, exact reviewed consumer9460 and normal generated Runtime8b32 adoption. Runtime source/security1511 PASS and actual adoption/rebind already complete; no stale producer-review or vendor wait. Exact source and receipt details remain in prior task rows.
+core open: 2 at actual5777/8b32. Six-original proof1540 has5 PASS1FAIL plus54 strict guards PASS. One retained inverse/redo original is Runtime-owned; separate create_empty setup author1551 PASS1 is merging. D13 ENV and both D23 deferrals remain unchanged. Final cut proof pending.
+regressions: 0 currently open at qualified scope; order181 repaired and actual d27b PASS16. Nine other upstream-PASS contrasts retain current PASS and await final cut confirmation. Exact276 overlays167 PASS107 open2 deferred; final core run remains owed.
+D60 baseline: Upstream924 full1621 terminal FAIL12396 passed91 failed14 errors16 skips566 subtests. Corrected exact276 has199 NEW-OURS and77 counterparts. External Runtimebecfe launch latere68 disclosed; no isolated all-run Runtime claim.
+D66 reverse: Corrected362 candidates=137 ledger-deleted178 present-changed47 restore-needed0renamed. Disjoint sdk16,CLI14,other17 workers1551 now close actual parameter identity, existing ledger or unchanged-body restoration. No speculative test deletion or original rerun.
+Gates: P1/P2/P3 App; P4 Agent; P5 and Composition main. P4 current service23496 had zero bodies/noXML due snapshot preflight. Sol1554 and independent Luna1554 own exact launcher correction; no new custody stack. Final-core row prepared but unrun.
+Admission: D56 stops Farm and schema venue work. All prior403/automatic source refusal routes remain stopped. D67 D13 is ENV known gap with no owner action; no child, source substitute or carrier fabrication.
+Disk: About9.2GB free at latest check; worker cap6. Newly finished clean trees are recycled by harness. Sweep3 and compact scheduled this pass; prior refused cleanup targets stay stopped.
+Blockers: Runtime — remaining inverse original needs authenticated timeline closure-root sequential-input validation. Existing owner peer1553 includes exact whole-path report and authentic homeXML/log; no competing Agent product author.
+Blockers: Agent — current P4/core service preflight exits before pytest. Sol1554 fixes both rows; independent whole-path1554 compares authentic snapshot with passing service launch.
+Next ready: Merge G4 setup1551; qualify integrated original; consume launcher1554 then submit one meaningful P4. Finish three D66 slices and required protected-test reviews. Consume Runtime auth fix, normal provenance rebind and one meaningful retained-original proof.
+live 5 / cap 6; ready-undispatched 0. Copied dispatcher15:53:13Z:1 Sol4 Luna. Sixth home proof1556 dispatched after G4 setup merged.
+Inbox consumed through15:50 Runtime adoption nudge; action already complete before15:45. Peer1553 reports actual five-of-six result and distinct remaining owned seam. Pass 2026-10-24T15:53:27Z.
