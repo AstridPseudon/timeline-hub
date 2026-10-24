@@ -189,6 +189,15 @@ if TYPE_CHECKING:
     from astrid.core.execution.executor.schema import ExecutorDefinition
 
 
+def _remotion_readiness_message(exc: BaseException) -> str:
+    """Plain-language readiness failure that keeps the underlying reason."""
+    reason = str(exc).strip() or type(exc).__name__
+    message = f"worker Remotion readiness context is unavailable: {reason}"
+    if "registry corpus changed" in reason:
+        message += "; restart Astrid to re-bind it"
+    return message
+
+
 class HostError(RuntimeError):
     """A controlled host-side error suitable for a worker diagnostic."""
 
@@ -7793,7 +7802,7 @@ class GenericPackHost:
                 _validated_runtime(Path(env[ASTRID_REMOTION_PROJECT_DIR]), environment=readiness_env)
             except Exception as exc:
                 secrets.clear()
-                raise HostError("worker Remotion readiness context is unavailable") from exc
+                raise HostError(_remotion_readiness_message(exc)) from exc
         return env, secrets
 
     @staticmethod

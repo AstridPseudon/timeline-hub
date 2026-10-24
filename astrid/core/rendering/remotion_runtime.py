@@ -268,6 +268,37 @@ def _file_binding(path: Path, *, digest_memo: dict | None = None) -> dict[str, A
 _GENERATED_NAMES = frozenset({"__pycache__", ".DS_Store"})
 
 
+def _startup_names(directory: Path) -> list[str]:
+    """Entries of a sys.path directory that Python could import (packages, modules, extension modules, .pth).
+
+    Only these can change which modules are available; Finder, editor and log files cannot.
+    """
+    import importlib.machinery
+    suffixes = set(importlib.machinery.all_suffixes()) | {".pth"}
+    return sorted(p.name for p in directory.iterdir()
+                  if p.name != "__pycache__" and (p.is_dir() or p.suffix in suffixes))
+
+
+def _describe_corpus_change(old: Mapping[str, Any], new: Mapping[str, Any]) -> str:
+    """Plain-language account of what differs between two _registry_inputs results."""
+    parts: list[str] = []
+    for key in sorted(set(old['inventory']) | set(new['inventory'])):
+        before, after = old['inventory'].get(key), new['inventory'].get(key)
+        if before == after:
+            continue
+        where = key[len('startup:'):] if key.startswith('startup:') else key
+        if isinstance(before, list) and isinstance(after, list):
+            for name in sorted(set(after) - set(before))[:3]:
+                parts.append(f"a new module or file `{name}` appeared in {where}")
+            for name in sorted(set(before) - set(after))[:3]:
+                parts.append(f"`{name}` was removed from {where}")
+        else:
+            parts.append(f"{where} changed")
+    if not parts and old['files_sha256'] != new['files_sha256']:
+        parts.append("the contents of a registry source file changed")
+    return "; ".join(parts[:4]) or "the registry corpus changed"
+
+
 def _tree_files(root: Path) -> list[Path]:
     """Immutable installation inputs; generated Python bytecode is separate."""
     found: dict[str, Path] = {}
@@ -332,7 +363,7 @@ def _runtime_inputs(project_dir: Path, environment: Mapping[str, str], python: s
                 paths.append(directory)
             continue
         # Detect changed startup/optional module availability as well as bytes.
-        startup[raw] = sorted(p.name for p in directory.iterdir() if p.name not in _GENERATED_NAMES)
+        startup[raw] = _startup_names(directory)
         paths.extend(directory.glob("*.pth"))
         for name in ("sitecustomize.py", "sitecustomize.pyc", "usercustomize.py", "usercustomize.pyc"):
             p = directory / name
@@ -581,7 +612,7 @@ def _registry_inputs(observation: Mapping[str, Any], *, digest_memo: dict | None
                 paths.append(root)
             continue
         if root.is_dir():
-            inventory['startup:' + raw] = sorted(p.name for p in root.iterdir() if p.name not in _GENERATED_NAMES)
+            inventory['startup:' + raw] = _startup_names(root)
             paths.extend(root.glob('*.pth'))
             for name in ('sitecustomize.py', 'sitecustomize.pyc', 'usercustomize.py', 'usercustomize.pyc'):
                 if (root / name).is_file():
@@ -1040,8 +1071,11 @@ def _validated_runtime(project_dir: Path, *, environment: Mapping[str, str] | No
             raise RemotionValidationError('launch-bound generated registry outputs changed')
         if registry['mode'] == 'source_settled':
             for side in ('renderer',):
-                if _registry_inputs(registry[side]['observation']) != registry[side]['inputs']:
-                    raise RemotionValidationError('launch-bound registry corpus changed')
+                current = _registry_inputs(registry[side]['observation'])
+                if current != registry[side]['inputs']:
+                    raise RemotionValidationError(
+                        'launch-bound registry corpus changed: '
+                        + _describe_corpus_change(registry[side]['inputs'], current))
         elif registry['state_file'] is not None and _file_binding(Path(registry['state_file']['path'])) != registry['state_file']:
             raise RemotionValidationError('provisioned registry state changed')
         if _runtime_inputs(project_dir, env, python, entry['closure']) != entry['inputs']:
