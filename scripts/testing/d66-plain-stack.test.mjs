@@ -25,11 +25,14 @@ test('D66 full P2 launch retains bounded Runtime phase logs while other suites s
   assert.notEqual(launch('p2').D66_RUNTIME_LOG_DIR, launch('p2-element').D66_RUNTIME_LOG_DIR);
 });
 
-test('D80 focused P2 descriptors select one exact original test each', () => {
+test('D83 focused P2 descriptors select one exact original test each and retain the full eight-test tour', () => {
   const expected = {
+    'p2-element': ['tests/e2e/local/three-products.p2-elements-assets.spec.ts', 'P2 mounted element edit: real catalog apply, exact params patch, reload and guarded Undo$'],
     'p2-register-asset': ['tests/e2e/local/three-products.p2-elements-assets.spec.ts', 'P2 mounted registerAsset save: real file drop, exact media/registry fields, reload and guarded Undo$'],
     'p2-automatic-child-placement': ['tests/e2e/local/three-products.p2-elements-assets.spec.ts', 'P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo$'],
+    'p2-popup-add': ['tests/e2e/local/three-products.p2-popup.spec.ts', 'P2 popup mounted ADD on selected child uses shared occurrence fork and A2 commit$'],
     'p2-popup-swap': ['tests/e2e/local/three-products.p2-popup.spec.ts', 'P2 popup mounted SWAP on selected child uses authenticated old/new media selections$'],
+    'p2-parent-move': ['tests/e2e/local/three-products.p2-tour.spec.ts', 'P2 mounted single parent move: v2 commit, exact field delta, reload and guarded Undo$'],
     'p2-transition-none-single': ['tests/e2e/local/three-products.p2-tour.spec.ts', 'P2 mounted transition None single: raw clear preserves opaque data/order and guarded Undo$'],
     'p2-transition-none-bulk': ['tests/e2e/local/three-products.p2-tour.spec.ts', 'P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo$'],
   };
@@ -39,6 +42,13 @@ test('D80 focused P2 descriptors select one exact original test each', () => {
     assert.equal(suites[name].grep, grep);
     assert.equal(suites[name].retainRuntimeLogs, true);
   }
+  assert.deepEqual(suites.p2.files, [
+    'tests/e2e/local/three-products.p2-popup.spec.ts',
+    'tests/e2e/local/three-products.p2-tour.spec.ts',
+    'tests/e2e/local/three-products.p2-elements-assets.spec.ts',
+  ]);
+  assert.equal(suites.p2.count, 8);
+  assert.equal(suites.p3.count, 1);
 });
 
 test('D66 accepts a detached clean checkout matching the normal head and tree', () => {
