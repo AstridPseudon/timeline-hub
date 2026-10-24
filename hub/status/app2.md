@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T15:01:58Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 9m -->
-# app2 board, 2026-10-24T14:52Z
+<!-- app2 | 2026-10-24T15:04:09Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# app2 board, 2026-10-24T15:02Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -51,7 +51,7 @@
 | F-final-host | Prepare App-host final proof routes | App Luna; independent Luna | Source recipe qualified; final inputs pending | merged | Return0754; independent0758 PASS | Actual tools, locks, maker argv and existing routes qualify. Missing P4/P5 registrations and final tuple remain explicit. | Source preparation only |
 | F-final-registrations | Retain historical App host preparation | App Luna | D59 venues supersede App host | gated:D59-venues | Draft0834; review0838; App1314 board | Historical source preparation only. P4 now Agent service; P5 main service. No duplicate App registration or new host worker owed. | Draft only |
 | F-App-early | Track D49 App checkpoint | App service; Luna | Same actual16138 terminal | blocked:app | App producer1227; repairs HOME | FAIL exit1 in1665s: Vitest19251 pass; Node257 pass,38 fail,26 skip. App owns categories and repairs; no final GO. | Tree3311 / HOMEd993 |
-| F-final-gates | Rerun final P1 to P5 | Lane services; App verdicts | D59 final cut | gated:D59-cut | App1437; Agent1433; Runtime1422 | Current P2 12541 and P3 1689 independently preflight NO-GO; originals NOTRUN. Launch repair owned. Final cut and final P1 to P5 unqualified. | Final tuple pending |
+| F-final-gates | Rerun final P1 to P5 | Lane services; App verdicts | D59 final cut | gated:D59-cut | App1437; Agent1452; Runtime1450 | Current P2 12541 and P3 1689 independently preflight NO-GO; originals NOTRUN. Launch repair owned. Final cut and final P1 to P5 unqualified. | Final tuple pending |
 | A4-source | Zero reachable legacy film writers | App; independent Luna | Census0438 and review0444 | merged | App0438 and0444 | Source-only end state qualified; D31/D37 retained subset unchanged. Same head523 tests, three types and lint passed. | c0fe |
 
 | P2-11933-verdict | Qualify terminal and retained limits | Independent Luna | Published producer1158 and peer1205 | merged | ap2-P2-11933-result-verdict-1213 | NO-GO469s,0pass/3fail/5notrun. Exact source and preserved assertions PASS. Remote files,full snapshot,daemon and direct safe bytes UNKNOWN. | Exactd6ed |
@@ -63,10 +63,10 @@
 
 D56.4: Proof is folded into App. The single complete handoff is [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md). All in-flight items are complete, including independent caller1213 PASS. No new Proof dispatch, old tuple run or product merge is owed. The manager loop remains alive for new orchestrator instructions.
 
-live 0 / cap 4; ready-undispatched 0. Copied dispatcher header: <!-- app2 | 2026-10-24T14:50:51Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m --> D56.4 stand-down remains binding; App owns transferred rows.
+live 0 / cap 4; ready-undispatched 0. Copied dispatcher header: <!-- app2 | 2026-10-24T15:01:58Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 9m --> D56.4 stand-down remains binding; App owns transferred rows.
 
 core open: 4 final proof gates P1 to P4 remain unqualified on final heads. Execution transferred to App for P1/P2/P3 and Agent for P4. All eight original P2 gestures are CORE under D55b. Historical passes do not qualify final heads.
-regressions: App13:51 reports0 open among historical Node38 on refreshed d24ed:36 repaired and passing;2 SSH environment failures. Final integrated full remains required. Proof claims no final zero-regression clearance.
+regressions: App14:52 reports0 open among historical Node38 on refreshed source:36 repaired and passing;2 SSH environment failures. Current full8158 is owned by App producer1446 and awaits terminal classification. Proof claims no final zero-regression clearance.
 
 P1 RESULT GO remains scoped to original18792: both mounted cases passed, exit0 in141 seconds, on App f8b15af0 / Agent78738040 / Runtime2a9e347f. Independent0036 source and0040 custody passed. P1 case2 includes refusal, message, canonical rollback and zero legacy traffic. Corpus49 passed with15 real fixtures and11 inputs. D60 refreshed final heads must rerun P1.
 
@@ -108,9 +108,11 @@ D60: Final upstream refresh before cut uses Runtime d4f496ec4,Agent924437716,App
 
 D61: Header14:10 decides Agent ABI escalation1400. Runtime derives and persists recorder_abi authority; legacy missing field means ABI1,and full ABI2-to-ABI1 rewrite must refuse. Runtime1410 owns additive history field/generation/security review; Agent1417 owns consumer. No orchestrator decision remains owed. This creates no Proof dispatch or hold on current-head App cycles.
 
-Disk: 8258297856 bytes free at 2026-10-24T14:52Z. All 1313 Proof workers done, no running markers. Three existing Proof trees KEEP-marked; no eligible non-KEEP Proof tree. Prior cleanup, compact and locked-v1 refusals stay stopped; no alternate route launched.
+D62: Header14:55 resolves Runtime native-custody escalation1443. No new submit-time trust seam; Runtime persists accepted-record ABI classification once and authenticates history. Submit-time native completeness is a recorded deferred gap; use fails closed. Runtime Sol1450 owns producer and disjoint forward-created repair, wire Luna1447 prepares generation; one joined security review then integrated proof and normal D39 consumer adoption. Agent14:52 consumes this scope. No decision remains owed and no Proof dispatch follows.
 
-Pass 2026-10-24T14:52Z: Read PLAN, MANAGER-COMMON, approved C0 contract and current header through D61. Inbox unchanged at790277 bytes; D56.4 stand-down remains binding. bin/workers and metadata confirm all1313 Proof workers done. Every blocked row rechecked against App14:41, Agent14:40 and Runtime14:43 boards. App verdicts1438 remain independent NO-GO with all originals NOTRUN; sole launch Sol1437 owns repair after completed whole-path1437. Agent tracks7 core. Runtime now awaits its own native-custody decision1443 and independent1445; no new Proof ask or authority. No duplicate dispatch, run, product edit, peer note or refused cleanup route. STATUS remains the manager harness restart point.
+Disk: 8252477440 bytes free at 2026-10-24T15:02Z. All 1313 Proof workers done, no running markers. Three existing Proof trees KEEP-marked; no eligible non-KEEP Proof tree. Prior cleanup, compact and locked-v1 refusals stay stopped; no alternate route launched.
+
+Pass 2026-10-24T15:02Z: Ten-minute monitoring interval complete. Inbox unchanged790277 bytes; read header through new D62 and retained D56.4 stand-down. bin/workers confirms all1313 Proof workers done. Every blocked row rechecked against App14:52, Agent14:52 and Runtime14:51 boards. App same-ID independent verdicts1438 remain NO-GO, all originals NOTRUN; sole launch Sol1437 continues after completed whole-path1437. App full8158 is separately owned by producer1446. D62 resolves Runtime decision; producer and forward-created Sol1450 plus wire1447 implement, then joined security review and D39 adoption. Agent tracks7 core; Runtime tracks3. No new Proof instruction, dispatch, peer note, run, product edit or refused cleanup route. STATUS remains the manager harness restart point.
 
 Inbox read through790277 bytes. Completed D56.4 handoff remains current. The manager harness can restart from this STATUS and INBOX; no new Proof dispatch is owed.
 
