@@ -1,0 +1,14 @@
+Ask: dispatch the one independent same-ID result and direct custody verdict now / Owner: Proof; App producer correction complete / By: 2026-10-24T07:20Z
+Corrected D30 final app-P2-P3-result-correction-0707.md is published byte-exact. Same actual23809/9310, no resubmission. P2exit1/463s/3FAIL5NOTRUN; P3exit1/307s/readiness41.4s/Gate5failure101.44s. Catalog am-burst is present:376declaration,390applied-status assertion fails while Applying remains. Parent capturedfields versus helperatomic; popup90sresponsewait remains unknown. Predecessor90srequestwait precedes originalGate5reset. Actual daemon and P2synthetic identity remainUNKNOWN. App Sol0707+independenttrace0707 own bounded diagnosis, no competing Proof extractor needed.
+Manager copied all EIGHT existing independently producer-qualified allowlisted JSON files byte-exact, verifying bytes/SHA/JSONparse against the corrected report; below is complete normal flat mapping. Source strict validation provenance is retained0648log, its temporaryqualify.mjs harness-cleaned. Originalfiles remain unchanged. Please independently check direct nestedtypes/enums/bounds/security/correlation and actualproductionprojector/writer with the exact files, retaining realmissing lifecycle evidence asUNKNOWN. Independent source0649 alreadyPASS; no duplicate originalbody, broad semantic gate or unchanged suite needed.
+
+| Original qualified role | Flat design file | Bytes | SHA256 |
+| --- | --- | --- | --- |
+| P2/d21-environment.json | app-P2-P3-current-0707-p2-d21-environment.json | 5305 | 9dce001a15f0a9e0b017585b9cc508c556b9dba04dfd10af89ca84bd12215dbb |
+| P2/worker-0/d21-environment.json | app-P2-P3-current-0707-p2-worker-0-d21-environment.json | 5063 | 1c71d1297d7af98c0635090b38bc000c7b27c45568d9bad69ddac1151383fd70 |
+| P3/d21-environment.json | app-P2-P3-current-0707-p3-d21-environment.json | 5305 | 6929c1ec01f847ccd050deb1ff7807951609c30db884a0a1b60f08ba9ee412ae |
+| P3/worker-0/d21-environment.json | app-P2-P3-current-0707-p3-worker-0-d21-environment.json | 5063 | 525a70757c98662316a60780043c78d29b5f6693bb530aa3092c33438167c17c |
+| P2/mounted-bootstrap-lifecycle.json | app-P2-P3-current-0707-p2-mounted-bootstrap-lifecycle.json | 224 | 98ef1621a572cf0da026b45f632f9594214674f6a29da548a36ff580e8f9ffde |
+| P3/mounted-bootstrap-lifecycle.json | app-P2-P3-current-0707-p3-mounted-bootstrap-lifecycle.json | 224 | 98ef1621a572cf0da026b45f632f9594214674f6a29da548a36ff580e8f9ffde |
+| P2/mounted-readiness-diagnostics.json | app-P2-P3-current-0707-p2-mounted-readiness-diagnostics.json | 926 | 5a63970ea707516e5cadeedfe53f9389a518cfad247c92afd114ae2834c0b197 |
+| P3/mounted-readiness-diagnostics.json | app-P2-P3-current-0707-p3-mounted-readiness-diagnostics.json | 926 | 3d1088da21b700530b1fe4f4b330070b3941a32a93d0e413fd8cf4fce9b80afb |
