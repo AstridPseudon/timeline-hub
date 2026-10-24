@@ -1,0 +1,27 @@
+# CWD: /home/user/work/wt/agt-R2-removal-redo-sol-1210
+
+# Baseline modules only are substituted before collection; production service, registered patch handler, tests and fixtures stay identical.
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/home/user/work/wt/rt-pin-becfe6db:/tmp/w-b9d5ebde1b" ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-becfe6db /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -p old_redo_control -p redo_origins --timeout=45 --tb=short tests/editing_conformance/test_doc_patch_removal_guards.py tests/editing_conformance/test_doc_patch_v2.py tests/editing_conformance/test_doc_patch_mirrors.py tests/editing_conformance/test_doc_patch_root_assignment.py tests/editing_conformance/test_doc_patch_occurrence_reorder.py tests/editing_conformance/test_doc_patch_occurrence_history.py tests/editing_conformance/test_inverse_clip_mirrors.py tests/editing_conformance/test_inverse_root_roundtrip.py tests/editing_conformance/test_provider_step_undo_v2.py tests/sdk/test_timeline_inverse_binding.py tests/sdk/test_timeline_inverse_fork_guard.py tests/editing_conformance/test_redo_retained_boundaries.py --junitxml=/tmp/w-b9d5ebde1b/baseline-qualified.xml
+
+# Exit 1: 7 failed, 327 passed in 89.62s. Three original candidate failures plus four repeated whole/step redo positives.
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/home/user/work/wt/rt-pin-becfe6db:/tmp/w-b9d5ebde1b" ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-becfe6db /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider -p redo_origins --timeout=45 --tb=short tests/editing_conformance/test_doc_patch_removal_guards.py tests/editing_conformance/test_doc_patch_v2.py tests/editing_conformance/test_doc_patch_mirrors.py tests/editing_conformance/test_doc_patch_root_assignment.py tests/editing_conformance/test_doc_patch_occurrence_reorder.py tests/editing_conformance/test_doc_patch_occurrence_history.py tests/editing_conformance/test_inverse_clip_mirrors.py tests/editing_conformance/test_inverse_root_roundtrip.py tests/editing_conformance/test_provider_step_undo_v2.py tests/sdk/test_timeline_inverse_binding.py tests/sdk/test_timeline_inverse_fork_guard.py tests/editing_conformance/test_redo_retained_boundaries.py --junitxml=/tmp/w-b9d5ebde1b/final-qualified.xml
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/home/user/work/wt/rt-pin-becfe6db" ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-becfe6db /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 --tb=short tests/editing_conformance/test_redo_retained_boundaries.py tests/editing_conformance/test_nested_inverse_order.py tests/editing_conformance/test_inverse_parent_clip_root.py tests/editing_conformance/test_inverse_stage_images.py tests/editing_conformance/test_inverse_registry_containers.py tests/editing_conformance/test_inverse_clear_batches.py tests/editing_conformance/test_historical_shared_inverse_owners.py --junitxml=/tmp/w-b9d5ebde1b/redo-neighbours.xml
+
+# Exit 0: 189 passed in 43.04s (new file had nine cases at this point; the final 21 cases are in the final qualification).
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache astrid/sdk/timeline/_step_undo.py astrid/sdk/timeline/_commit_patch.py tests/editing_conformance/test_redo_retained_boundaries.py
+
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:/home/user/work/wt/rt-pin-becfe6db" /home/user/work/venv-agent-typecheck-v2/bin/python -m mypy astrid/sdk/timeline/_step_undo.py astrid/sdk/timeline/_commit_patch.py tests/editing_conformance/test_redo_retained_boundaries.py --cache-dir=/tmp/w-b9d5ebde1b/mypy --no-error-summary
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json
+
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python scripts/artifact_manifest.py --check
+
+git diff --check
+
+# All scoped lint/type/vendor/artifact/diff checks exit 0. No suite, original test, fixture, schema, pin or production caller was changed.
+
+# Final qualification exit 0: 334 passed in 109.83s. Identical test/fixture/provider/runtime/schema hashes; 7 red-to-green; zero lost passes; all 17 new strict refusal controls pass on both versions.

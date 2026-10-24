@@ -1,0 +1,75 @@
+{
+  "baseline": {
+    "passed": 327,
+    "failed": 7
+  },
+  "final": {
+    "passed": 334,
+    "failed": 0
+  },
+  "red_to_green": [
+    "tests.editing_conformance.test_doc_patch_removal_guards::test_mixed_list_operations_keep_exact_inverse_and_redo_boundaries[ancestor-first]",
+    "tests.sdk.test_timeline_inverse_fork_guard::test_fork_output_guard_allows_independent_parent_edit_and_preview_redo",
+    "tests.sdk.test_timeline_inverse_fork_guard::test_valid_fork_history_distinguishes_output_consumers_from_retained_sibling[retained-sibling]",
+    "tests.editing_conformance.test_redo_retained_boundaries::test_repeated_redo_preserves_exact_documents_and_preview[whole-ancestor]",
+    "tests.editing_conformance.test_redo_retained_boundaries::test_repeated_redo_preserves_exact_documents_and_preview[whole-retained-fork]",
+    "tests.editing_conformance.test_redo_retained_boundaries::test_repeated_redo_preserves_exact_documents_and_preview[step-ancestor]",
+    "tests.editing_conformance.test_redo_retained_boundaries::test_repeated_redo_preserves_exact_documents_and_preview[step-retained-fork]"
+  ],
+  "lost_passes": [],
+  "strict_controls_pass_both": [
+    "tests.editing_conformance.test_redo_retained_boundaries::test_ancestor_redo_rejects_damaged_accepted_partition[config]",
+    "tests.editing_conformance.test_redo_retained_boundaries::test_ancestor_redo_rejects_damaged_accepted_partition[descendant]",
+    "tests.editing_conformance.test_redo_retained_boundaries::test_ancestor_redo_rejects_damaged_accepted_partition[source]",
+    "tests.editing_conformance.test_redo_retained_boundaries::test_ancestor_redo_rejects_damaged_accepted_partition[native-range]",
+    "tests.editing_conformance.test_redo_retained_boundaries::test_ancestor_redo_rejects_damaged_accepted_partition[effect-range]",
+    "tests.editing_conformance.test_redo_retained_boundaries::test_retained_fork_redo_rejects_damaged_accepted_partition[missing-pin]",
+    "tests.editing_conformance.test_redo_retained_boundaries::test_retained_fork_redo_rejects_damaged_accepted_partition[owners]",
+    "tests.editing_conformance.test_redo_retained_boundaries::test_retained_fork_redo_rejects_damaged_accepted_partition[pin]",
+    "tests.editing_conformance.test_redo_retained_boundaries::test_retained_fork_redo_rejects_damaged_accepted_partition[source]",
+    "tests.editing_conformance.test_redo_retained_boundaries::test_retained_fork_redo_rejects_damaged_accepted_partition[native-range]",
+    "tests.editing_conformance.test_redo_retained_boundaries::test_retained_fork_redo_rejects_damaged_accepted_partition[effect-range]",
+    "tests.editing_conformance.test_redo_retained_boundaries::test_retained_fork_redo_rejects_damaged_accepted_partition[stage-owner]",
+    "tests.editing_conformance.test_redo_retained_boundaries::test_retained_fork_redo_rejects_damaged_accepted_partition[parent-edge]",
+    "tests.editing_conformance.test_redo_retained_boundaries::test_retained_destination_requires_the_same_complete_physical_pin[revision_id]",
+    "tests.editing_conformance.test_redo_retained_boundaries::test_retained_destination_requires_the_same_complete_physical_pin[content_digest]",
+    "tests.editing_conformance.test_redo_retained_boundaries::test_retained_destination_requires_the_same_complete_physical_pin[payload]",
+    "tests.editing_conformance.test_redo_retained_boundaries::test_retained_destination_requires_the_same_complete_physical_pin[missing]"
+  ],
+  "unchanged_origins": [
+    "python",
+    "base_commit",
+    "production_service_origin",
+    "production_service_sha256",
+    "registered_patch_origin",
+    "registered_patch_sha256",
+    "runtime_origin",
+    "runtime_sha256",
+    "schema_origin",
+    "schema_sha256",
+    "new_tests_origin",
+    "new_tests_sha256",
+    "r1_tests_origin",
+    "r1_tests_sha256"
+  ],
+  "new_source_origins": {
+    "python": "/home/user/work/venv-agent/bin/python",
+    "base_commit": "d7efe3c490",
+    "step_undo_origin": "/home/user/work/wt/agt-R2-removal-redo-sol-1210/astrid/sdk/timeline/_step_undo.py",
+    "step_undo_sha256": "a38bb078ecd2579399f131fa0a08a9bedd339226f92b9d8ac27de2b6d27827a6",
+    "commit_patch_origin": "/home/user/work/wt/agt-R2-removal-redo-sol-1210/astrid/sdk/timeline/_commit_patch.py",
+    "commit_patch_sha256": "296667ffa34b385a43406448bdd7ff07624dc56fb9d136ab685d4e51cf379c6a",
+    "production_service_origin": "/home/user/work/wt/agt-R2-removal-redo-sol-1210/astrid/sdk/timeline/commit.py",
+    "production_service_sha256": "73a7afefb5c0bdc23ca7d2cce5c85d46ad6494b5af692181c3e428c5ea7b5499",
+    "registered_patch_origin": "/home/user/work/wt/agt-R2-removal-redo-sol-1210/astrid/sdk/timeline/_doc_patch.py",
+    "registered_patch_sha256": "46fcc1a7e9fc83bca5bc1386eaeca94c98a670161bc628088b0d16ef5caf8a2e",
+    "runtime_origin": "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/platform.py",
+    "runtime_sha256": "a1025d466641217b2ff67538801f6a354593e21e5b93b44146e0aab8c04bc185",
+    "schema_origin": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py",
+    "schema_sha256": "0760fca0b4ea29ca384932eb2291044acc6b9b62e12153b7480d2e354cef845c",
+    "new_tests_origin": "/home/user/work/wt/agt-R2-removal-redo-sol-1210/tests/editing_conformance/test_redo_retained_boundaries.py",
+    "new_tests_sha256": "5878b9b5a7c5cb9c0dbeba3d1579c59e5bfd6bc4e949004433f03b2f1675d295",
+    "r1_tests_origin": "/home/user/work/wt/agt-R2-removal-redo-sol-1210/tests/editing_conformance/test_doc_patch_removal_guards.py",
+    "r1_tests_sha256": "6f04541c4513de783b8cbadfb878d64988fbae1c56a7ee3a0aefcaf2309f2464"
+  }
+}
