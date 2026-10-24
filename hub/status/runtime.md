@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T13:04:21Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 1m -->
-# runtime board, 2026-10-24T13:02:33Z
+<!-- main | 2026-10-24T13:07:17Z | dispatcher heartbeat 10s | live 1 (sol 1, luna 0, other 0) | busy30 10 | status age 0m -->
+# runtime board, 2026-10-24T13:07:13Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -81,7 +81,7 @@
 | F-final | Main delivery build and ZIP | Luna | D59 cut and final proofs | doing | Builder1233; docs1229; service1244 | Builder and v2 prose installed. Durable service helper repair active; live-main refresh and final build wait qualified cut and proofs. | No delivery artifact |
 | F-final-builder | Put verifier clones in TMPDIR | Luna / Luna | Exact installed proof complete | merged | Review1229; installed1233 PASS | f25d atomically installed0755, old script backed up. Installed smoke and integrity checks passed; no real build. | f25dfab1 installed |
 | F-final-docs | Refresh v1 delivery prose | Luna | Installed hashes and rendering passed | merged | Author1226; install1229 PASS | Two exact v2 documents installed atomically; predecessors backed up. Final tuple, gates and ZIP remain pending. | ef414 / 403384 installed |
-| F-final-service | Bind callable final service environment | HARD Sol / Luna | Finish WIP controls and custody review | doing | ResumeSol1300; reviewLuna1300 | Sol1244 hit model capacity; WIP15f78 saved. Resume and independent exact-source custody review active. No live install. | 15f78 WIP held |
+| F-final-service | Bind callable final service environment | HARD Sol / Luna | Fix actual lock custody and candidate path | doing | rt-F-final-service-lock-return-sol-1305 | Resume1300 passed22. Review1300 found missing actual lock/client validation and candidate symlink guard. Correct same source; no live install. | 15f78 held |
 | F-final-inputs | Return qualified Runtime producer | Runtime1219 / App1222 | Actual consumer and Agent receipts | merged | Producer0727; handback1231 | Runtime becfe/tree7edc and all15 canonical mappings qualified. App home d993 receipt consumed; no child authority inferred. | Producer becfe |
 | F-D54-runtime-census | Classify core and regressions | Luna | Retained accounting complete | merged | Census1219 | Confirmed core open0; regressions0. One cross-lane provider incident remains unknown. [Accounting](../../design/runtime-D54-census-1219.md) | Runtime becfe |
 | F-composition-main | Run Composition full on main at cut | Luna / Service | D59 cut | gated:D59-cut | Bench1244 READY | Main dependencies and service preflight pass. Source635f; prior86PASS historical. At cut use integration:composition full with no cache. | Source635f |
@@ -128,16 +128,17 @@ Historical pinned proof (D56 retires further pinned runs): P1 remains historical
 
 Provider completion: Runtime 0915 and independent 0923 retain original cause, hook firing, durable acceptance and request correlation UNKNOWN. Nine controls passed; temporary JUnit loss remains disclosed. Original 20732/11466 remain failed and all 59 predicates unchanged. Viewing capture source 30cf passed independent 19; Agent owns home and runner wiring. No new Runtime source or original body is requested. [Source review](../../design/runtime-provider-completion-review-0923.md).
 
-KIT CHANGE: delivery-build f25dfab1 installed and independently qualified. Final service candidate remains uninstalled pending durable helper/custody repair1244.
+KIT CHANGE: delivery-build f25dfab1 installed and qualified. Final service15f78 remains uninstalled: custody review1300 found lock/client validation and candidate-path gaps; source return1305 active.
 Blockers: Final delivery — D59 cut requires every active lane0core/0regressions plus current P2/P3 PASS, then required final proofs and D51 live-main refresh.
 Blockers: App and Agent — existing working-service custody handback remains owner-specific; App1244 requests actual Agent sources and installed receipts, not new provisioning.
 Blockers: Agent — corrected joined redo security and current-home proof remain needed. Source1250 and exact author-result1256 comparisons complete; no Runtime duplicate body needed.
-Next ready: Consume serviceSol1300 controlled22 and independent custodyLuna1300. Qualify exact matching source before installation. Both main benches ready for D59 cut. Agent classifiers all owned.
+Next ready: Consume source return1305 then independent custody delta review. Main P5 and Composition are READY for D59 cut. Agent current joined security1258 remains unique; no duplicate classifier.
 
 Later: D47 memo and proof-pin work stay post-delivery; nine state attacks open. D34 broader cleanup held above8.5GB or until delivery. Prior denied cleanup, process, retirement and publication targets remain stopped. V4 cut; D14/D23 deferred unchanged. D52 removals require caller proof; live tests stay strict.
 
 Disk: About8.5GB free, above main8GB heavy floor. Five old v1 trees refused recycle as dirty; no forced removal. Sweep3 removed0. Compaction packed0 and compressed0 logs; no refused target retried.
 
-Pass 2026-10-24T13:02:33Z: Agent current56core rollup1242 and App36home regression repairs consumed; neither is final proof. Main P5 and Composition benches READY. Service resumeSol1300 passed22 controlled checks; Luna1300 reviews exact committed15f78 in parallel. No original/body/build/ZIP run.
+Pass 2026-10-24T13:07:13Z: Delivery resume1300 passed22; Luna1300 found concrete lock-map and candidate-path custody gaps. Existing Sol1305 fixes them immediately; expected missing tuple/install are not source failures. Exact Agentjoin e5fa and security1258 ownership consumed. Main benches READY, cut pending.
 
-live 2 / cap 4; ready-undispatched 0. Dispatcher header: <!-- main | 2026-10-24T13:01:18Z | dispatcher heartbeat 12s | live 2 (sol 1, luna 1, other 0) | busy30 12 | status age 0m -->
+live 0 / cap 4; ready-undispatched 0. Dispatcher header: <!-- main | 2026-10-24T13:04:21Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 1m -->
+Sol exception: source return1305 owns actual cross-repo client custody after two Luna source attempts and failed independent custody review; no independent Luna-ready row is waiting.

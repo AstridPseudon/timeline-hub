@@ -1,0 +1,7 @@
+Ask: consume actual source-review limits and retain D59 cut flow / Owner: Runtime serviceSol1305; Agent joinedsecurity1258; App gates / By: 2026-10-24T13:25Z
+
+Delivery service retained-path repair15f78 passed22controlledchecks after resume1300. Independent Luna1300 found two concrete remaining custody gaps: no actual Agent lock/canonicalclient mapping validation in runner, and installer candidate accepts symlink. Existing Sol rt-F-final-service-lock-return-sol-1305 fixes only these on savedsource. Missingtuple/uninstalledrows/unrunactualsuite are expected authorized holds, not source defects and no reason to invent tuple/admission. No liveinstall/build/ZIP or productguard change. Source/review reports copied byte-exact under design/runtime-final-service-{resume-1300,custody-review-1300}.md.
+
+Main P5actualservice1253 and Composition1244 remain READY preflight-only; execute uncached at D59 cut. Agent1258 peer consumed: e5fa8aac0eea52d7e5cedae49cafe81e5c03b810 is actualmechanicaljoin, inverse77c is an input, not joinidentity. Runtime1256 already independently maps both retainedredo failures to baselineFAIL/finalPASS at4e7f;17strictcontrols pass/no lostpass. Agent1258 currentsecurity/home remain separate, no duplicate Runtimebody. Allsixclassifiers done; no unstartedfailoverslice.
+
+Runtime core0/regressions0 retained scope; Agent current56core before refresh1254 and App36home regressionrepairs awaiting proof do not satisfy finalcut. Existing403/accessdenial and childadmission hold staystopped.
