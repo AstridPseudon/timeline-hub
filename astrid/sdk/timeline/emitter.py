@@ -160,6 +160,12 @@ def _payload_for_emit(ref: str, payload: Any) -> Any:
     value = copy.deepcopy(dict(payload))
     config = value.get("config")
     if isinstance(config, dict):
+        # Project only the live list; retain the caller's exact raw null mirror.
+        if value.get("clips", _MISSING) is None and isinstance(config.get("clips"), list):
+            value.pop("clips")
+        elif config.get("clips", _MISSING) is None and isinstance(value.get("clips"), list):
+            config.pop("clips")
+    if isinstance(config, dict):
         for key in ("clips", "registry"):
             if key in value and key in config:
                 config.pop(key)
@@ -265,6 +271,11 @@ def emit_document_commands(before_bundle: Mapping[str, Any], after_bundle: Mappi
         for ref, old, new in _root_pairs(before_bundle, after_bundle):
             if not _same(managed_edges(ref, old), managed_edges(ref, new)):
                 raise DocumentPatchError(f"{ref} changes managed closure edges; use a semantic command")
+            if ref == "parent":
+                for left, right in ((old, new), (old.get("config", {}), new.get("config", {}))):
+                    a, b = left.get("clips", _MISSING), right.get("clips", _MISSING)
+                    if (a is None or b is None) and not _same(a, b):
+                        raise DocumentPatchError("cannot change a null parent clip mirror")
             _diff(_payload_for_emit(ref, old), _payload_for_emit(ref, new), ref, (), changes)
         if not changes:
             return []

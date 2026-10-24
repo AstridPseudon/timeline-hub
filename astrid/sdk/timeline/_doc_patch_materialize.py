@@ -3,23 +3,46 @@ from __future__ import annotations
 
 import copy
 
-from astrid.core.timeline.authoring_bundle import _digest, _identity, _remap_known_item_references
+from astrid.core.timeline.authoring_bundle import (
+    _digest,
+    _identity,
+    _remap_known_item_references,
+)
 
 
-def remember(closure, physical):
+def remember(closure, physical, *, only_if_needed=False):
     mapping = closure.bundle['source_mapping']
     targets = mapping.setdefault('_doc_patch_images', {})
+    owners = set()
     for owner, local in closure.owners[physical]:
         shot = closure.bundle['shots'][local]
         origin = mapping['shots'].get(local)
         if origin is None:
             continue  # Semantic allocations retain the compiler's established identities.
+        owners.add(owner)
         targets[owner] = {
             'shot_id': origin['shot_id'], 'internal_timeline_id': origin['internal_timeline_id'],
             'source_shot_revision': origin['revision_id'],
             'source_internal_revision': origin['internal_timeline_revision_id'],
             'payload': copy.deepcopy(shot['payload']), 'internal_timeline': copy.deepcopy(shot['internal_timeline']),
         }
+    if only_if_needed and owners:
+        from .commit import document_from_bundle
+
+        retained = {owner: image for owner, image in targets.items() if owner not in owners}
+        source = {**mapping}
+        if retained:
+            source['_doc_patch_images'] = retained
+        else:
+            source.pop('_doc_patch_images')
+        candidate = {**closure.bundle, 'source_mapping': source}
+        # This cache supplies compiler projection, never historical authority.
+        # Drop only an override whose complete canonical closure is identical.
+        if document_from_bundle(candidate) == document_from_bundle(closure.bundle):
+            if retained:
+                mapping['_doc_patch_images'] = retained
+            else:
+                mapping.pop('_doc_patch_images')
 
 
 def project(bundle, publication):
