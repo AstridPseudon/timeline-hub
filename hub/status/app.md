@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T19:53:35Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 2m -->
+<!-- app | 2026-10-24T19:56:53Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 3m -->
 # app board, 2026-10-24T19:46Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -52,7 +52,7 @@
 | P3-26908-cause | Trace fourth recovery observation | HARD Sol PLAN A2 | Actual26908 and independent1905 | merged | app-A2-P3-recovery-current-sol-1910 | Intermediate page closed at Loadingproject before retry; no production defect proven. Review-only stronger poll proposal;269mounted controls/types/lint PASS. | Proposal only |
 | P3-intermediate | Observe intermediate recovery before close | Luna | Independent1920 PASS | merged | app-P3-intermediate-clean-apply-1925 | Exact one addition, protected hash736fd381 matches reviewed proposal; three fault controls and list15 PASS. Alias runner environment error retained. | e771ce1426 |
 | P3-intermediate-run | Qualify stronger recovery observation | Luna; Service | D74a floor6GB | review | Actual14240; verdict1948 | Independent1948 confirms readiness1 PASS/original FAIL. Both mounts strict5/3 passed; B record comparison1820 fails. No downstream history or undo credit. | App f6a21c28 |
-| P3-recorded-command | Compare request and authoritative record | Luna | Actual14240 new boundary | doing | app-P3-14240-recorded-command-shape-1948 | Contract and exact producer classification; review only strict proposal if oracle wrong. No protected edit before qualification. | Source unchanged |
+| P3-recorded-command | Strict authoritative command expectation | Luna; independent | Actual14240 envelope distinction | blocked:orchestrator | Author1948; review1954 active | Concrete exact key and full equality patch80127; virtual spec ef05a482. Scope escalation1954 requests approval on independent PASS. | Source unchanged |
 | P3-26908-path | Independent verdict and full path | Luna | Producer1855 final | merged | app-P3-26908-verdict-wholepath-1905 | Gate FAIL; manifest/hash/snapshot PASS. Recovery product equals passingP131083; missing fourth cause remains bounded, no new count inferred. | Evidence only |
 
 | P1-current | Updated parent-source control | Service; Luna | Independent1846 PASS | merged | Actual31083; verdict1846 | Readiness1/original2 PASS on App830252,Agent263696,Runtime1bae. Exact pins/hashes/XML qualified. | App830252 |
@@ -79,7 +79,7 @@ regressions: 0 confirmed open App source findings. D69 all four restorations hom
 
 Blockers: Runtime native capture — observer scope1932 and native watchdog1935 are sole source owners. App input complete; actual home handback precedes ONE meaningful D78 live element. Prior cause and actual Python frame unknown.
 
-Blockers: P3 authoritative command envelope — actual14240 reaches both recovery mounts then fails exact B record equality. Narrow Luna1948 and independent verdict1948 own classification; no product cause or oracle weakening inferred.
+Blockers: Orchestrator scope — concrete strict P3 command record proposal80127, virtual spec ef05a482, awaits conditional approval on independent1954 PASS. Escalation1954 filed; protected source unchanged.
 Blockers: Final cut — all eight P2 and one P3 core cases remain unqualified. Runtime coordinates final suites and ZIP after current gate proof.
 Next ready: Runtime observer1932 and watchdog1935 home handback precede ONE meaningful D78. App redundant1941 stopped. P3 actual14240 terminal; independent1948 verdict and narrow envelope1948 proposal active. No unchanged P3 rerun.
 
