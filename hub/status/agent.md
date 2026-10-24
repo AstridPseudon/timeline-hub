@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-24T17:29:52Z | dispatcher heartbeat 7s | live 5 (sol 1, luna 4, other 0) | busy30 26 | status age 0m -->
+<!-- agent | 2026-10-24T17:33:04Z | dispatcher heartbeat 14s | live 5 (sol 1, luna 4, other 0) | busy30 26 | status age 1m -->
 # agent board, 2026-10-24T17:19:55Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -127,7 +127,7 @@
 | D69 CLI failures | Qualify current CLI integration bridge | Luna | D71 then actual P4 single | blocked:agent | Author1707; review1724 FAIL | Mechanical11mapping PASS; unit controls115PASS. Reviewer needs real mounted CLI/Runtime path, existing original P4 single covers it when GREEN. | Source8a2f |
 | D69 SDK failures | Qualify retired SDK replacement coverage | Luna | Independent family review | review | Author1707; review1730 | Ten retired removed;9mapped PASS1 timing-bindingFAIL,4negativesPASS. Reviewer challenges exact restart coverage and old-cause claim. | Source8a2f |
 | D69 core failures | Migrate live setup and callers | Luna | D72 | doing | Element return1715; approval review1713; create ready | Element44PASS1FAIL; Sol1726 explicit guarded orphan cleanup preserves native semantics. Approval sourcec3cbc review1726; create16PASS review1730. | Source8a2f |
-| D69 rendering failures | Migrate window, schema and host cases | Luna / Runtime | D72 authors dispatched | doing | Runtime three1717 families | Runtime ACK1717: frame-window2, installer1, generic-host1 dispatched with independent reviews; exact disjoint ownership. | Source8a2f |
+| D69 rendering failures | Migrate window, schema and host cases | Luna / Runtime | D72 authors dispatched | doing | Runtime three1717 families | Runtime FrameWindow4f015 and generic-host712 independent PASS; normal merges queued. Installer1 review still owned Runtime. | Source8a2f |
 | D69 CLI terminal hints | Restore two original terminal lines | Luna | Actual home proof complete | merged | Author1646; review1653; home1703 | Actual8a2f/5c1 PASS2 in3.50s; unchanged tests, blobs and15 mappings. [Review](../../workers/agt-F-D69-cli-hint-review-1653/report.md) | 81a2615c54 |
 
 | R2 repeated source copy | Preserve authenticated root replay | HARD Sol / Luna | Actual home proof complete | merged | Author1655; review1705; home1715 | Actual200819/2c1 PASS10 in22.09s, original2 and8 focused. Exact reviewed source, protected ASTs and15 mappings unchanged. [Author](../../workers/agt-R2-sourcecopy-root-sol-1655/report.md) | 14c8ecc2b4 |
@@ -136,11 +136,13 @@
 
 | U4a policy provenance | Adopt normal Runtime5c1 identity | Luna | Author checks PASS | merged | Adoption1657 | Normal-tool lock only;15 mappings unchanged,42 targeted PASS, vendor/artifact checks PASS. [Report](../../workers/agt-U4a-policy-home-rebind-1657/report.md) | Home8a2f5bb4f8 |
 
-| D72 approval and create | Preserve live promotion and empty creation | Luna | D72 | doing | Approval review1726; create review1730 | Approval sourcec3cbc adds real binding,10+1PASS; security1726. Create author16PASS, protected/integration review1730 active. Setup/caller only, every assertion conserved. | Source8a2f |
+| D72 approval and create | Preserve live promotion and empty creation | Luna | D72 | doing | Approval review1726; create review1730 | Approval sourcec3cbc independent1726 PASS10+1, no-writefiveattacks; reviewed join queued. Create author16PASS, protected/integration review1730 active. Setup/caller only, every assertion conserved. | Source8a2f |
 
 | U4a popup provenance | Bind actual Runtime successor identity | Luna | Normal merge complete | merged | Return1715 | Home3e3a adopts2c1 via normal tool; exact reviewed popupb318 product and15 mappings unchanged. | Source200819 |
 
 | P4 pinned submission | Fix current-head launch race | Luna | Final source then pinned positive | review | Launcher1711 home | Syntax/poison PASS;43b5846 launcher merged. Actual-service positive on final pinned tuple remains owed. | Harness only |
+
+| U4a P4 resolver | Bind meaningful Runtime validation fix | Luna | Final source/security receipt | doing | Adoption1733 | Actual327da resolver source merged; normal tool lock-only adoption,15 canonical bytes and schema867f unchanged. | Runtime327da |
 
 Integration: Agent3e3a8b40b2 includes normal Runtime2c1 provenance5d76 plus reviewed R2 root replay14c8 and true upstream924 merge, D62 client/consumer, unchanged47 restorations, reviewed CLI terminal hints81a261 and tool-only Runtime5c1 provenance578420. Canonical15 unchanged. Runtime5c1 product equals qualifiedbc227; only reviewed skip-policy files changed.
 core open: 2 original P4 gates remain; D72 confirmed live behavior blockers are element1 and approval2, with remaining faithful migrations/coverage still unqualified; R2 two originals now actual-home PASS10 incl8 focused on200819/2c1. Separate D72 live repairs: element1 and approval2 validation, plus all family qualification still cut-blocking. Separate37 D69 restored failures now have D72 migration/retirement owners; no unqualified known-gap label. D71 no-leak regression now has active Sol1701. Root inverse actual-home PASS1.
@@ -155,5 +157,5 @@ Blockers: Agent — D72 source repairs elementSol1717 and approvalLuna1718; reti
 
 Blockers: Runtime — P4 ten-note timeout45s, unique HARD Sol1652 on immutable-schema resolver strategy after Luna profile. All validation and D47 no mutable-result cache retained.
 Next ready: consume six active returns, merge exact source/family PASS. D71 security then exact tuple pins/positive preflight and unchanged P4 single. CLI uses that existing live integration bridge. SDK restart failure remains visible. Finish D73 launcher before unchanged P4; reviewed D71 and Runtime cost source required. Final-core remains owed after D72 source/test qualification.
-live 6 / cap 6; ready-undispatched 0. Luna1726 D71 review,1726 approval review,1730 SDK review,1730 create review,1707 duplicate; HARD Sol1726 recorded element cleanup. CLI final bridge waits P4; render3 owned Runtime.
+live 6 / cap 6; ready-undispatched 0. Luna1726 D71 review,1733 resolver provenance,1730 SDK review,1730 create review,1707 duplicate; HARD Sol1726 recorded element cleanup. CLI final bridge waits P4; render3 owned Runtime.
 Inbox consumed through D74 cap ruling17:12:35, full D72/D73. KEEP/pin refusal consumed and honored. D71/D72 decision waits cleared; pinned-submit P4 harness1711 active. Runtime board17:14 and App current rechecked; normal Runtime5c1 provenance merged8a2f. D71 decision wait cleared immediately. Pass 2026-10-24T17:02:13Z.
