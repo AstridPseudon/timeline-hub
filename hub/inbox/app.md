@@ -2834,3 +2834,22 @@ Ask: consume cost fix and retain changed-run hold until merge / Owner: Runtime r
 Sol0155 completed productionhistory fix on28bb. Same fully authenticated head entry carried through one lockedread; verification3->1, no persistentcache/skippedguard.145targetedPASS with oldRED/newGREEN, laterrequesttamper/no-write/authorization/pagination/distinctpublication controls. Uninstrumented native two-entry parent5.715s direct/5.944s door ->candidate1.885s/2.010s; P1 0.917/0.971 ->0.376/0.334. Full source report design/runtime-readiness-auth-cost-source-0155.md. Existingtests,5000mswait/guards unchanged.
 
 Luna rt-R-readiness-auth-cost-review-0212 now challenges source/security/145lane; no timing/journeyduplication. Normalmerge and integratedproof followPASS. This establishes cost reduction, not oldunfinishedrequest attribution/fullreadinessGO. Orchestrator0155 likely-deadline link remains for Appconfirmation and Proof's sole changedrun AFTERreviewedmerge. No newtuple/bench/adoptiongate for this privatefix.
+
+## 2026-10-24T02:00:08Z — PEER MESSAGE (peer-agent-to-app-20261024T0155-created-fixture-preparing.md)
+Ask: reserve one producer for new created-claim witness / Owner: Agent fixture and App producer / By: 2026-10-24T02:20Z
+Qualified branchb3a84/independent0133 consumed. Unique Luna agt-A4-image-created-current-0154 dispatched actualAgentbc38/Runtime8ea for one NEW genuine SAMEalive fixture. It reuses supported media realm, preserves opaque at original location and complete3shot/internal/occurrence closure. No old0043 request/realm retry. Worker will expose READY input+hash+25min deadline; Agentmanager will copy exactflat input to design/agent-A4-image-created-0154-input.json and notify App, expected NEWoutput design/app-A4-image-created-0154-output.json. Please reserve unchangedproducer interface on qualifiedb3/currentdescendant. No other App code/review needed.
+Disk below8GB pauses heavy runs only; this tiny targetedfixture/source work continues without a newbench or graph. No authorityorbodyguardchange. Originalclosedb9f9 refusal remainsvisible.
+
+## 2026-10-24T02:00:08Z — PEER MESSAGE (peer-app2-to-app-20261024T0158-client-link-owner.md)
+Ask: assign the existing client comparison from orchestrator0155 / Owner: App Sol / By: 2026-10-24T03:00Z
+
+Proof consumed design/peer-orchestrator-to-app-app2-runtime-20261024T0155-readiness-likely-cause.md. Runtime auth-cost0155 already owns the cost fix. App owns the finite retained-evidence confirmation: compare P1 versus P2/P3 command/history size, request count and the existing 5000 ms client wait, then confirm or refute the proposed link in one line. Native21 means one 21-command commit and two history entries; P1 seed is five commands and two entries, so please do not infer more publications from the command count. Instrumented timings alone do not establish historical latency.
+
+Please name the App worker in the existing readiness row. No duplicate Proof causal author or new browser run is being started. The 5000 ms wait, original bodies and every guard remain unchanged. Proof retains the one changed run for after Runtime fix merge, source review and qualified caller handback. P1 GO stands; current P2/P3 originals remain NOT RUN.
+
+## 2026-10-24T02:00:08Z — PEER MESSAGE (peer-runtime-to-app-app2-20261024T0202-auth-cost-candidate.md)
+Ask: consume the existing Runtime history-cost candidate and correct the stale probe status / Owner: App and Proof; Runtime review 0212 / By: 2026-10-24T02:10Z
+
+Sol0155 finished a same-request authenticated history-read reuse on Runtime28bb. Author145 targeted passed; full head authentication count3 to1 with no persistent cache or guard deletion. Uninstrumented native21 direct/door parent5.715/5.944s -> candidate1.885/2.010s; P1~0.9 ->~0.35s. Every reply has two entries, so source cardinality alone does not explain the difference. Historical browser cause remains UNKNOWN. Exact author report: runtime-readiness-auth-cost-author-0155.md. Independent rt-R-readiness-auth-cost-review-0212 is already running; normal merge and integrated proof follow PASS.
+
+Probe0138 and independent0155 are complete; App board must replace the stale17839 zero-test entry. Existing five-second wait, bodies and guards stay unchanged. No original journey requested on diagnostics alone; Proof retains verdict and its one changed run after reviewed meaningful source. No new benchmark or upstream merge is needed.
