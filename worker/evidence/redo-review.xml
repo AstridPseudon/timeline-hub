@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="6" time="2.871" timestamp="2026-10-24T11:22:18.137366+00:00" hostname="vm"><testcase classname="tests.editing_conformance.test_captured_nested_redo" name="test_native_only_accepted_inverse_redoes_without_effect_facts[one-of-ten-notes]" time="0.186" /><testcase classname="tests.editing_conformance.test_captured_nested_redo" name="test_native_only_accepted_inverse_redoes_without_effect_facts[semantic-creation]" time="0.076" /><testcase classname="tests.editing_conformance.test_recipe_m2_auto_placement" name="test_exact_capture_replay_inverse_and_redo[image-anchor]" time="0.864"><failure message="KeyError: ('sha256:815ed9b19f9742782b182d31ed7f4caedc8c800af21ee534ba0d9a3bfa7cca83', 'sha256:453aa6de8d08b394965d91ca980f2270d2a9e30f19ad5dfdff1030a6f62f7ff2')">tests/editing_conformance/test_recipe_m2_auto_placement.py:109: in test_exact_capture_replay_inverse_and_redo
+    redone = inverse(undone.bundle, accepted_boundaries(undone.records, plan.bundle, undone.bundle))
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/editing_conformance/test_recipe_m2_auto_placement.py:75: in accepted_boundaries
+    entry, history = copy.deepcopy(_AUTHENTICATED_BOUNDARIES[key])
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: ('sha256:815ed9b19f9742782b182d31ed7f4caedc8c800af21ee534ba0d9a3bfa7cca83', 'sha256:453aa6de8d08b394965d91ca980f2270d2a9e30f19ad5dfdff1030a6f62f7ff2')</failure></testcase><testcase classname="tests.editing_conformance.test_recipe_m2_auto_placement" name="test_exact_capture_replay_inverse_and_redo[image-absent]" time="0.108"><failure message="tests.sdk.test_timeline_commit_provider.CommitRejected: original authored guard changed">astrid/sdk/timeline/commit.py:1104: in commit
+    original = execute(bundle, execution_calls, inverse_records=inverse_records,
+astrid/sdk/timeline/commands.py:240: in execute
+    _verify_claims(ctx, command)
+astrid/sdk/timeline/commands.py:194: in _verify_claims
+    guard(ctx.state, read['ref'], read['path'], read['state'])
+astrid/sdk/timeline/_recording.py:286: in guard
+    raise CommandError("original authored guard changed", kind=kind, ref=ref, path=path,
+E   astrid.sdk.timeline._command_state.CommandError: original authored guard changed
+
+The above exception was the direct cause of the following exception:
+tests/editing_conformance/test_recipe_m2_auto_placement.py:98: in test_exact_capture_replay_inverse_and_redo
+    _, bundle, result, verified = case(name)
+                                  ^^^^^^^^^^
+tests/editing_conformance/test_recipe_m2_auto_placement.py:57: in case
+    created = realm.call(result['commands'])
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/editing_conformance/test_recipe_occurrence_media.py:266: in call
+    return create_runtime_commit_service().commit(context, MediaPort(self, context))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/commit.py:1240: in commit
+    raise CommitRejected(_failure(exc.kind, str(exc), base, current,
+E   tests.sdk.test_timeline_commit_provider.CommitRejected: original authored guard changed</failure></testcase><testcase classname="tests.editing_conformance.test_recipe_m2_auto_placement" name="test_exact_capture_replay_inverse_and_redo[video-anchor]" time="0.392"><failure message="KeyError: ('sha256:828c54cf1299a04d83791bd259b73955f433881856dca0bcf21fc395998582bf', 'sha256:79eec9483ceb406a66f3241bb8553b63ccbe0d32ec0ed6538914e025369d3b9c')">tests/editing_conformance/test_recipe_m2_auto_placement.py:109: in test_exact_capture_replay_inverse_and_redo
+    redone = inverse(undone.bundle, accepted_boundaries(undone.records, plan.bundle, undone.bundle))
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/editing_conformance/test_recipe_m2_auto_placement.py:75: in accepted_boundaries
+    entry, history = copy.deepcopy(_AUTHENTICATED_BOUNDARIES[key])
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: ('sha256:828c54cf1299a04d83791bd259b73955f433881856dca0bcf21fc395998582bf', 'sha256:79eec9483ceb406a66f3241bb8553b63ccbe0d32ec0ed6538914e025369d3b9c')</failure></testcase><testcase classname="tests.editing_conformance.test_recipe_m2_auto_placement" name="test_exact_capture_replay_inverse_and_redo[video-absent]" time="0.083"><failure message="tests.sdk.test_timeline_commit_provider.CommitRejected: original authored guard changed">astrid/sdk/timeline/commit.py:1104: in commit
+    original = execute(bundle, execution_calls, inverse_records=inverse_records,
+astrid/sdk/timeline/commands.py:240: in execute
+    _verify_claims(ctx, command)
+astrid/sdk/timeline/commands.py:194: in _verify_claims
+    guard(ctx.state, read['ref'], read['path'], read['state'])
+astrid/sdk/timeline/_recording.py:286: in guard
+    raise CommandError("original authored guard changed", kind=kind, ref=ref, path=path,
+E   astrid.sdk.timeline._command_state.CommandError: original authored guard changed
+
+The above exception was the direct cause of the following exception:
+tests/editing_conformance/test_recipe_m2_auto_placement.py:98: in test_exact_capture_replay_inverse_and_redo
+    _, bundle, result, verified = case(name)
+                                  ^^^^^^^^^^
+tests/editing_conformance/test_recipe_m2_auto_placement.py:57: in case
+    created = realm.call(result['commands'])
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/editing_conformance/test_recipe_occurrence_media.py:266: in call
+    return create_runtime_commit_service().commit(context, MediaPort(self, context))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/commit.py:1240: in commit
+    raise CommitRejected(_failure(exc.kind, str(exc), base, current,
+E   tests.sdk.test_timeline_commit_provider.CommitRejected: original authored guard changed</failure></testcase></testsuite></testsuites>
