@@ -27,8 +27,8 @@
     "exact_unique_ids": 267,
     "exact_unique_phase_rows": 267,
     "counts": {
-      "proven_passed": 236,
-      "active_owner": 31,
+      "proven_passed": 260,
+      "active_owner": 7,
       "deferred_cut_visible": 0,
       "genuinely_unowned": 0
     },
@@ -38,19 +38,18 @@
     "unassigned_minimum_source_gaps": 0,
     "owner_status_does_not_credit_passes": true,
     "all_tags_ours": true,
-    "confirmed_closed_ids": 236,
-    "open_ids": 31,
-    "held_or_unknown_ids": 31,
-    "newly_confirmed_closed_since_0118": 100,
+    "confirmed_closed_ids": 260,
+    "open_ids": 7,
+    "held_or_unknown_ids": 7,
+    "newly_confirmed_closed_since_0118": 124,
     "current_head_full267_pass": false,
     "full_checkpoint": "UNRESOLVED: Farm26511 source/head mismatch and 96 possible closed-node failures; no retrospective Farm credit or broad full PASS.",
     "effective_owner_counts_active": {
-      "Agent": 29,
-      "Runtime": 1,
-      "Viewing": 1
+      "Agent": 6,
+      "Runtime": 1
     },
     "active_family_counts": {
-      "Agent SDK / timeline unconfirmed": 29,
+      "Agent SDK / timeline unconfirmed": 5,
       "CLI FakeCheckout fixture": 0,
       "D09 installed-profile setup": 0,
       "Execution/rendering/pack remainder": 1,
@@ -965,6 +964,164 @@
       "production_caller": "_cmd_apply -> commit_edit(sheet=True) -> NativeSheet.apply -> TimelineSession.commit_many -> generated commit_timeline -> Runtime preview/accept",
       "credit_limit": "Migrated connected sheet/apply scenarios only; source.via=sheet, not retired CLI dispatch. Unicode, empty, clear/remove, golden, pub1 and final state are preserved. Receipt covers the entire byte-identical 11-case module; no aggregate 71+5+53 inference, HTTP/C0 or every history/undo/attribution-field claim.",
       "custody": "Durable author receipt and independent review read and SHA-256 hashed for this package. Primary worker raw JUnit/log directories are absent on this machine; no raw JUnit digest, reread, new execution or installed-head qualification is claimed."
+    },
+    "runtime_R2_root_originals_0622": {
+      "result": "Scoped retained PASS for 9 exact original selectors; no new body run in this package.",
+      "role": "retained author/integrated qualification",
+      "report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-R2-root-originals-0622.md",
+      "report_sha256": "8dceb9b9db88818c7b3b7e88f68219e805476ee7b54bb2c4e71fa02f66eb9425",
+      "exact_original_node_ids": [
+        "tests/sdk/test_timeline_clip_scalar_provider.py::test_provider_unchanged_publication_and_aba_refuse_old_inverse[False-occurrence:f2-occurrence/clip:f2-agent-clear-clip-asset]",
+        "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_created_child_stages_reload_inverse_redo_exact_closure",
+        "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-False-child]",
+        "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-True-child]",
+        "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-False-child]",
+        "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-True-child]",
+        "tests/sdk/test_timeline_commit_provider_scalar.py::test_occurrence_inverse_reuses_original_images_and_preserves_later_sibling_pins",
+        "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-0]",
+        "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-1]"
+      ],
+      "phase": "call",
+      "agent_source_ref": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+      "runtime_source_ref": "1d9ddba546f8fb1300f55ff62607ed492719cbaa",
+      "cohort_timing_seconds": 3.63,
+      "reported_junit": "workers/rt-F-R2-root-originals-0622/f-r2-root-originals-junit.xml",
+      "receipt_custody": "Raw JUnit is unavailable on this machine; exact membership/result are retained independent-review findings, not freshly parsed or rehashed raw evidence. Timings refer to the original/integrated cohort, not each review.",
+      "credit_limit": "Provider/source qualification through RuntimeCommitService.commit -> commands.execute -> inverse/history/closure validation; DetachedPort is in-memory CAS/history with fixture ABI metadata/exceptions. No HTTP, installed-runtime, live actor, complete C0 wire shape or full reply claim. Initial literal pre/post hash capture failed because tmpdir was a regular file; fallback HEAD-to-worktree and independent 17-file audit do not supply a separately preserved immediate pre/post runtime-import snapshot."
+    },
+    "runtime_R2_root_review_0625": {
+      "result": "Scoped retained PASS for 9 exact original selectors; no new body run in this package.",
+      "role": "independent review",
+      "report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-R2-root-review-0625.md",
+      "report_sha256": "868133cfa96845b93b3b0103a3153e094574c90fa127fa3903823bb7acbb4723",
+      "exact_original_node_ids": [
+        "tests/sdk/test_timeline_clip_scalar_provider.py::test_provider_unchanged_publication_and_aba_refuse_old_inverse[False-occurrence:f2-occurrence/clip:f2-agent-clear-clip-asset]",
+        "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_created_child_stages_reload_inverse_redo_exact_closure",
+        "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-False-child]",
+        "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-True-child]",
+        "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-False-child]",
+        "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-True-child]",
+        "tests/sdk/test_timeline_commit_provider_scalar.py::test_occurrence_inverse_reuses_original_images_and_preserves_later_sibling_pins",
+        "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-0]",
+        "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-1]"
+      ],
+      "phase": "call",
+      "agent_source_ref": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+      "runtime_source_ref": "1d9ddba546f8fb1300f55ff62607ed492719cbaa",
+      "cohort_timing_seconds": 3.63,
+      "reported_junit": "workers/rt-F-R2-root-originals-0622/f-r2-root-originals-junit.xml",
+      "receipt_custody": "Raw JUnit is unavailable on this machine; exact membership/result are retained independent-review findings, not freshly parsed or rehashed raw evidence. Timings refer to the original/integrated cohort, not each review.",
+      "credit_limit": "Provider/source qualification through RuntimeCommitService.commit -> commands.execute -> inverse/history/closure validation; DetachedPort is in-memory CAS/history with fixture ABI metadata/exceptions. No HTTP, installed-runtime, live actor, complete C0 wire shape or full reply claim. Initial literal pre/post hash capture failed because tmpdir was a regular file; fallback HEAD-to-worktree and independent 17-file audit do not supply a separately preserved immediate pre/post runtime-import snapshot."
+    },
+    "runtime_helper_originals_0622": {
+      "result": "Scoped retained PASS for 13 exact original selectors; no new body run in this package.",
+      "role": "retained author/integrated qualification",
+      "report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-helper-originals-0622.md",
+      "report_sha256": "08c13b4148462e16df278dc4394e9b8f70f57f84831e04be68201822a5f1e971",
+      "exact_original_node_ids": [
+        "tests/sdk/test_timeline_helper_capture.py::test_genuine_anchor_capture_has_exact_source_scope_and_base_pair",
+        "tests/sdk/test_timeline_helper_capture.py::test_nudge_restart_merges_peer_other_clip",
+        "tests/sdk/test_timeline_helper_capture.py::test_conflicts_and_uncaptured_edits_never_write[same]",
+        "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[after]",
+        "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[commands]",
+        "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[hash]",
+        "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[reads]",
+        "tests/sdk/test_timeline_helper_capture.py::test_helper_lost_ack_retries_exact_request",
+        "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[+1s]",
+        "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[None]",
+        "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[collection]",
+        "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[same]",
+        "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[word-source]"
+      ],
+      "phase": "call",
+      "agent_source_ref": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+      "runtime_source_ref": "1d9ddba546f8fb1300f55ff62607ed492719cbaa",
+      "cohort_timing_seconds": 73.955,
+      "reported_junit": "workers/rt-F-helper-originals-0622/helper-originals-eligible.xml",
+      "receipt_custody": "Raw JUnit is unavailable on this machine; exact membership/result are retained independent-review findings, not freshly parsed or rehashed raw evidence. Timings refer to the original/integrated cohort, not each review.",
+      "credit_limit": "Only 13 exact eligible originals, source/in-process Runtime execution. Independent0627 confirms actual source/function-body/AST hashes match author pre/post evidence and module origins. No HTTP, bearer-auth, installed-runtime, browser, full reply or live actor proof. Child-word second is already D23 deferred, unchanged, visibly open and unrun."
+    },
+    "runtime_helper_review_0627": {
+      "result": "Scoped retained PASS for 13 exact original selectors; no new body run in this package.",
+      "role": "independent review",
+      "report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-helper-review-0627.md",
+      "report_sha256": "e309b2a58235a6ab4f5a640f26de2faf6ee2b202c73e37b52620743e4174f193",
+      "exact_original_node_ids": [
+        "tests/sdk/test_timeline_helper_capture.py::test_genuine_anchor_capture_has_exact_source_scope_and_base_pair",
+        "tests/sdk/test_timeline_helper_capture.py::test_nudge_restart_merges_peer_other_clip",
+        "tests/sdk/test_timeline_helper_capture.py::test_conflicts_and_uncaptured_edits_never_write[same]",
+        "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[after]",
+        "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[commands]",
+        "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[hash]",
+        "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[reads]",
+        "tests/sdk/test_timeline_helper_capture.py::test_helper_lost_ack_retries_exact_request",
+        "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[+1s]",
+        "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[None]",
+        "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[collection]",
+        "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[same]",
+        "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[word-source]"
+      ],
+      "phase": "call",
+      "agent_source_ref": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+      "runtime_source_ref": "1d9ddba546f8fb1300f55ff62607ed492719cbaa",
+      "cohort_timing_seconds": 73.955,
+      "reported_junit": "workers/rt-F-helper-originals-0622/helper-originals-eligible.xml",
+      "receipt_custody": "Raw JUnit is unavailable on this machine; exact membership/result are retained independent-review findings, not freshly parsed or rehashed raw evidence. Timings refer to the original/integrated cohort, not each review.",
+      "credit_limit": "Only 13 exact eligible originals, source/in-process Runtime execution. Independent0627 confirms actual source/function-body/AST hashes match author pre/post evidence and module origins. No HTTP, bearer-auth, installed-runtime, browser, full reply or live actor proof. Child-word second is already D23 deferred, unchanged, visibly open and unrun."
+    },
+    "schema_census_fix_0605": {
+      "result": "Scoped retained PASS for 2 exact original selectors; no new body run in this package.",
+      "role": "retained author/integrated qualification",
+      "report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-schema-census-fix-0605/report.md",
+      "report_sha256": "9596a278466d1504947b324a0614568262ca2c12a7e6d2754abff4aa88797991",
+      "exact_original_node_ids": [
+        "tests/sdk/test_timeline_composed_schema.py::test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden",
+        "tests/sdk/test_timeline_current_union_schema.py::test_closed_union_operation_inventory_is_exactly_the_supported_cohort"
+      ],
+      "phase": "call",
+      "agent_source_ref": "0b4255fd8a1c20b089093cb2508394e896f54a96",
+      "runtime_source_ref": null,
+      "cohort_timing_seconds": 0.89,
+      "reported_junit": "/tmp/w-474a6bd7fd/schema-integrated.xml",
+      "receipt_custody": "Raw JUnit is unavailable on this machine; exact membership/result are retained independent-review findings, not freshly parsed or rehashed raw evidence. Timings refer to the original/integrated cohort, not each review.",
+      "credit_limit": "Two original selector/predicate mappings after reviewed fixture correction only; no commit request/reply execution or HTTP/actor qualification. Explicit six provider-only registrations and frozen 30 unique wire branches; provider registration/handler/PARAMETERS and authoring producer unchanged. 41-module and mypy1902 parity remain retained review controls, not extra census credit.",
+      "reviewed_author_ref": "3b995372448dd8f8f85f23380adb153ea3270d80"
+    },
+    "schema_census_review_0622": {
+      "result": "Scoped retained PASS for 2 exact original selectors; no new body run in this package.",
+      "role": "independent review",
+      "report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-schema-census-review-0622/report.md",
+      "report_sha256": "2888e734c7bca76fa87581268d9f5b00ff45adfc485ff8271c8e94787f278c49",
+      "exact_original_node_ids": [
+        "tests/sdk/test_timeline_composed_schema.py::test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden",
+        "tests/sdk/test_timeline_current_union_schema.py::test_closed_union_operation_inventory_is_exactly_the_supported_cohort"
+      ],
+      "phase": "call",
+      "agent_source_ref": "0b4255fd8a1c20b089093cb2508394e896f54a96",
+      "runtime_source_ref": null,
+      "cohort_timing_seconds": 0.89,
+      "reported_junit": "/tmp/w-474a6bd7fd/schema-integrated.xml",
+      "receipt_custody": "Raw JUnit is unavailable on this machine; exact membership/result are retained independent-review findings, not freshly parsed or rehashed raw evidence. Timings refer to the original/integrated cohort, not each review.",
+      "credit_limit": "Two original selector/predicate mappings after reviewed fixture correction only; no commit request/reply execution or HTTP/actor qualification. Explicit six provider-only registrations and frozen 30 unique wire branches; provider registration/handler/PARAMETERS and authoring producer unchanged. 41-module and mypy1902 parity remain retained review controls, not extra census credit.",
+      "reviewed_author_ref": "3b995372448dd8f8f85f23380adb153ea3270d80"
+    },
+    "schema_integrated_0634": {
+      "result": "Scoped retained PASS for 2 exact original selectors; no new body run in this package.",
+      "role": "retained author/integrated qualification",
+      "report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-schema-integrated-0634/report.md",
+      "report_sha256": "5c05aedf14ea22e525b4cd8ddef7f1d39dfb81b6faadf784a6bd0baecbb33ed1",
+      "exact_original_node_ids": [
+        "tests/sdk/test_timeline_composed_schema.py::test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden",
+        "tests/sdk/test_timeline_current_union_schema.py::test_closed_union_operation_inventory_is_exactly_the_supported_cohort"
+      ],
+      "phase": "call",
+      "agent_source_ref": "0b4255fd8a1c20b089093cb2508394e896f54a96",
+      "runtime_source_ref": null,
+      "cohort_timing_seconds": 0.89,
+      "reported_junit": "/tmp/w-474a6bd7fd/schema-integrated.xml",
+      "receipt_custody": "Raw JUnit is unavailable on this machine; exact membership/result are retained independent-review findings, not freshly parsed or rehashed raw evidence. Timings refer to the original/integrated cohort, not each review.",
+      "credit_limit": "Two original selector/predicate mappings after reviewed fixture correction only; no commit request/reply execution or HTTP/actor qualification. Explicit six provider-only registrations and frozen 30 unique wire branches; provider registration/handler/PARAMETERS and authoring producer unchanged. 41-module and mypy1902 parity remain retained review controls, not extra census credit.",
+      "reviewed_author_ref": "3b995372448dd8f8f85f23380adb153ea3270d80"
     }
   },
   "unowned_gaps": {},
@@ -6658,9 +6815,9 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Viewing",
-      "reason": "Viewing owns same-alias ABA; preserve refusal assertion.",
+      "reason": "Exact current original selector qualified by retained independent scoped review; source/fixture predicate mapping is explicit in root_helper_schema_mapping. No body rerun.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timeline_clip_scalar_provider.py::test_provider_unchanged_publication_and_aba_refuse_old_inverse[False-occurrence:f2-occurrence/clip:f2-agent-clear-clip-asset]",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
@@ -6671,30 +6828,53 @@
       },
       "effective_owner": "Viewing",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "Current ABA service 13559 failed at undo landing output/prepared mismatch; prior 26248 is stale-fixture failure; remains open/unknown.",
+        "classification": "confirmed_closed_current_package",
+        "qualified_source_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "provider publication preserves unchanged scalar and refuses old ABA inverse",
         "post_0118_evidence_refs": [
-          "agt-F-ABA-whole-path-resume-0339",
-          "agent-ABA-13559-summary"
+          "runtime_R2_root_originals_0622",
+          "runtime_R2_root_review_0625"
         ],
-        "qualifying_original_behavior_credit": false
-      }
+        "qualifying_original_behavior_credit": true,
+        "mapping_ref": "agent-D32-current-node-reconciliation-H30-delta-mapping.json#/root_helper_schema_mapping",
+        "custody_limits": "Provider/source qualification through RuntimeCommitService.commit -> commands.execute -> inverse/history/closure validation; DetachedPort is in-memory CAS/history with fixture ABI metadata/exceptions. No HTTP, installed-runtime, live actor, complete C0 wire shape or full reply claim. Initial literal pre/post hash capture failed because tmpdir was a regular file; fallback HEAD-to-worktree and independent 17-file audit do not supply a separately preserved immediate pre/post runtime-import snapshot."
+      },
+      "historical_pre_next24_reconciliation": {
+        "status": "active_owner",
+        "reason": "Viewing owns same-alias ABA; preserve refusal assertion.",
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "Current ABA service 13559 failed at undo landing output/prepared mismatch; prior 26248 is stale-fixture failure; remains open/unknown.",
+          "post_0118_evidence_refs": [
+            "agt-F-ABA-whole-path-resume-0339",
+            "agent-ABA-13559-summary"
+          ],
+          "qualifying_original_behavior_credit": false
+        }
+      },
+      "proof_refs": [
+        "runtime_R2_root_originals_0622",
+        "runtime_R2_root_review_0625"
+      ],
+      "proof_status": "exact_retained_scoped_pass"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_created_child_stages_reload_inverse_redo_exact_closure",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact current original selector qualified by retained independent scoped review; source/fixture predicate mapping is explicit in root_helper_schema_mapping. No body rerun.",
       "owner_ref": "sdk_r2_0042",
       "proof_refs": [
-        "r2_0042"
+        "r2_0042",
+        "runtime_R2_root_originals_0622",
+        "runtime_R2_root_review_0625"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_commit_graph_roots.py",
@@ -6704,12 +6884,31 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "qualified_source_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "authenticated created child survives stage/reload/inverse/redo with exact closure",
+        "post_0118_evidence_refs": [
+          "runtime_R2_root_originals_0622",
+          "runtime_R2_root_review_0625"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "mapping_ref": "agent-D32-current-node-reconciliation-H30-delta-mapping.json#/root_helper_schema_mapping",
+        "custody_limits": "Provider/source qualification through RuntimeCommitService.commit -> commands.execute -> inverse/history/closure validation; DetachedPort is in-memory CAS/history with fixture ABI metadata/exceptions. No HTTP, installed-runtime, live actor, complete C0 wire shape or full reply claim. Initial literal pre/post hash capture failed because tmpdir was a regular file; fallback HEAD-to-worktree and independent 17-file audit do not supply a separately preserved immediate pre/post runtime-import snapshot."
+      },
+      "historical_pre_next24_reconciliation": {
+        "status": "active_owner",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "proof_refs": [
+          "r2_0042"
+        ],
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -6717,14 +6916,16 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact current original selector qualified by retained independent scoped review; source/fixture predicate mapping is explicit in root_helper_schema_mapping. No body rerun.",
       "owner_ref": "sdk_r2_0042",
       "proof_refs": [
-        "r2_0042"
+        "r2_0042",
+        "runtime_R2_root_originals_0622",
+        "runtime_R2_root_review_0625"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_commit_graph_roots.py",
@@ -6734,12 +6935,31 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "qualified_source_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "provider-root child alias equal-state publication remains guarded across both flags",
+        "post_0118_evidence_refs": [
+          "runtime_R2_root_originals_0622",
+          "runtime_R2_root_review_0625"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "mapping_ref": "agent-D32-current-node-reconciliation-H30-delta-mapping.json#/root_helper_schema_mapping",
+        "custody_limits": "Provider/source qualification through RuntimeCommitService.commit -> commands.execute -> inverse/history/closure validation; DetachedPort is in-memory CAS/history with fixture ABI metadata/exceptions. No HTTP, installed-runtime, live actor, complete C0 wire shape or full reply claim. Initial literal pre/post hash capture failed because tmpdir was a regular file; fallback HEAD-to-worktree and independent 17-file audit do not supply a separately preserved immediate pre/post runtime-import snapshot."
+      },
+      "historical_pre_next24_reconciliation": {
+        "status": "active_owner",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "proof_refs": [
+          "r2_0042"
+        ],
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -6747,14 +6967,16 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact current original selector qualified by retained independent scoped review; source/fixture predicate mapping is explicit in root_helper_schema_mapping. No body rerun.",
       "owner_ref": "sdk_r2_0042",
       "proof_refs": [
-        "r2_0042"
+        "r2_0042",
+        "runtime_R2_root_originals_0622",
+        "runtime_R2_root_review_0625"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_commit_graph_roots.py",
@@ -6764,12 +6986,31 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "qualified_source_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "provider-root child alias equal-state publication remains guarded across both flags",
+        "post_0118_evidence_refs": [
+          "runtime_R2_root_originals_0622",
+          "runtime_R2_root_review_0625"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "mapping_ref": "agent-D32-current-node-reconciliation-H30-delta-mapping.json#/root_helper_schema_mapping",
+        "custody_limits": "Provider/source qualification through RuntimeCommitService.commit -> commands.execute -> inverse/history/closure validation; DetachedPort is in-memory CAS/history with fixture ABI metadata/exceptions. No HTTP, installed-runtime, live actor, complete C0 wire shape or full reply claim. Initial literal pre/post hash capture failed because tmpdir was a regular file; fallback HEAD-to-worktree and independent 17-file audit do not supply a separately preserved immediate pre/post runtime-import snapshot."
+      },
+      "historical_pre_next24_reconciliation": {
+        "status": "active_owner",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "proof_refs": [
+          "r2_0042"
+        ],
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -6777,14 +7018,16 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact current original selector qualified by retained independent scoped review; source/fixture predicate mapping is explicit in root_helper_schema_mapping. No body rerun.",
       "owner_ref": "sdk_r2_0042",
       "proof_refs": [
-        "r2_0042"
+        "r2_0042",
+        "runtime_R2_root_originals_0622",
+        "runtime_R2_root_review_0625"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_commit_graph_roots.py",
@@ -6794,12 +7037,31 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "qualified_source_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "provider-root child alias equal-state publication remains guarded across both flags",
+        "post_0118_evidence_refs": [
+          "runtime_R2_root_originals_0622",
+          "runtime_R2_root_review_0625"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "mapping_ref": "agent-D32-current-node-reconciliation-H30-delta-mapping.json#/root_helper_schema_mapping",
+        "custody_limits": "Provider/source qualification through RuntimeCommitService.commit -> commands.execute -> inverse/history/closure validation; DetachedPort is in-memory CAS/history with fixture ABI metadata/exceptions. No HTTP, installed-runtime, live actor, complete C0 wire shape or full reply claim. Initial literal pre/post hash capture failed because tmpdir was a regular file; fallback HEAD-to-worktree and independent 17-file audit do not supply a separately preserved immediate pre/post runtime-import snapshot."
+      },
+      "historical_pre_next24_reconciliation": {
+        "status": "active_owner",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "proof_refs": [
+          "r2_0042"
+        ],
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -6807,14 +7069,16 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact current original selector qualified by retained independent scoped review; source/fixture predicate mapping is explicit in root_helper_schema_mapping. No body rerun.",
       "owner_ref": "sdk_r2_0042",
       "proof_refs": [
-        "r2_0042"
+        "r2_0042",
+        "runtime_R2_root_originals_0622",
+        "runtime_R2_root_review_0625"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_commit_graph_roots.py",
@@ -6824,12 +7088,31 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "qualified_source_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "provider-root child alias equal-state publication remains guarded across both flags",
+        "post_0118_evidence_refs": [
+          "runtime_R2_root_originals_0622",
+          "runtime_R2_root_review_0625"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "mapping_ref": "agent-D32-current-node-reconciliation-H30-delta-mapping.json#/root_helper_schema_mapping",
+        "custody_limits": "Provider/source qualification through RuntimeCommitService.commit -> commands.execute -> inverse/history/closure validation; DetachedPort is in-memory CAS/history with fixture ABI metadata/exceptions. No HTTP, installed-runtime, live actor, complete C0 wire shape or full reply claim. Initial literal pre/post hash capture failed because tmpdir was a regular file; fallback HEAD-to-worktree and independent 17-file audit do not supply a separately preserved immediate pre/post runtime-import snapshot."
+      },
+      "historical_pre_next24_reconciliation": {
+        "status": "active_owner",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "proof_refs": [
+          "r2_0042"
+        ],
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -6837,9 +7120,9 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
-      "reason": "IMAGE-0043 owns image-preservation proof; acceptance remains refused.",
+      "reason": "Exact current original selector qualified by retained independent scoped review; source/fixture predicate mapping is explicit in root_helper_schema_mapping. No body rerun.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timeline_commit_provider_scalar.py::test_occurrence_inverse_reuses_original_images_and_preserves_later_sibling_pins",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
@@ -6850,27 +7133,51 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
-      }
+        "classification": "confirmed_closed_current_package",
+        "qualified_source_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "occurrence inverse reuses original media and preserves later sibling pins",
+        "post_0118_evidence_refs": [
+          "runtime_R2_root_originals_0622",
+          "runtime_R2_root_review_0625"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "mapping_ref": "agent-D32-current-node-reconciliation-H30-delta-mapping.json#/root_helper_schema_mapping",
+        "custody_limits": "Provider/source qualification through RuntimeCommitService.commit -> commands.execute -> inverse/history/closure validation; DetachedPort is in-memory CAS/history with fixture ABI metadata/exceptions. No HTTP, installed-runtime, live actor, complete C0 wire shape or full reply claim. Initial literal pre/post hash capture failed because tmpdir was a regular file; fallback HEAD-to-worktree and independent 17-file audit do not supply a separately preserved immediate pre/post runtime-import snapshot."
+      },
+      "historical_pre_next24_reconciliation": {
+        "status": "active_owner",
+        "reason": "IMAGE-0043 owns image-preservation proof; acceptance remains refused.",
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
+      },
+      "proof_refs": [
+        "runtime_R2_root_originals_0622",
+        "runtime_R2_root_review_0625"
+      ],
+      "proof_status": "exact_retained_scoped_pass"
     },
     {
       "exact_node_id": "tests/sdk/test_timeline_composed_schema.py::test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden",
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact current original selector qualified by retained independent scoped review; source/fixture predicate mapping is explicit in root_helper_schema_mapping. No body rerun.",
       "owner_ref": "sdk_schema_0037",
       "proof_refs": [
-        "schema_0037"
+        "schema_0037",
+        "schema_census_fix_0605",
+        "schema_census_review_0622",
+        "schema_integrated_0634"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_composed_schema.py",
@@ -6880,12 +7187,32 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "qualified_source_head": "0b4255fd8a1c20b089093cb2508394e896f54a96",
+        "post_0118_disposition": "registered operations have closed canonical args and valid golden; reviewed fixture correction adds media.admit and the explicit six provider-only operations, with pin-only inputs/select=None and unchanged 30-branch wire inventory; original closed-args/unknown-arg/golden and exact-inventory predicates retained, not original-byte identity.",
+        "post_0118_evidence_refs": [
+          "schema_census_fix_0605",
+          "schema_census_review_0622",
+          "schema_integrated_0634"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "mapping_ref": "agent-D32-current-node-reconciliation-H30-delta-mapping.json#/root_helper_schema_mapping",
+        "custody_limits": "Two original selector/predicate mappings after reviewed fixture correction only; no commit request/reply execution or HTTP/actor qualification. Explicit six provider-only registrations and frozen 30 unique wire branches; provider registration/handler/PARAMETERS and authoring producer unchanged. 41-module and mypy1902 parity remain retained review controls, not extra census credit."
+      },
+      "historical_pre_next24_reconciliation": {
+        "status": "active_owner",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "proof_refs": [
+          "schema_0037"
+        ],
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -6893,14 +7220,17 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact current original selector qualified by retained independent scoped review; source/fixture predicate mapping is explicit in root_helper_schema_mapping. No body rerun.",
       "owner_ref": "sdk_schema_0037",
       "proof_refs": [
-        "schema_0037"
+        "schema_0037",
+        "schema_census_fix_0605",
+        "schema_census_review_0622",
+        "schema_integrated_0634"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_current_union_schema.py",
@@ -6910,12 +7240,32 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "qualified_source_head": "0b4255fd8a1c20b089093cb2508394e896f54a96",
+        "post_0118_disposition": "closed union operation inventory is exactly supported cohort; reviewed fixture correction adds media.admit and the explicit six provider-only operations, with pin-only inputs/select=None and unchanged 30-branch wire inventory; original closed-args/unknown-arg/golden and exact-inventory predicates retained, not original-byte identity.",
+        "post_0118_evidence_refs": [
+          "schema_census_fix_0605",
+          "schema_census_review_0622",
+          "schema_integrated_0634"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "mapping_ref": "agent-D32-current-node-reconciliation-H30-delta-mapping.json#/root_helper_schema_mapping",
+        "custody_limits": "Two original selector/predicate mappings after reviewed fixture correction only; no commit request/reply execution or HTTP/actor qualification. Explicit six provider-only registrations and frozen 30 unique wire branches; provider registration/handler/PARAMETERS and authoring producer unchanged. 41-module and mypy1902 parity remain retained review controls, not extra census credit."
+      },
+      "historical_pre_next24_reconciliation": {
+        "status": "active_owner",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "proof_refs": [
+          "schema_0037"
+        ],
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -6923,14 +7273,16 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact current original selector qualified by retained independent scoped review; source/fixture predicate mapping is explicit in root_helper_schema_mapping. No body rerun.",
       "owner_ref": "sdk_helper_0107",
       "proof_refs": [
-        "helper_0107"
+        "helper_0107",
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
@@ -6940,12 +7292,31 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "qualified_source_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "same-clip conflict and uncaptured edits never write",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "mapping_ref": "agent-D32-current-node-reconciliation-H30-delta-mapping.json#/root_helper_schema_mapping",
+        "custody_limits": "Only 13 exact eligible originals, source/in-process Runtime execution. Independent0627 confirms actual source/function-body/AST hashes match author pre/post evidence and module origins. No HTTP, bearer-auth, installed-runtime, browser, full reply or live actor proof. Child-word second is already D23 deferred, unchanged, visibly open and unrun."
+      },
+      "historical_pre_next24_reconciliation": {
+        "status": "active_owner",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "proof_refs": [
+          "helper_0107"
+        ],
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7046,14 +7417,16 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact current original selector qualified by retained independent scoped review; source/fixture predicate mapping is explicit in root_helper_schema_mapping. No body rerun.",
       "owner_ref": "sdk_helper_0107",
       "proof_refs": [
-        "helper_0107"
+        "helper_0107",
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
@@ -7063,12 +7436,31 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "qualified_source_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "guarded cut/nudge input never writes",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "mapping_ref": "agent-D32-current-node-reconciliation-H30-delta-mapping.json#/root_helper_schema_mapping",
+        "custody_limits": "Only 13 exact eligible originals, source/in-process Runtime execution. Independent0627 confirms actual source/function-body/AST hashes match author pre/post evidence and module origins. No HTTP, bearer-auth, installed-runtime, browser, full reply or live actor proof. Child-word second is already D23 deferred, unchanged, visibly open and unrun."
+      },
+      "historical_pre_next24_reconciliation": {
+        "status": "active_owner",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "proof_refs": [
+          "helper_0107"
+        ],
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7076,14 +7468,16 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact current original selector qualified by retained independent scoped review; source/fixture predicate mapping is explicit in root_helper_schema_mapping. No body rerun.",
       "owner_ref": "sdk_helper_0107",
       "proof_refs": [
-        "helper_0107"
+        "helper_0107",
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
@@ -7093,12 +7487,31 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "qualified_source_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "guarded cut/nudge input never writes",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "mapping_ref": "agent-D32-current-node-reconciliation-H30-delta-mapping.json#/root_helper_schema_mapping",
+        "custody_limits": "Only 13 exact eligible originals, source/in-process Runtime execution. Independent0627 confirms actual source/function-body/AST hashes match author pre/post evidence and module origins. No HTTP, bearer-auth, installed-runtime, browser, full reply or live actor proof. Child-word second is already D23 deferred, unchanged, visibly open and unrun."
+      },
+      "historical_pre_next24_reconciliation": {
+        "status": "active_owner",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "proof_refs": [
+          "helper_0107"
+        ],
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7106,14 +7519,16 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact current original selector qualified by retained independent scoped review; source/fixture predicate mapping is explicit in root_helper_schema_mapping. No body rerun.",
       "owner_ref": "sdk_helper_0107",
       "proof_refs": [
-        "helper_0107"
+        "helper_0107",
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
@@ -7123,12 +7538,31 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "qualified_source_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "guarded cut/nudge input never writes",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "mapping_ref": "agent-D32-current-node-reconciliation-H30-delta-mapping.json#/root_helper_schema_mapping",
+        "custody_limits": "Only 13 exact eligible originals, source/in-process Runtime execution. Independent0627 confirms actual source/function-body/AST hashes match author pre/post evidence and module origins. No HTTP, bearer-auth, installed-runtime, browser, full reply or live actor proof. Child-word second is already D23 deferred, unchanged, visibly open and unrun."
+      },
+      "historical_pre_next24_reconciliation": {
+        "status": "active_owner",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "proof_refs": [
+          "helper_0107"
+        ],
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7162,14 +7596,16 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact current original selector qualified by retained independent scoped review; source/fixture predicate mapping is explicit in root_helper_schema_mapping. No body rerun.",
       "owner_ref": "sdk_helper_0107",
       "proof_refs": [
-        "helper_0107"
+        "helper_0107",
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
@@ -7179,12 +7615,31 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "qualified_source_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "eligible non-second cut/nudge restart merges other cut",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "mapping_ref": "agent-D32-current-node-reconciliation-H30-delta-mapping.json#/root_helper_schema_mapping",
+        "custody_limits": "Only 13 exact eligible originals, source/in-process Runtime execution. Independent0627 confirms actual source/function-body/AST hashes match author pre/post evidence and module origins. No HTTP, bearer-auth, installed-runtime, browser, full reply or live actor proof. Child-word second is already D23 deferred, unchanged, visibly open and unrun."
+      },
+      "historical_pre_next24_reconciliation": {
+        "status": "active_owner",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "proof_refs": [
+          "helper_0107"
+        ],
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7192,14 +7647,16 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact current original selector qualified by retained independent scoped review; source/fixture predicate mapping is explicit in root_helper_schema_mapping. No body rerun.",
       "owner_ref": "sdk_helper_0107",
       "proof_refs": [
-        "helper_0107"
+        "helper_0107",
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
@@ -7209,12 +7666,31 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "qualified_source_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "eligible non-second cut/nudge restart merges other cut",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "mapping_ref": "agent-D32-current-node-reconciliation-H30-delta-mapping.json#/root_helper_schema_mapping",
+        "custody_limits": "Only 13 exact eligible originals, source/in-process Runtime execution. Independent0627 confirms actual source/function-body/AST hashes match author pre/post evidence and module origins. No HTTP, bearer-auth, installed-runtime, browser, full reply or live actor proof. Child-word second is already D23 deferred, unchanged, visibly open and unrun."
+      },
+      "historical_pre_next24_reconciliation": {
+        "status": "active_owner",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "proof_refs": [
+          "helper_0107"
+        ],
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7222,14 +7698,16 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact current original selector qualified by retained independent scoped review; source/fixture predicate mapping is explicit in root_helper_schema_mapping. No body rerun.",
       "owner_ref": "sdk_helper_0107",
       "proof_refs": [
-        "helper_0107"
+        "helper_0107",
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
@@ -7239,12 +7717,31 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "qualified_source_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "anchor capture binds exact source scope and base pair",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "mapping_ref": "agent-D32-current-node-reconciliation-H30-delta-mapping.json#/root_helper_schema_mapping",
+        "custody_limits": "Only 13 exact eligible originals, source/in-process Runtime execution. Independent0627 confirms actual source/function-body/AST hashes match author pre/post evidence and module origins. No HTTP, bearer-auth, installed-runtime, browser, full reply or live actor proof. Child-word second is already D23 deferred, unchanged, visibly open and unrun."
+      },
+      "historical_pre_next24_reconciliation": {
+        "status": "active_owner",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "proof_refs": [
+          "helper_0107"
+        ],
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7252,14 +7749,16 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact current original selector qualified by retained independent scoped review; source/fixture predicate mapping is explicit in root_helper_schema_mapping. No body rerun.",
       "owner_ref": "sdk_helper_0107",
       "proof_refs": [
-        "helper_0107"
+        "helper_0107",
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
@@ -7269,12 +7768,31 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "qualified_source_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "lost helper acknowledgement retries exact request",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "mapping_ref": "agent-D32-current-node-reconciliation-H30-delta-mapping.json#/root_helper_schema_mapping",
+        "custody_limits": "Only 13 exact eligible originals, source/in-process Runtime execution. Independent0627 confirms actual source/function-body/AST hashes match author pre/post evidence and module origins. No HTTP, bearer-auth, installed-runtime, browser, full reply or live actor proof. Child-word second is already D23 deferred, unchanged, visibly open and unrun."
+      },
+      "historical_pre_next24_reconciliation": {
+        "status": "active_owner",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "proof_refs": [
+          "helper_0107"
+        ],
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7282,14 +7800,16 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact current original selector qualified by retained independent scoped review; source/fixture predicate mapping is explicit in root_helper_schema_mapping. No body rerun.",
       "owner_ref": "sdk_helper_0107",
       "proof_refs": [
-        "helper_0107"
+        "helper_0107",
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
@@ -7299,12 +7819,31 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "qualified_source_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "tampered or forged capture journal input is refused",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "mapping_ref": "agent-D32-current-node-reconciliation-H30-delta-mapping.json#/root_helper_schema_mapping",
+        "custody_limits": "Only 13 exact eligible originals, source/in-process Runtime execution. Independent0627 confirms actual source/function-body/AST hashes match author pre/post evidence and module origins. No HTTP, bearer-auth, installed-runtime, browser, full reply or live actor proof. Child-word second is already D23 deferred, unchanged, visibly open and unrun."
+      },
+      "historical_pre_next24_reconciliation": {
+        "status": "active_owner",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "proof_refs": [
+          "helper_0107"
+        ],
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7312,14 +7851,16 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact current original selector qualified by retained independent scoped review; source/fixture predicate mapping is explicit in root_helper_schema_mapping. No body rerun.",
       "owner_ref": "sdk_helper_0107",
       "proof_refs": [
-        "helper_0107"
+        "helper_0107",
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
@@ -7329,12 +7870,31 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "qualified_source_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "tampered or forged capture journal input is refused",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "mapping_ref": "agent-D32-current-node-reconciliation-H30-delta-mapping.json#/root_helper_schema_mapping",
+        "custody_limits": "Only 13 exact eligible originals, source/in-process Runtime execution. Independent0627 confirms actual source/function-body/AST hashes match author pre/post evidence and module origins. No HTTP, bearer-auth, installed-runtime, browser, full reply or live actor proof. Child-word second is already D23 deferred, unchanged, visibly open and unrun."
+      },
+      "historical_pre_next24_reconciliation": {
+        "status": "active_owner",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "proof_refs": [
+          "helper_0107"
+        ],
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7342,14 +7902,16 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact current original selector qualified by retained independent scoped review; source/fixture predicate mapping is explicit in root_helper_schema_mapping. No body rerun.",
       "owner_ref": "sdk_helper_0107",
       "proof_refs": [
-        "helper_0107"
+        "helper_0107",
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
@@ -7359,12 +7921,31 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "qualified_source_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "tampered or forged capture journal input is refused",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "mapping_ref": "agent-D32-current-node-reconciliation-H30-delta-mapping.json#/root_helper_schema_mapping",
+        "custody_limits": "Only 13 exact eligible originals, source/in-process Runtime execution. Independent0627 confirms actual source/function-body/AST hashes match author pre/post evidence and module origins. No HTTP, bearer-auth, installed-runtime, browser, full reply or live actor proof. Child-word second is already D23 deferred, unchanged, visibly open and unrun."
+      },
+      "historical_pre_next24_reconciliation": {
+        "status": "active_owner",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "proof_refs": [
+          "helper_0107"
+        ],
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7372,14 +7953,16 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact current original selector qualified by retained independent scoped review; source/fixture predicate mapping is explicit in root_helper_schema_mapping. No body rerun.",
       "owner_ref": "sdk_helper_0107",
       "proof_refs": [
-        "helper_0107"
+        "helper_0107",
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
@@ -7389,12 +7972,31 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "qualified_source_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "tampered or forged capture journal input is refused",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "mapping_ref": "agent-D32-current-node-reconciliation-H30-delta-mapping.json#/root_helper_schema_mapping",
+        "custody_limits": "Only 13 exact eligible originals, source/in-process Runtime execution. Independent0627 confirms actual source/function-body/AST hashes match author pre/post evidence and module origins. No HTTP, bearer-auth, installed-runtime, browser, full reply or live actor proof. Child-word second is already D23 deferred, unchanged, visibly open and unrun."
+      },
+      "historical_pre_next24_reconciliation": {
+        "status": "active_owner",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "proof_refs": [
+          "helper_0107"
+        ],
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7402,14 +8004,16 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact current original selector qualified by retained independent scoped review; source/fixture predicate mapping is explicit in root_helper_schema_mapping. No body rerun.",
       "owner_ref": "sdk_helper_fixture_0114",
       "proof_refs": [
-        "helper_fixture_0114"
+        "helper_fixture_0114",
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
@@ -7419,12 +8023,31 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "qualified_source_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "nudge/restart merges a peer's other clip; original-census fixture pop(_runtime_document) becomes pop(_runtime_document, None), retaining all original behavior assertions; reviewed fixture0114, not byte-identical to full25691.",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "mapping_ref": "agent-D32-current-node-reconciliation-H30-delta-mapping.json#/root_helper_schema_mapping",
+        "custody_limits": "Only 13 exact eligible originals, source/in-process Runtime execution. Independent0627 confirms actual source/function-body/AST hashes match author pre/post evidence and module origins. No HTTP, bearer-auth, installed-runtime, browser, full reply or live actor proof. Child-word second is already D23 deferred, unchanged, visibly open and unrun."
+      },
+      "historical_pre_next24_reconciliation": {
+        "status": "active_owner",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "proof_refs": [
+          "helper_fixture_0114"
+        ],
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7662,14 +8285,16 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact current original selector qualified by retained independent scoped review; source/fixture predicate mapping is explicit in root_helper_schema_mapping. No body rerun.",
       "owner_ref": "sdk_r2_0042",
       "proof_refs": [
-        "r2_0042"
+        "r2_0042",
+        "runtime_R2_root_originals_0622",
+        "runtime_R2_root_review_0625"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_occurrence_delete_provider.py",
@@ -7679,12 +8304,31 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "qualified_source_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "authenticated delete reload inverse redo preserves exact provider closure",
+        "post_0118_evidence_refs": [
+          "runtime_R2_root_originals_0622",
+          "runtime_R2_root_review_0625"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "mapping_ref": "agent-D32-current-node-reconciliation-H30-delta-mapping.json#/root_helper_schema_mapping",
+        "custody_limits": "Provider/source qualification through RuntimeCommitService.commit -> commands.execute -> inverse/history/closure validation; DetachedPort is in-memory CAS/history with fixture ABI metadata/exceptions. No HTTP, installed-runtime, live actor, complete C0 wire shape or full reply claim. Initial literal pre/post hash capture failed because tmpdir was a regular file; fallback HEAD-to-worktree and independent 17-file audit do not supply a separately preserved immediate pre/post runtime-import snapshot."
+      },
+      "historical_pre_next24_reconciliation": {
+        "status": "active_owner",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "proof_refs": [
+          "r2_0042"
+        ],
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7692,14 +8336,16 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+      "reason": "Exact current original selector qualified by retained independent scoped review; source/fixture predicate mapping is explicit in root_helper_schema_mapping. No body rerun.",
       "owner_ref": "sdk_r2_0042",
       "proof_refs": [
-        "r2_0042"
+        "r2_0042",
+        "runtime_R2_root_originals_0622",
+        "runtime_R2_root_review_0625"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_occurrence_delete_provider.py",
@@ -7709,12 +8355,31 @@
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "qualified_source_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "authenticated delete reload inverse redo preserves exact provider closure",
+        "post_0118_evidence_refs": [
+          "runtime_R2_root_originals_0622",
+          "runtime_R2_root_review_0625"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "mapping_ref": "agent-D32-current-node-reconciliation-H30-delta-mapping.json#/root_helper_schema_mapping",
+        "custody_limits": "Provider/source qualification through RuntimeCommitService.commit -> commands.execute -> inverse/history/closure validation; DetachedPort is in-memory CAS/history with fixture ABI metadata/exceptions. No HTTP, installed-runtime, live actor, complete C0 wire shape or full reply claim. Initial literal pre/post hash capture failed because tmpdir was a regular file; fallback HEAD-to-worktree and independent 17-file audit do not supply a separately preserved immediate pre/post runtime-import snapshot."
+      },
+      "historical_pre_next24_reconciliation": {
+        "status": "active_owner",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "proof_refs": [
+          "r2_0042"
+        ],
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -9945,8 +10610,8 @@
   },
   "known_scopes_and_limits": [
     "All 267 D32 tags remain ours; zero upstream/pre-existing credit is admitted.",
-    "Historical baseline identity is preserved: the original 172 closed / 95 open baseline remains unchanged. The 0550 package snapshot is retained only as historical 179 closed / 88 open metadata context; cumulative current qualification now adds these exact 22 inverse originals for the prior 201 closed / 66 open package; the one exact 0551 D40 original now yields 202 closed / 65 open.",
-    "Current candidate census has 31 exact active IDs open/held/unknown; active owner and family counts are independently computed from membership. Owner assignment is not pass credit.",
+    "Historical count snapshots 172/95,179/88,201/66,202/65,211/56,236/31 retain their original proof scope; none is the current next24 candidate count.",
+    "Current next24 candidate census has 7 exact active original IDs; active owners Agent6+Runtime1 and families SDK/timeline5+Runtime child/import1+Execution/rendering/pack1 independently sum to7. Owner assignments are not pass credit.",
     "Aggregate neighbor totals, source-only, mock, candidate, installed-positive absence, stale failures, and wrapper-only fixes receive zero original behavior credit.",
     "The seven exact H3 selectors are current-qualified and closed by h3_current_0508; historical h3_import_0137 remains historical and is not relabeled. The renderer support timeout 0509 is pending and not credited.",
     "The exact 22 occurrence-media inverse selectors are current-qualified by inverse22_current_0537 and independently PASS-reviewed by inverse22_result_review_0550: 16 corruption and six retained-scope call rows. Their helper authority uses actual realm history/boundaries and real inverse resolvers; no predicate was weakened.",
@@ -9957,16 +10622,17 @@
     "This bounded fixture count does not claim the v2 production caller/wire-contract acceptance, including the complete request/reply shape; no product, test, schema, client, pin, or M5 change was made.",
     "Only this exact external-pack original call node earns one closure. No second generic_host original, whole86/full/gate, current-whole-HEAD installed, future, or v2 production caller/wire-contract acceptance credit. No rerun performed for this package.",
     "Historical SDK9 package scope: Exactly nine active SDK original call nodes close in this delta: capture 2, contiguous helpers 2, persistence 5. Other 258 node records, prior proof records and 60 mapping rows remain unchanged. The 24 unqualified SDK selectors and two schema inventory cases stay open; schema fix is owned separately by 0605. No aggregate, future CLI/labels/D09/restructure/schema/root/helper-neighbor/Farm/source-copy credit; no full267, current installed-head or blanket v2 acceptance claim.",
-    "H32 candidate delta closes exactly 25: D09 3, restructure 7, normal-publication PASS 7 of 8, CLI 5, track-label 3. All 242 other node records, all prior proofs, all 69 prior mappings preserved. SDK9 independent0631: overall metadata FAIL; exact nine-node substantive delta, preservation, counts, mapping, scope and full-suite honesty PASS. The missing contract inventory is corrected in metadata0636; combined SDK9+H32 package review remains pending. No independent approval of this correction is asserted. Package is not official. no_renderer closure, support/generic/ABA/schema/root/helper remainders remain OPEN. No broad full PASS, retrospective Farm credit, product/test edit or body rerun. Finite source/receipt limits are in h32_mapping and h32_*_retained proofs."
+    "Historical H32 delta closed exactly25, yielding236/31/94 mappings, independently reviewed0644 core plus metadata/cumulative scoped PASS. That snapshot is historical in this next24 candidate. All prior38 proof records and their scoped field coverage, metadata0636 inventory and94 mapping fields/links are preserved. Current next24 closes only9 roots+13 eligible helpers+2 schema originals; no full267/HTTP/installed/live actor/every-reply claim.",
+    "Next24: word-second remains unchanged/open under existing D23 (peer0114), not a new product blocker. Normal-publication no_renderer, generic/support and three other SDK/timeline originals remain open; exact7 IDs in root_helper_schema_mapping. Full25691 FAIL and Farm26511 frozen202/65 snapshot with96 possible failures receive no retrospective credit."
   ],
   "correction": {
     "basis": "Independent H30 census review after FAIL0358",
     "review_artifact": "workers/agt-F-census-review-0358/evidence/h30-reconciliation-review.json",
     "corrected_counts": {
       "total": 267,
-      "closed": 236,
-      "open": 31,
-      "held_or_unknown": 31
+      "closed": 260,
+      "open": 7,
+      "held_or_unknown": 7
     },
     "newly_credited_ids": [
       "tests/core/rendering/test_conformance.py::test_attachment_wire_parity",
@@ -10183,7 +10849,7 @@
       "inverse22_result_review_0550"
     ],
     "cumulative_0550_metadata_fix_disposition": "The 0550 package correction was metadata-only: it reconciled the seven H3 current-qualified nodes, preserved the historical 172/95 baseline and exact 37-row mapping, and produced artifact SHA c70b6627e6fe4cd7f6d900e0bcb99168dd8e56a4269ad8d88e12b07eec272268. It remains historical 179/88 package context here; it is not new behavior credit or a node-status change.",
-    "current_cumulative_disposition": "Candidate H32 package: exact 236 closed / 31 open, historical SDK9 211/56 plus 25 qualified original mappings. SDK9 independent0631: overall metadata FAIL; exact nine-node substantive delta, preservation, counts, mapping, scope and full-suite honesty PASS. The missing contract inventory is corrected in metadata0636; combined SDK9+H32 package review remains pending. No independent approval of this correction is asserted. Historical 172/95,179/88,201/66,202/65,211/56 remain provenance only.",
+    "current_cumulative_disposition": "Candidate next24 package: exact 260 closed / 7 open / 267 total and 118 mappings. Base official236/31/94 at 02bd3f1f has independent0644 core plus metadata/cumulative scoped PASS. Exactly 24 disjoint active original call nodes are added. Historical 202/65,211/56,236/31 are provenance, not current candidate counts. Candidate next24 independent package review pending; no broad full-suite PASS.",
     "newly_confirmed_closed_at_0551_d40": [
       "tests/stage1/test_zero_shim_execution_pack_deletion.py::test_generic_host_runs_external_python_orchestrator_from_admitted_pack"
     ],
@@ -10243,6 +10909,41 @@
       "h32_normal_publication_retained",
       "h32_cli_retained",
       "h32_track_labels_retained"
+    ],
+    "newly_confirmed_closed_at_next24": [
+      "tests/sdk/test_timeline_clip_scalar_provider.py::test_provider_unchanged_publication_and_aba_refuse_old_inverse[False-occurrence:f2-occurrence/clip:f2-agent-clear-clip-asset]",
+      "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_created_child_stages_reload_inverse_redo_exact_closure",
+      "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-False-child]",
+      "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-True-child]",
+      "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-False-child]",
+      "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-True-child]",
+      "tests/sdk/test_timeline_commit_provider_scalar.py::test_occurrence_inverse_reuses_original_images_and_preserves_later_sibling_pins",
+      "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-0]",
+      "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-1]",
+      "tests/sdk/test_timeline_helper_capture.py::test_genuine_anchor_capture_has_exact_source_scope_and_base_pair",
+      "tests/sdk/test_timeline_helper_capture.py::test_nudge_restart_merges_peer_other_clip",
+      "tests/sdk/test_timeline_helper_capture.py::test_conflicts_and_uncaptured_edits_never_write[same]",
+      "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[after]",
+      "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[commands]",
+      "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[hash]",
+      "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[reads]",
+      "tests/sdk/test_timeline_helper_capture.py::test_helper_lost_ack_retries_exact_request",
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[+1s]",
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[None]",
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[collection]",
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[same]",
+      "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[word-source]",
+      "tests/sdk/test_timeline_composed_schema.py::test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden",
+      "tests/sdk/test_timeline_current_union_schema.py::test_closed_union_operation_inventory_is_exactly_the_supported_cohort"
+    ],
+    "newly_confirmed_closed_at_next24_proof_refs": [
+      "runtime_R2_root_originals_0622",
+      "runtime_R2_root_review_0625",
+      "runtime_helper_originals_0622",
+      "runtime_helper_review_0627",
+      "schema_census_fix_0605",
+      "schema_census_review_0622",
+      "schema_integrated_0634"
     ]
   },
   "owner_registry_note": "H30 current ownership is Viewing for the retained-caller delta and six render-wire rows, Runtime for the seven H3 source-drift rows, and Agent for Agent-home rows. Historical worker labels are not active authors. The three track-label rows remain separate. The seven H3 import-source rows and the exact 22 occurrence-media inverse rows are current-qualified; source-copy selectors were checked and are absent from the 267-node census.",
@@ -10674,6 +11375,55 @@
       ],
       "limit": "Only the listed field projections and retained predicates are established by the cited reports/mapping; all other CONTRACTINVENTORY fields, optional annotations, HTTP transport, all reply branches and live authenticated actor custody remain unproven by this proof. No new body/source audit or execution.",
       "retained_field_or_behavior_detail": "0547/0622: three connected sheet/apply label scenarios, Unicode/empty/clear/remove, golden capture and final state. Whole byte-identical 11-case module receipt establishes membership, not every branch or every history/undo/actor field. No retired CLI dispatch or live actor claim."
+    },
+    "runtime_R2_root_originals_0622": {
+      "basis": "proofs.runtime_R2_root_originals_0622; exact retained report and mapping predicates, no new wire capture.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "retained_behavior_projection": "Raw canonical closure, history/receipt identity, created-root/owner claims, inverse/redo and no-mutation-on-refusal predicates; complete per-field wire coverage not enumerated.",
+      "limit": "Provider/source qualification through RuntimeCommitService.commit -> commands.execute -> inverse/history/closure validation; DetachedPort is in-memory CAS/history with fixture ABI metadata/exceptions. No HTTP, installed-runtime, live actor, complete C0 wire shape or full reply claim. Initial literal pre/post hash capture failed because tmpdir was a regular file; fallback HEAD-to-worktree and independent 17-file audit do not supply a separately preserved immediate pre/post runtime-import snapshot. Empty field arrays mean no complete field-by-field observation established by this retained record, not absence from execution. CONTRACTINVENTORY remains contract expectations only."
+    },
+    "runtime_R2_root_review_0625": {
+      "basis": "proofs.runtime_R2_root_review_0625; exact retained report and mapping predicates, no new wire capture.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "retained_behavior_projection": "Raw canonical closure, history/receipt identity, created-root/owner claims, inverse/redo and no-mutation-on-refusal predicates; complete per-field wire coverage not enumerated.",
+      "limit": "Provider/source qualification through RuntimeCommitService.commit -> commands.execute -> inverse/history/closure validation; DetachedPort is in-memory CAS/history with fixture ABI metadata/exceptions. No HTTP, installed-runtime, live actor, complete C0 wire shape or full reply claim. Initial literal pre/post hash capture failed because tmpdir was a regular file; fallback HEAD-to-worktree and independent 17-file audit do not supply a separately preserved immediate pre/post runtime-import snapshot. Empty field arrays mean no complete field-by-field observation established by this retained record, not absence from execution. CONTRACTINVENTORY remains contract expectations only."
+    },
+    "runtime_helper_originals_0622": {
+      "basis": "proofs.runtime_helper_originals_0622; exact retained report and mapping predicates, no new wire capture.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "retained_behavior_projection": "Exact base/source scope, captured dependency/collection reads, accepted/merged scenarios, peer preservation, request/key and reply equality on lost ACK, no-write guards and journal tamper refusal; complete per-field wire coverage not enumerated.",
+      "limit": "Only 13 exact eligible originals, source/in-process Runtime execution. Independent0627 confirms actual source/function-body/AST hashes match author pre/post evidence and module origins. No HTTP, bearer-auth, installed-runtime, browser, full reply or live actor proof. Child-word second is already D23 deferred, unchanged, visibly open and unrun. Empty field arrays mean no complete field-by-field observation established by this retained record, not absence from execution. CONTRACTINVENTORY remains contract expectations only."
+    },
+    "runtime_helper_review_0627": {
+      "basis": "proofs.runtime_helper_review_0627; exact retained report and mapping predicates, no new wire capture.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "retained_behavior_projection": "Exact base/source scope, captured dependency/collection reads, accepted/merged scenarios, peer preservation, request/key and reply equality on lost ACK, no-write guards and journal tamper refusal; complete per-field wire coverage not enumerated.",
+      "limit": "Only 13 exact eligible originals, source/in-process Runtime execution. Independent0627 confirms actual source/function-body/AST hashes match author pre/post evidence and module origins. No HTTP, bearer-auth, installed-runtime, browser, full reply or live actor proof. Child-word second is already D23 deferred, unchanged, visibly open and unrun. Empty field arrays mean no complete field-by-field observation established by this retained record, not absence from execution. CONTRACTINVENTORY remains contract expectations only."
+    },
+    "schema_census_fix_0605": {
+      "basis": "proofs.schema_census_fix_0605; exact retained report and mapping predicates, no new wire capture.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "retained_behavior_projection": "Closed canonical args, golden/unknown-arg rejection and explicit provider-only/frozen-wire operation inventory; no commitTimeline request/reply fields exercised by these inventories.",
+      "limit": "Two original selector/predicate mappings after reviewed fixture correction only; no commit request/reply execution or HTTP/actor qualification. Explicit six provider-only registrations and frozen 30 unique wire branches; provider registration/handler/PARAMETERS and authoring producer unchanged. 41-module and mypy1902 parity remain retained review controls, not extra census credit. Empty field arrays mean no complete field-by-field observation established by this retained record, not absence from execution. CONTRACTINVENTORY remains contract expectations only."
+    },
+    "schema_census_review_0622": {
+      "basis": "proofs.schema_census_review_0622; exact retained report and mapping predicates, no new wire capture.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "retained_behavior_projection": "Closed canonical args, golden/unknown-arg rejection and explicit provider-only/frozen-wire operation inventory; no commitTimeline request/reply fields exercised by these inventories.",
+      "limit": "Two original selector/predicate mappings after reviewed fixture correction only; no commit request/reply execution or HTTP/actor qualification. Explicit six provider-only registrations and frozen 30 unique wire branches; provider registration/handler/PARAMETERS and authoring producer unchanged. 41-module and mypy1902 parity remain retained review controls, not extra census credit. Empty field arrays mean no complete field-by-field observation established by this retained record, not absence from execution. CONTRACTINVENTORY remains contract expectations only."
+    },
+    "schema_integrated_0634": {
+      "basis": "proofs.schema_integrated_0634; exact retained report and mapping predicates, no new wire capture.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "retained_behavior_projection": "Closed canonical args, golden/unknown-arg rejection and explicit provider-only/frozen-wire operation inventory; no commitTimeline request/reply fields exercised by these inventories.",
+      "limit": "Two original selector/predicate mappings after reviewed fixture correction only; no commit request/reply execution or HTTP/actor qualification. Explicit six provider-only registrations and frozen 30 unique wire branches; provider registration/handler/PARAMETERS and authoring producer unchanged. 41-module and mypy1902 parity remain retained review controls, not extra census credit. Empty field arrays mean no complete field-by-field observation established by this retained record, not absence from execution. CONTRACTINVENTORY remains contract expectations only."
     }
   },
   "metadata0636": {
