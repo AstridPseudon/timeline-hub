@@ -9939,7 +9939,7 @@
         "cli": 5,
         "track_labels": 3
       },
-      "independent_sdk9_0631": "active; no PASS/official claim",
+      "independent_sdk9_0631": "SDK9 independent0631: overall metadata FAIL; exact nine-node substantive delta, preservation, counts, mapping, scope and full-suite honesty PASS. The missing contract inventory is corrected in metadata0636; combined SDK9+H32 package review remains pending. No independent approval of this correction is asserted.",
       "farm": "UNRESOLVED: Farm26511 source/head mismatch and 96 possible closed-node failures; no retrospective Farm credit or broad full PASS."
     }
   },
@@ -9957,7 +9957,7 @@
     "This bounded fixture count does not claim the v2 production caller/wire-contract acceptance, including the complete request/reply shape; no product, test, schema, client, pin, or M5 change was made.",
     "Only this exact external-pack original call node earns one closure. No second generic_host original, whole86/full/gate, current-whole-HEAD installed, future, or v2 production caller/wire-contract acceptance credit. No rerun performed for this package.",
     "Historical SDK9 package scope: Exactly nine active SDK original call nodes close in this delta: capture 2, contiguous helpers 2, persistence 5. Other 258 node records, prior proof records and 60 mapping rows remain unchanged. The 24 unqualified SDK selectors and two schema inventory cases stay open; schema fix is owned separately by 0605. No aggregate, future CLI/labels/D09/restructure/schema/root/helper-neighbor/Farm/source-copy credit; no full267, current installed-head or blanket v2 acceptance claim.",
-    "H32 candidate delta closes exactly 25: D09 3, restructure 7, normal-publication PASS 7 of 8, CLI 5, track-label 3. All 242 other node records, all prior proofs, all 69 prior mappings preserved. SDK9 independent0631 remains pending; package is not official. no_renderer closure, support/generic/ABA/schema/root/helper remainders remain OPEN. No broad full PASS, retrospective Farm credit, product/test edit or body rerun. Finite source/receipt limits are in h32_mapping and h32_*_retained proofs."
+    "H32 candidate delta closes exactly 25: D09 3, restructure 7, normal-publication PASS 7 of 8, CLI 5, track-label 3. All 242 other node records, all prior proofs, all 69 prior mappings preserved. SDK9 independent0631: overall metadata FAIL; exact nine-node substantive delta, preservation, counts, mapping, scope and full-suite honesty PASS. The missing contract inventory is corrected in metadata0636; combined SDK9+H32 package review remains pending. No independent approval of this correction is asserted. Package is not official. no_renderer closure, support/generic/ABA/schema/root/helper remainders remain OPEN. No broad full PASS, retrospective Farm credit, product/test edit or body rerun. Finite source/receipt limits are in h32_mapping and h32_*_retained proofs."
   ],
   "correction": {
     "basis": "Independent H30 census review after FAIL0358",
@@ -10183,7 +10183,7 @@
       "inverse22_result_review_0550"
     ],
     "cumulative_0550_metadata_fix_disposition": "The 0550 package correction was metadata-only: it reconciled the seven H3 current-qualified nodes, preserved the historical 172/95 baseline and exact 37-row mapping, and produced artifact SHA c70b6627e6fe4cd7f6d900e0bcb99168dd8e56a4269ad8d88e12b07eec272268. It remains historical 179/88 package context here; it is not new behavior credit or a node-status change.",
-    "current_cumulative_disposition": "Candidate H32 package: exact 236 closed / 31 open, historical SDK9 candidate 211/56 plus 25 qualified original mappings. SDK9 independent0631 is active, not claimed PASS or official. Historical 172/95,179/88,201/66,202/65,211/56 remain provenance only.",
+    "current_cumulative_disposition": "Candidate H32 package: exact 236 closed / 31 open, historical SDK9 211/56 plus 25 qualified original mappings. SDK9 independent0631: overall metadata FAIL; exact nine-node substantive delta, preservation, counts, mapping, scope and full-suite honesty PASS. The missing contract inventory is corrected in metadata0636; combined SDK9+H32 package review remains pending. No independent approval of this correction is asserted. Historical 172/95,179/88,201/66,202/65,211/56 remain provenance only.",
     "newly_confirmed_closed_at_0551_d40": [
       "tests/stage1/test_zero_shim_execution_pack_deletion.py::test_generic_host_runs_external_python_orchestrator_from_admitted_pack"
     ],
@@ -10245,5 +10245,451 @@
       "h32_track_labels_retained"
     ]
   },
-  "owner_registry_note": "H30 current ownership is Viewing for the retained-caller delta and six render-wire rows, Runtime for the seven H3 source-drift rows, and Agent for Agent-home rows. Historical worker labels are not active authors. The three track-label rows remain separate. The seven H3 import-source rows and the exact 22 occurrence-media inverse rows are current-qualified; source-copy selectors were checked and are absent from the 267-node census."
+  "owner_registry_note": "H30 current ownership is Viewing for the retained-caller delta and six render-wire rows, Runtime for the seven H3 source-drift rows, and Agent for Agent-home rows. Historical worker labels are not active authors. The three track-label rows remain separate. The seven H3 import-source rows and the exact 22 occurrence-media inverse rows are current-qualified; source-copy selectors were checked and are absent from the 267-node census.",
+  "CONTRACTINVENTORY": {
+    "classification": "CONTRACT EXPECTATIONS ONLY; not observed proof, captured HTTP, optional-field presence or live actor custody.",
+    "authority": "PLAN section 3; approved design/commit-v2.md sections 1-5 (history/attribution detail in section 7); BOARD-HEADER: acceptance includes the production caller uses it.",
+    "contract_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/commit-v2.md",
+    "production_requirement": "The mounted production caller uses the existing Runtime commit authority and preserves these shapes. Static caller traces and finite unit/source outcomes are not complete production wire acceptance.",
+    "request": {
+      "required": [
+        "api_version",
+        "project_id",
+        "timeline_id",
+        "base_revision_id",
+        "base_publication_id",
+        "commands"
+      ],
+      "identity": "api_version=1; exact project/timeline scope and base_revision_id/base_publication_id publication pair, never a digest or local counter.",
+      "commands": "Nonempty ordered transactional array; semantic op/version/select/args envelopes or doc.patch with schema_version=1. No partial acceptance.",
+      "label": "New producers send a nonempty label; ABI-1 omission normalizes to Timeline edit. Explicit empty/null is invalid.",
+      "steps": {
+        "fields": [
+          "id",
+          "label",
+          "intent",
+          "tags",
+          "command_ordinals",
+          "patch",
+          "reads"
+        ],
+        "semantics": "New producers send nonempty steps with stable unique id, label, string intent, unique-string tags, contiguous nonempty command_ordinals partitioning commands, patch and optional declared reads. ABI-1 omitted steps are synthesized; explicit empty/null is invalid. Provider completes authoritative effect patches; caller dependencies are invalid."
+      },
+      "merge": "fields | atomic; default fields. doc.patch with omitted request reads is conservatively effective atomic over complete touched scopes, even with step reads or requested fields.",
+      "reads": "Optional declared request reads: field exact tagged state, collection membership/order, or scope. Batch-entry reads and sequential steps[].reads have distinct boundaries. Explicit reads=[] is different from omission; never fabricate it from a byte diff.",
+      "dry_run": "Optional boolean, default false; preview uses true and a separate key.",
+      "annotations": {
+        "source": "Caller annotation (via/detail), not actor authority.",
+        "rationale": "Optional caller annotation; preserve/echo when supplied, not required to appear in narrower proof.",
+        "group_id": "Optional caller annotation; preserve/echo when supplied, not required to appear in narrower proof."
+      },
+      "idempotency": {
+        "transport": "Stable HTTP Idempotency-Key required for mutation; inventory of contract transport, not an HTTP observation.",
+        "scope": "(project_id, timeline_id); authorization required before replay.",
+        "request_identity": "Operation, route, authenticated publisher and entire canonical body, including base, label, steps, reads, merge and dry_run.",
+        "exact_retry": "First durable acceptance wins. Same request/key after lost ACK or restart returns identical {data, receipt}, without re-execution or extra history. Changed body or principal under the same key is idempotency_mismatch (409). Unknown outcome/not_ready retries the exact request/key first.",
+        "retries": "Head-CAS rebase retains original request/key (at most three attempts). Function conflict rerun uses returned head, at most three evaluations by default, with a fresh key for each changed request. Never rerun a function on unknown outcome.",
+        "preview": "No durable idempotency winner; repeated preview may evaluate a newer head. Commit after preview uses a new key and dry_run=false."
+      }
+    },
+    "replies": {
+      "accepted_or_merged": {
+        "envelope": "{data, receipt}; durable non-null authentic receipt is acceptance authority; receipt.result equals accepted data.",
+        "data_fields": [
+          "status",
+          "base_revision_id",
+          "base_publication_id",
+          "previous_revision_id",
+          "previous_publication_id",
+          "accepted_revision_id",
+          "rebased_onto",
+          "canonical_document",
+          "document_digest",
+          "commands",
+          "id_map",
+          "provider_version",
+          "compiler_version",
+          "merge_mode",
+          "steps",
+          "publisher",
+          "label"
+        ],
+        "annotations_when_supplied": [
+          "source",
+          "rationale",
+          "group_id"
+        ],
+        "head_revision": "accepted lands on requested base with rebased_onto=null; merged previous_* and rebased_onto pin actual landing head. Result publication ID is receipt.receipt_id; revision is accepted_revision_id.",
+        "canonical_document": [
+          "schema_version",
+          "project_id",
+          "timeline_id",
+          "parent_revision",
+          "shot_revisions",
+          "internal_timeline_revisions",
+          "dependency_manifest"
+        ],
+        "digests": "document_digest plus closure revision content_digest values; authenticated records digest/request hash/event-chain verification retained. Merged canonical closure includes peer changes and is adopted whole.",
+        "receipt_fields": [
+          "receipt_id",
+          "command_kind",
+          "idempotency_key",
+          "request_hash",
+          "project_id",
+          "project_seq",
+          "event_ids",
+          "result",
+          "created_at"
+        ],
+        "records_effects_steps_dependencies_bindings": "Authenticated records.commands and records.steps preserve complete authored/derived effects, ordered before/after states, complete authoritative step patches and optional nonempty dependencies; request/step/captured semantic/conservative scope dependencies keep original evaluation boundaries. Bindings retain submitted/physical ref, image revision/content digest, base/landing pair, ordinals and verified edge path; authenticated successor/allocation provenance remains required. These are result/history recorder surfaces, not invented top-level data fields.",
+        "history_undo_steps": "Receipt-bound history retains label, steps, source/rationale/group_id when supplied, merge/merge_mode, reads, exact previous/current publication/revision, provider/compiler versions, full command recorder, records.undo_of and records.undo_steps (null for whole undo). History list items/next_cursor/head share pinned through pair and scope. Undo is a guarded new commit using authenticated landing-head records; preserve A-to-B-to-A/later dependency checks and original entries.",
+        "authoritative_attribution": "Runtime-authenticated publisher on result, receipt-bound history and accepted event is actor authority; source/intent/tags/label/rationale cannot override it. No client publisher/actor authority; no invented legacy attribution or step evidence.",
+        "historical_rebased": "Authentic historical rebased acceptances replay unchanged, including original envelope, request hash, event chain, records digest and rebased_onto; never normalize to merged, synthesize v2 steps, rehash old requests or fabricate receipts. New v2 non-base successes/previews use merged."
+      },
+      "preview": {
+        "envelope": "{data, receipt:null}",
+        "data_fields": [
+          "status=preview",
+          "would_status=accepted|merged",
+          "base_revision_id",
+          "base_publication_id",
+          "evaluated_head",
+          "canonical_document",
+          "document_digest",
+          "commands",
+          "id_map",
+          "provider_version",
+          "compiler_version",
+          "merge_mode",
+          "steps"
+        ],
+        "semantics": "Same validation/head checks and complete authoritative step patches/dependencies; candidate revision IDs provisional. No durable receipt, head move, revisions, allocations, events or accepted history; invalid/conflict forms still apply."
+      },
+      "conflict": {
+        "envelope_fields": [
+          "http_status=409",
+          "code=conflict",
+          "message",
+          "details"
+        ],
+        "details_fields": [
+          "status=conflict",
+          "reason",
+          "code",
+          "path",
+          "hint",
+          "suggested_command",
+          "base",
+          "current",
+          "conflicts"
+        ],
+        "head": "details.base and details.current contain exact revision_id/publication_id; current is the current head, not a receipt or acceptance.",
+        "semantics": "Explicit reason includes value/dependency/selection/atomic-scope or inverse conflict as applicable; preserve structured details and no-write outcome."
+      },
+      "invalid": {
+        "envelope_fields": [
+          "http_status=422",
+          "code=validation_error",
+          "message",
+          "details"
+        ],
+        "details_fields": [
+          "status=invalid",
+          "reason",
+          "code",
+          "path",
+          "hint",
+          "suggested_command",
+          "base",
+          "current",
+          "conflicts"
+        ],
+        "semantics": "Structured invalid code/path/hint/suggested_command, no accepted receipt/history. Legacy history_unavailable/head_busy/idempotency_mismatch remain 409 refused with structured details; auth/availability retain their semantics, never acceptance."
+      }
+    },
+    "proof_boundary": "PROOF_FIELD_COVERAGE below is separate and conservative. No unlisted per-field exercise is inferred from full receipt, current source, schema, aggregate counts, or the inventory itself."
+  },
+  "PROOF_FIELD_COVERAGE": {
+    "full_raw_25691": {
+      "basis": "Existing proofs.full_raw_25691; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "env86_installed": {
+      "basis": "Existing proofs.env86_installed; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "env_source16": {
+      "basis": "Existing proofs.env_source16; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "render_cohort_0013": {
+      "basis": "Existing proofs.render_cohort_0013; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "render_audio_0013": {
+      "basis": "Existing proofs.render_audio_0013; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "render_node_five": {
+      "basis": "Existing proofs.render_node_five; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "cli_surface_0012": {
+      "basis": "Existing proofs.cli_surface_0012; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "observer_2355": {
+      "basis": "Existing proofs.observer_2355; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "env_misc_0020": {
+      "basis": "Existing proofs.env_misc_0020; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "d13_wheel_0039": {
+      "basis": "Existing proofs.d13_wheel_0039; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "p4_symbol_0023": {
+      "basis": "Existing proofs.p4_symbol_0023; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "capture_0052": {
+      "basis": "Existing proofs.capture_0052; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "Only the listed field projections and retained predicates are established by the cited reports/mapping; all other CONTRACTINVENTORY fields, optional annotations, HTTP transport, all reply branches and live authenticated actor custody remain unproven by this proof. No new body/source audit or execution.",
+      "retained_field_or_behavior_detail": "Saved/candidate capture source identity, digest, dependencies, registry and host round-trip predicates; real Runtime publication/validation/claim/CAS/GenericPackHost. This is capture admission evidence, not an enumerated commitTimeline body or all reply fields."
+    },
+    "r2_0042": {
+      "basis": "Existing proofs.r2_0042; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "schema_0037": {
+      "basis": "Existing proofs.schema_0037; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "helper_0107": {
+      "basis": "Existing proofs.helper_0107; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "helper_fixture_0114": {
+      "basis": "Existing proofs.helper_fixture_0114; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "sdk_fixture_0042": {
+      "basis": "Existing proofs.sdk_fixture_0042; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "g5_sdk4_c271_2149": {
+      "basis": "Existing proofs.g5_sdk4_c271_2149; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "render_wire_27934": {
+      "basis": "Existing proofs.render_wire_27934; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "h3_import_0137": {
+      "basis": "Existing proofs.h3_import_0137; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "viewing_0444_mapping": {
+      "basis": "Existing proofs.viewing_0444_mapping; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "integrated_0500": {
+      "basis": "Existing proofs.integrated_0500; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "h3_current_0508": {
+      "basis": "Existing proofs.h3_current_0508; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "inverse22_current_0537": {
+      "basis": "Existing proofs.inverse22_current_0537; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "inverse22_result_review_0550": {
+      "basis": "Existing proofs.inverse22_result_review_0550; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "d40_observed_0551": {
+      "basis": "Existing proofs.d40_observed_0551; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "d40_result_review_0552": {
+      "basis": "Existing proofs.d40_result_review_0552; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "The retained census record does not establish a per-field C0 wire inventory. Empty arrays mean not established here, not absent from execution. Original finite behavior/mapping credit is preserved; complete CONTRACTINVENTORY remains unproven by this record."
+    },
+    "sdk9_source_map_0554": {
+      "basis": "Existing proofs.sdk9_source_map_0554; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "Retained static source/function/AST/receipt review only; no field exercise is newly established by a review. Corrected0619 admits exactly nine originals, excludes two schema selectors and leaves 24 unqualified. CONTRACTINVENTORY states expectations, not observed optional field presence or blanket caller acceptance."
+    },
+    "sdk9_independent_0603": {
+      "basis": "Existing proofs.sdk9_independent_0603; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "Retained static source/function/AST/receipt review only; no field exercise is newly established by a review. Corrected0619 admits exactly nine originals, excludes two schema selectors and leaves 24 unqualified. CONTRACTINVENTORY states expectations, not observed optional field presence or blanket caller acceptance."
+    },
+    "sdk9_corrected_0619": {
+      "basis": "Existing proofs.sdk9_corrected_0619; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "Retained static source/function/AST/receipt review only; no field exercise is newly established by a review. Corrected0619 admits exactly nine originals, excludes two schema selectors and leaves 24 unqualified. CONTRACTINVENTORY states expectations, not observed optional field presence or blanket caller acceptance."
+    },
+    "sdk9_capture_retained": {
+      "basis": "Existing proofs.sdk9_capture_retained; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "Only the listed field projections and retained predicates are established by the cited reports/mapping; all other CONTRACTINVENTORY fields, optional annotations, HTTP transport, all reply branches and live authenticated actor custody remain unproven by this proof. No new body/source audit or execution.",
+      "retained_field_or_behavior_detail": "Saved/candidate capture source identity, digest, dependencies, registry and host round-trip predicates; real Runtime publication/validation/claim/CAS/GenericPackHost. This is capture admission evidence, not an enumerated commitTimeline body or all reply fields."
+    },
+    "sdk9_helper_retained": {
+      "basis": "Existing proofs.sdk9_helper_retained; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [
+        "commands (sequential helper changes)",
+        "steps (contiguous command ordinals and step-local reads)"
+      ],
+      "reply_fields_exercised": [
+        "data.status=accepted [False]",
+        "data.status=merged [True]"
+      ],
+      "limit": "Only the listed field projections and retained predicates are established by the cited reports/mapping; all other CONTRACTINVENTORY fields, optional annotations, HTTP transport, all reply branches and live authenticated actor custody remain unproven by this proof. No new body/source audit or execution.",
+      "retained_field_or_behavior_detail": "0224/0603/0619: corrected replay map 14 -> 5; other carrier fields preserved and both pinned validators pass. This does not enumerate optional field presence. Historical temporary packet is unavailable; retained hashes/logs only, no packet rehash."
+    },
+    "sdk9_persistence_retained": {
+      "basis": "Existing proofs.sdk9_persistence_retained; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [
+        "base_revision_id/base_publication_id (exact restart pins)",
+        "commands and saved journal reads (same-clip refusal diagnostics)"
+      ],
+      "reply_fields_exercised": [],
+      "limit": "Only the listed field projections and retained predicates are established by the cited reports/mapping; all other CONTRACTINVENTORY fields, optional annotations, HTTP transport, all reply branches and live authenticated actor custody remain unproven by this proof. No new body/source audit or execution.",
+      "retained_field_or_behavior_detail": "0008/0037: four file-backed lifecycle originals validate history DTO/exact head pins and open_bundle; same-clip restart uses genuine Runtime refusal/no-write. No disjoint merge success, no per-field authentic receipt/history/actor claim from fixture DTOs."
+    },
+    "h32_d09_retained": {
+      "basis": "Existing proofs.h32_d09_retained; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "Only the listed field projections and retained predicates are established by the cited reports/mapping; all other CONTRACTINVENTORY fields, optional annotations, HTTP transport, all reply branches and live authenticated actor custody remain unproven by this proof. No new body/source audit or execution.",
+      "retained_field_or_behavior_detail": "Managed-scene check/invocation; no commitTimeline request/reply field is established. Runtime 8ea0766f behavior only; 1d9ddba import probe is not behavior evidence."
+    },
+    "h32_restructure_retained": {
+      "basis": "Existing proofs.h32_restructure_retained; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [
+        "commands (including later text-binding.set follow-up)",
+        "merge=atomic",
+        "original request/idempotency key preserved across lost ACK"
+      ],
+      "reply_fields_exercised": [
+        "canonical_document (complete closure and retained identities)",
+        "exact original request/reply replay and one durable publication"
+      ],
+      "limit": "Only the listed field projections and retained predicates are established by the cited reports/mapping; all other CONTRACTINVENTORY fields, optional annotations, HTTP transport, all reply branches and live authenticated actor custody remain unproven by this proof. No new body/source audit or execution.",
+      "retained_field_or_behavior_detail": "0602: seven exact source-mode originals; canonical closure, opaque data, narration recovery, stored-form disjoint merge and overlap refusal; closure mismatch preserves calls/history/document/SQL. Exact retry is established only for these scenarios. Source trace, not exercise of every wire member: base pair, commands, label, steps, merge, reads, source, dry_run and key. rationale/group_id explicitly omitted by this caller.",
+      "optional_annotations_omitted": [
+        "rationale",
+        "group_id"
+      ]
+    },
+    "h32_normal_publication_retained": {
+      "basis": "Existing proofs.h32_normal_publication_retained; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [
+        "exact original request/idempotency key retry",
+        "changed payload under same key (no-write control)"
+      ],
+      "reply_fields_exercised": [],
+      "limit": "Only the listed field projections and retained predicates are established by the cited reports/mapping; all other CONTRACTINVENTORY fields, optional annotations, HTTP transport, all reply branches and live authenticated actor custody remain unproven by this proof. No new body/source audit or execution.",
+      "retained_field_or_behavior_detail": "0557/0601: seven PASS selectors cover retry/narration recovery, changed-key/force no-write, disjoint merge and supplied/opened connection. Report does not losslessly enumerate every reply field. Eighth complete-closure/followups selector fails no_renderer before Runtime submission, remains OPEN. Optional rationale/group_id are source-supported, not observed presence."
+    },
+    "h32_cli_retained": {
+      "basis": "Existing proofs.h32_cli_retained; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [],
+      "reply_fields_exercised": [],
+      "limit": "Only the listed field projections and retained predicates are established by the cited reports/mapping; all other CONTRACTINVENTORY fields, optional annotations, HTTP transport, all reply branches and live authenticated actor custody remain unproven by this proof. No new body/source audit or execution.",
+      "retained_field_or_behavior_detail": "0540/0544/0548/0601: exact SDK asset/voice/script/gap arguments and ordering for three mocked collaborators; two --file local transforms/reloads/guidance. No captured commitTimeline request, receipt or reply. 0601 statically traces printed and mounted final save callers; that does not upgrade these units to HTTP/C0 proof."
+    },
+    "h32_track_labels_retained": {
+      "basis": "Existing proofs.h32_track_labels_retained; original result, source custody and credit limits remain unchanged.",
+      "request_fields_exercised": [
+        "commands (golden parent/track:picture label set/clear)",
+        "source.via=sheet"
+      ],
+      "reply_fields_exercised": [
+        "receipt.receipt_id/publication=pub1"
+      ],
+      "limit": "Only the listed field projections and retained predicates are established by the cited reports/mapping; all other CONTRACTINVENTORY fields, optional annotations, HTTP transport, all reply branches and live authenticated actor custody remain unproven by this proof. No new body/source audit or execution.",
+      "retained_field_or_behavior_detail": "0547/0622: three connected sheet/apply label scenarios, Unicode/empty/clear/remove, golden capture and final state. Whole byte-identical 11-case module receipt establishes membership, not every branch or every history/undo/actor field. No retired CLI dispatch or live actor claim."
+    }
+  },
+  "metadata0636": {
+    "scope": "Metadata-only correction of SDK9review0631; cumulative 236 closed / 31 open / 267 total and 94 mapping members unchanged.",
+    "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-count-SDK9-review-0631/report.md",
+    "review_sha256": "61be89c19ca8a2e4e539d3862954b79ec2a73727ccd274908764392cd1bd0b89",
+    "disposition": "SDK9 independent0631: overall metadata FAIL; exact nine-node substantive delta, preservation, counts, mapping, scope and full-suite honesty PASS. The missing contract inventory is corrected in metadata0636; combined SDK9+H32 package review remains pending. No independent approval of this correction is asserted.",
+    "fix": "Explicit complete request/reply CONTRACTINVENTORY, separate conservative coverage for all 38 prior proof records; no new behavior proof, nodes, receipts or pass credit.",
+    "preservation": "All node/proof records unchanged; original fields of all 94 CSV/JSON mapping members unchanged. Only contract_inventory_ref metadata link is added to mapping rows.",
+    "pending": "Independent combined SDK9+25H32 review of this cumulative package.",
+    "unavailable_retained_metadata": [
+      {
+        "proof_ref": "sdk9_persistence_retained",
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-persistence-fixture-0008/log.txt",
+        "limit": "Historical stored log hash is preserved in the unchanged proof record, but this log is absent locally and was not rehashed. Durable 0008/0037 reports and corrected independent source/receipt findings remain the available basis."
+      }
+    ]
+  }
 }
