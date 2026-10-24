@@ -9,13 +9,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).parents[1]
 sys.path.insert(0, str(ROOT / "packages" / "python"))
-from astrid_runtime_client.generated import (
-    OPERATIONS as PYTHON_OPERATIONS,
-)
-from astrid_runtime_client.generated import PROTOCOL as PYTHON_PROTOCOL
-from astrid_runtime_client.generated import (
-    SCHEMA_DIGEST as PYTHON_SCHEMA_DIGEST,
-)
+from astrid_runtime_client.generated import OPERATIONS as PYTHON_OPERATIONS  # noqa: E402
+from astrid_runtime_client.generated import PROTOCOL as PYTHON_PROTOCOL  # noqa: E402
+from astrid_runtime_client.generated import SCHEMA_DIGEST as PYTHON_SCHEMA_DIGEST  # noqa: E402
 
 
 def _operation_ids() -> list[str]:

@@ -27,9 +27,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from astrid_runtime.loopback_http import urlopen_loopback
-from runtime_protocol.daemon import RuntimeDaemon
-from runtime_protocol.store import RealmStore
+from astrid_runtime.loopback_http import urlopen_loopback  # noqa: E402
+from runtime_protocol.daemon import RuntimeDaemon  # noqa: E402
+from runtime_protocol.store import RealmStore  # noqa: E402
 
 DEFAULT_OUT = ROOT / "conformance" / "responses"
 CAPABILITY = "render.recorded"
