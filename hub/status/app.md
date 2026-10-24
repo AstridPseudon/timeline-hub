@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T03:23:45Z | dispatcher heartbeat 8s | live 3 (sol 2, luna 1, other 0) | busy30 20 | status age 0m -->
+<!-- app | 2026-10-24T03:26:41Z | dispatcher heartbeat 0s | live 6 (sol 3, luna 3, other 0) | busy30 19 | status age 0m -->
 # app board, 2026-10-24T03:25Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -64,7 +64,7 @@ Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-han
 
 | readiness-phase-diagnostics | Correlate exact bootstrap read phases | Sol; Luna review | Retained cause report 0309 | doing | app-readiness-phase-diagnostics-sol-0318 | Narrow safe dependency-change and generation-linked loader phases; preserve behavior, waits, bodies and cap. No actual run authorised. | Fixed App804 branch |
 
-| P2-gesture-causes | Classify three actual gesture failures | Luna | Retained P2 12221 artifacts | doing | app-P2-D41-gesture-cause-0322 | Element capture refused; popup ADD and parent move waited for responses. Read-only actual boundaries; no competing element author or rerun. | Fixed App804 / Agent079 / Runtime37eb |
+| P2-gesture-causes | Classify three actual gesture failures | Luna | Retained P2 12221 artifacts | review | app-P2-gesture-review-0327 | Element pre-transport head guard; popup target absent before file selection; parent move dispatch unclear. Exact causes unknown; source path review assigned. | Fixed App804 / Agent079 / Runtime37eb |
 
 | readiness-D42-trace | Correlate retained request and close times | Sol | Existing 3362 and 12221 traces | doing | app-readiness-D42-trace-sol-0325 | D42 asks one timing confirmation by 03:50. No new run, endpoint probe or causal inference from unfinished requests. | Fixed App804 artifacts |
 | readiness-D42-coalesce | Reuse same-head in-flight basis reads | Luna; independent review | D42; diagnostic hook ownership | doing | app-readiness-D42-coalesce-0325 | Exact scope and revision/publication keys, pending promise only; no wait, body or guard change. Runtime owns main verification memo. | Pinned App804 branch |
