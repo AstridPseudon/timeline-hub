@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T15:50:40Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 1m -->
+<!-- app | 2026-10-24T15:53:54Z | dispatcher heartbeat 0s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 1m -->
 # app board, 2026-10-24T15:33Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -44,7 +44,7 @@
 | P3-current-verdict | Judge same-ID preflight failure | Luna | Producer 1435 terminal | merged | Verdict 1438 NO-GO | Exact 1689: exit 2 in 1 second; 0 PASS, 0 product FAIL, Gate5 NOTRUN. All original stages unrun; source matches pure target. | Current be98 |
 | F-node-current | Verify prior Node regressions | Luna | Refreshed home tree | merged | Node1345 PASS36; ENV2 | 33 verifier,marker guard and both release nodes pass. Two extension SSH setup failures remain explicit. | d24ed69dcd |
 | F-visual-seam | Qualify shared upstream seam fixture | Luna | Final Runtime fixture identity | merged | Fixture1356 PASS; exact e68 blob | All10 cases pass on App d24. Actual Runtime e68 fixture equals qualified f69 blob; no copies or source edits. | App d24; Runtime e68 |
-| F-install-schema | Align installer schema after D62 | Luna | First pin authored; stale new fixture | doing | Pin1545; return1548 | Exact tuple pins plus strict skew2/schema2 PASS. Updater Node3/4: new fixture hardcodes4118. First return fixes fixture; guard stays strict. | Pin branch1545 |
+| F-install-schema | Align installer schema after D62 | Luna | Pin and fixture author PASS | merging | Pin1545; return1548 PASS | Exact Agent5777/Runtime8b32/schema867f. Four updater tests,skew2,schema2,plan and lint PASS. Normal merge queued; guard unchanged. | Branch1548 |
 | F-current-full | Full checkpoint on refreshed source | Luna; App service | Actual be98 pure source | merged | Producer1446; actual8158 FAIL | Exit1/1203s. Vitest19256 PASS/1 FAIL installer schema. Node NOTRUN after Vitest short-circuit. Source and full parents verified. | be98aac54e |
 | F-App-full | Corrected App checkpoint terminal | App service; Luna producer | Same actual16138 | merged | Terminal producer1227 | FAIL exit1/1665s. Vitest19251PASS;Node257PASS38FAIL26SKIP. Final full GO remains open. | 5a9ff97cf0 |
 | F-core-map | Map App core suites and old failures | Luna | D54/D54a | merged | Return1233 | Historical19570 groups fixed or D52 removed. Home upstream behavior UNKNOWN; no false pre-existing claim. | cca3deb361 |
@@ -55,13 +55,15 @@
 | F-P4-P5-host | Retain historical App host preparation | Luna | D59 venues supersede App host | gated:D59-venues | Draft0834; review0838 | P4 now Agent service; P5 main service. No duplicate App registration or new host task. | Source draft only |
 | F-final | Final P1–P5 and core suites | Lane services; App verdicts | D59 cut | gated:D59-cut | App P1/P2/P3; Runtime coordinates | Current cycles run now; final cut requires all lanes core0/regressions0 plus P2/P3 PASS on those heads. | Cut pending |
 
-| D66-plain-launch | Boot originals with plain manifest | HARD Sol by D66 | Normal current heads now adopted | doing | app-D66-plain-stack-sol-1528 | Agent adoption landed5777; App95cf merged forward into active launch worker via sanctioned route. Boot schema input need cleared. | App95cf; Runtime8b32 |
+| D66-plain-launch | Boot originals with plain manifest | HARD Sol by D66 | Boot and author tests PASS | merging | app-D66-plain-stack-sol-1528 | Native seed,Agent identity,history,2/8/1collection,hashes and lint PASS. Helper home merge queued; P113564 running. | Authored D66 |
 | U4p-D62 | Adopt recorder ABI history producer | Luna | Actual producer8b32; author PASS | merged | Home1539 PASS | Normal sync/vendor/schema2/artifacts PASS. Fourteen mappings exact; tested TS blobs retained. Actual App home95cf. | 95cfbf216f |
 
 | D65-tool | Prepare tuple manifest command | Luna | Author tests PASS; D56 | merged | app-D65-manifest-tool-1534 | Four tests, help/plan, syntax and diff PASS. update-manifest command sent to Runtime. Actual pin waits D62 adoption. | daa6a68062 |
 | P1-current-run | Plain original control | App service; Sol launch | Actual normal launch GREEN | doing | Actual13564; plain Sol1528 | Exact ID app-D66-plain-stack-sol-1528-d66-plain-p1-three-products-1024154715-13564. Wait same ID; green releases P2/P3 immediately. | App adopted95cf tree |
 
-| U3-D68 | Final upstream connection refresh | Luna | Author289 PASS; clean real merge | merging | app-U3-D68-upstream-final-1543 | True3881 merge,41 paths,no conflicts. Fifteen files289 tests,app/node types,lint PASS. Generic browser runner error retained. | Upstream3881 |
+| U3-D68 | Final upstream connection refresh | Luna | Author289 PASS; clean real merge | merged | app-U3-D68-upstream-final-1543 | HOME2312 contains true3881 merge. Fifteen files289 tests,types/lint PASS. Upstream now frozen for gates. | 2312114d0d |
+
+| F-current-join | Qualify actual composed App head | Luna | All current packets home6d74 | doing | app-F-current-join-proof-1553 | Run strict skew2,Node4,schema2 on integrated source; reuse exact289/71 source proofs. No duplicate full or original. | 6d74fdd88a |
 
 Integration: be98aac54e275282467d85f79d3beb4665416039, tree 2839c7e7841d1c0897fd8e7c12f0c848d94e3979. Normal tool adoption 94d89 is merged; only runtime.lock.json differs from qualified d24ed. All 14 mapped artifacts are unchanged and match actual Runtime e68. U3-final includes exact upstream 09c844 and retains all mapped live tests. Source qualification 1409 passes 67 mounted controls on actual Agent 47b / Runtime e68.
 
