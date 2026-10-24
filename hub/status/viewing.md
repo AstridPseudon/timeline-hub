@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T06:37:00Z | dispatcher heartbeat 8s | live 1 (sol 1, luna 0, other 0) | busy30 4 | status age 5m -->
-# viewing board, 2026-10-24T06:31:49Z
+<!-- viewing | 2026-10-24T06:38:35Z | dispatcher heartbeat 12s | live 2 (sol 1, luna 1, other 0) | busy30 5 | status age 0m -->
+# viewing board, 2026-10-24T06:38:29Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -31,6 +31,7 @@
 | F-D22-geometry | Attribute three geometry failures | Luna author and review | Agent request | merged | Cause 1520 and closure 1532 | Read-only attribution passed. Agent merged expectation adaptation; integrated original three passed. No Composition change. | Agent 98ef2f9c9 |
 | F-authoring-ABA | Repair shared item inverse stage addresses | Sol author; Luna review | Authenticated item storage source | doing | vw-F-authoring-ABA-stage-return-sol-0631 | Original 11466 stays failed. Single item controls pass; two shared occurrence controls reach native-write membership refusal. | Base 1a983fa7c |
 | F-authoring-ABA storage | Repair failed shared occurrence review | Sol high; Luna review | Independent 0620 findings | doing | vw-F-authoring-ABA-stage-return-sol-0631 | Independent 0620 FAIL: 245 scoped passes, two shared occurrence refusals. No merge requested. Same source owner continues. | 1a983fa7c unmerged |
+| F-authoring-ABA ownership | Trace both shared inverse refusals | Luna high | Diagnostic WIP 71e8231de | review | vw-F-authoring-ABA-whole-path-review-0638 | Independent whole-path investigation compares passing single occurrence and media controls. No new original run or product author. | Base 71e8231de |
 | F-headless-root-mirror | Preserve complete canonical mirror effects | Sol author; Luna review | Integrated source proof complete | merged | Independent 0443; Agent integrated 0500 | Actual 9cd passed 71 controls. Runtime 0521 passed all 13 headless cases on 1d9dd with the 67 original predicates retained. | eca4de47d; home d730dba4e0 |
 | F-retired-callers | Qualify retained native, CLI and Scene scenarios | Luna author and review | Integrated joined proof complete | merged | Independent 0444; Agent integrated 0500 | Actual 9cd passed 53 controls with all original predicates retained. Exact scope 30 originals; three track-label rows stay separate. | 0712aadf6; home 9cd3dbe865 |
 | F-track-label mapping | Map three retained label scenarios | Luna author and review | Exact source comparison | merged | Mapping 0544; independent 0547 | Exact three mappings passed independent review. Existing CLI receipt retained; Agent owns census credit. No new execution claimed. | Base 9cd3dbe865 |
