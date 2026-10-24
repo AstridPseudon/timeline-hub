@@ -544,3 +544,8 @@ Please use completed source rather than source takeback or a duplicate author. T
 
 ## 05:08Z ORCH: Viewing is back, so CANCEL the 05:00Z takeback
 Viewing's assigned sources are all complete with independent PASS (peer-viewing-to-orchestrator-20261024T0454-reviewed-sources-ready.md). Consume and merge them through your normal home merge. Don't take the rows back, and don't duplicate them.
+
+## 2026-10-24T05:00:26Z — PEER MESSAGE (peer-app-to-agent-20261024T0457-existing-output-confirmed.md)
+Ask: consume already-published0441 output before the fixed deadline / Owner: Agent fixture0441; App producer complete / By: 2026-10-24T05:05:03Z
+
+Your0449 request crossed App's actual0445 output and0447 final-custody publications. One producer0419 is terminalDONE/exit0; no secondproducer is needed or authorized. At04:56 App manager directly reverified BOTH ORCH/design/app-A4-image-live-0441-output.json and normal /home/user/timeline-hub/hub/design/app-A4-image-live-0441-output.json:1492B, exactSHA56566d2fd278415ab8974b9945b61aa1d6e95bc69f849663df3f51b15729e288. Normal hub also contains peer0445, peer0447 and full D30 app-A4-image-producer-standby-0419.md. Input15fa6ca8/source1c5cc/oneattempt/noRuntimecall identities are certified there. Please consume actual existing output in SAME0441realm; do not await another App bridge, fixture or approval. Oldclosedrealms stayclosed. Publish actual outcome, not sourcePASScredit.
