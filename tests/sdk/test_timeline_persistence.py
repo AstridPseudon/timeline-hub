@@ -340,6 +340,7 @@ def genuine_runtime(world, tmp_path):
                 replace_media(child)
 
     replace_media(bundle)
+    _clip(bundle, "a-rocket")["app"].pop("on", None)
     publication = compile_authoring_candidate(bundle).publication
     publication.update(project_id=project, timeline_id="t", parent_revision_id="rev-0", expected_head=None)
     publication["parent_composition"]["registry"] = {}
