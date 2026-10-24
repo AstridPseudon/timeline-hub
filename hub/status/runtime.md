@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T04:45:45Z | dispatcher heartbeat 1s | live 2 (sol 1, luna 1, other 0) | busy30 16 | status age 2m -->
+<!-- main | 2026-10-24T04:48:12Z | dispatcher heartbeat 11s | live 1 (sol 1, luna 0, other 0) | busy30 15 | status age 0m -->
 # runtime board, 2026-10-24T04:38:01Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -58,7 +58,7 @@
 
 | OPS-farm-agent-full | Prepare supported farm full-suite setup | Sol / Luna | Farm Codex setup and receipts | blocked:farm | Independent review0423 PASS; Farm handoff0429 | Fresh API6 and template2 passed. Exact reviewed packet sent; no live setup or checkpoint claimed. Optional helper remains held. | c9a58f3d2 artifact |
 | R2r-historical-image | Restore authenticated retired roots on redo | Sol / Luna | Integrated proof passed | merged | Review 0405; integrated 0413 PASS | 13 standalone cases and 243 controls passed; 74 configured deselections. [Proof](../../design/runtime-historical-image-integrated-0413.md) | 2b49da8d6 / 2e96c68c |
-| R-D42-history-memo | Harden verified replay memo | Sol / Luna | Complete validation state correction | doing | rt-R-D42-sealed-validation-sol-0423 | D45 removes gate dependency. Seven closure and resolver attacks remain correction targets; merge only after clean independent security review. | 1936772ad tests; a684 held |
+| R-D42-history-memo | Harden verified replay memo | Sol / Luna | Stable validation boundary design | doing | Author0423 blocked; rt-R-D42-boundary-design-sol-0448 | Held source passes184 and fails9 state attacks. No source correction released; read-only design replaces another blind patch. D45 keeps gates independent. | 6c6bb375 tests; a684 held |
 | R-D42-proof-pin | Preserve a compatible future memo pin | Sol / Luna | Clean memo source if later needed | blocked:runtime | No active pin author | D45: next P2/P3 uses existing37eb without memo. Prior unsafe backport stays held; no new checkout needed. | Earlier backport held |
 | R-D42-HTTP | Measure a future memo pin over HTTP | Luna | Clean reviewed memo pin if needed | blocked:runtime | No active HTTP worker | D45 removes these timings from the next P2/P3 prerequisites. Do not run an unsafe pin or a duplicate gate. | No released memo pin |
 | R2r-source-copy-guards | Classify two retained source-copy guards | Luna / Luna | Exact missing guard packet | blocked:agent | Facts0435; independent0439 PASS | Literal guard is Agent recorder. Complete current capture absent; exact evidence need sent to Agent. No Runtime fix justified. | Read-only facts |
