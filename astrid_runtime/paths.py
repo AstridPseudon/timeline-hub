@@ -24,13 +24,18 @@ def _install_record_path(home: Path) -> Path:
     if platform.sys.platform == "win32":
         local_app_data = Path(os.environ.get("LOCALAPPDATA") or home / "AppData" / "Local")
         return local_app_data / "astrid-install.json"
+    if platform.sys.platform == "linux":
+        return Path(os.environ.get("XDG_DATA_HOME") or home / ".local" / "share") / "astrid-install.json"
     return home / ".local" / "share" / "astrid-install.json"
 
 
 def _installed_data_root(home: Path) -> Path | None:
     """Read the installer's selected data root, ignoring unavailable records."""
+    path = _install_record_path(home)
+    if path.is_symlink():
+        return None
     try:
-        record = json.loads(_install_record_path(home).read_text(encoding="utf-8"))
+        record = json.loads(path.read_text(encoding="utf-8"))
         if not isinstance(record, dict) or record.get("owner") != INSTALL_RECORD_OWNER:
             return None
         raw = record.get("data_root")

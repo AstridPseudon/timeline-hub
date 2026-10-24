@@ -82,6 +82,7 @@ def test_install_record_path_matches_installer_per_os(tmp_path, monkeypatch, sys
     home = tmp_path / "home"
     monkeypatch.setattr(paths_module.platform.sys, "platform", system)
     monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "local-app-data"))
+    monkeypatch.delenv("XDG_DATA_HOME", raising=False)
 
     expected = (
         tmp_path / "local-app-data" / expected_suffix
@@ -89,3 +90,20 @@ def test_install_record_path_matches_installer_per_os(tmp_path, monkeypatch, sys
         else home / expected_suffix
     )
     assert paths_module._install_record_path(home) == expected
+
+
+def test_install_record_path_follows_xdg_data_home_on_linux(tmp_path, monkeypatch):
+    monkeypatch.setattr(paths_module.platform.sys, "platform", "linux")
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "xdg"))
+    assert paths_module._install_record_path(tmp_path / "home") == tmp_path / "xdg" / "astrid-install.json"
+
+
+def test_symlinked_install_record_is_ignored(tmp_path, monkeypatch):
+    monkeypatch.setattr(paths_module.platform.sys, "platform", "darwin")
+    home = tmp_path / "home"
+    target = tmp_path / "elsewhere.json"
+    target.write_text('{"owner": "haus.astrid.runtime", "data_root": "/tmp/x"}', encoding="utf-8")
+    record = home / ".local" / "share" / "astrid-install.json"
+    record.parent.mkdir(parents=True)
+    record.symlink_to(target)
+    assert paths_module._installed_data_root(home) is None
