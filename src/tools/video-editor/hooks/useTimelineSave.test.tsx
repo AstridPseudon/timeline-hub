@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import { AstridElementOperationAdapter, createElementTimelineRoutes } from '../runtime/element-adapter.ts';
+import { buildAstridAgentElementContext } from '../runtime/element-contract.ts';
 import React from 'react';
 import { act, fireEvent, renderHook, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -196,6 +198,23 @@ describe('useTimelineSave — recovered draft durability', () => {
   afterEach(() => {
     vi.clearAllTimers();
     vi.useRealTimers();
+  });
+
+  it('keeps supported browser element saves on the current mounted persistence path', async () => {
+    const harness = setup(async () => 2, undefined, { data: makeTimelineData('browser'), loadBasis: undefined });
+    try {
+      await settleInitialRecoveryCheck();
+      const routes = createElementTimelineRoutes(harness.hook.result.current.elementTimelineRoutes);
+      const adapter = new AstridElementOperationAdapter(buildAstridAgentElementContext({}), routes, 'browser');
+      let result: Awaited<ReturnType<typeof adapter.execute>> | undefined;
+      await act(async () => { result = await adapter.execute({ name: 'timeline.set_clip_fade', project: 'browser',
+        timeline: 'timeline-1', expected_version: 1, clip_id: 'clip-browser', fade_in: 0.25 }); });
+      expect(harness.saveTimeline).toHaveBeenCalledOnce();
+      expect(harness.saveTimeline).toHaveBeenCalledWith('timeline-1', expect.objectContaining({ clips: [
+        expect.objectContaining({ id: 'clip-browser', entrance: { type: 'fade', duration: 0.25 } }),
+      ] }), 1, expect.anything(), undefined);
+      expect(result).toMatchObject({ config_version: 2, config: { clips: [expect.objectContaining({ entrance: { type: 'fade', duration: 0.25 } })] } });
+    } finally { harness.hook.unmount(); }
   });
 
   it.each((['image', 'video'] as const).flatMap(mode =>

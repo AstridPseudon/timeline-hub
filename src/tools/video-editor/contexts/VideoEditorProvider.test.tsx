@@ -104,6 +104,8 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
+const mountedElementRoutes = { get: vi.fn(), save: vi.fn() };
+
 const mocks = {
   setInputModality: vi.fn(),
   setInputModalityFromPointerType: vi.fn(() => 'touch'),
@@ -175,6 +177,7 @@ vi.mock('@/shared/hooks/settings/useToolSettings', () => ({
 vi.mock('@/tools/video-editor/hooks/useTimelineState', () => ({
   useTimelineState: () => {
     const editor = {
+      elementTimelineRoutes: mountedElementRoutes,
       data: operationalChromeState.editorData,
       resolvedConfig: { registry: {} },
       deviceClass: 'tablet',

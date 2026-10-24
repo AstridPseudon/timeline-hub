@@ -8,6 +8,8 @@ import type { AssetRegistry, TimelineConfig } from '../types/index.ts';
 import { canonicalizeTimelinePair, projectTimelineTracksForDisplay } from '../lib/timeline-domain.ts';
 import { withDefaultTimelineOutput } from '../lib/defaults.ts';
 import { markTimelineSaveRejection, type TimelineSaveRejectionCode } from '../lib/timeline-diagnostics.ts';
+import { applyTimelineOperation, type TimelineElementOperation } from '../runtime/element-adapter.ts';
+import type { AstridAgentElementContext } from '../runtime/element-contract.ts';
 import type { PlacePreparedMediaCommand } from '../commands/media.ts';
 
 export interface TimelineSaveSource {
@@ -24,7 +26,7 @@ export type TimelineGestureReadBasis = {
   clipId: string;
 } & ({ kind: 'split'; timeSeconds: number } | { kind: 'move'; trackId: string } | {
   kind: 'trim'; patch: Partial<Pick<TimelineConfig['clips'][number], 'from' | 'to' | 'hold' | 'speed'>>;
-} | { kind: 'prepared-media'; command: PlacePreparedMediaCommand });
+} | { kind: 'prepared-media'; command: PlacePreparedMediaCommand } | { kind: 'element'; operation: TimelineElementOperation; context: AstridAgentElementContext });
 
 /** Assembly supplies the ORIGINAL verified read, not loadTimelineCommandBasis at save time. */
 export interface TimelineLocalSaveHandoff {
@@ -164,7 +166,7 @@ export function createTimelineLocalSaveHandoff(options: {
   function remoteHistoryAvailable(): boolean {
     return !inversePending && !preparedMediaFailure && options.session.getState().status === 'saved';
   }
-  function changes(raw: unknown, previous: unknown, next: unknown, path: string[]): unknown {
+  function changes(raw: unknown, previous: unknown, next: unknown, path: string[], element = false): unknown {
     if (same(previous, next)) return structuredClone(raw);
     if (Array.isArray(previous) && Array.isArray(next) && path.length === 2
       && path[0] === 'config' && ['clips', 'tracks'].includes(path[1])) {
@@ -177,7 +179,7 @@ export function createTimelineLocalSaveHandoff(options: {
       return next.map((row) => {
         if (!object(row) || typeof row.id !== 'string' || !row.id) refuse('authored entity identity is unavailable', 'authored-identity-unavailable');
         return oldRows.has(row.id)
-          ? changes(rawRows.get(row.id), oldRows.get(row.id), row, [...path, row.id]) : authoredJson(row);
+          ? changes(rawRows.get(row.id), oldRows.get(row.id), row, [...path, row.id], element) : authoredJson(row);
       });
     }
     if (object(previous) && object(next)) {
@@ -193,17 +195,23 @@ export function createTimelineLocalSaveHandoff(options: {
           delete result[key];
         }
       }
+      if (element && path.length === 3 && path[0] === 'config' && path[1] === 'clips') {
+        for (const key of ['elementRef', 'entrance', 'transition']) {
+          if (Object.prototype.hasOwnProperty.call(previous, key) && next[key] === undefined
+            && !same(previous[key], next[key])) delete result[key];
+        }
+      }
       // Omission is a partial editor view, not an explicit clear. An unchanged
       // default/undefined never overwrites the raw own key (including null).
       for (const [key, value] of Object.entries(next)) {
         if (same(field(previous, key), value)) continue;
         if (value === undefined) {
-          if (key !== 'transition' || path.length !== 3 || path[0] !== 'config' || path[1] !== 'clips') {
+          if ((!(element && ['elementRef', 'entrance'].includes(key)) && key !== 'transition') || path.length !== 3 || path[0] !== 'config' || path[1] !== 'clips') {
             refuse(`explicit clear is unavailable: ${[...path, key].join('/')}`, 'explicit-clear-unavailable');
           }
           delete result[key];
         } else {
-          Object.defineProperty(result, key, { value: changes(field(raw, key), field(previous, key), value, [...path, key]),
+          Object.defineProperty(result, key, { value: changes(field(raw, key), field(previous, key), value, [...path, key], element),
             enumerable: true, writable: true, configurable: true });
         }
       }
@@ -226,18 +234,20 @@ export function createTimelineLocalSaveHandoff(options: {
         const parent = before.parent_revision.payload;
         const hasChildren = before.shot_revisions.length || before.internal_timeline_revisions.length
           || (Array.isArray(parent.occurrences) && parent.occurrences.length);
-        if (hasChildren && gestureBasis?.kind !== 'prepared-media') refuse('child ownership/fork mapping is unavailable', 'child-ownership-unavailable');
+        if (hasChildren && gestureBasis?.kind !== 'prepared-media' && gestureBasis?.kind !== 'element') refuse('child ownership/fork mapping is unavailable', 'child-ownership-unavailable');
         if (!sourceChecked) { checkSource(initial, source); sourceChecked = true; }
         if (!same(before, document)) refuse('local authored document changed outside this handoff', 'local-document-changed');
         authoredJson(next); // Reject non-finite editor values before mutating the chain.
         const after = structuredClone(before);
         const payload = after.parent_revision.payload;
-        const topLevelClips = gestureBasis?.kind === 'prepared-media' && object(parent.config)
+        const topLevelClips = (gestureBasis?.kind === 'prepared-media' || gestureBasis?.kind === 'element') && object(parent.config)
           && !Object.prototype.hasOwnProperty.call(parent.config, 'clips') && Array.isArray(parent.clips);
         const configBefore = topLevelClips ? { ...parent.config as Record<string, OutboxJson>, clips: parent.clips } : parent.config;
         const configSource = topLevelClips && !source.config.clips.length
           ? { ...source.config, clips: parent.clips } : source.config;
-        payload.config = changes(configBefore, configSource, next.config, ['config']) as Record<string, OutboxJson>;
+        if (gestureBasis?.kind === 'element' && topLevelClips && !source.config.clips.length
+          && Array.isArray(parent.clips) && parent.clips.length) refuse('element parent clips are not present in the mounted source');
+        payload.config = changes(configBefore, configSource, next.config, ['config'], gestureBasis?.kind === 'element') as Record<string, OutboxJson>;
         payload.registry = changes(parent.registry, source.registry, next.registry, ['registry']) as Record<string, OutboxJson>;
         if (next.bundle !== undefined && !same(source.bundle, next.bundle)) {
           (payload.config as Record<string, OutboxJson>).bundle = authoredJson(next.bundle);
@@ -250,10 +260,55 @@ export function createTimelineLocalSaveHandoff(options: {
         }
         let reads: OutboxJson[] | undefined;
         if (gestureBasis) {
-          if (!['split', 'trim', 'move', 'prepared-media'].includes(gestureBasis.kind)
+          if (!['split', 'trim', 'move', 'prepared-media', 'element'].includes(gestureBasis.kind)
             || !same(authoredJson(gestureBasis.config), authoredJson(authoringSource.config))
             || !same(authoredJson(gestureBasis.registry), authoredJson(authoringSource.registry))) {
             refuse('gesture read basis differs from the original local authoring input', 'gesture-basis-mismatch');
+          }
+        }
+        if (gestureBasis?.kind === 'element') {
+          if (!same(next.registry, authoringSource.registry) || !same(next.bundle, authoringSource.bundle)
+            || !same(authoredJson(next.config), authoredJson(applyTimelineOperation(gestureBasis.context,
+              gestureBasis.config, gestureBasis.operation)))) refuse('element operation differs from its original causal input');
+          const config = configBefore as Record<string, OutboxJson>;
+          if (!Array.isArray(config.clips)) refuse('element parent clips are unavailable');
+          const clips = config.clips as Record<string, OutboxJson>[];
+          const order = clips.map(row => row.id as string);
+          const clipPath = topLevelClips ? ['clips'] : ['config', 'clips'];
+          reads = [{ kind: 'collection', ref: 'parent', path: clipPath, members: [...order].sort(), order }];
+          const read = (row: Record<string, OutboxJson>, key: string, path: string[]) => reads!.push({
+            kind: 'field', ref: 'parent', path: [...path, key], state: Object.prototype.hasOwnProperty.call(row, key)
+              ? { state: 'present', value: row[key] } : { state: 'absent' },
+          });
+          const op = gestureBasis.operation;
+          const selectedId = 'from_clip' in op ? op.from_clip : op.clip_id;
+          const selected = clips.find(row => row.id === selectedId);
+          const transition = ['timeline.apply_transition', 'timeline.update_transition', 'timeline.remove_transition'].includes(op.name);
+          for (const row of clips) {
+            // Lookup/allocation consults IDs; adjacency additionally routes and sorts.
+            const keys = new Set(['id']);
+            if (transition) { keys.add('track'); keys.add('at'); }
+            if (row === selected || transition) {
+              if (transition || (op.name === 'timeline.apply_element' && op.placement === 'overlay' && op.duration === undefined)) {
+                for (const key of ['clipType', 'hold', 'from', 'to', 'speed']) keys.add(key);
+              }
+              if (op.name === 'timeline.apply_element') {
+                if (op.placement === 'overlay') { keys.add('track'); if (op.at === undefined) keys.add('at'); }
+                else if (op.params) keys.add('params');
+              } else if (op.name === 'timeline.update_element') {
+                keys.add('elementRef'); if (op.params) keys.add('params');
+                if (op.duration !== undefined) for (const key of ['clipType', 'hold', 'asset', 'file', 'src', 'source', 'from', 'to']) keys.add(key);
+              } else if (op.name === 'timeline.remove_element') { keys.add('elementRef'); keys.add('entrance'); }
+              else if (op.name === 'timeline.set_clip_fade') keys.add('effects');
+              else if (op.name === 'timeline.update_transition') keys.add('transition');
+            }
+            for (const key of keys) read(row, key, [...clipPath, `id:${row.id}`]);
+          }
+          if (op.name === 'timeline.apply_element' && op.placement === 'overlay') read(config, 'tracks', ['config']);
+          if (transition) {
+            // output.fps is defaulted from the theme by the upstream loader.
+            read(config, 'output', ['config']);
+            read(config, 'theme', ['config']); read(config, 'theme_overrides', ['config']);
           }
         }
         let commands: [EditCommand] | undefined;
@@ -337,9 +392,8 @@ export function createTimelineLocalSaveHandoff(options: {
               ] }];
           }
         }
-        // Only the two validated parent semantic recipes can coexist with child
-        // closure. The complete before image was cloned; no child patch is owned.
-        if (hasChildren && !commands) refuse('child ownership/fork mapping is unavailable', 'child-ownership-unavailable');
+        // Verified parent recipes preserve the complete child closure cloned above.
+        if (hasChildren && !commands && gestureBasis?.kind !== 'element') refuse('child ownership/fork mapping is unavailable', 'child-ownership-unavailable');
         if (topLevelClips) delete (payload.config as Record<string, OutboxJson>).clips;
         if (!commands) {
           const clips = (payload.config as Record<string, OutboxJson>).clips;
@@ -353,7 +407,7 @@ export function createTimelineLocalSaveHandoff(options: {
             refuse('new media needs its original Runtime project media selection. Draft retained; reload the timeline, then import the media again');
           }
         }
-        if (gestureBasis && gestureBasis.kind !== 'prepared-media') {
+        if (gestureBasis && gestureBasis.kind !== 'prepared-media' && gestureBasis.kind !== 'element') {
           const config = parent.config as Record<string, unknown>;
           const clips = config.clips;
           if (!Array.isArray(clips)) refuse('gesture clip read has no authored collection', 'gesture-clips-unavailable');
@@ -427,14 +481,14 @@ export function createTimelineLocalSaveHandoff(options: {
           ...(mediaReads && mediaSteps ? { reads: mediaReads, steps: mediaSteps,
             rationale: mediaSteps[0].intent, group_id: mediaSteps[0].id } : {}) }) : options.session.appendDocument({ before, after,
           roots: [{ ref: 'parent', revisionId: before.parent_revision.revision_id, contentDigest: before.parent_revision.content_digest }],
-          ...(reads === undefined ? {} : { reads, merge: 'fields' as const }),
+          ...(reads === undefined ? {} : { reads, merge: gestureBasis?.kind === 'element' ? 'atomic' as const : 'fields' as const }),
           label: 'Edit timeline', step: { id: crypto.randomUUID(), label: 'Edit timeline', intent: gestureBasis ? (gestureBasis.kind === 'split'
             ? `Split ${gestureBasis.clipId} at ${gestureBasis.timeSeconds}`
             : gestureBasis.kind === 'move' ? `Move ${gestureBasis.clipId} on ${gestureBasis.trackId}`
               : gestureBasis.kind === 'trim' ? `Trim ${gestureBasis.clipId}: ${canonicalJsonStringify(gestureBasis.patch)}`
-                : 'Add media') : 'Save local editor changes', tags: [] } });
+                : gestureBasis.kind === 'element' ? gestureBasis.operation.name : 'Add media') : 'Save local editor changes', tags: [], ...(gestureBasis?.kind === 'element' ? { reads } : {}) } });
         source = { ...next,
-          config: changes(source.config, source.config, next.config, ['config']) as TimelineConfig,
+          config: changes(source.config, source.config, next.config, ['config'], gestureBasis?.kind === 'element') as TimelineConfig,
           registry: changes(source.registry, source.registry, next.registry, ['registry']) as AssetRegistry,
           ...(next.bundle === undefined && source.bundle !== undefined ? { bundle: source.bundle } : {}),
         };

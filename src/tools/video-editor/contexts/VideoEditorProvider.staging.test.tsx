@@ -4,19 +4,21 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB } from 'fake-indexeddb';
-import { AgentChatProvider } from '@/shared/contexts/AgentChatContext';
+import { AgentChatProvider, useAgentChatBridge } from '@/shared/contexts/AgentChatContext';
 import { toast } from '@/shared/components/ui/runtime/sonner';
 import { systemResetSelectionForProjectChange } from '@/shared/state/selectionStore';
 import { RuntimeDataProvider } from '@/integrations/runtime/dataProvider';
 import { RUNTIME_SCHEMA_DIGEST } from '@/integrations/runtime/contract-metadata';
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture';
+import { ApiError } from '@/integrations/runtime/generated';
+import { createCommitOutbox } from '../commands/commitOutbox';
 import type { MediaSelection } from '@/integrations/runtime/timeline-commit-types';
 import type { DataProvider, TimelineCommandBasis } from '../data/DataProvider';
 import type { AssetRegistry, TimelineClip, TimelineConfig } from '../types';
-import { createDefaultTimelineConfig } from '../lib/defaults';
+import { createDefaultTimelineConfig, withDefaultTimelineOutput } from '../lib/defaults';
 import { buildTimelineData } from '../lib/timeline-data';
 import { MEDIA_COMMAND_DESCRIPTORS, PLACE_PREPARED_MEDIA_COMMAND_DESCRIPTOR } from '../commands/media';
-import { useTimelineChromeContext, useTimelineEditorData } from '../hooks/timelineStore';
+import { useTimelineChromeContext, useTimelineEditorData, useTimelineEditorOps } from '../hooks/timelineStore';
 import { VideoEditorProvider } from './VideoEditorProvider';
 import { ADD_GENERATION_QUERY_PARAM, readPendingAdds, writePendingAdds } from '@/domains/media-lightbox/hooks/addToVideoEditorConstants';
 
@@ -221,5 +223,137 @@ describe('mounted provider staged generation persistence', () => {
       await act(async () => { await retry.getChrome().flushPendingSave(); });
       expect(retry.commit).toHaveBeenCalledOnce();
     } finally { retry.view.unmount(); }
+  });
+});
+
+
+async function mountElement(outcome: 'accepted' | 'merged' | 'conflict' | 'invalid' = 'accepted') {
+  const config = { ...createDefaultTimelineConfig(), output: { fps: 30, resolution: null, file: null },
+    clips: [{ id: 'parent', track: 'V1', at: 0, hold: 2, opaque: { keep: null } },
+      { id: 'sibling', track: 'V1', at: 3, hold: 2 }], opaque: { absent: null } } as unknown as TimelineConfig;
+  const base = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' },
+    { projectId, timelineId, children: true }).data.canonical_document;
+  const registry = { assets: {}, opaque: { keep: null } };
+  base.parent_revision.payload = { ...base.parent_revision.payload, config, clips: config.clips, registry };
+  base.parent_revision.content_digest = fixtureDigest(base.parent_revision.payload);
+  let basis: TimelineCommandBasis = { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: base };
+  const initialData = await buildTimelineData({ ...config, ...withDefaultTimelineOutput(config) }, registry, async file => file, 1, undefined,
+    { projectId, timelineId, headRevisionId: 'r0', headPublicationId: 'p0' });
+  let editor!: ReturnType<typeof useTimelineEditorData>;
+  let chrome!: ReturnType<typeof useTimelineChromeContext>;
+  let chat!: ReturnType<typeof useAgentChatBridge>;
+  let ops!: ReturnType<typeof useTimelineEditorOps>;
+  function Consumer() {
+    editor = useTimelineEditorData(); chrome = useTimelineChromeContext(); chat = useAgentChatBridge(); ops = useTimelineEditorOps();
+    return null;
+  }
+  const commit = vi.fn<NonNullable<DataProvider['commitTimeline']>>(async (request, key) => {
+    if (outcome === 'conflict' || outcome === 'invalid') throw new ApiError(outcome === 'conflict' ? 409 : 422,
+      outcome, 'Element dependency changed', '', { status: outcome, reason: 'dependency_changed', head: basis.head,
+        code: 'element_invalid', path: ['config', 'clips'], hint: 'Read latest', suggested_command: 'timeline.show' });
+    const document = structuredClone(basis.canonicalDocument);
+    for (const command of request.commands) {
+      expect(command.op).toBe('doc.patch');
+      for (const change of command.args.changes as Array<{ op: string; path: string[]; value?: unknown }>) {
+        let target: unknown = document.parent_revision.payload;
+        for (const part of change.path.slice(0, -1)) target = part.startsWith('id:')
+          ? (target as Array<{ id: string }>).find(row => row.id === part.slice(3)) : (target as Record<string, unknown>)[part];
+        const key = change.path.at(-1)!;
+        if (change.op === 'remove') delete (target as Record<string, unknown>)[key];
+        else (target as Record<string, unknown>)[key] = structuredClone(change.value);
+      }
+    }
+    // The Runtime's canonical result, including unrelated landed edits, wins.
+    const raw = document.parent_revision.payload.config as unknown as TimelineConfig;
+    raw.clips[0].hold = 4;
+    if (outcome === 'merged') raw.clips[1].at = 9;
+    document.parent_revision.payload.clips = structuredClone(raw.clips);
+    document.parent_revision.revision_id = 'r1';
+    document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
+    const response = acceptedCommit({ revision_id: 'r1', publication_id: 'p1' },
+      { revision_id: request.base_revision_id, publication_id: request.base_publication_id }, { projectId, timelineId, commands: request.commands });
+    Object.assign(response.data, { status: outcome, canonical_document: document, document_digest: fixtureDigest(document),
+      merge_mode: request.merge, steps: request.steps, label: request.label, source: request.source });
+    response.receipt.idempotency_key = key; response.receipt.result = response.data;
+    basis = { head: { revisionId: 'r1', publicationId: 'p1' }, canonicalDocument: document };
+    return { response, accepted: basis.head, canonicalDocument: document, graph: {}, receipt: response.receipt };
+  });
+  const provider: DataProvider = { loadTimeline: vi.fn(async () => ({ config, configVersion: 1, head: initialData.head })),
+    loadAssetRegistry: vi.fn(async () => registry), resolveAssetUrl: async file => file, saveTimeline: vi.fn(), saveTimelineAtHead: vi.fn(),
+    loadTimelineCommandBasis: vi.fn(async () => structuredClone(basis)), getRecoverableIdentity: async () => ({ realmId: 'realm', actorId: 'actor' }), commitTimeline: commit };
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  const view = render(<MemoryRouter><QueryClientProvider client={client}><AgentChatProvider>
+    <VideoEditorProvider dataProvider={provider} projectId={projectId} projectSlug="element-project" timelineId={timelineId} userId={null} initialTimelineData={initialData}>
+      <Consumer />
+    </VideoEditorProvider>
+  </AgentChatProvider></QueryClientProvider></MemoryRouter>);
+  await waitFor(() => expect(chat.editorContext?.elementOperationAdapter).toBeDefined());
+  const entry = chat.editorContext!.elementContext!.catalog.find(item => item.id === 'text-card' && item.packId === 'rendering')!;
+  expect(entry.admitted).toBe(true);
+  return { view, provider, commit, base, getBasis: () => basis, getEditor: () => editor, getChrome: () => chrome,
+    getOps: () => ops, capture: () => chat.editorContext!.elementOperationAdapter!.captureForTurn(),
+    operation: { name: 'timeline.apply_element', project: 'element-project', timeline: timelineId, expected_version: 1, clip_id: 'parent', placement: 'clip',
+      element: { id: entry.id, kind: entry.kind, packId: entry.packId, revision: entry.revision }, params: { color: 'red' } } };
+}
+
+describe('registered parent element outbox handoff', () => {
+  it.each(['accepted', 'merged', 'conflict', 'invalid'] as const)('saves a child-bearing parent with a retained original basis: %s', async outcome => {
+    const mounted = await mountElement(outcome);
+    try {
+      let result: unknown;
+      await act(async () => {
+        const pending = mounted.capture().execute(mounted.operation);
+        if (outcome === 'conflict' || outcome === 'invalid') await expect(pending).rejects.toThrow('draft retained');
+        else result = await pending;
+      });
+      expect(mounted.commit).toHaveBeenCalledOnce();
+      const [request, key] = mounted.commit.mock.calls[0];
+      expect(request).toMatchObject({ api_version: 1, project_id: projectId, timeline_id: timelineId,
+        base_revision_id: 'r0', base_publication_id: 'p0', label: 'Edit timeline', merge: 'atomic', dry_run: false, source: { via: 'app' },
+        steps: [{ id: expect.any(String), label: 'Edit timeline', intent: 'timeline.apply_element', tags: [], command_ordinals: [0], patch: expect.any(Array) }],
+        reads: expect.arrayContaining([{ kind: 'field', ref: 'parent', path: ['config', 'clips', 'id:parent', 'params'],
+          state: { state: 'absent' } }]) });
+      expect(key).toEqual(expect.any(String));
+      expect(request.steps![0].patch).toEqual(request.commands[0].args.changes);
+      const outboxes = createCommitOutbox({ indexedDB, exclusiveLock: async (_key, work) => work() });
+      const [stored] = await outboxes.list({ realmId: 'realm', actorId: 'actor', projectId, timelineId });
+      if (outcome === 'conflict' || outcome === 'invalid') {
+        expect(stored.intents).toHaveLength(1);
+        expect(stored.pending?.outcome).toMatchObject({ kind: 'rejected', error: { details: { reason: 'dependency_changed' } } });
+        expect(mounted.getEditor().dataRef.current?.config.clips[0].elementRef).toBeUndefined();
+      } else {
+        expect(stored.intents).toHaveLength(0);
+        expect(result).toMatchObject({ head: { headRevisionId: 'r1', headPublicationId: 'p1' }, config: { clips: [
+          expect.objectContaining({ id: 'parent', hold: 4, elementRef: mounted.operation.element, params: { color: 'red' } }),
+          expect.objectContaining({ id: 'sibling', at: outcome === 'merged' ? 9 : 3 }),
+        ] } });
+        const document = mounted.getBasis().canonicalDocument;
+        expect(document.shot_revisions).toEqual(mounted.base.shot_revisions);
+        expect(document.internal_timeline_revisions).toEqual(mounted.base.internal_timeline_revisions);
+        expect(document.parent_revision.payload.occurrences).toEqual(mounted.base.parent_revision.payload.occurrences);
+        expect(document.parent_revision.payload.registry).toEqual(mounted.base.parent_revision.payload.registry);
+        expect(document.parent_revision.payload.config.output).toEqual({ fps: 30, resolution: null, file: null });
+        expect(document.parent_revision.payload.config.clips[0].opaque).toEqual({ keep: null });
+        expect(document.parent_revision.payload.config.clips[0]).not.toHaveProperty('asset');
+      }
+      expect(mounted.provider.saveTimeline).not.toHaveBeenCalled();
+      expect(mounted.provider.saveTimelineAtHead).not.toHaveBeenCalled();
+    } finally { mounted.view.unmount(); }
+  });
+
+  it('refuses a captured turn after a local dependent preview changes under the same head', async () => {
+    const mounted = await mountElement();
+    try {
+      const captured = mounted.capture();
+      await act(async () => { const current = mounted.getEditor().dataRef.current!;
+        // Model an upstream gesture before this captured turn executes.
+        const resolvedConfig = structuredClone(current.resolvedConfig);
+        resolvedConfig.clips[0].at = 7;
+        mounted.getOps().applyEdit({ type: 'config', resolvedConfig }, { save: false });
+      });
+      await act(async () => { await expect(captured.execute(mounted.operation)).rejects.toThrow('captured local timeline changed'); });
+      expect(mounted.commit).not.toHaveBeenCalled();
+      expect(mounted.provider.saveTimeline).not.toHaveBeenCalled();
+    } finally { mounted.view.unmount(); }
   });
 });

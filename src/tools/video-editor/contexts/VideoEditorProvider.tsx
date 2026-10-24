@@ -225,8 +225,8 @@ function LocalTestDiagnosticsBridge({ collection }: { collection?: DiagnosticCol
 
 /** Registers video-editor state into the app-level AgentChatContext and keeps
  *  timeline attachment metadata synchronized in the selection store. */
-function AgentChatBridgeRegistration({ operationsEnabled = true }: { operationsEnabled?: boolean }) {
-  const { timelineId, timelineName, project, provider, agentChat, liveSceneOperationPort, agentSelectionOwner, astridElementHost, timelineEditability, userId, shots } = useVideoEditorRuntime();
+function AgentChatBridgeRegistration({ operationsEnabled = true, elementTimelineRoutes }: { operationsEnabled?: boolean; elementTimelineRoutes?: import('../runtime/element-adapter.ts').ElementTimelineRoutes }) {
+  const { timelineId, timelineName, project, agentChat, liveSceneOperationPort, agentSelectionOwner, astridElementHost, timelineEditability, userId, shots } = useVideoEditorRuntime();
   const { registerTimeline, unregisterTimeline } = agentChat;
   const operationAuthority = useRef({ active: true, operationsEnabled, timelineEditability });
   operationAuthority.current.operationsEnabled = operationsEnabled;
@@ -305,7 +305,7 @@ function AgentChatBridgeRegistration({ operationsEnabled = true }: { operationsE
   // Catalog/selection updates must not replace the authority's private draft
   // registry while an ACP turn is still using this adapter.
   const ownedElementAdapter = useMemo(() => {
-    if (!project.projectSlug || !timelineId) return undefined;
+    if (!project.projectSlug || !timelineId || !elementTimelineRoutes) return undefined;
     const assertAuthority = () => {
       const authority = operationAuthority.current;
       if (!authority.active) {
@@ -321,13 +321,13 @@ function AgentChatBridgeRegistration({ operationsEnabled = true }: { operationsE
     };
     return new AstridElementOperationAdapter(
       elementContext,
-      createElementTimelineRoutes(provider, assertAuthority),
+      createElementTimelineRoutes(elementTimelineRoutes, assertAuthority),
       project.projectSlug,
       { timelineId, assertAuthority, getHead: () => timelineHead.current },
     );
     // elementContext is refreshed in place below; the provider/project/timeline
     // identity is the authority boundary, never a selection/catalog revision.
-  }, [project.projectSlug, provider, timelineId]);
+  }, [project.projectSlug, elementTimelineRoutes, timelineId]);
   ownedElementAdapter?.updateContext(elementContext);
   const elementOperationAdapter = operationsEnabled && timelineWritable ? ownedElementAdapter : undefined;
 
@@ -844,7 +844,7 @@ export function VideoEditorRuntimeContent({
 
   return (
     <EditorRuntimeScaffold assembly={assembly} sync={sync}>
-      <AgentChatBridgeRegistration operationsEnabled={operationsEnabled} />
+      <AgentChatBridgeRegistration operationsEnabled={operationsEnabled} elementTimelineRoutes={editor.elementTimelineRoutes} />
       {children}
       {lightboxAssetKey && resolvedLightboxMedia && (
         <>

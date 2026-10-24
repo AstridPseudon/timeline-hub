@@ -1265,7 +1265,7 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
 
   return {
     store,
-    editor,
+    editor: { ...editor, elementTimelineRoutes: save.elementTimelineRoutes },
     editorData,
     editorOps,
     chrome,
