@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T14:52:27Z | dispatcher heartbeat 9s | live 2 (sol 2, luna 0, other 0) | busy30 6 | status age 1m -->
+<!-- main | 2026-10-24T14:55:43Z | dispatcher heartbeat 10s | live 3 (sol 2, luna 1, other 0) | busy30 6 | status age 0m -->
 # runtime board, 2026-10-24T14:51:01Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -87,9 +87,10 @@
 | U1d-consumer-rebind | Rebind producer identity in consumers | Agent / App Luna | Normal vendor checks passed | merged | Agent custody1410; App adoption1404 | Agent5492 and Appbe98 adopt e68 provenance. Canonical15/14 bytes unchanged. D61 successor adoption remains separate. | Agent5492 / Appbe98 |
 | R-recorder-abi-authority | Persist accepted recorder mode under D62 | HARD Sol | D62 decided; wire1447 parallel | doing | rt-R-recorder-D62-producer-sol-1450 | D62 declines submit-time custody. Compute accepted-record mode once; immutable event and metadata authenticate history. | Base d068 held |
 | R-forward-created-authority | Preserve omitted forward allocation claims | HARD Sol | Agent exact two-case source handback | doing | rt-R-forward-created-authority-sol-1450 | Auth.py only; preserves explicit claims and reservation custody. Separate from store/port D62 source. | Base e68 |
-| R0-D61-history-wire | Generate approved optional history ABI field | Luna | D61 additive field approved | doing | rt-R0-D61-history-wire-1447 | Independent wire preparation; no authority claim. Held from merge and consumer adoption until complete producer qualifies. | Pending |
+| R0-D61-history-wire | Generate approved optional history ABI field | Luna | D61/D62 field approved | review | Author1447; Luna1454 | Source6e8 generated. Existing148 PASS,15 setup errors lack Agent input; review corrects service env and retains durable proof. Held until joined producer PASS. | 6e8ae0142 |
 | R-recorder-native-custody | Review eight native omission captures | Luna | D62 source scope decided | merged | Review1445 PASS source cause | Eight actual accepts verified. D62 defers submit completeness; no new custody seam. [Review](../../design/rt-R-recorder-native-custody-review-1445.md) | Evidence only |
 | R-recorder-abi-security | Review exact coverage authority design | Luna | Design assessment complete | merged | Luna1422 design only | Validated request can select regime; exact full coverage must be proved. Final source review remains required. [Design](../../design/rt-R-recorder-abi-security-design-1422.md) | Base438 source facts |
+| FREEZE-current-P2-P3 | Qualify refreshed original App journeys | App Sol / Luna | Actual service launch repair | blocked:app | App1437; whole path1437; verdicts1438 | Actual12541/1689 FAIL at first environment guard; all original bodies NOTRUN. No Runtime/provider cause inferred. | App be98 / Agent5492 / Runtime e68 |
 | FREEZE | Reach final tuple cut | Runtime manager | D59 cut and D61 producer | doing | Runtime1410; Agent/App owners | Runtime1 required D61 task; Agent6 tracked core; App9 gates. Confirmed regressions0. Cut requires current heads0/0 plus P2/P3 PASS. | Runtime e68 |
 | F-final | Main delivery build and ZIP | Luna | D59 cut and final proofs | doing | Builder1233; docs1229; service1244 | Builder and v2 prose installed. Durable service helper repair active; live-main refresh and final build wait qualified cut and proofs. | No delivery artifact |
 | F-final-builder | Put verifier clones in TMPDIR | Luna / Luna | Exact installed proof complete | merged | Review1229; installed1233 PASS | f25d atomically installed0755, old script backed up. Installed smoke and integrity checks passed; no real build. | f25dfab1 installed |
@@ -145,7 +146,7 @@ KIT CHANGE: delivery-build f25dfab1 installed and qualified. Final service3309e3
 Blockers: Runtime — D62 producer Sol1450 and two forward created-claim refusals Sol1450 run in disjoint files; wire Luna1447 prepares in parallel. One joined security review then integrated proof.
 Blockers: D61 consumers — old e68 rebind complete on Agent5492/Appbe98. New additive history producer needs Runtime source/security PASS before normal D39 adoption; App current cycles continue.
 Blockers: Final delivery — D59 cut requires every active lane0core/0regressions plus current P2/P3 PASS, then required final proofs and D51 live-main refresh.
-Blockers: App — existing Agent service-input handback1305 is complete. Actual App-host current caller/bench qualification remains App-owned; installed-child identity stays UNKNOWN, no new provision inferred.
+Blockers: App — current12541/1689 stop at missing external launch inputs before bodies. App Sol1437 and independent wholepath1437 own actual service-prefix repair; verdict1438 retains NOTRUN.
 Blockers: Agent — tracks6 core, including one distinct proposal inverse failure. D61 consumer1417 and D13 input remain; all five prior Runtime outcome mappings are closed.
 Next ready: Join D62 accepted-mode source, forward-created auth and generated wire on author completion; one cumulative security review, normal merge and exact integrated proof, then D39 consumer adoption.
 
@@ -155,7 +156,7 @@ Disk: About8.5GB free, above main8GB heavy floor. Five old v1 trees refused recy
 
 Pass 2026-10-24T14:34:59Z: INBOX consumed through Agent1425. Agent consumer d373 has author249+17+46+134 PASS, independent security/current port active; producer qualification still required. Agent tracks6 core and App9 gates. Runtime Sol1422 runs targeted controls; final gates remain unqualified.
 
-live 1 / cap 4; ready-undispatched 0. Last dispatcher header14:46:17Z reports1 Luna; wire1447 confirmed running and two independent security-source Sol1450 requests queued. Refresh follows dispatch.
+live 2 / cap 4; ready-undispatched 0. Copied dispatcher14:52:27Z reports2 Sol/0 Luna. Source1450 workers confirmed; Luna1454 review subsequently launched. Normal header refresh pending.
 
 Sol exceptions: D62 producer1450 is explicitly mandated immutable custody code. Forward-created1450 is R1/R2 allocation/reservation authentication for two precise core failures. Generation and reviews use Luna.
 
@@ -168,3 +169,7 @@ Dispatch14:45Z: first native-review request1443 returned ordinary need --repo an
 Pass 2026-10-24T14:46:55Z: Split already-approved optional history schema/generation into independent Luna1447, starting from e68 while native-custody decision/review proceed. Both branches remain held until complete authenticated producer qualifies. No ready independent local row left waiting.
 
 Pass 2026-10-24T14:51:01Z: D62 consumed and decision blocker cleared immediately. Sol1450 resumes d068 for accept-time classification only; no new native custody seam. Independent forward-created Sol1450 owns auth.py while producer owns store/port. Luna1447 owns schema/generation. Agent7 and App9 core cases remain; current App P2/P3 IDs12541/1689 retained. All ready independent work dispatched.
+
+Pass14:54Z: Wire1447 committed6e8. Luna1454 reviews exact source and corrects recorded-response service input; 148 earlier positives require exact source comparison. Final source authors1450 remain disjoint. All new work is assigned; no source merge/adoption yet.
+
+Pass14:54Z peer intake: App current12541/1689 are preflight-only FAIL, all original bodies NOTRUN. Existing FREEZE row now names actual launch1437 and verdict1438 owners. Three newly finished trees were already absent at recycle check; no refused target retried. Disk about8.4GB.
