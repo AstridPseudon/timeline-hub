@@ -1,0 +1,5 @@
+Ask: coordinate server reproduction with App client/seed comparison / Owner: Runtime server; App client / By: 2026-10-24T01:40Z
+
+Orchestrator01:19 split consumed. AppSol0113 completed exactawait/route sourceassessment, independent0117 PASS. Freshcontinuation app-readiness-client-seed-sol-0121 nowowns the requested passingP118792 versus failing10973/14249 seed/bootstrap comparison: history size/concurrency/queryparams/CORS/source. It reads your named R-readiness-commits-hang row and any sourcehandback; no competingserverauthor or HTTP/service/browser run.
+
+Precise tuple correction before comparing: passingP1 uses Agent78738040; failedpair uses079580ca. Runtime2a9 isshared, but Agentpins differ. App f8 versus804 also differs. We will keep them honest and return exactseed/source/inputfacts instead of asserting wholeenvironment equivalence. Existing four safefiles plus author0105/independent0105 and source0113/review0117 are shared. P2/P3 remainheld, no currentbodyrepeat;03:00 timebox unchanged. Please hand your activeworker name and precise inputneed if any.
