@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T07:41:26Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 20 | status age 1m -->
-# app board, 2026-10-24T07:41Z
+<!-- app | 2026-10-24T07:44:41Z | dispatcher heartbeat 8s | live 3 (sol 0, luna 3, other 0) | busy30 20 | status age 1m -->
+# app board, 2026-10-24T07:43Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -100,16 +100,19 @@
 | P2-element-clock | Locate Apply five second window | Luna; independent Luna | Independent 0724 PASS | merged | Timing 0717; review 0724 | 420 ms before POST, 4609 ms after POST. Reads finished before Apply; no response, refresh or page-close event captured. Backend outcome unknown. | Report only |
 
 | A3-real-provider-controls | Retain genuine provider stall controls | Sol; independent Luna | Integrated proof 0724 PASS | merged | Author 0707; review 0717; proof 0724 | Exact integrated tree equals reviewed tree. Three controls pass on HOME; independent 108 tests, three types and lint reused by identity. | 2056c7c0 / 38b29b5e29 |
-| P2-element-response | Classify retained post-POST error | Luna | Independent review | review | Error audit 0726; review 0738 | Console 503 belongs unrelated ACP chat read. Commit response, abort and failure completion absent. Backend outcome unknown. | Report only |
+| P2-element-response | Classify retained post-POST error | Luna; independent Luna | Independent 0738 PASS | merged | Error audit 0726; review 0738 | ACP chat 503 is unrelated. Commit response, abort and failure completion absent. Backend outcome unknown. | Report only |
 | P2-runtime-cost | Assess mutation response source path | Runtime source | App timing and source facts | blocked:runtime | Runtime peer requested 0726 | Bounded source assessment only; no benchmark, new producer or deferred memo work. Historical backend outcome unknown. | Runtime 37eb |
 
-| P2-popup-pending | Locate real popup pre-transport boundary | Luna | Actual retained popup trace | doing | app-P2-popup-pending-path-0733 | Source-only map was inconclusive. Inspect same-case requests, owner phases, UI refusals and safe error categories. No speculative repair. | Source 9b810 |
-| P2-P3-lifecycle-custody | Explain retained lifecycle newline | Luna; independent Luna | Final byte review | review | Producer 0733; review 0741 | Producer finds 224 bytes with LF; exact selected writer also 224. Earlier 225/no-LF claim contradicted. Independent review active. | Same immutable files |
+| P2-popup-pending | Locate real popup pre-transport boundary | Luna; independent Luna | Cause review 0745 | review | Author 0733; review 0745 | Media import and selection pass; local placement preview guard refuses before capture. Inner null cause remains unknown. | Source 9b810 |
+| P2-P3-lifecycle-custody | Explain retained lifecycle newline | Luna; independent Luna | Independent 0741 PASS | merged | Producer 0733; review 0741 | Originals, flat copies and attachments are 224 bytes with LF. Exact selected writer output matches. UNKNOWN snapshot cause stays unknown. | Same immutable files |
+
+| A3-popup-placement | Reproduce real local placement refusal | Luna | Actual current popup guard | doing | app-A3-popup-placement-repro-0745 | Reproduce exact valid inputs through production service; repair only demonstrated product defect. No original journey. | Current integration |
+| F-final-host-prep | Prepare final host and tuple commands | Luna | Runtime producer ready; final Agent pending | doing | app-F-final-host-prep-0744 | Existing-route recipe only. No final tuple, registration, child or run is claimed. Final Agent SHA is an explicit missing input. | Report preparation |
 
 Integration: HOME 38b29b5e29, tree 4561b53e00, equals reviewed provider-controls tree 2056c7c0. It adds one test file to prior 9b810; production source and original spec bodies remain exact selected 663. Product baseline tree 9a37265f0286128df7e6240a9df9877d959474af remains the current pinned journey subject.
 
 Next ready: Review popup findings on completion. Final U3b, element-error and lifecycle reviews are dispatched. Proof owns strict oracle and setup returns; no new original pair released.
-Blockers: App source — actual element completion and popup pending await remain unknown; retained response audit is active.
+Blockers: App source — actual element response remains unknown; popup placement refusal has a bounded reproduction owner0745.
 Blockers: Proof — current and future-case helper corrections and P3 predecessor predicate use authors 0705.
 Blockers: Freeze — App upstream integration merge waits header P2/P3 GO; draft proceeds now.
 
@@ -145,3 +148,5 @@ Pass 07:05Z: PLAN, COMMON, header D48/D49 and terminal reports read. Published e
 07:33Z: Proof lifecycle LF discrepancy assigned finite producer return0733; no byte rewriting. Popup same-case investigation0733 is the actual current owner. Normal hub already contains independently qualified P3 count and exact origin mappings. No duplicate extractor or original run.
 
 Pass 07:41Z: PLAN, COMMON, full header and latest Proof/Runtime boards checked. Sol0731 finished; independent final0738 dispatched at once. Element-error independent0738 and lifecycle independent0741 dispatched. Producer0733 contradicts prior LF claim using unchanged actual bytes; full reports and finite peer handoff published. No product/test/pin edits or original rerun. Disk about11GB; no finished unprotected unrecycled App worktrees found in current work inventory. Prior compact and historical cleanup refusals remain stopped.
+
+Pass 07:44Z: Independent lifecycle0741 PASS closes byte dispute; all224BwithLF exactwriter/attachments. Independent elementerror0738 PASS published. Popup0733 maps localpreview refusal; independent0745 and faithfulA3reproduction0745 dispatched. Runtime0740 finalhost ask is rowF-final-host-prep/worker0744. No speculative product repair, original pair or finaltuple invented. Sweep3 completed:0dirs,11008MiBfree. Priorrefusedcleanup/compact staystopped.
