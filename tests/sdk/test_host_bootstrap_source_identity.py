@@ -888,6 +888,33 @@ def test_parked_inspector_rejects_capacity_drift_after_full_native_identity(nati
         inspector.observe(handle)
 
 
+def test_parked_inspector_reports_executable_drift_for_typed_handle(monkeypatch, tmp_path):
+    process = SimpleNamespace(pid=4242)
+    reference = SimpleNamespace(
+        executable=SimpleNamespace(path=tmp_path / "python", digest="digest"),
+    )
+    state = {"pid": 4242, "process_birth_id": "birth"}
+    handle = host_bootstrap._ParkedPackHostHandle(
+        process, None, reference, state, "operation", "channel",
+    )
+    monkeypatch.setattr(host_bootstrap, "_parked_host_identity_matches", lambda _state: False)
+    monkeypatch.setattr(host_bootstrap, "_host_birth_identity", lambda _pid: "birth")
+    monkeypatch.setattr(host_bootstrap, "_host_artifact_digest", lambda _path: "digest")
+    monkeypatch.setattr(host_bootstrap, "_process_snapshot", lambda: {
+        4242: SimpleNamespace(pid=4242, birth="birth"),
+    })
+    monkeypatch.setattr(host_bootstrap, "_host_command", lambda _pid: "/unrelated/Python --max-concurrency 2")
+    monkeypatch.setattr(host_bootstrap, "_host_executable_matches", lambda _observed, _selected: False)
+    monkeypatch.setattr(host_bootstrap.platform, "current_user", lambda: os.getuid())
+    monkeypatch.setattr(host_bootstrap.subprocess, "run", lambda *args, **kwargs: SimpleNamespace(stdout=str(os.getuid())))
+    inspector = host_bootstrap._ParkedPackHostInspector(
+        lambda: {}, session_config_path=tmp_path / "session.json",
+    )
+
+    with pytest.raises(host_bootstrap.PackHostBootstrapError, match="executable, uid or birth"):
+        inspector.observe(handle)
+
+
 @pytest.mark.parametrize("outcome", ["live", "absent", "zombie", "unavailable"])
 @pytest.mark.posix_native  # POSIX-only process-group API
 def test_launch_precise_native_identity_is_real_bounded_observation(monkeypatch, outcome):

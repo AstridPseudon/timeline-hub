@@ -1148,7 +1148,11 @@ class _ParkedPackHostInspector:
         )
         from astrid.core.generation.model_root import model_root_binding_from_profile
 
-        if not isinstance(handle, _ParkedPackHostHandle) or not _parked_host_identity_matches(handle.state):
+        if not isinstance(handle, _ParkedPackHostHandle):
+            raise PackHostBootstrapError("parked host OS identity changed")
+        identity_matches = _parked_host_identity_matches(handle.state)
+        if (not identity_matches and _host_birth_identity(handle.process.pid)
+                != str(handle.state.get("process_birth_id") or "")):
             raise PackHostBootstrapError("parked host OS identity changed")
         reference = handle.reference
         # The framework-launcher probe executes the selected interpreter. Verify
@@ -1175,6 +1179,8 @@ class _ParkedPackHostInspector:
                 or not command or not _host_executable_matches(command[0], reference.executable.path)
                 or int(uid) != platform.current_user()):
             raise PackHostBootstrapError("parked host executable, uid or birth identity changed")
+        if not identity_matches:
+            raise PackHostBootstrapError("parked host OS identity changed")
         if sys.platform == "darwin":
             known = getattr(handle.process, "_astrid_host_launch_argv", None)
             if (not isinstance(known, tuple) or _launch_argv_digest(known) != handle.state["launch_argv_sha256"]
