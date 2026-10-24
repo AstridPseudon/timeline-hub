@@ -349,33 +349,54 @@ def test_expired_parent_publish_body_keeps_bounded_receipt_facts(tmp_path):
         reopened.close()
 
 
-def test_parent_receipt_compaction_preserves_publication_integrity(tmp_path):
+def test_parent_receipt_compaction_preserves_publication_integrity(tmp_path, astrid_importable):
     from datetime import datetime, timedelta, timezone
+    import importlib
+    from runtime_protocol.timeline_commit_baseline import verify_baseline
+    from runtime_protocol.timeline_commit_port import route_path
+
+    open_authoring_bundle = getattr(
+        importlib.import_module("astrid.core.timeline.authoring_bundle"), "open_authoring_bundle",
+    )
+    capture_track_create = getattr(
+        importlib.import_module("astrid.sdk.timeline.capture"), "capture_track_create",
+    )
 
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()
     service = RuntimeService(root)
     try:
-        project = service.create_project({"slug": "publication", "name": "Publication"}, idempotency_key="project")
-        project_id = project["id"]
+        service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+        project_id = service.create_project(
+            {"slug": "publication", "name": "Publication"}, idempotency_key="project",
+        )["id"]
         service.create_timeline(project_id, "main", idempotency_key="timeline")
-        publication = {
-            "project_id": project_id, "timeline_id": "main", "expected_head": None,
-            "parent_revision_id": "parent-1",
-            "parent_composition": {"config": {"clips": [], "tracks": []},
-                                   "registry": {"assets": {}}, "clips": [], "occurrences": []},
-            "shot_revisions": [], "internal_timeline_revisions": [],
-            "dependency_manifest": {"shots": [], "internal_timelines": [], "media": []},
+        bootstrap = service.list_timeline_commits(project_id, "main", authorize=lambda: None)["items"][0]
+        bootstrap_receipt = bootstrap["receipt"]
+        bootstrap_revision = bootstrap["revision_id"]
+
+        parent = service.get_project_parent_composition_revision(project_id, "main", bootstrap_revision)
+        bundle = open_authoring_bundle(parent, shot_revisions=[], internal_timeline_revisions=[])
+        command = capture_track_create(
+            bundle, "parent", {"id": "picture", "kind": "visual", "role": "output", "opaque": [None, False]},
+        )
+        head = service.get_project_timeline(project_id, "main")
+        request = {
+            "api_version": 1, "project_id": project_id, "timeline_id": "main",
+            "base_revision_id": head["head_revision_id"],
+            "base_publication_id": head["head_publication_id"], "commands": [command],
         }
-        original = service.publish_parent_composition(project_id, "main", publication, idempotency_key="publish")
         with service.store._transaction():
             service.store.conn.execute(
                 "UPDATE command_idempotency SET created_at=? WHERE command_kind='parent_composition.publish'",
                 ((datetime.now(timezone.utc) - timedelta(days=2)).isoformat(timespec="milliseconds"),),
             )
             service.store.conn.execute(
-                "UPDATE parent_composition_revisions SET created_at=? WHERE id='parent-1'",
-                ((datetime.now(timezone.utc) - timedelta(days=3)).isoformat(timespec="milliseconds"),),
+                "UPDATE parent_composition_revisions SET created_at=? WHERE id=?",
+                (
+                (datetime.now(timezone.utc) - timedelta(days=3)).isoformat(timespec="milliseconds"),
+                bootstrap_revision,
+                ),
             )
         assert service.store.integrity_report()["ok"] is True
         realm_id = service.realm["id"]
@@ -385,10 +406,58 @@ def test_parent_receipt_compaction_preserves_publication_integrity(tmp_path):
     reopened = RuntimeService(root)
     try:
         assert reopened.store.integrity_report()["ok"] is True
-        replay = reopened.publish_parent_composition(project_id, "main", publication, idempotency_key="publish")
-        assert replay["data"] == original["data"]
-        assert replay["receipt"]["result"] == original["receipt"]["result"]
-        assert reopened.committed_receipt("parent_composition.publish", "main", "publish", project_id=project_id)["result"] == original["data"]
+        connection = reopened.store.conn
+        assert connection is not None
+        facts = verify_baseline(connection, project_id, "main", read_object=reopened.cas.read)
+        assert facts is not None
+        assert facts["head"] == {
+            "revision_id": bootstrap_revision,
+            "publication_id": bootstrap_receipt["receipt_id"],
+        }
+        compacted_row = connection.execute(
+            "SELECT result_json FROM command_idempotency WHERE txn_id=?", (bootstrap_receipt["receipt_id"],),
+        ).fetchone()
+        assert compacted_row is not None
+        compacted_result = json.loads(compacted_row[0])
+        assert compacted_result["parent_revision_id"] == bootstrap_revision
+        assert compacted_result["event_id"] == bootstrap_receipt["result"]["event_id"]
+        assert IDEMPOTENCY_RESULT_MARKER in compacted_result
+    finally:
+        reopened.close()
+
+    reopened = RuntimeService(root)
+    try:
+        reopened.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+        original = reopened.commit_timeline(
+            project_id, "main", request, idempotency_key="current-commit",
+            publisher="editor", invocation_path=route_path(project_id, "main"),
+            authorize=lambda: None,
+        )
+        assert original["data"]["status"] == "accepted"
+        assert original["receipt"]["result"] == original["data"]
+        connection = reopened.store.conn
+        assert connection is not None
+        event = connection.execute(
+            "SELECT * FROM timeline_events WHERE id=?", (original["receipt"]["event_ids"][0],),
+        ).fetchone()
+        assert event is not None and event["kind"] == "timeline.commit.accepted"
+        assert reopened.store.integrity_report()["ok"] is True
+    finally:
+        reopened.close()
+
+    reopened = RuntimeService(root)
+    try:
+        reopened.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+        connection = reopened.store.conn
+        assert connection is not None
+        before = tuple(connection.iterdump())
+        replay = reopened.commit_timeline(
+            project_id, "main", request, idempotency_key="current-commit",
+            publisher="editor", invocation_path=route_path(project_id, "main"),
+            authorize=lambda: None,
+        )
+        assert replay == original
+        assert tuple(connection.iterdump()) == before
     finally:
         reopened.close()
 
