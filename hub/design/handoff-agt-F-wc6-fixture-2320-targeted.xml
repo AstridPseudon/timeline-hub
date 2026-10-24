@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="13" time="1.246" timestamp="2026-10-24T23:20:07.688175+00:00" hostname="vm"><testcase classname="tests.sdk.test_wc6_completion_capture" name="test_real_coordinator_delegates_once_and_preserves_outcome[success]" time="0.059" /><testcase classname="tests.sdk.test_wc6_completion_capture" name="test_real_coordinator_delegates_once_and_preserves_outcome[provider-error]" time="0.009" /><testcase classname="tests.sdk.test_wc6_completion_capture" name="test_real_coordinator_delegates_once_and_preserves_outcome[port-construction-error]" time="0.006" /><testcase classname="tests.sdk.test_wc6_completion_capture" name="test_real_coordinator_delegates_once_and_preserves_outcome[close-error]" time="0.007" /><testcase classname="tests.sdk.test_wc6_completion_capture" name="test_real_coordinator_delegates_once_and_preserves_outcome[lookup-masks-error]" time="0.005"><failure message="assert False&#10; +  where False = any(&lt;generator object test_real_coordinator_delegates_once_and_preserves_outcome.&lt;locals&gt;.&lt;genexpr&gt; at 0x7f5dc4d7fc40&gt;)">tmp_path = PosixPath('/tmp/w-1c60b08550/pytest-of-root/pytest-0/test_real_coordinator_delegate0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x7f5dc4a1d260&gt;
+failure = 'masked'
+
+    @pytest.mark.parametrize("failure", ["none", "provider", "construction", "close", "masked"],
+                             ids=["success", "provider-error", "port-construction-error", "close-error", "lookup-masks-error"])
+    def test_real_coordinator_delegates_once_and_preserves_outcome(tmp_path: Path, monkeypatch: Any, failure: str) -&gt; None:
+        from runtime_protocol.errors import AuthorizationError
+    
+        calls: list[str] = []
+        primary = RuntimeError("private message: Bearer must-not-escape")
+        final = AuthorizationError("private authentication detail") if failure == "masked" else None
+        store = Store(calls, final)
+        provider: Any = Provider(calls, store, primary if failure in ("provider", "masked") else None)
+        port = Port(calls, primary if failure == "close" else None)
+        if failure == "close":
+            # No durable result: demonstrate the close error raised by the real coordinator.
+            def commit(ctx: Any, selected_port: Any) -&gt; Any:
+                calls.append("provider")
+                return {"details": {"status": "invalid"}}
+            class Refusal:
+                def commit(self, ctx: Any, selected_port: Any) -&gt; Any:
+                    return commit(ctx, selected_port)
+            provider = Refusal()
+    
+        def port_factory(ctx: Any) -&gt; Port:
+            calls.append("construct")
+            if failure == "construction":
+                raise primary
+            return port
+    
+        def authorize() -&gt; None:
+            calls.append("authorize")
+    
+        capture = capture_at(tmp_path, monkeypatch)
+        capture.start()
+        try:
+            coordinator = CommitExecutionCoordinator(store)
+            if failure == "none":
+                result = coordinator.execute(context(), provider, port_factory, authorize=authorize)
+                assert result == store.winner
+            else:
+                with pytest.raises(BaseException) as caught:
+                    coordinator.execute(context(), provider, port_factory, authorize=authorize)
+                assert caught.value is (final if final else primary)
+                traceback = caught.value.__traceback__
+                names = []
+                while traceback:
+                    names.append(traceback.tb_frame.f_code.co_name)
+                    traceback = traceback.tb_next
+                assert "execute" in names
+                assert ("port_factory" if failure == "construction" else "close" if failure == "close" else
+                        "lookup" if failure == "masked" else "commit") in names
+        finally:
+            capture.stop()
+        expected = ["lookup", "authorize", "construct"]
+        if failure != "construction":
+            expected += ["provider", "close"]
+        assert calls == expected + ["lookup", "authorize"]
+        rows = records(tmp_path)
+        phases = [row["phase"] for row in rows]
+        assert phases.count("coordinator.call") == phases.count("port_factory.call") == 1
+        assert phases.count("lookup.2.call") == 1
+        if failure != "construction":
+            assert phases.index("provider.return") &lt; phases.index("close.call") &lt; phases.index("lookup.2.call")
+        if failure == "masked":
+&gt;           assert any(row["phase"] == "coordinator.saved" and row["error"] == {
+                "type": "builtins.RuntimeError", "object_id": id(primary)} for row in rows)
+E           assert False
+E            +  where False = any(&lt;generator object test_real_coordinator_delegates_once_and_preserves_outcome.&lt;locals&gt;.&lt;genexpr&gt; at 0x7f5dc4d7fc40&gt;)
+
+tests/sdk/test_wc6_completion_capture.py:155: AssertionError</failure></testcase><testcase classname="tests.sdk.test_wc6_completion_capture" name="test_sink_failure_preserves_original_exception" time="0.008" /><testcase classname="tests.sdk.test_wc6_completion_capture" name="test_absent_selected_key_is_explicit[None]" time="0.007" /><testcase classname="tests.sdk.test_wc6_completion_capture" name="test_absent_selected_key_is_explicit[other]" time="0.007" /><testcase classname="tests.sdk.test_wc6_completion_capture" name="test_credentials_excluded_and_second_invocation_not_observed" time="0.008" /><testcase classname="tests.sdk.test_wc6_completion_capture" name="test_preserved_original_and_mounted_source_attachment" time="0.285"><failure message="AssertionError: assert '62c30a6d9d3a...9a5aa446e10f7' == 'e55be12f88d2...b91745c1f8adf'&#10;  &#10;  - e55be12f88d23fddba3dd36614eb91745c1f8adf&#10;  + 62c30a6d9d3a6fe36201565fadf9a5aa446e10f7">def test_preserved_original_and_mounted_source_attachment() -&gt; None:
+        from runtime_protocol.service import RuntimeService
+        from runtime_protocol.timeline_commit_port import RequestCommitPort
+    
+        from astrid.sdk.timeline.commit import RuntimeCommitService
+        from astrid.sdk.timeline.sync import TimelineSession
+    
+        root = Path(__file__).parents[2]
+        original = root / "tests/timeline/test_authoring_media.py"
+        content = original.read_bytes()
+        blob = hashlib.sha1(f"blob {len(content)}\0".encode() + content).hexdigest()
+&gt;       assert blob == "e55be12f88d23fddba3dd36614eb91745c1f8adf"
+E       AssertionError: assert '62c30a6d9d3a...9a5aa446e10f7' == 'e55be12f88d2...b91745c1f8adf'
+E         
+E         - e55be12f88d23fddba3dd36614eb91745c1f8adf
+E         + 62c30a6d9d3a6fe36201565fadf9a5aa446e10f7
+
+tests/sdk/test_wc6_completion_capture.py:234: AssertionError</failure></testcase><testcase classname="tests.sdk.test_wc6_completion_capture" name="test_session_calls_mounted_service_real_provider_and_port_offline" time="0.163" /><testcase classname="tests.sdk.test_wc6_completion_capture" name="test_protocol_sink_setup_failure_yields_unchanged_test" time="0.006" /><testcase classname="tests.sdk.test_wc6_completion_capture" name="test_completion_projection_excludes_nested_documents" time="0.004" /></testsuite></testsuites>

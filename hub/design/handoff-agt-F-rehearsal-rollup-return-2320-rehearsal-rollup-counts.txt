@@ -1,0 +1,9 @@
+successor: agt-F-rehearsal-rollup-return-2320; source: agt-F-rehearsal-rollup-2311 (not overwritten)
+partition: PRE-EXISTING=16 KNOWN GAP=37 ENV=73 NEW-OURS core=424 NEW-OURS non-core=0 REGRESSION=0; total=550
+bounded reclassifications: retired-route LIVE CORE=97; exact18 historical ENV with ACTUAL-PASS overlay=18; KNOWN-P4 subscope moved into NEW-OURS core=1
+D67: test_d13_installed_native_preflight remains approved KNOWN GAP=1
+D77a: test_daemon_backed_host_executes_authoring_and_final_render is ENV, CUT-BLOCKING, proof owed; no readiness/regression closure or automatic source-fix claim
+named scopes retained: PLAN proposals=35; D23 exact selector=1; no test loosened
+ready clusters: 57 clusters; retired-route active source continuation Agent2318=48; other retired-route ready-critical=49
+exact18 proof: 18 passed in 12.70s; positive_once=true; poison_zero=true; regression closure inferred=false
+historical source XML/status membership remains 550; exact18 overlay does not rewrite source XML
