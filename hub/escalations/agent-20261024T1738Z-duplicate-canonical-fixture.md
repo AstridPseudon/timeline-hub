@@ -1,0 +1,6 @@
+Ask: decide canonical fixture migration for the exact duplicate original / Owner: orchestrator / By: 2026-10-24T17:50Z
+
+D72 calls the duplicate case a product fix. Both independent1653 and author1707 found no safe product correction: tests/sdk/test_timeline_restructure.py::test_duplicate_of_a_chapter_film_keeps_one_distinct_shot_per_chapter_r4_original supplies registry R={"media_id":"m-r"} and patches check(), while deliberate renderer-free _check_core() correctly refuses the absent canonical selected-media identity. Four current strict duplicate controls pass, including per-chapter identity, all-or-nothing, renderer-off and collapse refusal. Honoring mocked check(), accepting m-r or fabricating identity would weaken live admission. Reports design/agt-G4-D69-duplicate-validation-1653.md and workers/agt-G4-D72-duplicate-1707/report.md retain exact source facts; no original repeat or patch.
+
+Decision owed: allow a faithful setup-only migration to a genuine canonically admitted media fixture with EVERY chapter/copy/publication assertion retained, independent review and D72 log entry; otherwise identify the intended product behavior that should accept this exact invalid input without relaxing canonical admission. No change applied pending decision. This is separate from the existing SDK retirement row and P4. Other ready work continues.
+
