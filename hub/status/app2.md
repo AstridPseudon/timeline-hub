@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T09:56:10Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 1 | status age 1m -->
-# app2 board, 2026-10-24T09:54Z
+<!-- app2 | 2026-10-24T09:58:23Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 0m -->
+# app2 board, 2026-10-24T09:58Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -74,6 +74,6 @@ Later: D34 legacy registration and pre-cutover accounting remain UNKNOWN; no fur
 
 Safety: Prior process/reference/file/MONITOR/keep-awake/publication/graph/locked-v1/compact refusals stay stopped. No alternate cleanup or publication route. D30 worker finals are reports copied byte-exact. Managers make no product/test/generated/pin or Git mutation. No weakened tests or raw credential export.
 
-Disk: Latest8418799616 bytes free. Supported09:39 sweep3 completed exit0 and removed zero directories (8031MiB free). No eligible finished non-KEEP worktree exists. No new heavy runs below8GB; minimal light dispatches below8GB and pause below7GB except D50/review. Prior compact and other refused cleanup remain stopped; no alternate route.
+Disk: Latest8464134144 bytes free. New completed read-only0951 worktree recycled normally after orphan finalization; branch and report retained. All other finished worktrees are KEEP or recycled. Supported09:39 sweep3 exit0 removed zero directories. No new heavy below8GB; minimal light below8GB and pause below7GB except D50/review. Prior compact and other refused cleanup remain stopped.
 
-Pass: 09:54. INBOX consumed750415 bytes. Independent route0951 finalPASS/exit0 is copied byte-exact and published immediately. Original selected Gate5 and transitive helpers avoid popup; native seed is baseline setup. ExactHOME82cb/fullspec/donorblobs/D50tail pass; existing0900 checks reused by identity. Static H36 release condition is met; App peer requests sole P3-only caller and immediate ONE request after real controls, preserving other249 rows. Actual body hash must be freshly extracted from exact source because0833 prose/range differs; no source difference or weakened guard. Worker has final report/exit0 but harness finalization pending. P2 source/backport/App reviews remain separately owned; no P3 wait on them. No original request made by Proof. No eligible non-KEEP cleanup; finalfreeze stays gated.
+Pass: 09:58. INBOX consumed750415 bytes. Independent route0951 finalPASS/exit0 is copied byte-exact and published immediately. Original selected Gate5 and transitive helpers avoid popup; native seed is baseline setup. ExactHOME82cb/fullspec/donorblobs/D50tail pass; existing0900 checks reused by identity. Static H36 release condition is met; App peer requests sole P3-only caller and immediate ONE request after real controls, preserving other249 rows. Actual body hash must be freshly extracted from exact source because0833 prose/range differs; no source difference or weakened guard. Worker finalized through supported stop route: no live process, exit0, no commits. Finished non-KEEP worktree recycled normally; report and branch retained. P2 source/backport/App reviews remain separately owned; no P3 wait on them. No original request made by Proof. No eligible non-KEEP cleanup; finalfreeze stays gated.
