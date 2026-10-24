@@ -27,8 +27,8 @@
     "exact_unique_ids": 267,
     "exact_unique_phase_rows": 267,
     "counts": {
-      "proven_passed": 236,
-      "active_owner": 31,
+      "proven_passed": 260,
+      "active_owner": 7,
       "deferred_cut_visible": 0,
       "genuinely_unowned": 0
     },
@@ -38,28 +38,17 @@
     "unassigned_minimum_source_gaps": 0,
     "owner_status_does_not_credit_passes": true,
     "all_tags_ours": true,
-    "confirmed_closed_ids": 236,
-    "open_ids": 31,
-    "held_or_unknown_ids": 31,
-    "newly_confirmed_closed_since_0118": 100,
+    "confirmed_closed_ids": 260,
+    "open_ids": 7,
+    "held_or_unknown_ids": 7,
+    "newly_confirmed_closed_since_0118": 124,
     "current_head_full267_pass": false,
     "full_checkpoint": "UNRESOLVED: Farm26511 source/head mismatch and 96 possible closed-node failures; no retrospective Farm credit or broad full PASS.",
     "effective_owner_counts_active": {
-      "Agent": 29,
-      "Runtime": 1,
-      "Viewing": 1
+      "Agent": 7
     },
     "active_family_counts": {
-      "Agent SDK / timeline unconfirmed": 29,
-      "CLI FakeCheckout fixture": 0,
-      "D09 installed-profile setup": 0,
-      "Execution/rendering/pack remainder": 1,
-      "Isolated Agent child import fence": 0,
-      "Occurrence-media inverse fixture": 0,
-      "Other task-specific unconfirmed": 0,
-      "Rendering missing result file": 0,
-      "Retired CLI/native route or stale caller": 0,
-      "Runtime child import / OPS": 1
+      "Agent SDK / timeline unconfirmed": 7
     },
     "counts_are_exact_node_membership_not_author_named_totals": true
   },
@@ -6658,28 +6647,70 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Viewing",
-      "reason": "Viewing owns same-alias ABA; preserve refusal assertion.",
+      "reason": "Exact original selector retained by scoped review; body was not rerun in this package.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timeline_clip_scalar_provider.py::test_provider_unchanged_publication_and_aba_refuse_old_inverse[False-occurrence:f2-occurrence/clip:f2-agent-clear-clip-asset]",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_clip_scalar_provider.py",
         "exact_pytest_node_id": "tests/sdk/test_timeline_clip_scalar_provider.py::test_provider_unchanged_publication_and_aba_refuse_old_inverse[False-occurrence:f2-occurrence/clip:f2-agent-clear-clip-asset]",
         "phase": "call",
-        "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        "mapping": "Exact original selector is a member of the reviewed JUnit result; original body/assertions and current AST/source hashes are recorded. No body rerun was used."
       },
-      "effective_owner": "Viewing",
+      "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "Current ABA service 13559 failed at undo landing output/prepared mismatch; prior 26248 is stale-fixture failure; remains open/unknown.",
+        "classification": "confirmed_closed_current_package",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "provider publication preserves unchanged scalar and refuses old ABA inverse",
         "post_0118_evidence_refs": [
-          "agt-F-ABA-whole-path-resume-0339",
-          "agent-ABA-13559-summary"
+          "runtime_R2_root_originals_0622",
+          "runtime_R2_root_review_0625"
         ],
-        "qualifying_original_behavior_credit": false
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Exact original/current function-body AST hashes and full source-file hashes are recorded from stdlib AST/hash inspection; no body execution was repeated.",
+        "timing_seconds": 3.63,
+        "custody_limits": [
+          "in-process/source-mode only",
+          "no HTTP",
+          "no installed-source overlay",
+          "no runtime-actor claim",
+          "no body rerun in this package"
+        ]
+      },
+      "gap_id": "AGENT-F-ROOT-HELPER-SCHEMA-20261024",
+      "owner_ref": "agent_F_count_root_helper_schema_map_0641",
+      "proof_refs": [
+        "runtime_R2_root_originals_0622",
+        "runtime_R2_root_review_0625"
+      ],
+      "proof_status": "exact_retained_scoped_pass",
+      "historical_pre_package_reconciliation": {
+        "status": "active_owner",
+        "gap_id": null,
+        "reason": "Viewing owns same-alias ABA; preserve refusal assertion.",
+        "owner": "Viewing",
+        "owner_ref": null,
+        "proof_refs": [],
+        "proof_status": null,
+        "effective_owner": "Viewing",
+        "original_body_assertion_mapping": {
+          "test_file": "tests/sdk/test_timeline_clip_scalar_provider.py",
+          "exact_pytest_node_id": "tests/sdk/test_timeline_clip_scalar_provider.py::test_provider_unchanged_publication_and_aba_refuse_old_inverse[False-occurrence:f2-occurrence/clip:f2-agent-clear-clip-asset]",
+          "phase": "call",
+          "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        },
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "Current ABA service 13559 failed at undo landing output/prepared mismatch; prior 26248 is stale-fixture failure; remains open/unknown.",
+          "post_0118_evidence_refs": [
+            "agt-F-ABA-whole-path-resume-0339",
+            "agent-ABA-13559-summary"
+          ],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -6687,29 +6718,67 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
-      "owner_ref": "sdk_r2_0042",
+      "status": "proven_passed",
+      "gap_id": "AGENT-F-ROOT-HELPER-SCHEMA-20261024",
+      "reason": "Exact original selector retained by scoped review; body was not rerun in this package.",
+      "owner_ref": "agent_F_count_root_helper_schema_map_0641",
       "proof_refs": [
-        "r2_0042"
+        "runtime_R2_root_originals_0622",
+        "runtime_R2_root_review_0625"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_commit_graph_roots.py",
         "exact_pytest_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_created_child_stages_reload_inverse_redo_exact_closure",
         "phase": "call",
-        "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        "mapping": "Exact original selector is a member of the reviewed JUnit result; original body/assertions and current AST/source hashes are recorded. No body rerun was used."
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "authenticated created child survives stage/reload/inverse/redo with exact closure",
+        "post_0118_evidence_refs": [
+          "runtime_R2_root_originals_0622",
+          "runtime_R2_root_review_0625"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Exact original/current function-body AST hashes and full source-file hashes are recorded from stdlib AST/hash inspection; no body execution was repeated.",
+        "timing_seconds": 3.63,
+        "custody_limits": [
+          "in-process/source-mode only",
+          "no HTTP",
+          "no installed-source overlay",
+          "no runtime-actor claim",
+          "no body rerun in this package"
+        ]
+      },
+      "historical_pre_package_reconciliation": {
+        "status": "active_owner",
+        "gap_id": "AGENT-SDK-REMAINDER",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "owner": null,
+        "owner_ref": "sdk_r2_0042",
+        "proof_refs": [
+          "r2_0042"
+        ],
+        "proof_status": "missing_exact_node_proof_assigned_owner",
+        "effective_owner": "Agent",
+        "original_body_assertion_mapping": {
+          "test_file": "tests/sdk/test_timeline_commit_graph_roots.py",
+          "exact_pytest_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_created_child_stages_reload_inverse_redo_exact_closure",
+          "phase": "call",
+          "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        },
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -6717,29 +6786,67 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
-      "owner_ref": "sdk_r2_0042",
+      "status": "proven_passed",
+      "gap_id": "AGENT-F-ROOT-HELPER-SCHEMA-20261024",
+      "reason": "Exact original selector retained by scoped review; body was not rerun in this package.",
+      "owner_ref": "agent_F_count_root_helper_schema_map_0641",
       "proof_refs": [
-        "r2_0042"
+        "runtime_R2_root_originals_0622",
+        "runtime_R2_root_review_0625"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_commit_graph_roots.py",
         "exact_pytest_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-False-child]",
         "phase": "call",
-        "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        "mapping": "Exact original selector is a member of the reviewed JUnit result; original body/assertions and current AST/source hashes are recorded. No body rerun was used."
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "provider-root child alias equal-state publication remains guarded across both flags",
+        "post_0118_evidence_refs": [
+          "runtime_R2_root_originals_0622",
+          "runtime_R2_root_review_0625"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Exact original/current function-body AST hashes and full source-file hashes are recorded from stdlib AST/hash inspection; no body execution was repeated.",
+        "timing_seconds": 3.63,
+        "custody_limits": [
+          "in-process/source-mode only",
+          "no HTTP",
+          "no installed-source overlay",
+          "no runtime-actor claim",
+          "no body rerun in this package"
+        ]
+      },
+      "historical_pre_package_reconciliation": {
+        "status": "active_owner",
+        "gap_id": "AGENT-SDK-REMAINDER",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "owner": null,
+        "owner_ref": "sdk_r2_0042",
+        "proof_refs": [
+          "r2_0042"
+        ],
+        "proof_status": "missing_exact_node_proof_assigned_owner",
+        "effective_owner": "Agent",
+        "original_body_assertion_mapping": {
+          "test_file": "tests/sdk/test_timeline_commit_graph_roots.py",
+          "exact_pytest_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-False-child]",
+          "phase": "call",
+          "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        },
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -6747,29 +6854,67 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
-      "owner_ref": "sdk_r2_0042",
+      "status": "proven_passed",
+      "gap_id": "AGENT-F-ROOT-HELPER-SCHEMA-20261024",
+      "reason": "Exact original selector retained by scoped review; body was not rerun in this package.",
+      "owner_ref": "agent_F_count_root_helper_schema_map_0641",
       "proof_refs": [
-        "r2_0042"
+        "runtime_R2_root_originals_0622",
+        "runtime_R2_root_review_0625"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_commit_graph_roots.py",
         "exact_pytest_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-True-child]",
         "phase": "call",
-        "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        "mapping": "Exact original selector is a member of the reviewed JUnit result; original body/assertions and current AST/source hashes are recorded. No body rerun was used."
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "provider-root child alias equal-state publication remains guarded across both flags",
+        "post_0118_evidence_refs": [
+          "runtime_R2_root_originals_0622",
+          "runtime_R2_root_review_0625"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Exact original/current function-body AST hashes and full source-file hashes are recorded from stdlib AST/hash inspection; no body execution was repeated.",
+        "timing_seconds": 3.63,
+        "custody_limits": [
+          "in-process/source-mode only",
+          "no HTTP",
+          "no installed-source overlay",
+          "no runtime-actor claim",
+          "no body rerun in this package"
+        ]
+      },
+      "historical_pre_package_reconciliation": {
+        "status": "active_owner",
+        "gap_id": "AGENT-SDK-REMAINDER",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "owner": null,
+        "owner_ref": "sdk_r2_0042",
+        "proof_refs": [
+          "r2_0042"
+        ],
+        "proof_status": "missing_exact_node_proof_assigned_owner",
+        "effective_owner": "Agent",
+        "original_body_assertion_mapping": {
+          "test_file": "tests/sdk/test_timeline_commit_graph_roots.py",
+          "exact_pytest_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-True-child]",
+          "phase": "call",
+          "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        },
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -6777,29 +6922,67 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
-      "owner_ref": "sdk_r2_0042",
+      "status": "proven_passed",
+      "gap_id": "AGENT-F-ROOT-HELPER-SCHEMA-20261024",
+      "reason": "Exact original selector retained by scoped review; body was not rerun in this package.",
+      "owner_ref": "agent_F_count_root_helper_schema_map_0641",
       "proof_refs": [
-        "r2_0042"
+        "runtime_R2_root_originals_0622",
+        "runtime_R2_root_review_0625"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_commit_graph_roots.py",
         "exact_pytest_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-False-child]",
         "phase": "call",
-        "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        "mapping": "Exact original selector is a member of the reviewed JUnit result; original body/assertions and current AST/source hashes are recorded. No body rerun was used."
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "provider-root child alias equal-state publication remains guarded across both flags",
+        "post_0118_evidence_refs": [
+          "runtime_R2_root_originals_0622",
+          "runtime_R2_root_review_0625"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Exact original/current function-body AST hashes and full source-file hashes are recorded from stdlib AST/hash inspection; no body execution was repeated.",
+        "timing_seconds": 3.63,
+        "custody_limits": [
+          "in-process/source-mode only",
+          "no HTTP",
+          "no installed-source overlay",
+          "no runtime-actor claim",
+          "no body rerun in this package"
+        ]
+      },
+      "historical_pre_package_reconciliation": {
+        "status": "active_owner",
+        "gap_id": "AGENT-SDK-REMAINDER",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "owner": null,
+        "owner_ref": "sdk_r2_0042",
+        "proof_refs": [
+          "r2_0042"
+        ],
+        "proof_status": "missing_exact_node_proof_assigned_owner",
+        "effective_owner": "Agent",
+        "original_body_assertion_mapping": {
+          "test_file": "tests/sdk/test_timeline_commit_graph_roots.py",
+          "exact_pytest_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-False-child]",
+          "phase": "call",
+          "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        },
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -6807,29 +6990,67 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
-      "owner_ref": "sdk_r2_0042",
+      "status": "proven_passed",
+      "gap_id": "AGENT-F-ROOT-HELPER-SCHEMA-20261024",
+      "reason": "Exact original selector retained by scoped review; body was not rerun in this package.",
+      "owner_ref": "agent_F_count_root_helper_schema_map_0641",
       "proof_refs": [
-        "r2_0042"
+        "runtime_R2_root_originals_0622",
+        "runtime_R2_root_review_0625"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_commit_graph_roots.py",
         "exact_pytest_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-True-child]",
         "phase": "call",
-        "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        "mapping": "Exact original selector is a member of the reviewed JUnit result; original body/assertions and current AST/source hashes are recorded. No body rerun was used."
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "provider-root child alias equal-state publication remains guarded across both flags",
+        "post_0118_evidence_refs": [
+          "runtime_R2_root_originals_0622",
+          "runtime_R2_root_review_0625"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Exact original/current function-body AST hashes and full source-file hashes are recorded from stdlib AST/hash inspection; no body execution was repeated.",
+        "timing_seconds": 3.63,
+        "custody_limits": [
+          "in-process/source-mode only",
+          "no HTTP",
+          "no installed-source overlay",
+          "no runtime-actor claim",
+          "no body rerun in this package"
+        ]
+      },
+      "historical_pre_package_reconciliation": {
+        "status": "active_owner",
+        "gap_id": "AGENT-SDK-REMAINDER",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "owner": null,
+        "owner_ref": "sdk_r2_0042",
+        "proof_refs": [
+          "r2_0042"
+        ],
+        "proof_status": "missing_exact_node_proof_assigned_owner",
+        "effective_owner": "Agent",
+        "original_body_assertion_mapping": {
+          "test_file": "tests/sdk/test_timeline_commit_graph_roots.py",
+          "exact_pytest_node_id": "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-True-child]",
+          "phase": "call",
+          "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        },
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -6837,25 +7058,67 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
+      "status": "proven_passed",
       "owner": "Agent",
-      "reason": "IMAGE-0043 owns image-preservation proof; acceptance remains refused.",
+      "reason": "Exact original selector retained by scoped review; body was not rerun in this package.",
       "acceptance_command": "python -m pytest -q -o addopts= -p no:cacheprovider tests/sdk/test_timeline_commit_provider_scalar.py::test_occurrence_inverse_reuses_original_images_and_preserves_later_sibling_pins",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_commit_provider_scalar.py",
         "exact_pytest_node_id": "tests/sdk/test_timeline_commit_provider_scalar.py::test_occurrence_inverse_reuses_original_images_and_preserves_later_sibling_pins",
         "phase": "call",
-        "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        "mapping": "Exact original selector is a member of the reviewed JUnit result; original body/assertions and current AST/source hashes are recorded. No body rerun was used."
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "occurrence inverse reuses original media and preserves later sibling pins",
+        "post_0118_evidence_refs": [
+          "runtime_R2_root_originals_0622",
+          "runtime_R2_root_review_0625"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Exact original/current function-body AST hashes and full source-file hashes are recorded from stdlib AST/hash inspection; no body execution was repeated.",
+        "timing_seconds": 3.63,
+        "custody_limits": [
+          "in-process/source-mode only",
+          "no HTTP",
+          "no installed-source overlay",
+          "no runtime-actor claim",
+          "no body rerun in this package"
+        ]
+      },
+      "gap_id": "AGENT-F-ROOT-HELPER-SCHEMA-20261024",
+      "owner_ref": "agent_F_count_root_helper_schema_map_0641",
+      "proof_refs": [
+        "runtime_R2_root_originals_0622",
+        "runtime_R2_root_review_0625"
+      ],
+      "proof_status": "exact_retained_scoped_pass",
+      "historical_pre_package_reconciliation": {
+        "status": "active_owner",
+        "gap_id": null,
+        "reason": "IMAGE-0043 owns image-preservation proof; acceptance remains refused.",
+        "owner": "Agent",
+        "owner_ref": null,
+        "proof_refs": [],
+        "proof_status": null,
+        "effective_owner": "Agent",
+        "original_body_assertion_mapping": {
+          "test_file": "tests/sdk/test_timeline_commit_provider_scalar.py",
+          "exact_pytest_node_id": "tests/sdk/test_timeline_commit_provider_scalar.py::test_occurrence_inverse_reuses_original_images_and_preserves_later_sibling_pins",
+          "phase": "call",
+          "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        },
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -6863,29 +7126,69 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
-      "owner_ref": "sdk_schema_0037",
+      "status": "proven_passed",
+      "gap_id": "AGENT-F-ROOT-HELPER-SCHEMA-20261024",
+      "reason": "Exact original selector retained by scoped review; body was not rerun in this package.",
+      "owner_ref": "agent_F_count_root_helper_schema_map_0641",
       "proof_refs": [
-        "schema_0037"
+        "schema_census_fix_0605",
+        "schema_census_review_0622",
+        "schema_integrated_0634"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_composed_schema.py",
         "exact_pytest_node_id": "tests/sdk/test_timeline_composed_schema.py::test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden",
         "phase": "call",
-        "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        "mapping": "Exact original selector is a member of the reviewed JUnit result; original body/assertions and current AST/source hashes are recorded. No body rerun was used."
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "current_head": "0b4255fd8a1c20b089093cb2508394e896f54a96",
+        "post_0118_disposition": "registered operations have closed canonical args and valid golden",
+        "post_0118_evidence_refs": [
+          "schema_census_fix_0605",
+          "schema_census_review_0622",
+          "schema_integrated_0634"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Exact original/current function-body AST hashes and full source-file hashes are recorded from stdlib AST/hash inspection; no body execution was repeated.",
+        "timing_seconds": 0.89,
+        "custody_limits": [
+          "in-process/source-mode only",
+          "no HTTP",
+          "no installed-source overlay",
+          "no runtime-actor claim",
+          "no body rerun in this package"
+        ]
+      },
+      "historical_pre_package_reconciliation": {
+        "status": "active_owner",
+        "gap_id": "AGENT-SDK-REMAINDER",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "owner": null,
+        "owner_ref": "sdk_schema_0037",
+        "proof_refs": [
+          "schema_0037"
+        ],
+        "proof_status": "missing_exact_node_proof_assigned_owner",
+        "effective_owner": "Agent",
+        "original_body_assertion_mapping": {
+          "test_file": "tests/sdk/test_timeline_composed_schema.py",
+          "exact_pytest_node_id": "tests/sdk/test_timeline_composed_schema.py::test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden",
+          "phase": "call",
+          "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        },
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -6893,29 +7196,69 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
-      "owner_ref": "sdk_schema_0037",
+      "status": "proven_passed",
+      "gap_id": "AGENT-F-ROOT-HELPER-SCHEMA-20261024",
+      "reason": "Exact original selector retained by scoped review; body was not rerun in this package.",
+      "owner_ref": "agent_F_count_root_helper_schema_map_0641",
       "proof_refs": [
-        "schema_0037"
+        "schema_census_fix_0605",
+        "schema_census_review_0622",
+        "schema_integrated_0634"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_current_union_schema.py",
         "exact_pytest_node_id": "tests/sdk/test_timeline_current_union_schema.py::test_closed_union_operation_inventory_is_exactly_the_supported_cohort",
         "phase": "call",
-        "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        "mapping": "Exact original selector is a member of the reviewed JUnit result; original body/assertions and current AST/source hashes are recorded. No body rerun was used."
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "current_head": "0b4255fd8a1c20b089093cb2508394e896f54a96",
+        "post_0118_disposition": "closed union operation inventory is exactly supported cohort",
+        "post_0118_evidence_refs": [
+          "schema_census_fix_0605",
+          "schema_census_review_0622",
+          "schema_integrated_0634"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Exact original/current function-body AST hashes and full source-file hashes are recorded from stdlib AST/hash inspection; no body execution was repeated.",
+        "timing_seconds": 0.89,
+        "custody_limits": [
+          "in-process/source-mode only",
+          "no HTTP",
+          "no installed-source overlay",
+          "no runtime-actor claim",
+          "no body rerun in this package"
+        ]
+      },
+      "historical_pre_package_reconciliation": {
+        "status": "active_owner",
+        "gap_id": "AGENT-SDK-REMAINDER",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "owner": null,
+        "owner_ref": "sdk_schema_0037",
+        "proof_refs": [
+          "schema_0037"
+        ],
+        "proof_status": "missing_exact_node_proof_assigned_owner",
+        "effective_owner": "Agent",
+        "original_body_assertion_mapping": {
+          "test_file": "tests/sdk/test_timeline_current_union_schema.py",
+          "exact_pytest_node_id": "tests/sdk/test_timeline_current_union_schema.py::test_closed_union_operation_inventory_is_exactly_the_supported_cohort",
+          "phase": "call",
+          "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        },
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -6923,29 +7266,67 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
-      "owner_ref": "sdk_helper_0107",
+      "status": "proven_passed",
+      "gap_id": "AGENT-F-ROOT-HELPER-SCHEMA-20261024",
+      "reason": "Exact original selector retained by scoped review; body was not rerun in this package.",
+      "owner_ref": "agent_F_count_root_helper_schema_map_0641",
       "proof_refs": [
-        "helper_0107"
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
         "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_conflicts_and_uncaptured_edits_never_write[same]",
         "phase": "call",
-        "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        "mapping": "Exact original selector is a member of the reviewed JUnit result; original body/assertions and current AST/source hashes are recorded. No body rerun was used."
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "same-clip conflict and uncaptured edits never write",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Exact original/current function-body AST hashes and full source-file hashes are recorded from stdlib AST/hash inspection; no body execution was repeated.",
+        "timing_seconds": 73.955,
+        "custody_limits": [
+          "in-process/source-mode only",
+          "no HTTP",
+          "no installed-source overlay",
+          "no runtime-actor claim",
+          "no body rerun in this package"
+        ]
+      },
+      "historical_pre_package_reconciliation": {
+        "status": "active_owner",
+        "gap_id": "AGENT-SDK-REMAINDER",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "owner": null,
+        "owner_ref": "sdk_helper_0107",
+        "proof_refs": [
+          "helper_0107"
+        ],
+        "proof_status": "missing_exact_node_proof_assigned_owner",
+        "effective_owner": "Agent",
+        "original_body_assertion_mapping": {
+          "test_file": "tests/sdk/test_timeline_helper_capture.py",
+          "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_conflicts_and_uncaptured_edits_never_write[same]",
+          "phase": "call",
+          "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        },
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7046,29 +7427,67 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
-      "owner_ref": "sdk_helper_0107",
+      "status": "proven_passed",
+      "gap_id": "AGENT-F-ROOT-HELPER-SCHEMA-20261024",
+      "reason": "Exact original selector retained by scoped review; body was not rerun in this package.",
+      "owner_ref": "agent_F_count_root_helper_schema_map_0641",
       "proof_refs": [
-        "helper_0107"
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
         "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[collection]",
         "phase": "call",
-        "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        "mapping": "Exact original selector is a member of the reviewed JUnit result; original body/assertions and current AST/source hashes are recorded. No body rerun was used."
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "guarded cut/nudge input never writes",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Exact original/current function-body AST hashes and full source-file hashes are recorded from stdlib AST/hash inspection; no body execution was repeated.",
+        "timing_seconds": 73.955,
+        "custody_limits": [
+          "in-process/source-mode only",
+          "no HTTP",
+          "no installed-source overlay",
+          "no runtime-actor claim",
+          "no body rerun in this package"
+        ]
+      },
+      "historical_pre_package_reconciliation": {
+        "status": "active_owner",
+        "gap_id": "AGENT-SDK-REMAINDER",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "owner": null,
+        "owner_ref": "sdk_helper_0107",
+        "proof_refs": [
+          "helper_0107"
+        ],
+        "proof_status": "missing_exact_node_proof_assigned_owner",
+        "effective_owner": "Agent",
+        "original_body_assertion_mapping": {
+          "test_file": "tests/sdk/test_timeline_helper_capture.py",
+          "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[collection]",
+          "phase": "call",
+          "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        },
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7076,29 +7495,67 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
-      "owner_ref": "sdk_helper_0107",
+      "status": "proven_passed",
+      "gap_id": "AGENT-F-ROOT-HELPER-SCHEMA-20261024",
+      "reason": "Exact original selector retained by scoped review; body was not rerun in this package.",
+      "owner_ref": "agent_F_count_root_helper_schema_map_0641",
       "proof_refs": [
-        "helper_0107"
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
         "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[same]",
         "phase": "call",
-        "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        "mapping": "Exact original selector is a member of the reviewed JUnit result; original body/assertions and current AST/source hashes are recorded. No body rerun was used."
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "guarded cut/nudge input never writes",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Exact original/current function-body AST hashes and full source-file hashes are recorded from stdlib AST/hash inspection; no body execution was repeated.",
+        "timing_seconds": 73.955,
+        "custody_limits": [
+          "in-process/source-mode only",
+          "no HTTP",
+          "no installed-source overlay",
+          "no runtime-actor claim",
+          "no body rerun in this package"
+        ]
+      },
+      "historical_pre_package_reconciliation": {
+        "status": "active_owner",
+        "gap_id": "AGENT-SDK-REMAINDER",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "owner": null,
+        "owner_ref": "sdk_helper_0107",
+        "proof_refs": [
+          "helper_0107"
+        ],
+        "proof_status": "missing_exact_node_proof_assigned_owner",
+        "effective_owner": "Agent",
+        "original_body_assertion_mapping": {
+          "test_file": "tests/sdk/test_timeline_helper_capture.py",
+          "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[same]",
+          "phase": "call",
+          "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        },
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7106,29 +7563,67 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
-      "owner_ref": "sdk_helper_0107",
+      "status": "proven_passed",
+      "gap_id": "AGENT-F-ROOT-HELPER-SCHEMA-20261024",
+      "reason": "Exact original selector retained by scoped review; body was not rerun in this package.",
+      "owner_ref": "agent_F_count_root_helper_schema_map_0641",
       "proof_refs": [
-        "helper_0107"
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
         "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[word-source]",
         "phase": "call",
-        "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        "mapping": "Exact original selector is a member of the reviewed JUnit result; original body/assertions and current AST/source hashes are recorded. No body rerun was used."
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "guarded cut/nudge input never writes",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Exact original/current function-body AST hashes and full source-file hashes are recorded from stdlib AST/hash inspection; no body execution was repeated.",
+        "timing_seconds": 73.955,
+        "custody_limits": [
+          "in-process/source-mode only",
+          "no HTTP",
+          "no installed-source overlay",
+          "no runtime-actor claim",
+          "no body rerun in this package"
+        ]
+      },
+      "historical_pre_package_reconciliation": {
+        "status": "active_owner",
+        "gap_id": "AGENT-SDK-REMAINDER",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "owner": null,
+        "owner_ref": "sdk_helper_0107",
+        "proof_refs": [
+          "helper_0107"
+        ],
+        "proof_status": "missing_exact_node_proof_assigned_owner",
+        "effective_owner": "Agent",
+        "original_body_assertion_mapping": {
+          "test_file": "tests/sdk/test_timeline_helper_capture.py",
+          "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[word-source]",
+          "phase": "call",
+          "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        },
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7162,29 +7657,67 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
-      "owner_ref": "sdk_helper_0107",
+      "status": "proven_passed",
+      "gap_id": "AGENT-F-ROOT-HELPER-SCHEMA-20261024",
+      "reason": "Exact original selector retained by scoped review; body was not rerun in this package.",
+      "owner_ref": "agent_F_count_root_helper_schema_map_0641",
       "proof_refs": [
-        "helper_0107"
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
         "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[+1s]",
         "phase": "call",
-        "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        "mapping": "Exact original selector is a member of the reviewed JUnit result; original body/assertions and current AST/source hashes are recorded. No body rerun was used."
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "eligible non-second cut/nudge restart merges other cut",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Exact original/current function-body AST hashes and full source-file hashes are recorded from stdlib AST/hash inspection; no body execution was repeated.",
+        "timing_seconds": 73.955,
+        "custody_limits": [
+          "in-process/source-mode only",
+          "no HTTP",
+          "no installed-source overlay",
+          "no runtime-actor claim",
+          "no body rerun in this package"
+        ]
+      },
+      "historical_pre_package_reconciliation": {
+        "status": "active_owner",
+        "gap_id": "AGENT-SDK-REMAINDER",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "owner": null,
+        "owner_ref": "sdk_helper_0107",
+        "proof_refs": [
+          "helper_0107"
+        ],
+        "proof_status": "missing_exact_node_proof_assigned_owner",
+        "effective_owner": "Agent",
+        "original_body_assertion_mapping": {
+          "test_file": "tests/sdk/test_timeline_helper_capture.py",
+          "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[+1s]",
+          "phase": "call",
+          "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        },
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7192,29 +7725,67 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
-      "owner_ref": "sdk_helper_0107",
+      "status": "proven_passed",
+      "gap_id": "AGENT-F-ROOT-HELPER-SCHEMA-20261024",
+      "reason": "Exact original selector retained by scoped review; body was not rerun in this package.",
+      "owner_ref": "agent_F_count_root_helper_schema_map_0641",
       "proof_refs": [
-        "helper_0107"
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
         "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[None]",
         "phase": "call",
-        "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        "mapping": "Exact original selector is a member of the reviewed JUnit result; original body/assertions and current AST/source hashes are recorded. No body rerun was used."
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "eligible non-second cut/nudge restart merges other cut",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Exact original/current function-body AST hashes and full source-file hashes are recorded from stdlib AST/hash inspection; no body execution was repeated.",
+        "timing_seconds": 73.955,
+        "custody_limits": [
+          "in-process/source-mode only",
+          "no HTTP",
+          "no installed-source overlay",
+          "no runtime-actor claim",
+          "no body rerun in this package"
+        ]
+      },
+      "historical_pre_package_reconciliation": {
+        "status": "active_owner",
+        "gap_id": "AGENT-SDK-REMAINDER",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "owner": null,
+        "owner_ref": "sdk_helper_0107",
+        "proof_refs": [
+          "helper_0107"
+        ],
+        "proof_status": "missing_exact_node_proof_assigned_owner",
+        "effective_owner": "Agent",
+        "original_body_assertion_mapping": {
+          "test_file": "tests/sdk/test_timeline_helper_capture.py",
+          "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[None]",
+          "phase": "call",
+          "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        },
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7222,29 +7793,67 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
-      "owner_ref": "sdk_helper_0107",
+      "status": "proven_passed",
+      "gap_id": "AGENT-F-ROOT-HELPER-SCHEMA-20261024",
+      "reason": "Exact original selector retained by scoped review; body was not rerun in this package.",
+      "owner_ref": "agent_F_count_root_helper_schema_map_0641",
       "proof_refs": [
-        "helper_0107"
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
         "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_genuine_anchor_capture_has_exact_source_scope_and_base_pair",
         "phase": "call",
-        "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        "mapping": "Exact original selector is a member of the reviewed JUnit result; original body/assertions and current AST/source hashes are recorded. No body rerun was used."
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "anchor capture binds exact source scope and base pair",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Exact original/current function-body AST hashes and full source-file hashes are recorded from stdlib AST/hash inspection; no body execution was repeated.",
+        "timing_seconds": 73.955,
+        "custody_limits": [
+          "in-process/source-mode only",
+          "no HTTP",
+          "no installed-source overlay",
+          "no runtime-actor claim",
+          "no body rerun in this package"
+        ]
+      },
+      "historical_pre_package_reconciliation": {
+        "status": "active_owner",
+        "gap_id": "AGENT-SDK-REMAINDER",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "owner": null,
+        "owner_ref": "sdk_helper_0107",
+        "proof_refs": [
+          "helper_0107"
+        ],
+        "proof_status": "missing_exact_node_proof_assigned_owner",
+        "effective_owner": "Agent",
+        "original_body_assertion_mapping": {
+          "test_file": "tests/sdk/test_timeline_helper_capture.py",
+          "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_genuine_anchor_capture_has_exact_source_scope_and_base_pair",
+          "phase": "call",
+          "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        },
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7252,29 +7861,67 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
-      "owner_ref": "sdk_helper_0107",
+      "status": "proven_passed",
+      "gap_id": "AGENT-F-ROOT-HELPER-SCHEMA-20261024",
+      "reason": "Exact original selector retained by scoped review; body was not rerun in this package.",
+      "owner_ref": "agent_F_count_root_helper_schema_map_0641",
       "proof_refs": [
-        "helper_0107"
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
         "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_helper_lost_ack_retries_exact_request",
         "phase": "call",
-        "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        "mapping": "Exact original selector is a member of the reviewed JUnit result; original body/assertions and current AST/source hashes are recorded. No body rerun was used."
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "lost helper acknowledgement retries exact request",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Exact original/current function-body AST hashes and full source-file hashes are recorded from stdlib AST/hash inspection; no body execution was repeated.",
+        "timing_seconds": 73.955,
+        "custody_limits": [
+          "in-process/source-mode only",
+          "no HTTP",
+          "no installed-source overlay",
+          "no runtime-actor claim",
+          "no body rerun in this package"
+        ]
+      },
+      "historical_pre_package_reconciliation": {
+        "status": "active_owner",
+        "gap_id": "AGENT-SDK-REMAINDER",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "owner": null,
+        "owner_ref": "sdk_helper_0107",
+        "proof_refs": [
+          "helper_0107"
+        ],
+        "proof_status": "missing_exact_node_proof_assigned_owner",
+        "effective_owner": "Agent",
+        "original_body_assertion_mapping": {
+          "test_file": "tests/sdk/test_timeline_helper_capture.py",
+          "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_helper_lost_ack_retries_exact_request",
+          "phase": "call",
+          "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        },
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7282,29 +7929,67 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
-      "owner_ref": "sdk_helper_0107",
+      "status": "proven_passed",
+      "gap_id": "AGENT-F-ROOT-HELPER-SCHEMA-20261024",
+      "reason": "Exact original selector retained by scoped review; body was not rerun in this package.",
+      "owner_ref": "agent_F_count_root_helper_schema_map_0641",
       "proof_refs": [
-        "helper_0107"
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
         "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[after]",
         "phase": "call",
-        "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        "mapping": "Exact original selector is a member of the reviewed JUnit result; original body/assertions and current AST/source hashes are recorded. No body rerun was used."
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "tampered or forged capture journal input is refused",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Exact original/current function-body AST hashes and full source-file hashes are recorded from stdlib AST/hash inspection; no body execution was repeated.",
+        "timing_seconds": 73.955,
+        "custody_limits": [
+          "in-process/source-mode only",
+          "no HTTP",
+          "no installed-source overlay",
+          "no runtime-actor claim",
+          "no body rerun in this package"
+        ]
+      },
+      "historical_pre_package_reconciliation": {
+        "status": "active_owner",
+        "gap_id": "AGENT-SDK-REMAINDER",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "owner": null,
+        "owner_ref": "sdk_helper_0107",
+        "proof_refs": [
+          "helper_0107"
+        ],
+        "proof_status": "missing_exact_node_proof_assigned_owner",
+        "effective_owner": "Agent",
+        "original_body_assertion_mapping": {
+          "test_file": "tests/sdk/test_timeline_helper_capture.py",
+          "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[after]",
+          "phase": "call",
+          "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        },
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7312,29 +7997,67 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
-      "owner_ref": "sdk_helper_0107",
+      "status": "proven_passed",
+      "gap_id": "AGENT-F-ROOT-HELPER-SCHEMA-20261024",
+      "reason": "Exact original selector retained by scoped review; body was not rerun in this package.",
+      "owner_ref": "agent_F_count_root_helper_schema_map_0641",
       "proof_refs": [
-        "helper_0107"
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
         "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[commands]",
         "phase": "call",
-        "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        "mapping": "Exact original selector is a member of the reviewed JUnit result; original body/assertions and current AST/source hashes are recorded. No body rerun was used."
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "tampered or forged capture journal input is refused",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Exact original/current function-body AST hashes and full source-file hashes are recorded from stdlib AST/hash inspection; no body execution was repeated.",
+        "timing_seconds": 73.955,
+        "custody_limits": [
+          "in-process/source-mode only",
+          "no HTTP",
+          "no installed-source overlay",
+          "no runtime-actor claim",
+          "no body rerun in this package"
+        ]
+      },
+      "historical_pre_package_reconciliation": {
+        "status": "active_owner",
+        "gap_id": "AGENT-SDK-REMAINDER",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "owner": null,
+        "owner_ref": "sdk_helper_0107",
+        "proof_refs": [
+          "helper_0107"
+        ],
+        "proof_status": "missing_exact_node_proof_assigned_owner",
+        "effective_owner": "Agent",
+        "original_body_assertion_mapping": {
+          "test_file": "tests/sdk/test_timeline_helper_capture.py",
+          "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[commands]",
+          "phase": "call",
+          "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        },
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7342,29 +8065,67 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
-      "owner_ref": "sdk_helper_0107",
+      "status": "proven_passed",
+      "gap_id": "AGENT-F-ROOT-HELPER-SCHEMA-20261024",
+      "reason": "Exact original selector retained by scoped review; body was not rerun in this package.",
+      "owner_ref": "agent_F_count_root_helper_schema_map_0641",
       "proof_refs": [
-        "helper_0107"
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
         "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[hash]",
         "phase": "call",
-        "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        "mapping": "Exact original selector is a member of the reviewed JUnit result; original body/assertions and current AST/source hashes are recorded. No body rerun was used."
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "tampered or forged capture journal input is refused",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Exact original/current function-body AST hashes and full source-file hashes are recorded from stdlib AST/hash inspection; no body execution was repeated.",
+        "timing_seconds": 73.955,
+        "custody_limits": [
+          "in-process/source-mode only",
+          "no HTTP",
+          "no installed-source overlay",
+          "no runtime-actor claim",
+          "no body rerun in this package"
+        ]
+      },
+      "historical_pre_package_reconciliation": {
+        "status": "active_owner",
+        "gap_id": "AGENT-SDK-REMAINDER",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "owner": null,
+        "owner_ref": "sdk_helper_0107",
+        "proof_refs": [
+          "helper_0107"
+        ],
+        "proof_status": "missing_exact_node_proof_assigned_owner",
+        "effective_owner": "Agent",
+        "original_body_assertion_mapping": {
+          "test_file": "tests/sdk/test_timeline_helper_capture.py",
+          "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[hash]",
+          "phase": "call",
+          "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        },
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7372,29 +8133,67 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
-      "owner_ref": "sdk_helper_0107",
+      "status": "proven_passed",
+      "gap_id": "AGENT-F-ROOT-HELPER-SCHEMA-20261024",
+      "reason": "Exact original selector retained by scoped review; body was not rerun in this package.",
+      "owner_ref": "agent_F_count_root_helper_schema_map_0641",
       "proof_refs": [
-        "helper_0107"
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
         "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[reads]",
         "phase": "call",
-        "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        "mapping": "Exact original selector is a member of the reviewed JUnit result; original body/assertions and current AST/source hashes are recorded. No body rerun was used."
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "tampered or forged capture journal input is refused",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Exact original/current function-body AST hashes and full source-file hashes are recorded from stdlib AST/hash inspection; no body execution was repeated.",
+        "timing_seconds": 73.955,
+        "custody_limits": [
+          "in-process/source-mode only",
+          "no HTTP",
+          "no installed-source overlay",
+          "no runtime-actor claim",
+          "no body rerun in this package"
+        ]
+      },
+      "historical_pre_package_reconciliation": {
+        "status": "active_owner",
+        "gap_id": "AGENT-SDK-REMAINDER",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "owner": null,
+        "owner_ref": "sdk_helper_0107",
+        "proof_refs": [
+          "helper_0107"
+        ],
+        "proof_status": "missing_exact_node_proof_assigned_owner",
+        "effective_owner": "Agent",
+        "original_body_assertion_mapping": {
+          "test_file": "tests/sdk/test_timeline_helper_capture.py",
+          "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[reads]",
+          "phase": "call",
+          "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        },
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7402,29 +8201,67 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
-      "owner_ref": "sdk_helper_fixture_0114",
+      "status": "proven_passed",
+      "gap_id": "AGENT-F-ROOT-HELPER-SCHEMA-20261024",
+      "reason": "Exact original selector retained by scoped review; body was not rerun in this package.",
+      "owner_ref": "agent_F_count_root_helper_schema_map_0641",
       "proof_refs": [
-        "helper_fixture_0114"
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_helper_capture.py",
         "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_nudge_restart_merges_peer_other_clip",
         "phase": "call",
-        "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        "mapping": "Exact original selector is a member of the reviewed JUnit result; original body/assertions and current AST/source hashes are recorded. No body rerun was used."
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "nudge/restart merges a peer's other clip",
+        "post_0118_evidence_refs": [
+          "runtime_helper_originals_0622",
+          "runtime_helper_review_0627"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Exact original/current function-body AST hashes and full source-file hashes are recorded from stdlib AST/hash inspection; no body execution was repeated.",
+        "timing_seconds": 73.955,
+        "custody_limits": [
+          "in-process/source-mode only",
+          "no HTTP",
+          "no installed-source overlay",
+          "no runtime-actor claim",
+          "no body rerun in this package"
+        ]
+      },
+      "historical_pre_package_reconciliation": {
+        "status": "active_owner",
+        "gap_id": "AGENT-SDK-REMAINDER",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "owner": null,
+        "owner_ref": "sdk_helper_fixture_0114",
+        "proof_refs": [
+          "helper_fixture_0114"
+        ],
+        "proof_status": "missing_exact_node_proof_assigned_owner",
+        "effective_owner": "Agent",
+        "original_body_assertion_mapping": {
+          "test_file": "tests/sdk/test_timeline_helper_capture.py",
+          "exact_pytest_node_id": "tests/sdk/test_timeline_helper_capture.py::test_nudge_restart_merges_peer_other_clip",
+          "phase": "call",
+          "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        },
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7662,29 +8499,67 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
-      "owner_ref": "sdk_r2_0042",
+      "status": "proven_passed",
+      "gap_id": "AGENT-F-ROOT-HELPER-SCHEMA-20261024",
+      "reason": "Exact original selector retained by scoped review; body was not rerun in this package.",
+      "owner_ref": "agent_F_count_root_helper_schema_map_0641",
       "proof_refs": [
-        "r2_0042"
+        "runtime_R2_root_originals_0622",
+        "runtime_R2_root_review_0625"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_occurrence_delete_provider.py",
         "exact_pytest_node_id": "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-0]",
         "phase": "call",
-        "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        "mapping": "Exact original selector is a member of the reviewed JUnit result; original body/assertions and current AST/source hashes are recorded. No body rerun was used."
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "authenticated delete reload inverse redo preserves exact provider closure",
+        "post_0118_evidence_refs": [
+          "runtime_R2_root_originals_0622",
+          "runtime_R2_root_review_0625"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Exact original/current function-body AST hashes and full source-file hashes are recorded from stdlib AST/hash inspection; no body execution was repeated.",
+        "timing_seconds": 3.63,
+        "custody_limits": [
+          "in-process/source-mode only",
+          "no HTTP",
+          "no installed-source overlay",
+          "no runtime-actor claim",
+          "no body rerun in this package"
+        ]
+      },
+      "historical_pre_package_reconciliation": {
+        "status": "active_owner",
+        "gap_id": "AGENT-SDK-REMAINDER",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "owner": null,
+        "owner_ref": "sdk_r2_0042",
+        "proof_refs": [
+          "r2_0042"
+        ],
+        "proof_status": "missing_exact_node_proof_assigned_owner",
+        "effective_owner": "Agent",
+        "original_body_assertion_mapping": {
+          "test_file": "tests/sdk/test_timeline_occurrence_delete_provider.py",
+          "exact_pytest_node_id": "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-0]",
+          "phase": "call",
+          "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        },
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -7692,29 +8567,67 @@
       "phase": "call",
       "family": "Agent SDK / timeline unconfirmed",
       "tag": "ours",
-      "status": "active_owner",
-      "gap_id": "AGENT-SDK-REMAINDER",
-      "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
-      "owner_ref": "sdk_r2_0042",
+      "status": "proven_passed",
+      "gap_id": "AGENT-F-ROOT-HELPER-SCHEMA-20261024",
+      "reason": "Exact original selector retained by scoped review; body was not rerun in this package.",
+      "owner_ref": "agent_F_count_root_helper_schema_map_0641",
       "proof_refs": [
-        "r2_0042"
+        "runtime_R2_root_originals_0622",
+        "runtime_R2_root_review_0625"
       ],
-      "proof_status": "missing_exact_node_proof_assigned_owner",
+      "proof_status": "exact_retained_scoped_pass",
       "baseline_status": "active_owner",
       "original_body_assertion_mapping": {
         "test_file": "tests/sdk/test_timeline_occurrence_delete_provider.py",
         "exact_pytest_node_id": "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-1]",
         "phase": "call",
-        "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        "mapping": "Exact original selector is a member of the reviewed JUnit result; original body/assertions and current AST/source hashes are recorded. No body rerun was used."
       },
       "effective_owner": "Agent",
       "integrated_reconciliation": {
-        "classification": "open_held_or_unknown",
-        "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
-        "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
-        "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
-        "post_0118_evidence_refs": [],
-        "qualifying_original_behavior_credit": false
+        "classification": "confirmed_closed_current_package",
+        "current_head": "bb50a43c915ec00c05c5ee34569a040bab8e817c",
+        "post_0118_disposition": "authenticated delete reload inverse redo preserves exact provider closure",
+        "post_0118_evidence_refs": [
+          "runtime_R2_root_originals_0622",
+          "runtime_R2_root_review_0625"
+        ],
+        "qualifying_original_behavior_credit": true,
+        "source_equivalence": "Exact original/current function-body AST hashes and full source-file hashes are recorded from stdlib AST/hash inspection; no body execution was repeated.",
+        "timing_seconds": 3.63,
+        "custody_limits": [
+          "in-process/source-mode only",
+          "no HTTP",
+          "no installed-source overlay",
+          "no runtime-actor claim",
+          "no body rerun in this package"
+        ]
+      },
+      "historical_pre_package_reconciliation": {
+        "status": "active_owner",
+        "gap_id": "AGENT-SDK-REMAINDER",
+        "reason": "No current board owner or exact finite proof; upstream comparison unavailable, so this remains ours rather than pre-existing.",
+        "owner": null,
+        "owner_ref": "sdk_r2_0042",
+        "proof_refs": [
+          "r2_0042"
+        ],
+        "proof_status": "missing_exact_node_proof_assigned_owner",
+        "effective_owner": "Agent",
+        "original_body_assertion_mapping": {
+          "test_file": "tests/sdk/test_timeline_occurrence_delete_provider.py",
+          "exact_pytest_node_id": "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-1]",
+          "phase": "call",
+          "mapping": "Exact node collected by D32 full25691; original body and assertions are retained verbatim. Source-only, aggregate, mock, candidate, or neighbor results do not substitute for this node."
+        },
+        "integrated_reconciliation": {
+          "classification": "open_held_or_unknown",
+          "current_head": "9f2da582a6767030055e54092287d40f2b8f74bb",
+          "current_tree": "80c4f98ca5a57c19b99f9e729ef6963ac662c32b",
+          "post_0118_disposition": "No post-0118 proof losslessly enumerates this exact original node on the current source; remains open/held.",
+          "post_0118_evidence_refs": [],
+          "qualifying_original_behavior_credit": false
+        }
       }
     },
     {
@@ -9957,7 +10870,8 @@
     "This bounded fixture count does not claim the v2 production caller/wire-contract acceptance, including the complete request/reply shape; no product, test, schema, client, pin, or M5 change was made.",
     "Only this exact external-pack original call node earns one closure. No second generic_host original, whole86/full/gate, current-whole-HEAD installed, future, or v2 production caller/wire-contract acceptance credit. No rerun performed for this package.",
     "Historical SDK9 package scope: Exactly nine active SDK original call nodes close in this delta: capture 2, contiguous helpers 2, persistence 5. Other 258 node records, prior proof records and 60 mapping rows remain unchanged. The 24 unqualified SDK selectors and two schema inventory cases stay open; schema fix is owned separately by 0605. No aggregate, future CLI/labels/D09/restructure/schema/root/helper-neighbor/Farm/source-copy credit; no full267, current installed-head or blanket v2 acceptance claim.",
-    "H32 candidate delta closes exactly 25: D09 3, restructure 7, normal-publication PASS 7 of 8, CLI 5, track-label 3. All 242 other node records, all prior proofs, all 69 prior mappings preserved. SDK9 independent0631 remains pending; package is not official. no_renderer closure, support/generic/ABA/schema/root/helper remainders remain OPEN. No broad full PASS, retrospective Farm credit, product/test edit or body rerun. Finite source/receipt limits are in h32_mapping and h32_*_retained proofs."
+    "H32 candidate delta closes exactly 25: D09 3, restructure 7, normal-publication PASS 7 of 8, CLI 5, track-label 3. All 242 other node records, all prior proofs, all 69 prior mappings preserved. SDK9 independent0631 remains pending; package is not official. no_renderer closure, support/generic/ABA/schema/root/helper remainders remain OPEN. No broad full PASS, retrospective Farm credit, product/test edit or body rerun. Finite source/receipt limits are in h32_mapping and h32_*_retained proofs.",
+    "2026-10-24 bounded package: exact 24 current active originals (9 R2 roots, 13 eligible helpers, 2 schema census); root in-process DetachedPort with explicit initial pre/post snapshot limit; helper [second] remains OPEN/unrun; schema six provider-only operations and frozen 30 wire branches with exact bb50 provider/source and two reviewed fixture blobs. No HTTP, installed source, runtime actor, body rerun, source-word fixture, original closure qualifier, generic/support/last-three SDK, ABA, or Farm credit."
   ],
   "correction": {
     "basis": "Independent H30 census review after FAIL0358",
@@ -10183,7 +11097,7 @@
       "inverse22_result_review_0550"
     ],
     "cumulative_0550_metadata_fix_disposition": "The 0550 package correction was metadata-only: it reconciled the seven H3 current-qualified nodes, preserved the historical 172/95 baseline and exact 37-row mapping, and produced artifact SHA c70b6627e6fe4cd7f6d900e0bcb99168dd8e56a4269ad8d88e12b07eec272268. It remains historical 179/88 package context here; it is not new behavior credit or a node-status change.",
-    "current_cumulative_disposition": "Candidate H32 package: exact 236 closed / 31 open, historical SDK9 candidate 211/56 plus 25 qualified original mappings. SDK9 independent0631 is active, not claimed PASS or official. Historical 172/95,179/88,201/66,202/65,211/56 remain provenance only.",
+    "current_cumulative_disposition": "Candidate exact 260 closed / 7 open, 267 total; package adds nine R2 roots, thirteen eligible helpers and two schema census originals. Official ORCH remains 202/65 until future package independent PASS.",
     "newly_confirmed_closed_at_0551_d40": [
       "tests/stage1/test_zero_shim_execution_pack_deletion.py::test_generic_host_runs_external_python_orchestrator_from_admitted_pack"
     ],
@@ -10243,7 +11157,46 @@
       "h32_normal_publication_retained",
       "h32_cli_retained",
       "h32_track_labels_retained"
-    ]
+    ],
+    "newly_confirmed_closed_at_root_helper_schema": {
+      "count": 24,
+      "ids": [
+        "tests/sdk/test_timeline_clip_scalar_provider.py::test_provider_unchanged_publication_and_aba_refuse_old_inverse[False-occurrence:f2-occurrence/clip:f2-agent-clear-clip-asset]",
+        "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_created_child_stages_reload_inverse_redo_exact_closure",
+        "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-False-child]",
+        "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[False-True-child]",
+        "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-False-child]",
+        "tests/sdk/test_timeline_commit_graph_roots.py::test_provider_root_child_aliases_guard_equal_state_publications[True-True-child]",
+        "tests/sdk/test_timeline_commit_provider_scalar.py::test_occurrence_inverse_reuses_original_images_and_preserves_later_sibling_pins",
+        "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-0]",
+        "tests/sdk/test_timeline_occurrence_delete_provider.py::test_authenticated_delete_reload_exact_inverse_redo[3-1]",
+        "tests/sdk/test_timeline_helper_capture.py::test_genuine_anchor_capture_has_exact_source_scope_and_base_pair",
+        "tests/sdk/test_timeline_helper_capture.py::test_nudge_restart_merges_peer_other_clip",
+        "tests/sdk/test_timeline_helper_capture.py::test_conflicts_and_uncaptured_edits_never_write[same]",
+        "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[after]",
+        "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[commands]",
+        "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[hash]",
+        "tests/sdk/test_timeline_helper_capture.py::test_journal_tamper_and_forged_capture_refuse[reads]",
+        "tests/sdk/test_timeline_helper_capture.py::test_helper_lost_ack_retries_exact_request",
+        "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[+1s]",
+        "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[None]",
+        "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[collection]",
+        "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[same]",
+        "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_guarded_inputs_never_write[word-source]",
+        "tests/sdk/test_timeline_composed_schema.py::test_every_registered_operation_has_closed_canonical_args_and_a_valid_golden",
+        "tests/sdk/test_timeline_current_union_schema.py::test_closed_union_operation_inventory_is_exactly_the_supported_cohort"
+      ],
+      "proof_refs": [
+        "runtime_R2_root_originals_0622",
+        "runtime_R2_root_review_0625",
+        "runtime_helper_originals_0622",
+        "runtime_helper_review_0627",
+        "schema_census_fix_0605",
+        "schema_census_review_0622",
+        "schema_integrated_0634"
+      ],
+      "body_rerun": false
+    }
   },
   "owner_registry_note": "H30 current ownership is Viewing for the retained-caller delta and six render-wire rows, Runtime for the seven H3 source-drift rows, and Agent for Agent-home rows. Historical worker labels are not active authors. The three track-label rows remain separate. The seven H3 import-source rows and the exact 22 occurrence-media inverse rows are current-qualified; source-copy selectors were checked and are absent from the 267-node census."
 }
