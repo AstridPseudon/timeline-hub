@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T15:56:45Z | dispatcher heartbeat 12s | live 2 (sol 1, luna 1, other 0) | busy30 19 | status age 2m -->
-# agent board, 2026-10-24T15:53:27Z
+<!-- agent | 2026-10-24T15:59:41Z | dispatcher heartbeat 5s | live 3 (sol 1, luna 2, other 0) | busy30 19 | status age 1m -->
+# agent board, 2026-10-24T15:58:15Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -105,10 +105,12 @@
 
 | U4a D62 preparation | Adopt normal generated ABI field | Luna | Runtime security then home merge | merged | Author1529; review1533 PASS; rebind1536 | Actual5777 binds qualified Runtime8b32,15 mappings exact. Independent37 PASS/39 default-lane deselections; rebind31 PASS. Six-original home proof1540 active. | Home57779274a0 |
 
-| G4 empty timeline | Configure real daemon provider | Luna | Normal merge and home proof | merging | Whole path1546; setup1551 | Trusted astrid profile setup fixes original: author1 PASS, mypy PASS, Ruff unchangedF841. Normal merge queued. | Worker1551 |
+| G4 empty timeline | Configure real daemon provider | Luna | Actual home proof complete | merged | Setup1551; home1556 PASS1 | Actual fba2 original PASS1 in4.45s, durableXML. Source and original AST exact; mypy PASS and unchanged RuffF841 retained. | Homefba2b8fa95 |
 
-Integration: Agent57779274a0 includes true U2-final924, exact reviewed consumer9460 and normal generated Runtime8b32 adoption. Runtime source/security1511 PASS and actual adoption/rebind already complete; no stale producer-review or vendor wait. Exact source and receipt details remain in prior task rows.
-core open: 2 at actual5777/8b32. Six-original proof1540 has5 PASS1FAIL plus54 strict guards PASS. One retained inverse/redo original is Runtime-owned; separate create_empty setup author1551 PASS1 is merging. D13 ENV and both D23 deferrals remain unchanged. Final cut proof pending.
+| F D66 source reviews | Preserve original missing test bodies | Luna | Three author slices complete | review | Protected1557; CLI1558 | Authors report20 restores27 mappings. No body rerun; independent exact predicate and setup scope checks active. | Donor branches1551 |
+
+Integration: Agentfba2b8fa95 includes true U2-final924, exact reviewed consumer9460 and normal generated Runtime8b32 adoption. Runtime source/security1511 PASS and actual adoption/rebind already complete; no stale producer-review or vendor wait. Adds only trusted astrid profile test setup; actual original passes. Exact source and receipt details remain in prior task rows.
+core open: 1 at currentfba2/8b32. Six-original proof1540 has5 PASS1FAIL plus54 strict guards PASS. One retained inverse/redo original is Runtime-owned; separate create_empty setup is mergedfba2 and actual-home1556 PASS1. D13 ENV and both D23 deferrals remain unchanged. Final cut proof pending.
 regressions: 0 currently open at qualified scope; order181 repaired and actual d27b PASS16. Nine other upstream-PASS contrasts retain current PASS and await final cut confirmation. Exact276 overlays167 PASS107 open2 deferred; final core run remains owed.
 D60 baseline: Upstream924 full1621 terminal FAIL12396 passed91 failed14 errors16 skips566 subtests. Corrected exact276 has199 NEW-OURS and77 counterparts. External Runtimebecfe launch latere68 disclosed; no isolated all-run Runtime claim.
 D66 reverse: Corrected362 candidates=137 ledger-deleted178 present-changed47 restore-needed0renamed. Disjoint sdk16,CLI14,other17 workers1551 now close actual parameter identity, existing ledger or unchanged-body restoration. No speculative test deletion or original rerun.
@@ -116,7 +118,7 @@ Gates: P1/P2/P3 App; P4 Agent; P5 and Composition main. P4 current service23496 
 Admission: D56 stops Farm and schema venue work. All prior403/automatic source refusal routes remain stopped. D67 D13 is ENV known gap with no owner action; no child, source substitute or carrier fabrication.
 Disk: About9.2GB free at latest check; worker cap6. Newly finished clean trees are recycled by harness. Sweep3 and compact scheduled this pass; prior refused cleanup targets stay stopped.
 Blockers: Runtime — remaining inverse original needs authenticated timeline closure-root sequential-input validation. Existing owner peer1553 includes exact whole-path report and authentic homeXML/log; no competing Agent product author.
-Blockers: Agent — current P4/core service preflight exits before pytest. Sol1554 fixes both rows; independent whole-path1554 compares authentic snapshot with passing service launch.
-Next ready: Merge G4 setup1551; qualify integrated original; consume launcher1554 then submit one meaningful P4. Finish three D66 slices and required protected-test reviews. Consume Runtime auth fix, normal provenance rebind and one meaningful retained-original proof.
-live 5 / cap 6; ready-undispatched 0. Copied dispatcher15:53:13Z:1 Sol4 Luna. Sixth home proof1556 dispatched after G4 setup merged.
+Blockers: Agent — P4/core preflight rejects synthetic snapshot because rev-parse prints HEAD^2 on failure. Independent whole-path1554 confirms it; unique Sol1554 fixes both rows.
+Next ready: Consume launcher1554 and submit one meaningful P4. D66 all slices finished:20 restored27 mapped; independent1557/1558 review actual body preservation and ledger scope. Consume Runtime auth fix, normal provenance rebind and one meaningful retained-original proof.
+live 2 / cap 6; ready-undispatched 0. Copied dispatcher15:56:45Z:1 Sol1 Luna. CLI independent1558 queued after snapshot; sdk/other independent1557 active.
 Inbox consumed through15:50 Runtime adoption nudge; action already complete before15:45. Peer1553 reports actual five-of-six result and distinct remaining owned seam. Pass 2026-10-24T15:53:27Z.
