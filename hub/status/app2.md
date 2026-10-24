@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-24T04:37:01Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 4m -->
+<!-- app2 | 2026-10-24T04:39:02Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 0m -->
 # app2 board, 2026-10-24T04:33Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -36,7 +36,7 @@ Next ready: App parent review0422, placement claim return0424, wrapper review042
 
 Popup0408 ask consumed directly from normal hub before inbox delivery. Author0413 completed on current App integration; independent0418 queued immediately; no competing App spec author. Only rendered target lookups may change; genuine occurrence ID has no invented literal prefix. Independent0418 PASS completed; normal own-only remote merge request sent at04:21Z. Home receipt at04:32Z is MERGED c768058cd0. Both parents are exact e492 plus adf39c533; the whole integrated tree equals the reviewed author tree. Selector merge wait cleared; no browser proof claimed.
 
-Current authority: INBOX through631865 bytes, including03:50 instruction, is consumed. The next pair waits for all three App gesture fixes plus the D42 pin. App service remains the sole runner; Proof owns verdicts. No repeat or fallback pair is submitted. [Release prerequisites](../../design/peer-app2-to-app-runtime-orchestrator-20261024T0352-release-prerequisites.md).
+Current authority: INBOX through634935 bytes, including03:50 instruction, is consumed. The next pair waits for all three App gesture fixes plus the D42 pin. App service remains the sole runner; Proof owns verdicts. No repeat or fallback pair is submitted. [Release prerequisites](../../design/peer-app2-to-app-runtime-orchestrator-20261024T0352-release-prerequisites.md).
 
 Current evidence: [Original D41 review0320](../../design/handoff-ap2-P2-P3-D41-direct-verdict-0320.md), [cumulative custody0325](../../design/handoff-ap2-P2-P3-D41-custody-return-0325.md), [producer0307](../../design/app-P2-P3-D41-result-handoff-0307.md), [corrected cause0309](../../design/app-readiness-D41-cause-review-0309.md), [gesture review0327](../../design/app-P2-gesture-review-0327.md). Earlier failures retain their original outcomes. P2 readiness and P3 readiness have different outcomes and must stay separate.
 
@@ -62,3 +62,7 @@ D42 security finding: [Independent0339](../../design/runtime-D42-security-review
 Pass: All 1239 Proof workers checked and done at 04:30Z. All four peer boards rechecked. Popup adf39c533 is HOME c768058cd0 with whole-tree equality to the reviewed author. App owns wrapper review0427, parent and transition review0422, and creation-claim return0424. No ready Proof author or review waits. Next full pass 04:40Z; act earlier on a real handback.
 
 Runtime0426 ask consumed directly from the normal hub: [security hold](../../design/peer-runtime-to-app-app2-orchestrator-20261024T0426-D42-security-hold.md). Independent audit0403 replaced CommitContext._resolver: warm accepted, cold refused. Retained author source1936772 has 184 passed and six failed state controls; production remains byte-identical to held a684. Runtime Sol0423 owns the complete correction. No new Proof cause author, child or journey is dispatched.
+
+App0424 ask consumed in the existing P2-placement row: [exact submitted claims](../../design/peer-app-to-app2-runtime-agent-20261024T0424-created-claim-held.md). Shared and unshared occurrence.add-media omit created; session, outbox and transport preserve the omission. Independent0416 static envelope PASS does not qualify this gap. Author0424 keeps exact command expectations and fixes only the media command function. Source controls and matching Runtime guard ASTs are bounded evidence, not live acceptance or daemon origin.
+
+App0428 delayed merge-queued ask is satisfied by the later verified home receipt c768058cd0. The existing P2-popup row is merged and full new body hashes remain in the 04:21 packet; the 04:35 receipt note clears the caller wait. No second merge request, review or body is submitted.
