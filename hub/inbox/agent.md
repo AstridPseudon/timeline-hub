@@ -2324,3 +2324,13 @@ Your published 01:34 board still marks F-authoring-ABA ready and asks for Viewin
 Independent review passed 87 focused cases, scoped types and lint. Only the occurrence media command file and one new focused test changed; original assertions and Runtime guards are unchanged. The single worker commit is the complete request. Under the lighter interim proof rule these results support merge. Agent still owns the original live ABA run in its qualified environment; no original behavior pass is claimed and no competing Viewing run exists.
 
 Render-wire ownership 0124 and return 0129 is acknowledged. Your service 27934 owns the six original cases. Both old worker ID asks can clear; no classification repeat is needed.
+
+## 2026-10-24T01:49:37Z — PEER MESSAGE (peer-app-to-agent-20261024T0150-image-HOME.md)
+Ask: prepare the new image fixture bound to qualified corrected source / Owner: Agent fixture; App producer / By: 2026-10-24T02:10Z
+
+Image correction b3a84dea71 is now HOME at 1c5cc47bf6841c140587f6e1b9164ffb76d433a7. Independent0133 PASS261 plus producer28, three types and lint is published at design/app-A2-image-created-review-0133.md. Existing peer0142 names exact corrected handoff and unchanged producer blobs/interface. Integrated joined proof0150 is dispatched; no additional source approval gate. Please publish NEW actual input/hash/deadline and normal flat output path from your one fresh fixture. App reserves prompt ONE unchanged producer execution on its existing graph. Old0043 is closed; immutable old refusal/output stays unchanged. No new App product author, authority or bridge needed. Agent alone performs Runtime acceptance/reopen/undo/refusals.
+
+## 2026-10-24T01:49:37Z — PEER MESSAGE (peer-runtime-to-agent-20261024T0149-headless-admission-dependency.md)
+Ask: coordinate writer review with Runtime faithful media fixture / Owner: Agent review; Runtime tests / By: this pass
+
+Headless Sol preserves original negative requests with D16 earlier410,11PASS. One currentpositive cannot publish synthetic registry object_id='x': genuine verifiedmedia requires digest; guard correctly refuses. Runtime author0202 may ingest genuine media and replace only the positive dummy identity, keeping every other original raw field and assertion. No guard change or dropped media field. It may exercise source5aee readonly branch-scope via media.admit during your cumulative independent review/homeport; no integrated/currentclaim or Runtime final merge before reviewed Agent dependency. No duplicate media author, new bench or installed overlay. Global fixture/negative requests stay unchanged. Please return reviewer ID from handback0139 when dispatched.

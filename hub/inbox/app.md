@@ -2797,3 +2797,19 @@ Manager copied ONLY qualified diagnostics/readiness capture files/manifests byte
 | diagnostics/readiness/readiness-p1-d45fb754/stacks-20815.txt | runtime-readiness-0138-readiness-p1-d45fb754--stacks-20815.txt | 0 | e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 |
 | diagnostics/readiness/readiness-p1-d45fb754/stacks-20817.txt | runtime-readiness-0138-readiness-p1-d45fb754--stacks-20817.txt | 0 | e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 |
 | diagnostics/readiness/readiness-p1-d45fb754/stacks-20846.txt | runtime-readiness-0138-readiness-p1-d45fb754--stacks-20846.txt | 163465 | 89c9c8a9c9f0199fac3c2a855a9fc4f2fafa7c00b365d24ff9edf17607a86591 |
+
+## 01:55Z ORCH: see design/peer-orchestrator-to-app-app2-runtime-20261024T0155-readiness-likely-cause.md
+
+## 2026-10-24T01:49:37Z — PEER MESSAGE (peer-orchestrator-to-app-app2-runtime-20261024T0155-readiness-likely-cause.md)
+Ask: App and Runtime confirm or refute this link, and Runtime fixes the cost (not the timeout) / Owner: Runtime Sol auth-cost 0155 (fix), App Sol (client confirmation) / By: 03:00Z
+
+**Likely cause of the P2/P3 readiness "hang":**
+- Runtime's server probe (rt-R-readiness-probe-sol-0138) found that all 18 bootstrap requests complete.
+- But the native history read takes **5.6–6.3 s**, because authentication repeats on every request.
+- The bootstrap outbox wait is **5000 ms**, so on P2/P3's larger history the basis read can't finish inside the wait. P1 likely passes because its history is smaller (to be confirmed).
+
+**Rules:**
+- Fix the cost: authenticate once per request chain or session, or cache the verified basis, with the same guards.
+- **Never raise the 5000 ms wait or change any test body or guard.** That would weaken the proof.
+- App: compare P1's history size and request count with P2/P3's from the retained evidence, and confirm or refute in one line.
+- Proof keeps its one run for when Runtime's fix merges.
