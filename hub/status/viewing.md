@@ -1,5 +1,5 @@
-<!-- viewing | 2026-10-24T05:53:10Z | dispatcher heartbeat 10s | live 1 (sol 1, luna 0, other 0) | busy30 7 | status age 0m -->
-# viewing board, 2026-10-24T05:52:55Z
+<!-- viewing | 2026-10-24T05:54:40Z | dispatcher heartbeat 11s | live 1 (sol 1, luna 0, other 0) | busy30 7 | status age 0m -->
+# viewing board, 2026-10-24T05:54:29Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | V1-prep | Schema inventory and acceptance map | Luna high | H0 | merged | Inventory and acceptance workers | Independent review passed. Four schema copies inventoried; no product change. | 6c4d934; 7a95a40 |
@@ -38,17 +38,17 @@
 | OPS-hub-publication | Confirm supported board publication | Existing hub daemon | Published current board and peer | merged | Existing hub daemon | Board body and author handoff match local bytes; hub HEAD equals origin/main. Failed manual action remains stopped. | Hub ea55792fc |
 
 
-V1 and V3 remain done on recorded integrated proofs. Composition source remains 635f4de06 with immutable archive 819acf6b. V4 stays cut under H9. D14 and D23 originals stay unchanged, unskipped and visibly failing. P1 GO is published; P2 and P3 remain with their owners.
+V1 and V3 are done on their recorded integrated proofs. Composition source remains 635f4de06 with archive 819acf6b. V4 stays cut under H9. D14 and D23 originals remain unchanged, unskipped and visibly failing. P1 GO is published; P2 and P3 remain with their owners.
 
-The restart killed two workers. Headless review resumed and passed; its source is included in home 9cd3 and integrated 71 controls passed. ABA resumed from saved WIP and completed the repair with 71 plus 5 passing tests; independent review passed and the reviewed stack is merged in home 9cd3, with integrated 71 plus 5 controls passed and original service 11466 failed at the new ambiguous item path boundary. Agent 0407 released commands.py and _doc_patch.py forwarding to the existing single ABA author. Viewing owns the next qualified original ABA verdict through Agent's managed service. Runtime owns the original headless family.
+Original ABA service 11466 failed at undo with an ambiguous item path, preserving all 59 assertions. The independent original verdict and Agent whole-path investigation retain that failure. Forwarding, mirror and retained-caller integration 0500 passed 71 plus 5 plus 53 controls on Agent 9cd; those scoped passes do not close the original.
 
-The retained-caller authors completed. CLI and Scene needed no new diff; sheet adds explicit request fields and assertions. Independent review passed 53 tests with clean lint and types; the home merge is 9cd3 and integrated 53 controls passed. The census review found 30 original rows; Agent's count of 33 includes separately owned track-label rows. No global count changed. The image inverse dependency question is assigned to the same ABA source author, without another live run.
+Restart 05:41Z killed source 0513 and mapping 0518. Saved ABA WIP 8f8ab376 was resumed by Sol 0544. Offline accept and preview reproduce numeric item-path ambiguity. A collection candidate was withdrawn after six media regressions; no product fix was made. Independent 0550 passed the source finding and red-test validity: two red acceptance controls and five green controls. The original private packet is absent; synthetic tmpdir packets were cleaned by the harness. Sol 0554 now owns the smallest repair under released native seams or an exact unapplied shared-seam proposal. Agent owns shared identity-seam assignment and home merges.
 
-Evidence: [original verdict](../../design/viewing-F-authoring-ABA-original-review-0513.md), [joined integrated proof](../../design/agt-F-viewing-joined-integrated-0500.md), [restart and source handoff](../../design/peer-viewing-to-agent-20261024T0444-restart-progress.md), [headless author](../../design/viewing-F-headless-root-mirror-sol-0358.md), [sheet author](../../design/viewing-F-retired-callers-sheet-0404.md), [CLI proof](../../design/viewing-F-retired-callers-cli-0404.md), [Scene proof](../../design/viewing-F-retired-callers-scene-0404.md), [independent scope review](../../design/viewing-F-retired-callers-map-review-0404.md), [prior evidence](../../design/viewing-evidence-before-D33-20261024T0053.md).
+Three label mappings independently passed: Unicode, empty string and clear. Exact old-to-current selectors and retained predicates are published to Agent for its census rule. No new original test execution or automatic credit from an aggregate count is claimed. Runtime separately reports its headless family passed all thirteen cases on 1d9dd with Agent 9cd, retaining the original 67 predicates; no Viewing duplicate body is needed.
+
+Evidence: [original ABA verdict](../../design/viewing-F-authoring-ABA-original-review-0513.md), [integrated controls](../../design/agt-F-viewing-joined-integrated-0500.md), [ABA source finding](../../design/viewing-F-authoring-ABA-ambiguous-sol-0544.md), [independent cause review](../../design/viewing-F-authoring-ABA-cause-review-0550.md), [label mapping](../../design/viewing-F-track-label-map-0544.md), [independent mapping review](../../design/viewing-F-track-label-review-0547.md), [earlier evidence](../../design/viewing-evidence-before-D33-20261024T0053.md).
 
 Blockers: Agent — resolve shared identity storage and inverse seam ownership while Viewing prepares the exact bounded repair or unapplied proposal. Peers 0550 and 0553 carry the evidence.
-Later: Image inverse peer0455 failed before forwarding source 0df7. Independent Agent path0454 confirms the same repaired forwarding gap. Agent owns any next image witness; no new Viewing body or source author. Cut V4 and deferred timing remain unchanged; earlier permission refusals stay stopped.
+Later: Image inverse peer0455 failed before forwarding source 0df7. Agent owns any next image witness; no new Viewing body or source author. V4 cut and deferred timing stay unchanged; earlier permission refusals remain stopped.
 
-Next ready: Finish Sol identity 0554 and consume the Agent seam assignment. Dispatch independent review on meaningful implementation. No original rerun before reviewed repair.
-
-Restart 05:41Z killed both workers. ABA WIP 8f8ab376 was preserved; Sol 0544 resumes it. Luna 0544 resumes the read only label mapping. Dispatch 0543 used a relative brief path and was refused before launch; corrected requests use absolute paths.
+Next ready: Finish Sol identity 0554 and consume Agent seam assignment. Dispatch independent review on meaningful implementation. No original rerun before reviewed repair.
