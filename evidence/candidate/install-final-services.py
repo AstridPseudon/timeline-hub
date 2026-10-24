@@ -4,18 +4,17 @@
 The installer is intentionally inert unless ``--install`` is supplied.  A
 release must provide the final four-repository source tuple; no ambient
 checkout is accepted as a substitute.
+
+Source: tl/rt-F-final-service-sol-1244, based on candidate 1e1f32dd0.
 """
 
 from __future__ import annotations
 
 import argparse
 import hashlib
-import json
+import importlib.util
 import os
 from pathlib import Path
-import shutil
-import signal
-import subprocess
 import tempfile
 
 
@@ -33,16 +32,37 @@ OLD_ROW_SHA256 = {
     "v2-auth-current-integration": "e5c6c4ccd2c2e05d19a8bfae7147ca07a7e0a6e1cdcc20bb29c70c747b25ef9a",
 }
 NEW_ROW_SHA256 = {
-    "core-v2-final-integration": "09a2a5cf4ddca2622d37702be9925d9c48205cf5b8883459b77352761a30ad10",
-    "delivery-v2-final": "8d2b8f38a543bd6ffa001672d88955c1767640f83398596174cd947f8ae69633",
-    "delivery-v2-dryrun": "f6309353f3657286435702f215775a2db301ee543d370c97273c8974b3d08846",
+    "core-v2-final-integration": "1cb6d268f14ce25657ecdeb6ece08021f02b2ca2021a06505ba0f741d3fa3a10",
+    "delivery-v2-final": "ae4295fe53221fc4159a0184aabd4e6417ad2de538142610b346eec931063924",
+    "delivery-v2-dryrun": "c7220bf9a55f5e1fd19ca146fcb5a02920208085459ed5bf5605c81f31322f10",
 }
+
 NEW_NAMES = {
     "core-v2-final-integration",
     "delivery-v2-final",
     "delivery-v2-dryrun",
 }
-REQUIRED_TUPLE_REPOS = {"agent", "runtime", "app", "composition"}
+ARTIFACT_ROOT = Path(
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch"
+    "/workers/rt-F-final-service-sol-1244"
+)
+RUNNER = ARTIFACT_ROOT / "run-final-services.py"
+FINAL_TUPLE = ARTIFACT_ROOT / "final-source-tuple.json"
+RUNNER_SHA256 = "3ff01eabcd30b60664f29302f28d1d6505c80ee922de56b1f0caeccc83441837"
+TUPLE_MARKER = b"FINAL_TUPLE_SHA256_PENDING"
+
+
+def reviewed_runner():
+    if not RUNNER.is_file() or RUNNER.is_symlink():
+        raise ValueError(f"runner must be a retained regular file: {RUNNER}")
+    raw = RUNNER.read_bytes()
+    if digest(raw) != RUNNER_SHA256:
+        raise ValueError("retained runner hash mismatch")
+    spec = importlib.util.spec_from_file_location("timeline_final_runner", RUNNER)
+    module = importlib.util.module_from_spec(spec)
+    # Execute exactly the bytes checked above; do not read an unchecked pyc.
+    exec(compile(raw, str(RUNNER), "exec"), module.__dict__)
+    return module
 
 
 def digest(data: bytes) -> str:
@@ -66,7 +86,7 @@ def registry_rows(raw: bytes) -> list[tuple[bytes, str, str, str]]:
     rows: list[tuple[bytes, str, str, str]] = []
     for number, line in enumerate(raw.splitlines(keepends=True), 1):
         stripped = line.lstrip()
-        if not stripped or stripped.startswith(b"#"):
+        if not stripped.strip() or stripped.startswith(b"#"):
             continue
         try:
             repo, name, command = row_fields(line, source=f"registry line {number}")
@@ -111,146 +131,8 @@ def validate_registry(raw: bytes, candidate: bytes) -> tuple[dict[str, bytes], d
     return old_by_name, candidate_by_name
 
 
-def validate_builder(path: Path, expected: str) -> None:
-    if not path.is_file() or path.is_symlink():
-        raise ValueError(f"builder is not a regular file: {path}")
-    actual = digest(path.read_bytes())
-    if actual != expected:
-        raise ValueError(f"reviewed builder hash mismatch: {actual} != {expected}")
-
-
-def git_value(root: Path, *args: str) -> str:
-    try:
-        return subprocess.check_output(
-            ["git", "-C", str(root), "rev-parse", *args],
-            text=True,
-            stderr=subprocess.STDOUT,
-        ).strip()
-    except (OSError, subprocess.CalledProcessError) as exc:
-        raise ValueError(f"cannot inspect source tuple repository {root}: {exc}") from exc
-
-
-def git_parents(root: Path, ref: str) -> list[str]:
-    value = git_value(root, "rev-list", "--parents", "-n", "1", ref)
-    values = value.split()
-    if not values or values[0] != git_value(root, "rev-parse", ref):
-        raise ValueError(f"cannot establish commit identity for {root}")
-    return values[1:]
-
-
-def git_subject(root: Path, ref: str) -> str:
-    return git_value(root, "show", "-s", "--format=%s", ref)
-
-
-def git_status(root: Path) -> str:
-    try:
-        return subprocess.check_output(
-            ["git", "-C", str(root), "status", "--porcelain"],
-            text=True,
-            stderr=subprocess.STDOUT,
-        ).strip()
-    except (OSError, subprocess.CalledProcessError) as exc:
-        raise ValueError(f"cannot inspect source status {root}: {exc}") from exc
-
-
-def validate_source_tuple(path: Path) -> dict[str, dict[str, str]]:
-    try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise ValueError(f"invalid final source tuple: {path}: {exc}") from exc
-    if not isinstance(value, dict) or set(value) != REQUIRED_TUPLE_REPOS:
-        raise ValueError("final source tuple must name exactly agent, runtime, app, composition")
-    for name, item in value.items():
-        if not isinstance(item, dict) or set(item) != {"root", "sha", "tree"}:
-            raise ValueError(f"final source tuple entry {name} must contain root, sha, tree")
-        if not isinstance(item["root"], str) or not Path(item["root"]).is_absolute():
-            raise ValueError(f"final source tuple {name}.root must be an absolute path")
-        declared_root = Path(item["root"])
-        if declared_root.is_symlink():
-            raise ValueError(f"final source tuple {name}.root must not be a symlink")
-        root = declared_root.resolve()
-        sha = item["sha"]
-        tree = item["tree"]
-        if not isinstance(sha, str) or len(sha) != 40 or any(c not in "0123456789abcdef" for c in sha):
-            raise ValueError(f"final source tuple {name}.sha is not a lowercase Git SHA")
-        if not isinstance(tree, str) or len(tree) != 40 or any(c not in "0123456789abcdef" for c in tree):
-            raise ValueError(f"final source tuple {name}.tree is not a lowercase Git tree")
-        if git_value(root, "--is-inside-work-tree") != "true":
-            raise ValueError(f"final source tuple root is not a Git worktree: {root}")
-        actual_head = git_value(root, "HEAD")
-        actual_tree = git_value(root, "HEAD^{tree}")
-        if actual_tree != tree:
-            raise ValueError(f"final source tuple tree drift for {name}: {actual_tree} != {tree}")
-        if actual_head != sha:
-            # bin/test-run creates an authenticated synthetic commit with the
-            # exact tested tree and the selected source commit as its only
-            # parent.  The packet records that original source parent, not the
-            # service-owned snapshot commit, so HEAD must not be required to
-            # equal the packet SHA in this one approved form.
-            parents = git_parents(root, "HEAD")
-            if (
-                len(parents) != 1
-                or parents[0] != sha
-                or not git_subject(root, "HEAD").startswith("test snapshot ")
-            ):
-                raise ValueError(f"final source tuple commit drift for {name}: {actual_head} != {sha}")
-        if git_status(root):
-            raise ValueError(f"final source tuple source is dirty: {root}")
-    return value
-
-
-def _owned_tmp_root(service_tmp: Path) -> Path:
-    service_tmp = service_tmp.absolute()
-    if not service_tmp.is_dir() or service_tmp.is_symlink():
-        raise ValueError(f"service TMPDIR must be a real directory: {service_tmp}")
-    return Path(tempfile.mkdtemp(prefix="timeline-delivery-", dir=service_tmp))
-
-
-def _remove_owned_tmp(root: Path, service_tmp: Path) -> None:
-    root = root.absolute()
-    service_tmp = service_tmp.absolute()
-    if root.parent != service_tmp or root.is_symlink() or not root.is_dir():
-        raise RuntimeError(f"refusing to clean non-owned delivery TMPDIR: {root}")
-    shutil.rmtree(root)
-
-
-def run_private_command(
-    command: list[str],
-    *,
-    service_tmp: Path | None = None,
-    timeout_seconds: int = 30 * 60,
-    kill_grace_seconds: int = 45,
-) -> int:
-    """Run a delivery builder under an owned TMPDIR and clean only that root."""
-    if not command or any(not isinstance(value, str) or not value for value in command):
-        raise ValueError("private delivery command must be a non-empty argv")
-    if timeout_seconds <= 0 or kill_grace_seconds < 0:
-        raise ValueError("private delivery timeout values must be positive")
-    service_tmp = Path(os.environ.get("TMPDIR", tempfile.gettempdir())) if service_tmp is None else service_tmp
-    service_tmp = service_tmp.absolute()
-    root = _owned_tmp_root(service_tmp)
-    env = os.environ.copy()
-    env.update(TMPDIR=str(root), TMP=str(root), TEMP=str(root))
-    process: subprocess.Popen[bytes] | None = None
-    result = 1
-    try:
-        process = subprocess.Popen(command, env=env, start_new_session=True)
-        try:
-            result = process.wait(timeout=timeout_seconds)
-        except subprocess.TimeoutExpired:
-            os.killpg(process.pid, signal.SIGTERM)
-            try:
-                result = process.wait(timeout=kill_grace_seconds)
-            except subprocess.TimeoutExpired:
-                os.killpg(process.pid, signal.SIGKILL)
-                result = process.wait()
-            result = 124
-        return result if result >= 0 else 128 - result
-    finally:
-        _remove_owned_tmp(root, service_tmp)
-
-
-def install(registry: Path, candidate: Path, backup: Path) -> None:
+def install(registry: Path, candidate: Path, backup: Path, tuple_bytes: bytes) -> None:
+    reviewed_runner()
     if not registry.is_file() or registry.is_symlink():
         raise ValueError(f"registry is not a regular file: {registry}")
     old = registry.read_bytes()
@@ -262,14 +144,26 @@ def install(registry: Path, candidate: Path, backup: Path) -> None:
         raise ValueError("predecessor backup must be a distinct path")
     if backup.exists() or backup.is_symlink():
         raise ValueError(f"predecessor backup already exists: {backup}")
-    replacement = old + new_rows
+    if FINAL_TUPLE.exists() or FINAL_TUPLE.is_symlink():
+        raise ValueError(f"retained final tuple already exists: {FINAL_TUPLE}")
+    if new_rows.count(TUPLE_MARKER) != len(NEW_NAMES):
+        raise ValueError("candidate must bind the final tuple once per service")
+    replacement = old + new_rows.replace(TUPLE_MARKER, digest(tuple_bytes).encode("ascii"))
     if not replacement.startswith(old):
         raise ValueError("replacement does not preserve predecessor bytes")
 
     if not backup.parent.is_dir():
         raise ValueError(f"predecessor backup directory does not exist: {backup.parent}")
-    os.link(registry, backup)
+    replaced = False
+    tuple_created = False
     try:
+        # Retain the approved tuple independently of the input file's lifetime.
+        with FINAL_TUPLE.open("xb") as target:
+            tuple_created = True
+            target.write(tuple_bytes)
+            target.flush()
+            os.fsync(target.fileno())
+        os.link(registry, backup)
         with tempfile.NamedTemporaryFile(
             mode="wb", dir=registry.parent, prefix=f".{registry.name}.", suffix=".tmp", delete=False
         ) as temp:
@@ -278,6 +172,7 @@ def install(registry: Path, candidate: Path, backup: Path) -> None:
             temp.flush()
             os.fsync(temp.fileno())
         os.replace(temporary, registry)
+        replaced = True
         directory_fd = os.open(registry.parent, os.O_RDONLY | os.O_DIRECTORY)
         try:
             os.fsync(directory_fd)
@@ -286,6 +181,8 @@ def install(registry: Path, candidate: Path, backup: Path) -> None:
     except BaseException:
         if "temporary" in locals() and temporary.exists():
             temporary.unlink()
+        if tuple_created and not replaced and FINAL_TUPLE.is_file() and FINAL_TUPLE.read_bytes() == tuple_bytes:
+            FINAL_TUPLE.unlink()
         raise
     if digest(registry.read_bytes()) != digest(replacement) or digest(backup.read_bytes()) != digest(old):
         raise RuntimeError("post-install registry or predecessor backup hash mismatch")
@@ -296,16 +193,10 @@ def main() -> int:
     parser.add_argument("--registry", type=Path)
     parser.add_argument("--candidate", type=Path)
     parser.add_argument("--builder", type=Path)
-    parser.add_argument("--builder-sha", default=REVIEWED_BUILDER_SHA256)
     parser.add_argument("--source-tuple", type=Path)
     parser.add_argument("--backup", type=Path)
     parser.add_argument("--install", action="store_true", help="atomically install after every guard passes")
-    parser.add_argument("--run-private", nargs=argparse.REMAINDER, metavar="COMMAND")
     args = parser.parse_args()
-
-    if args.run_private is not None:
-        command = args.run_private[1:] if args.run_private[:1] == ["--"] else args.run_private
-        return run_private_command(command)
 
     if any(value is None for value in (args.registry, args.candidate, args.builder)):
         parser.error("--registry, --candidate, and --builder are required")
@@ -313,14 +204,21 @@ def main() -> int:
     raw = args.registry.read_bytes()
     candidate = args.candidate.read_bytes()
     validate_registry(raw, candidate)
-    validate_builder(args.builder, args.builder_sha)
+    runner = reviewed_runner()
+    runner.validate_builder(args.builder, REVIEWED_BUILDER_SHA256)
+    runner.validate_builder(runner.BUILDER, REVIEWED_BUILDER_SHA256)
     if not args.install:
         print("candidate and release guards PASS; no installation requested")
         return 0
     if args.source_tuple is None or args.backup is None:
         parser.error("--source-tuple and --backup are required with --install")
-    validate_source_tuple(args.source_tuple)
-    install(args.registry, args.candidate, args.backup)
+    tuple_bytes = args.source_tuple.read_bytes()
+    value = runner.validate_source_tuple(args.source_tuple, digest(tuple_bytes))
+    runner.validate_roots(value)
+    for name, item in value.items():
+        if runner.git_value(Path(item["root"]), "rev-parse", "tl/integration^{commit}") != item["sha"]:
+            raise ValueError(f"final source tuple integration ref drift for {name}")
+    install(args.registry, args.candidate, args.backup, tuple_bytes)
     print(f"installed {args.candidate} into {args.registry}; predecessor backup {args.backup}")
     return 0
 
