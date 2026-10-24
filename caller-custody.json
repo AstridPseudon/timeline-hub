@@ -34,16 +34,20 @@
   },
   "wire_fields": {
     "request": [
-      "api_version", "scope", "project_id", "timeline_id", "base_revision_id", "base_publication_id",
-      "commands", "op", "version", "select", "args", "created", "label", "steps", "id", "intent",
-      "tags", "command_ordinals", "patch", "reads", "merge", "fields", "atomic", "Idempotency-Key"
+      "api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id",
+      "commands", "schema_version", "op", "version", "select", "args", "created", "label", "steps",
+      "id", "intent", "tags", "command_ordinals", "patch", "reads", "merge", "fields", "atomic",
+      "Idempotency-Key", "dry_run", "source", "rationale", "group_id"
     ],
     "reply": [
       "data", "receipt", "status", "canonical_document", "document_digest", "id_map", "authoritative_commands",
       "commands", "base", "base_revision_id", "base_publication_id", "previous", "previous_revision_id",
       "previous_publication_id", "accepted_ids", "accepted_revision_id", "publisher", "provider_version",
       "compiler_version", "steps", "merge_mode", "rebased_onto", "accepted", "merged", "conflict", "invalid",
-      "auth", "rebased", "source", "rationale", "group_id"
+      "rebased", "source", "rationale", "group_id", "evaluated_head", "would_status", "receipt_id",
+      "command_kind", "idempotency_key", "request_hash", "project_seq", "event_ids", "result", "created_at",
+      "http_status", "message", "details", "reason", "current", "conflicts", "kind", "ref", "path", "base",
+      "theirs", "ours", "choices", "code", "hint", "suggested_command"
     ],
     "forbidden_invention": ["identity_map", "digest"]
   },
@@ -65,6 +69,13 @@
   },
   "source_rederivation": {
     "final_manifest": "required explicit input TIMELINE_FINAL_SOURCE_MANIFEST",
+    "dispatcher_authorization": {
+      "worker": "required existing ORCH/workers/<worker>/meta identity",
+      "branch": "must be tl/<worker> and match the dispatched clean checkout",
+      "base": "must match dispatcher meta base/base_sha",
+      "source_receipt": "required hashed immutable receipt carrying worker, branch, base, source, tree, parent, checkout",
+      "review": "manifest PASS is insufficient without matching dispatcher metadata and source receipt"
+    },
     "final_source": "PENDING",
     "final_tree": "PENDING",
     "final_parent": "PENDING",
@@ -125,6 +136,7 @@
     "source fingerprints and spec/body hashes rederived from that tree",
     "independent review PASS for the joined source",
     "separate read-only pure final-integrated proof-worker target",
+    "existing dispatcher worker metadata, branch/base identity, and hashed immutable source receipt",
     "normal-service single-parent same-tree snapshot authorization",
     "integrated P2/P3 proof and actual daemon identity"
   ]

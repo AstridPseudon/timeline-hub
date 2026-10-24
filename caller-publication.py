@@ -24,10 +24,6 @@ APP = Path(__file__).resolve().parent
 SUITES_FILE = ORCH / "tests/suites.conf"
 SUITES = ("full-e2e-three-products", "ap2-P3-gate5-h6-0348")
 
-ROW_APP = "b2380539c5545661954d2794976631312ee1d939"
-ROW_TREE = "eab53458e86b210b050673bdcd039d29b0a511ca"
-ROW_PARENT = "ae7acc1c2e1ae802b15110b9a7b099c77c9186da 172033a677472b0435498310babdbf1524b74bfd"
-ROW_SOURCE = "c0fe88994405fd517b58473c14678a0d1b73056d"
 QUALIFIED_APP = "66354161950d1e747965c095ea97b881d2592708"
 QUALIFIED_TREE = "9a37265f0286128df7e6240a9df9877d959474af"
 QUALIFIED_PARENT = "b2380539c5545661954d2794976631312ee1d939"
@@ -47,15 +43,17 @@ CHILD_RECEIPT = ORCH / "queue/done" / f"childvenv-{CHILD}"
 REMOTION_RECEIPT = ORCH / "queue/done" / f"runtime-{REMOTION}"
 
 WIRE_FIELDS = (
-    "api_version", "scope", "project_id", "timeline_id", "base_revision_id", "base_publication_id",
-    "commands", "op", "version", "select", "args", "created", "label", "steps", "id", "intent",
-    "tags", "command_ordinals", "patch", "reads", "merge", "fields", "atomic", "Idempotency-Key",
-    "data", "receipt", "status", "canonical_document", "document_digest", "id_map", "authoritative_commands",
-    "commands", "base", "base_revision_id", "base_publication_id", "previous", "previous_revision_id",
-    "previous_publication_id", "accepted_ids", "accepted_revision_id", "publisher", "provider_version",
-    "compiler_version", "merge_mode", "rebased_onto", "accepted", "merged", "conflict", "invalid",
-    "auth", "rebased", "source", "rationale", "group_id", "reason", "head", "code", "path", "hint",
-    "suggested_command",
+    "api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id",
+    "commands", "schema_version", "op", "version", "select", "args", "created", "label", "steps",
+    "id", "intent", "tags", "command_ordinals", "patch", "reads", "merge", "fields", "atomic",
+    "Idempotency-Key", "dry_run", "source", "rationale", "group_id", "data", "receipt", "status",
+    "canonical_document", "document_digest", "id_map", "authoritative_commands", "base", "previous",
+    "previous_revision_id", "previous_publication_id", "accepted_ids", "accepted_revision_id",
+    "publisher", "provider_version", "compiler_version", "merge_mode", "rebased_onto", "accepted",
+    "merged", "conflict", "invalid", "rebased", "evaluated_head", "would_status", "receipt_id",
+    "command_kind", "idempotency_key", "request_hash", "project_seq", "event_ids", "result", "created_at",
+    "http_status", "message", "details", "reason", "head", "base", "current", "conflicts", "kind", "ref",
+    "theirs", "ours", "choices", "code", "path", "hint", "suggested_command",
 )
 
 REQUIRED_FINAL_SOURCE_PATHS = (
@@ -99,23 +97,82 @@ def guarded(text: str, start: str, end: str | None) -> bytes:
     return text[a:b].encode()
 
 
+def key_value_file(path: Path) -> dict[str, str]:
+    values = {}
+    for line in path.read_text().splitlines():
+        key, separator, value = line.partition("=")
+        if separator:
+            values[key] = value
+    return values
+
+
+def source_receipt(path: Path) -> dict[str, object]:
+    raw = path.read_text()
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError:
+        value = key_value_file(path)
+    if not isinstance(value, dict):
+        raise RuntimeError("PREPARED: source receipt is not an object")
+    return value
+
+
+def receipt_value(receipt: dict[str, object], key: str) -> object:
+    if key in receipt and not (key == "source" and isinstance(receipt[key], dict)):
+        return receipt[key]
+    source = receipt.get("source")
+    if isinstance(source, dict):
+        if key == "source":
+            return source.get("source") or source.get("commit")
+        return source.get(key)
+    return None
+
+
 def final_source_input() -> dict[str, object]:
     manifest_name = os.environ.get("TIMELINE_FINAL_SOURCE_MANIFEST")
     if not manifest_name:
         raise RuntimeError("PREPARED: final reviewed source tuple is not available")
     manifest = json.loads(Path(manifest_name).read_text())
-    required = ("checkout", "source", "tree", "parent", "review")
+    required = (
+        "checkout", "source", "tree", "parent", "review", "worker", "branch",
+        "base", "base_sha", "source_receipt", "source_receipt_sha256",
+    )
     if any(key not in manifest for key in required):
         raise RuntimeError("PREPARED: final source manifest is incomplete")
     if manifest["review"] != "PASS":
         raise RuntimeError("PREPARED: independent final-source review is not PASS")
-    root = Path(manifest["checkout"]).resolve()
+    worker = str(manifest["worker"])
+    if not worker or "/" in worker or worker in {".", ".."}:
+        raise RuntimeError("PREPARED: final source worker identity is invalid")
+    meta_path = ORCH / "workers" / worker / "meta"
+    if not meta_path.is_file() or meta_path.is_symlink():
+        raise RuntimeError("PREPARED: dispatcher worker metadata is unavailable")
+    meta = key_value_file(meta_path)
+    if (
+        meta.get("name") != worker
+        or meta.get("repo") != "app"
+        or meta.get("base") != manifest["base"]
+        or meta.get("base_sha") != manifest["base_sha"]
+        or manifest["branch"] != f"tl/{worker}"
+    ):
+        raise RuntimeError("PREPARED: final source does not match dispatcher branch/base identity")
+    checkout_path = Path(str(manifest["checkout"]))
+    if checkout_path.is_symlink():
+        raise RuntimeError("PREPARED: final source checkout must not be a symlink")
+    root = checkout_path.resolve()
     if root == APP or not root.is_dir():
         raise RuntimeError("PREPARED: final source must be a separate read-only proof worker")
+    if Path(meta.get("worktree", "")).resolve() != root:
+        raise RuntimeError("PREPARED: final source checkout is not the dispatched proof worker")
     if any((root / name).exists() for name in ("caller-publication.py", "caller-custody.json")):
         raise RuntimeError("refusing caller-artifact target")
     if git(root, "status", "--porcelain=v1", "--untracked-files=all").strip():
         raise RuntimeError("final source target is not clean")
+    if git(root, "symbolic-ref", "--quiet", "--short", "HEAD").decode().strip() != manifest["branch"]:
+        raise RuntimeError("final source checkout is not on the dispatched branch")
+    base_commit = git(root, "rev-parse", f"{manifest['base']}^{{commit}}").decode().strip()
+    if not base_commit.startswith(str(manifest["base_sha"])):
+        raise RuntimeError("final source base does not match dispatcher base identity")
     if git(root, "rev-parse", "HEAD").decode().strip() != manifest["source"]:
         raise RuntimeError("final source HEAD does not match explicit input")
     if git(root, "show", "-s", "--format=%T", manifest["source"]).decode().strip() != manifest["tree"]:
@@ -124,6 +181,26 @@ def final_source_input() -> dict[str, object]:
         raise RuntimeError("final source parent does not match explicit input")
     if len(str(manifest["parent"]).split()) != 1:
         raise RuntimeError("final proof-worker target must be an authorized single-parent snapshot")
+    receipt_candidate = Path(str(manifest["source_receipt"]))
+    if receipt_candidate.is_symlink():
+        raise RuntimeError("PREPARED: immutable source receipt must not be a symlink")
+    receipt_path = receipt_candidate.resolve()
+    try:
+        receipt_path.relative_to(ORCH)
+    except ValueError as exc:
+        raise RuntimeError("PREPARED: source receipt is outside the dispatcher area") from exc
+    if receipt_path == Path(manifest_name).resolve() or not receipt_path.is_file():
+        raise RuntimeError("PREPARED: immutable source receipt is unavailable")
+    if digest(receipt_path.read_bytes()) != manifest["source_receipt_sha256"]:
+        raise RuntimeError("PREPARED: source receipt hash does not match explicit input")
+    receipt = source_receipt(receipt_path)
+    for key in ("worker", "branch", "base", "base_sha", "source", "tree", "parent", "checkout"):
+        if str(receipt_value(receipt, key)) != str(manifest[key]):
+            raise RuntimeError(f"PREPARED: source receipt identity mismatch: {key}")
+    if receipt_value(receipt, "review") not in (None, "PASS"):
+        raise RuntimeError("PREPARED: source receipt review is not PASS")
+    manifest["dispatcher_meta"] = {key: meta[key] for key in ("name", "repo", "base", "base_sha", "worktree")}
+    manifest["source_receipt"] = {"path": str(receipt_path), "sha256": manifest["source_receipt_sha256"]}
     return manifest
 
 
@@ -276,7 +353,40 @@ def extract_inner(line: bytes) -> tuple[str, str, str]:
     return outer, decoded[0], outer[end:]
 
 
-def mechanical_controls(inner: str, n: int, fingerprints: dict[str, object]) -> dict[str, object]:
+def row_fingerprints(inner: str, n: int) -> list[tuple[str, str, str]]:
+    assignments = {
+        f"P{n}{suffix}": value
+        for suffix, value in re.findall(rf"\bP{n}([A-Z]+)=([^;]+)", inner)
+    }
+    patterns = (
+        ("blob", re.compile(r'git hash-object -- ([^ ]+) 2>/dev/null\)" = ([0-9a-f]{40})')),
+        ("sha256", re.compile(r'sha256sum -- ([^ ]+).*?\)" = ([0-9a-f]{64})')),
+    )
+    found = {}
+    for kind, pattern in patterns:
+        for raw_path, expected in pattern.findall(inner):
+            path = raw_path.strip('"\'')
+            if path.startswith("$"):
+                variable = path[1:]
+                if variable not in assignments:
+                    raise RuntimeError(f"P{n}: fingerprint variable is not bound: {raw_path}")
+                path = assignments[variable].strip('"\'')
+            key = (path, kind)
+            prior = found.get(key)
+            if prior is not None and prior != expected:
+                raise RuntimeError(f"P{n}: ambiguous current fingerprint: {path}")
+            found[key] = expected
+    if not found:
+        raise RuntimeError(f"P{n}: no current source/body fingerprints decoded")
+    return [(path, kind, expected) for (path, kind), expected in found.items()]
+
+
+def mechanical_controls(
+    inner: str,
+    n: int,
+    fingerprints: dict[str, object],
+    final: dict[str, object],
+) -> dict[str, object]:
     """Check the retained caller's controls without running any stage."""
     required = (
         f"P{n}_ALLOCATED_PORT", f"P{n}A={AGENT}", f"P{n}R={RUNTIME}",
@@ -300,6 +410,9 @@ def mechanical_controls(inner: str, n: int, fingerprints: dict[str, object]) -> 
         "changed_input": "refused unless every reviewed source fingerprint matches",
         "wrong_artifact": "refused unless final target is clean and has no caller artifacts",
         "bash_n": True,
+        "mounted_source": str(final["source"]),
+        "mounted_tree": str(final["tree"]),
+        "mounted_parent": str(final["parent"]),
     }
 
 
@@ -310,24 +423,50 @@ def prepare(out: Path) -> dict[str, object]:
     raw, rows = selected_rows()
     outside = b"".join(line for i, line in enumerate(raw.splitlines(keepends=True), 1) if i not in {rows[name][0] for name in SUITES})
     assert len(raw.splitlines(keepends=True)) - 2 == 248 and len(outside) == 466341 and digest(outside) == "b33d30918d6e2ae039dfa296bc75b1e0b2674828b53f07a16ee029933d5ad734"
-    replacements = {ROW_APP: str(final["source"]), ROW_TREE: str(final["tree"]), ROW_PARENT: str(final["parent"])}
-    # Recompute guards from genuine Git blobs, including previously unchanged files.
-    for path in git(APP,"ls-tree","-r","--name-only",ROW_APP).decode().splitlines():
-        if any(path in rows[name][1].decode() for name in SUITES):
-            old = source_bytes(APP, ROW_APP, path)
-            new = source_bytes(Path(str(final["checkout"])), str(final["source"]), path)
-            replacements[git_blob(old)] = git_blob(new)
-            replacements[digest(old)] = digest(new)
+    binding_replacements = {
+        QUALIFIED_APP: str(final["source"]),
+        QUALIFIED_TREE: str(final["tree"]),
+        QUALIFIED_PARENT: str(final["parent"]),
+    }
+    replacements = dict(binding_replacements)
     drafts = {}
     stage_records = {}
     for n, name in enumerate(SUITES, 2):
         line = rows[name][1]
         text = line.decode()
-        assert ROW_APP in text and ROW_TREE in text and ROW_PARENT in text
+        current_app = f"P{n}APP={QUALIFIED_APP}"
+        current_tree = f"P{n}TREE={QUALIFIED_TREE}"
+        current_parent = f"P{n}PARENT="
+        assert text.count(current_app) == 1 and text.count(current_tree) == 1
+        if n == 2:
+            assert text.count(current_parent) == 1
+        assert QUALIFIED_PARENT in text
         outer, inner, tail = extract_inner(line)
+        row_replacements = dict(binding_replacements)
+        # Recompute this row's guards from the actual installed command, rather
+        # than assuming its fingerprints came from the qualified commit tree.
+        final_root = Path(str(final["checkout"]))
+        for path, kind, before in row_fingerprints(inner, n):
+            data = source_bytes(final_root, str(final["source"]), path)
+            after = git_blob(data) if kind == "blob" else digest(data)
+            row_replacements[before] = after
+            replacements[before] = after
         updated = inner
-        for before, after in replacements.items():
+        for before, after in row_replacements.items():
+            count = updated.count(before)
+            if count == 0:
+                raise RuntimeError(f"mounted source token is missing: {before}")
             updated = updated.replace(before, after)
+            if before != after and updated.count(before):
+                raise RuntimeError(f"mounted source token was not fully rebound: {before}")
+        if (
+            f"P{n}APP={final['source']}" not in updated
+            or f"P{n}TREE={final['tree']}" not in updated
+            or str(final["parent"]) not in updated
+            or QUALIFIED_APP in updated
+            or QUALIFIED_TREE in updated
+        ):
+            raise RuntimeError("decoded mounted caller retained stale source identity")
         # Lock every changed final source file before any production stage.
         guarded_paths = set(re.findall(r"git hash-object -- ([^ ]+) 2>/dev/null", inner))
         extra = " ".join(
@@ -352,7 +491,7 @@ def prepare(out: Path) -> dict[str, object]:
         updated_native_end = updated.index("finally { await harness.stop(); }")
         assert updated[updated_native_start:updated_native_end] == before_native
         assert f"P{n}_ALLOCATED_PORT" in updated and "original-body-NOTRUN" in updated
-        controls = mechanical_controls(updated, n, source["fingerprints"])
+        controls = mechanical_controls(updated, n, source["fingerprints"], final)
         new_outer = outer[:outer.index("$(bash -c ") + len("$(bash -c ")] + shlex.quote(updated) + tail
         for label, data in ((f"p{n}-inner.sh", inner), (f"p{n}-new-inner.sh", updated), (f"p{n}-outer.sh", outer), (f"p{n}-new-outer.sh", new_outer)):
             (out / label).write_text(data)
@@ -389,4 +528,3 @@ def prepare(out: Path) -> dict[str, object]:
 
 if __name__ == "__main__":
     print(json.dumps(prepare(Path(os.environ["TMPDIR"]).resolve()), indent=2))
-
