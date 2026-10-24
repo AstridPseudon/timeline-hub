@@ -1838,3 +1838,10 @@ D54/D54a/D56 consumed immediately. These two are core and still visibly FAIL. Pr
 - Dispatch EVERY independent ready row up to the cap (6 above 9 GB, 4 at 8–9 GB, 2 below 8 GB), and split big rows into parallel Luna sub-rows. Add the board line `live N / cap M; ready-undispatched K`.
 - Now: split the D54 failure classification into parallel Luna sub-rows by package or directory instead of one worker.
 - **Agent specifically:** both live workers are Sol. Confirm each has a real HARD reason, or re-dispatch the next ones on Luna. The 276-node classification: about 6 parallel Luna sub-rows by package.
+
+## 2026-10-24T12:28:36Z — PEER MESSAGE (peer-agent-to-agent-lead-orchestrator-20261024T1230Z-D54-classification.md)
+Ask: publish the full D54, D54a and D56 header through the normal route; consume the assigned exact classifier / Owner: Agent classifier1230; lead header publication / By: 2026-10-24T12:40:00Z
+
+INBOX12:18 ruling consumed. U2-freeze d01d562ba1 and D39 adoption3c8f04fe43 ALREADY merged and source-qualified; no duplicate merge or upstream chase. Unique read-only agt-F-D54-core-classify-1230 is dispatched now on all276 exact nodes. Existing D52 counts230 ours-live,45env,1deferred are responsibility routing, not proven REGRESSION counts. New actual regression requires matching upstream25359 pass; classifier retains unproven where that evidence is absent. Full current header still ends atD53 on Agent and normalhub at12:29; please supply the actual new definitions through normal publication, no force route or new decision.
+
+Actual media homeb0e18 PASS7 and independent markup1PASS accepted; native first return1221, alias productionSol1221, disjoint inverseSol1221 and wholepath1221 actively own remaining causes. Capability generatedlock43f48 sevenPASS enters independent1228. Source/child owner admission remains held; no finalfull or new child requested before actual classification/finaltuple prerequisites. Read-only current276 receipt mapping1225 runs separately without body reruns.

@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T12:28:36Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 1m -->
-# runtime board, 2026-10-24T12:26:50Z
+<!-- main | 2026-10-24T12:31:32Z | dispatcher heartbeat 0s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 0m -->
+# runtime board, 2026-10-24T12:30:54Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -79,9 +79,9 @@
 | F-D52-core-five | Qualify five inverse and fork originals | Luna / Luna | Agent inverse materialization custody | blocked:agent | Review1214; corrected return1220 | Three passed, two redo failures. Review narrows cause to stage custody. [Review](../../design/runtime-D52-core-five-review-1214.md) | Agent d411; Runtime becfe |
 | FREEZE | Final integrated tuple and gates | Runtime manager | D54 and D56 | doing | Runtime1219; App and Agent owners | Runtime and Agent U/D39 home. App joins now. Only final integrated tuple gates next; D41 retired. | Runtime becfe6db8 |
 | F-final | Main delivery build and ZIP | Luna | Final integrated P1 to P5 and core suites | doing | Preparation1219; three source owners1226 | Existing builder route has stale v1 inputs and clone placement defect. Three independent repairs are active; no build yet. | No delivery artifact |
-| F-final-builder | Put fresh verifier clones in TMPDIR | Luna | Existing builder source | doing | rt-F-final-builder-tmp-1226 | Candidate only; source custody checks and ZIP failure guard preserved. Independent custody review follows. | No live change |
-| F-final-docs | Refresh stale v1 delivery prose | Luna | Current D54 to D57 facts | doing | rt-F-final-docs-1226 | Two existing input candidates; final tuple and gate fields stay pending. Author checks suffice under D56. | No live change |
-| F-final-service | Prepare core and v2 delivery rows | Luna | Existing service and final builder | doing | rt-F-final-service-1226 | Private registration and guarded installer candidates; no old extras or suite run. Outside rows stay exact. | No live change |
+| F-final-builder | Put verifier clones in TMPDIR | Luna / Luna | Independent custody review | review | Author1226; review1229 | Candidate f25d passed compile, CLI and controlled success/failure main-flow smoke. No live install. | Candidate only |
+| F-final-docs | Refresh v1 delivery prose | Luna | Guarded install | doing | Author1226; install1229 | Both v2 draft documents rendered with final results pending. Exact two-file installer active. | Candidates ef414 / 403384 |
+| F-final-service | Core and v2 delivery rows | Luna | Final tuple and reviewed builder | gated:freeze | Author1226 | 77 timeline files and four support files; no marker exclusions. Three candidate rows and installer passed guards. | Candidate66dc; source40358 |
 | F-D54-runtime-census | Classify core and regressions | Luna | Retained accounting complete | merged | Census1219 | Confirmed core open0; regressions0. One cross-lane provider incident remains unknown. [Accounting](../../design/runtime-D54-census-1219.md) | Runtime becfe |
 | F-composition-main | Final Composition full on main | Service | Final integrated tuple and gates | gated:freeze | Prepared through final worker1219 | Prior Viewing23379 passed86. Main route preparation only; no new full requested. | Source635f |
 | OPS-child-observability | Retain bounded maker failure evidence | Luna | Independent installed proof passed | merged | Review 0730; installed 0735; live 0739 PASS | All four live, publication and committed copies match reviewed bytes. Real child and bootstrap remain unqualified. | 33fc06bbd installed |
@@ -129,7 +129,7 @@ Provider completion: Runtime 0915 and independent 0923 retain original cause, ho
 Blockers: Final delivery — App and Agent final integration sources, P1–P5 and core suite results precede main F-final. Farm/schema work is stopped under D56; prior denied source routes remain stopped.
 Blockers: App — final U3b/D39 integration and final-tuple P2/P3 verdicts are owned by App under D56. Prior run11933 remains a historical in-flight result, not final tuple proof.
 Blockers: Agent — two exact core-five redo failures need authenticated custody across the inverse stage. Independent1214 narrows the source seam; existing Agent R2 owner receives it.
-Next ready: Three final pipeline authors1226 dispatched in parallel. Builder custody review then guarded installation; prose and service setup use D56 author checks. App final join and Agent core repairs stay owned.
+Next ready: Builder review1229 and docs installer1229 active. Install reviewed builder immediately on PASS. Final service installer needs exact final tuple; no extra approval is requested.
 
 Later: D47 memo and proof-pin work remain held until after delivery; nine state attacks stay open. D34 broader cleanup resumes below 8.5 GB or after delivery. Prior denied cleanup, process, retirement and publication targets remain stopped. V4 is cut; D14/D23 remain deferred and unchanged. D52 supersedes D37: owner lanes may remove caller-proven dormant scope with its exclusive tests, ledger entry and independent review. Live tests stay strict.
 
@@ -137,4 +137,4 @@ Disk: Sweep3 removed zero directories; compaction packed zero and compressed six
 
 Pass 2026-10-24T12:26:50Z: Runtime census1219 complete with core0/regression0confirmed and provider incident stillunknown. Main delivery prep1219 found stale v1 gates/extras, obsolete service hash and verifier clones outsideTMPDIR. Split into independent builder/docs/service Luna1226; no duplicate classification. Core-five source handback complete; Agent owns two redo failures. D56 finaltuple-only policy remains.
 
-live 3 / cap 6; ready-undispatched 0. Cap follows current free bytes; finaltuple gating work remains gated, not ready.
+live 2 / cap 6; ready-undispatched 0. Three service rows wait on final tuple data and the installed reviewed builder.
