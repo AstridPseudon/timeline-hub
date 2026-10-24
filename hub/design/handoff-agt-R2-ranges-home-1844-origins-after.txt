@@ -1,0 +1,37 @@
+2026-10-24T18:44:57Z
+AGENT_HEAD
+831df37ffdfbb7cf802c95f91eac30681efdbb45
+AGENT_TREE
+52213c5a56f332532759826f04be6659d8ddd34a
+AGENT_STATUS
+RUNTIME_REALPATH
+/home/user/work/runtime
+RUNTIME_HEAD
+1bae0e8ccb8f912d50ad16e80d2e42f8e2ea603f
+RUNTIME_TREE
+4feab0185b3750a55b8f0c21c92c6015aaf8e2f7
+RUNTIME_STATUS
+SOURCE_HASHES
+5a212e3ddf05f6a81e14339a7d197035f500591d1dc1dcb9bc2507e24bd0a43d  astrid/sdk/timeline_elements.py
+6c2fc6c8dcfc228c87a285e0869b803a034b9e41c7b2e643ee500b78605b6437  astrid/sdk/timeline/commit.py
+05a1ebc6b251c75f4d5dc272598adc295ce5bf5a8c4596ad08497de6676264be  astrid/sdk/timeline/_commit_patch.py
+TEST_HASHES
+c331dcfd930544ff699674c31d7867d8da5d852d22e72f3ebcb335aabe55c79a  tests/core/test_timeline_element_publication_runtime.py
+7ca71b5ab49cad8035a328d8422a8772512c9878fc32e0d61dd73f8fe82553ff  tests/sdk/test_timeline_selected_schema_runtime.py
+79f881f95ce13338ee8cd5490529c43a55523819792eed682160a9042770dc56  tests/sdk/fixtures/selected-param-legacy/accepted.zip
+RUNTIME_AUTH_HASH
+a3fbb6a0289396fe84fbe455294747a627f9bae8c7579204a89db6402c66a908  /home/user/work/runtime/runtime_protocol/timeline_commit_auth.py
+JUNIT_HASH
+bfc09d96087eb0f6208cae615c7005059fa5a8a32816eb2c91b7dce941b0e023  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-ranges-home-1844/evidence/handoff-agt-R2-ranges-home-1844.xml
+IMPORT_ORIGINS_AFTER
+astrid /home/user/work/wt/agt-R2-ranges-home-1844/astrid/__init__.py
+astrid_runtime_client /home/user/work/wt/agt-R2-ranges-home-1844/astrid_runtime_client/__init__.py
+astrid.core.timeline.banodoco_schema /home/user/work/wt/agt-R2-ranges-home-1844/astrid/core/timeline/banodoco_schema.py
+runtime_protocol /home/user/work/runtime/runtime_protocol/__init__.py
+runtime_protocol.timeline_commit_auth /home/user/work/runtime/runtime_protocol/timeline_commit_auth.py
+astrid.sdk.timeline.commit /home/user/work/wt/agt-R2-ranges-home-1844/astrid/sdk/timeline/commit.py
+astrid.sdk.timeline._commit_patch /home/user/work/wt/agt-R2-ranges-home-1844/astrid/sdk/timeline/_commit_patch.py
+TEST_BODY tests/core/test_timeline_element_publication_runtime.py test_public_helper_element_only_keeps_literal_params_and_exact_inverse 2bf0d64360f2808421cf86b1690a55bbd781a0d1b3cff0c67521e5dc8429899d 1448
+TEST_BODY tests/sdk/test_timeline_selected_schema_runtime.py test_native_equal_json_opposite_selection_order_and_inverse_restore 8b71fbed028bef3049b5040f7a53559b1c62b88913cf427863788f25a69a6b84 3851
+MAPPING_COUNT_AFTER 15
+RUNTIME_AUTH_SOURCE_SHA256_AFTER a3fbb6a0289396fe84fbe455294747a627f9bae8c7579204a89db6402c66a908

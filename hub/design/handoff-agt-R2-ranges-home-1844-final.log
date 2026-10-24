@@ -1,0 +1,19 @@
+--- final product state ---
+831df37ffdfbb7cf802c95f91eac30681efdbb45
+52213c5a56f332532759826f04be6659d8ddd34a
+1bae0e8ccb8f912d50ad16e80d2e42f8e2ea603f
+4feab0185b3750a55b8f0c21c92c6015aaf8e2f7
+--- final ledger append custody ---
+post_size=67146
+9ed515e98faa89eda833212036069efee7c203d2a85b9b3a303d0663fd34fc7e  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/deletion-ledger.agent.md
+fe869740c9388099b30c5a11c670f73c9b81010f2bd14f0d1fcbf60f955f3744  -
+193:| R2-ranges-home-1844 | Five unchanged R2 originals: public helper literal-parameter exact inverse `[None-None]`, `[None-existing1]`, `[params1-None]`, `[params1-existing1]`, and selected-schema opposite-order inverse restore | Runtime inverse authentication rejected authenticated zero-width effect ranges emitted with nonempty native command ranges | Existing authenticated `_inverse_stage_ranges` zero-width effect-range acceptance in Runtime `1bae0e8ccb8f912d50ad16e80d2e42f8e2ea603f`, with native range ordering, coverage, source binding, and full v2 request/reply contract retained | agent+runtime | R2 | QUALIFIED — actual home | Agent `831df37ffdfbb7cf802c95f91eac30681efdbb45` tree `52213c5a56f332532759826f04be6659d8ddd34a`; Runtime `/home/user/work/runtime` `1bae0e8ccb8f912d50ad16e80d2e42f8e2ea603f` tree `4feab0185b3750a55b8f0c21c92c6015aaf8e2f7`; exact five-node command passed `5/5` in `18.44s`, exit 0, JUnit `workers/agt-R2-ranges-home-1844/evidence/handoff-agt-R2-ranges-home-1844.xml`. All 15 normal lock mappings match; source/test/fixture/auth hashes and imports are unchanged before/after. Reuses independent Runtime author/review `1818` and source-cause `1800` evidence; no PARAM False2/True2, P4, full, browser, or other originals run. |
+--- evidence hashes ---
+fd454ca5042c18f4323351e33c87c1584ef2ebb95a519ef951dd5fb6a2395535  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-ranges-home-1844/evidence/handoff-agt-R2-ranges-home-1844-origins-before.txt
+d9196f410ddd5df9e41e6921d8985233c0b10e4a5cdd4730cc6ce20a639505e3  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-ranges-home-1844/evidence/handoff-agt-R2-ranges-home-1844-origins-after.txt
+b1de633026f6409e3ce53e055a93366f52341a2f6b1da728108630c08aebec2c  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-ranges-home-1844/evidence/handoff-agt-R2-ranges-home-1844-run.log
+e9178593d69d98f46b92276c43ce674954f35744330b480b31b07ba95e51dea8  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-ranges-home-1844/evidence/handoff-agt-R2-ranges-home-1844-commands.txt
+--- markers ---
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-ranges-home-1844/DONE size=0
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-R2-ranges-home-1844/commit-msg size=178
+--- final static checks ---
