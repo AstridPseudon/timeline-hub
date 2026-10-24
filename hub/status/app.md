@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T04:41:29Z | dispatcher heartbeat 4s | live 3 (sol 0, luna 3, other 0) | busy30 14 | status age 0m -->
-# app board, 2026-10-24T04:41Z
+<!-- app | 2026-10-24T04:44:11Z | dispatcher heartbeat 13s | live 2 (sol 0, luna 2, other 0) | busy30 15 | status age 1m -->
+# app board, 2026-10-24T04:42Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -61,10 +61,12 @@
 
 | P2-single-child-placement | Use exact occurrence ADD carrier and claims | Luna; independent review | Cumulative0431 PASS; joined proof | merged | app-A2-A3-current-joined-proof-0438 | Independent342 tests, three types/lint and pinned Runtime guard pass. Current join includes shared and single-occurrence ADD. | 19ac2b0ddc /c0fe889944 |
 | App-current-joined | Qualify current combined App fixes | Luna | Reviewed source merges complete | doing | app-A2-A3-current-joined-proof-0438 | Exact current head; deduplicated popup and parent acceptance files, three types and lint. No full or browser run. | c0fe889944 |
+| readiness-current-caller | Bind current App source in private caller | Luna | Current merged App | doing | app-readiness-current-caller-prep-0442 | Refresh source and body guards only. No installed row or request; Runtime release remains required. | c0fe889944 |
+
 Safety: Historical cleanup, graph and publication denials stand. Managers write boards, briefs and shared reports; workers own product changes.
 Delivery legacy subset: Keep transcriptAssociateCapture.ts and its unchanged 397-line, 40-assertion test, plus required helpers, under D31.
 Evidence: [P1 result](/home/user/timeline-hub/hub/design/app-P1-18792-result-handoff-0029.md), [image review](/home/user/timeline-hub/hub/design/app-A2-image-created-review-0133.md), [A4 cut map](/home/user/timeline-hub/hub/design/app-A4-current-cut-census-0042.md).
-Integration: c0fe889944 contains all reviewed parent, bound popup, child ADD and selector changes plus coalescing. Current joined proof0438 and reachable census0438 are active.
+Integration: c0fe889944 contains all reviewed parent, bound popup, child ADD and selector changes plus coalescing. Current joined proof0438 passed523 tests; types/lint pending. Reachable census0438 and caller preparation0442 are active.
 Blockers: Runtime — D42 mutable state and resolver bypasses require Sol0423 correction, independent security proof, compatible pin and HTTP release. No caller adoption yet.
 Blockers: Freeze — U3b waits P2/P3 and final freeze.
 Next ready: Current joined proof0438 and final census0438, then independent census review. Image0419 is prepared and running; new Agent input awaited. Runtime pin remains held.
