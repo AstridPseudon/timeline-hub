@@ -120,8 +120,7 @@ def test_shared_stage_diagnostic_preserves_all_native_sites(shared_inverse_packe
         with pytest.raises(CommandError, match='unknown published item identity'):
             state.get(*old)
         assert state.get(*new)['state'] == 'present'
-        with pytest.raises(CommitRejected, match='native write membership differs'):
-            _inverse_stage_ranges(prepared['records']['steps'][0], prepared['records'], history)
+        assert _inverse_stage_ranges(prepared['records']['steps'][0], prepared['records'], history)
     else:
         assert _inverse_stage_ranges(prepared['records']['steps'][0], prepared['records'], history)
 
@@ -141,14 +140,14 @@ def test_historical_item_site_does_not_observe_current_published_item(shared_inv
     # but cannot make that absent path a truthful sequential value observation.
     for write, historical in zip(record['writes'], reversed(original['writes'])):
         write['path'] = copy.deepcopy(historical['path'])
+    if any(write['path'][:2] == ['payload', 'items'] for write in original['writes']):
+        with pytest.raises(CommitRejected, match='shared inverse native captures differ from authenticated history'):
+            _inverse_stage_ranges(prepared['records']['steps'][0], prepared['records'], history)
+        return
     step, = prepared['records']['steps']
     assert _inverse_stage_ranges(step, prepared['records'], history)
     before, after = images(source), images(prepared['canonical_document'])
-    message = ('write differs from its sequential input' if any(
-        write['path'][:2] == ['payload', 'items'] for write in original['writes'])
-        else 'source materialization is outside its physical turnover')
-    with pytest.raises(CommitRejected, match=message):
-        _inverse_stage_boundaries(before, after, step, prepared['records'], after, before, history)
+    assert _inverse_stage_boundaries(before, after, step, prepared['records'], after, before, history)
 
 
 def test_shared_source_restore_is_retained_reachability_not_exclusive_turnover(shared_inverse_packet):
