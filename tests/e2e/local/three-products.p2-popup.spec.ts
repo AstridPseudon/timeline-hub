@@ -162,6 +162,14 @@ async function canonicalAt(harness: DirectHarness, seed: ThreeProductsSeed, revi
   };
 }
 
+async function rawRevisionBody(harness: DirectHarness, timelineId: string, revisionId: string): Promise<string> {
+  const response = await harness.runtimeFetch(
+    `/v1/projects/${harness.seed.projectId}/timelines/${timelineId}/composition-revisions/${revisionId}`,
+  );
+  expect(response.status, `raw composition revision ${revisionId}`).toBe(200);
+  return response.text();
+}
+
 async function history(harness: DirectHarness, seed: ThreeProductsSeed): Promise<HistoryPage> {
   const result = await harness.runtimeJson<HistoryPage>(
     'GET',
@@ -368,6 +376,35 @@ function authoritativeDocumentDigest(post: CommitPost): string {
     env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' }, timeout: 30_000 }).trim();
 }
 
+function authoritativeParentHashes(expected: CanonicalDocument, beforeRaw: string): { contentDigest: string; revisionId: string } {
+  const script = [
+    'import json, sys',
+    'from runtime_protocol.timeline_commit_validation import digest',
+    'value = json.load(sys.stdin)',
+    'expected = value["expected"]',
+    'source = json.loads(value["before"])',
+    'def restore(value, source):',
+    '    if isinstance(source, float) and isinstance(value, (int, float)) and value == source: return float(value)',
+    '    if isinstance(value, dict) and isinstance(source, dict): return {key: restore(item, source[key]) if key in source else item for key, item in value.items()}',
+    '    if isinstance(value, list) and isinstance(source, list): return [restore(item, source[index]) if index < len(source) else item for index, item in enumerate(value)]',
+    '    return value',
+    'payload = restore(expected["payload"], source["payload"])',
+    'manifest = restore(expected["manifest"], source["dependency_manifest"])',
+    'content_digest = digest(payload)',
+    'revision_id = "authoring-parent-revision-" + digest({"project_id": expected["project_id"], "timeline_id": expected["timeline_id"], "parent": payload, "manifest": manifest})[7:]',
+    'print(json.dumps({"contentDigest": content_digest, "revisionId": revision_id}))',
+  ].join('\n');
+  return JSON.parse(execFileSync(ASTRID_PYTHON, ['-c', script, RUNTIME_CHECKOUT], {
+    input: JSON.stringify({ expected: {
+      project_id: expected.project_id,
+      timeline_id: expected.timeline_id,
+      payload: expected.parent_revision.payload,
+      manifest: expected.dependency_manifest,
+    }, before: beforeRaw }),
+    encoding: 'utf8', env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' }, timeout: 30_000,
+  }).trim()) as { contentDigest: string; revisionId: string };
+}
+
 function assertFullRequest(post: CommitPost, before: HeadPin, seed: PopupSeed, harness: DirectHarness): void {
   expect(post.key).toMatch(/^[A-Za-z0-9][A-Za-z0-9._~-]{0,127}$/);
   expect(post.body).toMatchObject({
@@ -527,7 +564,7 @@ function identity(kind: string, ...parts: unknown[]): string {
   return `${kind}-${sha256Hex(Buffer.from([kind, ...parts.map(canonical)].join('\0'))).slice(7)}`;
 }
 
-function expectedPopupDocument(before: CanonicalDocument, seed: PopupSeed, post: CommitPost, forkOnly = false): CanonicalDocument {
+function expectedPopupDocument(before: CanonicalDocument, seed: PopupSeed, post: CommitPost, beforeRaw: string, forkOnly = false): CanonicalDocument {
   const expected = clone(before);
   const occurrences = array(expected.parent_revision.payload.occurrences, 'all original occurrences');
   const source = object(occurrences.find((row) => row.occurrence_id === seed.sourceOccurrenceId), 'source occurrence');
@@ -568,9 +605,10 @@ function expectedPopupDocument(before: CanonicalDocument, seed: PopupSeed, post:
     expected.dependency_manifest.media.push({ media_id: String(media.object_id), content_digest: String(media.object_id) });
     expected.dependency_manifest.media.sort((a, b) => a.media_id.localeCompare(b.media_id));
   }
-  expected.parent_revision.content_digest = digest(expected.parent_revision.payload);
-  expected.parent_revision.revision_id = `authoring-parent-revision-${digest({ project_id: before.project_id,
-    timeline_id: before.timeline_id, parent: expected.parent_revision.payload, manifest: expected.dependency_manifest }).slice(7)}`;
+  const parentHashes = authoritativeParentHashes(expected, beforeRaw);
+  expect(parentHashes.contentDigest).not.toBe(digest(expected.parent_revision.payload));
+  expected.parent_revision.content_digest = parentHashes.contentDigest;
+  expected.parent_revision.revision_id = parentHashes.revisionId;
   return expected;
 }
 
@@ -781,7 +819,7 @@ function assertHistory(
 }
 
 async function assertReloadUndo(
-  page: Page, harness: DirectHarness, seed: PopupSeed, wire: PopupWire, before: HistoryPage,
+  page: Page, harness: DirectHarness, seed: PopupSeed, wire: PopupWire, before: HistoryPage, beforeRaw: string,
   original: CanonicalDocument, post: CommitPost, result: CommitAcceptedMutation, expected: CanonicalDocument,
 ): Promise<void> {
   const publicationId = authoritativePublicationId(post, result);
@@ -789,7 +827,7 @@ async function assertReloadUndo(
   expect(committed.items.filter((candidate) => !before.items.some((known) => known.publication_id === candidate.publication_id))
     .map((entry) => entry.publication_id)).toEqual([publicationId]);
   const entry = committed.items.find((candidate) => candidate.publication_id === publicationId)!;
-  assertHistory(entry, post, result, original, expected, [original, expectedPopupDocument(original, seed, post, true)], seed, []);
+  assertHistory(entry, post, result, original, expected, [original, expectedPopupDocument(original, seed, post, beforeRaw, true)], seed, []);
   assertAuthoritativeHead(committed.head, result);
   assertOnlyCommits(wire, [post]);
   expect(await canonicalAt(harness, seed, committed.head.revision_id)).toEqual(expected);
@@ -849,16 +887,17 @@ async function runPopupCase(
   const dialog = await openPopup(page, harness, seed);
   const wire = wireFor(page);
   const before = await history(harness, seed);
+  const beforeRaw = await rawRevisionBody(harness, seed.timelineId, before.head.revision_id);
   const original = await canonicalAt(harness, seed, before.head.revision_id);
   const post = await commitFromGesture(page, wire, () => action(dialog, seed.file));
   assertFullRequest(post, before.head, seed, harness);
   await assertSharedMediaCommands(post, seed, wire, op);
   const result = accepted(post, before.head);
-  const expected = expectedPopupDocument(original, seed, post);
+  const expected = expectedPopupDocument(original, seed, post, beforeRaw);
   // Whole-document equality preserves every sibling, registry entry, ordered
   // row, opaque value, explicit null, absent key and source_mapping field.
   expect(result.data.canonical_document).toEqual(expected);
-  await assertReloadUndo(page, harness, seed, wire, before, original, post, result, expected);
+  await assertReloadUndo(page, harness, seed, wire, before, beforeRaw, original, post, result, expected);
 }
 
 test('P2 popup mounted ADD on selected child uses shared occurrence fork and A2 commit', async ({ page, harness, popup }) => {
