@@ -6063,12 +6063,28 @@ class RuntimeService:
             raise ConflictError("managed output filename is not a direct safe file name") from exc
         return association, attempt, data, export_filename
 
+    def _ensure_export_root(self) -> Path:
+        """Use the configured export root, else default to ~/Downloads/Astrid exports (created on demand)."""
+        if self.export_root is not None:
+            return self.export_root
+        default = Path.home() / "Downloads" / "Astrid exports"
+        try:
+            default.mkdir(parents=True, exist_ok=True)
+            resolved = default.resolve()
+        except OSError as exc:
+            raise ConflictError("managed-output default export folder is unavailable") from exc
+        if resolved == self.store.root or resolved.is_relative_to(self.store.root) or self.store.root.is_relative_to(resolved):
+            raise ConflictError("managed-output export root must be outside the active realm root")
+        if default.is_symlink() or not resolved.is_dir():
+            raise ConflictError("managed-output default export folder must be an ordinary directory")
+        self.export_root = resolved
+        return resolved
+
     def _materialize_export(self, filename, data):
-        if self.export_root is None:
-            raise ConflictError("managed-output export root is not configured")
+        export_root = self._ensure_export_root()
         if len(str(filename).encode("utf-8")) > self._export_leaf_max_bytes():
             raise ConflictError("managed-output export destination filename is too long")
-        identity, root_fd, _ = _pin_directory(self.export_root)
+        identity, root_fd, _ = _pin_directory(export_root)
         temporary = f".{filename}.{os.getpid()}-{uuid.uuid4().hex}.tmp"
         fd = -1
         try:
@@ -6135,8 +6151,7 @@ class RuntimeService:
     def export_managed_output(self, association_id, body, *, idempotency_key=None):
         """Materialize exact CAS bytes for one completed retained output."""
         idempotency_key = require_idempotency_key(idempotency_key)
-        if self.export_root is None:
-            raise ConflictError("managed-output export root is not configured")
+        export_root = self._ensure_export_root()
         body = _wire_object(body, required=("destination_filename",), allowed=("destination_filename", "expected"))
         destination_filename = _wire_string(body, "destination_filename")
         expected = body.get("expected") or {}
@@ -6177,7 +6192,7 @@ class RuntimeService:
         destination_export_filename = export_filename
         if (
             len(destination_export_filename.encode("utf-8")) > self._export_leaf_max_bytes()
-            or os.path.lexists(self.export_root / destination_export_filename)
+            or os.path.lexists(export_root / destination_export_filename)
         ):
             destination_export_filename = self._collision_safe_export_filename(
                 association["association_id"], export_filename
@@ -6198,7 +6213,7 @@ class RuntimeService:
             "export_id": "export-" + new_id(),
             **source,
             "producer": association.get("producer") or {},
-            "destination": {"root": str(self.export_root), "filename": destination_export_filename},
+            "destination": {"root": str(export_root), "filename": destination_export_filename},
             "source_provenance": association.get("provenance") or {},
             "exported_at": now(),
         }
