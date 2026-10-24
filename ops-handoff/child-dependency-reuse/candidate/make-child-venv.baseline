@@ -21,8 +21,9 @@ PIP_NETWORK_TIMEOUT_SECONDS=${CHILD_VENV_PIP_NETWORK_TIMEOUT_SECONDS:-30}
 PIP_RETRIES=${CHILD_VENV_PIP_RETRIES:-2}
 REQUIREMENTS_PATH=${CHILD_VENV_REQUIREMENTS_PATH:-requirements/proof.lock}
 EXPECTED_PROOF_LOCK_SHA256=236d5be9894de96ce0483894630d54ee28f65107cd44ebe845940bc68c28c778
-VERIFIER_SHA256=b8b5155066973bd7c484f12c7813d2f1f9708ccf020da43b7b20b680601b7048
+VERIFIER_SHA256=02513492e4bb013cc615588a19a58d274494f3dcaa3806bfc7e17eaae57c7d68
 DEPENDENCY_SEED=
+BOOTSTRAP_ARCHIVE=$O/artifacts/bootstrap-wheel-input-0932-443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548.tgz
 SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
 
 case "$O:$W" in
@@ -191,10 +192,10 @@ done)
 
 STORE_HELPER=$O/bin/bench_store.py
 [ -f "$STORE_HELPER" ] && [ ! -L "$STORE_HELPER" ] || { echo 'REFUSED: bench store helper unavailable' >&2; exit 2; }
-export STORE_CONTEXT="$(declare -p O A R W PYTHON TIMEOUT_BIN PIP_TIMEOUT_SECONDS LOCAL_TIMEOUT_SECONDS FREEZE_TIMEOUT_SECONDS BUILD_TIMEOUT_SECONDS KILL_AFTER_SECONDS PIP_NETWORK_TIMEOUT_SECONDS PIP_RETRIES REQUIREMENTS_PATH N S BS RT RUNTIME_SHA CLIENT_IDENTITY LOCK_SHA DEPENDENCY_SEED SCRIPT_DIR; declare -f failure run_stage progress source_state)"
-python3 -I - "$0" "$STORE_HELPER" "$W/bench-store" "$O/tests" "$N" "$S" "$RUNTIME_SHA" "$CLIENT_IDENTITY" "$A" "$R" "$W" "$PYTHON" "$BS" "$RT" "$REQUIREMENTS_PATH" "$LOCK_SHA" "$DEPENDENCY_SEED" <<'STORE_PY'
-import hashlib, importlib.util, os, pathlib, re, shlex, stat, subprocess, sys
-script, helper, root, tests, name, agent, backend, client, checkout, runtime_checkout, work, python, base_suite, remotion, requirements, lock, dependency_seed = sys.argv[1:]
+export STORE_CONTEXT="$(declare -p O A R W PYTHON TIMEOUT_BIN PIP_TIMEOUT_SECONDS LOCAL_TIMEOUT_SECONDS FREEZE_TIMEOUT_SECONDS BUILD_TIMEOUT_SECONDS KILL_AFTER_SECONDS PIP_NETWORK_TIMEOUT_SECONDS PIP_RETRIES REQUIREMENTS_PATH N S BS RT RUNTIME_SHA CLIENT_IDENTITY LOCK_SHA VERIFIER_SHA256 BOOTSTRAP_ARCHIVE DEPENDENCY_SEED SCRIPT_DIR; declare -f failure run_stage progress source_state)"
+python3 -I - "$0" "$STORE_HELPER" "$W/bench-store" "$O/tests" "$N" "$S" "$RUNTIME_SHA" "$CLIENT_IDENTITY" "$A" "$R" "$W" "$PYTHON" "$BS" "$RT" "$REQUIREMENTS_PATH" "$LOCK_SHA" "$DEPENDENCY_SEED" "$VERIFIER_SHA256" "$EXPECTED_PROOF_LOCK_SHA256" <<'STORE_PY'
+import hashlib, importlib.util, json, os, pathlib, re, shlex, stat, subprocess, sys
+script, helper, root, tests, name, agent, backend, client, checkout, runtime_checkout, work, python, base_suite, remotion, requirements, lock, dependency_seed, verifier_sha, approved_lock = sys.argv[1:]
 sys.dont_write_bytecode = True
 spec = importlib.util.spec_from_file_location('bench_store', helper)
 module = importlib.util.module_from_spec(spec)
@@ -239,14 +240,34 @@ def success_receipt(entry, report):
             ' provision_report_sha256=' + hashlib.sha256(data).hexdigest() + ' status=passed')
 identity = {'agent_sha': agent, 'backend_sha': backend,
             'client_tuple': dict(line.split('=', 1) for line in client.splitlines())}
+seed_helper = pathlib.Path(script).parent / 'verify_dependency_seed.py'
+def bootstrap_key():
+    if (seed_helper != seed_helper.resolve() or not seed_helper.is_file()
+            or hashlib.sha256(seed_helper.read_bytes()).hexdigest() != verifier_sha):
+        print('REFUSED: untrusted dependency seed verifier', file=sys.stderr)
+        sys.exit(2)
+    value = subprocess.check_output([python, '-I', str(seed_helper), '--bootstrap-identity',
+                                     shutil.which(python) or python], text=True).strip()
+    if not re.fullmatch('[0-9a-f]{64}', value):
+        raise RuntimeError('missing trusted host Python/venv bootstrap source identity')
+    return value
+# New seeded children have a distinct key. Old incomplete entries are never
+# adopted. Without a new input, find a previously bound entry before legacy reuse.
+import shutil
+if dependency_seed:
+    identity['bootstrap_authority'] = bootstrap_key()
+elif seed_helper.is_file() and any(pathlib.Path(root, 'entries').glob('child-*/.bootstrap-authority')):
+    bound = {**identity, 'bootstrap_authority': bootstrap_key()}
+    if (pathlib.Path(root) / 'entries' / ('child-' + module.key_for('child', bound))).exists():
+        identity = bound
 def build(stage, final):
     build.failure_evidence = None
     build.failure_recorded = False
-    setup = 'T=$1; D=$2; RUN_ID=store; SRC=$T/.child-venv-source-$N; REPORT_DIR=$T; REPORT_TMP=$T/.provision-report; F=$REPORT_TMP; mkdir -p "$SRC"\n'
+    setup = 'T=$1; D=$2; MAKER_SOURCE=$3; RUN_ID=store; SRC=$T/.child-venv-source-$N; REPORT_DIR=$T; REPORT_TMP=$T/.provision-report; F=$REPORT_TMP; mkdir -p "$SRC"\n'
     try:
         subprocess.run(['timeout', '--kill-after=30', os.environ.get('CHILD_VENV_BUILD_TIMEOUT_SECONDS', '3600'),
                         'bash', '-u', '-o', 'pipefail', '-c', context + '\n' + setup + body,
-                        'store-child', str(stage), str(final)], check=True)
+                        'store-child', str(stage), str(final), script], check=True)
     except subprocess.CalledProcessError:
         marker = stage / '.provision-failure'
         fd = os.open(marker, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
@@ -302,16 +323,35 @@ def verify(path):
     retained = pathlib.Path(path)
     if retained.is_symlink() or not retained.is_dir() or not os.access(retained / 'bin/python', os.X_OK):
         raise RuntimeError('invalid retained child root/interpreter')
+    local_inventory = json.loads(subprocess.check_output(
+        ['python3', '-I', '-', str(path), client, checkout, agent,
+         runtime_checkout, backend, work, python], input=verifier, text=True))
     for marker, expected in (('.astrid-source-commit', agent), ('.astrid-runtime-source-commit', backend), ('.astrid-runtime-client-identity', client)):
         if (retained / marker).read_text().rstrip('\n') != expected:
             raise RuntimeError('retained child source/client marker mismatch: ' + marker)
-    subprocess.run(['python3', '-I', '-', str(path), client, checkout, agent,
-                    runtime_checkout, backend, work, python], input=verifier, text=True, check=True)
-    if dependency_seed:
-        # Authenticate retained ORIGINAL wheels before executing this child.
-        subprocess.run([python, '-I', str(pathlib.Path(script).parent / 'verify_dependency_seed.py'),
-                        str(retained / '.dependency-wheelhouse'), '-', '--committed-lock', checkout,
-                        agent, requirements, lock, '--installed', str(retained)], check=True,
+    retained_seed = retained / '.dependency-wheelhouse'
+    if dependency_seed or retained_seed.exists() or retained_seed.is_symlink():
+        if 'bootstrap_authority' not in identity:
+            raise RuntimeError('seeded child missing authenticated bootstrap authority; rebuild with genuine input0932')
+        if not retained_seed.is_dir() or retained_seed.is_symlink():
+            raise RuntimeError('seeded child reuse requires Store custody and retained original wheels')
+        seed_helper = pathlib.Path(script).parent / 'verify_dependency_seed.py'
+        if (seed_helper != seed_helper.resolve() or not seed_helper.is_file()
+                or hashlib.sha256(seed_helper.read_bytes()).hexdigest() != verifier_sha):
+            raise RuntimeError('untrusted dependency seed verifier')
+        if lock != approved_lock:
+            raise RuntimeError('dependency seed requires approved proof.lock SHA-256')
+        # Authenticate retained ORIGINAL wheels before executing this child,
+        # including a seeded entry reused without a new wheelhouse argument.
+        invoke = ('import importlib.util,json,sys; '
+                  'p=sys.argv.pop(1); '
+                  's=importlib.util.spec_from_file_location("dependency_seed",p); '
+                  'm=importlib.util.module_from_spec(s); s.loader.exec_module(m); '
+                  'm.main(local_inventory={k:set(v) for k,v in json.load(sys.stdin).items()})')
+        subprocess.run([python, '-I', '-c', invoke, str(seed_helper),
+                        str(retained_seed), '-', '--committed-lock', checkout,
+                        agent, requirements, lock, '--maker-python', python, '--bootstrap-root', str(retained), '--installed', str(retained)],
+                       input=json.dumps(local_inventory), text=True, check=True,
                        timeout=int(os.environ.get('CHILD_VENV_LOCAL_TIMEOUT_SECONDS', '600')))
     # Re-run the existing freeze identity verifier at the verified final path.
     data = report_bytes(retained)
@@ -361,11 +401,21 @@ STORE_PY
 exit $?
 : <<'STORE_BUILD_BODY'
 # STORE_BUILD_BEGIN
-run_stage venv "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -m venv --copies "$T"
+if [ -n "$DEPENDENCY_SEED" ]; then
+  run_stage venv "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -m venv --copies --without-pip --without-scm-ignore-files --prompt child "$T"
+  run_stage authenticate-bootstrap "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -I "$SCRIPT_DIR/verify_dependency_seed.py" --prepare-bootstrap "$BOOTSTRAP_ARCHIVE" "$T" "$(command -v "$PYTHON")"
+else
+  run_stage venv "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -m venv --copies "$T"
+fi
 P=$T/bin/python
 PIP_ARGS=(--no-cache-dir --disable-pip-version-check --progress-bar off --retries "$PIP_RETRIES" --timeout "$PIP_NETWORK_TIMEOUT_SECONDS")
-run_stage bootstrap-pip "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q \
-  'pip==26.2.1' 'setuptools==80.9.0' 'wheel==0.46.3'
+if [ -n "$DEPENDENCY_SEED" ]; then
+  run_stage bootstrap-pip "$PIP_TIMEOUT_SECONDS" "$PYTHON" -I "$SCRIPT_DIR/verify_dependency_seed.py" --install-python "$P" "$T/.bootstrap-wheelhouse" "$T/.bootstrap-wheelhouse/requirements.txt" --install "${PIP_ARGS[@]}"
+  run_stage verify-bootstrap "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -I "$SCRIPT_DIR/verify_dependency_seed.py" --verify-bootstrap "$T" "$(command -v "$PYTHON")"
+else
+  run_stage bootstrap-pip "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q \
+    'pip==26.2.1' 'setuptools==80.9.0' 'wheel==0.46.3'
+fi
 
 run_stage requirements "$LOCAL_TIMEOUT_SECONDS" mkdir -p "$REPORT_DIR"
 REQ=$T/.provision-requirements.txt
@@ -374,12 +424,15 @@ run_stage filter-requirements "$LOCAL_TIMEOUT_SECONDS" bash -c \
   _ "$A" "$S" "$REQUIREMENTS_PATH" "$REQ"
 if [ -n "$DEPENDENCY_SEED" ]; then
   SEED_SNAPSHOT=$T/.dependency-wheelhouse
-  run_stage verify-dependency-seed "$LOCAL_TIMEOUT_SECONDS" "$P" -I "$SCRIPT_DIR/verify_dependency_seed.py" "$DEPENDENCY_SEED" - "$SEED_SNAPSHOT" --committed-lock "$A" "$S" "$REQUIREMENTS_PATH" "$LOCK_SHA"
+  run_stage verify-dependency-seed "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -I "$SCRIPT_DIR/verify_dependency_seed.py" "$DEPENDENCY_SEED" - "$SEED_SNAPSHOT" --committed-lock "$A" "$S" "$REQUIREMENTS_PATH" "$LOCK_SHA"
 fi
 if [ -n "$DEPENDENCY_SEED" ]; then
-  run_stage pinned-requirements "$PIP_TIMEOUT_SECONDS" "$P" -I "$SCRIPT_DIR/verify_dependency_seed.py" "$SEED_SNAPSHOT" - --committed-lock "$A" "$S" "$REQUIREMENTS_PATH" "$LOCK_SHA" --install "${PIP_ARGS[@]}"
+  run_stage pinned-requirements "$PIP_TIMEOUT_SECONDS" "$PYTHON" -I "$SCRIPT_DIR/verify_dependency_seed.py" --install-python "$P" "$SEED_SNAPSHOT" - --committed-lock "$A" "$S" "$REQUIREMENTS_PATH" "$LOCK_SHA" --install "${PIP_ARGS[@]}"
 else
   run_stage pinned-requirements "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps -r "$REQ"
+fi
+if [ -n "$DEPENDENCY_SEED" ]; then
+  run_stage verify-installed-dependencies "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -I "$SCRIPT_DIR/verify_dependency_seed.py" "$SEED_SNAPSHOT" - --committed-lock "$A" "$S" "$REQUIREMENTS_PATH" "$LOCK_SHA" --maker-python "$PYTHON" --bootstrap-root "$T" --installed "$T"
 fi
 
 AGENT_SRC=$SRC/agent
@@ -392,8 +445,17 @@ run_stage archive-runtime "$LOCAL_TIMEOUT_SECONDS" bash -c \
   'set -o pipefail; git -C "$1" archive "$2" | tar -x -C "$3"' \
   _ "$R" "$RUNTIME_SHA" "$RUNTIME_SRC"
 
-run_stage install-agent "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$AGENT_SRC"
-run_stage install-runtime "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$RUNTIME_SRC"
+if [ -n "$DEPENDENCY_SEED" ]; then
+  BUILD_INPUT=$T/.source-inputs
+  run_stage build-input-directory "$LOCAL_TIMEOUT_SECONDS" mkdir "$BUILD_INPUT"
+  run_stage build-agent-input "$LOCAL_TIMEOUT_SECONDS" git -C "$A" archive --format=tar --output="$BUILD_INPUT/agent.tar" "$S"
+  run_stage build-runtime-input "$LOCAL_TIMEOUT_SECONDS" git -C "$R" archive --format=tar --output="$BUILD_INPUT/runtime.tar" "$RUNTIME_SHA"
+  run_stage install-agent "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$BUILD_INPUT/agent.tar"
+  run_stage install-runtime "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$BUILD_INPUT/runtime.tar"
+else
+  run_stage install-agent "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$AGENT_SRC"
+  run_stage install-runtime "$PIP_TIMEOUT_SECONDS" "$P" -m pip install "${PIP_ARGS[@]}" -q --no-deps --no-build-isolation "$RUNTIME_SRC"
+fi
 printf '%s\n' "$S" > "$T/.astrid-source-commit"
 printf '%s\n' "$RUNTIME_SHA" > "$T/.astrid-runtime-source-commit"
 printf '%s\n' "$CLIENT_IDENTITY" > "$T/.astrid-runtime-client-identity"
@@ -419,7 +481,7 @@ run_stage markers "$LOCAL_TIMEOUT_SECONDS" bash -c \
 # source installs have directory metadata; wheel installs have archive hashes.
 # Record the actual names, versions, source URLs and provenance kind in the
 # retained report, then validate those values against the live child venv below.
-DIST_METADATA_SCRIPT='import importlib.metadata as metadata, json, pathlib, sys, tomllib
+DIST_METADATA_SCRIPT='import hashlib, importlib.metadata as metadata, json, pathlib, sys, tomllib
 from urllib.parse import unquote, urlparse
 roots = {"astrid": pathlib.Path(sys.argv[1]).resolve(), "astrid-runtime": pathlib.Path(sys.argv[2]).resolve()}
 for name, root in roots.items():
@@ -431,15 +493,17 @@ for name, root in roots.items():
     url = direct.get("url")
     parsed = urlparse(url or "")
     assert parsed.scheme == "file" and parsed.netloc in ("", "localhost"), (name, url)
-    assert pathlib.Path(unquote(parsed.path)).resolve() == root, (name, url, root)
     if "dir_info" in direct or "directory_info" in direct:
         info = direct.get("dir_info", direct.get("directory_info"))
         assert not info.get("editable", False), (name, info)
+        assert pathlib.Path(unquote(parsed.path)).resolve() == root, (name, url, root)
         kind = "directory"
     else:
         archive = direct.get("archive_info") or {}
-        assert archive.get("hash", "").startswith("sha256:"), (name, direct)
-        kind = "wheel"
+        carrier = root.parent.parent / ".source-inputs" / (root.name + ".tar")
+        assert pathlib.Path(unquote(parsed.path)).resolve() == carrier, (name, url)
+        assert archive.get("hashes", {}).get("sha256") == hashlib.sha256(carrier.read_bytes()).hexdigest(), (name, direct)
+        kind = "archive"
     print("{}_name={}".format(name, dist.metadata["Name"]))
     print(f"{name}_version={dist.version}")
     print(f"{name}_direct_url={url}")
@@ -452,7 +516,7 @@ run_stage freeze "$FREEZE_TIMEOUT_SECONDS" bash -c \
   'set -e; { printf "status=passed\nagent_sha=%s\nruntime_sha=%s\nruntime_client_identity_sha256=%s\nrequirements_path=%s\nrequirements_lock_sha256=%s\n" "$4" "$5" "$(printf %s "$6" | sha256sum | cut -d" " -f1)" "$7" "$8"; printf "installed_import_origins:\n"; cat "$3"; printf "installed_distribution_metadata:\n"; cat "$9"; printf "pip_freeze:\n"; "$1" -I -m pip freeze --all; } > "$2"' \
   _ "$P" "$REPORT_TMP" "$T/.astrid-import-origins" "$S" "$RUNTIME_SHA" "$CLIENT_IDENTITY" "$REQUIREMENTS_PATH" "$LOCK_SHA" "$T/.astrid-distribution-metadata"
 
-IDENTITY_SCRIPT='import importlib.metadata as metadata, json, pathlib, sys, tomllib
+IDENTITY_SCRIPT='import hashlib, importlib.metadata as metadata, json, pathlib, sys, tomllib
 from urllib.parse import unquote, urlparse
 report = pathlib.Path(sys.argv[1])
 child = pathlib.Path(sys.argv[2]).resolve()
@@ -504,20 +568,25 @@ for name, root in roots.items():
     direct = json.loads((pathlib.Path(dist._path) / "direct_url.json").read_text())
     url = direct.get("url") or ""
     parsed = urlparse(url)
-    if parsed.scheme != "file" or parsed.netloc not in ("", "localhost") or pathlib.Path(unquote(parsed.path)).resolve() != root:
+    if parsed.scheme != "file" or parsed.netloc not in ("", "localhost"):
         fail(f"distribution source {name}")
     if "dir_info" in direct or "directory_info" in direct:
         info = direct.get("dir_info", direct.get("directory_info"))
         if info.get("editable", False):
             fail(f"editable source {name}")
+        if pathlib.Path(unquote(parsed.path)).resolve() != root:
+            fail(f"directory source {name}")
         kind = "directory"
     else:
         archive = direct.get("archive_info") or {}
-        if not archive.get("hash", "").startswith("sha256:"):
-            fail(f"wheel provenance {name}")
-        kind = "wheel"
+        carrier = root.parent.parent / ".source-inputs" / (root.name + ".tar")
+        if (pathlib.Path(unquote(parsed.path)).resolve() != carrier
+                or archive.get("hashes", {}).get("sha256") != hashlib.sha256(carrier.read_bytes()).hexdigest()):
+            fail(f"archive provenance {name}")
+        kind = "archive"
+    freeze_url = url if kind == "directory" else url + "#sha256=" + archive["hashes"]["sha256"]
     freeze = [line for line in lines if line.startswith(name + " @ ")]
-    if len(freeze) != 1 or freeze[0].split(" @ ", 1)[1] != url:
+    if len(freeze) != 1 or freeze[0].split(" @ ", 1)[1] != freeze_url:
         fail(f"pip freeze source {name}")
     if reported:
         for key, wanted in ((f"{name}_name", name), (f"{name}_version", dist.version), (f"{name}_direct_url", url), (f"{name}_provenance", kind)):
@@ -529,16 +598,75 @@ run_stage freeze-identity "$LOCAL_TIMEOUT_SECONDS" bash -c \
 
 # Venv launchers contain the partial path. Fix them before the atomic publish;
 # no complete destination exists until all validation above has passed.
+if [ -n "$DEPENDENCY_SEED" ]; then
+  run_stage verify-staging-inventory "$LOCAL_TIMEOUT_SECONDS" "$PYTHON" -I - "$MAKER_SOURCE" "$T" "$CLIENT_IDENTITY" "$A" "$S" "$R" "$RUNTIME_SHA" "$W" "$PYTHON" "$SEED_SNAPSHOT" "$REQUIREMENTS_PATH" "$LOCK_SHA" "$VERIFIER_SHA256" <<'STAGING_INVENTORY'
+import contextlib, hashlib, importlib.util, io, json, pathlib, sys
+maker, root, client, agent, sha, runtime, runtime_sha, work, python, seed, lock_path, lock_sha, helper_sha = sys.argv[1:]
+helper = pathlib.Path(maker).parent / 'verify_dependency_seed.py'
+if helper != helper.resolve() or not helper.is_file() or hashlib.sha256(helper.read_bytes()).hexdigest() != helper_sha:
+    raise SystemExit('untrusted dependency seed verifier')
+source = pathlib.Path(maker).read_text().split('# STORE_VERIFY_BEGIN\n', 1)[1].split('# STORE_VERIFY_END', 1)[0]
+sys.argv = ['verifier', root, client, agent, sha, runtime, runtime_sha, work, python, '--staging']
+output = io.StringIO()
+with contextlib.redirect_stdout(output):
+    exec(compile(source, maker, 'exec'), {})
+spec = importlib.util.spec_from_file_location('dependency_seed', helper)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+sys.argv = [str(helper), seed, '-', '--committed-lock', agent, sha, lock_path, lock_sha,
+            '--maker-python', python, '--bootstrap-root', root, '--installed', root]
+module.main(local_inventory={k: set(v) for k, v in json.loads(output.getvalue()).items()})
+STAGING_INVENTORY
+fi
+
 run_stage shebang-relocation "$LOCAL_TIMEOUT_SECONDS" bash -c \
   'set -e
+   test -z "$(find "$3/bin" -type l -print -quit)"
    while IFS= read -r file; do sed -i "s#$1#$2#g" "$file"; done < <(grep -rl -- "$1" "$3/bin" 2>/dev/null || true)' \
   _ "$T" "$D" "$T"
 run_stage origin-relocation "$LOCAL_TIMEOUT_SECONDS" sed -i "s#$T#$D#g" "$T/.astrid-import-origins"
 source_state "$A" "$S" && source_state "$R" "$RUNTIME_SHA" || failure 2 source-changed-during-build
 run_stage path-metadata-relocation "$LOCAL_TIMEOUT_SECONDS" python3 - "$T" "$D" <<'RELOCATE'
-import base64, csv, hashlib, io, json, pathlib, sys
+import base64, csv, hashlib, io, json, os, pathlib, stat, sys
 stage, final = map(pathlib.Path, sys.argv[1:])
-for path in stage.glob('lib/python*/site-packages/*.dist-info/direct_url.json'):
+def physical_file(path):
+    if not path.resolve().is_relative_to(stage):
+        raise SystemExit('relocation file escapes child')
+    cursor = stage
+    for part in path.relative_to(stage).parts:
+        cursor /= part
+        info = cursor.lstat()
+        if stat.S_ISLNK(info.st_mode) or info.st_uid != os.getuid():
+            raise SystemExit('unsafe relocation path')
+    if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+        raise SystemExit('unsafe relocation file')
+records = []
+# Validate every authority-bearing path before reading row targets or writing.
+for record in stage.glob('lib/python*/site-packages/*.dist-info/RECORD'):
+    physical_file(record)
+    site = record.parent.parent
+    rows = list(csv.reader(io.StringIO(record.read_text()), strict=True))
+    seen = set()
+    for row in rows:
+        if len(row) != 3:
+            raise SystemExit('malformed relocation RECORD')
+        rel = row[0]
+        pure = pathlib.PurePosixPath(rel)
+        if not rel or pure.is_absolute() or str(pure) != rel or '\\' in rel or '\x00' in rel:
+            raise SystemExit('unsafe relocation RECORD path')
+        target = site / rel
+        physical_file(target)
+        resolved = target.resolve()
+        if '..' in pure.parts and rel != os.path.relpath(resolved, site):
+            raise SystemExit('unsupported relocation RECORD path')
+        if resolved in seen:
+            raise SystemExit('duplicate relocation RECORD path')
+        seen.add(resolved)
+    records.append((record, site, rows))
+direct_urls = list(stage.glob('lib/python*/site-packages/*.dist-info/direct_url.json'))
+for path in direct_urls:
+    physical_file(path)
+for path in direct_urls:
     direct = json.loads(path.read_text())
     url = direct.get('url', '')
     if url.startswith(stage.as_uri() + '/'):
@@ -546,11 +674,10 @@ for path in stage.glob('lib/python*/site-packages/*.dist-info/direct_url.json'):
         path.write_text(json.dumps(direct))
 # Relocated console launchers and direct_url are distribution-owned files:
 # recompute their RECORD rows rather than accepting stale installation hashes.
-for record in stage.glob('lib/python*/site-packages/*.dist-info/RECORD'):
-    site = record.parent.parent
-    rows = list(csv.reader(io.StringIO(record.read_text())))
+for record, site, rows in records:
     for row in rows:
-        if row[1]:
+        target = (site / row[0]).resolve()
+        if row[1] and (target.parent == stage / 'bin' or target == record.parent / 'direct_url.json'):
             data = (site / row[0]).read_bytes()
             row[1] = 'sha256=' + base64.urlsafe_b64encode(hashlib.sha256(data).digest()).decode().rstrip('=')
             row[2] = str(len(data))
@@ -566,22 +693,27 @@ run_stage readonly-source "$LOCAL_TIMEOUT_SECONDS" chmod -R a-w "$SRC"
 STORE_BUILD_BODY
 : <<'STORE_VERIFY_BODY'
 # STORE_VERIFY_BEGIN
-import base64, csv, fnmatch, hashlib, importlib.metadata as md, importlib.machinery, io, json, pathlib, re, shutil, stat, subprocess, sys, tarfile, tomllib
+import base64, csv, fnmatch, hashlib, importlib.metadata as md, importlib.util, marshal, importlib.machinery, io, json, os, pathlib, re, shutil, stat, subprocess, sys, tarfile, tomllib
 from urllib.parse import unquote, urlparse
 
 def fail(message):
     raise SystemExit(message)
 
+staging = sys.argv[-1] == '--staging'
+
 def readonly(root):
-    if root.is_symlink() or not root.is_dir():
+    if root != root.resolve() or root.is_symlink() or not root.is_dir():
         fail(f'missing or symlinked root: {root}')
     for path in [root, *root.rglob('*')]:
-        mode = path.lstat().st_mode
+        info = path.lstat()
+        mode = info.st_mode
+        if info.st_uid != os.getuid() or (stat.S_ISREG(mode) and info.st_nlink != 1):
+            fail(f'foreign or hardlinked retained path: {path}')
         # venv --copies can create this one standard internal directory link.
         # Its target is traversed and checked independently; all other links refuse.
         if stat.S_ISLNK(mode) and path == root / 'lib64' and path.readlink() == pathlib.Path('lib') and (root / 'lib').is_dir() and not (root / 'lib').is_symlink():
             continue
-        if stat.S_ISLNK(mode) or not (stat.S_ISDIR(mode) or stat.S_ISREG(mode)) or mode & 0o222:
+        if stat.S_ISLNK(mode) or not (stat.S_ISDIR(mode) or stat.S_ISREG(mode)) or (not staging and mode & 0o222):
             fail(f'unsafe or writable retained path: {path}')
 
 root = pathlib.Path(sys.argv[1])
@@ -628,7 +760,12 @@ def committed_files(checkout, commit):
     return files
 
 sources = {}
+source_urls = {}
+source_kinds = {}
+freeze_urls = {}
 rows_by_name = {}
+local_inventory = {}
+root_inventory = set()
 for name, (checkout, commit) in checkouts.items():
     matches = [d for d in md.distributions(path=[str(site)])
                if re.sub(r'[-_.]+', '-', d.metadata.get('Name', '')).lower() == name]
@@ -647,19 +784,37 @@ for name, (checkout, commit) in checkouts.items():
     parsed = urlparse(direct.get('url', ''))
     if parsed.scheme != 'file' or parsed.netloc not in ('', 'localhost') or parsed.query or parsed.fragment:
         fail('invalid source URL')
-    source = pathlib.Path(unquote(parsed.path))
-    if source.is_symlink() or source != source.resolve() or not source.is_relative_to(work):
-        fail('source root escapes retained work root')
-    if source.name != ('agent' if name == 'astrid' else 'runtime') or not source.parent.name.startswith('.child-venv-source-'):
-        fail('source root is not a maker snapshot')
-    info = direct.get('dir_info')
-    if not isinstance(info, dict) or info.get('editable', False) is not False or 'archive_info' in direct:
-        fail('source is not a noneditable directory install')
+    carrier = pathlib.Path(unquote(parsed.path))
+    if carrier.is_symlink() or carrier != carrier.resolve() or not carrier.is_relative_to(root):
+        fail('source carrier escapes retained child root')
+    snapshot_name = 'agent' if name == 'astrid' else 'runtime'
+    snapshots = list(root.glob('.child-venv-source-*'))
+    if len(snapshots) != 1:
+        fail('ambiguous retained source snapshot')
+    source = snapshots[0] / snapshot_name
+    if 'archive_info' in direct:
+        expected_carrier = root / '.source-inputs' / (snapshot_name + '.tar')
+        original = subprocess.check_output(['git', '-C', checkout, 'archive', '--format=tar', commit])
+        if (carrier != expected_carrier or carrier.read_bytes() != original
+                or direct['archive_info'].get('hashes', {}).get('sha256') != hashlib.sha256(original).hexdigest()
+                or set(direct) != {'url', 'archive_info'}):
+            fail('source archive differs from requested commit')
+        root_inventory.add(carrier.relative_to(root).as_posix())
+        source_kinds[name] = 'archive'
+        freeze_urls[name] = direct['url'] + '#sha256=' + hashlib.sha256(original).hexdigest()
+    else:
+        info = direct.get('dir_info')
+        if carrier != source or not isinstance(info, dict) or info.get('editable', False) is not False or set(direct) != {'url', 'dir_info'}:
+            fail('source is not a noneditable directory install')
+        source_kinds[name] = 'directory'
+        freeze_urls[name] = direct['url']
+    source_urls[name] = direct['url']
     readonly(source.parent)
     for rel, content in files.items():
         path = source / rel
         if not path.is_file() or path.read_bytes() != content:
             fail(f'retained source differs from requested commit: {name}/{rel}')
+        root_inventory.add(path.relative_to(root).as_posix())
     sources[name] = source
     rows = {}
     record = dist_path / 'RECORD'
@@ -697,6 +852,46 @@ for name, (checkout, commit) in checkouts.items():
                            for pattern in discovery.get('exclude', []))}
     if not modules.issubset(rows):
         fail(f'incomplete installed source modules: {name}')
+    # Source ownership is finite: committed bytes, validated bytecode, known
+    # installer metadata and console scripts declared in committed pyproject.
+    # An extra local RECORD row never becomes dependency inventory authority.
+    for rel in rows:
+        path = (site / rel).resolve()
+        content = path.read_bytes()
+        metadata_rel = path.relative_to(dist_path).as_posix() if path.is_relative_to(dist_path) else None
+        if metadata_rel is not None:
+            if metadata_rel not in {'METADATA', 'WHEEL', 'top_level.txt', 'entry_points.txt',
+                                    'direct_url.json', 'INSTALLER', 'REQUESTED', 'RECORD'}:
+                fail('unowned local distribution metadata')
+            if metadata_rel in {'INSTALLER', 'REQUESTED'} and content != (b'pip\n' if metadata_rel == 'INSTALLER' else b''):
+                fail('unexpected local installer bookkeeping')
+        elif rel in files and content == files[rel]:
+            pass
+        elif rel.endswith('.pyc') and '__pycache__' in pathlib.PurePosixPath(rel).parts:
+            source_path = importlib.util.source_from_cache(str(path))
+            source_rel = str(pathlib.Path(source_path).relative_to(site))
+            if (source_rel not in files or len(content) < 16 or content[:4] != importlib.util.MAGIC_NUMBER
+                    or marshal.loads(content[16:]) != compile(files[source_rel], source_path, 'exec')):
+                fail('unowned local distribution bytecode')
+        elif path.parent == root / 'bin' and path.name in project.get('scripts', {}):
+            target = project['scripts'][path.name]
+            if not re.fullmatch(r'\w+(?:\.\w+)*:\w+(?:\.\w+)*', target):
+                fail('unsupported local console entry point')
+            module, function = target.split(':')
+            body = ("import sys\n" + f"from {module} import {function.split('.', 1)[0]}\n"
+                    + "if __name__ == '__main__':\n"
+                    + "    sys.argv[0] = sys.argv[0].removesuffix('.exe')\n"
+                    + f"    sys.exit({function}())\n").encode()
+            executable = str(root / 'bin/python')
+            if ' ' in executable:
+                executable = '"' + executable + '"'
+            wrappers = {f'#!{executable}\n'.encode() + body,
+                        (f"#!/bin/sh\n{chr(39)*3}exec{chr(39)} {executable} {chr(34)}$0{chr(34)} {chr(34)}$@{chr(34)}\n{chr(39)} {chr(39)*3}\n").encode() + body}
+            if content not in wrappers:
+                fail('local console script differs from committed entry point')
+        else:
+            fail('unowned local distribution RECORD addition')
+    local_inventory[name] = list(rows)
     rows_by_name[name] = rows
 if sources['astrid'].parent != sources['astrid-runtime'].parent:
     fail('source snapshots have different custody roots')
@@ -715,5 +910,61 @@ for package, owner in (('astrid', 'astrid'), ('astrid_runtime_client', 'astrid')
         if path.is_file() and str(path.relative_to(site)) not in rows_by_name[owner]:
             fail(f'unowned installed package file: {path}')
 readonly(root)
-readonly(sources['astrid'].parent)# STORE_VERIFY_END
+readonly(sources['astrid'].parent)
+# Source snapshots contain only committed files. Build outputs never gain
+# ownership merely by sitting under the retained source directory.
+for source in sources.values():
+    expected_dirs = {source}
+    for rel in root_inventory:
+        expected_dirs.update((root / rel).parents)
+    for path in source.rglob('*'):
+        if path.is_dir():
+            if path not in expected_dirs:
+                fail('unowned retained source directory')
+        elif path.relative_to(root).as_posix() not in root_inventory:
+            fail('unowned retained source file')
+markers = {'.astrid-source-commit': sys.argv[4] + '\n',
+           '.astrid-runtime-source-commit': sys.argv[6] + '\n',
+           '.astrid-runtime-client-identity': sys.argv[2] + '\n'}
+for rel, expected in markers.items():
+    if (root / rel).read_text() != expected:
+        fail('retained source/client marker differs from requested identity')
+    root_inventory.add(rel)
+root_inventory.add('.astrid-import-origins')
+# Maker metadata has a closed grammar and exact provenance. Its bytes never
+# grant ownership to another path or distribution.
+metadata_lines = []
+for name in ('astrid', 'astrid-runtime'):
+    dist = next(d for d in md.distributions(path=[str(site)])
+                if re.sub(r'[-_.]+', '-', d.metadata.get('Name', '')).lower() == name)
+    url = source_urls[name]
+    metadata_lines.extend((f'{name}_name={name}', f'{name}_version={dist.version}',
+                           f'{name}_direct_url={url}', f'{name}_provenance={source_kinds[name]}'))
+metadata_path = root / '.astrid-distribution-metadata'
+metadata_text = metadata_path.read_text()
+if metadata_text != '\n'.join(metadata_lines) + '\n':
+    fail('maker distribution metadata differs from authenticated source')
+report = root / '.provision-report'
+agent_files = committed_files(*checkouts['astrid'])
+lock = agent_files['requirements/proof.lock']
+report_prefix = (f'status=passed\nagent_sha={sys.argv[4]}\nruntime_sha={sys.argv[6]}\n'
+                 + 'runtime_client_identity_sha256=' + hashlib.sha256(sys.argv[2].encode()).hexdigest() + '\n'
+                 + 'requirements_path=requirements/proof.lock\nrequirements_lock_sha256=' + hashlib.sha256(lock).hexdigest() + '\n'
+                 + 'installed_import_origins:\n' + (root / '.astrid-import-origins').read_text()
+                 + 'installed_distribution_metadata:\n' + metadata_text + 'pip_freeze:\n')
+freeze = []
+for dist in md.distributions(path=[str(site)]):
+    name = re.sub(r'[-_.]+', '-', dist.metadata.get('Name', '')).lower()
+    freeze.append((name, f'{name} @ {freeze_urls[name]}' if name in sources
+                   else dist.metadata['Name'] + '==' + dist.version))
+expected_report = report_prefix + ''.join(line + '\n' for _, line in sorted(freeze))
+if report.read_text() != expected_report:
+    fail('maker provision report differs from authenticated installed inventory')
+for path in (metadata_path, report):
+    if path.stat().st_size > 1024 * 1024 or path.stat().st_mode & 0o111:
+        fail('unsafe maker metadata')
+    root_inventory.add(path.name)
+local_inventory['__root__'] = sorted(root_inventory)
+print(json.dumps(local_inventory))
+# STORE_VERIFY_END
 STORE_VERIFY_BODY

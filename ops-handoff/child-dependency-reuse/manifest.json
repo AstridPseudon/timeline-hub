@@ -3,13 +3,13 @@
   "base_runtime": "33fc06bbd5b0a778517ac6f7c161b2a556ab80c4",
   "lock_sha256": "236d5be9894de96ce0483894630d54ee28f65107cd44ebe845940bc68c28c778",
   "live_baseline": {
-    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv": "e4c0a9cb09f2e938c880970dcbc054eb0aa866e12af499d258e1d450589bc978",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv": "c1197e1a3407e970c02ff50519f800296905b89ad113ad32b9a41516a50fa3b6",
     "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-child-venv": "08f1b00a716456ba328ff42ee96f3df60d0dfa5470b36eeafb5d299b3df22fde",
     "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py": "ba31adcf5dfbad179dfe08b048c48052cee2083026ec62790659c8cdbbc903bd"
   },
   "candidate_sha256": {
     "candidate/bench_store.py": "7d5870433a76b7a611703f47a385cba9584f7213fe4b8a27005317f27bf26495",
-    "candidate/make-child-venv.baseline": "e4c0a9cb09f2e938c880970dcbc054eb0aa866e12af499d258e1d450589bc978",
+    "candidate/make-child-venv.baseline": "c1197e1a3407e970c02ff50519f800296905b89ad113ad32b9a41516a50fa3b6",
     "candidate/make-child-venv": "ff8dbf0ecb615a665e346b36d9d179526a58127d09749748990ea0fa885cf8f8",
     "candidate/request-child-venv": "bddaee9c457fd3cb8fa55e452abbf9886512a08697d593ca5983e43dfa955e94",
     "candidate/verify_dependency_seed.py": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
