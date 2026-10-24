@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T02:09:34Z | dispatcher heartbeat 2s | live 3 (sol 0, luna 3, other 0) | busy30 19 | status age 2m -->
+<!-- app | 2026-10-24T02:12:30Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 18 | status age 2m -->
 # app board, 2026-10-24T02:06Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -23,7 +23,7 @@
 | P3 | Original Gate-5 journey | App service; Proof verdict | Shared readiness cause | blocked:runtime | Test 14249; Proof review 0126 PASS | Exit 2 after 194 seconds. Native and history passed; outbox basis read failed. Original Gate-5 NOT RUN. No rerun. | Fixed 804134d747 |
 | A2-parent-media-closure | Preserve untouched child closure | Sol; Luna review | Resolved | merged | app-A2-parent-media-integrated-0035 | [299 tests, types, lint and external producer passed.](/home/user/timeline-hub/hub/design/app-A2-parent-media-integrated-0035.md) | 1b0428db7d |
 | A2-image-created | Declare genuine image creations | Sol; Luna review | Review 0133 PASS | merged | app-A2-image-created-sol-0126 | Independent 261 tests and producer 28, three types and lint passed. Clip and new authored registry alias claims match provider. Joined proof 0150 passed 448 tests, three types and lint. | b3a84dea71 / 1c5cc47bf6 |
-| A4-image-live | New authenticated image witness | App producer; Agent fixture | New input c0a3b657 ready | doing | app-A4-image-created-producer-0206 | One unchanged producer dispatched on fixed 1c5cc. Same live Agent0154 fixture deadline 02:21:17; output returns to Agent. | 1c5cc47bf6 |
+| A4-image-live | New authenticated image witness | App producer; Agent fixture | Output published | doing | App producer 0206; Agent fixture 0154 | Exact 1492-byte output af1a9a84 published at 02:08 from new input c0a3b657. Agent owns same-fixture Runtime acceptance. | Fixed 1c5cc47bf6 |
 | A2-video-caller | Normalized video duplication | Sol; Luna review | Resolved | merged | app-A2-video-integrated-2350 | 217 integrated tests and three typechecks passed. Agent provider is merged; no old raw-positive parity claim. | a714a4cc11 |
 | U3b-draft | Final upstream composition | Sol; Luna review | P2/P3 and final freeze | gated:freeze | app-U3b-current-join-2053 | Reviewed branch stays isolated. Refresh live upstream refs at freeze; do not merge during pinned proof. | Branch only |
 | F-App-full | Full suite before retirement | Test service; Luna review | Resolved for historical head | merged | app-F-D19-current-full-1230 | 18,819 tests passed on exact 12ef. A final qualification follows actual retirement and freeze. | 12ef320545 |
@@ -32,18 +32,18 @@
 | A4-unused-goldens | Delete two unused parity scripts | Luna | Review 0150 PASS | merged | app-A4-unused-goldens-0140 | Independent zero-consumer census, fixture integrity and three types passed. Source merged; next joined check covers integrated types. | ae91c2ee0f / 4b7786fb88 |
 | A2-A4-joined-proof | Qualify staged, image and history join | Luna | Three reviewed merges | merged | app-A2-A4-current-integrated-0150 | Exact 1c5cc47bf6 passed 448 tests across 16 files, three types and lint. No Runtime or browser acceptance claimed. | 1c5cc47bf6 |
 
-| A4-media-wrappers | Retire unused media executor wrappers | Luna | Cumulative 0200 PASS | doing | app-A4-media-wrappers-current-packet-0205 | Current own-only packet carries exact four reviewed blobs, preserving metadata correction and D17 ancestry. Integrated 108 and governance checks run. | Donor d8f9be57aa |
+| A4-media-wrappers | Retire unused media executor wrappers | Luna | Cumulative review and exact packet PASS | merging | app-A4-media-wrappers-current-packet-0205 | Exact four reviewed blobs, 108 tests, three types and governance passed on current base. One own commit queued. | 7987a0b0dc |
 
-| A4-owner-recovery-tests | Move explicit owner recovery cases | Luna | Author 0156 PASS | review | app-A4-owner-recovery-review-0202 | Two cases migrated; 105 tests, three types and lint passed. Independent review challenges exact retry, dependent order and live locks. | Branch pending |
+| A4-owner-recovery-tests | Move explicit owner recovery cases | Luna | Review 0202 HOLD | doing | app-A4-owner-recovery-return-0210 | First return moves lock assertions from a preemptive owner set to actual outbox exclusive-lock acquisition. Other mapping and 105 tests pass. | 8f92a51e3a held |
 
-| A4-public-executor | Remove executor value exports | Luna | Author 0203 PASS | review | Independent review packet follows current wrapper join | 108 tests, three types and governance passed. Only executor value exports and matching inventory removed; test-only runner remains. | Branch only |
+| A4-public-executor | Remove executor value exports | Luna | Author 0203 PASS | review | app-A4-public-executor-review-0208 | 108 tests, three types and governance passed. Only executor value exports and matching inventory removed; test-only runner remains. | Branch only |
 | readiness-client-confirmation | Compare history cardinality and wait | Sol; Luna review | Existing 0121 and 0128 PASS | merged | App Sol 0121; Luna 0128 | Both histories have two entries; full child closure and seed command count differ. Browser request count unknown. Reply 0200 published. | Report only |
 
 Blockers: U3b awaits P2/P3 and the final freeze.
 Blockers: Orchestrator owes bounded dormant track and raw-birth scope; escalation app-20261024T0116-A4-dormant-assertion-scope.md.
 Blockers: Runtime Sol 0155 owns uninstrumented history cost and guard-preserving source assessment. Historical hang remains unknown; P2/P3 stay held.
 
-Next ready: Publish image producer output promptly, consume lifecycle and recovery reviews, merge the current wrapper packet and review executor exports. Runtime cost fix is in independent review.
+Next ready: Consume lifecycle and executor reviews, owner-recovery return and wrapper merge. Agent has the exact image output. Runtime cost source is in review; P2/P3 remain held.
 Integration: 4b7786fb88; state retirement and two unused parity deletions are merged. Joined proof 0150 stays bound to exact 1c5cc47bf6. History, staged caller and image created claims are merged. Changed readiness experiments remain fixed at 804134d747.
 Disk: Available 11.79 GB. Eight finished worker trees were already recycled, so recycling freed 0 GB. Sweep removed three old temporary directories and freed about 139 MiB. Protected and refused paths stayed untouched.
 Safety: Historical cleanup, graph and publication denials stand. Managers write boards, briefs and shared reports; workers own product changes.
