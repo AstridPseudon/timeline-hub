@@ -1,0 +1,11 @@
+## Review: PASS on both source claims; D42 remains unapproved
+
+- Claim 1: PASS. No existing stable validation capsule or owner-controlled invalidation seam exists. The store owns only the LRU and injected prepared-value validator ([store.py:242](</home/user/work/wt/rt-R-D42-boundary-design-review-0454/runtime_protocol/timeline_commit_store.py:242)); replay directly imports mutable auth/validation modules and cached validators ([store.py:398](</home/user/work/wt/rt-R-D42-boundary-design-review-0454/runtime_protocol/timeline_commit_store.py:398), [validation.py:51](</home/user/work/wt/rt-R-D42-boundary-design-review-0454/runtime_protocol/timeline_commit_validation.py:51)). Startup-only provider registration does not freeze those dependencies ([service.py:2377](</home/user/work/wt/rt-R-D42-boundary-design-review-0454/runtime_protocol/service.py:2377)).
+
+- Claim 2: PASS. `setup_read` installs a mutable closure counter around `auth.validate` ([replay_memo.py:43](</home/user/work/wt/rt-R-D42-boundary-design-review-0454/tests/test_timeline_history_replay_memo.py:43)); the warm test requires zero additional calls ([replay_memo.py:58](</home/user/work/wt/rt-R-D42-boundary-design-review-0454/tests/test_timeline_history_replay_memo.py:58)). Strict unsupported-state cold misses necessarily invoke that wrapper again, conflicting with the counter assertion. Refusal tests must remain unchanged ([memo_state.py:20](</home/user/work/wt/rt-R-D42-boundary-design-review-0454/tests/test_timeline_history_memo_state.py:20)).
+
+No smaller safe production seam was found. The safe next path requires an explicitly scoped owner-controlled validation capsule/invalidation boundary; performance tests should observe real production calls via profiling rather than mutable wrappers. Do not add another serializer/evaluator or weaken refusal tests.
+
+One scope question remains: may D42 add that new owner-controlled boundary, while changing only performance instrumentation to profile-based observation? Otherwise, defer memo hardening. P2/P3 and Farm should proceed.
+
+Checks: `git diff --check` passed; worktree clean. No suites run, per brief. No product or test files changed. `DONE` and the conventional commit message were recorded.
