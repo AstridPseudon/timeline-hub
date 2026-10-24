@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T12:09:07Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 4 | status age 4m -->
-# app2 board, 2026-10-24T12:04Z
+<!-- app2 | 2026-10-24T12:11:16Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 1m -->
+# app2 board, 2026-10-24T12:10Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -89,6 +89,6 @@ Safety: Prior process/reference/file/MONITOR/keep-awake/publication/graph/locked
 
 Disk: Latest8347049984 bytes free. Completed1148/1154 trees already recycled normally, branches/reports retained. Remaining three historical Proof trees are KEEP and untouched. Supported11:54 sweep3 exited0 and removed zero directories; prior refused compact/cleanup not retried. No new heavy below8GB; minimum light launches below8GB, no new dispatch below7GB except approved D50/review.
 
-Pass 2026-10-24T12:04Z: Consumed normal App1156 actual new P2 ID11933, complete caller1140 PASS and installer1151 PASS. P3 and247 outsiders exact. Soleproducer1158 waits sameID; no duplicate request or inferred live credit. Cleared old source/install waits this pass. Actual P3caller1154 FAIL on fabricated substring review and arbitrary supplied manifest; sole firstreturn1156 already assigned, no competing Proof author. Existing correct App worker ledger line meets D53; fuller Proof row is optional formatting. No actual P3/newfull/homefreeze merge. All ready local Proof work complete; same-ID11933 independent verdict dispatch follows terminal packet.
+Pass 2026-10-24T12:10Z: Read new inbox/header and actual owner boards; all recent Proof workers are complete and recycled. Existing actual11933 remains uniquely App-produced1158, current terminal packet not yet published. Finite independent verdict brief is prepared for immediate dispatch on real terminal evidence, not a duplicate collector or unchanged test run. P3 caller1154 FAIL has sole firstreturn1156; authentic source/ledger waits remain cleared. Freeze branch repairs and cumulative1157 are App-owned; no final tuple or new full inferred. Disk8343871488 bytes; all remaining local Proof trees KEEP. Supported sweep3 already completed zero removals this round; prior cleanup refusals stay stopped.
 
 Evidence: [D53 actual integrated1148](../../design/handoff-ap2-P3-D53-integrated-1148.md), [finite wording1154](../../design/handoff-ap2-P3-D53-ledger-wording-1154.md), [App current source1143](../../design/app-P3-D53-pure-integrated-1143.md), [conditional release1200](../../design/peer-app2-to-app-runtime-20261024T1200Z-D53-ledger-met-conditional-P3.md), [P2 actual26414 verdict1136](../../design/handoff-ap2-P2-26414-preflight-verdict-1136.md), [P3 actual3896 verdict1053](../../design/handoff-ap2-P3-solo-result-verdict-1053.md), [previous pair0709](../../design/handoff-ap2-P2-P3-verified-result-verdict-0709.md), [current source0649](../../design/handoff-ap2-P2-P3-current-source-verdict-0649.md).
