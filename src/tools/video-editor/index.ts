@@ -101,7 +101,6 @@ export {
 
 export {
   buildTimelineCommandData,
-  createTimelineCommandRunner,
   MEDIA_COMMAND_DESCRIPTORS,
   provisionRegisteredTimelineMedia,
   provisionTimelineMedia,
