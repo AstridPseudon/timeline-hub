@@ -6,7 +6,8 @@ import copy
 import pytest
 
 from astrid.sdk.timeline._command_state import CommandError, State
-from astrid.sdk.timeline.commands import execute, validate_command
+from astrid.sdk.timeline.commands import execute as _execute
+from astrid.sdk.timeline.commands import validate_command
 from astrid.sdk.timeline.commit import (
     _digest,
     _manifest,
@@ -15,9 +16,16 @@ from astrid.sdk.timeline.commit import (
 )
 from astrid.sdk.timeline.native_occurrence_fork import capture_occurrence_fork
 from astrid.sdk.timeline.rebase import replay
-from tests.editing_conformance.test_recipe_m1_commands import inverse, later
-from tests.editing_conformance.test_recipe_occurrence_duplicate import accepted, identity_document
+from tests.editing_conformance.m2_authenticated_redo import AuthenticatedRedo
+from tests.editing_conformance.test_recipe_m1_commands import inverse as _inverse
+from tests.editing_conformance.test_recipe_m1_commands import later
+from tests.editing_conformance.test_recipe_occurrence_duplicate import identity_document
 from tests.sdk.test_timeline_commit_provider_document import document_fixture
+
+_AUTHENTICATED_REDO = AuthenticatedRedo(_execute, _inverse)
+execute = _AUTHENTICATED_REDO.execute
+inverse = _AUTHENTICATED_REDO.inverse
+accepted = _AUTHENTICATED_REDO.accepted
 
 
 def fork_document(*, distinct=False, count=2):

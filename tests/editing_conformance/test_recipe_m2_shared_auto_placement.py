@@ -8,12 +8,14 @@ from pathlib import Path
 import pytest
 
 from astrid.sdk.timeline._command_state import CommandError, State
-from astrid.sdk.timeline.commands import execute, validate_command
+from astrid.sdk.timeline.commands import execute as _execute
+from astrid.sdk.timeline.commands import validate_command
 from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
 from astrid.sdk.timeline.native_auto_placement import auto_place_shared, unplace_shared
 from astrid.sdk.timeline.native_shot_pool_commands import POOL, capture_shot_pool
 from astrid.sdk.timeline.rebase import replay
-from tests.editing_conformance.test_recipe_m1_commands import accepted_boundaries, inverse
+from tests.editing_conformance.m2_authenticated_redo import AuthenticatedRedo
+from tests.editing_conformance.test_recipe_m1_commands import inverse as _inverse
 from tests.editing_conformance.test_recipe_occurrence_media import MediaRealm, inputs
 from tests.sdk.test_timeline_commit_provider import (
     inverse as inverse_call,
@@ -21,6 +23,11 @@ from tests.sdk.test_timeline_commit_provider import (
 from tests.sdk.test_timeline_commit_provider import (
     runtime_abi,  # noqa: F401 -- autouse detached ABI fixture
 )
+
+_AUTHENTICATED_REDO = AuthenticatedRedo(_execute, _inverse)
+execute = _AUTHENTICATED_REDO.execute
+inverse = _AUTHENTICATED_REDO.inverse
+accepted_boundaries = _AUTHENTICATED_REDO.accepted_boundaries
 
 OWNER = 'occurrence:occ-a'
 CHILD = OWNER + '/clip:placed'

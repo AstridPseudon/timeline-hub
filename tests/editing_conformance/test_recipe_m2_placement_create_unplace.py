@@ -8,7 +8,8 @@ from pathlib import Path
 import pytest
 
 from astrid.sdk.timeline._command_state import CommandError, State
-from astrid.sdk.timeline.commands import execute, validate_command
+from astrid.sdk.timeline.commands import execute as _execute
+from astrid.sdk.timeline.commands import validate_command
 from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
 from astrid.sdk.timeline.native_placement_commands import (
     capture_placement_create,
@@ -16,7 +17,9 @@ from astrid.sdk.timeline.native_placement_commands import (
 )
 from astrid.sdk.timeline.rebase import replay
 from tests.editing_conformance.fixture_loader import load_fixture
-from tests.editing_conformance.test_recipe_m1_commands import accepted_boundaries, inverse, later
+from tests.editing_conformance.m2_authenticated_redo import AuthenticatedRedo
+from tests.editing_conformance.test_recipe_m1_commands import inverse as _inverse
+from tests.editing_conformance.test_recipe_m1_commands import later
 from tests.editing_conformance.test_recipe_occurrence_media import MediaRealm, inputs
 from tests.sdk.test_timeline_commit_provider import (
     inverse as inverse_call,
@@ -25,6 +28,11 @@ from tests.sdk.test_timeline_commit_provider import (
     runtime_abi,  # noqa: F401 -- autouse detached ABI fixture
 )
 from tests.sdk.test_timeline_commit_provider_document import MEDIA
+
+_AUTHENTICATED_REDO = AuthenticatedRedo(_execute, _inverse)
+execute = _AUTHENTICATED_REDO.execute
+inverse = _AUTHENTICATED_REDO.inverse
+accepted_boundaries = _AUTHENTICATED_REDO.accepted_boundaries
 
 OWNER = 'occurrence:occ-a'
 CHILD = OWNER + '/clip:placed'
