@@ -9,12 +9,15 @@ import pytest
 
 from astrid.sdk.timeline._command_state import CommandError, State
 from astrid.sdk.timeline._recording import Recording
-from astrid.sdk.timeline.commands import execute, validate_command
+from astrid.sdk.timeline.commands import execute as _execute
+from astrid.sdk.timeline.commands import validate_command
 from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
 from astrid.sdk.timeline.native_auto_placement import unplace_shared
 from astrid.sdk.timeline.native_placement_commands import capture_placement_unplace
 from astrid.sdk.timeline.rebase import replay
-from tests.editing_conformance.test_recipe_m1_commands import accepted_boundaries, inverse, later
+from tests.editing_conformance.m2_authenticated_redo import AuthenticatedRedo
+from tests.editing_conformance.test_recipe_m1_commands import inverse as _inverse
+from tests.editing_conformance.test_recipe_m1_commands import later
 from tests.editing_conformance.test_recipe_m2_shared_auto_placement import CHILD, OWNER, build
 from tests.editing_conformance.test_recipe_m2_shot_pool import pins, step
 from tests.editing_conformance.test_recipe_occurrence_media import MediaRealm
@@ -23,6 +26,11 @@ from tests.sdk.test_timeline_commit_provider import (
     runtime_abi,  # noqa: F401 -- detached ABI fixture
 )
 from tests.sdk.test_timeline_commit_provider import inverse as inverse_call
+
+_AUTHENTICATED_REDO = AuthenticatedRedo(_execute, _inverse)
+execute = _AUTHENTICATED_REDO.execute
+inverse = _AUTHENTICATED_REDO.inverse
+accepted_boundaries = _AUTHENTICATED_REDO.accepted_boundaries
 
 FIXTURE = Path(__file__).parent / 'fixtures' / 'recipe_m2_video_unplace.json'
 
