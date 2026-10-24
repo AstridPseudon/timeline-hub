@@ -1,0 +1,325 @@
+ORIGINS\n /home/user/work/wt/agt-pin-0c2c28da/astrid/__init__.py\n /home/user/work/wt/rt-pin-becfe6db/runtime_protocol/__init__.py\n /home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_auth.py\n /home/user/work/wt/agt-pin-0c2c28da/astrid_runtime_client/__init__.py\n /home/user/work/wt/agt-pin-0c2c28da/astrid/core/timeline/banodoco_schema.py\n /home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py
+AGENT /home/user/work/wt/agt-pin-0c2c28da
+RUNTIME /home/user/work/wt/rt-pin-becfe6db
+RUNTIME_AUTH_BLOB 979225ab8fdf7f6de1fcea4e7576b60b49b8b5f1
+RUNTIME_AUTH_FILE_SHA256 e172f8c56d81e8039570ba5a07fc7121fba623b305e7c7a0b529d90c5dcccb70
+PROFILE /home/user/work/runtimes/agent-remotion-v3-819acf-1110
+PROFILE_LOCK_SHA256 f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d
+PROFILE_ARCHIVE_SHA256 819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234
+PROFILE_COMPOSITION_VERSION 0.0.14
+~~~~~~~~~~~~~~ Stack of astrid-runtime-protocol (139687809451712) ~~~~~~~~~~~~~~
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 235, in serve_forever
+    ready = selector.select(poll_interval)
+  File "/usr/lib/python3.13/selectors.py", line 398, in select
+    fd_event_list = self._selector.poll(timeout)
++++++++++++++++++++++++++++++++++++ Timeout ++++++++++++++++++++++++++++++++++++
+F                                                                        [100%]----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 34498)
+Traceback (most recent call last):
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/server.py", line 1203, in _dispatch
+    self._route()
+    ~~~~~~~~~~~^^
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/server.py", line 523, in _route
+    return self._timeline_commit(path[2], path[4], path)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/server.py", line 311, in _timeline_commit
+    return self._send(200, commit(
+                           ~~~~~~^
+        project_id,
+        ^^^^^^^^^^^
+    ...<5 lines>...
+        authorize=authorize,
+        ^^^^^^^^^^^^^^^^^^^^
+    ))
+    ^
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/service.py", line 2442, in commit_timeline
+    return self._execute_timeline_commit(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        project_id, timeline_id, body, body, operation="commitTimeline",
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        idempotency_key=idempotency_key, publisher=publisher,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        invocation_path=invocation_path, authorize=authorize,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/service.py", line 2497, in _execute_timeline_commit
+    outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_execution.py", line 101, in execute
+    replay = self._lookup(context, authorize)
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_execution.py", line 63, in _lookup
+    return self.commit_store.lookup(context, authorize=authorize)
+           ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_store.py", line 174, in lookup
+    authorize()
+    ~~~~~~~~~^^
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/service.py", line 2416, in check
+    authorize()
+    ~~~~~~~~~^^
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/server.py", line 309, in authorize
+    return self._authorize_timeline_commit(publisher)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/server.py", line 276, in _authorize_timeline_commit
+    identity = self._identity("projects:write")
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/server.py", line 112, in _identity
+    raise AuthorizationError("runtime is not accepting authenticated requests")
+runtime_protocol.errors.AuthorizationError: runtime is not accepting authenticated requests
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+    ~~~~~~^^
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/server.py", line 1238, in do_POST
+    self._dispatch()
+    ~~~~~~~~~~~~~~^^
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/server.py", line 1224, in _dispatch
+    self._error(exc)
+    ~~~~~~~~~~~^^^^^
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/server.py", line 398, in _error
+    self._send(exc.status, error=payload)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/server.py", line 341, in _send
+    self.wfile.write(encoded)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 845, in write
+    self._sock.sendall(b)
+    ~~~~~~~~~~~~~~~~~~^^^
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+
+=================================== FAILURES ===================================
+_ test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba _
+tests/timeline/test_authoring_media.py:1088: in test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba
+    undo_session.undo([publication['receipt']['receipt_id']], idempotency_key='wc6-undo')
+astrid/sdk/timeline/sync.py:455: in undo
+    return self._flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via, prepare=prepare)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/timeline/sync.py:549: in _flush
+    result = _response(self.client.timelines.commit(
+astrid/sdk/_remote_timeline.py:248: in commit
+    return self._typed(
+astrid/sdk/remote.py:356: in _typed
+    value = self._client.commit_timeline(*args, **kwargs)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/sdk/workspace_client.py:494: in commit_timeline
+    return self._call_generated(
+astrid/sdk/workspace_client.py:290: in _call_generated
+    value = generated(*args, **kwargs)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid_runtime_client/generated.py:965: in commit_timeline
+    return self._commit_response(self._request("POST", f"/v1/projects/{_path_part(project_id)}/timelines/{_path_part(timeline_id)}/commit", body=body, headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2], preview=request.get("dry_run", False))
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid_runtime_client/generated.py:664: in _request
+    with _urlopen_loopback(request, timeout=self.timeout) as response:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid_runtime_client/generated.py:40: in _urlopen_loopback
+    return opener.open(request, timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/urllib/request.py:489: in open
+    response = self._open(req, data)
+               ^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/urllib/request.py:506: in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+/usr/lib/python3.13/urllib/request.py:466: in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+/usr/lib/python3.13/urllib/request.py:1360: in http_open
+    return self.do_open(http.client.HTTPConnection, req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/urllib/request.py:1335: in do_open
+    r = h.getresponse()
+        ^^^^^^^^^^^^^^^
+/usr/lib/python3.13/http/client.py:1478: in getresponse
+    response.begin()
+/usr/lib/python3.13/http/client.py:343: in begin
+    version, status, reason = self._read_status()
+                              ^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/http/client.py:304: in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/socket.py:723: in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: Timeout (>45.0s) from pytest-timeout.
+----------------------------- Captured stdout call -----------------------------
++++++++++++++++++++++++++++++++++++ Timeout ++++++++++++++++++++++++++++++++++++
+~~~~~~~~ Stack of Thread-82 (process_request_thread) (139687801059008) ~~~~~~~~~
+  File "/usr/lib/python3.13/threading.py", line 1015, in _bootstrap
+    self._bootstrap_inner()
+  File "/usr/lib/python3.13/threading.py", line 1044, in _bootstrap_inner
+    self.run()
+  File "/usr/lib/python3.13/threading.py", line 995, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+  File "/usr/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/server.py", line 1238, in do_POST
+    self._dispatch()
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/server.py", line 1203, in _dispatch
+    self._route()
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/server.py", line 523, in _route
+    return self._timeline_commit(path[2], path[4], path)
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/server.py", line 311, in _timeline_commit
+    return self._send(200, commit(
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/service.py", line 2442, in commit_timeline
+    return self._execute_timeline_commit(
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/service.py", line 2497, in _execute_timeline_commit
+    outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_execution.py", line 87, in execute
+    outcome = detached(provider.commit(provider_context, port))
+  File "/home/user/work/wt/agt-pin-0c2c28da/astrid/sdk/timeline/commit.py", line 1104, in commit
+    original = execute(bundle, execution_calls, inverse_records=inverse_records,
+  File "/home/user/work/wt/agt-pin-0c2c28da/astrid/sdk/timeline/commands.py", line 268, in execute
+    apply_inverse(ctx, inverse_records, intervening_records, staged_records=records)
+  File "/home/user/work/wt/agt-pin-0c2c28da/astrid/sdk/timeline/inverse.py", line 994, in apply_inverse
+    _validate_materializations(records)
+  File "/home/user/work/wt/agt-pin-0c2c28da/astrid/sdk/timeline/inverse.py", line 958, in _validate_materializations
+    before, after = (Closure(bundle) for bundle in records.load_boundary(entry))
+  File "/home/user/work/wt/agt-pin-0c2c28da/astrid/sdk/timeline/commit.py", line 1049, in load_boundary
+    prior = port.history_entry(previous['publication_id'])
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_port.py", line 246, in history_entry
+    return self._read(lambda: self._ancestor(publication_id))
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_port.py", line 215, in _read
+    return copy.deepcopy(call())
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_port.py", line 246, in <lambda>
+    return self._read(lambda: self._ancestor(publication_id))
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_port.py", line 233, in _ancestor
+    entry = self.__store.history_entry(self.__project, self.__timeline, current["publication_id"])
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_store.py", line 451, in history_entry
+    self._verify_accepted(ledger, row, allow_archived=allow_archived)
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_store.py", line 261, in _verify_accepted
+    replay_request, prepared, sequential = self._historical_sequential(
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_store.py", line 353, in _historical_sequential
+    return request, prepared, validate_sequential_capture(
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_auth.py", line 2299, in validate_sequential_capture
+    _capture_records(records, prepared["records"], request)
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_auth.py", line 2174, in _capture_records
+    validate_commit_value(records, "Recorder")
+  File "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_validation.py", line 97, in validate_commit_value
+    _validator(definition).validate(value)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 449, in validate
+    for error in self.iter_errors(*args, **kwargs):
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 383, in iter_errors
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 78, in items
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 296, in properties
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 78, in items
+    yield from validator.descend(
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 431, in descend
+    for error in errors:
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/_keywords.py", line 275, in ref
+    yield from validator._validate_reference(ref=ref, instance=instance)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/jsonschema/validators.py", line 462, in _validate_reference
+    resolved = self._resolver.lookup(ref)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/referencing/_core.py", line 690, in lookup
+    return retrieved.value.pointer(pointer=fragment, resolver=resolver)
+  File "/home/user/work/venv-agent/lib/python3.13/site-packages/referencing/_core.py", line 254, in pointer
+    def pointer(self, pointer: str, resolver: Resolver[D]) -> Resolved[D]:
+  File "/home/user/work/wt/agt-pin-546d8681/tests/helpers/wc6_completion_capture.py", line 141, in trace
+    return self._trace(frame, event, arg)
+  File "/home/user/work/wt/agt-pin-546d8681/tests/helpers/wc6_completion_capture.py", line 149, in _trace
+    phase = self.codes.get(code)
+=========================== short test summary info ============================
+FAILED tests/timeline/test_authoring_media.py::test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba
+1 failed in 50.74s
+WC6_COMPLETION_PACKET_BEGIN bytes=22725 sha256=d78efa41a224585476d025d6200e016420ec93131efc744ce92d04830055fde0 state=complete
+{"phase": "session.undo.call", "key": "wc6-undo", "source": {"module": "astrid.sdk.timeline.sync", "qualname": "TimelineSession.undo", "file": "/home/user/work/wt/agt-pin-0c2c28da/astrid/sdk/timeline/sync.py", "source_sha256": "44ace78aa0b38b1c501291ebe27c2e37b6d3afb7018be8c2d33379b4f1f955e8"}}
+{"phase": "service.call", "key": "wc6-undo", "source": {"module": "runtime_protocol.service", "qualname": "RuntimeService._execute_timeline_commit", "file": "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/service.py", "source_sha256": "ec7f9b0dd58f5240208d81e060d2e3f30284c2dd7ce2f9da5944b84a81a86e82"}}
+{"phase": "request", "key": "wc6-undo", "context": {"request": {"api_version": 1, "project_id": "f47546e2045e490282a83ae5c167a35a", "timeline_id": "film", "base_revision_id": "authoring-parent-revision-bdbf07635108545ed2eb9f26d1792c23162645b779b4dc574b320057b6f87bc3", "base_publication_id": "txn-3baa237d3b504fe2a5d798dc66cf71ea", "commands": [{"schema_version": 1, "op": "timeline.inverse", "version": "1", "select": null, "args": {"publications": ["txn-3baa237d3b504fe2a5d798dc66cf71ea"]}}], "source": {"via": "python"}, "dry_run": false, "label": "Undo timeline edit", "merge": "fields", "steps": [{"id": "inverse", "label": "Undo timeline edit", "intent": "", "tags": [], "command_ordinals": [0], "patch": []}]}, "idempotency_key": "wc6-undo", "request_hash": "c7f84dd5a11dc894f20761958ee45dc66618fa2d21908af5842214af807db900", "realm_id": "f99756b5f594433a8fecf3043543a547", "publisher": "owner"}, "invocation": {"operation": "commitTimeline", "path": "/v1/projects/f47546e2045e490282a83ae5c167a35a/timelines/film/commit"}, "provider_type": "astrid.sdk.timeline.commit.RuntimeCommitService", "provider_object_id": 139687837438976}
+{"phase": "coordinator.call", "key": "wc6-undo", "source": {"module": "runtime_protocol.timeline_commit_execution", "qualname": "CommitExecutionCoordinator.execute", "file": "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_execution.py", "source_sha256": "2b0c256757f1bf0b3ab3124840250d2d8ef5dbec31a259c4b1e924e295619dd6"}}
+{"phase": "coordinator.saved", "key": "wc6-undo", "error": null}
+{"phase": "lookup.1.call", "key": "wc6-undo", "source": {"module": "runtime_protocol.timeline_commit_execution", "qualname": "CommitExecutionCoordinator._lookup", "file": "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_execution.py", "source_sha256": "2b0c256757f1bf0b3ab3124840250d2d8ef5dbec31a259c4b1e924e295619dd6"}}
+{"phase": "lookup.1.return", "key": "wc6-undo", "completion": "returned", "result": null, "error": null}
+{"phase": "port_factory.call", "key": "wc6-undo", "source": {"module": "runtime_protocol.service", "qualname": "RuntimeService._execute_timeline_commit.<locals>.port_factory", "file": "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/service.py", "source_sha256": "ec7f9b0dd58f5240208d81e060d2e3f30284c2dd7ce2f9da5944b84a81a86e82"}}
+{"phase": "port_factory.return", "key": "wc6-undo", "completion": "returned", "result": {"type": "RequestCommitPort"}, "error": null}
+{"phase": "port.identity", "key": "wc6-undo", "object_id": 139687791421200, "type": "runtime_protocol.timeline_commit_port.RequestCommitPort"}
+{"phase": "provider.call", "key": "wc6-undo", "source": {"module": "astrid.sdk.timeline.commit", "qualname": "RuntimeCommitService.commit", "file": "/home/user/work/wt/agt-pin-0c2c28da/astrid/sdk/timeline/commit.py", "source_sha256": "73a7afefb5c0bdc23ca7d2cce5c85d46ad6494b5af692181c3e428c5ea7b5499"}}
+{"phase": "authenticated_history_entry.call", "key": "wc6-undo", "source": {"module": "runtime_protocol.timeline_commit_port", "qualname": "RequestCommitPort.history_entry", "file": "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_port.py", "source_sha256": "0d44b5a5e1e0374239df461cb5094ff4fe5bb70761233efd4e3a65c2b29b0859"}}
+{"phase": "authenticated_history_entry.return", "key": "wc6-undo", "completion": "returned", "result": {"revision_id": "authoring-parent-revision-bdbf07635108545ed2eb9f26d1792c23162645b779b4dc574b320057b6f87bc3", "publication_id": "txn-3baa237d3b504fe2a5d798dc66cf71ea", "receipt": {"receipt_id": "txn-3baa237d3b504fe2a5d798dc66cf71ea", "command_kind": "timeline.commit", "idempotency_key": "wc6-publish", "request_hash": "bf10242aae88bb733e23d3b3ac50157940d3950c6019df8befe1748ce71c1a71", "project_id": "f47546e2045e490282a83ae5c167a35a", "created_at": "2026-10-24T10:37:17.810+00:00", "result": {"status": "accepted", "base_revision_id": "wc6-baseline", "base_publication_id": "txn-dad0f96ebbe0490984a1ffce51949444", "previous_revision_id": "wc6-baseline", "previous_publication_id": "txn-dad0f96ebbe0490984a1ffce51949444", "accepted_revision_id": "authoring-parent-revision-bdbf07635108545ed2eb9f26d1792c23162645b779b4dc574b320057b6f87bc3", "rebased_onto": null}, "event_ids": ["6"], "project_seq": [21, 21]}, "previous": {"revision_id": "wc6-baseline", "publication_id": "txn-dad0f96ebbe0490984a1ffce51949444"}}, "error": null}
+{"phase": "authenticated_history_entry.call", "key": "wc6-undo", "source": {"module": "runtime_protocol.timeline_commit_port", "qualname": "RequestCommitPort.history_entry", "file": "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_port.py", "source_sha256": "0d44b5a5e1e0374239df461cb5094ff4fe5bb70761233efd4e3a65c2b29b0859"}}
+{"phase": "authenticated_history_entry.return", "key": "wc6-undo", "completion": "returned", "result": {"revision_id": "authoring-parent-revision-bdbf07635108545ed2eb9f26d1792c23162645b779b4dc574b320057b6f87bc3", "publication_id": "txn-3baa237d3b504fe2a5d798dc66cf71ea", "receipt": {"receipt_id": "txn-3baa237d3b504fe2a5d798dc66cf71ea", "command_kind": "timeline.commit", "idempotency_key": "wc6-publish", "request_hash": "bf10242aae88bb733e23d3b3ac50157940d3950c6019df8befe1748ce71c1a71", "project_id": "f47546e2045e490282a83ae5c167a35a", "created_at": "2026-10-24T10:37:17.810+00:00", "result": {"status": "accepted", "base_revision_id": "wc6-baseline", "base_publication_id": "txn-dad0f96ebbe0490984a1ffce51949444", "previous_revision_id": "wc6-baseline", "previous_publication_id": "txn-dad0f96ebbe0490984a1ffce51949444", "accepted_revision_id": "authoring-parent-revision-bdbf07635108545ed2eb9f26d1792c23162645b779b4dc574b320057b6f87bc3", "rebased_onto": null}, "event_ids": ["6"], "project_seq": [21, 21]}, "previous": {"revision_id": "wc6-baseline", "publication_id": "txn-dad0f96ebbe0490984a1ffce51949444"}}, "error": null}
+{"phase": "authenticated_history_entry.call", "key": "wc6-undo", "source": {"module": "runtime_protocol.timeline_commit_port", "qualname": "RequestCommitPort.history_entry", "file": "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_port.py", "source_sha256": "0d44b5a5e1e0374239df461cb5094ff4fe5bb70761233efd4e3a65c2b29b0859"}}
+{"phase": "authenticated_history_entry.return", "key": "wc6-undo", "completion": "returned", "result": {"revision_id": "wc6-baseline", "publication_id": "txn-dad0f96ebbe0490984a1ffce51949444", "receipt": {"receipt_id": "txn-dad0f96ebbe0490984a1ffce51949444", "command_kind": "timeline.commit", "idempotency_key": "wc6-baseline", "request_hash": "7bf07164aacfad5c0fc6fff8581bcef4962991e615136ae5f07a6466171e72f9", "project_id": "f47546e2045e490282a83ae5c167a35a", "created_at": "2026-10-24T10:37:10.748+00:00", "result": {"status": "accepted", "base_revision_id": "bootstrap-3a1b21f45d8f44fcaa26312e59ea0760", "base_publication_id": "txn-802d059354c24b4e97cd21ebc9eec6e2", "previous_revision_id": "bootstrap-3a1b21f45d8f44fcaa26312e59ea0760", "previous_publication_id": "txn-802d059354c24b4e97cd21ebc9eec6e2", "accepted_revision_id": "wc6-baseline", "rebased_onto": null}, "event_ids": ["5"], "project_seq": [16, 16]}, "previous": {"revision_id": "bootstrap-3a1b21f45d8f44fcaa26312e59ea0760", "publication_id": "txn-802d059354c24b4e97cd21ebc9eec6e2"}}, "error": null}
+{"phase": "authenticated_history.call", "key": "wc6-undo", "source": {"module": "runtime_protocol.timeline_commit_port", "qualname": "RequestCommitPort.history", "file": "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_port.py", "source_sha256": "0d44b5a5e1e0374239df461cb5094ff4fe5bb70761233efd4e3a65c2b29b0859"}}
+{"phase": "authenticated_history.return", "key": "wc6-undo", "completion": "returned", "result": {"head": {"revision_id": "authoring-parent-revision-bdbf07635108545ed2eb9f26d1792c23162645b779b4dc574b320057b6f87bc3", "publication_id": "txn-3baa237d3b504fe2a5d798dc66cf71ea"}, "items": [{"revision_id": "authoring-parent-revision-bdbf07635108545ed2eb9f26d1792c23162645b779b4dc574b320057b6f87bc3", "publication_id": "txn-3baa237d3b504fe2a5d798dc66cf71ea", "receipt": {"receipt_id": "txn-3baa237d3b504fe2a5d798dc66cf71ea", "command_kind": "timeline.commit", "idempotency_key": "wc6-publish", "request_hash": "bf10242aae88bb733e23d3b3ac50157940d3950c6019df8befe1748ce71c1a71", "project_id": "f47546e2045e490282a83ae5c167a35a", "created_at": "2026-10-24T10:37:17.810+00:00", "result": {"status": "accepted", "base_revision_id": "wc6-baseline", "base_publication_id": "txn-dad0f96ebbe0490984a1ffce51949444", "previous_revision_id": "wc6-baseline", "previous_publication_id": "txn-dad0f96ebbe0490984a1ffce51949444", "accepted_revision_id": "authoring-parent-revision-bdbf07635108545ed2eb9f26d1792c23162645b779b4dc574b320057b6f87bc3", "rebased_onto": null}, "event_ids": ["6"], "project_seq": [21, 21]}, "previous": {"revision_id": "wc6-baseline", "publication_id": "txn-dad0f96ebbe0490984a1ffce51949444"}}]}, "error": null}
+{"phase": "authenticated_history_entry.call", "key": "wc6-undo", "source": {"module": "runtime_protocol.timeline_commit_port", "qualname": "RequestCommitPort.history_entry", "file": "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_port.py", "source_sha256": "0d44b5a5e1e0374239df461cb5094ff4fe5bb70761233efd4e3a65c2b29b0859"}}
+{"phase": "authenticated_history_entry.return", "key": "wc6-undo", "completion": "returned", "result": {"revision_id": "wc6-baseline", "publication_id": "txn-dad0f96ebbe0490984a1ffce51949444", "receipt": {"receipt_id": "txn-dad0f96ebbe0490984a1ffce51949444", "command_kind": "timeline.commit", "idempotency_key": "wc6-baseline", "request_hash": "7bf07164aacfad5c0fc6fff8581bcef4962991e615136ae5f07a6466171e72f9", "project_id": "f47546e2045e490282a83ae5c167a35a", "created_at": "2026-10-24T10:37:10.748+00:00", "result": {"status": "accepted", "base_revision_id": "bootstrap-3a1b21f45d8f44fcaa26312e59ea0760", "base_publication_id": "txn-802d059354c24b4e97cd21ebc9eec6e2", "previous_revision_id": "bootstrap-3a1b21f45d8f44fcaa26312e59ea0760", "previous_publication_id": "txn-802d059354c24b4e97cd21ebc9eec6e2", "accepted_revision_id": "wc6-baseline", "rebased_onto": null}, "event_ids": ["5"], "project_seq": [16, 16]}, "previous": {"revision_id": "bootstrap-3a1b21f45d8f44fcaa26312e59ea0760", "publication_id": "txn-802d059354c24b4e97cd21ebc9eec6e2"}}, "error": null}
+{"phase": "authenticated_history.call", "key": "wc6-undo", "source": {"module": "runtime_protocol.timeline_commit_port", "qualname": "RequestCommitPort.history", "file": "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_port.py", "source_sha256": "0d44b5a5e1e0374239df461cb5094ff4fe5bb70761233efd4e3a65c2b29b0859"}}
+{"phase": "authenticated_history.return", "key": "wc6-undo", "completion": "returned", "result": {"head": {"revision_id": "authoring-parent-revision-bdbf07635108545ed2eb9f26d1792c23162645b779b4dc574b320057b6f87bc3", "publication_id": "txn-3baa237d3b504fe2a5d798dc66cf71ea"}, "items": [{"revision_id": "authoring-parent-revision-bdbf07635108545ed2eb9f26d1792c23162645b779b4dc574b320057b6f87bc3", "publication_id": "txn-3baa237d3b504fe2a5d798dc66cf71ea", "receipt": {"receipt_id": "txn-3baa237d3b504fe2a5d798dc66cf71ea", "command_kind": "timeline.commit", "idempotency_key": "wc6-publish", "request_hash": "bf10242aae88bb733e23d3b3ac50157940d3950c6019df8befe1748ce71c1a71", "project_id": "f47546e2045e490282a83ae5c167a35a", "created_at": "2026-10-24T10:37:17.810+00:00", "result": {"status": "accepted", "base_revision_id": "wc6-baseline", "base_publication_id": "txn-dad0f96ebbe0490984a1ffce51949444", "previous_revision_id": "wc6-baseline", "previous_publication_id": "txn-dad0f96ebbe0490984a1ffce51949444", "accepted_revision_id": "authoring-parent-revision-bdbf07635108545ed2eb9f26d1792c23162645b779b4dc574b320057b6f87bc3", "rebased_onto": null}, "event_ids": ["6"], "project_seq": [21, 21]}, "previous": {"revision_id": "wc6-baseline", "publication_id": "txn-dad0f96ebbe0490984a1ffce51949444"}}]}, "error": null}
+{"phase": "authenticated_history_entry.call", "key": "wc6-undo", "source": {"module": "runtime_protocol.timeline_commit_port", "qualname": "RequestCommitPort.history_entry", "file": "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_port.py", "source_sha256": "0d44b5a5e1e0374239df461cb5094ff4fe5bb70761233efd4e3a65c2b29b0859"}}
+{"phase": "authenticated_history_entry.return", "key": "wc6-undo", "completion": "returned", "result": {"revision_id": "wc6-baseline", "publication_id": "txn-dad0f96ebbe0490984a1ffce51949444", "receipt": {"receipt_id": "txn-dad0f96ebbe0490984a1ffce51949444", "command_kind": "timeline.commit", "idempotency_key": "wc6-baseline", "request_hash": "7bf07164aacfad5c0fc6fff8581bcef4962991e615136ae5f07a6466171e72f9", "project_id": "f47546e2045e490282a83ae5c167a35a", "created_at": "2026-10-24T10:37:10.748+00:00", "result": {"status": "accepted", "base_revision_id": "bootstrap-3a1b21f45d8f44fcaa26312e59ea0760", "base_publication_id": "txn-802d059354c24b4e97cd21ebc9eec6e2", "previous_revision_id": "bootstrap-3a1b21f45d8f44fcaa26312e59ea0760", "previous_publication_id": "txn-802d059354c24b4e97cd21ebc9eec6e2", "accepted_revision_id": "wc6-baseline", "rebased_onto": null}, "event_ids": ["5"], "project_seq": [16, 16]}, "previous": {"revision_id": "bootstrap-3a1b21f45d8f44fcaa26312e59ea0760", "publication_id": "txn-802d059354c24b4e97cd21ebc9eec6e2"}}, "error": null}
+{"phase": "authenticated_history.call", "key": "wc6-undo", "source": {"module": "runtime_protocol.timeline_commit_port", "qualname": "RequestCommitPort.history", "file": "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_port.py", "source_sha256": "0d44b5a5e1e0374239df461cb5094ff4fe5bb70761233efd4e3a65c2b29b0859"}}
+{"phase": "authenticated_history.return", "key": "wc6-undo", "completion": "returned", "result": {"head": {"revision_id": "authoring-parent-revision-bdbf07635108545ed2eb9f26d1792c23162645b779b4dc574b320057b6f87bc3", "publication_id": "txn-3baa237d3b504fe2a5d798dc66cf71ea"}, "items": [{"revision_id": "authoring-parent-revision-bdbf07635108545ed2eb9f26d1792c23162645b779b4dc574b320057b6f87bc3", "publication_id": "txn-3baa237d3b504fe2a5d798dc66cf71ea", "receipt": {"receipt_id": "txn-3baa237d3b504fe2a5d798dc66cf71ea", "command_kind": "timeline.commit", "idempotency_key": "wc6-publish", "request_hash": "bf10242aae88bb733e23d3b3ac50157940d3950c6019df8befe1748ce71c1a71", "project_id": "f47546e2045e490282a83ae5c167a35a", "created_at": "2026-10-24T10:37:17.810+00:00", "result": {"status": "accepted", "base_revision_id": "wc6-baseline", "base_publication_id": "txn-dad0f96ebbe0490984a1ffce51949444", "previous_revision_id": "wc6-baseline", "previous_publication_id": "txn-dad0f96ebbe0490984a1ffce51949444", "accepted_revision_id": "authoring-parent-revision-bdbf07635108545ed2eb9f26d1792c23162645b779b4dc574b320057b6f87bc3", "rebased_onto": null}, "event_ids": ["6"], "project_seq": [21, 21]}, "previous": {"revision_id": "wc6-baseline", "publication_id": "txn-dad0f96ebbe0490984a1ffce51949444"}}]}, "error": null}
+{"phase": "authenticated_history_entry.call", "key": "wc6-undo", "source": {"module": "runtime_protocol.timeline_commit_port", "qualname": "RequestCommitPort.history_entry", "file": "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_port.py", "source_sha256": "0d44b5a5e1e0374239df461cb5094ff4fe5bb70761233efd4e3a65c2b29b0859"}}
+{"phase": "authenticated_history_entry.return", "key": "wc6-undo", "completion": "returned", "result": {"revision_id": "wc6-baseline", "publication_id": "txn-dad0f96ebbe0490984a1ffce51949444", "receipt": {"receipt_id": "txn-dad0f96ebbe0490984a1ffce51949444", "command_kind": "timeline.commit", "idempotency_key": "wc6-baseline", "request_hash": "7bf07164aacfad5c0fc6fff8581bcef4962991e615136ae5f07a6466171e72f9", "project_id": "f47546e2045e490282a83ae5c167a35a", "created_at": "2026-10-24T10:37:10.748+00:00", "result": {"status": "accepted", "base_revision_id": "bootstrap-3a1b21f45d8f44fcaa26312e59ea0760", "base_publication_id": "txn-802d059354c24b4e97cd21ebc9eec6e2", "previous_revision_id": "bootstrap-3a1b21f45d8f44fcaa26312e59ea0760", "previous_publication_id": "txn-802d059354c24b4e97cd21ebc9eec6e2", "accepted_revision_id": "wc6-baseline", "rebased_onto": null}, "event_ids": ["5"], "project_seq": [16, 16]}, "previous": {"revision_id": "bootstrap-3a1b21f45d8f44fcaa26312e59ea0760", "publication_id": "txn-802d059354c24b4e97cd21ebc9eec6e2"}}, "error": null}
+{"phase": "authenticated_history.call", "key": "wc6-undo", "source": {"module": "runtime_protocol.timeline_commit_port", "qualname": "RequestCommitPort.history", "file": "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_port.py", "source_sha256": "0d44b5a5e1e0374239df461cb5094ff4fe5bb70761233efd4e3a65c2b29b0859"}}
+{"phase": "authenticated_history.return", "key": "wc6-undo", "completion": "returned", "result": {"head": {"revision_id": "authoring-parent-revision-bdbf07635108545ed2eb9f26d1792c23162645b779b4dc574b320057b6f87bc3", "publication_id": "txn-3baa237d3b504fe2a5d798dc66cf71ea"}, "items": [{"revision_id": "authoring-parent-revision-bdbf07635108545ed2eb9f26d1792c23162645b779b4dc574b320057b6f87bc3", "publication_id": "txn-3baa237d3b504fe2a5d798dc66cf71ea", "receipt": {"receipt_id": "txn-3baa237d3b504fe2a5d798dc66cf71ea", "command_kind": "timeline.commit", "idempotency_key": "wc6-publish", "request_hash": "bf10242aae88bb733e23d3b3ac50157940d3950c6019df8befe1748ce71c1a71", "project_id": "f47546e2045e490282a83ae5c167a35a", "created_at": "2026-10-24T10:37:17.810+00:00", "result": {"status": "accepted", "base_revision_id": "wc6-baseline", "base_publication_id": "txn-dad0f96ebbe0490984a1ffce51949444", "previous_revision_id": "wc6-baseline", "previous_publication_id": "txn-dad0f96ebbe0490984a1ffce51949444", "accepted_revision_id": "authoring-parent-revision-bdbf07635108545ed2eb9f26d1792c23162645b779b4dc574b320057b6f87bc3", "rebased_onto": null}, "event_ids": ["6"], "project_seq": [21, 21]}, "previous": {"revision_id": "wc6-baseline", "publication_id": "txn-dad0f96ebbe0490984a1ffce51949444"}}]}, "error": null}
+{"phase": "authenticated_history_entry.call", "key": "wc6-undo", "source": {"module": "runtime_protocol.timeline_commit_port", "qualname": "RequestCommitPort.history_entry", "file": "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_port.py", "source_sha256": "0d44b5a5e1e0374239df461cb5094ff4fe5bb70761233efd4e3a65c2b29b0859"}}
+{"phase": "session.undo.exception", "key": "wc6-undo", "error": {"type": "builtins.Failed", "object_id": 139687790331168}}
+{"phase": "session.undo.return", "key": "wc6-undo", "completion": "raised", "result": null, "error": {"type": "builtins.Failed", "object_id": 139687790331168}}
+{"phase": "authenticated_history_entry.return", "key": "wc6-undo", "completion": "returned", "result": {"revision_id": "wc6-baseline", "publication_id": "txn-dad0f96ebbe0490984a1ffce51949444", "receipt": {"receipt_id": "txn-dad0f96ebbe0490984a1ffce51949444", "command_kind": "timeline.commit", "idempotency_key": "wc6-baseline", "request_hash": "7bf07164aacfad5c0fc6fff8581bcef4962991e615136ae5f07a6466171e72f9", "project_id": "f47546e2045e490282a83ae5c167a35a", "created_at": "2026-10-24T10:37:10.748+00:00", "result": {"status": "accepted", "base_revision_id": "bootstrap-3a1b21f45d8f44fcaa26312e59ea0760", "base_publication_id": "txn-802d059354c24b4e97cd21ebc9eec6e2", "previous_revision_id": "bootstrap-3a1b21f45d8f44fcaa26312e59ea0760", "previous_publication_id": "txn-802d059354c24b4e97cd21ebc9eec6e2", "accepted_revision_id": "wc6-baseline", "rebased_onto": null}, "event_ids": ["5"], "project_seq": [16, 16]}, "previous": {"revision_id": "bootstrap-3a1b21f45d8f44fcaa26312e59ea0760", "publication_id": "txn-802d059354c24b4e97cd21ebc9eec6e2"}}, "error": null}
+{"phase": "authenticated_history.call", "key": "wc6-undo", "source": {"module": "runtime_protocol.timeline_commit_port", "qualname": "RequestCommitPort.history", "file": "/home/user/work/wt/rt-pin-becfe6db/runtime_protocol/timeline_commit_port.py", "source_sha256": "0d44b5a5e1e0374239df461cb5094ff4fe5bb70761233efd4e3a65c2b29b0859"}}
+{"phase": "authenticated_history.return", "key": "wc6-undo", "completion": "returned", "result": {"head": {"revision_id": "authoring-parent-revision-bdbf07635108545ed2eb9f26d1792c23162645b779b4dc574b320057b6f87bc3", "publication_id": "txn-3baa237d3b504fe2a5d798dc66cf71ea"}, "items": [{"revision_id": "authoring-parent-revision-bdbf07635108545ed2eb9f26d1792c23162645b779b4dc574b320057b6f87bc3", "publication_id": "txn-3baa237d3b504fe2a5d798dc66cf71ea", "receipt": {"receipt_id": "txn-3baa237d3b504fe2a5d798dc66cf71ea", "command_kind": "timeline.commit", "idempotency_key": "wc6-publish", "request_hash": "bf10242aae88bb733e23d3b3ac50157940d3950c6019df8befe1748ce71c1a71", "project_id": "f47546e2045e490282a83ae5c167a35a", "created_at": "2026-10-24T10:37:17.810+00:00", "result": {"status": "accepted", "base_revision_id": "wc6-baseline", "base_publication_id": "txn-dad0f96ebbe0490984a1ffce51949444", "previous_revision_id": "wc6-baseline", "previous_publication_id": "txn-dad0f96ebbe0490984a1ffce51949444", "accepted_revision_id": "authoring-parent-revision-bdbf07635108545ed2eb9f26d1792c23162645b779b4dc574b320057b6f87bc3", "rebased_onto": null}, "event_ids": ["6"], "project_seq": [21, 21]}, "previous": {"revision_id": "wc6-baseline", "publication_id": "txn-dad0f96ebbe0490984a1ffce51949444"}}]}, "error": null}
+{"phase": "absent", "key": "wc6-undo", "boundary": "provider.return", "reason": "not observed within selected call; no additional call made"}
+{"phase": "absent", "key": "wc6-undo", "boundary": "close.return", "reason": "not observed within selected call; no additional call made"}
+{"phase": "absent", "key": "wc6-undo", "boundary": "lookup.2.return", "reason": "not observed within selected call; no additional call made"}
+{"phase": "absent", "key": "wc6-undo", "boundary": "send_hook.call", "reason": "not observed within selected call; no additional call made"}
+{"phase": "capture.end", "key": "wc6-undo", "selected": true, "sink_failures": 0}
+WC6_COMPLETION_PACKET_END bytes=22725 sha256=d78efa41a224585476d025d6200e016420ec93131efc744ce92d04830055fde0 state=complete
