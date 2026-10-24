@@ -1,1 +1,1 @@
-LEAD 2026-10-24T07:42Z | up | P1 GO stands | D50 one-line protected-tail change relayed, needs review + hashes | five light workers running | DISK 7.6G under stop line: no heavy runs, minimal new worktrees | orchestrator told
+LEAD 2026-10-24T08:41Z | up | P1 GO stands | D50 one-line tail change merged with review, hashes and ledger | P2 tour compose merged; P3 predecessor-shape merging | no live P2 or P3 credit yet | disk 8.07G
