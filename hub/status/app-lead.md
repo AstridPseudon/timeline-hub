@@ -1,1 +1,1 @@
-app-lead 12:12Z: daemons up (ensure-daemons uptime 1571m, machine up 26h, no restart), 4 workers running, disk 10.5G free, wt 34 dirs, scratch /tmp/w-* <=2MB, no blockers, no LEAD FETCH; P2 original actual11933 running since 11:55:51Z (same ID, no repeat), P3 caller first-return 1156 active; P2/P3 not yet GO
+app-lead 12:41Z: daemons up (uptime 1601m, no restart), 5 running markers, disk 10.5G free, wt 34 dirs; board carries 'live 6 / cap 6; ready-undispatched 0'; no blockers, no LEAD FETCH; D54-D57 speed-up relayed to manager
