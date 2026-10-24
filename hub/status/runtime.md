@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T14:22:18Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 2m -->
-# runtime board, 2026-10-24T14:20:15Z
+<!-- main | 2026-10-24T14:25:24Z | dispatcher heartbeat 10s | live 1 (sol 1, luna 0, other 0) | busy30 6 | status age 1m -->
+# runtime board, 2026-10-24T14:24:26Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -76,7 +76,7 @@
 | R2r-shared-inverse-auth | Verify shared inverse source identities | Sol / Luna | Integrated source proof passed | merged | Author 0647; review 0701; integrated 0711 | Actual460c passed177 plus six shared/source-copy controls on exact Agent d33fe archive. No original ABA or HTTP credit. | 460c2d397 / 35764ce10 |
 | F-D52-shot-set | Preserve 17 live shot-set cases | Luna | Actual Agent home proof PASS | merged | Author1139; review1143; home1156 | Actualaff339 passed61 in4.04s; durable XML and original14 test ASTs exact. All17 assigned cases included. | 3b8dc8a345 / aff3391061 |
 | F-D52-occurrence-delete | Qualify 19 live delete cases | Luna | Exact integrated source proof | merged | Author1139; independent1141 PASS | Exact Agent7e258 and Runtimebecfe:19PASS6.43s; bodies and params unchanged. [Review](../../design/runtime-D52-occurrence-review-1141.md) | Agent7e258 unchanged |
-| F-D52-core-five | Map five named actual home outcomes | Luna | Authentic XML and map received | doing | rt-F-D52-core-five-receipt-1418 | Exact original artifacts published by Agent1409. Resume named-outcome extraction, no body repeat. Earlier source identities matched. | Agent 47b |
+| F-D52-core-five | Map five named actual home outcomes | Luna | Authentic XML and map verified | merged | Receipt 1418 PASS | All five named cases PASS on actual47b/becfe. Current four fork failures are distinct. [Receipt](../../design/rt-F-D52-core-five-receipt-1418.md) | Agent 47b |
 | U1d-final | Join final owner upstream | Luna | Integrated qualification complete | merged | Integrated 1401; reviews 1346/1351 | Actual e68:448 passed,9 declared skips,2 existing xfails; raw exit1 retained. [Proof](../../design/rt-U1d-integrated-1401.md) | e68cf2316 |
 | U1d-visual-source | Preserve upstream visual source | Luna | Source review passed | merged | Author 1331; review 1333 | Reviewed source is in actual e68. Integrated visual qualification running with the targeted union. | 9db3 / e68 |
 | U1d-visual-tests | Keep both live FPS families | Luna | Independent protected proof passed | merged | Restore 1338; review 1351 | Both restored tests and all incoming cases retained. Exact candidate 60e passed 95 with raw exit 0. | 60e / e68 |
@@ -85,7 +85,8 @@
 | U1d-core-review | Review core and upstream union | Luna | True two-parent merge | merged | Review 1346 PASS | Core authority and daemon union passed. No new normalized Ruff/Pyright diagnostics; existing 2 strict xfail policy exits disclosed. | f69ad5813 |
 | U1d-producer-handback | Return fixture and producer inventory | Luna | Actual e68 home | merged | rt-U1d-handoff-1401 PASS | Wire and 15 clients exact; manifest adds genuine visual fixture. [Handback](../../design/rt-U1d-handoff-1401.md) | e68cf2316 |
 | U1d-consumer-rebind | Rebind producer identity in consumers | Agent / App Luna | Normal vendor tools | blocked:agent-app | Peer producer rebind 1404 | Client bytes unchanged; source commit and producer manifest need current owner receipts. | Runtime e68 |
-| R-recorder-abi-authority | Authenticate recorder mode in accepted history | HARD Sol | D61 approved | doing | rt-R-recorder-abi-authority-sol-1410 | HistoryEntry needs optional recorder_abi enum1/2; additive schema impact reported. Server-validated coverage pending. [Design](../../design/runtime-D61-abi-boundary-1410.json) | Base e68 |
+| R-recorder-abi-authority | Authenticate recorder mode in accepted history | HARD Sol | D61 approved | doing | Sol1410; first return Sol1422 | First author returned RED controls only. Resume adds validated complete coverage and event-bound history fact; schema impact reported. | 4386016 held |
+| R-recorder-abi-security | Review exact coverage authority design | Luna | New real downgrade controls | doing | rt-R-recorder-abi-security-design-1422 | Independent design and attack assessment runs beside source continuation; final committed source review still required. | Base 4386016 |
 | FREEZE | Reach final tuple cut | Runtime manager | D59 cut and D61 producer | doing | Runtime1410; Agent/App owners | Runtime1 required D61 task; Agent5 core; App9 gates. Confirmed regressions0. Cut requires current heads0/0 plus P2/P3 PASS. | Runtime e68 |
 | F-final | Main delivery build and ZIP | Luna | D59 cut and final proofs | doing | Builder1233; docs1229; service1244 | Builder and v2 prose installed. Durable service helper repair active; live-main refresh and final build wait qualified cut and proofs. | No delivery artifact |
 | F-final-builder | Put verifier clones in TMPDIR | Luna / Luna | Exact installed proof complete | merged | Review1229; installed1233 PASS | f25d atomically installed0755, old script backed up. Installed smoke and integrity checks passed; no real build. | f25dfab1 installed |
@@ -138,21 +139,21 @@ Historical pinned proof (D56 retires further pinned runs): P1 remains historical
 Provider completion: Runtime 0915 and independent 0923 retain original cause, hook firing, durable acceptance and request correlation UNKNOWN. Nine controls passed; temporary JUnit loss remains disclosed. Original 20732/11466 remain failed and all 59 predicates unchanged. Viewing capture source 30cf passed independent 19; Agent owns home and runner wiring. No new Runtime source or original body is requested. [Source review](../../design/runtime-provider-completion-review-0923.md).
 
 KIT CHANGE: delivery-build f25dfab1 installed and qualified. Final service3309e33 independent1310 SOURCE PASS; actual lock,15 mappings and candidate guards qualified. Install waits D59 tuple.
-Blockers: Runtime — D61 author1410 owns validated ABI authority, additive HistoryEntry field and normal generation. Exact impact reported14:13Z; independent security and integrated proof required.
+Blockers: Runtime — D61 first return Sol1422 owns validated ABI authority, additive HistoryEntry field and normal generation; Luna1422 reviews new security design. Exact impact reported14:13Z; independent security and integrated proof required.
 Blockers: Agent and App — e68 producer rebind requested; D61 will produce additive history schema and regenerated successor; both consumers need normal D39 adoption. Coordinate current source identity without holding App current-head P2/P3 cycles.
 Blockers: Final delivery — D59 cut requires every active lane0core/0regressions plus current P2/P3 PASS, then required final proofs and D51 live-main refresh.
 Blockers: App — existing Agent service-input handback1305 is complete. Actual App-host current caller/bench qualification remains App-owned; installed-child identity stays UNKNOWN, no new provision inferred.
-Blockers: Agent — core open 5 remains owner scope. Existing five-case XML/map now received; Runtime Luna1418 dispatched this pass, finite evidence blocker cleared.
+Blockers: Agent — core open 5 remains owner scope; D61 ABI consumer and D13 input remain. All five prior Runtime outcome mappings are now closed by named XML evidence.
 Next ready: Relay D61 exact boundary as soon as author1410 publishes it; start independent security review on committed source. Consume consumer receipts and existing five-case XML. Final services stay cut-gated.
 
 Later: D47 memo and proof-pin work stay post-delivery; nine state attacks open. D34 broader cleanup held above8.5GB or until delivery. Prior denied cleanup, process, retirement and publication targets remain stopped. V4 cut; D14/D23 deferred unchanged. D52 removals require caller proof; live tests stay strict.
 
 Disk: About8.5GB free, above main8GB heavy floor. Five old v1 trees refused recycle as dirty; no forced removal. Sweep3 removed0. Compaction packed0 and compressed0 logs; no refused target retried.
 
-Pass 2026-10-24T14:20:15Z: D61 early schema impact sent14:13Z; Sol1410 owns source and normal generation. Genuine new controls established baseline authority failures; source validation continues. Agent original XML/map received and Luna1418 dispatched immediately. No cut or gate GO.
+Pass 2026-10-24T14:24:26Z: Exact five outcome receipt1418 PASS closes original47b scope. D61 firstSol returned RED controls only438; HARD Sol1422 implementation and independent Luna1422 design review dispatched immediately. Schema impact already reported. No held RED source merged.
 
 live 2 / cap 4; ready-undispatched 0. Dispatcher: main | 2026-10-24T14:19:06Z | dispatcher heartbeat 7s | live 2 (sol 1, luna 1, other 0) | busy30 7 | status age 0m
 
-Sol exception: Sole new Sol1410 is explicitly D61-mandated authenticated recorder mode and complete coverage custody. Independent security review will be Luna.
+Sol exception: Sole source Sol1422 is explicitly D61-mandated authenticated recorder mode and complete coverage custody after first author returned no implementation. Independent security review will be Luna.
 
 Disk cleanup14:03Z: zero eligible finished clean trees; sweep0, compaction0, compressed0. About8.7GB free; refused historical targets untouched.

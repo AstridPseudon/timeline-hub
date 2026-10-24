@@ -1,5 +1,5 @@
 {
-  "status": "coordination_required_before_schema_regeneration; validation_source_not_yet_sound",
+  "status": "blocked_no_validated_mode_or_complete_coverage_source",
   "base": "e68cf231641db98a72805a586b51ab5c4fae2c16",
   "persisted_slot": "proposed timeline_commit_history.metadata_json.recorder_abi, cross-checked against timeline.commit.accepted payload.recorder_abi in existing hashed event chain",
   "history_json_path": "$.items[*].recorder_abi (private port.history_entry(publication_id)[recorder_abi])",
@@ -11,5 +11,26 @@
   "client_change": true,
   "exact_schema_impact": "contract/schemas/timeline-commit.json $defs.HistoryEntry currently additionalProperties:false; optional recorder_abi integer enum [1,2] required. No extensible authenticated history slot exists. Event payload is generic JSON. No request/accepted-result/preview change proposed. Generated Runtime DTO/bundle, Python/TypeScript client DTOs, schema digest/artifact manifest and OpenAPI derived digest stamps need D39 coordination.",
   "agent_private_consumer_seam": "Agent commit.py _check_reservations restore_native_fork uses authenticated history entry recorder_abi; AcceptedRecords/load_boundary already receives entry. Consumer must compare candidate records with authenticated original history and refuse stripped/FULL REWRITE when original recorder_abi=2. No Agent edits here.",
-  "remaining_contract_fact": "Must establish Runtime-validated complete recorder coverage while retaining existing accepted ABI1 and annotated fixture behavior. Neither absence of physical fields nor caller flags establish ABI1."
+  "remaining_contract_fact": "Need a trusted execution/validator result proving mode AND complete binding coverage of exact accepted records, independently of caller request annotations and missing physical metadata. Current optional sequential captures validate supplied records but are not a mode-selection or complete-coverage certificate. Adding a public history field alone cannot establish this fact.",
+  "implemented": false,
+  "actual_persisted_slot": null,
+  "actual_history_json_path": null,
+  "source_probe_results": {
+    "new_requirement_tests": {
+      "passed": 11,
+      "failed": 14
+    },
+    "existing_authentication": 114,
+    "existing_sequential_verifier": 67,
+    "existing_port": 94
+  },
+  "confirmed_blockers": [
+    "RuntimeService._timeline_commits installs exactly one PreparedCommit validator for ABI1 and v2; Recorder.schema_version remains 1 and physical binding fields are optional.",
+    "Real v2 fork provider output projected to four-key bindings, including FULL REWRITE removing commit.effect, passes schema AND real acceptance unchanged. Runtime therefore cannot certify complete coverage from current validation.",
+    "History metadata recorder_abi is unauthenticated today: injecting 1, invalid values or invalid types is returned by private history_entry without ProtocolError.",
+    "Genuine legacy fork positive hits existing Agent fork source binding changed guard before Runtime acceptance on Agent 5492fc80414c53c77585844a25fd8a94107c71fa. Guard was not bypassed.",
+    "Closed HistoryEntry needs D39 coordinated additive schema and generated DTO/digest/artifact changes; no regeneration performed while source fact remains unavailable."
+  ],
+  "openapi_impact": "No direct workspace-v1.yaml source edit needed: TimelineCommitPage references timeline-commit.json. Adding optional integer enum [1,2] in HistoryEntry changes the schema and contract digest and requires Runtime/client DTO and resource bundle regeneration, generated digest stamps, artifact manifest, then coordinated Agent/App adoption.",
+  "agent_source_inspected": "/home/user/work/agent at 5492fc80414c53c77585844a25fd8a94107c71fa; Agent1354 design and escalation read; original five test bodies not run; remote Agent1354 private source/evidence was not present locally."
 }
