@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-24T01:22:26Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
-# app2 board, 2026-10-24T01:20Z
+<!-- app2 | 2026-10-24T01:24:31Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 1 | status age 0m -->
+# app2 board, 2026-10-24T01:24Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
 | P1 | Original mounted mixed chain | App Sol/Luna; Proof Luna | Complete on pinned tuple | merged | App run 18792; Proof reviews 0036 and 0040 | P1 RESULT GO. Exit 0, 141s; 2 passed in 56.3s. Source review and result custody passed. Freeze reruns all gates. | App f8b15af0a6; Agent 78738040; Runtime 2a9e347f |
@@ -7,11 +7,11 @@
 | P1-corpus | Real-document roundtrip and merge | Luna | Complete | merged | Corpus 1348 | 49 passed; 15 fixtures and 11 inputs. Direct provider scope; mounted chain has separate GO. | e6 / 9729 |
 | P1-seed | Full native atomic bootstrap | Sol; Luna review | Complete | merged | Common 0618; seed 2d7; Runtime a00e | All 21 native assertions and history passed in run 18792. Runtime 2a9 integrated proof: 67 passed. | App 12ef; Runtime 2a9 |
 | P1-diagnostics | Safe files and source guard codes | Sol/Luna | Source reviewed and merged | merged | Reviews 1945 and 2118; App WorkerInfo 2238 | Real emitter, serialized listener and failure file passed; cap 32 retains critical events. Failure-only files were not created on successful 18792. | b221 / 6ecc / def457 / f890 |
-| readiness-after-bootstrap | Verified basis read does not finish | App Sol; Luna review; Proof verdict | Source cause 0113; evidence review 0105 | doing | App Sol 0113; review 0105 | P2 read restarted after cancellation. Both failed outbox wait; no completed history response captured. Server cause unknown. No repeat. | Fixed App 804134 |
-| P2 | Original eight gestures on App service | App service; Proof verdict | App review 0105 and safe file publication | doing | Run 10973; App cause 0105 | Exit 2, 189s. Native/history and bootstrap connection/selection passed; outbox wait failed. All eight originals NOT RUN. | App 804134d747 / tree 8437e476 |
+| readiness-after-bootstrap | Verified basis read does not finish | App Sol; Luna review; Proof verdict | Runtime handler diagnosis; Proof audit | blocked:runtime | App 0113; Proof Luna 0126 | P2 read restarted after cancellation. Both failed outbox wait; no completed history response captured. Server cause unknown. No repeat. | Fixed App 804134 |
+| P2 | Original eight gestures on App service | App service; Proof verdict | Four safe files and review 0105 published | review | Run 10973; Proof Luna 0126 | Exit 2, 189s. Native/history and bootstrap connection/selection passed; outbox wait failed. All eight originals NOT RUN. | App 804134d747 / tree 8437e476 |
 | P2-custody | Actual 18800 lifecycle file | Proof Luna | Complete finite audit | merged | ap2-P2-18800-direct-custody-0032 | PASS: 10,665 bytes, six real records, schema/security/roundtrip/writer and Node 12+7. Cancellation at 679ms; trigger and history completion unknown. | Report only |
 | P2-popup-seed | Declare both created owners | Luna; independent review | Complete | merged | Author 1934; review 1940 | Four fixture lines; 102+2 tests, three typechecks, lint and collection passed. App tree matches reviewed 17324. | 17324 -> 93cdd |
-| P3 | Original Gate-5 journey | App service; Proof verdict | App review 0105 and safe file publication | doing | Run 14249; App cause 0105 | Exit 2, 194s. Native/history and bootstrap connection/selection passed; outbox wait failed. Original Gate-5 NOT RUN. | App 804134d747 / tree 8437e476 |
+| P3 | Original Gate-5 journey | App service; Proof verdict | Four safe files and review 0105 published | review | Run 14249; Proof Luna 0126 | Exit 2, 194s. Native/history and bootstrap connection/selection passed; outbox wait failed. Original Gate-5 NOT RUN. | App 804134d747 / tree 8437e476 |
 | P2/P3-preflight | Safe environment file and genuine owner checks | Luna; App source owner | Live qualification still open | merged | 13c2 / ef100 / fa702 / d96e / 384; control 66bf | Source tests/types/lint/collection passed. Genuine DB baseline and later 90s fresh-owner/connected checks remain. Real WorkerInfo 13 and bootstrap 20 controls passed. | App 77ada / d3bec / e4ef / 9aba / 51445 |
 | P2/P3-D28 | Retained environment comparison | Sol; Luna review | Report complete | merged | Farm matrix 2025; App review 2014 | Equivalence not proved. Browser/backend/provider facts unknown or lost. Farm 15659 and 31814 are diagnostic only. | Report only |
 | P-OPS-registration | Seven historical registrations | Runtime Sol/Luna | D34 resume threshold or delivery | gated:D34 | Runtime 2034/2111/2115/2123; Proof 2125/2127 | Prospective 21 tests, lint and custody passed. Old launch accounting and atomic boundary unknown. Runtime ACK 2138: no further Proof audit owed. | Prospective source only |
@@ -19,10 +19,10 @@
 
 P1 RESULT GO. BOARD-HEADER records it at the 00:43 status line; D35 is satisfied. App and Agent received the required merge asks at 00:48, due 01:45Z. G5 is done. P1 case 2 passed; P2/P3 remain open.
 
-Blockers: Proof file custody and verdict wait for App review 0105 and publication of four qualified exports.
+Blockers: Runtime owes the history-handler diagnosis requested by App 0117. No new P2/P3 run.
 Blockers: Farm F-final waits for deletions, upstream freeze and remaining gates. Agent owns full-suite classification and repairs under D32.
 
-A4: App Sol 0102 is retiring the remaining executor after Luna's partial output. Reviewed witnesses merged at aca94f and 7135. D31's dormant capture subset and its tests remain required.
+A4: Scalar cut a7d41 is merged. App Sol0112 and Luna0116 own remaining preview and protocol migrations. Orchestrator owes the bounded dormant assertion scope; all protected tests stay.
 Runtime: R0 export merged at 458595850c. Independent and integrated reviews passed 144 targeted tests, seven wire probes, generation and lint. Schema/client tuple unchanged. No new P1 run is needed.
 Legacy registrations: no trusted old launch accounting or atomic cutover boundary. Prospective source checks do not authorise live admission. Runtime disk-only work is gated by D34; all historical refusals remain stopped.
 
@@ -34,10 +34,10 @@ Historical failures keep their original results. Full source locks and evidence 
 
 Safety: all prior process, reference, file, MONITOR, keep-awake, publication and locked-v1 refusals remain stopped. D30 final-message reporting applies. No manager product/test/generated/pin or Git mutation. Frozen 34e/d106/819acf unchanged. D14/D23 remain unchanged and visibly deferred. D31 keeps the dormant capture subset and its 397-line/40-assertion tests.
 
-Disk: 01:19 available 8,947,142,656 bytes, above the 8 GB stop line. Supported recycle found no eligible worktree and gained no space. Protected OPS trees and pins remain. Sweep 00:04 removed zero directories; prior compact refusal is not retried. No local heavy run or disk-only worker.
+Disk: 01:22 available 8,939,413,504 bytes, above the 8 GB stop line. Supported recycle found no eligible worktree and gained no space. Protected OPS trees and pins remain. Sweep 00:04 removed zero directories; prior compact refusal is not retried. No local heavy run or disk-only worker.
 
-Latest pair: [App actual cause report0105](../../design/app-readiness-10973-14249-cause-sol-0105.md) records distinct live ports, seven false DB probes per run, no captured history completion, P2 restart and all originals NOT RUN. Four safe export hashes are specified; manager copies wait for App's named independent review. No direct local raw/trace audit is claimed. Existing five-second baseline and later fresh-owner/connected guards remain unchanged.
+Latest pair: [App actual cause report0105](../../design/app-readiness-10973-14249-cause-sol-0105.md) records distinct live ports, seven false DB probes per run, no captured history completion, P2 restart and all originals NOT RUN. Named independent review0105 PASS and all four safe files arrived at01:20. Proof Luna0126 is live for direct file and production projection audit. No direct local raw/trace audit is claimed. Existing five-second baseline and later fresh-owner/connected guards remain unchanged.
 
-Next ready: App review0105 and safe publication -> immediate independent Proof custody/result audit. App Sol0113 owns server-side basis/history cause. Agent rechecks U2c draft start condition after this changed readiness failure; branch only, no causal merge claim. No repeated run or duplicate extractor.
+Next ready: Consume Proof Luna0126 final, copy its harness report to design, and return the bounded P2/P3 verdict immediately. App owns Runtime handoff; no competing causal author or journey. Agent U2c remains held per its current board.
 
-Current full pass: 2026-10-24T01:19Z, updated01:20Z. INBOX through596617 bytes plus direct normal0114 packet and full0105 cause report consumed. P2 exit2/189s, P3 exit2/194s; all originals NOT RUN. All1234 local Proof workers terminal and no ready source task waiting. Owner boards rechecked; Runtime OPS remains gated:D34. Supported recycle found no eligible tree and gained no space. Next full pass01:29Z; act sooner on qualified exports/review.
+Current full pass: 2026-10-24T01:24Z. INBOX through598078 bytes consumed; direct review0105 and four published files consumed. All historical1234 Proof workers terminal; new audit0126 is live. App, Agent, Runtime and Farm boards rechecked. Supported recycle found zero finished non-KEEP worktrees; no space gained. Free space8.94GB, above8GB stop line. Prior compact refusal is not retried. Next full pass01:34Z; act sooner on audit completion.
