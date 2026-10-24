@@ -42,6 +42,7 @@ import type { ManagedObjectGuard, ManagedObjectInfo } from '@/tools/video-editor
 import { detachManagedApp } from '@/tools/video-editor/lib/managed-object-guard';
 import {
   applyPreparedMediaCommand,
+  type PreparedMediaDiagnostic,
   type PlacePreparedMediaCommand,
 } from '@/tools/video-editor/commands/media.ts';
 import type { TimelineProvisionedAsset } from '@/tools/video-editor/commands/provisioning.ts';
@@ -68,6 +69,7 @@ export interface TimelineCommandError {
   level?: string;
   issues?: unknown[];
   cause?: unknown;
+  diagnostic?: PreparedMediaDiagnostic;
   /** Managed-object metadata when code is 'managed_object_blocked'. */
   managedInfo?: ManagedObjectInfo;
 }
@@ -272,6 +274,7 @@ const failure = (
     ...(extra?.level ? { level: extra.level } : {}),
     ...(extra?.issues ? { issues: extra.issues } : {}),
     ...(extra?.cause !== undefined ? { cause: extra.cause } : {}),
+    ...(extra?.diagnostic ? { diagnostic: extra.diagnostic } : {}),
     ...(extra?.managedInfo ? { managedInfo: extra.managedInfo } : {}),
   },
 });
@@ -503,10 +506,15 @@ export function createTimelineCommands(
             ...(input.placementPolicy !== undefined ? { placementPolicy: input.placementPolicy } : {}),
           },
         };
-        const preview = applyPreparedMediaCommand(current, command);
+        let diagnostic: PreparedMediaDiagnostic | undefined;
+        const preview = applyPreparedMediaCommand(current, command, {
+          onFailure: (failureDiagnostic) => {
+            diagnostic = failureDiagnostic;
+          },
+        });
         const detail = preview?.commandResult?.detail;
         if (!detail || typeof detail.clipId !== 'string' || typeof detail.trackId !== 'string') {
-          return failure('mutation_failed', 'Failed to place the prepared asset on the timeline.');
+          return failure('mutation_failed', 'Failed to place the prepared asset on the timeline.', diagnostic ? { diagnostic } : undefined);
         }
         state.ops.applyEdit({ type: 'prepared-media', command }, {
           selectedClipId: detail.clipId,

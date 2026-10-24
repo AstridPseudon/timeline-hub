@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
 import type { MediaSelection } from '@/integrations/runtime/timeline-commit-types.ts';
 import { Button } from '@/shared/components/ui/button.tsx';
+import type { PreparedMediaDiagnostic } from '@/tools/video-editor/commands/media.ts';
 import { useVideoEditorRuntime } from '@/tools/video-editor/contexts/VideoEditorRuntimeContext.tsx';
 import { useAssetManagement } from '@/tools/video-editor/hooks/useAssetManagement.ts';
 import { useTimelineCommandsService } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
@@ -118,6 +119,7 @@ export function ShotTimelineMediaControls({
   }, []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorDiagnostic, setErrorDiagnostic] = useState<PreparedMediaDiagnostic | null>(null);
   const visualTracks = editor.resolvedConfig?.tracks.filter(track => track.kind === 'visual' && track.role !== 'source') ?? [];
   const trackId = visualTracks.find(track => track.id === editor.selectedTrackId)?.id ?? visualTracks[0]?.id;
   const selectedClip = editor.selectedClipIds.size === 1
@@ -152,6 +154,7 @@ export function ShotTimelineMediaControls({
 
   const choose = (swap: boolean, after = false) => {
     setError(null);
+    setErrorDiagnostic(null);
     try {
       const currentProjectId = validatedProjectId(runtime.project.projectId);
       const data = editor.dataRef.current;
@@ -269,7 +272,10 @@ export function ShotTimelineMediaControls({
         ...(target.replaceClipId ? { replaceClipId: target.replaceClipId } : {}),
         ...(target.afterClipId ? { afterClipId: target.afterClipId, oldMediaSelection } : {}),
       });
-      if (!result.ok) throw new Error(result.error.message);
+      if (!result.ok) {
+        if (mounted.current) setErrorDiagnostic(result.error.diagnostic ?? null);
+        throw new Error(result.error.message);
+      }
       if (target.afterClipId && !oldMediaSelection) setError('Could not resolve the source Runtime project media selection. Draft retained; reload the timeline, then import the media again.');
     } catch (cause) {
       if (mounted.current) setError(cause instanceof Error ? cause.message : 'Could not place shot media.');
@@ -307,6 +313,18 @@ export function ShotTimelineMediaControls({
       />
     </div>
     {!supported ? <p className="text-xs text-muted-foreground">This provider does not support shot media Add or swap.</p> : null}
-    {error ? <p role="alert" className="text-xs text-destructive">{error}</p> : null}
+    {error ? (
+      <p
+        role="alert"
+        className="text-xs text-destructive"
+        {...(errorDiagnostic ? {
+          'data-diagnostic-stage': errorDiagnostic.stage,
+          'data-diagnostic-reason': errorDiagnostic.reason,
+          'data-diagnostic-field-category': errorDiagnostic.fieldCategory,
+        } : {})}
+      >
+        {error}
+      </p>
+    ) : null}
   </div>;
 }
