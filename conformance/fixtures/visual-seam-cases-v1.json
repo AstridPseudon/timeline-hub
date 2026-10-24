@@ -11,7 +11,8 @@
           {"id": "sprite-b", "clipType": "am-sprite", "track": "overlay", "at": 1, "hold": 2}
         ]
       },
-      "expected": []
+      "expected": [],
+      "expectedWarnings": {"activation": 0, "opaque": 0}
     },
     {
       "name": "overlapping overlays inside an occurrence",
@@ -31,7 +32,8 @@
             "app": {"canonical": {"occurrenceId": "occ-1", "sourceClipId": "sprite-b"}}}
         ]
       },
-      "expected": []
+      "expected": [],
+      "expectedWarnings": {"activation": 0, "opaque": 0}
     },
     {
       "name": "gap on an overlay track",
@@ -43,7 +45,8 @@
           {"id": "icon-b", "clipType": "am-icon", "track": "overlay", "at": 2, "hold": 1}
         ]
       },
-      "expected": []
+      "expected": [],
+      "expectedWarnings": {"activation": 0, "opaque": 0}
     },
     {
       "name": "overlapping full-frame media on the base track",
@@ -56,7 +59,8 @@
         ]
       },
       "expected": [{"code": "boundary/overlap", "frame": 30, "clips": ["base-a", "base-b"]}],
-      "expectedLabels": ["Base A", "Base B"]
+      "expectedLabels": ["Base A", "Base B"],
+      "expectedWarnings": {"activation": 0, "opaque": 0}
     },
     {
       "name": "gap in the base picture",
@@ -69,7 +73,8 @@
         ]
       },
       "expected": [{"code": "boundary/gap", "frame": 60, "clips": ["base-a", "base-b"]}],
-      "expectedLabels": ["Base A", "Base B"]
+      "expectedLabels": ["Base A", "Base B"],
+      "expectedWarnings": {"activation": 0, "opaque": 0}
     },
     {
       "name": "declared transition overlap",
@@ -82,7 +87,8 @@
             "transition": {"type": "crossfade", "duration": 0.2}}
         ]
       },
-      "expected": []
+      "expected": [],
+      "expectedWarnings": {"activation": 0, "opaque": 0}
     },
     {
       "name": "sub-frame and translucent media do not establish an opaque base overlap",
@@ -95,7 +101,8 @@
           {"id": "translucent", "clipType": "media", "asset": "c", "track": "picture", "at": 1.25, "hold": 0.5, "opacity": 0.5}
         ]
       },
-      "expected": []
+      "expected": [],
+      "expectedWarnings": {"activation": 0, "opaque": 0}
     },
     {
       "name": "declared custom picture track participates in coverage findings",
@@ -109,7 +116,8 @@
         ]
       },
       "expected": [{"code": "boundary/overlap", "frame": 30, "clips": ["plate-a", "plate-b"]}],
-      "expectedLabels": ["Plate A", "Plate B"]
+      "expectedLabels": ["Plate A", "Plate B"],
+      "expectedWarnings": {"activation": 0, "opaque": 2}
     },
     {
       "name": "canonical asset_id media overlap",
