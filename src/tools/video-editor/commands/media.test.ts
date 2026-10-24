@@ -1,28 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createDefaultTimelineConfig } from '@/tools/video-editor/lib/defaults.ts';
 import { buildSwitchShotGroupToFinalVideoMutation } from '@/tools/video-editor/lib/shot-group-commands.ts';
-import { buildTimelineData, type TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
+import { buildTimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import * as serialize from '@/tools/video-editor/lib/serialize.ts';
 import type { AssetRegistry } from '@/tools/video-editor/types/index.ts';
 import {
-  applyPreparedMediaCommand as previewPreparedMedia,
-  MEDIA_COMMAND_DESCRIPTORS,
+  applyPreparedMediaCommand,
   PLACE_PREPARED_MEDIA_COMMAND_DESCRIPTOR,
   type PlacePreparedMediaCommand,
 } from './media.ts';
-import { createTimelineCommandRunner } from './runner.ts';
-
-const retainedRunner = createTimelineCommandRunner(MEDIA_COMMAND_DESCRIPTORS);
-const applyPreparedMediaCommand = (current: TimelineData, command: PlacePreparedMediaCommand) => {
-  const preview = previewPreparedMedia(current, command);
-  const legacy = retainedRunner.apply(current, { commands: [command] });
-  expect(preview).toEqual(legacy.status === 'rejected' ? null : {
-    nextData: legacy.nextData,
-    commandResult: legacy.commandResults[0],
-    history: legacy.history,
-  });
-  return preview;
-};
 
 describe('prepared media command', () => {
   it.each([
@@ -65,7 +51,7 @@ describe('prepared media command', () => {
     const apply = vi.spyOn(PLACE_PREPARED_MEDIA_COMMAND_DESCRIPTOR, 'apply');
     const invert = vi.spyOn(PLACE_PREPARED_MEDIA_COMMAND_DESCRIPTOR, 'invert');
     try {
-      const preview = previewPreparedMedia(current, {
+      const preview = applyPreparedMediaCommand(current, {
         type: 'place-prepared-media',
         payload: {
           asset: {
@@ -891,20 +877,20 @@ describe('prepared media command', () => {
       const candidate = structuredClone(command);
       testCase.mutate(candidate);
       const onFailure = vi.fn();
-      expect(previewPreparedMedia(current, candidate, { onFailure })).toBeNull();
+      expect(applyPreparedMediaCommand(current, candidate, { onFailure })).toBeNull();
       expect(onFailure).toHaveBeenCalledWith(testCase.diagnostic);
       expect(Object.isFrozen(onFailure.mock.calls[0]?.[0])).toBe(true);
     }
 
     const onFailure = vi.fn();
-    expect(previewPreparedMedia(current, command, { onFailure })).not.toBeNull();
+    expect(applyPreparedMediaCommand(current, command, { onFailure })).not.toBeNull();
     expect(onFailure).not.toHaveBeenCalled();
 
     const validateSerializedConfig = vi.spyOn(serialize, 'validateSerializedConfig')
       .mockImplementationOnce(() => { throw new Error('private validation detail'); });
     try {
       const finalConfigFailure = vi.fn();
-      expect(previewPreparedMedia(current, command, { onFailure: finalConfigFailure })).toBeNull();
+      expect(applyPreparedMediaCommand(current, command, { onFailure: finalConfigFailure })).toBeNull();
       expect(finalConfigFailure).toHaveBeenCalledWith({
         stage: 'final-config', reason: 'invalid-config', fieldCategory: 'config',
       });
@@ -934,6 +920,6 @@ describe('prepared media command', () => {
     });
     const command = { type: 'place-prepared-media', payload } as unknown as PlacePreparedMediaCommand;
 
-    expect(() => previewPreparedMedia(current, command)).toThrow(expected);
+    expect(() => applyPreparedMediaCommand(current, command)).toThrow(expected);
   });
 });
