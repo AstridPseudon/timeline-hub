@@ -810,6 +810,9 @@ def _check_reservations(port, plan, current, rejected, base):
                      'fork collection order changed')
 
         bindings = record.get('bindings', [])
+        _require(isinstance(bindings, list)
+                 and all(isinstance(item, Mapping) for item in bindings),
+                 'fork binding proof is malformed')
         source_bindings = [item for item in bindings if item.get('key') == 'fork.source']
         owner_bindings = [item for item in bindings if item.get('key') == 'fork.owner']
         source_shots = {row['revision_id']: row for row in document['shot_revisions']}
@@ -819,37 +822,43 @@ def _check_reservations(port, plan, current, rejected, base):
                          == source_internal['revision_id']]
         _require(len(source_bindings) == len(owner_bindings) == 1,
                  'fork source bindings are unavailable')
-        source_binding, owner_binding = source_bindings[0], owner_bindings[0]
+        source_binding = source_bindings[0]
         native_bindings = [
             {'key': key, 'ref': ref, 'policy': 'fixed', 'dependencies': []}
-            for key, ref in (('fork.source', owner + '/source'), ('fork.owner', owner))]
+            for key, ref in (('collection.owner:collection.clips', owner),
+                             ('collection.owner:collection.tracks', owner),
+                             ('fork.source', owner + '/source'), ('fork.owner', owner))]
         _require(isinstance(accepted_base, Mapping)
                  and set(accepted_base) == {'revision_id', 'publication_id'}
                  and accepted_base['revision_id'] == parent['revision_id'],
                  'fork predecessor boundary changed')
         # ABI-1 native captures predate physical enrichment. Only the complete
         # native record shape may use that proof; mixed physical facts fail closed.
-        native = ([source_binding, owner_binding] == native_bindings
-                  and not any('physical_ref' in item for item in bindings))
+        native = bindings == native_bindings
         if not native:
-            _require(all(item.get('policy') == 'fixed' and item.get('dependencies') == []
-                         for item in (source_binding, owner_binding))
-                     and source_binding.get('ref') == owner + '/source'
-                     and source_binding.get('physical_ref') ==
-                     'internal-revision:' + source_internal['revision_id']
-                     and source_binding.get('revision_id') == source_internal['revision_id']
-                     and source_binding.get('content_digest') == source_internal['content_digest']
-                     and source_binding.get('owners') == source_owners
-                     and source_binding.get('path') == []
-                     and owner_binding.get('ref') == owner
-                     and owner_binding.get('physical_ref') == 'parent'
-                     and owner_binding.get('revision_id') == parent['revision_id']
-                     and owner_binding.get('content_digest') == parent['content_digest']
-                     and owner_binding.get('path') == ['occurrences', 'occurrence_id:' + identity],
-                     'fork source binding changed')
-            for binding in (source_binding, owner_binding):
+            # Every native role must retain its physical input proof. Checking
+            # only the two fork roles admits partially stripped v2 records.
+            for expected_binding in native_bindings:
+                matches = [item for item in bindings if item.get('key') == expected_binding['key']]
+                _require(len(matches) == 1, 'fork binding role is unavailable')
+                binding = matches[0]
+                expected = {**expected_binding,
+                    'physical_ref': ('internal-revision:' + source_internal['revision_id']
+                                     if binding is source_binding else 'parent'),
+                    'revision_id': (source_internal if binding is source_binding else parent)['revision_id'],
+                    'content_digest': (source_internal if binding is source_binding else parent)['content_digest'],
+                    'path': [] if binding is source_binding else ['occurrences', 'occurrence_id:' + identity],
+                    'boundary': binding.get('boundary')}
+                if binding is source_binding:
+                    expected['owners'] = source_owners
+                _require(binding == expected, 'fork native binding schema changed')
+            for binding in bindings:
                 binding_boundary = binding.get('boundary')
                 _require(isinstance(binding_boundary, Mapping)
+                         and isinstance(binding.get('physical_ref'), str)
+                         and bool(binding['physical_ref'])
+                         and binding.get('policy') == 'fixed'
+                         and binding.get('dependencies') == []
                          and binding_boundary.get('base_revision_id') == requested_base['revision_id']
                          and binding_boundary.get('base_publication_id') ==
                          requested_base['publication_id']
@@ -860,6 +869,11 @@ def _check_reservations(port, plan, current, rejected, base):
                          and isinstance(binding_boundary.get('step_id'), str)
                          and bool(binding_boundary['step_id']),
                          'fork binding boundary changed')
+                if binding.get('key') in {item['key'] for item in native_bindings}:
+                    _require(set(binding_boundary) == {'base_revision_id', 'base_publication_id',
+                             'evaluated_head', 'command_ordinal', 'step_id', 'phase'}
+                             and binding_boundary['phase'] == 'input',
+                             'fork input phase changed')
         state.bundle['shots'][destination] = _CopiedShot(
             state.bundle['shots'][destination], {
                 'source_occurrence_id': identity, 'source_shot_id': source_shot_id,
