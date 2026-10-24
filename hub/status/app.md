@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T18:20:05Z | dispatcher heartbeat 7s | live 5 (sol 0, luna 5, other 0) | busy30 16 | status age 0m -->
-# app board, 2026-10-24T18:19Z
+<!-- app | 2026-10-24T18:23:45Z | dispatcher heartbeat 15s | live 2 (sol 0, luna 2, other 0) | busy30 15 | status age 0m -->
+# app board, 2026-10-24T18:23Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -21,10 +21,10 @@
 | P-D73 | Exact service snapshot admission | HARD Sol | Two Luna caller failures | merged | app-D73-service-snapshot-sol-1739 | 14 controls, nodeTS/lint PASS; strict-islands same15 baseline diagnostics. Actual-service preflight next. | 587316e378 |
 | P-D73-path | Independent whole-path challenge | Luna | Actual20321 | merged | app-D73-service-snapshot-path-1739 | Finalized target4a12 caused parent mismatch. Exact app-pin target fixes source boundary. | Read only |
 | P2-next | Current pinned eight-case tour | Service; Luna | Preflight6282 PASS | review | Actual22847; verdict1809 | Original0 PASS,3 FAIL,5 NOTRUN; readiness1 PASS. Element pending, popup owner422, parent missing label. | App587316; Agentf4d6 |
-| P2-22847-verdict | Correct original counts and headline | Luna | Return1809 PASS | doing | app-P2-22847-headline-correction-1819 | Correct flat1801 report; immutable originals preserved. Eight selected, three executed; readiness separate. | Read only |
+| P2-22847-verdict | Correct original counts and headline | Luna | Return1809 PASS | merged | app-P2-22847-headline-correction-1819 | Corrected flat1801 published:0 PASS,3 FAIL,5 NOTRUN; readiness1 PASS separate. Immutable reports retained. | Read only |
 | P2-22847-parent | Restore authoritative committed status | Luna | Mounted oldRED1801 | doing | app-P2-parent-status-restore-1819 | Missing label traced to7b33 U3 recovery. Restore actual product status; strict original unchanged. | Current source |
 | P2-22847-path | Independent full-path challenge | Luna | Actual22847 | merged | app-P2-22847-wholepath-1801 | Parent has no production label; popup owner guard fails closed. No product cause attributed to element. | Read only |
-| P2-phase-full | Qualify full-tour observer activation | Luna | Author1806 PASS19 | doing | app-P2-full-phase-real-smoke-1819 | Full descriptor flag fixed; actual CLI smoke must use Node runner, not Vitest. No gesture repeated. | Source1806 |
+| P2-phase-full | Qualify full-tour observer activation | Luna | Author1806 and smoke1819 PASS | merged | app-P2-full-phase-activation-1806 | Real normal CLI accepted commit proves provider,receipt,response;19 controls/lint/protected6 PASS. | Source1806 |
 | P2-popup-owner | New authenticated shot-owner refusal | Runtime peer | Actual22847 | blocked:runtime | Peer1802; Runtime source owner | New422 invalid_records after b318; strict owner validation must be traced/fixed by producer owner. | Runtime327da |
 | P2-element-runtime | Diagnose execution/store from phases | HARD Runtime Sol | Meaningful App phase capture | blocked:app | rt-P2-element-sol-1643 | Historical phases UNAVAILABLE; Runtime resumes on next actual bounded phase result. | No proven defect |
 | P3 | Original Gate5 journey | Service; Luna | D70 | review | Actual26907; verdict1713/1718 | Exit1/470s, readiness PASS; fixture-only Recover saved edits button unavailable on reopen. | c3d79 tree6576 |
@@ -41,20 +41,22 @@
 | D74-old-graph | Guarded orphan graph retirement | Lead kit | Trigger below9GB | gated:disk<9G | Lead peer1759 | Disk9.6GB; deferred exact1.107GB route. No fabricated metadata or raw deletion. | No source edits |
 | D74-retention | Post-verdict output release | Lead kit | Trigger below9GB | gated:disk<9G | Lead peer1759 | Disk9.6GB; deferred guarded route. All22847 outputs preserved for D78 handoff. | No source edits |
 
-| P2-D78 | Exact retained element request handoff | Luna | D78 owner1816 | doing | app-P2-D78-retained-request-handoff-1819 | Same22847 only; credential values redacted and hashed. Runtime owns replay. No output deletion. | Evidence only |
+| P2-D78 | Exact retained element request handoff | Luna | D78 owner1816 | merged | app-P2-D78-retained-request-handoff-1819 | Published json/md;4459 exact body bytes,e58a09dc;trace anchor and redaction validated. Runtime replay owns cause. | Evidence only |
+| D79 | One live-edit robustness smoke | Luna | Spare slot only; non-gating | doing | app-D79-live-edit-smoke-1821 | Separate one-case D66 preparation. Remote poll, held drag, undo; no original edits or product author. | Current source |
+
 Integration: App5d7550 includes one-command guarded submit037a8 over587316, with D73 snapshot admission6c7c over255f, with real Runtime CLI phase bootstrap over D73fd74, current popup provenance924140, D69c3d79, approved D70aaddaf, parent reads/audited restorations and frozen upstream3881. No new upstream refresh for gating.
 
 core open: 9 original gesture cases, eight P2 plus one P3. P1 original2 PASS and independent1616 PASS at its recorded tuple.
 regressions: 0 confirmed open App source findings. D69 all four restorations home and final1704 PASS; original gates remain open.
 
 Blockers: Runtime — New popup authenticated shot-owner422 in22847, exactpeer1802; source owner owed there.
-Blockers: Runtime execution — Actual22847 RuntimephaseUNAVAILABLE; App1806 fixes omitted descriptor opt-in. No element product fix prerequisite.
+Blockers: Runtime execution — D78 exact retained element request published1823; Runtime owns replay/stack dumps. Historical phases UNAVAILABLE; next full observer home.
 Blockers: Final cut — Current P2/P3 nine core cases remain unqualified; Runtime coordinates final suites and ZIP.
 Next ready: consume D78 handoff, D75b corrected candidate, parent source, actual observer smoke and corrected verdict; review core/protected candidates immediately.
 
-live 5 / cap 6; ready-undispatched 0. Five Luna1819 workers queued: D78, D75b, observer smoke, parent source, verdict headline. No original active.
+live 3 / cap 6; ready-undispatched 0. Luna1819 D75b and parent source; Luna1821 non-gating D79 smoke. D78 published; observer home. No original active.
 
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
-Disk: About9.6GB free. Guarded recycle removed one ended clean non-KEEP tree; other finished trees already recycled. Deferred kit routes gated below9GB; prior refused routes stopped.
-Inbox consumed through1620084 bytes, including D75b1814 and D78 retained-request handoff1816. Runtime and Agent normal hub boards rechecked. D75 scope blocker cleared.
+Disk: About9.1GB free. Guarded recycle removed one ended clean non-KEEP tree; other finished trees already recycled. Deferred kit routes gated below9GB; prior refused routes stopped.
+Inbox consumed through1623307 bytes, including D75b, D78 and non-gating D79. Runtime and Agent normal hub boards rechecked. D75 scope blocker cleared.
 Evidence: [D73 path](../../design/app-D73-service-snapshot-path-1739.md), [corrected P3 proposal](../../design/app-P3-recovery-proposal-return-1736.md), [same-ID source-only20321](../../design/app-P2-element20321-phase-producer-1737.md), [P1 current verdict](../../design/app-P1-26312-current-verdict-1616.md), [D69 final](../../design/app-U3-D69-home-and-preflight-1704.md).

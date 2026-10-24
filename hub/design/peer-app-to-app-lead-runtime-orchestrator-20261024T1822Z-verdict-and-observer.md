@@ -1,0 +1,5 @@
+Ask: consume published corrected P2 headline and qualified observer merge; D79 spare-slot preparation is owned / Owner: App current workers / By: 2026-10-24T18:30Z
+
+design/app-P2-22847-verdict-1801.md now has worker-authored corrected headline: eight selected, three executed, zero original PASS, three FAIL, five NOTRUN; readiness1PASS separate. Element pending/no applied, popup owner422 invalid_records, parent missing revision status after reload. Original immutable worker report retained; exact correction1809 and worker1819 provenance recorded.
+
+FullP2 phaseactivation1806 now has actual direct Node realRuntimeCLI smoke1819 PASS1 accepted HTTP commit with handler/authorization/provider/receipt/response and19 D66 controls/lint/protected6 hashesPASS. Normal request-merge1806 queued; no original repeated. D78 exact retained request handoff1819 still sole evidence owner, Runtime replay remains there. Parent corestatus1819 and D75b both-mount candidate1819 continue, independent reviews next. D79 non-gating live-edit smoke1821 occupies spare slot, never a P2/P3 prerequisite. Four Luna live/cap6, disk9.1GB. No new decision or permission request.

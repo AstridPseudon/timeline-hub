@@ -1,0 +1,621 @@
+{
+  "format": "timeline.app.runtime-retained-request-handoff.v1",
+  "task": "P2/A3 D78",
+  "parent_label": "App-owned",
+  "status": "retained-and-authorized",
+  "authorization": {
+    "scope": "exact same-ID retained element doc.patch request",
+    "source": "INBOX18:16 owner/ORCH D78 authorization relayed in app-pin-587316e3-d73-p2-current-1747-1024175319-22847",
+    "supersedes": "prior broader safephase-only limitation for this retained packet only",
+    "restrictions": [
+      "Use only existing same-ID retained artifacts",
+      "Do not replay, browse, extract a new body, or alter the source output",
+      "Runtime owns replay, stackdump, and source-cause diagnosis"
+    ]
+  },
+  "retained_run": {
+    "id": "app-pin-587316e3-d73-p2-current-1747-1024175319-22847",
+    "suite": "d73-p2-current-1747",
+    "requested_at": "2026-10-24T17:53:19Z",
+    "started_at": "2026-10-24T17:53:25.487Z",
+    "finished_at": "2026-10-24T18:00:00.491Z",
+    "outcome": "exit 1; element Apply case failed with retained pending request",
+    "source_tuple": {
+      "app": "587316e37891f1b474c2c3734e19044246b62285",
+      "app_tree": "84886c6b1915ca9748d04bb36c0fe8b6861efca6",
+      "agent": "f4d6c72ce336da66813fc39828187bccbaf80a5b",
+      "agent_tree": "5d328a24dd64fb216ae527b6c05f51d99d7c564e",
+      "runtime": "327da207ed30880fe2ae0cd0b116722bb2c6f7a6",
+      "runtime_tree": "0140a9ab2bf8582c4712dbf84498a6d5dcb132cf",
+      "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    }
+  },
+  "request": {
+    "method": "POST",
+    "url": "http://127.0.0.1:39795/api/runtime/v1/projects/0b848bb6e21a43e28fafd141adb73da4/timelines/9ec65ca6-f8bd-437f-9e5e-ac6ab493fc6b/commit",
+    "headers": [
+      {
+        "name": "sec-ch-ua-platform",
+        "value": "\"Linux\"",
+        "redacted": false
+      },
+      {
+        "name": "Referer",
+        "value": "",
+        "redacted": false
+      },
+      {
+        "name": "Accept-Language",
+        "value": "en-US",
+        "redacted": false
+      },
+      {
+        "name": "Idempotency-Key",
+        "value": "2697daf2-5839-4d30-af9a-c8f874473c1b",
+        "redacted": false
+      },
+      {
+        "name": "sec-ch-ua",
+        "value": "\"Chromium\";v=\"141\", \"Not?A_Brand\";v=\"8\"",
+        "redacted": false
+      },
+      {
+        "name": "sec-ch-ua-mobile",
+        "value": "?0",
+        "redacted": false
+      },
+      {
+        "name": "User-Agent",
+        "value": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/141.0.0.0 Safari/537.36",
+        "redacted": false
+      },
+      {
+        "name": "Accept",
+        "value": "application/json",
+        "redacted": false
+      },
+      {
+        "name": "Content-Type",
+        "value": "application/json",
+        "redacted": false
+      }
+    ],
+    "cookies": [],
+    "idempotency_key": {
+      "value": "2697daf2-5839-4d30-af9a-c8f874473c1b",
+      "redacted": false,
+      "note": "D78 explicitly authorizes the retained request key; it is an idempotency key, not an authentication credential."
+    },
+    "timestamp": {
+      "started_at": "2026-10-24T17:55:58.603Z",
+      "network_duration_ms": -1,
+      "response_status": "UNAVAILABLE",
+      "response_timestamp": "UNAVAILABLE",
+      "note": "The retained HAR records the request and body resource but no response."
+    },
+    "body": {
+      "status": "retained",
+      "raw_utf8": "{\"api_version\":1,\"project_id\":\"0b848bb6e21a43e28fafd141adb73da4\",\"timeline_id\":\"9ec65ca6-f8bd-437f-9e5e-ac6ab493fc6b\",\"base_revision_id\":\"authoring-parent-revision-75d3199472f3e520ec1abea85aeb7b2ca3b917feb8950443dd4fc823c97c29bf\",\"base_publication_id\":\"txn-4f1a00cf14384495b8a449e173f4897e\",\"commands\":[{\"schema_version\":1,\"op\":\"doc.patch\",\"version\":\"1\",\"select\":null,\"created\":[\"parent/clip:element-am-burst-0\"],\"args\":{\"changes\":[{\"op\":\"list.insert\",\"ref\":\"parent\",\"path\":[\"clips\"],\"id\":\"element-am-burst-0\",\"before\":{\"state\":\"absent\"},\"value\":{\"id\":\"element-am-burst-0\",\"at\":0,\"track\":\"V1\",\"clipType\":\"am-burst\",\"hold\":3,\"elementRef\":{\"id\":\"am-burst\",\"kind\":\"effect\",\"revision\":\"sha256:f4b453923da74f104d41baf34ab9760bc7474d53d7ce034e11e0ec0197babf29\",\"packId\":\"astrid_motion\"}},\"order_before\":[\"f2-app-clip\",\"f2-transition-clip\"],\"after_id\":\"f2-transition-clip\"}]}}],\"source\":{\"via\":\"app\"},\"label\":\"Edit timeline\",\"dry_run\":false,\"steps\":[{\"id\":\"fe42ef73-15e1-422d-bb40-32e1ded0e253\",\"label\":\"Edit timeline\",\"intent\":\"timeline.apply_element\",\"tags\":[],\"reads\":[{\"kind\":\"collection\",\"ref\":\"parent\",\"path\":[\"config\",\"clips\"],\"members\":[\"f2-app-clip\",\"f2-transition-clip\"],\"order\":[\"f2-app-clip\",\"f2-transition-clip\"]},{\"kind\":\"field\",\"ref\":\"parent\",\"path\":[\"config\",\"clips\",\"id:f2-app-clip\",\"id\"],\"state\":{\"state\":\"present\",\"value\":\"f2-app-clip\"}},{\"kind\":\"field\",\"ref\":\"parent\",\"path\":[\"config\",\"clips\",\"id:f2-app-clip\",\"clipType\"],\"state\":{\"state\":\"present\",\"value\":\"media\"}},{\"kind\":\"field\",\"ref\":\"parent\",\"path\":[\"config\",\"clips\",\"id:f2-app-clip\",\"hold\"],\"state\":{\"state\":\"absent\"}},{\"kind\":\"field\",\"ref\":\"parent\",\"path\":[\"config\",\"clips\",\"id:f2-app-clip\",\"from\"],\"state\":{\"state\":\"present\",\"value\":0}},{\"kind\":\"field\",\"ref\":\"parent\",\"path\":[\"config\",\"clips\",\"id:f2-app-clip\",\"to\"],\"state\":{\"state\":\"present\",\"value\":3}},{\"kind\":\"field\",\"ref\":\"parent\",\"path\":[\"config\",\"clips\",\"id:f2-app-clip\",\"speed\"],\"state\":{\"state\":\"present\",\"value\":1}},{\"kind\":\"field\",\"ref\":\"parent\",\"path\":[\"config\",\"clips\",\"id:f2-app-clip\",\"track\"],\"state\":{\"state\":\"present\",\"value\":\"V1\"}},{\"kind\":\"field\",\"ref\":\"parent\",\"path\":[\"config\",\"clips\",\"id:f2-app-clip\",\"at\"],\"state\":{\"state\":\"present\",\"value\":0}},{\"kind\":\"field\",\"ref\":\"parent\",\"path\":[\"config\",\"clips\",\"id:f2-transition-clip\",\"id\"],\"state\":{\"state\":\"present\",\"value\":\"f2-transition-clip\"}},{\"kind\":\"field\",\"ref\":\"parent\",\"path\":[\"config\",\"tracks\"],\"state\":{\"state\":\"present\",\"value\":[{\"id\":\"V1\",\"kind\":\"visual\",\"label\":\"V1\"},{\"id\":\"S1\",\"kind\":\"visual\",\"label\":\"S1\"}]}}],\"command_ordinals\":[0],\"patch\":[{\"op\":\"list.insert\",\"ref\":\"parent\",\"path\":[\"clips\"],\"id\":\"element-am-burst-0\",\"before\":{\"state\":\"absent\"},\"value\":{\"id\":\"element-am-burst-0\",\"at\":0,\"track\":\"V1\",\"clipType\":\"am-burst\",\"hold\":3,\"elementRef\":{\"id\":\"am-burst\",\"kind\":\"effect\",\"revision\":\"sha256:f4b453923da74f104d41baf34ab9760bc7474d53d7ce034e11e0ec0197babf29\",\"packId\":\"astrid_motion\"}},\"order_before\":[\"f2-app-clip\",\"f2-transition-clip\"],\"after_id\":\"f2-transition-clip\"}]}],\"merge\":\"atomic\",\"reads\":[{\"kind\":\"collection\",\"ref\":\"parent\",\"path\":[\"config\",\"clips\"],\"members\":[\"f2-app-clip\",\"f2-transition-clip\"],\"order\":[\"f2-app-clip\",\"f2-transition-clip\"]},{\"kind\":\"field\",\"ref\":\"parent\",\"path\":[\"config\",\"clips\",\"id:f2-app-clip\",\"id\"],\"state\":{\"state\":\"present\",\"value\":\"f2-app-clip\"}},{\"kind\":\"field\",\"ref\":\"parent\",\"path\":[\"config\",\"clips\",\"id:f2-app-clip\",\"clipType\"],\"state\":{\"state\":\"present\",\"value\":\"media\"}},{\"kind\":\"field\",\"ref\":\"parent\",\"path\":[\"config\",\"clips\",\"id:f2-app-clip\",\"hold\"],\"state\":{\"state\":\"absent\"}},{\"kind\":\"field\",\"ref\":\"parent\",\"path\":[\"config\",\"clips\",\"id:f2-app-clip\",\"from\"],\"state\":{\"state\":\"present\",\"value\":0}},{\"kind\":\"field\",\"ref\":\"parent\",\"path\":[\"config\",\"clips\",\"id:f2-app-clip\",\"to\"],\"state\":{\"state\":\"present\",\"value\":3}},{\"kind\":\"field\",\"ref\":\"parent\",\"path\":[\"config\",\"clips\",\"id:f2-app-clip\",\"speed\"],\"state\":{\"state\":\"present\",\"value\":1}},{\"kind\":\"field\",\"ref\":\"parent\",\"path\":[\"config\",\"clips\",\"id:f2-app-clip\",\"track\"],\"state\":{\"state\":\"present\",\"value\":\"V1\"}},{\"kind\":\"field\",\"ref\":\"parent\",\"path\":[\"config\",\"clips\",\"id:f2-app-clip\",\"at\"],\"state\":{\"state\":\"present\",\"value\":0}},{\"kind\":\"field\",\"ref\":\"parent\",\"path\":[\"config\",\"clips\",\"id:f2-transition-clip\",\"id\"],\"state\":{\"state\":\"present\",\"value\":\"f2-transition-clip\"}},{\"kind\":\"field\",\"ref\":\"parent\",\"path\":[\"config\",\"tracks\"],\"state\":{\"state\":\"present\",\"value\":[{\"id\":\"V1\",\"kind\":\"visual\",\"label\":\"V1\"},{\"id\":\"S1\",\"kind\":\"visual\",\"label\":\"S1\"}]}}]}",
+      "parsed": {
+        "api_version": 1,
+        "project_id": "0b848bb6e21a43e28fafd141adb73da4",
+        "timeline_id": "9ec65ca6-f8bd-437f-9e5e-ac6ab493fc6b",
+        "base_revision_id": "authoring-parent-revision-75d3199472f3e520ec1abea85aeb7b2ca3b917feb8950443dd4fc823c97c29bf",
+        "base_publication_id": "txn-4f1a00cf14384495b8a449e173f4897e",
+        "commands": [
+          {
+            "schema_version": 1,
+            "op": "doc.patch",
+            "version": "1",
+            "select": null,
+            "created": [
+              "parent/clip:element-am-burst-0"
+            ],
+            "args": {
+              "changes": [
+                {
+                  "op": "list.insert",
+                  "ref": "parent",
+                  "path": [
+                    "clips"
+                  ],
+                  "id": "element-am-burst-0",
+                  "before": {
+                    "state": "absent"
+                  },
+                  "value": {
+                    "id": "element-am-burst-0",
+                    "at": 0,
+                    "track": "V1",
+                    "clipType": "am-burst",
+                    "hold": 3,
+                    "elementRef": {
+                      "id": "am-burst",
+                      "kind": "effect",
+                      "revision": "sha256:f4b453923da74f104d41baf34ab9760bc7474d53d7ce034e11e0ec0197babf29",
+                      "packId": "astrid_motion"
+                    }
+                  },
+                  "order_before": [
+                    "f2-app-clip",
+                    "f2-transition-clip"
+                  ],
+                  "after_id": "f2-transition-clip"
+                }
+              ]
+            }
+          }
+        ],
+        "source": {
+          "via": "app"
+        },
+        "label": "Edit timeline",
+        "dry_run": false,
+        "steps": [
+          {
+            "id": "fe42ef73-15e1-422d-bb40-32e1ded0e253",
+            "label": "Edit timeline",
+            "intent": "timeline.apply_element",
+            "tags": [],
+            "reads": [
+              {
+                "kind": "collection",
+                "ref": "parent",
+                "path": [
+                  "config",
+                  "clips"
+                ],
+                "members": [
+                  "f2-app-clip",
+                  "f2-transition-clip"
+                ],
+                "order": [
+                  "f2-app-clip",
+                  "f2-transition-clip"
+                ]
+              },
+              {
+                "kind": "field",
+                "ref": "parent",
+                "path": [
+                  "config",
+                  "clips",
+                  "id:f2-app-clip",
+                  "id"
+                ],
+                "state": {
+                  "state": "present",
+                  "value": "f2-app-clip"
+                }
+              },
+              {
+                "kind": "field",
+                "ref": "parent",
+                "path": [
+                  "config",
+                  "clips",
+                  "id:f2-app-clip",
+                  "clipType"
+                ],
+                "state": {
+                  "state": "present",
+                  "value": "media"
+                }
+              },
+              {
+                "kind": "field",
+                "ref": "parent",
+                "path": [
+                  "config",
+                  "clips",
+                  "id:f2-app-clip",
+                  "hold"
+                ],
+                "state": {
+                  "state": "absent"
+                }
+              },
+              {
+                "kind": "field",
+                "ref": "parent",
+                "path": [
+                  "config",
+                  "clips",
+                  "id:f2-app-clip",
+                  "from"
+                ],
+                "state": {
+                  "state": "present",
+                  "value": 0
+                }
+              },
+              {
+                "kind": "field",
+                "ref": "parent",
+                "path": [
+                  "config",
+                  "clips",
+                  "id:f2-app-clip",
+                  "to"
+                ],
+                "state": {
+                  "state": "present",
+                  "value": 3
+                }
+              },
+              {
+                "kind": "field",
+                "ref": "parent",
+                "path": [
+                  "config",
+                  "clips",
+                  "id:f2-app-clip",
+                  "speed"
+                ],
+                "state": {
+                  "state": "present",
+                  "value": 1
+                }
+              },
+              {
+                "kind": "field",
+                "ref": "parent",
+                "path": [
+                  "config",
+                  "clips",
+                  "id:f2-app-clip",
+                  "track"
+                ],
+                "state": {
+                  "state": "present",
+                  "value": "V1"
+                }
+              },
+              {
+                "kind": "field",
+                "ref": "parent",
+                "path": [
+                  "config",
+                  "clips",
+                  "id:f2-app-clip",
+                  "at"
+                ],
+                "state": {
+                  "state": "present",
+                  "value": 0
+                }
+              },
+              {
+                "kind": "field",
+                "ref": "parent",
+                "path": [
+                  "config",
+                  "clips",
+                  "id:f2-transition-clip",
+                  "id"
+                ],
+                "state": {
+                  "state": "present",
+                  "value": "f2-transition-clip"
+                }
+              },
+              {
+                "kind": "field",
+                "ref": "parent",
+                "path": [
+                  "config",
+                  "tracks"
+                ],
+                "state": {
+                  "state": "present",
+                  "value": [
+                    {
+                      "id": "V1",
+                      "kind": "visual",
+                      "label": "V1"
+                    },
+                    {
+                      "id": "S1",
+                      "kind": "visual",
+                      "label": "S1"
+                    }
+                  ]
+                }
+              }
+            ],
+            "command_ordinals": [
+              0
+            ],
+            "patch": [
+              {
+                "op": "list.insert",
+                "ref": "parent",
+                "path": [
+                  "clips"
+                ],
+                "id": "element-am-burst-0",
+                "before": {
+                  "state": "absent"
+                },
+                "value": {
+                  "id": "element-am-burst-0",
+                  "at": 0,
+                  "track": "V1",
+                  "clipType": "am-burst",
+                  "hold": 3,
+                  "elementRef": {
+                    "id": "am-burst",
+                    "kind": "effect",
+                    "revision": "sha256:f4b453923da74f104d41baf34ab9760bc7474d53d7ce034e11e0ec0197babf29",
+                    "packId": "astrid_motion"
+                  }
+                },
+                "order_before": [
+                  "f2-app-clip",
+                  "f2-transition-clip"
+                ],
+                "after_id": "f2-transition-clip"
+              }
+            ]
+          }
+        ],
+        "merge": "atomic",
+        "reads": [
+          {
+            "kind": "collection",
+            "ref": "parent",
+            "path": [
+              "config",
+              "clips"
+            ],
+            "members": [
+              "f2-app-clip",
+              "f2-transition-clip"
+            ],
+            "order": [
+              "f2-app-clip",
+              "f2-transition-clip"
+            ]
+          },
+          {
+            "kind": "field",
+            "ref": "parent",
+            "path": [
+              "config",
+              "clips",
+              "id:f2-app-clip",
+              "id"
+            ],
+            "state": {
+              "state": "present",
+              "value": "f2-app-clip"
+            }
+          },
+          {
+            "kind": "field",
+            "ref": "parent",
+            "path": [
+              "config",
+              "clips",
+              "id:f2-app-clip",
+              "clipType"
+            ],
+            "state": {
+              "state": "present",
+              "value": "media"
+            }
+          },
+          {
+            "kind": "field",
+            "ref": "parent",
+            "path": [
+              "config",
+              "clips",
+              "id:f2-app-clip",
+              "hold"
+            ],
+            "state": {
+              "state": "absent"
+            }
+          },
+          {
+            "kind": "field",
+            "ref": "parent",
+            "path": [
+              "config",
+              "clips",
+              "id:f2-app-clip",
+              "from"
+            ],
+            "state": {
+              "state": "present",
+              "value": 0
+            }
+          },
+          {
+            "kind": "field",
+            "ref": "parent",
+            "path": [
+              "config",
+              "clips",
+              "id:f2-app-clip",
+              "to"
+            ],
+            "state": {
+              "state": "present",
+              "value": 3
+            }
+          },
+          {
+            "kind": "field",
+            "ref": "parent",
+            "path": [
+              "config",
+              "clips",
+              "id:f2-app-clip",
+              "speed"
+            ],
+            "state": {
+              "state": "present",
+              "value": 1
+            }
+          },
+          {
+            "kind": "field",
+            "ref": "parent",
+            "path": [
+              "config",
+              "clips",
+              "id:f2-app-clip",
+              "track"
+            ],
+            "state": {
+              "state": "present",
+              "value": "V1"
+            }
+          },
+          {
+            "kind": "field",
+            "ref": "parent",
+            "path": [
+              "config",
+              "clips",
+              "id:f2-app-clip",
+              "at"
+            ],
+            "state": {
+              "state": "present",
+              "value": 0
+            }
+          },
+          {
+            "kind": "field",
+            "ref": "parent",
+            "path": [
+              "config",
+              "clips",
+              "id:f2-transition-clip",
+              "id"
+            ],
+            "state": {
+              "state": "present",
+              "value": "f2-transition-clip"
+            }
+          },
+          {
+            "kind": "field",
+            "ref": "parent",
+            "path": [
+              "config",
+              "tracks"
+            ],
+            "state": {
+              "state": "present",
+              "value": [
+                {
+                  "id": "V1",
+                  "kind": "visual",
+                  "label": "V1"
+                },
+                {
+                  "id": "S1",
+                  "kind": "visual",
+                  "label": "S1"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "byte_length": 4459,
+      "sha256": "e58a09dcafa9fc499448d216d48a1e17f6ee326123e0a3281c169b20ab92b992",
+      "json_parse": "passed",
+      "byte_fidelity": "passed: raw_utf8 re-encodes to the retained 4459-byte body exactly",
+      "c0_fields_present": [
+        "api_version",
+        "scope/base pair (project_id/timeline_id plus base_revision_id/base_publication_id)",
+        "commands(op/version/select/args)",
+        "label",
+        "steps(id/label/intent/tags/command_ordinals/patch/reads)",
+        "merge",
+        "reads",
+        "dry_run",
+        "source",
+        "project_id",
+        "timeline_id"
+      ]
+    }
+  },
+  "redaction": {
+    "applied": true,
+    "policy": "Credential, token, cookie, and secret header values are never copied. Their header names remain and their original values are represented only by SHA256.",
+    "headers_redacted": [],
+    "cookies_redacted": [],
+    "body_sensitive_field_names": [],
+    "observed_auth_or_cookie_headers": []
+  },
+  "provenance": {
+    "extraction_anchor": {
+      "source_archive_member": "trace.zip!0-trace.network",
+      "har_record": "record[111].snapshot",
+      "request_node": "snapshot.request",
+      "body_resource_member": "trace.zip!resources/5e0a670f95cdaf127a07a4111aac1c6389a35f67.json",
+      "body_reference": "snapshot.request.postData._sha1",
+      "body_reference_value": "5e0a670f95cdaf127a07a4111aac1c6389a35f67.json"
+    },
+    "files": {
+      "runManifest": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-587316e3-d73-p2-current-1747-1024175319-22847/d66/manifest.json",
+        "sha256": "6183f07f0fa3d016fdfbfab5e1a1a66fe5ac2fdceab2d11de065d04e97314188"
+      },
+      "request": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-587316e3-d73-p2-current-1747-1024175319-22847/request",
+        "sha256": "6d7ad2c0f8898264d945404c1c10ab73687eef61ed6f3202d9a023ea414ece37"
+      },
+      "collection": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-587316e3-d73-p2-current-1747-1024175319-22847/d66/collection.txt",
+        "sha256": "8132dc7849a38ad1efc440109a8aae83f2c3e6263f71caa4bbf51c047b775f88"
+      },
+      "phaseProducer": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-22847-phase-producer-1753.md",
+        "sha256": "20fc015c5f42b3c3f62fb9be025de37b2bde41fd620bbb974f047eefc74924de"
+      },
+      "verdict": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-P2-22847-verdict-1801.md",
+        "sha256": "4023a45d413ba224fc9d9fa470ce6e50a1b1adca211283cf37b215ed06ee7c2b"
+      },
+      "authorization": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-app-to-app-lead-runtime-agent-orchestrator-20261024T1754Z-pinned-P2-22847-submitted.md",
+        "sha256": "a53553cd1b019d820c6832c3f08360304dc595602ef7e67a6b7dbba25b95711c"
+      },
+      "diagnostic": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-587316e3-d73-p2-current-1747-1024175319-22847/d66/p2/three-products.p2-elements-4b4f7-tch-reload-and-guarded-Undo/p2-element-apply-diagnostic.json",
+        "sha256": "d751a7d9236eaaeb2b42fac723391f1f4fe4da378feb6e16704bdd4eff0ae824"
+      },
+      "traceZip": {
+        "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-587316e3-d73-p2-current-1747-1024175319-22847/d66/p2/three-products.p2-elements-4b4f7-tch-reload-and-guarded-Undo/trace.zip",
+        "sha256": "2bb5f1c8db39d67fc6e359bbb91942ff3caff90e3385855b8cfe9709584b25c7"
+      },
+      "extractedNetwork": {
+        "path": "/tmp/d78-element-network.XM3yz0/network.json",
+        "sha256": "bc5c36c5fbdd183d0a423a209df4826462aa1821ba4c57edfb8a5349700b06bb"
+      },
+      "extractedBody": {
+        "path": "/tmp/d78-element-network.XM3yz0/body.json",
+        "sha256": "e58a09dcafa9fc499448d216d48a1e17f6ee326123e0a3281c169b20ab92b992"
+      }
+    },
+    "retained_diagnostic": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-587316e3-d73-p2-current-1747-1024175319-22847/d66/p2/three-products.p2-elements-4b4f7-tch-reload-and-guarded-Undo/p2-element-apply-diagnostic.json",
+      "sha256": "d751a7d9236eaaeb2b42fac723391f1f4fe4da378feb6e16704bdd4eff0ae824",
+      "event_anchor": "diagnostic.events[1] (request-start), correlation apply-1, idempotencyKey present; terminal pending at page-close"
+    }
+  },
+  "gaps": [
+    "No response status, response body, receipt, accepted/merged/conflict/invalid reply, or Runtime safe-phase output was retained in this same-ID run.",
+    "The request is retained and byte-verified, but the source run's element case failed before an accepted response was proven."
+  ],
+  "handoff_use": "Runtime may use this exact retained request for diagnosis under D78. Do not claim execution or acceptance from this packet."
+}
+
