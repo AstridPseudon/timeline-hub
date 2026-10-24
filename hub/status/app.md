@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T14:58:51Z | dispatcher heartbeat 4s | live 2 (sol 1, luna 1, other 0) | busy30 9 | status age 2m -->
-# app board, 2026-10-24T14:56Z
+<!-- app | 2026-10-24T15:02:04Z | dispatcher heartbeat 14s | live 3 (sol 1, luna 2, other 0) | busy30 10 | status age 2m -->
+# app board, 2026-10-24T15:00Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -14,7 +14,7 @@
 | A4-D52 | Delete dormant parent and track pairs | Luna; review | Current caller census | merged | Author1118; review1121 | Four deletions qualified by exact tree identity and85 neighboring tests/types. | 2e3c8f65a8 |
 | A4-session | Preserve live session behavior | Luna; review | Review1155 finding | merged | Restore1201; review1210 | Five live tests and shared module restored. Whole tree equals602f; no deletion merged. | 018bd527fc |
 | A4-transcript | Remove exclusive dormant capture pair | Luna; review | Census1205 and review1217 | merged | Author1210; integrated1232 | Exact two-file deletion.50 live neighbors and three types PASS; current worker ledger copied1233. | cca3deb361 |
-| P1-current-caller | Prepare current P1 service caller | Luna; custody review | Actual source-mode recipe | review | Author 1451; review 1456 | Source dry checks and seven negatives PASS. Review checks actual production invocation; no install or original run. | 05efffb236 |
+| P1-current-caller | Prepare current P1 service caller | Luna; custody review | Review 1456 findings | doing | Return 1459 from author1451 | Review FAIL: recycled source path, incomplete consumed guards and no stage retention. One Luna return fixes exact gaps; no install or original run. | Base 05efffb236 |
 | P1 | Original mixed chain | App service; Proof | Historical tuple | merged | Actual18792; reviews0036/0040 | Historical GO. Final integrated tuple rerun remains required. | Appf8;Agent787;Runtime2a9 |
 | IMAGE | Genuine image acceptance and undo | Agent; independent Luna | Reviewed forwarding repair | merged | 0554; review0636 | Direct RuntimeService witness passed. No HTTP or broader final gate credit. | App1c5cc;Agent2007 |
 | P2 | Eight original gesture tour | App service; Luna verdict | Actual service launch repair | blocked:app | Actual 12541; verdict 1438 | FAIL exit 2 in 1 second at environment guard. All 8 originals NOTRUN; no product failure inferred. Sol 1437 owns launch repair. | be98aac54e |
@@ -55,7 +55,7 @@
 
 Integration: be98aac54e275282467d85f79d3beb4665416039, tree 2839c7e7841d1c0897fd8e7c12f0c848d94e3979. Normal tool adoption 94d89 is merged; only runtime.lock.json differs from qualified d24ed. All 14 mapped artifacts are unchanged and match actual Runtime e68. U3-final includes exact upstream 09c844 and retains all mapped live tests. Source qualification 1409 passes 67 mounted controls on actual Agent 47b / Runtime e68.
 
-live 2 / cap 6; ready-undispatched 0. Copied dispatcher header: <!-- app | 2026-10-24T14:47:11Z | dispatcher heartbeat 2s | live 2 (sol 1, luna 1, other 0) | busy30 10 | status age 0m --> P1 prepare1451 queued after the snapshot. All independent ready work assigned. Sole Sol1437 repairs actual launch custody after failed Luna invocation; Luna owns full8158 terminal and P1 preparation.
+live 2 / cap 6; ready-undispatched 0. Copied dispatcher header: <!-- app | 2026-10-24T14:58:51Z | dispatcher heartbeat 4s | live 2 (sol 1, luna 1, other 0) | busy30 9 | status age 2m --> P1 first return1459 queued after review1456 FAIL. SoleSol1437 repairs actual launch custody; Luna owns full8158 terminal and P1 return. All independent ready work assigned.
 
 core open:9 final App gate cases unqualified,8 P2 and1 P3. D55b accepts all eight P2 as core. Historical16138 Vitest had0 failures; final core full and final P1–P5 remain required.
 
