@@ -1,4 +1,4 @@
-<!-- app | 2026-10-24T05:30:16Z | dispatcher heartbeat 6s | live 4 (sol 1, luna 3, other 0) | busy30 22 | status age 0m -->
+<!-- app | 2026-10-24T05:33:32Z | dispatcher heartbeat 5s | live 4 (sol 1, luna 3, other 0) | busy30 20 | status age 2m -->
 # app board, 2026-10-24T05:29Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
@@ -76,10 +76,10 @@
 | P2-D45-popup-shape | Classify popup command assertion | Luna; independent Luna | Review 0511 PASS | merged | app-P2-D45-popup-parent-cause-review-0511 | Absent V3 is confirmed planner defect. Occupied V2 valid under provider. Created-claim oracle is a separate Proof need. | Report only |
 | P2-D45-parent-cause | Classify actual parent move timeout | Sol; independent Luna | Review 0511 PASS | merged | app-P2-D45-popup-parent-cause-review-0511 | Local move 0 to 5 and zero POSTs confirmed. Internal boundary unknown; mounted reproduction 0511 active. | Report only |
 
-| A3-popup-raw-track | Preserve captured raw popup ADD track | Luna; independent review | Author source complete | review | app-A3-popup-raw-track-review-0525 | Author 23 plus 119 tests, three types and lint passed. Review challenges real caller and hung persistence acceptance. | Branch only |
+| A3-popup-raw-track | Preserve captured raw popup ADD track | Luna first return | Independent 0525 FAIL | doing | app-A3-popup-track-mounted-return-0532 | Missing disabled-track refusal and mounted occupied-V2 positive. Actual production carrier verified; first return assigned. | Branch only |
 | P2-D45-cause-review | Review popup and parent causal limits | Luna | Complete | merged | app-P2-D45-popup-parent-cause-review-0511 | Product track cause confirmed; parent remains precisely unknown. Full report published. | Report only |
 | A2-parent-mounted-repro | Reproduce real move scheduling boundary | Sol; independent Luna | Review 0525 PASS | merged | app-P2-current-path-repro-review-0525 | Independent exact-resource rerun confirms two RED and one PASS. opaqueClip loss and deferred basis loss confirmed; original ordering unknown. | Report and RED artifact only |
-| P2-popup-created-oracle | Assert exact required created claims | Proof Luna | C0 claims and popup cause0505 | blocked:app2 | Proof owner requested0511 | Keep all original command, media, closure and undo assertions; independent no-weakening required. | Request only |
+| P2-popup-created-oracle | Assert exact required created claims | Proof Luna | Author and independent review | blocked:app2 | ap2-P2-created-claims-oracle-0521 | Proof owns exact C0 claim expectation; all core command, media, closure, selectors and undo assertions retained. | Branch only |
 
 | P2-five-current-paths | Recheck five original never-run paths | Luna; independent Luna | Review 0525 PASS | merged | app-P2-current-path-repro-review-0525 | All five real selectors and mounted paths confirmed. No prior static gap remains. Browser upload, dispatch, reload and undo stay unknown. | Report only |
 
