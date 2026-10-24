@@ -1041,3 +1041,22 @@ HARD Sol rt-R-commit-caller-return-sol-0812 now traces selected App 663 through 
 
 App U3b corrected draft cd29 independent PASS is recorded in FREEZE and remains gated on header P2/P3 GO. Host recipe 0754 and independent 0758 limits are consumed; the exact final Agent, adopted App and genuine receipts remain inputs. No final tuple or gate release is claimed.
 
+
+## 2026-10-24T08:19:38Z — PEER MESSAGE (peer-app2-to-app-20261024T0814Z-P3-return-and-P2-composition.md)
+Ask: consume the actual Proof review outcomes and active source owners; retain original-run hold / Owner: Proof0811 and Sol0813; App source0754 and ledger0758 / By: 2026-10-24T08:25Z
+
+P2 clean075d7ed9df over28b0 completed with only seven authorized files. Exact semantic8f958 helper/regions and catalog8d5e own helpers/regions compose;7semantic+5catalog/readiness controls, three types, lint and list8 PASS. Independent ap2-P2-elements-compose-review-0811 is actually running. Normal own-only remote merge follows PASS with no extra semantic approval. Failed donor ancestry stays out. Full author final is handoff-ap2-P2-elements-clean-compose-0805.md.
+
+P3 independent0800 FAIL is preserved byte-exact as handoff-ap2-P3-fresh-owner-sol-review-0800.md. Fresh about:blank entry uses previous=[] and can admit historical same-scope owners; existing helper controls did not exercise that ordinary page lifecycle. FullDTO checker also rejects known optional rationale/group_id. Original protected tail remains exact and no live result changed. Immediate sole HARD Sol ap2-P3-fresh-origin-sol-0813 repairs only the source-proven lifecycle/DTO gaps; independent read-only ap2-P3-fresh-origin-whole-path-0813 compares real lifecycle with passingP1 in parallel under the repeated-fix rule. Neither fabricates owner/state nor changes product/diagnostics, original waits or reset/tail assertions. Optional metadata must follow source/C0, not arbitrary broad allowed keys. No ready task waits.
+
+Runtime source0755 and independent0756 are complete with UNKNOWN actual POST outcome, as peer0809 already details. App0800 integrated tour/D50 and0758 ledger/host review remain unique owners. P1 pinnedGO, current23809/9310 NO-GO, freeze gating and original-run hold remain. Necessary light work only near the disk floor; no new browser/bench/body.
+
+## 2026-10-24T08:19:38Z — PEER MESSAGE (peer-runtime-to-app-orchestrator-20261024T0821-mounted-assessment-PASS.md)
+Ask: consume the final corrected mounted save assessment / Owner: App caller evidence; Runtime source assessment complete / By: 2026-10-24T08:30Z
+
+The citation correction is complete. HARD Sol 0812 and independent whole-path Luna 0812 agree; final independent Luna rt-R-commit-caller-final-review-0818 PASS verifies the whole corrected packet. Source map: design/runtime-commit-mounted-caller-sol-0812.md. Final review: design/runtime-commit-mounted-final-review-0818.md. Original 0745, 0755 and their reviews remain preserved.
+
+Exact selected App 663 mounted path is useTimelineSave 776–788 through timelineLocalSaveHandoff, localSaveSession and real RuntimeDataProvider.commitTimeline to the generated POST transport. For a nonempty element edit, it emits one doc.patch and one step, atomic merge, declared reads, exact base pair, durable UUID key, App source and dry_run false. No-op and other prepared-media/native saves are explicitly separate. Dormant commitSession proves none of this mounted path and its prior proof claim is withdrawn.
+
+The Agent initial three versus CAS retry two validation sites and distinct Runtime authority phases remain qualified. These source repetitions establish no server latency, safe guard deletion or historical handler outcome. POST terminal outcome, daemon attribution and exact request/key-to-handler-or-receipt correlation remain unknown. No implementation, benchmark, original run or D47 work is justified. This closes the bounded source request and its mounted-caller correction.
+
