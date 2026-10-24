@@ -1,0 +1,46 @@
+{
+  "base_commit": "5d4ae93c833cc1adee109b28405276210165c0db",
+  "base_tree": "a393387ea995d3b140584d202f0fe9be21517086",
+  "contract_version": "0.2.14",
+  "files": {
+    "tests/editing_conformance/test_commit_runtime_m1.py": {
+      "sha256": "a95ee868774b20b093c015eef40b48a12f695ddaa9c06d6f1a8b8329b2092776"
+    },
+    "tests/editing_conformance/test_commit_runtime_shared_inverse.py": {
+      "sha256": "ad4156b53c3ed96e034ff289c16411e57168f920f248b36e9b290b41af490806"
+    },
+    "tests/editing_conformance/test_native_word_anchor.py": {
+      "sha256": "ab07f5b9cda3a42d0c9273917b46d9486c39b453b979d2ad5d39df5528d4179f"
+    },
+    "tests/editing_conformance/test_word_binding_recipe.py": {
+      "sha256": "4722227e6e347778bb491f4f660e0a8d049ee074026b23e43de939a65d47142a"
+    },
+    "tests/packs/timeline/test_cli_document_commit.py": {
+      "sha256": "e5ffb3e24a6fb13d6b9111d5fceb93ce1d5138eb0b9aaa4bef0b5d70cdef3865"
+    }
+  },
+  "format": "d86-main-source-manifest-v1",
+  "future_submission": {
+    "held_input": "7627 is never an input; use a qualified successor tuple only",
+    "original_test_hash": "recompute at actual pinned Agent checkout; do not inherit current-head value",
+    "provider_origin": "module origin must resolve to pinned Agent astrid_runtime_client, pinned Runtime runtime_protocol, and the existing schema/profile paths",
+    "tuple": "capture Agent/Runtime/App/Composition SHAs once at eventual submit; verify four request-checkout receipts before rendering"
+  },
+  "preparation": "source-only; no collection, test body, service build, installation, or live request",
+  "runtime_reference": "732c48c6f5a9441a65c61b24595d454a1cd3e180",
+  "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+  "selectors": {
+    "families": {
+      "cli-document": 8,
+      "m1-outbox": 10,
+      "native-word": 46,
+      "shared-inverse": 10
+    },
+    "files": 5,
+    "selector_manifest_sha256": "07b2768ab17d6b196ef121d500d16e2ef763bae010ad6ab4fb7406e97f3b3c6b",
+    "source": "design/agt-D86-main-families.md",
+    "total": 74
+  }
+}
+
+

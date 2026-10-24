@@ -1,0 +1,48 @@
+{
+  "format": "d86-main-dry-control-v1",
+  "status": "control-only; not the future submission tuple",
+  "launcher": "tools/p4-d73-pinned-launch.sh",
+  "tuple": {
+    "agent": {
+      "sha": "3edc45cb262ede95482528a9628e6738ec6fd7aa",
+      "tree": "0f6faf10a76dd282b8c151b189a3bfcb86a2ae39",
+      "path": "/home/user/work/agent"
+    },
+    "runtime": {
+      "sha": "732c48c6f5a9441a65c61b24595d454a1cd3e180",
+      "tree": "7ed0559c6f0a05954427cc668e303b6cd2f51586",
+      "path": "/home/user/work/runtime"
+    },
+    "app": {
+      "sha": "bcb6536fab8b5cb6fca7657ead574765d63cab07",
+      "tree": "a7e047a3af7d8dc68b0939de060d531b49b17839",
+      "path": "/home/user/work/app"
+    },
+    "composition": {
+      "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "path": "/home/user/work/composition"
+    },
+    "profile": "/home/user/work/runtimes/agent-remotion-current",
+    "schema": "/home/user/work/venv-agent/lib/python3.13/site-packages",
+    "node": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
+    "node_version": "v20.19.4",
+    "contract_version": "0.2.14",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b"
+  },
+  "controls": {
+    "positive": {
+      "mode": "dry",
+      "stub_calls": 1,
+      "exit": 17,
+      "preflight_exit": 0
+    },
+    "poisoned_agent_sha": {
+      "mode": "dry",
+      "stub_calls": 0,
+      "exit": 1,
+      "preflight_body_files": false
+    }
+  },
+  "future_submission": "Capture four fresh request-checkout SHAs once, render the p4-d73-v1 manifest, and keep this control tuple separate."
+}
