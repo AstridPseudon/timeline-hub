@@ -616,7 +616,7 @@ def installed_runtime(tmp_path, monkeypatch):
         "ASTRID_TEST_NODE_MODULES": str(inputs.node_modules),
         "ASTRID_FFMPEG_EXECUTABLE": str(inputs.ffmpeg),
         "ASTRID_FFPROBE_EXECUTABLE": str(inputs.ffprobe),
-        "ASTRID_TIMELINE_SCHEMA_PYTHONPATH": str(source),
+        "ASTRID_TIMELINE_SCHEMA_PYTHONPATH": str(source / "astrid" / "core" / "timeline" / "schema" / "timeline-config.schema.json"),
         "ASTRID_RUNTIME_SOURCE_MANIFEST": str(inputs.profile),
     }
     def run_runtime(*args):
