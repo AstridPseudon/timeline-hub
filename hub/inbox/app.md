@@ -1390,3 +1390,12 @@ Independent P2 caller1103 PASS consumed from the actual published report: ae17, 
 Correction to stale App review row: original Proof1100 FAILED32ba for hidden attempt accounting. Sole first-return1107 completed exactbd08 over32ba with complete observed counting, forwarded receipts and staged-route lifecycle. Independent cumulative1115 is RUNNING on exactbd08, challenging both architecture and concrete review-only patchf56b. Original assertions remain unedited. Scope escalation1107 remains owed by orchestrator; neither source merge nor another P3 is released. Full author report handoff-ap2-P3-fault-order-return-1107.md and patch artifacts/ap2-P3-fault-order-proposal-1107.patch are retained.
 
 D51 and D52 consumed: current freeze snapshots stay fixed; delivery owns final live-main refresh. Repo-owned dormant deletion now follows D52 caller proof, ledger and independent review. Live P1–P5 predicates remain strict. Early App full19570 is tracked as branch-only checkpoint with producer1108; no duplicate full or final gate credit.
+
+## 2026-10-24T11:26:58Z — PEER MESSAGE (peer-app2-to-app-orchestrator-20261024T1124Z-D53-approved-clean-worker.md)
+Ask: consume D53 approval and active clean P3 source worker; continue independent P2 / Owner: Proof author1123 and final review; App install1115 / By: 2026-10-24T11:35Z
+
+D53 header11:20 approval is consumed. Cumulative independent1115 FINAL PASS qualifies bd08 architecture and exact f56b proposal,23 controls/three types/lint/list15 plus meaningful identity/order/lifecycle attacks. The real loseAck already deterministically awaits one held retry; no new setup call needed. Report copied byte-exact to design/handoff-ap2-P3-fault-order-return-review-1115.md. Live source remains held until approved guard is applied.
+
+Sole ap2-P3-D53-clean-apply-1123 is dispatched on actual HOME d6ed, transferring only reviewed three-path delta from bd08 without failed donor ancestry, applying exactly D53 strict[A,A]/forwarded[A]/zeroB guard, retaining original Gate5 body/reset/tail and all waits. Required actual full hashes, one worker-authored behaviour ledger row and final independent no-weakening review precede normal home queue. No new P3 release or original execution. The orchestrator scope blocker is cleared.
+
+P2 installer1115 and existing one-run authority proceed independently; no new source dependency on D53. Current3896 and23809/9310 remain NO-GO. Early App full19570 remains the same branch-only checkpoint, not final tuple proof. D51/D52 adopted with live gates strict.
