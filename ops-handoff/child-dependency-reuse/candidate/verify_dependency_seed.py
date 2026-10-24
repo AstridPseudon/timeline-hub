@@ -2,6 +2,7 @@
 """Authenticate a finite wheelhouse against an active hash-locked requirements file."""
 
 import base64
+import configparser
 import csv
 import email
 import fcntl
@@ -16,7 +17,7 @@ import stat
 import subprocess
 import sys
 import zipfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import NoReturn
 
 from packaging.markers import default_environment
@@ -178,9 +179,12 @@ def write_snapshot(snapshot: Path, requirements: bytes, artifacts: dict[str, byt
 def installed_integrity(root: Path, artifacts: dict[str, bytes]) -> None:
     """Compare installed bytes to authenticated original wheels, not RECORD claims."""
     sites = list((root / "lib").glob("python*/site-packages"))
-    if len(sites) != 1 or root.is_symlink():
+    if len(sites) != 1 or root.is_symlink() or sites[0].is_symlink():
         fail("installed child layout is missing or ambiguous")
-    site = sites[0]
+    root = root.resolve()
+    site = sites[0].resolve()
+    if not site.is_relative_to(root):
+        fail("installed site-packages escapes child")
     owned: set[str] = set()
     for filename, data in artifacts.items():
         name, version, _, _ = parse_wheel_filename(filename)
@@ -201,15 +205,81 @@ def installed_integrity(root: Path, artifacts: dict[str, bytes]) -> None:
                 if any(part.endswith(".data") for part in Path(entry.filename).parts):
                     fail(f"unsupported relocated wheel layout: {filename}")
                 wheel_files[entry.filename] = archive.read(entry)
+        generated_scripts: dict[str, bytes] = {}
+        entrypoint_files = [
+            rel for rel in wheel_files if rel.endswith(".dist-info/entry_points.txt")
+        ]
+        if len(entrypoint_files) > 1:
+            fail(f"ambiguous console entry-point metadata: {name}")
+        if entrypoint_files:
+            parser = configparser.ConfigParser(interpolation=None, strict=True)
+            parser.optionxform = str  # type: ignore[method-assign, assignment]
+            try:
+                parser.read_string(wheel_files[entrypoint_files[0]].decode("utf-8"))
+                entrypoints = (
+                    list(parser.items("console_scripts", raw=True))
+                    if parser.has_section("console_scripts")
+                    else []
+                )
+            except (configparser.Error, UnicodeDecodeError) as exc:
+                fail(f"malformed console entry-point metadata: {name}: {exc}")
+            for script_name, target in entrypoints:
+                if (
+                    not script_name
+                    or "/" in script_name
+                    or "\\" in script_name
+                    or "\x00" in script_name
+                    or script_name in {".", ".."}
+                ):
+                    fail(f"unsafe console entry-point name: {name}:{script_name!r}")
+                target = target.partition("[")[0].strip()
+                module, separator, function = target.partition(":")
+                if not separator or not module or not function:
+                    fail(f"malformed console entry-point target: {name}:{script_name}")
+                script_path = root / "bin" / script_name
+                rel = str(Path(os.path.relpath(script_path, site)))
+                generated_scripts[rel] = (
+                    f"#!{root / 'bin/python'}\n"
+                    "import sys\n"
+                    f"from {module} import {function.split('.', 1)[0]}\n"
+                    "if __name__ == '__main__':\n"
+                    "    sys.argv[0] = sys.argv[0].removesuffix('.exe')\n"
+                    f"    sys.exit({function}())\n"
+                ).encode()
         rows: set[str] = set()
+        physical_rows: set[str] = set()
         for row in csv.reader(io.StringIO(captured_bytes(site / record).decode()), strict=True):
             if len(row) != 3:
                 fail(f"malformed dependency RECORD: {name}")
             rel, encoded, size = row
+            pure = PurePosixPath(rel)
+            if (
+                not rel
+                or rel in rows
+                or "\\" in rel
+                or "\x00" in rel
+                or pure.is_absolute()
+                or str(pure) != rel
+                or (".." in pure.parts and rel not in generated_scripts)
+            ):
+                fail(f"unsafe or overlapping dependency RECORD: {name}")
             path = site / rel
-            if rel in rows or rel in owned or "\\" in rel or Path(rel).is_absolute() or path.resolve() != path or not path.is_relative_to(root):
+            resolved = path.resolve()
+            if not resolved.is_relative_to(root):
+                fail(f"unsafe or overlapping dependency RECORD: {name}")
+            cursor = site
+            for part in pure.parts:
+                if part == "..":
+                    cursor = cursor.parent
+                else:
+                    cursor /= part
+                    if cursor.is_symlink():
+                        fail(f"unsafe or overlapping dependency RECORD: {name}")
+            physical = str(resolved.relative_to(root))
+            if physical in physical_rows or physical in owned:
                 fail(f"unsafe or overlapping dependency RECORD: {name}")
             rows.add(rel)
+            physical_rows.add(physical)
             content = captured_bytes(path)
             original = wheel_files.get(rel)
             if original is not None:
@@ -228,6 +298,9 @@ def installed_integrity(root: Path, artifacts: dict[str, bytes]) -> None:
                     fail(f"dependency bytecode differs from original wheel: {rel}")
                 if not encoded and not size:
                     continue
+            elif rel in generated_scripts:
+                if content != generated_scripts[rel]:
+                    fail(f"generated dependency script differs from wheel entry point: {rel}")
             elif Path(rel).parent != Path(record).parent or Path(rel).name not in {"INSTALLER", "REQUESTED"}:
                 fail(f"unowned installed dependency file: {rel}")
             digest = base64.urlsafe_b64encode(hashlib.sha256(content).digest()).decode().rstrip("=")
@@ -235,12 +308,14 @@ def installed_integrity(root: Path, artifacts: dict[str, bytes]) -> None:
                 fail(f"dependency RECORD integrity mismatch: {rel}")
         if not set(wheel_files).issubset(rows):
             fail(f"incomplete installed dependency: {name}")
+        if not set(generated_scripts).issubset(rows):
+            fail(f"missing installed console script: {name}")
         for prefix in {Path(rel).parts[0] for rel in wheel_files}:
             location = site / prefix
             for path in ([location] if location.is_file() else location.rglob("*")):
                 if path.is_file() and str(path.relative_to(site)) not in rows:
                     fail(f"unowned dependency package file: {path.name}")
-        owned.update(rows)
+        owned.update(physical_rows)
 
 
 def install_snapshot(wheelhouse: Path, requirements: bytes, flags: list[str]) -> None:

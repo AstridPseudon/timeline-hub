@@ -31,6 +31,7 @@ def wheel(
     unsafe_member: str | None = None,
     symlink_member: bool = False,
     duplicate_member: bool = False,
+    console_script: str | None = None,
 ) -> Path:
     path = directory / filename
     with zipfile.ZipFile(path, "w") as archive:
@@ -51,6 +52,11 @@ def wheel(
             f"{internal_name}-{internal_version}.dist-info/WHEEL",
             f"Wheel-Version: 1.0\nGenerator: fixture\nRoot-Is-Purelib: true\nTag: {internal_tag}\n",
         )
+        if console_script:
+            archive.writestr(
+                f"{internal_name}-{internal_version}.dist-info/entry_points.txt",
+                f"[console_scripts]\n{console_script}\n",
+            )
     return path
 
 
@@ -443,6 +449,103 @@ def write_record(site: Path, metadata: str, files: dict[str, bytes]) -> None:
             digest = base64.urlsafe_b64encode(hashlib.sha256(content).digest()).decode().rstrip("=")
             writer.writerow([rel, "sha256=" + digest, len(content)])
         writer.writerow([metadata + "/RECORD", "", ""])
+
+
+def installed_dependency_fixture(tmp_path: Path, *, script: bytes | None = None):
+    helper = load_helper("installed_dependency_fixture", VERIFY)
+    root = tmp_path / "child"
+    site = root / "lib/python3.13/site-packages"
+    wheelhouse = tmp_path / "wheelhouse"
+    wheelhouse.mkdir()
+    artifact = wheel(
+        wheelhouse,
+        "seedpkg-1.0.0-py3-none-any.whl",
+        console_script="seed-tool = seedpkg:main",
+    )
+    data = artifact.read_bytes()
+    with zipfile.ZipFile(artifact) as archive:
+        files = {
+            entry.filename: archive.read(entry)
+            for entry in archive.infolist()
+            if not entry.is_dir() and not entry.filename.endswith("/RECORD")
+        }
+    site.mkdir(parents=True)
+    root.joinpath("bin").mkdir()
+    root.joinpath("bin/python").write_bytes(b"python")
+    generated = (
+        f"#!{root / 'bin/python'}\n"
+        "import sys\n"
+        "from seedpkg import main\n"
+        "if __name__ == '__main__':\n"
+        "    sys.argv[0] = sys.argv[0].removesuffix('.exe')\n"
+        "    sys.exit(main())\n"
+    ).encode()
+    script_path = root / "bin/seed-tool"
+    script_path.write_bytes(generated if script is None else script)
+    record = site / "seedpkg-1.0.0.dist-info/RECORD"
+    record.parent.mkdir()
+    import base64
+    import csv
+
+    with record.open("w", newline="") as output:
+        writer = csv.writer(output)
+        for rel, content in files.items():
+            target = site / rel
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(content)
+            digest = base64.urlsafe_b64encode(hashlib.sha256(content).digest()).decode().rstrip("=")
+            writer.writerow([rel, "sha256=" + digest, len(content)])
+        digest = base64.urlsafe_b64encode(hashlib.sha256((script_path).read_bytes()).digest()).decode().rstrip("=")
+        writer.writerow(["../../../bin/seed-tool", "sha256=" + digest, len(script_path.read_bytes())])
+        writer.writerow(["seedpkg-1.0.0.dist-info/RECORD", "", ""])
+
+    class Distribution:
+        def __init__(self) -> None:
+            self.metadata = {"Name": "seedpkg"}
+            self.version = "1.0.0"
+            self.files = [Path("seedpkg-1.0.0.dist-info/RECORD")]
+
+    helper.md.distributions = lambda path: [Distribution()]
+    return helper, root, data
+
+
+def test_installed_console_script_record_is_oldred_newgreen(tmp_path: Path) -> None:
+    helper, root, data = installed_dependency_fixture(tmp_path)
+    base = tmp_path / "base-verifier.py"
+    base.write_bytes(subprocess.check_output(["git", "show", "b330264b9:ops-handoff/child-dependency-reuse/candidate/verify_dependency_seed.py"]))
+    old = load_helper("old_installed_dependency", base)
+    old.md.distributions = helper.md.distributions
+    with pytest.raises(SystemExit, match="unsafe or overlapping"):
+        old.installed_integrity(root, {"seedpkg-1.0.0-py3-none-any.whl": data})
+    helper.installed_integrity(root, {"seedpkg-1.0.0-py3-none-any.whl": data})
+
+
+def test_installed_console_script_negatives_remain_strict(tmp_path: Path) -> None:
+    helper, root, data = installed_dependency_fixture(tmp_path, script=b"forged\n")
+    with pytest.raises(SystemExit, match="generated dependency script"):
+        helper.installed_integrity(root, {"seedpkg-1.0.0-py3-none-any.whl": data})
+
+
+@pytest.mark.parametrize("mutation", ["traversal", "duplicate", "missing"])
+def test_installed_console_script_record_path_controls_remain_strict(
+    tmp_path: Path, mutation: str
+) -> None:
+    helper, root, data = installed_dependency_fixture(tmp_path)
+    record = root / "lib/python3.13/site-packages/seedpkg-1.0.0.dist-info/RECORD"
+    lines = record.read_text().splitlines()
+    script_row = next(line for line in lines if line.startswith("../../../bin/seed-tool,"))
+    if mutation == "traversal":
+        lines[lines.index(script_row)] = script_row.replace(
+            "../../../bin/seed-tool", "../../../../bin/seed-tool"
+        )
+    elif mutation == "duplicate":
+        lines.append(script_row)
+    else:
+        lines.remove(script_row)
+    record.write_text("\n".join(lines) + "\n")
+    expected = "missing installed console script" if mutation == "missing" else "unsafe or overlapping"
+    with pytest.raises(SystemExit, match=expected):
+        helper.installed_integrity(root, {"seedpkg-1.0.0-py3-none-any.whl": data})
 
 
 def retained_fixture(
