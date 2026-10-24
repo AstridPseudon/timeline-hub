@@ -49,12 +49,11 @@ the release owner should:
 
 Dependency audit for the pinned VibeComfy revision: `httpx==0.28.1`,
 `pyyaml==6.0.3`, and `websockets==16.1.1` are satisfied by the Astrid runtime
-closure. `huggingface_hub[hf_xet]>=0.32.0` is missing from both
-`pyproject.toml` and `requirements/runtime.lock`, and `hf-xet` is absent as
-well. The release owner should add `huggingface_hub[hf_xet]>=0.32.0` to the
-`pyproject.toml` dependencies, then in a network-enabled release environment
-run `make lock-runtime`, `make lock-proof`, and `make lock-validate`. Review the
-full transitive versions and hashes in both regenerated locks before release.
+closure. `huggingface_hub[hf_xet]>=0.32.0` is declared in `pyproject.toml`;
+the runtime and proof locks include `huggingface-hub==2.3.0`, `hf-xet==1.7.0`,
+and their transitive dependencies with hashes. Regenerate both locks when
+changing these requirements, then run `make lock-validate`. See the
+[fresh-install qualification](../testing/fresh-install-vibecomfy.md) for results.
 
 The m8 installed matrix also writes `astrid.release_toolchain.v1` evidence.
 It records the exact CPython patch and executable, GNU Make, Bash, Git, FFmpeg,
