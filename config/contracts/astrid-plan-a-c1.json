@@ -1149,7 +1149,7 @@
       "id": "capability-profile",
       "repository": "astrid-agent",
       "path": "config/astrid-beta-capabilities.json",
-      "sha256": "7aad14959c790730c5efdb1f00900b1e9f70dad395224328102520b0b9f00dd0",
+      "sha256": "41d219eae7cad6e564d02bf20c211d989763a514f306d154e7b5aa951e9e3fea",
       "summary": "Read-only existing declaration; observed bytes are not release custody or installed proof."
     },
     {
