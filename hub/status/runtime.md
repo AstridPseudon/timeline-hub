@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T02:55:18Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 18 | status age 1m -->
-# runtime board, 2026-10-24T02:53:00Z
+<!-- main | 2026-10-24T02:57:36Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 17 | status age 1m -->
+# runtime board, 2026-10-24T02:55:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -43,7 +43,7 @@
 | OPS-manifest-restore | Restore accidental generated manifest write | Luna | Exact main file identity | merged | Restore 0110; independent 0113 PASS | Exact tracked hash 7c541b restored; main cleanliness and byte equality independently verified. | HEAD 458595850 |
 | R0-public-export-manifest | Refresh generated artifact hash | Luna | Integrated verification passed | merged | Author 0111; review 0115; integrated 0128 | Actual db11: 74 passed, manifest and generation checks passed; 77 of 78 entries unchanged. [Proof](../../design/runtime-R0-manifest-integrated-0128.md) | db11ea829 / 8a742b1c2 |
 | R5-full-headless | Preserve ten headless scenarios | Sol / Luna | Agent root assignment source | blocked:agent | Agent root0213; Runtime review0202 | Eleven passed; faithful positive awaits minimal root assignment fix. Original raw input and genuine admitted media preserved. | 3c46eb0d0 held |
-| R5-full-occupancy | Preserve fifteen occupancy scenarios | Luna / Sol | Independent prep review; Agent inverse | review | Prep0246; rt-R5-occupancy-historical-review-0252 | Two offline mapping checks passed. Author also ran held full file; no provider credit. Reviewer checks actual fixture wiring. | Source0246 held |
+| R5-full-occupancy | Preserve fifteen occupancy scenarios | Luna / Sol | Wire actual fixture; Agent inverse | doing | Review0252 FAIL; rt-R5-occupancy-wiring-return-0255 | Offline helper was unused by historical case. First return wires accepted source carrier; original provider body remains held. | 60fedb573 held |
 | R5-full-speed | Preserve six speed refusals | Luna | Integrated proof passed | merged | Review 0138; port review 0148; service 13500 | Actual 28bb: 14 passed. Original six inputs and SQL/CAS retained; no new type diagnostics. | 4e983cebc / 0e28e6261 |
 | R5-full-receipt-key | Preserve receipt and key guards | Luna | Integrated proof passed | merged | Reviews 0138 and 0148; integrated 0157 | Actual 28bb: both cases passed in 1.97 s with explicit Agent path. All original replay and receipt equalities retained. | 28bb65668 / b57ab2331 |
 | R5-full-conformance | Declare actual retired-route errors | Sol / Luna | Integrated source proof complete | merged | Final review0242; integrated19379 | Actual f320:162passed. Three generation checks remain freeze-deferred; consumer pins intact. [Proof](../../design/runtime-D39-D40-integrated-0246.md) | a7a2fe6a5 |
