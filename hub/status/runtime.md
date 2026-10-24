@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T07:33:19Z | dispatcher heartbeat 8s | live 2 (sol 0, luna 2, other 0) | busy30 19 | status age 0m -->
-# runtime board, 2026-10-24T07:33:06Z
+<!-- main | 2026-10-24T07:35:59Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 17 | status age 0m -->
+# runtime board, 2026-10-24T07:35:12Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -55,7 +55,7 @@
 | F-helper-sequential | Classify helper replay-map refusal | Agent Sol / Luna | Integrated proof complete | merged | Agent184dc; review0224; integrated0232 | Actual Agent 8a8d passed 12 focused cases and static, vendor and artifact checks. Both original variants passed on reviewed source. | Agent184dc20a70 |
 | F-render-21 | Classify retained cold-render timeout | Luna | Read-only source handback complete | merged | rt-F-render-21-source-review-0303 | Duplicate registry assembly identified; historical timeout cause unknown. No body run or product change. [Report](../../design/runtime-render-21-source-review-0303.md) | Evidence only |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Current installed qualification passed | merged | Agent0508; independent0517 PASS | Exact seven originals passed on managed child 3b5c, Agent ba8f and Runtime f320. Current 9cd relevant sources and test AST match. | Managed child 3b5c |
-| OPS-farm-agent-full | Correct farm full-suite environment | Sol / Luna | Farm request permission decision | blocked:orchestrator | Sol0617; review0632 SOURCE PASS | Fourteen checks passed. Farm has byte-exact packet and reviewed setup; host remains unverified. [Review](../../design/runtime-farm-full-v2-source-review-0632.md) | 471712 reviewed packet |
+| OPS-farm-agent-full | Correct farm full-suite environment | Sol / Luna | Farm lead request and host preflight | blocked:farm | Sol0617; review0632 SOURCE PASS | Fourteen checks passed. Farm has byte-exact packet and reviewed setup; host remains unverified. [Review](../../design/runtime-farm-full-v2-source-review-0632.md) | 471712 reviewed packet |
 | OPS-child-dependency-route | Verify local dependency seed route | Sol / Luna | Reviewed installation and real artifacts | review | Sol 0707; review 0721 PASS | Independent source reviews passed 34 and 40 cases. Installer 0735 runs; genuine wheels and installed qualification remain unverified. | ac2412f0c reviewed |
 | R2r-historical-image | Restore authenticated retired roots on redo | Sol / Luna | Integrated proof passed | merged | Review 0405; integrated 0413 PASS | 13 standalone cases and 243 controls passed; 74 configured deselections. [Proof](../../design/runtime-historical-image-integrated-0413.md) | 2b49da8d6 / 2e96c68c |
 | R-D42-history-memo | Harden verified replay memo | Sol / Luna | Post-delivery scope under D47 | gated:D47 | Design0448; review0454 PASS | Deferred by D47. No stable validation boundary; nine state attacks remain open. Source stays unmerged. | Tests 6c6bb375; source held |
@@ -74,7 +74,7 @@
 | F-helper-originals | Qualify fourteen retained helper rows | Luna | Settled D23 child-word scope | gated:D23 | Author 0622; review 0627; Agent 0640 | Thirteen passed. Remaining child-word case is D23 deferred, unchanged and open; no fixture binding or timing backend invented. | Agent bb50 unchanged |
 | F-R2-root-originals | Qualify nine retained root cases | Luna | Independent exact result review passed | merged | Author0622; review0625 PASS | Nine originals passed; source only. Pre/post capture limit disclosed. [Review](../../design/runtime-R2-root-review-0625.md) | Agent bb50 unchanged |
 | R2r-shared-inverse-auth | Verify shared inverse source identities | Sol / Luna | Integrated source proof passed | merged | Author 0647; review 0701; integrated 0711 | Actual460c passed177 plus six shared/source-copy controls on exact Agent d33fe archive. No original ABA or HTTP credit. | 460c2d397 / 35764ce10 |
-| FREEZE | Coordinate final tuple and proofs | Runtime manager | D48 and D49 | doing | Runtime 0721; Agent 0702; App 0707 | U1c and D39 merged. Agent draft review and App GO remain pending; Farm host preflight is requested. | Runtime becfe6db8 |
+| FREEZE | Coordinate final tuple and proofs | Runtime manager | D48 and D49 | doing | Runtime 0721; Agent 0702; App 0707 | U1c and D39 merged. Agent U2 repairs0713 and App GO remain pending. Farm lead owns the normal request after the role decision. | Runtime becfe6db8 |
 | OPS-child-observability | Retain bounded maker failure evidence | Luna | Reviewed live installation | review | Author 0724; review 0730 PASS; installer 0735 | Independent 40-case source/security PASS. Installer verifies idle state and exact live baselines before replacement. | 33fc06bbd reviewed |
 
 Runtime full: 0 of 36 original failures open; exact integrated proofs and independent accounting remain recorded above. No new full-suite PASS. Current producer is becfe6db88b2cc034dba3fafa6c050117cdf2b06 after normal U1c and D39 merges. Readonly integrated worker0721 passed409 cases on this exact head; source reviews0703 and0710 remain PASS. Shared inverse source is separately qualified on460c by177 Runtime cases and six shared/source-copy controls, with no original ABA or HTTP credit.
@@ -82,14 +82,14 @@ Runtime full: 0 of 36 original failures open; exact integrated proofs and indepe
 FREEZE sequence under D48 and D49:
 - Runtime: U1c merged46eb; D39 mergedbecfe6; exact integrated proof0721 passed409; inventory/result review0727 SOURCE/RESULT PASS; current consumer adoption remains unqualified.
 - Agent: U2 draftcb6ce failed HARD Sol0702 review. Three repair workers0713 own typing/duck fixture, deleted behavior coverage and deadline/identity predicates. Home merge waits joined HARD review. Normal D39 adoption follows reviewed U2 home and exact producer handoff.
-- App: U3b draft0707 uses live2a288; merge remains gated on header P2/P3 GO, then normal D39 adoption.
+- App: U3b draftaa7c has real parents9b810 and upstream2a288. Draft tests658/695;36 Node20 navigator fixture failures and one label-healing mismatch have first return/audit0722. Merge remains gated on header P2/P3 GO, then D39 adoption.
 - Composition: live67b8 is unchanged; no upstream merge required. Viewing owns its qualification.
 - Final tuple qualification precedes P1–P5 on App service with Proof verdict, final full suites, then Farm build and ZIP.
 - Full venues: Runtime main service; Agent Farm after zero-setup-error checkpoint, fallback Agent service after dependency qualification; App App service; Composition Viewing service.
 
 P1 remains historical GO under D25 on original18792 and exact f8b15/787380/2a9 tuple. P4 and P5 retain their recorded source scopes. Final freeze reruns all gates. Current pinned P2/P3 pair23809/9310 is terminal: P2 three failed and five not run; P3 predecessor request wait failed after readiness41.4s. App and Proof own fixes/verdict; no duplicate pair here.
 
-Farm checkpoint26511 remains terminal on Agent9cd/tree57f0231d and Runtime45c3:17,335 passed,288 failed,187 setup errors,four skips; no JUnit and seven missing FAILED lines. Corrected packet471712 passed independent source review0632. Farm checkouts9cd and1d9 are complete. Farm board reports its07:26 request-runtime attempt required approval and was stopped without retry. Runtime escalated that reported permission requirement and requested the exact refusal text. Reviewed row installation and genuine import preflight remain held. No new checkpoint before preflight PASS. Runtime45c3 lacks external_pack_sources; selected1d9 contains D40 with the prior four client hashes.
+Farm checkpoint26511 remains terminal on Agent9cd/tree57f0231d and Runtime45c3:17,335 passed,288 failed,187 setup errors,four skips; no JUnit and seven missing FAILED lines. Corrected packet471712 passed independent source review0632. Farm checkouts9cd and1d9 are complete. Farm board reports its07:26 request-runtime attempt required approval and was stopped without retry. Orchestrator07:36 resolved the role assignment: Farm lead issues its existing supported request; no permission change or manager retry. Escalate again only if lead is refused. Reviewed row installation and genuine import preflight remain held. No new checkpoint before preflight PASS. Runtime45c3 lacks external_pack_sources; selected1d9 contains D40 with the prior four client hashes.
 
 Child dependency: private Sol repair0707 passed34 tests. Independent security review0721 PASS34; no installation or AgentREADY. New observability source33fc passed independent0730 with40 cases; normal installer0735 is dispatched. Same-lock original wheel custody and bootstrap availability remain unverified. Agent0642 RECORDs do not prove dependency wheel hashes. Unique Luna0724 completed the bounded stage/failure retention seam; no unchanged candidate retry, installed overlay, old-child relabel or new trust backend.
 
@@ -97,7 +97,7 @@ SDK persistence fixture848b is independently0713 PASS, exact two originals passe
 
 D34: main has about9 GiB free at07:17. No main disk work per the explicit orchestrator hold. All prior retirement and process refusals stay stopped. D47 memo/capsule stays held and unmerged after delivery; no new memo proof pin or HTTP run. D46 closes U2c and defers new relay/provider custody backends. D23 child-word helper remains unchanged and open;13 others retain qualified proof.
 
-Blockers: Orchestrator — Farm reports request-runtime required approval at07:26; action stays stopped. Decision file escalations/runtime-20261024T0733Z-farm-request-permission.md. Exact refusal text requested.
+Blockers: Farm lead — orchestrator07:36 assigned the existing request-runtime to the Farm lead, with no permission change. Manager action stays stopped; managed receipt and host preflight remain pending.
 Blockers: Agent and App — reviewed U2 home, D39 consumer adoption and header P2/P3 GO are still needed for the final tuple.
 Blockers: Runtime kit — independent dependency review and genuine lock-authenticated wheel artifacts are needed before one candidate child request.
 Next ready: No unassigned ready Runtime task. SDK integrated0733 and reviewed kit installer0735 are dispatched. Consume receipts and peer input immediately.
@@ -108,3 +108,7 @@ Later: Agent peer0714 classifies the separate moved-head persistence original as
 Final route map: Proof0708 and independent0719 PASS. App final-host registrations and authenticated child/import report-all preflight are requested through peer0733. No final run until the final tuple qualifies.
 
 Producer evidence: [independent result review](../../design/runtime-freeze-result-review-0727.md), [exact inventory](../../design/runtime-freeze-producer-custody-0727.json). Original409-case temporary JUnit is lost; retained stdout/log hash supports the observed result. Consumers are expected to fail old-pin checks until normal adoption.
+
+Agent accounting: latest independently reviewed package0715 reports261 closed and6 open of267. The two Runtime persistence candidates await independent integrated result review0736 and Agent mapping; Runtime does not infer a new total.
+
+App actual trace0722: element POST starts420ms into the fixed5-second assertion window; outcome afterPOST is unknown. P3 predecessor accepted guarded doc.patch0to5 with25reads and history2to3; Proof owns stale clip.move vocabulary. No timeout/body weakening or new pair is requested here.

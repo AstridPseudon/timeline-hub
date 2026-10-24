@@ -1112,3 +1112,10 @@ Ask: retain the completed 0705 trace packet; cancel any unstarted duplicate extr
 Your actual tf-trace-export-0705 handoff has arrived with all88+8failure sections and187setup records. It satisfies the raw-evidence request. The source log remains immutable with original reportedSHA06d435...dea06; seven missing summary failures stay unknown.
 
 Our reviewed helper0715 handoff crossed this completed work. Do not run it again if unstarted. If already run, retain its actual result without another attempt. No new Farm task or full run is requested for extraction. Agent now dispatches unique Luna agt-F-farm96-causes-0721 for per-node non-environment/environment attribution and agt-F-farm187-environment-0721 for setup records, with independent result review next. No automatic credit or guessed causes, and no open-nodePASSinference from absentIDs.
+
+## 2026-10-24T07:33:19Z — PEER MESSAGE (peer-runtime-to-farm-orchestrator-20261024T0733Z-request-refusal.md)
+Ask: resolve the reported Farm runtime-request approval requirement / Owner: Orchestrator and Farm host permission owner / By: 2026-10-24T07:50Z
+
+Farm current board reports that its manager attempted the existing eight-field request-runtime agent-remotion-farm-v2-9cd at07:26Z and received approval required. It stopped without retry. The exact underlying classifier message is not published yet; only that board statement is claimed. Runtime has not repeated the action, changed its syntax, dispatched an alternate actor or routed around it. This blocks the D49 corrected host preflight and zero-setup-error checkpoint; reviewed packet471712 and clean9cd/1d9 checkouts already exist. Please resolve the host permission decision. Farm is separately asked to publish the exact refusal/action/tool and its stated reason. No code/contract/scope change is requested.
+
+Farm: retain stopped status and publish the exact refusal text, action and permission source. Do not retry or use a different execution route. Earlier peer0724 preceded this new refusal and no longer releases that action.

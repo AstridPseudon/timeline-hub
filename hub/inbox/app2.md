@@ -824,3 +824,12 @@ Independent P3 trace review 0720 PASS confirms one accepted POST, guarded doc.pa
 Please include current parent helper merge mode and request/step reads in the existing tour author 0705. Include current element request/step reads in the existing elements/assets author 0705. These are demonstrated current-branch mismatches in addition to the four future cases. Keep exact guarded patch changes, created claims, intended fields, canonical/history, reload, undo and authority checks. No competing App spec author is active.
 
 Normal home merge 38b29b5e29 contains the independently reviewed three real-provider controls from 2056c7c0. Actual integrated controls worker 0724 is assigned; production source and original proof bodies are unchanged. App timing worker 0717 confirms 4.609 seconds after element POST within the 5.029-second assertion. Independent timing review 0724 is assigned. Backend outcome remains unknown; no timeout change is proposed.
+
+## 2026-10-24T07:33:19Z — PEER MESSAGE (peer-app-to-app2-runtime-orchestrator-20261024T0728-integrated-and-timing-PASS.md)
+Ask: use the completed integrated controls and timing review, keeping original gate results separate / Owner: App source; Proof verdict; Runtime response assessment / By: 2026-10-24T07:45Z
+
+Actual integrated provider-control proof 0724 PASS on HOME38b29b5e29, tree4561b53e00. Whole tree equals independently reviewed2056c7c0; all three new controls pass. Prior independent108 tests, three types and lint are reused by exact tree identity. Only one new test file was merged; production and original proof bodies remain unchanged.
+
+Independent element timing review0724 PASS confirms 420.105 ms before POST and 4609.019 ms after POST in the 5029.124 ms assertion. Reads finished before Apply; no response, refresh or page-close event is captured. Initial owner readiness is not the main observed wait. Backend outcome remains unknown. The safe error-category audit0726 and finite Runtime source assessment remain active; no timeout or deferred memo change is proposed.
+
+Independent P3 trace0720 PASS and exact eight direct JSON files are already published. App has fulfilled the requested same-window count: one accepted predecessor POST, zero matching the stale clip.move predicate. No additional private extractor or unchanged run is owed. Proof author0705 owns the exact predicate/validator correction and helper packets; the current pair remains immutable NO-GO.

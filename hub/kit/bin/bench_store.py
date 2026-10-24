@@ -112,6 +112,7 @@ def inode(path):
 class Store:
     # Fixed reserve; adapters cannot bypass retention or reserve via caller flags.
     REPORT_LIMIT = 1024 * 1024
+    FAILURE_LIMIT = 32 * 1024
     RESERVE_BYTES = 8 * 1024 * 1024 * 1024
 
     @classmethod
@@ -240,6 +241,62 @@ class Store:
             if old != new:
                 result['provision/' + name + '.txt'] = [old, new]
         return result
+
+    def _failure_path(self, name):
+        self._name(name)
+        folder = self.tests / 'provision-failures'
+        if folder.exists() or folder.is_symlink():
+            info = folder.lstat()
+            check(stat.S_ISDIR(info.st_mode) and not stat.S_ISLNK(info.st_mode)
+                  and info.st_uid == os.getuid() and info.st_nlink == 1
+                  and not info.st_mode & 0o077, 'unsafe failure directory')
+        else:
+            folder.mkdir(mode=0o700)
+            sync_dir(self.tests)
+        path = folder / (name + '.txt')
+        if path.exists() or path.is_symlink():
+            info = path.lstat()
+            check(stat.S_ISREG(info.st_mode) and not stat.S_ISLNK(info.st_mode)
+                  and info.st_uid == os.getuid() and info.st_nlink == 1
+                  and not info.st_mode & 0o077 and info.st_size <= self.FAILURE_LIMIT,
+                  'unsafe failure record')
+        check(path.parent == folder and path == path.resolve(), 'failure path escaped directory')
+        return path
+
+    def _failure_evidence(self, evidence):
+        check(isinstance(evidence, str) and evidence and
+              len(evidence.encode('utf-8')) <= self.FAILURE_LIMIT,
+              'failure evidence size')
+        allowed = {'status', 'stage', 'rc', 'elapsed_seconds', 'agent_sha', 'runtime_sha',
+                   'requirements_path', 'lock_sha256', 'diagnostic'}
+        values = {}
+        for line in evidence.splitlines():
+            key, separator, value = line.partition('=')
+            check(separator and key in allowed and key not in values, 'failure evidence schema')
+            values[key] = value
+        check(set(values) == allowed and values['status'] == 'failed', 'failure evidence fields')
+        check(re.fullmatch('[a-z0-9-]{1,64}', values['stage']) is not None,
+              'failure evidence stage')
+        check(re.fullmatch('[0-9]{1,5}', values['rc']) is not None,
+              'failure evidence return code')
+        check(re.fullmatch('[0-9]{1,6}', values['elapsed_seconds']) is not None,
+              'failure evidence timing')
+        check(re.fullmatch('[0-9a-f]{40}', values['agent_sha']) is not None,
+              'failure evidence Agent identity')
+        check(re.fullmatch('[0-9a-f]{40}', values['runtime_sha']) is not None,
+              'failure evidence Runtime identity')
+        check(values['requirements_path'] == 'requirements/proof.lock'
+              and re.fullmatch('[0-9a-f]{64}', values['lock_sha256']) is not None,
+              'failure evidence lock identity')
+        check(values['diagnostic'] == 'stage-command-failed', 'failure evidence diagnostic')
+        return '\n'.join(f'{key}={values[key]}' for key in (
+            'status', 'stage', 'rc', 'elapsed_seconds', 'agent_sha', 'runtime_sha',
+            'requirements_path', 'lock_sha256', 'diagnostic')) + '\n'
+
+    def _record_failure(self, name, evidence):
+        evidence = self._failure_evidence(evidence)
+        path = self._failure_path(name)
+        atomic(path, evidence)
 
     def _verify_pending_reports(self, journal):
         names = {name for name, reg in journal['before']['registrations'].items() if reg.get('report')}
@@ -576,7 +633,8 @@ class Store:
         reg['hash'] = digest(canonical(reg))
         return name, reg
 
-    def ensure(self, component, identity, registration, build, verify, seal=None):
+    def ensure(self, component, identity, registration, build, verify, seal=None,
+               failure_name=None):
         key = key_for(component, identity)
         eid = self._entry_id(component, key)
         with self.mutex():
@@ -644,11 +702,16 @@ class Store:
                 return dict(entry, reused=reused)
             except Exception as error:
                 # Eviction was already committed; rollback only this creation.
+                evidence = getattr(build, 'failure_evidence', None)
                 if self.journal.exists():
                     try:
                         self._roll(journal, False)
                     except Exception as rollback_error:
                         raise Refused(f'creation failed: {error}; recovery remains pending: {rollback_error}') from error
+                if evidence is not None:
+                    check(failure_name is not None, 'failure record name required')
+                    self._record_failure(failure_name, evidence)
+                    build.failure_recorded = True
                 raise
 
     def registered(self, name):
