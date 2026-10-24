@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "status": "PREPARED",
+  "submitted": false,
+  "source": {
+    "checkout": "/home/user/work/wt/app-P1-current-caller-prepare-1451",
+    "ref": "tl/integration",
+    "commit": "be98aac54e275282467d85f79d3beb4665416039",
+    "tree": "2839c7e7841d1c0897fd8e7c12f0c848d94e3979",
+    "parents": [
+      "d24ed69dcdbd464159a1b6db27403ce6a96be2e5",
+      "94d89d36e3760af41602a545f775fb9aeeb7f0ef"
+    ]
+  },
+  "integrations": {
+    "agent": {
+      "checkout": "/home/user/work/agent",
+      "ref": "tl/integration",
+      "source": "68e82c0c2ce621f43ae73aa05fce0d1d0f47a677",
+      "tree": "aa62e96c1231de41cee32c5388592c99ae04345f",
+      "parents": [
+        "5492fc80414c53c77585844a25fd8a94107c71fa",
+        "b9d7618f92399fdf0d33a72857ada058c028ba66"
+      ]
+    },
+    "runtime": {
+      "checkout": "/home/user/work/runtime",
+      "ref": "tl/integration",
+      "source": "e68cf231641db98a72805a586b51ab5c4fae2c16",
+      "tree": "a2cbedd185c7e576e20ed060d993deba17111b78",
+      "parents": [
+        "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+        "60e7838d8b4735a41686f82fb081969e75363c0b"
+      ]
+    }
+  },
+  "locks": {
+    "app": {
+      "file_sha256": "1d3d33e137c4bb8e0552c4a09ad9c764dab39df602276c3de7b3faaf5d3a1f1a",
+      "files_sha256": "b9d6b270aea23438b09158c55c69156402b2a96e3d20e69b887aa03c9a02b0b1",
+      "file_count": 14,
+      "producer_version": "sha256:9af2df7561a7e7d6793ad9f82acb7770ddbecf03dbdc753496c42ff86466eb24"
+    },
+    "agent": {
+      "file_sha256": "2504b220de619101a2d08918900d50f95a047a8cb3b57b904b720cc67f90a437",
+      "files_sha256": "90b3fdc7201f10bc516dd870f0fceb9d35c363292e6e5b842ac99b4740bd2fbb",
+      "file_count": 15,
+      "producer_version": "sha256:9af2df7561a7e7d6793ad9f82acb7770ddbecf03dbdc753496c42ff86466eb24"
+    }
+  },
+  "interpreters": {
+    "agent": {
+      "python": "/usr/bin/python3.13",
+      "imports": {
+        "astrid": "/home/user/work/agent/astrid/__init__.py",
+        "astrid_runtime_client": "/home/user/work/agent/astrid_runtime_client/__init__.py"
+      },
+      "versions": {
+        "astrid": "0.1.0",
+        "astrid-runtime": null,
+        "banodoco-timeline-schema": "0.0.2"
+      }
+    },
+    "runtime": {
+      "python": "/usr/bin/python3.13",
+      "imports": {
+        "astrid_runtime": "/home/user/work/runtime/astrid_runtime/__init__.py",
+        "runtime_protocol": "/home/user/work/runtime/runtime_protocol/__init__.py"
+      },
+      "versions": {
+        "astrid": null,
+        "astrid-runtime": "0.1.0",
+        "banodoco-timeline-schema": null
+      }
+    }
+  },
+  "runtime_artifacts": {
+    "/home/user/work/runtime/contract/artifacts.json": "f74b0e3041fe45422e6f4f349ee65401fe7222cacefdfa782aaac59354ff4d20",
+    "/home/user/work/runtime/contract/component-manifest.json": "1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5",
+    "/home/user/work/runtime/contract/schemas/timeline-config.schema.json": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+    "/home/user/work/runtime/runtime_protocol/schemas/timeline-commit-bundle.json": "b6a1550487dad7c83970d88f26ec3e8a74852cf8c57c20f3cd021847a075b39c"
+  },
+  "remotion": {
+    "tree": "b01dca9b3b24f54093c20b7c5657316f997725db",
+    "package_lock_sha256": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+    "node": "v20.19.4",
+    "npm": "10.8.2",
+    "composition_version": "0.0.14"
+  },
+  "composition": {
+    "artifact": "/home/user/work/wt/app-P1-current-caller-prepare-1451/vendor/artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz",
+    "artifact_sha256": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+    "graph": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-local-OPS-1830/private819acf-D19/node_modules/@banodoco/timeline-composition",
+    "file_count": 80,
+    "file_map_sha256": "ac0bf2a252d3f3a7640ed2a0b555b8a91ff81671a3b70074ed27676357edbbc9"
+  },
+  "spec": {
+    "path": "tests/e2e/local/three-products.p1-chain.spec.ts",
+    "git_blob": "5a2029d5f61a5cb665e1fb59c9fe13c9fff0bfde",
+    "sha256": "50960dd2efadc8350b8647a1f7e88a6cad2b44907bf36a7108832ee0ea9ebf17",
+    "case_titles": [
+      "P1 split -> trim new clip: accepted split, merged trim after Agent edit, lost ACK restart and exact retry",
+      "P1 split -> trim new clip: a real Agent move refuses the stale trim and the App rolls back with a message"
+    ]
+  },
+  "target": {
+    "cwd": "/home/user/work/wt/app-P1-current-caller-prepare-1451",
+    "command": ["npm", "run", "test:e2e:three-products", "--", "tests/e2e/local/three-products.p1-chain.spec.ts"],
+    "route": "mounted App -> persisted outbox -> generated commitTimeline"
+  },
+  "chronology": {
+    "source_snapshot": "be98aac54e275282467d85f79d3beb4665416039",
+    "later_snapshot": null,
+    "future_snapshot_required": false,
+    "historical_caller_reused": false,
+    "historical_row": "ap2-P1-chain-h6"
+  },
+  "execution": {
+    "mode": "source-mode",
+    "submitted": false,
+    "service": "NOT_RUN",
+    "next_step": "run the emitted shell once after final shared launch review"
+  },
+  "wire_contract": {
+    "route": "/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+    "request_headers": ["Idempotency-Key"],
+    "request_fields": [
+      "api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id",
+      "commands", "label", "steps", "merge", "reads", "source", "rationale", "group_id", "dry_run"
+    ],
+    "command_fields": ["schema_version", "op", "version", "select", "args", "created"],
+    "step_fields": ["id", "label", "intent", "tags", "command_ordinals", "patch", "reads"],
+    "reply_fields": [
+      "data", "receipt", "status", "canonical_document", "document_digest", "id_map", "commands", "steps",
+      "dependencies", "base", "previous", "accepted", "base_revision_id", "base_publication_id",
+      "previous_revision_id", "previous_publication_id", "accepted_revision_id", "accepted_publication_id",
+      "rebased_onto", "provider_version", "compiler_version", "publisher", "receipt_id", "idempotency_key",
+      "request_hash", "merge_mode", "history", "guarded_undo"
+    ],
+    "statuses": ["accepted", "merged", "conflict", "invalid", "dryrun"]
+  },
+  "preserved_behaviors": [
+    "two original P1 cases",
+    "split -> trim new ID -> Agent edit -> lost ACK -> restart",
+    "accepted, merged, and refused replies",
+    "history, legacy-route, timeout, and diagnostic stage-file guards",
+    "guarded-undo reply field and exact body preservation"
+  ]
+}
