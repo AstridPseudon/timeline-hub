@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T02:59:36Z | dispatcher heartbeat 7s | live 4 (sol 1, luna 3, other 0) | busy30 22 | status age 1m -->
-# agent board, 2026-10-24T02:58:00Z
+<!-- agent | 2026-10-24T03:01:39Z | dispatcher heartbeat 9s | live 3 (sol 0, luna 3, other 0) | busy30 21 | status age 0m -->
+# agent board, 2026-10-24T03:03:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -25,7 +25,7 @@
 | F-helper-digest | Keep verified helper intent after restart | Sol | G2 | merged | agt-F-helper-reader-integrated-0118 | Actual 92b: 14 passed; reviewed blobs and Runtime origins verified. Strict Ruff improvement is tracked separately. | 3b0dc9e80 |
 | F-renderless | Renderer-free saves with readable show | Luna | SDK reader | merged | agt-F-helper-reader-integrated-0118 | Actual 92b: 75 plus closure passed, with all six public fields retained. Strict Ruff improvement is tracked separately. | 61070c542 |
 | F-render-startup | Avoid unused transition-catalog scans | Luna | Source cause 0045 | merged | agt-F-transition-fixture-integrated-0126 | Actual 940b: 116 controls passed. Exact reviewed source retained both catalog authority guards. | 2b2c1a02f |
-| F-external-roots | Consume authenticated external source bytes | Sol | D40 producer merged | doing | agt-F-D40-consumer-sol-0258 | Runtime f320 producer reviewed; exact checkout ready. Old guards remain strict; joined launch unqualified. | new source pending |
+| F-external-roots | Consume authenticated external source bytes | Sol | D40 producer merged | doing | agt-F-D40-loader-sol-0303 | Resume WIP with both existing loader helpers authorized. Exact Runtime f320; old guards remain strict; join unqualified. | new source pending |
 | F-env-86 | Original installed-child cohort | Luna | External pack fix | blocked:agent | Services 11789 and 19627 | 69 cases passed, then 16 supported source invocations passed. One external-pack positive remains open. | c36 scope |
 | F-render-21 | Resolve installed rendering timeout | Luna source review | Current trace | ready | Runtime failover requested 0258 | Current lazy guard already present; no new performance repair. Read-only cause review assigned remotely. | source unchanged |
 | F-env-misc | D13, installers and bootstrap | Luna | Exact installed inputs | merged | agt-F-D13-wheel-input-0039 | Three original environment cases plus D13 passed. Exact c36 wheel matched installed payloads; wheel itself was temporary. | harness only |
@@ -38,7 +38,7 @@
 | F-G4-root-assignment | Restore absent roots and exact undo | Sol / Luna | Cumulative independent review | review | Author0251; review0300 | All187 plus7 inverse and69 timing guards passed; ten malformed roots refused. Three cumulative source commits in review. | dba4468649 held |
 | F-R1-reorder | Replay occurrence order through history | Sol / Luna | Independent 0248 PASS | merged | Author0239; review0248; join0256 | Source145 plus12 guards passed; parent three history failures became green. Current joined proof assigned0256. | a7a6d0e48c |
 | F-G4-occupancy | Faithful historical shared placement | Sol / Luna | Runtime inverse retirement | blocked:runtime | Agent0236 terminal; Runtime peer0249 | Forward source reviewed. Thirty controls pass; last-owner undo needs exact native and closure-effect authority. | candidate held |
-| F-authoring-neighbors | Restore seven publication behaviors | Luna current port | Reviewed source and fixtures | doing | agt-F-publisher-current-0256 | Source5b5e and saved-pair fixtures reviewed. R1 support merged; exact joined seven original nodes assigned. | source held |
+| F-authoring-neighbors | Restore seven publication behaviors | Luna | First home qualification | merged | Port0256; integrated0302 | Exact source and fixture blobs preserved;11 migration,7 originals and42 reorder/history passed. First integrated proof active. | 66d85b5db8 |
 | F-authoring shared alias | Project one materialized occurrence | Sol failover | Reviewed source cause0213 | ready | Runtime assigned in peer0258 | Real shared topology and all11 assertions retained. Generic contradictory-root guard is correct; semantic projection remains open. | source unchanged |
 | F-authoring-ABA | Preserve complete authoring undo and ABA | Sol failover | Existing cause0227 | ready | Viewing assigned in peer0257 | Viewing owns projection repair and review. Original141 undo FAIL retained; no competing Agent author. | source unchanged |
 | F-D32-render-wire | Six original SDK wire results | Luna / service | Existing installed child | merged | Service 27934 | Six original cases passed in 41.48s; body hashes, 19 source identities, import origins and read-only profile retained. | 521c source |
@@ -51,7 +51,7 @@
 | V4 / D14 / D23 | Cut and deferred relational timing | — | Scope decisions | gated:H9 | No repair worker | Keep original tests unchanged, unskipped and visibly failing. No V4 or relational-timing completion claim. | unchanged |
 | U2c | Upstream readiness draft only | Luna | Confirmed cause before merge | gated:readiness-cause | agt-U2c-review-0202 | Source scope PASS54; activation 6 failed and 9 errors because upstream Runtime fixture API is absent. No merge or readiness proof. | 699236a285 |
 P1: GO. Original service 18792 passed both cases; Proof reviews 0036 and 0040 passed. P4 and P5 are done. G5 already merged under H24. P2 and P3 remain with App and Proof.
-Integration: a7a6d0e48cb921fd0279bf54661b494b823f33f0, tree ce6413342d34d3fd0e2fd747bec9db50d8b575c4. Canonical45c3 export adopted; schema d106 and Composition819acf unchanged.
+Integration: 66d85b5db8, tree fdecabeafc7337d411bc885038d349940870cc47. Canonical45c3 export adopted; schema d106 and Composition819acf unchanged.
 Blockers: Agent full waits for the remaining owned fixes and finite qualifications. D32 comparison rejected all pre-existing credits; no full retry.
 Blockers: Agent full waits for exact root inverse, publication joins, complete authoring undo, installed external sources and the original rendering timeout.
 Safety: Earlier Farm, monitor, publication and bench permission refusals remain stopped. No denied action was retried here.
@@ -60,4 +60,4 @@ Next ready: Current publisher qualification, final root inverse review, D40 cons
 Evidence: Earlier detailed results remain in [the archived board](archive-v2/STATUS-20261024T0055Z.md) and the existing design handoffs. Worker final messages are copied unchanged into design.
 D32: Exact upstream comparison completed. Independent review rejected all 25 proposed pre-existing credits. All 267 remain ours; no known-gap or whole-suite PASS claim.
 Later: D37 dormant A4 capture subsets remain unchanged in delivery; no new provider migration. Source reviews and full-gate failure counts remain separate.
-Throttle: At most four local live workers below8GB: root0251, image0248, D40 consumer0258 and publisher port0256. No new heavy run below8.5GB.
+Throttle: At most four local live workers below8GB: root review0300, image0248, D40 loader0303 and integrated0302. No new heavy run below8.5GB.
