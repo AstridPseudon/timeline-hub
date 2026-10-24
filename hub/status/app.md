@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T12:28:05Z | dispatcher heartbeat 12s | live 4 (sol 0, luna 4, other 0) | busy30 25 | status age 1m -->
-# app board, 2026-10-24T12:35Z
+<!-- app | 2026-10-24T12:32:17Z | dispatcher heartbeat 5s | live 2 (sol 0, luna 2, other 0) | busy30 25 | status age 1m -->
+# app board, 2026-10-24T12:28Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -22,17 +22,23 @@
 | P2-dry-root | Derive caller identities and drycheck first | Luna; independent review | ORCH11:55 instruction | merged | Author1202; review1217 | Independent1217 PASS normal7.7s/optimized6.2s. Reusable preparation; no old row installed. | d4b770754e |
 | P2-terminal-current | Port retained diagnostic to current home | Luna; custody review next | Donordf09346; currentcca3 | doing | app-P2-terminal-current-port-1235 | Preserve upstream readiness wait and every original body;26 diagnostics and97 mounted neighbors required. | Branch only |
 | A4-transcript-integrated | Qualify current merged deletion | Luna | Homecca3 | doing | app-A4-D52-transcript-integrated-1232 | Exact two-file delta;50 live transcript and outbox neighbors plus three types. Current ledger row follows. | cca3deb361 |
-| F-final-caller | Prepare final tuple host and guards | Luna | Actual final source and receipts | doing | app-F-final-tuple-caller-1222 | Final tuple only; dry guard first. Refused schema and child routes remain stopped. No installation or live claim. | Based993 |
+| F-final-caller | Prepare final tuple host and guards | Luna | Actual generated dry guard first | doing | Return1231 from author1222 | Author syntax PASS is PREPARED. Actual decoded source guard must execute before custody review; no old tuple or live claim. | 50d971541b |
 | F-App-checkpoint | Complete one corrected App full | App service; Luna producer | Same actual16138 | doing | app-F-16138-terminal-1227 | Source5a9ff tree3311 equals homed993. Same ID still running; no duplicate full. | 5a9ff97cf0 |
+| F-core-map | Map existing final core suites | Luna | D54 and historical19570 | doing | app-F-core-suite-map-1229 | Read-only paths, callers and actual known-failure categories; no duplicate test run or new suite framework. | cca3deb361 |
 | F-regression | Classify and repair actual full failures | Luna or Sol after failure | Terminal16138 inventory | gated:result | Producer1227 | Core failures block. Any upstream pass and ours fail must be fixed or reverted regardless of core status. | Await actual result |
 | F-P4-P5-host | Install final host registrations | Luna | Final tuple and authentic receipts | gated:custody | Draft0834; review0838 | Source-only preparation passed. No actual child, graph or receipt identity invented. | No installation |
 | F-final | Final P1–P5 and core suites | App service; App verdict | Final tuple qualification | gated:tuple | App runs and verdicts; Runtime coordinates | D56 venues are lane services. Runtime owns final build and ZIP; farm stands down. | Final tuple inputs |
 
 Integration: cca3deb361e8fbbc62ddf491d5fd09c7e542b99f after reviewed two-file transcript deletion. U3b and D39 are HOME at d993. Full16138 remains on d993 tree3311; new deletion needs integrated neighbor qualification. Header D54–D56 read from normal hub; no further old tuple P2/P3 runs or D41 backports.
 
+live 5 / cap 6; ready-undispatched 0. Full producer, integrated deletion, diagnostic port, core map and final dry return have workers.
+
+regressions: final count unknown until terminal16138 and upstream comparison. Historical19570 four failure groups have reviewed repairs in home.
+
 core open: 8 P2 gestures unqualified on final tuple; historical11933 has3 failures and5 not run. All eight recommended CORE; orchestrator decision pending. Full16138 core census pending.
 
 Blockers: App — final P2/P3 source and authenticated caller binding remain with1222; historical11933 three failures need classification and real fixes where proven.
+Blockers: Orchestrator — D55 decision on all-eight-core recommendation is owed; evidence and escalation published in this pass.
 Blockers: Owner admission — prior exact schema HTTP403 and automatic access refusal remain stopped. No alternate schema or child admission; final custody needs existing coordinator disposition.
 Next ready: Publish classification1222 by13:20. Consume actual full16138 and assign failures. Port reviewed element diagnostic to current home if needed; final caller review follows dry PASS. No old tuple original released.
 
@@ -60,4 +66,4 @@ Current historical P2 signal: app-P2-final-pure-integrated-1036-full-e2e-three-p
 
 Classification: [all eight original gestures](../../design/app-P2-core-classification-1222.md). [Independent historical11933 verdict](../../design/app-P2-11933-verdict-1222.md).
 
-Current handoff: [final home and ownership](../../design/peer-app-to-runtime-app2-orchestrator-20261024T1227-final-home-and-ownership.md). Inbox consumed1497028 bytes through owner-approved12:19 relay. Normal hub header D54–D56 verified12:26. Disk about11GB; kit automatic recycling active. No finished non-KEEP worktree remains eligible; prior safety refusals stay stopped.
+Current handoff: [final home and ownership](../../design/peer-app-to-runtime-app2-orchestrator-20261024T1227-final-home-and-ownership.md). Inbox consumed1504344 bytes through owner-approved12:19 relay. Normal hub header D54–D56 verified12:26. Disk about11GB; kit automatic recycling active. No finished non-KEEP worktree remains eligible; prior safety refusals stay stopped.
