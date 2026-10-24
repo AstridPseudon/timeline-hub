@@ -180,6 +180,53 @@ def _closure(*, shared=True):
     return parent, [shot], [internal]
 
 
+def _runtime_document(parent, shots, internals):
+    """Build the immutable closure image consumed by the v2 test port."""
+    def media_ids(value):
+        if isinstance(value, dict):
+            return {media_id for child in value.values() for media_id in media_ids(child)}
+        if isinstance(value, list):
+            return {media_id for child in value for media_id in media_ids(child)}
+        if isinstance(value, str) and value.startswith("sha256:"):
+            return {value}
+        return set()
+
+    parent_image = {key: copy.deepcopy(parent[key]) for key in ("revision_id", "content_digest", "payload")}
+    shot_images = [{key: copy.deepcopy(row[key]) for key in (
+        "shot_id", "revision_id", "internal_timeline_revision_id", "content_digest", "payload"
+    )} for row in shots]
+    internal_images = [{key: copy.deepcopy(row[key]) for key in (
+        "timeline_id", "revision_id", "content_digest", "payload"
+    )} for row in internals]
+    media = sorted(
+        ({"media_id": media_id, "content_digest": media_id}
+         for media_id in media_ids([parent_image, *shot_images, *internal_images])),
+        key=lambda row: row["media_id"],
+    )
+    return {
+        "schema_version": 1,
+        "project_id": parent["project_id"],
+        "timeline_id": parent["timeline_id"],
+        "parent_revision": parent_image,
+        "shot_revisions": sorted(shot_images, key=lambda row: (row["shot_id"], row["revision_id"])),
+        "internal_timeline_revisions": sorted(
+            internal_images, key=lambda row: (row["timeline_id"], row["revision_id"])
+        ),
+        "dependency_manifest": {
+            "shots": sorted(({
+                key: row[key] for key in (
+                    "shot_id", "revision_id", "internal_timeline_revision_id", "content_digest"
+                )
+            } for row in shot_images), key=lambda row: (row["shot_id"], row["revision_id"])),
+            "internal_timelines": sorted(({
+                key: row[key] for key in ("timeline_id", "revision_id", "content_digest")
+            } for row in internal_images), key=lambda row: (row["timeline_id"], row["revision_id"])),
+            "media": media,
+            "documents": [],
+        },
+    }
+
+
 def _replace_selected_media(bundle, shot_id):
     shot = bundle["shots"][shot_id]
     shot["payload"]["items"][0]["media_id"] = NEW
@@ -502,12 +549,47 @@ def test_target_bound_transport_key_normalizes_digest_prefix_and_punctuation():
 
 
 class _Writer:
-    def __init__(self):
+    def __init__(self, document):
         self.calls = []
+        self.document = document
 
-    def publish_parent_composition(self, project_id, timeline_id, publication, *, idempotency_key):
-        self.calls.append((project_id, timeline_id, publication, idempotency_key))
-        return {"data": {"new_head": publication["parent_revision_id"]}}
+    def list_timeline_commits(self, project_id, timeline_id, *, cursor=None, limit=100):
+        return {"data": {"items": [{
+            "publication_id": "publication-1",
+            "revision_id": "parent-1",
+            "receipt": {
+                "receipt_id": "publication-1",
+                "result": {"canonical_document": copy.deepcopy(self.document)},
+            },
+        }], "next_cursor": None}}
+
+    def get_project_parent_composition_revision(self, project_id, timeline_id, revision):
+        return {"data": {
+            **copy.deepcopy(self.document["parent_revision"]),
+            "project_id": project_id,
+            "timeline_id": timeline_id,
+            "dependency_manifest": copy.deepcopy(self.document["dependency_manifest"]),
+        }}
+
+    def get_project_shot_revision(self, project_id, shot_id, revision):
+        row = next(row for row in self.document["shot_revisions"] if row["revision_id"] == revision)
+        return {"data": {**copy.deepcopy(row), "project_id": project_id}}
+
+    def get_project_timeline_revision(self, project_id, timeline_id, revision):
+        row = next(row for row in self.document["internal_timeline_revisions"] if row["revision_id"] == revision)
+        return {"data": {**copy.deepcopy(row), "project_id": project_id}}
+
+    def get_project_media_selection(self, project_id, selection):
+        raise AssertionError(f"unexpected fixture media selection: {selection}")
+
+    def commit_timeline(self, project_id, timeline_id, body, *, idempotency_key):
+        self.calls.append((project_id, timeline_id, body, idempotency_key))
+        return {"data": {
+            "status": "accepted",
+            "accepted_revision_id": "saved-revision",
+            "previous_revision_id": "parent-1",
+            "canonical_document": copy.deepcopy(self.document),
+        }, "receipt": {"receipt_id": "saved-receipt"}}
 
 
 def test_publish_uses_one_compilation_and_returns_complete_mapping():
@@ -515,13 +597,19 @@ def test_publish_uses_one_compilation_and_returns_complete_mapping():
     candidate = open_authoring_bundle(
         parent, shot_revisions=shots, internal_timeline_revisions=timelines
     )
-    writer = _Writer()
+    candidate["source_mapping"]["_runtime_document"] = _runtime_document(parent, shots, timelines)
+    writer = _Writer(candidate["source_mapping"]["_runtime_document"])
 
     result = publish_authoring_candidate(candidate, writer, idempotency_key="candidate-1")
 
     assert len(writer.calls) == 1
+    request = writer.calls[0][2]
     assert writer.calls[0][3] == "candidate-1"
-    assert result["publication"]["data"]["new_head"] == writer.calls[0][2]["parent_revision_id"]
+    assert request["base_revision_id"] == "parent-1"
+    assert request["merge"] == "atomic"
+    assert all(command["op"] in {"doc.patch", "media.admit"} for command in request["commands"])
+    assert result["publication"]["new_head"] == "saved-revision"
+    assert result["publication"]["canonical_document"] == writer.document
     assert set(result["identity_mapping"]["placements"]) == {"occ-1", "occ-2"}
     assert result["summary"]["new_head"] == result["publication"]["data"]["new_head"]
     assert isinstance(result["update"], str)
@@ -534,17 +622,23 @@ def test_group_move_compiles_and_uses_existing_publication_boundary():
         parent, shot_revisions=shots, internal_timeline_revisions=timelines
     )
     move_occurrence_group(candidate, "occ-2", before_occurrence_id="occ-1")
-    writer = _Writer()
+    compiled = compile_authoring_candidate(candidate).publication
+    occurrences = compiled["parent_composition"]["occurrences"]
+    assert [row["occurrence_id"] for row in occurrences] == ["occ-2", "occ-1"]
+    assert [row["placement"]["start_ms"] for row in occurrences] == [0, 1000]
+    assert [row["duration_ms"] for row in occurrences] == [1000, 1000]
+    candidate["source_mapping"]["_runtime_document"] = _runtime_document(parent, shots, timelines)
+    writer = _Writer(candidate["source_mapping"]["_runtime_document"])
 
     result = publish_authoring_candidate(candidate, writer, idempotency_key="a03-group-move")
 
     assert len(writer.calls) == 1
     assert writer.calls[0][3] == "a03-group-move"
-    occurrences = writer.calls[0][2]["parent_composition"]["occurrences"]
-    assert [row["occurrence_id"] for row in occurrences] == ["occ-2", "occ-1"]
-    assert [row["placement"]["start_ms"] for row in occurrences] == [0, 1000]
-    assert [row["duration_ms"] for row in occurrences] == [1000, 1000]
-    assert result["publication"]["data"]["new_head"] == writer.calls[0][2]["parent_revision_id"]
+    request = writer.calls[0][2]
+    assert request["base_revision_id"] == "parent-1"
+    assert request["merge"] == "atomic"
+    assert all(command["op"] == "doc.patch" for command in request["commands"])
+    assert result["publication"]["new_head"] == "saved-revision"
 
 
 def test_frozen_render_restart_is_single_generation(tmp_path):

@@ -22,7 +22,7 @@ from astrid.sdk.workspace_client import WorkspaceClientError
 from tests.editing_conformance.test_document_patch_emitter_engine import source as emitter_bundle
 from tests.sdk.test_timeline_commit_provider import DetachedRealm
 from tests.sdk.test_timeline_commit_provider_document import document_fixture
-from tests.timeline.test_authoring_bundle import NEW, OLD, _closure, _digest
+from tests.timeline.test_authoring_bundle import NEW, OLD, _closure, _digest, _runtime_document
 
 
 def bundle(*, images=1, shared=False):
@@ -35,7 +35,9 @@ def bundle(*, images=1, shared=False):
         internal["clips"].append(clip)
     internals[0]["content_digest"] = _digest(internal)
     shots[0]["content_digest"] = _digest(payload)
-    return open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=internals)
+    work = open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=internals)
+    work["source_mapping"]["_runtime_document"] = _runtime_document(parent, shots, internals)
+    return work
 
 
 def replace_images(work):
@@ -46,19 +48,85 @@ def replace_images(work):
 
 
 class Writer:
-    def __init__(self):
+    def __init__(self, document):
         self.calls = []
+        self.document = document
 
-    def publish_parent_composition(self, project, timeline, publication, **kwargs):
-        self.calls.append(publication)
-        return {"data": {"new_head": "saved-revision", "old_head": "parent-1"}}
+    def _scoped_document(self, project_id, timeline_id):
+        document = copy.deepcopy(self.document)
+        document["project_id"] = project_id
+        document["timeline_id"] = timeline_id
+        return document
+
+    def _history(self, project_id, timeline_id):
+        document = self._scoped_document(project_id, timeline_id)
+        return [{
+            "publication_id": "publication-1",
+            "revision_id": document["parent_revision"]["revision_id"],
+            "receipt": {
+                "receipt_id": "publication-1",
+                "result": {"canonical_document": document},
+            },
+        }]
+
+    def list_timeline_commits(self, project_id, timeline_id, *, cursor=None, limit=100):
+        assert cursor is None and limit == 100
+        return {"data": {"items": self._history(project_id, timeline_id), "next_cursor": None}}
+
+    def get_project_parent_composition_revision(self, project_id, timeline_id, revision):
+        assert revision == "parent-1"
+        document = self._scoped_document(project_id, timeline_id)
+        return {"data": {
+            **copy.deepcopy(document["parent_revision"]),
+            "project_id": project_id,
+            "timeline_id": timeline_id,
+            "dependency_manifest": copy.deepcopy(document["dependency_manifest"]),
+        }}
+
+    def get_project_shot_revision(self, project_id, shot_id, revision):
+        row = next(row for row in self.document["shot_revisions"] if row["revision_id"] == revision)
+        assert row["shot_id"] == shot_id
+        return {"data": {**copy.deepcopy(row), "project_id": project_id}}
+
+    def get_project_timeline_revision(self, project_id, timeline_id, revision):
+        row = next(row for row in self.document["internal_timeline_revisions"] if row["revision_id"] == revision)
+        assert row["timeline_id"] == timeline_id
+        return {"data": {**copy.deepcopy(row), "project_id": project_id}}
+
+    def get_project_media_selection(self, project_id, selection):
+        for row in self.document["internal_timeline_revisions"]:
+            for asset, value in row["payload"].get("registry", {}).get("assets", {}).items():
+                if (asset == selection.get("asset")
+                        and value.get("generationId") == selection.get("generation_id")
+                        and value.get("variantId") == selection.get("variant_id")):
+                    return {"data": {
+                        "asset": asset,
+                        "generation_id": selection["generation_id"],
+                        "variant_id": selection["variant_id"],
+                        "object_id": value["media_id"],
+                        "catalog_digest": value.get("catalog_digest", "catalog-fixture"),
+                    }}
+        raise AssertionError(f"missing fixture media selection: {selection}")
+
+    def commit_timeline(self, project_id, timeline_id, body, *, idempotency_key):
+        self.calls.append((project_id, timeline_id, body, idempotency_key))
+        assert body["base_revision_id"] == "parent-1"
+        return {"data": {
+            "status": "accepted",
+            "accepted_revision_id": "saved-revision",
+            "previous_revision_id": "parent-1",
+            "canonical_document": copy.deepcopy(self.document),
+        }, "receipt": {"receipt_id": "saved-receipt"}}
 
 
 def publish(work, *, imports=()):
-    writer = Writer()
+    document = work["source_mapping"]["_runtime_document"]
+    document["project_id"] = work["project_id"]
+    document["timeline_id"] = work["timeline_id"]
+    writer = Writer(document)
     result = publish_authoring_candidate(work, writer, idempotency_key="feedback-test", media_imports=imports)
     assert len(writer.calls) == 1
-    assert result["publication"]["data"]["new_head"] == "saved-revision"
+    assert result["publication"]["new_head"] == "saved-revision"
     return result
 
 
@@ -419,7 +487,10 @@ def test_document_emitter_refuses_candidate_only_mirror_field_matching_move_resu
 
 
 def test_unchanged_checkout_reports_no_authored_changes_and_unknown_imports_by_default():
-    result = publish_authoring_candidate(bundle(), Writer(), idempotency_key="noop")
+    work = bundle()
+    result = publish_authoring_candidate(
+        work, Writer(work["source_mapping"]["_runtime_document"]), idempotency_key="noop"
+    )
     assert result["update"].startswith("No authored changes. Saved revision saved-revision.")
     assert result["summary"]["authored_change_count"] == 0
     assert result["summary"]["catalog_media"] is None
@@ -550,13 +621,18 @@ def test_document_publish_stdout_and_durable_receipt_contain_shared_feedback(tmp
 def test_target_bound_sdk_forwards_shared_publication_feedback():
     work = bundle()
     replace_images(work)
-    writer = Writer()
+    writer = Writer(work["source_mapping"]["_runtime_document"])
     client = SimpleNamespace(
         endpoint="http://127.0.0.1:63331",
         list_timelines=lambda *args, **kwargs: ([{"timeline_id": "main"}], None),
         inspect_timeline=lambda *args, **kwargs: {"data": {"is_current_head": True, "revision_id": "parent-1"}},
         get_project_object_location=lambda project, object_id: {"data": {"verified": True, "object_id": object_id}},
-        publish_parent_composition=writer.publish_parent_composition,
+        list_timeline_commits=writer.list_timeline_commits,
+        get_project_parent_composition_revision=writer.get_project_parent_composition_revision,
+        get_project_shot_revision=writer.get_project_shot_revision,
+        get_project_timeline_revision=writer.get_project_timeline_revision,
+        get_project_media_selection=writer.get_project_media_selection,
+        commit_timeline=writer.commit_timeline,
     )
     target = {"endpoint": client.endpoint, "project_id": "project-1", "timeline_id": "main",
               "head_revision_id": "parent-1", "capabilities": {"edit": {
@@ -576,6 +652,7 @@ def test_target_bound_sdk_defers_replay_and_stale_decisions_to_runtime():
             self.current_head = "parent-1"
             self.requests = {}
             self.publication_calls = 0
+            self.document = bundle()["source_mapping"]["_runtime_document"]
 
         def list_timelines(self, project_id, **kwargs):
             return ([{"timeline_id": "main"}], None)
@@ -586,9 +663,38 @@ def test_target_bound_sdk_defers_replay_and_stale_decisions_to_runtime():
         def get_project_object_location(self, project_id, object_id):
             return {"data": {"verified": True, "object_id": object_id}}
 
-        def publish_parent_composition(self, project_id, timeline_id, publication, *, idempotency_key):
+        def list_timeline_commits(self, project_id, timeline_id, *, cursor=None, limit=100):
+            return {"data": {"items": [{
+                "publication_id": "publication-1",
+                "revision_id": "parent-1",
+                "receipt": {
+                    "receipt_id": "publication-1",
+                    "result": {"canonical_document": copy.deepcopy(self.document)},
+                },
+            }], "next_cursor": None}}
+
+        def get_project_parent_composition_revision(self, project_id, timeline_id, revision):
+            return {"data": {
+                **copy.deepcopy(self.document["parent_revision"]),
+                "project_id": project_id,
+                "timeline_id": timeline_id,
+                "dependency_manifest": copy.deepcopy(self.document["dependency_manifest"]),
+            }}
+
+        def get_project_shot_revision(self, project_id, shot_id, revision):
+            row = next(row for row in self.document["shot_revisions"] if row["revision_id"] == revision)
+            return {"data": {**copy.deepcopy(row), "project_id": project_id}}
+
+        def get_project_timeline_revision(self, project_id, timeline_id, revision):
+            row = next(row for row in self.document["internal_timeline_revisions"] if row["revision_id"] == revision)
+            return {"data": {**copy.deepcopy(row), "project_id": project_id}}
+
+        def get_project_media_selection(self, project_id, selection):
+            raise AssertionError(f"unexpected fixture media selection: {selection}")
+
+        def commit_timeline(self, project_id, timeline_id, request, *, idempotency_key):
             self.publication_calls += 1
-            body = json.dumps(publication, sort_keys=True)
+            body = json.dumps(request, sort_keys=True)
             prior = self.requests.get(idempotency_key)
             if prior is not None:
                 if prior[0] != body:
@@ -596,9 +702,14 @@ def test_target_bound_sdk_defers_replay_and_stale_decisions_to_runtime():
                         409, "idempotency_conflict", "idempotency key was reused with a different request"
                     )
                 return {"data": prior[1]}
-            if publication["expected_head"] != self.current_head:
+            if request["base_revision_id"] != self.current_head:
                 raise WorkspaceClientError(409, "conflict", "parent composition head is stale")
-            result = {"new_head": "advanced-head", "old_head": self.current_head}
+            result = {
+                "status": "accepted",
+                "accepted_revision_id": "advanced-head",
+                "previous_revision_id": self.current_head,
+                "canonical_document": copy.deepcopy(self.document),
+            }
             self.requests[idempotency_key] = (body, result)
             self.current_head = "advanced-head"
             return {"data": result}
