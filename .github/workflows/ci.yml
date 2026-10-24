@@ -9,6 +9,23 @@ on:
   workflow_dispatch:
 
 jobs:
+  windows-installer-cleanup:
+    runs-on: windows-latest
+    env:
+      ASTRID_CI_JOB: windows-installer-cleanup
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install focused test dependencies
+        run: python -m pip install pytest pytest-timeout PyYAML jsonschema
+      - name: Install the pinned Runtime and client
+        run: python scripts/ci_install_runtime.py
+      - name: Check native PowerShell cleanup exit codes
+        run: python -m pytest -q tests/test_installer_windows_tasks.py
+
   checks:
     name: fast checks
     runs-on: ubuntu-latest

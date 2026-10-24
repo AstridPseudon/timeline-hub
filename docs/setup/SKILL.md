@@ -20,6 +20,12 @@ from [Getting Started](../getting-started.md):
 For an agent using another shell on Windows (such as Git Bash), run
 `powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://astrid.haus/install.ps1 | iex"`.
 
+If the agent runs inside an MSIX-packaged Windows desktop app, use standalone
+PowerShell opened from the Start menu for installation. Launching PowerShell
+as a child of that app can inherit filesystem redirection: files written under
+`%LOCALAPPDATA%` may land in the app's private cache, where the Astrid scheduled
+task cannot find them.
+
 The installer checks that Astrid is healthy and opens astrid.haus itself. Tell
 the user to choose Allow if Chrome or Edge asks to reach their computer, then
 confirm astrid.haus shows Connected. That is the end of setup. (Connecting

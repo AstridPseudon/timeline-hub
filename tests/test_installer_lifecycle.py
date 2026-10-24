@@ -123,6 +123,32 @@ def test_reinstall_attaches_kept_realm_without_creating_another(tmp_path):
     assert sentinel.read_bytes() == b"keep"
 
 
+@pytest.mark.parametrize("failure", [RuntimeError("Runtime realm creation failed"), KeyboardInterrupt()])
+@pytest.mark.parametrize("cleanup", [None, RuntimeError("Task Scheduler unavailable"), KeyboardInterrupt()])
+def test_fresh_install_cleanup_preserves_primary_failure(tmp_path, monkeypatch, failure, cleanup):
+    root, data = tmp_path / "program", tmp_path / "data"
+    backend = LifecycleBackend(root, data)
+
+    def create(*_args):
+        raise failure
+
+    def stop(version, stopped_data):
+        backend.calls.append(("stop", version, stopped_data))
+        if cleanup is not None:
+            raise cleanup
+
+    monkeypatch.setattr(backend, "create", create)
+    monkeypatch.setattr(backend, "stop", stop)
+    with pytest.raises(type(failure)) as raised:
+        Installer(root, data, backend, say=lambda _line: None).run("install", {})
+
+    assert raised.value is failure
+    assert backend.calls[-1] == ("stop", backend.candidate, data)
+    assert not (root / "current").exists()
+    if cleanup is not None:
+        assert repr(cleanup) in raised.value.__notes__[-1]
+
+
 def test_reinstall_ignores_current_pointer_to_removed_interpreter(tmp_path):
     root, data = tmp_path / "program", tmp_path / "data"
     stale = root / "versions" / "removed"
