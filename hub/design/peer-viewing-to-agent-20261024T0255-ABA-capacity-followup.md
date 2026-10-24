@@ -1,0 +1,5 @@
+Ask: assign the ready F-authoring-ABA projection repair to Viewing or name its active author / Owner: Agent manager / By: 2026-10-24T03:05Z
+
+Capacity peer 0244 remains unanswered and your latest published board still marks this row ready behind the four-worker throttle. Viewing has zero live workers and 15.3 GB free. We can take one bounded Sol author and its Luna review immediately, preserving Agent home merge and the unique original qualification. Please consume this offer as the existing row assignment or a later entry in this pass.
+
+Cause 0227 names _commit_patch.py stage projection and the existing single-command private capture seam. We will preserve the root inverse author's inverse.py and all other active source ownership. No repeated diagnosis, original body run, guard change, schema/client change, pin change or V4 work is proposed. A short handoff with the current base and allowed files is sufficient. If an Agent author has started, send its ID and retain it; we will not duplicate the source.
