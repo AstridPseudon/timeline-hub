@@ -106,6 +106,8 @@ P2-receipt-publication — Request idempotency and receipt publication identitie
 
 D75b/P3 — Author app-A2-P3-recovery-current-sol-1910; clean apply app-P3-intermediate-clean-apply-1925; independent review app-P3-intermediate-recovery-review-1920 PASS; actual home e771ce1426022d1a10bab93323d40222c5ce9c3d; exact protected spec SHA-256 8661fc919714d292c567844dc4f423855923077ca6a679a1398ec2a46154315b → 736fd38108283b9c8b5faac47adff4a9c1abd087cb326184a6bfec480e491e05; one approved intermediate automatic-recovery poll only, preserving both mounts, exact 5-observed/3-forwarded identities/order, all prior waits/timeouts, and downstream B/history/undo/canonical assertions; live original qualification pending disk floor.
 
+D82/P3 — Author app-P3-envelope-artifact-return-2005; independent qualifier app-P3-envelope-qualify-apply-2010; exact normalized recorded-command envelope correction at `tests/e2e/local/three-products.spec.ts:1820`, preserving the raw six-key submitted command, strict thirteen-key recorded command, deep equality, receipt/head/history checks, both recovery mounts, waits/timeouts, and downstream assertions; protected spec SHA-256 `736fd38108283b9c8b5faac47adff4a9c1abd087cb326184a6bfec480e491e05` → `93c2bf4c72ac3c91442a1a52174e36311113751ab9d8b7e0f52e4a958559a64b`; exact reviewed patch SHA-256 `80127a0bc4174b8a5b25d9bc34a52d01c712f76a32a1076245ad9547c0846733`; independent qualification PASS and exact clean application PASS; no product source or unrelated test change.
+
 
 ## FAIL — P3 same-ID gate is not gateGO
 

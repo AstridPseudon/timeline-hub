@@ -1,0 +1,100 @@
+{
+  "artifact": "app-P3-14240-envelope-artifact-return-2005",
+  "status": "PASS",
+  "base": {
+    "commit": "f6a21c285267d6475816adbda74233907ac93911",
+    "path": "tests/e2e/local/three-products.spec.ts",
+    "sha256": "736fd38108283b9c8b5faac47adff4a9c1abd087cb326184a6bfec480e491e05"
+  },
+  "patch": {
+    "path": "evidence/p3-envelope-artifact-return-2005/proposal.patch",
+    "sha256": "80127a0bc4174b8a5b25d9bc34a52d01c712f76a32a1076245ad9547c0846733",
+    "published_sha256": "80127a0bc4174b8a5b25d9bc34a52d01c712f76a32a1076245ad9547c0846733",
+    "byte_identical_to": "design/app-P3-14240-recorded-command-1948-proposal.patch",
+    "git_apply_check": "PASS"
+  },
+  "virtual": {
+    "path": "tests/e2e/local/three-products.spec.ts",
+    "construction": "git show f6a21c285267d6475816adbda74233907ac93911:tests/e2e/local/three-products.spec.ts followed by the exact unchanged proposal.patch",
+    "sha256": "93c2bf4c72ac3c91442a1a52174e36311113751ab9d8b7e0f52e4a958559a64b",
+    "published_sha256_corrected_from": "ef05a482b17bf1cc37be0f264610ec0bbbe2335921565f6699ff00e7992650c4"
+  },
+  "regions": {
+    "helper": {
+      "lines": [957, 977],
+      "line_join": "newline_plus_terminal_newline",
+      "sha256": "312ded75179f64711c83ee2b9e2e764283eab7905ec5602437733cefe18390c2"
+    },
+    "merged_b_before": {
+      "lines": [1819, 1822],
+      "line_join": "newline_without_additional_terminal_newline",
+      "sha256": "67e2292e268a86cfc51c045cfdddfdf8951846821d20c32bf0604eec892434b6"
+    },
+    "merged_b_after": {
+      "lines": [1840, 1843],
+      "line_join": "newline_without_additional_terminal_newline",
+      "sha256": "f0c857e32eeca8fcdc8362c3adf6382dc9d2bf7e9d4be8c7504921a73a1e54f5"
+    }
+  },
+  "predicate_map": {
+    "submitted_command": {
+      "exact_keys": ["args", "created", "op", "schema_version", "select", "version"]
+    },
+    "recorded_command": {
+      "exact_keys": [
+        "args", "authorship", "bindings", "created", "expect", "intent", "op", "reads", "resolved",
+        "schema_version", "select", "selections", "version"
+      ],
+      "raw_projection": "deep_equal_to_submitted_command",
+      "authoritative_additions": {
+        "authorship": "{parent/clip:<appClipId>::at: direct}",
+        "bindings": {},
+        "expect": "{parent/clip:<appClipId>::at: {state: present, value: 5}}",
+        "intent": {},
+        "reads": [
+          {"ref": "parent/clip:<appClipId>", "path": ["at"], "state": {"state": "present", "value": 5}}
+        ],
+        "resolved": [],
+        "selections": []
+      }
+    },
+    "preserved_outer_guards": [
+      "recordedB.commands[0].reads.length > 0",
+      "recordedB.commands[0].bindings.length > 0"
+    ],
+    "mutation_families": [
+      "raw.args",
+      "raw.created",
+      "raw.op",
+      "raw.schema_version",
+      "raw.select",
+      "raw.version",
+      "authority.authorship",
+      "authority.bindings",
+      "authority.expect",
+      "authority.intent",
+      "authority.reads",
+      "authority.resolved",
+      "authority.selections",
+      "missing.raw_key",
+      "missing.authority_key",
+      "extra.raw_key",
+      "extra.authority_key",
+      "wrong.before",
+      "wrong.value",
+      "wrong.identity",
+      "wrong.order"
+    ],
+    "mutation_count": 21,
+    "expected_result": "canonical fixture accepts; every mutation rejects"
+  },
+  "validation": {
+    "node": "/opt/node20/bin/node --import tsx --test tests/e2e/local/support/gate5-fault-order.test.mjs",
+    "node_result": "PASS: 3/3 subtests",
+    "control": "recorded-command-envelope.control.mjs",
+    "control_result": "PASS: canonical fixture plus 21 mutations",
+    "source_application": false,
+    "browser_or_live_run": false,
+    "full_suite": false
+  }
+}
