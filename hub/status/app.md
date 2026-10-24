@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T20:10:59Z | dispatcher heartbeat 10s | live 3 (sol 0, luna 3, other 0) | busy30 13 | status age 0m -->
-# app board, 2026-10-24T20:10Z
+<!-- app | 2026-10-24T20:14:40Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 1m -->
+# app board, 2026-10-24T20:12Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -54,7 +54,7 @@
 | P3-26908-cause | Trace fourth recovery observation | HARD Sol PLAN A2 | Actual26908 and independent1905 | merged | app-A2-P3-recovery-current-sol-1910 | Intermediate page closed at Loadingproject before retry; no production defect proven. Review-only stronger poll proposal;269mounted controls/types/lint PASS. | Proposal only |
 | P3-intermediate | Observe intermediate recovery before close | Luna | Independent1920 PASS | merged | app-P3-intermediate-clean-apply-1925 | Exact one addition, protected hash736fd381 matches reviewed proposal; three fault controls and list15 PASS. Alias runner environment error retained. | e771ce1426 |
 | P3-intermediate-run | Qualify stronger recovery observation | Luna; Service | D74a floor6GB | review | Actual14240; verdict1948 | Independent1948 confirms readiness1 PASS/original FAIL. Both mounts strict5/3 passed; B record comparison1820 fails. No downstream history or undo credit. | App f6a21c28 |
-| P3-recorded-command | Strict authoritative command expectation | Luna; independent | D82 approved | doing | Author1948; review1954; return2005 | Semantic PASS; artifact hash FAIL. Correct actual hashes before application. Six submitted and13 recorded keys stay exact with deep equality. | Patch80127 held |
+| P3-recorded-command | Strict authoritative command expectation | Luna; independent | D82 approved | doing | Author1948; review1954; return2005; apply2010 | Artifact2005 PASS actual93c2bf4c, patch80127 unchanged. Independent qualifier applies exact approved six and13-key deep equality. | Source2010 pending |
 | P3-26908-path | Independent verdict and full path | Luna | Producer1855 final | merged | app-P3-26908-verdict-wholepath-1905 | Gate FAIL; manifest/hash/snapshot PASS. Recovery product equals passingP131083; missing fourth cause remains bounded, no new count inferred. | Evidence only |
 
 | P1-current | Updated parent-source control | Service; Luna | Independent1846 PASS | merged | Actual31083; verdict1846 | Readiness1/original2 PASS on App830252,Agent263696,Runtime1bae. Exact pins/hashes/XML qualified. | App830252 |
@@ -74,7 +74,7 @@
 | P2-D78-controls | Consume missing original helper controls | Runtime Luna | Exact normal publication complete | merged | Runtime1908 donor held; peer1914 | Exact6testbytes a1ab published. App7098 sole shipping wiring; Runtime donor held, no duplicate source or extra review. | Evidence only |
 | P2-D78-state | Historical exact realm replay input | Runtime; App | Live route supersedes | gated:D78-live | Runtime1832; App peer1855 | No demonstrated surviving original realm. Exact historic replay UNAVAILABLE; no invented state or Origin. Retained packet complete at stated limits. | Evidence only |
 
-| P2-D78-watchdog-live | Corrected isolated element capture | Luna; Service | Preflight27752 PASS | review | Actual14383; verdict2010 | FAIL exit1/188s; readiness1 PASS, native seed timeout before gesture. Genuine private stack4206B/hash eb2e; safe auth/commit frames sent Runtime. | App860e9755 |
+| P2-D78-watchdog-live | Corrected isolated element capture | Luna; Service | Independent2010 PASS | merged | Actual14383; producer2001; verdict2010 | Diagnostic FAIL188s. Readiness1 PASS; native seed ERROR before gesture. Private stack4206B0600/hash eb2e and108 phases qualified; Runtime owns cause. | App860e9755 |
 | P3-envelope-artifact | Correct proposal hash evidence | Luna | Artifact return2005 PASS | merged | app-P3-envelope-artifact-return-2005 | Actual virtual93c2bf4c; patch80127 unchanged.21 mutations and3 fault controls PASS. Genuine branch artifacts copied to normal design. | Evidence only |
 
 | P3-envelope-apply | Qualify and apply strict D82 patch | Luna independent | D82 and corrected2005 | doing | app-P3-envelope-qualify-apply-2010 | Independently verify actual hashes and21 mutations, then exact clean patch plus ledger. No original until PASS and merge. | Source pending |
@@ -86,13 +86,13 @@ regressions: 0 confirmed open App source findings. D69 all four restorations hom
 
 
 Blockers: Final cut — all eight P2 and one P3 core cases remain unqualified. Runtime coordinates final suites and ZIP after current gate proof.
-Next ready: P3 independent qualifier2010 applies exact approved patch on PASS; merge then one pinned/preflighted original. D78 independent verdict2010 and Runtime actual-frame interpretation active; no unchanged rerun.
+Next ready: P3 qualifier2010 applies exact approved patch on PASS; merge then one pinned/preflighted original. D78 actual-frame input complete; Runtime causal owner interprets. No unchanged D78 rerun.
 
-live 3 / cap 2; ready-undispatched 0. Critical P3 apply and D78 verdict occupy first slots. D79 source extension was dispatched at7.543GB with cap4; no new non-critical work below7.5GB. E4 stopped and dropped.
+live 2 / cap 4; ready-undispatched 0. Critical P3 exact application2010 and source-only D79 extension2012 active. D78 independent verdict is complete. E4 stopped and dropped; no new original before P3 home.
 
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
-Disk: Current7.376GB after D78 terminal, before next P3 build. Guarded scan found no finished clean non-KEEP App worktree remaining. Six stale pins previously released. D74a permits critical gates/D78 down to6.0GB. Cleanup1939 verifies stale KEEP pins and archives dirty abandoned U3 work before guarded recycle; classifier refusal stops. Orphan graph and prior denied routes stay stopped; all run evidence retained.
-Inbox consumed through1692815 bytes, including Agent1915 adoption homee39de and Runtime1920 capture request. Owner boards Runtime19:18 and Agent19:16 rechecked: popup87bc and cost e89 are home; original P2 source outcomes remain unqualified. Peer1934 closes App capture disposition at honest limits.
+Disk: Current7.516GB after D78 terminal, before next P3 build. Guarded scan found no finished clean non-KEEP App worktree remaining. Six stale pins previously released. D74a permits critical gates/D78 down to6.0GB. Cleanup1939 verifies stale KEEP pins and archives dirty abandoned U3 work before guarded recycle; classifier refusal stops. Orphan graph and prior denied routes stay stopped; all run evidence retained.
+Inbox consumed through1695519 bytes, including Agent1915 adoption homee39de and Runtime1920 capture request. Owner boards Runtime19:18 and Agent19:16 rechecked: popup87bc and cost e89 are home; original P2 source outcomes remain unqualified. Peer1934 closes App capture disposition at honest limits.
 Evidence: [D73 path](../../design/app-D73-service-snapshot-path-1739.md), [corrected P3 proposal](../../design/app-P3-recovery-proposal-return-1736.md), [same-ID source-only20321](../../design/app-P2-element20321-phase-producer-1737.md), [P1 current verdict](../../design/app-P1-26312-current-verdict-1616.md), [D69 final](../../design/app-U3-D69-home-and-preflight-1704.md).
 
 
