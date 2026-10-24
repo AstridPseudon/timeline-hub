@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T08:03:06Z | dispatcher heartbeat 7s | live 3 (sol 0, luna 3, other 0) | busy30 15 | status age 1m -->
-# runtime board, 2026-10-24T08:01:00Z
+<!-- main | 2026-10-24T08:05:50Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 14 | status age 0m -->
+# runtime board, 2026-10-24T08:05:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -55,7 +55,7 @@
 | F-helper-sequential | Classify helper replay-map refusal | Agent Sol / Luna | Integrated proof complete | merged | Agent184dc; review0224; integrated0232 | Actual Agent 8a8d passed 12 focused cases and static, vendor and artifact checks. Both original variants passed on reviewed source. | Agent184dc20a70 |
 | F-render-21 | Classify retained cold-render timeout | Luna | Read-only source handback complete | merged | rt-F-render-21-source-review-0303 | Duplicate registry assembly identified; historical timeout cause unknown. No body run or product change. [Report](../../design/runtime-render-21-source-review-0303.md) | Evidence only |
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Current installed qualification passed | merged | Agent0508; independent0517 PASS | Exact seven originals passed on managed child 3b5c, Agent ba8f and Runtime f320. Current 9cd relevant sources and test AST match. | Managed child 3b5c |
-| OPS-farm-agent-full | Install exact child for Farm full suite | Luna / Luna | Reviewed v3 packet and genuine child | doing | Source0803; source facts0801 | Owner selects normal D21 child for9cd/1d9. New packet drops PYTHONPATH and preserves verified graph. No checkpoint. | v2 471712; v3 pending |
+| OPS-farm-agent-full | Install exact child for Farm full suite | Luna / Luna | Reviewed v3 packet and genuine child | doing | Source0803; facts0801; review0804 | Owner selects normal D21 child for9cd/1d9. New packet drops PYTHONPATH and preserves verified graph. No checkpoint. | v2 471712; v3 pending |
 | OPS-child-dependency-route | Publish verified dependency seed route | Sol / Luna | Reviewed wheel layout and actual input | doing | Source0752; independent0756 | Original67 wheel hashes qualified by Agent0740. Narrow layout repair is in security review; no candidate built. | 33fc installed; b330 candidate |
 | R2r-historical-image | Restore authenticated retired roots on redo | Sol / Luna | Integrated proof passed | merged | Review 0405; integrated 0413 PASS | 13 standalone cases and 243 controls passed; 74 configured deselections. [Proof](../../design/runtime-historical-image-integrated-0413.md) | 2b49da8d6 / 2e96c68c |
 | R-D42-history-memo | Harden verified replay memo | Sol / Luna | Post-delivery scope under D47 | gated:D47 | Design0448; review0454 PASS | Deferred by D47. No stable validation boundary; nine state attacks remain open. Source stays unmerged. | Tests 6c6bb375; source held |
@@ -78,7 +78,7 @@
 | OPS-child-observability | Retain bounded maker failure evidence | Luna | Independent installed proof passed | merged | Review 0730; installed 0735; live 0739 PASS | All four live, publication and committed copies match reviewed bytes. Real child and bootstrap remain unqualified. | 33fc06bbd installed |
 | OPS-wheel-acquisition | Verify normal original-wheel acquisition | Luna | Independent source review passed | merged | Author 0743; review 0747 PASS; Agent 0733 | Standard hash-locked pip operation qualified from source. Input must survive maker snapshot; no actual wheels or child credit. | Source facts only |
 | R-commit-response | Correct mutation source call counts | Luna | Independent final verification passed | merged | Return0755; review0756 PASS | Initial path3 validations, CAS retry2. No latency or source-change conclusion. [Review](../../design/runtime-commit-response-final-review-0756.md) | Read only |
-| OPS-wheel-layout | Match legitimate wheel metadata names | Luna | Actual wheels and reviewed installation | doing | Security0756; static0758 PASS; install0801 | Independent48 tests and zero-new mypy passed. Agent actual67-wheel acceptance pending; normal installer dispatched. | b330264b9 |
+| OPS-wheel-layout | Match legitimate wheel metadata names | Luna | Actual wheels and received publication | review | Installed0801; independent0805 | Helper and maker installed atomically with backups. Independent live and publication review pending; actual67 wheels pending. | b330264b9 installed |
 
 Runtime full: 0 of 36 original failures open; exact integrated proofs and independent accounting remain recorded above. No new full-suite PASS. Current producer is becfe6db88b2cc034dba3fafa6c050117cdf2b06 after normal U1c and D39 merges. Readonly integrated worker0721 passed409 cases on this exact head; source reviews0703 and0710 remain PASS. Shared inverse source is separately qualified on460c by177 Runtime cases and six shared/source-copy controls, with no original ABA or HTTP credit.
 
@@ -102,7 +102,7 @@ D34: main has about9 GiB free at07:17. No main disk work per the explicit orches
 
 Blockers: Farm — isolated children need installed Runtime. Runtime source0803 authors normal managed-child full-farm packet; Farm lead owns actual child request.
 Blockers: Agent and App — reviewed U2 home, D39 consumer adoption and header P2/P3 GO are still needed for the final tuple.
-Blockers: Agent child — candidateb330 passed security and static review; installer0801 and actual67-wheel acceptance are pending.
+Blockers: Agent child — b330 is installed on main; independent0805 publication and actual67-wheel acceptance remain pending before child use.
 Next ready: Wheel installer0801, Farm sourcefacts0801 and v3 packet0803 are dispatched. Agent owns actual67-wheel acceptance; no unassigned ready task.
 Later: Viewing owns the original ABA joined-source verdict. Runtime shared-auth handoff0715 is complete; no competing Runtime author or original body. D34 disk work and D47 memo resume only under their stated conditions.
 
@@ -127,3 +127,7 @@ New input0744: Agent independent0740 validates all67 original wheels against exa
 Farm0745 exact denial evidence: manager/worker command forms hit the Farm session approval layer; Runtime performed no retry. Orchestrator assigned the existing Farm lead role; normal request returned verifiedreuse5ca5 and row0738 replaced onlyline161 with outside bytes unchanged. Genuine preflight0747 now runs.
 
 07:55 pass: Two completed workers moved directly to independent review. Agent U2 joined5783 has Sol0745 repair and whole-path review after0738 FAIL; managed row0747 repairs snapshot admission. Branch-only D39 source91bf has independent0747 and conflict fixture0747. Composition full checkpoint23379 is on Viewing service after unchanged67b8 upstream preflight. App U3b remains held for header P2/P3 GO. Farm row0738 installed; parent0752 passed and isolated child import failed. Owner08:03 selects exact managed child; v3 source0803 dispatched. D34 main disk hold remains in force at8.6GB. No final tuple, host readiness or full-suite PASS claimed.
+
+08:04 source return: Farm direct isolated subprocess failure is real; GenericHost uses a separate validated bootstrap and is not proven broken by the bare probe. Source0801 confirms the approved exact installed-child route; independent0804 dispatched. Normal v3 packet0803 continues. Wheel installer0801 is active. All original bodies and guards remain unchanged.
+
+KIT CHANGE: verify_dependency_seed.py b8b51550 and make-child-venv e4c0a9cb installed atomically by0801 after0756 security and0758 static PASS. Requester and Store unchanged. Publication was stale at installer return; independent0805 owns live/publication/committed identity. No actual child or realwheel PASS inferred.
