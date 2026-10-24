@@ -24,6 +24,7 @@ from astrid.core.contracts.capability_runner import CapabilityRunner
 from astrid.core.contracts.binding import (omit_absent_optional_flag_values, expand_command,
     assert_provided_inputs_bound, BindingError)
 from astrid.core.contracts.run_status import RunStatus
+from astrid.core.env_vars import ASTRID_INTERNAL_INVOCATION
 from astrid.core.project.guidance import (
     format_project_required_guidance,
     selected_project,
@@ -311,7 +312,7 @@ def _run_python_orchestrator_subprocess(
 
             selected, _contents = _captured_source
             chosen = selected["definition"]
-            if (os.environ.get("ASTRID_INTERNAL_INVOCATION") != "1"
+            if (os.environ.get(ASTRID_INTERNAL_INVOCATION) != "1"
                     or chosen["capability_kind"] != "orchestrator"
                     or chosen["capability_id"] != orchestrator.id
                     or chosen["definition_digest"] != _capability_digest(orchestrator.to_dict())):
