@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T21:51:09Z | dispatcher heartbeat 0s | live 3 (sol 3, luna 0, other 0) | busy30 14 | status age 0m -->
+<!-- main | 2026-10-24T21:54:25Z | dispatcher heartbeat 2s | live 3 (sol 3, luna 0, other 0) | busy30 12 | status age 2m -->
 # runtime board, 2026-10-24T21:50:56Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -81,7 +81,7 @@
 | R-P4-history-cost | Preserve finite walk snapshots | Luna / Sol | Actual integrated receipt passed | merged | Review1910; home1919 PASS | Exact e89eb: 173 focused plus12 historical PASS; source exact f51e. Three pairs gain5.69% wall. Original45s gate stays open. | e89eb8c7d / f51e29658 |
 | R-P2-popup-422 | Project genuine fork-created shot roots | Luna | App current P2 proof | merged | Security1658; integrated1704 PASS | Actualb318:4 PASS0.16s, exact reviewedsource; forgedowner/sibling/source refused. App original stillpending. [Proof](../../design/rt-P2-popup-integrated-1704.md) | b318a8ec4 /88b9cf6 |
 | R-P2-popup-observation | Attribute popup physical observation refusal | Luna | Source finding complete | merged | rt-P2-popup-observation-1638 | Runtime created-child projection lacks fork-created shot roots.2Runtime+8Agent comparators PASS; source cause only. | Source unchanged |
-| R-P2-element-docpatch-hang | Attribute genuine element pending window | HARD Sol / Luna | Accepted-history correction | doing | Facts2119; schemaSol2141 | Actual22971 ordinal3 pending in historical Recorder validation through4.6s. NativePASS; original5s outcome open. | Captured dc55 |
+| R-P2-element-docpatch-hang | Attribute genuine element pending window | HARD Sol / Luna | Accepted-history correction | doing | Facts2119; schemaSol2141 | Actual11589 onbc04 repeats ordinal3 historical Recorder pending4.6s; nativePASS. App holds originals for structural release. | Captured dc55 |
 | U1-D69-marker-scope | Preserve mixed-route live catalog predicates | Luna | Actual integrated proof passed | merged | Citations1702; integrated1708 PASS | Actual2c1:9 PASS9s; exact approvedledgerappendix published once, outsidebytes intact. [Proof](../../design/rt-U1-D69-phase-integrated-1708.md) | ea3bca10d /925a7dd |
 | U1-D69-restore-guard | Restore two skip guard originals | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 |
 | U1-D69-skip-policy | Restore upstream skip enforcement | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 /bb022 |
@@ -210,7 +210,7 @@ Admission: D56Farm/schema access stopped. Original403/accessrefusals and histori
 Disk:8622317568available bytes at last read,8.03GiB,cap4. Scan found no eligible ended clean nonKEEP Runtime tree; three old dirty trees untouched. Guarded sweep3 removed0; compact packed0scratch/0testdirs and gzipped7logs. No prior refused target retried;15GB target not reached.
 
 live3 / cap4; ready-undispatched0. Solschema2141 dispatched from current7aa603; Lunalock2143 dispatched from retained2135 branch. E/D79 paused.
-Pass2026-10-24T21:43:00Z:Consumed cost2126 no-gain return, lock2135 failed sequential setup and legacyreview2135 PASS/normal apply. Published exact reports and existing-ledger entry, dispatched both ready continuations, sent separate peers to Agent/App/orchestrator to clear stale metadata release waits. Inbox consumed through570505bytes. No original rerun or denied route retried.
+Pass2026-10-24T21:43:00Z:Consumed cost2126 no-gain return, lock2135 failed sequential setup and legacyreview2135 PASS/normal apply. Published exact reports and existing-ledger entry, dispatched both ready continuations, sent separate peers to Agent/App/orchestrator to clear stale metadata release waits. Inbox consumed through571988bytes. No original rerun or denied route retried.
 
 Pass 2026-10-24T21:42:20Z: New D84 consumed immediately. Stopped micro-gain author2141 and dispatched sole HARD Sol2142 structural owner, outside-lock verification/CAS first, narrow prefix memo only if insufficient. Parent837 finite input attached owned row; App asset/placement remain App-owned per D84. No decision escalation needed: explicit owner instruction covers the structural scope.
 
@@ -219,3 +219,5 @@ Pass 2026-10-24T21:44:47Z: D84a received and applied immediately: stopped2142 th
 Pass 2026-10-24T21:46:46Z: Later ORCH22:00 parallel order consumed.2142 had already stopped before that order; no product WIP lost. Resumed preserved2142 branch as HARD Sol2147 for lock placement only, in parallel with2145 request-scoped dedup. Luna2143 actual1PASS/18historical spans published. Both Sol tasks dispatched; no ready task waiting.
 
 Pass 2026-10-24T21:50:56Z: ORCH22:05 requires actual30s/44s snapshots ofONEFalse original. Dispatched read-only HARD Sol2151 on exactAgent197d candidate; source owners2145/2147 remain disjoint and uninterrupted. Requested observation, not assumption that near-limit timing proves wait. No repeated fullbatch or Appbody.
+
+Current receiving proof: App new-source11589 on245742/840a/bc04 repeats unchanged5s elementfailure; ordinal3 still historicalRecorder validation, pending4558ms/4626ms. No nativefailure or originalcredit. RemainingAppbodiesheld for D84a reviewedrelease. Assetmapping independentreview2143 and placementsource2143 App-owned.
