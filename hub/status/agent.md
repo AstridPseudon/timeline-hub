@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T06:49:18Z | dispatcher heartbeat 8s | live 2 (sol 1, luna 1, other 0) | busy30 27 | status age 1m -->
-# agent board, 2026-10-24T06:47:34Z
+<!-- agent | 2026-10-24T06:51:39Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 25 | status age 0m -->
+# agent board, 2026-10-24T06:51:28Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -87,7 +87,9 @@
 | F-harness whole path | Reuse normal managed test-service custody | Luna | Second harness failures 0632 | doing | agt-F-harness-whole-path-0638 | Compare both harness paths with passing D40 and normal service lease. Sol repairs stay separate; no new authority backend or permission flow. | Read only |
 | F-helper word fixture | Preserve deferred child word anchor original | Luna | Existing D23 scope decision | gated:D23 | Source 0640; prior scope 0114 | Same child-word-second case was already D23. No code delta or body rerun; keep original 5 assertions unchanged, open and visibly failing. | Unchanged |
 | F-child timeout evidence | Export exact failed maker and existing child facts | Luna | Runtime source review | review | agt-F-child-timeout-evidence-0642 | Real 3b5c markers, origins, Store identity and two RECORDs published. Partial path and pip logs absent; no cause guess. | Evidence 0f98955944 |
-| F-count next 24 map | Map nine roots, thirteen helpers and two schema originals | Luna | Independent exact receipts | doing | agt-F-count-root-helper-schema-map-0641 | Map 24 disjoint qualified nodes after provisional 236 / 31. Future 260 / 7 remains uncredited until complete package and review. | Evidence only |
+| F-count next 24 map | Package nine roots, thirteen helpers and two schema originals | Sol / Luna | Current metadata preservation | doing | Map 0641; current port Sol 0652 | Exact 24 candidates; old-parent package must preserve approved inventory on port. Expected 260 / 7 remains provisional until review. | Evidence branch only |
+| U2-freeze D48 | Merge current upstream into branch | Luna; HARD Sol review | Host live tip verification | doing | agt-U2-freeze-draft-0651 | Normal merge-forward started at 25359; three conflicts exposed. Luna resolves, Sol review follows. No early home merge or D39 adoption. | Base 1f15; upstream 25359 |
+| D39 adoption | Adopt final canonical regenerated client | Luna | Reviewed U2 home and Runtime producer | blocked:runtime | Producer requested in FREEZE peer 0651 | After D48 U2 merge, adopt once through vendor tools and independent review. No current pin or schema change yet. | Pending final tuple |
 
 P1: GO recorded. P4 and P5 done. G5 merged under H24. App and Proof retain P2/P3 ownership.
 Integration: 1f15f27482 adds reviewed renderer-free store e149 above schema home 0b425. Schema integrated 0634 passed 2 originals. Store integrated 0639 active. Earlier discovery bb50 passed 36 plus 3; all proofs retain exact scope.
@@ -102,5 +104,5 @@ Disk: About 11 GB available. Light work continues without worker-count throttle.
 D32: All 267 original entries remain ours. No full-suite PASS or upstream known-gap credit is claimed.
 D46: U2c closed and folded into the single freeze U-merge. Held candidates stay unmerged; relay and remote provider scope stays deferred and fail-closed.
 Later: D31/D37 dormant implementations and tests unchanged. V4 and D14/D23 remain cut or deferred and visibly failing. D47 memo held post-delivery; D39 adoption waits freeze.
-Next ready: Official 236 / 31 published. Finish compatible next-24 package and review, Sol harness repairs 0638, Runtime original publication and last 3 SDK qualifications. Farm raw traces and meaningful child maker proposal remain priority.
+Next ready: D48 upstream draft 0651 is top priority with three merge conflicts; HARD Sol review follows. Next-24 current port 0652 and harness repairs 0638 active. Runtime original qualifiers active; raw Farm traces remain needed.
 Evidence: [farm checkpoint](../../design/farm-agent-full-checkpoint-20261024T0555Z.md), [integrated discovery](../../design/agt-F-discovery-integrated-0603.md), [harness findings](../../design/agt-F-candidate-harness-review-0619.md).
