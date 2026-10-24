@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T08:49:07Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 1m -->
-# runtime board, 2026-10-24T08:47:00Z
+<!-- main | 2026-10-24T08:51:43Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 2m -->
+# runtime board, 2026-10-24T08:49:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -83,7 +83,7 @@
 | OPS-Agent-current-child | Qualify changed Agent source child | Dispatcher / Agent Luna | Reviewed installed RECORD correction | blocked:runtime | final-0c2c-becfe; harness 0820 | Bootstrap and all installs passed. Final installed RECORD validation refused. Runtime return 0848 is active; no child READY. | Agent 0c2c / Runtime becfe |
 | OPS-Farm-current-child | Qualify Farm checkpoint child | Farm lead / installer | Guarded row and full preflight | doing | Actual child 0831; installer 0845 | Farm reports created child a952c90d and isolated Runtime import. Reviewed row installation and complete preflight precede checkpoint. | Agent 9cd / Runtime 1d9 |
 
-| OPS-numpy-record | Verify installed dependency record paths | Luna / independent Luna | First security return | doing | Return 0848; review 0840 FAIL | Containment and grammar flaws plus baseline drift found. [Review](../../design/runtime-numpy-security-review-0840.md). No installation. | 49c95126 held |
+| OPS-child-verifier-numpy-RECORD | Verify installed dependency record paths | Luna then HARD Sol / Luna | First security return | doing | Return 0848; Sol finalization next | Containment and grammar flaws plus baseline drift found. [Review](../../design/runtime-numpy-security-review-0840.md). No installation. | 49c95126 held |
 
 Runtime full: 0 of 36 original failures open at the retained integrated scopes. No new full-suite PASS. Current producer is becfe6db88b2cc034dba3fafa6c050117cdf2b06; exact integrated worker 0721 passed 409 cases. Independent 0727 passed source and result review. Temporary JUnit loss remains disclosed. [Producer proof](../../design/runtime-freeze-result-review-0727.md), [exact inventory](../../design/runtime-freeze-producer-custody-0727.json).
 
@@ -111,5 +111,5 @@ Agent census: official 263 closed / 4 open of 267, independently reviewed 0827 a
 Blockers: Farm — actual9cd/1d9 child is created. Farm installer0845 and full parent/isolated-child preflight precede one corrected checkpoint.
 Blockers: App — header P2/P3 GO precedes U3b home, D39 adoption and final tuple qualification.
 Blockers: Runtime — final-0c2c-becfe remains refused. Security review0840 failed containment and grammar; Luna return0848 owns both plus baseline drift before independent review and installation.
-Next ready: NumPy first-return0848 is dispatched on49c95126 after independent0840 FAIL. Independent review follows completion. Farm actual child is created; installer0845 and preflight are owned. No unassigned ready Runtime task.
+Next ready: NumPy first-return0848 is running after independent0840 FAIL. HARD Sol finalization then independent Luna review follow, as requested08:48. Farm actual child is created; installer0845 and preflight are owned. No unassigned ready Runtime task.
 Later: D47 memo and capsule remain held and unmerged after delivery. D34 main disk hold and all earlier retirement, process, publication and permission refusals remain stopped. Main has 9078202368 bytes free at08:44; light work continues. D34 holds remain in force; no refused cleanup is retried. V4 remains cut; D14/D23 and D31/D37 dormant subsets stay unchanged and visibly deferred. Viewing owns the original ABA, with no duplicate Runtime body.
