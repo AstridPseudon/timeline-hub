@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T20:43:22Z | dispatcher heartbeat 12s | live 1 (sol 1, luna 0, other 0) | busy30 10 | status age 1m -->
-# runtime board, 2026-10-24T20:42:24Z
+<!-- main | 2026-10-24T20:46:18Z | dispatcher heartbeat 4s | live 1 (sol 1, luna 0, other 0) | busy30 8 | status age 2m -->
+# runtime board, 2026-10-24T20:44:15Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -154,8 +154,8 @@
 | D78-native-stack | Dump real pending native request stacks | Runtime Luna | Author12 passed; source home | merged | rt-D78-native-watchdog-1935 | Native20s daemon watchdog, cap1, private all-thread dump. Existing App bootstrap uses it. Actual live capture still owed; UI5s limitation explicit. | 44917baf5 |
 | R-P4-live-profile | Profile actual ten-note service step | HARD Sol / Agent venue | Independent evidence review passed | merged | Producer1948; service14690; verdict1956 PASS | Diagnostic FAIL1/PASS2.54 handlers; history71, verify64. First undo33.992s. Evidence independently qualified; overhead uncalibrated. [Summary](../../design/handoff-agt-P4-14690-summary.json) | Captured3b2/e89 only |
 
-| D83-history-cost | Complete actual-profile cost repair | HARD Sol / Luna | Single security review2037 | review | Sol2031 completed; Luna2037 active | Actual14690 copy4.135s; finite three-verification loop4.28%CPU gain and40counts exact.385 focused PASS. [Source](../../design/runtime-D83-history-path-sol-2031.md) | Source2031 held |
-| R2-False-history-tail | Review measured accepted history repair | HARD Sol / Luna | One security review | review | Author2031; security2037 | Auth projection avoids deep copies;385 focused PASS. Finite CPU4.28% gain with40 counts exact. Original five scopes remain open. | Source2031 held |
+| D83-history-cost | Avoid measured capture copy cost | HARD Sol / Luna | Batched original proof | merging | Author2031; security2037 PASS | Normaldc55 equals reviewed source;385 controls plus31 independent probes PASS. Parent-equivalent shared/mutation/concurrency checks retained. | dc55b8bc6 /57df943ec |
+| R2-False-history-tail | Qualify five original history scopes | HARD Sol / Luna | Agent normal adoption and batch | blocked:agent | Source2031; security2037 PASS | Normaldc55 schema and projection gains qualified; five original scopes remain open until Agent2028 meaningful batch. | dc55b8bc6 |
 
 | E1-inventory | Inventory duplicated commit rules | Luna | Sol design complete | merged | rt-E1-rule-inventory-1956 | Sixteen paired groups and four divergences cited. Earlier DSL suggestion is superseded by final shared Python design. [Inventory](../../design/runtime-E1-rule-inventory-1956.md) | Source only |
 | E1-design | Design one shared Python rules module | HARD Sol, D81 | Complete design source checks | merged | rt-E1-shared-module-design-sol-2001 | Six pure helpers map16 groups; estimated4–19 fewer lines,6–10 worker hours. Behavior and D79 corpus unproved. [Design](../../design/runtime-E1-shared-module-design-2001.md) | Design only; no merge |
@@ -170,7 +170,7 @@
 | R-P4-evidence-hygiene | Keep proof outputs outside source | Luna | Byte equality verified | merged | rt-P4-evidence-cleanup-2018 | Exact24 files preserved outside source and removed. Both reviewed product/test blobs exact; normal e745 only two-file product delta. | a213ed89f / e74527f5f |
 | D78-actual-frame | Reduce observer attribution overhead | Sol / Luna | Integrated service proof passed | merged | Sol2019; Luna2035 | Normal4351: exact service2PASS7.72s includes helper13 and mounted off/parent/fixed. Source blobs exact; no original recovery claim. | 4351b9f91 / fa2c16296 |
 
-Runtime producer: Normal4351b9f91 joins observer fa2 with actual integrated mounted proof on e745 independently reviewed schema setup fbba plus byte-preserving cleanup a213. Canonical15/schema867f unchanged. Previous normal44917 observer/watchdog captured actual14383. No original45s closure.
+Runtime producer: Normaldc55b8bc6 joins independent-security-PASS projection57df on observer4351 and schemae745. Canonical15/schema867f remain exact; actual original proof pending. Canonical15/schema867f unchanged. Previous normal44917 observer/watchdog captured actual14383. No original45s closure.
 
 core open: 2 Runtime boundaries: P4 accepted-history45s and native seed/element pending boundary. Agent retains all five historical original scopes. D83 treats common cause as a working hypothesis pending local evidence. Final Runtime core suite owed.
 regressions: D77a genuine installed final render remains cut-blocking; actual Agent34 adversarial plus2 positive PASS is source proof only.
@@ -179,15 +179,17 @@ Venues: App P1/P2/P3, Agent P4, main P5/Composition. D73 captures four exact SHA
 D65 delivery: Runtime merge, Agent merge, authentic App manifest command/digest equality, then App merge. Installed v2 docs and D67 bindings retained. Final candidate remains cut-gated.
 
 Blockers: Runtime D83 seed — resumeSol2040 registers the ordinary named service and runs prepared real-daemon controls. PriorSol2031 could not run private absolute path through targeted. No safety denial or App source wait.
-Blockers: Runtime D83 history — source2031 complete385PASS, finite4.28%CPU gain. One securityLuna2037 reviews shallow projection semantics and applies on PASS. Schemae745 PASS258. All five Agent originals open.
+Blockers: Agent originals — Runtime dc55 normal merge/security2037 PASS complete. Agent2028 owns normal adoption and one batch of P4three plus retained R2four. All five original scopes stay open until actual proof.
 Blockers: App popup original — reviewed87bc actual23 Runtime plus4 Agent PASS. Meaningful App isolated gesture qualification remains owed after D83 fix.
 Blockers: Final cut — lane core0/regressions0, eight P2, final tuple reruns, D69 and genuine installed render required. Current P3 GO qualifies only recorded tuple. No build before cut.
-Next ready: Finish disjoint D83 questions; one security review of new history delta then consolidated normal home handback and batched originals. No E/D79 follow-up until ZIP.
+Next ready: Finish seed off/on current-source comparison; Agent adopts qualified dc55 and runs its prepared original batch once. App next isolated gesture follows meaningful local seed qualification. No E/D79 follow-up until ZIP.
 Later: D79 has no complete authentic accepted record/history/context; paused D83. E1/E3 designs delivered before pause, no further work until ZIP. E2 Agent design complete. D47 memo/proof pins post-delivery,nine attacks open. V4 cut; D14/D23 deferred; D34 cleanup held. D62 submit completeness remains known gap.
 Admission: D56 Farm/schema access stopped. Original403/access refusals and historical denied cleanup/process/retirement targets untouched. D67 D13 gap unchanged. App dirtyU3 guard refusals stay stopped.
 Disk: 8693473280 available bytes at20:33, about8.10GiB; cap4. Ended trees auto recycle. Five prior dirty old Runtime trees remain ineligible; no retry. Recorded global sweep/compact permission limits untouched.
 
-live 2 / cap 4; ready-undispatched 0 critical local. SeedSol2040 and securityLuna2037 active. Observer service complete; no E/D79 worker live.
+live 1 / cap 4; ready-undispatched 0 critical local. SeedSol2040 active; securityLuna2037 completed and normal source merged. Observer service complete; no E/D79 worker live.
 Pass 2026-10-24T20:30:32Z: D83 source and local reproduction dispatched. Independent schema security2018 PASS258 consumed; exact cleanup2018 merged normal e745. Actual14383 capture wait cleared. Observer2019 exact service acceptance and integrated receipt2035 PASS consumed; normal4351. P315493 independent2024 GO consumed. Seed execution ordinary registration blocker assigned2040; history2031 source complete/security2037 active. No gate or cut closure. Prior refusals untouched.
 
 D83(1b) explicit: HARD Sol rt-D83-history-path-sol-2031 COMPLETED at20:36, source report published, security2037 active. Two original Sol questions were dispatched together; do not infer missing second Sol from current live count. App2026 correlates dump to successful request1; SDK30s timed out request2, outer120s did not fire.
+
+Current20:44: security2037 PASS and normal dc55 consumed. Native control oldobserver N4 ON timed out45s, seven other variants passed. Stack is observer request lookup/jsonschema path, not measured lock blocking. Seed2040 checks corrected source; original14383 common-cause limits remain.
