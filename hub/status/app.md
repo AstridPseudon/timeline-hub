@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T06:55:05Z | dispatcher heartbeat 13s | live 3 (sol 1, luna 2, other 0) | busy30 13 | status age 1m -->
-# app board, 2026-10-24T06:54Z
+<!-- app | 2026-10-24T06:58:09Z | dispatcher heartbeat 0s | live 3 (sol 1, luna 2, other 0) | busy30 13 | status age 1m -->
+# app board, 2026-10-24T06:57Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -82,10 +82,13 @@
 | A2-media-timing-join | Preserve prepared media canonical timing | Sol; Luna review | Independent 0623 PASS | merged | app-A2-media-timing-review-0623 | [252 tests, all 26 media tests, three types and lint passed.](../../design/app-A2-media-timing-review-0623.md) Original timing assertion unchanged. | 6635416195 / 9b810408cc |
 | P2-P3-target | Qualify product source dispatch target | Sol; D21 | Final source guards PASS | merged | app-P2-P3-source-target-sol-0644 | [15 source control blocks PASS, 43KB fixture.](../../design/app-P2-P3-source-target-sol-0644.md) Correct target exact663; wrong artifact tree refuses. | Source663 / HOME9b810 |
 
-| P2-five-final-precheck | Precheck five original never-run paths | Luna; independent review | Author0647 complete | review | app-P2-five-oracle-review-0651 | Four candidate strict helper mismatches need whole-helper validation. Popup SWAP aligned. No source edits or live proof. | 9b810408cc |
-| U3b-freeze-plan | Prepare upstream delta and merge order | Luna; independent review | Author0647 complete | review | app-U3b-freeze-plan-review-0653 | Draft18 commits and111paths; reviewer checks ancestry, exact nine-file conflicts and commands. Actual merge remains gated. | Plan only |
+| P2-five-final-precheck | Precheck five original never-run paths | Luna; independent review | Review0651 complete | merged | app-P2-five-oracle-review-0651 | Four strict helper mismatches independently confirmed; source routes reach POST. Popup SWAP aligned. Proof owns exact helper correction. | Report only9b810 |
+| U3b-freeze-plan | Prepare upstream delta and merge order | Luna; independent review | First return0657 | doing | app-U3b-freeze-plan-return-0657 | Whole held-draft replay rejected. Return uses own-only reviewed deltas, nine-file conflict list and unchanged dormant subsets. Actual merge gated. | Plan only |
 
 | P2-element-current-failure | Resolve repeated actual element failure | Sol; independent Luna | Actual23809 element FAIL | doing | Sol0654; whole path0654 | Original element failed18.4s; precise assertion pending. Sol owns any demonstrated source repair, Luna traces full path independently. | Selected663 / HOME9b810 |
+
+| P2-four-helper-oracles | Correct four strict helper mismatches | Proof Luna; independent review | App review0651 confirmed | blocked:app2 | Requested Proof at06:57 | Exact branch-specific fields, reads, created claims and semantic empty patch; keep all behavioral predicates. | Pending Proof packet |
+| P3-current-setup | Classify real predecessor request timeout | Proof source; App peer as needed | Actual9310 terminal | blocked:app2 | Producer0648; Proof setup request06:57 | Predecessor request waiter1540 timed out90s before original reset/tail. Whole-path compare requested; no zero-POST inference. | Selected663 / HOME9b810 |
 
 Integration: 9b810408ccf8aadbca708dd0bc461afc19576427, tree 9a37265f0286128df7e6240a9df9877d959474af. Exact whole tree equals independently reviewed timing candidate 6635416195. All reviewed catalog, parameter, popup, parent, P3 setup and oracle repairs remain present.
 
