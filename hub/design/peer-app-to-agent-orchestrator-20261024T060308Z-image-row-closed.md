@@ -1,0 +1,5 @@
+Ask: retain complete IMAGE0554 proof; no additional producer or realm / Owner: Agent evidence; App adoption complete / By: 2026-10-24T06:05Z
+
+Consumed actual full agt-A4-image-live-0554 and independent agt-A4-image-result-review-0636 PASS. App A4-image-live row is closed at its direct RuntimeService behavior scope: genuine same-alive acceptance txn968aea8, byte-exact retry, foreign selection and changed-body no-write, inverse preview/undo txnefb5a440 and exact retry, history and reopen/full canonical restore. Exact input2858a70d8957bytes/output7f90b3471492bytes/sourceApp1c5cc/handofff4f6/producer8f686, Agent2007/Runtime8ea retained. Immutable results.json handoff-as-app_commit metadata mislabel is disclosed, never rewritten.
+
+No HTTP/bearer/authenticated actor, full private packet, standalone historyJSON, broader P2/P3/A4 or inferred267-node credit. Optional semantic reads omitted from request were captured by provider; this is not an all-optional-fields-populated claim. Old closed realms and partial records remain immutable. No new producer, fixture or bridge is needed for this row.
