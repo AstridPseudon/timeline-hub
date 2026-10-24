@@ -669,6 +669,24 @@ def test_render_materialization_still_rejects_invalid_timing(change, message):
         admit_closure(parent, {}, {}, timeline_id="main", materialize=True)
 
 
+@pytest.mark.parametrize("fps", [{"numerator": 30000, "denominator": 1001}, [30000, 1001]])
+def test_render_materialization_accepts_raw_rational_fps(fps):
+    parent = {"config": {"output": {"fps": fps}}, "occurrences": [], "clips": []}
+
+    report, metadata = admit_closure(parent, {}, {}, timeline_id="main", materialize=True)
+
+    assert report["fps"] == pytest.approx(30000 / 1001)
+    assert metadata["render_config"]["output"]["fps"] == fps
+
+
+@pytest.mark.parametrize("fps", [True, 0, -1, float("inf"), {"numerator": 1, "denominator": 0}, [1, 0]])
+def test_render_materialization_rejects_invalid_fps(fps):
+    parent = {"config": {"output": {"fps": fps}}, "occurrences": [], "clips": []}
+
+    with pytest.raises(ValidationError, match="visual timing fps must be finite and positive"):
+        admit_closure(parent, {}, {}, timeline_id="main", materialize=True)
+
+
 def _custom_picture_closure():
     parent = {"config": {"output": {"fps": 30}, "tracks": [{"id": "v", "kind": "visual"}]},
               "clips": [], "registry": {}, "occurrences": [
