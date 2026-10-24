@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T19:18:56Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 1m -->
-# app board, 2026-10-24T19:18Z
+<!-- app | 2026-10-24T19:22:35Z | dispatcher heartbeat 3s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 0m -->
+# app board, 2026-10-24T19:22Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -25,7 +25,7 @@
 | P2-22847-parent | Restore authoritative committed status | Luna | Independent1825 PASS109/types/lint | merged | app-P2-parent-status-restore-1819 | Exact41c0 reviewed; authoritative paired label/config, canonical drafts local; protected6 unchanged. | Source41c0 |
 | P2-22847-path | Independent full-path challenge | Luna | Actual22847 | merged | app-P2-22847-wholepath-1801 | Parent has no production label; popup owner guard fails closed. No product cause attributed to element. | Read only |
 | P2-phase-full | Qualify full-tour observer activation | Luna | Author1806 and smoke1819 PASS | merged | app-P2-full-phase-activation-1806 | Real normal CLI accepted commit proves provider,receipt,response;19 controls/lint/protected6 PASS. | Source1806 |
-| P2-popup-owner | New authenticated shot-owner refusal | Runtime peer | Actual22847 | blocked:runtime | Peer1802; Runtime source owner | New422 invalid_records after b318; strict owner validation must be traced/fixed by producer owner. | Runtime327da |
+| P2-popup-owner | Shared authenticated shot-owner definition | Runtime HARD Sol; security | Cumulative1902 PASS | merged | Source52b; carrier1902; home1908 | Actual Runtime87bc includes reviewed owner projection; no Agent patch. Actual popup qualification still owed after native-seed source issue. | Runtime87bc7f74 |
 | P2-element-runtime | Diagnose execution/store from phases | HARD Runtime Sol | Meaningful App phase capture | blocked:app | rt-P2-element-sol-1643 | Historical phases UNAVAILABLE; Runtime resumes on next actual bounded phase result. | No proven defect |
 | P3 | Original Gate5 journey | Service; Luna | D70 | review | Actual26907; verdict1713/1718 | Exit1/470s, readiness PASS; fixture-only Recover saved edits button unavailable on reopen. | c3d79 tree6576 |
 | P3-history | Strict authenticated history ABI | Luna; review | Actual10033 | merged | Author1620; review1626 | 23 controls, types/lint PASS; missing/wrong ABI rejected. | 9f4ec08f56 |
@@ -42,11 +42,12 @@
 | D74-retention | Post-verdict output release | Lead kit | Guarded route unavailable | gated:disk-emergency | Lead owns disposition | Preserve run evidence, especially22847 and13100. No new release route built and no raw cleanup. | No source edits |
 
 | P2-D78 | Exact retained element request handoff | Luna | D78 owner1816 | merged | app-P2-D78-retained-request-handoff-1819 | Published json/md;4459 exact body bytes,e58a09dc;trace anchor and redaction validated. Runtime replay owns cause. | Evidence only |
-| D79 | One live-edit robustness smoke | Luna; Service | D80 complete; disk above7.5GiB | doing | app-D79-normal-auth-smoke-1916 | Spare-slot rerun through same D66 auth and guarded submit. Initial28293 setup-only bearer failure retained; no gate credit. | Current source |
+| D79 | One live-edit robustness smoke | Luna; Service | D80 complete; disk above7.5GiB | doing | app-D79-normal-auth-resume-1922 | Firstworker1916 correctly deferred7MB belowfloor, zeroIDs. Resume same branch/uniqueplan now abovefloor; normal D66auth, no gate credit. | Current source |
 
 | P3-D75-clean | Clean same-blob home packet and ledger | Luna | Home2bd162 | merged | app-P3-D75b-home-receipt-1848 | Actual home, parents, donor equality and computed hash correction PASS. Existing ledger updated; original report retained. | Home2bd162 |
 | P3-current | Corrected both-mount original Gate5 | Luna; Service | Preflight20128 PASS | review | Actual26908; producer1855 | Exit1/471s; readiness PASS, original FAIL at1773: expected fourth recovery observation, actual3. Downstream tail unproved. | App3c29 |
-| P3-26908-cause | Trace fourth recovery observation | HARD Sol PLAN A2 | Actual26908 and independent1905 | doing | app-A2-P3-recovery-current-sol-1910 | Distinguish mounted recovery from observer lifecycle; preserve exact counts/waits. No unchanged rerun or speculative repair. | App3c29 |
+| P3-26908-cause | Trace fourth recovery observation | HARD Sol PLAN A2 | Actual26908 and independent1905 | merged | app-A2-P3-recovery-current-sol-1910 | Intermediate page closed at Loadingproject before retry; no production defect proven. Review-only stronger poll proposal;269mounted controls/types/lint PASS. | Proposal only |
+| P3-intermediate | Observe real intermediate recovery before close | Luna | Sol1910 proposal | review | app-P3-intermediate-recovery-review-1920 | Add exact third-request poll using existing ceiling; both mounts, original waits/counts/identities/tail preserved. No protected application yet. | Patch839b7 |
 | P3-26908-path | Independent verdict and full path | Luna | Producer1855 final | merged | app-P3-26908-verdict-wholepath-1905 | Gate FAIL; manifest/hash/snapshot PASS. Recovery product equals passingP131083; missing fourth cause remains bounded, no new count inferred. | Evidence only |
 
 | P1-current | Updated parent-source control | Service; Luna | Independent1846 PASS | merged | Actual31083; verdict1846 | Readiness1/original2 PASS on App830252,Agent263696,Runtime1bae. Exact pins/hashes/XML qualified. | App830252 |
@@ -69,13 +70,13 @@ Integration: App7098 includes author-qualified D79 stack helper, fixture and nor
 core open: 9 original gesture cases, eight P2 plus one P3. P1 original2 PASS and independent1616 PASS at its recorded tuple.
 regressions: 0 confirmed open App source findings. D69 all four restorations home and final1704 PASS; original gates remain open.
 
-Blockers: Runtime — New popup authenticated shot-owner422 in22847, exactpeer1802; source owner owed there.
+Blockers: P2 native-seed qualification — popup owner source87bc now merged; prior22847 failed remains. All six latest diagnostics stopped before gestures; Runtime progress/cost interpretation owed.
 Blockers: Runtime execution — live13100 terminal at native seed,128safe phases published, no stacks/PIDs. Exact128budget reached, timed-out request correlation unknown; peer1914 owns interpretation.
 Blockers: Native-seed path — fiveD80 and live13100 all stop before gestures. App readonly1910 and Runtime peer1914 own bounded cause; no unchanged rerun.
 Blockers: Final cut — Current P2/P3 nine core cases remain unqualified; Runtime coordinates final suites and ZIP.
-Next ready: Consume P3 core cause and Runtime interpretation/qualified popup-cost receipts. Current D80 path complete, no App fix justified. D79 normal-auth smoke spareslot only.
+Next ready: On protectedreview1920 PASS, clean application/workerledger then one meaningful pinned P3. Runtime cost/capture receipts precede meaningful P2; no unchanged diagnostic rerun. D79 spareslot only.
 
-live 2 / cap 4; ready-undispatched 0. P3 causeSol1910 active; D80 path complete. D79 Luna1916 uses spare slot only after all diagnostics terminal and disk8.21GB (~7.65GiB). D80 producer1855 owns five submissions; P3 producer1855 owns corrected original; D78 live1856 owns highest-priority capture. Source tasks complete.
+live 2 / cap 4; ready-undispatched 0. P3 independent protectedreview1920 and spare-slot D79resume1922 active. Solcause complete; Appseedpath complete. Latest8.375GB (~7.8GiB), no unowned ready task. D80 producer1855 owns five submissions; P3 producer1855 owns corrected original; D78 live1856 owns highest-priority capture. Source tasks complete.
 
 Safety: Prior real denied cleanup, compact, graph, publication and source-access routes remain stopped. Producer1737 called source admission failure a safety denial; retained BLOCKED facts show ordinary preflight mismatch, no classifier refusal. No alternate denied route is used.
 Disk: Latest8.21GB (~7.65GiB), above7.5GiB threshold after diagnostics finish. Hold applies whenever below7.5GiB; D78 next critical meaningful run takes priority. Existing requests finish; deferred guarded-route request remains with App lead. Ended clean non-KEEP recycle check found none eligible. D74 caps and D80 build staggering apply; no run output released before verdict. Prior denied targets stay stopped.
