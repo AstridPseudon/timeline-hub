@@ -1,5 +1,5 @@
-<!-- app | 2026-10-24T08:04:06Z | dispatcher heartbeat 11s | live 2 (sol 0, luna 2, other 0) | busy30 19 | status age 3m -->
-# app board, 2026-10-24T08:00Z
+<!-- app | 2026-10-24T08:07:15Z | dispatcher heartbeat 3s | live 2 (sol 0, luna 2, other 0) | busy30 19 | status age 3m -->
+# app board, 2026-10-24T08:04Z
 
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -27,20 +27,20 @@
 | A3-popup-placement | Reproduce local placement refusal | Luna; independent review | Independent 0748 PASS | merged | Author 0745; review 0748 | Valid-input planner succeeds; 42 tests pass. Witness bypasses async preparation, so actual null cause remains unknown. No product repair. | Report only |
 | P2-four-helper-oracles | Correct strict request expectations | Proof Luna; independent review | Original source evidence | blocked:app2 | Transition and semantic reviews 0730 | Parent, catalog/params and readiness branches also need exact reads, metadata and scoped owner controls. No permissive matching. | Proof packets held |
 | P3-current-setup | Match predecessor patch exactly | Proof source; independent review | Actual accepted patch evidence | blocked:app2 | Proof source return 0730 | Preserve real UI 0 to 5, POST 200, exact 25 reads, owner, history and canonical checks. Original reset and tail stay protected. | Proof packet held |
-| P3-protected-tail | Match exact created expectation | Proof Luna; independent review | Source merged; integrated proof pending | review | Proof 0741/0747; App proof 0800 | One strict created[] addition HOME. Exact corrected body/tail hashes protected; ledger row awaiting finite format review. | 547c51afb9 / 28b0f11e1c |
+| P3-protected-tail | Match exact created expectation | Proof Luna; independent review | Integrated 0800 PASS | merged | Proof 0741/0747; App proof 0800 | One strict created[] addition HOME. Actual hashes qualified and worker-authored row copied to App ledger after independent 0758 PASS. | 547c51afb9 / 28b0f11e1c |
 | U3b-refresh | Draft current upstream merge | Sol; Luna review | Independent 0738 PASS | gated:freeze | Sol 0731; Luna 0738 | Independently 695 tests, 12 Gate5, 2 renderer and 72 wiring pass; three types, lint and conformance pass. Header P2/P3 GO gates home merge. | cd29ff2642 held |
 | U3b-home | Merge reviewed freeze draft | Manager merge queue | Header P2/P3 GO | gated:freeze | Final draft review 0738 | Upstream 2a288 included. Refresh live upstream at actual merge; do not merge before header condition. | Draft branch only |
 | U4p-D39 | Adopt final generated tuple | Luna | U3b home and exact producer | gated:freeze | Dispatch after U3b | Producer becfe6 inventory ready. Normal generated-client tooling; no manual type/pin edit or old consumer compatibility claim. | Producer becfe6 |
-| F-final-host-prep | Prepare final App host commands | Luna; independent review | Cumulative review 0758 | review | Return 0754; review 0758 | Corrected vendor tool, locks, complete maker argv and missing suite rows. Final Agent SHA remains input; no registration or tuple claim. | Report preparation |
+| F-final-host-prep | Prepare final App host commands | Luna; independent review | Cumulative 0758 PASS with limits | merged | Return 0754; review 0758 | Corrected tool, locks and maker argv qualified. P4/P5 rows missing; final Agent/App and receipts are explicit inputs. No final tuple claimed. | Report only |
 | F-App-final | Full suite on final App head | App test service | Final tuple and freeze | gated:freeze | App service; Runtime FREEZE | D49 venue accepted. Historical 12ef full passed 18,819; current final qualification is still required. | Final head pending |
 
 | A3-popup-inputs | Compare actual asset and planner inputs | Luna | Input audit complete | review | app-A3-popup-input-closure-0748 | Type, size, timing, track and selection constraints appear valid. Full async prepared asset is not captured; exact inner failure remains unknown. | Report only |
 
-| A3-popup-diagnostic | Retain safe refusal stage | Luna | Local preview refusal established | doing | app-A3-popup-refusal-diagnostic-0754 | Add safe stage/reason categories through existing caller channel; no semantic repair, raw payload or changed validation. | Branch only |
+| A3-popup-diagnostic | Retain safe refusal stage | Luna; independent review | Production retention qualification | review | Author 0754; review 0802 | Author 44 tests, types and lint pass. Review must verify the actual popup retains diagnostic rather than drops the added error field. | Branch only |
 | A3-popup-full-caller | Prove complete async popup save path | Luna | Missing preparation boundary witness | doing | app-A3-popup-full-caller-witness-0754 | Dedicated mounted test through import, preparation, preview and real dispatch. Product source owned only by diagnostic worker. | Branch only |
-| P2-tour-oracles | Strict transition and parent helpers | Proof Luna; independent review | Source merged; integrated proof pending | review | Proof 0737/0742; App proof 0800 | HOME 59cb contains exact reviewed three paths. Five controls, three types, lint/list3 pass independently. Joined integrated proof active. | 0a22d85455 / 59cb263629 |
+| P2-tour-oracles | Strict transition and parent helpers | Proof Luna; independent review | Integrated 0800 PASS | merged | Proof 0737/0742; App proof 0800 | Exact reviewed paths on HOME28b0 passed 17 joined controls, three types, lint/list. Original gesture outcomes remain open. | 0a22d85455 / 59cb263629 |
 
-Integration: HOME 28b0f11e1c contains reviewed tour helpers at 59cb and D50 one-line created[] at 28b0. Product source remains exact 9b810/663; test/spec changes are qualified separately and integrated proof0800 is active. Original 23809/9310 remain immutable on selected663, Agent079 and Runtime37eb.
+Integration: HOME 28b0f11e1c contains reviewed tour helpers at 59cb and D50 one-line created[] at 28b0. Product source remains exact 9b810/663; test/spec changes are qualified separately and integrated proof0800 passed 17 controls, three types, lint and list checks. Original 23809/9310 remain immutable on selected663, Agent079 and Runtime37eb.
 
 Blockers: App — actual element completion is unknown; faithful popup local-placement reproduction 0745 is active.
 Blockers: Runtime — bounded mutation-cost report is owned by Luna0745; no new run or memo work requested.
@@ -67,3 +67,5 @@ Pass 07:48Z: Independent U3b0738 PASS published and draft held for GO. Valid-inp
 Pass 07:56Z: D50 approval consumed; exact one-line Proof0747 PASS and ledger ask become owned row. Normal D50 fetch pending. Independently passed tour0a22 queued for home merge at once; no new review duplication. Host0748 FAIL immediately returned0754. Popup full-caller witness and safe refusal diagnostic assigned disjoint workers0754; no speculative semantic repair.
 
 Pass 08:00Z: New INBOX/header and owner boards consumed, D50 approval applied. Tour merged59cb and D50 merged28b0 via serialized home queue; actual joined proof0800 dispatched immediately. No product source change or original rerun. Host first return0754 is in cumulative0758 review; popup source diagnostic/fullcaller0754 are active. Ledger row0756 is worker-authored and awaits finite independent formatting qualification.
+
+Pass 08:03Z: Integrated0800 PASS closes source proof for tour and D50 on exact28b0; full report published. D50 worker-authored eight-column ledger row independently0758PASS copied to existing App-owned ledger; no generated combined file edited. Corrected host recipe independent0758PASS with missing final inputs explicit. Popup diagnostic0754 author completed44/types/lint; independent0802 challenges actual retained channel. Full async witness0754 active. Runtime final assessment uses ordinary0755/0756 return; active App caller citation correction sent0802.
