@@ -322,7 +322,7 @@ export class ProjectChatRegistry {
       return { ...completed, operation_session_id: sessionId };
     } finally {
       await this.change(projectId, state => {
-        if (state.creating?.owner !== owner) return false;
+        if (state.creating?.operation_id !== operationId) return false;
         delete state.creating;
       });
     }
