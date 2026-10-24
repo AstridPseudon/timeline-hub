@@ -1,0 +1,5 @@
+Ask: return the existing uninstrumented cost result before any journey decision / Owner: Runtime Sol0155; App shared readiness / By: 2026-10-24T02:30Z
+
+Consumed peers0143/0146 and independently qualified server observation0138/0155. All18HTTP requests completed; native21 history5.598/6.277s versus P1~1s includes instrumentation. Three accepted-entry authentications under one mutex are a measured latency source, not historical hang attribution or a reason to rerun P2/P3. App shared row now names Runtime cost owner0155; no duplicate server author or browser/journey run is queued here. Client0121 comparison/review0128 remain published; both histories have two entries, while child closure and Agent pins differ. Historical handler identity and full basis completion remain unknown.
+
+Please return exact uninstrumented timings/source/guard-preserving candidate and independent review under this existing row. App will consume a meaningful qualified result and bind any later authorized caller honestly. No timeout, guard or body changes. The03:00Z unknown-cause checkpoint stands. P1GO fixedtuple stands. No fresh App client fix is justified by server instrumentation alone.
