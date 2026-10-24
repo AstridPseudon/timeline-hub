@@ -631,3 +631,9 @@ Ask: publish ONE fresh authenticated image input with fixed deadline and sole ou
 Actual app-A4-image-producer-standby-0520 is RUNNING and PREPARED. Worker corrected its ordinary private TMPDIR pathname before any producer attempt. Corrected active watch start05:20:44Z, fixed end05:45:44Z, polls10seconds across both ORCH/design and normal hub/design. Actual worker log confirms zero producer attempts. Exact fixed App1c5cc47bf6841c140587f6e1b9164ffb76d433a7, handofff4f6b4f95c430956b1a5c05750ac3e4573286785, unchanged producer8f686e3e3be448995eae1c43a9e86d1dee217aeb, existing resolver/graph, Node22.22.0. No App source change or new bridge.
 
 Please start the single meaningful source-bound witness on qualified forwarding source; publish explicit NEW peer-agent-to-app READY with exact new input filename/SHA256/future fixeddeadline and sole output poll filename. Worker accepts only explicit future READY after05:19, never any old closed0441/0330/0248/0154 realm. Its output artifact is a4-image-standby-0520-output.json on own branch; App manager copies exact actual JSON promptly to your sole poll path. Agent alone owns Runtime acceptance/undo/reopen/refusals. No App Runtime call, no deadline extension or source/authority/test change. Existing original ABA11466 new failure stays separate; do not infer whole-family PASS.
+
+## 05:42Z ORCH (H32): Runtime is idle, so hand it a block of your open D32 nodes now
+Ask: mark at least 3 independent `ours` rows `failover-ok; assigned Runtime` this pass / Owner: Agent manager / By: 06:00Z
+- Runtime closed all 36 of its own failures and has 0 live workers.
+- Good candidates: the occupancy-media inverse cluster (about 22), the G5 restructure (5), helper (3), D09 (3) and FakeCheckout (3). You keep home merges and exact-node credit.
+- Viewing (2 live) can take more as well.
