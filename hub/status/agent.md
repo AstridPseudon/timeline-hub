@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T07:55:20Z | dispatcher heartbeat 13s | live 3 (sol 3, luna 0, other 0) | busy30 30 | status age 1m -->
-# agent board, 2026-10-24T07:48:00Z
+<!-- agent | 2026-10-24T07:57:49Z | dispatcher heartbeat 10s | live 1 (sol 1, luna 0, other 0) | busy30 29 | status age 0m -->
+# agent board, 2026-10-24T07:57:00Z
 | ID | task | model | needs | status | worker | proof | commit |
 |---|---|---|---|---|---|---|---|
 | U2 / U2b | Upstream merge and skip policy | Luna / Sol | — | merged | agt-U2b-integrated-1110 | Reviewed merge; integrated 99 passed, no skips or deselections. | abfa78a65 |
@@ -112,7 +112,7 @@
 | OPS-wheel artifacts | Qualify genuine lock-authenticated original wheels | Luna | Runtime verifier layout correction | blocked:runtime | Author0733; independent0740 complete | All67 hashes/tags/metadata/RECORD valid; one dotted metadata layout refused. Runtime owns strict verifier correction; no qualified child input. | Lock236d unchanged |
 
 | F-giant rationale | Correct stale freeze source line count | Luna | Independent review and U2 home | review | Port0744; independent0747 | Joined source14330 versus claimed13998; minimal docs correction passes original1. Oldhome14313 candidate superseded. | 8c5ae21fcd |
-| F-farm prior proofs | Repair all96 prior closure references | Luna | Complete independent review | review | Return0742; independent0747 | Author attaches96 prior-qualified scopes and one current docs challenge. Finalreview0747FAIL:288CSVtuplecells lost; Sol0752 and independentwholepath0752 active. All96 genuine priorproofmemberships verified. | 856de6e3f2 |
+| F-farm prior proofs | Repair all96 prior closure references | Luna | Complete independent review | review | Return0742; independent0747 | Author attaches96 prior-qualified scopes and one current docs challenge. Finalreview0747FAIL:288CSVtuplecells lost; Sol0752 and independentwholepath0752 active. All96 genuine priorproofmemberships verified; Sol0752 restores384tuple/citationcells, fullreview0759 active. | 856de6e3f2 |
 
 | U2 final fixtures | Restore effective refusal and bounded waits | Sol | Independent HARD review | review | Author0745; Solreview0755 | All3 findings repaired,8 controls and23 directtests pass. D18 generated-client fixture gives1setupERROR beforebody; exactcause inreview. | Two test files only |
 | U2 whole path | Audit activation and retained-handle abort | Luna | Independent second-failure investigation | doing | agt-U2-boundary-whole-path-0745 | Read-only path audit compares passingguards; no duplicate source or body. | Base5783 |
@@ -120,15 +120,20 @@
 | D39 conflict fixture | Preserve conflict mapping on canonical commit request | Luna | Canonical generated client91bf | doing | agt-D39-conflict-fixture-0747 | Only response-conformance test; retain status, details, errorclass and exact recorded request assertions. | Branch only |
 | D39 independent review | Audit full canonical adoption and limits | Luna | Complete author result | doing | agt-D39-adoption-review-0747 | All15 bytes, schema/client/public exports and source guards challenged. Existing failed fixture body is not repeated. | Base91bf |
 
-| F-count persistence delta | Restore restart, close writer and challenge docs | Sol | Complete exact results published | doing | agt-F-count-persistence-challenge-sol-0750 | Two source-mode originals qualified; current docs failure reopened pending homefix. Full267 census reconciliation; no duplicate credit. | Candidate only |
+| F-count persistence delta | Restore restart, close writer and challenge docs | Sol | Complete exact results published | doing | Sol0750; independent0759 | Candidate262/5 includes+restart,+writer,-currentdocs. Full267 preserved;122mappings and rawXMLabsence retained. Not officialbeforePASS. | Census286047a5 |
 
-| U2 snapshot row review | Check real service serialization and snapshot | Luna | Corrected staged row | review | Return0747; independent0752 | Exactsource/directparent snapshot plus treehash; source and Runtimeguardspreserved. No changedrow body yet. | a704b8fb rowhash |
-| D39 fixture review | Verify complete canonical conflict scenario | Luna | Meaningful corrected scenario PASS | review | Author0747; independent0752 | Conformance18 pluscontract9 pass. Alloriginal error/request assertions retained; canonicalclient bytes unchanged. | 82ca21469d |
+| U2 snapshot row review | Check real service serialization and snapshot | Luna | Corrected staged row | review | Return0747; independent0752 | Exactsource/directparent snapshot plus treehash; source and Runtimeguardspreserved. Independent0752PASS; exact reviewedrowinstalled and meaningful changedrowservice requested. | a704b8fb rowhash |
+| D39 fixture review | Verify complete canonical conflict scenario | Luna | Meaningful corrected scenario PASS | review | Author0747; newauthor0752; review0757 | Review0752 authored extra strict assertions and rename. Its PASS is author evidence; fresh readonly0757 reviews fullcandidate before anymerge. | 82ca21469d |
 | F-farm CSV custody | Restore all96 Farm tuples in CSV | Sol | Second Luna serialization failure | doing | agt-F-farm96-csv-sol-0752 | Only288 losttuplecells; oldFarmtuple and priorproof scopes remain distinct. Full package review follows. | Base856de |
 | F-farm whole path | Audit export to published evidence | Luna | Independent second-failure investigation | doing | agt-F-farm96-whole-path-0752 | Compare passed187packet; no source/body/full or authoroverlap. | Read only |
 
 | U2 final HARD review | Verify effective coverage and classify setup gap | Sol | Completed narrow fixture repair | doing | agt-U2-final-hard-review-0755 | Full reviewedunion retained; no knownbadsetup repeat or custodychange. | Author0745 |
 | U2 live tip | Refresh public upstream freshness before merge | Luna | Existing supported net worker | doing | agt-U2-live-tip-0755 | Single read-only publictip check; no fetch/writes or credentialoutput. | Prior25359 |
+
+| D39 actual independent review | Review full candidate after reviewer authored changes | Luna | Complete2c55 source proposal | doing | agt-D39-final-readonly-review-0757 | Extra strictpath/body assertions require a reviewer who authorednone of thecandidate. No home beforePASS. | 2c55d0ed89 |
+
+| F-count new package review | Validate complete262/5 candidate package | Luna | Complete original and challenge evidence | review | agt-F-count-persistence-review-0759 | Full267membership, allpriorproofs and exact3-node delta; no credituntilPASS. | Five files |
+| F-farm final custody review | Verify all31field CSV/JSON mappings | Luna | Sol384-cell correction complete | review | agt-F-farm96-custody-review-0759 | All96IDs, genuinepriorproofs, source tuples/citations and limited80/1/15classification. | Three files |
 
 P1: GO recorded. P4 and P5 done. G5 merged under H24. App and Proof retain P2/P3 ownership.
 Integration: 3f7e63b0cf adds reviewed persistence fixture848b above the exact d566 harness union. Runtime two-original home0733 and result0736 PASS; exact count mapping0750 active, no credit inferred from merge. Harness integrated0706 remains scoped staticPASS.
