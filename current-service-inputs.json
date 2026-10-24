@@ -1,0 +1,172 @@
+{
+  "recipe_version": 1,
+  "qualified_at": "2026-10-24T13:07:08Z",
+  "status": "qualified_existing_inputs_not_live",
+  "scope": "P2/P3/U4p current normal working-venv service inputs",
+  "policy": {
+    "authority": "PLAN §3 P2/P3/U4p, D59",
+    "qualification": "D59 permits the current integrated heads on existing qualified benches; no future final cut, child receipt, or coordinator permission receipt is required.",
+    "use": "Freeze this tuple during qualification and reject use if any current source ref or reusable artifact hash differs.",
+    "execution": "This recipe performs only readonly origin/version/hash checks. It does not create a realm, start Runtime, open the door, make an HTTP request, invoke a browser, run a native/backend request, install a package, or modify a registry.",
+    "historical_receipts": "Existing child receipts are historical context only and are not relabeled or required for this ordinary working-venv route."
+  },
+  "source": {
+    "app": {
+      "checkout": "/home/user/work/app",
+      "head": "bbed290db3a062fc9282940f580c14cf701cfbf8",
+      "tree": "e68346571bc405e21ed05e037728a60d52885d9b",
+      "parent": "0971c645ba113fab54d1da568550542b94f75e6c"
+    },
+    "agent": {
+      "checkout": "/home/user/work/agent",
+      "head": "cba425b61958f380f25b7bdea83d23c92f627761",
+      "tree": "d19ce2e55ce9f29e18a504fb9c97178764272bbe",
+      "parent": "de2d1aadbec1b9f4bfb76dcc70c62d2f192cb0a5",
+      "remotion_tree": "b01dca9b3b24f54093c20b7c5657316f997725db"
+    },
+    "runtime": {
+      "checkout": "/home/user/work/runtime",
+      "head": "becfe6db88b2cc034dba3fafa6c050117cdf2b06",
+      "tree": "7edc08e3fe94edcbc8ef695c479f4de301789b89",
+      "parent": "46eb068c5adf663270512aca8a4bdd62c1488e6d"
+    }
+  },
+  "interpreters": {
+    "agent": {
+      "path": "/home/user/work/venv-agent/bin/python",
+      "realpath": "/usr/bin/python3.13",
+      "role": "Agent SDK and Python runtime client",
+      "site_packages": "/home/user/work/venv-agent/lib/python3.13/site-packages",
+      "imports": {
+        "astrid": "/home/user/work/agent/astrid/__init__.py",
+        "astrid_runtime_client": "/home/user/work/agent/astrid_runtime_client/__init__.py",
+        "banodoco_timeline_schema": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py",
+        "astrid_runtime": null,
+        "runtime_protocol": null
+      },
+      "distributions": {
+        "astrid": "0.1.0",
+        "banodoco-timeline-schema": "0.0.2"
+      }
+    },
+    "runtime": {
+      "path": "/home/user/work/venv-runtime/bin/python",
+      "realpath": "/usr/bin/python3.13",
+      "role": "Runtime daemon, service, and door",
+      "site_packages": "/home/user/work/venv-runtime/lib/python3.13/site-packages",
+      "imports": {
+        "astrid_runtime": "/home/user/work/runtime/astrid_runtime/__init__.py",
+        "runtime_protocol": "/home/user/work/runtime/runtime_protocol/__init__.py",
+        "astrid": null,
+        "astrid_runtime_client": null,
+        "banodoco_timeline_schema": null
+      },
+      "distributions": {
+        "astrid-runtime": "0.1.0"
+      }
+    },
+    "binding": "The separate import sets are intentional: the supported service route invokes Agent-authoring code with venv-agent and the Runtime daemon with venv-runtime. Cross-importing those roles is not a qualification requirement."
+  },
+  "client_contract": {
+    "contract_version": "0.2.14",
+    "protocol": "workspace.v1",
+    "component_manifest_sha256": "sha256:1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5",
+    "schema_digest": "sha256:4118b1e26d30be43cb1a01649df0065fed6e55a528b8956364df8f4eedb413d2",
+    "files": {
+      "astrid_runtime_client/__init__.py": "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2",
+      "astrid_runtime_client/generated.py": "e3f51c05342088bc34a562e17997cbf8ff8065c3df795da1cb6cd374216b51b7",
+      "astrid_runtime_client/contract_metadata.py": "51e8ce94a7149f6b3160a6e5e66bafe17c7f94cfd3beb6733bbf8abd63125ab6",
+      "astrid_runtime_client/timeline_commit_types.py": "88c67d9eb650b445b8ad04c9011c1f44f1ec5e9f72a4a733050515de7ec0b616"
+    },
+    "source_roots": [
+      "/home/user/work/agent/astrid_runtime_client",
+      "/home/user/work/runtime/packages/python/astrid_runtime_client"
+    ],
+    "runtime_artifacts": {
+      "/home/user/work/runtime/contract/artifacts.json": "2f3d56b6f83834b4529ecb86657e2a5948bce072342bf46f9a2ab983cae369c3",
+      "/home/user/work/runtime/contract/component-manifest.json": "1ad76db27c1d9716bb234f811bf63e1f5898cb3d5f9b835a821765e6cad895e5",
+      "/home/user/work/runtime/contract/schemas/timeline-config.schema.json": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+      "/home/user/work/runtime/runtime_protocol/schemas/timeline-commit-bundle.json": "b6a1550487dad7c83970d88f26ec3e8a74852cf8c57c20f3cd021847a075b39c"
+    }
+  },
+  "remotion": {
+    "bench": "/home/user/work/bench-store/entries/runtime-5ca5c561b7be7069051ac8769432cc1edf29060bed39384cd3c4ecab1736e690",
+    "current_agent_remotion_tree": "b01dca9b3b24f54093c20b7c5657316f997725db",
+    "historical_source_commit_marker": "079580ca46af77e0292d49dc34386b25c8391f99",
+    "historical_marker_note": "The bench marker names the old Agent source commit. It is reusable for this current source only because the current Agent HEAD:remotion tree and all checked package identities match; the old source commit is not relabeled as current.",
+    "package_sha256": "3dbcfbf7f63c084a8e571cba4e584fcd4e53e37aeadc6ece4e74ed8ec279d723",
+    "package_lock_sha256": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+    "component_identity": "22888dcf93bab96b97843b6096ad432610f9aa92e8f9210050f352a435fd66d6",
+    "artifact_integrity": "85f5797cebc22ed6ec7eac88193c05bfca68ce040d2fd17d5b4f55ac9518c8af",
+    "installed_module_origins": "remotion=4.0.509\n@banodoco/timeline-composition=0.0.14",
+    "node_modules_lock_sha256": "7c9bc0496dec4c2b3545086a11614eb4e7cb8421951f5470f58d5c260aa314ae",
+    "node": "v20.19.4",
+    "npm": "10.8.2"
+  },
+  "composition": {
+    "artifact": "/home/user/work/app/vendor/artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz",
+    "artifact_sha256": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+    "qualified_graph": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-P1-local-OPS-1830/private819acf-D19/node_modules",
+    "package": "@banodoco/timeline-composition",
+    "version": "0.0.14",
+    "file_count": 80,
+    "file_map_sha256": "2de838a6299aeeac771d28231321e7b23b4db90d76f472eed94df0eb9e46a556",
+    "identity_note": "The graph is an existing approved read-only input. Its package resolves through dist exports; no package is copied or installed by this recipe."
+  },
+  "registration_and_callers": {
+    "app_harness": {
+      "path": "/home/user/work/app/tests/e2e/local/support/harness.ts",
+      "runtime_python": "runtimePython() uses ASTRID_RUNTIME_PYTHON when executable, otherwise the Runtime checkout .venv/bin/python; the production qualification value is /home/user/work/venv-runtime/bin/python.",
+      "create": "execFileSync(runtimePython(), ['-m','runtime_protocol.cli','create','--root',realmDir,'--display-name','Direct Journey'])",
+      "start": "spawnGroup(interpreter, ['-m','runtime_protocol.cli','start','--root',realmDir,'--support-root',supportDir,'--port',String(port),'--display-name','Direct Journey','--door-origin',origin,'--door-port',String(doorPort),'--door-credential-file',credentialPath,'--door-audit-log',auditPath,'--authoring-profile','astrid'])",
+      "authoring_interpreter": "/home/user/work/venv-agent/bin/python",
+      "source_lines": "runtimePython/create/startRuntime/enableTimelineAuthoring/commitNativeSeed in tests/e2e/local/support/harness.ts"
+    },
+    "runtime_startup": {
+      "daemon": "/home/user/work/runtime/runtime_protocol/daemon.py",
+      "provider": "RuntimeDaemon._load_installed_timeline_commit_provider() then register_timeline_commit_provider(provider) before readiness",
+      "door": "runtime_protocol.door.open_door(config, runtime=service, daemon_runtime=daemon, credentials=credentials, chat_file=support_root / CHAT_FILE_NAME)",
+      "door_source": "/home/user/work/runtime/runtime_protocol/door.py:431",
+      "service_registration": "/home/user/work/runtime/runtime_protocol/service.py:2377",
+      "profile": "astrid"
+    },
+    "app_data_provider": {
+      "path": "/home/user/work/app/src/integrations/runtime/dataProvider.ts",
+      "constructor": "new RuntimeDataProvider({ projectId, baseUrl, token, transport })",
+      "client": "options.runtimeClient ?? new AstridRuntimeClient({ baseUrl, token, transport })",
+      "client_path": "/home/user/work/app/src/integrations/runtime/client.ts"
+    },
+    "agent_seed_callable": {
+      "interpreter": "/home/user/work/venv-agent/bin/python",
+      "import": "from astrid.sdk.client import AstridClient",
+      "open": "AstridClient.open(endpoint, credential, realm_id, actor_id, client_name, client_version, protocol_version='workspace.v1')",
+      "commit": "client.timelines.commit(project_id, timeline_id, body, idempotency_key=...)"
+    }
+  },
+  "wire_shapes": {
+    "request": {
+      "required": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps", "merge", "reads", "dry_run", "source"],
+      "optional": ["rationale", "group_id"],
+      "command_required": ["schema_version", "op", "version", "select", "args"],
+      "command_optional": ["resolved", "expect", "bindings", "created", "authorship", "reads", "selections", "intent", "rationale", "group_id"],
+      "step_required": ["id", "label", "intent", "tags", "command_ordinals", "patch"],
+      "step_optional": ["reads"],
+      "metadata": ["source", "rationale", "group_id", "label", "intent", "tags"],
+      "idempotency": "The idempotency key is the caller-provided request header/key and is preserved in the authoritative receipt; it is not added to or removed from the body.",
+      "merge": ["fields", "atomic"]
+    },
+    "authoritative_reply": {
+      "envelope": ["data", "receipt"],
+      "data": ["status", "base_revision_id", "base_publication_id", "previous_revision_id", "previous_publication_id", "accepted_revision_id", "rebased_onto", "canonical_document", "document_digest", "commands", "id_map", "provider_version", "compiler_version", "merge_mode", "steps", "publisher", "source", "label", "rationale", "group_id"],
+      "canonical_document": ["schema_version", "project_id", "timeline_id", "parent_revision", "shot_revisions", "internal_timeline_revisions", "dependency_manifest"],
+      "dependency_manifest": ["shots", "internal_timelines", "media", "documents"],
+      "receipt": ["receipt_id", "command_kind", "idempotency_key", "request_hash", "project_id", "project_seq", "event_ids", "result", "created_at"],
+      "history_entry": ["publication_id", "revision_id", "previous", "receipt", "intent", "records", "provider_version", "compiler_version", "merge", "merge_mode", "reads", "steps", "publisher", "source", "label", "rationale", "group_id"],
+      "history_records": ["schema_version", "commands", "steps", "label", "merge_mode", "undo_of", "restored_from", "undo_steps"],
+      "preview": ["status", "would_status", "base_revision_id", "base_publication_id", "evaluated_head", "canonical_document", "document_digest", "commands", "id_map", "provider_version", "compiler_version", "merge_mode", "steps"],
+      "conflict": ["http_status", "code", "message", "details.kind", "details.reason", "details.base", "details.current", "details.conflicts"],
+      "invalid": ["http_status", "code", "message", "details.reason", "details.path", "details.hint", "details.suggested_command"],
+      "inverse": "Undo is a new full-v2 request with command {schema_version:1, op:'timeline.inverse', version:'1', select:null, args:{publications:[...], steps?:{publication_id:[step_id,...]}}}, merge=fields, and no reads. Its accepted result uses the same {data,receipt} envelope and authoritative canonical_document/document_digest/id_map/commands/steps/provider_version/compiler_version/previous and accepted head fields; history retains the original entries and records undo_of/restored_from/undo_steps."
+    }
+  }
+}

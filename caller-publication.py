@@ -75,6 +75,24 @@ if _DRY_PREFLIGHT_SPEC is None or _DRY_PREFLIGHT_SPEC.loader is None:
 _DRY_PREFLIGHT = importlib.util.module_from_spec(_DRY_PREFLIGHT_SPEC)
 _DRY_PREFLIGHT_SPEC.loader.exec_module(_DRY_PREFLIGHT)
 
+
+def _local_module(filename: str, name: str) -> Any:
+    spec = importlib.util.spec_from_file_location(name, ARTIFACT / filename)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"PREPARED: {filename} is unavailable")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+# These modules are the independently qualified normal working-service route.
+# Loading them here keeps the production caller's construction path identical
+# to the offline controls while leaving all execution stages in the retained
+# suite rows untouched.
+_WORKING_BINDING = _local_module("working-service-binding.py", "working_service_binding")
+_SERVICE_CONTROL = _local_module("working-service-binding-control.py", "working_service_binding_control")
+_SERVICE_RECIPE = _local_module("current-service-inputs.py", "current_service_inputs")
+
 P2_SUITE = "full-e2e-three-products"
 P3_SUITE = "ap2-P3-gate5-h6-0348"
 CUSTODY_PREFIX = (
@@ -597,6 +615,15 @@ def render_bindings(template: str, edits: list[tuple[int, int, str]]) -> str:
     return "".join(parts) + template[end:]
 
 
+def bind_runtime_launches(text: str, name: str) -> str:
+    """Route Runtime launches through the adapter's distinct interpreter."""
+
+    literal = 'ASTRID_RUNTIME_PYTHON="$CPY"'
+    expected = 2 if name == P2_SUITE else 3
+    require(text.count(literal) == expected, f"{name} Runtime launch binding inventory changed")
+    return text.replace(literal, 'ASTRID_RUNTIME_PYTHON="$RCPY"')
+
+
 def compare_bindings(template: str, candidate: str, edits: list[tuple[int, int, str]], label: str) -> None:
     """Compare every unchanged span and each exact authenticated replacement."""
     require(len(candidate) == len(template) + sum(len(value) - (stop - start) for start, stop, value in edits),
@@ -619,7 +646,7 @@ def native_stage(body: str) -> str:
     return matches[0].group(0)
 
 
-def authenticate_candidate(name: str, row: str, outer: str, body: str) -> dict[str, Any]:
+def authenticate_candidate(name: str, row: str, outer: str, body: str, *, environment: dict[str, Any] | None = None) -> dict[str, Any]:
     require(sha256(row.encode()) == APPROVED_ROWS[name][0], f"unapproved original row: {name}")
     original_outer, original, tail = extract_row(row)
     candidate_outer, decoded, candidate_tail = extract_row(f"app {name} {outer}\n")
@@ -629,7 +656,25 @@ def authenticate_candidate(name: str, row: str, outer: str, body: str) -> dict[s
     require(body.startswith(CUSTODY_PREFIX), f"{name} missing bounded environment guard")
     body_edits = binding_edits(name, original)
     tail_edits = binding_edits(name, tail, tail=True)
-    compare_bindings(original, body[len(CUSTODY_PREFIX):], body_edits, name + " body")
+    joined = body[len(CUSTODY_PREFIX):]
+    if environment is None:
+        compare_bindings(original, joined, body_edits, name + " body")
+    else:
+        stage = "2" if name == P2_SUITE else "3"
+        start, end = _WORKING_BINDING._region(original, stage)
+        expected = bind_runtime_launches(render_bindings(original, body_edits), name)
+        replacement = environment.get("joined_environment_region")
+        if replacement is None:
+            replacement = environment["body"][start:start + environment["environment_region_bytes"]]
+        marker = f'if test -n "$P{stage}FAIL"; then'
+        expected_start = expected.find("STORE_ROOT=")
+        expected_end = expected.find(marker, expected_start)
+        require(expected_start >= 0 and expected_end - expected_start == end - start,
+                f"{name} authenticated environment boundary moved")
+        expected = expected[:expected_start] + replacement + expected[expected_end:]
+        require(joined == expected, f"{name} joined source/environment bindings changed")
+        require(environment["launch_bindings"] == {"Agent": "CPY", "Runtime": "RCPY"},
+                f"{name} launch binding contract changed")
     compare_bindings(tail, candidate_tail, tail_edits, name + " tail")
     original_native, candidate_native = native_stage(original), native_stage(body)
     require(sha256(original_native.encode()) == NATIVE_SHA256 and candidate_native == original_native,
@@ -650,6 +695,69 @@ def rebind(name: str, body: str) -> tuple[str, dict[str, str]]:
 
 def refresh_wrapper_bindings(name: str, tail: str) -> str:
     return render_bindings(tail, binding_edits(name, tail, tail=True))
+
+
+def normal_service_facts(source: dict[str, Any], agent: dict[str, Any], runtime: dict[str, Any]) -> tuple[dict[str, Any], dict[str, str], dict[str, Any]]:
+    """Read and authenticate the actual normal working-service inputs."""
+
+    recipe = _SERVICE_CONTROL.recipe()
+    for name, facts_value in (("app", source), ("agent", agent), ("runtime", runtime)):
+        expected = recipe["source"][name]
+        require(expected["checkout"] == facts_value["checkout"], f"normal recipe checkout mismatch: {name}")
+        require(expected["ref"] == NORMAL_REF, f"normal recipe ref mismatch: {name}")
+        require(expected["head"] == facts_value["source"], f"normal recipe head mismatch: {name}")
+        require(expected["tree"] == facts_value["tree"], f"normal recipe tree mismatch: {name}")
+        require(tuple(expected["parents"]) == tuple(facts_value["parents"]), f"normal recipe parents mismatch: {name}")
+
+    probes = {
+        "agent": _SERVICE_RECIPE.check_probe(
+            recipe,
+            "agent",
+            ["astrid", "astrid_runtime_client", "banodoco_timeline_schema", "astrid_runtime", "runtime_protocol"],
+            ["astrid", "banodoco-timeline-schema"],
+        ),
+        "runtime": _SERVICE_RECIPE.check_probe(
+            recipe,
+            "runtime",
+            ["astrid_runtime", "runtime_protocol", "astrid", "astrid_runtime_client", "banodoco_timeline_schema"],
+            ["astrid-runtime"],
+        ),
+    }
+    checks = {
+        "probes": probes,
+        "client": _SERVICE_RECIPE.check_client(recipe),
+        "remotion": _SERVICE_RECIPE.check_remotion(recipe),
+        "composition": _SERVICE_RECIPE.check_graph(recipe),
+    }
+    bindings = _WORKING_BINDING.authenticated_bindings(recipe)
+    return recipe, bindings, checks
+
+
+def join_environment(name: str, template: str, stage: str, recipe: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    """Join the reviewed environment block to the source-bound candidate."""
+
+    adapted = _WORKING_BINDING.adapt_environment_block(template, stage=stage, recipe=recipe)
+    edits = binding_edits(name, template)
+    rendered = bind_runtime_launches(render_bindings(template, edits), name)
+    start, end = _WORKING_BINDING._region(template, stage)
+    marker = f'if test -n "$P{stage}FAIL"; then'
+    rendered_start = rendered.find("STORE_ROOT=")
+    rendered_end = rendered.find(marker, rendered_start)
+    require(rendered_start >= 0 and rendered_end - rendered_start == end - start,
+            f"{name} source binding moved the environment boundary")
+    replacement = adapted["body"][start:start + adapted["environment_region_bytes"]]
+    region = template[start:end]
+    encoded_end = region.find('; if test "$STORE_STATUS"')
+    require(encoded_end > 0 and region.count("STORE_INFO=$(python3 -c") == 1,
+            f"{name} encoded custody boundary changed")
+    encoded_prefix = region[:encoded_end]
+    joined_replacement = encoded_prefix + "; " + replacement
+    adapted["joined_environment_region"] = joined_replacement
+    adapted["joined_environment_region_sha256"] = sha256(joined_replacement.encode())
+    candidate = CUSTODY_PREFIX + rendered[:rendered_start] + joined_replacement + rendered[rendered_end:]
+    require('ASTRID_AGENT_PYTHON="$CPY"' in candidate, f"{name} Agent interpreter binding was not consumed")
+    require('ASTRID_RUNTIME_PYTHON="$RCPY"' in candidate, f"{name} Runtime interpreter binding was not consumed")
+    return candidate, adapted
 
 
 def syntax_check(outer: str, body: str, directory: Path, label: str) -> dict[str, Any]:
@@ -688,7 +796,7 @@ def wrapper_check(outer: str, body: str, label: str) -> dict[str, Any]:
         f'test "$TIMELINE_BUNDLE_RUNTIME_HEAD" = "${prefix}R"',
         f'test "$ASTRID_CHECKOUT" = "${prefix}AG"',
         f'test "$ASTRID_RUNTIME_CHECKOUT" = "${prefix}RT"',
-        'test "$ASTRID_PYTHON" = "$CPY" && test "$ASTRID_RUNTIME_PYTHON" = "$CPY"',
+        'test "$ASTRID_PYTHON" = "$CPY" && test "$ASTRID_RUNTIME_PYTHON" = "$RCPY"',
         'test "${PLAYWRIGHT_OUTPUT_DIR+x}" = x',
         'printf "%s\\n" wrapper-argv-export-PASS',
     ])
@@ -708,12 +816,13 @@ def wrapper_check(outer: str, body: str, label: str) -> dict[str, Any]:
 
 
 def custody_requirements() -> list[dict[str, str]]:
-    # These are facts used by the retained template route, not permission gates
-    # on the ordinary working-venv recipe owned by service-input task 1304.
+    # These are facts used by the retained template route.  The normal recipe
+    # and working-service adapter authenticate them before candidate creation;
+    # they are not a live-service or readiness claim.
     return [
-        {"name": "caller_environment", "status": "UNVERIFIED",
-         "required": "Authenticate actual interpreter/import/backend/Remotion/graph inputs for the supported route; historical child registrations do not authenticate the current tuple.",
-         "owner": "current normal existing-service recipe 1304; inventory 1257"},
+        {"name": "caller_environment", "status": "AUTHENTICATED",
+         "required": "Current refs, all parents, interpreter/import origins, Runtime client/artifact mappings, Remotion, and Composition graph must match the normal recipe.",
+         "owner": "current-service-inputs.py/json and working-service-binding.py"},
     ]
 
 
@@ -872,6 +981,7 @@ def prepare() -> dict[str, Any]:
     agent = facts(AGENT, label="Agent")
     runtime = facts(RUNTIME, label="Runtime")
     freeze_tuple(source, agent, runtime)
+    service_recipe, service_bindings, service_checks = normal_service_facts(source, agent, runtime)
     registry, rows = installed_rows()
     tmp = Path(tempfile.mkdtemp(prefix="timeline-final-tuple-", dir=os.environ.get("TMPDIR", "/tmp")))
     candidates: dict[str, Any] = {}
@@ -879,7 +989,12 @@ def prepare() -> dict[str, Any]:
     # Execute both bounded source phases before deeper binding/wrapper checks.
     for name in (P2_SUITE, P3_SUITE):
         outer, body, suffix = extract_row(rows[name])
-        rebound, old = rebind(name, body)
+        rebound, environment = join_environment(
+            name,
+            body,
+            "2" if name == P2_SUITE else "3",
+            service_recipe,
+        )
         dry = _DRY_PREFLIGHT.dry_source_preflight(
             rebound,
             app=source,
@@ -893,10 +1008,10 @@ def prepare() -> dict[str, Any]:
             + shlex.quote(rebound)
             + refresh_wrapper_bindings(name, suffix)
         )
-        prepared[name] = candidate_outer, rebound, old, dry
+        prepared[name] = candidate_outer, rebound, environment, dry
     wire = wire_inventory()
-    for name, (candidate_outer, rebound, old, dry) in prepared.items():
-        preservation = authenticate_candidate(name, rows[name], candidate_outer, rebound)
+    for name, (candidate_outer, rebound, environment, dry) in prepared.items():
+        preservation = authenticate_candidate(name, rows[name], candidate_outer, rebound, environment=environment)
         syntax = syntax_check(candidate_outer, rebound, tmp, name)
         candidates[name] = {
             "source_row_sha256": registry["rows"][name]["sha256"],
@@ -925,6 +1040,17 @@ def prepare() -> dict[str, Any]:
         "agent": agent,
         "runtime": runtime,
         "bindings": bindings,
+        "service_recipe": {
+            "status": service_recipe["status"],
+            "source": service_recipe["source"],
+            "environment": service_recipe["environment"],
+            "interpreters": service_recipe["interpreters"],
+            "client_contract": service_recipe["client_contract"],
+            "remotion": service_recipe["remotion"],
+            "composition": service_recipe["composition"],
+            "checks": service_checks,
+        },
+        "service_bindings": service_bindings,
         "source_bindings": dict(SOURCE_BINDINGS),
         "registry": registry,
         "candidates": candidates,
@@ -938,8 +1064,8 @@ def prepare() -> dict[str, Any]:
         },
         "wire_fields": wire,
         "required_custody": custody,
-        "readiness": {"status": "SOURCE_PREPARED_ENVIRONMENT_UNVERIFIED", "owner": "normal existing-service recipe 1304",
-                      "reason": "This dry artifact does not authenticate or execute the supported live environment; no additional approval handshake is required.",
+        "readiness": {"status": "SOURCE_PREPARED_ENVIRONMENT_AUTHENTICATED", "owner": "normal existing-service recipe 1304",
+                      "reason": "The actual normal working-service inputs are authenticated read-only; this artifact does not start or execute the service.",
                       "prior_refusals": "STOPPED; no alternate acquisition, new child/schema, install, preload, overlay, or historical receipt relabel"},
         "post_request_checks": ["authenticate the actual service snapshot against the frozen source/tree/parents/target/bindings", "retain the full terminal run result; it is evidence after execution"],
         "full_run": {
@@ -962,7 +1088,7 @@ def main() -> int:
     args = parser.parse_args()
     try:
         return negative(args.negative) if args.negative else (prepare() and 0)
-    except (PreparedError, _DRY_PREFLIGHT.DryPreflightError) as exc:
+    except (PreparedError, _DRY_PREFLIGHT.DryPreflightError, _WORKING_BINDING.BindingError) as exc:
         print(str(exc), file=os.sys.stderr)
         return 2
 
