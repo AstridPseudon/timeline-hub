@@ -267,14 +267,13 @@ describe('AgentChatMenu attach and empty states', () => {
     expect(screen.getByRole('button', { name: /Attach an existing chat/ })).toBeInTheDocument();
   });
 
-  it('shows the Main star on the trigger when the open chat is Main, and not otherwise', () => {
-    const { rerender } = renderMenu({ sessions: sessionsTwo, activeSessionId: 'one', mainSessionId: 'one' });
+  it('keeps the trigger a flat title: the Main star lives in the rows, never on the trigger', () => {
+    renderMenu({ sessions: sessionsTwo, activeSessionId: 'one', mainSessionId: 'one' });
     const trigger = screen.getByRole('button', { name: 'Chat: Planning' });
-    expect(within(trigger).getByRole('img', { name: 'Main chat' })).toBeInTheDocument();
+    expect(within(trigger).queryByRole('img', { name: 'Main chat' })).toBeNull();
     expect(trigger).toHaveTextContent('Planning');
-    rerender({ activeSessionId: 'two' });
-    const other = screen.getByRole('button', { name: 'Chat: Chat 2' });
-    expect(other).toHaveTextContent('Chat 2');
-    expect(within(other).queryByRole('img', { name: 'Main chat' })).toBeNull();
+    expect(trigger).not.toHaveClass('border');
+    expect(trigger).not.toHaveClass('backdrop-blur-md');
+    expect(trigger).toHaveClass('h-7', 'font-medium');
   });
 });

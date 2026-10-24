@@ -975,7 +975,7 @@ function AvailableAgentChatPanel({
             onOpenChange={(open) => setHeaderOverlayOpen('model', open)}
           />
         </div>
-        <div className="flex shrink-0 items-center gap-1 self-start">
+        <div className="flex h-7 shrink-0 items-center gap-1 self-start">
           <NewChatMenu
             ref={chatMenuRef}
             current={activeSessionId && !startingAgent ? {

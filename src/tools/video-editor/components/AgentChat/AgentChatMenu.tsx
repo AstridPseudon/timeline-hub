@@ -67,8 +67,8 @@ export function AgentChatMenu({
   return (
     <>
       <PickerMenu open={open} onOpenChange={changeOpen} plural="chats" ariaLabel="Chats" currentValue={activeSession ? `session:${activeSession.id}` : undefined}
-        count={sessions.length} emptyHint="Use + to start one."
-        trigger={<PickerTrigger label={triggerLabel} aria-label={`Chat: ${triggerLabel}`} title="Switch chats" disabled={disabled} className="max-w-full" starLabel={openChat && openChat.id === mainSessionId ? 'Main chat' : undefined} />}
+        count={sessions.length} panelClassName="w-64 max-w-[calc(100vw-2rem)] p-0" emptyHint="Use + to start one."
+        trigger={<PickerTrigger label={triggerLabel} aria-label={`Chat: ${triggerLabel}`} title="Switch chats" disabled={disabled} variant="title" className="max-w-full" />}
         footer={attachExisting && (
           <PickerFooterAction icon={Paperclip} onClick={() => { changeOpen(false); attachExisting.toggle(); }}>
             {attachExisting.open ? 'Hide existing chats' : 'Attach an existing chat…'}

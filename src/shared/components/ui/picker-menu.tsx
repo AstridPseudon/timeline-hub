@@ -35,6 +35,15 @@ const CHIP = cn(
   COARSE_TOUCH_TARGET,
 );
 
+// The flat variant: just the name and a chevron, neutral hover/open fill, for a header that has no other boxed element.
+const TITLE = cn(
+  'flex h-7 min-w-0 items-center gap-1 rounded-md px-1.5 text-sm font-medium text-foreground transition-colors',
+  'hover:bg-muted/60 aria-expanded:bg-muted/60',
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+  'disabled:pointer-events-none disabled:opacity-50',
+  COARSE_TOUCH_TARGET,
+);
+
 /** The starred item's mark (Primary timeline, Main chat): a filled accent star, labelled for assistive tech. */
 function StarMark({ label, className }: { label: string; className?: string }) {
   return (
@@ -49,16 +58,18 @@ interface PickerTriggerProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   label: string | null;
   /** Screen-reader text for the loading bar. */
   loadingLabel?: string;
-  /** Names the star shown before the label when the current item is the starred one. */
+  /** Names the star shown before the label when the current item is the starred one (chip variant). */
   starLabel?: string;
+  /** `chip` (default): a bordered card for top bars. `title`: a flat name for a header of bare controls; it shows no star. */
+  variant?: 'chip' | 'title';
 }
 
 /** The chip that opens a picker: the current value, then a chevron. */
 export const PickerTrigger = forwardRef<HTMLButtonElement, PickerTriggerProps>(function PickerTrigger(
-  { label, loadingLabel = 'Loading', starLabel, className, ...props }, ref,
+  { label, loadingLabel = 'Loading', starLabel, variant = 'chip', className, ...props }, ref,
 ) {
   return (
-    <button ref={ref} type="button" className={cn(CHIP, 'max-w-64 min-h-8', className)} {...props}>
+    <button ref={ref} type="button" className={cn(variant === 'title' ? TITLE : CHIP, 'max-w-64', variant === 'chip' && 'min-h-8', className)} {...props}>
       {label === null ? (
         <>
           {/* The Skeleton primitive's look, as a span: buttons hold phrasing content only. */}
@@ -67,7 +78,7 @@ export const PickerTrigger = forwardRef<HTMLButtonElement, PickerTriggerProps>(f
         </>
       ) : (
         <>
-          {starLabel && <StarMark label={starLabel} />}
+          {variant === 'chip' && starLabel && <StarMark label={starLabel} />}
           <span className="truncate">{label}</span>
         </>
       )}
@@ -98,6 +109,8 @@ interface PickerMenuProps {
   onRetry?: () => void;
   /** A line under "No <plural> yet." */
   emptyHint?: string;
+  /** The panel's classes; the default is the wide one. */
+  panelClassName?: string;
   /** A `PickerFooterAction`, pinned under the list. */
   footer?: ReactNode;
   /** The `PickerRow`s. */
@@ -105,7 +118,7 @@ interface PickerMenuProps {
 }
 
 /** A popover with a searchable, looping list that opens on the current row. */
-export function PickerMenu({ open, onOpenChange, trigger, plural, ariaLabel, currentValue, count, loading = false, error, onRetry, emptyHint, footer, children }: PickerMenuProps) {
+export function PickerMenu({ open, onOpenChange, trigger, plural, ariaLabel, currentValue, count, loading = false, error, onRetry, emptyHint, footer, panelClassName = PICKER_PANEL, children }: PickerMenuProps) {
   const [highlighted, setHighlighted] = useState(currentValue ?? '');
   const root = useRef<HTMLDivElement>(null);
   const search = useRef<HTMLInputElement>(null);
@@ -117,7 +130,7 @@ export function PickerMenu({ open, onOpenChange, trigger, plural, ariaLabel, cur
     <Popover open={open} onOpenChange={changeOpen}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
       {/* Focus the search, except on touch, where it would raise the keyboard. */}
-      <PopoverContent align="start" aria-label={ariaLabel} className={PICKER_PANEL}
+      <PopoverContent align="start" aria-label={ariaLabel} className={panelClassName}
         initialFocus={(type) => (type === 'touch' ? null : search.current) ?? root.current}>
         <Command ref={root} loop value={highlighted} onValueChange={setHighlighted} className="outline-none"
           filter={(_value, text, keywords) => matches(text, (keywords ?? []).join(' ')) ? 1 : 0}>
@@ -182,15 +195,14 @@ export function PickerRow({
   return (
     <CommandItem value={value} keywords={keywords} aria-current={current ? 'true' : undefined} data-current={current || undefined}
       className={cn(
-        'group gap-2 py-1.5 pr-1.5 [@media(pointer:coarse)]:min-h-11',
-        'data-[current=true]:bg-muted data-[current=true]:font-medium data-[current=true]:data-[selected=true]:bg-accent',
+        'group gap-2 py-1 pr-1.5 data-[current=true]:font-medium [@media(pointer:coarse)]:min-h-11',
       )}
       onSelect={onSelect}>
       <Check className={cn('h-4 w-4 shrink-0', current ? 'opacity-100' : 'opacity-0')} aria-hidden="true" />
       <span className="flex min-w-0 flex-1 flex-col">
-        <span title={title} className="min-w-0 truncate">{title}</span>
+        <span title={title} className="min-w-0 truncate text-sm leading-[18px]">{title}</span>
         {detail && (
-          <span className="flex min-w-0 items-center gap-1 text-[11px] font-normal leading-4 text-muted-foreground" title={detailTitle}>
+          <span className="flex min-w-0 items-center gap-1 text-xs font-normal leading-4 text-muted-foreground" title={detailTitle}>
             {detailIcon}
             <span className="truncate">{detail}</span>
           </span>
