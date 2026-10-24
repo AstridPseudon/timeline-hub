@@ -3,22 +3,133 @@
 from __future__ import annotations
 
 import hashlib
+import importlib
+import importlib.metadata
 import json
 import pickle
+import sys
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
+from urllib.parse import unquote, urlparse
 
 RUNTIME_F320 = "f3208b26b53c4d7053e5464eaa7c5e15b1505812"
+_RUNTIME_FIXTURE_DIGESTS = {
+    "test_external_pack_sources": "613b466d815770c327a1b761763d412891fd649369cf3bf3f0e7a280b6ece8e7",
+    "test_verified_host_launch": "10beeb007a360e04a266fe767ec8da6df9f120185855c2d528fde69c93d32870",
+    "test_remote_worker_activation": "d70aef6df8cfac43045ed99b0dc51d325a8812c563b0b738a4fc08d3b5f3d459",
+    "http_helpers": "0eebd43493e1d66eeb9d6aabc741de6e47cd582df62a9b7fd3f789d3784ea3b9",
+    "astrid_checkout": "68a9352f2b3bb101459aee6b996135e05f758e8bd12c6da8fb4e498cdf0485e7",
+}
+
+
+def _installed_runtime_root() -> Path | None:
+    """Return the retained Runtime source snapshot for an installed child only."""
+    import astrid
+
+    runtime_module = sys.modules.get("runtime_protocol")
+    if runtime_module is None and Path(astrid.__file__).resolve().parents[1].name not in {
+        "site-packages",
+        "dist-packages",
+    }:
+        return None
+    if runtime_module is None:
+        runtime_module = importlib.import_module("runtime_protocol")
+    runtime_origin = runtime_module.__file__
+    if not isinstance(runtime_origin, str) or not runtime_origin:
+        raise AssertionError("runtime_protocol has no source origin")
+    installed_root = Path(runtime_origin).resolve().parents[1]
+    if installed_root.name not in {"site-packages", "dist-packages"}:
+        return None
+
+    import astrid_runtime
+    import runtime_protocol
+    import runtime_protocol.platform
+
+    import astrid_runtime_client
+    from astrid.core.source_identity import installed_runtime_origins
+
+    expected = installed_runtime_origins(installed_root)
+
+    actual = {
+        "astrid": Path(astrid.__file__).resolve(),
+        "astrid_runtime": Path(astrid_runtime.__file__).resolve(),
+        "astrid_runtime_client": Path(astrid_runtime_client.__file__).resolve(),
+        "runtime_protocol": Path(runtime_protocol.__file__).resolve(),
+        "runtime_protocol.platform": Path(runtime_protocol.platform.__file__).resolve(),
+    }
+    expected = {name: str(path) for name, path in expected.items()}
+    expected.update({
+        "astrid": str(installed_root / "astrid" / "__init__.py"),
+        "astrid_runtime_client": str(installed_root / "astrid_runtime_client" / "__init__.py"),
+    })
+    if {name: str(path) for name, path in actual.items()} != expected:
+        raise AssertionError(f"installed production origins changed: {actual!r} != {expected!r}")
+
+    metadata = importlib.metadata.distribution("astrid-runtime").read_text("direct_url.json")
+    if not metadata:
+        raise AssertionError("installed Runtime direct_url metadata is missing")
+    direct_url = json.loads(metadata)
+    if direct_url.get("dir_info") != {} or direct_url.get("url", "").startswith("file://") is False:
+        raise AssertionError("installed Runtime source is not a retained directory snapshot")
+    source_root = Path(unquote(urlparse(direct_url["url"]).path)).resolve()
+    if source_root.name != "runtime" or not source_root.is_dir():
+        raise AssertionError(f"installed Runtime source snapshot is invalid: {source_root}")
+    marker = source_root.parent.parent / ".astrid-runtime-source-commit"
+    if not marker.is_file() or marker.read_text(encoding="utf-8").strip() != RUNTIME_F320:
+        raise AssertionError("installed Runtime source snapshot is not the authenticated f320 checkout")
+    return source_root
 
 
 def _runtime_fixture(name: str) -> Any:
-    from tests.core.execution.test_runtime_source_custody_d40 import (
-        _runtime_fixture as load_fixture,
-    )
+    source_root = _installed_runtime_root()
+    if source_root is None:
+        from tests.core.execution.test_runtime_source_custody_d40 import (
+            _runtime_fixture as load_fixture,
+        )
 
-    return load_fixture(name)
+        return load_fixture(name)
+
+    expected_digest = _RUNTIME_FIXTURE_DIGESTS.get(name)
+    if expected_digest is None:
+        raise AssertionError(f"unapproved Runtime fixture requested: {name}")
+    tests_root = source_root / "tests"
+    path = tests_root / f"{name}.py"
+    if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != expected_digest:
+        raise AssertionError(f"Runtime fixture bytes are not the authenticated f320 fixture: {path}")
+    for dependency in ("http_helpers", "astrid_checkout"):
+        dependency_path = tests_root / f"{dependency}.py"
+        if (not dependency_path.is_file()
+                or hashlib.sha256(dependency_path.read_bytes()).hexdigest()
+                != _RUNTIME_FIXTURE_DIGESTS[dependency]):
+            raise AssertionError(f"Runtime fixture dependency is not the authenticated f320 fixture: {dependency_path}")
+
+    import tests
+
+    runtime_tests = str(tests_root)
+    if runtime_tests not in tests.__path__:
+        tests.__path__.insert(0, runtime_tests)
+    for dependency in _RUNTIME_FIXTURE_DIGESTS:
+        dependency_module = sys.modules.get(f"tests.{dependency}")
+        if dependency_module is not None:
+            dependency_origin = dependency_module.__file__
+            if not isinstance(dependency_origin, str) or not dependency_origin:
+                raise AssertionError(f"Runtime fixture dependency has no source origin: {dependency}")
+            if Path(dependency_origin).resolve() != tests_root / f"{dependency}.py":
+                raise AssertionError(
+                    f"Runtime fixture dependency imported from an unexpected path: {dependency_origin}"
+                )
+    module_name = f"tests.{name}"
+    module = sys.modules.get(module_name)
+    if module is None:
+        module = importlib.import_module(module_name)
+    module_origin = module.__file__
+    if not isinstance(module_origin, str) or not module_origin:
+        raise AssertionError(f"Runtime fixture has no source origin: {module_name}")
+    if Path(module_origin).resolve() != path:
+        raise AssertionError(f"Runtime fixture imported from an unexpected path: {module_origin}")
+    return module
 
 
 def _orchestrator_digest(pack_root: Path) -> str:
@@ -47,9 +158,11 @@ def admit_external_orchestrator_source(
     *, tmp_path: Path, monkeypatch: Any, pack_root: Path
 ) -> SimpleNamespace:
     """Install one genuine owner-captured source handle before host discovery."""
-    from tests.helpers.runtime import use_runtime
+    installed_root = _installed_runtime_root()
+    if installed_root is None:
+        from tests.helpers.runtime import use_runtime
 
-    use_runtime(RUNTIME_F320)
+        use_runtime(RUNTIME_F320)
     from runtime_protocol import external_pack_sources as producer
     from runtime_protocol import verified_host_launch as gate
     from runtime_protocol.service import RuntimeService
@@ -125,6 +238,9 @@ def admit_external_orchestrator_source(
         custody.bind(preparation)
     finally:
         service.close()
+    if installed_root is not None:
+        if _installed_runtime_root() != installed_root:
+            raise AssertionError("installed production origins changed during Runtime fixture setup")
     return SimpleNamespace(
         capture=capture,
         custody=custody,
