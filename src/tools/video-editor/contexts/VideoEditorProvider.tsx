@@ -27,6 +27,9 @@ import { useAstridShotsHost } from '@/tools/video-editor/adapters/app/useAstridS
 import { playedShotComposition } from '@/tools/video-editor/lib/timeline-shot-summaries.ts';
 import type { PreparedShotComposition } from '@/tools/video-editor/data/shotCompositionAdapter.ts';
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
+import type { RuntimeDataProvider } from '@/integrations/runtime/dataProvider.ts';
+import type { MediaSelection } from '@/integrations/runtime/timeline-commit-types.ts';
+import { createTimelineCommands } from '@/tools/video-editor/hooks/useTimelineCommandsService.ts';
 import type { TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
 import {
   VideoEditorRuntimeProvider,
@@ -86,7 +89,6 @@ import { useRenderDiagnostic } from '@/tools/video-editor/hooks/usePerfDiagnosti
 import { createProposalPersistenceBridge, type ProposalPersistenceProvider } from '@/tools/video-editor/lib/proposal-runtime.ts';
 import type { ProcessManager } from '@/tools/video-editor/runtime/processes/ProcessManager.ts';
 import type { SaveStatus } from '@/tools/video-editor/hooks/useTimelinePersistence.ts';
-import type { OccurrenceAddMediaCapturePort } from '@/tools/video-editor/commands/commitSession.ts';
 import { publishLocalTestExtensionDiagnostics } from '@/app/localTestRuntime.ts';
 import {
   withCanonicalShotDraftLock,
@@ -223,8 +225,8 @@ function LocalTestDiagnosticsBridge({ collection }: { collection?: DiagnosticCol
 
 /** Registers video-editor state into the app-level AgentChatContext and keeps
  *  timeline attachment metadata synchronized in the selection store. */
-function AgentChatBridgeRegistration({ operationsEnabled = true }: { operationsEnabled?: boolean }) {
-  const { timelineId, timelineName, project, provider, agentChat, liveSceneOperationPort, agentSelectionOwner, astridElementHost, timelineEditability, userId, shots } = useVideoEditorRuntime();
+function AgentChatBridgeRegistration({ operationsEnabled = true, elementTimelineRoutes }: { operationsEnabled?: boolean; elementTimelineRoutes?: import('../runtime/element-adapter.ts').ElementTimelineRoutes }) {
+  const { timelineId, timelineName, project, agentChat, liveSceneOperationPort, agentSelectionOwner, astridElementHost, timelineEditability, userId, shots } = useVideoEditorRuntime();
   const { registerTimeline, unregisterTimeline } = agentChat;
   const operationAuthority = useRef({ active: true, operationsEnabled, timelineEditability });
   operationAuthority.current.operationsEnabled = operationsEnabled;
@@ -303,7 +305,7 @@ function AgentChatBridgeRegistration({ operationsEnabled = true }: { operationsE
   // Catalog/selection updates must not replace the authority's private draft
   // registry while an ACP turn is still using this adapter.
   const ownedElementAdapter = useMemo(() => {
-    if (!project.projectSlug || !timelineId) return undefined;
+    if (!project.projectSlug || !timelineId || !elementTimelineRoutes) return undefined;
     const assertAuthority = () => {
       const authority = operationAuthority.current;
       if (!authority.active) {
@@ -319,13 +321,13 @@ function AgentChatBridgeRegistration({ operationsEnabled = true }: { operationsE
     };
     return new AstridElementOperationAdapter(
       elementContext,
-      createElementTimelineRoutes(provider, assertAuthority),
+      createElementTimelineRoutes(elementTimelineRoutes, assertAuthority),
       project.projectSlug,
       { timelineId, assertAuthority, getHead: () => timelineHead.current },
     );
     // elementContext is refreshed in place below; the provider/project/timeline
     // identity is the authority boundary, never a selection/catalog revision.
-  }, [project.projectSlug, provider, timelineId]);
+  }, [project.projectSlug, elementTimelineRoutes, timelineId]);
   ownedElementAdapter?.updateContext(elementContext);
   const elementOperationAdapter = operationsEnabled && timelineWritable ? ownedElementAdapter : undefined;
 
@@ -383,8 +385,6 @@ function InnerProvider({
   operationalEmitter,
   assembly,
   initialTimelineData,
-  occurrenceAddMediaPort,
-  getOccurrenceAddMediaCurrent,
 }: {
   children: React.ReactNode;
   effectCatalog?: VideoEditorEffectCatalog | null;
@@ -394,8 +394,6 @@ function InnerProvider({
   operationalEmitter?: HostOwnedExtensionOperationalEmitter;
   assembly: EditorRuntimeAssembly;
   initialTimelineData?: TimelineData;
-  occurrenceAddMediaPort?: OccurrenceAddMediaCapturePort;
-  getOccurrenceAddMediaCurrent?: () => TimelineData | null;
 }) {
   useRenderDiagnostic('VideoEditorProvider');
   const runtime = useVideoEditorRuntime();
@@ -438,8 +436,7 @@ function InnerProvider({
   });
   return (
     <VideoEditorRuntimeContent assembly={assembly} sync={sync}
-      onSaveStatusChange={onSaveStatusChange} onPendingWorkChange={onPendingWorkChange} operationalEmitter={operationalEmitter}
-      occurrenceAddMediaPort={occurrenceAddMediaPort} getOccurrenceAddMediaCurrent={getOccurrenceAddMediaCurrent}>
+      onSaveStatusChange={onSaveStatusChange} onPendingWorkChange={onPendingWorkChange} operationalEmitter={operationalEmitter}>
       {children}
     </VideoEditorRuntimeContent>
   );
@@ -448,7 +445,7 @@ function InnerProvider({
 /** Shared routed/editor content; the caller owns the one runtime assembly and store. */
 export function VideoEditorRuntimeContent({
   children, assembly, sync, onSaveStatusChange, onPendingWorkChange, operationalEmitter,
-  occurrenceAddMediaPort, getOccurrenceAddMediaCurrent, operationsEnabled = true,
+  operationsEnabled = true,
 }: {
   children: React.ReactNode;
   assembly: EditorRuntimeAssembly;
@@ -456,12 +453,14 @@ export function VideoEditorRuntimeContent({
   onSaveStatusChange?: (status: SaveStatus) => void;
   onPendingWorkChange?: (state: ExtensionPendingWorkState) => void;
   operationalEmitter?: HostOwnedExtensionOperationalEmitter;
-  occurrenceAddMediaPort?: OccurrenceAddMediaCapturePort;
-  getOccurrenceAddMediaCurrent?: () => TimelineData | null;
   operationsEnabled?: boolean;
 }) {
   const runtime = useVideoEditorRuntime();
   const { store, editor, chrome, transcriptHost } = sync;
+  const commands = useMemo(() => createTimelineCommands(store, {
+    timelineEditability: runtime.timelineEditability,
+    preparedMediaRequiresSelection: Boolean(runtime.provider.commitTimeline),
+  }), [store, runtime.timelineEditability, runtime.provider.commitTimeline]);
   useEffect(() => {
     const pending = store.getState().pendingWorkRegistry;
     if (!pending || !onPendingWorkChange) return;
@@ -586,7 +585,33 @@ export function VideoEditorRuntimeContent({
             processed.push(generationId);
             continue;
           }
+          let mediaSelection: MediaSelection | undefined;
+          if (runtime.provider.commitTimeline) {
+            const provider = runtime.provider as DataProvider & Partial<Pick<RuntimeDataProvider, 'getProjectMediaSelection'>>;
+            const variantId = generation.primary_variant_id;
+            try {
+              if (!runtime.project.projectId || !variantId || !provider.getProjectMediaSelection) {
+                throw new Error('Could not resolve the Runtime project media selection. Import the media again.');
+              }
+              mediaSelection = await provider.getProjectMediaSelection(runtime.project.projectId, {
+                asset: variantId,
+                generation_id: generation.id,
+                variant_id: variantId,
+              });
+              if (mediaSelection.asset !== variantId || mediaSelection.generation_id !== generation.id
+                || mediaSelection.variant_id !== variantId || mediaSelection.object_id !== generation.media_id) {
+                throw new Error('Runtime media selection does not match the loaded generation. Import the media again.');
+              }
+            } catch (error) {
+              if (!mountedRef.current) break;
+              runtime.toast.error(error instanceof Error ? error.message : 'Could not resolve the Runtime project media selection');
+              processed.push(generationId);
+              continue;
+            }
+            if (!mountedRef.current) break;
+          }
           const registrationPlan = planGenerationAssetRegistration({
+            ...(mediaSelection ? { assetId: mediaSelection.asset, variantId: mediaSelection.variant_id } : {}),
             generationId: generation.id,
             mediaId: generation.media_id,
             variantType: generation.type === 'video' ? 'video' : 'image',
@@ -616,36 +641,20 @@ export function VideoEditorRuntimeContent({
             (max, clip) => Math.max(max, clip.at + getClipTimelineDuration(clip)),
             0,
           );
-          const preparedCommand = {
-            type: 'place-prepared-media',
-            payload: {
-              asset: {
-                assetKey: registrationPlan.assetId,
-                mediaType,
-                durationSeconds: registrationPlan.assetEntry.duration ?? null,
-                entry: registrationPlan.assetEntry,
-                source: 'registered',
-              },
-              at: timelineEnd,
-              selectedTrackId: editorForDrop.selectedTrackId,
+          const placed = commands.addClip({
+            preparedAsset: {
+              assetKey: registrationPlan.assetId,
+              mediaType,
+              durationSeconds: registrationPlan.assetEntry.duration ?? null,
+              entry: registrationPlan.assetEntry,
+              source: 'registered',
+              ...(mediaSelection ? { mediaSelection } : {}),
             },
-          } as const;
-          const preview = editorForDrop.commands.dryRun(preparedCommand);
-          if (preview.status === 'rejected') {
-            console.error('[video-editor] Staged generation asset could not be planned', { assetKey: registrationPlan.assetId });
-            runtime.toast.error(preview.errors[0]?.message ?? 'Could not place asset');
-            processed.push(generationId);
-            continue;
-          }
-          const detail = preview.commandResults[0]?.detail;
-          const placed = editorForDrop.commands.apply(preparedCommand, {
-            semantic: true,
-            selectedClipId: typeof detail?.clipId === 'string' ? detail.clipId : undefined,
-            selectedTrackId: typeof detail?.trackId === 'string' ? detail.trackId : editorForDrop.selectedTrackId,
+            time: timelineEnd,
           });
-          if (placed.status === 'rejected') {
+          if (!placed.ok) {
             console.error('[video-editor] Staged generation asset could not be placed', { assetKey: registrationPlan.assetId });
-            runtime.toast.error(placed.errors[0]?.message ?? 'Could not place asset');
+            runtime.toast.error(placed.error.message);
           }
           processed.push(generationId);
           // Allow React to commit the clip before the next iteration reads clips.
@@ -670,7 +679,7 @@ export function VideoEditorRuntimeContent({
         drainInFlightRef.current = false;
       }
     })();
-  }, [editor.isLoading, isActiveInstance, pendingAddGenerationId, runtime.mediaLightbox, runtime.toast, runtime.timelineId, runtime.project.projectId, searchParams, setSearchParams, store]);
+  }, [commands, editor.isLoading, isActiveInstance, pendingAddGenerationId, runtime.mediaLightbox, runtime.provider, runtime.toast, runtime.timelineId, runtime.project.projectId, searchParams, setSearchParams, store]);
 
   const [lightboxAssetKey, setLightboxAssetKey] = useState<string | null>(null);
   const [lightboxClipId, setLightboxClipId] = useState<string | null>(null);
@@ -754,20 +763,6 @@ export function VideoEditorRuntimeContent({
 
   const onActionResizeStart: TimelineActionResizeStart = editor.onActionResizeStart;
   const onClipEdgeResizeEnd: TimelineClipEdgeResizeEnd = editor.onClipEdgeResizeEnd;
-  const occurrenceAddMedia = useMemo(() => {
-    if (!occurrenceAddMediaPort) return undefined;
-    return {
-      capture(input: Parameters<OccurrenceAddMediaCapturePort['capture']>[0]) {
-        const current = getOccurrenceAddMediaCurrent?.() ?? null;
-        if (!current) {
-          throw new Error('Parent timeline data is unavailable for occurrence media add');
-        }
-        return occurrenceAddMediaPort.capture({ ...input, current });
-      },
-      finish: occurrenceAddMediaPort.finish,
-      submit: occurrenceAddMediaPort.submit,
-    } satisfies OccurrenceAddMediaCapturePort;
-  }, [getOccurrenceAddMediaCurrent, occurrenceAddMediaPort]);
 
   const editorOps = useMemo<TimelineEditorOpsContextValue>(() => ({
     transcriptHost,
@@ -829,8 +824,7 @@ export function VideoEditorRuntimeContent({
     registerAsset: editor.registerAsset,
     onDoubleClickAsset,
     setLightboxAssetKey,
-    occurrenceAddMedia,
-  }), [editor, occurrenceAddMedia, transcriptHost, onActionResizeStart, onClipEdgeResizeEnd, onDoubleClickAsset, setLightboxAssetKey]);
+  }), [editor, transcriptHost, onActionResizeStart, onClipEdgeResizeEnd, onDoubleClickAsset, setLightboxAssetKey]);
 
   useLayoutEffect(() => {
     store.getState().syncOpsSlice(editorOps);
@@ -850,7 +844,7 @@ export function VideoEditorRuntimeContent({
 
   return (
     <EditorRuntimeScaffold assembly={assembly} sync={sync}>
-      <AgentChatBridgeRegistration operationsEnabled={operationsEnabled} />
+      <AgentChatBridgeRegistration operationsEnabled={operationsEnabled} elementTimelineRoutes={editor.elementTimelineRoutes} />
       {children}
       {lightboxAssetKey && resolvedLightboxMedia && (
         <>
@@ -893,10 +887,6 @@ export interface VideoEditorProviderProps {
   timelineEditability?: TimelineEditability;
   /** Optional synchronous data seed for hosts with an already-resolved projection. */
   initialTimelineData?: TimelineData;
-  /** Reuse an already-mounted parent command session for occurrence media adds. */
-  occurrenceAddMediaPort?: OccurrenceAddMediaCapturePort;
-  /** Read the mounted parent timeline at occurrence-add capture time. */
-  getOccurrenceAddMediaCurrent?: () => TimelineData | null;
   /** Whether this editor hosts extensions for lifecycle telemetry. */
   extensionHostEnabled?: boolean;
   /** Host revision attached to privacy-safe operational events. */
@@ -933,8 +923,6 @@ function VideoEditorProviderInstance({
   timelineOverlaysEnabled = false,
   timelineEditability,
   initialTimelineData,
-  occurrenceAddMediaPort,
-  getOccurrenceAddMediaCurrent,
   extensionHostEnabled = false,
   extensionReleaseRevision = 'unset',
   extensionOperationalEventSink = dispatchExtensionOperationalEvent,
@@ -1182,8 +1170,6 @@ function VideoEditorProviderInstance({
         operationalEmitter={extensionHostEnabled ? operationalEmitter : undefined}
         assembly={assembly}
         initialTimelineData={initialTimelineData}
-        occurrenceAddMediaPort={occurrenceAddMediaPort}
-        getOccurrenceAddMediaCurrent={getOccurrenceAddMediaCurrent}
       >
         {children}
       </InnerProvider>

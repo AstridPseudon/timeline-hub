@@ -5,16 +5,11 @@ import type { useClipResize } from '@/tools/video-editor/hooks/useClipResize.ts'
 import type { useDragCoordinator } from '@/tools/video-editor/hooks/useDragCoordinator.ts';
 import type { useExternalDrop } from '@/tools/video-editor/hooks/useExternalDrop.ts';
 import type { TimelineStoreApi } from '@/tools/video-editor/hooks/timelineStore.ts';
-import type { OccurrenceAddMediaCapturePort } from '@/tools/video-editor/commands/commitSession.ts';
 import type { useTimelinePlayback } from '@/tools/video-editor/hooks/useTimelinePlayback.ts';
 import type { useTimelineTrackManagement } from '@/tools/video-editor/hooks/useTimelineTrackManagement.ts';
 import type {
   AddMediaCommand,
-  PlacePreparedMediaCommand,
   SwapMediaCommand,
-  TimelineCommandExecutionResult,
-  TimelineCommandInput,
-  TimelineCommandRunOptions,
 } from '@/tools/video-editor/commands/index.ts';
 import type {
   TimelineApplyEdit,
@@ -72,30 +67,9 @@ type TimelineSetRightPanelLayoutSlot = (panelId: string, slot: RightPanelLayoutS
 type TimelineSetShowDataLanes = (show: boolean) => void;
 export type TimelineActionResizeStart = ClipResizeHook['onActionResizeStart'];
 export type TimelineClipEdgeResizeEnd = ClipResizeHook['onClipEdgeResizeEnd'];
-export type TimelineEditorCommand = AddMediaCommand | PlacePreparedMediaCommand | SwapMediaCommand;
-export type TimelineEditorCommandInput = TimelineCommandInput<TimelineEditorCommand>;
-export type TimelineEditorCommandResult = TimelineCommandExecutionResult<TimelineEditorCommand>;
-export type TimelineEditorCommandApplyOptions = TimelineCommandRunOptions & {
-  save?: boolean;
-  selectedClipId?: string | null;
-  selectedTrackId?: string | null;
-  semantic?: boolean;
-};
 export type TimelineEditorCommands = {
   buildAddMediaCommand: (input: { trackId: string; at: number; assetKey: string }) => AddMediaCommand | null;
   buildSwapCommand: (input: { clipId: string; assetKey: string }) => SwapMediaCommand | null;
-  validate: (
-    input: TimelineEditorCommandInput | unknown,
-    options?: TimelineCommandRunOptions,
-  ) => TimelineEditorCommandResult;
-  dryRun: (
-    input: TimelineEditorCommandInput | unknown,
-    options?: TimelineCommandRunOptions,
-  ) => TimelineEditorCommandResult;
-  apply: (
-    input: TimelineEditorCommandInput | unknown,
-    options?: TimelineEditorCommandApplyOptions,
-  ) => TimelineEditorCommandResult;
 };
 
 export interface TimelineEditorDataContextValue {
@@ -195,8 +169,6 @@ export interface TimelineEditorOpsContextValue {
   registerAsset: TimelineRegisterAsset;
   onDoubleClickAsset?: (assetKey: string, clipId?: string) => void;
   setLightboxAssetKey?: (assetKey: string | null) => void;
-  /** Temporary host seam for occurrence-owned media adds until A3 owns the flow. */
-  occurrenceAddMedia?: OccurrenceAddMediaCapturePort;
 }
 
 /**
@@ -298,7 +270,7 @@ export interface TimelinePlaybackContextValue {
 
 export interface UseTimelineStateResult {
   store: TimelineStoreApi;
-  editor: TimelineEditorContextValue;
+  editor: TimelineEditorContextValue & { elementTimelineRoutes?: import('../runtime/element-adapter.ts').ElementTimelineRoutes };
   editorData: TimelineEditorDataContextValue;
   editorOps: TimelineEditorOpsContextValue;
   chrome: TimelineChromeContextValue;

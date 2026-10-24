@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { updateClipOrder } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import type { MediaSelection } from '@/integrations/runtime/timeline-commit-types.ts';
 import { getNextClipId, rowsToConfig, type TimelineData } from '@/tools/video-editor/lib/timeline-data.ts';
@@ -5,13 +6,14 @@ import { buildAssetDropEdit, planAssetDropTarget } from '@/tools/video-editor/li
 import { buildDuplicateClipEdit } from '@/tools/video-editor/lib/duplicate-clip.ts';
 import { getAssetImmediateSource } from '@/tools/video-editor/lib/asset-registry.ts';
 import { buildDataFromCurrentRegistry } from '@/tools/video-editor/lib/timeline-save-utils.ts';
+import { validateSerializedConfig } from '@/tools/video-editor/lib/serialize.ts';
 import type { AssetRegistry, TimelineClip, ResolvedTimelineConfig, PinnedShotGroup } from '@/tools/video-editor/types/index.ts';
-import { applyTimelineCommandEffect, createTimelineCommandRunner } from './runner.ts';
-import { buildTimelineCommandData } from './timelineData.ts';
 import type {
   TimelineCommand,
   TimelineCommandDescriptor,
   TimelineCommandEffect,
+  TimelineCommandHistoryMetadata,
+  TimelineCommandStepResult,
 } from './types.ts';
 import {
   estimateProvisionedAssetDuration,
@@ -64,6 +66,13 @@ export type PlacePreparedMediaCommand = Omit<TimelineCommand<'place-prepared-med
 };
 
 const roundSeconds = (value: number): number => Math.round(value * 1000) / 1000;
+
+const preparedMediaInput = z.object({
+  type: z.string().trim().pipe(z.literal('place-prepared-media')),
+  payload: z.record(z.string(), z.json()),
+  commandId: z.string().optional(),
+  metadata: z.record(z.string(), z.json()).optional(),
+});
 
 const getTrackForClip = (
   data: TimelineData,
@@ -562,7 +571,7 @@ const materializePreparedData = ({
 const buildPlacePreparedMediaEffect = (
   currentData: TimelineData,
   payload: PlacePreparedMediaCommand['payload'],
-): TimelineCommandEffect => {
+): TimelineCommandEffect & { mutation: { type: 'data'; data: TimelineData } } => {
   const assetKind = payload.asset.mediaType === 'audio' ? 'audio' : 'visual';
   const duration = payload.clipSpanSeconds
     ?? estimateProvisionedAssetDuration(payload.asset);
@@ -742,79 +751,61 @@ export const MEDIA_COMMAND_DESCRIPTORS = [
   PLACE_PREPARED_MEDIA_COMMAND_DESCRIPTOR,
 ] as const;
 
-const mediaCommandRunner = createTimelineCommandRunner<AddMediaCommand | SwapMediaCommand | PlacePreparedMediaCommand>([
-  ADD_MEDIA_COMMAND_DESCRIPTOR,
-  SWAP_MEDIA_COMMAND_DESCRIPTOR,
-  PLACE_PREPARED_MEDIA_COMMAND_DESCRIPTOR,
-]);
-
-const getFailureMessage = (
-  result: ReturnType<typeof mediaCommandRunner.apply>,
-): string => {
-  const validationMessage = result.errors[0]?.validationErrors?.[0]?.message;
-  return validationMessage ?? result.errors[0]?.message ?? 'Command failed.';
-};
-
-export const applyProvisionedMediaCommandToConfig = (
-  config: TimelineData['config'],
-  registry: AssetRegistry,
-  command: AddMediaCommand | SwapMediaCommand,
-): { config?: TimelineData['config']; result: string } => {
-  const data = buildTimelineCommandData(config, registry);
-  const result = mediaCommandRunner.apply(data, { commands: [command] });
-  if (result.status === 'rejected') {
-    return { result: getFailureMessage(result) };
-  }
-
-  return {
-    config: result.nextData.config,
-    result: result.commandResults[0]?.summary ?? 'Applied media command.',
-  };
-};
-
-export const dryRunProvisionedMediaCommand = (
-  currentData: TimelineData,
-  command: AddMediaCommand | SwapMediaCommand,
-) => {
-  return mediaCommandRunner.dryRun(currentData, { commands: [command] });
-};
-
-export const applyProvisionedMediaCommand = (
-  currentData: TimelineData,
-  command: AddMediaCommand | SwapMediaCommand,
-) => {
-  const result = mediaCommandRunner.apply(currentData, { commands: [command] });
-  if (result.status === 'rejected') {
-    return null;
-  }
-
-  return {
-    nextData: result.nextData,
-    commandResult: result.commandResults[0],
-  };
-};
-
-export const materializeProvisionedMediaCommand = (
-  currentData: TimelineData,
-  effect: TimelineCommandEffect,
-) => {
-  return applyTimelineCommandEffect(currentData, effect);
-};
-
 export const applyPreparedMediaCommand = (
   currentData: TimelineData,
   command: PlacePreparedMediaCommand,
-) => {
-  const result = mediaCommandRunner.apply(currentData, { commands: [command] });
-  if (result.status === 'rejected') {
+): {
+  nextData: TimelineData;
+  commandResult: TimelineCommandStepResult<PlacePreparedMediaCommand>;
+  history: TimelineCommandHistoryMetadata;
+} | null => {
+  if (!preparedMediaInput.safeParse(command).success) {
+    return null;
+  }
+  const payload = command.payload;
+  if (!payload || validateProvisionedAsset(payload.asset, '$.payload.asset').length > 0
+    || !Number.isFinite(payload.at) || payload.at < 0) {
     return null;
   }
 
-  return {
-    nextData: result.nextData,
-    commandResult: result.commandResults[0],
-    history: result.history,
-  };
+  try {
+    const effect = buildPlacePreparedMediaEffect(currentData, payload);
+    const nextData = effect.mutation.data;
+    validateSerializedConfig(nextData.config);
+    return {
+      nextData,
+      commandResult: {
+        command: {
+          type: 'place-prepared-media',
+          payload,
+          ...(command.commandId !== undefined ? { commandId: command.commandId } : {}),
+          ...(command.metadata !== undefined ? { metadata: command.metadata } : {}),
+        },
+        commandIndex: 0,
+        status: 'applied',
+        beforeSignature: currentData.stableSignature,
+        afterSignature: nextData.stableSignature,
+        summary: effect.summary,
+        detail: effect.detail,
+        inverse: null,
+      },
+      history: {
+        kind: 'command',
+        transactionId: undefined,
+        commandTypes: ['place-prepared-media'],
+        commandIds: command.commandId === undefined ? [] : [command.commandId],
+        strategy: 'snapshot_fallback',
+        inverseTransaction: null,
+        executionMode: 'atomic',
+        runMode: 'apply',
+        appliedCount: 1,
+        failedCount: 0,
+        partial: false,
+      },
+    };
+  } catch {
+    return null;
+  }
 };
 
 export const previewPreparedMediaCommand = applyPreparedMediaCommand;

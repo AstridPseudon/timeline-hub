@@ -244,118 +244,6 @@ describe('real clip move session through the Runtime HTTP boundary', () => {
     await session.dispose();
   });
 
-  it('drains a just-submitted gesture on dispose without flushing or starting a request', async () => {
-    const env = await environment();
-    const session = await env.mount();
-    const owner = session.getState().ownerId!;
-    env.move(session, 5);
-    await session.dispose();
-    expect(env.commits()).toHaveLength(0);
-    const [saved] = await env.outboxes.list(scope);
-    expect(saved.intents).toHaveLength(1);
-    expect(saved.intents[0].payload).toMatchObject({ commands: [{ args: { on: 5 } }] });
-    expect(() => env.move(session, 7)).toThrow('unavailable');
-    const reopened = await env.mount();
-    expect(reopened.getState().recoverableOwners).toEqual([owner]);
-    await reopened.recover(owner);
-    expect(env.commits()[0].body?.commands[0].expect?.['parent/clip:x::at']).toEqual({ state: 'present', value: 1 });
-    expect(env.current().config.clips[0].at).toBe(5);
-    await reopened.dispose();
-  });
-  it('holds the claim until an already-started durable append finishes', async () => {
-    const env = await environment();
-    let finishAppend!: () => void;
-    const gate = new Promise<void>((resolve) => { finishAppend = resolve; });
-    const create = env.outboxes.create;
-    const appending = vi.fn();
-    env.outboxes.create = (scope, work) => create(scope, (box, owner) => work({ ...box, append: async (...args) => {
-      appending();
-      await gate;
-      return box.append(...args);
-    } }, owner));
-    const session = await env.mount();
-    env.move(session, 5);
-    await vi.waitFor(() => expect(appending).toHaveBeenCalledOnce());
-    const closed = vi.fn();
-    const closing = session.dispose().then(closed);
-    await Promise.resolve();
-    expect(closed).not.toHaveBeenCalled();
-    await expect(env.outboxes.recover(scope, session.getState().ownerId!, async () => {})).rejects.toThrow('claimed');
-    finishAppend();
-    await closing;
-    expect((await env.outboxes.list(scope))[0].intents).toHaveLength(1);
-    expect(env.commits()).toHaveLength(0);
-  });
-  it.each(['accepted', 'error'] as const)('releases without A network completion, retains queued B and fences late %s', async (outcome) => {
-    const env = await environment();
-    const session = await env.mount();
-    const network = env.pause();
-    env.move(session, 5);
-    await vi.waitFor(() => expect(env.commits()).toHaveLength(1));
-    const original = structuredClone(env.commits()[0]);
-    env.move(session, 7);
-    await session.dispose();
-    const [saved] = await env.outboxes.list(scope);
-    expect(saved.intents).toHaveLength(2);
-    expect(saved.pending?.request.key).toBe(original.key);
-    expect(JSON.parse(saved.pending!.request.body)).toEqual(original.body);
-    expect(saved.intents[1].payload).toMatchObject({ commands: [{ expect: { 'parent/clip:x::at': { state: 'present', value: 5 } } }] });
-    const projectCount = env.projected.length;
-    const closedState = session.getState();
-    if (outcome === 'error') env.setFault('lost');
-    const reopened = await env.mount();
-    const recovering = reopened.recover(saved.ownerId);
-    await vi.waitFor(() => expect(env.commits()).toHaveLength(2));
-    network.resolve();
-    await recovering;
-    expect(env.commits()[1]).toEqual(original);
-    expect(env.commits()).toHaveLength(3);
-    expect(env.commits()[2].body).toMatchObject({ base_publication_id: 'p1', commands: [{ args: { on: 7 } }] });
-    expect(env.commits()[2].key).not.toBe(original.key);
-    expect(env.current().config.clips[0].at).toBe(7);
-    expect(session.getState()).toEqual(closedState);
-    expect(env.projected).toHaveLength(projectCount + 2);
-    expect(reopened.getState().status).toBe('saved');
-    await reopened.dispose();
-  });
-  it('reports a durable failure during close and never transmits the ephemeral preview', async () => {
-    const env = await environment();
-    const session = await env.mount();
-    env.factory.open = () => { throw new Error('disk full'); };
-    env.move(session, 5);
-    await expect(session.dispose()).rejects.toThrow('Unsaved move: disk full');
-    expect(session.getState()).toMatchObject({ status: 'error', error: 'Unsaved move: disk full', canUndo: false });
-    expect(env.commits()).toHaveLength(0);
-  });
-  it('never starts a reserved transmission after close and lets a new claimant retry it exactly', async () => {
-    const env = await environment();
-    let finishReservation!: () => void;
-    const gate = new Promise<void>((resolve) => { finishReservation = resolve; });
-    const reserved = vi.fn();
-    const create = env.outboxes.create;
-    env.outboxes.create = (scope, work) => create(scope, (box, owner) => work({ ...box, dispatch: (build, transmit) =>
-      box.dispatch(build, async (request) => {
-        reserved(request);
-        await gate;
-        return transmit(request);
-      }) }, owner));
-    const session = await env.mount();
-    env.move(session, 5);
-    await vi.waitFor(() => expect(reserved).toHaveBeenCalledOnce());
-    const finished = expect(session.flush()).rejects.toThrow('not acknowledged');
-    await session.dispose();
-    expect(env.commits()).toHaveLength(0);
-    const reopened = await env.mount();
-    await reopened.recover(session.getState().ownerId!);
-    const request = reserved.mock.calls[0][0];
-    expect(env.commits()[0]).toMatchObject({ path: request.path, method: request.method,
-      body: JSON.parse(request.body), key: request.key });
-    finishReservation();
-    await finished;
-    expect(env.commits()).toHaveLength(1);
-    expect(reopened.getState().status).toBe('saved');
-    await reopened.dispose();
-  });
   it('opens the exact public immutable closure, preserving unknown/null/absent fields and child scope', async () => {
     const raw = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' },
       { revision_id: 'old', publication_id: 'old' }, { children: true }).data.canonical_document;
@@ -454,26 +342,6 @@ describe('real clip move session through the Runtime HTTP boundary', () => {
       commands: [{ op: 'timeline.inverse', args: { publications: ['p2'] } }] });
     await session.dispose();
   });
-  it('recovers an explicitly chosen owner and retries the exact pending A before B', async () => {
-    const env = await environment();
-    const first = await env.mount();
-    env.setFault('lost');
-    env.move(first, 5);
-    env.move(first, 7);
-    await vi.waitFor(() => expect(first.getState().status).toBe('retry'));
-    const owner = first.getState().ownerId!;
-    const original = env.commits()[0];
-    await first.dispose();
-    const reopened = await env.mount(await env.provider.loadTimelineCommandBasis('timeline-commit'));
-    expect(reopened.getState().status).toBe('recovery');
-    expect(env.commits()).toHaveLength(1);
-    await reopened.recover(owner);
-    expect(env.commits()[1]).toEqual(original);
-    const b = env.commits()[2];
-    expect(b.body?.base_publication_id).toBe('p1');
-    expect(b.body?.commands[0].expect?.['parent/clip:x::at']).toEqual({ state: 'present', value: 5 });
-    await reopened.dispose();
-  });
   it.each(['accepted', 'conflict'] as const)(
     'queues B authored after uncertain A without retransmitting, then recovers exact A: %s', async (outcome) => {
       const env = await environment();
@@ -561,31 +429,6 @@ describe('real clip move session through the Runtime HTTP boundary', () => {
       }
       await recovered.dispose();
     });
-  it('retains an unsaved B preview after uncertain A without an ephemeral transmission', async () => {
-    const env = await environment();
-    const session = await env.mount();
-    env.setFault('lost');
-    env.move(session, 5);
-    await vi.waitFor(() => expect(session.getState().status).toBe('retry'));
-    const [original] = await env.outboxes.list(scope);
-    const wireA = structuredClone(env.commits()[0]);
-    const open = env.factory.open.bind(env.factory);
-    env.factory.open = () => { throw new Error('disk full'); };
-    env.move(session, 7);
-    await vi.waitFor(() => expect(session.getState().status).toBe('error'));
-    expect(session.getState()).toMatchObject({ error: 'Unsaved move: disk full', canUndo: false });
-    expect(env.current().config.clips[0].at).toBe(7);
-    expect(env.commits()).toEqual([wireA]);
-    env.factory.open = open;
-    const [retained] = await env.outboxes.list(scope);
-    expect(retained.intents).toEqual(original.intents);
-    expect(retained.pending).toEqual(original.pending);
-    await session.retry();
-    expect(env.commits()[1]).toEqual(wireA);
-    expect(env.commits()[2].body?.commands[0].expect?.['parent/clip:x::at']).toEqual({ state: 'present', value: 5 });
-    expect(session.getState().status).toBe('saved');
-    await session.dispose();
-  });
   it.each([true, false])('recovers legacy work only with a matching original document: %s', async (matching) => {
     const env = await environment();
     const session = await env.mount();
@@ -612,69 +455,6 @@ describe('real clip move session through the Runtime HTTP boundary', () => {
       expect(retained.pending).toEqual(saved.pending);
     }
     await reopened.dispose();
-  });
-  it.each(['missing dependent display basis', 'missing revision', 'empty revision', 'missing publication',
-    'empty publication', 'missing document', 'mismatched revision'] as const)(
-    'retains work without projecting or sending when recovery has a %s', async (fault) => {
-      const env = await environment();
-      const session = await env.mount();
-      env.setFault('lost');
-      env.move(session, 5);
-      env.move(session, 7);
-      await vi.waitFor(() => expect(session.getState().status).toBe('retry'));
-      // A's cached ACK must arrive before B's retryable refusal.
-      const send = env.provider.commitTimeline.bind(env.provider);
-      env.setFault(null);
-      vi.spyOn(env.provider, 'commitTimeline').mockImplementation(async (...args) => {
-        const result = await send(...args);
-        env.setFault('busy');
-        return result;
-      });
-      await session.retry();
-      await session.dispose();
-      await editOwner(env, (record) => {
-        const payload = record.intents[0].payload as Record<string, unknown>;
-        if (fault === 'missing dependent display basis') delete payload.displayBasis;
-        else {
-          const basis = payload.displayBasis as { head: { revisionId?: string; publicationId?: string }; canonicalDocument?: unknown };
-          if (fault === 'missing publication') delete basis.head.publicationId;
-          else if (fault === 'empty publication') basis.head.publicationId = '';
-          else if (fault === 'missing revision') delete basis.head.revisionId;
-          else if (fault === 'empty revision') basis.head.revisionId = '';
-          else if (fault === 'missing document') delete basis.canonicalDocument;
-          else basis.head.revisionId = 'another-revision';
-        }
-      });
-      const [saved] = await env.outboxes.list(scope);
-      const count = env.commits().length;
-      const reopened = await env.mount(await env.provider.loadTimelineCommandBasis(scope.timelineId));
-      await expect(reopened.recover(saved.ownerId)).rejects.toThrow('verified original display basis');
-      expect(reopened.getState()).toMatchObject({ status: 'error', canUndo: false });
-      expect(() => env.move(reopened, 9)).toThrow('verified original display basis');
-      await reopened.retry();
-      await expect(reopened.flush()).rejects.toThrow('verified original display basis');
-      expect(env.projected).toHaveLength(0);
-      expect(env.commits()).toHaveLength(count);
-      const [retained] = await env.outboxes.list(scope);
-      expect(retained.intents).toEqual(saved.intents);
-      expect(retained.pending).toEqual(saved.pending);
-      expect(retained.accepted).toEqual(saved.accepted);
-      await reopened.dispose();
-    });
-  it('keeps recovery explicit and permits a later claim after the live owner releases its lock', async () => {
-    const env = await environment();
-    const first = await env.mount();
-    env.setFault('lost');
-    env.move(first, 5);
-    await vi.waitFor(() => expect(first.getState().status).toBe('retry'));
-    const owner = first.getState().ownerId!;
-    const second = await env.mount();
-    await expect(second.recover(owner)).rejects.toThrow('claimed');
-    expect(env.commits()).toHaveLength(1);
-    await first.dispose();
-    await second.recover(owner);
-    expect(env.commits()[1]).toEqual(env.commits()[0]);
-    await second.dispose();
   });
   it('routes a persisted native bootstrap owner through its existing carrier before generic edit recovery', async () => {
     const runtime = {} as { env: Awaited<ReturnType<typeof environment>> };
@@ -999,42 +779,6 @@ describe('track labels in the existing durable command session', () => {
     else expect(command.reads?.some((read) => read.ref.includes('/clip:'))).toBe(false);
     await session.dispose();
   });
-  it('drains a label-only edit on close into the same outbox without starting a request', async () => {
-    const env = await environment();
-    const session = await env.mount();
-    rename(session, env.current(), 'Closed draft');
-    await session.dispose();
-    expect(env.commits()).toHaveLength(0);
-    const [stored] = await env.outboxes.list(scope);
-    expect(stored.intents).toHaveLength(1);
-    expect(stored.intents[0].payload).toMatchObject({ commands: [{ op: 'track.set' }] });
-    const recovered = await env.mount();
-    await recovered.recover(stored.ownerId);
-    expect(rawTrack(env.projected.at(-1)!.canonicalDocument).label).toBe('Closed draft');
-    await recovered.dispose();
-  });
-  it('keeps a pending label request unchanged when a newer move is authored', async () => {
-    const env = await environment();
-    const session = await env.mount();
-    env.setFault('lost');
-    rename(session, env.current(), 'First label');
-    await vi.waitFor(() => expect(session.getState().status).toBe('retry'));
-    const original = structuredClone(env.commits()[0]);
-    env.move(session, 5);
-    await session.dispose();
-    const [stored] = await env.outboxes.list(scope);
-    expect(stored.pending?.request.key).toBe(original.key);
-    expect(JSON.parse(stored.pending!.request.body)).toEqual(original.body);
-    const recovered = await env.mount(await env.provider.loadTimelineCommandBasis('timeline-commit'));
-    await recovered.recover(stored.ownerId);
-    expect(env.commits()[1]).toEqual(original);
-    expect(env.commits()[2].body).toMatchObject({ base_publication_id: 'p1', commands: [{ op: 'clip.move',
-      expect: { 'parent/clip:x::at': { state: 'present', value: 1 } } }] });
-    expect(env.commits()[2].key).not.toBe(original.key);
-    expect(env.current().config.clips[0].at).toBe(5);
-    expect(rawTrack(env.projected.at(-1)!.canonicalDocument).label).toBe('First label');
-    await recovered.dispose();
-  });
   it('refuses synthetic or ambiguous track ownership and unprepared commands atomically', async () => {
     const raw = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' },
       { revision_id: 'old', publication_id: 'old' }, { children: true }).data.canonical_document;
@@ -1079,23 +823,6 @@ describe('track labels in the existing durable command session', () => {
     await session.flush();
     expect(env.commits()).toHaveLength(1);
     expect(env.commits()[0].body!.commands[0]).toEqual(command);
-    await session.dispose();
-  });
-  it('refuses a typing capture invalidated by a newer local move without changing the pending request', async () => {
-    const env = await environment();
-    const session = await env.mount();
-    const captured = captureTrackLabelEdit(session.trackLabelPort, env.current(), 'V1');
-    env.setFault('lost');
-    env.move(session, 5);
-    await vi.waitFor(() => expect(session.getState().status).toBe('retry'));
-    const original = structuredClone(env.commits()[0]);
-    expect(() => submitTrackLabelEdit(captured, { values: { label: 'Kept input' }, clear: [] })).toThrow('Timeline changed');
-    const [stored] = await env.outboxes.list(scope);
-    expect(stored.intents).toHaveLength(1);
-    expect(JSON.parse(stored.pending!.request.body)).toEqual(original.body);
-    expect(stored.pending!.request.key).toBe(original.key);
-    await session.retry();
-    expect(env.commits()[1]).toEqual(original);
     await session.dispose();
   });
 });

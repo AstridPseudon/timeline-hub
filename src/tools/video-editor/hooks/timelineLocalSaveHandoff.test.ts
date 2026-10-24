@@ -1,3 +1,6 @@
+import { applyTimelineOperation } from '../runtime/element-adapter.ts';
+import { buildAstridAgentElementContext } from '../runtime/element-contract.ts';
+import { ASTRID_EFFECT_CATALOG } from '../runtime/astrid-element-catalog.ts';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createFakeIndexedDB } from 'fake-indexeddb';
 import { acceptedCommit, fixtureDigest } from '@/integrations/runtime/__tests__/timelineCommitFixture.ts';
@@ -22,7 +25,7 @@ vi.mock('@/integrations/runtime/generated-contract-metadata.ts', async (importOr
 
 afterEach(() => { contractFixture.digest = 'sha256:unsupported-test-fixture'; vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
-async function environment(children = false, raw = false, rawIds = ['authored'], rawApp?: Record<string, unknown>, asset?: { key: string; registry: AssetRegistry; mirror?: boolean | Record<string, unknown>; rawRegistry?: Record<string, unknown> }) {
+async function environment(children = false, raw = false, rawIds = ['authored'], rawApp?: Record<string, unknown>, asset?: { key: string; registry: AssetRegistry; mirror?: boolean | Record<string, unknown>; rawRegistry?: Record<string, unknown> }, topLevel = false) {
   const head = { projectId: 'project-commit', timelineId: 'timeline-commit', headRevisionId: 'r0', headPublicationId: 'p0' };
   let source: TimelineSaveSource = { config: createDefaultTimelineConfig(), registry: asset?.registry ?? { assets: {} }, head };
   const document = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' }, { revision_id: 'r0', publication_id: 'p0' }, { children }).data.canonical_document;
@@ -44,6 +47,7 @@ async function environment(children = false, raw = false, rawIds = ['authored'],
       if (asset.mirror) document.parent_revision.payload.config.registry = structuredClone(asset.rawRegistry);
     }
   }
+  if (topLevel) delete document.parent_revision.payload.config.clips;
   document.parent_revision.content_digest = fixtureDigest(document.parent_revision.payload);
   const initial = { head: { revisionId: 'r0', publicationId: 'p0' }, canonicalDocument: document };
   const scope = { realmId: 'realm', actorId: 'actor', projectId: head.projectId, timelineId: head.timelineId };
@@ -537,4 +541,73 @@ describe('upstream local document handoff', () => {
     } } });
     await env.session.dispose();
   });
+});
+
+
+it('captures verified parent element apply/remove while retaining raw children and sibling bytes', async () => {
+  contractFixture.digest = CURRENT_V2_DIGEST;
+  const env = await environment(true, true, ['authored', 'sibling']);
+  const context = buildAstridAgentElementContext({ astridEffects: ASTRID_EFFECT_CATALOG });
+  const entry = context.catalog.find(item => item.id === 'text-card' && item.packId === 'rendering')!;
+  const operation = { name: 'timeline.apply_element' as const, project: 'project-commit', timeline: 'timeline-commit', expected_version: 1,
+    clip_id: 'authored', placement: 'clip' as const, element: { id: entry.id, kind: entry.kind, revision: entry.revision, packId: entry.packId }, params: { color: 'red' } };
+  const next = { ...env.source, config: applyTimelineOperation(context, env.source.config, operation) };
+  await env.handoff.capture(next, { kind: 'element', config: env.source.config, registry: env.source.registry, clipId: 'authored', operation, context });
+  const document = env.session.getDocument() as unknown as typeof env.initial.canonicalDocument;
+  expect(document.shot_revisions).toEqual(env.initial.canonicalDocument.shot_revisions);
+  expect(document.internal_timeline_revisions).toEqual(env.initial.canonicalDocument.internal_timeline_revisions);
+  expect(document.parent_revision.payload.occurrences).toEqual(env.initial.canonicalDocument.parent_revision.payload.occurrences);
+  expect(document.parent_revision.payload.config.clips[1]).toEqual(env.initial.canonicalDocument.parent_revision.payload.config.clips[1]);
+  expect(document.parent_revision.payload.config.clips[0]).toMatchObject({ elementRef: operation.element, opaque: { keep: null }, clipType: null });
+  const remove = { name: 'timeline.remove_element' as const, project: operation.project, timeline: operation.timeline, expected_version: 1, clip_id: 'authored' };
+  const removed = { ...next, config: applyTimelineOperation(context, next.config, remove) };
+  await env.handoff.capture(removed, { kind: 'element', config: next.config, registry: next.registry, clipId: 'authored', operation: remove, context });
+  const final = env.session.getDocument() as unknown as typeof env.initial.canonicalDocument;
+  expect(final.parent_revision.payload.config.clips[0]).not.toHaveProperty('elementRef');
+  expect(final.shot_revisions).toEqual(document.shot_revisions);
+  const [stored] = await env.outboxes.list(env.scope);
+  expect(stored.intents).toHaveLength(2);
+  expect(stored.intents[1].basis).toEqual({ after: stored.intents[0].id });
+  expect(stored.intents[0].payload.documentIntent).toMatchObject({ merge: 'atomic', reads: expect.any(Array), step: { reads: expect.any(Array) } });
+  await env.session.dispose();
+});
+
+it.each(['registry', 'bundle', 'flattened child'] as const)('refuses an element capture with changed %s provenance', async changed => {
+  const env = await environment(true, true);
+  const context = buildAstridAgentElementContext({});
+  const operation = { name: 'timeline.set_clip_fade' as const, project: 'project-commit', timeline: 'timeline-commit', expected_version: 1, clip_id: 'authored', fade_in: 0.25 };
+  const source = structuredClone(env.source);
+  if (changed === 'flattened child') source.config.clips.push({ id: 'child-title', track: 'V1', at: 0, hold: 1 });
+  const next = { ...source, config: applyTimelineOperation(context, source.config, operation) };
+  if (changed === 'registry') next.registry = { assets: { injected: { file: 'new.png' } } };
+  if (changed === 'bundle') next.bundle = { schema_version: 1, itemsBySchemaRef: {} };
+  await expect(env.handoff.capture(next, { kind: 'element', config: source.config, registry: source.registry, clipId: 'authored', operation, context })).rejects.toThrow();
+  expect(env.session.getDocument()).toEqual(env.initial.canonicalDocument);
+  expect((await env.outboxes.list(env.scope))[0].intents).toEqual([]);
+  expect(env.send).not.toHaveBeenCalled();
+  await env.session.dispose();
+});
+
+
+it.each([false, true])('binds top-level parent element clips and refuses an incomplete mounted view: %s', async missing => {
+  const env = await environment(true, true, ['authored', 'sibling'], undefined, undefined, true);
+  const source = structuredClone(env.source);
+  if (missing) source.config.clips = [];
+  const handoff = createTimelineLocalSaveHandoff({ initial: env.initial, source, session: env.session, adopted: env.receipt });
+  const context = buildAstridAgentElementContext({});
+  const operation = { name: 'timeline.set_clip_fade' as const, project: 'project-commit', timeline: 'timeline-commit', expected_version: 1, clip_id: 'authored', fade_in: 0.25 };
+  const next = { ...source, config: missing ? env.source.config : applyTimelineOperation(context, source.config, operation) };
+  const capture = handoff.capture(next, { kind: 'element', config: source.config, registry: source.registry, clipId: 'authored', operation, context });
+  if (missing) {
+    await expect(capture).rejects.toThrow('not present in the mounted source');
+    expect(env.session.getDocument()).toEqual(env.initial.canonicalDocument);
+  } else {
+    await capture;
+    const document = env.session.getDocument() as unknown as typeof env.initial.canonicalDocument;
+    expect(document.parent_revision.payload.config).not.toHaveProperty('clips');
+    expect(document.parent_revision.payload.clips[0]).toMatchObject({ id: 'authored', entrance: { type: 'fade', duration: 0.25 } });
+    expect(document.parent_revision.payload.clips[1]).toEqual(env.initial.canonicalDocument.parent_revision.payload.clips[1]);
+    expect(document.shot_revisions).toEqual(env.initial.canonicalDocument.shot_revisions);
+  }
+  await env.session.dispose();
 });
