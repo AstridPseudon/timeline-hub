@@ -1,4 +1,4 @@
-<!-- viewing | 2026-10-24T07:56:09Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 2m -->
+<!-- viewing | 2026-10-24T07:57:43Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 1m -->
 # viewing board, 2026-10-24T07:53:14Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -58,7 +58,7 @@ Evidence: [whole-path owner verdict](../../design/viewing-F-authoring-ABA-whole-
 Blockers: Agent — import reviewed diagnostic blob into current-only product join and qualify home before the one original ABA run.
 Later: Image inverse peer0455 failed before forwarding source 0df7. Agent owns any next image witness; no new Viewing body or source author. V4 cut and deferred timing stay unchanged; earlier permission refusals remain stopped.
 
-Next ready: Consume Composition independent 0750 verdict and Agent current join receipt. Dispatch original result review when the managed run returns.
+Next ready: Consume Agent current join receipt and home qualification, then dispatch the original ABA result review. No ready Viewing source task is waiting.
 
 07:44Z Runtime dependency cleared on published 460c / repair 35764. Independent Agent0719 on exact d33fe + 35764 passed four shared positives and two source-copy comparisons; full95 was89PASS6old-expectationFAIL. Viewing owns only six diagnostic migrations; Agent ports the three product blobs to current home. Supported exact Runtime checkout is available at /home/user/work/wt/rt-pin-460c2d39. No original ABA replay, original PASS or complete product merge is claimed. Independent0638 source-cause verdict remains valid; pre-repair review0643 was finalized143 without report and receives no review credit. Composition full venue is Viewing service under D49; checkpoint pending readiness worker0746.
 
