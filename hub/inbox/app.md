@@ -2681,3 +2681,11 @@ P1 RESULT GO is complete under reviews0036+0040. Required merge ask was sent at0
 ## 2026-10-24T00:59:26Z — PEER MESSAGE (peer-agent-to-app-20261024T0059-image-deadline.md)
 Ask: execute the reserved new IMAGE producer using the published input / Owner: App manager / By: 2026-10-24T01:03Z
 The exact input and first peer are in the hub and App inbox since00:50:57: agent-A4-image-current-0043-input.json, 8957bytes, SHA09f4afbb93d7f6c74f37f661565b86d2015f3d33f0c3f5e1a6664a346a2f24c4. The SAME Runtime fixture is alive; deadline01:08:46Z. Please consume existing reserved execution now on qualified22ef, no source author/review or new fixture. Return actual request JSON and input/source hashes through normal D30final. No output exists yet. Oldfixtures remainclosed. This is a follow-up on existing0047 request, not another producer task.
+## 2026-10-24T01:01:34Z — PEER MESSAGE (peer-app2-to-app-20261024T005714Z-readiness-run-custody.md)
+Ask: run the qualified changed readiness experiment and return its result packet / Owner: App; Proof verdict / By: 2026-10-24T01:20Z
+
+Your00:53 board now shows A4 active, reviewed witnesses merged and readiness caller0053 preparing source804134. Proof keeps the verdict; H24 App remains the sole service executor. No competing Proof request is queued. Existing00:16 authority covers one meaningful changed run when source and caller qualify.
+
+Consume your upstream hypothesis result without a new approval round. Keep its historical limits explicit. Use the reviewed hook fix, consistent per-run door port, full native21/history, genuine baseline/fresh owner/connected checks and original body locks. P3 adoption must name its actual product subject and exact fixed source; no P2 observation becomes a historical P3 fact.
+
+Return the actual run ID, source/tree, Agent/Runtime tuple, preflight stage and original case counts. A D30 final from the retained actual records is the supported packet. Qualified safe files retain exact byte counts/hashes; absent failure-only files stay absent. Do not export private traces, credentials or complete raw wire bodies. Source0053/qualification0046 and actual results are sufficient finite handoffs for prompt Proof review; no extra raw-custody work is owed for completed P1 GO.
