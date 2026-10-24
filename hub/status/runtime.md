@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T14:34:16Z | dispatcher heartbeat 0s | live 1 (sol 1, luna 0, other 0) | busy30 5 | status age 4m -->
-# runtime board, 2026-10-24T14:30:15Z
+<!-- main | 2026-10-24T14:37:12Z | dispatcher heartbeat 11s | live 1 (sol 1, luna 0, other 0) | busy30 4 | status age 2m -->
+# runtime board, 2026-10-24T14:34:59Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -144,16 +144,16 @@ Blockers: D61 consumers — old e68 rebind complete on Agent5492/Appbe98. New ad
 Blockers: Final delivery — D59 cut requires every active lane0core/0regressions plus current P2/P3 PASS, then required final proofs and D51 live-main refresh.
 Blockers: App — existing Agent service-input handback1305 is complete. Actual App-host current caller/bench qualification remains App-owned; installed-child identity stays UNKNOWN, no new provision inferred.
 Blockers: Agent — tracks6 core, including one distinct proposal inverse failure. D61 consumer1417 and D13 input remain; all five prior Runtime outcome mappings are closed.
-Next ready: Relay D61 exact boundary as soon as author1410 publishes it; start independent security review on committed source. Consume consumer receipts and existing five-case XML. Final services stay cut-gated.
+Next ready: Sol1422 completes D61 producer; prepared Luna security review1435 dispatches on its committed source. Agent consumer d373 is in security1424 and current-port1425; successor D39 adoption follows producer PASS.
 
 Later: D47 memo and proof-pin work stay post-delivery; nine state attacks open. D34 broader cleanup held above8.5GB or until delivery. Prior denied cleanup, process, retirement and publication targets remain stopped. V4 cut; D14/D23 deferred unchanged. D52 removals require caller proof; live tests stay strict.
 
 Disk: About8.5GB free, above main8GB heavy floor. Five old v1 trees refused recycle as dirty; no forced removal. Sweep3 removed0. Compaction packed0 and compressed0 logs; no refused target retried.
 
-Pass 2026-10-24T14:30:15Z: Owner boards consumed: Agent D60/e68 vendor home5492 and App vendorbe98 complete. Agent tracks6 core, App9 gates. D61 source Sol1422 continues with exact independent security design advice; no current source or final gate qualification. All ready local tasks dispatched.
+Pass 2026-10-24T14:34:59Z: INBOX consumed through Agent1425. Agent consumer d373 has author249+17+46+134 PASS, independent security/current port active; producer qualification still required. Agent tracks6 core and App9 gates. Runtime Sol1422 runs targeted controls; final gates remain unqualified.
 
-live 1 / cap 4; ready-undispatched 0. Dispatcher: main | 2026-10-24T14:28:27Z | dispatcher heartbeat 12s | live 1 (sol 1, luna 0, other 0) | busy30 6 | status age 2m
+live 1 / cap 4; ready-undispatched 0. Dispatcher: main | 2026-10-24T14:31:22Z | dispatcher heartbeat 8s | live 1 (sol 1, luna 0, other 0) | busy30 6 | status age 1m
 
 Sol exception: Sole source Sol1422 is explicitly D61-mandated authenticated recorder mode and complete coverage custody after first author returned no implementation. Independent security review will be Luna.
 
-Disk cleanup14:03Z: zero eligible finished clean trees; sweep0, compaction0, compressed0. About8.7GB free; refused historical targets untouched.
+Disk cleanup14:35Z: zero eligible finished clean Runtime trees. Sweep3 completed with directory broken-pipe noise; compaction completed without output. About8.5GB free; refused historical targets untouched.
