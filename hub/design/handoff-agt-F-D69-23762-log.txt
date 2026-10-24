@@ -1,0 +1,2030 @@
+{"donors_required": true, "file_hashes": {"tests/core/test_timeline_element_publication.py": "9b830ac849593500c51af4d2cfd7a17ece7ae1a4f61dcbc1b1dd6cfcbd02194e", "tests/packs/rendering/test_live_scene_composition.py": "60d9bff9a7c8b99389c7daca0d035dbbea07ade474bca8d0d99fbc036ad8835b", "tests/packs/rendering/test_timeline_filmstrip_cards.py": "b22c30a2ffcd8be37e9cfa444884960fe4f0082b0b3ff6f1b5e7e13f467ff317", "tests/packs/rendering/test_timeline_filmstrip_execution.py": "216f2671bfa3a025ea271ecd89f258297fa61a3f85ff49dd6ffbf5aa3b6cb9ca", "tests/packs/timeline/test_cli_parity.py": "14b1ff737adef334f2c8c0539f10921bf73ea1dcf054d805240901376fda1dcf", "tests/packs/timeline/test_cli_status_publish.py": "461c58b3bd3000e28a03d1f28370c69c4b39a797ba42aa9ee029a3a94d881c93", "tests/packs/timeline/test_verbs_working_copy.py": "620c7984ba0c0024ecf4a6bb5ee5e290f31cff9ee7b42bb7c353de6e65e24673", "tests/packs/video_editing/test_runtime_publication_chain.py": "02c9182ea024619944e31fae162ee9af776830bff5d38879984b844d9e3d0b92", "tests/sdk/test_authoring_revision_diff.py": "ad499b0473ca1bcc6f1477b95d25194286dcf6107b093fe2a6e86157d5c94391", "tests/sdk/test_intent_app_astrid.py": "c3b85e89730be4499903a38ce8cf34adb868828707d67afa4f65a35b998362c7", "tests/sdk/test_runtime_response_conformance.py": "a7f32e29d927d3b0832884c22144cf7cee69386184702efafcf0d70f62134e2f", "tests/sdk/test_timeline_checkout.py": "42495cf323c05dc4ac12190d6b9e92d0e06988975e4fbf47f036b7506a04760e", "tests/sdk/test_timeline_persistence.py": "533b98cd9f5b45ba6253282ac4d867cdda31d5bb17ac67a2f036eba2bcf23d66", "tests/sdk/test_timeline_publish_connection.py": "4a69d57d89471274f1acbccd6a95d901ad0b66ef32058301110d70ee64538ff1", "tests/sdk/test_timeline_restructure.py": "3e0f8dc4c9e6b5cffb8c9bb40efeff605cc187b926e60615bbd59a0efbda3e67", "tests/sdk/test_timeline_store_fixes.py": "116d83276132f4a30482a4b4d47325cc8632aea03e4cbf9d520bd5d81d9587c9", "tests/test_installer_schema.py": "57513a47506bcd9f156fb2191ed4d2ac3a678b4695dac2f6a6b332763d81f5d8", "tests/timeline/test_authoring_bundle.py": "46139aac78d3de4ee2c2bf3273dafe911392cc84a48fd3faf3c874b0ce66fc57", "tests/v10/test_timelines_create.py": "958a8db4ab25dbe648809f190e9ed4003ad3a6ec2a1678a37f90bee02b0d6752"}, "functions": 34, "head": "e1f8518ac06e033dc0d14ab5177254d635d4def1", "parameterized_rows": 20, "parents": "e1f8518ac06e033dc0d14ab5177254d635d4def1 ef0363985e645481952448619f2cbb25e9d51a66", "rows": 47, "status": "PASS", "task": "F/D69", "tree": "1be86f3bb070ec0712afa334c7d7fa4c1d4e0a6d"}
+FFFFF.FFF..FFF.....FFFFFFFFFFFFFFFFFFFF..FFFFFFFF                        [100%]
+=================================== FAILURES ===================================
+_______________________ test_publish_requires_a_message ________________________
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f08de878980>
+
+    def test_publish_requires_a_message(capsys) -> None:
+        parser = timeline_cli.build_parser(_Client())
+        with pytest.raises(SystemExit) as exc:
+            parser.parse_args(["publish", "main", "--project", "p"])
+        assert exc.value.code == 2
+>       assert "-m/--message" in capsys.readouterr().err
+E       assert '-m/--message' in "usage: astrid timelines [-h]\n                        {checkout,commit,edit,assets,find,apply,undo,redo,check,status,...', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')\n"
+E        +  where "usage: astrid timelines [-h]\n                        {checkout,commit,edit,assets,find,apply,undo,redo,check,status,...', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')\n" = CaptureResult(out='', err="usage: astrid timelines [-h]\n                        {checkout,commit,edit,assets,find,app..., 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')\n").err
+E        +    where CaptureResult(out='', err="usage: astrid timelines [-h]\n                        {checkout,commit,edit,assets,find,app..., 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')\n") = readouterr()
+E        +      where readouterr = <_pytest.capture.CaptureFixture object at 0x7f08de878980>.readouterr
+
+tests/packs/timeline/test_cli_parity.py:91: AssertionError
+_______________ test_publish_forwards_key_and_force_to_sdk_once ________________
+
+self = TimelinesParser(prog='astrid timelines', usage=None, description="Timeline check/create/list/show/script/replace-paren...beneath 'timelines shots'.", formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+args = ['publish', 'main', '--project', 'p1', '--idempotency-key', 'edit-42', ...]
+namespace = Namespace(command=None), intermixed = False
+
+    def _parse_known_args2(self, args, namespace, intermixed):
+        if args is None:
+            # args default to the system args
+            args = _sys.argv[1:]
+        else:
+            # make sure that args are mutable
+            args = list(args)
+    
+        # default Namespace built from parser defaults
+        if namespace is None:
+            namespace = Namespace()
+    
+        # add any action defaults that aren't present
+        for action in self._actions:
+            if action.dest is not SUPPRESS:
+                if not hasattr(namespace, action.dest):
+                    if action.default is not SUPPRESS:
+                        setattr(namespace, action.dest, action.default)
+    
+        # add any parser defaults that aren't present
+        for dest in self._defaults:
+            if not hasattr(namespace, dest):
+                setattr(namespace, dest, self._defaults[dest])
+    
+        # parse the arguments and exit if there are any errors
+        if self.exit_on_error:
+            try:
+>               namespace, args = self._parse_known_args(args, namespace, intermixed)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/usr/lib/python3.13/argparse.py:1965: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.13/argparse.py:2197: in _parse_known_args
+    positionals_end_index = consume_positionals(start_index)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:2172: in consume_positionals
+    take_action(action, args)
+/usr/lib/python3.13/argparse.py:2026: in take_action
+    argument_values = self._get_values(action, argument_strings)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:2556: in _get_values
+    self._check_value(action, value[0])
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = TimelinesParser(prog='astrid timelines', usage=None, description="Timeline check/create/list/show/script/replace-paren...beneath 'timelines shots'.", formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+action = _SubParsersAction(option_strings=[], dest='command', nargs='A...', const=None, default=None, type=None, choices={'chec...e.HelpFormatter'>, conflict_handler='error', add_help=True)}, required=True, help=None, metavar=None, deprecated=False)
+value = 'publish'
+
+    def _check_value(self, action, value):
+        # converted value must be one of the choices (if specified)
+        choices = action.choices
+        if choices is not None:
+            if isinstance(choices, str):
+                choices = iter(choices)
+            if value not in choices:
+                args = {'value': str(value),
+                        'choices': ', '.join(repr(str(choice)) for choice in action.choices)}
+                msg = _('invalid choice: %(value)r (choose from %(choices)s)')
+>               raise ArgumentError(action, msg % args)
+E               argparse.ArgumentError: argument command: invalid choice: 'publish' (choose from 'checkout', 'commit', 'edit', 'assets', 'find', 'apply', 'undo', 'redo', 'check', 'status', 'discard', 'duplicate', 'rename', 'restructure', 'lines', 'words', 'create', 'list', 'show', 'script', 'elements', 'update-element', 'replace-parent-media', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')
+
+/usr/lib/python3.13/argparse.py:2606: ArgumentError
+
+During handling of the above exception, another exception occurred:
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9/test_publish_forwards_key_and_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f08dda636f0>
+capsys = <_pytest.capture.CaptureFixture object at 0x7f08dd354b90>
+
+    def test_publish_forwards_key_and_force_to_sdk_once(tmp_path, monkeypatch, capsys) -> None:
+        parser = timeline_cli.build_parser(object())
+        path = tmp_path / "draft.json"
+        path.write_text("draft", encoding="utf-8")
+        monkeypatch.setattr("astrid.sdk.timeline_checkout.find_draft", lambda *_args, **_kwargs: path)
+        calls = []
+    
+        class FakeCheckout:
+            @staticmethod
+            def load(_path):
+                return FakeCheckout()
+    
+            def publish(self, message, **kwargs):
+                calls.append((message, kwargs))
+                return {"new_head": "head-4", "narration_pinned": []}
+    
+        monkeypatch.setattr(Checkout, "load", classmethod(lambda _cls, _path: FakeCheckout()))
+>       parsed = parser.parse_args([
+            "publish", "main", "--project", "p1", "--idempotency-key", "edit-42", "--force", "-m", "edit", "--json",
+        ])
+
+tests/packs/timeline/test_cli_status_publish.py:40: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+astrid/packs/timeline/cli_parser.py:41: in parse_args
+    parsed, extras = self.parse_known_args(args, namespace)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:1936: in parse_known_args
+    return self._parse_known_args2(args, namespace, intermixed=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:1967: in _parse_known_args2
+    self.error(str(err))
+/usr/lib/python3.13/argparse.py:2686: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = TimelinesParser(prog='astrid timelines', usage=None, description="Timeline check/create/list/show/script/replace-paren...beneath 'timelines shots'.", formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = "astrid timelines: error: argument command: invalid choice: 'publish' (choose from 'checkout', 'commit', 'edit', 'asse...', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')\n"
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+/usr/lib/python3.13/argparse.py:2673: SystemExit
+----------------------------- Captured stderr call -----------------------------
+usage: astrid timelines [-h]
+                        {checkout,commit,edit,assets,find,apply,undo,redo,check,status,discard,duplicate,rename,restructure,lines,words,create,list,show,script,elements,update-element,replace-parent-media,archive,recover,history,log,diff,visualize,lint,inspect,render,shots,transcripts} ...
+astrid timelines: error: argument command: invalid choice: 'publish' (choose from 'checkout', 'commit', 'edit', 'assets', 'find', 'apply', 'undo', 'redo', 'check', 'status', 'discard', 'duplicate', 'rename', 'restructure', 'lines', 'words', 'create', 'list', 'show', 'script', 'elements', 'update-element', 'replace-parent-media', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')
+_ test_publish_partial_narration_error_preserves_receipt_and_does_not_retry[False] _
+
+self = TimelinesParser(prog='astrid timelines', usage=None, description="Timeline check/create/list/show/script/replace-paren...beneath 'timelines shots'.", formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+args = ['publish', 'main', '--project', 'p1', '--idempotency-key', 'edit-43', ...]
+namespace = Namespace(command=None), intermixed = False
+
+    def _parse_known_args2(self, args, namespace, intermixed):
+        if args is None:
+            # args default to the system args
+            args = _sys.argv[1:]
+        else:
+            # make sure that args are mutable
+            args = list(args)
+    
+        # default Namespace built from parser defaults
+        if namespace is None:
+            namespace = Namespace()
+    
+        # add any action defaults that aren't present
+        for action in self._actions:
+            if action.dest is not SUPPRESS:
+                if not hasattr(namespace, action.dest):
+                    if action.default is not SUPPRESS:
+                        setattr(namespace, action.dest, action.default)
+    
+        # add any parser defaults that aren't present
+        for dest in self._defaults:
+            if not hasattr(namespace, dest):
+                setattr(namespace, dest, self._defaults[dest])
+    
+        # parse the arguments and exit if there are any errors
+        if self.exit_on_error:
+            try:
+>               namespace, args = self._parse_known_args(args, namespace, intermixed)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/usr/lib/python3.13/argparse.py:1965: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.13/argparse.py:2197: in _parse_known_args
+    positionals_end_index = consume_positionals(start_index)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:2172: in consume_positionals
+    take_action(action, args)
+/usr/lib/python3.13/argparse.py:2026: in take_action
+    argument_values = self._get_values(action, argument_strings)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:2556: in _get_values
+    self._check_value(action, value[0])
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = TimelinesParser(prog='astrid timelines', usage=None, description="Timeline check/create/list/show/script/replace-paren...beneath 'timelines shots'.", formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+action = _SubParsersAction(option_strings=[], dest='command', nargs='A...', const=None, default=None, type=None, choices={'chec...e.HelpFormatter'>, conflict_handler='error', add_help=True)}, required=True, help=None, metavar=None, deprecated=False)
+value = 'publish'
+
+    def _check_value(self, action, value):
+        # converted value must be one of the choices (if specified)
+        choices = action.choices
+        if choices is not None:
+            if isinstance(choices, str):
+                choices = iter(choices)
+            if value not in choices:
+                args = {'value': str(value),
+                        'choices': ', '.join(repr(str(choice)) for choice in action.choices)}
+                msg = _('invalid choice: %(value)r (choose from %(choices)s)')
+>               raise ArgumentError(action, msg % args)
+E               argparse.ArgumentError: argument command: invalid choice: 'publish' (choose from 'checkout', 'commit', 'edit', 'assets', 'find', 'apply', 'undo', 'redo', 'check', 'status', 'discard', 'duplicate', 'rename', 'restructure', 'lines', 'words', 'create', 'list', 'show', 'script', 'elements', 'update-element', 'replace-parent-media', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')
+
+/usr/lib/python3.13/argparse.py:2606: ArgumentError
+
+During handling of the above exception, another exception occurred:
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9/test_publish_partial_narration0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f08dd362b10>
+capsys = <_pytest.capture.CaptureFixture object at 0x7f08dd485810>
+as_json = False
+
+    @pytest.mark.parametrize("as_json", [False, True])
+    def test_publish_partial_narration_error_preserves_receipt_and_does_not_retry(tmp_path, monkeypatch, capsys, as_json) -> None:
+        parser = timeline_cli.build_parser(object())
+        path = tmp_path / "draft.json"
+        path.write_text("draft", encoding="utf-8")
+        monkeypatch.setattr("astrid.sdk.timeline_checkout.find_draft", lambda *_args, **_kwargs: path)
+        receipt = {
+            "old_head": "head-1",
+            "new_head": "head-2",
+            "narration_pinned": [],
+            "narration_error": "binding CAS conflict",
+        }
+        calls = []
+    
+        class FakeCheckout:
+            @staticmethod
+            def load(_path):
+                return FakeCheckout()
+    
+            def edits(self):
+                return {"changes": []}
+    
+            def changed_cut_ids(self):
+                return []
+    
+            def publish(self, _message, **_kwargs):
+                calls.append(True)
+                return dict(receipt)
+    
+        monkeypatch.setattr(Checkout, "load", classmethod(lambda _cls, _path: FakeCheckout()))
+        args = ["publish", "main", "--project", "p1", "--idempotency-key", "edit-43", "-m", "edit"]
+>       parsed = parser.parse_args(args + (["--json"] if as_json else []))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/packs/timeline/test_cli_status_publish.py:83: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+astrid/packs/timeline/cli_parser.py:41: in parse_args
+    parsed, extras = self.parse_known_args(args, namespace)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:1936: in parse_known_args
+    return self._parse_known_args2(args, namespace, intermixed=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:1967: in _parse_known_args2
+    self.error(str(err))
+/usr/lib/python3.13/argparse.py:2686: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = TimelinesParser(prog='astrid timelines', usage=None, description="Timeline check/create/list/show/script/replace-paren...beneath 'timelines shots'.", formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = "astrid timelines: error: argument command: invalid choice: 'publish' (choose from 'checkout', 'commit', 'edit', 'asse...', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')\n"
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+/usr/lib/python3.13/argparse.py:2673: SystemExit
+----------------------------- Captured stderr call -----------------------------
+usage: astrid timelines [-h]
+                        {checkout,commit,edit,assets,find,apply,undo,redo,check,status,discard,duplicate,rename,restructure,lines,words,create,list,show,script,elements,update-element,replace-parent-media,archive,recover,history,log,diff,visualize,lint,inspect,render,shots,transcripts} ...
+astrid timelines: error: argument command: invalid choice: 'publish' (choose from 'checkout', 'commit', 'edit', 'assets', 'find', 'apply', 'undo', 'redo', 'check', 'status', 'discard', 'duplicate', 'rename', 'restructure', 'lines', 'words', 'create', 'list', 'show', 'script', 'elements', 'update-element', 'replace-parent-media', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')
+_ test_publish_partial_narration_error_preserves_receipt_and_does_not_retry[True] _
+
+self = TimelinesParser(prog='astrid timelines', usage=None, description="Timeline check/create/list/show/script/replace-paren...beneath 'timelines shots'.", formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+args = ['publish', 'main', '--project', 'p1', '--idempotency-key', 'edit-43', ...]
+namespace = Namespace(command=None), intermixed = False
+
+    def _parse_known_args2(self, args, namespace, intermixed):
+        if args is None:
+            # args default to the system args
+            args = _sys.argv[1:]
+        else:
+            # make sure that args are mutable
+            args = list(args)
+    
+        # default Namespace built from parser defaults
+        if namespace is None:
+            namespace = Namespace()
+    
+        # add any action defaults that aren't present
+        for action in self._actions:
+            if action.dest is not SUPPRESS:
+                if not hasattr(namespace, action.dest):
+                    if action.default is not SUPPRESS:
+                        setattr(namespace, action.dest, action.default)
+    
+        # add any parser defaults that aren't present
+        for dest in self._defaults:
+            if not hasattr(namespace, dest):
+                setattr(namespace, dest, self._defaults[dest])
+    
+        # parse the arguments and exit if there are any errors
+        if self.exit_on_error:
+            try:
+>               namespace, args = self._parse_known_args(args, namespace, intermixed)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/usr/lib/python3.13/argparse.py:1965: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.13/argparse.py:2197: in _parse_known_args
+    positionals_end_index = consume_positionals(start_index)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:2172: in consume_positionals
+    take_action(action, args)
+/usr/lib/python3.13/argparse.py:2026: in take_action
+    argument_values = self._get_values(action, argument_strings)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:2556: in _get_values
+    self._check_value(action, value[0])
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = TimelinesParser(prog='astrid timelines', usage=None, description="Timeline check/create/list/show/script/replace-paren...beneath 'timelines shots'.", formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+action = _SubParsersAction(option_strings=[], dest='command', nargs='A...', const=None, default=None, type=None, choices={'chec...e.HelpFormatter'>, conflict_handler='error', add_help=True)}, required=True, help=None, metavar=None, deprecated=False)
+value = 'publish'
+
+    def _check_value(self, action, value):
+        # converted value must be one of the choices (if specified)
+        choices = action.choices
+        if choices is not None:
+            if isinstance(choices, str):
+                choices = iter(choices)
+            if value not in choices:
+                args = {'value': str(value),
+                        'choices': ', '.join(repr(str(choice)) for choice in action.choices)}
+                msg = _('invalid choice: %(value)r (choose from %(choices)s)')
+>               raise ArgumentError(action, msg % args)
+E               argparse.ArgumentError: argument command: invalid choice: 'publish' (choose from 'checkout', 'commit', 'edit', 'assets', 'find', 'apply', 'undo', 'redo', 'check', 'status', 'discard', 'duplicate', 'rename', 'restructure', 'lines', 'words', 'create', 'list', 'show', 'script', 'elements', 'update-element', 'replace-parent-media', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')
+
+/usr/lib/python3.13/argparse.py:2606: ArgumentError
+
+During handling of the above exception, another exception occurred:
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9/test_publish_partial_narration1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f08dc22d040>
+capsys = <_pytest.capture.CaptureFixture object at 0x7f08dd36eea0>
+as_json = True
+
+    @pytest.mark.parametrize("as_json", [False, True])
+    def test_publish_partial_narration_error_preserves_receipt_and_does_not_retry(tmp_path, monkeypatch, capsys, as_json) -> None:
+        parser = timeline_cli.build_parser(object())
+        path = tmp_path / "draft.json"
+        path.write_text("draft", encoding="utf-8")
+        monkeypatch.setattr("astrid.sdk.timeline_checkout.find_draft", lambda *_args, **_kwargs: path)
+        receipt = {
+            "old_head": "head-1",
+            "new_head": "head-2",
+            "narration_pinned": [],
+            "narration_error": "binding CAS conflict",
+        }
+        calls = []
+    
+        class FakeCheckout:
+            @staticmethod
+            def load(_path):
+                return FakeCheckout()
+    
+            def edits(self):
+                return {"changes": []}
+    
+            def changed_cut_ids(self):
+                return []
+    
+            def publish(self, _message, **_kwargs):
+                calls.append(True)
+                return dict(receipt)
+    
+        monkeypatch.setattr(Checkout, "load", classmethod(lambda _cls, _path: FakeCheckout()))
+        args = ["publish", "main", "--project", "p1", "--idempotency-key", "edit-43", "-m", "edit"]
+>       parsed = parser.parse_args(args + (["--json"] if as_json else []))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/packs/timeline/test_cli_status_publish.py:83: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+astrid/packs/timeline/cli_parser.py:41: in parse_args
+    parsed, extras = self.parse_known_args(args, namespace)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:1936: in parse_known_args
+    return self._parse_known_args2(args, namespace, intermixed=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:1967: in _parse_known_args2
+    self.error(str(err))
+/usr/lib/python3.13/argparse.py:2686: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = TimelinesParser(prog='astrid timelines', usage=None, description="Timeline check/create/list/show/script/replace-paren...beneath 'timelines shots'.", formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = "astrid timelines: error: argument command: invalid choice: 'publish' (choose from 'checkout', 'commit', 'edit', 'asse...', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')\n"
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+/usr/lib/python3.13/argparse.py:2673: SystemExit
+----------------------------- Captured stderr call -----------------------------
+usage: astrid timelines [-h]
+                        {checkout,commit,edit,assets,find,apply,undo,redo,check,status,discard,duplicate,rename,restructure,lines,words,create,list,show,script,elements,update-element,replace-parent-media,archive,recover,history,log,diff,visualize,lint,inspect,render,shots,transcripts} ...
+astrid timelines: error: argument command: invalid choice: 'publish' (choose from 'checkout', 'commit', 'edit', 'assets', 'find', 'apply', 'undo', 'redo', 'check', 'status', 'discard', 'duplicate', 'rename', 'restructure', 'lines', 'words', 'create', 'list', 'show', 'script', 'elements', 'update-element', 'replace-parent-media', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')
+___ test_publish_human_output_is_a_short_summary_and_json_keeps_the_envelope ___
+
+self = TimelinesParser(prog='astrid timelines', usage=None, description="Timeline check/create/list/show/script/replace-paren...beneath 'timelines shots'.", formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+args = ['publish', 'main', '--project', 'p1', '-m', 'tighten c3']
+namespace = Namespace(command=None), intermixed = False
+
+    def _parse_known_args2(self, args, namespace, intermixed):
+        if args is None:
+            # args default to the system args
+            args = _sys.argv[1:]
+        else:
+            # make sure that args are mutable
+            args = list(args)
+    
+        # default Namespace built from parser defaults
+        if namespace is None:
+            namespace = Namespace()
+    
+        # add any action defaults that aren't present
+        for action in self._actions:
+            if action.dest is not SUPPRESS:
+                if not hasattr(namespace, action.dest):
+                    if action.default is not SUPPRESS:
+                        setattr(namespace, action.dest, action.default)
+    
+        # add any parser defaults that aren't present
+        for dest in self._defaults:
+            if not hasattr(namespace, dest):
+                setattr(namespace, dest, self._defaults[dest])
+    
+        # parse the arguments and exit if there are any errors
+        if self.exit_on_error:
+            try:
+>               namespace, args = self._parse_known_args(args, namespace, intermixed)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/usr/lib/python3.13/argparse.py:1965: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.13/argparse.py:2197: in _parse_known_args
+    positionals_end_index = consume_positionals(start_index)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:2172: in consume_positionals
+    take_action(action, args)
+/usr/lib/python3.13/argparse.py:2026: in take_action
+    argument_values = self._get_values(action, argument_strings)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:2556: in _get_values
+    self._check_value(action, value[0])
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = TimelinesParser(prog='astrid timelines', usage=None, description="Timeline check/create/list/show/script/replace-paren...beneath 'timelines shots'.", formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+action = _SubParsersAction(option_strings=[], dest='command', nargs='A...', const=None, default=None, type=None, choices={'chec...e.HelpFormatter'>, conflict_handler='error', add_help=True)}, required=True, help=None, metavar=None, deprecated=False)
+value = 'publish'
+
+    def _check_value(self, action, value):
+        # converted value must be one of the choices (if specified)
+        choices = action.choices
+        if choices is not None:
+            if isinstance(choices, str):
+                choices = iter(choices)
+            if value not in choices:
+                args = {'value': str(value),
+                        'choices': ', '.join(repr(str(choice)) for choice in action.choices)}
+                msg = _('invalid choice: %(value)r (choose from %(choices)s)')
+>               raise ArgumentError(action, msg % args)
+E               argparse.ArgumentError: argument command: invalid choice: 'publish' (choose from 'checkout', 'commit', 'edit', 'assets', 'find', 'apply', 'undo', 'redo', 'check', 'status', 'discard', 'duplicate', 'rename', 'restructure', 'lines', 'words', 'create', 'list', 'show', 'script', 'elements', 'update-element', 'replace-parent-media', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')
+
+/usr/lib/python3.13/argparse.py:2606: ArgumentError
+
+During handling of the above exception, another exception occurred:
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9/test_publish_human_output_is_a0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f08dc2789e0>
+capsys = <_pytest.capture.CaptureFixture object at 0x7f08dd36f6f0>
+
+    def test_publish_human_output_is_a_short_summary_and_json_keeps_the_envelope(tmp_path, monkeypatch, capsys) -> None:
+        parser = timeline_cli.build_parser(object())
+        path = tmp_path / "draft.json"
+        path.write_text("draft", encoding="utf-8")
+        monkeypatch.setattr("astrid.sdk.timeline_checkout.find_draft", lambda *_args, **_kwargs: path)
+        receipt = {
+            "old_head": "authoring-parent-revision-abcdef1234567890",
+            "new_head": "head-2",
+            "narration_pinned": [],
+            "message": "tighten c3",
+            "structure": "x" * 200_000,
+        }
+        calls = []
+    
+        class FakeCheckout:
+            @staticmethod
+            def load(_path):
+                return FakeCheckout()
+    
+            def edits(self):
+                calls.append("edits")
+                assert "publish" not in calls
+                return {"changes": [{"clip_id": "a"}, {"clip_id": "b"}]}
+    
+            def changed_cut_ids(self):
+                calls.append("cuts")
+                assert "publish" not in calls
+                return ["c3"]
+    
+            def publish(self, _message, **_kwargs):
+                calls.append("publish")
+                return dict(receipt)
+    
+        monkeypatch.setattr(Checkout, "load", classmethod(lambda _cls, _path: FakeCheckout()))
+    
+>       human = parser.parse_args(["publish", "main", "--project", "p1", "-m", "tighten c3"])
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/packs/timeline/test_cli_status_publish.py:134: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+astrid/packs/timeline/cli_parser.py:41: in parse_args
+    parsed, extras = self.parse_known_args(args, namespace)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:1936: in parse_known_args
+    return self._parse_known_args2(args, namespace, intermixed=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:1967: in _parse_known_args2
+    self.error(str(err))
+/usr/lib/python3.13/argparse.py:2686: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = TimelinesParser(prog='astrid timelines', usage=None, description="Timeline check/create/list/show/script/replace-paren...beneath 'timelines shots'.", formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = "astrid timelines: error: argument command: invalid choice: 'publish' (choose from 'checkout', 'commit', 'edit', 'asse...', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')\n"
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+/usr/lib/python3.13/argparse.py:2673: SystemExit
+----------------------------- Captured stderr call -----------------------------
+usage: astrid timelines [-h]
+                        {checkout,commit,edit,assets,find,apply,undo,redo,check,status,discard,duplicate,rename,restructure,lines,words,create,list,show,script,elements,update-element,replace-parent-media,archive,recover,history,log,diff,visualize,lint,inspect,render,shots,transcripts} ...
+astrid timelines: error: argument command: invalid choice: 'publish' (choose from 'checkout', 'commit', 'edit', 'assets', 'find', 'apply', 'undo', 'redo', 'check', 'status', 'discard', 'duplicate', 'rename', 'restructure', 'lines', 'words', 'create', 'list', 'show', 'script', 'elements', 'update-element', 'replace-parent-media', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')
+____ test_publish_cas_refusal_is_not_retried_or_reported_as_success[False] _____
+
+self = TimelinesParser(prog='astrid timelines', usage=None, description="Timeline check/create/list/show/script/replace-paren...beneath 'timelines shots'.", formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+args = ['publish', 'main', '--project', 'p1', '-m', 'edit', ...]
+namespace = Namespace(command=None), intermixed = False
+
+    def _parse_known_args2(self, args, namespace, intermixed):
+        if args is None:
+            # args default to the system args
+            args = _sys.argv[1:]
+        else:
+            # make sure that args are mutable
+            args = list(args)
+    
+        # default Namespace built from parser defaults
+        if namespace is None:
+            namespace = Namespace()
+    
+        # add any action defaults that aren't present
+        for action in self._actions:
+            if action.dest is not SUPPRESS:
+                if not hasattr(namespace, action.dest):
+                    if action.default is not SUPPRESS:
+                        setattr(namespace, action.dest, action.default)
+    
+        # add any parser defaults that aren't present
+        for dest in self._defaults:
+            if not hasattr(namespace, dest):
+                setattr(namespace, dest, self._defaults[dest])
+    
+        # parse the arguments and exit if there are any errors
+        if self.exit_on_error:
+            try:
+>               namespace, args = self._parse_known_args(args, namespace, intermixed)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/usr/lib/python3.13/argparse.py:1965: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.13/argparse.py:2197: in _parse_known_args
+    positionals_end_index = consume_positionals(start_index)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:2172: in consume_positionals
+    take_action(action, args)
+/usr/lib/python3.13/argparse.py:2026: in take_action
+    argument_values = self._get_values(action, argument_strings)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:2556: in _get_values
+    self._check_value(action, value[0])
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = TimelinesParser(prog='astrid timelines', usage=None, description="Timeline check/create/list/show/script/replace-paren...beneath 'timelines shots'.", formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+action = _SubParsersAction(option_strings=[], dest='command', nargs='A...', const=None, default=None, type=None, choices={'chec...e.HelpFormatter'>, conflict_handler='error', add_help=True)}, required=True, help=None, metavar=None, deprecated=False)
+value = 'publish'
+
+    def _check_value(self, action, value):
+        # converted value must be one of the choices (if specified)
+        choices = action.choices
+        if choices is not None:
+            if isinstance(choices, str):
+                choices = iter(choices)
+            if value not in choices:
+                args = {'value': str(value),
+                        'choices': ', '.join(repr(str(choice)) for choice in action.choices)}
+                msg = _('invalid choice: %(value)r (choose from %(choices)s)')
+>               raise ArgumentError(action, msg % args)
+E               argparse.ArgumentError: argument command: invalid choice: 'publish' (choose from 'checkout', 'commit', 'edit', 'assets', 'find', 'apply', 'undo', 'redo', 'check', 'status', 'discard', 'duplicate', 'rename', 'restructure', 'lines', 'words', 'create', 'list', 'show', 'script', 'elements', 'update-element', 'replace-parent-media', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')
+
+/usr/lib/python3.13/argparse.py:2606: ArgumentError
+
+During handling of the above exception, another exception occurred:
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9/test_publish_cas_refusal_is_no0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f08dd346e50>
+capsys = <_pytest.capture.CaptureFixture object at 0x7f08dd361eb0>
+as_json = False
+
+    @pytest.mark.parametrize("as_json", [False, True])
+    def test_publish_cas_refusal_is_not_retried_or_reported_as_success(tmp_path, monkeypatch, capsys, as_json) -> None:
+        path = tmp_path / "draft.json"
+        path.write_text("draft", encoding="utf-8")
+        monkeypatch.setattr("astrid.sdk.timeline_checkout.find_draft", lambda *_args, **_kwargs: path)
+        calls = []
+        conflict = RuntimeError("CAS head changed")
+        class FakeCheckout:
+            def edits(self):
+                return {"changes": []}
+    
+            def changed_cut_ids(self):
+                return []
+    
+            def publish(self, message, **kwargs):
+                calls.append((message, kwargs))
+                raise conflict
+    
+        monkeypatch.setattr(Checkout, "load", classmethod(lambda _cls, _path: FakeCheckout()))
+        args = ["publish", "main", "--project", "p1", "-m", "edit", "--idempotency-key", "cas-key"]
+>       parsed = timeline_cli.build_parser(object()).parse_args(args + (["--json"] if as_json else []))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/packs/timeline/test_cli_status_publish.py:180: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+astrid/packs/timeline/cli_parser.py:41: in parse_args
+    parsed, extras = self.parse_known_args(args, namespace)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:1936: in parse_known_args
+    return self._parse_known_args2(args, namespace, intermixed=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:1967: in _parse_known_args2
+    self.error(str(err))
+/usr/lib/python3.13/argparse.py:2686: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = TimelinesParser(prog='astrid timelines', usage=None, description="Timeline check/create/list/show/script/replace-paren...beneath 'timelines shots'.", formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = "astrid timelines: error: argument command: invalid choice: 'publish' (choose from 'checkout', 'commit', 'edit', 'asse...', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')\n"
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+/usr/lib/python3.13/argparse.py:2673: SystemExit
+----------------------------- Captured stderr call -----------------------------
+usage: astrid timelines [-h]
+                        {checkout,commit,edit,assets,find,apply,undo,redo,check,status,discard,duplicate,rename,restructure,lines,words,create,list,show,script,elements,update-element,replace-parent-media,archive,recover,history,log,diff,visualize,lint,inspect,render,shots,transcripts} ...
+astrid timelines: error: argument command: invalid choice: 'publish' (choose from 'checkout', 'commit', 'edit', 'assets', 'find', 'apply', 'undo', 'redo', 'check', 'status', 'discard', 'duplicate', 'rename', 'restructure', 'lines', 'words', 'create', 'list', 'show', 'script', 'elements', 'update-element', 'replace-parent-media', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')
+_____ test_publish_cas_refusal_is_not_retried_or_reported_as_success[True] _____
+
+self = TimelinesParser(prog='astrid timelines', usage=None, description="Timeline check/create/list/show/script/replace-paren...beneath 'timelines shots'.", formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+args = ['publish', 'main', '--project', 'p1', '-m', 'edit', ...]
+namespace = Namespace(command=None), intermixed = False
+
+    def _parse_known_args2(self, args, namespace, intermixed):
+        if args is None:
+            # args default to the system args
+            args = _sys.argv[1:]
+        else:
+            # make sure that args are mutable
+            args = list(args)
+    
+        # default Namespace built from parser defaults
+        if namespace is None:
+            namespace = Namespace()
+    
+        # add any action defaults that aren't present
+        for action in self._actions:
+            if action.dest is not SUPPRESS:
+                if not hasattr(namespace, action.dest):
+                    if action.default is not SUPPRESS:
+                        setattr(namespace, action.dest, action.default)
+    
+        # add any parser defaults that aren't present
+        for dest in self._defaults:
+            if not hasattr(namespace, dest):
+                setattr(namespace, dest, self._defaults[dest])
+    
+        # parse the arguments and exit if there are any errors
+        if self.exit_on_error:
+            try:
+>               namespace, args = self._parse_known_args(args, namespace, intermixed)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/usr/lib/python3.13/argparse.py:1965: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.13/argparse.py:2197: in _parse_known_args
+    positionals_end_index = consume_positionals(start_index)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:2172: in consume_positionals
+    take_action(action, args)
+/usr/lib/python3.13/argparse.py:2026: in take_action
+    argument_values = self._get_values(action, argument_strings)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:2556: in _get_values
+    self._check_value(action, value[0])
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = TimelinesParser(prog='astrid timelines', usage=None, description="Timeline check/create/list/show/script/replace-paren...beneath 'timelines shots'.", formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+action = _SubParsersAction(option_strings=[], dest='command', nargs='A...', const=None, default=None, type=None, choices={'chec...e.HelpFormatter'>, conflict_handler='error', add_help=True)}, required=True, help=None, metavar=None, deprecated=False)
+value = 'publish'
+
+    def _check_value(self, action, value):
+        # converted value must be one of the choices (if specified)
+        choices = action.choices
+        if choices is not None:
+            if isinstance(choices, str):
+                choices = iter(choices)
+            if value not in choices:
+                args = {'value': str(value),
+                        'choices': ', '.join(repr(str(choice)) for choice in action.choices)}
+                msg = _('invalid choice: %(value)r (choose from %(choices)s)')
+>               raise ArgumentError(action, msg % args)
+E               argparse.ArgumentError: argument command: invalid choice: 'publish' (choose from 'checkout', 'commit', 'edit', 'assets', 'find', 'apply', 'undo', 'redo', 'check', 'status', 'discard', 'duplicate', 'rename', 'restructure', 'lines', 'words', 'create', 'list', 'show', 'script', 'elements', 'update-element', 'replace-parent-media', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')
+
+/usr/lib/python3.13/argparse.py:2606: ArgumentError
+
+During handling of the above exception, another exception occurred:
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9/test_publish_cas_refusal_is_no1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f08dd33a4e0>
+capsys = <_pytest.capture.CaptureFixture object at 0x7f08dc22f460>
+as_json = True
+
+    @pytest.mark.parametrize("as_json", [False, True])
+    def test_publish_cas_refusal_is_not_retried_or_reported_as_success(tmp_path, monkeypatch, capsys, as_json) -> None:
+        path = tmp_path / "draft.json"
+        path.write_text("draft", encoding="utf-8")
+        monkeypatch.setattr("astrid.sdk.timeline_checkout.find_draft", lambda *_args, **_kwargs: path)
+        calls = []
+        conflict = RuntimeError("CAS head changed")
+        class FakeCheckout:
+            def edits(self):
+                return {"changes": []}
+    
+            def changed_cut_ids(self):
+                return []
+    
+            def publish(self, message, **kwargs):
+                calls.append((message, kwargs))
+                raise conflict
+    
+        monkeypatch.setattr(Checkout, "load", classmethod(lambda _cls, _path: FakeCheckout()))
+        args = ["publish", "main", "--project", "p1", "-m", "edit", "--idempotency-key", "cas-key"]
+>       parsed = timeline_cli.build_parser(object()).parse_args(args + (["--json"] if as_json else []))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/packs/timeline/test_cli_status_publish.py:180: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+astrid/packs/timeline/cli_parser.py:41: in parse_args
+    parsed, extras = self.parse_known_args(args, namespace)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:1936: in parse_known_args
+    return self._parse_known_args2(args, namespace, intermixed=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:1967: in _parse_known_args2
+    self.error(str(err))
+/usr/lib/python3.13/argparse.py:2686: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = TimelinesParser(prog='astrid timelines', usage=None, description="Timeline check/create/list/show/script/replace-paren...beneath 'timelines shots'.", formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = "astrid timelines: error: argument command: invalid choice: 'publish' (choose from 'checkout', 'commit', 'edit', 'asse...', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')\n"
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+/usr/lib/python3.13/argparse.py:2673: SystemExit
+----------------------------- Captured stderr call -----------------------------
+usage: astrid timelines [-h]
+                        {checkout,commit,edit,assets,find,apply,undo,redo,check,status,discard,duplicate,rename,restructure,lines,words,create,list,show,script,elements,update-element,replace-parent-media,archive,recover,history,log,diff,visualize,lint,inspect,render,shots,transcripts} ...
+astrid timelines: error: argument command: invalid choice: 'publish' (choose from 'checkout', 'commit', 'edit', 'assets', 'find', 'apply', 'undo', 'redo', 'check', 'status', 'discard', 'duplicate', 'rename', 'restructure', 'lines', 'words', 'create', 'list', 'show', 'script', 'elements', 'update-element', 'replace-parent-media', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')
+____________ test_publish_of_a_clean_working_copy_publishes_nothing ____________
+
+self = TimelinesParser(prog='astrid timelines', usage=None, description="Timeline check/create/list/show/script/replace-paren...beneath 'timelines shots'.", formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+args = ['publish', 'main', '--project', 'p1', '-m', 'nothing', ...]
+namespace = Namespace(command=None), intermixed = False
+
+    def _parse_known_args2(self, args, namespace, intermixed):
+        if args is None:
+            # args default to the system args
+            args = _sys.argv[1:]
+        else:
+            # make sure that args are mutable
+            args = list(args)
+    
+        # default Namespace built from parser defaults
+        if namespace is None:
+            namespace = Namespace()
+    
+        # add any action defaults that aren't present
+        for action in self._actions:
+            if action.dest is not SUPPRESS:
+                if not hasattr(namespace, action.dest):
+                    if action.default is not SUPPRESS:
+                        setattr(namespace, action.dest, action.default)
+    
+        # add any parser defaults that aren't present
+        for dest in self._defaults:
+            if not hasattr(namespace, dest):
+                setattr(namespace, dest, self._defaults[dest])
+    
+        # parse the arguments and exit if there are any errors
+        if self.exit_on_error:
+            try:
+>               namespace, args = self._parse_known_args(args, namespace, intermixed)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/usr/lib/python3.13/argparse.py:1965: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.13/argparse.py:2197: in _parse_known_args
+    positionals_end_index = consume_positionals(start_index)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:2172: in consume_positionals
+    take_action(action, args)
+/usr/lib/python3.13/argparse.py:2026: in take_action
+    argument_values = self._get_values(action, argument_strings)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:2556: in _get_values
+    self._check_value(action, value[0])
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = TimelinesParser(prog='astrid timelines', usage=None, description="Timeline check/create/list/show/script/replace-paren...beneath 'timelines shots'.", formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+action = _SubParsersAction(option_strings=[], dest='command', nargs='A...', const=None, default=None, type=None, choices={'chec...e.HelpFormatter'>, conflict_handler='error', add_help=True)}, required=True, help=None, metavar=None, deprecated=False)
+value = 'publish'
+
+    def _check_value(self, action, value):
+        # converted value must be one of the choices (if specified)
+        choices = action.choices
+        if choices is not None:
+            if isinstance(choices, str):
+                choices = iter(choices)
+            if value not in choices:
+                args = {'value': str(value),
+                        'choices': ', '.join(repr(str(choice)) for choice in action.choices)}
+                msg = _('invalid choice: %(value)r (choose from %(choices)s)')
+>               raise ArgumentError(action, msg % args)
+E               argparse.ArgumentError: argument command: invalid choice: 'publish' (choose from 'checkout', 'commit', 'edit', 'assets', 'find', 'apply', 'undo', 'redo', 'check', 'status', 'discard', 'duplicate', 'rename', 'restructure', 'lines', 'words', 'create', 'list', 'show', 'script', 'elements', 'update-element', 'replace-parent-media', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')
+
+/usr/lib/python3.13/argparse.py:2606: ArgumentError
+
+During handling of the above exception, another exception occurred:
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9/test_publish_of_a_clean_workin0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f08dc2196d0>
+capsys = <_pytest.capture.CaptureFixture object at 0x7f08dd32acf0>
+
+    def test_publish_of_a_clean_working_copy_publishes_nothing(tmp_path, monkeypatch, capsys) -> None:
+        parser = timeline_cli.build_parser(object())
+        path = tmp_path / "draft.json"
+        path.write_text("draft", encoding="utf-8")
+        monkeypatch.setattr("astrid.sdk.timeline_checkout.find_draft", lambda *_args, **_kwargs: path)
+        calls = []
+    
+        class FakeCheckout:
+            @staticmethod
+            def load(_path):
+                return FakeCheckout()
+    
+            def document(self):
+                return {}
+    
+            def narration_changes(self):
+                return {}
+    
+            def publish(self, *_args, **_kwargs):
+                calls.append("publish")
+                return {"new_head": "head-empty"}
+    
+        monkeypatch.setattr(Checkout, "load", classmethod(lambda _cls, _path: FakeCheckout()))
+        monkeypatch.setattr(timeline_cli, "_checkout_change_units", lambda _checkout: (True, []))
+>       parsed = parser.parse_args(["publish", "main", "--project", "p1", "-m", "nothing", "--json"])
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/packs/timeline/test_cli_status_publish.py:212: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+astrid/packs/timeline/cli_parser.py:41: in parse_args
+    parsed, extras = self.parse_known_args(args, namespace)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:1936: in parse_known_args
+    return self._parse_known_args2(args, namespace, intermixed=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:1967: in _parse_known_args2
+    self.error(str(err))
+/usr/lib/python3.13/argparse.py:2686: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = TimelinesParser(prog='astrid timelines', usage=None, description="Timeline check/create/list/show/script/replace-paren...beneath 'timelines shots'.", formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = "astrid timelines: error: argument command: invalid choice: 'publish' (choose from 'checkout', 'commit', 'edit', 'asse...', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')\n"
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+/usr/lib/python3.13/argparse.py:2673: SystemExit
+----------------------------- Captured stderr call -----------------------------
+usage: astrid timelines [-h]
+                        {checkout,commit,edit,assets,find,apply,undo,redo,check,status,discard,duplicate,rename,restructure,lines,words,create,list,show,script,elements,update-element,replace-parent-media,archive,recover,history,log,diff,visualize,lint,inspect,render,shots,transcripts} ...
+astrid timelines: error: argument command: invalid choice: 'publish' (choose from 'checkout', 'commit', 'edit', 'assets', 'find', 'apply', 'undo', 'redo', 'check', 'status', 'discard', 'duplicate', 'rename', 'restructure', 'lines', 'words', 'create', 'list', 'show', 'script', 'elements', 'update-element', 'replace-parent-media', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')
+_ test_a_refusal_from_the_head_lookup_is_one_plain_line_upstream_publish[argv2] _
+
+self = TimelinesParser(prog='astrid timelines', usage=None, description="Timeline check/create/list/show/script/replace-paren...beneath 'timelines shots'.", formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+args = ['publish', 't', '--project', 'P', '-m', 'x']
+namespace = Namespace(command=None), intermixed = False
+
+    def _parse_known_args2(self, args, namespace, intermixed):
+        if args is None:
+            # args default to the system args
+            args = _sys.argv[1:]
+        else:
+            # make sure that args are mutable
+            args = list(args)
+    
+        # default Namespace built from parser defaults
+        if namespace is None:
+            namespace = Namespace()
+    
+        # add any action defaults that aren't present
+        for action in self._actions:
+            if action.dest is not SUPPRESS:
+                if not hasattr(namespace, action.dest):
+                    if action.default is not SUPPRESS:
+                        setattr(namespace, action.dest, action.default)
+    
+        # add any parser defaults that aren't present
+        for dest in self._defaults:
+            if not hasattr(namespace, dest):
+                setattr(namespace, dest, self._defaults[dest])
+    
+        # parse the arguments and exit if there are any errors
+        if self.exit_on_error:
+            try:
+>               namespace, args = self._parse_known_args(args, namespace, intermixed)
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/usr/lib/python3.13/argparse.py:1965: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.13/argparse.py:2197: in _parse_known_args
+    positionals_end_index = consume_positionals(start_index)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:2172: in consume_positionals
+    take_action(action, args)
+/usr/lib/python3.13/argparse.py:2026: in take_action
+    argument_values = self._get_values(action, argument_strings)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:2556: in _get_values
+    self._check_value(action, value[0])
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = TimelinesParser(prog='astrid timelines', usage=None, description="Timeline check/create/list/show/script/replace-paren...beneath 'timelines shots'.", formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+action = _SubParsersAction(option_strings=[], dest='command', nargs='A...', const=None, default=None, type=None, choices={'chec...e.HelpFormatter'>, conflict_handler='error', add_help=True)}, required=True, help=None, metavar=None, deprecated=False)
+value = 'publish'
+
+    def _check_value(self, action, value):
+        # converted value must be one of the choices (if specified)
+        choices = action.choices
+        if choices is not None:
+            if isinstance(choices, str):
+                choices = iter(choices)
+            if value not in choices:
+                args = {'value': str(value),
+                        'choices': ', '.join(repr(str(choice)) for choice in action.choices)}
+                msg = _('invalid choice: %(value)r (choose from %(choices)s)')
+>               raise ArgumentError(action, msg % args)
+E               argparse.ArgumentError: argument command: invalid choice: 'publish' (choose from 'checkout', 'commit', 'edit', 'assets', 'find', 'apply', 'undo', 'redo', 'check', 'status', 'discard', 'duplicate', 'rename', 'restructure', 'lines', 'words', 'create', 'list', 'show', 'script', 'elements', 'update-element', 'replace-parent-media', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')
+
+/usr/lib/python3.13/argparse.py:2606: ArgumentError
+
+During handling of the above exception, another exception occurred:
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9/test_a_refusal_from_the_head_l0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f08dcd3de60>
+capsys = <_pytest.capture.CaptureFixture object at 0x7f08dd33a4e0>
+argv = ['publish', 't', '--project', 'P', '-m', 'x']
+
+    @pytest.mark.parametrize("argv", [
+        ["checkout", "t", "--project", "P"],
+        ["status", "t", "--project", "P"],
+        ["publish", "t", "--project", "P", "-m", "x"],
+    ])
+    def test_a_refusal_from_the_head_lookup_is_one_plain_line_upstream_publish(tmp_path, monkeypatch, capsys, argv):
+        from astrid.sdk.timeline import store
+    
+        monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "data"))
+    
+        def refuse(project, timeline, client=None):
+            raise TimelineEditError("could not open timeline 't' in project 'P': no such timeline")
+    
+        monkeypatch.setattr(store, "resolve_ids", refuse)
+        monkeypatch.setattr(tc, "resolve_ids", refuse)
+>       assert _run(*argv) == 2  # the guarded exit code, not a bug report
+               ^^^^^^^^^^^
+
+tests/packs/timeline/test_verbs_working_copy.py:539: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/packs/timeline/test_verbs_working_copy.py:87: in _run
+    parsed = _parse(*argv)
+             ^^^^^^^^^^^^^
+tests/packs/timeline/test_verbs_working_copy.py:83: in _parse
+    return parser.parse_args(["timelines", *argv][1:] if argv and argv[0] == "timelines" else list(argv))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+astrid/packs/timeline/cli_parser.py:41: in parse_args
+    parsed, extras = self.parse_known_args(args, namespace)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:1936: in parse_known_args
+    return self._parse_known_args2(args, namespace, intermixed=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/argparse.py:1967: in _parse_known_args2
+    self.error(str(err))
+/usr/lib/python3.13/argparse.py:2686: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = TimelinesParser(prog='astrid timelines', usage=None, description="Timeline check/create/list/show/script/replace-paren...beneath 'timelines shots'.", formatter_class=<class 'argparse.HelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = "astrid timelines: error: argument command: invalid choice: 'publish' (choose from 'checkout', 'commit', 'edit', 'asse...', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')\n"
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+/usr/lib/python3.13/argparse.py:2673: SystemExit
+----------------------------- Captured stderr call -----------------------------
+usage: astrid timelines [-h]
+                        {checkout,commit,edit,assets,find,apply,undo,redo,check,status,discard,duplicate,rename,restructure,lines,words,create,list,show,script,elements,update-element,replace-parent-media,archive,recover,history,log,diff,visualize,lint,inspect,render,shots,transcripts} ...
+astrid timelines: error: argument command: invalid choice: 'publish' (choose from 'checkout', 'commit', 'edit', 'assets', 'find', 'apply', 'undo', 'redo', 'check', 'status', 'discard', 'duplicate', 'rename', 'restructure', 'lines', 'words', 'create', 'list', 'show', 'script', 'elements', 'update-element', 'replace-parent-media', 'archive', 'recover', 'history', 'log', 'diff', 'visualize', 'lint', 'inspect', 'render', 'shots', 'transcripts')
+_ test_publish_conflict_names_the_writer_and_offers_discard_first[astrid.editor.timeline.5fb2249e000000000000000000000000-the editor published 5fb2249e after your checkout (rev-0)] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f08dc233ad0>
+head = 'astrid.editor.timeline.5fb2249e000000000000000000000000'
+who = 'the editor published 5fb2249e after your checkout (rev-0)'
+
+    @pytest.mark.parametrize("head, who", [
+        (EDITOR_HEAD, "the editor published 5fb2249e after your checkout (rev-0)"),
+        ("authoring-parent-revision-38cecaa5" + "f" * 24, "someone published 38cecaa5 after your checkout (rev-0)"),
+    ])
+    def test_publish_conflict_names_the_writer_and_offers_discard_first(monkeypatch, head, who):
+        from astrid.sdk.timeline import store
+    
+        class _Timelines:
+            def open_composition(self, *_args, **_kwargs):
+                return type("Shown", (), {"ok": True, "error": None,
+                                          "data": {"summary": {"head_revision_id": head}}})()
+    
+        class _Client:
+            timelines = _Timelines()
+    
+        monkeypatch.setattr(store, "fetch_bundle", lambda *_args, **_kwargs: copy.deepcopy(bundle()))
+>       monkeypatch.setattr(store, "three_way", lambda _base, _head, candidate, force: (candidate, ["p/a-rocket (clip) moved 1.8s"]))
+E       AttributeError: <module 'astrid.sdk.timeline.store' from '/home/user/work/wt/.test-agent-d69-restored47-nodes-1024164419-23762/astrid/sdk/timeline/store.py'> has no attribute 'three_way'
+
+tests/packs/timeline/test_verbs_working_copy.py:612: AttributeError
+_ test_publish_conflict_names_the_writer_and_offers_discard_first[authoring-parent-revision-38cecaa5ffffffffffffffffffffffff-someone published 38cecaa5 after your checkout (rev-0)] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f08dc233d10>
+head = 'authoring-parent-revision-38cecaa5ffffffffffffffffffffffff'
+who = 'someone published 38cecaa5 after your checkout (rev-0)'
+
+    @pytest.mark.parametrize("head, who", [
+        (EDITOR_HEAD, "the editor published 5fb2249e after your checkout (rev-0)"),
+        ("authoring-parent-revision-38cecaa5" + "f" * 24, "someone published 38cecaa5 after your checkout (rev-0)"),
+    ])
+    def test_publish_conflict_names_the_writer_and_offers_discard_first(monkeypatch, head, who):
+        from astrid.sdk.timeline import store
+    
+        class _Timelines:
+            def open_composition(self, *_args, **_kwargs):
+                return type("Shown", (), {"ok": True, "error": None,
+                                          "data": {"summary": {"head_revision_id": head}}})()
+    
+        class _Client:
+            timelines = _Timelines()
+    
+        monkeypatch.setattr(store, "fetch_bundle", lambda *_args, **_kwargs: copy.deepcopy(bundle()))
+>       monkeypatch.setattr(store, "three_way", lambda _base, _head, candidate, force: (candidate, ["p/a-rocket (clip) moved 1.8s"]))
+E       AttributeError: <module 'astrid.sdk.timeline.store' from '/home/user/work/wt/.test-agent-d69-restored47-nodes-1024164419-23762/astrid/sdk/timeline/store.py'> has no attribute 'three_way'
+
+tests/packs/timeline/test_verbs_working_copy.py:612: AttributeError
+_ test_three_way_merges_disjoint_edits_and_refuses_overlapping_ones_r4_original _
+
+    def test_three_way_merges_disjoint_edits_and_refuses_overlapping_ones_r4_original():
+        base = bundle()
+        ours, theirs = copy.deepcopy(base), copy.deepcopy(base)
+        Checkout(ours).clip("R").nudge(0.5)
+        Checkout(theirs).clip("b-type").set(text="LIVE!")
+>       merged, conflicts = three_way(base, theirs, ours)  # noqa: F821 -- retired upstream route remains visible
+                            ^^^^^^^^^
+E       NameError: name 'three_way' is not defined
+
+tests/sdk/test_timeline_checkout.py:315: NameError
+_ test_publish_after_a_restart_merges_other_clips_onto_the_moved_head_r4_original _
+
+world = namespace(tmp=PosixPath('/tmp/pytest-of-root/pytest-9/test_publish_after_a_restart_m0'), root=PosixPath('/tmp/pytest-o...=<function world.<locals>.<lambda> at 0x7f08dd4f3380>, read_state=<function world.<locals>.<lambda> at 0x7f08dd4f3420>)
+
+    def test_publish_after_a_restart_merges_other_clips_onto_the_moved_head_r4_original(world):
+        with world.writer("A") as a:
+            a.do("draft")
+            a.do("nudge", clip="a-rocket", seconds=0.5)
+            a.do("save")
+        world.move_head("rev-1", lambda b: _clip(b, "b-type")["params"].__setitem__("text", "LIVE!"))
+    
+        with world.writer("B") as b:
+            b.do("draft")
+            assert b.do("state")["base"] == "rev-0"  # the working copy still remembers the base it started from
+>           published = b.do("publish")
+                        ^^^^^^^^^^^^^^^
+
+tests/sdk/test_timeline_persistence.py:740: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <test_timeline_persistence.Writer object at 0x7f08dd355a90>
+op = 'publish', kw = {}, publisher = None
+reply = {'error': "AttributeError: 'types.SimpleNamespace' object has no attribute '_remote'", 'ok': False}
+
+    def do(self, op: str, **kw):
+        publisher = getattr(self.world, "publish_candidate", None)
+        if op == "publish" and publisher is not None:
+            reply = self.send("candidate")
+            if reply is None:
+                raise AssertionError(f"{self.name}: worker exited during 'candidate': {self.stderr()}")
+            if not reply["ok"]:
+                raise Refused(reply["error"])
+            return publisher(reply["result"])
+        reply = self.send(op, **kw)
+        if reply is None:
+            raise AssertionError(f"{self.name}: worker exited during {op!r}: {self.stderr()}")
+        if not reply["ok"]:
+>           raise Refused(reply["error"])
+E           test_timeline_persistence.Refused: AttributeError: 'types.SimpleNamespace' object has no attribute '_remote'
+
+tests/sdk/test_timeline_persistence.py:245: Refused
+_ test_a_publish_with_no_client_writes_through_the_connection_it_opens_r4_original _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f08dd597bd0>
+
+    def test_a_publish_with_no_client_writes_through_the_connection_it_opens_r4_original(monkeypatch):
+        client = FakeClient()
+        monkeypatch.setattr(AstridClient, "open_from_launcher", classmethod(lambda cls, **kw: client))
+>       receipt = store.publish_bundle(dict(CANDIDATE), "key-1")
+                  ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'astrid.sdk.timeline.store' has no attribute 'publish_bundle'
+
+tests/sdk/test_timeline_publish_connection.py:93: AttributeError
+_____ test_a_publish_with_a_client_writes_through_that_client_r4_original ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f08dc1af620>
+
+    def test_a_publish_with_a_client_writes_through_that_client_r4_original(monkeypatch):
+        monkeypatch.setattr(AstridClient, "open_from_launcher", classmethod(lambda cls, **kw: pytest.fail("a second connection was opened")))
+        client = FakeClient()
+>       receipt = store.publish_bundle(dict(CANDIDATE), "key-2", client=client)
+                  ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'astrid.sdk.timeline.store' has no attribute 'publish_bundle'
+
+tests/sdk/test_timeline_publish_connection.py:101: AttributeError
+__ test_three_way_legacy_head_is_not_a_conflict_and_keeps_intent_r4_original ___
+
+    def test_three_way_legacy_head_is_not_a_conflict_and_keeps_intent_r4_original():
+        base = _legacy_bundle()
+        head = copy.deepcopy(base)
+        candidate = copy.deepcopy(base)
+        intent.migrate(candidate)  # the working copy was migrated on checkout
+        intent.set_chapters(candidate, [{"name": "01 OPEN", "from": "c1"}, {"name": "02 NEXT", "from": "c2"}])
+>       merged, _lines = three_way(base, head, candidate)  # noqa: F821 -- retired upstream route remains visible
+                         ^^^^^^^^^
+E       NameError: name 'three_way' is not defined
+
+tests/sdk/test_intent_app_astrid.py:140: NameError
+_ test_merge_keeps_a_film_namespace_key_outside_the_known_list_in_the_namespace_r4_original _
+
+    def test_merge_keeps_a_film_namespace_key_outside_the_known_list_in_the_namespace_r4_original():
+        base = json.loads(TINY.read_text(encoding="utf-8"))
+        head = copy.deepcopy(base)
+        candidate = copy.deepcopy(base)
+        candidate.setdefault("parent", {}).setdefault("config", {}).setdefault("app", {}).setdefault("astrid", {})["groups"] = {"g": ["c1"]}
+>       merged, lines = three_way(base, head, candidate)  # noqa: F821 -- retired upstream route remains visible
+                        ^^^^^^^^^
+E       NameError: name 'three_way' is not defined
+
+tests/sdk/test_intent_app_astrid.py:210: NameError
+__ test_publish_conflict_409_maps_to_conflict_and_keeps_its_details_r4_route ___
+
+    def test_publish_conflict_409_maps_to_conflict_and_keeps_its_details_r4_route() -> None:
+        client, calls = _client("publish_conflict_409")
+        recorded = fixture("publish_conflict_409")
+        with pytest.raises(WorkspaceClientError) as raised:
+            client.publish_parent_composition("project-1", "main", recorded["request"]["body"], idempotency_key="k")
+        error = raised.value
+        assert (error.status, error.code) == (409, "conflict")
+        assert error.details == recorded["body"]["details"] and error.request_id == "<request_id>"
+        assert _SERVICE_ERROR_CLASSES[error.code] is ServiceConflictError
+>       _sent_the_recorded_request("publish_conflict_409", calls, project_id="project-1")
+
+tests/sdk/test_runtime_response_conformance.py:246: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+case = 'publish_conflict_409'
+calls = [('POST', '/v1/projects/project-1/timelines/main/composition-revisions', b'{"api_version":1,"base_publication_id":"<ba...elect":null,"version":"1"}],"label":"Recorded title","merge":"fields","project_id":"project-1","timeline_id":"main"}')]
+exact_request = False, ids = {'project_id': 'project-1'}
+recorded = {'body': {'api_version': 1, 'base_publication_id': '<base_publication_id>', 'base_revision_id': '<base_revision_id>', ...ema_version': 1, 'select': None, ...}], ...}, 'method': 'POST', 'path': '/v1/projects/project-1/timelines/main/commit'}
+method = 'POST'
+path = '/v1/projects/project-1/timelines/main/composition-revisions'
+body = b'{"api_version":1,"base_publication_id":"<base_publication_id>","base_revision_id":"<base_revision_id>","commands":[{..."select":null,"version":"1"}],"label":"Recorded title","merge":"fields","project_id":"project-1","timeline_id":"main"}'
+@py_assert2 = None, @py_assert1 = False
+
+    def _sent_the_recorded_request(case: str, calls: list, *, exact_request: bool = False, **ids: str) -> None:
+        recorded = _concrete(fixture(case)["request"], **ids)
+        method, path, body = calls[-1]
+        assert method == recorded["method"]
+        sent_path, _, sent_query = path.partition("?")
+        recorded_path, _, recorded_query = recorded["path"].partition("?")
+        if exact_request:
+            assert path == recorded["path"]
+        else:
+>           assert sent_path == recorded_path
+E           AssertionError: assert '/v1/projects...ion-revisions' == '/v1/projects...s/main/commit'
+E             
+E             - /v1/projects/project-1/timelines/main/commit
+E             ?                                          ^
+E             + /v1/projects/project-1/timelines/main/composition-revisions
+E             ?                                          ^^^  +++++++++++++
+
+tests/sdk/test_runtime_response_conformance.py:140: AssertionError
+__________ test_three_way_merge_works_on_the_stored_form_r4_original ___________
+
+    def test_three_way_merge_works_on_the_stored_form_r4_original():
+        base = published(split(flat_film()))
+        mine = Checkout(copy.deepcopy(base))
+        mine.clip("late").data["hold"] = 1.5
+        mine.clip("bed").data["volume"] = 0.9
+        candidate = mine.stored_document()
+        head = copy.deepcopy(base)
+        first = head["shots"][head["placements"][0]["shot_id"]]
+        first["internal_timeline"]["clips"][0]["hold"] = 3.9  # someone else touched a different clip in another chapter
+>       merged, conflicts = three_way(base, head, candidate)  # noqa: F821 -- retired upstream route remains visible
+                            ^^^^^^^^^
+E       NameError: name 'three_way' is not defined
+
+tests/sdk/test_timeline_restructure.py:287: NameError
+_ test_duplicate_of_a_chapter_film_keeps_one_distinct_shot_per_chapter_r4_original _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f08dd509f60>
+
+    def test_duplicate_of_a_chapter_film_keeps_one_distinct_shot_per_chapter_r4_original(monkeypatch):
+        """A chapter film is read flat; duplicating must copy its stored form (a shot per chapter), not the one flat
+        shot, or the copy is stored as a single shot and every chapter reads back with the same shot id."""
+        from types import SimpleNamespace
+    
+        from astrid.sdk import timeline_duplicate as td
+    
+        stored = published(split(flat_film()))
+        assert len(stored["placements"]) == 3
+        src = Checkout(flatten(copy.deepcopy(stored)))
+        assert len(src.bundle["shots"]) == 1 and STRUCTURE_KEY in src.bundle
+        empty = flat_film()
+        empty["timeline_id"] = "dup"
+        dst = Checkout(empty)
+        for tl in (src, dst):  # the toy film has no real media identities; validity is not what this test is about
+            tl.check = lambda: SimpleNamespace(valid=True, blocking=[], problems=[])
+        opened = {"t": src, "dup": dst}
+        monkeypatch.setattr(td.Checkout, "open", classmethod(lambda cls, p, t, client=None, revision_id=None: opened[t]))
+        stored_docs = []
+        monkeypatch.setattr(td.Checkout, "publish", lambda self, *a, **k: stored_docs.append(self.stored_document()) or {})
+        client = SimpleNamespace(timelines=SimpleNamespace(
+            create_empty=lambda **kw: SimpleNamespace(ok=True, data={"timeline_id": "dup"}),
+            archive=lambda *a: SimpleNamespace(ok=True)))
+>       out = td._duplicate(client, "p", "t", slug="dup", name=None, revision_id=None)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/sdk/test_timeline_restructure.py:862: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+client = namespace(timelines=namespace(create_empty=<function test_duplicate_of_a_chapter_film_keeps_one_distinct_shot_per_chap...test_duplicate_of_a_chapter_film_keeps_one_distinct_shot_per_chapter_r4_original.<locals>.<lambda> at 0x7f08dc1a2660>))
+project = 'p', source = 't'
+
+    def _duplicate(client: Any, project: str, source: str, *, slug: str | None, name: str | None,
+                   revision_id: str | None) -> dict[str, Any]:
+        src = Checkout.open(project, source, revision_id=revision_id, client=client)
+        report = src._check_core()  # all or nothing: refuse an invalid head BEFORE creating anything
+        if not report.valid:
+>           raise TimelineEditError(f"not duplicating {source}: its head is not valid ("
+                                    + "; ".join((report.blocking or report.problems or ["invalid"])[:3]) + "); nothing was created")
+E           astrid.sdk.timeline._common.TimelineEditError: not duplicating t: its head is not valid (invalid: registry asset 'R' has no canonical selected media identity); nothing was created
+
+astrid/sdk/timeline_duplicate.py:248: TimelineEditError
+_ test_publish_merge_keeps_candidate_parent_config_changes_next_to_head_changes_r4_original _
+
+    def test_publish_merge_keeps_candidate_parent_config_changes_next_to_head_changes_r4_original():
+        base = _base()
+        head = _unrelated_clip_change(base)
+        candidate = copy.deepcopy(base)
+        candidate["parent"]["config"]["chapters"] = [{"name": "01 OPEN", "from": "c1"}]
+    
+>       merged, conflicts = three_way(base, head, candidate)  # noqa: F821 -- retired upstream route remains visible
+                            ^^^^^^^^^
+E       NameError: name 'three_way' is not defined
+
+tests/sdk/test_timeline_store_fixes.py:103: NameError
+_ test_publish_merge_flags_a_parent_config_key_changed_differently_and_force_wins_r4_original _
+
+    def test_publish_merge_flags_a_parent_config_key_changed_differently_and_force_wins_r4_original():
+        base = _base()
+        head = copy.deepcopy(base)
+        head["parent"]["config"]["theme_overrides"] = {"visual": {"canvas": {"fps": 24}}}
+        candidate = copy.deepcopy(base)
+        candidate["parent"]["config"]["theme_overrides"] = {"visual": {"canvas": {"fps": 60}}}
+    
+>       _merged, conflicts = three_way(base, head, candidate)  # noqa: F821 -- retired upstream route remains visible
+                             ^^^^^^^^^
+E       NameError: name 'three_way' is not defined
+
+tests/sdk/test_timeline_store_fixes.py:137: NameError
+_ test_d69_upstream_sameclip_exacthead_publication_preserves_closure_and_user_params _
+
+obj = <module 'astrid.sdk.timeline_elements' from '/home/user/work/wt/.test-agent-d69-restored47-nodes-1024164419-23762/astrid/sdk/timeline_elements.py'>
+name = 'resolve_admitted_element', ann = 'astrid.sdk.timeline_elements'
+
+    def annotated_getattr(obj: object, name: str, ann: str) -> object:
+        try:
+>           obj = getattr(obj, name)
+                  ^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'astrid.sdk.timeline_elements' has no attribute 'resolve_admitted_element'
+
+../../venv-agent/lib/python3.13/site-packages/_pytest/monkeypatch.py:92: AttributeError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f08dd55ba80>
+
+    def test_d69_upstream_sameclip_exacthead_publication_preserves_closure_and_user_params(monkeypatch):
+>       owner,bundle,ref=setup_owner(monkeypatch)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/core/test_timeline_element_publication.py:347: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/core/test_timeline_element_publication.py:23: in setup_owner
+    monkeypatch.setattr('astrid.sdk.timeline_elements.resolve_admitted_element',lambda realm,project,ref,**kwargs:{})
+../../venv-agent/lib/python3.13/site-packages/_pytest/monkeypatch.py:106: in derive_importpath
+    annotated_getattr(target, attr, ann=module)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+obj = <module 'astrid.sdk.timeline_elements' from '/home/user/work/wt/.test-agent-d69-restored47-nodes-1024164419-23762/astrid/sdk/timeline_elements.py'>
+name = 'resolve_admitted_element', ann = 'astrid.sdk.timeline_elements'
+
+    def annotated_getattr(obj: object, name: str, ann: str) -> object:
+        try:
+            obj = getattr(obj, name)
+        except AttributeError as e:
+>           raise AttributeError(
+                f"{type(obj).__name__!r} object at {ann} has no attribute {name!r}"
+            ) from e
+E           AttributeError: 'module' object at astrid.sdk.timeline_elements has no attribute 'resolve_admitted_element'
+
+../../venv-agent/lib/python3.13/site-packages/_pytest/monkeypatch.py:94: AttributeError
+____ test_d69_upstream_stale_head_and_concurrent_cas_reject_without_rebase _____
+
+obj = <module 'astrid.sdk.timeline_elements' from '/home/user/work/wt/.test-agent-d69-restored47-nodes-1024164419-23762/astrid/sdk/timeline_elements.py'>
+name = 'resolve_admitted_element', ann = 'astrid.sdk.timeline_elements'
+
+    def annotated_getattr(obj: object, name: str, ann: str) -> object:
+        try:
+>           obj = getattr(obj, name)
+                  ^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'astrid.sdk.timeline_elements' has no attribute 'resolve_admitted_element'
+
+../../venv-agent/lib/python3.13/site-packages/_pytest/monkeypatch.py:92: AttributeError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f08dd1d5fd0>
+
+    def test_d69_upstream_stale_head_and_concurrent_cas_reject_without_rebase(monkeypatch):
+>       owner,_,ref=setup_owner(monkeypatch)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/core/test_timeline_element_publication.py:366: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/core/test_timeline_element_publication.py:23: in setup_owner
+    monkeypatch.setattr('astrid.sdk.timeline_elements.resolve_admitted_element',lambda realm,project,ref,**kwargs:{})
+../../venv-agent/lib/python3.13/site-packages/_pytest/monkeypatch.py:106: in derive_importpath
+    annotated_getattr(target, attr, ann=module)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+obj = <module 'astrid.sdk.timeline_elements' from '/home/user/work/wt/.test-agent-d69-restored47-nodes-1024164419-23762/astrid/sdk/timeline_elements.py'>
+name = 'resolve_admitted_element', ann = 'astrid.sdk.timeline_elements'
+
+    def annotated_getattr(obj: object, name: str, ann: str) -> object:
+        try:
+            obj = getattr(obj, name)
+        except AttributeError as e:
+>           raise AttributeError(
+                f"{type(obj).__name__!r} object at {ann} has no attribute {name!r}"
+            ) from e
+E           AttributeError: 'module' object at astrid.sdk.timeline_elements has no attribute 'resolve_admitted_element'
+
+../../venv-agent/lib/python3.13/site-packages/_pytest/monkeypatch.py:94: AttributeError
+______________ test_d69_upstream_bad_duration_never_publishes[0] _______________
+
+obj = <module 'astrid.sdk.timeline_elements' from '/home/user/work/wt/.test-agent-d69-restored47-nodes-1024164419-23762/astrid/sdk/timeline_elements.py'>
+name = 'resolve_admitted_element', ann = 'astrid.sdk.timeline_elements'
+
+    def annotated_getattr(obj: object, name: str, ann: str) -> object:
+        try:
+>           obj = getattr(obj, name)
+                  ^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'astrid.sdk.timeline_elements' has no attribute 'resolve_admitted_element'
+
+../../venv-agent/lib/python3.13/site-packages/_pytest/monkeypatch.py:92: AttributeError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f08dd1d60b0>
+duration = 0
+
+    @pytest.mark.parametrize('duration',[0,-1,float('inf'),float('nan')])
+    def test_d69_upstream_bad_duration_never_publishes(monkeypatch,duration):
+>       owner,_,ref=setup_owner(monkeypatch)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/core/test_timeline_element_publication.py:379: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/core/test_timeline_element_publication.py:23: in setup_owner
+    monkeypatch.setattr('astrid.sdk.timeline_elements.resolve_admitted_element',lambda realm,project,ref,**kwargs:{})
+../../venv-agent/lib/python3.13/site-packages/_pytest/monkeypatch.py:106: in derive_importpath
+    annotated_getattr(target, attr, ann=module)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+obj = <module 'astrid.sdk.timeline_elements' from '/home/user/work/wt/.test-agent-d69-restored47-nodes-1024164419-23762/astrid/sdk/timeline_elements.py'>
+name = 'resolve_admitted_element', ann = 'astrid.sdk.timeline_elements'
+
+    def annotated_getattr(obj: object, name: str, ann: str) -> object:
+        try:
+            obj = getattr(obj, name)
+        except AttributeError as e:
+>           raise AttributeError(
+                f"{type(obj).__name__!r} object at {ann} has no attribute {name!r}"
+            ) from e
+E           AttributeError: 'module' object at astrid.sdk.timeline_elements has no attribute 'resolve_admitted_element'
+
+../../venv-agent/lib/python3.13/site-packages/_pytest/monkeypatch.py:94: AttributeError
+______________ test_d69_upstream_bad_duration_never_publishes[-1] ______________
+
+obj = <module 'astrid.sdk.timeline_elements' from '/home/user/work/wt/.test-agent-d69-restored47-nodes-1024164419-23762/astrid/sdk/timeline_elements.py'>
+name = 'resolve_admitted_element', ann = 'astrid.sdk.timeline_elements'
+
+    def annotated_getattr(obj: object, name: str, ann: str) -> object:
+        try:
+>           obj = getattr(obj, name)
+                  ^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'astrid.sdk.timeline_elements' has no attribute 'resolve_admitted_element'
+
+../../venv-agent/lib/python3.13/site-packages/_pytest/monkeypatch.py:92: AttributeError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f08dd58da20>
+duration = -1
+
+    @pytest.mark.parametrize('duration',[0,-1,float('inf'),float('nan')])
+    def test_d69_upstream_bad_duration_never_publishes(monkeypatch,duration):
+>       owner,_,ref=setup_owner(monkeypatch)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/core/test_timeline_element_publication.py:379: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/core/test_timeline_element_publication.py:23: in setup_owner
+    monkeypatch.setattr('astrid.sdk.timeline_elements.resolve_admitted_element',lambda realm,project,ref,**kwargs:{})
+../../venv-agent/lib/python3.13/site-packages/_pytest/monkeypatch.py:106: in derive_importpath
+    annotated_getattr(target, attr, ann=module)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+obj = <module 'astrid.sdk.timeline_elements' from '/home/user/work/wt/.test-agent-d69-restored47-nodes-1024164419-23762/astrid/sdk/timeline_elements.py'>
+name = 'resolve_admitted_element', ann = 'astrid.sdk.timeline_elements'
+
+    def annotated_getattr(obj: object, name: str, ann: str) -> object:
+        try:
+            obj = getattr(obj, name)
+        except AttributeError as e:
+>           raise AttributeError(
+                f"{type(obj).__name__!r} object at {ann} has no attribute {name!r}"
+            ) from e
+E           AttributeError: 'module' object at astrid.sdk.timeline_elements has no attribute 'resolve_admitted_element'
+
+../../venv-agent/lib/python3.13/site-packages/_pytest/monkeypatch.py:94: AttributeError
+_____________ test_d69_upstream_bad_duration_never_publishes[inf] ______________
+
+obj = <module 'astrid.sdk.timeline_elements' from '/home/user/work/wt/.test-agent-d69-restored47-nodes-1024164419-23762/astrid/sdk/timeline_elements.py'>
+name = 'resolve_admitted_element', ann = 'astrid.sdk.timeline_elements'
+
+    def annotated_getattr(obj: object, name: str, ann: str) -> object:
+        try:
+>           obj = getattr(obj, name)
+                  ^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'astrid.sdk.timeline_elements' has no attribute 'resolve_admitted_element'
+
+../../venv-agent/lib/python3.13/site-packages/_pytest/monkeypatch.py:92: AttributeError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f08dd4ff070>
+duration = inf
+
+    @pytest.mark.parametrize('duration',[0,-1,float('inf'),float('nan')])
+    def test_d69_upstream_bad_duration_never_publishes(monkeypatch,duration):
+>       owner,_,ref=setup_owner(monkeypatch)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/core/test_timeline_element_publication.py:379: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/core/test_timeline_element_publication.py:23: in setup_owner
+    monkeypatch.setattr('astrid.sdk.timeline_elements.resolve_admitted_element',lambda realm,project,ref,**kwargs:{})
+../../venv-agent/lib/python3.13/site-packages/_pytest/monkeypatch.py:106: in derive_importpath
+    annotated_getattr(target, attr, ann=module)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+obj = <module 'astrid.sdk.timeline_elements' from '/home/user/work/wt/.test-agent-d69-restored47-nodes-1024164419-23762/astrid/sdk/timeline_elements.py'>
+name = 'resolve_admitted_element', ann = 'astrid.sdk.timeline_elements'
+
+    def annotated_getattr(obj: object, name: str, ann: str) -> object:
+        try:
+            obj = getattr(obj, name)
+        except AttributeError as e:
+>           raise AttributeError(
+                f"{type(obj).__name__!r} object at {ann} has no attribute {name!r}"
+            ) from e
+E           AttributeError: 'module' object at astrid.sdk.timeline_elements has no attribute 'resolve_admitted_element'
+
+../../venv-agent/lib/python3.13/site-packages/_pytest/monkeypatch.py:94: AttributeError
+_____________ test_d69_upstream_bad_duration_never_publishes[nan] ______________
+
+obj = <module 'astrid.sdk.timeline_elements' from '/home/user/work/wt/.test-agent-d69-restored47-nodes-1024164419-23762/astrid/sdk/timeline_elements.py'>
+name = 'resolve_admitted_element', ann = 'astrid.sdk.timeline_elements'
+
+    def annotated_getattr(obj: object, name: str, ann: str) -> object:
+        try:
+>           obj = getattr(obj, name)
+                  ^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'astrid.sdk.timeline_elements' has no attribute 'resolve_admitted_element'
+
+../../venv-agent/lib/python3.13/site-packages/_pytest/monkeypatch.py:92: AttributeError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f08dd4fef20>
+duration = nan
+
+    @pytest.mark.parametrize('duration',[0,-1,float('inf'),float('nan')])
+    def test_d69_upstream_bad_duration_never_publishes(monkeypatch,duration):
+>       owner,_,ref=setup_owner(monkeypatch)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/core/test_timeline_element_publication.py:379: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/core/test_timeline_element_publication.py:23: in setup_owner
+    monkeypatch.setattr('astrid.sdk.timeline_elements.resolve_admitted_element',lambda realm,project,ref,**kwargs:{})
+../../venv-agent/lib/python3.13/site-packages/_pytest/monkeypatch.py:106: in derive_importpath
+    annotated_getattr(target, attr, ann=module)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+obj = <module 'astrid.sdk.timeline_elements' from '/home/user/work/wt/.test-agent-d69-restored47-nodes-1024164419-23762/astrid/sdk/timeline_elements.py'>
+name = 'resolve_admitted_element', ann = 'astrid.sdk.timeline_elements'
+
+    def annotated_getattr(obj: object, name: str, ann: str) -> object:
+        try:
+            obj = getattr(obj, name)
+        except AttributeError as e:
+>           raise AttributeError(
+                f"{type(obj).__name__!r} object at {ann} has no attribute {name!r}"
+            ) from e
+E           AttributeError: 'module' object at astrid.sdk.timeline_elements has no attribute 'resolve_admitted_element'
+
+../../venv-agent/lib/python3.13/site-packages/_pytest/monkeypatch.py:94: AttributeError
+___________ test_d69_upstream_unadmitted_owner_and_sourceclip_reject ___________
+
+obj = <module 'astrid.sdk.timeline_elements' from '/home/user/work/wt/.test-agent-d69-restored47-nodes-1024164419-23762/astrid/sdk/timeline_elements.py'>
+name = 'resolve_admitted_element', ann = 'astrid.sdk.timeline_elements'
+
+    def annotated_getattr(obj: object, name: str, ann: str) -> object:
+        try:
+>           obj = getattr(obj, name)
+                  ^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'astrid.sdk.timeline_elements' has no attribute 'resolve_admitted_element'
+
+../../venv-agent/lib/python3.13/site-packages/_pytest/monkeypatch.py:92: AttributeError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f08dd1d6270>
+
+    def test_d69_upstream_unadmitted_owner_and_sourceclip_reject(monkeypatch):
+>       owner,_,ref=setup_owner(monkeypatch)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/core/test_timeline_element_publication.py:386: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/core/test_timeline_element_publication.py:23: in setup_owner
+    monkeypatch.setattr('astrid.sdk.timeline_elements.resolve_admitted_element',lambda realm,project,ref,**kwargs:{})
+../../venv-agent/lib/python3.13/site-packages/_pytest/monkeypatch.py:106: in derive_importpath
+    annotated_getattr(target, attr, ann=module)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+obj = <module 'astrid.sdk.timeline_elements' from '/home/user/work/wt/.test-agent-d69-restored47-nodes-1024164419-23762/astrid/sdk/timeline_elements.py'>
+name = 'resolve_admitted_element', ann = 'astrid.sdk.timeline_elements'
+
+    def annotated_getattr(obj: object, name: str, ann: str) -> object:
+        try:
+            obj = getattr(obj, name)
+        except AttributeError as e:
+>           raise AttributeError(
+                f"{type(obj).__name__!r} object at {ann} has no attribute {name!r}"
+            ) from e
+E           AttributeError: 'module' object at astrid.sdk.timeline_elements has no attribute 'resolve_admitted_element'
+
+../../venv-agent/lib/python3.13/site-packages/_pytest/monkeypatch.py:94: AttributeError
+_ test_d69_upstream_native_window_layer_is_materialized_once_with_pin_hold_and_alpha[0] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9/test_d69_upstream_native_windo0')
+z = 0
+
+    @pytest.mark.parametrize('z', [0, 1])
+    def test_d69_upstream_native_window_layer_is_materialized_once_with_pin_hold_and_alpha(tmp_path, z):
+        package = _package()
+        config = _composition(package)
+        config['clips'][0]['hold'] = 20
+        path = tmp_path / 'timeline.json'
+        path.write_text(json.dumps(config))
+        candidate = _candidate(tmp_path, 'fixture.native', 'renderer', capabilities={'supports_windows': True, 'supports_full_timeline': True})
+        request = _request(path)
+        segment = RenderSegment(window=request.window, renderer=_renderer_resolution(candidate.id), input_hashes={}, layer=LayerRef(z=z, tracks=('scene',)))
+        service = RenderService()
+        adapted, hashes = service._segment_request(request, candidate=candidate, segment=segment, index=0, workspace=tmp_path)
+>       assert adapted.window is None
+E       AssertionError: assert FrameWindow(start_frame=180, end_frame=210, fps_rational=(30, 1), source_range=None, speed=None) is None
+E        +  where FrameWindow(start_frame=180, end_frame=210, fps_rational=(30, 1), source_range=None, speed=None) = RenderRequest(schema_version=1, timeline_path='/tmp/pytest-of-root/pytest-9/test_d69_upstream_native_windo0/segment-in...end_config={}, metadata={'astrid_composition_duration_frames': '360'}, materialized_root=None, materialized_objects={}).window
+
+tests/packs/rendering/test_live_scene_composition.py:388: AssertionError
+_ test_d69_upstream_native_window_layer_is_materialized_once_with_pin_hold_and_alpha[1] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9/test_d69_upstream_native_windo1')
+z = 1
+
+    @pytest.mark.parametrize('z', [0, 1])
+    def test_d69_upstream_native_window_layer_is_materialized_once_with_pin_hold_and_alpha(tmp_path, z):
+        package = _package()
+        config = _composition(package)
+        config['clips'][0]['hold'] = 20
+        path = tmp_path / 'timeline.json'
+        path.write_text(json.dumps(config))
+        candidate = _candidate(tmp_path, 'fixture.native', 'renderer', capabilities={'supports_windows': True, 'supports_full_timeline': True})
+        request = _request(path)
+        segment = RenderSegment(window=request.window, renderer=_renderer_resolution(candidate.id), input_hashes={}, layer=LayerRef(z=z, tracks=('scene',)))
+        service = RenderService()
+        adapted, hashes = service._segment_request(request, candidate=candidate, segment=segment, index=0, workspace=tmp_path)
+>       assert adapted.window is None
+E       AssertionError: assert FrameWindow(start_frame=180, end_frame=210, fps_rational=(30, 1), source_range=None, speed=None) is None
+E        +  where FrameWindow(start_frame=180, end_frame=210, fps_rational=(30, 1), source_range=None, speed=None) = RenderRequest(schema_version=1, timeline_path='/tmp/pytest-of-root/pytest-9/test_d69_upstream_native_windo1/segment-in...end_config={}, metadata={'astrid_composition_duration_frames': '360'}, materialized_root=None, materialized_objects={}).window
+
+tests/packs/rendering/test_live_scene_composition.py:388: AssertionError
+_ test_d66_upstream_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9/test_d66_upstream_generic_host0')
+
+    def test_d66_upstream_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke(tmp_path):
+        """The registered authoring host hook has one Runtime publication route."""
+        proposal_path = tmp_path / "attempt" / "outputs" / "authoring-proposal.json"
+        proposal_path.parent.mkdir(parents=True)
+        proposal_path.write_text(json.dumps({
+            "timeline": {"tracks": [], "clips": []}, "registry": {"assets": {}},
+            "publication": {"authority": "workspace_runtime", "render_capability": "rendering.render"},
+        }))
+    
+        class Runtime:
+            def __init__(self): self.calls = []
+            def publish_timeline_render(self, *args, **kwargs):
+                self.calls.append((args, kwargs))
+                return {"timeline_version": 2, "render_task_id": "render-1"}
+    
+        runtime = Runtime()
+        host = GenericPackHost.__new__(GenericPackHost)
+        host.client = runtime
+        host.capabilities = {}
+>       result = host._publish_assembled_timeline(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            task_data={"id": "author-1", "spec": {"family": "stitch_finalization", "runtime_dependencies": {
+                "publication": {"timeline_id": "main", "expected_version": 1, "render": {
+                    "capability_id": "rendering.render", "capability_digest": _digest("rendering.render"),
+                    "spec": {"inputs": {"selector": "rendering.ffmpeg"}},
+                }},
+            }}},
+            attempt_id="attempt-1", fence=1, lease_token="lease-1",
+            outputs=[{"path": str(proposal_path), "artifact_type": "timeline/authoring-proposal"}],
+            attempt_root=proposal_path.parents[1],
+        )
+E       AttributeError: 'GenericPackHost' object has no attribute '_publish_assembled_timeline'
+
+tests/packs/video_editing/test_runtime_publication_chain.py:1049: AttributeError
+______ test_d66_upstream_remotion_lock_pins_the_transitive_schema_package ______
+
+    def test_d66_upstream_remotion_lock_pins_the_transitive_schema_package():
+        package = json.loads((ROOT / "remotion/package.json").read_text(encoding="utf-8"))
+        lock = json.loads((ROOT / "remotion/package-lock.json").read_text(encoding="utf-8"))
+        composition = lock["packages"]["node_modules/@banodoco/timeline-composition"]
+>       schema = lock["packages"]["node_modules/@banodoco/timeline-schema"]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'node_modules/@banodoco/timeline-schema'
+
+tests/test_installer_schema.py:138: KeyError
+______ test_d66_upstream_approval_is_bound_to_candidate_and_base_revision ______
+
+    def test_d66_upstream_approval_is_bound_to_candidate_and_base_revision():
+        parent, shots, timelines = _closure(shared=True)
+        candidate = open_authoring_bundle(
+            parent, shot_revisions=shots, internal_timeline_revisions=timelines
+        )
+        approval = approve_authoring_candidate(
+            candidate, approver="editor-1", approval_id="approval-1"
+        )
+>       writer = _Writer()
+                 ^^^^^^^^^
+E       TypeError: _Writer.__init__() missing 1 required positional argument: 'document'
+
+tests/timeline/test_authoring_bundle.py:1416: TypeError
+_ test_d66_upstream_frozen_render_restart_then_approval_promotion_is_single_generation _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9/test_d66_upstream_frozen_rende0')
+
+    def test_d66_upstream_frozen_render_restart_then_approval_promotion_is_single_generation(tmp_path):
+        """Exercise the contract, durable replay, and candidate promotion seam together."""
+        from astrid.core.execution.reconciler import ExecutionReconciler
+        from astrid.core.execution.target_adapter import LocalMachineTargetAdapter
+    
+        source = b"deterministically extracted source bytes"
+        source_digest = "sha256:" + hashlib.sha256(source).hexdigest()
+        contract = {
+            "schema_version": 1,
+            "workflow": {
+                "id": "render.authoring-candidate",
+                "contract_digest": "sha256:workflow",
+                "required_bindings": ["source_video"],
+            },
+            "inputs": [
+                {
+                    "name": "source_video",
+                    "object_id": source_digest,
+                    "filename": "source.mp4",
+                    "required": True,
+                }
+            ],
+            "target": {"kind": "machine", "id": "local-1"},
+            "retry_policy": {"max_attempts": 2},
+            "checks": {"outputs": ["sha256"]},
+        }
+    
+        class Runtime:
+            def __init__(self):
+                self.task = None
+                self.calls = []
+    
+            def create(self, **kwargs):
+                self.calls.append(("create", kwargs))
+                if self.task is None:
+                    self.task = {
+                        "task_id": "render-task-1",
+                        "run_id": "render-run-1",
+                        "state": "queued",
+                        "idempotency_key": kwargs["idempotency_key"],
+                        "capability_id": kwargs["capability"],
+                        "spec": {**kwargs["spec"], "execution_request": kwargs["execution_request"]},
+                    }
+                return {"task_id": self.task["task_id"], "run_id": self.task["run_id"]}
+    
+            def get_task(self, task_id):
+                assert task_id == self.task["task_id"]
+                return dict(self.task)
+    
+            def claim(self, **kwargs):
+                self.calls.append(("claim", kwargs))
+                self.task.update({"state": "running", "attempt_id": "render-attempt-1"})
+                return {
+                    "task_id": self.task["task_id"],
+                    "attempt_id": "render-attempt-1",
+                    "lease_id": "render-lease-1",
+                    "fence": 1,
+                    "runtime_epoch": 1,
+                    "idempotency_key": "render-request-1",
+                    "capability_id": "render.authoring-candidate",
+                    "spec": self.task["spec"],
+                }
+    
+            def settle(self, attempt_id, **kwargs):
+                self.calls.append(("settle", kwargs))
+                self.task.update({"state": "completed", "result": {"outputs": kwargs["outputs"]}})
+                return {"ok": True}
+    
+            def fail(self, *args, **kwargs):
+                self.calls.append(("fail", kwargs))
+                self.task["state"] = "failed"
+                return {"ok": True}
+    
+        runtime = Runtime()
+        adapter = LocalMachineTargetAdapter(
+            {"kind": "machine", "id": "local-1"},
+            observer=lambda: {
+                "kind": "machine",
+                "target_id": "local-1",
+                "live": True,
+                "runtime_epoch": 1,
+                "launch_generation": "launch-1",
+                "process_birth_id": "process-1",
+                "engine_birth_id": "engine-1",
+                "output_root": str(tmp_path),
+            },
+        )
+        render_count = 0
+    
+        def execute(_claim, observation):
+            nonlocal render_count
+            render_count += 1
+            output = tmp_path / "render.bin"
+            output.write_bytes(source + b"/rendered")
+            data = output.read_bytes()
+            return {
+                "outputs": [
+                    {
+                        "path": output.name,
+                        "content_hash": "sha256:" + hashlib.sha256(data).hexdigest(),
+                        "bytes": len(data),
+                    }
+                ],
+                "source_digest": source_digest,
+                "source_filename": "source.mp4",
+                "output_root": observation.output_root,
+            }
+    
+        reconciler = ExecutionReconciler(runtime, adapter)
+        first = reconciler.run(
+            contract=contract,
+            project_id="project-1",
+            capability="render.authoring-candidate",
+            spec={"inputs": {}},
+            executor_id="worker-1",
+            execute=execute,
+            idempotency_key="render-request-1",
+        )
+        second = reconciler.run(
+            contract=contract,
+            project_id="project-1",
+            capability="render.authoring-candidate",
+            spec={"inputs": {}},
+            executor_id="worker-1",
+            execute=execute,
+            idempotency_key="render-request-1",
+        )
+    
+        assert first.status == "complete"
+        assert second.status == "complete"
+        assert second.phase == "recovery"
+        assert render_count == 1
+        assert [name for name, _ in runtime.calls].count("claim") == 1
+    
+        parent, shots, timelines = _closure(shared=True)
+        candidate = open_authoring_bundle(
+            parent, shot_revisions=shots, internal_timeline_revisions=timelines
+        )
+        approval = approve_authoring_candidate(candidate, approver="editor-1", approval_id="approval-render-1")
+>       writer = _Writer()
+                 ^^^^^^^^^
+E       TypeError: _Writer.__init__() missing 1 required positional argument: 'document'
+
+tests/timeline/test_authoring_bundle.py:1574: TypeError
+_____ test_d66_upstream_remote_create_empty_creates_shell_then_empty_head ______
+
+    def test_d66_upstream_remote_create_empty_creates_shell_then_empty_head() -> None:
+        writer = _Writer()
+        result = RemoteTimelines(writer).create_empty(
+            project="render-smoke",
+            timeline_id="01ARZ3NDEKTSV4RRFFQ69G5FAV",
+            config=DEFAULT_CONFIG,
+            idempotency_key="caller-1",
+        )
+>       assert result.ok, result.error
+E       AssertionError: ErrorObject(code='validation_error', message="could not open timeline '01ARZ3NDEKTSV4RRFFQ69G5FAV' in project 'P-1': E...={'project': 'P-1', 'timeline': '01ARZ3NDEKTSV4RRFFQ69G5FAV'})", details={'timeline_id': '01ARZ3NDEKTSV4RRFFQ69G5FAV'})
+E       assert False
+E        +  where False = DomainResult(ok=False, data=None, error=ErrorObject(code='validation_error', message="could not open timeline '01ARZ3N...TSV4RRFFQ69G5FAV'})", details={'timeline_id': '01ARZ3NDEKTSV4RRFFQ69G5FAV'}), receipt=None, idempotency_key='caller-1').ok
+
+tests/v10/test_timelines_create.py:387: AssertionError
+____ test_d69_upstream_remote_create_empty_generates_ulid_when_no_id_given _____
+
+    def test_d69_upstream_remote_create_empty_generates_ulid_when_no_id_given() -> None:
+        writer = _Writer()
+        result = RemoteTimelines(writer).create_empty(project="render-smoke")
+>       assert result.ok, result.error
+E       AssertionError: ErrorObject(code='validation_error', message="could not open timeline '01M5QCSRP4PVQ0HY2SDGN3KD2P' in project 'P-1': E...={'project': 'P-1', 'timeline': '01M5QCSRP4PVQ0HY2SDGN3KD2P'})", details={'timeline_id': '01M5QCSRP4PVQ0HY2SDGN3KD2P'})
+E       assert False
+E        +  where False = DomainResult(ok=False, data=None, error=ErrorObject(code='validation_error', message="could not open timeline '01M5QCS...tails={'timeline_id': '01M5QCSRP4PVQ0HY2SDGN3KD2P'}), receipt=None, idempotency_key='f1cfbbcc98484117be696bba704f1ded').ok
+
+tests/v10/test_timelines_create.py:360: AssertionError
+___________________ test_edit_nudge_frames_set_and_close_gap ___________________
+
+local = PosixPath('/tmp/pytest-of-root/pytest-9/test_edit_nudge_frames_set_and0/t.checkout.json')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f08dd4e9310>
+
+    def test_edit_nudge_frames_set_and_close_gap(local, capsys):
+        assert _run("edit", "--file", str(local), "--clip", "R", "--nudge-frames", "3", "--set", "x=42") == 0
+        rocket = Checkout.load(local).clip("a-rocket")
+        assert rocket.get("x") == 42 and rocket.params["x"] == 7  # canvas px in, stored on the sprite grid (÷6)
+        assert rocket.start == pytest.approx(1.1)
+        capsys.readouterr()
+    
+        assert _run("edit", "--file", str(local), "--close-gap-before", "now") == 0
+        out = capsys.readouterr().out
+>       assert "next:" in out.splitlines()[-1]
+E       AssertionError: assert 'next:' in 'Use a fresh idempotency key for new intent; reuse the same candidate and key for a retry.'
+
+tests/packs/timeline/test_cli_edit_flags.py:154: AssertionError
+---------------------------- Captured stdout setup -----------------------------
+saved /tmp/pytest-of-root/pytest-9/test_edit_nudge_frames_set_and0/t.checkout.json · 0 clip(s) changed vs published · tl.check().brief() says what blocks publishing
+___________________ test_voice_line_swap_reflows_and_reports ___________________
+
+local = PosixPath('/tmp/pytest-of-root/pytest-9/test_voice_line_swap_reflows_a0/t.checkout.json')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9/test_voice_line_swap_reflows_a0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f08dd913af0>
+
+    def test_voice_line_swap_reflows_and_reports(local, tmp_path, capsys):
+        words = _words_file(tmp_path, "s1.json", [[0.0, 0.5, "it"], [0.6, 1.1, "went"], [1.2, 2.0, "viral"]])
+        assert _run("edit", "--file", str(local), "--line", "s1", "--take", "P", "--words", words) == 0
+        out = capsys.readouterr().out
+>       assert out.splitlines()[-1].startswith("next: timelines check")
+E       AssertionError: assert False
+E        +  where False = <built-in method startswith of str object at 0x7f08dd28f1b0>('next: timelines check')
+E        +    where <built-in method startswith of str object at 0x7f08dd28f1b0> = 'Use a fresh idempotency key for new intent; reuse the same candidate and key for a retry.'.startswith
+
+tests/packs/timeline/test_cli_edit_flags.py:183: AssertionError
+---------------------------- Captured stdout setup -----------------------------
+saved /tmp/pytest-of-root/pytest-9/test_voice_line_swap_reflows_a0/t.checkout.json · 0 clip(s) changed vs published · tl.check().brief() says what blocks publishing
+=========================== short test summary info ============================
+FAILED tests/packs/timeline/test_cli_parity.py::test_publish_requires_a_message
+FAILED tests/packs/timeline/test_cli_status_publish.py::test_publish_forwards_key_and_force_to_sdk_once
+FAILED tests/packs/timeline/test_cli_status_publish.py::test_publish_partial_narration_error_preserves_receipt_and_does_not_retry[False]
+FAILED tests/packs/timeline/test_cli_status_publish.py::test_publish_partial_narration_error_preserves_receipt_and_does_not_retry[True]
+FAILED tests/packs/timeline/test_cli_status_publish.py::test_publish_human_output_is_a_short_summary_and_json_keeps_the_envelope
+FAILED tests/packs/timeline/test_cli_status_publish.py::test_publish_cas_refusal_is_not_retried_or_reported_as_success[False]
+FAILED tests/packs/timeline/test_cli_status_publish.py::test_publish_cas_refusal_is_not_retried_or_reported_as_success[True]
+FAILED tests/packs/timeline/test_cli_status_publish.py::test_publish_of_a_clean_working_copy_publishes_nothing
+FAILED tests/packs/timeline/test_verbs_working_copy.py::test_a_refusal_from_the_head_lookup_is_one_plain_line_upstream_publish[argv2]
+FAILED tests/packs/timeline/test_verbs_working_copy.py::test_publish_conflict_names_the_writer_and_offers_discard_first[astrid.editor.timeline.5fb2249e000000000000000000000000-the editor published 5fb2249e after your checkout (rev-0)]
+FAILED tests/packs/timeline/test_verbs_working_copy.py::test_publish_conflict_names_the_writer_and_offers_discard_first[authoring-parent-revision-38cecaa5ffffffffffffffffffffffff-someone published 38cecaa5 after your checkout (rev-0)]
+FAILED tests/sdk/test_timeline_checkout.py::test_three_way_merges_disjoint_edits_and_refuses_overlapping_ones_r4_original
+FAILED tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head_r4_original
+FAILED tests/sdk/test_timeline_publish_connection.py::test_a_publish_with_no_client_writes_through_the_connection_it_opens_r4_original
+FAILED tests/sdk/test_timeline_publish_connection.py::test_a_publish_with_a_client_writes_through_that_client_r4_original
+FAILED tests/sdk/test_intent_app_astrid.py::test_three_way_legacy_head_is_not_a_conflict_and_keeps_intent_r4_original
+FAILED tests/sdk/test_intent_app_astrid.py::test_merge_keeps_a_film_namespace_key_outside_the_known_list_in_the_namespace_r4_original
+FAILED tests/sdk/test_runtime_response_conformance.py::test_publish_conflict_409_maps_to_conflict_and_keeps_its_details_r4_route
+FAILED tests/sdk/test_timeline_restructure.py::test_three_way_merge_works_on_the_stored_form_r4_original
+FAILED tests/sdk/test_timeline_restructure.py::test_duplicate_of_a_chapter_film_keeps_one_distinct_shot_per_chapter_r4_original
+FAILED tests/sdk/test_timeline_store_fixes.py::test_publish_merge_keeps_candidate_parent_config_changes_next_to_head_changes_r4_original
+FAILED tests/sdk/test_timeline_store_fixes.py::test_publish_merge_flags_a_parent_config_key_changed_differently_and_force_wins_r4_original
+FAILED tests/core/test_timeline_element_publication.py::test_d69_upstream_sameclip_exacthead_publication_preserves_closure_and_user_params
+FAILED tests/core/test_timeline_element_publication.py::test_d69_upstream_stale_head_and_concurrent_cas_reject_without_rebase
+FAILED tests/core/test_timeline_element_publication.py::test_d69_upstream_bad_duration_never_publishes[0]
+FAILED tests/core/test_timeline_element_publication.py::test_d69_upstream_bad_duration_never_publishes[-1]
+FAILED tests/core/test_timeline_element_publication.py::test_d69_upstream_bad_duration_never_publishes[inf]
+FAILED tests/core/test_timeline_element_publication.py::test_d69_upstream_bad_duration_never_publishes[nan]
+FAILED tests/core/test_timeline_element_publication.py::test_d69_upstream_unadmitted_owner_and_sourceclip_reject
+FAILED tests/packs/rendering/test_live_scene_composition.py::test_d69_upstream_native_window_layer_is_materialized_once_with_pin_hold_and_alpha[0]
+FAILED tests/packs/rendering/test_live_scene_composition.py::test_d69_upstream_native_window_layer_is_materialized_once_with_pin_hold_and_alpha[1]
+FAILED tests/packs/video_editing/test_runtime_publication_chain.py::test_d66_upstream_generic_host_hook_materializes_and_publishes_without_local_save_or_invoke
+FAILED tests/test_installer_schema.py::test_d66_upstream_remotion_lock_pins_the_transitive_schema_package
+FAILED tests/timeline/test_authoring_bundle.py::test_d66_upstream_approval_is_bound_to_candidate_and_base_revision
+FAILED tests/timeline/test_authoring_bundle.py::test_d66_upstream_frozen_render_restart_then_approval_promotion_is_single_generation
+FAILED tests/v10/test_timelines_create.py::test_d66_upstream_remote_create_empty_creates_shell_then_empty_head
+FAILED tests/v10/test_timelines_create.py::test_d69_upstream_remote_create_empty_generates_ulid_when_no_id_given
+FAILED tests/packs/timeline/test_cli_edit_flags.py::test_edit_nudge_frames_set_and_close_gap
+FAILED tests/packs/timeline/test_cli_edit_flags.py::test_voice_line_swap_reflows_and_reports
+39 failed, 10 passed in 17.11s

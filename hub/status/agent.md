@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-24T16:45:16Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 15 | status age 2m -->
-# agent board, 2026-10-24T16:43:13Z
+<!-- agent | 2026-10-24T16:48:06Z | dispatcher heartbeat 6s | live 5 (sol 0, luna 5, other 0) | busy30 18 | status age 0m -->
+# agent board, 2026-10-24T16:47:21Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -123,9 +123,16 @@
 
 | G2 P4 read boundary | Preserve ordinary and canonical read authority | HARD Sol / Luna | Actual P4 failure30725 | doing | Sol1639; whole-path1639 | Independent whole-path traces unconditional sync.py publication hydration. Sol1639 tests correction; accepted canonical authority must remain intact. | Agent ef036 / Runtime bc227 |
 
+| D69 actual49 checkpoint | Qualify restored47 and two assertions | Service | Product failure follow-through | review | Actual service23762 | All49 ran:39 FAIL10PASS17.11s. Exact47 subset37FAIL10PASS; two audit predicates FAIL. [JUnit](../../design/handoff-agt-F-D69-23762-d69-restored47.xml) | Agent ef036 / Runtime bc227 |
+| D69 CLI failures | Classify14 exact CLI cases | Luna | Actual23762 XML | doing | agt-F-D69-failures-cli-1646 | Eleven FAIL,three PASS. Exact source and logged decision mapping; no body repeat. | Evidence only |
+| D69 SDK failures | Classify16 exact SDK cases | Luna | Actual23762 XML | doing | agt-F-D69-failures-sdk-1646 | Eleven FAIL,five PASS. Exact source and logged decision mapping; no body repeat. | Evidence only |
+| D69 core failures | Classify11 core-source cases | Luna | Actual23762 XML | doing | agt-F-D69-failures-core-1646 | Eleven FAIL. Missing element/approval/create API seams need live-caller and decision evidence. | Evidence only |
+| D69 rendering failures | Classify6 rendering/input cases | Luna | Actual23762 XML | doing | agt-F-D69-failures-render-1646 | Four FAIL,two PASS. Exact source, environment or logged decision evidence; no body repeat. | Evidence only |
+| D69 CLI terminal hints | Restore two original terminal lines | Luna | Actual output failures | doing | agt-F-D69-cli-terminal-hint-1646 | Keep retry guidance, make next: timelines check terminal. Original predicates stay byte-identical. | Source pending |
+
 Integration: Agent ef0363985e includes true upstream924, normal Runtime8b32 adoption, reviewed recorder consumer, 47 unchanged upstream test restorations and reviewed P4 parser default. Runtime root-auth successor is actual local normal bc227 with exact reviewed tree1d410 and expected parents. Normal provenance adoption1630 merged; one actual-home inverse original1632 dispatched.
-core open: 2 tracked: P4 single edit fails cache boundary at assertion113 on actual30725; ten-note times out45s. Root inverse original PASS1 in2.08s. Parser predicate now passes. Prior five/54 scopes retained; final-core body owed.
-regressions: 0 currently open at qualified scope. Order181 repaired and actual d27b PASS16. Restored47 behavior proof is pending; any failure gets a product owner under D69. Other upstream PASS contrasts need cut confirmation.
+core open: 2 established P4 cases, plus39 D69 failures blocking cut pending exact source/scope/decision classification. No restored failure is called a known gap. Single-edit cache ownerSol1639; ten-note cost ownerRuntimeSol1635. Root inverse actualhome PASS1.
+regressions: 39 D69 failure cases tracked provisionally:37 original restores and2 audit assertions. Two CLI output-order regressions have immediate product owner1646. Remaining37 have four disjoint source classifiers. Prior order181 fix remains PASS16.
 D60 baseline: Upstream924 full1621 terminal FAIL: 12396 passed, 91 failed, 14 errors, 16 skips, 566 subtests. Exact276:199 NEW-OURS and77 counterparts. Mutable external Runtime scope remains disclosed.
 D66 reverse:137 ledgered,178 present-changed,47 restored,0 renamed. Original47 ASTs exact924 at3d67. Durable service repair1634 active after two zero-body launches. Independent whole-path1634 runs in parallel. D69 audit:167 cleared,9 cited,2 restored at home9a781 after independent1622 PASS. Behavior proof pending.
 Gates: P1/P2/P3 App; P4 Agent; P5 and Composition Runtime. Original P4 service29577 FAIL2/PASS1. Next P4 run needs current source rebind and meaningful ten-note correction. Final-core body still owed.
@@ -133,6 +140,6 @@ Admission: D56 ends Farm/schema venue work. Prior access and safety refusals sta
 Disk: About9GB free; cap6 above9GB. Newly completed read-only trees are already recycled. Sweep3 removed0; prior refused targets stay stopped.
 
 Blockers: Runtime — P4 ten-note first redo times out45s. Luna1625 found no justified optimization; HARD Sol1635 continues bounded caller-cost work. Every validation and45s retained; independent review before retry.
-Next ready: Consume actual-service no-op preflight1642, then original49 once. Consume P4 source1639 and independent whole-path1639, review meaningful correction. Runtime ten-note costSol1635 remains unique owner after Luna profile1625.
-live 3 / cap 6; ready-undispatched 0. HARD Sol1639 read authority; Luna1639 whole path; HARD Sol1642 repairs repeated harness snapshot failure. No original49 body has run.
+Next ready: Consume four D69 slice returns, assign every justified product repair, escalate only exact contract/retirement conflicts. Review output fix1646 and P4 source1639. Runtime ten-note costSol1635 remains unique owner.
+live 6 / cap 6; ready-undispatched 0. HARD Sol1639; five Luna1646 across four triage slices and CLI output repair. No duplicated original bodies.
 Inbox consumed through Runtime1635 P4 cost continuation and1621 actual root-auth home. Runtime actual normal successor bc227 verified locally by tree and parents; stale source wait cleared. Pass 2026-10-24T16:26:38Z.
