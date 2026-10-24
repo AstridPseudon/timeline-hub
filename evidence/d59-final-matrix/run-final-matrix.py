@@ -23,11 +23,16 @@ ORCH = Path(
     "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch"
 )
 REQUEST_TEST = ORCH / "bin/request-test"
-D84 = ORCH / "workers/rt-F-final-D84-core-prep-2207/evidence/candidate"
+D84 = Path(__file__).resolve().parent / "inherited-d84"
 INHERITED = {
     "run-final-services.py": "05c5662aa14c3bb288f672421d448335a0b10df659fd58439e6abd296c4c3a97",
     "submit-final.py": "345c8663dde1379264f913e0b72657dbe0d326aac13571dd5cc1e0700087bcca",
     "acceptance-d73.py": "08d69d10a58c8b65ded99165054e6f11e42fcaf9c9c9471b57cdaa2d2d81d8f8",
+    "core-inventory.json": "9705979776ebb9182d986e9364a29911fafd04227e817f5f19346e8fd116bb97",
+    "runtime-final-service-rows.txt": "be2572c2b4ea888237a8696c15e68505010da4453df93aba9ff876b724e2553a",
+    "install-final-services.py": "6e7eafca3f31c559e07d85a69ef9ac1f785679f727dad831b005a9cb9c6e01f1",
+    "run-final-delivery.py": "cf714b7d6105ddf1bd752f311bb2982896e5b67e4988b4096417e6b30f8237f8",
+    "submit-packet.md": "450f67c20acbf5dee1ec229a150ca35e1ea438e432145f66a1c6e9958cd7ca93",
 }
 HEX40 = re.compile(r"^[0-9a-f]{40}$")
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
@@ -55,10 +60,10 @@ def route_table() -> list[dict[str, Any]]:
         {"id": "app-p3", "venue": "app", "target": "app", "suite": "full-e2e-three-products", "files": files["p3"], "kind": "request-test"},
         {"id": "app-core", "venue": "app", "target": "app", "suite": "full", "files": None, "kind": "request-test"},
         {
-            "id": "agent-p4", "venue": "agent", "target": "integration:agent", "suite": "p4-v2-http-nodes",
-            "files": "tests/editing_conformance/test_p4_cli_sheet_v2_runtime.py::test_cli_sheet_v2_runtime_preserves_document_and_reads_back tests/editing_conformance/test_p4_ten_note_v2_runtime.py::test_http_ten_note_commit_per_step_inverse_and_redo tests/editing_conformance/test_p4_note_rerun_v2_runtime.py::test_http_note_conflict_reruns_public_function_from_verified_peer_document",
+            "id": "agent-p4", "venue": "agent", "target": "integration:agent", "suite": "p4-current-becfe-http-3legs",
+            "files": None,
             "kind": "request-test", "availability": "PENDING_OWNER_REGISTRATION",
-            "missing_input": "owner registration p4-v2-http-nodes in the installed suites.conf",
+            "missing_input": "owner must publish the existing p4-current-becfe-http-3legs row in the installed suites.conf; final P4 remains the separate three-original-selector handoff",
         },
         {"id": "agent-core", "venue": "agent", "target": "agent", "suite": "full", "files": None, "kind": "request-test"},
         {"id": "agent-d77-render", "venue": "agent", "target": "agent", "suite": "m3-public13-bounded-files-gate", "files": None, "kind": "request-test", "availability": "PENDING_AUTHENTIC_ENVIRONMENT", "missing_input": "genuine installed D77 render environment and its received receipt"},
@@ -72,6 +77,44 @@ def tuple_error(message: str) -> ValueError:
     return ValueError(f"final tuple refused: {message}")
 
 
+def validate_d73_manifest(manifest: Any, repos: dict[str, Any]) -> None:
+    required = {
+        "format",
+        *(f"{name}_{field}" for name in REPOS for field in ("sha", "tree", "path")),
+        "agent_parents",
+        "python",
+        "node",
+        "profile",
+        "schema",
+        "node_version",
+        "profile_lock_sha",
+        "profile_archive_sha",
+        "profile_registry_sha",
+        "composition_version",
+        "original_p4_test_hash",
+        "service_versions",
+        "junit_paths",
+    }
+    if not isinstance(manifest, dict) or not required.issubset(manifest):
+        raise tuple_error("D73 manifest fields are incomplete")
+    if manifest["format"] != "p4-d73-v1":
+        raise tuple_error("D73 manifest format is unsupported")
+    for name in REPOS:
+        if manifest[f"{name}_sha"] != repos[name]["sha"] or manifest[f"{name}_tree"] != repos[name]["tree"]:
+            raise tuple_error(f"D73 {name} SHA/tree does not match the final tuple")
+        if manifest[f"{name}_path"] != repos[name]["checkout_path"]:
+            raise tuple_error(f"D73 {name} path does not match the selected checkout")
+    for key in ("agent_parents", "python", "node", "profile", "schema", "node_version", "composition_version", "service_versions", "junit_paths"):
+        if not isinstance(manifest[key], str) or not manifest[key]:
+            raise tuple_error(f"D73 {key} is missing")
+    for key in ("python", "node", "profile", "schema"):
+        if not manifest[key].startswith("/"):
+            raise tuple_error(f"D73 {key} is not an absolute path")
+    for key in ("profile_lock_sha", "profile_archive_sha", "profile_registry_sha", "original_p4_test_hash"):
+        if not isinstance(manifest[key], str) or not HEX64.fullmatch(manifest[key]):
+            raise tuple_error(f"D73 {key} is not a lowercase SHA-256")
+
+
 def validate_tuple_data(value: Any, *, expected_sha: str, check_git: bool) -> dict[str, Any]:
     if not isinstance(value, dict) or value.get("version") != 1:
         raise tuple_error("version must be 1")
@@ -80,6 +123,7 @@ def validate_tuple_data(value: Any, *, expected_sha: str, check_git: bool) -> di
     repos = value.get("repos")
     if not isinstance(repos, dict) or set(repos) != set(REPOS):
         raise tuple_error("repos must contain exactly agent, runtime, app, composition")
+    validate_d73_manifest(value.get("d73_manifest"), repos)
     if value.get("final_tuple_sha256") not in (expected_sha, "FINAL_TUPLE_SHA256_PENDING"):
         raise tuple_error("final_tuple_sha256 does not match the supplied tuple")
     schema = value.get("schema")
@@ -167,11 +211,19 @@ def request_argv(route: dict[str, Any], request_test: Path) -> list[str]:
     return command
 
 
-def route_plan(route: dict[str, Any], tuple_path: Path, tuple_sha: str, runner: Path) -> dict[str, Any]:
+def route_plan(
+    route: dict[str, Any],
+    tuple_path: Path,
+    tuple_sha: str,
+    runner: Path,
+    tuple_value: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     if route["kind"] == "request-test":
         command = request_argv(route, REQUEST_TEST)
     else:
-        command = [sys.executable, str(runner), "--source-tuple", "<d73_source_tuple>", "--tuple-sha", "<d73_tuple_sha256>", "core"]
+        source_tuple = tuple_value.get("d73_source_tuple") if tuple_value else "<d73_source_tuple>"
+        source_sha = tuple_value.get("d73_tuple_sha256") if tuple_value else "<d73_tuple_sha256>"
+        command = [sys.executable, str(runner), "--source-tuple", str(source_tuple), "--tuple-sha", str(source_sha), "core"]
     result = {"id": route["id"], "venue": route["venue"], "kind": route["kind"], "argv": command, "budget_seconds": 45, "availability": route.get("availability", "READY")}
     for field in ("missing_input", "requires"):
         if field in route:
@@ -230,7 +282,7 @@ def main(argv: list[str] | None = None) -> int:
         if not pending:
             value = validate_tuple_data(value, expected_sha=args.tuple_sha, check_git=True)
         routes = [route for route in route_table() if args.venue is None or route["id"] == args.venue]
-        result = {"version": 1, "status": "PENDING" if pending else "READY", "tuple_sha256": actual, "tuple_path": str(tuple_path), "inherited": inherited_paths(), "venues": [route_plan(route, tuple_path, args.tuple_sha, args.d84_runner) for route in routes], "dispatched": 0, "note": "No request-test or checkout was invoked." if pending else "Plan only; use --mode submit for the captured tuple."}
+        result = {"version": 1, "status": "PENDING" if pending else "READY", "tuple_sha256": actual, "tuple_path": str(tuple_path), "inherited": inherited_paths(), "venues": [route_plan(route, tuple_path, args.tuple_sha, args.d84_runner, value if not pending else None) for route in routes], "dispatched": 0, "note": "No request-test or checkout was invoked." if pending else "Plan only; use --mode submit for the captured tuple."}
         args.receipt.absolute().parent.mkdir(parents=True, exist_ok=True)
         args.receipt.absolute().write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         print(json.dumps(result, indent=2, sort_keys=True))

@@ -1,0 +1,28 @@
+Named membership and source applicability checks (read-only):
+
+- current Agent HEAD: 7c485e5b612a31a9b4f6e9a67163612a4a3313d4
+- current Agent tree: 742a1195e33b1b94cbd7d817c5b4d8167c4a20d5
+- tested 29429 Agent SHA: c2a63bbee9369b84bec7f4bfec06f447df02c27b
+- tested 29429 Agent tree: 742a1195e33b1b94cbd7d817c5b4d8167c4a20d5
+- `git diff --quiet c2a63bbee9369b84bec7f4bfec06f447df02c27b --`: exit 0
+- current live row selector count: 5
+- final candidate selector count: 3
+- prepared final-core node count: 8817 (8814 core-blocking + 1 D13 + 2 D23)
+- prepared final-core P4 exclusions: exactly the three original files
+- current Runtime: 732c48c6f5a9441a65c61b24595d454a1cd3e180 / tree 7ed0559c6f0a05954427cc668e303b6cd2f51586 / clean
+
+The historical actual manifest's `original_p4_test_hash` is
+495911538a8dfc789d2674c97ba1be8cc2e63f001ce65f5eb5cdd07a34b81f06. The same
+three source bytes at this worker path produce
+8ee0bb69c079eb1067ef18d0769fed87a76a235293243da236a9b6ab28c931ed because
+the launcher hashes `sha256sum` output containing absolute filenames. Therefore
+the historical value is applicable only to the historical exact checkout path;
+the final manifest must recompute it at its own exact checkout path. This is a
+guard-preserving source equivalence observation, not permission to run or
+install.
+
+Normal-merge applicability is consequently conditional: the Agent source
+content and Runtime source match the named tested source where stated, but the
+old App pin and all old path-dependent manifest values remain historical. The
+pending final tuple must carry fresh four-receipt values and pass the launcher
+guards as written.

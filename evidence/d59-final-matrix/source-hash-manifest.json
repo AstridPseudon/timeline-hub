@@ -1,0 +1,105 @@
+{
+  "agent2236": {
+    "current_actual_p4": "five selectors (29429), historical evidence only",
+    "files": {
+      "agent2236/handoff-agt-F-matrix-2236-current-live-five-row.txt": "db3ee5aac42aa0be7e98a5bd7b8a0bf2cd87c228db3806aaf53d187b92ea7f59",
+      "agent2236/handoff-agt-F-matrix-2236-final-p4-pending-input.env": "a700903f5274c674ecd5ee31d8e0fff0c02f41b538e30afebb2398c3c831c974",
+      "agent2236/handoff-agt-F-matrix-2236-final-p4-three-selector.command.sh": "08ce890cc876acf3686b164f7a02dc7064f16fa8fea98914cfbcc25b0169c748",
+      "agent2236/handoff-agt-F-matrix-2236-final-p4-three-selector.membership.tsv": "66ba84d59cf704e567db8afa63ae72f1b5563f296d6ebb40b35a74d7492e0c8e",
+      "agent2236/handoff-agt-F-matrix-2236-matrix-handoff.md": "3f7b5f6b638f5392f802196e00f1e41a3dd44e35a0489ee313c712af1de14348",
+      "agent2236/handoff-agt-F-matrix-2236-missing-files.txt": "6470a66c616f388031428c8a56e39b57e8a1c6a08415bf96324bf8d6cbbf7708",
+      "agent2236/handoff-agt-F-matrix-2236-normalmerge-applicability.txt": "d752299fe0e24d6085ce4d6771a9169ee514e9b946798c71e3b16b88ba06a947",
+      "agent2236/handoff-agt-F-matrix-2236-sha256manifest": "c1663840d1411fb2c80edcee0cac0c3af9d5706e0a3f0a10537647d67455ec88",
+      "agent2236/handoff-agt-F-matrix-2236-source-identity.json": "83d48108e5dabcba0e76d98910eedb2f2e8a2eeb9c4a023030299c274fc22f52",
+      "agent2236/prepared-1755/final-core-collection.json": "3314895c1995e61d3235424728690888aeff0adb94cec82cef15c03e34ac0388",
+      "agent2236/prepared-1755/final-core-pending-input.env": "ca125d7e5b2018cf61e2d488a081ad664ba1c976c84d25890cd141f01a407abe",
+      "agent2236/prepared-1755/final-core-prep-dry-2.command": "e3b6f064af23004effe139af86af2768b669a8fa7cc19566737b744d3d26489b",
+      "agent2236/prepared-1755/final-core-prep-dry-2.manifest": "be8760dfdf3574b3079e53e8b65998ef02c1175e1af02d2054898cba40c101ca",
+      "agent2236/prepared-1755/final-core-prep-dry-2.result": "b99bea235107702c2bb978c401257fdafc1c94e2821c2f0778f18aab43aa7926",
+      "agent2236/prepared-1755/final-core-prep-poison.result": "3b13b4b44a419372f46e5cf3e4d9433a109399999ef519ffd2b6f6c54af2b11d",
+      "agent2236/prepared-1755/final-core-row-1755.txt": "d5c595d6afe776ab7e8f94b5675ec4e48df9a8f3c483b43bac13085803e7cfb2",
+      "agent2236/prepared-1755/source-collection.sha256": "5c9fc7390634b3ce66334a55a449da01979d4f77684f7267a30ac10e9e106e5e",
+      "agent2236/prepared-1755/worker-report.md": "0220ea6c2421eaeed5f4167212ad70723afde39228f0f748e51b6ba254503c25",
+      "agent2236/source/install_p4_launcher.py": "46595ea2b6e0738736ebf181f731930144737ac8d39902e4903b94e23c2c94f2",
+      "agent2236/source/p4-d73-pinned-launch.sh": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1"
+    },
+    "final_p4": "three original selectors, pending fresh tuple and final paths",
+    "source_manifest": "handoff-agt-F-matrix-2236-sha256manifest",
+    "source_worker": "agt-F-matrix-handoff-2236"
+  },
+  "current": {
+    "files": {
+      "README.md": "3fe3aa4bede266e29232a6b54eb65edab973175763e4f2d29290b5cfbb3e7970",
+      "__pycache__/run-final-matrix.cpython-313.pyc": "c7ad0d1a35be84b4a02818e66971caa8bc17e760cee9eb547887d9b3069f2b9b",
+      "agent2236/handoff-agt-F-matrix-2236-current-live-five-row.txt": "db3ee5aac42aa0be7e98a5bd7b8a0bf2cd87c228db3806aaf53d187b92ea7f59",
+      "agent2236/handoff-agt-F-matrix-2236-final-p4-pending-input.env": "a700903f5274c674ecd5ee31d8e0fff0c02f41b538e30afebb2398c3c831c974",
+      "agent2236/handoff-agt-F-matrix-2236-final-p4-three-selector.command.sh": "08ce890cc876acf3686b164f7a02dc7064f16fa8fea98914cfbcc25b0169c748",
+      "agent2236/handoff-agt-F-matrix-2236-final-p4-three-selector.membership.tsv": "66ba84d59cf704e567db8afa63ae72f1b5563f296d6ebb40b35a74d7492e0c8e",
+      "agent2236/handoff-agt-F-matrix-2236-matrix-handoff.md": "3f7b5f6b638f5392f802196e00f1e41a3dd44e35a0489ee313c712af1de14348",
+      "agent2236/handoff-agt-F-matrix-2236-missing-files.txt": "6470a66c616f388031428c8a56e39b57e8a1c6a08415bf96324bf8d6cbbf7708",
+      "agent2236/handoff-agt-F-matrix-2236-normalmerge-applicability.txt": "d752299fe0e24d6085ce4d6771a9169ee514e9b946798c71e3b16b88ba06a947",
+      "agent2236/handoff-agt-F-matrix-2236-sha256manifest": "c1663840d1411fb2c80edcee0cac0c3af9d5706e0a3f0a10537647d67455ec88",
+      "agent2236/handoff-agt-F-matrix-2236-source-identity.json": "83d48108e5dabcba0e76d98910eedb2f2e8a2eeb9c4a023030299c274fc22f52",
+      "agent2236/prepared-1755/final-core-collection.json": "3314895c1995e61d3235424728690888aeff0adb94cec82cef15c03e34ac0388",
+      "agent2236/prepared-1755/final-core-pending-input.env": "ca125d7e5b2018cf61e2d488a081ad664ba1c976c84d25890cd141f01a407abe",
+      "agent2236/prepared-1755/final-core-prep-dry-2.command": "e3b6f064af23004effe139af86af2768b669a8fa7cc19566737b744d3d26489b",
+      "agent2236/prepared-1755/final-core-prep-dry-2.manifest": "be8760dfdf3574b3079e53e8b65998ef02c1175e1af02d2054898cba40c101ca",
+      "agent2236/prepared-1755/final-core-prep-dry-2.result": "b99bea235107702c2bb978c401257fdafc1c94e2821c2f0778f18aab43aa7926",
+      "agent2236/prepared-1755/final-core-prep-poison.result": "3b13b4b44a419372f46e5cf3e4d9433a109399999ef519ffd2b6f6c54af2b11d",
+      "agent2236/prepared-1755/final-core-row-1755.txt": "d5c595d6afe776ab7e8f94b5675ec4e48df9a8f3c483b43bac13085803e7cfb2",
+      "agent2236/prepared-1755/source-collection.sha256": "5c9fc7390634b3ce66334a55a449da01979d4f77684f7267a30ac10e9e106e5e",
+      "agent2236/prepared-1755/worker-report.md": "0220ea6c2421eaeed5f4167212ad70723afde39228f0f748e51b6ba254503c25",
+      "agent2236/source/install_p4_launcher.py": "46595ea2b6e0738736ebf181f731930144737ac8d39902e4903b94e23c2c94f2",
+      "agent2236/source/p4-d73-pinned-launch.sh": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1",
+      "commands.sh": "ff23c02659a163a63c8e84a5909a5858948c0297ab5080e6e20775e7fc1e50bf",
+      "final-source-tuple.template.json": "f2e5ee57ffaed096c1a984e26fa0f63df1a6b385b588dadd6fb1c557e688106e",
+      "inherited-d84/acceptance-d73.py": "08d69d10a58c8b65ded99165054e6f11e42fcaf9c9c9471b57cdaa2d2d81d8f8",
+      "inherited-d84/core-inventory.json": "9705979776ebb9182d986e9364a29911fafd04227e817f5f19346e8fd116bb97",
+      "inherited-d84/install-final-services.py": "6e7eafca3f31c559e07d85a69ef9ac1f785679f727dad831b005a9cb9c6e01f1",
+      "inherited-d84/run-final-delivery.py": "cf714b7d6105ddf1bd752f311bb2982896e5b67e4988b4096417e6b30f8237f8",
+      "inherited-d84/run-final-services.py": "05c5662aa14c3bb288f672421d448335a0b10df659fd58439e6abd296c4c3a97",
+      "inherited-d84/runtime-final-service-rows.txt": "be2572c2b4ea888237a8696c15e68505010da4453df93aba9ff876b724e2553a",
+      "inherited-d84/submit-final.py": "345c8663dde1379264f913e0b72657dbe0d326aac13571dd5cc1e0700087bcca",
+      "inherited-d84/submit-packet.md": "450f67c20acbf5dee1ec229a150ca35e1ea438e432145f66a1c6e9958cd7ca93",
+      "run-final-matrix.py": "3e9c15cb535fc567768d920d2f9c4fddbdbe51800a44334486dc400e14c47f44",
+      "stubcontrols.py": "fd8f0434b78e3daae85850aa21762004a5b3f7c545b49324d5164398cfaad138"
+    }
+  },
+  "delta": {
+    "agent_p4_route": "p4-current-becfe-http-3legs pending owner registration; final three-selector candidate remains separate",
+    "product_tree_changes": 0,
+    "runner_uses_local_inherited_d84": true
+  },
+  "inherited_d84": {
+    "files": {
+      "inherited-d84/acceptance-d73.py": "08d69d10a58c8b65ded99165054e6f11e42fcaf9c9c9471b57cdaa2d2d81d8f8",
+      "inherited-d84/core-inventory.json": "9705979776ebb9182d986e9364a29911fafd04227e817f5f19346e8fd116bb97",
+      "inherited-d84/install-final-services.py": "6e7eafca3f31c559e07d85a69ef9ac1f785679f727dad831b005a9cb9c6e01f1",
+      "inherited-d84/run-final-delivery.py": "cf714b7d6105ddf1bd752f311bb2982896e5b67e4988b4096417e6b30f8237f8",
+      "inherited-d84/run-final-services.py": "05c5662aa14c3bb288f672421d448335a0b10df659fd58439e6abd296c4c3a97",
+      "inherited-d84/runtime-final-service-rows.txt": "be2572c2b4ea888237a8696c15e68505010da4453df93aba9ff876b724e2553a",
+      "inherited-d84/submit-final.py": "345c8663dde1379264f913e0b72657dbe0d326aac13571dd5cc1e0700087bcca",
+      "inherited-d84/submit-packet.md": "450f67c20acbf5dee1ec229a150ca35e1ea438e432145f66a1c6e9958cd7ca93"
+    },
+    "source_worker": "rt-F-final-matrix-return-2228"
+  },
+  "predecessor": {
+    "branch": "tl/rt-F-final-matrix-2219",
+    "commit": "5d0350207a87810c589b0ad5f835eac8fcdaa149",
+    "files": {
+      "README.md": "f18afd7c7c5304bb2bf02ff23fac1d22748529fb2e3b7a3b0986b76a8440a4c3",
+      "commands.sh": "ff23c02659a163a63c8e84a5909a5858948c0297ab5080e6e20775e7fc1e50bf",
+      "final-source-tuple.template.json": "9a0340907ac3dd9d557c376e9d62426509a6c77f8ce23e2400c372892897a22f",
+      "run-final-matrix.py": "669f5cc26f57e49aabdecbdbfa299db98fb0f16a9719de32e6a621d8a5894363",
+      "stubcontrols.py": "0cb63a3a72cd9a5b2b847f036d5e80c5f4af82ef9d424d9b4bb3714b06424616"
+    },
+    "tree": "6dc95f44cb8c08c01d3f373b7d8e3322b85da48b"
+  },
+  "rules": {
+    "final_tuple": "PENDING until fresh four-repository checkout receipts, final-core receipt, and genuine D77 installed-render receipt exist",
+    "original_p4_test_hash": "sha256sum of the three absolute final Agent test filenames, then sha256sum of that ordered output; recompute at final paths",
+    "scope": "Agent2234 active rehearsal is final-core input; Agent1755 preparation is historical only"
+  },
+  "version": 2
+}
+
