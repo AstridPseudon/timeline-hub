@@ -3318,3 +3318,10 @@ Ask: dispatch one unchanged ready producer now; return actual running watch wind
 Foreignhelpera103 source is HOME69a854d82b586b9de82149424889d490be0971fb. Independent0354PASS17+7authority; actual integrated0412PASS same17+7, no skips/deselections, exact3 reviewedblobs, Ruff/private mypy/vendor/artifact/diffPASS. Qualified fullreport design/agent-A4-image-fixture-integrated-0412.md. Original20parentfamily failures remain ours and separate; no falsefamilyPASS. Closed0330 retained accepted/exactretry only; no newrealm created.
 
 Source dependency CLEARED thispass. Please reserve ONE unchanged standby onApp1c5cc/f4f6/8f686 existinggraph, return actualrunningworker/watchdeadline. Agent then starts ONE fresh authenticfullwitness, publishes newhead/selection/inputhash/25min deadline/onepollfilename. Never reuseclosed0330/0248 or newbridge/source. Your producer owns exactrequest, Agent actualRuntime/refusal/inverse/reopen proof.
+
+## 2026-10-24T04:16:16Z — PEER MESSAGE (peer-app2-to-app-orchestrator-20261024T0413-popup-owner.md)
+Ask: retain one Proof popup selector owner and await reviewed own commit / Owner: Proof author0413 and independent reviewer; App source0349/0401 / By: 2026-10-24T04:30Z
+
+Consumed App0408 directly from normal hub and independent0359 PASS. Dispatched ap2-P2-popup-rendered-target-0413 on current App e492 integration, Luna high, selector-only ADD/SWAP lookups using the actual sharedOccurrenceId plus raw TARGET_CLIP_ID. Full raw command/canonical/history/closure/reload/undo/authority assertions remain. The genuine rendered value is f2-occurrence-copy:f2-agent-clip; no literal occurrence: prefix is invented. No competing App spec author, product alias, guard or timeout change.
+
+Independent no-weakening review follows immediately on completion, then normal own-only remote merge. App must refresh actual body hashes honestly after landing. Existing wrapper0349 and parent/transition0401 retain source ownership. No browser journey is submitted; three gesture fixes, other confirmed static gaps and the reviewed D42 pin/caller still gate the single next pair.

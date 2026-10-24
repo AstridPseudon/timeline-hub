@@ -1,4 +1,4 @@
-<!-- main | 2026-10-24T04:16:16Z | dispatcher heartbeat 4s | live 2 (sol 2, luna 0, other 0) | busy30 18 | status age 2m -->
+<!-- main | 2026-10-24T04:18:40Z | dispatcher heartbeat 13s | live 3 (sol 2, luna 1, other 0) | busy30 17 | status age 0m -->
 # runtime board, 2026-10-24T04:05:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -43,7 +43,7 @@
 | F-authoring-seed-fixture | Preserve shared alias compiler case | Sol / Luna | Agent reply qualification | blocked:agent | Runtime 0303 and 0313 PASS; Agent 0337 | Source landed; faithful original reached publication, then reply key failed. Agent owns first return. | 8f9a6acc7; Agent 8f5c |
 | OPS-manifest-restore | Restore accidental generated manifest write | Luna | Exact main file identity | merged | Restore 0110; independent 0113 PASS | Exact tracked hash restored; main cleanliness and byte equality independently verified. | HEAD 458595850 |
 | R0-public-export-manifest | Refresh generated artifact hash | Luna | Integrated verification passed | merged | Author 0111; review 0115; integrated 0128 | Actual head db11 passed 74 cases and generation checks; 77 of 78 entries unchanged. [Proof](../../design/runtime-R0-manifest-integrated-0128.md) | db11ea829 / 8a742b1c2 |
-| R5-full-headless | Preserve headless acceptance and retry | Sol / Luna | Agent authoritative effect fix | blocked:agent | Cause 0332; review 0349 PASS; Agent requested | 12 cases passed; one failed. First patch after bootstrap omits a mirror removal in Agent effects. [Cause](../../design/runtime-headless-effect-cause-0332.md) | ddaa6aed held |
+| R5-full-headless | Preserve headless acceptance and retry | Sol / Luna | Viewing authoritative effect fix | blocked:viewing | Cause 0332; review 0349 PASS; Viewing 0358 | 12 cases passed; one failed. First patch after bootstrap omits a mirror removal in Agent effects. [Cause](../../design/runtime-headless-effect-cause-0332.md) | ddaa6aed held |
 | R5-full-occupancy | Preserve fifteen occupancy scenarios | Sol / Luna | Agent semantic redo source | blocked:agent | Author0313; review0317 PASS | Static preparation passed: all 65 original predicates and 16 scenarios retained. [Review](../../design/runtime-occupancy-faithful-review-0317.md) | 3441bc34 held |
 | R5-full-speed | Preserve six speed refusals | Luna | Integrated proof passed | merged | Review 0138; port review 0148; service 13500 | Actual head 28bb passed 14 cases. Original six inputs and SQL/CAS checks retained; no new type diagnostics. | 4e983cebc / 0e28e6261 |
 | R5-full-receipt-key | Preserve receipt and key guards | Luna | Integrated proof passed | merged | Reviews 0138 and 0148; integrated 0157 | Actual head 28bb passed both cases with explicit Agent source path. All receipt and replay equalities retained. | 28bb65668 / b57ab2331 |
@@ -57,13 +57,13 @@
 | F-D32-h3-import | Seven isolated child import nodes | Luna | Agent existing child qualified | merged | Source 0125; review 0132; Agent 0137 | Exact seven cases passed in 3.60 seconds on existing child c886; wrong-tree control refused. Source and body identities retained. | Source 521c888; installed c36 |
 
 | OPS-farm-agent-full | Prepare supported farm full-suite setup | Sol / Luna | Existing normal API qualification | doing | Return 0410 blocked; Sol 0413 | Optional helper remains held. Farm inputs arrived; existing fresh Store.initialize route is being qualified. | Artifact only |
-| R2r-historical-image | Restore authenticated retired roots on redo | Sol / Luna | Actual integrated proof | merging | Review 0405 PASS; integrated 0413 | Home tree exactly matches reviewed source. Original packet and temporary capture limits remain explicit. | 2b49da8d6 / 2e96c68c |
+| R2r-historical-image | Restore authenticated retired roots on redo | Sol / Luna | Integrated proof passed | merged | Review 0405; integrated 0413 PASS | 13 standalone cases and 243 controls passed; 74 configured deselections. [Proof](../../design/runtime-historical-image-integrated-0413.md) | 2b49da8d6 / 2e96c68c |
 | R-D42-history-memo | Memoize complete verified replay inputs | Sol / Luna | Stateful dependency correction | doing | Review 0357 found bypass; Sol 0403; audit 0403 | 145 passed. Mutable closure attack still bypasses warm verification. Candidate held; whole validation path under review. | a6843aa9 held |
 | R-D42-proof-pin | Backport memo onto compatible proof pin | Sol / Luna | Corrected source and review | blocked:runtime | Pin 0358 reproduced closure bypass | 160 pin cases passed; source remains unsafe. Old client and all 64 protected hashes match. | a684 backport held |
 | R-D42-HTTP | Cold, warm and concurrent native21 GET | Luna | Corrected reviewed proof pin | blocked:runtime | HTTP 0344 stop requested | Preparation retained. Release needs cold, warm and two concurrent HTTP timings on exact committed pin. | Await corrected pin |
 P1 is GO under D25: original 18792 passed both cases on App f8b15af0, Agent 78738040 and Runtime 2a9e347f; independent source and custody reviews passed. Final freeze reruns all gates on final heads.
 
-Runtime integration is 2b49da8d6, tree 40eb05d5a51b. Historical redo source merged after independent PASS; actual integrated proof 0413 is running. Prior D39/D40 and foreign-retirement proofs remain at their exact recorded scope.
+Runtime integration is 2b49da8d6, tree 40eb05d5a51b. Historical redo source has independent and integrated PASS: 13 new cases and 243 controls, with 74 configured deselections. Agent owns its meaningful original qualification.
 
 The earlier history cost fix passed 145 cases on exact head 45c3 with Agent 4151. Compatible proof pin 37eb remains separate from integration. The D42 memo is held after a security failure; Sol 0346 owns its correction. Current wire shapes and consumer pins remain unchanged. No final full-suite pass is claimed.
 
@@ -77,6 +77,6 @@ Blockers: Freeze — Reviewed U1c 40427e8b5 against live 795379a67 stays held un
 
 D34: Main remains near 8.4 GiB. The orchestrator orders no further main disk work. Reviewed registry candidate fdb9e9e9 was installed; normal retirement of s2-c13 was refused for incomplete tuple markers. No retry; zero GB freed.
 
-Later: Agent U2c fixture API facts from peer 0407 are assigned to Luna 0414; draft activation remains freeze held. Legacy admission and v1 archive retirement resume only below 8.5 GB or after delivery. The finite Agent prune assessment found no unreferenced target. No live cleanup or installation is qualified this pass.
+Later: Agent U2c fixture API facts are complete in 0414; independent 0417 checks exact authority equivalence. Draft activation stays freeze held. Legacy admission and v1 retirement stay paused under D34.
 
-Next ready: D42 corrected source review, source merge and integrated proof, corrected proof pin and independent review, then required HTTP release timings. Agent owns alias, headless effects and its occupancy join; Runtime has merged the redo image correction and is qualifying the integrated head.
+Next ready: D42 corrected source review, source merge and integrated proof, corrected proof pin and independent review, then required HTTP release timings. Agent owns alias and its occupancy join; Viewing owns headless effects; Runtime has merged the redo image correction and is qualifying the integrated head.
