@@ -12,6 +12,7 @@ from astrid.core.timeline.authoring_bundle import (
     compile_authoring_candidate,
     open_authoring_bundle,
 )
+from astrid.sdk.timeline import capture as capture_module
 from astrid.sdk.timeline._command_state import (
     ABSENT,
     CommandError,
@@ -21,15 +22,15 @@ from astrid.sdk.timeline._command_state import (
     overlaps,
     present,
 )
-from astrid.sdk.timeline import capture as capture_module
 from astrid.sdk.timeline.capture import capture_move, capture_track_create
 from astrid.sdk.timeline.commands import execute
+from astrid.sdk.timeline.commit import bundle_from_document
 from astrid.sdk.timeline.rebase import replay
 from tests.editing_conformance.staging_recipes import (
     install_staging_operations,
     staged_move,
 )
-from tests.timeline.test_authoring_bundle import _closure, _digest
+from tests.timeline.test_authoring_bundle import _closure, _digest, _runtime_document
 
 FIXTURES = Path(__file__).parent / 'fixtures'
 
@@ -47,7 +48,7 @@ def bundle(*, shared=True, app='missing', fps=30):
         parent['payload']['config']['clips'][0]['app'] = copy.deepcopy(app)
     for image in [parent, *shots, *internals]:
         image['content_digest'] = _digest(image['payload'])
-    return open_authoring_bundle(parent, shot_revisions=shots, internal_timeline_revisions=internals)
+    return bundle_from_document(_runtime_document(parent, shots, internals))
 
 
 def clip(bundle, ref='parent/clip:direct'):
