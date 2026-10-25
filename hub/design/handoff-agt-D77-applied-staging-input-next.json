@@ -1,0 +1,92 @@
+{
+  "task": "D77",
+  "status": "SOURCE_ONLY_UNPROVIDED_APPLIED_DEPLOYMENT",
+  "read_only": true,
+  "applied_graph": {
+    "agent": {
+      "commit": "cd3f5480350d1ca68c9d8ec16aeae2863501c2a4",
+      "tree": "523893dcf54dbe756db8fe2915d14055b1da660b"
+    },
+    "runtime": {
+      "commit": "62040eeab98747dfb65abb6366236bf213109d6c",
+      "tree": "a522511414947e48e317a5e5c2103483b121a750"
+    },
+    "app": {
+      "commit": "5391d71d871c73458ef27710fc132694d57983dd",
+      "tree": "204a9216697953f765b5bd550aefa5822503a44c"
+    },
+    "composition": {
+      "commit": "ccd3a1084a9a4adc8f391befe01828ca7f9612e8",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    },
+    "manifest": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D108-0645-d108-source-rehearsal-manifest.json",
+      "sha256": "37e559e6e176f4d9b4c20db27cdf6de8b4f5ef532b5abedf35533caffb2a4504"
+    },
+    "agent_patch_sha256": "348350d78ee5cea1f4736e5962990128a579e88836e0c84a9cfb8788b809da3e"
+  },
+  "carrier": {
+    "matching_applied_deployment": false,
+    "agent_commit": "UNPROVIDED",
+    "agent_tree": "UNPROVIDED_AS_INSTALLED_CARRIER",
+    "agent_wheel": "UNPROVIDED",
+    "agent_wheel_sha256": "UNPROVIDED",
+    "source_checkout": "UNPROVIDED",
+    "source_digest": "UNPROVIDED",
+    "runtime_environment": "UNPROVIDED",
+    "installed_schema": "UNPROVIDED",
+    "installed_schema_sha256": "UNPROVIDED",
+    "remotion_project": "UNPROVIDED",
+    "remotion_package_lock_sha256": "UNPROVIDED",
+    "normal_transfer_receipt": "UNPROVIDED"
+  },
+  "rejected_near_matches": [
+    {
+      "carrier": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D13-inputs-1017/d13-bindings.json",
+      "agent_commit": "ef851b22c506245441b9a630c093b3460e39cbdc",
+      "agent_tree": "b11eee891208d11e23c55950f8954ddd3377d5a8",
+      "agent_wheel_sha256": "fcccab4dc881faa4eead1f971fc655dc96ebfac9efac199015794d7b644007e3",
+      "source_digest": "302834da6581954c2cb070e99fb4021bea6775cdde2ba351057ca832279f2326",
+      "reason": "different Agent graph and Runtime tuple"
+    },
+    {
+      "carrier_family": "historical-f4ed-0013",
+      "agent_commit": "f4edcb4bce531be3ea8c6389069429175b048c2a",
+      "agent_tree": "1cbd18011b56c41a5ef31f155c15bd373c1208e6",
+      "agent_wheel_sha256": "7455220aa1d3f8c67c7c9cee0f7a6571fb4f51882eca2543ead25943eebd185a",
+      "source_digest": "f6cdf8c2daada3f4877802baf839cdbecede7943fc3c0312d2aa4d4933abe09a",
+      "reason": "historical Agent/Remotion family; not applied graph"
+    },
+    {
+      "artifact": "current-composition-819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+      "reason": "current artifact is not relabeled as applied-Agent deployment input"
+    }
+  ],
+  "source_route": {
+    "caller": "astrid/installer/cli.py:41-111",
+    "transaction": "astrid/installer/core.py:245-274",
+    "stage": "astrid/installer/backend.py:386-430",
+    "source_transfer": "astrid/installer/tools.py:214-237",
+    "service_declaration": "astrid/services.py:14-54",
+    "local_schema_check": "astrid/installer/backend.py:172-187",
+    "installed_origin_consumer": "astrid/sdk/host_bootstrap.py:707-772",
+    "d13_test": "tests/packs/video_editing/test_runtime_publication_chain.py:673-678"
+  },
+  "minimum_real_materialization": [
+    "exact Agent source archive/tree at cd3f5480350d1ca68c9d8ec16aeae2863501c2a4 / 523893dcf54dbe756db8fe2915d14055b1da660b",
+    "exact Runtime source and packages/python at 62040eeab98747dfb65abb6366236bf213109d6c / a522511414947e48e317a5e5c2103483b121a750",
+    "effective pinned VibeComfy source",
+    "private noneditable py environment with Agent hash-locked runtime requirements and product distributions",
+    "normal tools and Remotion node_modules closure with measured hashes",
+    "normal Backend.stage profile.json, version.json, manifest.json and services.json",
+    "truthful D13 seven-key carrier and installed schema/Remotion/tool hashes"
+  ],
+  "execution": {
+    "staging_executed": false,
+    "build_executed": false,
+    "install_executed": false,
+    "acquisition_executed": false,
+    "d13_executed": false,
+    "tests": "N/A: read-only source inventory"
+  }
+}
