@@ -13,6 +13,6 @@ export default function WelcomeConnection({ onBack }: { readonly onBack: () => v
   const needsLocalNetworkPermission = requiresLocalNetworkPermission(runtime, typeof window === 'undefined' ? '' : window.location.origin);
   return <RuntimeConnectionProvider gated requireLocalNetworkPermission={needsLocalNetworkPermission}><RuntimeConnectionGate connectOnEntry={hosted}
     panel={(connection, exit) => <RuntimeConnectionPanel connection={connection} exit={exit} onBack={exit ? undefined : onBack} />}>
-    <StarterProjectHandoff onContinueWithoutProject={() => window.location.assign(completeWelcome())} onReady={selection => window.location.assign(completeWelcome(selection))} />
+    <StarterProjectHandoff onContinueWithoutProject={() => window.location.replace(completeWelcome())} onReady={selection => window.location.replace(completeWelcome(selection))} />
   </RuntimeConnectionGate></RuntimeConnectionProvider>;
 }

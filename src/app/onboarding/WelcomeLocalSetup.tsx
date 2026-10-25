@@ -45,6 +45,7 @@ export function WelcomeLocalSetup({ onBack }: { readonly onBack: () => void }) {
           </ol>
           <p className="text-[13px] leading-5 text-muted-foreground">Ctrl+C stops it. To start again, run npm run dev:local in the astrid-app folder.</p>
         </section>
+        <a href="http://127.0.0.1:5180" target="_blank" rel="noreferrer" className="block text-center text-[13px] text-muted-foreground underline underline-offset-4 hover:text-foreground">Open my local editor</a>
       </EditorCard>
     </EditorCardLayer>
   </main>;

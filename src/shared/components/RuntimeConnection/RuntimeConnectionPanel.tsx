@@ -207,18 +207,19 @@ function ConnectingPanel({ exit, onBack }: { exit: RuntimeConnectionPanelExit | 
 /** A phone: Astrid runs on a computer, so the only useful thing is to send this page there. */
 function PhoneCard({ onBack }: { readonly onBack?: () => void }) {
   const { phone } = COPY;
-  const { copied, send } = useSendLinkToComputer(() => window.location.href);
+  const { copied, fallback, send } = useSendLinkToComputer(() => window.location.href);
   return (
     <Card
       title={phone.title}
       sentence={phone.sentence}
       onBack={onBack}
-      action={(
+      action={<div className="space-y-2">
         <Button type="button" className="h-11 w-full justify-between rounded-xl px-4" onClick={() => void send()}>
           <span>{copied ? phone.copied : phone.button}</span>
           {copied ? <Check aria-hidden="true" className="h-4 w-4" /> : <Link2 aria-hidden="true" className="h-4 w-4" />}
         </Button>
-      )}
+        {fallback && <CopyFallback text={window.location.href} label={phone.button} />}
+      </div>}
     />
   );
 }

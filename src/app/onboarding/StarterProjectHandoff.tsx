@@ -72,16 +72,17 @@ export function StarterProjectHandoff({ onReady, onContinueWithoutProject }: {
     setAttempt(value => value + 1);
   };
   const state = error ? 'error' : stillWaiting ? 'waiting' : 'opening';
+  const archivedOnly = error === 'Your only project is archived. Unarchive it or create a new one in the editor.';
   return <main aria-label="Opening your project">
     <EditorCardLayer cardKey={state}>
       <EditorCard title={error ? "Couldn't open your project" : stillWaiting ? 'Still getting your project ready' : 'Opening your project…'}
-        sentence={error ? <span role="alert">Astrid on this computer couldn&apos;t set it up.</span> : stillWaiting
+        sentence={error ? <span role="alert">{archivedOnly ? error : <>Astrid on this computer couldn&apos;t set it up.</>}</span> : stillWaiting
           ? <span role="status">Astrid on this computer is taking longer than usual. You can keep waiting or try again.</span>
           : <span role="status">Astrid is connected and getting your project ready.</span>}>
         {(error || stillWaiting) && <div className="space-y-3">
-          {error && <CardDisclosure label="Details"><p className="break-words font-mono text-xs">{error}</p></CardDisclosure>}
+          {error && !archivedOnly && <CardDisclosure label="Details"><p className="break-words font-mono text-xs">{error}</p></CardDisclosure>}
           <div className={onContinueWithoutProject ? 'grid gap-2 sm:grid-cols-2' : ''}>
-            <Button className="h-11 w-full rounded-xl" onClick={retry}>Try again</Button>
+            {!archivedOnly && <Button className="h-11 w-full rounded-xl" onClick={retry}>Try again</Button>}
             {onContinueWithoutProject && <Button className="h-11 w-full rounded-xl" variant="outline" onClick={() => { cancelAttempt(); onContinueWithoutProject(); }}>Open editor</Button>}
           </div>
         </div>}

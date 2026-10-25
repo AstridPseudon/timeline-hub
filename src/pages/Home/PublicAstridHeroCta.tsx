@@ -1,5 +1,6 @@
 import { ArrowRight } from 'lucide-react';
 import { APP_ENTRY_PATH, rememberAppEntryPreference } from '@/app/entryClassification.ts';
+import { isMobileDevice } from './installScenario.ts';
 
 /** The first visit starts with the browser-only welcome. */
 export function PublicAstridHeroCta({ active = true }: { active?: boolean }) {
@@ -7,7 +8,7 @@ export function PublicAstridHeroCta({ active = true }: { active?: boolean }) {
     <div className="astrid-hero-cta">
       <a className="astrid-button astrid-button-primary" href={APP_ENTRY_PATH}
         data-active={active} aria-hidden={!active} tabIndex={active ? undefined : -1}
-        onClick={rememberAppEntryPreference}>
+        onClick={() => { if (!isMobileDevice()) rememberAppEntryPreference(); }}>
         <span>Get Started</span><ArrowRight size={17} aria-hidden="true" />
       </a>
     </div>

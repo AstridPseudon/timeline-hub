@@ -323,6 +323,13 @@ describe('RuntimeConnectionPanel', () => {
       const previous = new URL(previousUrl);
       window.history.replaceState({}, '', `${previous.pathname}${previous.search}${previous.hash}`);
     });
+
+    it('shows a selectable link when neither sharing nor clipboard is available', () => {
+      Object.defineProperty(navigator, 'share', { configurable: true, value: undefined });
+      Object.defineProperty(navigator, 'clipboard', { configurable: true, value: undefined });
+      panel(connectionFor({ status: 'phone' }));
+      expect(screen.getByRole('textbox', { name: 'Send the link to your computer' })).toHaveValue(window.location.href);
+    });
   });
 
   it('renders nothing once connected: the gate shows the app', () => {
