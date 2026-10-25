@@ -1,1 +1,1 @@
-2026-10-25T14:18:21Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 15G free; D124 bodies HELD: child-venv fix for 'unowned local distribution metadata' (Runtime 369) not yet published (Runtime 14:10Z: host14 reverted upstream a4e016b6a9, no refused child retry yet)
+2026-10-25T14:41:52Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 15G free; D124: agent-core-full on Agent a4e016b6 blocked only on Runtime bench-store 'unowned local distribution metadata' fix (lead re-issues child-venv once when published); host14 9ea proof dropped
