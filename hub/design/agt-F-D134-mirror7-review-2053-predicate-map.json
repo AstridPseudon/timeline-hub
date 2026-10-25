@@ -1,0 +1,46 @@
+{
+  "verdict": "FAIL",
+  "candidate": "ab05311ac730b2e53ce2fd71bb4ef176db78bac8",
+  "reported_exact_nodes": [
+    "tests/editing_conformance/test_native_word_anchor.py::test_reference_is_authoritative_and_kernel_never_searches_echo[\"stop\" #99 +300f]",
+    "tests/editing_conformance/test_native_word_anchor.py::test_reference_is_authoritative_and_kernel_never_searches_echo[obsolete display label]",
+    "tests/editing_conformance/test_native_word_anchor.py::test_unique_legacy_word_compiles_without_persisting_a_reference",
+    "tests/editing_conformance/test_word_binding_recipe.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[missing-clip-source occurrence/clip is missing]",
+    "tests/editing_conformance/test_word_binding_recipe.py::test_reference_is_authoritative_and_kernel_never_searches_echo[\"stop\" #99 +300f]",
+    "tests/editing_conformance/test_word_binding_recipe.py::test_reference_is_authoritative_and_kernel_never_searches_echo[obsolete display label]",
+    "tests/editing_conformance/test_word_binding_recipe.py::test_unique_legacy_word_compiles_without_persisting_a_reference"
+  ],
+  "predicate_status": [
+    {
+      "predicate": "stable word IDs remain authoritative and no text search occurs when a reference is present",
+      "status": "partially covered",
+      "reason": "The in-memory recipe echo check remains, but its real persisted change/restart path was removed; native coverage is separate."
+    },
+    {
+      "predicate": "legacy unique lookup remains non-persisting",
+      "status": "source assertion retained",
+      "reason": "The assertion remains, but the returned mirror includes a detached pre-alias object."
+    },
+    {
+      "predicate": "missing clip reference remains a finite TimingCompileError",
+      "status": "reported exact selector passed",
+      "reason": "Not sufficient to qualify the other mutation branches or mirror plumbing."
+    },
+    {
+      "predicate": "all authored fields, words, anchors, pins, opaque fields, restart/history/no-write/undo purposes are preserved",
+      "status": "FAIL",
+      "reason": "Recipe echo persistence was removed; mirror mutation references are stale; unrelated cases were not run."
+    },
+    {
+      "predicate": "protected D14/D23/D133 and all unchanged cases remain unchanged",
+      "status": "UNVERIFIED",
+      "reason": "bundle() aliasing is global and the author's outcomes explicitly omit unrelated cases."
+    }
+  ],
+  "lost_or_unverified_inputs": [
+    "recipe non-null echo through real clip.anchor commit",
+    "recipe post-echo Runtime restart/reload",
+    "current-list mirror mutation for non-missing-clip invalid inputs",
+    "independent mirror shape in unchanged bundle(case) consumers"
+  ]
+}

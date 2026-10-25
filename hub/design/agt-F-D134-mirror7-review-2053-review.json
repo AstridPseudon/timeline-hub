@@ -1,0 +1,47 @@
+{
+  "verdict": "FAIL",
+  "candidate_commit": "ab05311ac730b2e53ce2fd71bb4ef176db78bac8",
+  "candidate_parent": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "scope": [
+    "tests/editing_conformance/test_native_word_anchor.py",
+    "tests/editing_conformance/test_word_binding_recipe.py"
+  ],
+  "reported_exact7": "7/7",
+  "accepted_exact7": false,
+  "findings": [
+    {
+      "id": "D134-F1",
+      "severity": "blocking",
+      "path": "tests/editing_conformance/test_word_binding_recipe.py:343-365",
+      "title": "recipe echo perturbation is no longer persisted",
+      "finding": "The candidate removes the second clip.anchor submit and its restart for non-null echo values. The test now mutates only the captured in-memory bundle after restarting following the first anchor.",
+      "impact": "The recipe family no longer covers Runtime acceptance, persisted history/revision, or restart reload of the changed echo. The passing assertion proves only pure compilation against an in-memory perturbation; it cannot qualify the production persistence/history/restart predicate.",
+      "required_disposition": "Restore the existing real change-echo commit and post-commit restart while preserving the mirror setup correction."
+    },
+    {
+      "id": "D134-F2",
+      "severity": "blocking",
+      "path": "tests/editing_conformance/test_native_word_anchor.py:28-36; tests/editing_conformance/test_word_binding_recipe.py:28-36",
+      "title": "returned mirror app is captured before alias assignment",
+      "finding": "The helper resolves mirror from the separate config list, then replaces config.clips with clips, and returns the already-resolved mirror app. That object is detached from the current bundle after the assignment. A mutation loop therefore updates the active primary object and a discarded stale object, not two current aliased views.",
+      "impact": "The claimed mutation plumbing does not prove that current captured mirror references conserve authored fields, words, anchors, and pins. The invalid-input test applies the change to both refs only for missing-clip; the other reference/pin mutations affect only the active primary object."
+    },
+    {
+      "id": "D134-F3",
+      "severity": "major",
+      "path": "tests/editing_conformance/test_native_word_anchor.py:45-55; tests/editing_conformance/test_word_binding_recipe.py:46-56",
+      "title": "global bundle alias changes all unchanged cases and was not covered",
+      "finding": "Every bundle(case) call in both files now replaces the persisted document's independent config.clips list with the parent clips list, not only the seven mapped selectors. The author's outcomes explicitly say unrelated_word_cases were not run.",
+      "impact": "The exact7 count does not establish that protected D14/D23/D133 and the other unchanged cases retain their original independent-mirror inputs or predicates. The alias can mask mirror divergence for those cases."
+    },
+    {
+      "id": "D134-F4",
+      "severity": "major",
+      "path": "workers/agt-F-D134-mirror7-2032/evidence/validation.md; source-manifest.json",
+      "title": "reported live run used the wrong Runtime identity",
+      "finding": "The author's validation says ASTRID_RUNTIME_CHECKOUT=/home/user/work/runtime and records Runtime e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9. The review brief requires immutable Runtime ab1e4f6141987706132916e2da16477f5a019464 for live validation.",
+      "impact": "The 7/7 live result is not evidence against the required Runtime pin. Source syntax/lint remains independently clean, but live qualification is unverified."
+    }
+  ],
+  "recommendation": "FAIL; repair F1 and F2, then re-evaluate all affected unchanged cases and run exact selectors only with the required Runtime pin."
+}

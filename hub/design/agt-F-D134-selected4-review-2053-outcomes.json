@@ -1,0 +1,8 @@
+{
+  "source": "FAIL_SOURCE",
+  "status_classification": "PASS_SOURCE_ONLY",
+  "http_setup": "BLOCKED_BY_SEQUENTIAL_PREVIOUS_VALUE_MISMATCH",
+  "own3": {"status": "NOTRUN", "reason": "integration dependency admission refused at pytest setup; three errors"},
+  "http": {"status": "NOTRUN", "reason": "prerequisite refusal stops exact body"},
+  "behavior_credit": false
+}

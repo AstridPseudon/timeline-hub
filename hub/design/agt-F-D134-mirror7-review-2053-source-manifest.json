@@ -1,0 +1,29 @@
+{
+  "review_commit": "ab05311ac730b2e53ce2fd71bb4ef176db78bac8",
+  "review_parent": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "changed_paths": [
+    {
+      "path": "tests/editing_conformance/test_native_word_anchor.py",
+      "sha256": "34247fcc475a3bf6ba8a059a9f3a3b87cac0eb228dbe9192c1f0468df100e4d9",
+      "insertions": 24,
+      "deletions": 6
+    },
+    {
+      "path": "tests/editing_conformance/test_word_binding_recipe.py",
+      "sha256": "3d1ede88f92fb4950d41835a7de985324d4335c8b9a72657ae3ee28568ca6dce",
+      "insertions": 27,
+      "deletions": 12
+    }
+  ],
+  "outside_target_diff": "clean",
+  "required_runtime": {
+    "path": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "sha": "ab1e4f6141987706132916e2da16477f5a019464",
+    "clean": true
+  },
+  "author_live_runtime": {
+    "path": "/home/user/work/runtime",
+    "sha": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+    "matches_required": false
+  }
+}

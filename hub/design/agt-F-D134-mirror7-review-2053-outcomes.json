@@ -1,0 +1,21 @@
+{
+  "verdict": "FAIL",
+  "author_reported": {
+    "exact_nodes": {"count": 7, "passed": 7},
+    "unrelated_word_cases": "not run",
+    "full_suite": "not run by instruction"
+  },
+  "review_acceptance": {
+    "source_static": "PASS",
+    "live_behavior": "UNQUALIFIED",
+    "exact7": "REJECTED",
+    "reason": "Recipe persisted echo/history/restart coverage was removed, mirror mutation references are stale after alias assignment, and the author used Runtime e319fdb instead of required immutable ab1e4f614198."
+  },
+  "own_review_checks": {
+    "ast_py_compile": "PASS",
+    "ruff": "PASS",
+    "git_diff_check": "PASS",
+    "mypy": "KNOWN_BASELINE_BLOCKED",
+    "live_selector_rerun": "NOT_RUN"
+  }
+}

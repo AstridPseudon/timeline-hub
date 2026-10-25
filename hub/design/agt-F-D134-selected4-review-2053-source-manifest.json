@@ -1,0 +1,19 @@
+{
+  "schema": "timeline.agent.f_d134_selected4_review_2053.v1",
+  "repo": "agent",
+  "head": "150597e860d386b6d504df63c1a99e7896c33fb7",
+  "first_return": "4073fb0f84a9d0afbc61b9406748a09d9c3c62",
+  "original_base": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "changed_paths_from_base": ["tests/sdk/test_timeline_selected_schema_runtime.py"],
+  "delta_from_first_return": {"insertions": 2, "deletions": 2, "meaning": "two status constants rebased -> merged"},
+  "current_file_sha256": "b4ddc4b539884e8720199c188aad33240496ab606160a241ae9bd253c69a8b18",
+  "runtime": {
+    "path": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "clean": true,
+    "service_sha256": "13587d2c3b58ecb6838525e69cbaa38a045b2491a34170275e1d5e55354bf51b",
+    "store_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4"
+  },
+  "source_verdict": "FAIL_SOURCE",
+  "live_behavior": "NOTRUN_AFTER_PREREQUISITE_REFUSAL"
+}
