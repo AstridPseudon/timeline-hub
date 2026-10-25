@@ -1,0 +1,53 @@
+{
+  "status": "READY_FOR_NEXT_SOLE_TOUR; NOT_RUN_HERE",
+  "app_source": {
+    "head": "4c56a6282e25c0c4dbb4355164d27d28fdbe1757",
+    "tree": "2afa38ba9e8ebfcefb23c81dbc1af3b1b9eabe0c"
+  },
+  "production_runtime": {
+    "head": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "manifest_role": "immutable production Runtime source"
+  },
+  "diagnostic_helper": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D124-helper-first-return-1312/evidence/p2_commit_phase_capture.py",
+    "sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760",
+    "source_commit": "181952babeb3454e5d18f441dcb355f203ed775b",
+    "identity_role": "explicit diagnostic helper; not Runtime production source"
+  },
+  "invocation": {
+    "mode": "existing generated D66 normal serviceRecipe for p2",
+    "required_env": [
+      "D66_APP_SHA=<captured exact App SHA>",
+      "D66_APP_TREE=<captured exact App tree>",
+      "D66_APP_CHECKOUT=<stable detached App checkout>",
+      "D66_AGENT_SHA=<captured exact Agent SHA>",
+      "D66_AGENT_TREE=<captured exact Agent tree>",
+      "D66_AGENT_CHECKOUT=<stable detached Agent checkout>",
+      "D66_RUNTIME_SHA=5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+      "D66_RUNTIME_TREE=<captured exact Runtime tree>",
+      "D66_RUNTIME_CHECKOUT=<stable detached Runtime checkout>",
+      "D66_COMPOSITION_SHA=<captured exact Composition SHA>",
+      "D66_COMPOSITION_TREE=<captured exact Composition tree>",
+      "D66_COMPOSITION_CHECKOUT=<stable detached Composition checkout>",
+      "D66_P2_COMMIT_PHASE_CAPTURE_HELPER=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D124-helper-first-return-1312/evidence/p2_commit_phase_capture.py",
+      "D66_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256=6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760",
+      "ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS=20"
+    ],
+    "stages": [
+      "run the generated preflight row first (same four pins and helper identity)",
+      "then run the generated normal row without editing its env or source tuple"
+    ]
+  },
+  "expected_manifest": {
+    "repo_heads": "the four exact pinned source heads",
+    "repo_trees": "the four exact pinned source trees",
+    "source_checkouts": "the four stable detached checkouts",
+    "service_source": "actual App snapshot, distinct from selected source checkouts",
+    "diagnostic_helper": {
+      "path": "the explicit helper path above",
+      "sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760",
+      "source": "explicit"
+    }
+  },
+  "do_not_use": "the author's superseded 1304 recipe with helper SHA256 13883f6f1611b2a9df8dbb5c5c4f4355a0b04864b256e6457bb135017a4b09d6"
+}

@@ -1,0 +1,50 @@
+{
+  "review": "D124 sole independent protected App hook review",
+  "verdict": "SOURCE_PASS",
+  "attachment": "PENDING_NEXT_TOUR",
+  "candidate": {
+    "base": "fe3309dba4520835a685f925468bff1acdc0506f",
+    "head": "4c56a6282e25c0c4dbb4355164d27d28fdbe1757",
+    "tree": "2afa38ba9e8ebfcefb23c81dbc1af3b1b9eabe0c",
+    "changed_files": [
+      "scripts/testing/d66-plain-stack.mjs",
+      "scripts/testing/d66-plain-stack.test.mjs",
+      "tests/e2e/local/support/harness.ts"
+    ],
+    "source_containment": "PASS"
+  },
+  "runtime": {
+    "production_head": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "production_source_changed": false
+  },
+  "diagnostic_helper": {
+    "corrected_source_commit": "181952babeb3454e5d18f441dcb355f203ed775b",
+    "sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760",
+    "source": "explicit reviewed helper, distinct from production Runtime",
+    "superseded_author_recipe_sha256": "13883f6f1611b2a9df8dbb5c5c4f4355a0b04864b256e6457bb135017a4b09d6"
+  },
+  "controls": {
+    "default_pinned_helper_route": "PASS",
+    "valid_override_and_recipe_propagation": "PASS",
+    "missing_path": "PASS_FAIL_CLOSED",
+    "missing_hash": "PASS_FAIL_CLOSED",
+    "wrong_hash": "PASS_FAIL_CLOSED",
+    "missing_file": "PASS_FAIL_CLOSED",
+    "original_source_guards_and_privacy": "PASS_BY_UNCHANGED_SOURCE_AND_FOCUSED_CONTROLS",
+    "normal_runtime_bootstrap": "UNVERIFIED; central harness lacked ASTRID_RUNTIME_PYTHON"
+  },
+  "tests": {
+    "node20_focused": "29 passed",
+    "node20_d124_pattern": "2 passed",
+    "app_tsc": "passed",
+    "node_tsc": "passed",
+    "changed_file_eslint": "passed",
+    "node20_syntax": "passed",
+    "git_diff_check": "passed",
+    "central_e2e_harness": "44 passed, 3 failed at runtime startup because ASTRID_RUNTIME_PYTHON was absent"
+  },
+  "limitations": [
+    "No browser/native HTTP probe, request body, full suite, or P2 qualification was run or claimed.",
+    "The author's printed normal recipe names the superseded 1304 helper; use the corrected 181952 helper recipe instead."
+  ]
+}

@@ -1,0 +1,10 @@
+Node artifact: node-v20.19.4-linux-x64.tar.xz
+URL: https://nodejs.org/dist/v20.19.4/node-v20.19.4-linux-x64.tar.xz
+SHASUMS URL: https://nodejs.org/dist/v20.19.4/SHASUMS256.txt
+SHA256: 7a488a09e2fc02fbd1bc4ae084bea8a589314f741c182fc02c5f3f07c79a29d4
+
+Source verification command (read-only):
+curl --fail --silent --show-error --location --connect-timeout 10 --max-time 30 https://nodejs.org/dist/v20.19.4/SHASUMS256.txt | rg 'node-v20\\.19\\.4-linux-x64\\.tar\\.xz|node-v20\\.19\\.4-linux-x64\\.tar\\.gz'
+
+Observed matching line:
+7a488a09e2fc02fbd1bc4ae084bea8a589314f741c182fc02c5f3f07c79a29d4  node-v20.19.4-linux-x64.tar.xz

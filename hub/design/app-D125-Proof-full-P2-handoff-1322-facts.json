@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "task": "D125 Proof full P2 source-only handoff",
+  "status": "PREPARATION_ONLY",
+  "local_execution": {
+    "preflight": false,
+    "submit": false,
+    "build": false,
+    "install": false,
+    "native": false,
+    "browser": false,
+    "service": false,
+    "full_suite": false,
+    "reason": "D125 explicitly forbids local execution"
+  },
+  "source_tuple": {
+    "app": {
+      "sha": "fe3309dba4520835a685f925468bff1acdc0506f",
+      "tree": "e55f0d65dca0c9f2ba3013df4cab999f314308b9",
+      "repo": "/home/user/banodoco/reigh-app",
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-app-fe3309dba4520835a685f925468bff1acdc0506f",
+      "receipt_sha256": "fd6d4631ce0b2157a7fb808e3005a13f26fdf8adb1f0a5c2caa157b1ea9e596",
+      "observed_receipt_path": "/home/user/work/wt/app-pin-fe3309db"
+    },
+    "agent": {
+      "sha": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+      "tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+      "repo": "/home/user/peteromallet/astrid-agent",
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+      "receipt_sha256": "a8abf836cedf70334caaa9030d021a0c20d52b05b0b671a607c7d0c45d5fbc05",
+      "observed_receipt_path": "/home/user/work/wt/agt-pin-070dfc5e"
+    },
+    "runtime": {
+      "sha": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+      "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+      "repo": "/home/user/banodoco/banodoco-workspace-runtime",
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+      "receipt_sha256": "c0e64009fd57d7fd1145a89f89fd56a34640a81762a3046ef6984caf278b25cf",
+      "observed_receipt_path": "/home/user/work/wt/rt-pin-5e9ad1c6"
+    },
+    "composition": {
+      "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "repo": "/home/user/peteromallet/timeline-composition",
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "receipt_sha256": "ea43438c8e7327f152faf44d2d8e56133dd4b6aaf2205c4196d61b6c7b1e9ab1",
+      "observed_receipt_path": "/home/user/work/wt/vw-pin-635f4de0"
+    }
+  },
+  "read_only_tree_verification": {
+    "command": "git -C <repo> rev-parse <commit>^{tree}",
+    "result": {
+      "app": "e55f0d65dca0c9f2ba3013df4cab999f314308b9",
+      "agent": "6056414359ae9fce08d999d54cbecf719fda33c3",
+      "runtime": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+      "composition": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    }
+  },
+  "source_hashes": {
+    "scripts/testing/d66-plain-stack.mjs": "81d273e626240cb02b0f1a5cee7314325bf935bf487874a178acede4d9de0dd3",
+    "scripts/testing/d66-plain-stack.test.mjs": "5519efcccf4036c7d88e4d95012c9db4fa377609b838050873ad53d0260e77bd",
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+    "tests/e2e/local/three-products.p2-popup.spec.ts": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "tests/e2e/local/three-products.p2-tour.spec.ts": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4",
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+    "tests/e2e/local/support/harness.ts": "e41f26ec201f9b5874142fb06061020eb6d4f0dc7748af521e4ddafd531765c3"
+  },
+  "node": {
+    "version": "20.19.4",
+    "artifact": "node-v20.19.4-linux-x64.tar.xz",
+    "url": "https://nodejs.org/dist/v20.19.4/node-v20.19.4-linux-x64.tar.xz",
+    "shasums_url": "https://nodejs.org/dist/v20.19.4/SHASUMS256.txt",
+    "sha256": "7a488a09e2fc02fbd1bc4ae084bea8a589314f741c182fc02c5f3f07c79a29d4",
+    "verification": "official SHASUMS256.txt fetched read-only; line matched exact xz artifact"
+  },
+  "route": {
+    "selector": "p2",
+    "watchdog_seconds": 20,
+    "central_api": "existing D66 --submit persistent-plan path",
+    "preflight_then_normal": true,
+    "normal_original_count": 8,
+    "new_helper_or_hook": "excluded",
+    "same_id_on_124_or_restart": true,
+    "controller_timeout_seconds": 180,
+    "proof_admission_reported": "6.3-6.5 GB available; venue admission 6.0 GB; not locally checked",
+    "sourceguard_profile_bench_keys": "preserve exact existing keys; no near-match",
+    "actual_id": null,
+    "self_go": false,
+    "independent_review": "app-D125-P2-Proof-GO-review"
+  },
+  "prior_route_reference": {
+    "D120_plan": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D120-full-P2-D111b-1145/submission/full-p2/p2-submit-plan.json",
+    "D120_plan_sha256": "f5ad604c0cf6c16099c3a1710e36c05b2389ad607fa9867c7f06db75a1216760",
+    "D120_submission": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D120-full-P2-D111b-1145/notes/submission.json",
+    "D124_plan": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D124-tagged-full-P2-1306/submission/full-p2/p2-submit-plan.json",
+    "D124_status": "BLOCKED; preparation only; not submitted"
+  },
+  "safe_boundary": {
+    "return": ["XML", "result directory", "source hashes", "source receipts", "manifest hashes", "persistent plan hash", "bounded safe diagnostics"],
+    "retain_private": ["payload", "Idempotency-Key", "auth", "credentials", "URL", "raw stderr", "raw stacks", "private phase records"],
+    "export_swap_fields_only": ["tag", "reason", "hash", "correlation"]
+  }
+}
