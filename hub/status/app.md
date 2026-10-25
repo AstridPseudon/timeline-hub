@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T19:35:54Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 9 | status age 3m -->
-# app board, 2026-10-25T19:32Z
+<!-- app | 2026-10-25T19:39:59Z | dispatcher heartbeat 14s | live 3 (sol 1, luna 2, other 0) | busy30 12 | status age 3m -->
+# app board, 2026-10-25T19:36Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -99,8 +99,9 @@
 | D127-element-profile | Measure actual element leaf cost | Luna and independent Luna | Sole result1847 complete | gated:recorded-no-go | Actual32016; independent1847 | Readiness PASS; element FAIL1052. Runtime completed21.741s/provider13.781s; safe profile qualified. Caller outcome UNKNOWN. | Appd5a1 Runtimeab1e |
 | D128-inclusive-table | Rank functions under timeline commit | Luna read only | Actual safe projection only | gated:missing-counters | app-D128-element-inclusive-table-1851 complete | EXACTMISSING: five routing rows, no descendant membership/counters or call counts. [Table](../../design/app-D128-element-inclusive-table-1851-inclusive-table.md). | Source unchanged |
 | D127bA-descendants | Recover retained inclusive cost table | Luna and one quick checker | Independent1902 complete | gated:missing-counters | Author1858; quickcheck1902 PASS | Genuine828/lost15; no sampled chains/full counters retained. Safe fields/custody PASS, top25/edges EXACTMISSING. No cost author. | Source unchanged |
-| D127c-last-profile | Profile actual element handler calls | Luna and protected Luna | Correct all independent 1909 findings | review | app-D127c-cProfile-cumulative-review-1929 | Candidate5747 statics PASS; targeted20838 queued. Reviewer challenges actual doc.patch versus selected clip.set-element, privacy and whole path. No body. | Two helper files only |
+| D127c-last-profile | Profile actual element handler calls | HARD Sol and Luna | Correct all independent 1909 findings | doing | app-D127c-mounted-selection-sol-1935 | Independent1929 FAIL actual selector, dispatch provenance, mypy and App validator. Sol fixes helper after repeated Luna failure. Central31 PASS is scoped only. | Two Runtime helper files |
 | F-tail-App16 | Classify App ZIP conflict hunks | Luna | Independent census 1850 PASS | doing | app-F-App16-classification-return-1932 | Independent1926 FAIL blanket labels: 14 true conflict hunks,67 clean;1 trivial import and13 semantic. Exact artifact correction only; no source merge. | d5a1 versus 213318 |
+| D127c-App-validator | Validate strict profiler capture | Luna and protected review | Final helper SHA from Sol1935 | doing | app-D127c-App-validator-1935 | Only our diagnostic bootstrap test; preserve all old strict arms and add exact profiler field and identity validation. No product or original body change. | App d5a1 source base |
 
 Integration: App d5a1d1ab6550187e377fd7387d300102b8b82ece; tree7be73e2cbbcf89d627bf7b9da940b4ce17968c20. Entire tree equals independent1723 reviewed54c91d77 and tested import9bf46528. Source, D78, types and lint PASS. Qualified Runtime ab1e provenance; Agent070dfc/Composition635f exact. Receipt design/app-D127-normal-home-1738.json. Actual new-helper bootstrap retained execution independently PASS1738; raw capture absent, retained-log assertions only.
 
@@ -108,12 +109,12 @@ Integration: App d5a1d1ab6550187e377fd7387d300102b8b82ece; tree7be73e2cbbcf89d62
 Current P2 NO-GO. Historical six cases qualified; full original tour and final tuple proof remain owed. Actual element32016 independently FAIL at unchanged five second wait; Runtime lifecycle 21.741s and provider 13.781s qualified. App receipt, outcome and wall duration UNKNOWN. Raw capture stays private and retained. D127b-A counts confirmed828/lost15 but no chains/full counters recoverable.
 
 Blockers: SWAP safety — D130 holds recovery, related acceptance, release, adoption and tours after automatic classifier refusal. No retry, alternate route, transfer or rollback.
-Blockers: Element profile — App first return1921 corrects sole1909 protected FAIL on helper/test. No source home or element body until independent PASS; no product author.
+Blockers: Element profile — Independent1929 wholepath FAIL. Sole Sol1935 fixes helper selector/provenance/types; Luna1935 handles our strict diagnostic test. One final coupled protected review before home/body.
 Blockers: Graph child birth — Runtime1814/final1821 complete; C0 sequential operands defined. Authentic intermediate bindings/stages absent, causal owner UNKNOWN.
 Blockers: Agent core and final render — Runtime portable1855/final1903 and installer1826 own custody route. Agent owns one genuine E2E, D134 measurement waits recorded20:00 gate. Farm only D77.
 Blockers: Final cut — Full P2, final P1–P5/core/D69 and genuine installed render owed. No ZIP claim.
-Next ready: D127c cumulative1929 active, with actual doc.patch caller selection challenged. D100 Main1914 final/protected1919 source packet precedes sole App corrected27 and original9 if green and admitted; no second App source review. App16 returns finite hunk decisions.
-live 2 / cap 3; ready-undispatched 0. Luna D127c cumulative1929 and App16 artifact return1932. D100 earlier Main1914 final/protected1919 active; App remains sole behavioral receiver. No heavy body. Fresh free 4844953600 bytes; stop4GB.
+Next ready: D127c1935 helper and strict App diagnostic test source authors active; one coupled independent review follows both final sources. D100 Main1914 final/protected1919 source packet precedes sole App corrected27 and original9 if green and admitted; no second App source review. App16 returns finite hunk decisions.
+live 3 / cap 3; ready-undispatched 0. Sol D127c1935, Luna App validator1935 and App16 artifact return1932. D100 earlier Main1914/protected1919 exact final input pending. No heavy body. Fresh free 4844953600 bytes; stop4GB.
 INBOX consumed through 2405440 bytes. New peer1901 D100 and App16 requests both dispatched; owner boards read at /home/user/timeline-hub/hub/status/.
 Safety: No manager product/test/generated/pin edits, direct Git writes, upstream push, M5, credentials or refused-route retries. Current inputs, raw captures, outputs, branches and reports retained. Historical dirty/orphan guards untouched.
 Later: Gate3 D133 corrected B DEFERRED, worker1853 ZIP paragraph delivered; no optionA author/review/body. Word cases need transcript authority records. Parentlabels2/native originals4/trackbatch1 remain source-gated. D79 waits ZIP; E4 dropped; helpercut1 D23 held. Graph and originalTrue live failures remain visible, no unchanged rerun. Agent40 conflicts belong Agent allocator; no duplicate local authors.
