@@ -1,0 +1,218 @@
+{
+  "task": "D127e",
+  "result": "PASS",
+  "mode": "independent_read_only_review",
+  "sourcebase": {
+    "repo": "Composition",
+    "branch": "tl/rt-D127e-waiter-review-2202",
+    "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "integration_source_scope": "composition tl/integration; current integration was not used as behavioral evidence"
+  },
+  "historical_tuple": {
+    "runtime_ref": "ab1e4f6141987706132916e2da16477f5a019464",
+    "agent_ref": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2"
+  },
+  "provider_return_chain": [
+    "Runtime runtime_protocol/server.py:300 _timeline_commit",
+    "Runtime runtime_protocol/service.py:2469 commit_timeline",
+    "Runtime runtime_protocol/service.py:2486 _execute_timeline_commit",
+    "Runtime runtime_protocol/service.py:2438 _timeline_commits and :2537 coordinator construction",
+    "Runtime runtime_protocol/timeline_commit_execution.py:365 execute",
+    "Runtime runtime_protocol/timeline_commit_execution.py:328 coordinator guard",
+    "Runtime runtime_protocol/timeline_commit_execution.py:341 matching idempotency entry lock",
+    "Runtime runtime_protocol/service.py:2541 port_factory",
+    "Runtime runtime_protocol/timeline_commit_execution.py:395 provider.commit(provider_context, port)",
+    "Agent astrid/sdk/timeline/commit.py:1160 RuntimeCommitService.commit",
+    "Agent astrid/sdk/timeline/commit.py:1336 bounded range(3) stale-head loop",
+    "Agent astrid/sdk/timeline/commit.py:1443 preview or :1444 accept",
+    "Runtime runtime_protocol/timeline_commit_port.py:217 _read",
+    "Runtime runtime_protocol/timeline_commit_store.py:381 _read_transaction and :349 _store_version",
+    "Runtime runtime_protocol/timeline_commit_store.py:357 conditional _reestablish_connection",
+    "Runtime runtime_protocol/timeline_commit_store.py:1792 preview or :1834 accept",
+    "Runtime timeline_commit_execution.py:400 verify_outcome and :405-408 close",
+    "Runtime server return/_send"
+  ],
+  "waiter_review": [
+    {
+      "id": "d112-reestablish-store-mutex",
+      "file": "runtime_protocol/timeline_commit_store.py",
+      "line": 315,
+      "kind": "conditional lock_acquire",
+      "condition": "_store_version sees connection_changed, database_changed, or wal_changed at :353-357",
+      "max_wait": "UNKNOWN/unbounded; threading.RLock context has no timeout",
+      "reachability": "REACHABLE_CONDITIONALLY through provider port _read -> history_read_scope -> _read_transaction -> _store_version"
+    },
+    {
+      "id": "request-port-read-store-mutex",
+      "file": "runtime_protocol/timeline_commit_port.py",
+      "line": 221,
+      "kind": "lock_acquire",
+      "condition": "Every RequestCommitPort._read provider read",
+      "max_wait": "UNKNOWN/unbounded; no timeout",
+      "reachability": "Direct provider read boundary"
+    },
+    {
+      "id": "history-read-transaction-store-mutex",
+      "file": "runtime_protocol/timeline_commit_store.py",
+      "line": 383,
+      "kind": "lock_acquire",
+      "condition": "Every ordinary history_read_scope that opens _read_transaction",
+      "max_wait": "UNKNOWN/unbounded; no timeout",
+      "reachability": "Immediate caller of _store_version on provider history reads"
+    },
+    {
+      "id": "coordinator-guard",
+      "file": "runtime_protocol/timeline_commit_execution.py",
+      "line": 328,
+      "kind": "lock_acquire",
+      "condition": "All coordinator executions enter the entry map guard",
+      "max_wait": "UNKNOWN/unbounded; threading.Lock context has no timeout",
+      "reachability": "Direct from _timeline_commit -> coordinator.execute"
+    },
+    {
+      "id": "coordinator-idempotency-entry-lock",
+      "file": "runtime_protocol/timeline_commit_execution.py",
+      "line": 341,
+      "kind": "lock_acquire",
+      "condition": "Matching request hash shares scope and Idempotency-Key entry",
+      "max_wait": "UNKNOWN/unbounded; entry.lock has no timeout",
+      "reachability": "Directly before lookup/provider invocation; mismatches refuse"
+    },
+    {
+      "id": "service-store-mutex-family",
+      "file": "runtime_protocol/service.py",
+      "line": 2438,
+      "additional_lines": [2464, 2517, 2538, 2625],
+      "kind": "lock_acquire family",
+      "condition": "TimelineCommitStore/coordinator initialization, authorization, active check, provider capture, baseline",
+      "max_wait": "UNKNOWN/unbounded; same store RLock",
+      "reachability": "Direct route setup and authorization"
+    },
+    {
+      "id": "timeline-evaluation-mutex-family",
+      "file": "runtime_protocol/timeline_commit_store.py",
+      "line": 172,
+      "additional_lines": [583, 977, 1026, 1075, 1100, 1150, 1205, 1273, 1792, 1834],
+      "kind": "lock_acquire family",
+      "condition": "Evaluation and public/history/preview/accept helpers",
+      "max_wait": "UNKNOWN/unbounded; same store RLock",
+      "reachability": "Reached conditionally by provider port methods; nested acquisitions are reentrant"
+    },
+    {
+      "id": "store-project-mutex",
+      "file": "runtime_protocol/store.py",
+      "line": 1516,
+      "kind": "lock_acquire",
+      "condition": "_timeline_authorize calls get_project",
+      "max_wait": "UNKNOWN/unbounded; same RLock",
+      "reachability": "Direct authorization route"
+    },
+    {
+      "id": "sqlite-connection-busy-timeout",
+      "file": "runtime_protocol/store.py",
+      "line": 1230,
+      "additional_lines": [1231, 1246],
+      "kind": "busy_timeout",
+      "condition": "Open/reopen or SQLite busy operation",
+      "max_wait": "10000 ms per busy operation; route total UNKNOWN/unbounded",
+      "reachability": "D112 same-connection reopen calls _open; acceptance uses the same configured busy timeout"
+    },
+    {
+      "id": "sqlite-accept-begin-immediate",
+      "file": "runtime_protocol/store.py",
+      "line": 933,
+      "kind": "blocking_transaction",
+      "condition": "_accepting starts BEGIN IMMEDIATE",
+      "max_wait": "Up to 10 s per SQLite busy operation; route total UNKNOWN/unbounded",
+      "reachability": "Agent port.accept -> TimelineCommitStore.accept -> _accepting"
+    },
+    {
+      "id": "provider-call",
+      "file": "runtime_protocol/timeline_commit_execution.py",
+      "line": 395,
+      "additional_source": "Agent astrid/sdk/timeline/commit.py:1160",
+      "kind": "blocking_provider_call",
+      "condition": "Installed provider and non-replay coordinator path",
+      "max_wait": "UNKNOWN/unbounded; no source timeout",
+      "reachability": "The production provider seam; elapsed interval is not itself wait evidence"
+    },
+    {
+      "id": "agent-stale-head-retry-loop",
+      "file": "astrid/sdk/timeline/commit.py",
+      "line": 1336,
+      "kind": "retry_loop",
+      "condition": "StaleHead from port.accept at :1445",
+      "max_wait": "Bounded: exactly 3 attempts; no sleep/backoff",
+      "reachability": "Normal provider handler; not a waiter attribution"
+    },
+    {
+      "id": "restore-integrity-report",
+      "file": "runtime_protocol/timeline_commit_port.py",
+      "line": 155,
+      "additional_source": "runtime_protocol/store.py:6210",
+      "kind": "conditional bounded preflight",
+      "condition": "Restore adapter or timeline.restore only",
+      "max_wait": "Configured admission_timeout at the call site; exact value UNKNOWN; SQLite busy operations still 10 s",
+      "reachability": "Conditional restore route, not ordinary element commands"
+    }
+  ],
+  "nested_lock_scope": {
+    "runtime_protocol_timeline_commit_port.py:875": "MediaReads.selection is reached from selected_media under RequestCommitPort._read and re-enters the same RLock; covered by the outer :221 lock, not a separate contention class",
+    "runtime_protocol_timeline_commit_store.py:264": "clear_replay_memo is reached while the store mutex is already held on the recovery path; reentrant and covered by the D112 :315 path"
+  },
+  "d112": {
+    "status": "REACHABLE_CONDITIONALLY",
+    "condition": "Physical DB/WAL identity changes while a provider port read/accept is active",
+    "source_chain": "RequestCommitPort._read:217-228 -> history_read_scope -> _read_transaction:381-408 -> _store_version:349-357 -> _reestablish_connection:307-347 -> store._open:1230-1246",
+    "wait_claim": "Source-only possibility; no measured occurrence or duration attribution",
+    "d130": "HELD; stop at source facts"
+  },
+  "measurements": {
+    "32016": {
+      "handler_ms": 21740.631,
+      "provider_ms": 13780.929,
+      "dispatch_wall_ms": 21741.532,
+      "handler_minus_provider_ms": 7959.702,
+      "dispatch_minus_handler_ms": 0.901,
+      "samples": 828,
+      "lost_samples": 15,
+      "interpretation": "Qualified element boundary; inclusive samples and missing raw membership do not distinguish CPU from waits"
+    },
+    "15200": {
+      "handler_ms": 19557.721,
+      "provider_ms": 12290.285,
+      "dispatch_wall_ms": 19558.850,
+      "handler_minus_provider_ms": 7267.436,
+      "dispatch_minus_handler_ms": 1.129,
+      "samples": 737,
+      "lost_samples": 17,
+      "interpretation": "Qualified element boundary; inclusive rows and exact cProfile/edges are missing"
+    },
+    "non_comparators": ["10721 request 2 is NOT_ELEMENT", "direct 1.75 s replay is NOT_SAME_STATE_COMPARISON"]
+  },
+  "negative_source_findings": {
+    "reachable_time_sleep": false,
+    "reachable_select": false,
+    "reachable_event_or_condition_wait": false,
+    "reachable_subprocess_wait": false,
+    "agent_standalone_store_waits": "Excluded: historical provider does not import/call that standalone store route",
+    "runtime_media_worker_lifecycle_waits": "Excluded: not reachable from this timeline commit provider chain"
+  },
+  "c0_f_scope": {
+    "route": "Existing commitTimeline route; Runtime is writer and Agent provider computes semantics",
+    "request_scope": "api_version, project_id, timeline_id, base_revision_id, base_publication_id, commands[{schema_version,op,version,select,args}], label, steps[{id,label,intent,tags,command_ordinals,patch,optional reads}], merge fields|atomic, reads, Idempotency-Key, dry_run, source, rationale, group_id",
+    "reply_scope": "accepted|merged canonical/base/landing/merge_mode/receipt/records/bindings/effects/dependencies/history/undo_steps; conflict reason/head; invalid code/path/hint/suggested_command; preview would_status/null receipt",
+    "review_boundary": "C0/F shapes were checked as scope only; no claim that frozen R4 source implements the later v2 schema"
+  },
+  "source_scope_findings": [
+    "Census call-path text has a citation typo: preview/accept lines 1792/1834 are in runtime_protocol/timeline_commit_store.py, not store.py. The line numbers and source behavior are correct.",
+    "Census findings omit nested reentrant lock lines 875 and 264 as separate ranks; source inspection confirms they add no independent wait class.",
+    "All other ranked waiter paths, conditions, file:line references, max-wait claims, and exclusions match the pinned source."
+  ],
+  "prohibited_actions": {
+    "product_or_fixture_changes": false,
+    "tests_or_qualification": false,
+    "live_or_full_execution": false,
+    "authoring_or_d130_transfer": false
+  }
+}

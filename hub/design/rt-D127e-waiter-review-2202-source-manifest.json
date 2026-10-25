@@ -1,0 +1,42 @@
+{
+  "task": "D127e",
+  "result": "PASS",
+  "sourcebase": {
+    "repo": "Composition",
+    "branch": "tl/rt-D127e-waiter-review-2202",
+    "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "historical_refs": {
+    "Runtime": "ab1e4f6141987706132916e2da16477f5a019464",
+    "Agent": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2"
+  },
+  "c0_contract": {
+    "repo": "Runtime",
+    "ref": "tl/integration",
+    "path": "contract/commit-v2.md",
+    "blob": "257024df6fa93be767f0c74ee10014a6770c4fcb"
+  },
+  "historical_source_files": [
+    {"repo": "Runtime", "path": "runtime_protocol/server.py", "bytes": 77673, "lines": 1273, "sha256": "672ebcb59a923b96d3189980c197315a09fd31d44444d502ea5d3750e7bb52fc"},
+    {"repo": "Runtime", "path": "runtime_protocol/service.py", "bytes": 520340, "lines": 8532, "sha256": "13587d2c3b58ecb6838525e69cbaa38a045b2491a34170275e1d5e55354bf51b"},
+    {"repo": "Runtime", "path": "runtime_protocol/timeline_commit_execution.py", "bytes": 17901, "lines": 445, "sha256": "5956b4850e11d517a6bcc9aa8ae7f0074b45810e26faa8ffe391b907e764c257"},
+    {"repo": "Runtime", "path": "runtime_protocol/timeline_commit_port.py", "bytes": 71136, "lines": 1190, "sha256": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14"},
+    {"repo": "Runtime", "path": "runtime_protocol/timeline_commit_store.py", "bytes": 142549, "lines": 2205, "sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4"},
+    {"repo": "Runtime", "path": "runtime_protocol/store.py", "bytes": 420529, "lines": 7034, "sha256": "4bb37ed4a77b36ffe66d367388c75ae00c2ce09cb223be6c7e398fab132da2c0"},
+    {"repo": "Agent", "path": "astrid/sdk/timeline/commit.py", "bytes": 89194, "lines": 1476, "sha256": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7"}
+  ],
+  "reviewed_flat_evidence": [
+    {"path": "design/rt-D127e-waiter-census-2153-findings.md", "sha256": "c56fb87a6a97b07acff3e054288f89eaf6ab22f2b4d67bb6c19541f612fd0a11"},
+    {"path": "design/rt-D127e-waiter-census-2153-validation.md", "sha256": "05df5841de982c04e4c9050ed99f72e422dca1f622d9c309d572e9f31b187cbf"},
+    {"path": "design/rt-D127e-waiter-census-2153-call-path.md", "sha256": "bc5d94179f3798d4aefc935b3201a1eb292fbf2c8db85f2823c1ed59c3472f12"},
+    {"path": "design/rt-D127e-waiter-census-2153-waiters.json", "sha256": "e082466ff251328bf0183fc8bfdcfdab747423975b0bfb549fee029c937f29d5"},
+    {"path": "design/rt-D127e-waiter-census-2153-evidence-match.json", "sha256": "5af372302a093228f009bb8ec38338e27ac4162fc35ce4af146bfa879c225934"},
+    {"path": "design/rt-D127e-waiter-census-2153-source-manifest.json", "sha256": "225f34328fe9d4a1218689f2910798c81ec1898047497d226157b0b1d9071129"}
+  ],
+  "retained_artifacts": [
+    {"request": "32016", "path": "design/app-D127-element32016-result-review-1847-safe-profile.json", "sha256": "a8aad8e29caec3772f2d83bbf1422fa90294a15534229bd7319380a64a26a0c5"},
+    {"request": "15200", "path": "design/app-D127c-element15200-review-2113-profile-totals.json", "sha256": "bf57f4cfbdbfbc43bb6a4be8e53a640e777b2b7eac00da1909ec4750dfb9708b"},
+    {"request": "10721 request 2", "path": "design/rt-D127-real-profile-1535.json", "sha256": "3196c121864c81bb38b2ddf1ff22b78d0bfd02117bb62d2cc3b84a6f64005773"}
+  ],
+  "custody": "Historical source manifests recomputed byte/line/SHA-256 identically; all reviewed JSON parsed successfully. No product, fixture, test, Git ref, design, or report file was modified."
+}
