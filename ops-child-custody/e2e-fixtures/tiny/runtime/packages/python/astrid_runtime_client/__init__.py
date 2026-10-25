@@ -1,0 +1,1 @@
+CLIENT = "tiny-custody-contract"

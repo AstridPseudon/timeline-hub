@@ -1,13 +1,15 @@
-"""Whole-make test for an admitted, preinitialized, private tiny-package venue.
+"""Prepare and run a whole-make test for a private tiny-package venue.
 
-This program never initializes a Store, writes Git, changes admission, mocks a
-command, or substitutes a verifier. Missing venue inputs are a blocked result.
-The manager supplies two disposable fixture Stores and commits fixture_sources()
-through its normal harness. They must live in this run's TMPDIR.
+Preparation initializes only two disposable fixture Stores through the normal
+Store API; it never writes Git, changes admission, mocks a command, or
+substitutes a verifier. Missing venue inputs are a blocked result. The manager
+commits fixture_sources() through its normal harness. Stores and orchestration
+must live in this run's TMPDIR.
 """
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -21,45 +23,46 @@ from support import MAKER, block
 PARENT_COMMIT = '9428f515fcd8dccaef26193438b3ac89f903f5aa'
 PARENT_SHA256 = '0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39'
 HELPER_SHA256 = '123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2'
+MAKER_SHA256 = 'c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e'
 RESERVE = 5905580032
+FIXTURE_ROOT = Path(__file__).resolve().parents[1] / 'e2e-fixtures/tiny'
+FIXTURE_MANIFEST = FIXTURE_ROOT / 'manifest.json'
+BOOTSTRAP_WHEELS = {
+    'pip-26.2.1-py3-none-any.whl': '71138adf1f4ca900cdb7d289c21b7494329f2332b6d85f0e1c42108c0384ed3e',
+    'setuptools-80.9.0-py3-none-any.whl': '062d34222ad13e0cc312a4c02d73f059e86a4acbfbdea8f8f76b28c99f306922',
+    'wheel-0.46.3-py3-none-any.whl': '4b399d56c9d9338230118d705d9737a2a468ccca63d5e813e2a4fc7815d8bc4d',
+}
 
 
 def fixture_sources():
-    build = ('[build-system]\nrequires = ["setuptools==80.9.0", "wheel==0.46.3"]\n'
-             'build-backend = "setuptools.build_meta"\n')
+    manifest = json.loads(FIXTURE_MANIFEST.read_text())
+    require(manifest.get('schema') == 'timeline.ops-child-custody.tiny-source.v1',
+            'tiny fixture source manifest schema mismatch')
+    result = {}
+    for role, entry in manifest['roles'].items():
+        files = {}
+        for name, expected in entry['files'].items():
+            path = FIXTURE_ROOT / role / name
+            require(path.is_file() and not path.is_symlink(), 'missing tiny fixture source: ' + role + '/' + name)
+            data = path.read_bytes()
+            require(hashlib.sha256(data).hexdigest() == expected,
+                    'tiny fixture source hash mismatch: ' + role + '/' + name)
+            files[name] = data.decode('utf-8')
+        result[role] = files
+    return result
 
-    def project(name, packages, scripts=''):
-        return (build + f'[project]\nname = "{name}"\nversion = "0.1.0"\n' + scripts
-                + '[tool.setuptools.packages.find]\ninclude = ' + json.dumps(packages) + '\n')
 
-    client = 'CLIENT = "tiny-custody-contract"\n'
-    return {
-        'agent': {
-            'pyproject.toml': project('astrid', ['astrid', 'astrid_runtime_client']),
-            'LICENSE': 'Tiny private fixture license\n',
-            'requirements/proof.lock': 'custody.B==0.1.0\ncustody_A==0.1.0\n',
-            'astrid/__init__.py': 'VALUE = "tiny-agent"\n',
-            'astrid_runtime_client/__init__.py': client,
-        },
-        'runtime': {
-            'pyproject.toml': project('astrid-runtime', ['astrid_runtime', 'runtime_protocol'],
-                                      '[project.scripts]\nastrid-runtime = "astrid_runtime:main"\n'
-                                      'astrid-runtime-protocol = "runtime_protocol:main"\n'),
-            'LICENSE': 'Tiny private fixture license\n',
-            'astrid_runtime/__init__.py': 'def main():\n    return 0\n',
-            'astrid_runtime/__main__.py': 'from . import main\nraise SystemExit(main())\n',
-            'runtime_protocol/__init__.py': 'def main():\n    return 0\n',
-            'packages/python/astrid_runtime_client/__init__.py': client,
-        },
-        'dependency-dot': {
-            'pyproject.toml': project('custody.B', ['custody_b']),
-            'custody_b/__init__.py': 'VALUE = "dot"\n',
-        },
-        'dependency-underscore': {
-            'pyproject.toml': project('custody_A', ['custody_a']),
-            'custody_a/__init__.py': 'VALUE = "underscore"\n',
-        },
-    }
+def fixture_wheel_pins():
+    manifest = json.loads(FIXTURE_MANIFEST.read_text())
+    pins = dict(BOOTSTRAP_WHEELS)
+    for role in ('dependency-dot', 'dependency-underscore'):
+        wheel = manifest['roles'][role].get('wheel', {})
+        require(re.fullmatch(r'[A-Za-z0-9_.-]+\.whl', wheel.get('filename', '')),
+                'tiny dependency wheel filename pin missing')
+        require(re.fullmatch(r'[0-9a-f]{64}', wheel.get('sha256', '')),
+                'tiny dependency wheel hash pin missing')
+        pins[wheel['filename']] = wheel['sha256']
+    return pins
 
 
 def command(argv, **kwargs):
@@ -77,6 +80,20 @@ def physical(value):
     return path
 
 
+def executable(value, label):
+    path = Path(value)
+    require(path.is_absolute() and path.exists() and path.is_file() and os.access(path, os.X_OK),
+            'missing/non-executable ' + label)
+    return path
+
+
+def private_path(value, scratch, label):
+    path = Path(value)
+    require(path.is_absolute() and path == path.resolve() and path.is_relative_to(scratch),
+            label + ' must be an absolute path in this TMPDIR')
+    return path
+
+
 def committed_fixture(path, expected):
     require(command(['git', '-C', str(path), 'status', '--porcelain', '--untracked-files=all']).stdout == '',
             'fixture source must be clean')
@@ -89,27 +106,136 @@ def committed_fixture(path, expected):
     return head.stdout.strip()
 
 
+def verify_wheelhouse(path):
+    path = physical(path)
+    pins = fixture_wheel_pins()
+    for name, expected in pins.items():
+        wheel = path / name
+        require(wheel.is_file() and not wheel.is_symlink(), 'missing pinned local wheel: ' + name)
+        require(hashlib.sha256(wheel.read_bytes()).hexdigest() == expected,
+                'local wheel hash mismatch: ' + name)
+    return pins
+
+
+def store_module(helper):
+    spec = importlib.util.spec_from_file_location('tiny_fixture_bench_store', helper)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def build_wheels(destination, build_python):
+    scratch = physical(os.environ['TMPDIR'])
+    destination = private_path(destination, scratch, 'wheel output')
+    require(not destination.exists(), 'wheel output already exists; use a fresh TMPDIR path')
+    destination.mkdir(parents=True)
+    source_root = destination / 'sources'
+    source_root.mkdir()
+    for role, files in fixture_sources().items():
+        for name, content in files.items():
+            target = source_root / role / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(content)
+    build_python = executable(build_python, 'wheel build Python')
+    for role in ('dependency-dot', 'dependency-underscore'):
+        result = command([str(build_python), '-m', 'build', '--wheel', '--no-isolation',
+                          '--outdir', str(destination), str(source_root / role)],
+                         env={**os.environ, 'PIP_NO_INDEX': '1',
+                              'PIP_DISABLE_PIP_VERSION_CHECK': '1',
+                              'PIP_CONFIG_FILE': os.devnull, 'SOURCE_DATE_EPOCH': '0'})
+        require(result.returncode == 0, 'offline tiny dependency wheel build failed: ' + role)
+    produced = {'custody_b-0.1.0-py3-none-any.whl', 'custody_a-0.1.0-py3-none-any.whl'}
+    require(all((destination / name).is_file() for name in produced),
+            'offline tiny dependency build did not produce the pinned wheel names')
+    manifest = {'schema': 'timeline.ops-child-custody.tiny-wheelhouse.v1',
+                'wheels': {name: {'sha256': hashlib.sha256((destination / name).read_bytes()).hexdigest(),
+                                  'bytes': (destination / name).stat().st_size}
+                           for name in sorted(produced)}}
+    (destination / 'wheel-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
+    print(json.dumps(manifest, indent=2))
+
+
+def prepare_venue(args):
+    scratch = physical(os.environ['TMPDIR'])
+    manifest_path = private_path(args.prepare_venue, scratch, 'venue manifest')
+    require(not manifest_path.exists(), 'venue manifest already exists; use a fresh TMPDIR path')
+    helper = physical(args.helper)
+    require(hashlib.sha256(helper.read_bytes()).hexdigest() == HELPER_SHA256,
+            'protected Store helper mismatch')
+    orch = private_path(args.orch_root, scratch, 'fixture orchestration root')
+    require(not orch.exists(), 'fixture orchestration root already exists; use a fresh TMPDIR path')
+    agent = physical(args.agent)
+    runtime = physical(args.runtime)
+    sources = fixture_sources()
+    agent_sha = committed_fixture(agent, sources['agent'])
+    runtime_sha = committed_fixture(runtime, sources['runtime'])
+    wheelhouse = physical(args.wheelhouse)
+    wheel_hashes = verify_wheelhouse(wheelhouse)
+    python = physical(args.python)
+    parent_work = private_path(args.parent_work, scratch, 'parent fixture work root')
+    candidate_work = private_path(args.candidate_work, scratch, 'candidate fixture work root')
+    require(parent_work != candidate_work, 'parent and candidate fixture work roots must differ')
+    require(not parent_work.exists() and not candidate_work.exists(),
+            'fixture work roots already exist; use fresh TMPDIR paths')
+    orch.mkdir(parents=True)
+    (orch / 'bin').mkdir()
+    (orch / 'tests').mkdir()
+    shutil.copyfile(helper, orch / 'bin/bench_store.py')
+    (orch / 'bin/bench_store.py').chmod(0o755)
+    parent_work.mkdir()
+    candidate_work.mkdir()
+    store = store_module(orch / 'bin/bench_store.py')
+    store.Store.initialize(parent_work / 'bench-store', orch / 'tests')
+    store.Store.initialize(candidate_work / 'bench-store', orch / 'tests')
+    venue = {
+        'schema': 'timeline.ops-child-custody.tiny-venue.v1',
+        'fixture_kind': 'private-tiny-source-carrier',
+        'prepared_by': 'e2e_inventory.py --prepare-venue',
+        'orch': str(orch),
+        'python': str(python),
+        'wheelhouse': str(wheelhouse),
+        'agent': str(agent),
+        'agent_sha': agent_sha,
+        'runtime': str(runtime),
+        'runtime_sha': runtime_sha,
+        'parent_work': str(parent_work),
+        'candidate_work': str(candidate_work),
+        'helper_sha256': HELPER_SHA256,
+        'maker_sha256': MAKER_SHA256,
+        'wheel_hashes': wheel_hashes,
+        'stores_initialized_by_worker': True,
+    }
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest_path.write_text(json.dumps(venue, indent=2) + '\n')
+    print('prepared private tiny fixture venue: ' + str(manifest_path))
+
+
 def run_venue(manifest, output):
     scratch = physical(os.environ['TMPDIR'])
     venue = json.loads(manifest.read_text())
-    require(venue['approved_private_fixture'] is True, 'missing manager fixture admission')
+    require(venue['schema'] == 'timeline.ops-child-custody.tiny-venue.v1'
+            and venue['fixture_kind'] == 'private-tiny-source-carrier',
+            'missing private tiny fixture venue manifest')
+    require(venue.get('stores_initialized_by_worker') is True,
+            'private fixture Stores were not initialized by the normal Store API')
+    output['store_initialized_by_worker'] = True
     orch = physical(venue['orch'])
     require(orch.is_relative_to(scratch), 'fixture orchestration must be in this TMPDIR')
     helper = orch / 'bin/bench_store.py'
-    require(hashlib.sha256(helper.read_bytes()).hexdigest() == HELPER_SHA256, 'protected Store helper mismatch')
+    require(hashlib.sha256(helper.read_bytes()).hexdigest() == venue['helper_sha256'] == HELPER_SHA256,
+            'protected Store helper mismatch')
+    require(hashlib.sha256(MAKER.read_bytes()).hexdigest() == venue['maker_sha256'] == MAKER_SHA256,
+            'candidate maker source mismatch')
     python = physical(venue['python'])
     wheelhouse = physical(venue['wheelhouse'])
-    require(wheelhouse.is_dir(), 'missing already available local wheels')
-    require(any(wheelhouse.glob('pip-26.2.1-*.whl'))
-            and any(wheelhouse.glob('setuptools-80.9.0-*.whl'))
-            and any(wheelhouse.glob('wheel-0.46.3-*.whl'))
-            and any(wheelhouse.glob('custody_b-0.1.0-*.whl'))
-            and any(wheelhouse.glob('custody_a-0.1.0-*.whl')),
-            'missing supported bootstrap/private dependency wheels; no acquisition allowed')
+    require(venue['wheel_hashes'] == verify_wheelhouse(wheelhouse),
+            'venue wheel pins differ from the actual local wheelhouse')
     agent = physical(venue['agent'])
     runtime = physical(venue['runtime'])
     agent_sha = committed_fixture(agent, fixture_sources()['agent'])
     runtime_sha = committed_fixture(runtime, fixture_sources()['runtime'])
+    require(agent_sha == venue['agent_sha'] and runtime_sha == venue['runtime_sha'],
+            'venue source commit differs from its prepared manifest')
     client = 'packages/python/astrid_runtime_client/__init__.py=' + hashlib.sha256(
         fixture_sources()['runtime']['packages/python/astrid_runtime_client/__init__.py'].encode()).hexdigest()
     parent = command(['git', 'show', PARENT_COMMIT + ':ops-child-custody/make-child-venv'], cwd=MAKER.parents[1])
@@ -133,7 +259,8 @@ def run_venue(manifest, output):
         require((work / 'bench-store/owner.json').is_file(), 'preinitialized approved fixture Store missing')
         require(shutil.disk_usage(work).free >= max(RESERVE, 5000000000), 'unchanged production reserve unavailable')
         # Only an empty, single-use fixture Store is suitable; no adoption/reuse.
-        index = json.loads((work / 'bench-store/index.json').read_text())
+        store = store_module(helper).Store(work / 'bench-store', orch / 'tests')
+        index = store._load()
         require(not index['entries'] and not index['registrations'], 'fixture Store must be unused')
         argv = ['bash', str(maker), 'venv-agent-child-inventory-' + label, agent_sha,
                 '--source-carrier', str(agent), str(runtime), runtime_sha]
@@ -205,17 +332,38 @@ def run_venue(manifest, output):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--write-inputs', type=Path)
+    parser.add_argument('--build-wheels', type=Path)
+    parser.add_argument('--build-python', type=Path)
+    parser.add_argument('--prepare-venue', type=Path)
+    parser.add_argument('--helper', type=Path)
+    parser.add_argument('--orch-root', type=Path)
+    parser.add_argument('--python', type=Path)
+    parser.add_argument('--wheelhouse', type=Path)
+    parser.add_argument('--agent', type=Path)
+    parser.add_argument('--runtime', type=Path)
+    parser.add_argument('--parent-work', type=Path)
+    parser.add_argument('--candidate-work', type=Path)
     parser.add_argument('--venue-manifest', type=Path)
     parser.add_argument('--result', type=Path)
     args = parser.parse_args()
     if args.write_inputs:
         require(args.write_inputs.resolve().is_relative_to(Path(os.environ['TMPDIR']).resolve()), 'fixture inputs must be in TMPDIR')
-        args.write_inputs.mkdir()
+        args.write_inputs.mkdir(parents=True)
         for role, files in fixture_sources().items():
             for name, content in files.items():
                 path = args.write_inputs / role / name
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(content)
+        return 0
+    if args.build_wheels:
+        require(args.build_python is not None, '--build-python is required with --build-wheels')
+        build_wheels(args.build_wheels, args.build_python)
+        return 0
+    if args.prepare_venue:
+        required = (args.helper, args.orch_root, args.python, args.wheelhouse, args.agent, args.runtime,
+                    args.parent_work, args.candidate_work)
+        require(all(required), '--prepare-venue requires all private venue paths and source checkouts')
+        prepare_venue(args)
         return 0
     require(args.result is not None, '--result required')
     output = {'whole_make_e2e': 'NOTRUN', 'parent_red': False, 'candidate_green': False,
@@ -223,7 +371,7 @@ def main():
               'store_initialized_by_worker': False, 'admission_changed': False}
     try:
         require(args.venue_manifest is not None and args.venue_manifest.is_file(),
-                'EXACTMISSING: approved private fixture venue manifest, Store custody, committed tiny sources and local wheels')
+                'EXACTMISSING: private tiny fixture venue manifest, initialized Stores, committed tiny sources and local wheels')
         run_venue(args.venue_manifest, output)
     except RuntimeError as error:
         output['blocker'] = str(error)
