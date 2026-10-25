@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T01:08:40Z | dispatcher heartbeat 10s | live 3 (sol 0, luna 3, other 0) | busy30 11 | status age 2m -->
-# app board, 2026-10-25T01:04Z
+<!-- app | 2026-10-25T01:12:15Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 3m -->
+# app board, 2026-10-25T01:09Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -148,22 +148,22 @@
 | P2-ADD-6954 | Read popup selection from its actual owner | Luna; independent | Actual6954 selected label874 | review | Author0056; review submit0106 | Product owner-selection fix:11 mounted and62 neighbors plus3 oracle/types/lint PASS. Six original specs exact; no browser credit. | Two source blobs in review |
 | P2-asset-import-current | Qualify exact import and catalogue ABI | Luna; service | Actual32587 terminal | gated:strict-oracle | Launcher0055; registry author0064 | Readiness1 PASS; original FAIL36s at missing config.registry527. Raw import, semantic request, acceptance and canonical readback advance. Later tail NOTRUN. | App913686448c |
 
-| P2-placement-import-current | Qualify embedded geometry and exact ABI | Luna; service | Asset32587 terminal | doing | app-P2-import-placement-submit-0062 | First original on reviewed embedded geometry and import ABI. Fixed913686/0d142/a3cd/635f; genuine request pending. | App913686448c |
+| P2-placement-import-current | Qualify embedded geometry and exact ABI | Luna; service | Preflight2470 PASS | doing | Actual16952; launcher0062 | Sole App placement body submitted01:05:28 on fixed913686/0d142/a3cd/635f. Source plan authentic; body result pending. | App913686448c |
 | P2-asset-registry | Prove canonical registry boundary | Luna | Actual32587 registry527 | doing | app-P2-asset-32587-registry-oracle-0064 | Retained accepted before/after and authoritative source first; preserve every asset/identity/isolation/tail predicate. No new body. | Source pending |
 
 Integration: App913686448c now includes import merge over independently reviewed Undo5f4ce933ec and popup selectorsc9d71b. Import reviewer0048 PASS25+7/types/lint; exact three blobs home, no browser credit. Exact reviewed Undo source blobs match home. ADD6954 terminal NO-GO at selected label874; later history/Undo remain unqualified.
 
-core open: Zero of eight isolated gestures PASS. Element8897 retains original five-second failure on a3cd. Asset20057 passes intended semantic POST and row checks before raw ABI510; ADD5211 reaches reload identity before clip860. Parent/single fail exact Undo reads shape. All source rows have owners.
+core open: Zero of eight isolated gestures PASS. Element8897 fails five seconds. ADD6954 passes projected clip/canvas then selected label874 fails; product fix in review. Asset32587 accepts and passes canonical readback, then registry527 fails. All later tails remain unqualified.
 regressions: No browser closure from source controls. D69 complete at its recorded source. P1 actual31083 and P3 actual15493 retain GO only on their recorded tuples.
 
 Blockers: Runtime source — element8897 still fails five seconds on a3cd. Complete ordinal3 frame/phase packet is published; Runtime owns next source decision. No App capture input remains owed.
 Blockers: Runtime venue — SWAP/bulk0039 assigned fixedfd2f after terminal P4. New parent/single reviewed5f/0d142/a3cd/635f requested0053 for next main slot; source wait cleared.
 Blockers: Final cut — eight isolated P2, one full App tour, final pinned P1–P5/core and genuine installed render remain required. Runtime coordinates matrix and ZIP.
-Next ready: Asset0055 submitted to dispatcher after ADD6954 terminal; placement follows free App body slot. Label source0056 assigned; one independent review follows. Parent/single reviewed5f handed to Runtime0053. No P3, D79 or E work.
+Next ready: Placement16952 active. Independent selection0106 may merge and submit one ADD if placement has ended; otherwise return READY without idle wait. Registry0064 gets one protected diff review when complete. Runtime parent/single handoff0053 ready.
 
-live 1 / cap 6; ready-undispatched 0. Dispatcher header01:00:34 reports1; label0056 active. Placement0062 and registry0064 dispatched after asset32587 terminal. One App body only; no idle wait worker.
+live 2 / cap 6; ready-undispatched 0. Dispatcher header01:04:28 reports2; placement0062, registry0064 and independent selection0106 assigned. Placement16952 sole App body. D89 source cap applies above5.5GB.
 Capacity: Source authors and completed reviewers auto-recycle; no idle worker holds a body wait. Every remaining ended nonKEEP App worktree scan is empty. Historical refused dirty U3 and cleanup targets remain untouched; all actual run output retained.
-Disk: 6.656GB at01:05 after guarded stale50cf pin recycle; zero use/queue/lease hits or unreadable processes. D89 supersedes old floors: six source workers above5.5GB, one body above5.2GB, no starts below4.5GB; stop newest nongate at4.0GB.
+Disk: 6.239GB at01:08 during one placement body. Guarded c9 and50cf stale pins recycled; all outputs kept, no refusal. D89: six source above5.5GB; one body above5.2GB; no new below4.5GB; stop newest nongate4.0GB.
 Safety: No new safety or permission refusal. No direct product, test or pin edits by manager. All source and review work assigned to Codex workers.
 Inbox consumed through1844191 bytes. D89 new floors and up-to-five disjoint diff reviews consumed immediately. New upstreamAppd114 remains F-final-only; no gating upstream merge.
 Later: F-final App upstream d11417a59 refresh and applied-result full suite are Runtime final coordinator-owned, gated on D59 cut. Gating App keeps frozen upstream3881.
