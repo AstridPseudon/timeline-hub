@@ -231,7 +231,7 @@ class RequestCommitPort:
             current, seen = root, set()
             while current and current["publication_id"] not in seen:
                 seen.add(current["publication_id"])
-                entry = self.__store.history_entry(self.__project, self.__timeline, current["publication_id"])
+                entry = self.__store._history_entry_view(self.__project, self.__timeline, current["publication_id"])
                 if entry["revision_id"] != current["revision_id"]:
                     raise refused("history_unavailable", "publication/revision pins disagree")
                 if current["publication_id"] == publication_id:
@@ -250,7 +250,7 @@ class RequestCommitPort:
         def read():
             if self._ancestor(through["publication_id"])["revision_id"] != through["revision_id"]:
                 raise refused("history_unavailable", "history bounds disagree")
-            return self.__store.history(self.__project, self.__timeline, through,
+            return self.__store._history_view(self.__project, self.__timeline, through,
                                         after_publication_id=after_publication_id, cursor=cursor, limit=limit)
         return self._read(read)
 

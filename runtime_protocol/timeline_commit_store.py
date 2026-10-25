@@ -966,13 +966,13 @@ class TimelineCommitStore:
             self._membership(project_id, timeline_id)
             cached = self._history_state["heads"].get((project_id, timeline_id))
             if cached is not None:
-                return detached(cached), self.history_entry(project_id, timeline_id, cached["publication_id"])
+                return detached(cached), self._history_entry_view(project_id, timeline_id, cached["publication_id"])
             row = self.conn.execute("SELECT revision_id, publication_id FROM parent_composition_heads "
                                     "WHERE project_id=? AND timeline_id=?", (project_id, timeline_id)).fetchone()
             if row is None or not row["revision_id"] or not row["publication_id"]:
                 reject("history_unavailable")
             assert row is not None
-            entry = self.history_entry(project_id, timeline_id, row["publication_id"])
+            entry = self._history_entry_view(project_id, timeline_id, row["publication_id"])
             if entry["revision_id"] != row["revision_id"]:
                 reject("history_unavailable")
             from .timeline_catalog import verify_catalog_tail
@@ -1002,6 +1002,13 @@ class TimelineCommitStore:
 
     @_evaluation
     def history_entry(self, project_id, timeline_id, publication_id, *, allow_archived=False):
+        return detached(self._history_entry_view(project_id, timeline_id, publication_id,
+                                                 allow_archived=allow_archived))
+
+    @_evaluation
+    def _history_entry_view(self, project_id, timeline_id, publication_id, *, allow_archived=False):
+        # Internal readers must not mutate this authenticated value. The public
+        # store API and RequestCommitPort detach before handing it to a caller.
         with self.store._mutex:
             if allow_archived:
                 row = self.conn.execute(
@@ -1017,7 +1024,7 @@ class TimelineCommitStore:
                 row, ledger, entry = cached
                 if row["intent"] == "recorded" or ledger["command_kind"] == "timeline.commit":
                     self._verify_accepted(ledger, row, allow_archived=allow_archived)
-                return detached(entry)
+                return entry
             row = self.conn.execute("SELECT * FROM timeline_commit_history WHERE publication_id=? "
                                     "AND project_id=? AND timeline_id=?", (publication_id, project_id, timeline_id)).fetchone()
             if row is None:
@@ -1054,6 +1061,7 @@ class TimelineCommitStore:
         with self.store._mutex:
             if cursor is None:
                 through, bound = self._head_entry(project_id, timeline_id)
+                bound = detached(bound)
             else:
                 try:
                     decoded = json.loads(base64.urlsafe_b64decode(cursor.encode()))
@@ -1068,18 +1076,24 @@ class TimelineCommitStore:
 
     @_evaluation
     def history(self, project_id, timeline_id, through, after_publication_id=None, cursor=None, limit=100):
+        return detached(self._history_view(project_id, timeline_id, through,
+                                           after_publication_id=after_publication_id, cursor=cursor, limit=limit))
+
+    @_evaluation
+    def _history_view(self, project_id, timeline_id, through, after_publication_id=None, cursor=None, limit=100):
         if type(limit) is not int or not 1 <= limit <= 200:
             raise ValidationError("history limit must be 1–200")
         with self.store._mutex:
-            bound = self.history_entry(project_id, timeline_id, through["publication_id"])
+            bound = self._history_entry_view(project_id, timeline_id, through["publication_id"])
             return self._history_page(project_id, timeline_id, through, bound,
-                                      after_publication_id=after_publication_id, cursor=cursor, limit=limit)
+                                      after_publication_id=after_publication_id, cursor=cursor, limit=limit, _entry_views=True)
 
     def _history_page(self, project_id, timeline_id, through, bound, *,
-                      after_publication_id=None, cursor=None, limit):
+                      after_publication_id=None, cursor=None, limit, _entry_views=False):
         if bound["revision_id"] != through["revision_id"]:
             reject("history_unavailable")
-        after = self.history_entry(project_id, timeline_id, after_publication_id) if after_publication_id else None
+        read_entry = self._history_entry_view if _entry_views else self.history_entry
+        after = read_entry(project_id, timeline_id, after_publication_id) if after_publication_id else None
         low = after["receipt"]["project_seq"][0] if after else 0
         high = bound["receipt"]["project_seq"][0]
         cursor_scope = [project_id, timeline_id, through, after_publication_id]
@@ -1100,7 +1114,7 @@ class TimelineCommitStore:
         # The bound is the exact entry authenticated in this locked read, not
         # another publication or closure with coincidentally equal bytes.
         items = [bound if row[0] == bound["publication_id"] else
-                 self.history_entry(project_id, timeline_id, row[0]) for row in rows[:limit]]
+                 read_entry(project_id, timeline_id, row[0]) for row in rows[:limit]]
         previous = self.conn.execute("SELECT publication_id, revision_id FROM timeline_commit_history WHERE project_id=? "
                                     "AND timeline_id=? AND project_seq<=? ORDER BY project_seq DESC LIMIT 1",
                                     (project_id, timeline_id, start)).fetchone()
