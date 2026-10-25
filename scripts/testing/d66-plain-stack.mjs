@@ -288,7 +288,7 @@ export function buildSubmitPlan({ name, target, paths = normalHomes, checkoutRoo
   return { name, target, pins, checkouts, checkoutRequests };
 }
 
-export function serviceRecipe({ name, pins, checkouts, preflight = false }) {
+export function serviceRecipe({ name, pins, checkouts, outputDir, preflight = false }) {
   assert(suites[name], 'choose p1, p2, p2-element or p3');
   for (const role of sourceRoles) {
     validateObjectId(pins[role]?.head, `${role} SHA`);
@@ -302,7 +302,111 @@ export function serviceRecipe({ name, pins, checkouts, preflight = false }) {
   ]);
   const watchdogSeconds = name === 'p2-element' ? '2' : name === 'p2' ? '20' : '';
   env.push(`ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS=${shellQuote(watchdogSeconds)}`);
+  if (outputDir !== undefined) {
+    assert(path.isAbsolute(outputDir), 'D66_OUTPUT_DIR must be an absolute path');
+    env.push(`D66_OUTPUT_DIR=${shellQuote(outputDir)}`);
+  }
   return `${env.join(' ')} ${shellQuote(node)} --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs ${shellQuote(name)}${preflight ? ' --preflight' : ''}`;
+}
+
+const nativePreparationSuites = Object.freeze({
+  'p2-native-asset': {
+    suite: 'p2-register-asset',
+    intent: 'next meaningful original asset: registerAsset file drop',
+  },
+  'p2-native-placement': {
+    suite: 'p2-automatic-child-placement',
+    intent: 'next meaningful original placement: managed child file drop',
+  },
+});
+
+/**
+ * Validate a caller-supplied immutable D66 tuple without recapturing moving
+ * normal homes. This is intentionally source admission only; it does not
+ * enqueue a checkout, register a suite, or start a service.
+ */
+export function fixedCapture({ pins, checkouts, homes = normalHomes, target, workerRoot = path.join(orch, 'workers') }) {
+  const sources = {};
+  for (const role of sourceRoles) {
+    const pin = pins?.[role];
+    const checkout = checkouts?.[role];
+    assert(pin && checkout, `D66 fixed ${role} input is required`);
+    const selectedState = checkoutState(checkout);
+    sources[role] = {
+      checkout: realpathSync(checkout),
+      normal_home: realpathSync(homes[role]),
+      head: pin.head,
+      tree: pin.tree,
+      state: selectedState,
+    };
+    validatePinnedSource({ role, selected: sources[role].checkout, normal: sources[role].normal_home,
+      expectedHead: pin.head, expectedTree: pin.tree, selectedState });
+  }
+  validatePinnedSources({ sources, appRootState: checkoutState(sources.app.checkout) });
+  const serviceTarget = appCheckoutTarget(sources.app.checkout, sources.app.head, { target, workerRoot });
+  return { sources, target: serviceTarget };
+}
+
+/**
+ * Build the two-request D66 plan for a reviewed original without performing
+ * either request. Registry rows are checked through the normal helper against
+ * an in-memory empty registry, so central suites.conf remains untouched.
+ */
+export function orchestrateSubmission({ selector, pins, checkouts, outputDir, homes = normalHomes,
+  target, receiptRoot = path.join(orch, 'queue', 'done'), workerRoot = path.join(orch, 'workers'),
+  registryPath = path.join(outputDir, 'suites.conf'), appRoot = checkouts?.app }) {
+  const descriptor = nativePreparationSuites[selector];
+  assert(descriptor, `unknown native preparation selector: ${selector}`);
+  assert(path.isAbsolute(outputDir), 'D66_OUTPUT_DIR must be an absolute path');
+  const captured = fixedCapture({ pins, checkouts, homes, target, workerRoot });
+  const exactEnv = pinnedEnvironment({ pins, checkouts });
+  const preflight = preflightSources(exactEnv, homes, appRoot, { receiptRoot, workerRoot });
+  assert.equal(preflight.target, captured.target, 'D66 fixed capture and preflight selected different App targets');
+
+  const suitesForSubmit = {
+    preflight: `${selector}-0257-preflight`,
+    normal: `${selector}-0257`,
+  };
+  const recipes = {
+    preflight: serviceRecipe({ name: descriptor.suite, pins, checkouts, outputDir, preflight: true }),
+    normal: serviceRecipe({ name: descriptor.suite, pins, checkouts, outputDir }),
+  };
+  const rows = [`app ${suitesForSubmit.preflight} ${recipes.preflight}`, `app ${suitesForSubmit.normal} ${recipes.normal}`];
+  let stagedRegistry;
+  const registry = registerSubmitRecipes({ registryPath, rows, readRegistry: () => Buffer.alloc(0),
+    writeRegistry: (_path, bytes) => { stagedRegistry = Buffer.from(bytes); } });
+  const requestTest = path.join(orch, 'bin', 'request-test');
+  const waitTest = path.join(orch, 'bin', 'wait-test');
+  const commands = {
+    preflight: `${shellQuote(requestTest)} ${shellQuote(captured.target)} ${shellQuote(suitesForSubmit.preflight)} --no-cache`,
+    wait: `${shellQuote(waitTest)} <preflight-result-id>`,
+    normal: `${shellQuote(requestTest)} ${shellQuote(captured.target)} ${shellQuote(suitesForSubmit.normal)} --no-cache`,
+  };
+  return {
+    version: 1,
+    status: 'prepared_not_submitted',
+    selector,
+    suite: descriptor.suite,
+    intent: descriptor.intent,
+    output_dir: outputDir,
+    no_submission: true,
+    no_browser_body_build: true,
+    pins,
+    checkouts,
+    target: captured.target,
+    receipts: Object.fromEntries(sourceRoles.map((role) => [role,
+      path.join(receiptRoot, `checkout-${role}-${pins[role].head}`)])),
+    source_admission: {
+      service_source: preflight.service_source,
+      selected_sources: captured.sources,
+    },
+    suites: suitesForSubmit,
+    recipes,
+    registry: { path: registryPath, rows: registry.names, staged_bytes: stagedRegistry.toString('utf8') },
+    commands,
+    preflight: null,
+    normal: null,
+  };
 }
 
 function bytesEqual(left, right) {

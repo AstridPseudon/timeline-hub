@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { appCheckoutTarget, buildSubmitPlan, captureSubmitPins, exactCheckoutPath, playwrightLaunchEnv, preflightSources, receiptCheckout, registerSubmitRecipes, selectPinnedSources, serviceRecipe, suites, submit, validatePinnedSource, validatePinnedSources, validateSelectedSource, waitForSubmitReceipts } from './d66-plain-stack.mjs';
+import { appCheckoutTarget, buildSubmitPlan, captureSubmitPins, exactCheckoutPath, fixedCapture, orchestrateSubmission, playwrightLaunchEnv, preflightSources, receiptCheckout, registerSubmitRecipes, selectPinnedSources, serviceRecipe, suites, submit, validatePinnedSource, validatePinnedSources, validateSelectedSource, waitForSubmitReceipts } from './d66-plain-stack.mjs';
 
 const state = (overrides = {}) => ({
   root: '/snapshot/agent', head: 'a'.repeat(40), tree: 'b'.repeat(40), branch: null, dirty: false, ...overrides,
@@ -257,6 +257,47 @@ test('D73 verifies a real service snapshot, receipts and target after mutable ho
   const checkoutRequests = f.roles.map((role) => ({ role, head: f.pins[role].head, checkout: f.checkouts[role],
     receipt: path.join(f.receiptRoot, `checkout-${role}-${f.pins[role].head}`) }));
   assert.deepEqual(await waitForSubmitReceipts({ pins: f.pins, checkoutRequests }, { waitMs: 0 }), f.checkouts);
+});
+
+test('D89 prepares both native original plans from one fixed four-repository tuple without central submission', () => {
+  const f = serviceFixture();
+  const outputRoot = path.join(f.base, 'submission');
+  const makePlan = (selector) => orchestrateSubmission({ selector, pins: f.pins, checkouts: f.checkouts,
+    outputDir: path.join(outputRoot, selector), homes: f.homes, target: f.target,
+    appRoot: f.checkouts.app, receiptRoot: f.receiptRoot, workerRoot: f.workerRoot });
+
+  const asset = makePlan('p2-native-asset');
+  const placement = makePlan('p2-native-placement');
+  for (const plan of [asset, placement]) {
+    assert.equal(plan.status, 'prepared_not_submitted');
+    assert.equal(plan.no_submission, true);
+    assert.equal(plan.no_browser_body_build, true);
+    assert.deepEqual(Object.fromEntries(Object.entries(plan.pins).map(([role, pin]) => [role, [pin.head, pin.tree]])),
+      Object.fromEntries(Object.entries(f.pins).map(([role, pin]) => [role, [pin.head, pin.tree]])));
+    assert.deepEqual(plan.checkouts, f.checkouts);
+    assert.deepEqual(Object.keys(plan.receipts).sort(), f.roles.slice().sort());
+    assert.match(plan.recipes.preflight, /D66_OUTPUT_DIR='/);
+    assert.match(plan.commands.preflight, /request-test/);
+    assert.match(plan.commands.wait, /wait-test.*<preflight-result-id>/);
+    assert.match(plan.commands.normal, /request-test/);
+    assert.equal(plan.preflight, null);
+    assert.equal(plan.normal, null);
+    assert.equal(plan.registry.staged_bytes.split('\n').filter(Boolean).length, 2);
+  }
+  assert.equal(asset.suite, 'p2-register-asset');
+  assert.equal(placement.suite, 'p2-automatic-child-placement');
+  assert.deepEqual(asset.suites, { preflight: 'p2-native-asset-0257-preflight', normal: 'p2-native-asset-0257' });
+  assert.deepEqual(placement.suites, { preflight: 'p2-native-placement-0257-preflight', normal: 'p2-native-placement-0257' });
+  assert.equal(existsSync(path.join(outputRoot, 'p2-native-asset', 'suites.conf')), false,
+    'source-only staging must not write the registry');
+});
+
+test('D89 fixed capture refuses a mutable normal home or a changed exact source before recipe construction', () => {
+  const f = serviceFixture();
+  assert.throws(() => fixedCapture({ pins: f.pins, checkouts: { ...f.checkouts, agent: f.homes.agent },
+    homes: f.homes, target: f.target, workerRoot: f.workerRoot }), /must be detached|per-request checkout/);
+  assert.throws(() => fixedCapture({ pins: { ...f.pins, runtime: { ...f.pins.runtime, tree: 'c'.repeat(40) } },
+    checkouts: f.checkouts, homes: f.homes, target: f.target, workerRoot: f.workerRoot }), /does not match/);
 });
 
 test('D73 refuses same-tree worker finalization parents, grandparents, multiple parents and changed snapshot trees', () => {
