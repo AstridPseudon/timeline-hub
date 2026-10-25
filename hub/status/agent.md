@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T19:46:40Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 1m -->
-# agent board, 2026-10-25T19:45Z
+<!-- agent | 2026-10-25T19:50:49Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 2m -->
+# agent board, 2026-10-25T19:48Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -92,13 +92,15 @@
 | D107 transcript root | Trace persisted pin after restart | Luna read only | Genuine private authority record | later | Reader1634; final1646 PASS | Source map and corrected custody PASS | Whole path source traced. Owner UNKNOWN; persisted/private record missing. Both317 failures live; no unchanged body or speculative guard author. | Evidence only |
 | D128 fixture result | Preserve first actual parent failure | Independent Luna | Corrected source1926 PASS | merged | Failure1829; Runtime1908/1926 | Prior FAIL retained; new source PASS | Empty suites baseline and complete census corrected in607535. New1945 receiving owns actual whole fixture; no behavior credit from source. | Evidence only |
 
-| D134 interim measurement | Classify completed frozen full core | Luna / service | Exact independent classification | review | Operator1909; reviewer1937 | Review running | Actual18455:8926 PASS,190 FAIL,180 ERROR,173 subtests PASS in1379.05s. Core and REG UNKNOWN. MEASUREMENT only. | Frozen a4e016 /5e9ad |
+| D134 interim measurement | Classify completed frozen full core | Luna / service | Exact independent classification | review | Operator1909; reviewer1937 complete | FAIL final custody; source classification retained | Actual370 bad:344 new-file,14 prior REG all FAIL,12 UNKNOWN. XML missing; final core and REG counts UNKNOWN. MEASUREMENT only. | Frozen a4e016 /5e9ad |
 | F Agent conflicts A | Classify first twenty frozen Agent paths | Luna | Earlier Main owner | blocked:runtime | Main first half1928 | Local1936 stopped as later duplicate | Main1928 is exclusive. Local WIP and branch retained; no product merge or clone proof. | Evidence only |
 | F Agent conflicts B | Classify last twenty frozen Agent paths | Luna | Earlier Main owner | blocked:runtime | Main B1935; local1936 complete | Local1942 stop queued | Earlier Main allocation received late. Local45 hunk source packet retained as supporting evidence; no further duplicate. | Evidence only |
 | F Runtime review | Review Runtime ten conflict classes | Luna read only | Runtime corrected derivative | blocked:runtime | Agent1926 complete; Main1927 | Agent FAIL evidence only | Exact partition and patch checks PASS; hash typo and three anchors need correction. Later Main review receipt requested. | Evidence only |
+| D135 Agent private join | Merge current upstream into private candidate | Sol | Lead fresh tip and reviewed conflict inputs | blocked:agent-lead | Agent allocator; lead freshness request1949 | Source only, no integration merge | D135 authorized. Current a30e base reserved; Main A1928/B1935 classifications feed join. Exact current upstream readback requested. | No candidate yet |
+
 Integration: Agent a30e74e901a28b39c28facba3deb00d76f186e23, tree ece8e0887e48e45cb1fce85b1256c49a0f6126c0; clean19:40Z. Native companions78db and graph callers a30e contain exact reviewed blobs. Runtime ab1e lock qualified. Released Agent070dfc unchanged; no product release before proper batch proof.
 
-Current measurement: service agent-agent-core-full-1025191128-18455 terminal exit1 at19:35Z. Operator8926 PASS /190 FAIL /180 ERROR /173 subtests PASS /1379.05s. Independent1937 classifies per ID against immutable30693 and pristine evidence. Core open and REG status UNKNOWN pending review. Historical30693 core425/REG14 retained as prior checkpoint only. No ship, custody or release credit; retirement0. Raw18455 is protected by KEEP while review is open.
+Current measurement: service agent-agent-core-full-1025191128-18455 terminal exit1 at19:35Z. Operator8926 PASS /190 FAIL /180 ERROR /173 subtests PASS /1379.05s. Independent1937 complete:344 new-file core,14 prior REG14 still FAIL,12 UNKNOWN. XML and full disk witness missing; final core and REG counts UNKNOWN. Read-only wholepath1948 compares passing1345. Historical30693 core425/REG14 retained as prior checkpoint only. No ship, custody or release credit; retirement0. Raw18455 is protected by KEEP while review is open.
 
 Bounded proof:16bb/5e9ad native5 PASS and originalten6 PASS4 FAIL, independently1405. Current originalTrue still FAIL at redo birth on d4ba/ab1e; exact records missing and causal owner unknown. Scalar, compound and separate remain live. Synthetic3/native2 PASS does not close originalfour.
 
@@ -108,8 +110,8 @@ Blockers: Runtime/Main conflict halves A1928/B1935 — both earlier owners prese
 Blockers: SWAP safety — D130 holds recovery and related qualification after automatic classifier refusal. Owner escalation runtime-20261025T1553Z-D127-safety-refusal.md retained. No retry, transfer, alternate route or rollback.
 Blockers: D69 and D59 — genuine installed render90, platform, final upstream audit, fullP2, final tupleP1-P5, wheel and ZIP owed. Farm D77 only after qualified maker kit.
 
-Next ready: actual receiving1945 check-only then one changed genuine fixture on Agent. Independent result review, reviewed CAS kit install and actual received hash/mode precede same-WIP controller1722 ONE changed normal child request/core. Production request remains unspent. D134 classification and critical receiving1945 active.
-live 2 / cap 6 source, cap 1 heavy; ready-undispatched 0 local. Receiver1945 is sole heavy controller; independent1937 is read only. Main both conflict halves remote-owned.
+Next ready: actual receiving1945 check-only then one changed genuine fixture on Agent. Independent result review, reviewed CAS kit install and actual received hash/mode precede same-WIP controller1722 ONE changed normal child request/core. Production request remains unspent. Critical receiving1945 and host wholepath1948 active. D135 private join waits exact lead-current upstream receipt.
+live 2 / cap 6 source, cap 1 heavy; ready-undispatched 0 local. Receiver1945 is sole heavy controller; host wholepath1948 is read only. Main both conflict halves remote-owned.
 
 Disk:6.39GB19:42Z. Sweep3 running; compact packed0 and gzipped2 old logs; ended clean nonKEEP scan found0. Protected d22/f1012 and held/refused targets unchanged; six-pin guard receipt design/agent-D128-six-pin-guards-1557.json retained. KEEP on current18455.
 H6: actual Runtime19:31, App19:30 and Farm authoritative16:05 boards read19:40. Runtime1926 final source review PASS consumed, D1001934 evidence correction active; App D127c cumulative1929 and App16 review1926 active. No cross-lane dependency silently left ready.
@@ -117,4 +119,4 @@ D133 corrected optionB DEFERRED; no optionA review or own1. Gate3 unchanged, vis
 Later: transcript authority, originalTrue redo and graph child birth lack authentic private boundary records; owners UNKNOWN. No speculative guard author or unchanged repeat. Element deterministic profile remains App D127c source-owned; no measured cost author yet. D23/D14 exact deferred; E2/D79 wait ZIP; D13 installed environment gap explicit.
 D129 normal source review1549 completed Ruff, compile and AST PASS. Historical Farm permission refusals retained; no retry. D131 actual123bb regular0755 installed, child5905580032 bytes, Runtime/profile8GiB unchanged. No local guard edit or near-match environment.
 Safety: managers change only boards, briefs, peers and byte-exact worker evidence handoffs. No direct product/test/generated/pin edits, Git mutations, credentials, upstream push, M5 or refused-route retries.
-INBOX consumed through1827871 bytes. Current2026-10-25T19:42Z pass stopped later overlapping halfA, published exact final measurement evidence from harness commit and informed Runtime of available E2E venue. No count deduction or body repeat.
+INBOX consumed through1829412 bytes. Current2026-10-25T19:42Z pass stopped later overlapping halfA, published exact final measurement evidence from harness commit and informed Runtime of available E2E venue. No count deduction or body repeat.

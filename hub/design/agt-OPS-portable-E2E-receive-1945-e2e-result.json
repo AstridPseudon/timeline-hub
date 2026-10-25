@@ -1,0 +1,40 @@
+{
+  "whole_make_e2e": "NOTRUN",
+  "parent_red": false,
+  "candidate_green": false,
+  "adversarial_checks": 0,
+  "commands": [
+    {
+      "label": "parent",
+      "argv": [
+        "bash",
+        "/tmp/timeline-portable-receive-008vuh/inventory-parent-0857",
+        "venv-agent-child-inventory-parent",
+        "5ce02cda82555495c7ce2867cb088643be61dae1",
+        "--source-carrier",
+        "/tmp/timeline-portable-receive-008vuh/tiny-agent",
+        "/tmp/timeline-portable-receive-008vuh/tiny-runtime",
+        "cffb1d27712e5391b9d83bfd65a4d5002b1d2eee"
+      ],
+      "exit_code": 2
+    }
+  ],
+  "verifier_mocked": false,
+  "store_initialized_by_worker": true,
+  "admission_changed": false,
+  "parent_stages": [
+    [
+      "venv",
+      "start"
+    ],
+    [
+      "venv",
+      "complete"
+    ],
+    [
+      "bootstrap-pip",
+      "start"
+    ]
+  ],
+  "blocker": "parent did not reach the expected inventory refusal"
+}

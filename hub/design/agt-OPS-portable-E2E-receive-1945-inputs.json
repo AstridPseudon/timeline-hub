@@ -1,0 +1,6 @@
+{
+  "agent_fixture_commit": "5ce02cda82555495c7ce2867cb088643be61dae1",
+  "runtime_fixture_commit": "cffb1d27712e5391b9d83bfd65a4d5002b1d2eee",
+  "wheelhouse_pins": "manifest-authenticated",
+  "git_mutation_scope": "two-private-tiny-source-carriers"
+}

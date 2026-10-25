@@ -1,0 +1,7 @@
+{
+  "dispatch_admission_free_bytes": 6383534080,
+  "normal_reserve_bytes": 5905580032,
+  "stop_line_bytes": 4000000000,
+  "source_review": "PASS_SOURCE_UNIT",
+  "body_started": false
+}

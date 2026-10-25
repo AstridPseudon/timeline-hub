@@ -1,0 +1,34 @@
+{
+  "suite": "composition inventory-whole-maker",
+  "service_id": "agt-OPS-portable-E2E-receive-1945-inventory-whole-maker-1025194809-23349",
+  "terminal_status": "fail",
+  "exit_code": 2,
+  "result": {
+    "whole_make_e2e": "NOTRUN",
+    "parent_red": false,
+    "candidate_green": false,
+    "adversarial_checks": 0,
+    "verifier_mocked": false,
+    "store_initialized_by_worker": true,
+    "admission_changed": false,
+    "parent_stages": [
+      [
+        "venv",
+        "start"
+      ],
+      [
+        "venv",
+        "complete"
+      ],
+      [
+        "bootstrap-pip",
+        "start"
+      ]
+    ],
+    "command_exits": [
+      2
+    ],
+    "blocker": "parent did not reach the expected inventory refusal",
+    "e2e_result_sha256": "782d386edcbfa154ca4088ac2bdb6d536f265bde7f114d41944798cfbbf59e83"
+  }
+}
