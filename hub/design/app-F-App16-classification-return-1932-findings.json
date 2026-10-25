@@ -1,0 +1,186 @@
+{
+  "task": "app-F-App16-classification-return-1932",
+  "verdict": "PASS_CORRECTED_CLASSIFICATION",
+  "corrected_finding": "The 1921 all-semantic label was too broad. Reconcile only the 13 marker-bearing semantic seams listed here; 67 headers are clean preview output and one import hunk is mechanical.",
+  "semantic_choices": [
+    {
+      "path": "public/install-manifest.json",
+      "header": "@@ -1,11 +1,22 @@",
+      "owner": "App lead with Agent/Runtime release owners",
+      "choice": "Regenerate the manifest after the selected integrated Agent and Runtime commits are final; preserve upstream vibecomfy/OMP additions and publish only hashes/digests computed from the chosen sources.",
+      "app_owner": "App lead with Agent/Runtime release owners",
+      "reviewer_proposal": "Regenerate the manifest after the selected integrated Agent and Runtime commits are final; preserve upstream vibecomfy/OMP additions and publish only hashes/digests computed from the chosen sources.",
+      "preserved_c0": "Keep the full C0 v2 request/reply contract, authority, guards, privacy, durable receipt, and accepted/merged/conflict/invalid/dry-run distinctions; do not invent a TypeScript executor or alternate save route.",
+      "preserved_upstream_behavior": "Retain upstream vibecomfy/OMP additions; regenerate only after final Agent/Runtime choices and publish computed hashes/digests.",
+      "preserved_live_predicates": "Manifest hashes must describe the selected integrated sources; no stale or hand-entered digest.",
+      "approval_route": "PLAN-covered finite App-owner choice; send to the App cut owner. No new human-approval flow is introduced and no semantic patch is applied here."
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+      "header": "@@ -1365,7 +1598,11 @@",
+      "owner": "App AgentChat owner",
+      "choice": "Preserve both the upstream setup/catalog/terminal-nudge tests and the ours voice/session/queue tests, including exact mocks and refusal predicates; reconcile against the final AgentChat API.",
+      "app_owner": "App AgentChat owner",
+      "reviewer_proposal": "Preserve both the upstream setup/catalog/terminal-nudge tests and the ours voice/session/queue tests, including exact mocks and refusal predicates; reconcile against the final AgentChat API.",
+      "preserved_c0": "Keep the full C0 v2 request/reply contract, authority, guards, privacy, durable receipt, and accepted/merged/conflict/invalid/dry-run distinctions; do not invent a TypeScript executor or alternate save route.",
+      "preserved_upstream_behavior": "Retain upstream setup/catalog/terminal-nudge tests and exact mocks while retaining ours voice/session/queue tests.",
+      "preserved_live_predicates": "Preserve exact mocks, refusal predicates, setup recovery, session/voice/queue assertions, and both test families.",
+      "approval_route": "PLAN-covered finite App-owner choice; send to the App cut owner. No new human-approval flow is introduced and no semantic patch is applied here."
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+      "header": "@@ -1374,8 +1611,16 @@",
+      "owner": "App AgentChat owner",
+      "choice": "Preserve both the upstream setup/catalog/terminal-nudge tests and the ours voice/session/queue tests, including exact mocks and refusal predicates; reconcile against the final AgentChat API.",
+      "app_owner": "App AgentChat owner",
+      "reviewer_proposal": "Preserve both the upstream setup/catalog/terminal-nudge tests and the ours voice/session/queue tests, including exact mocks and refusal predicates; reconcile against the final AgentChat API.",
+      "preserved_c0": "Keep the full C0 v2 request/reply contract, authority, guards, privacy, durable receipt, and accepted/merged/conflict/invalid/dry-run distinctions; do not invent a TypeScript executor or alternate save route.",
+      "preserved_upstream_behavior": "Retain upstream setup/catalog/terminal-nudge tests and exact mocks while retaining ours voice/session/queue tests.",
+      "preserved_live_predicates": "Preserve exact mocks, refusal predicates, setup recovery, session/voice/queue assertions, and both test families.",
+      "approval_route": "PLAN-covered finite App-owner choice; send to the App cut owner. No new human-approval flow is introduced and no semantic patch is applied here."
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+      "header": "@@ -314,7 +329,219 @@",
+      "owner": "App AgentChat owner",
+      "choice": "Preserve both the upstream setup/catalog/terminal-nudge tests and the ours voice/session/queue tests, including exact mocks and refusal predicates; reconcile against the final AgentChat API.",
+      "app_owner": "App AgentChat owner",
+      "reviewer_proposal": "Preserve both the upstream setup/catalog/terminal-nudge tests and the ours voice/session/queue tests, including exact mocks and refusal predicates; reconcile against the final AgentChat API.",
+      "preserved_c0": "Keep the full C0 v2 request/reply contract, authority, guards, privacy, durable receipt, and accepted/merged/conflict/invalid/dry-run distinctions; do not invent a TypeScript executor or alternate save route.",
+      "preserved_upstream_behavior": "Retain upstream setup/catalog/terminal-nudge tests and exact mocks while retaining ours voice/session/queue tests.",
+      "preserved_live_predicates": "Preserve exact mocks, refusal predicates, setup recovery, session/voice/queue assertions, and both test families.",
+      "approval_route": "PLAN-covered finite App-owner choice; send to the App cut owner. No new human-approval flow is introduced and no semantic patch is applied here."
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+      "header": "@@ -513,6 +740,12 @@",
+      "owner": "App AgentChat owner",
+      "choice": "Preserve both the upstream setup/catalog/terminal-nudge tests and the ours voice/session/queue tests, including exact mocks and refusal predicates; reconcile against the final AgentChat API.",
+      "app_owner": "App AgentChat owner",
+      "reviewer_proposal": "Preserve both the upstream setup/catalog/terminal-nudge tests and the ours voice/session/queue tests, including exact mocks and refusal predicates; reconcile against the final AgentChat API.",
+      "preserved_c0": "Keep the full C0 v2 request/reply contract, authority, guards, privacy, durable receipt, and accepted/merged/conflict/invalid/dry-run distinctions; do not invent a TypeScript executor or alternate save route.",
+      "preserved_upstream_behavior": "Retain upstream setup/catalog/terminal-nudge tests and exact mocks while retaining ours voice/session/queue tests.",
+      "preserved_live_predicates": "Preserve exact mocks, refusal predicates, setup recovery, session/voice/queue assertions, and both test families.",
+      "approval_route": "PLAN-covered finite App-owner choice; send to the App cut owner. No new human-approval flow is introduced and no semantic patch is applied here."
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -1038,10 +1130,17 @@",
+      "owner": "App AgentChat owner with Timeline lead",
+      "choice": "Integrate upstream setup/error/terminal behavior with the current timeline-session availability gate, voice behavior, and unified menu; no AgentChat path may bypass the mounted App outbox or Runtime commitTimeline caller.",
+      "app_owner": "App AgentChat owner with Timeline lead",
+      "reviewer_proposal": "Integrate upstream setup/error/terminal behavior with the current timeline-session availability gate, voice behavior, and unified menu; no AgentChat path may bypass the mounted App outbox or Runtime commitTimeline caller.",
+      "preserved_c0": "Keep the full C0 v2 request/reply contract, authority, guards, privacy, durable receipt, and accepted/merged/conflict/invalid/dry-run distinctions; do not invent a TypeScript executor or alternate save route.",
+      "preserved_upstream_behavior": "Retain upstream setup/error/terminal behavior and reconcile it with the current timeline-session gate, voice behavior, and unified menu.",
+      "preserved_live_predicates": "Mounted App outbox -> Runtime commitTimeline remains the only production save path; availability, setup/error, terminal, voice, and menu predicates remain live.",
+      "approval_route": "PLAN-covered finite App-owner choice; send to the App cut owner. No new human-approval flow is introduced and no semantic patch is applied here."
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -1057,7 +1156,36 @@",
+      "owner": "App AgentChat owner with Timeline lead",
+      "choice": "Integrate upstream setup/error/terminal behavior with the current timeline-session availability gate, voice behavior, and unified menu; no AgentChat path may bypass the mounted App outbox or Runtime commitTimeline caller.",
+      "app_owner": "App AgentChat owner with Timeline lead",
+      "reviewer_proposal": "Integrate upstream setup/error/terminal behavior with the current timeline-session availability gate, voice behavior, and unified menu; no AgentChat path may bypass the mounted App outbox or Runtime commitTimeline caller.",
+      "preserved_c0": "Keep the full C0 v2 request/reply contract, authority, guards, privacy, durable receipt, and accepted/merged/conflict/invalid/dry-run distinctions; do not invent a TypeScript executor or alternate save route.",
+      "preserved_upstream_behavior": "Retain upstream setup/error/terminal behavior and reconcile it with the current timeline-session gate, voice behavior, and unified menu.",
+      "preserved_live_predicates": "Mounted App outbox -> Runtime commitTimeline remains the only production save path; availability, setup/error, terminal, voice, and menu predicates remain live.",
+      "approval_route": "PLAN-covered finite App-owner choice; send to the App cut owner. No new human-approval flow is introduced and no semantic patch is applied here."
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -1396,6 +1554,7 @@",
+      "owner": "App AgentChat owner with Timeline lead",
+      "choice": "Integrate upstream setup/error/terminal behavior with the current timeline-session availability gate, voice behavior, and unified menu; no AgentChat path may bypass the mounted App outbox or Runtime commitTimeline caller.",
+      "app_owner": "App AgentChat owner with Timeline lead",
+      "reviewer_proposal": "Integrate upstream setup/error/terminal behavior with the current timeline-session availability gate, voice behavior, and unified menu; no AgentChat path may bypass the mounted App outbox or Runtime commitTimeline caller.",
+      "preserved_c0": "Keep the full C0 v2 request/reply contract, authority, guards, privacy, durable receipt, and accepted/merged/conflict/invalid/dry-run distinctions; do not invent a TypeScript executor or alternate save route.",
+      "preserved_upstream_behavior": "Retain upstream setup/error/terminal behavior and reconcile it with the current timeline-session gate, voice behavior, and unified menu.",
+      "preserved_live_predicates": "Mounted App outbox -> Runtime commitTimeline remains the only production save path; availability, setup/error, terminal, voice, and menu predicates remain live.",
+      "approval_route": "PLAN-covered finite App-owner choice; send to the App cut owner. No new human-approval flow is introduced and no semantic patch is applied here."
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "header": "@@ -534,7 +548,17 @@",
+      "owner": "App AgentChat owner with Timeline lead",
+      "choice": "Integrate upstream setup/error/terminal behavior with the current timeline-session availability gate, voice behavior, and unified menu; no AgentChat path may bypass the mounted App outbox or Runtime commitTimeline caller.",
+      "app_owner": "App AgentChat owner with Timeline lead",
+      "reviewer_proposal": "Integrate upstream setup/error/terminal behavior with the current timeline-session availability gate, voice behavior, and unified menu; no AgentChat path may bypass the mounted App outbox or Runtime commitTimeline caller.",
+      "preserved_c0": "Keep the full C0 v2 request/reply contract, authority, guards, privacy, durable receipt, and accepted/merged/conflict/invalid/dry-run distinctions; do not invent a TypeScript executor or alternate save route.",
+      "preserved_upstream_behavior": "Retain upstream setup/error/terminal behavior and reconcile it with the current timeline-session gate, voice behavior, and unified menu.",
+      "preserved_live_predicates": "Mounted App outbox -> Runtime commitTimeline remains the only production save path; availability, setup/error, terminal, voice, and menu predicates remain live.",
+      "approval_route": "PLAN-covered finite App-owner choice; send to the App cut owner. No new human-approval flow is introduced and no semantic patch is applied here."
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx",
+      "header": "@@ -1,3 +1,4 @@",
+      "owner": "App AgentChat owner",
+      "choice": "Reconcile the unified menu API with upstream setup and terminal actions, preserving focus handoff, agent/model selection, and all source-owned menu callbacks; no wholesale side selection.",
+      "app_owner": "App AgentChat owner",
+      "reviewer_proposal": "Reconcile the unified menu API with upstream setup and terminal actions, preserving focus handoff, agent/model selection, and all source-owned menu callbacks; no wholesale side selection.",
+      "preserved_c0": "Keep the full C0 v2 request/reply contract, authority, guards, privacy, durable receipt, and accepted/merged/conflict/invalid/dry-run distinctions; do not invent a TypeScript executor or alternate save route.",
+      "preserved_upstream_behavior": "Retain upstream setup and terminal actions while preserving focus handoff, agent/model selection, and source-owned callbacks.",
+      "preserved_live_predicates": "Focus, selection, callback ownership, and terminal/setup availability predicates remain live; no wholesale side selection.",
+      "approval_route": "PLAN-covered finite App-owner choice; send to the App cut owner. No new human-approval flow is introduced and no semantic patch is applied here."
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx",
+      "header": "@@ -299,6 +315,7 @@",
+      "owner": "App AgentChat owner",
+      "choice": "Reconcile the unified menu API with upstream setup and terminal actions, preserving focus handoff, agent/model selection, and all source-owned menu callbacks; no wholesale side selection.",
+      "app_owner": "App AgentChat owner",
+      "reviewer_proposal": "Reconcile the unified menu API with upstream setup and terminal actions, preserving focus handoff, agent/model selection, and all source-owned menu callbacks; no wholesale side selection.",
+      "preserved_c0": "Keep the full C0 v2 request/reply contract, authority, guards, privacy, durable receipt, and accepted/merged/conflict/invalid/dry-run distinctions; do not invent a TypeScript executor or alternate save route.",
+      "preserved_upstream_behavior": "Retain upstream setup and terminal actions while preserving focus handoff, agent/model selection, and source-owned callbacks.",
+      "preserved_live_predicates": "Focus, selection, callback ownership, and terminal/setup availability predicates remain live; no wholesale side selection.",
+      "approval_route": "PLAN-covered finite App-owner choice; send to the App cut owner. No new human-approval flow is introduced and no semantic patch is applied here."
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx",
+      "header": "@@ -84,9 +95,14 @@",
+      "owner": "App AgentChat owner",
+      "choice": "Reconcile the unified menu API with upstream setup and terminal actions, preserving focus handoff, agent/model selection, and all source-owned menu callbacks; no wholesale side selection.",
+      "app_owner": "App AgentChat owner",
+      "reviewer_proposal": "Reconcile the unified menu API with upstream setup and terminal actions, preserving focus handoff, agent/model selection, and all source-owned menu callbacks; no wholesale side selection.",
+      "preserved_c0": "Keep the full C0 v2 request/reply contract, authority, guards, privacy, durable receipt, and accepted/merged/conflict/invalid/dry-run distinctions; do not invent a TypeScript executor or alternate save route.",
+      "preserved_upstream_behavior": "Retain upstream setup and terminal actions while preserving focus handoff, agent/model selection, and source-owned callbacks.",
+      "preserved_live_predicates": "Focus, selection, callback ownership, and terminal/setup availability predicates remain live; no wholesale side selection.",
+      "approval_route": "PLAN-covered finite App-owner choice; send to the App cut owner. No new human-approval flow is introduced and no semantic patch is applied here."
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/TourChatPanel.tsx",
+      "header": "@@ -152,8 +152,18 @@",
+      "owner": "App tour owner",
+      "choice": "Keep the current source's static tour/no-session behavior and unified AgentChatMenu; add only the upstream coarse-pointer styling after verifying tour anchors and scripted predicates remain intact.",
+      "app_owner": "App tour owner",
+      "reviewer_proposal": "Keep the current source's static tour/no-session behavior and unified AgentChatMenu; add only the upstream coarse-pointer styling after verifying tour anchors and scripted predicates remain intact.",
+      "preserved_c0": "Keep the full C0 v2 request/reply contract, authority, guards, privacy, durable receipt, and accepted/merged/conflict/invalid/dry-run distinctions; do not invent a TypeScript executor or alternate save route.",
+      "preserved_upstream_behavior": "Retain the upstream coarse-pointer styling only after checking the existing static tour and anchors.",
+      "preserved_live_predicates": "Static no-session behavior, tour anchors, scripted predicates, and responsive/coarse-pointer behavior remain live.",
+      "approval_route": "PLAN-covered finite App-owner choice; send to the App cut owner. No new human-approval flow is introduced and no semantic patch is applied here."
+    }
+  ],
+  "mechanical_textual_choice": {
+    "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+    "header": "@@ -6,7 +6,11 @@",
+    "classification": "trivial_textual",
+    "exact_union": "Retain both independent imports: CHAT_VOICE_ENABLED from ours and type LocalAgentChoice from upstream. Both are used by their preserved test families.",
+    "source_context": "Base has the shared import boundary; ours adds CHAT_VOICE_ENABLED; upstream adds LocalAgentChoice.",
+    "repo_application": "NOT_APPLIED; artifact only, because this worker may not modify or merge the repository."
+  },
+  "clean_nonconflicting_policy": "67 headers were checked against the actual preview and carry no conflict markers; they require no owner choice and are not relabeled as conflicts.",
+  "production_caller": {
+    "mounted_path": "src/tools/video-editor/hooks/useTimelineSave.ts:319-323 -> src/tools/video-editor/commands/localSaveSession.ts:168-196 -> src/integrations/runtime/dataProvider.ts:751-767 -> src/integrations/runtime/client.ts:735-742",
+    "proof": "The mounted persisted outbox sends the original C0-shaped request and HTTP idempotency key to the registered Runtime commitTimeline transport; provider project/timeline and revision/publication guards run before transport.",
+    "diagnostic_hook": "src/tools/video-editor/lib/timeline-diagnostics.ts:10-14,147-201, ordinary opt-in __timelineSaveDiagnosticsEnabled path; observational/redacted only and cannot change result classification.",
+    "helper_only_credit": false
+  },
+  "source_route": {
+    "delivery_builder": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "route": "git am -q at delivery-build lines 195-198",
+    "whitespace_error_flag": false,
+    "eof_cleanup": false
+  },
+  "semantic_patch_applied": false,
+  "normal_merge_applied": false
+}

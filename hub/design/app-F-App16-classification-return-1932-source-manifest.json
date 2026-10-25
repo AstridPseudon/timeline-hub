@@ -1,0 +1,171 @@
+{
+  "task": "app-F-App16-classification-return-1932",
+  "reviewed_task": "app-F-App16-conflict-classify-1921",
+  "verdict": "PASS_CORRECTED_CLASSIFICATION",
+  "verdict_scope": "Corrected read-only classification of the fixed App16 tuple: 16 files, 81 preview headers, 14 marker-bearing true conflicts, 67 clean nonconflicting headers, 13 semantic true conflicts, and one mechanical textual import union. No repository resolution was applied.",
+  "source_tuple": {
+    "base": "3881e9440688f774878e18806da2dc5c993a9b00",
+    "ours": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+    "upstream": "213318f1ec6ea5c324787bbd1c30a73072d1151a",
+    "merge_base": "3881e9440688f774878e18806da2dc5c993a9b00",
+    "base_tree": "210e5739b838ef7655f87238c711704301d12846",
+    "ours_tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20",
+    "upstream_tree": "591327d499ea162dd2ccb4620e577480aa305fae",
+    "current_head": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+    "current_head_tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20",
+    "integration_ref": "refs/heads/tl/integration",
+    "upstream_ref": "refs/remotes/origin/main",
+    "frozen_candidate_ref": "refs/remotes/origin/codex/handover-timeline-r4-20261019-candidate-app-qualified",
+    "frozen_candidate": "8f0c2484463e9b666d184a744d52e252984e551a"
+  },
+  "merge_preview": {
+    "command": "git merge-tree --trivial-merge 3881e9440688f774878e18806da2dc5c993a9b00 d5a1d1ab6550187e377fd7387d300102b8b82ece 213318f1ec6ea5c324787bbd1c30a73072d1151a",
+    "bytes": 769114,
+    "sha256": "6c7cf7073a554a81ddbfe9aca90da2a192e73bed90245e137e030998c4439535",
+    "read_only": true,
+    "expected_paths": 16,
+    "actual_paths": 16,
+    "expected_hunks": 81,
+    "actual_hunks": 81,
+    "hunk_headers_equal": true,
+    "true_conflict_hunks": 14,
+    "true_conflict_files": [
+      "public/install-manifest.json",
+      "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+      "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx",
+      "src/tools/video-editor/components/AgentChat/TourChatPanel.tsx"
+    ],
+    "clean_nonconflicting_hunks": 67
+  },
+  "blob_checks": {
+    "files": 16,
+    "triplets": 48,
+    "all_match": true,
+    "all_blob_objects": true
+  },
+  "qualified_inputs": {
+    "census": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-tail-upstream-census-1844-census.json",
+    "source_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-tail-upstream-census-1844-source-manifest.json",
+    "independent_review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-tail-census-review-1850-review.json",
+    "classification": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-F-App16-conflict-classify-1921/evidence/conflict-classes.json"
+  },
+  "route": {
+    "delivery_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "observed_route": "git am -q at delivery-build lines 195-198",
+    "git_apply_whitespace_error_flag": false,
+    "git_am_source_citation": "delivery-build:195-198"
+  },
+  "limitations": [
+    "No fresh private clone or actual merge/cut/ZIP dry-run was performed or claimed.",
+    "No acquisition, credentials, service, browser, body test, typecheck, lint, full suite, D130, or product edit was performed.",
+    "This verdict is source-review evidence only; it does not certify a resolved merge or delivery ZIP."
+  ],
+  "classification_summary": {
+    "files": 16,
+    "preview_hunks": 81,
+    "true_conflict_hunks": 14,
+    "clean_nonconflicting_hunks": 67,
+    "semantic_true_conflicts": 13,
+    "trivial_textual_true_conflicts": 1,
+    "unclassified_hunks": 0
+  },
+  "source_byte_sha256": [
+    {
+      "path": "package.json",
+      "base": "224652de20da66737a20e9b125447e6160e452d3286dcdf2f9e8878b55451550",
+      "ours": "a3854a8eeb714fc65777cbe0951fa0914b1a3c84af91b85154732869b01e165d",
+      "upstream": "ec14f4ba4ec7efd7496a6335e044e63cb0d8e3281da959896b12c9010addf4b6"
+    },
+    {
+      "path": "public/install-manifest.json",
+      "base": "ef368681d0fc4b2c9c37b8ea1b49e55005931e38892556efbec584d9b12453ab",
+      "ours": "02a0cf29ac24ec5c18bf04e7e3540aada60854cd68f02f634ae5fd90eb6de1a1",
+      "upstream": "50af9255a1640fa8d75dfb118af980162a1eeeee12a1b3196d39b9076a13fe3c"
+    },
+    {
+      "path": "src/app/onboarding/WelcomeConnection.test.tsx",
+      "base": "9e848b701c2778eeaeb878ef086231647ce0df93ad6e74b731946e2a70af7d36",
+      "ours": "973ed0187bfa1647cfcfe90bd20731c3b0661b950b6f12acaf3e9505aefcd1a2",
+      "upstream": "e1150a320a954e90a7abfdc31b42f40b916d53e8faa87eca413d9ddf68e19b99"
+    },
+    {
+      "path": "src/integrations/astrid/localAgents.ts",
+      "base": "191591bc13187abc4873c3484084da98a5be232d366b213d923a0c953809f6a8",
+      "ours": "d62b3989865568f2b0be8a3a03535ad8f34b456b6cc0020339f58528e3530bdf",
+      "upstream": "aed9b0bb28cf348e9f4410d1604da657ab2f7c408ef36050a0d7bf6d7b5d1131"
+    },
+    {
+      "path": "src/integrations/paired/pairedRoutePolicy.test.ts",
+      "base": "2ddd70ffa20d356600a6c3b979426e32963827f911691d56bdc0b1279face390",
+      "ours": "2a374b408636153f47b83b08bb827e396cd231d2447a1b80c847a738f15b281d",
+      "upstream": "c18a1cc06ffbf27ced6ec907715ce6c5184ff1b1520af37e6227c0a858b48ffd"
+    },
+    {
+      "path": "src/integrations/runtime/client.ts",
+      "base": "e14ac95b824b38e5dd8fc6d76780215c711a6d096496b0bd4687f1f301c61de6",
+      "ours": "8e3fdb4919ad993ba7e038f5eeab6a4d79e12d8dffb05e4003443e44d58e1d61",
+      "upstream": "12c2c6ec1b9ffc2d04a167a30f44dea816821991ff398b6fe1d791d3cc3c8c55"
+    },
+    {
+      "path": "src/shared/components/SettingsModal/sections/ConnectionSection.tsx",
+      "base": "97ebe9346f8e8ea28d676e56b18c64a9b7686302309d19bac09a7a2e3a980e11",
+      "ours": "633745da16675051c291c72ff5bee0140de618c681d367a12a25383456afd3ea",
+      "upstream": "e605956c6f7a04fdbaca1b93c124a7186d484a028a72472dcdd4353a88b8607b"
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.projectContract.test.tsx",
+      "base": "15efe008334c1e235ce2223e68b397da13dd171b847eac38ce9bf6e0db5aaf5a",
+      "ours": "76cdfd045fcb07b5019703fa6495cd048e3630a032c5e21be25897c9f16f6b1f",
+      "upstream": "916c5285f3cec0875eb2d2589405a9e642ff6521b7b3e652bad313c38fec5a32"
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.test.tsx",
+      "base": "1eec69cf0e666a2744f6f40f6a50a3f5a8228a2e321280ea36e504f09ed43010",
+      "ours": "799e11618c71d5f15ebf6018d94531c9d4e3b714afa4ffcc3eb5385cc1c08d2a",
+      "upstream": "19db992e3d49994c5df369baf79c00f416a78a353394d5826e0ae385fd4bdd27"
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChat.tsx",
+      "base": "fb98eea35224dd0a03c26e87c6bd6b61f69a385dfbf2e573be239d756939927e",
+      "ours": "8c0455d2d0256d1865c4a5b51d1d1cff5e02fe3e8f587de5dc34ea0d7f28f8ee",
+      "upstream": "364b3794fe9f602fb83541a5d9d08227f422957352a040e1ce30c5ec69305028"
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx",
+      "base": "db33c549b87f750a63a6e4a10aff4844a66c2913aa0cd882e7f7193f1d7bf968",
+      "ours": "704fcb7a96be35450fe4cd30ee4500647c03489bcf6635a86b7472d882556cfa",
+      "upstream": "5248465b4b5634dced000f8043b9827c60134166f8ac43a0c9e4e3113a2424d1"
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/AgentChatModelLine.tsx",
+      "base": "3d08125efbec93d63ac3f36c12ea18f66d65de7b79829fa342468962237c6f86",
+      "ours": "ac8aa2e0204f7eeba393f568724d365a475a2ae8c7e993aeb34add1c8ee573ed",
+      "upstream": "488eedfadccea3d9df8780e4b0a0d054fe10a00eeef31f51d3b2a40981a742f6"
+    },
+    {
+      "path": "src/tools/video-editor/components/AgentChat/TourChatPanel.tsx",
+      "base": "b9e61ca2f0c5db8259474cdd5247a0f336a87551f528758f0d4172eb6e78e274",
+      "ours": "ed4884bc08d860acc7dd95e792b5d65d001714abf8646543360aaff6a5875aff",
+      "upstream": "11b1713add6a0e6a120adf47e9c00417f76e79ec0cf62c4827b5236aea1d3efa"
+    },
+    {
+      "path": "src/tools/video-editor/hooks/useAgentSession.ts",
+      "base": "7b96d924dc258137e7c46c82589a0e7237f1d4dd832a0bb2f50405eecf662d34",
+      "ours": "b99d568d2bd7f097cfde8e908d40a1a5a18e2d21a8dd4c312ff0d4e392a70aa9",
+      "upstream": "9fbc90e4053e79afe1edffd3e56604812200e4ffafc04ff3870d783652f573db"
+    },
+    {
+      "path": "src/tools/video-editor/pages/VideoEditorPage.test.tsx",
+      "base": "e0cdce2a8a62cd8c496bde41e73e8296c65f85dc1f27427706efd83eee111ae9",
+      "ours": "35645395786ed15ed6a03b3efee50254f9b6ddeb904e9a31d03c95f902e008f0",
+      "upstream": "680782a90722a07706635a257e0d708cba281b25e8f44c324d3c6713320cb377"
+    },
+    {
+      "path": "tests/e2e/fake-runtime/server.contract.test.mjs",
+      "base": "d828318c032f6d256589c4c62669b9452107181bcc0caedaf4579ecdeb9f8955",
+      "ours": "62dfab746b917e6e5539dadc4d56f2e36a5b72fb1519890e1f1aad55e08fdf3e",
+      "upstream": "985a231a39d438a761f0923bda94513a4c4508aa3940981c4f75488787ebe99c"
+    }
+  ]
+}

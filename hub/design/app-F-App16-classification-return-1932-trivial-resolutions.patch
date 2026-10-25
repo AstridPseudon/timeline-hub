@@ -1,0 +1,12 @@
+diff --git a/src/tools/video-editor/components/AgentChat/AgentChat.test.tsx b/src/tools/video-editor/components/AgentChat/AgentChat.test.tsx
+--- a/src/tools/video-editor/components/AgentChat/AgentChat.test.tsx
++++ b/src/tools/video-editor/components/AgentChat/AgentChat.test.tsx
+@@ -6,6 +6,8 @@
+ import type { ComponentProps } from 'react';
+ import type { AgentTurn } from '@/tools/video-editor/types/agent-session';
+ import { BridgeRouteError } from '@/integrations/astrid/transport.ts';
++import { CHAT_VOICE_ENABLED } from '@/tools/video-editor/hooks/chatVoice.ts';
++import type { LocalAgentChoice } from '@/integrations/astrid/localAgents.ts';
+ import { AgentChatPanel as AgentChatPanelWithoutProvider } from './AgentChat';
+ import { RuntimeConnectionProvider, useRuntimeConnection } from '@/integrations/runtime/RuntimeConnectionProvider.tsx';
+ import { BridgeContractError } from '@/tools/video-editor/data/bridgeContract.ts';
