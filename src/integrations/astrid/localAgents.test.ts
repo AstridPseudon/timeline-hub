@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it } from 'vitest';
-import { EXTERNAL_AGENT_IDS, LOCAL_AGENT_IDS, isExternalAgentSession, localAgentCatalogSchema, sessionAgentId } from './localAgents.ts';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { EXTERNAL_AGENT_IDS, LOCAL_AGENT_IDS, isExternalAgentSession, knownSessionAgentId, localAgentCatalogSchema, sessionAgentId } from './localAgents.ts';
 
 afterEach(() => localStorage.clear());
 
@@ -18,6 +18,24 @@ describe('local agent registry', () => {
     const catalog = localAgentCatalogSchema.parse({ defaultAgent: 'hermes', agents: [{ id: 'hermes', name: 'Hermes', state: 'ready', line: null, models: [], defaultModel: null }] });
     expect(catalog.defaultAgent).toBe('hermes');
     expect(localStorage.length).toBe(0);
+  });
+
+  it('skips service agents this app does not know and falls back for an unknown default', () => {
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => {});
+    const row = { id: 'claude-code', name: 'Claude Code', state: 'ready', line: null, models: [], defaultModel: null };
+    const catalog = localAgentCatalogSchema.parse({
+      defaultAgent: 'new-agent',
+      agents: [row, { id: 'new-agent', invalid: true }],
+    });
+    expect(catalog.agents).toEqual([row]);
+    expect(catalog.defaultAgent).toBe('astrid');
+    expect(debug).toHaveBeenCalledTimes(1);
+    debug.mockRestore();
+  });
+
+  it('does not route an unknown namespaced session to Astrid', () => {
+    expect(knownSessionAgentId('new-agent:chat-1')).toBeNull();
+    expect(() => sessionAgentId('new-agent:chat-1')).toThrow('does not support');
   });
 
   it('accepts optional setup fields and drops unknown agent and model keys', () => {

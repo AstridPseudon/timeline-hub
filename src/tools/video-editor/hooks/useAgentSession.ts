@@ -13,7 +13,7 @@ import { recordedEditorResults, type RecordedEditorResult } from '../runtime/edi
 import { runElementAcpRoundtrip } from '../runtime/elementAcpRoundtrip';
 import { acceptedReplayRequestIds } from '../runtime/agentRequestReceipts';
 import { readAstridTaskRefs, mergeAstridTaskRefs, type AgentTaskLink } from '../runtime/agentTaskLinks';
-import { defaultThoughtLevel, sessionAgentId, type LocalAgentId, type LocalAgentModels } from '@/integrations/astrid/localAgents.ts';
+import { defaultThoughtLevel, knownSessionAgentId, sessionAgentId, type LocalAgentId, type LocalAgentModels } from '@/integrations/astrid/localAgents.ts';
 import { AGENT_CHAT_COPY } from '@/integrations/astrid/chatCopy.ts';
 import { ACP_SESSION_CONTROL_FIELD, ACP_SESSION_CONTROL_UPDATE, type AcpSessionControl } from '@/integrations/astrid/acpSessionControl.ts';
 
@@ -355,7 +355,7 @@ export class AstridAgentSessionStore {
     if (projectId) {
       const chat = await this.client.acp.projectChat(projectId);
       // Association order keeps Chat N labels stable across selection/Main changes.
-      const options = chat.sessions.filter((session) => !session.missing).map(({ id }) => ({ id, status: this.state(id).status }));
+      const options = chat.sessions.filter((session) => !session.missing && knownSessionAgentId(session.id) !== null).map(({ id }) => ({ id, status: this.state(id).status }));
       for (const { id } of options) this.sessionProjects.set(id, projectId);
       await this.pullEvents();
       return options;
@@ -366,7 +366,7 @@ export class AstridAgentSessionStore {
     const options: AgentSessionOption[] = [];
     for (const item of sessionItemsFromValue(result)) {
       const id = sessionIdFromValue(item);
-      if (!id) continue;
+      if (!id || knownSessionAgentId(id) === null) continue;
       const session = this.state(id);
       options.push({ id, status: session.status });
     }
@@ -389,6 +389,10 @@ export class AstridAgentSessionStore {
 
   private isFollower(sessionId: string): boolean {
     return this.state(sessionId).control?.role === 'follower';
+  }
+
+  private agentForSession(sessionId: string): LocalAgentId {
+    return sessionAgentId(sessionId);
   }
 
   private assertCanStartTurn(sessionId: string): void {
@@ -419,7 +423,7 @@ export class AstridAgentSessionStore {
     this.replayMessages.set(sessionId, new Map());
     const entry = { connectionId, promise: Promise.resolve() };
     entry.promise = this.client.acp.loadSession(connectionId, sessionId).then((result) => {
-      if (!this.connected(sessionAgentId(sessionId), connectionId)) throw new Error('ACP disconnected during saved chat load.');
+      if (!this.connected(this.agentForSession(sessionId), connectionId)) throw new Error('ACP disconnected during saved chat load.');
       const control = controlFromResult(result);
       if (control) this.applySessionControl(sessionId, control);
       this.loaded.add(sessionId);
@@ -433,7 +437,7 @@ export class AstridAgentSessionStore {
     if (!sessionId) return { providers: [], currentModel: null, localModels: null };
     if (!projectId) throw new Error(AGENT_CHAT_COPY.selectProjectToReadModel);
     await this.assertOwned(projectId, sessionId);
-    const connectionId = await this.connection(sessionAgentId(sessionId));
+    const connectionId = await this.connection(this.agentForSession(sessionId));
     await this.load(connectionId, sessionId);
     await this.pullEvents();
     const { models } = await this.client.acp.sessionModels(connectionId, sessionId);
@@ -446,7 +450,7 @@ export class AstridAgentSessionStore {
     if (this.activePrompts.has(sessionId)) throw new Error('Wait for the active agent turn before changing settings.');
     if (!projectId) throw new Error('Select a project to configure this chat.');
     await this.assertOwned(projectId, sessionId);
-    const connectionId = await this.connection(sessionAgentId(sessionId));
+    const connectionId = await this.connection(this.agentForSession(sessionId));
     await this.load(connectionId, sessionId);
     await this.pullEvents();
     this.assertCanStartTurn(sessionId);
@@ -467,14 +471,14 @@ export class AstridAgentSessionStore {
 
   async unassignedProjectSessions(projectId: string) {
     const { defaultAgent } = await this.agents();
-    return this.client.acp.unassignedProjectSessions(projectId, await this.connection(defaultAgent));
+    return (await this.client.acp.unassignedProjectSessions(projectId, await this.connection(defaultAgent))).filter(session => knownSessionAgentId(session.id) !== null);
   }
   async associateProjectSession(projectId: string, expectedRevision: number, sessionId: string) {
-    return this.client.acp.associateProjectSession(projectId, await this.connection(sessionAgentId(sessionId)), expectedRevision, sessionId);
+    return this.client.acp.associateProjectSession(projectId, await this.connection(this.agentForSession(sessionId)), expectedRevision, sessionId);
   }
   async takeOver(projectId: string, sessionId: string): Promise<AgentSessionView> {
     await this.assertOwned(projectId, sessionId);
-    const connectionId = await this.connection(sessionAgentId(sessionId));
+    const connectionId = await this.connection(this.agentForSession(sessionId));
     await this.load(connectionId, sessionId);
     await this.pullEvents();
     const result = await this.client.acp.takeOverSession(connectionId, sessionId);
@@ -500,18 +504,18 @@ export class AstridAgentSessionStore {
     const existingId = mode === 'ensure_main'
       ? chatBeforeCreate?.main_session_id
       : chatBeforeCreate?.selected_session_id ?? chatBeforeCreate?.main_session_id;
-    const connectionAgent = existingId ? sessionAgentId(existingId) : choice.agent;
+    const connectionAgent = existingId ? this.agentForSession(existingId) : choice.agent;
     // New sessions always connect with the requested choices. Omitting both lets the service repeat
     // its last successful choices, even when another tab has changed them.
     const connectionId = existingId
-      ? await this.connection(sessionAgentId(existingId))
+      ? await this.connection(this.agentForSession(existingId))
       : (await this.client.acp.connect(choice.agent, choice.defaultModelId)).connection_id;
     let keepConnection = Boolean(existingId);
     try {
       const chat = await this.client.acp.createProjectSession(projectId, connectionId, mode, operationId);
       const id = (mode === 'ensure_main' ? chat.main_session_id : null) ?? chat.operation_session_id ?? chat.selected_session_id;
       if (!id) throw new Error('Astrid ACP did not return a session ID.');
-      const agent = sessionAgentId(id);
+      const agent = this.agentForSession(id);
       if (this.connectionIds.get(agent) === connectionId) keepConnection = true;
       // Ensure and operation replay can return another agent's existing session. An omitted-agent
       // connect does not report its agent, so only a known matching connection can be adopted.
@@ -539,7 +543,7 @@ export class AstridAgentSessionStore {
     if (sessionAgentId(sessionId) === 'astrid') return null;
     const current = await this.client.acp.projectChat(projectId);
     if (!current.sessions.some(session => session.id === sessionId && session.pending_first_message !== false)) return null;
-    const connectionId = await this.connection(sessionAgentId(sessionId));
+    const connectionId = await this.connection(this.agentForSession(sessionId));
     const projectChat = await this.client.acp.recoverProjectSession(
       projectId, connectionId, `empty-chat:${globalThis.crypto.randomUUID()}`, sessionId,
     );
@@ -553,7 +557,7 @@ export class AstridAgentSessionStore {
 
   async get(projectId: string, sessionId: string, replay = false): Promise<AgentSessionView> {
     await this.assertOwned(projectId, sessionId);
-    const agent = sessionAgentId(sessionId);
+    const agent = this.agentForSession(sessionId);
     if (replay) {
       if (this.activePrompts.has(sessionId)) throw new Error('Wait for the active request before checking saved delivery.');
       this.loaded.delete(sessionId);
@@ -620,7 +624,7 @@ export class AstridAgentSessionStore {
       await this.assertOwned(projectId, sessionId);
       if (signal.aborted) return;
       checkCurrent();
-      const agent = sessionAgentId(sessionId);
+      const agent = this.agentForSession(sessionId);
       const connectionId = await this.connection(agent);
       promptConnectionId = connectionId;
       if (signal.aborted) return;
@@ -790,7 +794,7 @@ export class AstridAgentSessionStore {
     this.assertWriter(sessionId);
     const cancelledBeforeDispatch = this.activePrompts.has(sessionId) && !this.dispatchedPrompts.has(sessionId);
     this.promptControllers.get(sessionId)?.abort();
-    const connectionId = await this.connection(sessionAgentId(sessionId));
+    const connectionId = await this.connection(this.agentForSession(sessionId));
     await this.client.acp.cancelSession(connectionId, sessionId);
     this.state(sessionId).status = cancelledBeforeDispatch ? 'waiting_user' : 'cancelled';
     await this.pullEvents();
