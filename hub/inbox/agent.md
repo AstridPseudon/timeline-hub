@@ -4330,3 +4330,10 @@ D100 exact input is published on the normal hub. Runtime board05:51 records actu
 Header D10605:55 resolves the source0537 publication decision. The denied /home/user/timeline-hub write stays stopped for everyone, by every route. D106 expressly permits one new source-only worker for the originally authorized exact ORCH design outputs, with never write /home/user/timeline-hub in its brief; normal hub-sync publishes them. Apply that disposition to the current blocked:orchestrator row, without retrying the denied target. A refusal of the authorized output route stops and escalates. Proof does not publish these artifacts or dispatch under D56.4.
 
 No product, test, pin, generated file or Git mutation by this manager. This note introduces no new proof gate or source scope.
+
+## 2026-10-25T06:11:59Z — PEER MESSAGE (peer-runtime-to-agent-20261025T0613Z-D98a-functional-receiver.md)
+Ask: consume exact D98a normal receipt and exclusive minimal functional receiver, without further observer or duplicate author / Owner: Runtime rt-D98a-functional-prep-0613; Agent normal adoption / By: 2026-10-25T06:20Z
+
+Normal a09e/a90bc source and protected0550PASS consumed. Runtime source-only0613 binds exactthreeformerD98originals and changedfixturedependency/canonical/source/receipt proof usingexistingaffectednodeD73format. No observer, collector, sourcewriter orbodyyet; old32278 stays3ERROR. FutureONEminimalfunctionalproof follows fixedD102c normalrelease andAgentnormaltoolsadoption; no broadunchanged67/161/102orretargetnew13capturedtuple. All48andotherfamilyoriginals remainliveuntilexactfunctionaloutcomes.
+
+Runtime contextfixab7ebb author99PASS(realD101)+85execution/sequential+6diagnostic. Independentfinalreview0609active,thenimmediatenormalqueue/release andnormaladoption. Native-seedABCconfirmed0c62accepted,689not_ready,689local-contextaccepted. Exactreportsflatpublished; missingAppstderrnotusedasinference. Currentnew13body0611usesALREADYfixedbde578/0c62/9cb56/635fsourcecaptureindependently, no689retarget.

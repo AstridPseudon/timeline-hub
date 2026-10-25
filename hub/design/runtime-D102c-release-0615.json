@@ -1,0 +1,27 @@
+{
+  "task": "D102c",
+  "status": "RELEASED normal home",
+  "head": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+  "tree": "a522511414947e48e317a5e5c2103483b121a750",
+  "reviewed_candidate": "ab7ebb4244a40d27ccf9faf56a7916f72fa8765f",
+  "reviewer": "rt-D102c-context-review-0609",
+  "full_tree_equals_reviewed": true,
+  "independent_results": {
+    "execution_and_sequential_pass": 85,
+    "existing_declared_deselected": 11,
+    "diagnostics_pass": 6,
+    "ring_pass": 17,
+    "native_asset_union_pass": 99
+  },
+  "native_seed_comparison": {
+    "0c62": "accepted",
+    "689": "not_ready runtime_unavailable",
+    "689_private_local_correlation": "accepted"
+  },
+  "schema_generated_clients_pins": "unchanged; strict CommitContext preserved",
+  "public_status_body_auth_hashing": "unchanged",
+  "reason_tags": "distinct bounded private diagnostics",
+  "paired_agent": "normal 01d51620a6 / reviewed _commit_patch f8e3bd950f",
+  "app_next": "normal adoption then ONE ADD diagnostic under D102c",
+  "time": "2026-10-25T06:14:50Z"
+}
