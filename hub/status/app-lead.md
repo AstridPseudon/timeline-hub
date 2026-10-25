@@ -1,1 +1,1 @@
-app-lead 07:46Z: daemons up (uptime ~2730m, no restart), disk ~5.8G, no blockers, no LEAD FETCH, no new refusals; codex unchanged; P1 15075 GO, P3 31792 service PASS (verdict pending), Agent 070dfc adoption then full P2 after D111
+app-lead 08:13Z: daemons up (uptime ~2775m, machine up 46h, no restart), 2 workers running, disk 5.6G (15 wt dirs), codex sizes unchanged since 17:12Z; no blockers for lead, no LEAD FETCH, no new refusals; P1 15075 GO, P3 31792 GO, early full P2 19078: 4 service PASS (ADD, parent, trans single/bulk), SWAP/element FAIL, placement ERROR, asset NOTRUN

@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T08:04:03Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 5m -->
-# app board, 2026-10-25T07:58Z
+<!-- app | 2026-10-25T08:08:27Z | dispatcher heartbeat 3s | live 2 (sol 0, luna 2, other 0) | busy30 5 | status age 0m -->
+# app board, 2026-10-25T08:08Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -259,9 +259,11 @@
 
 | D108-P2-route-prep | Prepare existing full tour recipe | Luna read only | Current App source | merged | app-D108-full-P2-route-prep-0754 | Existing p2 API and eight cases mapped; no tests or source changes. [Recipe](../../design/app-D108-full-P2-route-prep-0754-recipe.md) | Source unchanged |
 
-| D108-P2-early | Find other failures before D111 | Luna; service | Owner MAIN07:53 early run | doing | Actual19078; controller0753 | Source preflight15434 PASS. Full eight-case original queued07:54:40Z, fixed04beed/070dfc/1daca/635f. Same ID only. | Fixed source tuple |
+| D108-P2-early | Find other failures before D111 | Luna; service | Actual19078 terminal | review | Controller0753; review0807 | Exit1. Readiness1 PASS; originals4 PASS,2 FAIL,1 ERROR,1 NOTRUN. ADD/parent/single/bulk pass service only; exact first predicates pending producer. | 04beed/070dfc/1daca/635f |
 
 | P2-D111-retained-lifecycle | Return retained process and cache facts | Luna read only | Runtime peer0744 | merged | app-P2-element29218-lifecycle-0755 | Ordinal3 has provider start without outcome. Process/store/fallback/cache-clear UNKNOWN. [Facts](../../design/app-P2-element29218-lifecycle-0755-facts.md) | Evidence only |
+
+| D108-P2-19078-verdict | Qualify four passing original gestures | Luna independent | Actual19078 XML and source | review | app-D108-P2-19078-pass-review-0807 | ADD,parent,single,bulk servicePASS; exact source/tuple/XML/full tail qualification underway. Other four cases retain failure or not-run status. | 04beed/070dfc/1daca/635f |
 
 Integration: Normal App04beedcd18 includes independently reviewed portable phase-capture repair33fce, with home tree equal to the reviewed author. D110 adoption6e21 targets released Agent070dfc; Runtime remainsc916. It includes D105a scoped oracle398489, reviewed seed-log retention51239, and normal provenance to Runtimec916/Agent070dfc. c916 production bytes equal released1daca; Agent070dfc is the reviewed inverse correction plus already integrated source. Captured diagnostics/placement stay immutable older tuples.
 core open: 4 — SWAP, ADD, element and placement lack current GO. Four isolated GO retained on recorded tuples. CORRECTION: ADD18021 has retained KeyError in apply_inverse to remember. Element29218 stack shows schema validation in accepted-history replay. Agent D110 owns inverse; Runtime D111 owns validation cost. Full P2 after BOTH qualified releases/adoption; P1/P3 continue meanwhile. Placement31962 hit setup phase-sink collision; reviewed portable harness repair is now HOME04beed. Placement joins full P2 after D111.
@@ -269,10 +271,10 @@ regressions: Runtime689 request_id regression fixed in1daca. Inverse KeyError so
 
 Blockers: Runtime D111 — Qualified release and normal adoption gate the final tour only. Independent0729 FAIL and measured-return Sol0744 are active; owner07:53 explicitly permits the early current-source full tour.
 Blockers: Final cut — Four recorded isolated GO; current full P2 and final pinned P1–P5/core plus genuine installed render required before ZIP.
-Next ready: Authorized early full P2 is dispatched0753 now on04beed/070dfc/1daca/635f; route prep0754 is disjoint. Qualified D111 release still triggers normal adoption and the final full P2.
-live 2 / cap 6; ready-undispatched 0; core open: 4. Latest dispatcher header 2026-10-25T07:56:16Z; lifecycle0755 now complete. One App full P2 request19078 is running.
+Next ready: Early19078 terminal; producer0753 extracts exact first predicates and redacted logs. One independent review of four passing cases next; assign source causes immediately. Final D111 adoption/tour remains separate.
+live 1 / cap 6; ready-undispatched 0; core open: 4. Published dispatcher08:04Z count; review0807 newly dispatched and producer0753 finishing. Actual19078 terminal; no App heavy body.
 Capacity: Seven host-cleared stale pins recycled after fresh static guards, zero refusals; net867MB, free6.30GB at receipt0642. Four additional host-cleared pins recycled0700,zero refusals/net481MB; free5.78GB at receipt,6.53 GB after two host-cleared old pins recycled at07:47Z, net294MB and zero refusals. All finished clean non-KEEP worker trees already retired. All outputs/branches/reports/current pins retained; prior dirty/refused targets untouched. Source cap6 above5.0GB; heavy1 above5.2GB; nothing new below4.5GB.
-Inbox consumed through2017535 bytes. Owner early-tour amendment is already applied; actual19078 running. Runtime peer0744 is fulfilled by exact0755 safe lifecycle packet, returned this pass. D111 source remains measured-return Sol0744; final release pending. No safety or permission refusal.
+Inbox consumed through2020526 bytes. Late self peers0745/0748 confirm already-completed two-pin release; no repeated cleanup. Early19078 exit1: four service passes, two failures, placement error, asset not run. Controller handback and sole independent review next. No safety or permission refusal.
 
 Later: D79 and E paused until ZIP. F-final fresh Appd11417a59 and Agent08e6 applied-result suites belong to Runtime final coordinator. Gating stays frozen upstream3881. D108 current P1/P3 GO do not constitute final cut proofs. Withdrawn D88 and denied actions stay held.
 Evidence: [Current P1 GO](../../design/app-D108-P1-15075-GO-review-0657.md), [Current P3 GO](../../design/app-D108-P3-31792-GO-review-0706.md), [Sink review FAIL](../../design/app-P2-phase-sink-review-0703.md), [ADD18021](../../design/app-P2-D102c-ADD-element-diagnostics-0628-handoff-add.md), [Retention PASS](../../design/app-P2-D102-retention-sol-review-0631.md), [Pin release](../../design/app-pin-guarded-release-0642.md), [Bulk GO](../../design/app-P2-bulk21852-GO-return-0339.md), [Asset GO](../../design/app-P2-asset27438-GO-review-0315.md), [Single GO](../../design/app-P2-single5678-GO-resume-0255.md), [Parent GO](../../design/app-P2-parent20481-GO-review-0507.md).

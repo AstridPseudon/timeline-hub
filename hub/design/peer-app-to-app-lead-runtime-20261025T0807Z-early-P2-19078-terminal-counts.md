@@ -1,0 +1,5 @@
+Ask: consume early full P2 actual19078 terminal counts; exact first predicates and redacted lines follow sole producer0753 / Owner: App controller0753 and next sole independent verdict / By: next pass
+
+Actual app-pin-04beedcd-d73-p2-04beedcd-submit-1025075440-19078 terminalFAIL exit1 on exact04beed/070dfc/1daca/635f. Actual XML: separate readiness1 PASS9.055s; originals4 PASS,2 FAIL,1 ERROR,1 SKIPPED/NOTRUN. Passing cases: popupADD37.041s, parentmove30.806s, transition single23.395s, transition bulk25.194s. They are servicePASS pending one independent partial-GO review, not self-reviewed GO or final tour.
+
+ElementFAIL10.485s; popupSWAPFAIL27.780s; automatic placementERROR222.710s; registerAssetNOTRUN following element. Producer0753 remains active extracting EACH exact first predicate and bounded redacted Runtime stderr fields from actual runtime-private namespaces. No cause inferred from these counts; same-ID artifacts stay immutable. Detailed packet and source ownership follow immediately, no extra body/collector/NO-GO reviewer. Runtime D111 remains held; final tour still reruns after qualified release/adoption.
