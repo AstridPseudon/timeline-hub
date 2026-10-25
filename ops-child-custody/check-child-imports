@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Bounded import preflight for an already selected child interpreter.
 
-This command probes only names classified as genuine installed distributions.
+This command probes installed requirements and canonical missing-name diagnostics.
 It is deliberately not a launcher, installer, Store registrar, or proof of a
 registered child. Static enumeration has an explicit dynamic-import limit.
 """
@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -18,6 +19,44 @@ import sys
 KNOWN_LOCAL = {"astrid", "astrid_runtime", "astrid_runtime_client", "runtime_protocol"}
 OPTIONAL_NAMES = {"numpy", "torch", "cv2"}
 TEST_PARTS = {"test", "tests", "fixtures", "conftest.py"}
+# Agent 2149 packet, independently authenticated by final census review 2216.
+CANONICAL_SCHEMA = "timeline.d139.input-census/v1"
+CANONICAL_SHA256 = "be9e8bc9c6d2411809da2d99126a9b3eef72678de2066bb6ad196d5d16ebcd30"
+CANONICAL_TUPLE = ("4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+                   "ab1e4f6141987706132916e2da16477f5a019464")
+
+
+def _canonical_census(value: dict, raw: bytes) -> tuple[list[dict], dict]:
+    if value.get("schema") != CANONICAL_SCHEMA:
+        raise ValueError("unsupported canonical census schema")
+    if (value.get("agent_commit"), value.get("runtime_commit")) != CANONICAL_TUPLE:
+        raise ValueError("canonical census source tuple mismatch")
+    imports = value.get("imports")
+    if not isinstance(imports, list) or len(imports) != 1146:
+        raise ValueError("canonical census requires all 1146 import rows")
+    required = {"module", "category", "distribution", "occurrences",
+                "resolved_local", "source_owner"}
+    categories = {"internal_source_carrier", "stdlib", "optional_manual",
+                  "missing", "unconditional_required", "tested_conditional"}
+    for item in imports:
+        if (not isinstance(item, dict) or set(item) != required
+                or not isinstance(item["module"], str)
+                or not isinstance(item["category"], str)
+                or item["category"] not in categories
+                or not isinstance(item["occurrences"], list)):
+            raise ValueError("malformed canonical census import row")
+    digest = hashlib.sha256(raw).hexdigest()
+    if digest != CANONICAL_SHA256:
+        raise ValueError("canonical census provenance hash mismatch")
+    rows = []
+    for item in imports:
+        category = item["category"]
+        rows.append({**item, "name": item["module"], "classification": category,
+                     "applicable": category == "unconditional_required",
+                     "probe_policy": "required" if category == "unconditional_required"
+                     else "diagnostic_missing" if category == "missing" else "not_probed"})
+    return rows, {"schema": CANONICAL_SCHEMA, "sha256": digest,
+                  "metadata": {key: data for key, data in value.items() if key != "imports"}}
 
 
 def _parents(tree: ast.AST) -> dict[ast.AST, ast.AST]:
@@ -140,8 +179,12 @@ def _census(roots: list[Path], launcher: Path) -> list[dict[str, object]]:
     return rows
 
 
-def _external_census(path: Path) -> list[dict[str, object]]:
-    value = json.loads(path.read_text())
+def _external_census(path: Path) -> tuple[list[dict[str, object]], dict]:
+    raw = path.read_bytes()
+    value = json.loads(raw)
+    if isinstance(value, dict) and ("schema" in value or "agent_commit" in value
+                                    or "runtime_commit" in value):
+        return _canonical_census(value, raw)
     if isinstance(value, dict):
         value = value.get("census", value.get("imports"))
     if not isinstance(value, list):
@@ -157,7 +200,7 @@ def _external_census(path: Path) -> list[dict[str, object]]:
         row.setdefault("applicable", row["classification"] == "installed_distribution")
         row.setdefault("kind", "merged-census")
         rows.append(row)
-    return rows
+    return rows, {"schema": "unverified-legacy-census"}
 
 
 def _probe(child: Path, names: list[str]) -> dict[str, object]:
@@ -201,6 +244,7 @@ def main() -> int:
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     sources = "imports-file" if args.imports_file else "census-file" if args.census_file else "source"
+    provenance = None
     if args.imports_file:
         requested = json.loads(args.imports_file.read_text())
         if not isinstance(requested, list) or any(not isinstance(item, str) for item in requested):
@@ -210,18 +254,20 @@ def main() -> int:
                 for name in dict.fromkeys(requested)]
     elif args.census_file:
         try:
-            rows = _external_census(args.census_file)
+            rows, provenance = _external_census(args.census_file)
         except (OSError, ValueError, json.JSONDecodeError) as error:
             parser.error(str(error))
     else:
         rows = _census(args.root, args.launcher)
-    applicable = [row for row in rows if row.get("applicable")
-                  and row.get("classification") == "installed_distribution"]
-    names = list(dict.fromkeys(str(row["name"]) for row in applicable))
+    probed = [row for row in rows if (row.get("applicable")
+              and row.get("classification") == "installed_distribution")
+              or (provenance and provenance["schema"] == CANONICAL_SCHEMA
+                  and row["classification"] in {"unconditional_required", "missing"})]
+    names = list(dict.fromkeys(str(row["name"]) for row in probed))
     probe = _probe(args.child, names)
     by_name = {result["name"]: result for result in probe.get("results", [])}
     failures = []
-    for row in applicable:
+    for row in probed:
         result = by_name.get(row["name"], {"ok": False, "error": "not returned"})
         row["probe"] = result
         if not result.get("ok"):
@@ -235,9 +281,13 @@ def main() -> int:
         "scope": {"roots": [str(root.resolve()) for root in args.root],
                   "census_source": sources,
                   "dynamic_boundary": "literal importlib.import_module and __import__ calls only; computed runtime names are dynamic_unresolved"},
+        "census_provenance": provenance,
         "census": rows, "attempted_modules": names,
         "missing_installed_distributions": sorted({row["name"] for row in failures
-                                                    if row.get("classification") == "installed_distribution"}),
+                                                    if row.get("classification") in {
+                                                        "installed_distribution", "unconditional_required"}}),
+        "missing_census_modules": sorted({row["name"] for row in failures
+                                          if row.get("classification") == "missing"}),
         "failures": failures,
         "status": "passed" if not failures else "failed",
     }
