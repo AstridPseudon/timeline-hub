@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T23:03:30Z | dispatcher heartbeat 2s | live 2 (sol 0, luna 2, other 0) | busy30 17 | status age 0m -->
-# runtime board, 2026-10-25T23:03:00Z
+<!-- main | 2026-10-25T23:08:13Z | dispatcher heartbeat 14s | live 2 (sol 0, luna 2, other 0) | busy30 18 | status age 1m -->
+# runtime board, 2026-10-25T23:07:00Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | Prior evidence | 34eac0041; 62c454ac0 |
@@ -505,7 +505,7 @@
 
 | OPS-two-obsolete-pins | Release superseded idle source checkouts | Manager guarded route | Prior host CLEAR and fresh full audit | merged | bin/recycle b742 and d4ba | Zero current process, queue, service, lease or registration users. Both clean ancestors. Current and held-candidate pins remain. | Normal guarded recycle PASS | Source and reports retained |
 
-| OPS-store-retirement | Add guarded explicit Store retirement | Sol / Luna | Owner admission and old state scope | blocked:orchestrator | Sol2253; disposition2304 | F4/F5 fixed; F1 to F3 UNAPPLIED. Historical child ineligible. No install or cleanup; scope escalation2304. | Independent2304 dispatched | Candidate held |
+| OPS-store-retirement | Add guarded explicit Store retirement | Sol / Luna | Post ZIP scope | gated:D140-deferred | Sol2253; disposition2304 PASS | Main D140 DEFERRED; F1 to F3 remain open. Child3e163 retained; no further author rounds, install or cleanup. | Independent2304 PASS_ASSESSMENT | Candidate held |
 
 | D136b-observation-producer | Trace genuine observation consistency | Sol / independent Luna | Lead receives producer finding first | review | Sol2233; review2247 PASS | Supporting source only per ownerD136c: App2231 was primary. Actual2136 cause UNKNOWN; no producer or guard author. Diagnostics next after recipe. | Independent2247 PASS source | Source unchanged |
 
@@ -513,12 +513,15 @@
 
 | F-final-D139a-notes | Record installed schema provenance | Luna | Actual delivery rendering verified | merged | rt-F-D139a-schema-notes-2255 | Two actual documents installed; outside bytes, backups, CAS, modes and real renderer PASS. [Receipt](../../design/rt-F-D139a-schema-notes-2255-receipt.json). | D56 author prose proof | Installed docs |
 
-| D139a-source-join | Join exact reviewed recipe components | Luna / independent Luna | Exact joined custody review | review | Join2300; review2305 | Combined63 PASS; exact reviewed components and final manifest. Five evidence files recovered byte-exact from Git; no install. | Independent2305 active | Candidatefd83 |
-| D136c-safe-refusal | Add safe physical-observation diagnostics | Luna, owner D136c | D139a combined source qualified | gated:D139a-source | Not dispatched before recipe | Safe flags and ordinals only; refusal decision unchanged. Independent privacy review then App sole original9. | Review required | No source change |
+| D139a-source-join | Join exact reviewed recipe components | Luna / Luna | Caller and combined installation | review | Join2300; review2305 PASS | Independent63 PASS; five maker and two checker blobs exact. Relative review evidence recovered from committed Git; caller still pending. | Independent2305 PASS_SOURCE | f304bfc97 / makerfd83 |
+| D136c-safe-refusal | Add safe physical-observation diagnostics | Luna, owner D136c | Recipe source PASS | doing | rt-D136c-safe-observation-diagnostics-2305 | Author scope only safe flags and ordinals; refusal decision unchanged. Independent privacy review then App sole original9. | Review next | No released change |
 
-| D139a-request-carrier | Carry schema input through normal queue | Luna | Reviewed maker and checker components | doing | rt-OPS-D139a-request-carrier-2305 | Live request wrapper rejects new schema flags. Private candidate carries exact normal CHILDVENV fields, preserving all guards. | Independent review next | Livebdda unchanged |
+| D139a-request-carrier | Carry schema input through normal queue | Luna / Luna | Exact joined maker source | review | Author2305; carrierreview2305 | Candidate60d223 five queue plus33 custody and6 schema PASS. Independent review active; livebdda unchanged. | Independent2305 active | 60d223 source only |
+
+| D140-Farm-recipe | Bind complete merged-tuple Farm core | Luna | Received qualified kit and genuine Farm inputs | doing | rt-F-D140-Farm-recipe-2307 | Complete check-only prerequisite census and22-root/control packet being prepared; no body or child. | Review next | Source only |
 
 Runtime producer: Normal f103bb46866999c961a8865636f2e66d544e0c9b contains reviewed upstream0bb3 and helpercf0b. D139 freeze ended; exact targeted1571 PASS independently reviewed, no gate credit. Agent merged4c4ee and App2f362 recorded.
+Core venue: D140 Farm. Agent remains source lane; no new Agent child/core. Complete Farm prerequisite census before any body.
 Core: Actual D134 measurement8926 PASS190 FAIL180 ERROR173 subtests. XML/full disk witness absent. Own344 split132 setup,0 proved product,212 unknown. Ship-grade core NEVER started: real child built, D73 schema import failed.
 Gates: Historical P1/P3/P4/P5 GO. Full P2 NO-GO element and SWAP. No final cut, wheel, Windows, installed render90 or ZIP.
 Blockers: Child/core — Canonical checker CENSUS-005 secondFAIL; Sol2238 fixes adapter only. Store firstreturn2235 addresses four source findings. No new child/core.
@@ -533,10 +536,10 @@ Element: D127d UNAPPLIED; offline warm123ms/synthetic267ms did not reproduce liv
 Delivery: prepared joins merge now under D139; second upstream merge at final D59 cut. Farm old union harness STOPPED. D77 final merged tuple inputs remain incomplete.
 Safety: All prior refusals held. Manager writes ORCH board/briefs/peers and byte-exact handbacks only. No product/test/generated/pin/Git internals/credentials mutation.
 Disk:4.617GB before read-only review2202. Five unused clean pins released after full audit; a30e,369f,c916 plus b742,d4ba. Latest two net191MB. All branches and evidence retained. Source cap3/floor4.6GB, stop4GB. Sweep3 removed0; compact packed0 and compressed7 logs. Registered pins and protected test KEEP remain.
-live3 / cap6; ready-undispatched0. Join review2305, request carrier2305 and Store disposition2304 active. Fresh5.06GB; no heavy body. D136c remains gated on qualified D139a source.
+live3 / cap6; ready-undispatched0. Carrier review2305, diagnostics2305 and Farm recipe2307 active. Fresh5.08GB; no heavy body. Joined source63PASS; installation after wrapper review. Store and staging deferred.
 INBOX consumed through1668789 bytes including ownerD136c priority and Main2233 supporting-only routing disposition. App2231 is sole producer reader. LaterAgent2224 source/review overlap alreadyaskedstop; earlierMainStore owner22:21:24 and current2241 remainsoleintake. Agent laterStore2224 overlaps earlierMain2222 actual22:21:24; normal stop requested by peer2234, earlierMainfirstreturn2235 remains sole owner. Round continues from terminal receipts.
 
 Model rule: owner2250 requires hard=<actual reason> in every new Sol worker meta; otherwise Luna. D136b2233 owner HARD and census2238 second-Luna-failure reasons recorded. Staging next round Luna per owner.
 
 Staging: Main2303 DEFERRED until post ZIP; source held and uninstalled. No more rounds or cleanup.
-Blockers: Store retirement — Orchestrator owes defer or separately scoped shared admission and historical compatibility; escalation runtime-20261025T2304Z-store-lifecycle-scope.md. No installation or target action.
+Store retirement: D140 DEFERRED by resolved2304 escalation. Child3e163 retained. No new source, installation or retirement; merged child/core venue is Farm.
