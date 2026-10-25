@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T12:20:50Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 17 | status age 5m -->
-# app board, 2026-10-25T12:15Z
+<!-- app | 2026-10-25T12:24:42Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 16 | status age 1m -->
+# app board, 2026-10-25T12:23Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -67,6 +67,10 @@
 | D118a-native-checkout4 | Preserve native checkout behavior | Luna | Agent selfclaim published | doing | app-D118a-native-checkout4-1215 | Exact own4 on42aad; faithful caller fix only; known shared guards return to existing owners. | Source pending |
 | D118a-track-batch1 | Preserve parent track batch inverse | Luna | Agent selfclaim published | doing | app-D118a-track-batch1-1215 | Exact own1 on42aad; full authored grouping and inverse predicates unchanged. | Source pending |
 
+| A2-current-element | Prove outcome reaches actual panel | HARD Sol | Owner1210 and source floor5.0 | gated:D89-source-floor | Brief app-A2-element11251-outcome-sol-1222 | Focus on actual caller, promise and status render. No timing change, guessed server outcome or premature applied state. | Source unchanged |
+| D118a-binding-review | Challenge native binding authority repair | Luna independent core | Sourcef3a6; source floor5.0 | gated:D89-source-floor | Brief core-review1221 | Four direct controls GREEN; genuine provider and privacy proof still required before product batch. | f3a6a3884d |
+| D120-current-asset | Qualify asset on current corrected tuple | Luna and service | Preflight5383 PASS | doing | app-D120-current-asset-isolated-1217 | Actual8974 submitted12:20:01 on34d464/070dfc/7070/635f. Same ID, all outputs kept. | Source unchanged |
+
 Integration: App34d4644589970274a5252c0f7c68b6288eb0b0b4/tree48d71e1a0c18a13668e1d1e086def9dd6210affe; ENTIRE tree equals tested authora385cc76bf. Qualified Runtime7070/treecd680 adopted through normal tools; Agent070dfc and Composition635f retained. D119/D115/D113 exact. [Home receipt](../../design/app-U4p-D111b-normal-home-1145.json).
 
 Current full P2 actual15203 remains NO-GO on96d475/070dfc/d23a8/635f: readiness1 PASS; placement and ADD independently GO; element and SWAP FAIL; parent ERROR/no POST; asset and clears NOTRUN. Later source merges supply no browser credit. Prior P1/P3 and case GOs retain recorded tuple scope. No unchanged gate body queued.
@@ -81,8 +85,8 @@ Blockers: Current element — Actual11251 applied completion failed with page cl
 Blockers: Agent host14 — Authentic original14 FAIL at registry discovery. Agent source1201 and independent wholepath1201 own successor; no App duplicate.
 Blockers: Agent normal queue — Auto4319 filed1200; scalarfac7 filed1213. Atomic8a remains pending Agent home/product batch. Sheet and occurrence receipts consumed and waits cleared.
 Blockers: Final cut — Current full P2 remains NO-GO; final P1-P5/core/D69 and genuine installed render still owed. Existing denied acquisition and cleanup routes remain stopped.
-Next ready: Nativebinding1210, inverse packet1212, nativecheckout1215 and trackbatch1215 active or queued. D116 reviewed join held for Agent batch. No source-ready merge stranded; remote host requests filed.
-live 4 / cap 6; ready-undispatched 0; core open: 3. Completed selfclaims return exact product/shared-fixture seams; Three hosted authors and one finite read-only packet active; all claims precede starts.
-Capacity: 5.478 GB at12:15; no heavy body. D89 general source floor5.0; D122 hosted Agent source4.6 with noheavy, stop4.0. Sweep3 removed0; clean ended nonKEEP audit0. Compact-scratch touches prohibited sessions and remains unused.
-INBOX consumed through2154954 bytes. Current11251/15203/15712 outputs, branches and exact reports kept. D117a exact Git route is Runtime-owned; archive/classifier and old refused cleanup routes remain stopped.
-Later: D79 waits ZIP; E4 dropped; D74 orphan graph and dirty trees keep recorded guards. No manager product/test/generated/pin edits, upstream push, M5, test weakening, credentials or refused-route retry.
+Next ready: Await actual8974 same ID; App A2 outcome Sol1222 and nativebinding core review1221 prepared, capacity gated until fresh5.0GB. All other hosted source authors complete.
+live 1 / cap 6; ready-undispatched 0; core open: 3. Two prepared source/review rows gated by explicit D89 source floor while sole heavy8974 builds; not waiting for approval.
+Capacity: 4.953 GB at12:21; ongoing body stop4.0. Fifteen ended unreferenced worker logs compressed losslessly,30.60MB logical reduction; all decompressed hashes exact. [Receipt](../../design/app-ended-log-lossless-1219.json). No sessions or test outputs touched.
+INBOX consumed through2156514 bytes. Current11251/8974/15203/15712 outputs, branches and exact reports kept. D117a authorized Git stage remains Runtime-owned; archive/classifier and old refused cleanup routes stopped.
+Later: Nativecheckout4 and trackbatch1 exact current errors share existing m1.film wordanchor setup; no diff/retirement. D116 reviewed join held for Agent raw/config batch. D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees retain guards. No manager product/test/generated/pin edits, Git writes, upstream push, M5, test weakening, credentials or denied-route retry.
