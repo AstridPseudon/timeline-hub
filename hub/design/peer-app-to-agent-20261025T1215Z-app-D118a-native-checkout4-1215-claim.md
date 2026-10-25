@@ -1,0 +1,3 @@
+Ask: record exclusive native checkout4 selfclaim before author start / Owner: App app-D118a-native-checkout4-1215; Agent allocator / By: 2026-10-25T12:30Z
+
+Claim ONLY tests/editing_conformance/test_commit_runtime_native_checkout.py, exact original2016 ordinals 1143, 1147, 1152, 1159. No active Agentboard row namesfile. Current basecf7b, exactreleased42aad own4nodecheck, minimum PROVEN setup/caller correction or finite no-diff sourcehandback. All authoredinputs/grouping/assertions preserved. Known m1wordseed/authguards handed toexistingowners ratherthan duplicateauthor. No product/sharedfixture/guard change, family/full/collector/body. Oneprotectedreview anydiff. Nativebinding1210 soleproductauthor remainsdisjoint; totalhostedauthorsmax3.

@@ -1,0 +1,41 @@
+{
+  "worker": "app-D118a-document-input3-1206",
+  "repo": "agent",
+  "base": "cf7b8d7c2b4cb980de1d873f0498784d5210d508",
+  "head": "cf7b8d7c2b4cb980de1d873f0498784d5210d508",
+  "worktree_clean": true,
+  "allowed_file": "tests/editing_conformance/test_commit_document_input_capture.py",
+  "allowed_file_sha256": "20ae264e920c39c124ff6c98a5e05af89fef6632e8efda1a6c9e7c58c37e5266",
+  "production_seam": {
+    "file": "astrid/sdk/timeline/commit.py",
+    "lines": "369-373",
+    "sha256": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7",
+    "cause": "document_from_bundle unconditionally merges authenticated pinned_documents into documents, changing the hydrated predecessor before command consumption"
+  },
+  "runtime": {
+    "commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+    "tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c",
+    "checkout": "/home/user/work/wt/rt-pin-42aad0e9",
+    "clean": true
+  },
+  "own3": {
+    "command": "PYTHONPATH=/home/user/work/wt/app-D118a-document-input3-1206:/home/user/work/wt/rt-pin-42aad0e9 /home/user/work/venv-agent/bin/python -m pytest -q --disable-warnings --maxfail=3 tests/editing_conformance/test_commit_document_input_capture.py::test_verified_transcript_is_added_only_at_its_consuming_command[False] tests/editing_conformance/test_commit_document_input_capture.py::test_verified_transcript_is_added_only_at_its_consuming_command[True] tests/editing_conformance/test_commit_document_input_capture.py::test_hydration_replaces_caller_manifest_with_authenticated_closure[requested]",
+    "result": "3 failed in 4.62s",
+    "failure_locations": ["tests/editing_conformance/test_commit_document_input_capture.py:42", "tests/editing_conformance/test_commit_document_input_capture.py:42", "tests/editing_conformance/test_commit_document_input_capture.py:91"],
+    "failure_text_sha256": ["480299522ce5915c09915e8cc6a64a32c94fb2998aafc64e70951780dbaf5a19", "6365a9c7461b4029a4e0c59d957d80635bc9215a831136acf74c37c09ccf3dc7", "760e98a3740800989bcbe22bf2bb1a7ef28602c213c86c537d6c12d1add89393"]
+  },
+  "static": {
+    "ruff": "pass",
+    "mypy_follow_imports_skip": "pass",
+    "py_compile": "pass",
+    "git_diff_check": "pass"
+  },
+  "conservation": {
+    "asserts": 15,
+    "calls": 43,
+    "ast_equal_to_HEAD": true,
+    "source_file_unchanged": true,
+    "pristine_08e6b905_file": "absent"
+  },
+  "decision": "No test or production edit: the exact assertions expose an out-of-scope production seam; changing them or fabricating a caller setup would weaken the live behavior contract."
+}
