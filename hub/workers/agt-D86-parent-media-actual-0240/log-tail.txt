@@ -1,62 +1,3 @@
-        if after['state'] == 'absent':
-            for end in range(1, len(path)):
-                ancestor = self.state.get(ref, path[:end])
-                if ancestor == ABSENT or ancestor == present(None):
-                    # A missing leaf must not erase its ancestor's tagged presence.
-                    self.read(ref, path[:end])
-                    break
-        before = self.state.get(ref, path)
-        self.record['writes'].append({"ref": ref, "path": list(path),
-                                       "before": before, "after": copy.deepcopy(after)})
-        self.state.set(ref, path, after)
-        if ref == 'parent' and list(path) == ['config']:
-            parent = self.state.bundle['parent']
-            config = parent.get('config')
-            self.mirrored_clips = (isinstance(parent.get('clips'), list)
-                                   and isinstance(config, dict) and isinstance(config.get('clips'), list)
-                                   and equal(parent['clips'], config['clips']))
-
-    def write(self, ref, path, value):
-        self.assign(ref, path, present(value))
-
-    def clear(self, ref, path):
-        self.assign(ref, path, ABSENT)
-
-    def object(self, ref, path):
-        value = self.state.get(ref, path)
-        if value['state'] == 'present' and isinstance(value['value'], dict):
-            return
-        self.read(ref, path)
-        if value['state'] == 'present' and value['value'] is not None:
-            raise CommandError("intent container must be object or null", ref=ref, path=path)
-        self.write(ref, path, {})
-
-    def create(self, owner, kind, row, *, restoring=False, after=None):
-
-codex
-The authentic 10077 packet matches this worktree exactly (`test_commit_runtime_parent_media.py` SHA-256 `deafe397…`), and its 18 errors all stop during the historical fixture’s dry-run `occurrence.add-media` command. The current caller submits that raw command without `created`; the real provider recorder creates the occurrence asset and clip claims, so Runtime’s exact command/claim predicate rejects it before the intended parent-media cases run. I’m applying only those demonstrated setup claims, preserving all authored rows and assertions.
-apply patch
-patch: completed
-/home/user/work/wt/agt-D86-parent-media-actual-0240/tests/editing_conformance/test_commit_runtime_parent_media.py
-diff --git a/tests/editing_conformance/test_commit_runtime_parent_media.py b/tests/editing_conformance/test_commit_runtime_parent_media.py
-index 31005dfdc55d8df023ed42bb15679e5755e58d0e..98c25406a5c12cbb3285d820b32128e08b28c58b
---- a/tests/editing_conformance/test_commit_runtime_parent_media.py
-+++ b/tests/editing_conformance/test_commit_runtime_parent_media.py
-@@ -177,6 +177,9 @@
-             child_preview = call('occurrence.add-media', {
-                 'row': child, 'media': music_pin}, 'occurrence:occurrence-2')
-             child_preview['intent'] = {'ownership': 'occurrence'}
-+            child_preview['created'] = [
-+                'occurrence:occurrence-2/asset:' + child['asset'],
-+                'occurrence:occurrence-2/clip:' + child['id']]
-             commit(editing, body(editing, [child_preview], dry_run=True), 'occurrence-2-selection')
-             child_command = capture_occurrence_add_media(
-                 bundle_from_document(current(editing)), 'occurrence:occurrence-2', child,
-
-exec
-/bin/bash -lc "command -v ruff || true; command -v mypy || true; ls -l /home/user/work/venv-agent/bin/ruff /home/user/work/venv-agent/bin/mypy 2>/dev/null || true; rg -n 'ruff|mypy|compare_ruff_baseline|compare_mypy' Makefile pyproject.toml setup.cfg tox.ini scripts 2>/dev/null | sed -n '1,220p'" in /home/user/work/wt/agt-D86-parent-media-actual-0240
-exec
-/bin/bash -lc 'git diff -- tests/editing_conformance/test_commit_runtime_parent_media.py; git diff --check; sha256sum tests/editing_conformance/test_commit_runtime_parent_media.py; git status --short' in /home/user/work/wt/agt-D86-parent-media-actual-0240
  succeeded in 21ms:
 /root/.local/bin/ruff
 /root/.local/bin/mypy
@@ -398,3 +339,62 @@ exec
 DONE marker present; commit message present
  M tests/editing_conformance/test_commit_runtime_parent_media.py
 
+codex
+## Report
+
+Changed only [test_commit_runtime_parent_media.py](/home/user/work/wt/agt-D86-parent-media-actual-0240/tests/editing_conformance/test_commit_runtime_parent_media.py:180).
+
+Added exact `created` claims for the historical `occurrence.add-media` dry-run:
+
+- `occurrence:occurrence-2/asset:music-bed`
+- `occurrence:occurrence-2/clip:clip-2`
+
+This matches the provider recorder’s `_registry(create=True)` and `ctx.create()` behavior. No inputs, assertions, decorators, branches, opaque values, or physical identities changed.
+
+Original source hash: `deafe397…`  
+New source hash: `6f68086…`  
+Authentic Actual10077 XML: `7d41234…`  
+Authentic outcomes TSV: `57b417b…`
+
+Exact 20 selectors were preserved; Actual10077 showed 2 PASS and 18 setup ERROR with `provider executed a different command`.
+
+Checks:
+
+- AST parse/compile: PASS
+- AST function/test ABI map: PASS
+- Ruff baseline/current: `[]` / `[]`
+- mypy baseline/current: no issues / no issues
+- `git diff --check`: PASS
+- Pytest/functional execution: intentionally not run per source-only instructions
+
+Commit message written and `DONE` marker created. Functional proof remains unverified; next step is the protected review followed by the central targeted rerun.
+tokens used
+194,387
+## Report
+
+Changed only [test_commit_runtime_parent_media.py](/home/user/work/wt/agt-D86-parent-media-actual-0240/tests/editing_conformance/test_commit_runtime_parent_media.py:180).
+
+Added exact `created` claims for the historical `occurrence.add-media` dry-run:
+
+- `occurrence:occurrence-2/asset:music-bed`
+- `occurrence:occurrence-2/clip:clip-2`
+
+This matches the provider recorder’s `_registry(create=True)` and `ctx.create()` behavior. No inputs, assertions, decorators, branches, opaque values, or physical identities changed.
+
+Original source hash: `deafe397…`  
+New source hash: `6f68086…`  
+Authentic Actual10077 XML: `7d41234…`  
+Authentic outcomes TSV: `57b417b…`
+
+Exact 20 selectors were preserved; Actual10077 showed 2 PASS and 18 setup ERROR with `provider executed a different command`.
+
+Checks:
+
+- AST parse/compile: PASS
+- AST function/test ABI map: PASS
+- Ruff baseline/current: `[]` / `[]`
+- mypy baseline/current: no issues / no issues
+- `git diff --check`: PASS
+- Pytest/functional execution: intentionally not run per source-only instructions
+
+Commit message written and `DONE` marker created. Functional proof remains unverified; next step is the protected review followed by the central targeted rerun.
