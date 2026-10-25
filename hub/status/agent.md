@@ -1,8 +1,9 @@
-<!-- agent | 2026-10-25T12:21:58Z | dispatcher heartbeat 8s | live 2 (sol 2, luna 0, other 0) | busy30 8 | status age 3m -->
-# agent board, 2026-10-25T12:18Z
+<!-- agent | 2026-10-25T12:25:42Z | dispatcher heartbeat 3s | live 2 (sol 2, luna 0, other 0) | busy30 7 | status age 3m -->
+# agent board, 2026-10-25T12:23Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
+| U2 D123 | Refresh final patch onto upstream b742 | HARD Sol | Owner D123 scope | doing | agt-U2-D123-final-patch-sol-1221 | Six rejects and35 overlaps; preserve upstream behavior and both live test purposes. Gating tuple frozen; review and cut matrix later. | b742 base |
 | U4a | Adopt released Runtime output provenance | Luna | Runtime42aad | merged | agt-U4a-output-clean-import-1130 | Only lock changed;15 mappings exact; vendor, artifacts, compile and diff PASS. | 30caca3e23 |
 | R1 | Patches, reads and conflict semantics | Sol / Luna | C0 | merged | Original and later source owners | Historical scoped controls qualified; current core failures remain in measured cohorts below. | Original bac094;440cc |
 | R2 | Guarded inverse and step undo | Sol / Luna | R1 | merged | Original and later source owners | Historical controls and D110 ADD/SWAP PASS; held current restores remain separate. | Original0b8cb;070dfc |
@@ -33,7 +34,7 @@
 | D118a script pin | Preserve pinned script after live rebind | App Luna / protected Luna | Review1132 PASS1 | merged | App1124 normal b8507 | Independent exact original PASS2.41s on42aad;7 assertions and49 calls conserved. Final tuple separate. | 706e83559 |
 | D118a atomic scope | Restore private document capture | App Luna / core Luna | Independent1144 PASS | review | App1137; Runtime batch1148 | Original1 and private wrong-pair/no-write4 PASS on42aad. Exact one-line private capture repair; batch core before adoption. | 8a4103 held |
 | D118a helper cut | Preserve deferred cut purpose | App Luna | Existing owner D23 scope | gated:D23 | app-D118a-helper-cut1-1130 | No source delta; exact second word-anchor case remains owner-deferred and unchanged. No new closure or retirement. | Original exact |
-| D118a scalar3 | Preserve scalar and compound media behavior | App Luna / protected Luna | First review1148 FAIL | review | Final App reviewer1209 | Correct unsupported metadata while preserving causal provider order and grouping. Actual inverse auth failures remain open. | 04eb held |
+| D118a scalar3 | Preserve scalar and compound media behavior | App Luna / protected Luna | Final1209 PASS_SOURCE | merged | App1155 normal3ab324 | Cumulative registration relocation only; all3 pass bootstrap then fail auth2267 physical promotion. No behavior closure. | fac7 /3ab324 |
 | D118a auto4 | Preserve stale-read no-write refusals | App Luna / protected Luna | Independent1152 PASS | merged | App exact1148 normalf90e | Exact value_conflict reason, unchanged authored inputs/assertions/no-write. Independent original4 PASS5.05s; batch core pending. | 4319 /f90e |
 | D118a text binding | Preserve Runtime-derived binding identity | App Luna requested | Next hosted slot after D116 | ready | App next slot requested1155 | native_text_binding.py drops binding_id/head; live producer seam, separate from passed script workaround. | No candidate |
 | D100 candidate | Preserve sequential shared-item provenance | Sol / protected Luna | Exact current source applicability | review | Author1100; protected1104 | Six corrected formerly duplicate-seed controls PASS4.00s; prior20 conserved, TEN unchanged. Product held. | 3aaf held |
@@ -41,7 +42,7 @@
 | D117 installed render | Qualify exact authorized source input | Runtime Luna / review | D117a exact git decision | blocked:runtime | Runtime1128 and1134 | Owner authorized pinned git input; existing integrity review governs next step. Historical denial retained; genuine render NOTRUN. | Applied523893 |
 | D59 final cut | Qualify final gates and full delivery | Runtime coordinator | Core and REG zero, D69, render | gated:D59 | Existing final coordinator | Final P1–P5, full core, reverse audit and genuine installed render owed. No ZIP claim. | Cut pending |
 
-Integration: normal Agentf90e87091c contains reviewed sheet, WC6, video and Scene test changes plus normal Runtime42aad lock-only provenance. Agent product remains released070dfc. Held82b6/adcb/bae5 product changes are not adopted. Exact merge receipts are in queue/done and worker reports.
+Integration: normal Agent3ab324c891 contains reviewed sheet, WC6, video and Scene test changes plus normal Runtime42aad lock-only provenance. Agent product remains released070dfc. Held82b6/adcb/bae5 product changes are not adopted. Exact merge receipts are in queue/done and worker reports.
 
 core open: 425 on immutable30693. Confirmed regressions:14, all still open until original-node proof. Effective retirements added this batch:0. D107 ten remain held, not counted as closed. Historical550,267,276 and506 inventories remain distinct.
 
@@ -50,10 +51,10 @@ Current full checkpoint:8823 PASS /159 FAIL /291 ERROR /173 subtests /0 skips on
 Blockers: Agent current core425 andREG14 — exact source owners above; source-only changes never imply functional closure.
 Blockers: Agent D69 — index90 genuine installed render and index107 held normal import remain; all other semantic purpose units cleared by exact1150 join.
 Blockers: Runtime D117a — exact authorized git source and installer integrity handoff; historical refusal retained. Genuine installed render NOTRUN.
-Blockers: Final cut — final tuple P1–P5, full core, D69 and render remain owed.
+Blockers: Final cut — D123 fresh b742 patch, final tuple P1–P5, full core, D69 and render remain owed.
 
 Next ready: HARD host14 successor and independent return; Runtime ready producer/XML/atomic source requested separately from held host deltas. App D116/text-binding requests remain assigned to next hosted slots; no competing local authors.
-live 2 / cap 6; ready-undispatched 0 local. Runtime hosted3 owners1148/1150, App current claims exclusive. Source-only local starts use D89b floor4.6GB, max3 with no heavy; next full core waits qualified batch and no source collision.
+live 3 / cap 6; ready-undispatched 0 local; D89b source cap3 at4.742GB. D123 exact owner authorized by new header; host repair and independent return remain separate. Runtime hosted3 owners1148/1150, App current claims exclusive. Source-only local starts use D89b floor4.6GB, max3 with no heavy; next full core waits qualified batch and no source collision.
 
 Disk: 5006381056 bytes before proof dispatch; host proof13117 terminal; two source-only follow-ups use D89b floor. Hash-verified compression freed about130MB from unreferenced finished outputs. Exact receipt design/agent-disk-compact-20261025T1210Z.json. Pins, KEEP and refused paths untouched; no eligible finished non-KEEP trees. No heavy body.
 
@@ -61,4 +62,4 @@ D120: check each fix with its own failing nodes; one unfiltered agent-core-full 
 
 Later: two D23 child-word originals and D14 deferred anchors remain unchanged and visibly unqualified. Missing numeric3/video4 complete correspondence records remain EXACTMISSING; no invented fixes or collector. E2 ABI retirement paused until after ZIP; withdrawn1171212 memo never adopted. D79 genuine replay input absent. D13 installed environment remains an explicit known gap.
 
-Inbox consumed through 1605153 bytes. Manager made no product, test, generated, pin or Git changes. Peer safe-input1130 and predicate JOIN1130 artifacts exported byte-exact to flat ORCH design; no evidence branch merged.
+Inbox consumed through 1606666 bytes. Manager made no product, test, generated, pin or Git changes. Peer safe-input1130 and predicate JOIN1130 artifacts exported byte-exact to flat ORCH design; no evidence branch merged.
