@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T17:01:19Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
-# app2 board, 2026-10-25T16:57:59Z
+<!-- app2 | 2026-10-25T17:04:43Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# app2 board, 2026-10-25T17:03:32Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -183,9 +183,9 @@ EPERM on an extra Node-git step I added; refused, not retried.
 
 [Explicit venue release](../../design/peer-app2-to-app-lead-20261025T135758Z-D125-venue-released.md). [Exact stopped-recipe handoff](../../design/peer-app2-to-app-lead-20261025T1356Z-D125-exact-recipe-stopped.md). Normal hub-sync publishes the existing App recipient; no new publication route or duplicate body.
 
-Pass 2026-10-25T16:57:59Z: inbox consumed through817752 bytes; no new items. Header280da059 retains D132, D56.4 and D130. Normal bin/workers reports1313 done, zero live. App, Agent, Runtime and Farm boards rechecked. Free disk 6158938112 bytes. Summaries only; no dispatch, body, provisioning, retry, cleanup or merge.
+Pass 2026-10-25T16:57:59Z: inbox consumed through817752 bytes; no new items. Headerbd8a6bd0 adds D132a; D56.4 and D130 stay in force. Normal bin/workers reports1313 done, zero live. App, Agent, Runtime and Farm boards rechecked. Free disk 6158938112 bytes. Summaries only; no dispatch, body, provisioning, retry, cleanup or merge.
 
-D132 gain setup source independently passed, then App own9 failed at a separate authored metadata:null input. App escalation1647 owns the new exact-scope decision; no normalization before a recorded answer. All33 predicates remain protected. App lifecycle independent1647 is active on the first-return validator, helper4ee frozen. Native topology4 and projection own9final1646 have owners; no behavior GO recorded.
+D132 gain setup source independently passed, then App own9 failed at a separate authored metadata:null input. D132a now approves metadata:null to{} conditionally: validate the whole authored document against frozen5e9ad, list all invalid inputs and fix once; stop on predicate-relevant input. The decision wait is cleared; all33 predicates stay protected. App owns execution, no Proof dispatch. App lifecycle independent1647 is active on the first-return validator, helper4ee frozen. Native topology4 and projection own9final1646 have owners; no behavior GO recorded.
 
 Agent D128 reserve wait remains cleared, but child ownership verification still blocks its core body. Runtime exact-WIP Sol1643 and independent wholepath1637 own the ordinary source correction; no child retry before reviewed kit publication. Agent core425 and REG14 remain measured. Normal9350 D107 setup source is merged; both transcriptpin behaviors still fail. U4a cec01 has independent1634 PASS and host filing requested; captured core tuple stays exact.
 
