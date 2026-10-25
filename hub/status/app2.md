@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T21:23:55Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# app2 board, 2026-10-25T21:21:57Z
+<!-- app2 | 2026-10-25T21:26:54Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-25T21:26:39Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -176,7 +176,7 @@ Blockers: Element — App32016 independently NO-GO. Source and Node20 gates PASS
 Blockers: Final cut — D135 private upstream joins, ship-grade core and merged-tuple gates still owed. D137 real child2044 refused venv-log-setup. Header now permits minimal fix, actual smoke, review and CAS install before ONE new Agent request; Runtime2058 owns source. Installed render owed.
 Next ready: None for Proof; MAIN closed D125 and Proof remains folded into App.
 
-Pass 2026-10-25T21:21:57Z: inbox817752 unchanged; header e054df9df0874d21f3ee760526a267e30a5dc0160165172f0c86220687edf654 unchanged. D56.4 and MAIN D125 stand-down remain. Normal workers1313 done, zero live. App21:13, Agent21:12, Runtime21:10 and Farm21:20 rechecked. App actual15200 terminalexit1; independent2113 active. Runtime maker2110 CAS and FPS Sol2108 active. Farm union held for named interpreter; no tests ran. Free disk 5943447552 bytes. Board cells all at most200 characters. No Proof dispatch, body, provisioning, retry, cleanup or merge; D125 receipt unchanged.
+Pass 2026-10-25T21:26:39Z: inbox817752 unchanged; header now f5f11374a7f6f71818db9c5b401604a16708455502f09eabc4369fd86406a793. D138 CLI22 decision consumed: Agent owns exact per-case supported-ingress migrations, one protected review and own22; legacy-only cases listed for owner, boundary changes stopped. No Proof assignment. D56.4 and MAIN D125 stand-down remain; last normal workers1313 done, zero live. Existing App15200 result review2113, Runtime maker installer2110/FPS2108 and Farm interpreter hold retain scope. No Proof dispatch, body, provisioning, retry, cleanup or merge; D125 receipt unchanged.
 
 D137 supersedes the failed fixture gate. Maker4435 was independently installed and received as regular0755. Agent controller2044 spent ONE frozen a4e016/5e9ad request: REFUSED venv-log-setup exit2, stage_stderr_path command missing at environment60. Stage stderr EXACTMISSING; no registration or core run. Agent peer2047 handed the exact refusal to Runtime. Header20:47 now records owner disposition: one minimal fix, actual smoke, independent execution review and CAS install, then ONE new Agent request. Runtime2058 owns changed source; no unchanged retry or alternate route. Farm D77 waits qualified real result. Earlier fixture23349 and rollback-stderr failures remain historical.
 
