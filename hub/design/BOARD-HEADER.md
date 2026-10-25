@@ -201,6 +201,24 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **Order:** Runtime first (producer), then D39 client regeneration if the contract changed, then Agent and App in parallel. P2/P3 and the core suites then run on the refreshed heads.
   - At delivery, F-final applies the squashed patches to these same tips. A new upstream move after this point triggers another refresh only if the owner asks.
   - **Test-file conflicts (13:40Z): keep BOTH.** Upstream's new and changed tests are taken as they are, and every one of our live test cases is re-applied on top: adapted to upstream's structure, never dropped. Taking 'incoming' and discarding our cases is weakening, so it's refused. The independent review maps every pre-merge live predicate to its post-merge location. Product-code conflicts follow the default: upstream behaviour, with ours adapted.
+- **D115, Agent core is measured (08:42Z): 506 bad nodes (159 failed, 347 errors), core open 438, regressions vs upstream 0 proven. Fix by CLUSTER, not by row (09:12Z).** Tuple: Agent 070dfc / Runtime 1daca / App 04beed / Composition 635f; 8,763 passed. Classification: 438 NEW-OURS core, 59 ENV, 8 non-core, 1 D23.
+  - **The failures collapse to a few locations.** From design/handoff-agt-F-D108b-core-local-0811-outcomes.json there are 71 distinct (outcome, location) pairs, and the top 7 cover about 300 of the 506:
+
+    | Count | Location | Note |
+    |---|---|---|
+    | 107 | `runtime_protocol/service.py:2524` | THE COMMIT CATCH-ALL (80 errors, 27 failures). The real exception is in each node's captured stderr `runtime.timeline_commit.error` line, from D102. |
+    | 78 | `astrid/sdk/timeline/commit.py:1331` | the Agent commit frame in the D110 chain (68 errors, 10 failures) |
+    | 54 | `native_word_anchor_fixture.py:217` | a fixture error |
+    | 27 | `test_authenticated_legacy_restore.py:54` | |
+    | 27 | `astrid/sdk/timeline/validation.py:650` | |
+    | 22 | `test_commit_runtime_parent_media_swap.py:78` | |
+    | 16 + 16 | `test_current_pair_reader.py:60` and `tests/sdk/test_selected_param_neutral_stage.py:219` | |
+
+  - **Plan (Agent, up to the cap, Luna):**
+    1. ONE cluster worker per top location (the seven above). It reads the failure text and captured stderr for its nodes from the retained run. For the 2524 cluster that means the D102 class chain and frames, which name the real exceptions; that cluster may itself split into a few. It names the root cause, proposes ONE fix (product or our test, whichever C0 and D69 say is wrong), and proves it RED/GREEN on a sample of its nodes plus the rest of its cluster.
+    2. Fixes ride normal review. Then ONE rerun of agent-core-full (24 min) gives the next count. Repeat until core open is 0, or the remainder is ledgered under D72/D52.
+    3. Fixture-error clusters follow D104 where they apply.
+  - This supersedes per-row family bodies for these nodes. Already-reviewed family fixes land normally. The 47 scope maps are used only to avoid duplicate authors.
 - **D113, placement: close the embedded dialog before the parent Undo (08:32Z), deciding escalation app-20261025T0830Z-placement-modal-dismissal:** APPROVED as a correction to OUR spec. The p2-elements-assets spec is ours (D105a). This is a missing USER step, not setup, so D104 does not cover it and I decide it here.
   - **Why:** in 19078 both placement commits were accepted (HTTP 200), and the canonical, history and scoped-reload checks passed. The parent Undo is enabled but sits behind the still-open modal, so the click never fires (0 Undo inputs, 0 inverse POSTs) and the 90 s response wait times out. A real user closes the dialog first. The passing ADD case already does exactly this.
   - **Conditions:**
@@ -672,6 +690,7 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
 - **H54 (03:55Z):** ETA ~20:00Z 25 Oct (15Z 25 Oct to 10Z 26 Oct). P1 and P3 GO; P2 isolated 2/8; P4 waits on D94/D94a. Regressions 0.
 - **RELEASE Runtime 0c62dfa63 (04:25Z): D94/D94a/D97 shipped.** Independent final security review 0420 PASSES on candidate fec6ca4f (263/267 passed); the cost curve is flat. Next: adopt it, then ONE P4 ten-note original (Agent), and the held P2 gestures element/parent/SWAP/ADD (App). Privileged real chown is unverified; the different-owner case is covered by controlled stat witnesses.
 - **RELEASE Runtime 689352013 (05:29Z): D102 redacted commit-path diagnostics**, independent rereview 0525 PASS (36 passed; write-failure fallback verified). Next: App adopts it and runs ONE ADD, then ONE element, as the diagnostics.
+- **MEASURE Agent core (09:05Z, D108b):** agent-core-full-1025081835-2016 has 8763 passed, 159 failed and 347 errors in 24 min. Core open 438 NEW-OURS; 59 ENV; 0 regressions proven (Runtime baseline isolation UNCERTAIN). This is now the long pole; see D115.
 - **GATE P2 early full tour 19078 (08:15Z), NO-GO as a tour; 4 case-level GOs on the CURRENT tuple** (App 04beed / Agent 070dfc / Runtime 1daca / Composition 635f; independent app-D108-P2-19078-pass-review-0807): ADD (newly qualified after D110), parent, single, bulk. Open: SWAP (409 history_unavailable; ProtocolError at _read_transaction/_store_version, Runtime 0810 mapping it), element (D111a profile), placement (response wait, 222 s ERROR). registerAsset did not run (it follows element) and needs a current-tuple rerun. App core open: 3.
 - **GATE P3 GO on current heads (07:25Z, D59 rerun):** actual 31792, independent app-D108-P3-31792-GO-review-0706, on App f7201 / Agent d629 / Runtime c916 / Composition 635f. P1 and P3 are now both re-proven on current heads.
 - **GATE P1 GO on current heads (07:12Z, D59 rerun):** actual 15075, independent app-D108-P1-15075-GO-review-0657. Readiness 1 and original 2 PASS; 0 fail, error or skip. Tuple App f7201 / Agent d629 / Runtime c916 (1daca product) / Composition 635f. P3 rerun next.
