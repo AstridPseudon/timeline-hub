@@ -65,7 +65,7 @@ class RuntimeRealm:
         self.service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
         self.project = self.service.create_project(
             {'slug': 'graph-roots', 'name': 'Graph roots'}, idempotency_key='project')['id']
-        self.timeline = 'film'
+        self.timeline = 'chapter-1'
         self.service.create_timeline(self.project, self.timeline, idempotency_key='timeline')
         media = self.service.ingest(
             self.project, b'graph-root-media', media_type='image/png',
