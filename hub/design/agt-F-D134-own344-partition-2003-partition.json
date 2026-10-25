@@ -1,0 +1,42 @@
+{
+  "schema": "timeline.agent.f_d134_partition.v1",
+  "review_id": "F-D134-own344-partition-2003",
+  "service": {
+    "id": "agent-agent-core-full-1025191128-18455",
+    "log_sha256": "65def166348d4ffde949d530bff1a7bcba820ad674ca85b8ccc3e708c781ae8e",
+    "snapshot_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+    "summary": "190 failed, 180 errors, 8926 passed"
+  },
+  "tuple": {
+    "agent": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+    "runtime": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "app": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "named_upstream": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+    "terminal_reference": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+    "baseline_reference": "30693"
+  },
+  "finite_equation": {
+    "TEST_SETUP_OR_EXPECTATION_PROVED": 141,
+    "PRODUCT_FAULT_PROVED": 0,
+    "UNKNOWN": 203,
+    "sum": 344
+  },
+  "new_test_file_fact": {
+    "ids": 344,
+    "unique_test_files": 58,
+    "all_current_source_files_present": true,
+    "all_absent_at_named_upstream": true,
+    "does_not_imply_test_bug": true
+  },
+  "causal_boundary": {
+    "product_fault_proved": false,
+    "reason": "Retained actual output lacks private accepted records and a legitimate caller trace for the unresolved families; failure status, guard text, and test-file novelty are not causal proof."
+  },
+  "reg14": {
+    "separate_count": 14,
+    "current_status": "UNVERIFIED_CURRENT_REG",
+    "retirement": 0,
+    "other_unknown_count": 12
+  }
+}
