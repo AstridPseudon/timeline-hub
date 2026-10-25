@@ -1259,6 +1259,8 @@ placementTest('P2 mounted automatic child placement: embedded shot file gesture,
     const reloadedDialog = await openEmbeddedCanonicalShot(page, seed3.occurrenceId, 'F2 agent shot');
     await expect(reloadedDialog.locator(`.clip-action[data-clip-id="${projectedPlacementClipId}"]`)).toHaveCount(1);
     await expect(reloadedDialog.locator(`.clip-action[data-clip-id="${row.id as string}"]`)).toHaveCount(0);
+    await reloadedDialog.getByRole('button', { name: 'Close', exact: true }).click();
+    await expect(reloadedDialog).toHaveCount(0);
   });
   const undo = await commitFromGesture(page, wire, async () => { await page.getByRole('button', { name: 'Undo', exact: true }).click(); });
   assertRequestV2(undo, { revision_id: result.data.accepted_revision_id, publication_id: placementPublication }, { project_id: harness.seed.projectId, timeline_id: seed3.timelineId }, publicationId(post));
