@@ -33,6 +33,20 @@ from support import (
 )
 
 
+def serialized_store_context(text, env):
+    """Materialize the maker's exact child-shell function serialization."""
+    functions = (text[text.index('progress() {'):text.index('\nN=${1:-}')]
+                 + text[text.index('failure() {'):text.index('\nmissing=()')])
+    start = text.index('export STORE_CONTEXT=')
+    export = text[start:text.index('\npython3 -I', start)]
+    result = subprocess.run(
+        ['bash', '-u', '-o', 'pipefail', '-c',
+         functions + '\n' + export + '\nprintf "%s" "$STORE_CONTEXT"\n'],
+        env=env, capture_output=True, text=True, check=True, timeout=10,
+    )
+    return result.stdout
+
+
 class SourceCallerTests(unittest.TestCase):
     def test_failing_stage_retains_exact_private_stderr_and_exit_status(self):
         fixture = scratch()
@@ -102,19 +116,24 @@ class SourceCallerTests(unittest.TestCase):
                 identity = {'agent_sha': AGENT, 'backend_sha': RUNTIME,
                             'client_tuple': {'client.py': 'f' * 64}}
                 text = MAKER.read_text()
-                shell_functions = (text[text.index('progress() {'):text.index('\nN=${1:-}')]
-                                    + text[text.index('failure() {'):text.index('\nmissing=()')])
-
                 def build(stage_path, _final):
                     env = {**os.environ, 'T': str(stage_path), 'O': str(fixture),
                            'N': name, 'PYTHON': sys.executable, 'S': AGENT,
                            'RUNTIME_SHA': RUNTIME, 'REQUIREMENTS_PATH': 'requirements/proof.lock',
                            'LOCK_SHA': 'c' * 64, 'TIMEOUT_BIN': 'timeout',
-                           'KILL_AFTER_SECONDS': '1'}
+                           'KILL_AFTER_SECONDS': '1', 'FARM_SCHEMA_SOURCE': '',
+                           'FARM_REQUIRED': '0', 'FARM_AUTHORITY': '', 'A': '/fixture/agent',
+                           'R': '/fixture/runtime', 'W': str(fixture), 'PIP_TIMEOUT_SECONDS': '20',
+                           'LOCAL_TIMEOUT_SECONDS': '20', 'FREEZE_TIMEOUT_SECONDS': '20',
+                           'BUILD_TIMEOUT_SECONDS': '20', 'PIP_NETWORK_TIMEOUT_SECONDS': '1',
+                           'PIP_RETRIES': '0', 'BS': '', 'RT': '', 'CLIENT_IDENTITY': '',
+                           'VERIFIER_SHA256': 'e' * 64, 'BOOTSTRAP_ARCHIVE': '',
+                           'DEPENDENCY_SEED': '', 'SCRIPT_DIR': str(MAKER.parent)}
+                    context = serialized_store_context(text, env)
                     budget = '1' if expected == 124 else '20'
                     result = subprocess.run(
                         ['bash', '-u', '-o', 'pipefail', '-c',
-                         shell_functions + f"\nrun_stage {stage} {budget} bash -c {shlex.quote(command)}\n"],
+                         context + f"\nrun_stage {stage} {budget} bash -c {shlex.quote(command)}\n"],
                         env=env, capture_output=True, text=True, timeout=10)
                     self.assertEqual(result.returncode, expected, result.stderr)
                     lock_sha = 'c' * 64

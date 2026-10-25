@@ -20,10 +20,10 @@ the route.
 | input | value |
 | --- | --- |
 | reviewed source commit | exact 40-hex final source commit bound by the D137 decision |
-| candidate SHA-256 | `4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36` |
-| candidate bytes/mode | `75503` / `0755` |
-| installed preimage SHA-256 | `0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39` |
-| installed preimage bytes/mode | `68351` / `0755` |
+| candidate SHA-256 | `f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f` |
+| candidate bytes/mode | `75541` / `0755` |
+| installed preimage SHA-256 | `4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36` |
+| installed preimage bytes/mode | `75503` / `0755` |
 | protected `bench_store.py` | `123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2` |
 | protected `verify_dependency_seed.py` | `116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2` |
 | normal child reserve | `5905580032` bytes |
@@ -129,8 +129,8 @@ and Composition has no configured mypy/pyright baseline.
 OPS inventory maker install gate
 
 D137 decision: WITHDRAWN / NOTRUN — decision path: <...>
-Candidate: 4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36 / 75503 bytes / 0755
-Preimage required: 0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39 / 68351 bytes / 0755
+Candidate: f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f / 75541 bytes / 0755
+Preimage required: 4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36 / 75503 bytes / 0755
 Protected helpers: bench_store.py 123bb93c…7adfe2; verify_dependency_seed.py 116b4e6…d7bfe2
 Admission: normal reserve >=5905580032; stop line >=4000000000; source floor >=4600000000
 Decision: INSTALL|HOLD — D137 decision input is not E2E PASS and this worker does not install.
