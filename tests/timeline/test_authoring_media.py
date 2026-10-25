@@ -443,10 +443,12 @@ def _genuine_compound_source(tmp_path):
     service = RuntimeService(root)
     service.register_timeline_commit_provider(create_runtime_commit_service())
 
-    def import_media(project, value, *, media_type, filename, alias, key):
+    def import_media(project, value, *, media_type, filename, alias, key,
+                     duration_seconds=None):
         result = service.import_media(
             project, value, media_type=media_type, original_name=filename,
             actor_id="d92-authoring-test", idempotency_key=key,
+            duration_seconds=duration_seconds,
         )["data"]
         selection = service.get_project_media_selection(project, {
             "asset": alias, "generation_id": result["generation_id"],
@@ -526,7 +528,8 @@ def _genuine_compound_source(tmp_path):
         alias="reserved-new", key="d92-new",
     )
     retained, _ = import_media(
-        project, audio.getvalue(), media_type="audio/wav", filename="held.wav", alias="held-audio", key="d92-held"
+        project, audio.getvalue(), media_type="audio/wav", filename="held.wav",
+        alias="held-audio", key="d92-held", duration_seconds=1.0,
     )
     document, source_old, _, _ = inputs()
     document["parent_revision"]["payload"]["occurrences"] = \
