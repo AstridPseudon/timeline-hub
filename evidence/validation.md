@@ -1,78 +1,44 @@
-# F/D134 validation and disposition
+# Validation
 
-## Source conservation
+This is source/dry preparation only. No launcher, preflight control, body,
+test, provider, browser, socket, render, package, profile, or service command
+was executed.
 
-- The four frozen checkouts are clean and match the bound SHA, tree, parents,
-  and official origin recorded in `source-review.json`.
-- The normal D73 maker is the unchanged Agent
-  `tests/suites.conf.candidate.request.md`; the pinned launcher is the
-  unchanged `tools/p4-d73-pinned-launch.sh`. Their Git blob and SHA-256
-  witnesses are recorded in `source-review.json`.
-- The generated positive manifest binds Agent `a4e016b6`, Runtime `5e9ad1c6`,
-  App `d8a1cd40`, Composition `635f4de0`, existing `venv-agent`, the exact
-  profile/schema, and Node `v20.19.4`. The poison copy changes only
-  `agent_sha`; `manifest-diff.json` records the parsed comparison.
-- The existing 0811/2234 positive stub was independently hashed in full as
-  `38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0`.
-- The old 070dfc/f4d6 manifests were not reused. No package, profile, child,
-  kit, suite, product, or test change was made.
+Read-only source facts used by the candidate:
 
-## Recipe conservation
+- `tools/p4-d73-pinned-launch.sh:128` and `:149` export
+  `PYTHONNOUSERSITE=1`; `:132` and `:153` export the Remotion project.
+- `host_bootstrap.py:1651` calls `_prepare_render_validation`; `:836` calls
+  `prepare_remotion_validation`; `:813-814` only takes the no-Remotion return
+  when the project variable is absent.
+- `remotion_runtime.py:214-216` includes `PYTHONNOUSERSITE` in
+  `_UNSUPPORTED_PYTHON_STARTUP`; `:234-236` raises before host launch.
+- The launcher preflight checks exact manifest keys, four SHA/tree/clean
+  states, parent guards, original P4 test hash, Python/Node/profile/schema
+  bindings, module origins, lock and registry hashes, and writes report-all
+  evidence before the body. Those guards are unchanged in the candidate.
 
-`evidence/measurement-command.sh` retains the canonical 22 selector roots,
-`-n 3`, cleared `addopts`, `-p no:cacheprovider`, and `--timeout=45`. The
-authorized suite row changed only the operational bindings and invoked this
-byte-identical recipe through `bash`; no selector, filter, deselection,
-xfail/skip, assertion, source, package, profile, or environment fallback was
-introduced.
-
-## Authorized DRY controls
-
-The ordinary launcher was run exactly twice in `dry` mode. The positive path
-passed launcher preflight (`preflight_exit=0`), reached the existing stub,
-returned 17, and recorded one call. The poison path stopped at the deliberate
-`D73 launcher: agent SHA mismatch` guard with exit 1 and zero calls. Raw
-stdout/stderr and launcher records remain in the private scratch directory;
-only hashes and safe outcomes are published in `preflight.json`.
-
-## Measurement result
-
-The normal service `agent-agent-core-full-1025191128-18455` admitted one body,
-passed the D73 launcher preflight (`0`), and reached terminal body exit `1`.
-The measured terminal summary is `8926 passed, 190 failed, 180 errors, 86
-warnings, 173 subtests passed` in `1379.05s`. The raw body log and XML remain
-private; safe counts, the XML digest, root inventory, and exact-node comparison
-inputs are in `outcomes.json`.
-
-The current XML has 9296 unique testcase nodeids plus 173 subtests reported by
-the runner but not represented as individual XML testcase elements. Exact
-status-pair comparisons against immutable 30693 and retained upstream 924 are
-recorded without assigning causes to current-only nodes. Complete finite
-per-node accounting is therefore not claimed: `core_open_n` and `reg_open_n`
-remain `UNKNOWN` pending independent result/classification review. Retirement
-is `0`; this run carries no ship, custody, or release credit.
-
-## Validation commands
+Commands run after editing:
 
 ```text
-bash -n evidence/measurement-command.sh evidence/preflight-command.sh
-/home/user/work/venv-agent/bin/python -P -m json.tool evidence/source-review.json
-/home/user/work/venv-agent/bin/python -P -m json.tool evidence/source-manifest.json
-/home/user/work/venv-agent/bin/python -P -m json.tool evidence/manifest-diff.json
-/home/user/work/venv-agent/bin/python -P -m json.tool evidence/preflight.json
-/home/user/work/venv-agent/bin/python -P -m json.tool evidence/readiness.json
-/home/user/work/venv-agent/bin/python -P -m json.tool evidence/missing-inputs.json
-git diff --check
+bash -n evidence/next-core-command.sh                         PASS
+python3 -m json.tool evidence/environment-contract.json        PASS
+python3 -m json.tool evidence/source-manifest.json             PASS
+git diff --check                                               PASS
 ```
 
-The source/evidence checks above passed before submission. Post-terminal JSON
-validation and XML count/hash extraction also passed. No own Python,
-TypeScript, or production code was added, so compile, Ruff, and typecheck lanes
-are not applicable.
+Additional read-only checks:
 
-## Gate disposition
+```text
+sha256sum tools/p4-d73-pinned-launch.sh                        PASS: cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1
+git -C /home/user/work/wt/agt-pin-a4e016b6 rev-parse HEAD HEAD^{tree} PASS: a4e016b6 / 60d45288
+python3 AST-parse of host_bootstrap.py, remotion_runtime.py,
+  subprocess_env.py                                             PASS (read-only)
+static recipe comparison                                            PASS: 22 roots, -n 3, empty addopts, no cache, timeout 45
+static full-body comparison                                        PASS: command/body copied from 1909; only outer PYTHONNOUSERSITE omitted
+```
 
-D128's child-maker custody refusal remains immutable and is not a route for this
-worker. The measured core result is retained for independent Luna result and
-classification review only; it provides no ship-grade custody or release
-credit.
+The corrected candidate is not evidence that the current launcher can admit
+the environment: the two launcher-owned exports are the exact finite blocker.
+An independent review must verify any authorized launcher correction before a
+meaningful own-14 or ship-grade/full-core run.

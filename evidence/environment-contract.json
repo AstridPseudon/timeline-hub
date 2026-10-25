@@ -1,0 +1,74 @@
+{
+  "schema": "timeline.agent.f_d134_next_environment_contract.v1",
+  "task": "F/D134/D73 next-run preparation",
+  "status": "FINITE_UNSUPPORTED_SEAM",
+  "candidate": "evidence/next-core-command.sh",
+  "decision": "The candidate removes only the outer PYTHONNOUSERSITE injection, but cannot run against the immutable current launcher because that launcher re-injects the same unsupported key.",
+  "current_boundary": {
+    "host_failures": 14,
+    "exception": "RemotionValidationError",
+    "rejected_key": "PYTHONNOUSERSITE",
+    "before_host_launch": true,
+    "runtime_child_reached": false,
+    "project_export_present": true,
+    "source_callers": [
+      "astrid/sdk/host_bootstrap.py:1651",
+      "astrid/sdk/host_bootstrap.py:836",
+      "astrid/core/rendering/remotion_runtime.py:445",
+      "astrid/core/rendering/remotion_runtime.py:236"
+    ]
+  },
+  "safe_outer_environment": {
+    "construction": "env -i",
+    "allowlisted_keys": [
+      "HOME",
+      "LANG",
+      "LC_ALL",
+      "PYTHONDONTWRITEBYTECODE",
+      "PYTHONPATH",
+      "PATH",
+      "VIRTUAL_ENV",
+      "ASTRID_RUNTIME_CHECKOUT",
+      "ASTRID_RUNTIME_SOURCE_ROOT",
+      "P4_D73_MANIFEST",
+      "P4_D73_EVIDENCE",
+      "P4_D73_REQUEST_ID"
+    ],
+    "deliberately_absent": ["PYTHONNOUSERSITE"],
+    "launcher_owned_keys": [
+      "ASTRID_REMOTION_PROJECT_DIR",
+      "ASTRID_NODE_EXECUTABLE",
+      "ASTRID_TEST_NODE_MODULES"
+    ],
+    "no_full_environment_dump": true
+  },
+  "finite_seam": {
+    "file": "tools/p4-d73-pinned-launch.sh",
+    "sha256": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1",
+    "exports": [
+      {"line": 128, "text": "export PYTHONNOUSERSITE=1", "phase": "preflight"},
+      {"line": 149, "text": "export PYTHONNOUSERSITE=1", "phase": "body"}
+    ],
+    "effect": "Outer omission or env -u cannot remove a later export in the launcher subshell.",
+    "minimum_authorized_followup": "Remove only these two launcher-owned exports, retain all existing manifest, source, origin, profile, schema, test-hash, and report-all guards, then independently review before any body run.",
+    "changed_here": false
+  },
+  "preserved_contract": {
+    "source_tuple": ["a4e016b6", "5e9ad1c6", "d8a1cd40", "635f4de0"],
+    "selector_roots": 22,
+    "xdist_workers": 3,
+    "addopts": "",
+    "cache_plugin": "disabled",
+    "timeout_seconds": 45,
+    "remotion_path": "enabled when launcher-owned ASTRID_REMOTION_PROJECT_DIR is present",
+    "production_caller": "unchanged registered commitTimeline/provider",
+    "source_of_authority": "environment is diagnostic only; no custody or accepted-history authority is inferred"
+  },
+  "c0_shape_preserved": {
+    "request": ["api", "project", "timeline", "base_pair", "commands", "label", "steps", "own_patch", "reads", "merge", "fields|atomic", "reads", "idempotency", "dry_run", "source", "rationale", "group"],
+    "success": ["accepted", "merged", "canonical", "receipt", "records", "bindings", "effects", "dependencies", "history", "undo_steps"],
+    "conflict": ["reason", "head"],
+    "invalid": ["code", "path", "hint", "suggested_command"],
+    "preview": ["would_status", "null_receipt"]
+  }
+}
