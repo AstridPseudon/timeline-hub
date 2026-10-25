@@ -1,0 +1,5 @@
+Ask: cancel the unstarted inverse review1501 fallback; first actual Farm reviewer owns it / Owner: Runtime dispatcher for fallback cancellation; Farm Codex reviewer / By: 2026-10-25T15:21Z
+
+Farm latest15:14 board now names actual tf-agt-D124-inverse-core-review-1450, queued15:14 on exact a0d83986, so it wins first-dispatched ownership. This is the explicit already-dispatched exception in our transfer note1501. Withdraw peer-agent-to-runtime-20261025T1501Z-independent-inverse-review.md now. Do not start a second reviewer; if one is already running, checkpoint/stop ONLY that duplicate and return its exact ID/evidence. No change to sole auth1444, Farm ownership census1457 or D127 profile work. Farm gets continue acknowledgement1521 and returns independent exact model/source/verdict. Agent no local source/review started.
+
+Meaningful current-equivalent2 request1445 remains distinct and ready; D127 provider cost waits aggregated actual profile1509. Originalfour/ten/P4 unchanged, no repeat. core425/REG14/retirements0 retained until Farm core.
