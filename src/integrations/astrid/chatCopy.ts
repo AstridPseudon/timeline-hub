@@ -80,6 +80,12 @@ Hermes speaks ACP directly via hermes acp.
 Keep diagnostic output on stderr so stdout stays an ACP JSON-RPC stream.
 Reuse the existing host for sessions, streamed replies, tools, permissions and cancellation.
 
+Worked example: Hermes is a complete integration to copy. It speaks ACP natively (hermes acp)
+and has a sign-in probe, setup steps, a skill harness, an icon and tests. Mirror every place it appears:
+- in astrid-agent: git grep -n -i hermes -- astrid/chat astrid/skills ':!*.mjs'
+- in astrid-app: git grep -n -i hermes -- src tests/e2e
+If your agent needs an ACP adapter instead, mirror Codex (git grep -n -i codex-acp in astrid-agent).
+
 Make the changes in this order:
 1. In astrid-agent/astrid/chat/localAgents.ts, add a stable agent id to localAgentIdSchema
    and an entry to LOCAL_AGENT_TABLE with its name, install and sign-in commands.
