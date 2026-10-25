@@ -1,0 +1,51 @@
+{
+  "result": "FAIL_SOURCE",
+  "candidate_commit": "04eb2d2b947b421828ec744542d724c0aaed161e",
+  "candidate_tree": "533d4c22fb95c3537f5ecae002987e960f42d99b",
+  "agent_base": "0ad49261ed36f043b059c07de989bd39cd3a5889",
+  "agent_base_tree": "aa413f6e1712626c0506284c8727057d753f692d",
+  "changed_file": "tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py",
+  "original_source_sha256": "52c63fa1a59d4ac08ca9077b97e6facfe7947cc36fde2795d1538df31a14cfed",
+  "candidate_source_sha256": "e8f28d05d9a458958d1e7bbd537a662ddecba6161e147c22f4b4dac6ede834db",
+  "runtime": {
+    "path": "/home/user/work/wt/rt-pin-42aad0e9",
+    "commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+    "tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c",
+    "clean": true
+  },
+  "source_review": {
+    "provider_registration": "causal minimum: original exact nodes fail at service.py:2347 before seeding because provider is absent; candidate moves genuine provider registration before create_timeline",
+    "metadata": "not causally required: stripping label/steps/merge/reads/source/rationale/group_id from post-seed scalar calls reproduces the same three inverse failures",
+    "minimum_correction": "retain provider registration move; remove the added metadata from the original request(calls) ABI-1 helper",
+    "ast": "seed helper exact; original request fields and values exact; 14 assertions exact"
+  },
+  "tests": {
+    "exact3_candidate": {
+      "command": "ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-42aad0e9 PYTHONPATH=$PWD:/home/user/work/wt/rt-pin-42aad0e9 python -m pytest -q -m integration tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py -k test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba",
+      "result": "3 failed in 66.73s",
+      "failures": {
+        "scalar_compound": "Runtime timeline_commit_auth.py:1607: inverse stage source materialization is outside its physical turnover",
+        "separate": "Runtime timeline_commit_auth.py:1755: inverse stage native writes do not cover its authenticated effect image"
+      },
+      "log_sha256": "d6430a3a65b7d82b7bb01e111da80fec00821f6a4bd579b9df11948b1d51421c"
+    },
+    "metadata_stripped_diagnostic": {
+      "result": "3 failed in 34.25s; same two Runtime inverse seams",
+      "log_sha256": "f0c9caab67ce01e7f142ff4eaa57cd2edf20f41fca7a597301a0e3b018b2b98e"
+    },
+    "public_caller": "1 passed in 2.69s",
+    "ruff": "passed",
+    "mypy_follow_imports_skip": "passed",
+    "py_compile": "passed",
+    "git_diff_check": "passed",
+    "original_red": {
+      "location": "tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py:171",
+      "message": "NotFoundError: parent composition revision not found",
+      "failure_text_sha256": [
+        "53481592f592ea167e0581521ac298fc668bd9c68b2e5d81cf9a47049be074b2",
+        "9483838ed28a303fa9ed76fd218cb0813ca3eec03298eff392d92386c17a019b",
+        "025d47ef70ca5f1292a902e3c48af990c0f91a807ba0ad70427fa7561e25779f"
+      ]
+    }
+  }
+}

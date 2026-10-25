@@ -1,4 +1,4 @@
-<!-- app | 2026-10-25T11:54:06Z | dispatcher heartbeat 3s | live 2 (sol 0, luna 2, other 0) | busy30 18 | status age 0m -->
+<!-- app | 2026-10-25T11:58:23Z | dispatcher heartbeat 1s | live 3 (sol 0, luna 3, other 0) | busy30 18 | status age 3m -->
 # app board, 2026-10-25T11:47Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -46,8 +46,8 @@
 
 | D118a-helper-cut1 | Preserve owner-deferred timing purpose | Luna | Existing D23 scope | gated:D23 | app-D118a-helper-cut1-1130 | No source change; exact second word-anchor case is already owner-deferred. Authenticated binding would change input. No new core bug claimed. | Original exact |
 
-| D118a-clip-scalars3 | Preserve clip scalar changes | Luna and protected review | Author1134 candidate | review | app-D118a-clip-scalars-protected-review-1148 | Provider ordering repair plus new metadata challenged for causal need and grouping. Original3 now reach inverse guards; no case GREEN. | Candidate held |
-| D118a-auto-completion4 | Preserve exact field conflict refusal | Luna and protected review | Author1148 exact4 PASS | review | app-D118a-auto-conflict-final-review-1152 | Source floor cleared in same pass; final exact-source review active. No changed inputs or weakened no-write predicates. | Candidate held |
+| D118a-clip-scalars3 | Preserve scalar bootstrap and grouping | Luna and protected review | Review1148 first FAIL | gated:D89-source-floor | First return1155 brief prepared | Keep causal provider order; remove unsupported metadata. Original grouping and all assertions stay exact; later inverse guards remain open. | 04eb2d2 held |
+| D118a-auto-completion4 | Preserve exact field conflict refusal | Luna and protected review | Author1148 exact4 PASS | review | app-D118a-auto-conflict-final-review-1152 | Final exact-source review active; no new-source exception used. No changed inputs or weakened no-write predicates. | Candidate held |
 
 | U4p-D111b | Adopt qualified generic read performance | Luna | Released normal7070 | merged | Adopter1139; normal receipt1145 | Node20 strict8/vendor17/artifact3/lint PASS;14 mappings/15 canonical/8protected exact; full normal tree equals tested author. | 34d4644589 |
 | D120-full-P2 | Qualify all eight on released D111b | Luna and service | Preflight12718 PASS | doing | app-D120-full-P2-D111b-1145; actual11251 | Submitted11:45:16 on34d464/070dfc/7070/635f. Same ID to terminal; no result yet. [Packet](../../design/app-D120-full-P2-D111b-1145-submit.json). | App34d4644589 |
