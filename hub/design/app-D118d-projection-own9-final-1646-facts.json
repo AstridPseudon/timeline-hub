@@ -1,0 +1,59 @@
+{
+  "task": "D118d exact reviewed clean import plus own9",
+  "repo": "Agent",
+  "worktree": "/home/user/work/wt/app-D118d-projection-own9-final-1646",
+  "source_commit": "f53b016900c99e46998268e36c7c431ac0eec61e",
+  "changed_paths": [
+    "tests/sdk/test_timeline_capture_projection.py"
+  ],
+  "reviewed_blob": {
+    "sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+    "git_blob": "16954294f9f70018e4bbd1012083f51594f6cb19",
+    "byte_exact_worktree_match": true,
+    "git_diff_against_reviewed": "empty"
+  },
+  "runtime_pin": {
+    "path": "/home/user/work/wt/rt-pin-5e9ad1c6",
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "clean": true
+  },
+  "provider_registration": {
+    "registration_source": "tests/sdk/test_capture_source_runtime.py:216",
+    "registration": "service.register_timeline_commit_provider(load_timeline_commit_provider(\"astrid\"))",
+    "provider_origin": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/timeline_commit_provider.py",
+    "store_origin": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/timeline_commit_store.py",
+    "agent_commit_origin": "/home/user/work/wt/app-D118d-projection-own9-final-1646/astrid/sdk/timeline/commit.py",
+    "runtime_protocol_origin": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/__init__.py"
+  },
+  "capacity": {
+    "admission_free_bytes": 5094088704,
+    "required_free_bytes": 5000000000,
+    "ongoing_stop_bytes": 4000000000,
+    "post_run_free_bytes": 5092470784,
+    "admitted": true
+  },
+  "own9": {
+    "outcome": "FAIL",
+    "pytest_exit_code": 1,
+    "duration": "16.26s",
+    "tests": 9,
+    "errors": 9,
+    "failures": 0,
+    "skipped": 0,
+    "pytest_started": true,
+    "first_failure": {
+      "node": "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden",
+      "phase": "fixture setup",
+      "safe_frame": "astrid/sdk/timeline/_command_state.py:369",
+      "type": "astrid.sdk.timeline._command_state.CommandError",
+      "kind": "identity_conflict",
+      "message": "shot item correspondence changed",
+      "surface": "runtime_protocol.errors.RuntimeErrorBase",
+      "fixture_frame": "tests/sdk/test_timeline_capture_projection.py:311"
+    },
+    "no_fix_or_retry": true,
+    "xml": "evidence/own9.xml",
+    "log": "evidence/own9.log"
+  }
+}

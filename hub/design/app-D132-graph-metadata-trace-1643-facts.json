@@ -1,0 +1,119 @@
+{
+  "task": "D132",
+  "base": "134d9787c791b54db695a2332bd352ca1c0a6a78",
+  "status": "SOURCE_PASS_OWN9_FAIL_TRACE_COMPLETE",
+  "source_verdict": "PASS",
+  "conservation": {
+    "fixture": {
+      "path": "tests/editing_conformance/test_recorded_graph_roots.py",
+      "test_bodies": 22,
+      "assertions": 90,
+      "parametrize_decorators": 6,
+      "all_non_gain_inputs_equal": true
+    },
+    "graph_consumer": {
+      "path": "tests/sdk/test_timeline_commit_graph_roots.py",
+      "test_bodies": 11,
+      "assertions": 33,
+      "parametrize_decorators": 7,
+      "predicates_unchanged": true
+    },
+    "other_inputs_and_assertions": "unchanged"
+  },
+  "own9": {
+    "retained_result": "9 requested nodes failed",
+    "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "registered_profile": "astrid",
+    "failure_boundary": "frozen PreparedCommit validation",
+    "failure_source": "runtime_protocol/timeline_commit_validation.py:173",
+    "failure_path": "canonical_document.shot_revisions[1].payload.metadata",
+    "failure_type": "explicit null rejected where object is required",
+    "rerun": false
+  },
+  "causal_trace": [
+    {
+      "stage": "authored fixture seed",
+      "path": "tests/editing_conformance/test_recorded_graph_roots.py",
+      "lines": "34-52",
+      "type": "root_values() shot root mapping",
+      "finding": "payload.metadata is explicitly authored as null"
+    },
+    {
+      "stage": "registered operation capture",
+      "path": "astrid/sdk/timeline/_recording.py",
+      "lines": "184-208",
+      "type": "Recording.create_entity",
+      "finding": "the supplied root value is validated, deep-recorded, and written unchanged; no metadata defaulting"
+    },
+    {
+      "stage": "document opener",
+      "path": "astrid/sdk/timeline/commit.py",
+      "lines": "154-166",
+      "type": "bundle_from_document",
+      "finding": "the complete closure is opened through open_authoring_bundle; no null-to-object conversion"
+    },
+    {
+      "stage": "candidate compiler",
+      "path": "astrid/core/timeline/authoring_bundle.py",
+      "lines": "1000-1007,1099-1106,1184-1207",
+      "type": "compile_authoring_candidate",
+      "finding": "candidate shot payload is copied into the immutable shot revision; metadata is not normalized"
+    },
+    {
+      "stage": "provider prepared value",
+      "path": "astrid/sdk/timeline/commit.py",
+      "lines": "1419-1435",
+      "type": "RuntimeCommitService.commit prepared mapping",
+      "finding": "canonical_document is constructed from document_from_bundle and passed to the Runtime port unchanged"
+    },
+    {
+      "stage": "Runtime acceptance preflight",
+      "path": "runtime_protocol/timeline_commit_store.py",
+      "lines": "1599-1606",
+      "type": "TimelineCommitStore._check_shot_destinations",
+      "finding": "frozen PreparedCommit validation runs before destination/closure checks and refuses the null"
+    }
+  ],
+  "schema_contract": {
+    "prepared_type": "runtime_protocol/timeline_commit_types.py:95 PreparedCommit",
+    "canonical_type": "runtime_protocol/timeline_commit_types.py:88 CanonicalDocument",
+    "shot_payload": "runtime_protocol/schemas/timeline-commit-bundle.json:3722-3775 ShotPayload",
+    "metadata_definition": "runtime_protocol/schemas/timeline-commit-bundle.json:3752-3754 metadata -> OpenMap",
+    "open_map_contract": "OpenMap is an object; metadata property is optional because it is not required",
+    "omission": "contract-valid and means the field is absent",
+    "empty_object": "contract-valid and means the field is present with an empty object",
+    "explicit_null": "not contract-valid at this field; null remains valid only where a schema explicitly permits it"
+  },
+  "passing_comparison": {
+    "path": "tests/sdk/test_timeline_commit_provider_document.py",
+    "lines": "33-39",
+    "type": "document_fixture shot payload",
+    "finding": "the same current Agent document path carries object-valued payload.metadata; this is the genuine passing shape used by current provider tests"
+  },
+  "shared_seed_consumers": [
+    {
+      "path": "tests/sdk/test_timeline_commit_graph_roots.py",
+      "intent": "registered Runtime provider graph creation, closure, reservation, inverse, and redo"
+    },
+    {
+      "path": "tests/sdk/test_timeline_semantic_reservations.py",
+      "intent": "detached semantic identity retirement and collision/no-write checks"
+    },
+    {
+      "path": "tests/sdk/test_timeline_created_root_stage_redo.py",
+      "intent": "detached created-root stage input and guarded redo checks"
+    }
+  ],
+  "proposed_seam_unapplied": {
+    "decision_owner": "manager scope under D104/D120",
+    "minimal_boundary": "the shared authored fixture field at tests/editing_conformance/test_recorded_graph_roots.py:39",
+    "finite_input_choices": [
+      "omit payload.metadata",
+      "author payload.metadata as an empty object"
+    ],
+    "preserve_null_choice": "if explicit null is required as contract data, Runtime/schema ownership must decide a schema change; Agent must not normalize it",
+    "not_applied": true,
+    "assertions_unchanged": true
+  }
+}

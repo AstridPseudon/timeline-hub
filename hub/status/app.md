@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T16:43:04Z | dispatcher heartbeat 3s | live 3 (sol 0, luna 3, other 0) | busy30 15 | status age 0m -->
-# app board, 2026-10-25T16:43Z
+<!-- app | 2026-10-25T16:48:24Z | dispatcher heartbeat 3s | live 3 (sol 1, luna 2, other 0) | busy30 17 | status age 1m -->
+# app board, 2026-10-25T16:47Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -107,15 +107,15 @@
 
 | D116-current17 | Map shared current word setup | Luna and independent | Agent peer1526; normal20177 | merged | Author1540; independent1548 | Source applicability17/17 PASS; scalar suppliedhash malformed65chars, exact64 reviewerhash published. All selector-specific topology still missing. No behavior credit. | Source unchanged |
 | D118d-pair16 | Preserve current pair-reader purposes | Luna and independent | Historical30693 exact16 | merged | Author1540; independent1552 | Current file byte-exact captured120d; all16 PASS in30693. Existing7d858 setupfix home; no diff, rerun or current5e9ad behavior credit. | Agent20177 unchanged |
-| D118d-projection9 | Preserve real capture projection purposes | HARD Sol and independent Luna | Actual own-node floor5GB | gated:light-capacity | Resume1643 zero body | Exact reviewed blob; actual free4993753088 below5GB, NOTRUN. Resume when other source workers finish; no duplicate source review. | f53b01690 held |
+| D118d-projection9 | Preserve real capture projection purposes | HARD Sol and independent Luna | Source review1616 PASS | doing | app-D118d-projection-own9-final-1646 | Same exact reviewed6e41 blob; only one new worktree before pytest. Actual own9 floor5GB remains strict. | f53b01690 held |
 
-| D118d-graph9 | Preserve typed root and tamper purposes | Luna and independent Luna | D132 approved gain 1 | doing | app-D132-graph-metadata-trace-1643 | Protected1632 SOURCE PASS; own9 FAIL at metadata None schema. Trace producer versus authored setup; no input fix authorized. | 134d9787c held |
+| D118d-graph9 | Preserve typed root and tamper purposes | Luna and protected Luna | Authored metadata null decision | blocked:orchestrator | Trace1643 complete; escalation1647 | Gain1 SOURCE PASS; own9 FAIL9 at authored metadata null. Finite proposal{} unapplied; source trace complete. | 134d9787c held |
 
 | D127-leaf-retention | Retain safe leaf and lifecycle evidence | Luna and protected Luna | App lifecycle validator repair | review | Helper231ddb; independent1630 | Helper4ee and all160 predicate mapping qualified; exact central28551 PASS23. Combined FAIL belongs App lifecycle cross checks. No activation. | 231ddb5 held |
 
 | U4p-R2-diagnostic | Adopt qualified inverse redo and diagnostics | Luna | Qualified ab1e normal receipt | merged | Adopter1615; normal1624 | Entire normal tree equals tested author. Vendor17/artifact3/lint PASS; mappings14/protected8 exact. D130 recovery excluded; no gate claim. | d4e5284dfc |
 
-| D127-App-validator | Strictly validate leaf and lifecycle schema | Luna and protected Luna | Combined1630 concrete FAIL | doing | app-D127-App-lifecycle-first-return-1643 | Own mutations and two fresh bootstrap controls PASS; App/node types PASS. Fix lifecycle versus phase, duration and final outcome contradictions. | f9fa634 held |
+| D127-App-validator | Strictly validate leaf and lifecycle schema | Luna and independent Luna | Author1643 own controls PASS | review | app-D127-lifecycle-protected-review-1647 | Lifecycle/phase/duration/final outcome contradictions tightened. Mutation2, App/node types and lint PASS; final independent review active. | 5a9e0eb523 held |
 
 | D116-native-topology4 | Build four faithful current checkout companions | Luna | Agent peer1619 reserved source | doing | app-D116-native-topology4-1644 | Only two new companion files; all17 originals and shared fixtures read only. Fresh5110702080 bytes; own new4 requires actual5GB. | Source pending |
 
@@ -124,15 +124,18 @@ Integration: App d4e5284dfcc20801977cef12253b12f9cc8798fd, tree5efca939546f30b03
 Current P2 remains NO-GO. Actual10721 readiness1 PASS; original5 PASS,2 FAIL,1 NOTRUN. Exact element key joins d22 request3,352 samples/3 lost/PENDING. No provider leaf, response, duration or denominator. Request2 is distinct. Historical five complete tails and separate asset8974 GO retained. Final full8 still owed.
 
 Blockers: SWAP safety — Runtime D130 escalation and recorded header hold recovery, related qualification, release, adoption and tours. Automatic classifier refusal; no retry, alternate route, transfer or rollback.
-Blockers: Element source — App lifecycle first return1643 closes strict validator finding; helper4ee frozen. No original timing or cost repair claimed, no new tour.
+Blockers: Element source — Final independent App lifecycle review1647 owns exact consistency and fresh bootstrap controls; helper4ee frozen. No original timing/cost repair or tour claimed.
 Blockers: Agent core — D128 owns local a4e016/5e9ad core. Latest Agent1626 says D131 reserve PASS, child built then ownership guard refused; Runtime owns exact normal custody disposition. No App duplicate body.
 Blockers: Final render — Farm D77 waits Runtime paired exact source publication; no App input owed. Historical denied acquisition route stays stopped.
 Blockers: Final cut — Current full P2, final P1–P5/core/D69 and genuine installed render owed. No ZIP claim.
-Next ready: Native topology4 in first freed hosted source slot; protected App lifecycle review on author return; graph follow-through only after causal trace. No tour or SWAP qualification.
-live 3 / cap 3; ready-undispatched 0; native topology4 dispatched immediately in freed projection slot. Projection own9, graph trace and App strict validator running. Fresh dispatch5418221568 bytes; source floor4.6GB with no heavy, own-node body5GB, ongoing stop4GB. No heavy body.
+Next ready: Consume actual projectionown9 and independentApp1647; cleanimport/normalmerge each exact qualified candidate. Graph stays owner-held for authored metadata decision; native4 author active. No tour.
+live 3 / cap 3; ready-undispatched 0; native topology4, projection own9final1646 and independent App1647 fill hosted slots. Projection own9, graph trace and App strict validator running. Fresh dispatch5418221568 bytes; source floor4.6GB with no heavy, own-node body5GB, ongoing stop4GB. No heavy body.
 INBOX consumed through2298501 bytes. H6 checked actual hub/status Agent1626, Runtime1624 and Farm1635. Farm core dropped; Agent normal child custody is active owner. All former App source/publication asks consumed. New Agent1619 companion ask is an explicit row and will start first free slot.
 Safety: D130 remains absolute. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakened tests, credentials or refused-route retry. All current inputs/outputs/branches/reports and historical guarded dirty/orphan targets preserved.
 Later: Parent labels2/native checkout originals4/trackbatch1 retain word-source setup errors; new companion work is separate. D79 waits ZIP; E4 dropped. Current17 applicability17 PASS, pair16 historical30693 source equality PASS, neither is current behavior proof.
 Pass16:43: consumed all three terminal workers, published safe exact reports/verdict/custody only. Projection1630 zero-body shortfall cleared by ended worker recycling; same reviewed source resumed1643. Graph1632 source PASS then9 actual FAIL at frozen metadata None; source-only trace1643, no speculative normalization. Helper/App1630 FAIL is App lifecycle consistency, first return1643 on same branch; Runtime helper unchanged. Existing APP/node typechecks and two bootstrap controls PASS, strict-islands baseline retained. Sweep3 and corrected compact invoked once; no protected/refused cleanup target touched.
 
 Pass16:44: projection1643 terminalNOTRUN at actual4993753088bytes, pytest neverstarted; newlightproof waits enough capacity, no testwaiver. Native topology4 claimed toAgent and dispatched at5110702080bytes in freedslot. Graphtrace andAppstrictvalidator continue.
+
+Blockers: Graph scope — Orchestrator owes one authored metadata:null->{} decision; escalation app-20261025T1647Z-graph-authored-metadata-null.md. No input change before recorded answer.
+Pass16:47: App lifecycle firstreturn1643 own mutation/types/lintPASS5a9e; sole independent1647 queued. Graph trace complete: authorednull correct schema refusal, exact scope question recorded samepass before any edit. Projectionown9final1646 admitted after two source workers ended and no competing newworktree until launch; alloriginals/source/goldens unchanged.

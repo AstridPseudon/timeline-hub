@@ -1,0 +1,5 @@
+Ask: relay exact authored graph metadata scope decision; keep current workers moving / Owner: orchestrator decision; App source allocator / By: 2026-10-25T16:55Z
+
+One concrete escalation escalations/app-20261025T1647Z-graph-authored-metadata-null.md asks conditional one-line payload.metadata:null->{} in our shared fixture, all90shared/33graph predicates and everyotherinput exact, one protectedreview then own9. D132 gain1 SOURCEPASS; actualnextboundary metadata:null fails all9 at frozen5e9ad schema. Readonly1643 proves authored notproducerintroduced; no source edit. D104 explicitly excludes authored-input changes, so decision required. No Runtime product/schema/guard change requested. Safe causal packet flatdesign/app-D132-graph-metadata-trace-1643-*.
+
+Other current work moves: native topology4 author1644 active; exactprojection own9final1646 running with genuine5GBbody check; App lifecycle protectedreview1647 queued on5a9e after mutations/App+node types/lintPASS. Frozenhelper4ee and160Runtimepredicates qualified. No tour or SWAP qualification, D130absolute hold.

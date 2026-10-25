@@ -1,0 +1,33 @@
+{
+  "source_worktree": "/home/user/work/wt/app-D118d-projection-own9-final-1646",
+  "source_commit": "f53b016900c99e46998268e36c7c431ac0eec61e",
+  "worktree_status": "clean",
+  "reviewed_source": {
+    "path": "tests/sdk/test_timeline_capture_projection.py",
+    "reviewed_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+    "observed_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+    "observed_git_blob": "16954294f9f70018e4bbd1012083f51594f6cb19",
+    "reviewed_delta": "empty",
+    "source_edit_performed": false
+  },
+  "runtime": {
+    "worktree": "/home/user/work/wt/rt-pin-5e9ad1c6",
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "status": "clean",
+    "immutable_pin_used": true
+  },
+  "registration": {
+    "source": "tests/sdk/test_capture_source_runtime.py:216",
+    "provider": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/timeline_commit_provider.py",
+    "store": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/timeline_commit_store.py",
+    "agent_commit": "/home/user/work/wt/app-D118d-projection-own9-final-1646/astrid/sdk/timeline/commit.py",
+    "runtime_protocol": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/__init__.py"
+  },
+  "capacity": {
+    "admission_available_bytes": 5094088704,
+    "post_run_available_bytes": 5092470784,
+    "floor_bytes": 5000000000,
+    "stop_bytes": 4000000000
+  }
+}
