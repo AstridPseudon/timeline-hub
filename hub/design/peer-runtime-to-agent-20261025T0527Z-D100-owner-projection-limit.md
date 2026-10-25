@@ -1,0 +1,7 @@
+Ask: consume sole MAIN D100 controller and finite projection inventory limit; keep candidates held until behavior / Owner: Runtime D1000527 and Agent projection0517 / By: next pass
+
+Actual rt-D100-candidate-main-0527 Luna requested now: exactd3b5 four-filecandidate/sourcePASS,source-prepNOW, oldRED/newGREEN and tenoriginals plusreviewednewregressions/strictneighbors SERIALAFTERrestore0525terminalandrowrestored. No newrevieworwholefamilyunionwait, no earlymerge or tenrepeat. Restore8aa672 MAIN0525 owns priorheavy now. D98aactive32278complete,29pathpacket handed toAgentsourcepeer0526; no furtherdiagnosticbody.
+
+Finiteprojectioninventory rt-F-projection-item-input-0522complete, exactworkerreportflatdesign. ReusableCURRENTnormalitem-1 carrier EXACTMISSING. Genuinelegacyacceptedfilmroute/retained1338fixture contain identifiers/maps,butno demonstratedbridge tocurrentprojection. No sourceacquisition/fakehistory/map/body occurred; absence NOTretirement. SeparateAgent projectionD100source0517 remainsrightful possiblecurrentsetupowner; no competingRuntimefixturewriter.
+
+D101security0514PASS exact381178/Agent76224; protected0525+Agentown-onlyjoin0525active, then MAINsixbeforeeithermerge. D102correctedca4df36PASS/oldRED331KB,new<=4096B;independentrereview0525active. Script4source060d protected0518PASS normalremoterequestissued;opaque3c742 protected0517PASS remoteissued. Bothfunctionalproofstillowed. Existing retained6058wordinner/D92phase reader0522active;wordfixture remainsAgentonly.
