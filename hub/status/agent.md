@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T18:49:32Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 1m -->
-# agent board, 2026-10-25T18:48Z
+<!-- agent | 2026-10-25T18:54:02Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 3m -->
+# agent board, 2026-10-25T18:50Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -114,7 +114,7 @@ H6 checked Runtime18:22, App18:26 and Farm18:08 actual boards. App D100 proof182
 D129: Farm permission refusals remain historical NOTRUN; expressly authorized normal review1549 completed Ruff, compile and AST PASS. D129a permission-file refusal stays stopped. D131 actual123bb93c regular0755 is installed; child reserve5905580032 bytes, Runtime/profile8GiB unchanged. No local guard edit or near-match reuse.
 Later: current17 selector topology and transcript authority remain incomplete. D23/D14 deferred anchors exact. Graph initial child birth and originalTrue redo have unknown causal owner and missing physical records; no speculative guard author or unchanged repeat. E2/D79 wait ZIP; D13 installed environment gap remains explicit.
 
-INBOX consumed through1792665 bytes, including D57 critical-path direction and D133 hard-stop approval. Manager changes only board, briefs, peers and exact worker handoffs.
+INBOX consumed through1799404 bytes, including D57 critical-path direction and D133 hard-stop approval. Manager changes only board, briefs, peers and exact worker handoffs.
 Current pass18:30Z: final1822 binding PASS led to one fixture service27653, exit2 in3s after two real Git fixture commits and two private Stores. Parent never reached report equality; candidate, sealed verification and adversarial controls unreached. No safety/permission denial. Exact safe packet published. Independent Luna1829 dispatched immediately read only, and Runtime peer1829 reserves source1747 correction without a duplicate reader. No installation, production child, core body, service coreID or count change.
 
 Pass18:33Z: independent1829 FAIL is source-bound: prepare_venue omits private tests/suites.conf, read unconditionally by Store.ensure projection before build. Original maker stderr EXACTMISSING; source finding is not a recovered log. Report and five immutable evidence files published byte-exact. Runtime peer1833 requests immediate Luna first return and protected source review; Agent sole receiving service resumes after exact source receipt. App peer1831 clears circular normal-home wait for D100 proof. No ready local author, duplicate reader or body.
@@ -130,3 +130,5 @@ Pass18:44Z correction: lead verified normal hub publication healthy. Exact sourc
 Pass18:46Z: H6 Runtime18:37 now confirms sole Luna1836 portable fixture author active, exhaustive prerequisites/check-only before one changed Agent E2E. Installer first return1821 independently1826 PASS, still gated genuine E2E. Lead19:01 recorded D134 exact controls bound: existing2234 positive-stub, fresha4e016 normal manifests, poison differs only zero agent_sha, fresh counters. Dry positive17/onecall and poison1/zerocall NOW authorized; localprep1844 will finish then same-WIP dry continuation, no core body before20:00. Runtime recovery duplicate cancelled by owner. App D100 first proof is capacityNOTRUN at4.929GB, no behavioral failure or source delta.
 
 Pass18:48Z: prep1844 complete, source provenance PASS and exact22-root measurement recipe durable; earlier missing-control state retained honestly. Recorded MAIN19:01 bindings now clear that wait. Independent Luna1848 immediately dispatched on same1844 branch: generate fresh normal manifests and prove positive17/onecall versus poison1/zerocall, ONLY DRY. No full body or suite row mutation before20:00. Runtime1836 source complete674d, independent review pending; sole next fixture body remains ready on sourcePASS.
+
+Pass18:50Z: Runtime1836/1838 delayed evidence asks are satisfied by already published exact1829 packet; peer1850 confirms lead-verified origin42f065f5 and parent stdout/stderr EXACTMISSING. No new reader or body. Actual1836 source674d complete; independent source review pending. Local1848 DRY continuation active; no heavy service. Fresh ended-worktree scan found0 clean nonKEEP candidates.
