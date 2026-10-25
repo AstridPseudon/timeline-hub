@@ -1,61 +1,119 @@
 {
-  "schema": "timeline.agent.d73.review_source_manifest.v1",
-  "scope": "independent review observations; not an operational launcher manifest",
+  "schema": "timeline.agent.d73.review_correction_source_manifest.v1",
+  "task": "agt-OPS-D73-review-correction-2240",
+  "scope": "finite correction source map for the 2232 review; not an operational launcher manifest",
+  "derivative": {
+    "base_ref": "refs/heads/tl/agt-OPS-D73-receiving-review-2232",
+    "base_commit": "ccf60580d29a0826d3efd8f90386d009ad3f834a",
+    "base_artifacts": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-OPS-D73-receiving-review-2232/evidence",
+    "author_inputs": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-OPS-D73-receiving-inputs-2227/evidence",
+    "current_artifacts": "/home/user/work/wt/agt-OPS-D73-review-correction-2240/evidence",
+    "prior_originals_immutable": true
+  },
   "candidate": {
     "repository": "composition",
+    "repository_path": "/home/user/work/wt/agt-OPS-D73-review-correction-2240",
     "commit": "afda6c66a11608d8cb012df1a54bf2489d8c20b3",
     "tree": "67bd2d4ee1d50bd95ebb8b0de55d4d1ed1e3e87f",
     "parent": "ff6498859bb2a72b1b7d52d807dd04d3852fc055",
     "origin": "https://github.com/peteromallet/timeline-composition",
-    "checkout": "/home/user/work/wt/agt-OPS-D73-receiving-review-2232",
-    "clean": true
+    "object_type": "commit",
+    "object_verified": true
   },
   "candidate_files": {
-    "ops-d73-exact-nodes/README.md": {"blob": "e6527ea7305e56d5879ff7064fa6f00632058994", "sha256": "87ef06167eb08d2cc4f7b30b321274950e71d9568eaa1a38ec147ec909ae2474"},
-    "ops-d73-exact-nodes/check.py": {"blob": "29d30fe4eb50468a2222898aba0eab359f469097", "sha256": "b8e63f510ec06e092e10f09215ee404204789629dec10d3c0a3e734d8df5cc24"},
-    "ops-d73-exact-nodes/dry-check.sh": {"blob": "410350fd6788bc2932c6ac9ec443167238652430", "sha256": "f8aa1b9e96a0fec55e05910927b8bdf1fd623282deeffd0263bbfdc318641f52"},
-    "ops-d73-exact-nodes/suites.conf": {"blob": "3a5fe1c93afdac1c95891c72058a92d15dfc7c19", "sha256": "ddf8d6d20e9dbadbb4f23716726695b662c053f6d449c8d6e7df3d2d80d2f3c5"},
-    "ops-d73-exact-nodes/test_recipe.py": {"blob": "d7e2aab6bd99f116de614a94e85c242a5ee0c994", "sha256": "432621a19b675aac798e9d48477b7be3e4ca1bc711c8903fba469a59650366fc"}
+    "ops-d73-exact-nodes/README.md": {
+      "source_path": "/home/user/work/wt/agt-OPS-D73-review-correction-2240/ops-d73-exact-nodes/README.md",
+      "blob": "e6527ea7305e56d5879ff7064fa6f00632058994",
+      "sha256": "87ef06167eb08d2cc4f7b30b321274950e71d9568eaa1a38ec147ec909ae2474"
+    },
+    "ops-d73-exact-nodes/check.py": {
+      "source_path": "/home/user/work/wt/agt-OPS-D73-review-correction-2240/ops-d73-exact-nodes/check.py",
+      "blob": "29d30fe4eb50468a2222898aba0eab359f469097",
+      "sha256": "b8e63f510ec06e092e10f09215ee404204789629dec10d3c0a3e734d8df5cc24"
+    },
+    "ops-d73-exact-nodes/dry-check.sh": {
+      "source_path": "/home/user/work/wt/agt-OPS-D73-review-correction-2240/ops-d73-exact-nodes/dry-check.sh",
+      "blob": "410350fd6788bc2932c6ac9ec443167238652430",
+      "sha256": "f8aa1b9e96a0fec55e05910927b8bdf1fd623282deeffd0263bbfdc318641f52"
+    },
+    "ops-d73-exact-nodes/suites.conf": {
+      "source_path": "/home/user/work/wt/agt-OPS-D73-review-correction-2240/ops-d73-exact-nodes/suites.conf",
+      "blob": "3a5fe1c93afdac1c95891c72058a92d15dfc7c19",
+      "sha256": "ddf8d6d20e9dbadbb4f23716726695b662c053f6d449c8d6e7df3d2d80d2f3c5"
+    },
+    "ops-d73-exact-nodes/test_recipe.py": {
+      "source_path": "/home/user/work/wt/agt-OPS-D73-review-correction-2240/ops-d73-exact-nodes/test_recipe.py",
+      "blob": "d7e2aab6bd99f116de614a94e85c242a5ee0c994",
+      "sha256": "432621a19b675aac798e9d48477b7be3e4ca1bc711c8903fba469a59650366fc"
+    }
   },
   "immutable_route": {
     "agent": {
+      "repository_path": "/home/user/peteromallet/astrid-agent",
       "commit": "2eca9a1da94eb35bb969540e150192ff920ce326",
       "tree": "888c16e3dbbff2d6827e7ffcfea64208b0e2a5e4",
       "parents": ["d066e3b7a82a1e7853963ea357510ccef0c0aa34", "cbdc731789d0d6ebe1c0935ca722ef83a30c1979"],
       "origin": "https://github.com/peteromallet/astrid-agent",
+      "object_type": "commit",
+      "object_verified": true,
       "checkout_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-2eca9a1da94eb35bb969540e150192ff920ce326",
       "checkout_receipt_present": false
     },
     "runtime": {
+      "repository_path": "/home/user/banodoco/banodoco-workspace-runtime",
       "commit": "ab1e4f6141987706132916e2da16477f5a019464",
       "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
       "parents": ["00ede8c3fac7f607a14a1bf74182e87a3dcb523a", "a5fc9ddf3ac7c9e120e22df5b3c4093d60759f3b"],
       "origin": "https://github.com/banodoco/banodoco-workspace-runtime",
-      "checkout": "/home/user/work/wt/rt-pin-ab1e4f61",
+      "object_type": "commit",
+      "object_verified": true,
+      "checkout_path": "/home/user/work/wt/rt-pin-ab1e4f61",
       "checkout_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-ab1e4f6141987706132916e2da16477f5a019464",
       "checkout_receipt_present": true
     }
   },
-  "protected_hashes": {
-    "launcher": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
-    "selected4_source": "8243f3b9fe71b218b3b6a402c10d099e15c848b91b82770383e91a2dd3a72b86",
-    "fork_source": "3fef15b5862e044942f2d0164b37f6f9281f86d378345d8a0b262c64870af8a4",
-    "focused_control": "0c2c70bd5e26598beebd31f4c7a0a3c1bf48bdc5e9f32ff93c6b54bf15b4b600",
-    "runtime_lock": "ad818e99cb0759d1742d9f67b5bb3367b03fd3e88d8f65846253169272b8b6ce"
-  },
-  "private_rows": {
-    "selected4": {"suite": "d73-ab1e-selected4-exact-nodes", "selector_count": 4, "central_installed": false},
-    "fork": {"suite": "d73-ab1e-fork-exact-nodes", "selector_count": 1, "central_installed": false}
+  "prior_review_correction": {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D73-source-review-2209-review.json",
+    "wrong_agent_tree": "888c16e3dbbff2d6827e7ffcfea64208b0e5a4",
+    "correct_agent_tree": "888c16e3dbbff2d6827e7ffcfea64208b0e2a5e4",
+    "correction_class": "evidence_integrity_derivative",
+    "product_or_test_failure": false
   },
   "central_readonly_inputs": {
-    "request-test": {"expected": "f839c0026eaa32eab43369120f6ddadfb6af382be7a9a19fc47e30b477bdf874", "observed": "f839c0026eaa32eab43369120f6ddadfb6af382be7a9a19fc47e30b477bdf874", "match": true},
-    "test-run": {"expected": "0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe", "observed": "0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe", "match": true},
-    "tests/suites.conf": {"prior_expected": "fecaa66d22ed4e90401455eceb8983b48178a2037c3ccfc0bbc716428239156f", "observed_current": "84d3045878ea806439b73b0a5ca983c06371fcac2d42bc8c7e8add0ebfbd3988", "match": false}
+    "request_test": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test",
+      "sha256": "f839c0026eaa32eab43369120f6ddadfb6af382be7a9a19fc47e30b477bdf874"
+    },
+    "test_run": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/test-run",
+      "sha256": "0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe"
+    },
+    "suites_conf": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+      "author_recorded_sha256": "fecaa66d22ed4e90401455eceb8983b48178a2037c3ccfc0bbc716428239156f",
+      "current_observed_sha256": "84d3045878ea806439b73b0a5ca983c06371fcac2d42bc8c7e8add0ebfbd3988",
+      "capture_time": "not recorded",
+      "exact_rows_currently_present": [],
+      "interpretation": "mutable-source difference; timing/cause unresolved"
+    }
+  },
+  "private_rows": {
+    "selected4": {
+      "suite": "d73-ab1e-selected4-exact-nodes",
+      "selector_count": 4,
+      "central_installed": false
+    },
+    "fork": {
+      "suite": "d73-ab1e-fork-exact-nodes",
+      "selector_count": 1,
+      "central_installed": false
+    }
   },
   "c0_wire_shape": {
     "request": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands[{schema_version,op,version,select,args}]", "label", "steps[{id,label,intent,tags,command_ordinals,patch,reads?}]", "merge", "reads", "idempotency", "dry_run", "source", "rationale", "group_id"],
     "replies": ["accepted", "merged", "canonical", "base", "landing", "receipt", "records", "bindings", "effects", "dependencies", "history", "undo_steps", "conflict{reason,head}", "invalid{code,path,hint,suggested_command}", "preview{would_status,nullreceipt,no_writes}"],
-    "dto_change": false
+    "dto_change": false,
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-OPS-D73-receiving-inputs-2227/evidence/receiving-inputs.json"
   },
   "d139_boundary": {
     "agent_merged_integration": "cd63be424d62226e3ee5c26fc5ce03227f5394a5",
@@ -70,5 +128,6 @@
     "app_identity": null,
     "composition_receipt_identity": null,
     "interpreter_schema_profile_node": null
-  }
+  },
+  "author_finite_missing_inputs": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-OPS-D73-receiving-inputs-2227/evidence/missing-inputs.json"
 }
