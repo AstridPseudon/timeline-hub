@@ -56,6 +56,18 @@ def occurrence_patch(before, rows):
             "args": {"changes": changes}}
 
 
+def body_with_ordered_patch(edit, commands):
+    """Claim the exact ordered effects for a doc.patch-only setup commit."""
+    body = edit.body(commands)
+    body["steps"][0]["patch"] = copy.deepcopy([
+        change
+        for command in commands
+        if command["op"] == "doc.patch"
+        for change in command["args"]["changes"]
+    ])
+    return body
+
+
 @pytest.fixture(params=["item_id", "id", "both"])
 def opaque_film(request, tmp_path, monkeypatch):
     runtime = use_runtime()
@@ -131,7 +143,7 @@ def opaque_film(request, tmp_path, monkeypatch):
         source_row = copy.deepcopy(staged["parent_revision"]["payload"]["occurrences"][0])
         source_row.update(data=opaque(), app=opaque(), opaque=opaque())
         setup.append(occurrence_patch(staged, [source_row, *staged["parent_revision"]["payload"]["occurrences"][1:]]))
-        source = edit.commit(edit.body(setup), "opaque-source")
+        source = edit.commit(body_with_ordered_patch(edit, setup), "opaque-source")
 
         source_document = source["data"]["canonical_document"]
         shared = capture_occurrence_place_shared(
@@ -159,7 +171,10 @@ def opaque_film(request, tmp_path, monkeypatch):
                 row["shot_revision_id"] = source_row["shot_revision_id"]
                 row.update(data=opaque(), app=opaque(), opaque=opaque())
             rows.append(row)
-        baseline = edit.commit(edit.body([occurrence_patch(shared_document, rows)]), "opaque-baseline")
+        baseline = edit.commit(
+            body_with_ordered_patch(edit, [occurrence_patch(shared_document, rows)]),
+            "opaque-baseline",
+        )
         baseline_document = baseline["data"]["canonical_document"]
         first = occurrence_image(baseline_document, "occurrence-1")
         second = occurrence_image(baseline_document, "occurrence-2")
