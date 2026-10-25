@@ -1,0 +1,1864 @@
+{
+  "approval_refs": [
+    "PLAN.md \u00a73 G4/G5 and C0",
+    "design/agent-G4-create-empty-review-0442.md",
+    "design/agent-G5-normal-publisher-1205.md",
+    "design/agent-G5-current-ready-review-2004.md",
+    "design/agent-native-writer-cutlist.md"
+  ],
+  "checks": [
+    "JSON parse and in-memory AST parse",
+    "all 5 old/captured/current source blobs matched",
+    "73 changed rows retained with exact p1 IDs and partition-0 IDs where present",
+    "no imports, pytest, collection, providers, probes, browsers, installs, or live requests"
+  ],
+  "findings": [
+    {
+      "decision": "FAIL",
+      "purpose": "publication shot_revisions and internal_timeline_revisions are no longer asserted by the current function",
+      "row_ids": [
+        "9:removed:0"
+      ],
+      "smallest_repair": "Add a current v2 canonical-document/receipt assertion for the closure-list invariant, or obtain an explicit C0-approved scope ruling that it is outside the migrated helper."
+    }
+  ],
+  "function_records": [
+    {
+      "added_multiplicity": 18,
+      "captured_new_source": {
+        "blob": "fe87a4c3cf0c646242deff04ec892badc8eda3dd",
+        "body_sha256": "f8c2a0e9260acbfa010b95e5fbabfd0cc80303c1bd19a251ea54317be1ba6d92",
+        "commit": "d6294843286c18e57af3c1874cf1996be42212d2",
+        "line_end": 150,
+        "line_start": 107
+      },
+      "current_normal_source": {
+        "blob": "fe87a4c3cf0c646242deff04ec892badc8eda3dd",
+        "commit": "d0ecf1d69a7b37f86034bc52004f73f6c6231603",
+        "relation_to_captured_new": "identical"
+      },
+      "decision": "FAIL",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "kind": "sameclip",
+      "old_source": {
+        "blob": "4a6aa956a9ad752a59e26cdaa12b5b3f5ee7af18",
+        "body_sha256": "277c389e599a250015f41448d18025b4f48779e4b11f2ff23bdb0eb055779c38",
+        "commit": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+        "line_end": 40,
+        "line_start": 25
+      },
+      "path": "tests/core/test_timeline_element_publication.py",
+      "removed_multiplicity": 11,
+      "row_count": 29
+    },
+    {
+      "added_multiplicity": 18,
+      "captured_new_source": {
+        "blob": "4e27855ae0b3c9547723464c1c4eda47e2bfb70e",
+        "body_sha256": "6b048bfb14b00bd1b3531a21ae3ffbbb394e2278a23db60c775e39bea987c14c",
+        "commit": "d6294843286c18e57af3c1874cf1996be42212d2",
+        "line_end": 277,
+        "line_start": 168
+      },
+      "current_normal_source": {
+        "blob": "4e27855ae0b3c9547723464c1c4eda47e2bfb70e",
+        "commit": "d0ecf1d69a7b37f86034bc52004f73f6c6231603",
+        "relation_to_captured_new": "identical"
+      },
+      "decision": "PASS",
+      "function_key": "tests/test_timeline_clip_replacement.py:test_remote_parent_media_replacement_publishes_exact_closure_once",
+      "kind": "replacement",
+      "old_source": {
+        "blob": "0bfcc066d63cfe96e7393cda2cb0127cfa49f5e1",
+        "body_sha256": "d8a7dc738fda85c9fbbe755365e36b0aa38b731531e973388edc493d7456610b",
+        "commit": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+        "line_end": 93,
+        "line_start": 35
+      },
+      "path": "tests/test_timeline_clip_replacement.py",
+      "removed_multiplicity": 2,
+      "row_count": 20
+    },
+    {
+      "added_multiplicity": 5,
+      "captured_new_source": {
+        "blob": "c5496c4bb988bf1fba3ec3aaa82f13fb8d160460",
+        "body_sha256": "335bf357f65ed69c1667907a9c818e61fd687626b363fa6e94c6393e8ca542a7",
+        "commit": "d6294843286c18e57af3c1874cf1996be42212d2",
+        "line_end": 46,
+        "line_start": 27
+      },
+      "current_normal_source": {
+        "blob": "c5496c4bb988bf1fba3ec3aaa82f13fb8d160460",
+        "commit": "d0ecf1d69a7b37f86034bc52004f73f6c6231603",
+        "relation_to_captured_new": "identical"
+      },
+      "decision": "PASS",
+      "function_key": "tests/sdk/test_timeline_publish_connection.py:test_a_publish_with_no_client_writes_through_the_connection_it_opens",
+      "kind": "no_client",
+      "old_source": {
+        "blob": "914ec3a149e0e31bfb51ba0b2072b49e950e55eb",
+        "body_sha256": "13a1c2fe19816d05eeec1d189f2106ce1e3d5f139ae9595f0c0d8625870f9741",
+        "commit": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+        "line_end": 56,
+        "line_start": 51
+      },
+      "path": "tests/sdk/test_timeline_publish_connection.py",
+      "removed_multiplicity": 2,
+      "row_count": 7
+    },
+    {
+      "added_multiplicity": 5,
+      "captured_new_source": {
+        "blob": "c5496c4bb988bf1fba3ec3aaa82f13fb8d160460",
+        "body_sha256": "cfa98ffa71a60760dede3256872982686da43512c8c85867ca26f9cf70491dc4",
+        "commit": "d6294843286c18e57af3c1874cf1996be42212d2",
+        "line_end": 58,
+        "line_start": 47
+      },
+      "current_normal_source": {
+        "blob": "c5496c4bb988bf1fba3ec3aaa82f13fb8d160460",
+        "commit": "d0ecf1d69a7b37f86034bc52004f73f6c6231603",
+        "relation_to_captured_new": "identical"
+      },
+      "decision": "PASS",
+      "function_key": "tests/sdk/test_timeline_publish_connection.py:test_a_publish_with_a_client_writes_through_that_client",
+      "kind": "with_client",
+      "old_source": {
+        "blob": "914ec3a149e0e31bfb51ba0b2072b49e950e55eb",
+        "body_sha256": "e396704df8052d610b3106d244d1841059c0aac1950edea58cc210f2bc42101c",
+        "commit": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+        "line_end": 64,
+        "line_start": 59
+      },
+      "path": "tests/sdk/test_timeline_publish_connection.py",
+      "removed_multiplicity": 2,
+      "row_count": 7
+    },
+    {
+      "added_multiplicity": 5,
+      "captured_new_source": {
+        "blob": "fff1a470def7759f9577fc4d45062b64c359c577",
+        "body_sha256": "a01993abc2e2a8015926d543afd03cf2ea1de63be3af3bbf9e039dadda40660f",
+        "commit": "d6294843286c18e57af3c1874cf1996be42212d2",
+        "line_end": 350,
+        "line_start": 342
+      },
+      "current_normal_source": {
+        "blob": "fff1a470def7759f9577fc4d45062b64c359c577",
+        "commit": "d0ecf1d69a7b37f86034bc52004f73f6c6231603",
+        "relation_to_captured_new": "identical"
+      },
+      "decision": "PASS",
+      "function_key": "tests/v10/test_timelines_create.py:test_remote_create_empty_generates_ulid_when_no_id_given",
+      "kind": "create_empty",
+      "old_source": {
+        "blob": "64623003fdc83f2be8eb5637e57602fc6de9b423",
+        "body_sha256": "40bf04cf7d11b9c6390a5d0566f3b7e3cf290114f18cdcf2130e877c00ecd815",
+        "commit": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+        "line_end": 256,
+        "line_start": 247
+      },
+      "path": "tests/v10/test_timelines_create.py",
+      "removed_multiplicity": 5,
+      "row_count": 10
+    }
+  ],
+  "rows": [
+    {
+      "decision": "PASS",
+      "function_key": "tests/sdk/test_timeline_publish_connection.py:test_a_publish_with_a_client_writes_through_that_client",
+      "mapping": [
+        {
+          "assertion": "assert client.transport.published == [(\"p\", \"t\", {\"candidate\": True}, \"key-2\")]",
+          "fingerprint_sha256": "57aae3c140819f6b438c50bb0129ea78528ddb72ca0392242f458927b4461b54",
+          "line": 64,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[73:added:0]",
+      "ordinal": 0,
+      "partition0_row_ids": [],
+      "row_id": "73:added:0",
+      "side": "added",
+      "source": {
+        "assertion": "assert len(env.calls) == 1",
+        "fingerprint": "Compare(left=Call(func=Name(id='len', ctx=Load()), args=[Attribute(value=Name(id='env', ctx=Load()), attr='calls', ctx=Load())]), ops=[Eq()], comparators=[Constant(value=1)])",
+        "fingerprint_sha256": "2cf94937e1672905cb58831a9f5c92bf494a890d4feab03d0bb2a1fa190617dc",
+        "new_line": 54,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/sdk/test_timeline_publish_connection.py:test_a_publish_with_a_client_writes_through_that_client",
+      "mapping": [
+        {
+          "assertion": "assert receipt[\"new_head\"] == \"rev-1\"",
+          "fingerprint_sha256": "95398b9c199b42c7fd7a8cf145a35e7070d413fbf1d6bf8009e0d03271d64fda",
+          "line": 63,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[73:added:1]",
+      "ordinal": 1,
+      "partition0_row_ids": [],
+      "row_id": "73:added:1",
+      "side": "added",
+      "source": {
+        "assertion": "assert receipt[\"new_head\"] == env.document()[\"parent_revision\"][\"revision_id\"]",
+        "fingerprint": "Compare(left=Subscript(value=Name(id='receipt', ctx=Load()), slice=Constant(value='new_head'), ctx=Load()), ops=[Eq()], comparators=[Subscript(value=Subscript(value=Call(func=Attribute(value=Name(id='env', ctx=Load()), attr='document', ctx=Load())), slice=Constant(value='parent_revision'), ctx=Load()), slice=Constant(value='revision_id'), ctx=Load())])",
+        "fingerprint_sha256": "dd8081ebaace1f867c29fd8474c130e5741ae0b2b89ae5a2c903a93093b79a08",
+        "new_line": 53,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/sdk/test_timeline_publish_connection.py:test_a_publish_with_a_client_writes_through_that_client",
+      "mapping": [
+        {
+          "assertion": "assert client.transport.published == [(\"p\", \"t\", {\"candidate\": True}, \"key-2\")]",
+          "fingerprint_sha256": "57aae3c140819f6b438c50bb0129ea78528ddb72ca0392242f458927b4461b54",
+          "line": 64,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[73:added:2]",
+      "ordinal": 2,
+      "partition0_row_ids": [],
+      "row_id": "73:added:2",
+      "side": "added",
+      "source": {
+        "assertion": "assert body[\"commands\"][0][\"op\"] == \"doc.patch\"",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Subscript(value=Name(id='body', ctx=Load()), slice=Constant(value='commands'), ctx=Load()), slice=Constant(value=0), ctx=Load()), slice=Constant(value='op'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='doc.patch')])",
+        "fingerprint_sha256": "928e29aedfbdb0a1097332cc1295ab7ec058774720b68c3c514ff8f11ee8f69c",
+        "new_line": 57,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/sdk/test_timeline_publish_connection.py:test_a_publish_with_a_client_writes_through_that_client",
+      "mapping": [
+        {
+          "assertion": "assert client.transport.published == [(\"p\", \"t\", {\"candidate\": True}, \"key-2\")]",
+          "fingerprint_sha256": "57aae3c140819f6b438c50bb0129ea78528ddb72ca0392242f458927b4461b54",
+          "line": 64,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[73:added:3]",
+      "ordinal": 3,
+      "partition0_row_ids": [],
+      "row_id": "73:added:3",
+      "side": "added",
+      "source": {
+        "assertion": "assert env.document()[\"parent_revision\"][\"payload\"][\"opaque\"][\"connected\"] is True",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Subscript(value=Subscript(value=Call(func=Attribute(value=Name(id='env', ctx=Load()), attr='document', ctx=Load())), slice=Constant(value='parent_revision'), ctx=Load()), slice=Constant(value='payload'), ctx=Load()), slice=Constant(value='opaque'), ctx=Load()), slice=Constant(value='connected'), ctx=Load()), ops=[Is()], comparators=[Constant(value=True)])",
+        "fingerprint_sha256": "47870c747123c854913c011a6e50d9d883ede917cdd4e43e8fa66aa705d1e658",
+        "new_line": 58,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/sdk/test_timeline_publish_connection.py:test_a_publish_with_a_client_writes_through_that_client",
+      "mapping": [
+        {
+          "assertion": "assert client.transport.published == [(\"p\", \"t\", {\"candidate\": True}, \"key-2\")]",
+          "fingerprint_sha256": "57aae3c140819f6b438c50bb0129ea78528ddb72ca0392242f458927b4461b54",
+          "line": 64,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[73:added:4]",
+      "ordinal": 4,
+      "partition0_row_ids": [],
+      "row_id": "73:added:4",
+      "side": "added",
+      "source": {
+        "assertion": "assert (body[\"project_id\"], body[\"timeline_id\"], key) == (env.project, \"t\", \"key-2\")",
+        "fingerprint": "Compare(left=Tuple(elts=[Subscript(value=Name(id='body', ctx=Load()), slice=Constant(value='project_id'), ctx=Load()), Subscript(value=Name(id='body', ctx=Load()), slice=Constant(value='timeline_id'), ctx=Load()), Name(id='key', ctx=Load())], ctx=Load()), ops=[Eq()], comparators=[Tuple(elts=[Attribute(value=Name(id='env', ctx=Load()), attr='project', ctx=Load()), Constant(value='t'), Constant(value='key-2')], ctx=Load())])",
+        "fingerprint_sha256": "121e02d049dbb5482b100ac64e6617e838bfec3d32ef103b8563e897da5bf3fd",
+        "new_line": 56,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/sdk/test_timeline_publish_connection.py:test_a_publish_with_a_client_writes_through_that_client",
+      "mapping": [
+        {
+          "assertion": "assert len(env.calls) == 1",
+          "fingerprint_sha256": "2cf94937e1672905cb58831a9f5c92bf494a890d4feab03d0bb2a1fa190617dc",
+          "line": 54,
+          "relation": "new_assertion"
+        },
+        {
+          "assertion": "assert (body[\"project_id\"], body[\"timeline_id\"], key) == (env.project, \"t\", \"key-2\")",
+          "fingerprint_sha256": "121e02d049dbb5482b100ac64e6617e838bfec3d32ef103b8563e897da5bf3fd",
+          "line": 56,
+          "relation": "new_assertion"
+        },
+        {
+          "assertion": "assert body[\"commands\"][0][\"op\"] == \"doc.patch\"",
+          "fingerprint_sha256": "928e29aedfbdb0a1097332cc1295ab7ec058774720b68c3c514ff8f11ee8f69c",
+          "line": 57,
+          "relation": "new_assertion"
+        },
+        {
+          "assertion": "assert env.document()[\"parent_revision\"][\"payload\"][\"opaque\"][\"connected\"] is True",
+          "fingerprint_sha256": "47870c747123c854913c011a6e50d9d883ede917cdd4e43e8fa66aa705d1e658",
+          "line": 58,
+          "relation": "new_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[73:removed:0]",
+      "ordinal": 0,
+      "partition0_row_ids": [],
+      "row_id": "73:removed:0",
+      "side": "removed",
+      "source": {
+        "assertion": "assert client.transport.published == [(\"p\", \"t\", {\"candidate\": True}, \"key-2\")]",
+        "fingerprint": "Compare(left=Attribute(value=Attribute(value=Name(id='client', ctx=Load()), attr='transport', ctx=Load()), attr='published', ctx=Load()), ops=[Eq()], comparators=[List(elts=[Tuple(elts=[Constant(value='p'), Constant(value='t'), Dict(keys=[Constant(value='candidate')], values=[Constant(value=True)]), Constant(value='key-2')], ctx=Load())], ctx=Load())])",
+        "fingerprint_sha256": "57aae3c140819f6b438c50bb0129ea78528ddb72ca0392242f458927b4461b54",
+        "new_line": null,
+        "old_line": 64
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/sdk/test_timeline_publish_connection.py:test_a_publish_with_a_client_writes_through_that_client",
+      "mapping": [
+        {
+          "assertion": "assert receipt[\"new_head\"] == env.document()[\"parent_revision\"][\"revision_id\"]",
+          "fingerprint_sha256": "dd8081ebaace1f867c29fd8474c130e5741ae0b2b89ae5a2c903a93093b79a08",
+          "line": 53,
+          "relation": "new_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[73:removed:1]",
+      "ordinal": 1,
+      "partition0_row_ids": [],
+      "row_id": "73:removed:1",
+      "side": "removed",
+      "source": {
+        "assertion": "assert receipt[\"new_head\"] == \"rev-1\"",
+        "fingerprint": "Compare(left=Subscript(value=Name(id='receipt', ctx=Load()), slice=Constant(value='new_head'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='rev-1')])",
+        "fingerprint_sha256": "95398b9c199b42c7fd7a8cf145a35e7070d413fbf1d6bf8009e0d03271d64fda",
+        "new_line": null,
+        "old_line": 63
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/sdk/test_timeline_publish_connection.py:test_a_publish_with_no_client_writes_through_the_connection_it_opens",
+      "mapping": [
+        {
+          "assertion": "assert client.transport.published == [(\"p\", \"t\", {\"candidate\": True}, \"key-1\")]",
+          "fingerprint_sha256": "5f9eb86cc243651023c8e2366349809fe35a4b6e4d3a41411dcd5966df688a10",
+          "line": 56,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-F-D108-D69-predicates-0-0902.json#rows[p0-f74-a-0]",
+      "ordinal": 0,
+      "partition0_row_ids": [
+        "p0-f74-a-0"
+      ],
+      "row_id": "p0-f74-a-0",
+      "side": "added",
+      "source": {
+        "assertion": "assert len(opened) == 1 and len(env.calls) == 1",
+        "fingerprint": "BoolOp(op=And(), values=[Compare(left=Call(func=Name(id='len', ctx=Load()), args=[Name(id='opened', ctx=Load())]), ops=[Eq()], comparators=[Constant(value=1)]), Compare(left=Call(func=Name(id='len', ctx=Load()), args=[Attribute(value=Name(id='env', ctx=Load()), attr='calls', ctx=Load())]), ops=[Eq()], comparators=[Constant(value=1)])])",
+        "fingerprint_sha256": "cd3143600957f1cc72adabbd3d1307110aa18eaec730074a4379e3f7e63e4fb9",
+        "new_line": 42,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/sdk/test_timeline_publish_connection.py:test_a_publish_with_no_client_writes_through_the_connection_it_opens",
+      "mapping": [
+        {
+          "assertion": "assert receipt[\"new_head\"] == \"rev-1\" and receipt[\"old_head\"] == \"rev-0\"",
+          "fingerprint_sha256": "88c4a1ba6e8c172ce838ddeed96d21feffd0676a1c25d3f5e16e84c4b1921ee8",
+          "line": 55,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-F-D108-D69-predicates-0-0902.json#rows[p0-f74-a-1]",
+      "ordinal": 1,
+      "partition0_row_ids": [
+        "p0-f74-a-1"
+      ],
+      "row_id": "p0-f74-a-1",
+      "side": "added",
+      "source": {
+        "assertion": "assert receipt[\"new_head\"] == env.document()[\"parent_revision\"][\"revision_id\"] and receipt[\"old_head\"] == old_head",
+        "fingerprint": "BoolOp(op=And(), values=[Compare(left=Subscript(value=Name(id='receipt', ctx=Load()), slice=Constant(value='new_head'), ctx=Load()), ops=[Eq()], comparators=[Subscript(value=Subscript(value=Call(func=Attribute(value=Name(id='env', ctx=Load()), attr='document', ctx=Load())), slice=Constant(value='parent_revision'), ctx=Load()), slice=Constant(value='revision_id'), ctx=Load())]), Compare(left=Subscript(value=Name(id='receipt', ctx=Load()), slice=Constant(value='old_head'), ctx=Load()), ops=[Eq()], comparators=[Name(id='old_head', ctx=Load())])])",
+        "fingerprint_sha256": "9e16176ee1314c59624b8b27e377d0776b77fe805fa6b6e62cedf7439cbdf9ad",
+        "new_line": 41,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/sdk/test_timeline_publish_connection.py:test_a_publish_with_no_client_writes_through_the_connection_it_opens",
+      "mapping": [
+        {
+          "assertion": "assert client.transport.published == [(\"p\", \"t\", {\"candidate\": True}, \"key-1\")]",
+          "fingerprint_sha256": "5f9eb86cc243651023c8e2366349809fe35a4b6e4d3a41411dcd5966df688a10",
+          "line": 56,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-F-D108-D69-predicates-0-0902.json#rows[p0-f74-a-2]",
+      "ordinal": 2,
+      "partition0_row_ids": [
+        "p0-f74-a-2"
+      ],
+      "row_id": "p0-f74-a-2",
+      "side": "added",
+      "source": {
+        "assertion": "assert body[\"commands\"][0][\"op\"] == \"doc.patch\"",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Subscript(value=Name(id='body', ctx=Load()), slice=Constant(value='commands'), ctx=Load()), slice=Constant(value=0), ctx=Load()), slice=Constant(value='op'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='doc.patch')])",
+        "fingerprint_sha256": "928e29aedfbdb0a1097332cc1295ab7ec058774720b68c3c514ff8f11ee8f69c",
+        "new_line": 45,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/sdk/test_timeline_publish_connection.py:test_a_publish_with_no_client_writes_through_the_connection_it_opens",
+      "mapping": [
+        {
+          "assertion": "assert client.transport.published == [(\"p\", \"t\", {\"candidate\": True}, \"key-1\")]",
+          "fingerprint_sha256": "5f9eb86cc243651023c8e2366349809fe35a4b6e4d3a41411dcd5966df688a10",
+          "line": 56,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-F-D108-D69-predicates-0-0902.json#rows[p0-f74-a-3]",
+      "ordinal": 3,
+      "partition0_row_ids": [
+        "p0-f74-a-3"
+      ],
+      "row_id": "p0-f74-a-3",
+      "side": "added",
+      "source": {
+        "assertion": "assert env.document()[\"parent_revision\"][\"payload\"][\"opaque\"][\"connected\"] is True",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Subscript(value=Subscript(value=Call(func=Attribute(value=Name(id='env', ctx=Load()), attr='document', ctx=Load())), slice=Constant(value='parent_revision'), ctx=Load()), slice=Constant(value='payload'), ctx=Load()), slice=Constant(value='opaque'), ctx=Load()), slice=Constant(value='connected'), ctx=Load()), ops=[Is()], comparators=[Constant(value=True)])",
+        "fingerprint_sha256": "47870c747123c854913c011a6e50d9d883ede917cdd4e43e8fa66aa705d1e658",
+        "new_line": 46,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/sdk/test_timeline_publish_connection.py:test_a_publish_with_no_client_writes_through_the_connection_it_opens",
+      "mapping": [
+        {
+          "assertion": "assert client.transport.published == [(\"p\", \"t\", {\"candidate\": True}, \"key-1\")]",
+          "fingerprint_sha256": "5f9eb86cc243651023c8e2366349809fe35a4b6e4d3a41411dcd5966df688a10",
+          "line": 56,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-F-D108-D69-predicates-0-0902.json#rows[p0-f74-a-4]",
+      "ordinal": 4,
+      "partition0_row_ids": [
+        "p0-f74-a-4"
+      ],
+      "row_id": "p0-f74-a-4",
+      "side": "added",
+      "source": {
+        "assertion": "assert (body[\"project_id\"], body[\"timeline_id\"], key) == (env.project, \"t\", \"key-1\")",
+        "fingerprint": "Compare(left=Tuple(elts=[Subscript(value=Name(id='body', ctx=Load()), slice=Constant(value='project_id'), ctx=Load()), Subscript(value=Name(id='body', ctx=Load()), slice=Constant(value='timeline_id'), ctx=Load()), Name(id='key', ctx=Load())], ctx=Load()), ops=[Eq()], comparators=[Tuple(elts=[Attribute(value=Name(id='env', ctx=Load()), attr='project', ctx=Load()), Constant(value='t'), Constant(value='key-1')], ctx=Load())])",
+        "fingerprint_sha256": "73de5bda031dd74959b0f284a858639cffcd3e9b473eb4ce138b64c21261b000",
+        "new_line": 44,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/sdk/test_timeline_publish_connection.py:test_a_publish_with_no_client_writes_through_the_connection_it_opens",
+      "mapping": [
+        {
+          "assertion": "assert receipt[\"new_head\"] == env.document()[\"parent_revision\"][\"revision_id\"] and receipt[\"old_head\"] == old_head",
+          "fingerprint_sha256": "9e16176ee1314c59624b8b27e377d0776b77fe805fa6b6e62cedf7439cbdf9ad",
+          "line": 41,
+          "relation": "new_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-F-D108-D69-predicates-0-0902.json#rows[p0-f74-r-0]",
+      "ordinal": 0,
+      "partition0_row_ids": [
+        "p0-f74-r-0"
+      ],
+      "row_id": "p0-f74-r-0",
+      "side": "removed",
+      "source": {
+        "assertion": "assert receipt[\"new_head\"] == \"rev-1\" and receipt[\"old_head\"] == \"rev-0\"",
+        "fingerprint": "BoolOp(op=And(), values=[Compare(left=Subscript(value=Name(id='receipt', ctx=Load()), slice=Constant(value='new_head'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='rev-1')]), Compare(left=Subscript(value=Name(id='receipt', ctx=Load()), slice=Constant(value='old_head'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='rev-0')])])",
+        "fingerprint_sha256": "88c4a1ba6e8c172ce838ddeed96d21feffd0676a1c25d3f5e16e84c4b1921ee8",
+        "new_line": null,
+        "old_line": 55
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/sdk/test_timeline_publish_connection.py:test_a_publish_with_no_client_writes_through_the_connection_it_opens",
+      "mapping": [
+        {
+          "assertion": "assert len(opened) == 1 and len(env.calls) == 1",
+          "fingerprint_sha256": "cd3143600957f1cc72adabbd3d1307110aa18eaec730074a4379e3f7e63e4fb9",
+          "line": 42,
+          "relation": "new_assertion"
+        },
+        {
+          "assertion": "assert (body[\"project_id\"], body[\"timeline_id\"], key) == (env.project, \"t\", \"key-1\")",
+          "fingerprint_sha256": "73de5bda031dd74959b0f284a858639cffcd3e9b473eb4ce138b64c21261b000",
+          "line": 44,
+          "relation": "new_assertion"
+        },
+        {
+          "assertion": "assert body[\"commands\"][0][\"op\"] == \"doc.patch\"",
+          "fingerprint_sha256": "928e29aedfbdb0a1097332cc1295ab7ec058774720b68c3c514ff8f11ee8f69c",
+          "line": 45,
+          "relation": "new_assertion"
+        },
+        {
+          "assertion": "assert env.document()[\"parent_revision\"][\"payload\"][\"opaque\"][\"connected\"] is True",
+          "fingerprint_sha256": "47870c747123c854913c011a6e50d9d883ede917cdd4e43e8fa66aa705d1e658",
+          "line": 46,
+          "relation": "new_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-F-D108-D69-predicates-0-0902.json#rows[p0-f74-r-1]",
+      "ordinal": 1,
+      "partition0_row_ids": [
+        "p0-f74-r-1"
+      ],
+      "row_id": "p0-f74-r-1",
+      "side": "removed",
+      "source": {
+        "assertion": "assert client.transport.published == [(\"p\", \"t\", {\"candidate\": True}, \"key-1\")]",
+        "fingerprint": "Compare(left=Attribute(value=Attribute(value=Name(id='client', ctx=Load()), attr='transport', ctx=Load()), attr='published', ctx=Load()), ops=[Eq()], comparators=[List(elts=[Tuple(elts=[Constant(value='p'), Constant(value='t'), Dict(keys=[Constant(value='candidate')], values=[Constant(value=True)]), Constant(value='key-1')], ctx=Load())], ctx=Load())])",
+        "fingerprint_sha256": "5f9eb86cc243651023c8e2366349809fe35a4b6e4d3a41411dcd5966df688a10",
+        "new_line": null,
+        "old_line": 56
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/v10/test_timelines_create.py:test_remote_create_empty_generates_ulid_when_no_id_given",
+      "mapping": [
+        {
+          "assertion": "assert is_ulid(timeline_id)",
+          "fingerprint_sha256": "4e1b2281ea916d0f7ff8456a3e438fad4f353b2f9560bf444a64602ae9b479e6",
+          "line": 252,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-F-D108-D69-predicates-0-0902.json#rows[p0-f128-a-0]",
+      "ordinal": 0,
+      "partition0_row_ids": [
+        "p0-f128-a-0"
+      ],
+      "row_id": "p0-f128-a-0",
+      "side": "added",
+      "source": {
+        "assertion": "assert is_ulid(timeline_key)",
+        "fingerprint": "Call(func=Name(id='is_ulid', ctx=Load()), args=[Name(id='timeline_key', ctx=Load())])",
+        "fingerprint_sha256": "1217f23300130ba503000a000331d88f546727f31c5fb045fe0c4f5be8df5ec1",
+        "new_line": 346,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/v10/test_timelines_create.py:test_remote_create_empty_generates_ulid_when_no_id_given",
+      "mapping": [
+        {
+          "assertion": "assert writer.calls[0][1] == (\"render-smoke\", timeline_id)",
+          "fingerprint_sha256": "e4f38c710bb15009fda369f302669ca9f4651445bace7c841883b43d7322c70c",
+          "line": 253,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-F-D108-D69-predicates-0-0902.json#rows[p0-f128-a-1]",
+      "ordinal": 1,
+      "partition0_row_ids": [
+        "p0-f128-a-1"
+      ],
+      "row_id": "p0-f128-a-1",
+      "side": "added",
+      "source": {
+        "assertion": "assert runtime_create_case.calls[0][1] == (\"render-smoke\", timeline_key)",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Attribute(value=Name(id='runtime_create_case', ctx=Load()), attr='calls', ctx=Load()), slice=Constant(value=0), ctx=Load()), slice=Constant(value=1), ctx=Load()), ops=[Eq()], comparators=[Tuple(elts=[Constant(value='render-smoke'), Name(id='timeline_key', ctx=Load())], ctx=Load())])",
+        "fingerprint_sha256": "74b64b4971638834394ba50e344921d8f09392972bd0a359020b61a2d8ca00a6",
+        "new_line": 347,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/v10/test_timelines_create.py:test_remote_create_empty_generates_ulid_when_no_id_given",
+      "mapping": [
+        {
+          "assertion": "assert writer.calls[1][1][1] == timeline_id",
+          "fingerprint_sha256": "8788f06a817be0f98bd483bac0c0c2c1443952c4fabb4baf202ad6c8d35b7652",
+          "line": 254,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-F-D108-D69-predicates-0-0902.json#rows[p0-f128-a-2]",
+      "ordinal": 2,
+      "partition0_row_ids": [
+        "p0-f128-a-2"
+      ],
+      "row_id": "p0-f128-a-2",
+      "side": "added",
+      "source": {
+        "assertion": "assert runtime_create_case.calls[1][0] == \"list_timeline_commits\"",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Attribute(value=Name(id='runtime_create_case', ctx=Load()), attr='calls', ctx=Load()), slice=Constant(value=1), ctx=Load()), slice=Constant(value=0), ctx=Load()), ops=[Eq()], comparators=[Constant(value='list_timeline_commits')])",
+        "fingerprint_sha256": "2ecb4ced22096805d1973c1ffb9b1e2b7181b9b9cad85dab1b6af5a4ea65b137",
+        "new_line": 348,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/v10/test_timelines_create.py:test_remote_create_empty_generates_ulid_when_no_id_given",
+      "mapping": [
+        {
+          "assertion": "assert writer.calls[1][2][\"idempotency_key\"] == f\"{result.idempotency_key}-head\"",
+          "fingerprint_sha256": "f53df0a898897b5842353e4f22ddaef918763e72d3db658e0e1a45cf88e0de7f",
+          "line": 255,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-F-D108-D69-predicates-0-0902.json#rows[p0-f128-a-3]",
+      "ordinal": 3,
+      "partition0_row_ids": [
+        "p0-f128-a-3"
+      ],
+      "row_id": "p0-f128-a-3",
+      "side": "added",
+      "source": {
+        "assertion": "assert runtime_create_case.calls[-1][0] == \"commit_timeline\"",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Attribute(value=Name(id='runtime_create_case', ctx=Load()), attr='calls', ctx=Load()), slice=UnaryOp(op=USub(), operand=Constant(value=1)), ctx=Load()), slice=Constant(value=0), ctx=Load()), ops=[Eq()], comparators=[Constant(value='commit_timeline')])",
+        "fingerprint_sha256": "684499cfb4033c44ae79c688fa2c62be6d97ebc3ba54c1ab955c4227c916e3c1",
+        "new_line": 349,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/v10/test_timelines_create.py:test_remote_create_empty_generates_ulid_when_no_id_given",
+      "mapping": [
+        {
+          "assertion": "assert writer.calls[1][1][2][\"parent_composition\"][\"config\"] == {\"tracks\": []}",
+          "fingerprint_sha256": "6adf53d03da7a4239d43c74df3b71dcad6f3dff70c834448ced4ee27b6173519",
+          "line": 256,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-F-D108-D69-predicates-0-0902.json#rows[p0-f128-a-4]",
+      "ordinal": 4,
+      "partition0_row_ids": [
+        "p0-f128-a-4"
+      ],
+      "row_id": "p0-f128-a-4",
+      "side": "added",
+      "source": {
+        "assertion": "assert result.data[\"canonical_document\"][\"parent_revision\"][\"payload\"][\"config\"][\"tracks\"] == []",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Subscript(value=Subscript(value=Subscript(value=Attribute(value=Name(id='result', ctx=Load()), attr='data', ctx=Load()), slice=Constant(value='canonical_document'), ctx=Load()), slice=Constant(value='parent_revision'), ctx=Load()), slice=Constant(value='payload'), ctx=Load()), slice=Constant(value='config'), ctx=Load()), slice=Constant(value='tracks'), ctx=Load()), ops=[Eq()], comparators=[List(ctx=Load())])",
+        "fingerprint_sha256": "82c6d5ab3e81df4112396ec48712e6c69041f7b66a206d482eed1963b68dccae",
+        "new_line": 350,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/v10/test_timelines_create.py:test_remote_create_empty_generates_ulid_when_no_id_given",
+      "mapping": [
+        {
+          "assertion": "assert is_ulid(timeline_key)",
+          "fingerprint_sha256": "1217f23300130ba503000a000331d88f546727f31c5fb045fe0c4f5be8df5ec1",
+          "line": 346,
+          "relation": "new_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-F-D108-D69-predicates-0-0902.json#rows[p0-f128-r-0]",
+      "ordinal": 0,
+      "partition0_row_ids": [
+        "p0-f128-r-0"
+      ],
+      "row_id": "p0-f128-r-0",
+      "side": "removed",
+      "source": {
+        "assertion": "assert is_ulid(timeline_id)",
+        "fingerprint": "Call(func=Name(id='is_ulid', ctx=Load()), args=[Name(id='timeline_id', ctx=Load())])",
+        "fingerprint_sha256": "4e1b2281ea916d0f7ff8456a3e438fad4f353b2f9560bf444a64602ae9b479e6",
+        "new_line": null,
+        "old_line": 252
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/v10/test_timelines_create.py:test_remote_create_empty_generates_ulid_when_no_id_given",
+      "mapping": [
+        {
+          "assertion": "assert runtime_create_case.calls[0][1] == (\"render-smoke\", timeline_key)",
+          "fingerprint_sha256": "74b64b4971638834394ba50e344921d8f09392972bd0a359020b61a2d8ca00a6",
+          "line": 347,
+          "relation": "new_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-F-D108-D69-predicates-0-0902.json#rows[p0-f128-r-1]",
+      "ordinal": 1,
+      "partition0_row_ids": [
+        "p0-f128-r-1"
+      ],
+      "row_id": "p0-f128-r-1",
+      "side": "removed",
+      "source": {
+        "assertion": "assert writer.calls[0][1] == (\"render-smoke\", timeline_id)",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Attribute(value=Name(id='writer', ctx=Load()), attr='calls', ctx=Load()), slice=Constant(value=0), ctx=Load()), slice=Constant(value=1), ctx=Load()), ops=[Eq()], comparators=[Tuple(elts=[Constant(value='render-smoke'), Name(id='timeline_id', ctx=Load())], ctx=Load())])",
+        "fingerprint_sha256": "e4f38c710bb15009fda369f302669ca9f4651445bace7c841883b43d7322c70c",
+        "new_line": null,
+        "old_line": 253
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/v10/test_timelines_create.py:test_remote_create_empty_generates_ulid_when_no_id_given",
+      "mapping": [
+        {
+          "assertion": "assert runtime_create_case.calls[0][1] == (\"render-smoke\", timeline_key)",
+          "fingerprint_sha256": "74b64b4971638834394ba50e344921d8f09392972bd0a359020b61a2d8ca00a6",
+          "line": 347,
+          "relation": "new_assertion"
+        },
+        {
+          "assertion": "assert runtime_create_case.calls[1][0] == \"list_timeline_commits\"",
+          "fingerprint_sha256": "2ecb4ced22096805d1973c1ffb9b1e2b7181b9b9cad85dab1b6af5a4ea65b137",
+          "line": 348,
+          "relation": "new_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-F-D108-D69-predicates-0-0902.json#rows[p0-f128-r-2]",
+      "ordinal": 2,
+      "partition0_row_ids": [
+        "p0-f128-r-2"
+      ],
+      "row_id": "p0-f128-r-2",
+      "side": "removed",
+      "source": {
+        "assertion": "assert writer.calls[1][1][1] == timeline_id",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Subscript(value=Attribute(value=Name(id='writer', ctx=Load()), attr='calls', ctx=Load()), slice=Constant(value=1), ctx=Load()), slice=Constant(value=1), ctx=Load()), slice=Constant(value=1), ctx=Load()), ops=[Eq()], comparators=[Name(id='timeline_id', ctx=Load())])",
+        "fingerprint_sha256": "8788f06a817be0f98bd483bac0c0c2c1443952c4fabb4baf202ad6c8d35b7652",
+        "new_line": null,
+        "old_line": 254
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/v10/test_timelines_create.py:test_remote_create_empty_generates_ulid_when_no_id_given",
+      "mapping": [
+        {
+          "assertion": "assert runtime_create_case.calls[-1][0] == \"commit_timeline\"",
+          "fingerprint_sha256": "684499cfb4033c44ae79c688fa2c62be6d97ebc3ba54c1ab955c4227c916e3c1",
+          "line": 349,
+          "relation": "new_assertion"
+        },
+        {
+          "assertion": "assert result.data[\"canonical_document\"][\"parent_revision\"][\"payload\"][\"config\"][\"tracks\"] == []",
+          "fingerprint_sha256": "82c6d5ab3e81df4112396ec48712e6c69041f7b66a206d482eed1963b68dccae",
+          "line": 350,
+          "relation": "new_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-F-D108-D69-predicates-0-0902.json#rows[p0-f128-r-3]",
+      "ordinal": 3,
+      "partition0_row_ids": [
+        "p0-f128-r-3"
+      ],
+      "row_id": "p0-f128-r-3",
+      "side": "removed",
+      "source": {
+        "assertion": "assert writer.calls[1][2][\"idempotency_key\"] == f\"{result.idempotency_key}-head\"",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Subscript(value=Attribute(value=Name(id='writer', ctx=Load()), attr='calls', ctx=Load()), slice=Constant(value=1), ctx=Load()), slice=Constant(value=2), ctx=Load()), slice=Constant(value='idempotency_key'), ctx=Load()), ops=[Eq()], comparators=[JoinedStr(values=[FormattedValue(value=Attribute(value=Name(id='result', ctx=Load()), attr='idempotency_key', ctx=Load()), conversion=-1), Constant(value='-head')])])",
+        "fingerprint_sha256": "f53df0a898897b5842353e4f22ddaef918763e72d3db658e0e1a45cf88e0de7f",
+        "new_line": null,
+        "old_line": 255
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/v10/test_timelines_create.py:test_remote_create_empty_generates_ulid_when_no_id_given",
+      "mapping": [
+        {
+          "assertion": "assert result.data[\"canonical_document\"][\"parent_revision\"][\"payload\"][\"config\"][\"tracks\"] == []",
+          "fingerprint_sha256": "82c6d5ab3e81df4112396ec48712e6c69041f7b66a206d482eed1963b68dccae",
+          "line": 350,
+          "relation": "new_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-F-D108-D69-predicates-0-0902.json#rows[p0-f128-r-4]",
+      "ordinal": 4,
+      "partition0_row_ids": [
+        "p0-f128-r-4"
+      ],
+      "row_id": "p0-f128-r-4",
+      "side": "removed",
+      "source": {
+        "assertion": "assert writer.calls[1][1][2][\"parent_composition\"][\"config\"] == {\"tracks\": []}",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Subscript(value=Subscript(value=Subscript(value=Attribute(value=Name(id='writer', ctx=Load()), attr='calls', ctx=Load()), slice=Constant(value=1), ctx=Load()), slice=Constant(value=1), ctx=Load()), slice=Constant(value=2), ctx=Load()), slice=Constant(value='parent_composition'), ctx=Load()), slice=Constant(value='config'), ctx=Load()), ops=[Eq()], comparators=[Dict(keys=[Constant(value='tracks')], values=[List(ctx=Load())])])",
+        "fingerprint_sha256": "6adf53d03da7a4239d43c74df3b71dcad6f3dff70c834448ced4ee27b6173519",
+        "new_line": null,
+        "old_line": 256
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/test_timeline_clip_replacement.py:test_remote_parent_media_replacement_publishes_exact_closure_once",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[111:added:0]",
+      "ordinal": 0,
+      "partition0_row_ids": [],
+      "row_id": "111:added:0",
+      "side": "added",
+      "source": {
+        "assertion": "assert result.receipt.receipt_id == \"publication-2\"",
+        "fingerprint": "Compare(left=Attribute(value=Attribute(value=Name(id='result', ctx=Load()), attr='receipt', ctx=Load()), attr='receipt_id', ctx=Load()), ops=[Eq()], comparators=[Constant(value='publication-2')])",
+        "fingerprint_sha256": "9c481a7a70fae0985ca3aa46d3ad81b4fce68bd19210732b10e1ef2e0645c4f0",
+        "new_line": 270,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/test_timeline_clip_replacement.py:test_remote_parent_media_replacement_publishes_exact_closure_once",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[111:added:1]",
+      "ordinal": 1,
+      "partition0_row_ids": [],
+      "row_id": "111:added:1",
+      "side": "added",
+      "source": {
+        "assertion": "assert result.receipt is not None",
+        "fingerprint": "Compare(left=Attribute(value=Name(id='result', ctx=Load()), attr='receipt', ctx=Load()), ops=[IsNot()], comparators=[Constant(value=None)])",
+        "fingerprint_sha256": "0f9b4905c79c8f22834e1fbfe910bd776045b1c3639b2476935bae63b3c00c08",
+        "new_line": 269,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/test_timeline_clip_replacement.py:test_remote_parent_media_replacement_publishes_exact_closure_once",
+      "mapping": [
+        {
+          "assertion": "assert len(transport.published) == 1",
+          "fingerprint_sha256": "53e2fd00f7badfa945e1672072159a08984b32ce2ced9d70cdfab49ad654f920",
+          "line": 86,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[111:added:2]",
+      "ordinal": 2,
+      "partition0_row_ids": [],
+      "row_id": "111:added:2",
+      "side": "added",
+      "source": {
+        "assertion": "assert len(transport.committed) == 1",
+        "fingerprint": "Compare(left=Call(func=Name(id='len', ctx=Load()), args=[Attribute(value=Name(id='transport', ctx=Load()), attr='committed', ctx=Load())]), ops=[Eq()], comparators=[Constant(value=1)])",
+        "fingerprint_sha256": "597482dcb32f776ec552e0874b4129d769e13d617406b1d728e8b03299f630d3",
+        "new_line": 254,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/test_timeline_clip_replacement.py:test_remote_parent_media_replacement_publishes_exact_closure_once",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[111:added:3]",
+      "ordinal": 3,
+      "partition0_row_ids": [],
+      "row_id": "111:added:3",
+      "side": "added",
+      "source": {
+        "assertion": "assert \"dry_run\" not in request",
+        "fingerprint": "Compare(left=Constant(value='dry_run'), ops=[NotIn()], comparators=[Name(id='request', ctx=Load())])",
+        "fingerprint_sha256": "db8f2a7b2bf0d34b3aed69bc46d16cc899f60fd13c6bd94642cea31e3e3c5419",
+        "new_line": 267,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/test_timeline_clip_replacement.py:test_remote_parent_media_replacement_publishes_exact_closure_once",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[111:added:4]",
+      "ordinal": 4,
+      "partition0_row_ids": [],
+      "row_id": "111:added:4",
+      "side": "added",
+      "source": {
+        "assertion": "assert \"reads\" not in request",
+        "fingerprint": "Compare(left=Constant(value='reads'), ops=[NotIn()], comparators=[Name(id='request', ctx=Load())])",
+        "fingerprint_sha256": "2b6d85fe65a01ab043bef1046de3376dfb9b521d6dcf75d1b573fd1d25f6f37e",
+        "new_line": 268,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/test_timeline_clip_replacement.py:test_remote_parent_media_replacement_publishes_exact_closure_once",
+      "mapping": [
+        {
+          "assertion": "assert publication[\"expected_head\"] == \"parent-1\"",
+          "fingerprint_sha256": "db68f7cef9c43cfd6e7cb76413af5102ba71f2aa023a9f3e551d37446689b33b",
+          "line": 93,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[111:added:5]",
+      "ordinal": 5,
+      "partition0_row_ids": [],
+      "row_id": "111:added:5",
+      "side": "added",
+      "source": {
+        "assertion": "assert result.data[\"expected_head\"] == \"parent-1\"",
+        "fingerprint": "Compare(left=Subscript(value=Attribute(value=Name(id='result', ctx=Load()), attr='data', ctx=Load()), slice=Constant(value='expected_head'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='parent-1')])",
+        "fingerprint_sha256": "ed0f2db22cf781696449d2cde19cbebc5dca924acf6b3d764f4c572df411f599",
+        "new_line": 277,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/test_timeline_clip_replacement.py:test_remote_parent_media_replacement_publishes_exact_closure_once",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[111:added:6]",
+      "ordinal": 6,
+      "partition0_row_ids": [],
+      "row_id": "111:added:6",
+      "side": "added",
+      "source": {
+        "assertion": "assert request[\"api_version\"] == 1",
+        "fingerprint": "Compare(left=Subscript(value=Name(id='request', ctx=Load()), slice=Constant(value='api_version'), ctx=Load()), ops=[Eq()], comparators=[Constant(value=1)])",
+        "fingerprint_sha256": "8fd467184f8b47603c754bec341140486ea23480855e7e2981d9da8b504387ff",
+        "new_line": 257,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/test_timeline_clip_replacement.py:test_remote_parent_media_replacement_publishes_exact_closure_once",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[111:added:7]",
+      "ordinal": 7,
+      "partition0_row_ids": [],
+      "row_id": "111:added:7",
+      "side": "added",
+      "source": {
+        "assertion": "assert request[\"base_publication_id\"] == \"publication-1\"",
+        "fingerprint": "Compare(left=Subscript(value=Name(id='request', ctx=Load()), slice=Constant(value='base_publication_id'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='publication-1')])",
+        "fingerprint_sha256": "0f5caa2d2d8f370534aed54ba380687f7d373113d25b071db9066e4811599ec8",
+        "new_line": 261,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/test_timeline_clip_replacement.py:test_remote_parent_media_replacement_publishes_exact_closure_once",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[111:added:8]",
+      "ordinal": 8,
+      "partition0_row_ids": [],
+      "row_id": "111:added:8",
+      "side": "added",
+      "source": {
+        "assertion": "assert request[\"base_revision_id\"] == \"parent-1\"",
+        "fingerprint": "Compare(left=Subscript(value=Name(id='request', ctx=Load()), slice=Constant(value='base_revision_id'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='parent-1')])",
+        "fingerprint_sha256": "196ae1ed02886affeb39ffbe16b084db8172a287ea30d9612de8f4969c7f5c43",
+        "new_line": 260,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/test_timeline_clip_replacement.py:test_remote_parent_media_replacement_publishes_exact_closure_once",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[111:added:9]",
+      "ordinal": 9,
+      "partition0_row_ids": [],
+      "row_id": "111:added:9",
+      "side": "added",
+      "source": {
+        "assertion": "assert request[\"label\"] == \"Publish authoring candidate\"",
+        "fingerprint": "Compare(left=Subscript(value=Name(id='request', ctx=Load()), slice=Constant(value='label'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='Publish authoring candidate')])",
+        "fingerprint_sha256": "29f99fa2920754214fba36474bdffa92a3812d4135d8ee096f833fa00b0f5dc2",
+        "new_line": 263,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/test_timeline_clip_replacement.py:test_remote_parent_media_replacement_publishes_exact_closure_once",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[111:added:10]",
+      "ordinal": 10,
+      "partition0_row_ids": [],
+      "row_id": "111:added:10",
+      "side": "added",
+      "source": {
+        "assertion": "assert request[\"merge\"] == \"atomic\"",
+        "fingerprint": "Compare(left=Subscript(value=Name(id='request', ctx=Load()), slice=Constant(value='merge'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='atomic')])",
+        "fingerprint_sha256": "c6b17826562edb962c526bcd159f1f861d98ec48ab6dfe6846436c693b7b4246",
+        "new_line": 265,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/test_timeline_clip_replacement.py:test_remote_parent_media_replacement_publishes_exact_closure_once",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[111:added:11]",
+      "ordinal": 11,
+      "partition0_row_ids": [],
+      "row_id": "111:added:11",
+      "side": "added",
+      "source": {
+        "assertion": "assert request[\"project_id\"] == \"project-1\"",
+        "fingerprint": "Compare(left=Subscript(value=Name(id='request', ctx=Load()), slice=Constant(value='project_id'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='project-1')])",
+        "fingerprint_sha256": "2b5a92adda8c4a4f3f7c1db93e40cd7581f9e808b0ce938a0f2a5d6bbbdac230",
+        "new_line": 258,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/test_timeline_clip_replacement.py:test_remote_parent_media_replacement_publishes_exact_closure_once",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[111:added:12]",
+      "ordinal": 12,
+      "partition0_row_ids": [],
+      "row_id": "111:added:12",
+      "side": "added",
+      "source": {
+        "assertion": "assert request[\"source\"] == {\"via\": \"python\"}",
+        "fingerprint": "Compare(left=Subscript(value=Name(id='request', ctx=Load()), slice=Constant(value='source'), ctx=Load()), ops=[Eq()], comparators=[Dict(keys=[Constant(value='via')], values=[Constant(value='python')])])",
+        "fingerprint_sha256": "90c746878a1697371a29510878857df31144c4ddf00c66f00c42aef2235b2a54",
+        "new_line": 266,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/test_timeline_clip_replacement.py:test_remote_parent_media_replacement_publishes_exact_closure_once",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[111:added:13]",
+      "ordinal": 13,
+      "partition0_row_ids": [],
+      "row_id": "111:added:13",
+      "side": "added",
+      "source": {
+        "assertion": "assert request[\"timeline_id\"] == \"main\"",
+        "fingerprint": "Compare(left=Subscript(value=Name(id='request', ctx=Load()), slice=Constant(value='timeline_id'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='main')])",
+        "fingerprint_sha256": "1f5079273910041f4868c6e4c574e2338bcf469412756015286888321ff1e6ff",
+        "new_line": 259,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/test_timeline_clip_replacement.py:test_remote_parent_media_replacement_publishes_exact_closure_once",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[111:added:14]",
+      "ordinal": 14,
+      "partition0_row_ids": [],
+      "row_id": "111:added:14",
+      "side": "added",
+      "source": {
+        "assertion": "assert (project_id, timeline_id, cursor, limit) == (\"project-1\", \"main\", None, 100)",
+        "fingerprint": "Compare(left=Tuple(elts=[Name(id='project_id', ctx=Load()), Name(id='timeline_id', ctx=Load()), Name(id='cursor', ctx=Load()), Name(id='limit', ctx=Load())], ctx=Load()), ops=[Eq()], comparators=[Tuple(elts=[Constant(value='project-1'), Constant(value='main'), Constant(value=None), Constant(value=100)], ctx=Load())])",
+        "fingerprint_sha256": "e82035a82917f179c67747ad76fa52bf0782e82e0ef79f4979d756d90a6fe539",
+        "new_line": 214,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/test_timeline_clip_replacement.py:test_remote_parent_media_replacement_publishes_exact_closure_once",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[111:added:15]",
+      "ordinal": 15,
+      "partition0_row_ids": [],
+      "row_id": "111:added:15",
+      "side": "added",
+      "source": {
+        "assertion": "assert (project_id, timeline_id) == (\"project-1\", \"main\")",
+        "fingerprint": "Compare(left=Tuple(elts=[Name(id='project_id', ctx=Load()), Name(id='timeline_id', ctx=Load())], ctx=Load()), ops=[Eq()], comparators=[Tuple(elts=[Constant(value='project-1'), Constant(value='main')], ctx=Load())])",
+        "fingerprint_sha256": "d34b1226f58717b3793dbe39eaeb294b882edc8c67758b275aecb984ce99b4a4",
+        "new_line": 226,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/test_timeline_clip_replacement.py:test_remote_parent_media_replacement_publishes_exact_closure_once",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[111:added:16]",
+      "ordinal": 16,
+      "partition0_row_ids": [],
+      "row_id": "111:added:16",
+      "side": "added",
+      "source": {
+        "assertion": "assert request[\"commands\"]",
+        "fingerprint": "Subscript(value=Name(id='request', ctx=Load()), slice=Constant(value='commands'), ctx=Load())",
+        "fingerprint_sha256": "2d1aedab05ea96ebaab034fc44aff21a19a39f0263fddfe851bab2890791e9d4",
+        "new_line": 262,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/test_timeline_clip_replacement.py:test_remote_parent_media_replacement_publishes_exact_closure_once",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[111:added:17]",
+      "ordinal": 17,
+      "partition0_row_ids": [],
+      "row_id": "111:added:17",
+      "side": "added",
+      "source": {
+        "assertion": "assert request[\"steps\"]",
+        "fingerprint": "Subscript(value=Name(id='request', ctx=Load()), slice=Constant(value='steps'), ctx=Load())",
+        "fingerprint_sha256": "355aa961da85815815ba47d63f10c9946dbe67dc45db140b71c35a2cc1f72e5b",
+        "new_line": 264,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/test_timeline_clip_replacement.py:test_remote_parent_media_replacement_publishes_exact_closure_once",
+      "mapping": [
+        {
+          "assertion": "assert len(transport.committed) == 1",
+          "fingerprint_sha256": "597482dcb32f776ec552e0874b4129d769e13d617406b1d728e8b03299f630d3",
+          "line": 254,
+          "relation": "new_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[111:removed:0]",
+      "ordinal": 0,
+      "partition0_row_ids": [],
+      "row_id": "111:removed:0",
+      "side": "removed",
+      "source": {
+        "assertion": "assert len(transport.published) == 1",
+        "fingerprint": "Compare(left=Call(func=Name(id='len', ctx=Load()), args=[Attribute(value=Name(id='transport', ctx=Load()), attr='published', ctx=Load())]), ops=[Eq()], comparators=[Constant(value=1)])",
+        "fingerprint_sha256": "53e2fd00f7badfa945e1672072159a08984b32ce2ced9d70cdfab49ad654f920",
+        "new_line": null,
+        "old_line": 86
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/test_timeline_clip_replacement.py:test_remote_parent_media_replacement_publishes_exact_closure_once",
+      "mapping": [
+        {
+          "assertion": "assert result.data[\"expected_head\"] == \"parent-1\"",
+          "fingerprint_sha256": "ed0f2db22cf781696449d2cde19cbebc5dca924acf6b3d764f4c572df411f599",
+          "line": 277,
+          "relation": "new_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[111:removed:1]",
+      "ordinal": 1,
+      "partition0_row_ids": [],
+      "row_id": "111:removed:1",
+      "side": "removed",
+      "source": {
+        "assertion": "assert publication[\"expected_head\"] == \"parent-1\"",
+        "fingerprint": "Compare(left=Subscript(value=Name(id='publication', ctx=Load()), slice=Constant(value='expected_head'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='parent-1')])",
+        "fingerprint_sha256": "db68f7cef9c43cfd6e7cb76413af5102ba71f2aa023a9f3e551d37446689b33b",
+        "new_line": null,
+        "old_line": 93
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [
+        {
+          "assertion": "assert publication['expected_head']=='head'",
+          "fingerprint_sha256": "d23e94d9eda9c766e55e020a5e950a687cabeb827556ae6723f2c21d1ac27c05",
+          "line": 30,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:added:0]",
+      "ordinal": 0,
+      "partition0_row_ids": [],
+      "row_id": "9:added:0",
+      "side": "added",
+      "source": {
+        "assertion": "assert body['base_revision_id'] == 'head' and body['base_publication_id'] == 'publication'",
+        "fingerprint": "BoolOp(op=And(), values=[Compare(left=Subscript(value=Name(id='body', ctx=Load()), slice=Constant(value='base_revision_id'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='head')]), Compare(left=Subscript(value=Name(id='body', ctx=Load()), slice=Constant(value='base_publication_id'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='publication')])])",
+        "fingerprint_sha256": "3d8312f7b160c2956a845d216001be214e200b864ec1a2efb7734861ce9fd477",
+        "new_line": 113,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:added:1]",
+      "ordinal": 1,
+      "partition0_row_ids": [],
+      "row_id": "9:added:1",
+      "side": "added",
+      "source": {
+        "assertion": "assert owner.commit.call_args.kwargs == {'idempotency_key': 'edit-element'}",
+        "fingerprint": "Compare(left=Attribute(value=Attribute(value=Attribute(value=Name(id='owner', ctx=Load()), attr='commit', ctx=Load()), attr='call_args', ctx=Load()), attr='kwargs', ctx=Load()), ops=[Eq()], comparators=[Dict(keys=[Constant(value='idempotency_key')], values=[Constant(value='edit-element')])])",
+        "fingerprint_sha256": "40cabf6de1df6e87f273b3427ed58b3bb9e15126250c54cda1947b2cf7f7d70f",
+        "new_line": 131,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:added:2]",
+      "ordinal": 2,
+      "partition0_row_ids": [],
+      "row_id": "9:added:2",
+      "side": "added",
+      "source": {
+        "assertion": "assert result.receipt.receipt_id == 'accepted-receipt'",
+        "fingerprint": "Compare(left=Attribute(value=Attribute(value=Name(id='result', ctx=Load()), attr='receipt', ctx=Load()), attr='receipt_id', ctx=Load()), ops=[Eq()], comparators=[Constant(value='accepted-receipt')])",
+        "fingerprint_sha256": "52a42e0dde78b1833185b791fab538baae248f7858ad32b474ec0edd0763dbfd",
+        "new_line": 138,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [
+        {
+          "assertion": "assert result.data['new_head'] and result.data['clip_id']=='effect'",
+          "fingerprint_sha256": "7105229447097dc0cc93b11ba9a85ecc3945ec2eba05fb04f3acd0d799ff40d5",
+          "line": 40,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:added:3]",
+      "ordinal": 3,
+      "partition0_row_ids": [],
+      "row_id": "9:added:3",
+      "side": "added",
+      "source": {
+        "assertion": "assert result.data == {\n        'project_id': 'project', 'timeline_id': 'timeline', 'expected_head': 'head',\n        'new_head': 'committed', 'clip_id': 'effect', 'element': ref, 'duration': 6,\n        'params': {'color': '#ff6b6b', 'seed': 15, 'chaos': .8}, 'before': {\n            'element': original['parent']['clips'][0]['elementRef'], 'duration': 2,\n            'params': {'color': '#ff6b6b', 'seed': 15}}}",
+        "fingerprint": "Compare(left=Attribute(value=Name(id='result', ctx=Load()), attr='data', ctx=Load()), ops=[Eq()], comparators=[Dict(keys=[Constant(value='project_id'), Constant(value='timeline_id'), Constant(value='expected_head'), Constant(value='new_head'), Constant(value='clip_id'), Constant(value='element'), Constant(value='duration'), Constant(value='params'), Constant(value='before')], values=[Constant(value='project'), Constant(value='timeline'), Constant(value='head'), Constant(value='committed'), Constant(value='effect'), Name(id='ref', ctx=Load()), Constant(value=6), Dict(keys=[Constant(value='color'), Constant(value='seed'), Constant(value='chaos')], values=[Constant(value='#ff6b6b'), Constant(value=15), Constant(value=0.8)]), Dict(keys=[Constant(value='element'), Constant(value='duration'), Constant(value='params')], values=[Subscript(value=Subscript(value=Subscript(value=Subscript(value=Name(id='original', ctx=Load()), slice=Constant(value='parent'), ctx=Load()), slice=Constant(value='clips'), ctx=Load()), slice=Constant(value=0), ctx=Load()), slice=Constant(value='elementRef'), ctx=Load()), Constant(value=2), Dict(keys=[Constant(value='color'), Constant(value='seed')], values=[Constant(value='#ff6b6b'), Constant(value=15)])])])])",
+        "fingerprint_sha256": "dbe8eb2151651a558a916b8e2c04a9eb869a75a74e3da8adae2ca9989b03376e",
+        "new_line": 132,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:added:4]",
+      "ordinal": 4,
+      "partition0_row_ids": [],
+      "row_id": "9:added:4",
+      "side": "added",
+      "source": {
+        "assertion": "assert result.idempotency_key == 'edit-element'",
+        "fingerprint": "Compare(left=Attribute(value=Name(id='result', ctx=Load()), attr='idempotency_key', ctx=Load()), ops=[Eq()], comparators=[Constant(value='edit-element')])",
+        "fingerprint_sha256": "0264e9b2e3a20f5f3aedfc9479c4addb6a1f856d4ff8b36a1a8f4a14361e48b9",
+        "new_line": 139,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [
+        {
+          "assertion": "assert parent['config']['app']=={'elements':{},'other':'keep'}",
+          "fingerprint_sha256": "a7ed824f28aa967dd6965630f3194b99b9ef6e14cc19a8269e067cfeb7083e69",
+          "line": 35,
+          "relation": "original_assertion"
+        },
+        {
+          "assertion": "assert parent['config']['bundle']==bundle['parent']['config']['bundle']",
+          "fingerprint_sha256": "c552c5d6adc134bb604d8e3543caf64a61360fe2a35d3fbf1793460e688c181b",
+          "line": 36,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:added:5]",
+      "ordinal": 5,
+      "partition0_row_ids": [],
+      "row_id": "9:added:5",
+      "side": "added",
+      "source": {
+        "assertion": "assert {k: v for k, v in config.items() if k != 'clips'} == {\n        k: v for k, v in bundle['parent']['config'].items() if k != 'clips'}",
+        "fingerprint": "Compare(left=DictComp(key=Name(id='k', ctx=Load()), value=Name(id='v', ctx=Load()), generators=[comprehension(target=Tuple(elts=[Name(id='k', ctx=Store()), Name(id='v', ctx=Store())], ctx=Store()), iter=Call(func=Attribute(value=Name(id='config', ctx=Load()), attr='items', ctx=Load())), ifs=[Compare(left=Name(id='k', ctx=Load()), ops=[NotEq()], comparators=[Constant(value='clips')])], is_async=0)]), ops=[Eq()], comparators=[DictComp(key=Name(id='k', ctx=Load()), value=Name(id='v', ctx=Load()), generators=[comprehension(target=Tuple(elts=[Name(id='k', ctx=Store()), Name(id='v', ctx=Store())], ctx=Store()), iter=Call(func=Attribute(value=Subscript(value=Subscript(value=Name(id='bundle', ctx=Load()), slice=Constant(value='parent'), ctx=Load()), slice=Constant(value='config'), ctx=Load()), attr='items', ctx=Load())), ifs=[Compare(left=Name(id='k', ctx=Load()), ops=[NotEq()], comparators=[Constant(value='clips')])], is_async=0)])])",
+        "fingerprint_sha256": "ded60c9cdb1afa11ea98be5266e9a3bcb3de34bfdab7d9b3c9410de19903eb83",
+        "new_line": 146,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:added:6]",
+      "ordinal": 6,
+      "partition0_row_ids": [],
+      "row_id": "9:added:6",
+      "side": "added",
+      "source": {
+        "assertion": "assert [c['op'] for c in body['commands']] == [\n        'clip.set-element', 'clip.set', 'clip.set-params', 'doc.patch']",
+        "fingerprint": "Compare(left=ListComp(elt=Subscript(value=Name(id='c', ctx=Load()), slice=Constant(value='op'), ctx=Load()), generators=[comprehension(target=Name(id='c', ctx=Store()), iter=Subscript(value=Name(id='body', ctx=Load()), slice=Constant(value='commands'), ctx=Load()), is_async=0)]), ops=[Eq()], comparators=[List(elts=[Constant(value='clip.set-element'), Constant(value='clip.set'), Constant(value='clip.set-params'), Constant(value='doc.patch')], ctx=Load())])",
+        "fingerprint_sha256": "8663379ac43e4a9219db70cb323c8dbea95e655293e183d4c1f726b848203ca3",
+        "new_line": 114,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [
+        {
+          "assertion": "assert bundle['parent']['clips'][0]['hold']==2",
+          "fingerprint_sha256": "4dcf6c812014543471b0642f619d604a18c3f947f9ea8043100c751f1771811b",
+          "line": 39,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:added:7]",
+      "ordinal": 7,
+      "partition0_row_ids": [],
+      "row_id": "9:added:7",
+      "side": "added",
+      "source": {
+        "assertion": "assert bundle == original",
+        "fingerprint": "Compare(left=Name(id='bundle', ctx=Load()), ops=[Eq()], comparators=[Name(id='original', ctx=Load())])",
+        "fingerprint_sha256": "135ce3f7c1f548e33c6548ceeae1f2a83b39334917210a3b5ad4314e55f4c5a5",
+        "new_line": 149,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:added:8]",
+      "ordinal": 8,
+      "partition0_row_ids": [],
+      "row_id": "9:added:8",
+      "side": "added",
+      "source": {
+        "assertion": "assert body['reads'] == [{\n        'kind': 'collection', 'ref': 'parent', 'path': ['clips'],\n        'members': ['effect', 'media'], 'order': ['effect', 'media']}, *[\n        {'kind': 'field', 'ref': 'parent', 'path': ['clips', 'id:' + row['id'], field],\n         'state': {'state': 'present', 'value': row[field]} if field in row else {'state': 'absent'}}\n        for row in original['parent']['clips'] for field in ('elementRef', 'element_ref')]]",
+        "fingerprint": "Compare(left=Subscript(value=Name(id='body', ctx=Load()), slice=Constant(value='reads'), ctx=Load()), ops=[Eq()], comparators=[List(elts=[Dict(keys=[Constant(value='kind'), Constant(value='ref'), Constant(value='path'), Constant(value='members'), Constant(value='order')], values=[Constant(value='collection'), Constant(value='parent'), List(elts=[Constant(value='clips')], ctx=Load()), List(elts=[Constant(value='effect'), Constant(value='media')], ctx=Load()), List(elts=[Constant(value='effect'), Constant(value='media')], ctx=Load())]), Starred(value=ListComp(elt=Dict(keys=[Constant(value='kind'), Constant(value='ref'), Constant(value='path'), Constant(value='state')], values=[Constant(value='field'), Constant(value='parent'), List(elts=[Constant(value='clips'), BinOp(left=Constant(value='id:'), op=Add(), right=Subscript(value=Name(id='row', ctx=Load()), slice=Constant(value='id'), ctx=Load())), Name(id='field', ctx=Load())], ctx=Load()), IfExp(test=Compare(left=Name(id='field', ctx=Load()), ops=[In()], comparators=[Name(id='row', ctx=Load())]), body=Dict(keys=[Constant(value='state'), Constant(value='value')], values=[Constant(value='present'), Subscript(value=Name(id='row', ctx=Load()), slice=Name(id='field', ctx=Load()), ctx=Load())]), orelse=Dict(keys=[Constant(value='state')], values=[Constant(value='absent')]))]), generators=[comprehension(target=Name(id='row', ctx=Store()), iter=Subscript(value=Subscript(value=Name(id='original', ctx=Load()), slice=Constant(value='parent'), ctx=Load()), slice=Constant(value='clips'), ctx=Load()), is_async=0), comprehension(target=Name(id='field', ctx=Store()), iter=Tuple(elts=[Constant(value='elementRef'), Constant(value='element_ref')], ctx=Load()), is_async=0)]), ctx=Load())], ctx=Load())])",
+        "fingerprint_sha256": "667359d1d96b5bb278a19f592c3e6b83d4c62f328b7c8672f114f44c246633a2",
+        "new_line": 125,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [
+        {
+          "assertion": "assert parent['config']['clips']==parent['clips']",
+          "fingerprint_sha256": "d636406cd04729746623a105b5bcc8d590e81a6b6450f8d289bc3e8de62be08c",
+          "line": 34,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:added:9]",
+      "ordinal": 9,
+      "partition0_row_ids": [],
+      "row_id": "9:added:9",
+      "side": "added",
+      "source": {
+        "assertion": "assert config['clips'] == plan.bundle['parent']['clips']",
+        "fingerprint": "Compare(left=Subscript(value=Name(id='config', ctx=Load()), slice=Constant(value='clips'), ctx=Load()), ops=[Eq()], comparators=[Subscript(value=Subscript(value=Attribute(value=Name(id='plan', ctx=Load()), attr='bundle', ctx=Load()), slice=Constant(value='parent'), ctx=Load()), slice=Constant(value='clips'), ctx=Load())])",
+        "fingerprint_sha256": "9d73fdcf4c4a462a0432cd2a0b574f3d76d8dd4eb40ff4aaa197f18f85698bec",
+        "new_line": 145,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [
+        {
+          "assertion": "assert parent['registry']==bundle['parent']['registry']",
+          "fingerprint_sha256": "18adb47c57db819b0c86e18108338ef0df49004c08310a5bfd680daa63fa8e47",
+          "line": 37,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:added:10]",
+      "ordinal": 10,
+      "partition0_row_ids": [],
+      "row_id": "9:added:10",
+      "side": "added",
+      "source": {
+        "assertion": "assert plan.bundle['parent']['registry'] == bundle['parent']['registry']",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Attribute(value=Name(id='plan', ctx=Load()), attr='bundle', ctx=Load()), slice=Constant(value='parent'), ctx=Load()), slice=Constant(value='registry'), ctx=Load()), ops=[Eq()], comparators=[Subscript(value=Subscript(value=Name(id='bundle', ctx=Load()), slice=Constant(value='parent'), ctx=Load()), slice=Constant(value='registry'), ctx=Load())])",
+        "fingerprint_sha256": "82fc08c923f9fed2faf50281005a36aa3b807b69ec44cc7a3a6938a609246204",
+        "new_line": 148,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [
+        {
+          "assertion": "assert parent['clips'][1]==bundle['parent']['clips'][1]",
+          "fingerprint_sha256": "9200931db0a067bb737dfe5b5e49a9539d6cf294df2b1449a7c3bb447b368a16",
+          "line": 33,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:added:11]",
+      "ordinal": 11,
+      "partition0_row_ids": [],
+      "row_id": "9:added:11",
+      "side": "added",
+      "source": {
+        "assertion": "assert plan.bundle['parent']['clips'][1] == bundle['parent']['clips'][1]",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Subscript(value=Attribute(value=Name(id='plan', ctx=Load()), attr='bundle', ctx=Load()), slice=Constant(value='parent'), ctx=Load()), slice=Constant(value='clips'), ctx=Load()), slice=Constant(value=1), ctx=Load()), ops=[Eq()], comparators=[Subscript(value=Subscript(value=Subscript(value=Name(id='bundle', ctx=Load()), slice=Constant(value='parent'), ctx=Load()), slice=Constant(value='clips'), ctx=Load()), slice=Constant(value=1), ctx=Load())])",
+        "fingerprint_sha256": "d7aaad4612db8fa9bf06111b90b1327cb271f692fa4ea94a87618e7fb7068612",
+        "new_line": 142,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [
+        {
+          "assertion": "assert parent['clips'][0]['id']=='effect' and parent['clips'][0]['hold']==6",
+          "fingerprint_sha256": "a336d3ba6269bf21d287997d38b351238c45fa2f883fd5302f6bb422f4866b3d",
+          "line": 31,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:added:12]",
+      "ordinal": 12,
+      "partition0_row_ids": [],
+      "row_id": "9:added:12",
+      "side": "added",
+      "source": {
+        "assertion": "assert body['commands'][0]['args'] == {\n        'elementRef': ref, 'schema_source': body['commands'][2]['args']['schema_source']}",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Subscript(value=Name(id='body', ctx=Load()), slice=Constant(value='commands'), ctx=Load()), slice=Constant(value=0), ctx=Load()), slice=Constant(value='args'), ctx=Load()), ops=[Eq()], comparators=[Dict(keys=[Constant(value='elementRef'), Constant(value='schema_source')], values=[Name(id='ref', ctx=Load()), Subscript(value=Subscript(value=Subscript(value=Subscript(value=Name(id='body', ctx=Load()), slice=Constant(value='commands'), ctx=Load()), slice=Constant(value=2), ctx=Load()), slice=Constant(value='args'), ctx=Load()), slice=Constant(value='schema_source'), ctx=Load())])])",
+        "fingerprint_sha256": "5caf12865c1aeec0435e1a570e352b77b40b9e6a55c1434eb8a0ae665bada428",
+        "new_line": 116,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [
+        {
+          "assertion": "assert parent['clips'][0]['id']=='effect' and parent['clips'][0]['hold']==6",
+          "fingerprint_sha256": "a336d3ba6269bf21d287997d38b351238c45fa2f883fd5302f6bb422f4866b3d",
+          "line": 31,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:added:13]",
+      "ordinal": 13,
+      "partition0_row_ids": [],
+      "row_id": "9:added:13",
+      "side": "added",
+      "source": {
+        "assertion": "assert body['commands'][1]['args'] == {'values': {'hold': 6}, 'clear': []}",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Subscript(value=Name(id='body', ctx=Load()), slice=Constant(value='commands'), ctx=Load()), slice=Constant(value=1), ctx=Load()), slice=Constant(value='args'), ctx=Load()), ops=[Eq()], comparators=[Dict(keys=[Constant(value='values'), Constant(value='clear')], values=[Dict(keys=[Constant(value='hold')], values=[Constant(value=6)]), List(ctx=Load())])])",
+        "fingerprint_sha256": "17e8c0e3e030a13ab068fd157887eedb3fe980502e62c90cac2d435dc010f5f8",
+        "new_line": 118,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:added:14]",
+      "ordinal": 14,
+      "partition0_row_ids": [],
+      "row_id": "9:added:14",
+      "side": "added",
+      "source": {
+        "assertion": "assert body['commands'][3]['args'] == {'changes': [{\n        'op': 'remove', 'ref': 'parent', 'path': ['config', 'app', 'elements', 'reveal'],\n        'before': {'state': 'present', 'value': {'source': 'legacy recovery bytes'}}}]}",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Subscript(value=Name(id='body', ctx=Load()), slice=Constant(value='commands'), ctx=Load()), slice=Constant(value=3), ctx=Load()), slice=Constant(value='args'), ctx=Load()), ops=[Eq()], comparators=[Dict(keys=[Constant(value='changes')], values=[List(elts=[Dict(keys=[Constant(value='op'), Constant(value='ref'), Constant(value='path'), Constant(value='before')], values=[Constant(value='remove'), Constant(value='parent'), List(elts=[Constant(value='config'), Constant(value='app'), Constant(value='elements'), Constant(value='reveal')], ctx=Load()), Dict(keys=[Constant(value='state'), Constant(value='value')], values=[Constant(value='present'), Dict(keys=[Constant(value='source')], values=[Constant(value='legacy recovery bytes')])])])], ctx=Load())])])",
+        "fingerprint_sha256": "a5c32c72d4b2b1c61dc5e40531e7ac80bec9a827394e32458232a1c8d0da3729",
+        "new_line": 122,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:added:15]",
+      "ordinal": 15,
+      "partition0_row_ids": [],
+      "row_id": "9:added:15",
+      "side": "added",
+      "source": {
+        "assertion": "assert plan.bundle['parent']['clips'][0]['opaque'] == {'keep': [None, False]}",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Subscript(value=Subscript(value=Attribute(value=Name(id='plan', ctx=Load()), attr='bundle', ctx=Load()), slice=Constant(value='parent'), ctx=Load()), slice=Constant(value='clips'), ctx=Load()), slice=Constant(value=0), ctx=Load()), slice=Constant(value='opaque'), ctx=Load()), ops=[Eq()], comparators=[Dict(keys=[Constant(value='keep')], values=[List(elts=[Constant(value=None), Constant(value=False)], ctx=Load())])])",
+        "fingerprint_sha256": "296197c3d127a897763bfba5bb092f664fc42674bd1efea82a9f2e485ce6da9b",
+        "new_line": 143,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [
+        {
+          "assertion": "assert parent['clips'][0]['params']=={'color':'#ff6b6b','seed':15,'chaos':.8}",
+          "fingerprint_sha256": "14c710915f5baf86aee02e8023791f8b7a910a222db09c92160f5ce592457a6b",
+          "line": 32,
+          "relation": "original_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:added:16]",
+      "ordinal": 16,
+      "partition0_row_ids": [],
+      "row_id": "9:added:16",
+      "side": "added",
+      "source": {
+        "assertion": "assert body['commands'][2]['args']['values'] == {'chaos': .8}",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Subscript(value=Subscript(value=Name(id='body', ctx=Load()), slice=Constant(value='commands'), ctx=Load()), slice=Constant(value=2), ctx=Load()), slice=Constant(value='args'), ctx=Load()), slice=Constant(value='values'), ctx=Load()), ops=[Eq()], comparators=[Dict(keys=[Constant(value='chaos')], values=[Constant(value=0.8)])])",
+        "fingerprint_sha256": "00139a96a2a90301e2dc21d1000c86a3ba6bea1bcb1c8efb924bebf3d09e296e",
+        "new_line": 119,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:added:17]",
+      "ordinal": 17,
+      "partition0_row_ids": [],
+      "row_id": "9:added:17",
+      "side": "added",
+      "source": {
+        "assertion": "assert body['commands'][2]['args']['schema_source']['document_id'] in {\n        document for project, document in configured.rows}",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Subscript(value=Subscript(value=Subscript(value=Name(id='body', ctx=Load()), slice=Constant(value='commands'), ctx=Load()), slice=Constant(value=2), ctx=Load()), slice=Constant(value='args'), ctx=Load()), slice=Constant(value='schema_source'), ctx=Load()), slice=Constant(value='document_id'), ctx=Load()), ops=[In()], comparators=[SetComp(elt=Name(id='document', ctx=Load()), generators=[comprehension(target=Tuple(elts=[Name(id='project', ctx=Store()), Name(id='document', ctx=Store())], ctx=Store()), iter=Attribute(value=Name(id='configured', ctx=Load()), attr='rows', ctx=Load()), is_async=0)])])",
+        "fingerprint_sha256": "994abe5541139c10ef5090440abd5f1507fadb6fd3dee3dba46e3e7be9b07560",
+        "new_line": 120,
+        "old_line": null
+      }
+    },
+    {
+      "decision": "FAIL",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:removed:0]",
+      "ordinal": 0,
+      "partition0_row_ids": [],
+      "row_id": "9:removed:0",
+      "side": "removed",
+      "source": {
+        "assertion": "assert publication['shot_revisions']==[] and publication['internal_timeline_revisions']==[]",
+        "fingerprint": "BoolOp(op=And(), values=[Compare(left=Subscript(value=Name(id='publication', ctx=Load()), slice=Constant(value='shot_revisions'), ctx=Load()), ops=[Eq()], comparators=[List(ctx=Load())]), Compare(left=Subscript(value=Name(id='publication', ctx=Load()), slice=Constant(value='internal_timeline_revisions'), ctx=Load()), ops=[Eq()], comparators=[List(ctx=Load())])])",
+        "fingerprint_sha256": "7723ca53785719cff989a434a7292b0b65054fc89f3c0b70caf30a0d728b749b",
+        "new_line": null,
+        "old_line": 38
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [
+        {
+          "assertion": "assert body['commands'][1]['args'] == {'values': {'hold': 6}, 'clear': []}",
+          "fingerprint_sha256": "17e8c0e3e030a13ab068fd157887eedb3fe980502e62c90cac2d435dc010f5f8",
+          "line": 118,
+          "relation": "new_assertion"
+        },
+        {
+          "assertion": "assert result.data == {\n        'project_id': 'project', 'timeline_id': 'timeline', 'expected_head': 'head',\n        'new_head': 'committed', 'clip_id': 'effect', 'element': ref, 'duration': 6,\n        'params': {'color': '#ff6b6b', 'seed': 15, 'chaos': .8}, 'before': {\n            'element': original['parent']['clips'][0]['elementRef'], 'duration': 2,\n            'params': {'color': '#ff6b6b', 'seed': 15}}}",
+          "fingerprint_sha256": "dbe8eb2151651a558a916b8e2c04a9eb869a75a74e3da8adae2ca9989b03376e",
+          "line": 132,
+          "relation": "new_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:removed:1]",
+      "ordinal": 1,
+      "partition0_row_ids": [],
+      "row_id": "9:removed:1",
+      "side": "removed",
+      "source": {
+        "assertion": "assert parent['clips'][0]['id']=='effect' and parent['clips'][0]['hold']==6",
+        "fingerprint": "BoolOp(op=And(), values=[Compare(left=Subscript(value=Subscript(value=Subscript(value=Name(id='parent', ctx=Load()), slice=Constant(value='clips'), ctx=Load()), slice=Constant(value=0), ctx=Load()), slice=Constant(value='id'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='effect')]), Compare(left=Subscript(value=Subscript(value=Subscript(value=Name(id='parent', ctx=Load()), slice=Constant(value='clips'), ctx=Load()), slice=Constant(value=0), ctx=Load()), slice=Constant(value='hold'), ctx=Load()), ops=[Eq()], comparators=[Constant(value=6)])])",
+        "fingerprint_sha256": "a336d3ba6269bf21d287997d38b351238c45fa2f883fd5302f6bb422f4866b3d",
+        "new_line": null,
+        "old_line": 31
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [
+        {
+          "assertion": "assert result.data == {\n        'project_id': 'project', 'timeline_id': 'timeline', 'expected_head': 'head',\n        'new_head': 'committed', 'clip_id': 'effect', 'element': ref, 'duration': 6,\n        'params': {'color': '#ff6b6b', 'seed': 15, 'chaos': .8}, 'before': {\n            'element': original['parent']['clips'][0]['elementRef'], 'duration': 2,\n            'params': {'color': '#ff6b6b', 'seed': 15}}}",
+          "fingerprint_sha256": "dbe8eb2151651a558a916b8e2c04a9eb869a75a74e3da8adae2ca9989b03376e",
+          "line": 132,
+          "relation": "new_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:removed:2]",
+      "ordinal": 2,
+      "partition0_row_ids": [],
+      "row_id": "9:removed:2",
+      "side": "removed",
+      "source": {
+        "assertion": "assert result.data['new_head'] and result.data['clip_id']=='effect'",
+        "fingerprint": "BoolOp(op=And(), values=[Subscript(value=Attribute(value=Name(id='result', ctx=Load()), attr='data', ctx=Load()), slice=Constant(value='new_head'), ctx=Load()), Compare(left=Subscript(value=Attribute(value=Name(id='result', ctx=Load()), attr='data', ctx=Load()), slice=Constant(value='clip_id'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='effect')])])",
+        "fingerprint_sha256": "7105229447097dc0cc93b11ba9a85ecc3945ec2eba05fb04f3acd0d799ff40d5",
+        "new_line": null,
+        "old_line": 40
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [
+        {
+          "assertion": "assert plan.bundle['parent']['registry'] == bundle['parent']['registry']",
+          "fingerprint_sha256": "82fc08c923f9fed2faf50281005a36aa3b807b69ec44cc7a3a6938a609246204",
+          "line": 148,
+          "relation": "new_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:removed:3]",
+      "ordinal": 3,
+      "partition0_row_ids": [],
+      "row_id": "9:removed:3",
+      "side": "removed",
+      "source": {
+        "assertion": "assert parent['registry']==bundle['parent']['registry']",
+        "fingerprint": "Compare(left=Subscript(value=Name(id='parent', ctx=Load()), slice=Constant(value='registry'), ctx=Load()), ops=[Eq()], comparators=[Subscript(value=Subscript(value=Name(id='bundle', ctx=Load()), slice=Constant(value='parent'), ctx=Load()), slice=Constant(value='registry'), ctx=Load())])",
+        "fingerprint_sha256": "18adb47c57db819b0c86e18108338ef0df49004c08310a5bfd680daa63fa8e47",
+        "new_line": null,
+        "old_line": 37
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [
+        {
+          "assertion": "assert body['base_revision_id'] == 'head' and body['base_publication_id'] == 'publication'",
+          "fingerprint_sha256": "3d8312f7b160c2956a845d216001be214e200b864ec1a2efb7734861ce9fd477",
+          "line": 113,
+          "relation": "new_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:removed:4]",
+      "ordinal": 4,
+      "partition0_row_ids": [],
+      "row_id": "9:removed:4",
+      "side": "removed",
+      "source": {
+        "assertion": "assert publication['expected_head']=='head'",
+        "fingerprint": "Compare(left=Subscript(value=Name(id='publication', ctx=Load()), slice=Constant(value='expected_head'), ctx=Load()), ops=[Eq()], comparators=[Constant(value='head')])",
+        "fingerprint_sha256": "d23e94d9eda9c766e55e020a5e950a687cabeb827556ae6723f2c21d1ac27c05",
+        "new_line": null,
+        "old_line": 30
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [
+        {
+          "assertion": "assert plan.bundle['parent']['clips'][1] == bundle['parent']['clips'][1]",
+          "fingerprint_sha256": "d7aaad4612db8fa9bf06111b90b1327cb271f692fa4ea94a87618e7fb7068612",
+          "line": 142,
+          "relation": "new_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:removed:5]",
+      "ordinal": 5,
+      "partition0_row_ids": [],
+      "row_id": "9:removed:5",
+      "side": "removed",
+      "source": {
+        "assertion": "assert parent['clips'][1]==bundle['parent']['clips'][1]",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Name(id='parent', ctx=Load()), slice=Constant(value='clips'), ctx=Load()), slice=Constant(value=1), ctx=Load()), ops=[Eq()], comparators=[Subscript(value=Subscript(value=Subscript(value=Name(id='bundle', ctx=Load()), slice=Constant(value='parent'), ctx=Load()), slice=Constant(value='clips'), ctx=Load()), slice=Constant(value=1), ctx=Load())])",
+        "fingerprint_sha256": "9200931db0a067bb737dfe5b5e49a9539d6cf294df2b1449a7c3bb447b368a16",
+        "new_line": null,
+        "old_line": 33
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [
+        {
+          "assertion": "assert {k: v for k, v in config.items() if k != 'clips'} == {\n        k: v for k, v in bundle['parent']['config'].items() if k != 'clips'}",
+          "fingerprint_sha256": "ded60c9cdb1afa11ea98be5266e9a3bcb3de34bfdab7d9b3c9410de19903eb83",
+          "line": 146,
+          "relation": "new_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:removed:6]",
+      "ordinal": 6,
+      "partition0_row_ids": [],
+      "row_id": "9:removed:6",
+      "side": "removed",
+      "source": {
+        "assertion": "assert parent['config']['app']=={'elements':{},'other':'keep'}",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Name(id='parent', ctx=Load()), slice=Constant(value='config'), ctx=Load()), slice=Constant(value='app'), ctx=Load()), ops=[Eq()], comparators=[Dict(keys=[Constant(value='elements'), Constant(value='other')], values=[Dict(), Constant(value='keep')])])",
+        "fingerprint_sha256": "a7ed824f28aa967dd6965630f3194b99b9ef6e14cc19a8269e067cfeb7083e69",
+        "new_line": null,
+        "old_line": 35
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [
+        {
+          "assertion": "assert {k: v for k, v in config.items() if k != 'clips'} == {\n        k: v for k, v in bundle['parent']['config'].items() if k != 'clips'}",
+          "fingerprint_sha256": "ded60c9cdb1afa11ea98be5266e9a3bcb3de34bfdab7d9b3c9410de19903eb83",
+          "line": 146,
+          "relation": "new_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:removed:7]",
+      "ordinal": 7,
+      "partition0_row_ids": [],
+      "row_id": "9:removed:7",
+      "side": "removed",
+      "source": {
+        "assertion": "assert parent['config']['bundle']==bundle['parent']['config']['bundle']",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Name(id='parent', ctx=Load()), slice=Constant(value='config'), ctx=Load()), slice=Constant(value='bundle'), ctx=Load()), ops=[Eq()], comparators=[Subscript(value=Subscript(value=Subscript(value=Name(id='bundle', ctx=Load()), slice=Constant(value='parent'), ctx=Load()), slice=Constant(value='config'), ctx=Load()), slice=Constant(value='bundle'), ctx=Load())])",
+        "fingerprint_sha256": "c552c5d6adc134bb604d8e3543caf64a61360fe2a35d3fbf1793460e688c181b",
+        "new_line": null,
+        "old_line": 36
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [
+        {
+          "assertion": "assert config['clips'] == plan.bundle['parent']['clips']",
+          "fingerprint_sha256": "9d73fdcf4c4a462a0432cd2a0b574f3d76d8dd4eb40ff4aaa197f18f85698bec",
+          "line": 145,
+          "relation": "new_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:removed:8]",
+      "ordinal": 8,
+      "partition0_row_ids": [],
+      "row_id": "9:removed:8",
+      "side": "removed",
+      "source": {
+        "assertion": "assert parent['config']['clips']==parent['clips']",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Name(id='parent', ctx=Load()), slice=Constant(value='config'), ctx=Load()), slice=Constant(value='clips'), ctx=Load()), ops=[Eq()], comparators=[Subscript(value=Name(id='parent', ctx=Load()), slice=Constant(value='clips'), ctx=Load())])",
+        "fingerprint_sha256": "d636406cd04729746623a105b5bcc8d590e81a6b6450f8d289bc3e8de62be08c",
+        "new_line": null,
+        "old_line": 34
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [
+        {
+          "assertion": "assert body['commands'][2]['args']['values'] == {'chaos': .8}",
+          "fingerprint_sha256": "00139a96a2a90301e2dc21d1000c86a3ba6bea1bcb1c8efb924bebf3d09e296e",
+          "line": 119,
+          "relation": "new_assertion"
+        },
+        {
+          "assertion": "assert result.data == {\n        'project_id': 'project', 'timeline_id': 'timeline', 'expected_head': 'head',\n        'new_head': 'committed', 'clip_id': 'effect', 'element': ref, 'duration': 6,\n        'params': {'color': '#ff6b6b', 'seed': 15, 'chaos': .8}, 'before': {\n            'element': original['parent']['clips'][0]['elementRef'], 'duration': 2,\n            'params': {'color': '#ff6b6b', 'seed': 15}}}",
+          "fingerprint_sha256": "dbe8eb2151651a558a916b8e2c04a9eb869a75a74e3da8adae2ca9989b03376e",
+          "line": 132,
+          "relation": "new_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:removed:9]",
+      "ordinal": 9,
+      "partition0_row_ids": [],
+      "row_id": "9:removed:9",
+      "side": "removed",
+      "source": {
+        "assertion": "assert parent['clips'][0]['params']=={'color':'#ff6b6b','seed':15,'chaos':.8}",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Subscript(value=Name(id='parent', ctx=Load()), slice=Constant(value='clips'), ctx=Load()), slice=Constant(value=0), ctx=Load()), slice=Constant(value='params'), ctx=Load()), ops=[Eq()], comparators=[Dict(keys=[Constant(value='color'), Constant(value='seed'), Constant(value='chaos')], values=[Constant(value='#ff6b6b'), Constant(value=15), Constant(value=0.8)])])",
+        "fingerprint_sha256": "14c710915f5baf86aee02e8023791f8b7a910a222db09c92160f5ce592457a6b",
+        "new_line": null,
+        "old_line": 32
+      }
+    },
+    {
+      "decision": "PASS",
+      "function_key": "tests/core/test_timeline_element_publication.py:test_sameclip_exacthead_publication_preserves_closure_and_user_params",
+      "mapping": [
+        {
+          "assertion": "assert bundle == original",
+          "fingerprint_sha256": "135ce3f7c1f548e33c6548ceeae1f2a83b39334917210a3b5ad4314e55f4c5a5",
+          "line": 149,
+          "relation": "new_assertion"
+        }
+      ],
+      "membership_source": "handoff-agt-D108-D69-predicates-1-0902.json#assertion_rows[9:removed:10]",
+      "ordinal": 10,
+      "partition0_row_ids": [],
+      "row_id": "9:removed:10",
+      "side": "removed",
+      "source": {
+        "assertion": "assert bundle['parent']['clips'][0]['hold']==2",
+        "fingerprint": "Compare(left=Subscript(value=Subscript(value=Subscript(value=Subscript(value=Name(id='bundle', ctx=Load()), slice=Constant(value='parent'), ctx=Load()), slice=Constant(value='clips'), ctx=Load()), slice=Constant(value=0), ctx=Load()), slice=Constant(value='hold'), ctx=Load()), ops=[Eq()], comparators=[Constant(value=2)])",
+        "fingerprint_sha256": "4dcf6c812014543471b0642f619d604a18c3f947f9ea8043100c751f1771811b",
+        "new_line": null,
+        "old_line": 39
+      }
+    }
+  ],
+  "schema": "timeline.agent.d108.d69.core-map.v1",
+  "scope": {
+    "added_multiplicity": 51,
+    "assigned_changed_assertion_multiplicity": 73,
+    "assigned_functions": 5,
+    "behavior_execution": false,
+    "preserved_historical_membership": true,
+    "removed_multiplicity": 22
+  },
+  "source_identity": {
+    "captured_new_commit": "d6294843286c18e57af3c1874cf1996be42212d2",
+    "current_normal_commit": "d0ecf1d69a7b37f86034bc52004f73f6c6231603",
+    "current_normal_source_matches_captured_new": true,
+    "old_upstream_commit": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+    "source_method": "git show/AST/hash only"
+  },
+  "status": "SOURCE_REVIEW_COMPLETE_ONE_MISSING_PURPOSE",
+  "task": "F-D108/D69 independent semantic predicate review"
+}
