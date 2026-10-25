@@ -1,1 +1,1 @@
-2026-10-25T21:32:52Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 9G free; D77: child venv BUILT+registered 21:32Z (child-717e53d7), manager continuing to installed stage/render; union proof still waits Runtime interpreter answer
+2026-10-25T21:36:32Z procs: hub-syncd dispatcher run-manager up; disk 9G free; D77 child built 21:32Z, manager on installed stage/render; union proof waits Runtime's corrected portable gate (venv-agent interpreter only after census PASS)
