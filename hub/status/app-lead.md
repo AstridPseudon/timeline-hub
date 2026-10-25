@@ -1,1 +1,1 @@
-08:41Z app-lead: daemons up (uptime 2801m), 0 workers, disk 5.6G, 1 wt dir, codex unchanged (th 1648238592, state 362328064, sessions 849044K); D113 merged dc8c809cd9, no blocked:orchestrator, no refusals; core open 3 (SWAP/element/placement) awaiting Runtime D111a/D112 then full P2
+09:08Z app-lead: daemons up (uptime ~2830m), disk ~5.6G, asset 15712 FAIL at native Undo envelope.data (all HTTP 200, stderr empty), core open 4; Luna asset15712 native-source 0904 running; D113 merged dc8c; no blocked:orchestrator, no refusals
