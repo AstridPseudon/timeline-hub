@@ -1,0 +1,14 @@
+### Timeline write-route migration
+
+The delivery retires the native `edit commands-file`/native-batch ingress and
+the other separate native/publish writers (`edit --native`, `apply --native`,
+`undo --publication`, `publish`, `publish_bundle`, and the old three-way
+writer). A document edit now uses `timelines commit --file ... --message ...
+--idempotency-key ...`; the Runtime `commitTimeline` door owns accepted,
+merged, conflict, and invalid replies, durable exact-key retry, and the
+receipt/history. A single move or trim uses the current native `timelines edit
+...` route. Cut-sheet edits use the current `timelines apply <sheet> ...` /
+`NativeSheet` route, which emits registered commands through that same Runtime
+door and preserves the draft on refusal. No native packet envelope,
+commands-file alias, detached document overwrite, or resurrected G5 interface
+is included.
