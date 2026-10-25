@@ -47,6 +47,12 @@ const test = appTest.extend<object, { seed3: ThreeProductsSeed }>({
   }, { scope: 'worker', timeout: 240_000 }],
 });
 
+const placementTest = appTest.extend<object, { seed3: ThreeProductsSeed }>({
+  seed3: [async ({ harness }, use) => {
+    await use(await harness.seedThreeProducts(THREE_PRODUCTS_REFERENCE_AT, 'native-none', 14));
+  }, { scope: 'worker', timeout: 240_000 }],
+});
+
 test.describe.configure({ mode: 'serial' });
 
 function object(value: unknown, label: string): JsonObject {
@@ -1012,7 +1018,7 @@ function placementPublicationId(post: CommitPost): string {
   return receipt.receipt_id as string;
 }
 
-test('P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo', async ({ page, harness, seed3 }) => {
+placementTest('P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo', async ({ page, harness, seed3 }) => {
   await openTimeline(page, harness, seed3);
   const wire = wireFor(page);
   const before = await history(harness, seed3);
