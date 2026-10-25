@@ -13,7 +13,7 @@ from types import SimpleNamespace
 import pytest
 
 from astrid.sdk.timeline._clip_scalar_commands import capture_clip_set
-from astrid.sdk.timeline._command_state import State
+from astrid.sdk.timeline._command_state import ABSENT, State
 from astrid.sdk.timeline.capture import capture_track_create
 from astrid.sdk.timeline.commit import bundle_from_document
 from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
@@ -185,9 +185,20 @@ def media_realm(tmp_path, monkeypatch, kind, *, historical, pristine=False):
                 bundle_from_document(current(editing)), 'occurrence:occurrence-2', child,
                 music_pin, verified_media=editing.selected)
             commit(editing, body(editing, [child_command]), 'occurrence-2-clip')
-            transition = capture_clip_set(
-                bundle_from_document(current(editing)), 'occurrence:occurrence-2/clip:clip-2',
-                values={'transition': {'type': 'crossfade', 'duration': 0.5}})
+            transition_bundle = bundle_from_document(current(editing))
+            occurrence_shot = next(row['shot_id'] for row in transition_bundle['placements']
+                                   if row['occurrence_id'] == 'occurrence-2')
+            internal_ref = ('internal-revision:'
+                            + transition_bundle['source_mapping']['shots'][occurrence_shot][
+                                'internal_timeline_revision_id'])
+            # Native clip.set only captures hold in values; retain the original
+            # transition through a guarded patch after genuine media allocation.
+            transition = call('doc.patch', {'changes': [{
+                'op': 'set', 'ref': internal_ref,
+                'path': ['clips', 'id:clip-2', 'transition'],
+                'before': ABSENT,
+                'value': {'type': 'crossfade', 'duration': 0.5},
+            }]}, None)
             commit(editing, body(editing, [transition]), 'occurrence-2-transition')
         editing.selected.clear()
         editing.candidates.clear()
