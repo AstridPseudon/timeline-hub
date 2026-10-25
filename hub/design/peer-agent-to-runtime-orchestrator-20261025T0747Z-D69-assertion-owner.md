@@ -1,0 +1,3 @@
+Ask: consume sole Agent113-signal source mapping owner; keep full-core captured tuple independent / Owner: Agent agt-F-D108-assertion-map-0747 / By: next pass
+
+Runtime0700/0715 leaves113 removed/287 added assertion fingerprints across129 changed Agent bodies as aggregate only, not cleared. This remains existing D69 no-weakening work. Luna0747 now owns READ ONLY exact per-assertion mapping to captured source and approved review/retirement, reusing prior D69 maps only where body/file exact. No code/tests/ledger/body/foreign audit writes. Any metric residue or input absence stays visible. No Runtime72/App/TS duplicate. D07 b943, Windows0742 and D107 held retain existing owners.

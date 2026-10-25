@@ -1,0 +1,115 @@
+{
+  "task": "U2 D108 protected Windows source review",
+  "verdict": "PASS_SOURCE",
+  "source_only": true,
+  "windows_behavior_executed": false,
+  "commits": {
+    "author": "2efa4dccf9fd09f67617933a2f42e116290cf0b0",
+    "captured_parent": "b943270a9ed42bb968dbaeace7b296d9898ea21b",
+    "fresh_upstream": "08e6b905114a3ee2b05c3e7980421f26b4abf15c"
+  },
+  "delta": {
+    "paths": [
+      "tests/test_installer_windows_tasks.py"
+    ],
+    "insertions": 40,
+    "deletions": 0,
+    "imports_added": [
+      "uuid",
+      "from astrid.installer import service",
+      "from astrid.installer.core import Version"
+    ],
+    "production_or_generated_changes": false,
+    "full_core_tuple_changed": false
+  },
+  "new_registration_test": {
+    "selector": "tests/test_installer_windows_tasks.py::test_register_scheduled_task_accepts_rendered_xml_string",
+    "source_sha256": "deb4ceb835cb0cfcc3ad596214293b7cdc68356cf35d5e4c2cf2b63a1f52797d",
+    "ast_sha256": "6f0d6ccd52104dbad4df30a247aa1ab1b4bd4bcad7906dd2b4743b7be845de17",
+    "fresh_source_exact": true,
+    "fresh_ast_exact": true,
+    "parameters": [
+      "tmp_path",
+      "monkeypatch"
+    ],
+    "decorators": [],
+    "required_anchors": {
+      "xml_starts_Task": true,
+      "xml_has_no_declaration_assertion": true,
+      "two_Enabled_replacements": true,
+      "current_TASK_and_filtered_TASK_QUERY": true,
+      "powershell_Get_ScheduledTask_ErrorAction_Stop_query": true,
+      "finally_unregister": true
+    }
+  },
+  "preserved_cleanup_test": {
+    "selector": "tests/test_installer_windows_tasks.py::test_task_cleanup_preserves_powershell_success_and_failure",
+    "source_sha256": "277c9825fd2c69ee415d6f16650ac92a4037472792fcd954feb978f35c239120",
+    "ast_sha256": "1b58e4eff0c2251b12ad5767b471d43c254e38499c84a98333c6fcfecd2146ce",
+    "parent_source_exact": true,
+    "parent_ast_exact": true,
+    "parameters_and_marks_exact": true
+  },
+  "module": {
+    "pytestmark": "pytest.mark.windows_installer",
+    "new_skip_or_scope_claim": false,
+    "author_source_sha256": "141ed2333b01f67e15be157a08fbc47ca78223fce566875509f17fb5de9ef9fe",
+    "fresh_source_sha256": "5fbe0670c1253fa13296bed4cea45895f06197a3b6ebd805e5363c880bc92325",
+    "in_memory_ast_and_compile": true
+  },
+  "current_api_static_check": {
+    "Service_constructor": "Service(root, log, run, *, home, system, say)",
+    "Service_register": "register(version, data)",
+    "Service_powershell": "powershell(script)",
+    "Service_unregister": "unregister()",
+    "Version_constructor_fields": [
+      "root",
+      "python",
+      "profile",
+      "env"
+    ],
+    "service_render": "render(system, version, data, log, *, user, env_file)",
+    "service_TASK_and_TASK_QUERY": true,
+    "installer_data_valid": true,
+    "both_required_windows_test_sets_present": true
+  },
+  "checks": [
+    {
+      "command": "/home/user/work/venv-agent/bin/ruff check tests/test_installer_windows_tasks.py --output-format concise",
+      "result": "PASS",
+      "exit": 0,
+      "diagnostics": []
+    },
+    {
+      "command": "scoped Ruff on exact author candidate source",
+      "result": "PASS",
+      "exit": 0,
+      "diagnostics": []
+    },
+    {
+      "command": "/home/user/work/venv-agent/bin/mypy tests/test_installer_windows_tasks.py --cache-dir /tmp/w-3dc73cad30/d108-mypy-parent --show-error-codes --no-error-summary",
+      "result": "PASS",
+      "exit": 0,
+      "diagnostics": []
+    },
+    {
+      "command": "scoped mypy on exact author candidate source with /tmp/w-3dc73cad30/d108-mypy-candidate cache",
+      "result": "PASS",
+      "exit": 0,
+      "diagnostics": []
+    },
+    {
+      "command": "git diff --check 2efa4dccf9^ 2efa4dccf9",
+      "result": "PASS",
+      "exit": 0,
+      "diagnostics": []
+    }
+  ],
+  "unverified": [
+    "Actual Windows PowerShell and Task Scheduler execution",
+    "Functional Windows PASS",
+    "F-final qualified platform proof"
+  ],
+  "next_step": "Proceed to normal merge queue, then retain actual qualified Windows execution as the F-final proof gate.",
+  "evidence": "workers/agt-U2-D108-windows-review-0745/evidence/static-source-review.md"
+}

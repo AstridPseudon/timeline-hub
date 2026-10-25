@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T07:42:44Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 1m -->
-# agent board, 2026-10-25T07:41:12Z
+<!-- agent | 2026-10-25T07:45:59Z | dispatcher heartbeat 15s | live 1 (sol 0, luna 1, other 0) | busy30 14 | status age 0m -->
+# agent board, 2026-10-25T07:45:39Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -282,8 +282,9 @@
 | F D108 census | Reconcile Windows and D18 selectors | Luna / independent Luna | Source review complete; Windows repair | merged | Return0731; review0737 B | Restoration and D18 exclusion verified. Raw105/declared104/reconstructed103 exact; Windows live gap assigned0742, no false clearance. | Evidence only |
 | F D108a full command | Publish exact unfiltered MAIN command | Luna source only | Existing exact recipe | merged | Author0726; return0734 PASS | Expanded22 actual roots include live_scene. Exact env/venv, timeout/XML and parsed controls published; shell syntax/root equality pass. No local body. | Normal070dfc source |
 | F D108 D07 coverage | Preserve timing audio and window predicates | Luna / independent Luna | D108 terminal before needed proof | merging | Author0732; review0737 A PASS | Normalb943 adds three faithful current tests. All old predicates and existing ASTs conserved; statics pass. Functional proof pending on exact source. | b943270a9e |
-| U2 D108 Windows | Restore exact Windows registration test | Luna / independent review | Live gap from census0737 B | doing | agt-U2-D108-windows-restore-0742 | Restore full upstream body; preserve current cleanup cases. No Windows body or gating upstream merge. | Fresh08e6 source |
-| F D07 source receipt | Record exact pending coverage | Luna | Normalb943 and review0737 A | doing | agt-F-D108-D07-source-receipt-0743 | Durable source receipt and exact handoff target copies; no behavioral PASS or D69 closure. | Evidence only |
+| U2 D108 Windows | Restore exact Windows registration test | Luna / independent Luna | Protected source review | review | Author0742; review0745 | Exact upstream body restored; current cleanup retained. Static checks pass; protected review active. No Windows body. | Source candidate |
+| F D07 source receipt | Record exact pending coverage | Luna | Normalb943 and review0737 A | merged | agt-F-D108-D07-source-receipt-0743 PASS | Exact three mappings and handoff copies; prefix CAS, hash and JSON checks pass. Source qualified, behavior pending; no D69 closure. | Evidence only |
+| F D108 assertion map | Qualify each changed assertion signal | Luna read only | Existing source audit0700 | doing | agt-F-D108-assertion-map-0747 | Exact per-assertion approval/source mapping for113 removed signals; no aggregate clearance, code or body. | Captured audit source |
 Integration: Actual normalb943270a9e contains reviewed test-only D07 addition; production remains released070dfc5ef4 and adopts released Runtime1daca; all15 mappings unchanged. Includes normal mirror5554, D10101d516, media1a977, sheetCLI b948 and graph8c88. D103d588/S3badfe/legacy read79c94 and critical D110 normally merged. Historical D110 home tree605641 equals its independent review; later D07 changes tests only.
 core open: UNKNOWN current count until D108 terminal; historical424 is not a current numeric result. P4 independent GO28.101s on786/0c62/1e34/635f; every per-note time UNKNOWN. P2 and final D59 P1-P5/core,D69/genuine installed render still required.
 Rehearsal categories: PRE16 / KNOWN37 / ENV73 / NEWcore424 / NEWnoncore0 / REG0 =550. Later named proofs retain exact source scope; no full/core-zero/ZIP claim.
@@ -295,9 +296,9 @@ Safety: Withdrawn D88 action stopped. D93 original credential/session/scope limi
 Disk: Free5.45GiB; D89 source/review6 above5.0GB, heavy1 above5.2GB, nothing new below4.5GB. Sweep3 removed0 with broken-pipe warnings; compact packed0; ended clean nonKEEP source trees auto-recycled. Only old dirty G2 remains; prior refused targets untouched.
 Blockers: Agent D107 — Independent0715 PASS_SOURCE; current test remains held on2154 and D108 terminal before needed MAIN proof. Receipt0721 PASS; no effective retirement.
 Blockers: Runtime D108 — Exact expanded command published with live_scene and all22 actual inventory roots. MAIN agent-core-full owns captured tuple/body; terminal pending.
-Blockers: Agent D69 — D07 normalb943 awaits exact functional proof. Windows missing selector restoration0742 active; review then final source/platform qualification.
+Blockers: Agent D69 — D07 normalb943 awaits exact functional proof. Windows restored0742 in protected review0745; exact changed-assertion map0747 active. Final source/platform qualification owed.
 Blockers: Final cut — D59 final tuple gates/core, D69 and genuine installed render remain owed.
-Next ready: MAIN agent-core-full after normal D89 kit correction; exact command published. Windows0742 and D07 receipt0743 active. App D110 adopted6e21; full P2 awaits qualified D111 and capture fix. Family bodies paused.
-live 2 / cap 6; ready-undispatched 0 eligible local starts. Windows0742 and source receipt0743 active; batch0737 A PASS, B live Windows gap; protected0715 PASS. Duplicate0718 stopped. MAIN D108 owns full core. No manager product/test/generated/pin edits or test execution.
-Inbox consumed through1475285 bytes. Updated 2026-10-25T07:41:12Z.
+Next ready: MAIN agent-core-full after normal D89 kit correction; exact command published. Windows review0745 and assertion map0747 active. App D110 adopted6e21; full P2 awaits qualified D111 and capture fix. Family bodies paused.
+live 2 / cap 6; ready-undispatched 0 eligible local starts. Windows review0745 and assertion map0747 active; source receipt0743 PASS; batch0737 A PASS, B live Windows gap; protected0715 PASS. Duplicate0718 stopped. MAIN D108 owns full core. No manager product/test/generated/pin edits or test execution.
+Inbox consumed through1475285 bytes. Updated 2026-10-25T07:45:39Z.
 Later: U4a D111 — Runtime sole Luna rt-D111-validation-memo-0653 owns element-cost profiling and bounded successful-validation memo. Agent normal adoption waits qualified release/security/native-seed smoke; no duplicate writer or isolated P2 body.
