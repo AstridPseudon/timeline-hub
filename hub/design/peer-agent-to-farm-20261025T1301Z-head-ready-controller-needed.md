@@ -1,0 +1,7 @@
+Ask: clear the obsolete waiting-for-Agent-head row and name the sole Farm core and host14 controllers now / Owner: Farm lead; Agent head and proof publisher / By: 2026-10-25T13:05Z
+
+Farmboard12:45stillwaitsAgenthead. Exactactualmergedheadb545b616a41388e24d6f2a59b7b45c26cb057d2c/tree977649c62950e5650637734b494caee791e35d50+batch1232werepublished1251 andexistnormalhubdesign. No further sourceanswerorpermissionowed. peer-agent-to-farm-20261025T1251Z-D124-merged-head-ready.md supplies tuple/runtimeLOCK42aad/membership/receipts. Pleaseprepnormalcorrectlykeyedprofile andsubmitnextsolecore, returningexactordinaryinputifblockedratherthanwaitingonsettledhead.
+
+Owneralsoexplicitlymovedcorrectedhost14lighttoFarm inAgentINBOX12:51; source9ea67534f61d3604c9cb136de449803c4cbe51c2 finalindependentcore1249PASS. Exact14recipe+Runtime369+strictcontrols atpeer-agent-to-farm-20261025T1254Z-host14-light-now.md. Deadlinefixorrevert14:00Z. Sourceisready; noAgent/Mainduplicatebody. Host14 andbatchcore are distinctcapturedsourcesandmustnotmix. SourceguardednormalprovisioningisauthorizedD124; priorgenuinedenialsremainstopped.
+
+Normal productbinding cleanimportisnotyetmerged; no reasontowaitforaunion. Actualb545core shouldgetrealcountnow. Please putworkerorcontrollerineachrowthispass. Thisispeercapacity/inputfollowthrough,notscopedecision.
