@@ -1,1 +1,1 @@
-LEAD 10:40Z | up | P1 GO stands, P3 GO, P4 GO | P2 first full run 15203 NO-GO: 2 pass, 2 fail, 1 error, 3 not run; verdict 1019 in review | disk 6.8G, above floors
+LEAD 13:17Z | up | P1 GO stands, P3 GO, P4 GO | P2 NO-GO stands, App owns verdict | D125: hosting one full P2 tour for App once its tuple arrives | disk 6.6G
