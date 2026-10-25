@@ -1,0 +1,31 @@
+{
+  "task": "rt-F-D77-stage-return-1158",
+  "status": "blocked_before_acquisition",
+  "free_bytes": 5958463488,
+  "heavy_start_gate": {"strictly_greater_than": 5200000000, "passed": true},
+  "known_additive_lower_bound_bytes": 1358509601,
+  "projected_free_after_known_additive_bytes": 4599953887,
+  "inter_phase_floor_bytes": 4500000000,
+  "margin_bytes": 99953887,
+  "complete_peak_bound": "unknown",
+  "unknowns": [
+    "OMP source/native materialization and build temporaries",
+    "Remotion npm ci node_modules and temporary/cache behavior",
+    "exact applied Agent archive/extraction and dependency/build temporaries",
+    "complete private phase peak and allocation behavior"
+  ],
+  "exact_trees": {
+    "agent": "523893dcf54dbe756db8fe2915d14055b1da660b",
+    "runtime": "a522511414947e48e317a5e5c2103483b121a750",
+    "omp_commit": "9e282751c0059e37d2f6fbc14ffa0b450710bd23",
+    "omp_tree": "2074d7a2e26cc954b5cf3d77e91f3efbb25ad34f"
+  },
+  "actions": {
+    "source_fetch": "not_run",
+    "omp_fetch": "not_run",
+    "installer_run": "not_run",
+    "backend_stage": "not_run",
+    "renderer_browser_full_suite_build_zip": "not_run"
+  },
+  "custody": "retained D108 patches and manifest; no new materialization"
+}
