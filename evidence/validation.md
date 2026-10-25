@@ -85,3 +85,22 @@ full suite or source-unit repeat was run. The wrapper author should repair the
 two bindings above, then obtain one fresh admitted ordinary service run. The
 source/E2E result remains unqualified until parent-RED, candidate-GREEN, sealed
 registration, and unchanged adversarial checks pass in that run.
+
+## Final independent binding and one authorized service
+
+The exact corrected wrapper was independently rechecked without modification:
+
+- wrapper SHA256 `564716bca87c9b48251ceecb3b6455bea40147e94cae9b5e25d98dee9747fa3f`;
+- suite row SHA256 `fcfd280bb6441a462707e645743187efec6a6ff95d83528903579bac67b0fd8f`;
+- source1747 `f6b9d4d52802d3cc5cd6bf9be070cd4c40d1e2fe`, runner and manifest hashes exact;
+- candidate maker `c3226b`, parent maker `0857a5`, support import and Git parent lookup exact;
+- Agent/build Python, child Python, setuptools `80.9.0`, wheel `0.46.3`, offline wheel hashes,
+  source modes, numeric disk guard, fresh physical TMPDIR, default-off network and no mocked
+  verifier/installer all passed.
+
+The manager-authorized service was submitted once and only once. It reached the genuine
+fixture path and produced the first authentic result, but exited `2` at the parent maker
+inventory-refusal assertion. The result is intentionally not promoted to GREEN: parent RED,
+candidate GREEN, sealed verification, registration, and adversarial checks are all false or
+unreached in `e2e-result.json`. This is not a safety, classifier, or permission refusal.
+No retry was submitted.

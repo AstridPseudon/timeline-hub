@@ -1,0 +1,18 @@
+{
+  "status": "FINAL_PASS",
+  "wrapper_sha256": "564716bca87c9b48251ceecb3b6455bea40147e94cae9b5e25d98dee9747fa3f",
+  "suite_row_sha256": "fcfd280bb6441a462707e645743187efec6a6ff95d83528903579bac67b0fd8f",
+  "source1747_commit": "f6b9d4d52802d3cc5cd6bf9be070cd4c40d1e2fe",
+  "execution_admitted": true,
+  "manager_new_service_authorization": true,
+  "free_bytes_observed": 6696894464,
+  "start_reserve_bytes": 5905580032,
+  "stop_line_bytes": 4000000000,
+  "other_live_heavy_body": false,
+  "fixture_tmpdir_fresh": true,
+  "production_store_touched": false,
+  "production_request_sent": false,
+  "network_acquisition": false,
+  "safety_permission_classifier_refusal": false,
+  "whole_maker_bodies_before_submission": 0
+}
