@@ -1,0 +1,50 @@
+{
+  "task": "D111b / PLAN §3 R2r/C0",
+  "decision": "HELD",
+  "scope": "independent read-only whole-path investigation after exact-base fix1016",
+  "base": "85639c2941dbb8fd62439700f4a16b1cdf654136",
+  "finding": "Fix1016 materially reduces generic read and deepcopy work, but the request-local ancestry walk still grows from 15 to 498 history-entry calls as distinct entries grow from 3 to 10. The 0.265-to-1.829-second endpoint measurement fails 1.5x but is confounded by JSON/hash instrumentation.",
+  "trustworthy_aggregate": {
+    "generic_read_seconds": [24.721185059, 6.00723494],
+    "deepcopy_calls": [2058, 448],
+    "receipt_readback_bytes_preserved": true,
+    "source_document_calls": 0,
+    "source_store_calls": 0
+  },
+  "path": {
+    "app": "shotTimelineDataProvider.ts:1124-1142 creates doc.patch; generated.ts:202-204 POSTs commit with Idempotency-Key",
+    "runtime": "service.py:2447-2461 validates and service.py:2508-2515 creates RequestCommitPort",
+    "agent": "commit.py:1227-1231 reads base/head/history; commit.py:1395-1399 checks reservations and can load historical boundaries",
+    "port": "timeline_commit_port.py:210-216 authorizes and opens history_read_scope; :225-244 walks _ancestor; :257-286 caches only revision closures",
+    "store": "timeline_commit_store.py:501-529 holds input/version/CAS checks; :601-695 verifies accepted graph; :1009-1055 authenticates cache hits; :1083-1132 assembles history"
+  },
+  "c0_surface": {
+    "request": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps", "merge", "reads", "dry_run", "Idempotency-Key"],
+    "step_fields": ["id", "label", "intent", "tags", "command_ordinals", "patch", "reads"],
+    "accepted_or_merged": ["canonical_document", "receipt", "head", "effects", "bindings", "dependencies"],
+    "conflict": ["head", "reason"],
+    "invalid": ["code", "path", "hint"],
+    "dry_run": "durable state unchanged"
+  },
+  "why_15_to_498": "Each request has observed/base roots and several provider operations ask for ancestry. _ancestor starts at those roots and walks back until its target; it does not retain a per-request result for a previously visited publication. Store entry values are cached, but cache hits still run membership and _verify_accepted, and each new _ancestor invocation repeats the walk. The measured sequence fits 3,4,5,6,7,8,9,10 distinct entries -> 15,33,63,108,171,255,363,498 calls.",
+  "necessary_vs_redundant": {
+    "necessary": "Historical growth itself is required: doc.patch rebasing/reservation checks must authenticate the base/current chain, prior records, revision closures, and exact publication/revision pins. history_read_scope must keep SQL/CAS inputs live through dependent reads.",
+    "redundant_after_verification": "Within one request and one unchanged authenticated read snapshot, revisiting the same publication path through _ancestor is repeated work. Candidate cache entries are detached/authenticated; callers receive deep copies, so reuse of an already verified request-private traversal result is safe only inside those boundaries.",
+    "not_established": "No uninstrumented production endpoint curve was established. Do not infer a required D111b flat curve from D112a baseline equivalence."
+  },
+  "safe_reuse_boundaries": [
+    "same RequestCommitPort/request, project/timeline, exact publication/revision pair, and same authenticated history-read scope",
+    "retain per-public-call authorization and active/archived membership checks",
+    "retain _HistoryReadInputs checks, store-version checks, CAS byte/hash checks, and _verify_accepted live row/ledger/replay validation",
+    "invalidate on acceptance writes, unrelated transaction changes, rollback/refusal, close/restart, version or DB/WAL/CAS changes, or failed verification",
+    "never carry proofs across requests or bypass revocation/mutation checks"
+  ],
+  "d94_comparison": "D94 warm is repeated history-only GET after accepted/restarted state: 27 SQL and zero digest/decode work across N=3..22. D111b is the App POST -> Runtime -> Agent commit lifecycle plus ancestry/reservation reads and canonical readback, so D94 does not validate or invalidate this native whole-path curve.",
+  "controls": "Prior 123/132/53/2/7 controls and the separate strict 39+1 parent-failure scope are retained and not re-executed. Native XML is absent; raw exit/log is retained and no XML was synthesized.",
+  "acceptance": {
+    "source_hash_ast_json_cleanliness": "pass",
+    "worktree_changes": "none",
+    "targeted_tests_type_lint": "N/A read-only"
+  },
+  "handback": "Bounded remaining cost/missing measurement is request-local repeated ancestry traversal plus the lack of a clean uninstrumented split between provider, port/store reads, and HTTP/canonical readback. No second diagnostic round or implementation change was performed."
+}
