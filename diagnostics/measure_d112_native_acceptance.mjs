@@ -12,6 +12,30 @@ const py = process.env.ASTRID_PYTHON || '/home/user/work/venv-agent/bin/python';
 const digest = (value) => createHash('sha256').update(value).digest('hex');
 const fail = (message, value) => { throw new Error(`${message}: ${JSON.stringify(value)}`); };
 
+function metricDelta(before, after) {
+  return Object.fromEntries(Object.entries(after.counters).map(([key, value]) => [key, value - (before?.counters?.[key] || 0)]));
+}
+
+async function metricSnapshot(harness, previous) {
+  const metricPath = process.env.D112_METRIC_PATH;
+  if (!metricPath || !harness.runtime?.child.pid) fail('curve metrics unavailable', metricPath);
+  process.kill(harness.runtime.child.pid, 'SIGUSR1');
+  const deadline = Date.now() + 3000;
+  while (Date.now() < deadline) {
+    try {
+      const current = JSON.parse(readFileSync(metricPath, 'utf8'));
+      if (current.pid === harness.runtime.child.pid && (!previous || current.monotonic > previous.monotonic)) return current;
+    } catch { /* wait for the signal handler's atomic replacement */ }
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  fail('curve metric snapshot timed out', metricPath);
+}
+
+function externalStateChange(harness) {
+  const script = "import sqlite3,sys\nwith sqlite3.connect(sys.argv[1],isolation_level=None) as db:\n    db.execute(\"UPDATE timelines SET name=COALESCE(name,'') || 'd112-external'\")\n";
+  execFileSync(py, ['-c', script, `${harness.realmDir}/realm.sqlite3`], { encoding: 'utf8' });
+}
+
 async function canonicalAt(harness, seed, revisionId) {
   const parentResponse = await harness.runtimeJson('GET', `/v1/projects/${seed.projectId}/timelines/${seed.timelineId}/composition-revisions/${revisionId}`);
   if (parentResponse.status !== 200) fail('parent read failed', parentResponse.status);
@@ -110,6 +134,69 @@ async function history(harness, seed) {
   return response.body;
 }
 
+async function runFiniteCurve(harness, result) {
+  const seed = { ...harness.seed, ...await harness.seedThreeProducts(15, 'native-none') };
+  let current = await history(harness, seed);
+  const initialHistoryItems = current.items?.length ?? null;
+  let document = await canonicalAt(harness, seed, current.head.revision_id);
+  const media = [];
+  for (let ordinal = 0; ordinal < 3; ordinal += 1) {
+    media.push(await importFreshPin(harness, seed, harness.seed.image, `d112-native-curve-${ordinal}.png`));
+  }
+  const rows = [];
+  let metric = await metricSnapshot(harness);
+  const clipId = `d112-native-curve-${randomUUID()}`;
+  let priorMedia = media[0];
+  for (let ordinal = 0; ordinal < 3; ordinal += 1) {
+    const replacement = media[ordinal];
+    const row = { id: clipId, clipType: 'image', track: 'V2', asset: replacement.selected.asset, at: 9, hold: 3 };
+    const command = ordinal === 0
+      ? agentCommand(document, 'add', replacement.selected, replacement.verified, row)
+      : agentCommand(document, 'swap', replacement.selected, replacement.verified,
+        { id: clipId, old_media: priorMedia.selected, old_verified: priorMedia.verified });
+    const beforeMetric = metric;
+    const started = performance.now();
+    const reply = await post(harness, seed, requestFor(seed, current.head, command, `D112native CURVE ${ordinal + 1}`),
+      `D112native-curve-${randomUUID()}`);
+    const elapsed = performance.now() - started;
+    metric = await metricSnapshot(harness, beforeMetric);
+    if (reply.status !== 200 || !reply.body?.receipt) fail('native curve ADD refused', reply.status);
+    current = await history(harness, seed);
+    document = await canonicalAt(harness, seed, current.head.revision_id);
+    priorMedia = replacement;
+    const beforeExternal = metric;
+    externalStateChange(harness);
+    const externalStarted = performance.now();
+    const revalidated = await history(harness, seed);
+    const externalElapsed = performance.now() - externalStarted;
+    const afterExternal = await metricSnapshot(harness, beforeExternal);
+    if (revalidated.head.revision_id !== current.head.revision_id) fail('external read changed head', revalidated.head);
+    rows.push({
+      N: current.items?.length ?? null,
+      wall_ms: elapsed,
+      external_revalidation_wall_ms: externalElapsed,
+      verification_reads: metricDelta(beforeMetric, metric),
+      external_revalidation_reads: metricDelta(beforeExternal, afterExternal),
+      document_bytes: Buffer.byteLength(JSON.stringify(document)),
+      history_bytes: Buffer.byteLength(JSON.stringify(current)),
+      status: reply.status,
+      receipt: Boolean(reply.body.receipt),
+    });
+  }
+  result.curve = {
+    source: { runtime_commit: execFileSync('git', ['-C', runtime, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+      agent_commit: execFileSync('git', ['-C', agent, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim() },
+    lifecycle: harness.lifecycleObservation,
+    seed: { project_id: seed.projectId, timeline_id: seed.timelineId, initial_history_items: initialHistoryItems },
+    rows,
+    same_process: true,
+    cache_resets: 0,
+    external_state_changes: rows.length,
+    flat_verification_work: new Set(rows.map((row) => JSON.stringify(row.verification_reads))).size === 1,
+    flat_wall_observed: Math.max(...rows.map((row) => row.wall_ms)) / Math.min(...rows.map((row) => row.wall_ms)) <= 2,
+  };
+}
+
 async function main() {
   const harness = await startDirectHarness({ deferTimelineInitialization: false });
   const result = { task: 'D112native', stage, runtime, agent, phases: [] };
@@ -123,7 +210,11 @@ async function main() {
     } finally { harness.restoreProductCredential(); }
     if (result.tagged_refusal.status !== 401) fail('tagged refusal was not 401', result.tagged_refusal);
     result.phases.push('tagged-refusal-control');
-    const seed = { ...harness.seed, ...await harness.seedThreeProducts(15, 'native-none') };
+    if (process.env.D112_CURVE === '1') {
+      await runFiniteCurve(harness, result);
+      result.phases.push('current-candidate-finite-curve');
+    } else {
+      const seed = { ...harness.seed, ...await harness.seedThreeProducts(15, 'native-none') };
     result.seed = { project_id: seed.projectId, timeline_id: seed.timelineId, head_revision_id: seed.headRevisionId };
     result.phases.push('genuine-registered-provider-seed');
     let current = await history(harness, seed);
@@ -173,8 +264,9 @@ async function main() {
     if (undoReply.status !== 200 || !undoReply.body?.receipt) fail('nativeUndo refused', result.undo_reply);
     result.phases.push('native-undo-accepted');
     current = await history(harness, seed);
-    result.final_controls = { history_items: current.items?.length ?? null, head_revision_id: current.head.revision_id,
-      head_publication_id: current.head.publication_id, canonical_history_status: 200 };
+      result.final_controls = { history_items: current.items?.length ?? null, head_revision_id: current.head.revision_id,
+        head_publication_id: current.head.publication_id, canonical_history_status: 200 };
+    }
   } catch (error) {
     result.error = { class: error?.constructor?.name || 'Error', message: String(error?.message || error) };
   } finally {
@@ -195,8 +287,9 @@ async function main() {
   result.runtime_stderr_sha256 = digest(stderr);
   result.runtime_stderr_bytes = stderr.length;
   writeFileSync(`${logDir}/result-${stage}.json`, `${JSON.stringify(result, null, 2)}\n`, { mode: 0o600 });
-  console.log(JSON.stringify({ stage, completed: !result.error, add: result.add_reply?.status,
+  const curve = process.env.D112_CURVE === '1';
+  console.log(JSON.stringify({ stage, completed: !result.error, curve, add: result.add_reply?.status,
     swap: result.swap_reply?.status, undo: result.undo_reply?.status, stderr_sha256: result.runtime_stderr_sha256 }));
-  if (result.error || result.add_reply?.status !== 200 || result.swap_reply?.status !== 200 || result.undo_reply?.status !== 200) process.exitCode = 1;
+  if (result.error || (!curve && (result.add_reply?.status !== 200 || result.swap_reply?.status !== 200 || result.undo_reply?.status !== 200))) process.exitCode = 1;
 }
 await main();
