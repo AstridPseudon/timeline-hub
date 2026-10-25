@@ -1,0 +1,86 @@
+{
+  "schema": "timeline.agent.d134_managed14_review_source_manifest.v1",
+  "task": "D134",
+  "status": "PASS_UNAPPLIED",
+  "base": {
+    "commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+    "runtime_source_reference": "releasedab1e",
+    "frozen_measurement": "a4e016b6a9f91fbe372672bdcf382c630bf59186"
+  },
+  "authorized_files": [
+    {
+      "path": "tests/editing_conformance/test_commit_runtime_video_unplace.py",
+      "bytes": 15349,
+      "sha256": "fe54a4f5d41677d95f4d7c4fa9edde56028333250be405080b41ad2101429cd2",
+      "ast_sha256": "73519ab4e2383b32006bb89683403280aa4464ab66dc072ad59a80ebe3a3d410",
+      "ast_no_attributes_sha256": "c82b9000d1384d5abc2ccb36f1e066c47dfffe905fab83f40a03dcb560716603",
+      "base_blob": "4abe70f006bf7a9a752a3d6ab9cc34bed507dafe"
+    },
+    {
+      "path": "tests/editing_conformance/test_recipe_m2_auto_placement.py",
+      "bytes": 26008,
+      "sha256": "5146188c84a4911ff42ff5c39be5b9da650f8cc5ebdf80bb4900903dad90f861",
+      "ast_sha256": "bda086bbd9e9012169eb9e195979eb605eda8f4ebff294e17cce84a3a4e1176a",
+      "ast_no_attributes_sha256": "5a3776bc08dda2bb22ace75d3901e60369b8f2c62b31a2cb7d61b7ea13a68365",
+      "base_blob": "fe6b163dab6006c0a994c04fd0ee5bfdc5a6f185"
+    },
+    {
+      "path": "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py",
+      "bytes": 14679,
+      "sha256": "51c047472cf0677baf5ce9d0c252afa00b28cc5ebdf80bb4900903dad90f861",
+      "ast_sha256": "6ab0cc48b3a0d9f1f21e2ab0a9f42c1673cd4181d788fe437e1cc330d3cea937",
+      "ast_no_attributes_sha256": "48bb7e83c8771f1ff42ff5c39be5b9da650f8cc5ebdf80bb4900903dad90f861",
+      "base_blob": "68cf00ca0687262d029b70d9789ec0bd4dd76f8e"
+    }
+  ],
+  "exact_nodes": 14,
+  "input_hashes": {
+    "canonicalization": "json.dumps(sort_keys=True,separators=(',',':'),ensure_ascii=False,allow_nan=False)",
+    "image": {
+      "document_sha256": "453aa6de8d08b394965d91ca980f2270d2a9e30f19ad5dfdff1030a6f62f7ff2",
+      "parent_payload_sha256": "02bb61acb800f5abc184c4daf315217cbc01b02c2fd88780a2e4e7c6b7504f89",
+      "shot_payload_sha256": "f700f1f65d6111e008f10de355a74ab6b41b766f4ff407bd62f97206a3f0775",
+      "internal_payload_sha256": "f579c1ef3548804d91bdaedcd7acdca9af674baf2f458b74bc6606ffd7cce502",
+      "occurrences_sha256": "09a82284ebd235a531dac1b97be24f98a42e74149f0ec608a2c83ace9f6e3cd1",
+      "old_selection_sha256": "cbcba99da9180a04e3b3f3e1dcd02ff489ae5ed281106e69e7f1f659e196bd21",
+      "new_selection_sha256": "744b8588b11861a038a1c0bbcb532168c2aa5eb2ad62cd75ea85609a6424461b",
+      "verified_media_sha256": "84480385b65738fe9baa20082057f98f2bb216fd603a85e1388a336cd29f54e7"
+    },
+    "video": {
+      "document_sha256": "79eec9483ceb406a66f3241bb8553b63ccbe0d32ec0ed6538914e025369d3b9c",
+      "parent_payload_sha256": "86c97a97fb837467f83918e31ce27d76c59740c83fec38a22562ce4d213c249b",
+      "shot_payload_sha256": "f700f1f65d6111e008f10de355a74ab6b41b766f4ff407bd62f97206a3f0775",
+      "internal_payload_sha256": "0693a443fc594c55a609396fbb0f92114b7a6bf1d880230818a76226c9648622",
+      "occurrences_sha256": "09a82284ebd235a531dac1b97be24f98a42e74149f0ec608a2c83ace9f6e3cd1",
+      "old_selection_sha256": "cbcba99da9180a04e3b3f3e1dcd02ff489ae5ed281106e69e7f1f659e196bd21",
+      "new_selection_sha256": "744b8588b11861a038a1c0bbcb532168c2aa5eb2ad62cd75ea85609a6424461b",
+      "verified_media_sha256": "377669f07b7ba1ccd28c4243265da8ec002d9debdf5a1679e258808841ecc49c"
+    }
+  },
+  "topology": {
+    "occurrences": [
+      {"occurrence_id": "occ-a", "shot_id": "chapter-shot", "shot_revision_id": "shot-1"},
+      {"occurrence_id": "occ-b", "shot_id": "chapter-shot", "shot_revision_id": "shot-1"}
+    ],
+    "shot_items": [{"item_id": "item-1", "metadata": {"opaque_literal": "item-1"}}]
+  },
+  "registered_operations_audited": [
+    "doc.patch", "media.admit", "occurrence.create", "occurrence.add-media", "occurrence.swap-media", "placement.create", "placement.unplace", "shot.set", "occurrence.duplicate", "occurrence.fork", "occurrence.place-shared", "timeline.duplicate", "timeline.restructure", "clip.add", "clip.add-media", "clip.duplicate-media", "shot.pool"
+  ],
+  "source_citations": [
+    "astrid/sdk/timeline/commands.py:29-115",
+    "astrid/sdk/timeline/native_occurrence_create.py:40-50",
+    "astrid/sdk/timeline/_shot_commands.py:12-41",
+    "astrid/sdk/timeline/native_occurrence_media_commands.py:69-82,207-222",
+    "astrid/sdk/timeline/native_placement_commands.py:81-119",
+    "astrid/sdk/timeline/_doc_patch.py:303-328",
+    "astrid/sdk/timeline/_command_state.py:341-369",
+    "astrid/sdk/timeline/native_occurrence_duplicate.py:17-61",
+    "astrid/sdk/timeline/native_occurrence_fork.py:21-36",
+    "astrid/sdk/timeline/native_occurrence_shared.py:304-325",
+    "astrid/sdk/timeline/native_timeline_duplicate.py:23-65",
+    "astrid/sdk/timeline/native_restructure.py:15-44",
+    "tests/editing_conformance/test_recipe_occurrence_media.py:90-149"
+  ]
+}

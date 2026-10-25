@@ -1,0 +1,26 @@
+{
+  "task": "app-U3-D135-model-menu-return-2033",
+  "base": "e9041a262186747548c6a74c1e6fa6cf6313f1f4",
+  "parents": {
+    "normal": "002a82339c934d75894467032d788606257315fa",
+    "upstream": "36e1ef39c03c2c91a36fd964e3a2385a410bc06c"
+  },
+  "changed_sources": [
+    "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx",
+    "src/tools/video-editor/components/AgentChat/NewChatMenu.tsx",
+    "src/tools/video-editor/components/AgentChat/NewChatModels.tsx"
+  ],
+  "source_sha256": {
+    "src/tools/video-editor/components/AgentChat/AgentChatMenu.tsx": "84bb5d6b272c722618d2b912a131d287a859ad7ee3cc1cb83968b152db6a39b3",
+    "src/tools/video-editor/components/AgentChat/NewChatMenu.tsx": "c48952fe24c75dbb454440bc61e6b883bb6c0c1f45dc41ca7f7f739b814f4683",
+    "src/tools/video-editor/components/AgentChat/NewChatModels.tsx": "1fa3fa1a296548a42e562a664fec7c656227047a5a897d4b154f9832b1a55365"
+  },
+  "read_only_test_sha256": {
+    "src/tools/video-editor/components/AgentChat/NewChatMenu.test.tsx": "e8e853479154e1a7dbfb2e1329789486a03c21a219352459b46f0c50130f5667",
+    "src/tools/video-editor/components/AgentChat/AgentChatMenu.test.tsx": "ee11b40fefe0847d9ba38e142d0ec0b2401109c9774a3c1f650a3608173a9eac"
+  },
+  "upstream_merge_files_byte_exact_to_head": {
+    "src/shared/components/RuntimeConnection/RuntimeConnectionPanel.test.tsx": "7e1b7dedd70458578136fa2132fdaed6417e053d7e74f116d6b212155afa6564",
+    "src/shared/components/ToolbarPointer/ToolbarPointer.tsx": "a0ef7df1b8e82d3ad0d96cd33270d5e91fa3f9e37a8347c953eb1b09fc7b724a"
+  }
+}

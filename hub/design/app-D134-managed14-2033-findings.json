@@ -1,0 +1,28 @@
+{
+  "schema": "timeline.agent.d134_findings.v1",
+  "verdict": "UNAPPLIED",
+  "summary": "No faithful source-only migration exists with the currently registered public semantic commands.",
+  "exact_seam": {
+    "source_callers": [
+      "test_commit_runtime_video_unplace.py:135-143 patches the born occurrence source and shot; its whole shot replacement carries authored items.",
+      "test_recipe_m2_auto_placement.py:GenuineTimeline.create calls test_commit_runtime_occurrence_media._create_fixture, whose same setup path whole-patches the authored shot.",
+      "test_recipe_m2_placement_create_unplace.py imports GenuineTimeline.create and therefore shares that setup seam."
+    ],
+    "guard": "astrid/sdk/timeline/_doc_patch.py:359-376,450-456 refuses managed closure membership/edges; a full shot replacement changing item correspondence is not a legal doc.patch.",
+    "registered_trace": [
+      "occurrence.create -> creates the occurrence and an empty shot payload; it does not accept authored items.",
+      "shot.set -> accepts only name/settings values and clear paths under those fields.",
+      "occurrence.add-media -> creates an occurrence clip and registry binding; it does not create shot payload items.",
+      "placement.create/unplace -> operate on occurrence-owned clip membership and registry binding only.",
+      "media.admit -> authenticates media inputs and has no document item creation semantics."
+    ],
+    "source_only_conclusion": "Replacing the rejected whole-shot patch with any available command would either drop item-1/its media and opaque metadata, invent a new allocation/history, or change the authored topology. All are prohibited by the task."
+  },
+  "not_done": [
+    "No tests were changed.",
+    "No product, shared fixture, schema, pin, Runtime, seed, generated file or other cohort file was changed.",
+    "No original integration body was run before protected review; no behavior, core, retirement or REG credit is claimed.",
+    "No fresh measurement, browser, socket, acquisition or full suite was run."
+  ],
+  "recommended_next_step": "Runtime/Agent owners must provide a registered semantic command that faithfully creates the authored shot item (including exact media identity and opaque metadata), or explicitly decide this slice remains UNAPPLIED. Do not use a doc.patch workaround or rewrite the fixture."
+}

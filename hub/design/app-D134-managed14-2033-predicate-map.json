@@ -1,0 +1,66 @@
+{
+  "schema": "timeline.agent.d134_predicate_map.v1",
+  "status": "UNAPPLIED",
+  "d104": {
+    "condition_1_invalid_input_and_correct_guard": {
+      "status": "yes",
+      "evidence": "The setup caller replaces an empty or semantic-born shot root with authored items through whole-root doc.patch. C0/R1 managed-edge validation rejects the shot item correspondence change with identity_conflict; this is the intended guard, not a product fault."
+    },
+    "condition_2_setup_only": {
+      "status": "would_be_yes_for_a_valid_migration",
+      "evidence": "The proposed scope would touch only fixture setup, but no source change was made because the supported semantic replacement is absent. All authored gestures, timings, positions, durations, expected outcomes, assertions, inverse inputs and refusal predicates remain untouched."
+    },
+    "condition_3_exact_bounds": {
+      "status": "enumerated",
+      "bounds": {
+        "parent_occurrence_a_ms": {"start": 8000, "duration": 10000, "end": 18000},
+        "parent_occurrence_b_ms": {"start": 10000, "duration": 10000, "end": 20000},
+        "existing_clip_a_seconds": {"start": 1, "end": 3},
+        "existing_clip_b_seconds": {"start": 5, "end": 7},
+        "video_authored_source_seconds": {"from": 2, "to": 6, "hold": 4, "speed": 2},
+        "video_authored_output_seconds": {"at": 1, "hold": 4, "end": 5},
+        "m2_auto_anchor_frame": 330,
+        "m2_auto_lane_end_frame": 450,
+        "m2_auto_completion_default_seconds": 5,
+        "m2_placement_create": {"on": 9, "hold": 4}
+      },
+      "arithmetic": "The exact source values are copied from inputs(kind), not rounded or substituted. No setup-host or media-duration migration was attempted."
+    },
+    "condition_4_shared_seed_caller_audit": {
+      "status": "not_satisfied_for_shared_seed_change",
+      "evidence": "tests/editing_conformance/test_recipe_occurrence_media.py:inputs is imported by multiple editing_conformance files, including the three authorized files and neighboring media recipes. A shared seed edit would therefore require a broader caller audit and is out of scope; no shared fixture was edited."
+    },
+    "condition_5_review_and_meaningful_proof": {
+      "status": "not_satisfied",
+      "evidence": "The prior independent review classifies the 14 nodes as setup/expectation-proved only and explicitly grants no migration. This worker found an unsupported semantic seam, made no source change, and did not run the original integration body. No protected review or meaningful MAIN proof exists for a proposed migration."
+    }
+  },
+  "protected_predicates": {
+    "video_unplace": [
+      "image/video parameterization",
+      "keep false/true pooling branch",
+      "capture, dry-run no-write, accepted output, reload, retry/idempotency, inverse undo and redo",
+      "selected-media authority and exact store/history/integrity assertions"
+    ],
+    "m2_auto": [
+      "image/video and anchor/absent cases",
+      "exact capture/replay records",
+      "inverse and redo using accepted Runtime boundaries",
+      "anchor-after and lane-end frame arithmetic"
+    ],
+    "m2_create_unplace": [
+      "create/unplace command goldens and records",
+      "exact provider acceptance with undo and redo",
+      "scoped birth, sibling/parent preservation, registry binding and refusal predicates"
+    ]
+  },
+  "input_map": {
+    "managed_authored_edge": "shot_revisions[0].payload.items[0] (item-1 -> old media object), plus exact shot metadata/text_bindings/unknown",
+    "semantic_birth": "occurrence.create creates an empty shot payload and generated managed revision identity",
+    "available_registered_media": "occurrence.add-media creates an occurrence clip and registry binding; it does not create authored shot items",
+    "available_registered_shot": "shot.set writes only payload.name and payload.settings; it has no item insertion operation",
+    "available_registered_placement": "placement.create/unplace operate on occurrence-owned clip membership and registry, not shot item membership",
+    "refused_route": "whole-root doc.patch of shot payload with authored item correspondence",
+    "missing_supported_route": "no registered semantic command creates/restores the original shot item item-1 with its exact media_id and opaque metadata"
+  }
+}

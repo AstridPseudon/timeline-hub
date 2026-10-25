@@ -1,0 +1,39 @@
+{
+  "status": "UNAPPLIED",
+  "input": {
+    "kind": "image",
+    "authored_occurrence_keys": ["duration_ms", "occurrence_id", "placement", "shot_id", "shot_revision_id", "source_offset", "speed", "track", "unknown"],
+    "authored_shot_item_ids": ["item-1"],
+    "authored_shot_item_media_id": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "authored_shot_item_metadata": {"opaque_literal": "item-1"}
+  },
+  "registered_commands": {
+    "occurrence.create": {
+      "output_shot_items": [],
+      "meaning": "creates occurrence and empty shot closure"
+    },
+    "shot.set": {
+      "meaning": "writes only shot payload name/settings; no item insertion"
+    },
+    "occurrence.add-media": {
+      "output_shot_items": ["item-1"],
+      "meaning": "preserves existing shot item while creating an occurrence clip and registry binding"
+    },
+    "placement.create": {
+      "meaning": "creates an occurrence-owned clip and registry binding"
+    },
+    "placement.unplace": {
+      "meaning": "removes an occurrence-owned clip while guarding its binding"
+    }
+  },
+  "rejected_equivalent": {
+    "op": "doc.patch",
+    "ref": "shot:chapter-shot",
+    "path": [],
+    "change": "empty semantic-born shot -> authored shot containing item-1",
+    "error_type": "CommandError",
+    "error_kind": "identity_conflict",
+    "error": "shot item correspondence changed"
+  },
+  "conclusion": "No registered public semantic command faithfully creates the authored item from the empty semantic birth. The existing refusal is correct; no source migration was applied."
+}

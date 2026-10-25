@@ -1,0 +1,18 @@
+{
+  "upstream_predicates": [
+    "compact selector classes on name line",
+    "thinking level copy includes · Low",
+    "per-model New chat button",
+    "row selection does not start a chat in NewChatMenu"
+  ],
+  "existing_app_predicates": [
+    "AgentChatMenu row selection starts the selected model",
+    "AgentChatMenu selector retains aligned classes",
+    "model rows without levels remain selectable",
+    "default and remembered model selection remains ticked"
+  ],
+  "preserved_paths": [
+    "outbox/transport/client/door paths",
+    "menu/session/voice/queue behavior"
+  ]
+}

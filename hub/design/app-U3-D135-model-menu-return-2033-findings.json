@@ -1,0 +1,22 @@
+{
+  "status": "pass",
+  "findings": [
+    {
+      "kind": "source_scope",
+      "result": "exactly three authorized source files changed"
+    },
+    {
+      "kind": "behavior",
+      "result": "NewChatMenu row selection remains non-starting; per-model button starts one chat"
+    },
+    {
+      "kind": "behavior",
+      "result": "AgentChatMenu keeps existing row-start behavior without changing option accessible names"
+    },
+    {
+      "kind": "integrity",
+      "result": "tests unchanged, git diff --check clean, no conflict markers"
+    }
+  ],
+  "blocked": []
+}
