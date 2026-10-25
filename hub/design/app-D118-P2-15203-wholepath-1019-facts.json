@@ -1,0 +1,79 @@
+{
+  "scope": "D118 current P2 independent read-only whole-path disposition",
+  "status": "diagnostic_only",
+  "product_or_test_changes": false,
+  "tuple": {
+    "app_commit": "96d4754b4eef0591a208d6b51b60c30fc44b6915",
+    "app_tree": "3f9da34c4f116026ec21022421850e0608ba653b",
+    "agent_commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "agent_tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+    "runtime_commit": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e",
+    "runtime_tree": "6283b5fbb128447f1b333e0e6af334d35637cf69",
+    "composition_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "terminal_packet": {
+    "readiness": "PASS 1/1",
+    "original": "FAIL exit 1; 2 PASS, 2 FAIL, 1 ERROR, 3 NOTRUN",
+    "xml_sha256": "360e4f07926cfe952f95e48e034d1246dbdde9eb8b3b9290a540abd5aeb3b54d",
+    "readiness_xml_sha256": "a578a9c8c6affeacefec3675b864eaa9430acacb6840a1355d9345f3965c66fc",
+    "manifest_sha256": "9c97027b9e3ee8057638a8d54d7587a8afec088fea2ffcddf77fb6f760752aec",
+    "terminal_json_sha256": "fea75333adf5099198a9ba164c1060f5f593153b6dc7dd05cf814d7f4e9ebd1f"
+  },
+  "findings": {
+    "swap": {
+      "test": "tests/e2e/local/three-products.p2-popup.spec.ts:949",
+      "intended_post": "present",
+      "response": "HTTP 409 conflict; safe reason history_unavailable",
+      "first_missing_seam": "Runtime provider/store verified-history seam; exact lower predicate UNKNOWN",
+      "owner": "Runtime provider/store",
+      "runtime_phases": "dispatch_queue, handler_entry, authorization, coordinator_admission, coordinator_lock, provider reached; provider/coordinator/handler raised; HTTP response 409 observed; accept and receipt UNKNOWN",
+      "provider_wall_ms": 16145.682,
+      "receipt": "UNKNOWN; no accepted receipt",
+      "tail": "accepted envelope, canonical result, authoritative history, reload, and guarded Undo were not reached",
+      "old_19078_cause_reused": false
+    },
+    "parent_move": {
+      "test": "tests/e2e/local/three-products.p2-tour.spec.ts:745",
+      "intended_post": "absent in retained browser trace; zero POST requests ending in /commit",
+      "response": "UNKNOWN; response wait timed out after 90000 ms",
+      "first_missing_seam": "App mounted gesture/capture -> submit -> durable outbox dispatch boundary; exact substage UNKNOWN",
+      "owner": "App caller/outbox path until a commit POST exists",
+      "runtime_phases": "not attributed: retained incomplete Runtime phase record has no safe correlation to this parent action",
+      "physical_identity": "UNKNOWN",
+      "caller_identity": "UNKNOWN",
+      "connection_lifecycle": "UNKNOWN for the missing commit path; health/inspect reads do not prove commit dispatch",
+      "tail": "request body, Runtime response, receipt, canonical result, history, reload, and guarded Undo were not reached"
+    }
+  },
+  "comparison": {
+    "add": "PASS on the same tuple; popup test uses the same commitFromGesture and asserts occurrence.fork plus occurrence.add-media, accepted envelope, canonical/history, reload, and Undo",
+    "placement": "PASS in the terminal packet; its test asserts the accepted placement commit and full canonical/history/reload/Undo tail",
+    "shared_app_path": "commitSession builds the canonical v2 POST and commitOutbox reserves a durable pending request before transmit for ordinary ADD/SWAP/move",
+    "lifecycle_difference": "placement can use operation.transmit while ordinary ADD/SWAP/move use options.send; passing ADD or placement does not prove the parent missing dispatch or the SWAP verified-history predicate",
+    "d112": "Released D112a source qualifies native identity recovery and explicitly does not claim the original tour SWAP GO; current SWAP remains a separate 409 reproduction"
+  },
+  "unknowns_preserved": [
+    "No exact SWAP history subpredicate was retained beyond history_unavailable.",
+    "No parent commit POST means no Runtime/provider/store/connection-cause claim is justified.",
+    "No parent response, receipt, server duration, or authoritative mutation was observed.",
+    "No overall P2 GO or source/core GREEN claim is made."
+  ],
+  "source_citations": [
+    {"file": "src/tools/video-editor/commands/commitSession.ts", "sha256": "7bddb9c4adc28ff7d7079c4011ae965e65952570abe248f3d0247789a3532648", "lines": "218-253,332-365,436-455,534-600,680-710"},
+    {"file": "src/tools/video-editor/commands/commitOutbox.ts", "sha256": "dc497f0676b72abee0736abe19f0c33848a059776440db507375847a12160b21", "lines": "464-530"},
+    {"file": "tests/e2e/local/three-products.p2-popup.spec.ts", "sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9", "lines": "494-520,523-578,920-954"},
+    {"file": "tests/e2e/local/three-products.p2-tour.spec.ts", "sha256": "54ea18f3f3fa8fef2eb31cc0a05809ede76099f3bee9bf0511824e652a85f7", "lines": "124-139,679-743,745-775"},
+    {"file": "runtime_protocol/timeline_commit_store.py", "sha256": "f0867b6bf083aef2ca280c3f1bcbbbc926c7dfc448c519836e286022f5e3d59a", "lines": "161-185,248-358,403-430,601-783,960-1048"},
+    {"file": "tests/helpers/p2_commit_phase_capture.py", "sha256": "a17a92115661fcef13b49169504ad8726e6f6c0cdce66b195128b14477fa76a4", "lines": "1-27,42-52,278-287,413-457"},
+    {"file": "runtime-D112a-release-0952.md", "sha256": "f8e3c9971414e9912d2127aec3fa5ef763d7f82a56bafd4789ef0b36a7504af5", "lines": "Identity, Proof register, Release scope and handoff"}
+  ],
+  "retained_private_artifacts": {
+    "manifest": "d66/manifest.json",
+    "p2_xml": "d66/p2.xml",
+    "readiness_xml": "d66/readiness.xml",
+    "swap_trace_zip_sha256": "5b43be389d18c5e732a67840712a715121c4b068ded7a9fb2cb48407a6124690",
+    "parent_trace_zip_sha256": "1db6cd2496ab97b71c1cf73a3ae43bb98a48e1f5e9f16f77c0522e98ae516814",
+    "swap_phase_jsonl_sha256": "eace4188766c9666ec025f03a85fd8286400993e5a79a279b10af5ad80cbc9c3"
+  }
+}
