@@ -1,0 +1,59 @@
+{
+  "schema": "timeline.d139.store-retirement-independent-review/v1",
+  "task": "D139",
+  "result": "FAIL",
+  "scope": "private candidate source, isolated Store fixtures, authoritative source metadata, and read-only route/index inspection",
+  "findings": [
+    {
+      "id": "D139-R1",
+      "severity": "high",
+      "title": "retirement recovery does not bind victims to the requested registration",
+      "source": [
+        "ops-d139-retirement/bench_store.py:618-622",
+        "ops-d139-retirement/bench_store.py:664-681"
+      ],
+      "evidence": "The retirement journal is validated through the same multi-victim branch as eviction. It checks only that after.entries is a subset of before.entries and that registrations omit every registration requiring journal.victims; it does not require exactly one victim, the requested registration, or the requested child entry. A private isolated fixture modified pending.json after retirement:journal to add the unrelated second child to victims and remove its entry/registration. recover() accepted the journal and deleted both target and unrelated entries.",
+      "impact": "A corrupted or same-owner modified pending retirement can remove unrelated Store entries and registrations, violating the no-unrelated-deletions and recovery/index-integrity requirements.",
+      "observed": {
+        "tampered_recovery_deleted_target": true,
+        "tampered_recovery_deleted_unrelated": true,
+        "retired_names": [
+          "venv-agent-child-d137-a4e016",
+          "venv-agent-child-d40-ba8f-f320"
+        ]
+      }
+    },
+    {
+      "id": "D139-R2",
+      "severity": "medium",
+      "title": "KEEP is not rechecked at the deletion boundary",
+      "source": [
+        "ops-d139-retirement/bench_store.py:571-592",
+        "ops-d139-retirement/bench_store.py:428-498"
+      ],
+      "evidence": "Store.retire checks KEEP before journaling, but _delete_owned performs no KEEP check. A private isolated fixture added KEEP from the checkpoint at index, after the journal transition and before payload deletion; retire() still deleted the entry.",
+      "impact": "A KEEP marker created during the recovery/deletion window cannot stop the in-progress Store-owned deletion, despite KEEP being a required protection.",
+      "observed": {
+        "keep_added_after_index": true,
+        "entry_deleted_despite_keep": true
+      }
+    }
+  ],
+  "positive_review": [
+    "candidate files are rooted in the installed 123bb93/954d sources",
+    "unchanged request-retire-venv and dispatcher-daemon are the normal caller path",
+    "the real read-only index maps venv-agent-child-d137-a4e016 to child-3e163... and the other active child is suite-referenced",
+    "the candidate preserves the legacy workroot route and ordinary _evict source body"
+  ],
+  "operations": {
+    "live_install": false,
+    "live_request": false,
+    "dispatcher_run": false,
+    "real_store_mutation": false,
+    "real_cleanup": false,
+    "queue_mutation": false,
+    "deletion": false,
+    "full_suite": false,
+    "D130": "not reviewed"
+  }
+}

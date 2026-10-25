@@ -1,0 +1,53 @@
+{
+  "schema": "timeline.d139.store-retirement-independent-source-manifest/v1",
+  "task": "D139",
+  "author_commit": "4c396e7c0c",
+  "sources": [
+    {
+      "installed_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py",
+      "installed_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+      "candidate_path": "ops-d139-retirement/bench_store.py",
+      "candidate_sha256": "42107263303af5c71cedb07e38f68660d2cf9f192611da9b893e38d54a3f993a",
+      "installed_mode": "0755",
+      "candidate_mode": "0755",
+      "diff_scope": [
+        "style normalization of existing Python diagnostics",
+        "Store.retirement_target and Store.retire",
+        "retirement report-preserving projections and journal branches",
+        "retirement-target and retire CLI actions"
+      ]
+    },
+    {
+      "installed_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/retire-child-venv",
+      "installed_sha256": "954d5d87fe2e6fcf42b34953ec0edc519a2eb97ade8f66f0f2f96f523516b791",
+      "candidate_path": "ops-d139-retirement/retire-child-venv",
+      "candidate_sha256": "1672424e94280f0937aac6ac5bc574b8ae7aead792979ce3422d80f8e35a3517",
+      "installed_mode": "0755",
+      "candidate_mode": "0755",
+      "diff_scope": [
+        "Store probe and exact-entry route",
+        "Store candidate shape/age checks",
+        "Store-owned retire invocation",
+        "legacy workroot route unchanged"
+      ]
+    }
+  ],
+  "tests_sha256": "4349e61e23805491ac9050b4e10b6e263fdfbd1d967ac78ffb8b432474a85d3d",
+  "callers": {
+    "request-retire-venv": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-retire-venv",
+      "sha256": "21f61833a6718794ab2a06a3a96d34ca58c050ccd0151622e16866ac78758139"
+    },
+    "dispatcher-daemon": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatcher-daemon",
+      "sha256": "d5c6753312e485f2368ab61d34161f0853b27aa6c5e2b5c22036d3bd628da8ed"
+    }
+  },
+  "real_read_only_route": {
+    "index_sha256": "6ea9e569f623784a3dfbd53c5ecff37c22fde4587a495a89f394d14f0af899f6",
+    "authorized_registration": "venv-agent-child-d137-a4e016",
+    "authorized_entry": "child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30",
+    "protected_registration": "venv-agent-child-d40-ba8f-f320",
+    "protected_entry": "child-3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9"
+  }
+}

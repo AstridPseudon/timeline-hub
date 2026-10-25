@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T22:32:11Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 13 | status age 3m -->
-# agent board, 2026-10-25T22:29Z
+<!-- agent | 2026-10-25T22:36:22Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 3m -->
+# agent board, 2026-10-25T22:32Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -126,7 +126,7 @@
 | D138 CLI22 | Preserve supported batch caller purposes | Luna | Qualified Runtime2104 own-node route | merged | Author2117; protected2128 PASS | Source exact HOME708ba3. All22 purposes conserved; claimed22/0/0. Actual22 behavior NOTRUN; author run deselected all. | 708ba3 /aa62c1 |
 | D134 Runtime2546 pair | Preserve word35 and selected PARAM14 | Runtime Luna | Independent2100 source assessment | merged | Runtime2052; protected2100 | Finite49 SOURCE assessment PASS | 27 fixture/setup,22 UNKNOWN,0 proved product gaps. No implementation authority from missing private records. | Evidence only |
 | D134 fork18 bindings | Preserve native fork binding purposes | Luna and independent | Authentic ABI1 records | later | Local2114; App final2119 PASS | Exact18 source and wholepath qualified; no delta. ABI1 history and before/output closure missing; owner UNKNOWN. No behavior credit. | Source unchanged |
-| D134 own node route | Prepare exact reviewed receiving inputs | Luna | Genuine manifests and environment receipts | doing | Source2156; review2209 PASS; receiving2227 | Exactafda route and seven controls qualified. Check all real prerequisites once; no installation, body or pin mutation. | afda source only |
+| D134 own node route | Prepare exact reviewed receiving inputs | Luna and independent | Genuine manifests and receipts | review | Sourceafda; prep2227; review2232 | Input packet NOT_READY with owners. Source PASS7 retained; no manifest fabrication, central row, live route or body. | Evidence only |
 | D137 refusal custody | Qualify terminal real request evidence | Luna read only | Exact retained request and source | merged | agt-F-D137-refusal-review-2053 | PASS_EVIDENCE; no body | Confirmed missing helper export at maker385. One refusal; no stage file/child/core/retry. Peer2058 published. | Evidence only |
 | D136a normal intake | Preserve upstream open canvas FPS | Luna | Final2034 independent PASS | merged | Source intake2059; normal06fce | Source101 and45; matrix46 PASS | Exact three reviewed blobs HOME. App2056 sole original9 proof active; no full-core or release credit. | 06fce335db /49f876 |
 | D136a typed initialization | Permit canonical typed FPS initialization | Runtime Sol and Luna | App sole merged-base original9 | blocked:app | Source2108; independent2119 PASS; union2151 | Exact20db57 own and138 nearest PASS. Source wait cleared; actual original9 still owed. No fixture conversion or source-only closure. | 20db held |
@@ -135,7 +135,7 @@
 | D139 complete import inputs | Supply pinned import prerequisites | Luna and independent | Finite correction reviewed | merged | Author2149; return2210; final2216 PASS | Exact17642 occurrences reconciled;1001 source hashes,17-module map and12 schema hashes PASS. Physical carrier remains separate. | Evidence only |
 | D139 original9 source union | Preserve five exact reviewed donor blobs | Luna | App actual2136 failure inventory | gated:App-boundaries | Author2151; independent2202 PASS | Exact donors, outside union and43 predicates PASS; compile/Ruff/mypy PASS. App actual9 setup ERROR remains; no repeat or normal D100 merge. | d133a14838 |
 | D139 disk admission | Complete finite headroom audit | Luna read only | Corrected source evidence | merged | Audit2154; return2205; final2210 PASS | Direct store retirement route is missing; 623MB deficit verified. No cleanup, request or retry. [Review](../../design/agt-OPS-D139-disk-final-review-2210-report.md). | Evidence only |
-| D139 store retirement | Add missing ordinary guarded route | Luna | Owner22:18 exact superseded child | doing | agt-OPS-D139-store-retirement-2224 | Private kit candidate only; current wrapper and every guard retained. Runtime earlier actual owner wins; review and normal CAS required before live action. | Candidate pending |
+| D139 store retirement | Add missing ordinary guarded route | Luna and independent | Source security review | review | Author2224; reviewer2232 | Private4c396 candidate;11 isolated tests and statics PASS. No live kit/store action. Review checks all guards, recovery and caller wiring. | 4c396e7c0c held |
 | D139 schema carrier | Preserve exact schema availability boundary | Luna and independent | Runtime supported recipe input | blocked:runtime | Author2214; independent2218 complete | Evidence and installed12 hashes PASS; required portable carrier missing. Old D137 binding works;2153 applicability UNKNOWN. No acquisition or body. | Evidence only |
 Integration: Agent cd63be424d62226e3ee5c26fc5ce03227f5394a5. Reviewed U2 join4c and exactFPS20db normally merged. Prior244 Python and195 chat PASS at4c; no full core on this successor. Runtime lockab1e retained. Latest owner-reported0cd0398fe9 upstream held for the small second join at cut; no chasing.
 
@@ -151,7 +151,7 @@ Blockers: App D100 — qualified9486 behavior receipt owed before shared105 prop
 Blockers: SWAP safety — D130 automaticclassifier refusal holds all related recovery/qualification. Existing escalation runtime-20261025T1553Z-D127-safety-refusal.md; no retry, transfer, alternate route or rollback.
 Blockers: D69 and D59 — ship-grade core, REG0, final P1-P5/fullP2, installed render90, platform, wheel and ZIP owed. Farm old union stopped; D77 waits complete final merged-tuple inputs.
 
-Next ready: guarded store candidate2224 and own-node receiving inputs2227 active. live2 / cap6; ready-undispatched0. No heavy body. Runtime2153 recipe and schema input remain external needs.
+Next ready: independent guarded-retirement2232 and receiving-input2232 reviews active. live2 / cap6; ready-undispatched0. Heavy slot free; Runtime recipe and actual closed schema source remain needed.
 
 Disk:about5.2GB; child admission5.905GB, stop4GB. Scratch cleanup complete, no eligible existing target route. Superseded3e163 untouched; private guarded route2224 active. All protected targets retained.
 

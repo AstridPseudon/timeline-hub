@@ -1,0 +1,22 @@
+{
+  "schema": "timeline.d139.store-retirement-independent-guard-map/v1",
+  "result": "FAIL",
+  "guards": {
+    "production_caller": "PASS source-only: unchanged request-retire-venv queues RETIREVENV and unchanged dispatcher invokes retire-child-venv",
+    "name_grammar": "PASS: wrapper accepts the actual venv-agent-child-d137-a4e016 grammar and Store._name is stricter than path selection",
+    "exact_registered_target": "PASS source/read-only index: registration resolves only its one child entry and exact /bench-store/entries/child-<64hex> path",
+    "owner_authentication": "PASS inherited checks: owner schema, uid, physical store directories, mutex inode, entry owner and .bench-owner.json",
+    "record_hash_receipts": "PASS for registration/report hash validation and receipt preservation; no receipt mutation observed in isolated positive test",
+    "mutex_and_lease": "PASS positive and held-lease refusal tests",
+    "age_3600": "PASS strict greater-than-one-hour checks in wrapper and Store.retire",
+    "KEEP": "FAIL boundary race: checked before journal only; _delete_owned does not recheck",
+    "references_and_processes": "PASS source path: wrapper scans suites/env/pending/worker metadata and process argv/cwd/exe/fds; isolated process refusal passes",
+    "fingerprint_and_mode": "PASS source path: wrapper fingerprints twice and Store revalidates entry/path/owner/inode; no broad deletion root added",
+    "ordinary_eviction": "PASS diff/source: _evict body and retention policy unchanged",
+    "journal_validation_recovery": "FAIL retirement reuses eviction multi-victim validation and accepts an unrelated victim in a same-owner pending journal",
+    "index_registration_projection": "FAIL under tampered recovery: unrelated entry/registration can be removed and appended to retired",
+    "no_unrelated_deletions": "FAIL demonstrated by private tampered-journal recovery",
+    "legacy_route": "PASS positive isolated legacy workroot test and source diff"
+  },
+  "finite_findings": ["D139-R1", "D139-R2"]
+}

@@ -1,0 +1,102 @@
+{
+  "schema": "timeline.agent.d73.receiving_review.v1",
+  "task": "agt-OPS-D73-receiving-review-2232",
+  "reviewed_task": "agt-OPS-D73-receiving-inputs-2227",
+  "verdict": "FAIL",
+  "receiving_status": "NOT_READY",
+  "scope": "independent finite read-only review of the existing D73 own-node route; no source controls rerun",
+  "base": {
+    "composition_commit": "afda6c66a11608d8cb012df1a54bf2489d8c20b3",
+    "composition_tree": "67bd2d4ee1d50bd95ebb8b0de55d4d1ed1e3e87f",
+    "composition_parent": "ff6498859bb2a72b1b7d52d807dd04d3852fc055",
+    "worktree": "/home/user/work/wt/agt-OPS-D73-receiving-review-2232"
+  },
+  "findings": [
+    {
+      "id": "D73-REV-001",
+      "severity": "PASS",
+      "status": "VERIFIED",
+      "summary": "The candidate Composition commit/tree/parent and the immutable Agent 2eca and Runtime ab1e commit/tree/parents resolve to the claimed Git objects.",
+      "evidence": [
+        "/home/user/work/wt/agt-OPS-D73-receiving-review-2232/evidence/source-manifest.json",
+        "/home/user/peteromallet/astrid-agent at 2eca9a1da94eb35bb969540e150192ff920ce326",
+        "/home/user/banodoco/banodoco-workspace-runtime at ab1e4f6141987706132916e2da16477f5a019464"
+      ]
+    },
+    {
+      "id": "D73-REV-002",
+      "severity": "BLOCKING_EVIDENCE_INTEGRITY",
+      "status": "FOUND",
+      "summary": "The author/source manifest has a one-character SHA typo for the candidate ops-d73-exact-nodes/suites.conf blob content.",
+      "claimed": "ddf8d6d20e9dbadbb4f23716726695b662c053f6d449c8d6e7df3d2d80d2f3c5",
+      "observed": "ddf8d6d20e9dbadbb4f23716726695b662c053f6d449c8d6e7df3d2d80d2f3c5",
+      "source": "/home/user/work/wt/agt-OPS-D73-receiving-review-2232/ops-d73-exact-nodes/suites.conf at afda6c66a11608d8cb012df1a54bf2489d8c20b3"
+    },
+    {
+      "id": "D73-REV-003",
+      "severity": "BLOCKING_EVIDENCE_INTEGRITY",
+      "status": "FOUND",
+      "summary": "The prior independent review JSON records the wrong Agent tree, while the author packet, source manifest, and actual 2eca Git object record the correct tree.",
+      "prior_review_value": "888c16e3dbbff2d6827e7ffcfea64208b0e5a4",
+      "author_and_actual_value": "888c16e3dbbff2d6827e7ffcfea64208b0e2a5e4",
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D73-source-review-2209-review.json"
+    },
+    {
+      "id": "D73-REV-004",
+      "severity": "STALE_INPUT",
+      "status": "FOUND",
+      "summary": "The author source manifest's central read-only digest is stale for tests/suites.conf. request-test and test-run still match; the current central suites file has no D73 rows, so the receiving NOT_READY conclusion remains true.",
+      "expected_current_suites_sha256": "fecaa66d22ed4e90401455eceb8983b48178a2037c3ccfc0bbc716428239156f",
+      "observed_current_suites_sha256": "84d3045878ea806439b73b0a5ca983c06371fcac2d42bc8c7e8add0ebfbd3988",
+      "current_row_check": "d73-ab1e-selected4-exact-nodes and d73-ab1e-fork-exact-nodes absent from /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf"
+    },
+    {
+      "id": "D73-REV-005",
+      "severity": "PASS",
+      "status": "VERIFIED",
+      "summary": "The exact four-plus-one selectors, central request route, run-- launcher binding, argv, no-cache mode, and C0 field guard match the candidate source and commit-v2 contract. This is static evidence only.",
+      "evidence": [
+        "/home/user/work/wt/agt-OPS-D73-receiving-review-2232/ops-d73-exact-nodes/README.md",
+        "/home/user/work/wt/agt-OPS-D73-receiving-review-2232/ops-d73-exact-nodes/suites.conf",
+        "/home/user/peteromallet/astrid-agent:2eca9a1da94eb35bb969540e150192ff920ce326:tools/p4-d73-pinned-launch.sh",
+        "/home/user/work/runtime/contract/commit-v2.md",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-OPS-D73-receiving-inputs-2227/evidence/receiving-inputs.json"
+      ]
+    },
+    {
+      "id": "D73-REV-006",
+      "severity": "PASS",
+      "status": "VERIFIED",
+      "summary": "The listed receipt and receiving gaps are genuine: Runtime ab1e has its existing receipt; Agent 2eca has no matching checkout receipt; no D73 App receipt or afda Composition receipt exists; both central rows and fresh per-ID artifacts are absent.",
+      "evidence": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-ab1e4f6141987706132916e2da16477f5a019464",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-OPS-D73-receiving-inputs-2227/evidence/missing-inputs.json",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf"
+      ]
+    },
+    {
+      "id": "D73-REV-007",
+      "severity": "PASS",
+      "status": "JUSTIFIED",
+      "summary": "Every missing owner is justified by a current route requirement. Python/Node/schema/profile/package-lock/archive/registry/origin fields are enforced by the pinned launcher preflight; App/Composition receipt identities are required by source admission; central rows and per-ID/disk witnesses belong to the normal service/receiving owners. D139's merged cd63/f103 core and exclusive Runtime dependency recipe remain separate from this historical 2eca/ab1e route.",
+      "evidence": [
+        "/home/user/work/wt/agt-OPS-D73-receiving-review-2232/ops-d73-exact-nodes/check.py",
+        "/home/user/peteromallet/astrid-agent:2eca9a1da94eb35bb969540e150192ff920ce326:tools/p4-d73-pinned-launch.sh",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-runtime-to-agent-20261025T2214Z-D73-reviewed-private-route.md",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D139-integrated-six-2214-source-manifest.json"
+      ]
+    }
+  ],
+  "source_controls": {
+    "prior_review": "rt-D73-source-review-2209 PASS7 consumed as prior evidence; not rerun",
+    "current_review": "JSON, Git object/blob, source/hash, static caller/argv, receipt, schema-field, and diff checks only",
+    "product_tests": "NOT_RUN",
+    "imports": "NOT_RUN",
+    "launcher_preflight": "NOT_RUN",
+    "functional_body": "NOT_RUN",
+    "central_requests": "NOT_REQUESTED",
+    "install_or_acquisition": "NOT_RUN",
+    "git_mutation": "NONE"
+  }
+}
