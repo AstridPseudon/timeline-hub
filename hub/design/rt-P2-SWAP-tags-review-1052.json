@@ -1,0 +1,78 @@
+{
+  "task": "rt-P2-SWAP-tags-review-1052",
+  "verdict": "FAIL",
+  "candidate": "2867a197748124b42dcb42bb5171df421b5b1a70",
+  "base": "369ffa7c00bd3d45c610fac7651ff79e7a283a1a",
+  "changed_files": [
+    "runtime_protocol/service.py",
+    "runtime_protocol/timeline_commit_execution.py",
+    "tests/test_timeline_history_diagnostics.py"
+  ],
+  "changed_source_sha256": {
+    "runtime_protocol/service.py": "e6a0d486a115fadba13499409d625066367c6a67eae6390b5f71ac049c4c185c",
+    "runtime_protocol/timeline_commit_execution.py": "f444edf202e7ceda1ebe6feebac2f69bd30caa775604e83bd7e9f82fe6f45433",
+    "tests/test_timeline_history_diagnostics.py": "989788e11830480490077d482938107d98ec5060dcb8b867f9c07f43903e161c"
+  },
+  "protected_source_sha256": {
+    "runtime_protocol/timeline_commit_store.py": "f0867b6bf083aef2ca280c3f1bcbbbc926c7dfc448c519836e286022f5e3d59a",
+    "runtime_protocol/timeline_commit_port.py": "e1d9397bc8164af8b4afd7f2b8d3133805c7404bce26b25cad32432d1f17badd",
+    "runtime_protocol/timeline_commit_baseline.py": "36076f4a0ffa26e6544ec9704000a22a6bd46370cacb6577ea9f5dadac346e31"
+  },
+  "history_emitters": {
+    "port_direct_refusals": 6,
+    "store_direct_refusals": 31,
+    "reference_projection_history_refusals": 2,
+    "baseline_helper": "one _refuse helper with four mapped category families plus unmapped integrity reasons",
+    "store_distinct_tag_coverage": 0,
+    "port_distinct_tag_coverage": 6,
+    "baseline_distinct_category_coverage": 4,
+    "fallback": "history_provider_or_store_guard"
+  },
+  "findings": [
+    {
+      "severity": "blocking",
+      "source": "runtime_protocol/timeline_commit_store.py:35-40 and all 31 direct history_unavailable sites",
+      "summary": "Every direct store history refusal lacks a distinct source tag and collapses to history_provider_or_store_guard."
+    },
+    {
+      "severity": "blocking",
+      "source": "runtime_protocol/timeline_commit_reference_projection.py:147; runtime_protocol/timeline_commit_store.py:1860-1864",
+      "summary": "Apply-time deliberate history_unavailable escapes the only ReferenceProjectionError translation and reaches generic catchall/public 503."
+    },
+    {
+      "severity": "blocking",
+      "source": "tests/test_timeline_history_diagnostics.py",
+      "summary": "Coverage is mapper/fake-provider/monkeypatched-baseline only; no real store or port RED/GREEN per-tag evidence."
+    }
+  ],
+  "tests": [
+    {
+      "command": "/home/user/work/venv-runtime/bin/python -m pytest -q tests/test_timeline_history_diagnostics.py tests/test_timeline_commit_redacted_diagnostics.py tests/test_runtime_unavailable_reason_tags.py tests/test_timeline_commit_execution.py",
+      "result": "38 passed"
+    },
+    {
+      "command": "/home/user/work/venv-runtime/bin/python -m pytest -q tests/test_timeline_commit_port.py tests/test_timeline_commit_baseline.py tests/test_timeline_commit_routes.py tests/test_timeline_commit_acceptance.py",
+      "result": "229 passed, 2 failed, 1 deselected; both failures are existing authorizer replay cases denying PRAGMA data_version"
+    },
+    {
+      "command": "pyright runtime_protocol/service.py runtime_protocol/timeline_commit_execution.py",
+      "result": "zero diagnostics"
+    },
+    {
+      "command": "python -m compileall -q runtime_protocol/service.py runtime_protocol/timeline_commit_execution.py tests/test_timeline_history_diagnostics.py",
+      "result": "passed"
+    },
+    {
+      "command": "ruff check runtime_protocol/service.py runtime_protocol/timeline_commit_execution.py tests/test_timeline_history_diagnostics.py",
+      "result": "34 repository-baseline diagnostics; none on candidate-added lines/new test"
+    },
+    {
+      "command": "git diff --check 369ffa7c0..2867a197748124b42dcb42bb5171df421b5b1a70",
+      "result": "EOF blank-line warning at tests/test_timeline_history_diagnostics.py:123"
+    }
+  ],
+  "native_app_swap_replay": "NOT_RUN; retained D112 harness is not allow-listed",
+  "public_contract": "No public API/schema/envelope changes in candidate diff; handled public refusal equality passed in 38-test diagnostics run.",
+  "context_privacy": "No new shared context key; handled history tags pass no exception object and produce bounded fixed-vocabulary diagnostics. Existing request_id correlation remains.",
+  "ready_handoff": "Return to Luna: tag live store/reference-projection sources, add real-provider per-emitter RED/GREEN stderr tests, and preserve existing guards/writes/CAS/trust/public details."
+}

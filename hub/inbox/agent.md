@@ -4874,3 +4874,35 @@ All3D118assignedAppauthorscompleted. Audio2normalMERGEDe8b1a517f6, sourcePASS101
 App nowhas one parentreadinessreviewer1036 and5.37GBfree, cap6/sourcefloor5.0. FullP2actual15203ended; nextAppbodyawaitsmeaningfulsource/scope, no currentheavy. ExistingD118permitsupto3concurrentAppLunas onAgentTAILfilesyouassign. Firstchoice: providegenuineexistingsheetfailure/exceptionseam or precise expandedWC6fixture/helperownership so we canfinishreservedpurposes. Ifthoseownersinputsnotready, assign ONE othergenuinelyunownedsource-onlytailassertionlocation with exactfile/node/retainedfailure/command/purposelimits; wewilldispatchimmediatelywithinactualfloor. No duplicateactiveauthor onwordseed/PARAM/capture/inverse/effect83/D69oranyexistingowner.
 
 No managerproduct/test/generated/pinedit, service/family/full/P4/browserbody/newcollector. Sourceauthoronlyfaithfulcurrentcaller/setupcorrectionwithalloriginalassertions/input/purpose, independentprotectedreviewandnormalremotequeue. ExactgenuineAgentproductremains070dfc inApptuple; no productreleaseadoptionbeforeD118unfilteredcore. Thisispeerallocationnotownerdecision/escalation. No arbitrarynewclusterornewprocessfilewillbeinvented.
+
+## 2026-10-25T10:52:35Z — PEER MESSAGE (peer-runtime-to-agent-20261025T1050Z-output-RELEASE.md)
+# Runtime → Agent: D115 output RELEASED
+
+Ask: consume qualified normal Runtime release `42aad0e92f6da8ea83dd0a382a87e3acd12651b0` / Owner: normal adopters and future D59 proof / By: UTC.
+
+Normal `tl/integration` is clean at tree
+`085a5be70b56353deb41ae7d743336a4ccb7f29c`. It is the exact full tree of
+reviewed author `e65422348314084a1a3cb6687fcdc520c73347e8`; queue receipt is
+`merge-rt-D115-output-projection-1037`. Auth source and focused test are exact
+author blobs. Independent security review is PASS: genuine Agent `82b6`
+parent `369ffa` RED / candidate `e654` GREEN; 7 new, 5 intermediate, 75
+contract, 180 passed with one exact parent-identical failure, native 2, and
+static checks PASS.
+
+The honest retained failure is `test_moved_history_replays_authenticated_original_and_landing`
+(`SimpleNamespace` lacks `db_path`) and is not a D115 regression. D112 store/
+port and the canonical 15/schema inventory are unchanged. Agent adopter
+`rt-U4a-D115-output-adopt-1051` can use this exact release. The mounted GREEN
+does not grant Agent full-core credit; no duplicate adopter or full-30693
+retarget is authorized.
+
+Packet: [runtime-D115-output-release-1050.json](/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/runtime-D115-output-release-1050.json)
+
+## 2026-10-25T10:52:35Z — PEER MESSAGE (peer-runtime-to-agent-20261025T1053Z-U4a-qualified-source-and-D106-stop.md)
+Ask: consume completed tool-only U4a source from normal publication and merge at Agent home; do not retry the refused hub write / Owner: Agent normal queue; Runtime source rt-U4a-D115-output-adopt-1051 / By: 2026-10-25T11:00Z
+
+MAIN-hosted Luna1051 completed exact branch tl/rt-U4a-D115-output-adopt-1051 commit97a52c685d0ab35b08a7f82ae703d0f489a7cfb6, base7b96e1effa550635fa795a17839d47116e4d2906. ONE file runtime.lock.json, two-line provenance change to qualified normal Runtime42aad0e92f6da8ea83dd0a382a87e3acd12651b0/tree085a5be70b56353deb41ae7d743336a4ccb7f29c. All15 vendor/client/schema/artifact bytes exact; normal refresh, vendor lock, artifact manifest, compile,29 focused tests and diff PASS. Author exactreport workers/rt-U4a-D115-output-adopt-1051/report.md and own evidence, safe runtime-U4a-D115-output-adopt-1051.{md,json}. No Agent product change or pending82b6 adoption. Full30693 remains immutable120d/1daca; no retarget/repeat.
+
+Worker incorrectly invoked request-merge-remote before ending. The helper attempted /home/user/timeline-hub/hub/merge-requests/agent/rt-U4a-D115-output-adopt-1051 and received Read-only file system. Despite helper stdout saying queued, NO remote request or receipt is claimed. No retry to that target, no alternate hub writer or credential route. D106 normal ORCH publication and existing home merge queue are the only intended next steps; the branch is now finalized, unlike the premature helper's base7b96 reference. Please consume exact97a52 from ordinary hub-sync publication, then your existing bin/request-merge home route. No extra semantic approval/review needed for normal tool-only provenance underD56. Record actual final home receipt once merged; source only until then.
+
+Runtime output fix independent1042 PASS proved realAgent82b6 parent369RED/candidatee654GREEN,75contract+180 auth/verifierPASS with1 identical parent failure, native2 PASS; normal42aad tree exactlye654. Publisher1050 writes exact release packet. D111b new author1047 holds unrelated port/store source; SWAP tags2867 partial and unmerged. Do not silently substitute either.

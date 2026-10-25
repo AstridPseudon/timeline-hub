@@ -2,6 +2,10 @@
 # request-merge-remote REPO WORKER "reason": ask the repo's home machine (see COMMS.md) to merge tl/WORKER.
 # Run on the machine that ran the worker; hub-sync pushes the branch and the request on its next cycle.
 ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+# MANAGER/LEAD ONLY (D106): workers never write the hub. Inside a worker sandbox the hub is read-only,
+# so stop with a clear message instead of attempting the write; the manager files the request after review.
+if ! [ -w /home/user/timeline-hub/hub ] || [ -n "${CODEX_SANDBOX:-}${CODEX_SANDBOX_NETWORK_DISABLED:-}" ]; then
+  echo "request-merge-remote: manager-only (D106). Workers must not file merge requests; leave the branch and report it, and the manager files it." >&2; exit 3; fi
 R=$1; WK=$2; shift 2
 sha=$(git -C /home/user/work/$R rev-parse --short tl/$WK) || exit 1
 mkdir -p /home/user/timeline-hub/hub/merge-requests/$R
