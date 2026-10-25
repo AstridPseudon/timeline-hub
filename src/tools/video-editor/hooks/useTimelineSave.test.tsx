@@ -30,6 +30,9 @@ import type { TimelineEditability } from '../lib/timeline-editability';
 import { createCommitOutbox } from '../commands/commitOutbox.ts';
 import { ApiError } from '@/integrations/runtime/generated.ts';
 import * as timelineDiagnostics from '../lib/timeline-diagnostics';
+import { compileFunction } from 'node:vm';
+import ts from 'typescript';
+import p2TourSource from '../../../../tests/e2e/local/three-products.p2-tour.spec.ts?raw';
 
 vi.mock('@/integrations/runtime/generated-contract-metadata.ts', async (importOriginal) => ({
   ...await importOriginal<typeof import('@/integrations/runtime/generated-contract-metadata.ts')>(),
@@ -937,6 +940,9 @@ describe('useTimelineSave — recovered draft durability', () => {
 
   it.each(['accepted', 'merged', 'lost acknowledgement', 'later_write', 'aba_write', 'history_unavailable', 'invalid', 'legacy_unknown'] as const)(
     'mounted Undo uses the public client, authoritative history and reload (%s)', async (outcome) => {
+      const helper = p2TourSource.match(/^function assertRequestV2\([^]*?^}/m)?.[0];
+      expect(helper).toBeTruthy();
+      const checkUndo = compileFunction(`${ts.transpileModule(helper!, {}).outputText}\nreturn assertRequestV2;`, ['expect'])(expect);
       const locks = new Set<string>();
       const descriptor = Object.getOwnPropertyDescriptor(navigator, 'locks');
       Object.defineProperty(navigator, 'locks', { configurable: true, value: {
@@ -974,6 +980,24 @@ describe('useTimelineSave — recovered draft durability', () => {
       });
       const items = [entry(bootstrap)];
       const posted: { body: string; key: string; path: string }[] = [];
+      const assertInverseRequest = (post: typeof posted[number], ordinal: number, label: string) => {
+        const body = JSON.parse(post.body) as CommitRequest;
+        if (label === 'Undo timeline') checkUndo({ key: post.key, body },
+          { revision_id: `r${ordinal}`, publication_id: `p${ordinal}` }, false,
+          { projectId, timelineId, publicationId: `p${ordinal}` });
+        expect(post.key).toBeTruthy();
+        expect(post.path).toBe(`/v1/projects/${projectId}/timelines/${timelineId}/commit`);
+        expect(Object.hasOwn(body, 'reads')).toBe(true);
+        expect(body).toEqual({
+          api_version: 1, project_id: projectId, timeline_id: timelineId,
+          base_revision_id: `r${ordinal}`, base_publication_id: `p${ordinal}`,
+          commands: [{ schema_version: 1, op: 'timeline.inverse', version: '1', select: null,
+            args: { publications: [`p${ordinal}`] } }],
+          label, steps: [{ id: expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/),
+            label, intent: label, tags: [], command_ordinals: [0], patch: [] }],
+          merge: 'fields', reads: [], dry_run: false, source: { via: 'app' },
+        });
+      };
       let lost = false;
       const refused = ['later_write', 'aba_write', 'history_unavailable', 'invalid'].includes(outcome);
       const transport: typeof fixture.transport = async (method, path, headers, body) => {
@@ -1065,13 +1089,28 @@ describe('useTimelineSave — recovered draft durability', () => {
         await vi.waitFor(() => expect(harness!.hook.result.current.history.canUndo).toBe(true));
         act(() => harness!.hook.result.current.history.undo());
         await vi.waitFor(() => expect(posted).toHaveLength(1));
-        const sent = JSON.parse(posted[0].body);
-        expect(sent).toMatchObject({ api_version: 1, project_id: projectId, timeline_id: timelineId,
-          base_revision_id: 'r1', base_publication_id: 'p1', label: 'Undo timeline', merge: 'fields', dry_run: false,
-          commands: [{ schema_version: 1, op: 'timeline.inverse', version: '1', select: null, args: { publications: ['p1'] } }],
-          steps: [{ label: 'Undo timeline', command_ordinals: [0], patch: [] }] });
-        expect(sent).not.toHaveProperty('reads');
-        expect(posted[0].path).toBe(`/v1/projects/${projectId}/timelines/${timelineId}/commit`);
+        assertInverseRequest(posted[0], 1, 'Undo timeline');
+        if (outcome === 'accepted') {
+          const variants: ((candidate: { key: string; body: CommitRequest }) => void)[] = [
+            candidate => { delete candidate.body.reads; },
+            candidate => { candidate.body.reads = null as unknown as CommitRequest['reads']; },
+            candidate => { candidate.body.reads = [{ kind: 'scope', ref: 'timeline', path: [] }]; },
+            candidate => { Object.assign(candidate.body, { extra: true }); },
+            candidate => { candidate.body.project_id = 'foreign-project'; },
+            candidate => { candidate.body.timeline_id = 'foreign-timeline'; },
+            candidate => { candidate.body.base_revision_id = 'wrong-revision'; },
+            candidate => { candidate.body.base_publication_id = 'wrong-publication'; },
+            candidate => { candidate.key = ''; },
+            candidate => { candidate.body.commands[0].op = 'doc.patch'; },
+            candidate => { candidate.body.commands[0].args.publications = ['wrong-publication']; },
+          ];
+          for (const mutate of variants) {
+            const candidate = { key: posted[0].key, body: JSON.parse(posted[0].body) as CommitRequest };
+            mutate(candidate);
+            expect(() => checkUndo(candidate, { revision_id: 'r1', publication_id: 'p1' }, false,
+              { projectId, timelineId, publicationId: 'p1' })).toThrow();
+          }
+        }
         if (refused || lost) {
           await vi.waitFor(() => expect(harness!.toast.error).toHaveBeenCalled());
           expect(harness.hook.result.current.history.canUndo).toBe(false);
@@ -1111,7 +1150,7 @@ describe('useTimelineSave — recovered draft durability', () => {
         if (lost) expect(posted[1]).toEqual(posted[0]);
         act(() => harness!.hook.result.current.history.redo());
         await vi.waitFor(() => expect(harness!.hook.result.current.history.canUndo).toBe(true));
-        expect(JSON.parse(posted.at(-1)!.body).commands[0].args.publications).toEqual(['p2']);
+        assertInverseRequest(posted.at(-1)!, 2, 'Redo timeline');
         expect(posted.at(-1)!.key).not.toBe(posted[0].key);
         expect(harness.hook.result.current.dataRef.current?.config.output.file).toBe('authored.mp4');
         harness.hook.unmount();
@@ -1120,7 +1159,7 @@ describe('useTimelineSave — recovered draft durability', () => {
         await vi.waitFor(() => expect(harness!.hook.result.current.history.canUndo).toBe(true));
         act(() => harness!.hook.result.current.history.undo());
         await vi.waitFor(() => expect(harness!.hook.result.current.history.canRedo).toBe(true));
-        expect(JSON.parse(posted.at(-1)!.body).commands[0].args.publications).toEqual(['p3']);
+        assertInverseRequest(posted.at(-1)!, 3, 'Undo timeline');
         expect(harness.saveTimeline).not.toHaveBeenCalled();
       } finally {
         harness?.hook.unmount();
