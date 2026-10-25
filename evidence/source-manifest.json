@@ -1,0 +1,64 @@
+{
+  "task": "rt-OPS-D137-shell-security-review-2103",
+  "verdict": "PASS",
+  "review_scope": "source/tests/kit only; bounded private Store regression",
+  "head": "cf80cfcb918ee9e311a294fb7291ad5e11c48d0b",
+  "base": "0c4170e42d2ff435ea855a54c940299619f6a285",
+  "candidate": {
+    "path": "ops-child-custody/make-child-venv",
+    "sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+    "bytes": 75541,
+    "mode": "0755"
+  },
+  "preimage": {
+    "source": "base 0c417 and actual installed maker",
+    "sha256": "4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36",
+    "bytes": 75503,
+    "mode": "0755"
+  },
+  "maker_source_diff": "one existing STORE_CONTEXT declare-f line; adds exactly stage_stderr_path and retain_stage_stderr",
+  "store_context": {
+    "exported_functions": [
+      "failure",
+      "run_stage",
+      "progress",
+      "source_state",
+      "stage_stderr_path",
+      "retain_stage_stderr"
+    ],
+    "transitive_closure": "PASS",
+    "missing_variables": false,
+    "actual_store_boundary": "STORE_PY reads STORE_CONTEXT; Store.ensure invokes build(stage, final), which executes context + setup + STORE_BUILD"
+  },
+  "embedded_blocks": {
+    "STORE_PY": {"sha256": "0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c", "parent_equal": true},
+    "STORE_VERIFY": {"sha256": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209", "parent_equal": true},
+    "STORE_BUILD": {"sha256": "729036a7bca12cba36b87e39c556a82859d2e5fe76fba102cc6c7b5f86c253c3", "parent_equal": true},
+    "STAGING_INVENTORY": {"sha256": "4c98ffcf6de7bd0314cc0e4790d4ffaeb206c03fb905f143e013cc57f631c6f1", "parent_equal": true},
+    "RELOCATE": {"sha256": "cf189024a79d12481c0629d3815c794c805dcd3fb4de6e9c3640ec242693cd98", "parent_equal": true},
+    "PROVENANCE_SCRIPT": {"sha256": "6ab4e64766e6df6996035fdf984b3c50efa169ffa982c5f4df6633964a0781cf", "parent_equal": true},
+    "DIST_METADATA_SCRIPT": {"sha256": "b78b24f8d2aef8fb3ca112e00de3a25e846280b194be88f27f1945b798e75123", "parent_equal": true},
+    "IDENTITY_SCRIPT": {"sha256": "05f8c82c7ea9b28f6f12ac8cad3557a08b0885e455ee22719e9c3ddebc3ccf77", "parent_equal": true}
+  },
+  "protected_pins": {
+    "bench_store.py": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "verify_dependency_seed.py": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+  },
+  "controls": {
+    "ownership_record_hash_source_registration_reserve": "unchanged and covered",
+    "privacy_no_follow_no_clobber": "unchanged and covered",
+    "stderr_limit": 1048576,
+    "stderr_mode": "0600",
+    "public_failure_payload": "excluded",
+    "exit_status": "preserved"
+  },
+  "source_commit_binding": "installer gate statically requires exact 40-hex decision source_commit and git object existence; no decision input was supplied or consumed here",
+  "live_actions": {
+    "install": false,
+    "real_request": false,
+    "production_build": false,
+    "network_acquisition": false,
+    "fixture_e2e": "WITHDRAWN/NOTRUN",
+    "original_request": "stopped"
+  }
+}
