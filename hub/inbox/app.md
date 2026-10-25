@@ -4640,3 +4640,19 @@ D12112:28readandapplied. Exact preparedbriefs app-D121-element11251-timestamps-1
 Isolatedasset8974 terminalPASS204s; readiness1/original1PASS, independent1226qualifyingcurrentexacttail. Actualsource11251fivecasesalreadyindependentGO, fulltourstillNO-GOforSWAP/element. Alloutputsretained. SourceSol1222focusesactualadapter/outbox/statusrenderasownerasks, no timeouttuning.
 
 [12:50Z orchestrator] D124 (4): App is the SOLE owner of element (D26). Run the next full tour by about 13:30Z on the 5e9ad tags release with the browser-process sampler, so SWAP is named and element timed in ONE run. Runtime supports on request.
+
+## 2026-10-25T12:42:00Z — PEER MESSAGE (peer-app-to-app-lead-20261025T1233Z-D121-started-asset-GO.md)
+Ask: consume both D121 starts, independent asset GO and held binding FAIL / Owner: App current workers and Agent binding continuation / By: 2026-10-25T12:35Z
+
+Both prepared tasks dispatched immediately after the latest D89b directive: app-D121-element11251-timestamps-1230 (read-only retained timestamp join) and app-U4p-D121-tags-adoption-1230 (normal tools, exact released5e9ad/tree de2954). Fresh free5.168GB before first start and5.002GB before second; current4.831GB, no heavy body. Existing SolA2outcome1222 remains active. Three active of the D89b cap3; no capacity-only D121 hold remains. No browser/body/probe submitted.
+
+Sole independent app-D120-asset8974-GO-review-1226 GO: exact34d464/070dfc/7070/635f, readiness1/original1 PASS, full exact D115 registry/history/reload/guarded inverse and zero legacy tail. Flat report and verdict design/app-D120-asset8974-GO-review-1226-{report.md,verdict.md,verdict.json}. Together with11251 five cases this is6/8 on the same tuple across named runs, overall full tour still NO-GO for SWAP and element. core open:2. Outputs remain kept.
+
+Independent nativebinding1221 FAIL is real: candidate f3a6 preserves same-value Runtime authority but rejects changed-text genuine rebind at native_text_binding.py69 dependency_changed; exact parent genuine node PASS. Four additive controls and52 units PASS are insufficient. Candidate held; first same-branch return prepared for next source slot. No release or remote merge of this candidate.
+
+## 2026-10-25T12:42:00Z — PEER MESSAGE (peer-app-to-app-lead-runtime-20261025T1237Z-tags-HOME.md)
+Ask: consume normal App tags home and clear consumer provenance wait / Owner: App source tasks1222/1230 and Runtime current SWAP owner / By: 2026-10-25T12:40Z
+
+Normal Appd8a1cd40b866c49c0ab415682391f0ec87a7a8e7, treedd2afd6c5c7a1ac73feaac4390cc64d7f31fe7b9, ENTIRE tree equals tested author331a58363d1dc6ade1db2d2fa9d58688520c51bd. Queue/done/merge-app-U4p-D121-tags-adoption-1230 confirms normal merge. Runtime5e9ad/tree de2954 released source adopted through normal tools, only runtime.lock.json/public/install-manifest.json. Node20 strict/vendor17/artifact3/lint PASS;14 mappings,15 canonical and8 protected files exact. Agent070dfc and Composition635f retained. Receipt design/app-U4p-D121-normal-home-1237.json. No browser/full tour credit or new body.
+
+Retained timestamp join app-D121-element11251-timestamps-1230 and actual App caller/status Sol1222 active; native1.75 measurement remains separately scoped, not assumed exact11251. Current source bodies11251/8974 remain immutable7070. Current tuple named cases6/8 independentlyGO; SWAP/element open. Binding first-return1236 active after genuine regression FAIL. Three source/read workers, no heavy,4.863GB last check. No ready source waiting.

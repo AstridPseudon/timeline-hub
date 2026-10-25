@@ -1,0 +1,117 @@
+{
+  "task": "rt-D77-guard-wholepath-1243",
+  "mode": "readonly-source-facts-existing-telemetry",
+  "status": "handback-no-source-pass",
+  "measurement": {
+    "observed_allocated_high_water_bytes": 1623728128,
+    "observed_min_free_bytes": 4393406464,
+    "phase_floor_bytes": 4500000000,
+    "phase_floor_shortfall_bytes": 106593536,
+    "overall_stop_bytes": 4000000000,
+    "overall_stop_margin_bytes": 393406464,
+    "observed_private_phase_delta_bytes": 1186406400,
+    "native_fetch_gap_seconds": 2.024,
+    "native_fetch_start_free_bytes": 4710780928,
+    "native_fetch_end_free_bytes": 4393435136,
+    "native_fetch_start_allocated_bytes": 1306353664,
+    "native_fetch_end_allocated_bytes": 1623699456,
+    "status_truth": "cancelled-lower-bound",
+    "phase_complete": false,
+    "upper_bound_supported": false,
+    "full_stage_bound_supported": false,
+    "remotion_npm_ci_observed": false
+  },
+  "source_identities": [
+    {
+      "path": "/home/user/work/agent",
+      "head": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "note": "read-only current integration source; not substituted for retained applied-run identity"
+    },
+    {
+      "path": "/home/user/work/agent/astrid/installer/core.py",
+      "sha256": "a0b2bfc178787f7d863a1180bdbc73a6c5690e7d5b91ebd008b98c57b1e6ef09",
+      "lines": "167-170,245-246,277-300"
+    },
+    {
+      "path": "/home/user/work/agent/astrid/installer/backend.py",
+      "sha256": "8707791013bbc0ea885d818e62286165931e33a4be03f6bb87af9c84c01a1139",
+      "lines": "43-75,386-430"
+    },
+    {
+      "path": "/home/user/work/agent/astrid/installer/tools.py",
+      "sha256": "c0da1099b958bbde0d6a3bfe513193c839e9fe93ef028373ae086b30badf400a",
+      "lines": "101-165,334-405,408-427,464-517"
+    },
+    {
+      "path": "/home/user/work/agent/astrid/installer/omp/recipe.json",
+      "sha256": "9faec7eb6ff285d935ac6adcaf0b698a4f7fcf95eb3e7a108e665b6a4e24605b",
+      "lines": "4-41"
+    },
+    {
+      "path": "/home/user/work/agent/scripts/reshape/remotion_gate.py",
+      "sha256": "5887cc576fb9efdd310ebb5be53297afc2faca7c89a524d59f0b72a545276334",
+      "lines": "123-207",
+      "note": "standalone gate; production normal Installer uses Backend.install_remotion_dependencies"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D77-OMP-peak-resume-1237/log.txt",
+      "lines": "6019-6062",
+      "note": "authored retained wrapper and execution transcript"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D77-OMP-peak-resume-1237/evidence/omp-phase-result.json",
+      "sha256": "646a4c7c137fbb00482331f99845a6f30cd5e335ccd9064c062335f0023e34ac",
+      "note": "retained corrected telemetry; archive/source/Bun/lock/native identities preserved"
+    }
+  ],
+  "boundary_findings": [
+    {
+      "boundary": "native-fetch-download-extract",
+      "owner": "astrid/installer/tools.py:374-386",
+      "result": "escaped-wrapper-monitor",
+      "reason": "authored wrapper called fetch_archive inline between start/end samples; no sampler ran during the 2.024s gap"
+    },
+    {
+      "boundary": "native-file-placement",
+      "owner": "astrid/installer/tools.py:376-386",
+      "result": "unmonitored-direct-mutation",
+      "reason": "Path.replace moved native files outside common command monitor"
+    },
+    {
+      "boundary": "abi-probe",
+      "owner": "astrid/installer/tools.py:387-393",
+      "result": "cancelled-not-success",
+      "reason": "retained row exit 0 and cancelled true below phase floor"
+    },
+    {
+      "boundary": "bun-link",
+      "owner": "astrid/installer/tools.py:394-396",
+      "result": "post-cancel-command",
+      "reason": "caller ignored cancelled flag and started link; retained row exit 0 and cancelled true"
+    },
+    {
+      "boundary": "remotion-npm-ci",
+      "owner": "astrid/installer/backend.py:62-75,415-416",
+      "result": "unmeasured",
+      "reason": "OMP phase did not complete and no npm ci was run"
+    }
+  ],
+  "guard_requirements": [
+    "same bounded owner around every download, extract, rename, subprocess and post-command write",
+    "cheap nonrecursive preflight before every mutating boundary; no recursive du in critical poll",
+    "preserve >5200000000 admission, cancel before 4500000000, stop at 4000000000",
+    "owned process-group cancellation with bounded wait; cancellation is terminal and blocks later commands",
+    "direct Python mutators require a controlled write seam or supported pre-start cancellation point",
+    "post-check after children that exit before first poll; exit 0 cannot override floor violation",
+    "complete only when all expected boundaries pass without cancellation and final phase checks pass",
+    "stub controls for fast growth, slow du, low admission, early exit, cleanup propagation and all-steps success"
+  ],
+  "scope_guard": {
+    "no_product_or_contract_change": true,
+    "no_full_stage_bound_or_retirement_recommendation": true,
+    "targets_held": true,
+    "no_audit_or_retire_retry": true,
+    "parallel_sol_candidate_consumed": false,
+    "reason": "parallel worker had no finished candidate artifact/hash at review time"
+  }
+}
