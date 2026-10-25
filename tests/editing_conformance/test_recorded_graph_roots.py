@@ -36,7 +36,7 @@ def root_values():
         {'ref': 'shot:new-shot', 'kind': 'shot', 'owner': None, 'value': {
             'payload': {'name': 'New shot', 'items': [], 'unknown': {
                 'pinnedShotGroups': None, 'clipType': 'shot', 'empty': {}, 'ordered': [None, False, 0]},
-                'metadata': None},
+                'metadata': {}},
             'internal_timeline': {'tracks': [{'id': 'picture', 'kind': 'visual', 'unknown': None}],
                                   'clips': [{'id': 'title', 'track': 'picture', 'at': 0,
                                              'hold': 2, 'text': 'Hello', 'unknown': [None]}],
