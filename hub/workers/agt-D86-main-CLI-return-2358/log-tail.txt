@@ -1,0 +1,400 @@
+221-            return None
+222-        if row["request_hash"] != context["request_hash"]:
+223:            reject("idempotency_mismatch")
+224-        edge = self.conn.execute("SELECT * FROM timeline_commit_history WHERE publication_id=?", (row["txn_id"],)).fetchone()
+225-        if edge is None or edge["project_id"] != context["request"]["project_id"] or edge["timeline_id"] != context["request"]["timeline_id"]:
+226-            raise ProtocolError("accepted commit history is missing or corrupt")
+    88	
+    89	def refused(reason, message, *, current=None):
+    90	    from .timeline_commit import CommitRejected
+    91	    return CommitRejected({"http_status": 409, "code": "conflict", "message": message,
+    92	                           "details": {"status": "refused", "reason": reason,
+    93	                                       "base": None, "current": current, "conflicts": []}})
+    94	
+    95	
+    96	def public_failure(failure):
+    97	    error = RuntimeErrorBase(failure["message"], details=copy.deepcopy(failure["details"]))
+    98	    error.code = failure["code"]
+    99	    error.status = failure["http_status"]
+   100	    return error
+   101	
+   102	
+   103	class RequestCommitPort:
+  2490	            self._ensure_timeline_commit_baseline(commits, project_id, timeline_id, require_active)
+  2491	            return RequestCommitPort(self, commits, bound_context, require_active)
+  2492	        try:
+  2493	            if provider is None:
+  2494	                replay = commits.lookup(context, authorize=check)
+  2495	                if replay is not None:
+  2496	                    return replay
+  2497	                require_active()
+  2498	                raise CommitUnavailable()
+  2499	            outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+  2500	            if "http_status" in outcome:
+  2501	                raise public_failure(outcome)
+  2502	            return outcome
+  2503	        except CommitRejected as exc:
+  2504	            raise public_failure(exc.failure) from exc
+  2505	        except (AuthorizationError, ForbiddenError, NotFoundError, ValidationError, ConflictError):
+  2506	            raise
+  2507	        except RuntimeErrorBase:
+  2508	            raise
+  2509	        except Exception as exc:
+  2510	            raise CommitUnavailable() from exc
+
+codex
+I found the clean repair seam: keep the real `RuntimeService` call untouched, expose only passive telemetry from the genuine fixture (`calls`, actual history limits, and request bodies), and let `sent` record only newly accepted/previewed Runtime submissions so the original no-duplicate-publication predicates remain valid. The changed-body oracle will be corrected at the same assertion strength from the fabricated top-level code to Runtime’s exact `details["reason"] == "idempotency_mismatch"` (store source: `timeline_commit_store.py:217–223`; public mapping: `timeline_commit_port.py:89–100`).
+apply patch
+patch: completed
+/home/user/work/wt/agt-D86-main-CLI-return-2358/tests/packs/timeline/test_cli_document_commit.py
+diff --git a/tests/packs/timeline/test_cli_document_commit.py b/tests/packs/timeline/test_cli_document_commit.py
+index a95d0df20b469b42fa8ce5c1431bd15e382d84c1..6011079f4506c85a4cf3800e734cc987d23e7506
+--- a/tests/packs/timeline/test_cli_document_commit.py
++++ b/tests/packs/timeline/test_cli_document_commit.py
+@@ -41,6 +41,9 @@
+     class RuntimeRealm:
+         def __init__(self):
+             self.project, self.timeline = project, "film"
++            self.calls = []
++            self.history_limits = []
++            self.requests = []
+ 
+         @property
+         def head(self):
+@@ -88,6 +91,7 @@
+             timeline_id = args[0] if args else "film"
+             try:
+                 if operation == "list_timeline_commits":
++                    realm.history_limits.append(kwargs.get("limit", 50))
+                     result = service.list_timeline_commits(
+                         requested_project, timeline_id,
+                         cursor=kwargs.get("cursor"), limit=kwargs.get("limit", 50),
+@@ -96,7 +100,9 @@
+                     return DomainResult.success(result)
+                 if operation == "commit_timeline":
+                     body = copy.deepcopy(args[1])
+-                    sent.append(body)
++                    realm.calls.append(kwargs["idempotency_key"])
++                    realm.requests.append(copy.deepcopy(body))
++                    before = realm.head
+                     result = service.commit_timeline(
+                         requested_project, timeline_id, body,
+                         idempotency_key=kwargs["idempotency_key"],
+@@ -104,6 +110,8 @@
+                         invocation_path=f"/v1/projects/{requested_project}/timelines/{timeline_id}/commit",
+                         authorize=lambda: None,
+                     )
++                    if body.get("dry_run") or realm.head != before:
++                        sent.append(body)
+                     from astrid.core.receipts.contract import CommandReceipt
+ 
+                     receipt = CommandReceipt.from_dict(result["receipt"]) if result["receipt"] else None
+@@ -227,7 +235,7 @@
+     public_session, tmp_path, capsys, monkeypatch,
+ ):
+     _opened, realm, sent, client, _outbox = public_session
+-    calls = _runtime_idempotency(client, monkeypatch)
++    calls = realm.calls
+     path = _document_file(tmp_path, realm)
+     candidate = json.loads(path.read_text(encoding="utf-8"))
+     candidate["parent"]["name"] = "Retryable Film"
+@@ -247,8 +255,8 @@
+     public_session, tmp_path, capsys, monkeypatch,
+ ):
+     _opened, realm, sent, client, _outbox = public_session
+-    history_limits = []
+-    calls = _runtime_idempotency(client, monkeypatch, history_limits=history_limits)
++    history_limits = realm.history_limits
++    calls = realm.calls
+     path = _document_file(tmp_path, realm)
+     candidate = json.loads(path.read_text(encoding="utf-8"))
+     candidate["parent"]["name"] = "Long history retry"
+@@ -327,7 +335,7 @@
+     public_session, tmp_path, capsys, monkeypatch,
+ ):
+     _opened, realm, sent, client, _outbox = public_session
+-    calls = _runtime_idempotency(client, monkeypatch)
++    calls = realm.calls
+     path = _document_file(tmp_path, realm)
+     candidate = json.loads(path.read_text(encoding="utf-8"))
+     candidate["parent"]["name"] = "First body"
+@@ -339,7 +347,7 @@
+     path.write_text(json.dumps(candidate), encoding="utf-8")
+     assert _run(client, path, key="same-key") == 1
+     output = json.loads(capsys.readouterr().out)
+-    assert output["error"]["code"] == "idempotency_conflict"
++    assert output["error"]["details"]["reason"] == "idempotency_mismatch"
+     assert len(realm.entries) == 2 and len(sent) == 1
+     assert calls == ["same-key", "same-key"]
+ 
+
+apply patch
+patch: completed
+/home/user/work/wt/agt-D86-main-CLI-return-2358/tests/packs/timeline/test_cli_document_commit.py
+diff --git a/tests/packs/timeline/test_cli_document_commit.py b/tests/packs/timeline/test_cli_document_commit.py
+index a95d0df20b469b42fa8ce5c1431bd15e382d84c1..78234fb1f760d0a1dcf146ef8551b342ffbc3e28
+--- a/tests/packs/timeline/test_cli_document_commit.py
++++ b/tests/packs/timeline/test_cli_document_commit.py
+@@ -41,6 +41,9 @@
+     class RuntimeRealm:
+         def __init__(self):
+             self.project, self.timeline = project, "film"
++            self.calls = []
++            self.history_limits = []
++            self.requests = []
+ 
+         @property
+         def head(self):
+@@ -88,6 +91,7 @@
+             timeline_id = args[0] if args else "film"
+             try:
+                 if operation == "list_timeline_commits":
++                    realm.history_limits.append(kwargs.get("limit", 50))
+                     result = service.list_timeline_commits(
+                         requested_project, timeline_id,
+                         cursor=kwargs.get("cursor"), limit=kwargs.get("limit", 50),
+@@ -96,7 +100,9 @@
+                     return DomainResult.success(result)
+                 if operation == "commit_timeline":
+                     body = copy.deepcopy(args[1])
+-                    sent.append(body)
++                    realm.calls.append(kwargs["idempotency_key"])
++                    realm.requests.append(copy.deepcopy(body))
++                    before = realm.head
+                     result = service.commit_timeline(
+                         requested_project, timeline_id, body,
+                         idempotency_key=kwargs["idempotency_key"],
+@@ -104,6 +110,8 @@
+                         invocation_path=f"/v1/projects/{requested_project}/timelines/{timeline_id}/commit",
+                         authorize=lambda: None,
+                     )
++                    if body.get("dry_run") or realm.head != before:
++                        sent.append(body)
+                     from astrid.core.receipts.contract import CommandReceipt
+ 
+                     receipt = CommandReceipt.from_dict(result["receipt"]) if result["receipt"] else None
+@@ -162,46 +170,6 @@
+         args.append("--dry-run")
+     parsed = timeline_cli.build_parser(client).parse_args(args)
+     return parsed.handler(parsed)
+-
+-
+-def _runtime_idempotency(client, monkeypatch, *, history_limits=None):
+-    """Model Runtime's exact-key replay at the existing authenticated port."""
+-    original = client.timelines._typed
+-    calls = []
+-    accepted = {}
+-
+-    def typed(operation, project, *args, **kwargs):
+-        if operation != "commit_timeline":
+-            result = original(operation, project, *args, **kwargs)
+-            if operation == "list_timeline_commits" and history_limits is not None:
+-                history_limits.append(kwargs.get("limit"))
+-                if result.ok and isinstance(result.data, dict):
+-                    rows = result.data.get("items")
+-                    if isinstance(rows, list) and rows:
+-                        result.data["items"] = [copy.deepcopy(rows[0]) for _ in range(201)]
+-            return result
+-        key = kwargs["idempotency_key"]
+-        body = copy.deepcopy(args[1])
+-        fingerprint = json.dumps(body, sort_keys=True, separators=(",", ":"))
+-        calls.append(key)
+-        prior = accepted.get(key)
+-        if prior is not None:
+-            old_fingerprint, result = prior
+-            if old_fingerprint != fingerprint:
+-                return DomainResult.failure(
+-                    ErrorObject("idempotency_conflict", "idempotency key was reused for a different request", {
+-                        "status": "refused", "path": "/idempotency_key",
+-                    }),
+-                    idempotency_key=key,
+-                )
+-            return copy.deepcopy(result)
+-        result = original(operation, project, *args, **kwargs)
+-        if result.ok:
+-            accepted[key] = (fingerprint, copy.deepcopy(result))
+-        return result
+-
+-    monkeypatch.setattr(client.timelines, "_typed", typed)
+-    return calls
+ 
+ 
+ def test_document_commit_uses_the_authenticated_commit_door(public_session, tmp_path, capsys):
+@@ -227,7 +195,7 @@
+     public_session, tmp_path, capsys, monkeypatch,
+ ):
+     _opened, realm, sent, client, _outbox = public_session
+-    calls = _runtime_idempotency(client, monkeypatch)
++    calls = realm.calls
+     path = _document_file(tmp_path, realm)
+     candidate = json.loads(path.read_text(encoding="utf-8"))
+     candidate["parent"]["name"] = "Retryable Film"
+@@ -247,8 +215,8 @@
+     public_session, tmp_path, capsys, monkeypatch,
+ ):
+     _opened, realm, sent, client, _outbox = public_session
+-    history_limits = []
+-    calls = _runtime_idempotency(client, monkeypatch, history_limits=history_limits)
++    history_limits = realm.history_limits
++    calls = realm.calls
+     path = _document_file(tmp_path, realm)
+     candidate = json.loads(path.read_text(encoding="utf-8"))
+     candidate["parent"]["name"] = "Long history retry"
+@@ -327,7 +295,7 @@
+     public_session, tmp_path, capsys, monkeypatch,
+ ):
+     _opened, realm, sent, client, _outbox = public_session
+-    calls = _runtime_idempotency(client, monkeypatch)
++    calls = realm.calls
+     path = _document_file(tmp_path, realm)
+     candidate = json.loads(path.read_text(encoding="utf-8"))
+     candidate["parent"]["name"] = "First body"
+@@ -339,7 +307,7 @@
+     path.write_text(json.dumps(candidate), encoding="utf-8")
+     assert _run(client, path, key="same-key") == 1
+     output = json.loads(capsys.readouterr().out)
+-    assert output["error"]["code"] == "idempotency_conflict"
++    assert output["error"]["details"]["reason"] == "idempotency_mismatch"
+     assert len(realm.entries) == 2 and len(sent) == 1
+     assert calls == ["same-key", "same-key"]
+ 
+
+exec
+/bin/bash -lc "git diff -- tests/packs/timeline/test_cli_document_commit.py; printf '%s\\n' '--- grep forbidden shim ---'; rg -n \"_runtime_idempotency|idempotency_conflict|accepted = \\{|rows\\].*201|history_limits\" tests/packs/timeline/test_cli_document_commit.py || true; printf '%s\\n' '--- status ---'; git status --short" in /home/user/work/wt/agt-D86-main-CLI-return-2358
+ succeeded in 42ms:
+diff --git a/tests/packs/timeline/test_cli_document_commit.py b/tests/packs/timeline/test_cli_document_commit.py
+index a95d0df20b..78234fb1f7 100644
+--- a/tests/packs/timeline/test_cli_document_commit.py
++++ b/tests/packs/timeline/test_cli_document_commit.py
+@@ -41,6 +41,9 @@ def public_session(tmp_path, runtime_abi):  # noqa: F811
+     class RuntimeRealm:
+         def __init__(self):
+             self.project, self.timeline = project, "film"
++            self.calls = []
++            self.history_limits = []
++            self.requests = []
+ 
+         @property
+         def head(self):
+@@ -88,6 +91,7 @@ def public_session(tmp_path, runtime_abi):  # noqa: F811
+             timeline_id = args[0] if args else "film"
+             try:
+                 if operation == "list_timeline_commits":
++                    realm.history_limits.append(kwargs.get("limit", 50))
+                     result = service.list_timeline_commits(
+                         requested_project, timeline_id,
+                         cursor=kwargs.get("cursor"), limit=kwargs.get("limit", 50),
+@@ -96,7 +100,9 @@ def public_session(tmp_path, runtime_abi):  # noqa: F811
+                     return DomainResult.success(result)
+                 if operation == "commit_timeline":
+                     body = copy.deepcopy(args[1])
+-                    sent.append(body)
++                    realm.calls.append(kwargs["idempotency_key"])
++                    realm.requests.append(copy.deepcopy(body))
++                    before = realm.head
+                     result = service.commit_timeline(
+                         requested_project, timeline_id, body,
+                         idempotency_key=kwargs["idempotency_key"],
+@@ -104,6 +110,8 @@ def public_session(tmp_path, runtime_abi):  # noqa: F811
+                         invocation_path=f"/v1/projects/{requested_project}/timelines/{timeline_id}/commit",
+                         authorize=lambda: None,
+                     )
++                    if body.get("dry_run") or realm.head != before:
++                        sent.append(body)
+                     from astrid.core.receipts.contract import CommandReceipt
+ 
+                     receipt = CommandReceipt.from_dict(result["receipt"]) if result["receipt"] else None
+@@ -164,46 +172,6 @@ def _run(client, path, *, message="Rename film", key="document-1", dry_run=False
+     return parsed.handler(parsed)
+ 
+ 
+-def _runtime_idempotency(client, monkeypatch, *, history_limits=None):
+-    """Model Runtime's exact-key replay at the existing authenticated port."""
+-    original = client.timelines._typed
+-    calls = []
+-    accepted = {}
+-
+-    def typed(operation, project, *args, **kwargs):
+-        if operation != "commit_timeline":
+-            result = original(operation, project, *args, **kwargs)
+-            if operation == "list_timeline_commits" and history_limits is not None:
+-                history_limits.append(kwargs.get("limit"))
+-                if result.ok and isinstance(result.data, dict):
+-                    rows = result.data.get("items")
+-                    if isinstance(rows, list) and rows:
+-                        result.data["items"] = [copy.deepcopy(rows[0]) for _ in range(201)]
+-            return result
+-        key = kwargs["idempotency_key"]
+-        body = copy.deepcopy(args[1])
+-        fingerprint = json.dumps(body, sort_keys=True, separators=(",", ":"))
+-        calls.append(key)
+-        prior = accepted.get(key)
+-        if prior is not None:
+-            old_fingerprint, result = prior
+-            if old_fingerprint != fingerprint:
+-                return DomainResult.failure(
+-                    ErrorObject("idempotency_conflict", "idempotency key was reused for a different request", {
+-                        "status": "refused", "path": "/idempotency_key",
+-                    }),
+-                    idempotency_key=key,
+-                )
+-            return copy.deepcopy(result)
+-        result = original(operation, project, *args, **kwargs)
+-        if result.ok:
+-            accepted[key] = (fingerprint, copy.deepcopy(result))
+-        return result
+-
+-    monkeypatch.setattr(client.timelines, "_typed", typed)
+-    return calls
+-
+-
+ def test_document_commit_uses_the_authenticated_commit_door(public_session, tmp_path, capsys):
+     _opened, realm, sent, client, _outbox = public_session
+     path = _document_file(tmp_path, realm)
+@@ -227,7 +195,7 @@ def test_document_commit_retry_uses_runtime_idempotency_without_history_scan(
+     public_session, tmp_path, capsys, monkeypatch,
+ ):
+     _opened, realm, sent, client, _outbox = public_session
+-    calls = _runtime_idempotency(client, monkeypatch)
++    calls = realm.calls
+     path = _document_file(tmp_path, realm)
+     candidate = json.loads(path.read_text(encoding="utf-8"))
+     candidate["parent"]["name"] = "Retryable Film"
+@@ -247,8 +215,8 @@ def test_document_commit_retry_does_not_scan_a_long_history_page(
+     public_session, tmp_path, capsys, monkeypatch,
+ ):
+     _opened, realm, sent, client, _outbox = public_session
+-    history_limits = []
+-    calls = _runtime_idempotency(client, monkeypatch, history_limits=history_limits)
++    history_limits = realm.history_limits
++    calls = realm.calls
+     path = _document_file(tmp_path, realm)
+     candidate = json.loads(path.read_text(encoding="utf-8"))
+     candidate["parent"]["name"] = "Long history retry"
+@@ -327,7 +295,7 @@ def test_document_commit_changed_body_with_same_key_is_runtime_refusal(
+     public_session, tmp_path, capsys, monkeypatch,
+ ):
+     _opened, realm, sent, client, _outbox = public_session
+-    calls = _runtime_idempotency(client, monkeypatch)
++    calls = realm.calls
+     path = _document_file(tmp_path, realm)
+     candidate = json.loads(path.read_text(encoding="utf-8"))
+     candidate["parent"]["name"] = "First body"
+@@ -339,7 +307,7 @@ def test_document_commit_changed_body_with_same_key_is_runtime_refusal(
+     path.write_text(json.dumps(candidate), encoding="utf-8")
+     assert _run(client, path, key="same-key") == 1
+     output = json.loads(capsys.readouterr().out)
+-    assert output["error"]["code"] == "idempotency_conflict"
++    assert output["error"]["details"]["reason"] == "idempotency_mismatch"
+     assert len(realm.entries) == 2 and len(sent) == 1
+     assert calls == ["same-key", "same-key"]
+ 
+--- grep forbidden shim ---
+45:            self.history_limits = []
+94:                    realm.history_limits.append(kwargs.get("limit", 50))
+194:def test_document_commit_retry_uses_runtime_idempotency_without_history_scan(
+218:    history_limits = realm.history_limits
+231:    assert history_limits and 200 not in history_limits
+--- status ---
+ M tests/packs/timeline/test_cli_document_commit.py
+

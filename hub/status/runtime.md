@@ -1,5 +1,5 @@
-<!-- main | 2026-10-24T23:55:58Z | dispatcher heartbeat 14s | live 2 (sol 0, luna 2, other 0) | busy30 8 | status age 0m -->
-# runtime board, 2026-10-24T23:55:55Z
+<!-- main | 2026-10-24T23:59:14Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 0m -->
+# runtime board, 2026-10-24T23:58:52Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -81,7 +81,7 @@
 | R-P4-history-cost | Preserve finite walk snapshots | Luna / Sol | Actual integrated receipt passed | merged | Review1910; home1919 PASS | Exact e89eb: 173 focused plus12 historical PASS; source exact f51e. Three pairs gain5.69% wall. Original45s gate stays open. | e89eb8c7d / f51e29658 |
 | R-P2-popup-422 | Project genuine fork-created shot roots | Luna | App current P2 proof | merged | Security1658; integrated1704 PASS | Actualb318:4 PASS0.16s, exact reviewedsource; forgedowner/sibling/source refused. App original stillpending. [Proof](../../design/rt-P2-popup-integrated-1704.md) | b318a8ec4 /88b9cf6 |
 | R-P2-popup-observation | Attribute popup physical observation refusal | Luna | Source finding complete | merged | rt-P2-popup-observation-1638 | Runtime created-child projection lacks fork-created shot roots.2Runtime+8Agent comparators PASS; source cause only. | Source unchanged |
-| R-P2-element-docpatch-hang | Qualify original element response | Sol / Luna | Final security and App original | review | Source2330; security2346 | Original7131 still fails5s. Candidate local single patch does not reproduce actual realm; no common P4 cause proved. | Released732; candidate6a9 |
+| R-P2-element-docpatch-hang | Qualify original element response | Sol / App service | App adoption and original | blocked:app | Runtime2346 released; App next original | Provider source a3cd qualified and published. Original7131 still failed5s; no release-only timing closure. | Released a3cd1a321 |
 | U1-D69-marker-scope | Preserve mixed-route live catalog predicates | Luna | Actual integrated proof passed | merged | Citations1702; integrated1708 PASS | Actual2c1:9 PASS9s; exact approvedledgerappendix published once, outsidebytes intact. [Proof](../../design/rt-U1-D69-phase-integrated-1708.md) | ea3bca10d /925a7dd |
 | U1-D69-restore-guard | Restore two skip guard originals | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 |
 | U1-D69-skip-policy | Restore upstream skip enforcement | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 /bb022 |
@@ -195,7 +195,7 @@
 
 | P2-spare-venue | Complete four main diagnostics | Luna / main service | All four originals reached | merged | rt-P2-main-dependency-2250 | All readiness PASS; four NO-GO. Parent envelope, SWAP allocation, single intent and bulk display. [Report](../../design/runtime-P2-main-four-report-2250.md) | Fixed bceb/039f/732/635f |
 
-| P4-D84a-distinct | Authenticate full provider return | Sol / Luna | Independent final security | review | Source2330; security2346 | Independent260 required and192 neighbors PASS; remaining port controls and complete boundary review active. No release yet. | Candidate6a9 held |
+| P4-D84a-distinct | Authenticate full provider return | Sol / Luna | Independent security and normal apply PASS | merged | Source2330; security2346 | Normal a3cd exact reviewed3 blobs. Independent260+192+123 controls,4 boundary attacks and3 finite previews PASS. No original45s credit. | a3cd1a321 /6a9a98f96 |
 
 | P2-popup-digest | Preserve exact raw canonical digest | App Luna / independent | App source and controls complete | merged | Author2233; review2239; return2246 | App63d7 preserves numeric spelling; canonical and opaque mutation controls PASS. New ADD7872 remains App owned; old5083 stays failed. | App63d7c74b6d |
 | P2-parent-envelope | Preserve exact parent request shape | App Luna / Luna | Independent2344 PASS | merged | App2338; review2344 | NormalApp364f has strict initial and Undo envelopes;13controls/types/lint PASS. Original parent still unqualified. | App364f124b5c |
@@ -211,7 +211,7 @@
 | D86-M1-outbox | Migrate ten outbox setup cases | Luna / Agent review | Protected fixture-history mapping | review | agt-D86-main-M1-2333 | Source/statics PASS; bootstrap/recorded history assertions changed and need strict independent mapping. No body/core credit. | baaa9fd3f |
 | D86-shared-inverse | Migrate ten shared inverse cases | Luna / Agent review | Agent protected review then merge | review | agt-D86-main-shared-inverse-2333 | Source/statics/AST PASS; genuine native provider and shared shot identity retained. Remote request; no behavioral credit. | d49ebd104 |
 | D86-native-word | Migrate46 native word setup cases | Luna / Agent review | Agent protected review then merge | review | agt-D86-main-native-word-return-2341 | Genuine audio bootstrap/doc.patch; fixture-only +95/-29. Both testfiles byte-exact; statics/AST PASS, no body. | baf7bb6cc6 |
-| D86-CLI-document | Migrate eight document CLI cases | Luna / Agent review | Agent protected review then merge | review | agt-D86-main-CLI-document-2333 | Source-only compile/Ruff/mypy/AST PASS;12 bodies exact. Remote request carries8 selectors; no body or core credit. | Remote author branch |
+| D86-CLI-document | Preserve real CLI idempotency | Luna / Agent review | First protected review failed | doing | agt-D86-main-CLI-return-2358 | Failed f79 fixture bypassed Runtime on retry and fabricated refusal. First return delegates both to real store; no body before main batch. | Failed f79 held |
 
 | D86-main-batch-prep | Prepare existing main affected-node route | Luna | Reviewed source union and tuple | merged | rt-D86-main-batch-prep-2337 | Exact74 manifest/parsed stub once17 and poison0 PASS. Durable committed candidate exported; final union108+ABI21 pending. No install/body. | Private candidate only |
 
@@ -219,22 +219,22 @@
 | D86-parent-auto | Migrate14 parent completion cases | Luna / Agent review | Agent protected review then merge | review | agt-D86-main-parent-auto-2343 | Source/compile/Ruff/mypy/AST PASS; all3 test bodies and14 selectors exact. Remote owner review requested; no body. | cf0251d0b2 |
 
 | D86-main-batch-union | Prepare full affected-node union | Luna | Reviewed Agent source union | doing | rt-D86-batch-union-2356 | Extend private74 route to six108 plus exact ABI family; parsed once17 and poison0 required. No live install or body. | Private candidate only |
-Runtime producer: RELEASED 732c48c6f5a9441a65c61b24595d454a1cd3e180, tree 7ed0559c6f0a05954427cc668e303b6cd2f51586. Canonical 15 files and schema867f unchanged. [Release](../../design/runtime-D84a-release-2205.md).
+Runtime producer: RELEASED a3cd1a3214fa1632879c21d82d1abb9ea720b1de, tree64bb0caf0b7b950e02c4075077868a3dcd12ee06. Canonical15/schema867f unchanged. [Security and release](../../design/runtime-R2-provider-security-2346.md).
 
-core open: P4 ten-note remains45.314s. Bad9 and7627 failed independent callback freshness attacks and remain held. Sol2330 repairs the full provider boundary; independent wholepath2330 has reproduced the late pin-read gap. Original remains45.314s; no new timing claim. Four R2 originals are closed on actual Agent7c48, tree-equal to testedc2a63; original45s preserved. Element7131 still fails unchanged5s; local one-patch0.315s does not reproduce actual realm.
+core open: P4 ten-note remains45.314s. Bad9/7627 security failures stay held. Full-provider6a9 passed independent final security and is released in normal a3cd; Agent normal adoption and one remaining original are ready. Four R2 originals retain actual7c48/732 qualification. Element7131 remains failed5s; App current adoption and original are ready. Source release alone closes no original timing failure.
 regressions: No newly established Runtime regression. D77 genuine installed render remains cut-blocking. Known gaps and original historical failures remain visible at their recorded scopes.
 Gates: P1 GO31083 and P3 GO15493/independent2024 retain recorded tuples. All eight P2 remain unqualified; final P1–P5 and core matrix on one tuple still required. No cut, final build or ZIP.
 
-Blockers: Runtime P4 — candidate6a9 final security2346 active: independent260 required and192 neighbors PASS. Port controls, complete boundary attacks and normal apply on PASS remain. Released732 unchanged; no original timing credit.
+Blockers: Agent P4 — Runtime a3cd released with independent2346 PASS and exact home receipt. Agent normal adoption plus one ten-note original now ready; original45s unchanged. No Runtime source/review input owed.
 Blockers: App P2 — element7131 fails5s. Mounted drops source is home def3; actual asset12239 pending. ADD22240 reached canonical/history then wire333 failure; App2347 owns traffic. Tour home364f; bulk display2347 active. SWAP remote merge requested after PASS.
 Main profile: CLEARED by2250 private exact635f package resolution and four actual preflights PASS. Parent8232 terminal at exact request envelope; shared dependencies unchanged. Historical setup failures retained. [Prior report](../../design/runtime-main-profile-2238.md).
 Blockers: Final cut — D59 requires all lanes core0/regressions0, final pinned P1–P5/core, D69 and genuine installed render. Private final candidates remain uninstalled. Rehearsal retry waits heavy8.5GB threshold and critical priority.
-Next ready: Security2346 applies on PASS and publishes actual home; App merges reviewed SWAP80a. Agent reviews all six returned D86 families and sends exact source union. Batch union2356 prepares main route in parallel; one body follows reviewed joins.
+Next ready: Agent and App adopt released a3cd now and run existing remaining originals. App consumes reviewed SWAP80a remote merge. Main CLI first return2358 and batch union2356 active; other five families await Agent protected review.
 
 Venues: App P1/P2/P3 and final P2 tour; Agent P4; main P5/Composition. Spare main four diagnostics use fixedbceb/039f/732/635f only. D73 captures tuple once, genuine checkout receipts and preflight precede body. Newer heads do not invalidate an in-flight run.
 Delivery: Runtime merge, Agent merge, authentic App manifest command with schema digest equality, App merge. D65/D67/D72 docs installed. D77 render and D62 submit-completeness known gap remain explicit.
 Later: E1/E3, AgentE2 and D79 paused until ZIP. D42 cross-request memo held; V4 cut, D14/D23 deferred; unsafe D34 cleanup held. D56 Farm/schema access stopped. All historical safety/access/cleanup/process refusals remain stopped.
 Disk: 7521595392 available bytes at23:31; sourcecap6 underD85, service tiers retained. Sweep3 removed0; compact packed0 and gzipped10old logs. No ended clean nonKEEP Runtime tree eligible; no refused-target retry.
 
-live 2 / cap 6 source; ready-undispatched 0. Runtime security2346 running; batch union2356 queued. Six Agent source families returned and reserved for Agent protected review. SWAP reviewed PASS, normal remote merge requested. No per-family body.
-Current pass 2026-10-24T23:55:55Z: consumed INBOX through631313 bytes. No ended clean nonKEEP Runtime worktree eligible. Normal sweep3/compact active; results pending. Rehearsal remains below8.5GB and behind critical work. All original budgets, security holds and final cut requirements retained.
+live 2 / cap 6 source; ready-undispatched 0. CLI first return2358 and private batch union2356 active. Runtime security2346 PASS and normal apply complete. App SWAP remote merge queued; five other D86 families await Agent review.
+Current pass 2026-10-24T23:58:52Z: released a3cd full-provider source and exact independent report/home receipt to Agent and App. INBOX through634506 bytes. Sweep3 removed0; compact packed0 scratch/0 test dirs, gzipped0. Free7259672576 bytes. No eligible ended clean nonKEEP tree.
