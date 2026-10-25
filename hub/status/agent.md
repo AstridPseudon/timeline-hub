@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T03:11:43Z | dispatcher heartbeat 9s | live 5 (sol 0, luna 5, other 0) | busy30 15 | status age 7m -->
-# agent board, 2026-10-25T02:57:10Z
+<!-- agent | 2026-10-25T03:15:04Z | dispatcher heartbeat 15s | live 1 (sol 0, luna 1, other 0) | busy30 14 | status age 0m -->
+# agent board, 2026-10-25T03:12:03Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -11,7 +11,7 @@
 | G2 / G3 | Public commit, emitter, CLI and sheet | Sol / Luna | R1, R2 | merged | G234 integrated0549 | Joined131 and live Runtime controls passed. P4 retains actual HTTP scope. | ea302e0f5 |
 | G4 | Remaining production writers | Sol / Luna | G2 | merged | G234; video; media admission0832 | Writer migration qualified; media admission20 passed on0ff3. Managed duck original remains held. | ea302e0f5; 0ff3d103fb |
 | G5 | Retire superseded writers | Luna / Sol | H24 criteria | merged | Custody review2155 | 350 cases, four SDK and c271 passed. Historical raw packet loss remains disclosed. | c36ca8c94 |
-| P4 owner | Qualify unchanged ten-note original | Runtime Sol / Luna | One cross-process measurement then targeted fix | blocked:runtime | Cost0228; wholepath0229; sample0242 requested | Actual14151 FAIL45.448s versus45 on d407/6634. Owner orders one sampled actual original; original credentials and calls only under D93. | d407 /6634 |
+| P4 owner | Qualify unchanged ten-note original | Runtime Sol / Luna | Measured source correction then one original | blocked:runtime | Cost0301; sample25257 complete | Diagnostic FAIL45.557s; all432 stacks captured. Runtime digest and input tracking dominate observed stacks. No unprofiled gate credit. | d407 /6634 |
 | F original census | Keep exact historical267 records | Sol / Luna | Independent accounting | merged | Count0818; review0827 | 263 closed,4 open;123 exact mappings. Current full9758 remains a separate failed checkpoint. | Census e13d65ba |
 | F checkpoint9758 | Retain failed full checkpoint | Service / Luna | Exact census complete | merged | 9758; census 1052 and 1058 | Historical FAIL: 17673 passed, 231 failed, 45 errors. All 276 bad IDs exact. This is retained evidence, never full PASS. | ba55 / tree c13 |
 | F checkpoint setup | Correct profile setup | Luna / Luna | Source1052; review1105 | merged | Install1118; review1124 | All45 errors classified:3 loops and42 artifact mismatches. Actual registry18de/row0bdf verified; no full retry. | Candidate4a2a3472d1 |
@@ -160,8 +160,8 @@
 | D86 main word46 | Preserve native word binding behavior | Main Luna | MAIN source successor proof | merging | Functional0145; review0152 PASS | Exact9e88 supported init then original rational fps; normal5dc9. Nine semantic failures remain separate; no body. | 5dc9f0c898 |
 | D86 main CLI8 | Preserve real CLI idempotency | Main Luna | Main affected-node batch | merging | Runtime0022 PASS; home a0b8a3c078 | Real store retries and exact mismatch reason verified; eight assigned scenarios and twelve tests conserved. Functional proof pending. | Home a0b8a3c078 |
 | F next cohort11 | Preserve next-command scenarios | Luna | MAIN meaningful successor proof | merging | Word9e88; normal5dc9; inputs0200 | Exact2 historical PASS retained;9 prior setup errors now eligible via reviewed shared word fps correction. Actual behavior owed. | 5dc9f0c898 |
-| D86 main media20 | Preserve parent-media scenarios | MAIN Luna | Normal merge then meaningful MAIN proof | merging | Author0240; protected0245 PASS | Earlier MAIN owner arrived late. Exact child media claims source queued. Local0257 differs and stays held; duplicate local review stopped. All20 behavior owed. | 2a04d92fca |
-| D86 main auto14 | Preserve parent auto-completion | MAIN Luna | Existing protected review0254 | review | Author0241; review0254; six-case facts0254 | Earlier MAIN owner arrived late. Local0257 held; duplicate review stopped. Two exact code expectations corrected; six guarded-address failures stay open. | MAIN candidate held |
+| D86 main media20 | Preserve parent-media scenarios | MAIN Luna | MAIN meaningful proof | merging | Author0240; protected0245 PASS | Exact claims correction now normal7f4e; target blob equals reviewed98c254. All20 remain behaviorally unqualified. | 7f4ea9ce7d |
+| D86 main auto14 | Preserve parent auto-completion | MAIN Luna | MAIN corrected two plus separate guard six | merging | Author0241; protected0254 PASS | Two exact field-error literals now normal7e237. Six guarded-address originals owned by Agent source0314. No behavioral closure. | 7e23790248 |
 | F current sheet17 | Preserve current sheet scenarios | Luna | MAIN corrected subset proof | merging | Author0157; review0203 PASS | Normal3b8f exact reviewed64166; original17 conserved. Init/emitter source corrected; inverse1 and retired CLI3 findings held. | 3b8f341cf6 |
 | F main batch recipe | Hand back exact affected-node inputs | Luna | Main recipe2337 and source joins | merging | agt-F-main-batch-prep-2342 | Exact251 source-only snapshot exported. Extra37 assigned cases join later; remaining live core stays visible. No registry install or body. | Private bundle only |
 | F M2 placement20 | Preserve placement recipe scenarios | Luna | MAIN successor qualification | merging | BatchE0151 PASS; home536b | Exact85e046 protected PASS, mirrored parent clips preserved; all20 retained. Source joined; behavior owed. | 536bb82153 |
@@ -206,24 +206,33 @@
 
 | D91 inverse window | Make five original-third hosts valid | Luna | Protected PASS then exact MAIN proof | merging | Author0218; independent0223 PASS | Approved host1.8 to2.0s only. Normal 9f697 has exact source; other timing and predicates exact. MAIN proof and D72 log owed. | 9f697afcf0 |
 
-| P4 cross-process sample | Measure actual ten-note process costs | MAIN Luna | Locally proven corrected observer | doing | First0233 actual30057; corrected agt0242 | First FAIL45.478s,43.90 CPU/46.14wall; zero Python CLI children. Observer failed before all timed stacks; dominant function UNKNOWN. One corrected owner only. | d407 /6634 /4b984 /635f |
+| P4 cross-process sample | Measure actual ten-note process costs | MAIN Luna | Complete corrected measurement | merged | Corrected0242; actual25257 | All432 samples captured, one process, zero Python CLI children. Main42.63 CPU/46.32 wall; Runtime digest121 and cursor106 samples. | d407 /6634 /4b984 /635f |
 
 | F D72 current receipts | Publish approved migration log entries | Luna | Existing independent PASS | merged | Review-log0239 | Exact D91 and core-element D83 entries appended with original byte prefix and hash preserved. MAIN proof remains pending. | Existing ledger only |
 | F current supplement | Publish exact new proof inputs | Luna | Existing MAIN receiving route | merged | Return0252 PASS; flat packet published | Exact 34 new selectors, zero overlap with immutable230. All34 AST and eight home hashes pass. Review inventory is24 scopes; functional proof pending. | Home 562ee |
 
-| F held thirteen | Resolve exact word and sheet inputs | Luna read only | Existing current source and old failure traces | doing | agt-F-held13-source-disposition-0301 | Nine word semantics and four sheet findings need per-ID eligibility or bounded owner scope. No code or body; preserve all live originals. | Normal 562ee |
+| F held thirteen | Route exact word and sheet inputs | Luna read only | Named owner follow-through | merged | Source disposition0301 complete | Zero eligible unchanged retries. Ten live seams and three retired CLI setup routes mapped. Five receiving source/input workers0314 assigned. | 562ee source facts |
 
-Integration: Current Agent 562ee30b6e includes five reviewed source joins: occurrence48, D91 host window, core-element literal, inverse7 source hashes, genuine D92 fixture. Every imported file matches its reviewed blob. D90 remains qualified by actual28969 PASS36; final tuple remains separate.
-core open: P4 service14151 FAIL45.448s versus45 on d407/6634. Owner now authorizes ONE cross-process sample through the existing original route; MAIN host requested. Four R2 retain qualified historical scope.
+| F parent guard six | Resolve exact rebase guard projection | Luna read only | Existing10077 traces and current source | doing | agt-F-parent-guard-six-0314 | Source only; exact kind/ref/path remains unknown until trace. No Runtime preview reached. | Current7e237 |
+| F sheet CLI three | Migrate current-sheet retired CLI setup | Luna | Current ordinary commit and sheet routes | doing | agt-F-sheet-cli3-migrate-0314 | Three live scenarios keep all pins, retry, inverse and ABA predicates. No new native envelope. | Current7e237 |
+| F word source four | Resolve timing, registry and status scope | Luna read only | Current C0 and exact held IDs | doing | agt-F-word-four-source-0314 | Four precise cases; existing D14/D23 checked before source author. No unchanged body. | Current7e237 |
+| F inverse source six | Bind inverse failures to exact owner | Luna read only | Exact source disposition complete | merged | Source0314 complete | Two exact D14 positives remain deferred. Four live auth seams handed to Runtime with conditional Agent producer follow-up. No body. | Current7e237 |
+| F next exact input | Join new source receipts to later delta | Luna | Media20 and auto two normal merges | doing | agt-F-next-inputs-0314 | Existing34 supplement preserved. Subtract current161, later102 and scheduled D91; no duplicate body. | Current7e237 |
+
+| R2 inverse auth four | Preserve retained inverse scenarios | Runtime / Agent source | Exact producer and auth follow-through | blocked:runtime | Agent0314 complete; peer sent | Four historical10077 inverse range/boundary/coverage failures remain live. No present-source failure or cure inferred. | Current7e237 /6634 |
+
+Integration: Agent7e23790248 normally includes media0240 and auto0241 reviewed corrections; both exact target blobs match independent reviews. D90 remains qualified by actual28969 PASS36; final tuple separate.
+core open: P4 historical14151 FAIL45.448s; corrected diagnostic25257 FAIL45.557s. All requested timed stacks captured. One Runtime cost0301 owns evidence-directed repair; no Agent diagnosis or duplicate original.
 Gates: P1 and P3 historical GO. D59 final pinned P1-P5/core, D69 and genuine installed render still owed. No full PASS, core0, final tuple or ZIP claim. E2/D79 after ZIP.
-Rehearsal categories: PRE16 / KNOWN37 / ENV73 / NEWcore424 / NEWnoncore0 / REG0 =550. Eighteen ENV contrasts later passed; every identity and scope limit retained.
-Families: Exact161 packet0200 plus69 packet0209 yields230 corrected selectors. MAIN existing161 prep0218 owns qualification route. Newly merged occurrence48, pending D91/core-element and netzero need exact successor mapping. All23 no-case remain unqualified first bodies.
-Admission: D92 genuine A/B route preserved unused manifest pin. Protected review0243 PASS and exact clean normal562ee complete. Three compound originals await MAIN. Atomic and ABA stay separate. No legacy retirement.
-Safety: Old D88 denial/prototype stay stopped. D93 classifies private401 as product-fixture scope mismatch; only the exact original credential/session/calls are allowed. Runtime0228 resumes under D93; no invented scopes. Sample remains one existing-route body.
-Disk: Amended02:42 source/review6 above5.0GB, heavy1 above5.2GB, nothing new4.5GB. Free6.047GB before cleanjoin request; reclaimed completed trees safely. Sweep3 removed0; compact0. No ended nonKEEP unrecycled tree; old dirty/KEEP/refused paths untouched.
-Blockers: MAIN proof — Exact230 corrected input and new reviewed fixture joins need meaningful existing-runner qualification; all23 no-case/livefrontend6/netzero1 remain visibly unqualified.
+Rehearsal categories: PRE16 / KNOWN37 / ENV73 / NEWcore424 / NEWnoncore0 / REG0 =550. Eighteen ENV contrasts later passed; every exact scope limit retained.
+Families: First meaningful161 service9211 terminal6PASS43FAIL112ERROR on capturedcef8. Mechanical Runtime export0303 pending. D91 ten follows. Existing later102 plus Agent34 supplement and new media20/auto two require exact disjoint mapping by0314. No unchanged268 retry.
+Admission: D92 genuine A/B retains unused manifest pin; normal562ee exactly reviewed. Three compound originals await MAIN. Atomic and ABA separate. No legacy retirement.
+Safety: Old D88 denial/prototype remain stopped. D93 permits only original fixture credentials/session/granted scopes/calls. Corrected sample complete; no further sample queued.
+Disk: D89 amended source/review6 above5.0GB; heavy1 above5.2GB; nothing new below4.5GB. Five source jobs started at5.566GB; post-start free4.917GB holds new source starts. Approved sweep3 and compact running; historical dirty/KEEP/refused paths untouched.
+Blockers: Runtime source — P4 measured correction0301 requires one independent review and normal release before meaningful original.
+Blockers: MAIN proof — Actual161 then D91 and exact later delta must qualify merged scenarios. All no-case and held live scenarios remain visible.
 Blockers: Final cut — D59 pinned P1-P5/core, D69 and genuine installed render required.
-Next ready: Existing MAIN media0240 source merge and auto0241 protected review; MAIN actual sample0233, current161/D91 proofs and exact34 supplemental inputs. No unchanged original or broad retry.
-live 1 plus duplicate review stopping / cap 6; ready-undispatched 0 eligible local starts. Held13 source disposition0301 active. Earlier MAIN media0240/auto0241 owners now consumed; local duplicate branches held and review stopped. Exact34 packet published. MAIN sample0233 exclusive.
+Next ready: Five assigned source/input0314 jobs; sheet correction receives one protected review on completion. No new review for already reviewed media/auto branches.
+live 4 / cap6; ready-undispatched0 eligible source starts. Current pending review inventory is24 scopes, not24 unresolved diffs.
 
-Inbox consumed through1309019 bytes. Updated 2026-10-25T02:54:31Z: exact normal562ee verifies all reviewed joins; D72 log complete; D92 original assertions retained, helper proof owed; metadata packet correction active. No manager product/test/pin edits or bodies.
+Inbox consumed through1318650 bytes. Updated 2026-10-25T03:12:03Z. Exact media/auto source joins verified; held13 disposition and original artifacts byte-published. No manager product/test/generated/pin edits or bodies.
