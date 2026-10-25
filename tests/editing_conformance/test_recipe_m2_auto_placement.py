@@ -105,9 +105,10 @@ class GenuineTimeline:
                 binding.update(media_id=old['object_id'], generationId=old['generation_id'],
                                variantId=old['variant_id'])
                 assets[old['asset']] = binding
-                for row in payload.get('clips', []):
-                    if row.get('asset') == 'picture':
-                        row['asset'] = old['asset']
+                for rows in (payload.get('clips', []), payload.get('config', {}).get('clips', [])):
+                    for row in rows:
+                        if row.get('asset') == 'picture':
+                            row['asset'] = old['asset']
             for image in [document['parent_revision'], *document['shot_revisions'],
                           *document['internal_timeline_revisions']]:
                 image['content_digest'] = _digest(image['payload'])
