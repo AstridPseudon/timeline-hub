@@ -1,0 +1,15 @@
+{
+  "schema": "timeline-four-target-audit-handoff.v1",
+  "status": "stop-not-authorized",
+  "helper": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-four-target-audit-1212/evidence/host-audit.py",
+  "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-four-target-audit-1212/evidence/receipt.json",
+  "targets": [
+    "/home/user/work/venv-agent-child-d21b-fixture",
+    "/home/user/work/venv-agent-child-s2",
+    "/home/user/work/venv-agent-child-s2-c13",
+    "/home/user/work/runtimes/agent-remotion"
+  ],
+  "host_view": "sandbox-only; normal-host rerun required",
+  "guard": "existing guarded retirement only after authentic zero-process/no-reference result; no retry or alternate",
+  "grammar_boundary": "agent-remotion requires a hyphenated suffix; agent-remotion-current remains protected"
+}
