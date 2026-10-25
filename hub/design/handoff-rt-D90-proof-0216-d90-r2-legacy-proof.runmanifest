@@ -1,0 +1,7 @@
+agent_sha=89642bafc8adbd2e56000dd3b1c89323107354f6
+runtime_sha=a3cd1a3214fa1632879c21d82d1abb9ea720b1de
+app_sha=4b98436552bf30f5fb28bbb958b1817430b12e34
+composition_sha=635f4de06fda22a85fc2e4cfc764d0153a4c9f40
+original_p4_test_hash=8a3b4422c36815e1718ee1da674c1ee57d60a02faef2f7f6fb91dc2a483c3fa1
+service_versions=agent:89642bafc8adbd2e56000dd3b1c89323107354f6,runtime:a3cd1a3214fa1632879c21d82d1abb9ea720b1de,node:v20.19.4,composition:0.0.13,client:0.2.14,schema:sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b
+junit_paths=/home/user/work/wt/rt-D90-candidate-proof-0200/evidence/rt-D90-candidate-proof-0200/d90-r2-legacy-proof.xml

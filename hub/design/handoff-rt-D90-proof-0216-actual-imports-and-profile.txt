@@ -1,0 +1,14 @@
+astrid_origin=/home/user/work/wt/agt-pin-89642baf/astrid/__init__.py
+client_origin=/home/user/work/wt/agt-pin-89642baf/astrid_runtime_client/__init__.py
+runtime_origin=/home/user/work/wt/rt-pin-a3cd1a32/runtime_protocol/__init__.py
+schema_origin=/home/user/work/wt/agt-pin-89642baf/astrid/core/timeline/banodoco_schema.py
+contract_version=0.2.14
+schema_digest=sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b
+profile=/home/user/work/runtimes/agent-remotion-0013
+profile_node_modules=/home/user/work/runtimes/agent-remotion-0013/node_modules
+profile_node_modules_symlink=False
+profile_package_lock_sha256=c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24
+profile_registry_sha256=b0de93a936fa0f406cc4e6901dfdc558f55c633f7e349ae5d5704492dacb0f1d
+profile_archive_sha256=9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738
+profile_composition_version=0.0.13
+runtime_lock_source=a3cd1a3214fa1632879c21d82d1abb9ea720b1de
