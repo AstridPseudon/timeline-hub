@@ -1,0 +1,96 @@
+{
+  "schema": "timeline.d139.import-census-correction/v1",
+  "task": "D139",
+  "status": "PASS_FINITE_RECONCILED",
+  "source_tuple": {
+    "agent_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+    "agent_tree": "d50fd98f7d1bc6860de810f38e8a0b3a55ca224e",
+    "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "runtime_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657"
+  },
+  "correction": {
+    "prior_graph_edges": 17604,
+    "prior_import_occurrence_records": 17642,
+    "excluded_occurrences": 38,
+    "reconciled_arithmetic": "17604 + 38 = 17642",
+    "graph_scope": "The 17604-edge graph is a filtered runtime/source graph: it excludes the embedded D73 launcher preflight and missing imports whose source-proved guard contains try/except.",
+    "rule_is_exhaustive": true,
+    "originals_remain_byte_exact": true
+  },
+  "exclusion_rules": [
+    {
+      "rule_id": "d73_launcher_preflight",
+      "predicate": "occurrence.path == tools/p4-d73-pinned-launch.sh",
+      "source_proof": "The pinned launcher contains two embedded Python blocks at lines 82-89 and 94-115; their imports are preflight input and are not graph.edges.",
+      "count": 14,
+      "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+      "source_sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd"
+    },
+    {
+      "rule_id": "caught_or_conditional_missing",
+      "predicate": "occurrence.category == missing and occurrence.guard contains try/except",
+      "source_proof": "The Agent source lines recorded in excluded-occurrences.json place every such missing import inside a try/except boundary; graph.edges retains missing imports without that guard.",
+      "count": 24,
+      "source_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d"
+    }
+  ],
+  "source_proof_files": {
+    "astrid/core/generation/backends/vibecomfy.py": {
+      "git_blob": "52c4c86ed76fa19bada15e9f5d4143f9443af398",
+      "sha256": "7eb7b430f884de5f882de02a0f1ecb7625e2a6a1da24b13d63b320c3fce6f79a"
+    },
+    "astrid/core/timeline/banodoco_schema.py": {
+      "git_blob": "1b3f12da05da3bb89fa76881184eefdf8232e076",
+      "sha256": "572845f1102cefd2c8c9cae1f889393e3ba1b7b2b8d681f3f1f0bd96c63321ce"
+    },
+    "astrid/packs/vibecomfy/production_engine.py": {
+      "git_blob": "7494d080aad84a649804664c98454f1d2443c540",
+      "sha256": "2f71562ccc64e3b80c70fa9d99aa183f4bc658d7873302062705f3ce45166709"
+    },
+    "tests/packs/rendering/_helpers.py": {
+      "git_blob": "a82e128b2a75065c01e1f1877ca04753ad13aaa7",
+      "sha256": "0bd4941857b2707925257070ee1a1957370126922f31530fb4494b4fdbdb4e11"
+    },
+    "tools/p4-d73-pinned-launch.sh": {
+      "sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd"
+    }
+  },
+  "counts": {
+    "graph_nodes": 1001,
+    "graph_edges": 17604,
+    "import_table_entries": 1146,
+    "import_occurrence_records": 17642,
+    "excluded_occurrence_records": 38,
+    "dynamic_records": 983,
+    "root_selectors": 22,
+    "root_python_files": 431,
+    "source_rows": 1001,
+    "parse_errors": 0
+  },
+  "excluded_by_path": {
+    "tools/p4-d73-pinned-launch.sh": 14,
+    "astrid/core/generation/backends/vibecomfy.py": 10,
+    "astrid/core/timeline/banodoco_schema.py": 7,
+    "astrid/packs/vibecomfy/production_engine.py": 6,
+    "tests/packs/rendering/_helpers.py": 1
+  },
+  "missing_classification": {
+    "reported_total": 17,
+    "registered_child_exact_missing": 12,
+    "explicitly_optional_or_plugin_missing": 5,
+    "unconditional_missing_blockers": 0,
+    "mapping_source": "source-manifest.json:missing_module_mapping"
+  },
+  "runtime_boundary": {
+    "recipe_and_kit_owner": "Runtime",
+    "source_facts_remain_usable": true,
+    "this_correction_does_not_request_or_execute_child_or_provider_work": true
+  },
+  "original_evidence_sha256": {
+    "input-census.json": "be9e8bc9c6d2411809da2d99126a9b3eef72678de2066bb6ad196d5d16ebcd30",
+    "missing-modules.json": "2d008eae7e10ec0364b4395e0e368a72690680ee15729d65cb39c5e51b39fc2b",
+    "source-manifest.json": "da8140716e8cc84c61c6956faac7559e116eeea79b1649bfcf7f73bdedb59153",
+    "source-pins.json": "7644e140279928e915513cf7a6ac8fb115bd91d788db4ec81bc31105d423584a",
+    "review.json": "a961de1dfb5ac97ff5c5ffc74c04c1de52cdef7da080d0e8238508d4795b185f"
+  }
+}
