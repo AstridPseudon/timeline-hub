@@ -1,0 +1,174 @@
+{
+  "request_conservation": "PASS: exact whole source except HTTP setup and two status assertions versus original; exactly two status constants versus first return",
+  "parent_literal_conservation": "PASS: config.clips absent; top-level clips empty",
+  "test_predicates": [
+    {
+      "function": "test_pre_enforcement_alias_history_reopens_with_current_authority",
+      "original_source_sha256": "b8262b40aaeaea8af342f16ee0f0e46641002862035ba5bf81c56a9c5a6fc75a",
+      "current_source_sha256": "b8262b40aaeaea8af342f16ee0f0e46641002862035ba5bf81c56a9c5a6fc75a",
+      "original_assertions": 8,
+      "current_assertions": 8,
+      "status_only_delta": false,
+      "all_other_predicates_exact": true
+    },
+    {
+      "function": "test_http_attached_selected_param_retains_original_pin_after_v2_removal_restart",
+      "original_source_sha256": "1ff8b996ebd1bb451969de4e45232b98a06fc1a9838cbb0b0cbe9073ea8170de",
+      "current_source_sha256": "1ff8b996ebd1bb451969de4e45232b98a06fc1a9838cbb0b0cbe9073ea8170de",
+      "original_assertions": 13,
+      "current_assertions": 13,
+      "status_only_delta": false,
+      "all_other_predicates_exact": true
+    },
+    {
+      "function": "test_native_inverse_refuses_earlier_unchanged_selection_atomically",
+      "original_source_sha256": "f1fd3e04361db4a69ce166739505ed5a630f45e38773317f576e06a98cc71086",
+      "current_source_sha256": "f1fd3e04361db4a69ce166739505ed5a630f45e38773317f576e06a98cc71086",
+      "original_assertions": 8,
+      "current_assertions": 8,
+      "status_only_delta": false,
+      "all_other_predicates_exact": true
+    },
+    {
+      "function": "test_native_disjoint_staged_label_and_inverse_preserve_opaque",
+      "original_source_sha256": "3a3472ff606c348bd8f1c09cad2a6dc4c27505c7c699767e020e70682b007bf0",
+      "current_source_sha256": "3a3472ff606c348bd8f1c09cad2a6dc4c27505c7c699767e020e70682b007bf0",
+      "original_assertions": 2,
+      "current_assertions": 2,
+      "status_only_delta": false,
+      "all_other_predicates_exact": true
+    },
+    {
+      "function": "test_native_inverse_then_selection_and_params_use_staged_pin",
+      "original_source_sha256": "9837383c574f227863c35ff6164a6cf39fe16604666105f0ead031bec3f19186",
+      "current_source_sha256": "9837383c574f227863c35ff6164a6cf39fe16604666105f0ead031bec3f19186",
+      "original_assertions": 2,
+      "current_assertions": 2,
+      "status_only_delta": false,
+      "all_other_predicates_exact": true
+    },
+    {
+      "function": "test_mixed_pack_readmission_keeps_old_and_new_native_param_sources",
+      "original_source_sha256": "839e77dfae2f8b08233b2f17c50649383b5cc3ebebd7335cc3fe837f0cf2f270",
+      "current_source_sha256": "839e77dfae2f8b08233b2f17c50649383b5cc3ebebd7335cc3fe837f0cf2f270",
+      "original_assertions": 16,
+      "current_assertions": 16,
+      "status_only_delta": false,
+      "all_other_predicates_exact": true
+    },
+    {
+      "function": "test_native_params_reads_only_the_exact_selected_object",
+      "original_source_sha256": "36d47b52709b8b132babc301419c60efa933aabfe3a59048d148e0c393bfea87",
+      "current_source_sha256": "36d47b52709b8b132babc301419c60efa933aabfe3a59048d148e0c393bfea87",
+      "original_assertions": 3,
+      "current_assertions": 3,
+      "status_only_delta": false,
+      "all_other_predicates_exact": true
+    },
+    {
+      "function": "test_native_params_does_not_consume_unselected_bytes",
+      "original_source_sha256": "c3ba1b601a79b21b1c7ad57ece8e547e6441e655de94033109fc1eafc34d9920",
+      "current_source_sha256": "c3ba1b601a79b21b1c7ad57ece8e547e6441e655de94033109fc1eafc34d9920",
+      "original_assertions": 2,
+      "current_assertions": 2,
+      "status_only_delta": false,
+      "all_other_predicates_exact": true
+    },
+    {
+      "function": "test_native_staged_params_different_refs_and_pins_inverse_redo_restore",
+      "original_source_sha256": "90c582127c357e15b3487ccc0aac12fc067fc88b027ea824bd8330404cd39bc5",
+      "current_source_sha256": "90c582127c357e15b3487ccc0aac12fc067fc88b027ea824bd8330404cd39bc5",
+      "original_assertions": 11,
+      "current_assertions": 11,
+      "status_only_delta": false,
+      "all_other_predicates_exact": true
+    },
+    {
+      "function": "test_native_rebase_after_v2_and_selection_removal_uses_original_object",
+      "original_source_sha256": "494d6d6dd5f0a1c209d93ed46f117b8132c6c083ff7df71c33a2d76df2a35e17",
+      "current_source_sha256": "b75ec031bd05dafbecb03026c6ad5c4944ef98ae96a8eb0331d5f400d5941bfb",
+      "original_assertions": 5,
+      "current_assertions": 5,
+      "status_only_delta": true,
+      "all_other_predicates_exact": true
+    },
+    {
+      "function": "test_native_multiple_params_share_only_the_needed_object",
+      "original_source_sha256": "1e13d3d12bf4bf15c4c2683d99863430e1526ae9d26f8ab741ecee01dab465b0",
+      "current_source_sha256": "1e13d3d12bf4bf15c4c2683d99863430e1526ae9d26f8ab741ecee01dab465b0",
+      "original_assertions": 2,
+      "current_assertions": 2,
+      "status_only_delta": false,
+      "all_other_predicates_exact": true
+    },
+    {
+      "function": "test_native_retained_schema_replay_inverse_reload_and_exact_retry",
+      "original_source_sha256": "0fd8e47cd8aacba57ef224f18b11005e6f761e9fe9490bb60f79cb7b7fec3963",
+      "current_source_sha256": "0fd8e47cd8aacba57ef224f18b11005e6f761e9fe9490bb60f79cb7b7fec3963",
+      "original_assertions": 8,
+      "current_assertions": 8,
+      "status_only_delta": false,
+      "all_other_predicates_exact": true
+    },
+    {
+      "function": "test_native_provider_refuses_unavailable_or_wrong_retained_basis",
+      "original_source_sha256": "892a8d59f5870e41cedba9ff46e35223ca24c48b6a37247aab311ab84a6de812",
+      "current_source_sha256": "892a8d59f5870e41cedba9ff46e35223ca24c48b6a37247aab311ab84a6de812",
+      "original_assertions": 2,
+      "current_assertions": 2,
+      "status_only_delta": false,
+      "all_other_predicates_exact": true
+    },
+    {
+      "function": "test_paired_provider_requires_exact_installed_contract_digest",
+      "original_source_sha256": "74e3f60fae9d04e8ab6bfd167aa350d0c49880102a1c6e99f72de2ad9be7dbb7",
+      "current_source_sha256": "74e3f60fae9d04e8ab6bfd167aa350d0c49880102a1c6e99f72de2ad9be7dbb7",
+      "original_assertions": 1,
+      "current_assertions": 1,
+      "status_only_delta": false,
+      "all_other_predicates_exact": true
+    },
+    {
+      "function": "test_native_equal_json_opposite_selection_order_and_inverse_restore",
+      "original_source_sha256": "e05c81fe990d9c191776fce25323a070c054bec2d9382ec2b8aae352bfd3f2dc",
+      "current_source_sha256": "e05c81fe990d9c191776fce25323a070c054bec2d9382ec2b8aae352bfd3f2dc",
+      "original_assertions": 6,
+      "current_assertions": 6,
+      "status_only_delta": false,
+      "all_other_predicates_exact": true
+    },
+    {
+      "function": "test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive",
+      "original_source_sha256": "e685aaa1c864f33e89ffdca51280c9e4edef8aeebb0ab5aee6e40e5cdd25db11",
+      "current_source_sha256": "3f84d3465f07a5cacd2ed46a6abe2d1ebfadffdcdb48fb3182469c17049ce713",
+      "original_assertions": 3,
+      "current_assertions": 3,
+      "status_only_delta": true,
+      "all_other_predicates_exact": true
+    },
+    {
+      "function": "test_native_birth_without_selection_cannot_authorize_param",
+      "original_source_sha256": "37247ef06477812e10fcb47f51d51e595f5547951ce599db2e606582ff294205",
+      "current_source_sha256": "37247ef06477812e10fcb47f51d51e595f5547951ce599db2e606582ff294205",
+      "original_assertions": 1,
+      "current_assertions": 1,
+      "status_only_delta": false,
+      "all_other_predicates_exact": true
+    }
+  ],
+  "unknown_functions": [
+    "test_pre_enforcement_alias_history_reopens_with_current_authority",
+    "test_mixed_pack_readmission_keeps_old_and_new_native_param_sources",
+    "test_native_disjoint_staged_label_and_inverse_preserve_opaque",
+    "test_native_inverse_then_selection_and_params_use_staged_pin",
+    "test_native_equal_json_opposite_selection_order_and_inverse_restore",
+    "test_native_retained_schema_replay_inverse_reload_and_exact_retry"
+  ],
+  "unknown_cases": 7,
+  "unknown_source_and_decorators": "exact",
+  "source_body_changes_from_original": [
+    "http_retained_pack",
+    "test_native_rebase_after_v2_and_selection_removal_uses_original_object",
+    "test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive"
+  ]
+}

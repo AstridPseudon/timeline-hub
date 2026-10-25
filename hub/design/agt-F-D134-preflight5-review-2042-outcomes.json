@@ -1,0 +1,14 @@
+{
+  "source_review": "PASS",
+  "source_checks": {
+    "py_compile": "PASS",
+    "ruff": "PASS",
+    "mypy": "PASS",
+    "diff_check": "PASS"
+  },
+  "functional": {
+    "ordinary_sheet": "UNAPPLIED dependency; unchanged",
+    "fork_integration": "UNVERIFIED; central exact-selector prerequisite unavailable",
+    "central_prior_targeted": "exit 5; five integration nodes deselected"
+  }
+}

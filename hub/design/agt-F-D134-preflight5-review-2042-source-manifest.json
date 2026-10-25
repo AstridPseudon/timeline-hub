@@ -1,0 +1,25 @@
+{
+  "base_commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "candidate_commit": "8c41696560fd278705751febdcd32527bc2cdf07",
+  "candidate_tree": "b3638fbf9edb2b2104a89a7e7e4400cac707e471",
+  "changed_files": [
+    {
+      "path": "tests/editing_conformance/test_occurrence_fork_source_baseline.py",
+      "status": "modified",
+      "sha256": "3fef15b5862e044942f2d0164b37f6f9281f86d378345d8a0b262c64870af8a4"
+    }
+  ],
+  "unchanged_files": [
+    {
+      "path": "tests/editing_conformance/test_native_sheet_ordinary_runtime.py",
+      "status": "unchanged",
+      "sha256": "63eb7f78060f336880e8de0aa97fe6c47abd7d524b72e55af5eca3e389f702b"
+    }
+  ],
+  "runtime": {
+    "path": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "clean": true
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "sources": [
+    {
+      "role": "first_return_test",
+      "repo": "agent",
+      "ref": "tl/agt-F-D134-selected-first-return-2034",
+      "path": "tests/sdk/test_timeline_selected_schema_runtime.py",
+      "sha256": "d48c63f0dd8799f058fb8aa1c9abf0729a1d938465b793788fc0936f06d9fca4",
+      "ranges": {
+        "request_helper": "174-183",
+        "http_parent_and_doc_patch_setup": "228-268",
+        "http_pin_history_lost_ack_restart_refusal_undo": "330-412",
+        "fresh_native_status_assertion_one": "749-750",
+        "fresh_native_status_assertion_two": "978-983"
+      }
+    },
+    {
+      "role": "runtime_contract",
+      "repo": "runtime",
+      "refs": ["5e9ad1c6f74241d8771d3284fdd2ce7a214fd344", "ab1e4f6141987706132916e2da16477f5a019464", "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9"],
+      "path": "contract/commit-v2.md",
+      "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+      "rules": ["omitted label/steps are ABI-1 compatible", "new v2/modeled landings use merged", "historical rebased receipts replay unchanged", "exact retry uses durable request identity"]
+    },
+    {
+      "role": "runtime_classifier",
+      "repo": "runtime",
+      "ref": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+      "path": "runtime_protocol/timeline_commit_store.py",
+      "sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+      "ranges": {"modern_classifier": "80-90", "historical_and_modern_status": "734-738", "accept_status_and_normalized_fields": "1878-1892"}
+    },
+    {
+      "role": "agent_normalization",
+      "repo": "agent",
+      "ref": "tl/integration",
+      "paths": {
+        "astrid/sdk/timeline/_commit_patch.py": {"sha256": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f", "ranges": "42-88,278-294"},
+        "astrid/sdk/timeline/_commit_preview.py": {"ranges": "7-22"},
+        "astrid/sdk/timeline/commit.py": {"sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3", "ranges": "1160-1190,1342-1394,1421-1434"}
+      }
+    },
+    {
+      "role": "historical_record",
+      "repo": "agent",
+      "path": "tests/sdk/fixtures/selected-param-legacy/accepted.zip::accepted.json",
+      "sha256": "79f881f95ce13338ee8cd5490529c43a55523819792eed682160a9042770dc56",
+      "facts": {"idempotency_key": "legacy-params", "status": "accepted", "rebased_onto": null}
+    }
+  ]
+}

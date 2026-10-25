@@ -1,0 +1,33 @@
+{
+  "source": "PASS",
+  "status": "BLOCKED_LIVE_PREREQUISITE",
+  "applied_delta": "two status-only assertions in the sole assigned test file; HTTP setup inherited from first return",
+  "local_three": {
+    "executed": 0,
+    "passed": 0,
+    "failed": 0,
+    "credit": false
+  },
+  "http_one": {
+    "executed": 0,
+    "credit": false
+  },
+  "historical_retry": {
+    "source_preserved": true,
+    "executed": false
+  },
+  "prerequisites": {
+    "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "runtime_clean": true,
+    "origins_and_provider_contract": "PASS",
+    "free_bytes": 6133731328,
+    "min_free_bytes": 5000000000,
+    "heavy_workers": [
+      "agt-F-D137-real-child-core-2044"
+    ],
+    "heavy_tests": [],
+    "result": "REFUSED_NO_HEAVY_ASSERTION"
+  },
+  "stop_rule": "Stopped immediately after prerequisite refusal; no live tests, retries, acquisition, fallback or near-match Runtime."
+}
+

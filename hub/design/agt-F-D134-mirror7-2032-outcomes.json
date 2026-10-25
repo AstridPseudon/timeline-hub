@@ -1,0 +1,11 @@
+{
+  "first_source_control_node": {"count": 1, "passed": 1},
+  "remaining_exact_nodes": {"count": 6, "passed": 6},
+  "total_exact_d134_nodes": {"count": 7, "passed": 7},
+  "full_suite": "not run by instruction",
+  "unrelated_word_cases": "not run",
+  "notes": [
+    "The final source aliases only equal captured mirrors and keeps the recipe echo perturbation in-memory for that test-local spike.",
+    "No failure was converted to skip/xfail and no assertion was weakened."
+  ]
+}

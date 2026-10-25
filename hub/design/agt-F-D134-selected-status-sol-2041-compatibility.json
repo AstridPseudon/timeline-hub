@@ -1,0 +1,56 @@
+{
+  "classification": "NEW_CURRENT_C0_REQUESTS",
+  "source_only": true,
+  "live_behavior_credit": false,
+  "wire_versions": {
+    "api_version": 1,
+    "command_schema_version": 1,
+    "meaning": "Current C0 wire versions, not proof of historical acceptance"
+  },
+  "original_requests": {
+    "unchanged": true,
+    "controls_added": [],
+    "fresh_realm": "retained_pack initializes a new RealmStore and creates a new selected-schema project",
+    "new_keys": [
+      "rebase-after-v2",
+      "authority-retry"
+    ],
+    "prior_keys": "retain-multi, after-v2, authority-peer are distinct; no historical backup/receipt is loaded in these nodes",
+    "normalization": "CommitPatch.normalize_steps synthesizes Timeline edit/edit with complete authoritative patches; authored request and invocation hash remain unchanged",
+    "provider_output": "commands.execute -> CommitPatch.finish assigns plan.steps/label/merge_mode -> prepared_records copies them into Runtime prepared records",
+    "runtime_accept": "TimelineCommitStore._is_v2_request(request, prepared.records) is true when records has steps. accept selects merged iff expected_head differs from requested base."
+  },
+  "native_source_controls": [
+    {
+      "path": "tests/sdk/test_timeline_commit_provider.py:295",
+      "test": "test_legacy_rebase_records_landing_step_metadata",
+      "finding": "Native omitted-control request carries authoritative landing step patches/dependencies; source comparison only, not executed here"
+    },
+    {
+      "path": "tests/sdk/test_timeline_commit_provider.py:312",
+      "test": "test_replay_accepts_legacy_request_head_and_builds_steps",
+      "finding": "Original native request is passed through execute/replay; steps derived in both; source comparison only, not executed here"
+    }
+  ],
+  "historical_retry_control": {
+    "path": "/home/user/work/wt/rt-pin-ab1e4f61/tests/test_timeline_commit_acceptance.py:287",
+    "test": "test_legacy_rebased_receipt_and_history_keep_v2_metadata_absent_after_restart",
+    "modified": false,
+    "executed": false,
+    "finding": "The existing control accepts legacy prepared records with no step evidence, gets genuine rebased acceptance, reopens the Runtime, and asserts exact lookup equality, absent v2 metadata and zero integrity errors. It does not rewrite database rows.",
+    "implementation": "Coordinator lookup precedes provider execution. TimelineCommitStore._lookup checks original publisher-bound hash and verifies stored row/edge, then returns _envelope. _verify_accepted allows authentic historical rebased and new merged, retaining event chain/records/head checks. No stored envelope is normalized."
+  },
+  "decision": "Existing D120 status-only adaptation: two assertion constants cover three new stale-base requests. No product/contract/input change; authentic historical rebased retries stay unchanged.",
+  "origins": {
+    "astrid": "/home/user/work/wt/agt-F-D134-selected-status-sol-2041/astrid/__init__.py",
+    "runtime": "/home/user/work/wt/rt-pin-ab1e4f61/runtime_protocol/__init__.py",
+    "client": "/home/user/work/wt/agt-F-D134-selected-status-sol-2041/astrid_runtime_client/__init__.py",
+    "schema": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py",
+    "contract_version": "0.2.14",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "provider_contract": "PASS"
+  },
+  "runtime_receipt": "queue/done/checkout-runtime-ab1e4f6141987706132916e2da16477f5a019464",
+  "validation_boundary": "Runtime import/provider contract validated; live selected nodes not run because no-heavy prerequisite refused."
+}
+

@@ -1,0 +1,62 @@
+{
+  "schema": "timeline.agent.f_d134_selected_wholepath_review.v1",
+  "task": "agt-F-D134-selected-wholepath-2041",
+  "verdict": "PASS_SOURCE",
+  "behavior_credit": "NONE",
+  "scope": {
+    "repo": "composition",
+    "reviewed_agent_ref": "tl/agt-F-D134-selected-first-return-2034",
+    "reviewed_agent_commit": "4073fb0f84a9d0afbcba61b9406748a09d9c3c62",
+    "author_commit": "d67a83086cdfb165a1b8e229b5cd1f3307004d09",
+    "independent_review_commit": "fa07365d2e7ad44aa017c8ce6f8810b0fd02a709",
+    "runtime_frozen_c0": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "runtime_current": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9"
+  },
+  "source_findings": [
+    {
+      "id": "F1-resolved",
+      "status": "resolved_source",
+      "detail": "The first return removes the v2_request wrapper from the three selected native stale-base cases and restores their original API-1 request bodies and rebased assertions."
+    },
+    {
+      "id": "F2-compatibility",
+      "status": "routine_expectation_disposition",
+      "detail": "Those cases use fresh keys rebase-after-v2 and authority-retry. They are new requests, not historical receipt retries. Current Runtime normalizes omitted label/steps, receives provider step records, and returns merged for a moved-head fresh acceptance. The preserved rebased expectations are therefore stale against current C0 semantics, but this is not evidence of a product fault. Sol may authorize a routine expectation correction; this read-only task makes no source or test change."
+    },
+    {
+      "id": "F3-http",
+      "status": "source_restored_behavior_unverified",
+      "detail": "The first return restores the retired HTTP setup through registered commitTimeline/doc.patch, preserves the parent payload with config.clips absent, and retains the pin/history/lost-ACK/restart/refusal/undo predicates. The central HTTP node was deselected previously; no retry or body credit is assigned."
+    },
+    {
+      "id": "F4-conservation",
+      "status": "resolved_source",
+      "detail": "All seven UNKNOWN cases are AST/source-hash identical to pristine base; no product source, provider registration, fixture, schema, pin, generated file, or permission was changed."
+    }
+  ],
+  "classification": {
+    "new_request": {
+      "controls": "api_version=1/schema_version=1 with label/steps omitted is allowed by C0",
+      "keys": ["rebase-after-v2", "authority-retry"],
+      "receipt_class": "new acceptance",
+      "status_normative": "merged when landing differs from requested base"
+    },
+    "exact_retry": {
+      "control": "same idempotency key and byte-identical request after first durable acceptance/restart",
+      "receipt_class": "ledger replay",
+      "status_normative": "unchanged original envelope; no provider execution or new history"
+    },
+    "historical_record": {
+      "fixture": "selected-param-legacy/accepted.zip",
+      "key": "legacy-params",
+      "record_status": "accepted",
+      "record_base": "equals landing base",
+      "conclusion": "No genuine historical rebased receipt was found in this selected cohort; do not use the archive to reclassify fresh requests."
+    }
+  },
+  "body_status": {
+    "targeted_three": "existing first-return execution observed merged against preserved rebased assertions; not credited as behavior",
+    "http": "unverified; central service deselected the node; no retry",
+    "policy": "source-only review; stop before body/provider rerun"
+  }
+}

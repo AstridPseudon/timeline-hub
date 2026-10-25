@@ -1,0 +1,20 @@
+{
+  "task": "D134 mirror7",
+  "agent_head": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "runtime_head_used_for_direct_validation": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+  "changed_files": [
+    {
+      "path": "tests/editing_conformance/test_native_word_anchor.py",
+      "sha256": "34247fcc475a3bf6ba8a059a9f3a3b87cac0eb228dbe9192c1f0468df100e4d9",
+      "insertions": 24,
+      "deletions": 6
+    },
+    {
+      "path": "tests/editing_conformance/test_word_binding_recipe.py",
+      "sha256": "3d1ede88f92fb4950d41835a7de985324d4335c8b9a72657ae3ee28568ca6dce",
+      "insertions": 27,
+      "deletions": 12
+    }
+  ],
+  "scope_check": "Only the two task-authorized test files changed."
+}

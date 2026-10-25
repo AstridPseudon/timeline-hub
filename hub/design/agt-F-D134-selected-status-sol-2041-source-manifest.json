@@ -1,0 +1,34 @@
+{
+  "source_gate": "PASS",
+  "head": "4073fb0f84a9d0afbcba61b9406748a09d9c3c62",
+  "original_base": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "first_return_base": "4073fb0f84a9d0afbcba61b9406748a09d9c3c62",
+  "changed_paths_from_first_return": [
+    "tests/sdk/test_timeline_selected_schema_runtime.py"
+  ],
+  "runtime": {
+    "path": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "clean": true,
+    "checkout_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-ab1e4f6141987706132916e2da16477f5a019464"
+  },
+  "sha256": {
+    "/home/user/work/wt/rt-pin-ab1e4f61/runtime_protocol/service.py": "13587d2c3b58ecb6838525e69cbaa38a045b2491a34170275e1d5e55354bf51b",
+    "/home/user/work/wt/rt-pin-ab1e4f61/runtime_protocol/timeline_commit_store.py": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+    "/home/user/work/wt/rt-pin-ab1e4f61/runtime_protocol/timeline_commit_execution.py": "5956b4850e11d517a6bcc9aa8ae7f0074b45810e26faa8ffe391b907e764c257",
+    "/home/user/work/wt/rt-pin-ab1e4f61/runtime_protocol/timeline_commit_port.py": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14",
+    "/home/user/work/wt/rt-pin-ab1e4f61/contract/commit-v2.md": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "/home/user/work/wt/rt-pin-ab1e4f61/contract/schemas/timeline-commit.json": "3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815",
+    "/home/user/work/wt/rt-pin-ab1e4f61/tests/test_timeline_commit_acceptance.py": "210363497fcdcac96bd734080a69de1f642aeaeca0e944ad133e67012eadcc3a",
+    "/home/user/work/wt/rt-pin-ab1e4f61/tests/test_timeline_commit_contract.py": "59693de6b54c7b2660469a771e6d705cdcb4fd512c5700b9089ddb232838404b",
+    "/home/user/work/wt/agt-F-D134-selected-status-sol-2041/tests/sdk/test_timeline_selected_schema_runtime.py": "b4ddc4b539884e8720199c188aad33240496ab606160a241ae9bd253c69a8b18",
+    "/home/user/work/wt/agt-F-D134-selected-status-sol-2041/astrid/sdk/timeline/commit.py": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+    "/home/user/work/wt/agt-F-D134-selected-status-sol-2041/astrid/sdk/timeline/commands.py": "b89798a439daace286e6702647c670c532a21575719e4df1bda87607b855ee96",
+    "/home/user/work/wt/agt-F-D134-selected-status-sol-2041/astrid/sdk/timeline/_commit_patch.py": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f",
+    "/home/user/work/wt/agt-F-D134-selected-status-sol-2041/astrid/sdk/timeline/_commit_preview.py": "9380dd2e3eb9c041b8515e20d979e2cce4aa0ca9cbfeed81f40c315357f77c36",
+    "/home/user/work/wt/agt-F-D134-selected-status-sol-2041/tests/helpers/runtime.py": "4d084450df4d8e9dbdef934bf19ab9d909a8caecdd2646a21b758955e07a883f",
+    "/home/user/work/wt/agt-F-D134-selected-status-sol-2041/tests/sdk/test_timeline_commit_provider.py": "cde797633e42e21fc7219c2b5288ce8238cdacf92e094450e02e4e746c871434",
+    "/home/user/work/wt/agt-F-D134-selected-status-sol-2041/runtime.lock.json": "ad818e99cb0759d1742d9f67b5bb3367b03fd3e88d8f65846253169272b8b6ce"
+  }
+}

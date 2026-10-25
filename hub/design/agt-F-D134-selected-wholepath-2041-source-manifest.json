@@ -1,0 +1,25 @@
+{
+  "schema": "timeline.agent.f_d134_selected_wholepath_source_manifest.v1",
+  "workspace_head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "workspace_clean_before_evidence": true,
+  "agent_first_return": "4073fb0f84a9d0afbcba61b9406748a09d9c3c62",
+  "agent_author_2019": "d67a83086cdfb165a1b8e229b5cd1f3307004d09",
+  "agent_reviewer_2026": "fa07365d2e7ad44aa017c8ce6f8810b0fd02a709",
+  "runtime_frozen": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+  "runtime_current": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+  "tracked_scope": ["evidence/review.json", "evidence/findings.md", "evidence/source-map.json", "evidence/source-manifest.json", "evidence/validation.md", "evidence/progress.md"],
+  "source_files": {
+    "agent_selected_test": "d48c63f0dd8799f058fb8aa1c9abf0729a1d938465b793788fc0936f06d9fca4",
+    "runtime_contract": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "runtime_service": "13587d2c3b58ecb6838525e69cbaa38a045b2491a34170275e1d5e55354bf51b",
+    "runtime_store": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+    "agent_commit_patch": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f",
+    "agent_commit": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3"
+  },
+  "unknown_cases": {
+    "base_commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "all_seven_source_hashes_equal": true,
+    "assertion_counts": [8, 16, 2, 2, 2, 6, 8]
+  },
+  "changes_outside_evidence": []
+}
