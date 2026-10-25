@@ -245,13 +245,21 @@ function inverseFixture() {
   return {
     post: { key: 'request-key', body },
     before: { revision_id: 'revision', publication_id: 'publication' },
-    expected: { projectId: 'project', timelineId: 'timeline', publicationId: 'publication' },
+    expected: { projectId: 'project', timelineId: 'timeline', publicationId: 'publication', action: 'Undo' },
   };
 }
 
 test('actual shared request helper accepts the full v2 Undo envelope', () => {
   const { post, before, expected } = inverseFixture();
-  checkRequest(post, before, false, expected);
+  checkRequest(post, before, expected);
+});
+
+test('actual shared request helper accepts the source-derived full v2 Redo envelope', () => {
+  const { post, before, expected } = inverseFixture();
+  post.body.label = 'Redo timeline';
+  post.body.steps[0].label = 'Redo timeline';
+  post.body.steps[0].intent = 'Redo timeline';
+  checkRequest(post, before, { ...expected, action: 'Redo' });
 });
 
 test('the retired minimal Undo envelope is red against the genuine full request', () => {
@@ -261,7 +269,7 @@ test('the retired minimal Undo envelope is red against the genuine full request'
     base_revision_id: before.revision_id, base_publication_id: before.publication_id,
     commands: post.body.commands, source: { via: 'app' },
   }));
-  checkRequest(post, before, false, expected);
+  checkRequest(post, before, expected);
 });
 
 test('actual shared request helper refuses Undo envelope mutations', () => {
@@ -283,7 +291,7 @@ test('actual shared request helper refuses Undo envelope mutations', () => {
   for (const mutate of variants) {
     const candidate = structuredClone(post);
     mutate(candidate);
-    assert.throws(() => checkRequest(candidate, before, false, expected));
+    assert.throws(() => checkRequest(candidate, before, expected));
   }
 });
 
@@ -388,6 +396,68 @@ function replyFixture() {
     result: envelope,
   };
 }
+
+function inverseReplyFixture(action) {
+  const fixture = replyFixture();
+  const command = {
+    schema_version: 1, op: 'timeline.inverse', version: '1', select: null,
+    args: { publications: ['publication'] },
+  };
+  const submittedStep = {
+    id: 'inverse-step', label: `${action} timeline`, intent: `${action} timeline`, tags: [],
+    command_ordinals: [0], patch: [],
+  };
+  const authoritativeCommand = {
+    ...command, intent: {}, resolved: [], expect: {}, authorship: {}, reads: [], selections: [], bindings: {}, created: [],
+  };
+  const authoritativeStep = {
+    ...submittedStep, patch: [{ op: 'set' }], dependencies: [{ kind: 'scope' }],
+  };
+  fixture.post.body.commands = [command];
+  fixture.post.body.label = `${action} timeline`;
+  fixture.post.body.steps = [submittedStep];
+  fixture.post.body.merge = 'fields';
+  fixture.post.body.reads = [];
+  fixture.post.json.data.commands = [authoritativeCommand];
+  fixture.post.json.data.label = `${action} timeline`;
+  fixture.post.json.data.steps = [authoritativeStep];
+  fixture.post.json.data.merge_mode = 'fields';
+  fixture.post.json.receipt.command_kind = 'timeline.inverse';
+  return fixture;
+}
+
+test('actual reply helper uses explicit native Undo/Redo metadata and keeps omission fallback exact', () => {
+  for (const action of ['Undo', 'Redo']) {
+    const fixture = inverseReplyFixture(action);
+    assert.doesNotThrow(() => checkReply(fixture.post, { revision_id: 'revision', publication_id: 'publication' }));
+  }
+
+  const legacy = replyFixture();
+  delete legacy.post.body.label;
+  delete legacy.post.body.steps;
+  legacy.post.json.data.label = 'Timeline edit';
+  legacy.post.json.data.steps = [{
+    id: 'edit', label: 'Timeline edit', intent: '', tags: [], command_ordinals: [0],
+    patch: [{ op: 'set' }], dependencies: [{ kind: 'scope' }],
+  }];
+  assert.doesNotThrow(() => checkReply(legacy.post, { revision_id: 'revision', publication_id: 'publication' }));
+});
+
+test('actual reply helper refuses wrong, missing, and extra explicit native metadata', () => {
+  const variants = [
+    (candidate) => { candidate.post.body.label = 'Timeline edit'; },
+    (candidate) => { delete candidate.post.body.steps; },
+    (candidate) => { candidate.post.body.steps[0].intent = 'wrong intent'; },
+    (candidate) => { candidate.post.json.data.label = 'Timeline edit'; },
+    (candidate) => { candidate.post.json.data.steps[0].unexpected = true; },
+    (candidate) => { candidate.post.json.data.steps[0].dependencies = []; },
+  ];
+  for (const mutate of variants) {
+    const candidate = inverseReplyFixture('Undo');
+    mutate(candidate);
+    assert.throws(() => checkReply(candidate.post, { revision_id: 'revision', publication_id: 'publication' }));
+  }
+});
 
 test('actual reply helper accepts a distinct UUID request key and txn receipt identity', () => {
   const { post, result } = replyFixture();
