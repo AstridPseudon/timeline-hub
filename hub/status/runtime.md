@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T06:29:20Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 15 | status age 0m -->
-# runtime board, 2026-10-25T06:27:16Z
+<!-- main | 2026-10-25T06:32:46Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 13 | status age 1m -->
+# runtime board, 2026-10-25T06:31:16Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -259,7 +259,7 @@
 
 | OPS-old-U1c-trees | Retire superseded upstream draft trees | Manager route | Full host and route audit clear | merged | bin/recycle three named U1c workers | All three ended, clean; zero process, queue, active service or lease users. Superseded by U1d. Branches and every report/output retained. | No source change |
 
-| D86-command68-pairs | Classify exact recorded mismatches | Agent source owner | Published active D98a packet | blocked:agent | Runtimepeer0526; exact32278 packet | All29 safe paths handed over;firstauthorship absent/object. No more diagnostic bodies or guessed common cause. | Existing records only |
+| D86-command68-pairs | Classify exact recorded mismatches | Agent source owner / Runtime service | Fixed-release normal adoption | review | Agent capture 0545; protected 0550; normal a90bc | Exact 29 paths classified. Registered capture fixes created claims; three functional originals prepared and await adopted tuple. No observer repeat. | Agent a90bc7f9e1 |
 | D86-20-22-safe-export | Publish exact terminal metadata | Luna read only | Safe publication complete | merged | Exact0358; packets0406 | 48 safe flat files published byte-exact. Genuine22 XML has4PASS18ERROR; original packet and actual20 preserved. | Evidence only |
 | OPS-D94a-stale-pins | Release unused main pin worktrees | Manager route | Full live-source and host audit clear | merged | bin/recycle six exact unused pins | Six clean idle pins: no live worker, process, queue, service or lease users. About0.7GB freed; all receipts/reports/branches retained. | No source change |
 | R-P4-private-cost-0215 | Close superseded private cost harness | Sol history | Owner D94a closes this work | gated:superseded | Worker0215 ended; no retry | Cross-process sample and D94a replace private harness. Original credential scope mismatch retained; no invented scopes. | Evidence only |
@@ -329,10 +329,10 @@
 | D86-17724-export | Return exact new 13 outcomes | Luna read only | Safe packet published | merged | rt-D86-17724-safe-export-0618 | Exact 13: four FAIL and nine ERROR; nine safe files published byte-exact. No rerun. [Packet](../../design/handoff-rt-D86-17724-0618-README.md) | Evidence only |
 | D102c-consumer-adoption | Adopt qualified fixed Runtime source | App and Agent Luna | Normal fixed release available | ready | App and Agent peer 0615 | Normal tools only, then App ONE ADD diagnostic. No new source review or P4 repeat; actual receipts pending. | Runtime 1daca2a33 |
 
-| R-release-smoke | Require genuine provider seed before release | Luna / independent Luna | Independent review PASS | merging | Author 0622; reviewer 0626 PASS | Genuine provider two PASS; fail-closed CLI, shell and scoped statics PASS. Normal merge requested immediately. [Review](../../design/rt-R-release-smoke-review-0626-report.md) | 79f49a7dc |
-| D86-opaque13-follow | Preserve opaque physical correspondence | Luna | Independent whole-path source result | review | Source 0627; independent wholepath 0627 | No edit: physical item correspondence changes item-audio to item-2. D100 dependency proposed; exact scope awaits independent comparison. | Source unchanged |
+| R-release-smoke | Require genuine provider seed before release | Luna / independent Luna | Normal merged source qualification | doing | Review 0626 PASS; home 0630 active | Normal c916 retains exact reviewed source; integrated genuine-provider smoke and CLI controls active. [Review](../../design/rt-R-release-smoke-review-0626-report.md) | c91626f5e / 79f49a7dc |
+| D86-opaque13-follow | Preserve opaque physical correspondence | Luna | Independent source audit complete | merged | Source 0627; wholepath 0627 | Source assessment only. Actual cause UNKNOWN; missing per-command records prevent fixture or product attribution. Original six remain ERROR. | Source unchanged |
 | D86-script13-follow | Preserve four script scenarios | Luna / independent Luna | Protected source review | review | Author 0627; reviewer 0629 | One registered-capture setup correction. Two physical-promotion and one descriptor seams returned unapplied; original predicates retained. | Candidate source only |
-| D86-13-wholepath | Compare current failures with passing callers | Luna read only | Second failed gate fix | doing | rt-D86-17724-wholepath-0627 | Independent full-path source comparison; no body, collector, invented command records or guessed common cause. | Evidence only |
+| D86-13-wholepath | Compare current failures with passing callers | Luna read only | Source assessment complete | merged | rt-D86-17724-wholepath-0627 | Ten actual outcomes stay UNKNOWN_UNAPPLIED; exact missing provider records identified. [Report](../../design/rt-D86-17724-wholepath-0627-report.md) | Evidence only |
 | D103-17724-follow | Preserve genuine CLI setup metadata | Agent source owner | Actual 17724 packet and peer 0627 | blocked:agent | Agent allocator requested in peer 0627 | Three genuine-media setup errors at selected metadata. Existing times, 42-second container and original assertions remain. | Agent current source |
 | D107-M1-replacement | Cover current combined word-bound sequence | Agent source owner | D107 owner decision | blocked:agent | Agent exclusive source and ledger allocator | D107 answers legacy ten scope. Archive read plus one current combined sequence and independent protected proof now required. | New coverage pending |
 
@@ -345,16 +345,16 @@ regressions: D102 replay regression CLOSED on exact normal reviewed tree. Earlie
 Gates: P1/P3 historical GO; current P4 independent GO 28.101s with per-note timings UNKNOWN. Four isolated P2 GO on recorded tuples; full tour and final D59 P1-P5/core/render proofs remain required.
 
 Blockers: App and Agent — Adopt released 1daca through normal tools and return actual normal receipts. App then ONE ADD diagnostic with reviewed pre-seed log retention; SWAP after root correction.
-Blockers: Agent restore — Actual ID5 1023 errors on contradictory parent mirrors after private route repair. Exact fixture owner requested in peer 0606; no Runtime guard relaxation or unchanged original retry.
+Blockers: Agent restore — Mirror fixture is normal 5554; independent protected review 0620 and exact held-product join are pending before the one remaining ID5 proof. No unchanged retry.
 Blockers: Agent D100 — Exact outcomes and both independent whole-path reports published. Agent original time/shared-item owners and earlier whole-path 0555 handle current source corrections; no repeated candidate body.
 Blockers: Final cut — All-lane core zero, current final P1-P5/core, D69 and genuine installed render still owed. No final tuple or ZIP.
 Safety: Withdrawn D88 action/prototype remain stopped. D106 clears the wrong-target publication question: one Agent worker uses exact ORCH outputs; nobody retries the denied hub target. New briefs explicitly forbid hub writes.
-Next ready: Consumer normal adoption then ONE App ADD. D98a functional packet waits actual Agent receipt. Release smoke and three source investigations assigned; Agent owns CLI and D107 coverage.
+Next ready: Actual consumer adoption then ONE App ADD and Runtime D98a or exact21 functional proof. Protected script review0629 and home release-smoke0630 active. Agent owns CLI, D107 and mirror joins.
 Venues: New13 17724 is terminal, registry restored. No MAIN heavy body active. One heavy body at a time above 5.2 GB; no duplicate App original or unchanged passed controls.
 Delivery: Existing-clone rehearsal remains gated on D59. Final build, ZIP and genuine installed render pending.
 Later: No unchanged 161, 102, 20, 22, 96, 61, 60 or 13 repeats; no passed inverse7, four R2 or P4 repeats. Projection nine still needs actual D100 PASS and normal source.
-Disk: About 5.85 GB after six audited stale pins were recycled. Sweep3 removed zero; compact still running. Registered sources retained. Three abandoned v1 trees contain untracked test work and remain intact.
-live 2 / cap 6; ready-undispatched 0 eligible local starts. Protected script review 0629 and independent wholepath 0627 active; release-smoke merge queued. D98a functional requires actual Agent adoption receipt; no added approval stage.
-Dispatcher: Normal merge 1daca source tree equals final independent review. Agent D101 normal 01d516 has no product delta under astrid versus the qualified e021 source. All generated/client/schema bytes preserved.
+Disk: About 6.13 GB after six audited stale pins were recycled. Sweep3 removed zero; compact compressed eleven old logs. Registered sources and branches retained. Three v1 trees have untracked tests; no deletion.
+live 2 / cap 6; ready-undispatched 0 eligible local starts. Script protected0629 and integrated release-smoke0630 active. Three functional source packets await genuine consumer adoption or protected mirror join. D98a functional requires actual Agent adoption receipt; no added approval stage.
+Dispatcher: Normal c916 adds reviewed release checks only; product bytes remain 1daca. Existing 1daca consumer target stays qualified. Agent mirror5554 received; all generated/client/schema bytes preserved.
 INBOX consumed through 998417 bytes. Updated 2026-10-25T06:24:35Z. D105a stays App-owned; D106 complete. D107 source and coverage remain Agent-owned; no duplicate M1 author.
 
