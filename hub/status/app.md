@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T02:39:06Z | dispatcher heartbeat 7s | live 3 (sol 1, luna 2, other 0) | busy30 17 | status age 1m -->
-# app board, 2026-10-25T02:38Z
+<!-- app | 2026-10-25T02:43:54Z | dispatcher heartbeat 5s | live 3 (sol 0, luna 3, other 0) | busy30 17 | status age 1m -->
+# app board, 2026-10-25T02:42Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -168,7 +168,7 @@
 
 | P2-registry-asset-current | Qualify exact registry and import identity | Luna; service | Actual15897 terminal | gated:native-oracle-fix | Reviewer0130; source0142 | NO-GO240s. Readiness PASS; canonical registry/history/first reload reached. Undo request181 expects atomic, native sends fields. Later Undo tail NOTRUN. | App37384adf26 |
 
-| P2-asset-native-Undo | Complete strict native inverse tail | HARD Sol | Second review0216 FAIL | doing | app-P2-native-oracle-sol-0218 | Both Luna proposals held. Sol derives exact native metadata from independent before/target/history/readback inputs; wholepath0218 complete. | Source pending |
+| P2-asset-native-Undo | Review complete native inverse tail | HARD Sol; Luna next | Sol0218 author complete | review | app-P2-native-complete-protected-review-0242 | Author138 Node,18 semantic/geometry, three types and lint PASS; nine prior-source mutation failures. Fresh protected review dispatched. | Source06f2 held |
 
 | U4p-D88b | Adopt qualified replay memo release | Luna normal tools | Security0125 PASS; normal6634 | merged | app-U4p-D88b-adoption-0150 | Eight strict,15 vendor,14 mappings PASS; protected six exact. Normal queue receipt24865. | Home24865fa212 |
 
@@ -186,9 +186,9 @@ core open: Zero of eight isolated P2 gestures PASS. Element3111 fails applied433
 regressions: No new proven regression. P1 actual31083 and P3 actual15493 retain GO only on their recorded tuples.
 
 Blockers: Final cut — Runtime coordinates current eight isolated P2, full App tour, final pinned P1–P5/core and genuine installed render before ZIP.
-Next ready: Native Sol0218 then fresh protected review; ADD core review0236; bulk exact fixture return0230 then fresh independent review. Sole App SWAP9674 pending; main native parent12208 then single.
-live 3 source / cap 6; ready-undispatched 0 eligible starts. Sole App body9674 pending; launcher0235 ended. Two duplicate0234 workers stopped and recycled. D89 source above5.5GB, heavy one above5.2GB, nothing new below4.5GB, stop newest nongate4.0GB.
-Capacity: Free5.383GB during SWAP build. New source starts wait5.5GB; current admitted workers continue. Every ended clean nonKEEP local App tree scanned; none eligible. Two old dirty U3 guard refusals remain untouched. All run outputs retained. No orphan, compact or refused cleanup retry.
+Next ready: Fresh native protected review0242; ADD core review0236; bulk exact fixture return0230 then fresh independent review. Sole App SWAP9674 pending; main native parent12208 then single.
+live 3 source / cap 6; ready-undispatched 0 eligible starts. Native protected review0242 dispatched at5.564GB after author tree release. Sole App body9674 pending; launcher0235 ended. Two duplicate0234 workers stopped and recycled. D89 source above5.5GB, heavy one above5.2GB, nothing new below4.5GB, stop newest nongate4.0GB.
+Capacity: Free5.564GB before native review dispatch during SWAP build. New source starts wait5.5GB; current admitted workers continue. Every ended clean nonKEEP local App tree scanned; none eligible. Two old dirty U3 guard refusals remain untouched. All run outputs retained. No orphan, compact or refused cleanup retry.
 Inbox consumed through1873318 bytes. Runtime0223 SWAP finite facts consumed; no stale Runtime blocker remains. Cost0215 permission refusal is Runtime orchestrator-owned; no scope change or retry. Main native0217 actual parent12208 consumed; no duplicate pair.
 Later: D79 and E paused until ZIP. F-final fresh Appd11417a59 and Agent08e6 applied-result full suite belong to Runtime final coordinator. Gating App stays frozen upstream3881. Withdrawn D88 and denied actions stay held; distinct protectivePASS D88b6634 adopted normally.
 Evidence: [Corrected element3111](../../design/app-P2-element3111-corrected-0221.md), [bulk and ADD review](../../design/app-P2-bulk-ADD-review-0223.md), [ADD source return](../../design/app-P2-ADD3964-selection-return-0222.md), [SWAP launch brief](briefs/app-P2-D88b-SWAP-submit-0235.md).
