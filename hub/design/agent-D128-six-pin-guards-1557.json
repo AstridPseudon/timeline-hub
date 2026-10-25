@@ -1,0 +1,96 @@
+{
+  "host_clear": "Agent INBOX 2026-10-25T15:55:26Z lead audit",
+  "free_before": 6133792768,
+  "guards": [
+    {
+      "worker": "agt-pin-197d780d",
+      "worktree": "/home/user/work/wt/agt-pin-197d780d",
+      "model": "none",
+      "detached": true,
+      "clean": true,
+      "live_references": [],
+      "KEEP_present": true,
+      "normal_pin_lifecycle_has_no_ended_marker": true
+    },
+    {
+      "worker": "agt-pin-f4d6c72c",
+      "worktree": "/home/user/work/wt/agt-pin-f4d6c72c",
+      "model": "none",
+      "detached": true,
+      "clean": true,
+      "live_references": [],
+      "KEEP_present": true,
+      "normal_pin_lifecycle_has_no_ended_marker": true
+    },
+    {
+      "worker": "rt-pin-327da207",
+      "worktree": "/home/user/work/wt/rt-pin-327da207",
+      "model": "none",
+      "detached": true,
+      "clean": true,
+      "live_references": [],
+      "KEEP_present": true,
+      "normal_pin_lifecycle_has_no_ended_marker": true
+    },
+    {
+      "worker": "rt-pin-e89eb8c7",
+      "worktree": "/home/user/work/wt/rt-pin-e89eb8c7",
+      "model": "none",
+      "detached": true,
+      "clean": true,
+      "live_references": [],
+      "KEEP_present": true,
+      "normal_pin_lifecycle_has_no_ended_marker": true
+    },
+    {
+      "worker": "app-pin-255f9f12",
+      "worktree": "/home/user/work/wt/app-pin-255f9f12",
+      "model": "none",
+      "detached": true,
+      "clean": true,
+      "live_references": [],
+      "KEEP_present": true,
+      "normal_pin_lifecycle_has_no_ended_marker": true
+    },
+    {
+      "worker": "app-pin-ce1cd9c4",
+      "worktree": "/home/user/work/wt/app-pin-ce1cd9c4",
+      "model": "none",
+      "detached": true,
+      "clean": true,
+      "live_references": [],
+      "KEEP_present": true,
+      "normal_pin_lifecycle_has_no_ended_marker": true
+    }
+  ],
+  "permission": "release KEEP and use bin/recycle only",
+  "actual_recycle": {
+    "agt-pin-197d780d": {
+      "worktree_absent": true,
+      "recycled_marker": true
+    },
+    "agt-pin-f4d6c72c": {
+      "worktree_absent": true,
+      "recycled_marker": true
+    },
+    "rt-pin-327da207": {
+      "worktree_absent": true,
+      "recycled_marker": true
+    },
+    "rt-pin-e89eb8c7": {
+      "worktree_absent": true,
+      "recycled_marker": true
+    },
+    "app-pin-255f9f12": {
+      "worktree_absent": true,
+      "recycled_marker": true
+    },
+    "app-pin-ce1cd9c4": {
+      "worktree_absent": true,
+      "recycled_marker": true
+    }
+  },
+  "free_after": 6761951232,
+  "net_freed_bytes": 628158464,
+  "completed_at": "2026-10-25T15:58Z"
+}
