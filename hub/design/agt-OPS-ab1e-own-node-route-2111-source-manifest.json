@@ -1,0 +1,19 @@
+{
+  "schema": "timeline.agent.d134.own_node_source_manifest.v1",
+  "agent": {"snapshot_pwd": "/home/user/work/wt/agt-OPS-ab1e-own-node-route-2111", "head": "22bf4560aa66e917e8ccde0515475119bec58aea", "tree": "671ec5286bda452623a0f4a80123afd9195d9dfe", "clean": true},
+  "runtime": {"path": "/home/user/work/wt/rt-pin-ab1e4f61", "head": "ab1e4f6141987706132916e2da16477f5a019464", "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657", "clean": true, "historical_source_object": "a0dca16975dfe8f5e762703b99d9791a16cf7fd7", "historical_source_object_present": true},
+  "runtime_lock": {"path": "runtime.lock.json", "sha256": "ad818e99cb0759d1742d9f67b5bb3367b03fd3e88d8f65846253169272b8b6ce", "source_commit": "ab1e4f6141987706132916e2da16477f5a019464", "file_count": 15, "producer": "astrid-runtime", "manifest": "contract/artifacts.json"},
+  "source_hashes": {
+    "tests/timeline/test_authoring_media.py": "c437733944997fd1622bc25eb8860479e76f5b181dd4ba66bb3b7952f250c174",
+    "tests/sdk/test_timeline_selected_schema_runtime.py": "6d7ba7623cb59931d76d3eeefc564200f4a0336199cc64331fea0fc976939b9a",
+    "tests/editing_conformance/test_native_word_anchor.py": "8bfb67093dda0b84b1c8ff6b18db52ed727e37a111c85d4d1c4796519e524ea8",
+    "tests/editing_conformance/test_word_binding_recipe.py": "0c35eb6bb61f7f1990bd7b83270dc5b4c4ce30bb31a6d3b922750f4c32ff5b04",
+    "service_suite_preimage": "84d3045878ea806439b73b0a5ca983c06371fcac2d42bc8c7e8add0ebfbd3988"
+  },
+  "canonical_contract": {"version": "0.2.14", "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b"},
+  "remotion_profile": {"path": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110", "node_version": "v20.19.4", "package_lock_sha256": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d", "registry_sha256": "d609b44b37d724358a33405e9d8539008fd1ac30bc2f0d9746575c3fbadaac96", "composition_version": "0.0.14", "composition_archive_sha256": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234"},
+  "media_tools": {"ffmpeg": "6.1.1-3ubuntu5", "ffprobe": "6.1.1-3ubuntu5"},
+  "stale_route": {"path": "/home/user/work/wt/rt-pin-8ea0766f", "present": false, "source_line": "tests/timeline/test_authoring_media.py:916"},
+  "changes": [],
+  "behavioral_execution": false
+}

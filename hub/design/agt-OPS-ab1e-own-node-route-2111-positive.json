@@ -1,0 +1,10 @@
+{
+  "schema": "timeline.agent.d134.own_node_positive_dry.v1",
+  "status": "PASS",
+  "command": "ab1e-own-nodes.sh --dry-positive inert-stub.sh",
+  "source_checks": ["Agent PWD binding", "clean immutable Runtime SHA/tree", "canonical module origins", "Node v20.19.4", "ffmpeg/ffprobe presence", "Remotion profile realpath", "PYTHONNOUSERSITE absent"],
+  "stub_exit": 17,
+  "stub_calls": 1,
+  "origin_capture_sha256": "a9adab923c9ec96316ad3bc6562df9c17e271f4f4a72a6daa0404339ae1c6b34",
+  "behavioral_execution": false
+}

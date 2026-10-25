@@ -1,0 +1,31 @@
+{
+  "schema": "timeline.agent.d134.own_node_route.v1",
+  "task": "D134",
+  "scope": "source/dry only",
+  "decision": "propose-normal-row-no-live-install",
+  "reference_suite": "authoring-current8ea-nodes",
+  "proposed_suite": "ab1e-own-nodes",
+  "runtime": {
+    "path": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657"
+  },
+  "row_policy": {
+    "normal_worker_source": true,
+    "files_are_appended_by_request_test": true,
+    "pytest_args": ["-q", "-o", "addopts=", "-m", "integration", "-p", "no:cacheprovider", "--timeout=45"],
+    "forbidden": ["deselect", "-k", "skip", "xfail", "PYTHONNOUSERSITE", "mutable Runtime", "Runtime overlay", "service installation"]
+  },
+  "wrapper": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-OPS-ab1e-own-node-route-2111/evidence/ab1e-own-nodes.sh",
+    "sha256": "b51e6ad90795743d13d4227cc0094d550c34a64fa315a9b5667e214a57d8c1ad",
+    "purpose": "source identity and inert positive/poison controls; not a manager or installer"
+  },
+  "behavioral_status": "not_run",
+  "review_blocker": {
+    "kind": "exactmissinginput",
+    "path": "/home/user/work/wt/rt-pin-8ea0766f",
+    "detail": "tests/timeline/test_authoring_media.py:916 hardcodes this missing Runtime path; immutable ab1e cannot satisfy that unchanged selector without a forbidden test edit or overlay",
+    "disposition": "finite-stop; do not acquire, overlay, or weaken the test guard"
+  }
+}

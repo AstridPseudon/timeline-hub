@@ -1,0 +1,14 @@
+{
+  "schema": "timeline.agent.d134.own_node_prerequisites.v1",
+  "runtime_checkout": {"status": "PASS", "path": "/home/user/work/wt/rt-pin-ab1e4f61", "commit": "ab1e4f6141987706132916e2da16477f5a019464", "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657", "clean": true},
+  "agent_snapshot": {"status": "PASS", "binding": "actual PWD snapshot", "clean": true},
+  "node": {"status": "PASS", "path": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node", "version": "v20.19.4"},
+  "ffmpeg": {"status": "PASS", "version": "6.1.1-3ubuntu5"},
+  "ffprobe": {"status": "PASS", "version": "6.1.1-3ubuntu5"},
+  "remotion_profile": {"status": "PASS", "path": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110", "node_modules_realpath": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110/node_modules", "composition_version": "0.0.14"},
+  "schema": {"status": "PASS", "site_packages": "/home/user/work/venv-agent/lib/python3.13/site-packages", "contract_version": "0.2.14", "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b"},
+  "vibecomfy": {"status": "NOT_REQUIRED_BY_SELECTED_AUTHORING_SOURCES", "basis": "selected authoring source paths do not import or launch VibeComfy; no substitute checkout claimed"},
+  "network": {"status": "NOT_REQUIRED_FOR_SOURCE_DRY", "basis": "no provider, daemon, browser, Store, network, or child started"},
+  "guard_policy": {"PYTHONNOUSERSITE": "absent and forbidden", "runtime_overlay": "forbidden", "mutable_runtime": "not used", "behavioral_body": "not run"},
+  "blocking_input": {"status": "STOP", "code": "exactmissinginput", "path": "/home/user/work/wt/rt-pin-8ea0766f", "reason": "unchanged historical authoring test hardcodes the missing path at line 916"}
+}

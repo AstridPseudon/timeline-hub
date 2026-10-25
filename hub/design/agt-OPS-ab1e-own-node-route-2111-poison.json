@@ -1,0 +1,11 @@
+{
+  "schema": "timeline.agent.d134.own_node_poison_dry.v1",
+  "status": "PASS",
+  "command": "ab1e-own-nodes.sh --dry-poison inert-stub.sh",
+  "poisoned_runtime_sha": "0000000000000000000000000000000000000000",
+  "exit": 1,
+  "reason": "Runtime SHA mismatch",
+  "stub_calls": 0,
+  "origins_written": false,
+  "behavioral_execution": false
+}
