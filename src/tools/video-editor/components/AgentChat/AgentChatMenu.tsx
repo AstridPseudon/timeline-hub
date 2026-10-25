@@ -327,7 +327,9 @@ export const AgentChatMenu = forwardRef<AgentChatMenuHandle, AgentChatMenuProps>
               {browsing ? (
                 <>
                   <NewChatModels agent={browsing} submenu={submenu} models={shownModels} levelSelections={levelSelections[browsing]} openLevelSelector={openLevelSelector}
-                    returnFocus={search} onBack={() => browse(null)} onStart={(model, level) => start(browsing, model, level)}
+                    returnFocus={search} onBack={() => browse(null)}
+                    onStartNow={(model, level) => start(browsing, model, level)}
+                    onPick={(model, level) => start(browsing, model, level)}
                     onLevelSelectorOpenChange={(modelId, next) => {
                       setOpenLevelSelector(next ? modelId : null);
                       setHighlighted(`model:${modelId}`);

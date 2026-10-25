@@ -260,9 +260,10 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
           {browsing && <PickerSearch ref={search} autoFocus placeholder={`Search ${agentNames[browsing]} models…`} value={query} onValueChange={setQuery} />}
           <CommandList className={updateNeeded && !browsing ? 'max-h-48' : 'max-h-96'}>
             {browsing ? (
-              <NewChatModels agent={browsing} submenu={submenu} models={shownModels} levelSelections={levelSelections[browsing]} openLevelSelector={openLevelSelector}
-                returnFocus={search} onBack={() => browse(null)}
-                onStart={(model, level) => choose(browsing, model, level, submenu?.models.find(item => item.id === model)?.name)}
+              <NewChatModels agent={browsing} submenu={submenu} models={shownModels} levelSelections={levelSelections[browsing]} openLevelSelector={openLevelSelector} compactSelector showStartButtons
+                returnFocus={search} onBack={() => browse(null)} selectedModel={effective.agent === browsing ? effective.model : undefined}
+                onStartNow={(model, level, name) => { choose(browsing, model, level, name); if (level === undefined) onNewChat(browsing, model); else onNewChat(browsing, model, level); }}
+                onPick={(model, level) => choose(browsing, model, level, submenu?.models.find(item => item.id === model)?.name)}
                 onLevelSelectorOpenChange={(modelId, next) => {
                   setOpenLevelSelector(next ? modelId : null);
                   setHighlighted(`model:${modelId}`);
