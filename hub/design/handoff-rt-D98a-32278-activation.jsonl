@@ -1,0 +1,2 @@
+{"binding":"module_global","event":"observer_active","global_call_binding":true,"hook":"runtime_protocol.timeline_commit_auth.validate_claims(request, records)","observer_sha256":"4f8c5929225294c9d0927c2a95258ee319f6a2609b7c85cb545f5774e4988fdc","runtime_module":"runtime_protocol.timeline_commit_auth","signature":["request","records"],"wrapper_is_bound":true}
+{"binding":"module_global","event":"observer_restored","hook":"runtime_protocol.timeline_commit_auth.validate_claims(request, records)","restored_identity":true}

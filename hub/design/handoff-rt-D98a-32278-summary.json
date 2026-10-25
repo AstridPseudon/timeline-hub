@@ -1,0 +1,49 @@
+{
+  "junit_attributes": {
+    "name": "pytest tests"
+  },
+  "junit_root": "testsuites",
+  "observer": [
+    {
+      "first": {
+        "command_ordinal": 0,
+        "path": "commands[0].command.authorship",
+        "record_ordinal": 0,
+        "recorded_hash": "sha256:60367a4d5798711f63e7b0339035ba0f5eab1b3063498ce43af1df9ef5079a07",
+        "recorded_shape": "object",
+        "submitted_hash": "sha256:a4d0f0eb87fed960b9f1819efda1cd7935b4f665fdd3872149260986d11e96da",
+        "submitted_shape": "absent"
+      },
+      "mismatch_count": 29,
+      "status": "diff"
+    },
+    {
+      "first": {
+        "command_ordinal": 0,
+        "path": "commands[0].command.authorship",
+        "record_ordinal": 0,
+        "recorded_hash": "sha256:60367a4d5798711f63e7b0339035ba0f5eab1b3063498ce43af1df9ef5079a07",
+        "recorded_shape": "object",
+        "submitted_hash": "sha256:a4d0f0eb87fed960b9f1819efda1cd7935b4f665fdd3872149260986d11e96da",
+        "submitted_shape": "absent"
+      },
+      "mismatch_count": 29,
+      "status": "diff"
+    },
+    {
+      "first": {
+        "command_ordinal": 0,
+        "path": "commands[0].command.authorship",
+        "record_ordinal": 0,
+        "recorded_hash": "sha256:60367a4d5798711f63e7b0339035ba0f5eab1b3063498ce43af1df9ef5079a07",
+        "recorded_shape": "object",
+        "submitted_hash": "sha256:a4d0f0eb87fed960b9f1819efda1cd7935b4f665fdd3872149260986d11e96da",
+        "submitted_shape": "absent"
+      },
+      "mismatch_count": 29,
+      "status": "diff"
+    }
+  ],
+  "observer_rows": 3
+}
+testsuite {'name': 'pytest', 'errors': '3', 'failures': '0', 'skipped': '0', 'tests': '3', 'time': '5.505', 'timestamp': '2026-10-25T05:20:38.430516+00:00', 'hostname': 'vm'}
