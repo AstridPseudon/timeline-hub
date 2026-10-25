@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T02:20:06Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 0m -->
+<!-- agent | 2026-10-25T02:23:04Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 9 | status age 2m -->
 # agent board, 2026-10-25T02:19:26Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -150,7 +150,7 @@
 | F final categories | Qualify exact550 category rollup | Luna analysis | Membership proof passed | merged | agt-F-rehearsal-rollup-return-2320 | PRE16/KNOWN37/ENV73/NEWcore424/noncore0/REG0. Exact550;18env nowPASS.97 live fixtures retainedcore; D77cut hold. [Report](../../design/agt-F-rehearsal-rollup-return-2320.md) | Evidence only |
 | F providerABI20 | Preserve selected-PARAM provider identities | Luna | Actual named20 PASS | merged | Main10077; exporter0117 | All20 assigned originals PASS on exact0ae1/a3cd/913686/635f. Twenty-first strict neighbor and final tuple remain separate. | Home387c |
 | F WC6 fixture11 | Preserve failure and capture identities | Luna | Main affected-node batch | merging | Review2328 PASS; home159e | All59 assertions conserved; Ruff/mypy/compile PASS. Source merged; functional proof pending. [Review](../../workers/agt-F-wc6-review-2328/report.md) | 159e11abf5 |
-| F remaining core | Repair other independent live families | Luna slots as available | Exact550 cluster map | ready | Next available source slots | Dozens of ready families in linked rollup; preserve original assertions. No extra bodies before meaningful source/setup corrections. | No new source yet |
+| F remaining core | Keep all live family repairs moving | Luna / Sol | Named source, scope and proof rows | merging | Existing 57-family allocation | All 57 families map to the named grouped rows. Remaining work needs current source, decisions or MAIN proof; no duplicate author needed. | [Families](../../workers/agt-F-rehearsal-rollup-return-2320/evidence/dispatch-clusters.json) |
 | F native batch24 | Ledger retired native CLI batches | Luna / Main Luna | Protected coverage review complete | merged | Ledger0007; review0033 PASS | Exact24 plus separate1 mapped; zero current coverage gaps. Exact worker appendix published in Agent ledger; six other cases remain live. | Evidence only |
 | F NativeSheet11 | Preserve ordinary sheet behavior | Luna | MAIN meaningful successor proof | merging | Author0154; review0159 PASS | Exact fractional fps retained; normald265 blob exact reviewed0d02. Static PASS; NumPy mypy limit unchanged. All11 behavior owed. | d265112485 |
 | F projection9 | Preserve genuine captured sources | Luna | MAIN successor qualification | merging | BatchE0151 PASS; homeb0ac | Exact4a8ec protected PASS, original9 predicates retained. Normal home blob qualifies source only; behavior owed. | b0ac6891b2 |
