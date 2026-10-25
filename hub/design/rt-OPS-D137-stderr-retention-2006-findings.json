@@ -1,0 +1,42 @@
+{
+  "task": "D137",
+  "status": "SOURCE_READY_REVIEW_PENDING",
+  "decision": {
+    "fixture_e2e": "WITHDRAWN",
+    "e2e_result": "NOTRUN",
+    "production_install": false,
+    "acceptance": "UNVERIFIED"
+  },
+  "stage_stderr_coverage": {
+    "caller": "existing dispatcher -> installed entrypoint -> make-child-venv -> run_stage",
+    "all_run_stage_calls": "captured by shared run_stage wrapper",
+    "private_log": ".provision-stderr/<stage>.stderr mode 0600",
+    "public_output": "fixed identity/status summary only",
+    "timeout_exit": "preserved"
+  },
+  "source_change": {
+    "old_maker_sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+    "old_maker_bytes": 69516,
+    "new_maker_sha256": "7a065c078972d9fe91041bcd895ec8be151a034ef66539fed59aa884950119f8",
+    "new_maker_bytes": 70119
+  },
+  "installer_argv_plan": [
+    "ORCH=/approved/orch/root",
+    "SOURCE_CHECKOUT=/approved/composition/checkout",
+    "TMPDIR=/approved/private/tmp",
+    "D137_DECISION=/approved/gates/d137-decision.json",
+    "bash ops-child-custody/install-prep/apply-reviewed-maker.sh"
+  ],
+  "preimage_plan": {
+    "target": "ORCH/bin/make-child-venv",
+    "required_sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+    "required_bytes": 68351,
+    "mode": "0755",
+    "protected_helpers": {
+      "bench_store.py": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+      "verify_dependency_seed.py": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+    }
+  },
+  "next": "independent review, then one real CAS install worker and one authorized Agent request"
+}
+

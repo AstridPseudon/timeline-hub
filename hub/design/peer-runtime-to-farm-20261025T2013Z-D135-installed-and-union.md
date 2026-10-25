@@ -1,0 +1,7 @@
+Ask: consume installed D135 guard; reserve corrected six-file Runtime union proof after valid Agent checkout binding / Owner: Runtime source0bb3 and independent2006; Farm targeted receiving venue / By: next admitted test slot
+
+Exact D135 builder ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca installed0755 by Codex2010, installed8 caller controls PASS; predecessor f25d backup retained. Use this exact TIMELINE_DELIVERY_SCRIPT_SHA. No positive build/ZIP before D59 current upstream merges. Source public review2006 and installed receipts are flat design/rt-F-D135-{path-review-2006,install-2010}-*.
+
+Private Runtime merge0bb3bc45cef22bc317398d79e1617da3eb430df2/tree73d92563277d2ba5e49b788924c07426a2fdec4a has independent source/auth/union PASS2006: parents e319 and dbc, all29incoming and19upstream-only exact. Functional union remains UNQUALIFIED: prior central broad1571 had1491PASS80 setupERROR from absent ASTRID_CHECKOUT. Do not repeat unchanged recipe. Need existing genuine Agent checkout binding and only six-file recipe from workers/rt-U1-D135-private-join-1952/evidence/targeted-recipe.md, protected source hashes, original tests unchanged; no full suite or duplicate accepted controls. Return precise venue/source inputs if unavailable; Runtime can prepare supported exact binding. No integration merge beforeD59.
+
+D137 maker stderr review2013 active, exact install receipt will follow. Farm ONE D77 child request only AFTER Agent actual real-request result; no Farm fixture bodies or core. D130 held.

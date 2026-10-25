@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T20:12:08Z | dispatcher heartbeat 1s | live 2 (sol 0, luna 2, other 0) | busy30 15 | status age 4m -->
+<!-- main | 2026-10-25T20:16:46Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 15 | status age 2m -->
 # runtime board, 2026-10-25T20:08:00Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
@@ -434,13 +434,13 @@
 
 | R2-graph-boundary | Assess current graph child inverse | Luna | Authentic stage and physical records | later | Author1744; independent1749 PASS | Current track-only fix does not cover clip aliases. Causal owner UNKNOWN; exact accepted/stage/physical records absent. No body. | PASS SOURCE ASSESSMENT1749 | Source unchanged |
 | D127-leaf-current | Preserve exact helper import evidence | Luna | App1734 is first intake owner | gated:duplicate | rt-D127-leaf-retention-ready-1741 | Exact231ddb import completed. Offline21PASS and prior23 reused; three parent E402 diagnostics retained. No duplicate merge; App1734 owns intake. | Prior helper review reused | Duplicate source only |
-| OPS-inventory-E2E | Review complete portable census | Sol / Luna | Agent genuine whole-make proof | review | Author1908; independent1926 PASS | Final607535/tree dd434; independent64 PASS. Exact receiving command sent Agent; genuine E2E unrun. | Independent1926 source PASS | 60753548eb |
+| OPS-inventory-E2E | Park fixture whole-make loop | Luna | D137 withdraws fixture gate | gated:D137-parked | Agent actual23349 failed | Five harness failures preserved. No more fixture bodies; real child request is decisive. | Prior1926 source PASS | Branches retained |
 
 | D100-provider-birth | Preserve authenticated item birth | Sol / Luna | Exact additive and original proof | review | Source1742; security1803; App1837; reader1858 | Parent23/27; candidate24/27. First-birth/no-write RED to PASS; three additive failures remain. Own9 unrun. Source disposition active. | App1843 PASS WITH BOUNDARY | 9486 held |
 
 | R2-created-read-contract | Assess same-command child reads | Luna | Corrected independent interpretation PASS | merged | Correction1814; finalreview1821 PASS | C0 sequential operands defined; raw staged reads grant no new trust. Actual authenticated record pairs missing; causal owner unknown. | [Review](../../design/rt-R2-created-read-final-review-1821-review.json) | Source unchanged |
 
-| OPS-inventory-install | Prepare guarded kit installation | Luna | Genuine E2E and independent result PASS | gated:E2E | Return1821; independent1826 PASS | F1–F7 resolved; exact private installer ready. Synthetic private gates carry no genuine acceptance. Live0857 unchanged. | [Review](../../design/rt-OPS-inventory-install-final-review-1826-review.json) | a3e707dbc held |
+| OPS-inventory-install | Apply guarded maker installation | Luna | Current stderr source review | review | rt-OPS-D137-security-review-2013 | Reviewed1826 CAS retained; D137 decision replaces withdrawn E2E artifact gate. | Exact current source review active | 4932c candidate |
 
 | F-tail-upstream-census | Preview current upstream conflicts | Luna | Source census independently verified | merged | Author1844; independent1850 PASS | Read-only merge-tree: Runtime10, Agent40, App16, Composition0 conflicts. No actual clone dry run. | [Review](../../design/rt-F-tail-census-review-1850-report.md) | Evidence only |
 | F-tail-pristine-prep | Prepare pristine core comparison | Luna | Actual inputs before execution | later | Independent1916 scoped PASS | Composition ref corrected and independently PASS. Five upstream roots and launcher missing; no executable gate claimed. | Independent1916 | Evidence only |
@@ -457,8 +457,8 @@
 
 | D127c-profile | Deterministic element cost capture | App Sol / Luna | Coupled protected review | review | SecondFAIL1929; Sol1935 and App1935 | Existing helper only. No body, cost author or normal source intake before protected PASS. | App independent review | Held source |
 
-| F-D135-builder | Refuse upstream reverts in package builder | Luna | Fresh source slot | doing | Review1949 PASS withfinding; return1955 | Guard7 controls and production refusal PASS. One path-error normalization finding under1955 correction; no install yet. | Independent review next | Source pending |
-| U1-D135-private-join | Prepare current upstream merge | Luna | Fresh dbc confirmed by lead | doing | rt-U1-D135-private-join-1952 | Actual merge-forward: one daemon conflict,28 incoming files auto-composed. Worker audits both source/test families; integration frozen. | Security and union proof next | No join yet |
+| F-D135-builder | Refuse upstream reverts in builder | Luna | Actual installed receipt review | review | Installer2010; independent2015 | Installed exactef9 mode0755; eight installed caller controls PASS. No build or ZIP. | Source2006 PASS | ef9 installed |
+| U1-D135-private-join | Preserve current Runtime upstream | Luna | Genuine six-file union proof | review | Author1952; independent2006 PASS | Two-parent0bb3 preserves29 incoming paths. Generator/artifact PASS; functional tests unqualified. | Auth/source union PASS | 0bb3bc45c |
 | F-D135-notes | Name fresh upstream patch base | Luna | Notes worker slot | merged | Notes1940 installed PASS | Patch base must be current upstream main at cut. No new build or ZIP. | D56 prose checks | Pending |
 
 | F-D135-Agent-retarget | Bind real Agent home source | Luna | Actual a30e home object | merged | Census1939; independent1947 PASS | Actuala30e has41 changed-in-both paths,107 preview hunks; actual7 markers across6paths. No normal merge. | Independent review next | a30e74e901 |
@@ -468,18 +468,18 @@
 | OPS-stale-pins-1948 | Release two unused proof checkouts | Manager route | Host CLEAR and fresh route checks | merged | bin/recycle f7201 and8d2d | Both clean and unused; observed net292MB. Four other referenced targets retained. All source/evidence preserved. | Host1946 CLEAR | No source change |
 
 
-| OPS-D137-stderr | Retain every failing stage stderr | Luna | D137 owner decision | doing | rt-OPS-D137-stderr-retention-2006 | Source check and focused controls pending. Fixture gate withdrawn; no more fixture bodies. | No install yet | Candidate c3226b baseline |
+| OPS-D137-stderr | Retain failing stage stderr | Luna | Independent current source review | review | Author2006; security2013 | Maker7a065;42 author controls PASS, verifier exact. All stage logging and installer decision reviewed next. | Independent active | 4932c0f8e |
 | OPS-D137-install | Install qualified maker through CAS | Luna | Stderr source and independent review | gated:source-review | Reviewed installer1826 | D137 replaces fixture acceptance gate. Preserve CAS, backups and verifier. | Independent review next | Live0857 unchanged |
 | OPS-D137-real-child | Build one genuine Agent child | Agent Luna | Installed received kit | gated:installed-kit | Agent sole receiving venue | ONE a4e016/5e9ad request, then ship-grade core if built. Farm D77 follows Agent result. | Actual result owed | No real request yet |
 | U1-D135-union-review | Review private upstream source union | Luna | Finished1952 two-parent candidate | review | rt-U1-D135-union-review-2006 | Actual0bb3 includes e319 and dbc. Author tests NOTRUN; union proof still owed. | Independent pending | 0bb3bc45c |
 | F-D135-path-review | Review builder path refusal correction | Luna | Finished1955 | review | rt-F-D135-path-review-2006 | Author8PASS; ancestry/private tuple controls retained. No installed change yet. | Independent pending | ef9cd915 candidate hash |
 
-| D136a-fps-regression | Restore upstream fps input acceptance | Luna | Next source slot after D137 install | ready | Runtime next source owner | Owner decision20:16: blame first, exact array regression and same-commit input audit. Original9 fixture unchanged. | Independent review owed | No source change yet |
+| D136a-fps-regression | Restore upstream fps input acceptance | Luna | Owner D136a | doing | rt-D136a-fps-regression-2014 | Blame first; exact array regression and same-commit input audit. Original9 fixture unchanged. | Independent review owed | Agent a30e base |
 
 Runtime producer: Normal e319 helper/tests; product ab1e. Private upstream join0bb3 includes e319 and fresh dbc, not merged to integration.
 Core: D13418455 measurement8926PASS190FAIL180ERROR173subtests. Independent1937 custody FAIL: missing XML and disk witness. Known344 new-file core,14 prior REG still FAIL,12 UNKNOWN. No ship credit.
 Gates: P1/P3/P4/P5 recorded GO. Full P2 NO-GO element/SWAP. No D59 cut, final build or ZIP.
-Blockers: Kit installation — stderr source2006 and independent review before D137 CAS installation; Agent real request follows received hash/mode. Fixture gate explicitly withdrawn by owner; branches retained.
+Blockers: KIT CHANGE make-child-venv candidate7a065 — independent2013 before D137 CAS installation; Agent real request follows received hash/mode. Fixture gate explicitly withdrawn by owner; branches retained.
 Blockers: SWAP safety — D130 holds all WAL recovery and related qualification after classifier refusal1537. No retry, transfer, alternate test or rollback. Existing escalation retained.
 Blockers: Element — App sole D127c final helper368f and App binder1950 await coupled protected review. No cost author or new body before PASS.
 Blockers: D69 and cut — current ship-grade core, REG0, fullP2, installed render90, final tupleP1-P5, wheel, Windows and build/ZIP remain owed.
@@ -490,5 +490,5 @@ D77: Farm changed child request follows Agent actual D137 result; no Farm fixtur
 Delivery: Current cut integration tuple only, no stale547e proof pin. App16 final1941PASS:14 true conflicts,13semantic/1textual. Old Agent halves reference stale proof pin; new actuala30e census1947 qualified.
 Safety: D130 and prior refusals held. Managers write ORCH boards/briefs/peers only; no direct product/test/pin/Git writes or credentials.
 Disk: Fresh4.877GB; source cap3 under D89b, stop4GB. Cleanup target5.2GB unmet; preserve all open proof evidence and KEEP.
-live 3 / cap 3; queued 0; ready-undispatched 0. Absolute brief paths corrected; all three workers running since20:06:53Z.
-INBOX consumed through1497613bytes including explicit20:13 D137. Updated20:08Z.
+live 2 / cap 3; queued 1; ready-undispatched 0. Absolute brief paths corrected; all three workers running since20:06:53Z.
+INBOX consumed through1503846bytes including explicit20:13 D137. Updated20:15Z.

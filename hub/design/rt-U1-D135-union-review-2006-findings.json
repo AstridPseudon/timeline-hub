@@ -1,0 +1,81 @@
+{
+  "review": "rt-U1-D135-union-review-2006",
+  "verdict": {
+    "source_auth_union": "PASS",
+    "functional_targeted": "NOTRUN_UNQUALIFIED",
+    "merge_gate": "D59_REMAINS"
+  },
+  "identity": {
+    "head": "0bb3bc45cef22bc317398d79e1617da3eb430df2",
+    "tree": "73d92563277d2ba5e49b788924c07426a2fdec4a",
+    "parents": [
+      "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+      "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f"
+    ],
+    "merge_base": "d4f496ec4fbcae7a1f3a51d47ed5147c561117ad",
+    "incoming_paths": 29,
+    "overlap_paths": 10,
+    "upstream_only_paths": 19,
+    "upstream_only_exact_byte_matches": 19,
+    "conflict_markers": 0
+  },
+  "findings": [
+    {
+      "id": "F-SOURCE-001",
+      "severity": "none",
+      "status": "pass",
+      "area": "daemon process policy/provider lifecycle",
+      "detail": "Process policy configuration, process-signaling probe, and announce precede provider loading; provider registration, startup-only timeline provider behavior, and cleanup/error-close handling remain present."
+    },
+    {
+      "id": "F-SOURCE-002",
+      "severity": "none",
+      "status": "pass",
+      "area": "identity/pidfd/auth",
+      "detail": "Strict identity and pidfd behavior remains intact; sandbox-only fallbacks perform identity checks. ACP selection and API-key routes are exact-route reserved and existing auth/scope routes remain."
+    },
+    {
+      "id": "F-SOURCE-003",
+      "severity": "none",
+      "status": "pass",
+      "area": "C0/public errors/filename",
+      "detail": "Unexpected server errors remain redacted in the public C0 envelope, old route guards remain, and managed output uses the settled managed filename rather than a port label."
+    },
+    {
+      "id": "F-UNION-001",
+      "severity": "none",
+      "status": "pass",
+      "area": "upstream-only preservation",
+      "detail": "All 19 upstream-only paths retain upstream bytes exactly; source-manifest.json records SHA-256 and byte counts."
+    },
+    {
+      "id": "F-TEST-001",
+      "severity": "none",
+      "status": "pass",
+      "area": "test predicate union",
+      "detail": "Process-control, platform-signaling, dirfd/data-root/native-custody/managed-output/seccomp families are retained; local timeline contract and legacy-authority families remain. No weakening, skips, or silent parameter drops were found."
+    },
+    {
+      "id": "F-STATIC-001",
+      "severity": "none",
+      "status": "pass",
+      "area": "generated/static validation",
+      "detail": "Generator check, artifact manifest check, py_compile for 24 incoming Python files, AST parse for 24 files, and git diff --check pass. Ruff has 118 baseline diagnostics and 0 new diagnostic identities against the parent union."
+    },
+    {
+      "id": "F-TYPE-001",
+      "severity": "baseline",
+      "status": "unqualified",
+      "area": "Pyright",
+      "detail": "Broad unconfigured Pyright reports 668 errors, 0 warnings, and 0 information across 24 files. No clean typecheck or independent no-new type diagnostic claim is made."
+    },
+    {
+      "id": "F-FUNCTIONAL-001",
+      "severity": "blocking_for_acceptance",
+      "status": "notrun_unqualified",
+      "area": "targeted runtime tests",
+      "detail": "Local light testing was below the 5 GiB free-space gate (4,732,916 KiB). The sole central attempt reported 1491 passed and 80 setup errors because /home/user/work/wt/astrid was unavailable. This is not functional acceptance."
+    }
+  ],
+  "next_step": "Rerun the exact six-file targeted recipe in the test farm with a valid ASTRID_CHECKOUT and PYTHONPATH; D59 gates merge."
+}

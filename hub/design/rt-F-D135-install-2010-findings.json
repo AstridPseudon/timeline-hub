@@ -1,0 +1,37 @@
+{
+  "format": "timeline-delivery-d135-install-findings-v1",
+  "worker": "rt-F-D135-install-2010",
+  "reviewed_commit": "d45e07dfb305c41d588fe168a2518d5ffa1c4954",
+  "verdict": "PASS",
+  "prior_review": {
+    "verdict": "PASS_WITH_FINDINGS",
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-D135-path-review-2006-findings.json",
+    "D135-REV-1": "fixed and independently reverified"
+  },
+  "resolved": [
+    {
+      "id": "D135-REV-2",
+      "result": "resolved",
+      "detail": "This Codex worker performed the live entrypoint installation; the Manager did not write the entrypoint or live root."
+    },
+    {
+      "id": "D135-REV-3",
+      "result": "resolved",
+      "detail": "Derivative evidence records the actual reviewed commit d45e07dfb305c41d588fe168a2518d5ffa1c4954 and tree 92401b1abc84a0a6a23d5b0d9b9bfebeb41638a2; the candidate script was not changed."
+    }
+  ],
+  "installation_findings": [
+    {
+      "id": "postcheck-scope",
+      "severity": "process",
+      "result": "closed",
+      "detail": "The first post-install verifier exited nonzero because its neighbor comparison did not exclude the newly authorized backup. Read-back verification then confirmed that the install had completed atomically, the backup was exact, and no pre-existing neighbor changed. No second installation was attempted."
+    }
+  ],
+  "boundaries": [
+    "No production positive preflight or build",
+    "No ZIP, fresh clone, network, package, venv, Store, child, hub write, Git ref mutation, or full suite",
+    "No hostprocessprobe was run",
+    "No source or test guard was weakened"
+  ]
+}

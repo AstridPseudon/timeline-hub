@@ -1,0 +1,425 @@
+{
+  "head": "0bb3bc45cef22bc317398d79e1617da3eb430df2",
+  "head_tree": "73d92563277d2ba5e49b788924c07426a2fdec4a",
+  "incoming_path_count": 29,
+  "incoming_paths": [
+    {
+      "head": {
+        "bytes": 5765,
+        "sha256": "4f36475f65e691cee57e16168ac09124a2a2c9bee8146288d081445a779eebd9"
+      },
+      "head_equals_upstream": false,
+      "ours_changed_from_merge_base": true,
+      "path": ".github/workflows/ci.yml",
+      "upstream": {
+        "bytes": 4148,
+        "sha256": "8b1d16a6df92ad36c49ff42c99a911cf8956bcb4dfcbd9efa84427992cfd9177"
+      },
+      "upstream_only": false
+    },
+    {
+      "head": {
+        "bytes": 62038,
+        "sha256": "80a4bb8b0e25bdbfd0c94cee5c467c6658ecdc0e0e26532410ad59d004a5393a"
+      },
+      "head_equals_upstream": true,
+      "ours_changed_from_merge_base": false,
+      "path": "astrid_runtime/bootstrap.py",
+      "upstream": {
+        "bytes": 62038,
+        "sha256": "80a4bb8b0e25bdbfd0c94cee5c467c6658ecdc0e0e26532410ad59d004a5393a"
+      },
+      "upstream_only": true
+    },
+    {
+      "head": {
+        "bytes": 30942,
+        "sha256": "73451309b2848999d180ee1e2f1bb88735e430119ced0b98bb51b0d08bde7306"
+      },
+      "head_equals_upstream": true,
+      "ours_changed_from_merge_base": false,
+      "path": "astrid_runtime/cli.py",
+      "upstream": {
+        "bytes": 30942,
+        "sha256": "73451309b2848999d180ee1e2f1bb88735e430119ced0b98bb51b0d08bde7306"
+      },
+      "upstream_only": true
+    },
+    {
+      "head": {
+        "bytes": 88022,
+        "sha256": "26bfe41adcb1095464dfedc3c51832fd632f6f46bc94bc2188776ebce27880b3"
+      },
+      "head_equals_upstream": true,
+      "ours_changed_from_merge_base": false,
+      "path": "astrid_runtime/custody_broker.py",
+      "upstream": {
+        "bytes": 88022,
+        "sha256": "26bfe41adcb1095464dfedc3c51832fd632f6f46bc94bc2188776ebce27880b3"
+      },
+      "upstream_only": true
+    },
+    {
+      "head": {
+        "bytes": 4041,
+        "sha256": "dbd92640767863653d3576e98fbf204b861de38c8293759d0e4b3d0ae65415b7"
+      },
+      "head_equals_upstream": true,
+      "ours_changed_from_merge_base": false,
+      "path": "astrid_runtime/paths.py",
+      "upstream": {
+        "bytes": 4041,
+        "sha256": "dbd92640767863653d3576e98fbf204b861de38c8293759d0e4b3d0ae65415b7"
+      },
+      "upstream_only": true
+    },
+    {
+      "head": {
+        "bytes": 9815,
+        "sha256": "105d521495414a8e2c5197c1e2d22d3de4d74beed8d3cc83cac1d2cd10fcce9a"
+      },
+      "head_equals_upstream": true,
+      "ours_changed_from_merge_base": false,
+      "path": "astrid_runtime/workspace.py",
+      "upstream": {
+        "bytes": 9815,
+        "sha256": "105d521495414a8e2c5197c1e2d22d3de4d74beed8d3cc83cac1d2cd10fcce9a"
+      },
+      "upstream_only": true
+    },
+    {
+      "head": {
+        "bytes": 12657,
+        "sha256": "42615cf3389a785b01ff01d02f7dc7ad155af2867fb7c5527fb904462774c72f"
+      },
+      "head_equals_upstream": false,
+      "ours_changed_from_merge_base": true,
+      "path": "docs/runtime-portability-testing.md",
+      "upstream": {
+        "bytes": 12695,
+        "sha256": "f7cb154a327f59982db07f77017e587c8677b0b2de09b7f2749ca2780fa3a5c0"
+      },
+      "upstream_only": false
+    },
+    {
+      "head": {
+        "bytes": 90677,
+        "sha256": "02a7a35e15144e7661b122c5015e4f502824986b81a8791be377d52fcc8a726d"
+      },
+      "head_equals_upstream": false,
+      "ours_changed_from_merge_base": true,
+      "path": "runtime_protocol/daemon.py",
+      "upstream": {
+        "bytes": 89626,
+        "sha256": "11028b8695c9293cff1b4a06dd8e5b18e6f6c4d8db156c02cae67810a65c682b"
+      },
+      "upstream_only": false
+    },
+    {
+      "head": {
+        "bytes": 52753,
+        "sha256": "ce648f80597ad02736e2538d76d851857cf3158ac5c45e9d660b7343e45ba206"
+      },
+      "head_equals_upstream": true,
+      "ours_changed_from_merge_base": false,
+      "path": "runtime_protocol/dirfd.py",
+      "upstream": {
+        "bytes": 52753,
+        "sha256": "ce648f80597ad02736e2538d76d851857cf3158ac5c45e9d660b7343e45ba206"
+      },
+      "upstream_only": true
+    },
+    {
+      "head": {
+        "bytes": 34812,
+        "sha256": "b4703160901ccf4c02dfad31163136c0f9da4e278ecf1f1ced7aaeca6ef6e202"
+      },
+      "head_equals_upstream": false,
+      "ours_changed_from_merge_base": true,
+      "path": "runtime_protocol/door.py",
+      "upstream": {
+        "bytes": 34215,
+        "sha256": "1806da73c9de28dcefdae4949a8b9d993a72833dccdd70533e989186414d2f3f"
+      },
+      "upstream_only": false
+    },
+    {
+      "head": {
+        "bytes": 65173,
+        "sha256": "aed999b364280e6d9e3530e413b20f078cf28e1a663333e2b03a8b6c4ca35361"
+      },
+      "head_equals_upstream": false,
+      "ours_changed_from_merge_base": true,
+      "path": "runtime_protocol/platform.py",
+      "upstream": {
+        "bytes": 64435,
+        "sha256": "280ac7eb11cb4295557d86bbe8a399d01108fa95152b8d55f40d79cce925af14"
+      },
+      "upstream_only": false
+    },
+    {
+      "head": {
+        "bytes": 3213,
+        "sha256": "f7635dd448716acc22dac6df03940c5ccac38392369a82bf656ce747e258932c"
+      },
+      "head_equals_upstream": true,
+      "ours_changed_from_merge_base": false,
+      "path": "runtime_protocol/process_control.py",
+      "upstream": {
+        "bytes": 3213,
+        "sha256": "f7635dd448716acc22dac6df03940c5ccac38392369a82bf656ce747e258932c"
+      },
+      "upstream_only": true
+    },
+    {
+      "head": {
+        "bytes": 78065,
+        "sha256": "05c21ef1f91ddab7a35e78f9210408dd94aa6eb6ec721ccc407a99a78386af92"
+      },
+      "head_equals_upstream": false,
+      "ours_changed_from_merge_base": true,
+      "path": "runtime_protocol/server.py",
+      "upstream": {
+        "bytes": 68281,
+        "sha256": "6ba70b00f7e7bcdfc9495aaf104bfb93ba5fcc5249fa249da2c468dfeac3da2d"
+      },
+      "upstream_only": false
+    },
+    {
+      "head": {
+        "bytes": 520502,
+        "sha256": "dab94d49434670374f6af1cf0d3c66655af6fdafc083c9367ea99afff1d9ab7a"
+      },
+      "head_equals_upstream": false,
+      "ours_changed_from_merge_base": true,
+      "path": "runtime_protocol/service.py",
+      "upstream": {
+        "bytes": 580653,
+        "sha256": "5e60b7af1f607dbf0088a302b7d020f84a72ff56eaab43b108c13926c0dbdf94"
+      },
+      "upstream_only": false
+    },
+    {
+      "head": {
+        "bytes": 14269,
+        "sha256": "29adb71ee19ffc265b451e647e5dbe57d7049fc718f40fb5075bcac81d82380f"
+      },
+      "head_equals_upstream": true,
+      "ours_changed_from_merge_base": false,
+      "path": "runtime_protocol/services.py",
+      "upstream": {
+        "bytes": 14269,
+        "sha256": "29adb71ee19ffc265b451e647e5dbe57d7049fc718f40fb5075bcac81d82380f"
+      },
+      "upstream_only": true
+    },
+    {
+      "head": {
+        "bytes": 8710,
+        "sha256": "50917ded0ac0dc214d24c60894bf62f3b574eaa3f81740bc91eb5dc4739cd476"
+      },
+      "head_equals_upstream": false,
+      "ours_changed_from_merge_base": true,
+      "path": "tests/conftest.py",
+      "upstream": {
+        "bytes": 7910,
+        "sha256": "1b9eca2fa74bed7f89c53b6d6cdec68bcf70163dc62cabc7a59d9e02c178c69f"
+      },
+      "upstream_only": false
+    },
+    {
+      "head": {
+        "bytes": 22283,
+        "sha256": "84507f925b866e4730e2c3b9ac8f67aeac6ff43b1ce3858800b6da38f1ae2cae"
+      },
+      "head_equals_upstream": false,
+      "ours_changed_from_merge_base": true,
+      "path": "tests/lanes.py",
+      "upstream": {
+        "bytes": 14359,
+        "sha256": "d5394ad93177585462cd24eec18bd35d77604c80951036d55664a5123924df91"
+      },
+      "upstream_only": false
+    },
+    {
+      "head": {
+        "bytes": 4725,
+        "sha256": "4f9d99861069c62a1c3cb9e76dd8d80f01fa828eabcf1e2efda8dc162dc9cc51"
+      },
+      "head_equals_upstream": true,
+      "ours_changed_from_merge_base": false,
+      "path": "tests/process_groups.py",
+      "upstream": {
+        "bytes": 4725,
+        "sha256": "4f9d99861069c62a1c3cb9e76dd8d80f01fa828eabcf1e2efda8dc162dc9cc51"
+      },
+      "upstream_only": true
+    },
+    {
+      "head": {
+        "bytes": 1074,
+        "sha256": "22a314b2dde1468e0c6171c1689cad8dc029dabf817510e8275ca918b8dd41b2"
+      },
+      "head_equals_upstream": true,
+      "ours_changed_from_merge_base": false,
+      "path": "tests/seccomp/README.md",
+      "upstream": {
+        "bytes": 1074,
+        "sha256": "22a314b2dde1468e0c6171c1689cad8dc029dabf817510e8275ca918b8dd41b2"
+      },
+      "upstream_only": true
+    },
+    {
+      "head": {
+        "bytes": 531,
+        "sha256": "d43b42916e81af7c2a20fe179581e20442ecc9e84a1512fc5a9a835e69c44e35"
+      },
+      "head_equals_upstream": true,
+      "ours_changed_from_merge_base": false,
+      "path": "tests/seccomp/openshell-like.json",
+      "upstream": {
+        "bytes": 531,
+        "sha256": "d43b42916e81af7c2a20fe179581e20442ecc9e84a1512fc5a9a835e69c44e35"
+      },
+      "upstream_only": true
+    },
+    {
+      "head": {
+        "bytes": 982,
+        "sha256": "e9fb9616a984ccf3522b4de8800e2e8324b0facdc109116aa717670b5215c1b6"
+      },
+      "head_equals_upstream": true,
+      "ours_changed_from_merge_base": false,
+      "path": "tests/seccomp/run-suite.sh",
+      "upstream": {
+        "bytes": 982,
+        "sha256": "e9fb9616a984ccf3522b4de8800e2e8324b0facdc109116aa717670b5215c1b6"
+      },
+      "upstream_only": true
+    },
+    {
+      "head": {
+        "bytes": 4537,
+        "sha256": "db9949fc7c91674119840f7e40a2c7919dba676edb127de7284f1918a6e8ddba"
+      },
+      "head_equals_upstream": true,
+      "ours_changed_from_merge_base": false,
+      "path": "tests/test_data_root.py",
+      "upstream": {
+        "bytes": 4537,
+        "sha256": "db9949fc7c91674119840f7e40a2c7919dba676edb127de7284f1918a6e8ddba"
+      },
+      "upstream_only": true
+    },
+    {
+      "head": {
+        "bytes": 1375,
+        "sha256": "c351afdab8162885a45787d2f71802638ef49136c8eaf918344affa82660f41f"
+      },
+      "head_equals_upstream": true,
+      "ours_changed_from_merge_base": false,
+      "path": "tests/test_dirfd_ancestor_walk.py",
+      "upstream": {
+        "bytes": 1375,
+        "sha256": "c351afdab8162885a45787d2f71802638ef49136c8eaf918344affa82660f41f"
+      },
+      "upstream_only": true
+    },
+    {
+      "head": {
+        "bytes": 16958,
+        "sha256": "5d2cb169f7244dc914c139f586c18e392ff3ed734ed373951e0393867d9b543d"
+      },
+      "head_equals_upstream": true,
+      "ours_changed_from_merge_base": false,
+      "path": "tests/test_door_chat.py",
+      "upstream": {
+        "bytes": 16958,
+        "sha256": "5d2cb169f7244dc914c139f586c18e392ff3ed734ed373951e0393867d9b543d"
+      },
+      "upstream_only": true
+    },
+    {
+      "head": {
+        "bytes": 17187,
+        "sha256": "9b757d2c7d1125a76db1ad188672429e2b2e9ea2007cc0f248eda96331c8b67d"
+      },
+      "head_equals_upstream": false,
+      "ours_changed_from_merge_base": true,
+      "path": "tests/test_door_routes.py",
+      "upstream": {
+        "bytes": 17104,
+        "sha256": "a34efb22236b6f7afd382d9ff48e923d81b0aad857416bb8902ac9c1b0c96446"
+      },
+      "upstream_only": false
+    },
+    {
+      "head": {
+        "bytes": 10318,
+        "sha256": "89c4b3f0aa7998c334d4635524ebb22b75f2f4930f5a028ca8e390c260c82a90"
+      },
+      "head_equals_upstream": true,
+      "ours_changed_from_merge_base": false,
+      "path": "tests/test_managed_output_public_api.py",
+      "upstream": {
+        "bytes": 10318,
+        "sha256": "89c4b3f0aa7998c334d4635524ebb22b75f2f4930f5a028ca8e390c260c82a90"
+      },
+      "upstream_only": true
+    },
+    {
+      "head": {
+        "bytes": 16687,
+        "sha256": "03e4e8754ecd2df7a998f3960d70237315c2513a74c1946605cf8d664d6e8d62"
+      },
+      "head_equals_upstream": true,
+      "ours_changed_from_merge_base": false,
+      "path": "tests/test_native_custody.py",
+      "upstream": {
+        "bytes": 16687,
+        "sha256": "03e4e8754ecd2df7a998f3960d70237315c2513a74c1946605cf8d664d6e8d62"
+      },
+      "upstream_only": true
+    },
+    {
+      "head": {
+        "bytes": 23728,
+        "sha256": "520dccc3cab41d9c8eded56b101c48bc960e1294d77246281880371bae2d10ec"
+      },
+      "head_equals_upstream": true,
+      "ours_changed_from_merge_base": false,
+      "path": "tests/test_platform_signaling.py",
+      "upstream": {
+        "bytes": 23728,
+        "sha256": "520dccc3cab41d9c8eded56b101c48bc960e1294d77246281880371bae2d10ec"
+      },
+      "upstream_only": true
+    },
+    {
+      "head": {
+        "bytes": 13341,
+        "sha256": "260ea8f64aaf3f9e919d4086688cc5bed2aa427c0a963fb6a9e01ef0c6d8a696"
+      },
+      "head_equals_upstream": true,
+      "ours_changed_from_merge_base": false,
+      "path": "tests/test_process_control.py",
+      "upstream": {
+        "bytes": 13341,
+        "sha256": "260ea8f64aaf3f9e919d4086688cc5bed2aa427c0a963fb6a9e01ef0c6d8a696"
+      },
+      "upstream_only": true
+    }
+  ],
+  "marker_scan": "PASS (zero exact conflict-marker lines)",
+  "merge_base": "d4f496ec4fbcae7a1f3a51d47ed5147c561117ad",
+  "overlap_count": 10,
+  "parents": [
+    "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+    "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f"
+  ],
+  "repository": "runtime",
+  "review": "rt-U1-D135-union-review-2006",
+  "upstream_only_byte_matches": 19,
+  "upstream_only_count": 19
+}
+

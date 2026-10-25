@@ -1,0 +1,36 @@
+{
+  "format": "timeline-delivery-d135-install-source-manifest-v1",
+  "worker": "rt-F-D135-install-2010",
+  "reviewed_commit": "d45e07dfb305c41d588fe168a2518d5ffa1c4954",
+  "reviewed_tree": "92401b1abc84a0a6a23d5b0d9b9bfebeb41638a2",
+  "source": {
+    "path": "/home/user/work/wt/rt-F-D135-install-2010/ops-delivery-d135/delivery-build",
+    "sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "mode": "0755",
+    "regular": true,
+    "single_link": true
+  },
+  "focused_test": {
+    "path": "/home/user/work/wt/rt-F-D135-install-2010/ops-delivery-d135/tests/test_delivery_build.py",
+    "sha256": "c00401bb11401ffaa8929f887c4ccf69600bcf6f312c81ba41d4d54c9e3286bf"
+  },
+  "review_basis": {
+    "independent_path_review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D135-path-review-2006/evidence",
+    "independent_verdict": "PASS_WITH_FINDINGS",
+    "rev_1": "fixed and independently reverified",
+    "rev_2": "resolved by this Codex installer; Manager did not write the entrypoint",
+    "rev_3": "resolved by this derivative evidence naming the actual reviewed commit/tree; candidate script unchanged"
+  },
+  "d59_tuple": {
+    "agent_sha": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "agent_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+    "tuple_sha256": "ce3d06b41014bcd5cd42454c62828c7d240d3beb0a570467be0375109b1c4338"
+  },
+  "scope": {
+    "source_tree_verified_before_install": true,
+    "source_tree_verified_after_install": true,
+    "candidate_source_unchanged": true,
+    "focused_test_unchanged": true,
+    "production_positive_delivery": "not run"
+  }
+}

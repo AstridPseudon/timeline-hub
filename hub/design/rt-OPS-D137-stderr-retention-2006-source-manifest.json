@@ -1,0 +1,34 @@
+{
+  "task": "rt-OPS-D137-stderr-retention-2006",
+  "base_source_commit": "09ed4999741b822fba7e8b3033ca28db6bcf8fa1",
+  "final_source_commit": "UNAVAILABLE_UNTIL_HARNESS_COMMIT",
+  "maker": {
+    "path": "ops-child-custody/make-child-venv",
+    "sha256": "7a065c078972d9fe91041bcd895ec8be151a034ef66539fed59aa884950119f8",
+    "bytes": 70119,
+    "mode": "0755"
+  },
+  "stderr_capture": {
+    "stage_path": ".provision-stderr/<stage>.stderr",
+    "mode": "0600",
+    "retains_original_stderr": true,
+    "exit_status_preserved": true,
+    "public_summary_allowlisted": true
+  },
+  "embedded_unchanged": {
+    "STORE_PY": "0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c",
+    "STORE_VERIFY": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209",
+    "bench_store.py": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "verify_dependency_seed.py": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+  },
+  "installer": {
+    "reference_commit": "a3e707dbcb80a200dbb5d8f60a8f0d63fd807da4",
+    "candidate_sha256": "7a065c078972d9fe91041bcd895ec8be151a034ef66539fed59aa884950119f8",
+    "candidate_bytes": 70119,
+    "source_commit_bound_by": "D137 decision input",
+    "cas_route": "descriptor-bound lock, O_NOFOLLOW/O_EXCL no-clobber backup, identity CAS, atomic rename"
+  },
+  "e2e": "WITHDRAWN / NOTRUN",
+  "install": "NOTRUN / UNVERIFIED"
+}
+

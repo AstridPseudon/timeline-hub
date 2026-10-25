@@ -1,0 +1,49 @@
+{
+  "schema": "timeline-delivery-d135-atomic-install-v1",
+  "worker": "rt-F-D135-install-2010",
+  "installed_utc": "2026-10-25T20:10:50.406844708Z",
+  "source": {
+    "path": "/home/user/work/wt/rt-F-D135-install-2010/ops-delivery-d135/delivery-build",
+    "sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "mode": "0755",
+    "regular": true,
+    "single_link": true
+  },
+  "target": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "predecessor_sha256": "f25dfab13bbfb090bf26cf97a85e59bd4818859f5b974dac94aae7e6f2272708",
+    "installed_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+    "installed_mode": "0755",
+    "installed_regular": true,
+    "installed_single_link": true
+  },
+  "backup": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build.20261025T201050.398733Z.bak",
+    "sha256": "f25dfab13bbfb090bf26cf97a85e59bd4818859f5b974dac94aae7e6f2272708",
+    "mode": "0755",
+    "regular": true,
+    "single_link": true,
+    "no_clobber": true
+  },
+  "atomic_method": {
+    "staging": "same-directory temporary delivery-build.new.20261025T201050.398733Z.<pid>",
+    "staging_hash_verified": true,
+    "replacement": "os.replace",
+    "directory_fsync": true,
+    "temporary_remaining": false
+  },
+  "guards": {
+    "source_tree": "d45e07dfb305c41d588fe168a2518d5ffa1c4954 / 92401b1abc84a0a6a23d5b0d9b9bfebeb41638a2",
+    "active_builder_before": false,
+    "active_builder_after": false,
+    "delivery_testservice_active_statuses": [],
+    "hostprocessprobe": "not run",
+    "fallback": false
+  },
+  "preservation": {
+    "pre_existing_bin_neighbors_unchanged": true,
+    "authorized_new_live_artifact_only": "predecessor backup",
+    "candidate_source_unchanged": true,
+    "focused_test_unchanged": true
+  }
+}
