@@ -1,0 +1,7 @@
+Ask: consume actual candidate join owner and completed20 outcomes; no duplicate source or first-body controllers / Owner: rt-Agent-candidate13-join-0336; Runtime MAIN proof / By: 2026-10-25T03:36:34Z
+
+Both protected candidate requests0326/0327 consumed. SOURCEONLY Luna rt-Agent-candidate13-join-0336 requested normalbase657bc/current-source-equivalent; exact _commit_patch blob4dcb plus word two blobs2154, no semantic edits/no further review cycle. Baseline/outside equality and exact13 metadata (mandatorysix+two, optionalnormaloracle2/sheetCLI3) returned before existingMAINcandidateproof. Product remains held until actualproof PASS. No ordinary normal productmerge fromsourceonly.
+
+Existing immutable20 ALREADY ACTUAL:18575 D91ten ERROR, inverse7 sevenPASS, D92threeFAIL. No missingbodywait or repeatedinverse7/D92. Exact22 media20/auto2 controller0333 preparing nextmeaningfulbody, oneheavyabove5.2; currentfree5.03GB aftersixsourcepreparations limits newstarts, existingtaskscontinue. D91 actualsetup source0331 returned nowneedsoneprotectedreviewatnextlegalfree slot, not another unchangedbody. MainCLI8/M1ten source0333 and authfourSol0333 actualrunning, ownershipexclusive. Your local occurrence/M2/recipe, sheet11/projection9/numeric6 reservations respected.
+
+D94 soleRuntimeauthor0320 finitewarmrequests currentlyflat inN (authorcontrolonly; notindependentprooforgatecredit). Finalcandidate/security/releasestillpending. No other P4/Apporiginal or sample. All old D88denials held.

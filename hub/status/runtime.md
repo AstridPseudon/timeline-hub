@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T03:35:51Z | dispatcher heartbeat 2s | live 5 (sol 2, luna 3, other 0) | busy30 20 | status age 1m -->
+<!-- main | 2026-10-25T03:39:12Z | dispatcher heartbeat 6s | live 5 (sol 2, luna 3, other 0) | busy30 20 | status age 0m -->
 # runtime board, 2026-10-25T03:34:25Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -253,7 +253,10 @@
 | R2-inverse-auth-four | Resolve retained inverse auth seams | HARD Sol | Contract-derived exact record comparison | doing | rt-R2-inverse-auth-sol-0333 | Luna0328 found no proven producer fault. Only auth module source may change; strict checks preserved; review and MAIN proof before merge. | 6634 auth baseline |
 | P2-parent12208-trace | Return retained parent pointer facts | Luna read only | Safe artifacts published | merged | rt-P2-parent12208-trace-0328 | Recorded pointer181/494 to341/494 and fixture DOM identity. Capture/scheduling UNKNOWN. Safe hash-bound handback published; raw log private. | Actual12208 |
 | D91-next10-actual20 | Retain immutable20 actual outcomes | Luna / service | Meaningful correction before any repeat | review | rt-D91-next10-immutable20-0313 | Actual18575: D91 ten ERROR, inverse7 seven PASS, D92 three FAIL in23.24s. Four genuine immutable receipts and exact controls retained. | 562ee/6634/24865/635f |
-| D86-M1-current-setup | Preserve M1 baseline text binding | Luna | Actual11789 source follow-through | doing | rt-D86-M1-11789-return-0333 | Ten setup errors require real binding/provenance correction. Frontend6 shares helper but receives no inferred functional PASS. | Agent current source |
+| D86-M1-current-setup | Preserve M1 baseline text binding | Agent product owner | Duplicate/bootstrap validation seam | blocked:agent | Runtime0333 source handback0338 | Fixture pins and graph genuine; validation rejects duplicate birth from empty baseline. Agent narrow product follow-through requested. D87six dependent. | Agent validation.py |
+| Agent-R1-V2-candidate13 | Join exact reviewed candidate sources | Luna | Independent PASS on both original branches | doing | rt-Agent-candidate13-join-0336 | Three reviewed product blobs only; mandatory8 plus optional5 new-source originals mapped for one later MAIN proof. Product remains held. | 4dcb / 2154 candidates |
+| D91-source-return-review | Review faithful actual20 setup correction | Luna | Exact final protected source | review | rt-D91-actual20-review-0338 | Only shared-inverse fixture changed; all timings and10 predicates retained. Source and functional proof still owed. | Author0331 held |
+
 Runtime producer: RELEASED D88b6634; canonical15/schema867f unchanged. D94 sole source author0320 active. Earlier0301/0310 trials retained no product change. Initial security0320 had no final candidate and no verdict; exact-source review resumes on return.
 core open: Original14151 FAIL45.448s; diagnostic25257 FAIL45.557s with432 samples and10/25/40 stacks. Runtime dominates, zero Python CLI children. D94 is owner-authorized verified-history state reuse; no performance/gate credit yet.
 regressions: No newly established Runtime regression. Actual9211=6PASS43FAIL112ERROR;11789=10PASS24FAIL68ERROR;18575=7PASS3FAIL10ERROR. All exact originals and no-case scopes retained; no unchanged rerun.
@@ -270,6 +273,6 @@ Delivery: D65/D67/D72/D87 exact prose installed with renderer PASS. Fresh upstre
 Source ownership: Manager changed only briefs, peer messages and board. D94 owns Runtime store; Agent owns R1 guard, word choice/oracles and sheet CLI setup. Opaque/script0323 and video0328 are read-only protected reviewers.
 Later: D94 exact review after final source; corrected D91ten/D92three proof after owners return; lostACK/replace-existing/word9/current-sheet boundaries remain visible. E1/E2/E3/D79 afterZIP; D42/D34 held; D56 Farm/schema stopped; V4cut; D14/D23 deferred.
 Disk: 5.325 GB now; Sweep3 removed0; compact packed0 scratch/0 test dirs, gzipped1 old log. Three ended nonKEEP v1 trees are dirty and prior refusals remain stopped. Audit only ended clean nonKEEP trees; existing dirty/refused targets untouched. All exact run outputs/branches/receipts retained.
-live 2 plus queued4 / cap 6; ready-undispatched 0 eligible source starts. Source/reviews above5.0GB, one heavy above5.2GB; nothing new below4.5GB.
+live 5 plus queued1 / cap 6; ready-undispatched 0 eligible starts; ready-undispatched 0 eligible source starts. Source/reviews above5.0GB, one heavy above5.2GB; nothing new below4.5GB.
 Dispatcher: D94 author0320, D91 fixture0331; ready22 body, CLI8, M1 and inverse-auth0333 queued. All prior0328 source returns complete.
-INBOX consumed through833641 bytes. Updated 2026-10-25T03:29:08Z. Read PLAN, common rules, current header and Agent/App boards. 0331 remote opaque/script merges requested after independent PASS; D91 source return dispatched. Initial stale board corrected from actual worker reports; no duplicate D94 author or initial review.
+INBOX consumed through839931 bytes. Updated 2026-10-25T03:29:08Z. Read PLAN, common rules, current header and Agent/App boards. 0331 remote opaque/script merges requested after independent PASS; D91 source return dispatched. Initial stale board corrected from actual worker reports; no duplicate D94 author or initial review.
