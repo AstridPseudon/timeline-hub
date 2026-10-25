@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "task": "rt-P2-SWAP29224-facts-0218",
+  "disposition": "safe-existing-facts",
+  "historical_tuple": {
+    "app": "3a2d6067b441b8eee683f2899ee0006615aa6fb0",
+    "agent": "0d142f79518ba4ec20eb195657ccc7eb6e903fc3",
+    "runtime": "a3cd1a3214fa1632879c21d82d1abb9ea720b1de",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "source_trees": {
+    "app": "5976575e123ed30597fa2e02eaa84245f770f23b",
+    "agent": "f490451a3fa92f847a9ff2d26daac9e1157925e3",
+    "runtime": "64bb0caf0b7b950e02c4075077868a3dcd12ee06",
+    "composition": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "app_branch": "tl/rt-P2-SWAP-reviewed-submit-0145",
+  "result": {
+    "suite": "p2-popup-swap",
+    "normal_result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-3a2d6067-d73-p2-popup-swap-reviewed-submit-0145-3a2d6067-1025014649-29224",
+    "normal_artifact": {
+      "path": "d66.tgz",
+      "bytes": 105611701,
+      "sha256": "0689ae1468cdb463036864304e5f0e8b57b562d6d4da5a9ed45131a2d0c5c9c3"
+    },
+    "manifest": {
+      "path": "d66/manifest.json",
+      "bytes": 7286,
+      "sha256": "c3b5207a0ee2951c80ab57de3a595814aae6e4b01519eabe42d6baae6206a65f",
+      "started_at": "2026-10-25T01:47:06.714Z",
+      "finished_at": "2026-10-25T01:50:50.678Z",
+      "normal_elapsed_seconds": 223.964,
+      "readiness_exit": 0,
+      "normal_exit": 1
+    },
+    "case": {
+      "path": "tests/e2e/local/three-products.p2-popup.spec.ts:949:1",
+      "name": "P2 popup mounted SWAP on selected child uses authenticated old/new media selections",
+      "elapsed_seconds": 71.801,
+      "status": "failed"
+    }
+  },
+  "request": {
+    "method": "POST",
+    "category": "timeline commit / mounted popup SWAP",
+    "status": 503,
+    "status_disposition": "observed response; not the intended accepted commit reply",
+    "error_code": "not_ready",
+    "reason": "runtime_unavailable",
+    "safe_message": "Timeline commit outcome unavailable; retry the exact request",
+    "intended_accepted_status": 200,
+    "accepted_reply_retained": false,
+    "receipt_retained": false
+  },
+  "runtime_phase_ledger": {
+    "path": "d66/runtime-private/p2-commit-phase.jsonl",
+    "bytes": 12841,
+    "sha256": "6607b3c859ee0152b986053b1200327f391e7cd0c9b1492c2fa2ee04ec18e307",
+    "ordinal_1": {
+      "provider": ["start@1867.126", "end@3082.299"],
+      "accept": ["start@2716.093", "end@3082.133"],
+      "receipt": ["start@2724.588", "end@3081.731"],
+      "response": ["start@3414.210 status=200", "end@3414.365 status=200", "start@3414.692 count=2 status=200", "end@3415.307 count=2 status=200"]
+    },
+    "ordinal_2": {
+      "provider": ["start@8875.476", "end@17533.416"],
+      "accept": ["start@13220.504", "end@17531.893"],
+      "receipt": ["start@13329.666", "end@17528.237"],
+      "response": ["start@22329.466 status=200", "end@22330.025 status=200", "start@22331.328 count=2 status=200", "end@22334.960 count=2 status=200"]
+    },
+    "ordinal_3": {
+      "provider": ["start@27926.997"],
+      "provider_end_retained": false,
+      "accept_retained": false,
+      "receipt_retained": false,
+      "response_retained": false,
+      "last_retained_authorization": "count=9 end@34057.745"
+    }
+  },
+  "earliest_missing_observation": "After ordinal 3 provider/start at 27926.997ms, no provider/end, accept, receipt, or response phase is retained. The later frontend observation is not_ready/runtime_unavailable with HTTP 503.",
+  "limits": [
+    "One normal original was retained; no retry or replay was made.",
+    "Readiness passed. Reload, undo, and final acceptance assertions were unreached after the 503.",
+    "No backend failure is inferred from the frontend message or the missing retained tail.",
+    "Raw authorization, request body, idempotency key, URLs, request identifiers, and private traces are intentionally omitted.",
+    "The existing 45-second original limit and fresh-validation/no-write/no-leak guards remain requirements; this evidence does not claim later guards passed after the refusal."
+  ],
+  "source_integrity": {
+    "popup_test_sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "readiness_test_sha256": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+    "before_equals_after": true
+  }
+}

@@ -3707,3 +3707,14 @@ Current actual workers: rt-P2-native-reply-resume-0217 (sole parent/single on Ap
 D91 approval consumed: only host1.8->2.0s, all other authored timing and guards preserved, one review then exactMAIN proof. Core-element bounded D83 literal correction keeps lostACK separate.23 no-JUnit source packet already exists as design/rt-D86-10077-unexecuted-facts-0155.md; filter cause is source-supported but exact original deselection record absent, all remain unqualified. Current Agent joins0207 consumed; no stale normal-home wait.
 
 Four newly stale terminal pins (D90 candidate, completedP4d407, failedSWAP3a2, old4b984) passed currenthead/test/queue/lease/fullprocess audit with zero unreadable and were recycled through normal route after namedKEEP release; all run outputs preserved. Free recovered5.46->6.05GB and dispatches rechecked D89 floor, now six live/requested. No previous refused dirty/cleanup target retried. Old denied D88 action remains stopped; no new attack construction or prototype release.
+
+## 2026-10-25T02:25Z ORCHESTRATOR: D92 (unused-pin compound cases: genuine two-commit route, or legacy-only retirement)
+- **D92, the "unused managed pin" compound cases: reach the state through the REAL API, or retire it as legacy-only (02:25Z), deciding escalation agent-20261025T0216Z-unused-manifest-current-admission:**
+  1. **Try the genuine route first (one Luna, source and local):** build the state with current commits only.
+     - Commit A admits the media WITH a consumer (current `media.admit` plus its use).
+     - Commit B removes the consumer through the normal edit path.
+     - If the pin legitimately remains in the manifest as unused, that IS a genuine current unused-pin state with an authenticated history pair. Migrate the three originals' setup to it (D72(2)), keeping every assertion, the unused-pin purpose and all fresh source/history guards.
+  2. **If no current API can reach an unused managed pin** (the pin is collected, or admission without consumption is impossible by design): then the state exists only in legacy data, and the three cases go to the ledger under D72(1)/D52 as legacy-only.
+     - Each entry names the current behaviour that replaces it: the admission-requires-consumption tests, plus the legacy-history read tests for the held schema31 archives, which already contain such a pin.
+     - Add ONE targeted test if the "legacy unused pin is read without error" behaviour has no coverage.
+  - No fabricated history, SQL, synthetic pins, temporary consumers kept in the product, or relaxed guards. Atomic and ABA stay separate.

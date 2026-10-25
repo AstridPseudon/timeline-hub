@@ -201,6 +201,15 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **Order:** Runtime first (producer), then D39 client regeneration if the contract changed, then Agent and App in parallel. P2/P3 and the core suites then run on the refreshed heads.
   - At delivery, F-final applies the squashed patches to these same tips. A new upstream move after this point triggers another refresh only if the owner asks.
   - **Test-file conflicts (13:40Z): keep BOTH.** Upstream's new and changed tests are taken as they are, and every one of our live test cases is re-applied on top: adapted to upstream's structure, never dropped. Taking 'incoming' and discarding our cases is weakening, so it's refused. The independent review maps every pre-merge live predicate to its post-merge location. Product-code conflicts follow the default: upstream behaviour, with ours adapted.
+- **D92, the "unused managed pin" compound cases: reach the state through the REAL API, or retire it as legacy-only (02:25Z), deciding escalation agent-20261025T0216Z-unused-manifest-current-admission:**
+  1. **Try the genuine route first (one Luna, source and local):** build the state with current commits only.
+     - Commit A admits the media WITH a consumer (current `media.admit` plus its use).
+     - Commit B removes the consumer through the normal edit path.
+     - If the pin legitimately remains in the manifest as unused, that IS a genuine current unused-pin state with an authenticated history pair. Migrate the three originals' setup to it (D72(2)), keeping every assertion, the unused-pin purpose and all fresh source/history guards.
+  2. **If no current API can reach an unused managed pin** (the pin is collected, or admission without consumption is impossible by design): then the state exists only in legacy data, and the three cases go to the ledger under D72(1)/D52 as legacy-only.
+     - Each entry names the current behaviour that replaces it: the admission-requires-consumption tests, plus the legacy-history read tests for the held schema31 archives, which already contain such a pin.
+     - Add ONE targeted test if the "legacy unused pin is read without error" behaviour has no coverage.
+  - No fabricated history, SQL, synthetic pins, temporary consumers kept in the product, or relaxed guards. Atomic and ABA stay separate.
 - **D91, shared-inverse host-fixture window corrected (02:12Z), deciding escalation runtime-20261025T0207Z-shared-inverse-original-host:** APPROVED as a D72(2) setup-only migration.
   - The five original-third cases author a move whose required local end (2.0 s) exceeds their host window (1.8 s). Under C0's finite-interval semantics, which are a deliberate, approved behaviour, Runtime correctly refuses. Keeping every input AND getting acceptance is impossible. The fixture predates C0.
   - **The correction:** set the host fixture window to the minimum valid value, **2.0 s**, which exactly contains the authored move and clip.

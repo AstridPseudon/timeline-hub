@@ -1,0 +1,27 @@
+field	value
+disposition	safe-existing-facts
+app_branch	tl/rt-P2-SWAP-reviewed-submit-0145
+tuple	App=3a2d6067 Agent=0d142f Runtime=a3cd1a Composition=635f4de
+method	POST
+category	timeline commit / mounted popup SWAP
+status	503 observed; not intended accepted reply
+error_code	not_ready
+reason	runtime_unavailable
+safe_message	Timeline commit outcome unavailable; retry the exact request
+intended_status	200
+accepted_reply_retained	false
+receipt_retained	false
+normal_elapsed_seconds	223.964
+case_elapsed_seconds	71.801
+readiness	PASS
+ordinal_1	provider start/end; accept start/end; receipt start/end; response start/end status=200 (counts 1 and 2)
+ordinal_2	provider start/end; accept start/end; receipt start/end; response start/end status=200 (counts 1 and 2)
+ordinal_3	provider start only at 27926.997ms; no provider end, accept, receipt, or response retained
+earliest_missing	Immediately after ordinal 3 provider/start; later authorization ended at count=9 at 34057.745ms
+post_failure_tail	Reload, undo, final acceptance assertions unreached
+retry	NONE
+backend_conclusion	NONE; frontend unavailable message is not backend-failure evidence
+phase_artifact	d66/runtime-private/p2-commit-phase.jsonl
+phase_artifact_sha256	6607b3c859ee0152b986053b1200327f391e7cd0c9b1492c2fa2ee04ec18e307
+popup_test_path	tests/e2e/local/three-products.p2-popup.spec.ts:949:1
+popup_test_sha256	09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9
