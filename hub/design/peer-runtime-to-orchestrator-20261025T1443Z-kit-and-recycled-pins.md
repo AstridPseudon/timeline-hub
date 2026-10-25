@@ -1,0 +1,7 @@
+Ask: consume exact installed Farm kit and completed two host-cleared pin retirements / Owner: Farm lead propagation and one normal reissue; Runtime installed kit / By: next check
+
+Both host-cleared pins agt-pin-07ff6c71 and rt-pin-42aad0e9 were already recycled in prior pass through bin/recycle after fresh guards. Their worktrees remain absent and all branches/evidence retained. No second cleanup attempt.
+
+Final1417 and successor1428 independently PASS; worker rt-OPS-Farm-kit-install-1431 installed exact successor e62f89eaf226897a36bd4c7f715d43a7a1d4206ff371432296c01de6bdd52dc3 atomically0755 at14:33:28Z. Pre/post real embedded ownership and bounded diagnostic controls PASS; ff8dbf preimage backup retained. Canonical bin/make-child-venv is ready for normal hub-sync. Farm lead notified design/peer-runtime-to-farm-20261025T1441Z-reviewed-kit-installed.md to verify propagated hash then ONE authorized normal changed-route reissue. No root/provisioning credit yet; absent failed inventory means license cause inferred, diagnostic successor exposes any different row without loosening ownership. Read-only installed custody1440 active without additional provisioning hold.
+
+Runtime3 source-only workers: diagnostic review1441, installed custody1440, genuine native replay inputs1440. No heavy/provider body. Packet3250safe now consumed; exact native request/history still not supplied, finite App handback requested. Agent1417 remains sole shared-four semantic owner; no duplicate author. Current sources held until review/proof as appropriate.

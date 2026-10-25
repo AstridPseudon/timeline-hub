@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "task": "P2 SWAP3250 exact native replay source preparation",
+  "status": "SOURCE_FAITHFUL_ONLY_EXACT_MISSING",
+  "supported_suite": "full-p2-swap-native-1055",
+  "command_executed": false,
+  "tuple": {
+    "app": "fe3309dba4520835a685f925468bff1acdc0506f",
+    "agent": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "runtime": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "exact_missing": [
+    "original D127 request body or safe equivalent containing exact commands, optional reads, and request identity",
+    "authentic pre-SWAP project/timeline current base pair, accepted setup history/ancestry, and canonical closure",
+    "exact old/new authenticated media-selection records and registry custody",
+    "receiving diagnostic source bound to Runtime 5e9ad1c6 for the 3250 tuple",
+    "private realm/auth custody if required by the receiving harness"
+  ],
+  "source_fact_only": {
+    "app_final_gesture": "occurrence.fork followed by occurrence.swap-media, merge fields, mounted App caller, current setup head",
+    "d112_positive": "occurrence.add-media at current, then occurrence.swap-media on the added row at current, atomic merge, separate timeline.inverse",
+    "eligible_first_post_current_branches": ["App place-shared", "App authored doc.patch", "App final fork+swap", "D112 add-media", "D112 swap", "D112 inverse"],
+    "root_cause": "not claimed; exact App semantic-test-to-runtime namespace binding is UNKNOWN"
+  },
+  "admission": {"observed_free_bytes": 4834320384, "required_light_floor_bytes": 5000000000}
+}
