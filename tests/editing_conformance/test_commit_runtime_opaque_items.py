@@ -33,16 +33,32 @@ def opaque_film(request, tmp_path, monkeypatch):
     from timeline_commit_film_fixture import build_film_fixture
 
     from astrid.sdk.timeline.capture import capture_move
-    from astrid.sdk.timeline.commit import _digest, _manifest, bundle_from_document
+    from astrid.sdk.timeline.commit import (
+        _digest,
+        _manifest,
+        bundle_from_document,
+    )
     from astrid.sdk.timeline.emitter import emit_document_commands
+    from astrid.sdk.timeline.native_occurrence_delete import capture_occurrence_delete
+    from astrid.sdk.timeline.native_occurrence_shared import capture_occurrence_place_shared
 
     fixture = build_film_fixture(tmp_path)
     service = RuntimeService(fixture.duplicate_root)
     edit = Editing(service, SimpleNamespace(fixture=fixture),
                    SimpleNamespace(move=capture_move, bundle=bundle_from_document))
     try:
+        service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
         original = edit.document()
-        target = copy.deepcopy(original)
+
+        # Open occurrence-2 only through the real semantic route.  The source
+        # occurrence is then a genuine shared physical closure for the opaque
+        # payload patch below; an independently rewritten source would bypass
+        # the materialization case this fixture is meant to cover.
+        deleted = edit.commit(edit.body([capture_occurrence_delete(
+            bundle_from_document(original), "occurrence:occurrence-2",
+        )]), "opaque-delete-source")
+        staged = deleted["data"]["canonical_document"]
+        target = copy.deepcopy(staged)
         parent = target["parent_revision"]["payload"]
         _, shot, internal = occurrence_image(target, "occurrence-1")
         internal["payload"]["clips"][0]["hold"] = 0.25
@@ -61,8 +77,7 @@ def opaque_film(request, tmp_path, monkeypatch):
                     parent["clips"][0], shot["payload"], internal["payload"],
                     internal["payload"]["tracks"][0], internal["payload"]["clips"][0]):
             row.update(data=opaque(), app=opaque(), opaque=opaque())
-        for occurrence in parent["occurrences"][:2]:
-            occurrence.update(data=opaque(), app=opaque(), opaque=opaque())
+        parent["occurrences"][0].update(data=opaque(), app=opaque(), opaque=opaque())
         target["parent_revision"]["content_digest"] = _digest(parent)
         for image in target["shot_revisions"]:
             image["content_digest"] = _digest(image["payload"])
@@ -72,9 +87,51 @@ def opaque_film(request, tmp_path, monkeypatch):
             target["shot_revisions"], target["internal_timeline_revisions"],
             target["dependency_manifest"]["media"], target["dependency_manifest"]["documents"],
         )
-        service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
-        setup = emit_document_commands(bundle_from_document(original), bundle_from_document(target))
-        edit.commit(edit.body(setup), "opaque-baseline")
+        setup = emit_document_commands(bundle_from_document(staged), bundle_from_document(target))
+        source = edit.commit(edit.body(setup), "opaque-source")
+
+        source_document = source["data"]["canonical_document"]
+        shared = capture_occurrence_place_shared(
+            bundle_from_document(source_document), "occurrence:occurrence-1", "occurrence-2", on=1,
+        )
+        shared_result = edit.commit(edit.body([shared]), "opaque-shared-source")
+        shared_document = shared_result["data"]["canonical_document"]
+
+        # Restore the premigration occurrence rows and order while retaining
+        # the authenticated source revision returned by place-shared.
+        target = copy.deepcopy(shared_document)
+        parent = target["parent_revision"]["payload"]
+        current = {row["occurrence_id"]: row for row in parent["occurrences"]}
+        original_rows = {
+            row["occurrence_id"]: row
+            for row in original["parent_revision"]["payload"]["occurrences"]
+        }
+        rows = []
+        for occurrence_id in (
+            row["occurrence_id"] for row in original["parent_revision"]["payload"]["occurrences"]
+        ):
+            row = copy.deepcopy(original_rows[occurrence_id])
+            if occurrence_id in ("occurrence-1", "occurrence-2"):
+                source_row = current[occurrence_id]
+                row["shot_id"] = source_row["shot_id"]
+                row["shot_revision_id"] = source_row["shot_revision_id"]
+                row.update(data=opaque(), app=opaque(), opaque=opaque())
+            rows.append(row)
+        parent["occurrences"] = rows
+        target["parent_revision"]["content_digest"] = _digest(parent)
+        target["dependency_manifest"] = _manifest(
+            target["shot_revisions"], target["internal_timeline_revisions"],
+            target["dependency_manifest"]["media"], target["dependency_manifest"]["documents"],
+        )
+        setup = emit_document_commands(
+            bundle_from_document(shared_document), bundle_from_document(target),
+        )
+        baseline = edit.commit(edit.body(setup), "opaque-baseline")
+        baseline_document = baseline["data"]["canonical_document"]
+        first = occurrence_image(baseline_document, "occurrence-1")
+        second = occurrence_image(baseline_document, "occurrence-2")
+        assert first[1]["revision_id"] == second[1]["revision_id"]
+        assert first[1]["internal_timeline_revision_id"] == second[1]["internal_timeline_revision_id"]
         yield edit, load_timeline_commit_provider
     finally:
         edit.service.close()
