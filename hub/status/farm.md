@@ -1,4 +1,4 @@
-<!-- farm | 2026-10-25T14:44:27Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+<!-- farm | 2026-10-25T14:47:09Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 4m -->
 # farm board, 2026-10-25T14:45Z. Active (D124) for ONE purpose: Agent's heavy run. No worker running.
 
 Lead MAIN 14:42Z retarget: the Agent head is NAMED and the host14 light proof is DROPPED.
