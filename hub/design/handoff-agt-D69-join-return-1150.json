@@ -1,0 +1,143 @@
+{
+  "task": "agt-D69-join-return-1150",
+  "result": "NOT_WHOLE_AUDIT_PASS",
+  "join_authority": {
+    "report": "agt-F-D69-review-join-1042/report.md",
+    "json": "agt-F-D69-review-join-1042/evidence/d69-join.json",
+    "joined_disjoint_function_scopes": 64,
+    "zero_delta_members_retained": true,
+    "immutable_source_census": {
+      "changed_function_bodies": 129,
+      "removed_assertion_fingerprints_multiplicity": 113,
+      "added_assertion_fingerprints_multiplicity": 287,
+      "note": "Do not sum report labels to reconstruct the original unit total."
+    }
+  },
+  "actual_current_normal": {
+    "repo": "/home/user/work/agent",
+    "branch": "tl/integration",
+    "head": "b8507e946a4225026132cdd3973b145a340f1607",
+    "tree": "6cb086da2a04ad9fdd4399fddb9cc4a45970d802",
+    "clean": true,
+    "normal_product_baseline_commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "normal_product_baseline_tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+    "normal_product_service_source_sha256": "75f5f4b0e4a07cd7516c26f5487784c1fcf322661c89b144351eded2f5079f3c",
+    "note": "The current normal checkout is later than 070dfc; the relevant normal product service source remains the 070dfc source. The held adcb product source is not normally landed."
+  },
+  "remaining_open": [
+    {
+      "index": 90,
+      "function": "tests/stage1/test_media_handoff_render_boundary.py::test_host_derived_registry_reaches_canonical_remotion_executor_process",
+      "predicate_or_scope": {
+        "source_guards": [
+          "assert source_frame == output_frame",
+          "assert len(source_frame) == len(output_frame)",
+          "for channel in range(3): assert abs(source_mean - output_mean) <= 4"
+        ],
+        "behavior_boundary": "The test must prove a genuine installed Remotion/render process, not only the faithfully restored source guards."
+      },
+      "source": {
+        "status": "QUALIFIED",
+        "1042_current_or_captured_function_blob": "9a5f4138a897a98f60ed4044ab9ff730519be8d7",
+        "actual_current_normal_file_blob": "5f91c8277427761026016af552327317faab1522",
+        "actual_current_normal_function_ast_sha256": "ed661c8dc5bb4911b36d9c7fa13f3d65f96ef55e656e6a8637f30e920bf69feb",
+        "source_note": "The later normal file adds the length and per-channel mean guards while retaining strict frame equality; this is source evidence only."
+      },
+      "applicability": "Current normal source contains the repaired guards; no source applicability gap remains for index 90.",
+      "behavior": "OPEN",
+      "approval": "No behavior approval; 1042 explicitly leaves the installed-render proof pending.",
+      "evidence": [
+        "1042 d69-join.json joined scope old-stage [90,92,93,95,97], disposition source-qualified-after-faithful-repair; behavior-pending",
+        "Current source AST inspection at the named function",
+        "D117 installed-render qualification remains STOPPED"
+      ],
+      "owner": "Agent installed-render/D117 (STOPPED)",
+      "missing_exactly": "A successful genuine installed Remotion/render qualification for this function."
+    },
+    {
+      "index": 107,
+      "function": "tests/test_installer_platforms.py::test_windows_task_settings_and_no_console_executable",
+      "predicate_or_scope": {
+        "restored_predicates": [
+          "assert xml.startswith('<Task ')",
+          "assert '<?xml' not in xml"
+        ],
+        "preserved_predicate": "assert 'Hidden' not in service.render('win32', version, data, log)"
+      },
+      "source": {
+        "status": "CANDIDATE_PASS_HELD",
+        "normal_current_file_blob": "55d0bbfd4200756d1a5322ed63e52ada32a44560",
+        "normal_current_function_ast_sha256": "1b24e3d38081c3a8491ac81960c071cc531d0e68dc784bb334e46818b295acdf",
+        "candidate_test_commit": "e2da11c0271edaee4a0be9360ad428190baeaf49",
+        "candidate_test_file_blob": "0cc059252667fed490e761ac20056847bf4e9f6b",
+        "candidate_test_function_ast_sha256": "ba026d8de3be951cb3c951cf45923586c3140ccf96929ea35e2331493975ed2a",
+        "candidate_product_commit": "adcbbea915f975f8bb6ded1e97d7b56ef67db48f",
+        "candidate_product_service_sha256": "8439dd891e6f7354136c5467f838c61c1e9dc904ce611b104a8ec8df47a07097",
+        "candidate_relation": "e2da test restore plus adcb product restore are held as a batch/core candidate; neither is the current normal product source."
+      },
+      "applicability": "OPEN: current normal source still lacks the two restored test predicates and current normal product service remains the 070dfc source.",
+      "behavior": "Candidate proof PASS only: independent 1111 recorded the protected Windows test as 1 passed, 44 deselected. This does not qualify current normal until the held candidate is normally imported.",
+      "approval": "Independent 1111 source PASS for adcb; candidate remains held for batch/core adoption, not normal merge from source alone.",
+      "evidence": [
+        "1042 d69-join.json odd-five-unresolved [107] missing exactly the two Windows XML predicates",
+        "1059 protected residual review: source repair is PASS_SOURCE / behavior distinction retained",
+        "1111 independent review: adcb source PASS and protected test 1 GREEN",
+        "Actual current-normal ref/tree recorded above"
+      ],
+      "owner": "Agent installer/service owner and normal integration importer; held candidate owner is U2/D69 XML batch",
+      "missing_exactly": "Normal import/adoption of e2da test source and adcb product source, followed by current-normal applicability verification. No new semantic review is owed."
+    }
+  ],
+  "cleared_not_open": [
+    {
+      "indexes": [57, 59],
+      "functions": [
+        "tests/sdk/test_coverage_empty_cut.py::test_a_declared_fade_in_is_a_dip_not_a_gap",
+        "tests/sdk/test_coverage_empty_cut.py::test_a_translucent_plate_does_not_cover_the_canvas"
+      ],
+      "predicate": "D69 scene GAP findings are advisory; structural blockers remain authoritative. The exact old blocking/valid=False purpose is replaced by advisory GAP coverage.",
+      "approval": "Exact D09 deletion-ledger decision at deletion-ledger.agent.md:184: Explicit diagnostics stay advisory; save remains pure.",
+      "evidence": "agt-F-D69-residual-review-1059/report.md, protected residual review",
+      "owner": "Agent scene-check/public caller",
+      "status": "CLEARED_SOURCE_AND_SEMANTIC_APPROVAL"
+    }
+  ],
+  "reviewed_scope_accounting": {
+    "old_core": [9, 73, 74, 111, 128],
+    "old_stage": [90, 92, 93, 95, 97],
+    "old_writers": [52, 53, 115, 120, 121],
+    "even_a": [0, 4, 6, 12, 14],
+    "even_b": [28, 30, 38, 46, 54],
+    "even_c": [60, 76, 80, 88, 96],
+    "even_d": [98, 104, 112, 114, 124],
+    "odd_a": [5, 11, 13, 29, 31],
+    "odd_b_qualified": [37, 39, 47],
+    "odd_b_cleared_after_protected_review": [57, 59],
+    "odd_c": [69, 75, 81, 85, 89],
+    "odd_d": [101, 105, 113, 125],
+    "five_even": [10, 56, 58, 116, 126],
+    "odd_five_qualified": [61, 83, 21, 49],
+    "odd_five_open_source_applicability": [107],
+    "accounting_note": "These are the 64 disjoint joined function scopes. Zero-delta reviewed members remain accounted for; no residual odd/even packet is treated as an open semantic unit."
+  },
+  "validation": {
+    "commands": [
+      "python3 -m json.tool on retained 1042 join JSON and this evidence JSON",
+      "source-only git rev-parse/blob/hash checks for actual current normal, e2da, adcb, 070dfc, captured-new, and old refs",
+      "source-only ast.parse plus AST SHA checks for indexes 90 and 107",
+      "git diff --check"
+    ],
+    "results": {
+      "json": "PASS",
+      "hash": "PASS",
+      "ast": "PASS",
+      "git_diff_check": "PASS",
+      "tests_imports_collection_bodies": "NOT RUN by read-only task"
+    }
+  },
+  "limits": [
+    "No new semantic review of cleared cases was performed.",
+    "No product, test, import, collection, body, kit, repo, ledger, process, or retirement changes were made.",
+    "This does not claim whole-audit PASS or that current normal 107 has landed."
+  ]
+}
