@@ -1,0 +1,45 @@
+{
+  "task": "rt-R2-created-read-final-review-1821",
+  "verdict": "PASS",
+  "review_scope": "Independent first-return review of the corrected rt-R2-created-read-correction-1814 source/contract packet against rt-R2-created-read-review-1808 and rt-R2-created-read-contract-1803; read-only, no product or test changes.",
+  "reviewed_packet": {
+    "task": "rt-R2-created-read-correction-1814",
+    "result": "CORRECTED_SOURCE_CONTRACT_ASSESSMENT",
+    "classification": "NO_RUNTIME_FIX_AUTHORIZED",
+    "assessment": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-R2-created-read-correction-1814/evidence/assessment.json",
+    "source_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-R2-created-read-correction-1814/evidence/source-manifest.json",
+    "validation": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-R2-created-read-correction-1814/evidence/validation.md"
+  },
+  "basis": {
+    "contract_correction_verified": "C0:314-322 resolves each command operand/change at its sequential input, including preceding creations/removals; C0:356-367 permits subsequent same-batch patches to address roots created by semantic commands; C0c:2825-2837 requires verified intermediate images before a subsequent qualified operand uses them and permits refusal of unsupported input. Public sequential operand visibility is defined; it is not limited to a separately numbered subsequent command.",
+    "recorded_read_boundary_verified": "Provider recorder observations in record['reads'] are distinct from public command guards. Agent _recording.py:93-99 records the observed staged state; finish(capture=True) at :249-262 derives public guards from command_input while retaining the staged observations. A raw post-handler read therefore does not itself authenticate a public guard or authorize Runtime trust expansion.",
+    "runtime_seam_verified": "Runtime validate seeds each step's first command from the source boundary and constructs later command inputs with command_output (timeline_commit_auth.py:2873-2915). validate_step resolves each recorded read against its command boundary (382-442); occurrence aliases require an authenticated occurrence row (150-172); created-child projection is for a following command (1896-1910, 2189-2209). Store dispatch reaches authenticated validation (timeline_commit_store.py:1491-1539).",
+    "original_findings_retained": "The original 1803 assessment remains FAIL for its superseded contract interpretation, and 1808 remains FAIL as its independent review of that assessment. Their corrected substantive distinction is retained: current Runtime lacks an authenticated arbitrary intra-handler boundary, so the source refusal alone does not authorize widening guards, aliases, roots, ownership, or trust.",
+    "exact_missing_retained": [
+      "accepted records.commands and records.steps for the failing graph request",
+      "failing read ref/path/state and exact command ordinal",
+      "intra-command read/change ordinal or authenticated staged boundary",
+      "undo/redo phase and inverse stage range",
+      "per-ordinal sequential input/output closure images",
+      "effect/materialization physical bindings and source-to-successor continuations",
+      "paired accepted history receipts and historical-root provenance"
+    ],
+    "unknown_causality_retained": "No same-message, same-cause, historical-cause, Agent-causal, or Runtime-causal attribution is inferred beyond the source ownership seam.",
+    "production_context": "The assessed production caller remains the graph doc.patch path and recorded command reads; the held SWAP path is independent. No public wire-shape change follows."
+  },
+  "decision": "PASS the corrected report and contract interpretation. Preserve the original FAIL findings as historical evidence, retain EXACTMISSING authenticated actual records, and authorize no Runtime fix or scope/permission wait by inference.",
+  "checks": {
+    "source_sha_blob": "PASS",
+    "ast_compile": "PASS (5 cited Python files)",
+    "callgraph_predicates": "PASS",
+    "evidence_json": "PASS",
+    "c0_json_examples": "PASS (20 parsed)",
+    "git_diff_check": "PASS",
+    "worktree": "PASS (clean at e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9)"
+  },
+  "excluded": [
+    "No pytest, provider/body, socket/browser, tour/P4, acquisition, collector, or full-suite run",
+    "No D130 SWAP/WAL/refused-path inspection",
+    "No product, contract, test, generated-file, pin, permission, Git, credential, or hub write"
+  ]
+}

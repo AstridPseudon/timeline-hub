@@ -1,0 +1,125 @@
+{
+  "task": "rt-OPS-inventory-install-review-1815",
+  "reviewed_commit": "a5c39e412b8974932bb20a726ef08f8853c594a4",
+  "verdict": "FAIL",
+  "result_code": "FAIL_SOURCE_SECURITY",
+  "scope": "Read-only review of the install-prep runbook, installer, and private controls against actual1656 and independent1659 custody evidence.",
+  "gates": {
+    "agent_e2e_1800": "PENDING",
+    "independent_result_review": "REQUIRED_AFTER_E2E",
+    "d125b": "HOLD",
+    "live_install_performed": false
+  },
+  "candidate": {
+    "source_commit": "09ed4999741b822fba7e8b3033ca28db6bcf8fa1",
+    "source_tree": "32dbfb3e6ec08b032db2c9f75c6fae29e5e4abcc",
+    "path": "ops-child-custody/make-child-venv",
+    "sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+    "bytes": 69516,
+    "mode": "0755",
+    "regular_single_link": true
+  },
+  "preimage": {
+    "parent_commit": "9428f515fcd8dccaef26193438b3ac89f903f5aa",
+    "parent_tree": "7952f3e9e15532072066474ea9d151fe79114bd6",
+    "path": "ops-child-custody/make-child-venv",
+    "sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+    "bytes": 68351,
+    "mode": "0755"
+  },
+  "protected_helpers": {
+    "bench_store.py": {
+      "sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+      "bytes": 43403,
+      "mode": "0755",
+      "single_link": true
+    },
+    "verify_dependency_seed.py": {
+      "sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+      "bytes": 52731,
+      "mode": "0755",
+      "single_link": true
+    }
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "BLOCKING",
+      "path": "ops-child-custody/install-prep/apply-reviewed-maker.sh:72-74,86-88",
+      "title": "Predictable temporary paths are check-then-copy races",
+      "detail": "The script checks that BACKUP_TMP and REPLACEMENT_TMP do not exist, then cp opens them without an exclusive, no-follow reservation. A concurrent creator can replace either path with a symlink between the check and cp; cp follows the destination and can write outside the intended directory. The private controls use O_EXCL only for their backup, and shutil.copyfile after a separate existence check for replacement, so they do not prove the shell route is race-safe.",
+      "required_fix": "Use an atomic exclusive, no-follow temporary-file reservation in the destination directory and copy through the reserved file descriptor or equivalent race-safe primitive; exercise both destinations under adversarial replacement."
+    },
+    {
+      "id": "F2",
+      "severity": "BLOCKING",
+      "path": "ops-child-custody/install-prep/apply-reviewed-maker.sh:16-17,33,48-54",
+      "title": "Parent path shape is not bound",
+      "detail": "ORCH itself is checked physical, but ORCH/bin and ORCH/backups are not. A symlinked bin or backups directory redirects the target replacement or backup outside the approved ORCH root. The file-level checks cannot detect this because they follow parent directories. Parent owner/mode/physical-directory invariants are absent.",
+      "required_fix": "Resolve and validate every receiving parent (ORCH, bin, backups) as owned physical directories before any write, and reject symlinked or otherwise unapproved ancestors."
+    },
+    {
+      "id": "F3",
+      "severity": "BLOCKING",
+      "path": "ops-child-custody/install-prep/apply-reviewed-maker.sh:82-91",
+      "title": "CAS is not protected through the rename",
+      "detail": "The second hash/CAS check is followed by a separate mv. Another writer can replace or modify TARGET after line 85 and before line 91; the script then atomically renames over that changed path without checking the original inode or using a lock/descriptor-bound replacement. This is not an exact receiving CAS under a race.",
+      "required_fix": "Bind the receiving entry and parent to an exclusive coordination mechanism and perform an identity-preserving CAS/rename, or use an equivalent kernel primitive that refuses when the checked target entry changed. Add an adversarial race control."
+    },
+    {
+      "id": "F4",
+      "severity": "HIGH",
+      "path": "ops-child-custody/install-prep/apply-reviewed-maker.sh:91-97",
+      "title": "A post-replacement denial can leave production modified",
+      "detail": "The target is replaced at line 91, but helper readback at lines 96-97 checks only SHA-256 and can then call die. A helper symlink or mode/owner/hardlink change after the initial check can evade the hash-only readback, while a genuine readback failure reports REFUSED after the target has already changed. The runbook's stop-on-denial/no-alternate invariant is therefore not preserved.",
+      "required_fix": "Validate helper shape/owner/mode/link count again and define a failure-safe commit boundary; do not report a refusal after a write without an explicit installed-but-unverified state and manager handling that does not attempt an alternate route."
+    },
+    {
+      "id": "F5",
+      "severity": "HIGH",
+      "path": "ops-child-custody/install-prep/apply-reviewed-maker.sh:62-63",
+      "title": "TMPDIR is an unvalidated write root",
+      "detail": "The private extraction root is created under the caller-controlled TMPDIR without checking that TMPDIR is physical, owned, and distinct from ORCH and SOURCE_CHECKOUT. A symlink or an approved-root TMPDIR can redirect extraction and archive writes into a production tree. The controls resolve TMPDIR but do not enforce the shell installer's boundary.",
+      "required_fix": "Require an owned physical temporary parent outside the receiving and source roots, then verify the created private root before extraction."
+    },
+    {
+      "id": "F6",
+      "severity": "MEDIUM",
+      "path": "ops-child-custody/install-prep/apply-reviewed-maker.sh:31-32,56-58",
+      "title": "Documented source ownership is not enforced",
+      "detail": "The README requires the source checkout to be owned by the invoking user, but the script checks only physicality, commit availability, and clean status. It does not validate checkout ownership or directory ancestry. The exact file hash limits content substitution, but the stated custody invariant is not implemented.",
+      "required_fix": "Validate source checkout and relevant ancestors' ownership/shape before using the checkout, or narrow the runbook claim."
+    },
+    {
+      "id": "F7",
+      "severity": "HIGH",
+      "path": "ops-child-custody/install-prep/README.md:8-18; ops-child-custody/install-prep/apply-reviewed-maker.sh:1-12",
+      "title": "D125b gates are procedural only",
+      "detail": "The README says E2E1800 and independent review must pass, but the executable accepts only ORCH and SOURCE_CHECKOUT and has no machine-readable gate input or verification. A caller can invoke the live route before either required gate. This is an operational bypass unless the manager-only receiving process is an independently enforced trust boundary.",
+      "required_fix": "Keep the route HOLD until both gates exist and, before any live use, bind the command to exact accepted result artifacts and the independent review; otherwise explicitly retain this as a non-automated procedural limitation."
+    }
+  ],
+  "approved_route_comparison": {
+    "actual1656": {
+      "verdict": "PASS_INSTALL",
+      "installed_sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+      "backup_sha256": "1243cb6c203b7f9c23015f2fc0e3fe4722eb53c1c703f171b89123cf9c8afd0b",
+      "scope_limit": "actual child acceptance and live layout remain unverified"
+    },
+    "independent1659": {
+      "verdict": "PASS_INSTALLED_SOURCE",
+      "scope_limit": "no live child/build/diagnostic/Store/package acquisition; actual child acceptance remains unverified"
+    }
+  },
+  "controls": {
+    "private_runner": "PASS",
+    "shell_syntax": "PASS",
+    "source_ast_and_embedded_compile": "PASS",
+    "scoped_ruff": "PASS",
+    "hash_tree_conservation": "PASS",
+    "git_diff_check": "PASS",
+    "full_or_live_suite": "NOT_RUN_BY_RULE",
+    "agent_e2e_1800": "NOT_RUN",
+    "live_install": "NOT_RUN"
+  }
+}

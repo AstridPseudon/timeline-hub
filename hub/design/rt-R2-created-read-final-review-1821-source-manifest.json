@@ -1,0 +1,70 @@
+{
+  "task": "rt-R2-created-read-final-review-1821",
+  "source_commit": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+  "source_tree": "d5cb9335a03bf4764548e379ce180a66bf966910",
+  "qualified_product_pin": "ab1e4f6141987706132916e2da16477f5a019464",
+  "sources": {
+    "runtime": {
+      "contract/commit-v2.md": {
+        "git_blob": "257024df6fa93be767f0c74ee10014a6770c4fcb",
+        "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+        "citations": ["112-155", "314-336", "356-367", "603-612", "614-661", "1612-1636", "2825-2837"]
+      },
+      "runtime_protocol/timeline_commit_auth.py": {
+        "git_blob": "75c290edb73a8f8e39c77a64368bf4b11705f7f0",
+        "sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+        "citations": ["100-172", "382-442", "490-558", "1896-1910", "2189-2209", "2873-2975"]
+      },
+      "runtime_protocol/timeline_commit_store.py": {
+        "git_blob": "f9cf50c1aee3b0a8c7caeb3d8a307a65f5f910e9",
+        "sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+        "citations": ["1491-1539"]
+      }
+    },
+    "agent_frozen": {
+      "commit": "224de4697c36b8958d94c0b85626e0fedaf007cb",
+      "astrid/sdk/timeline/_recording.py": {
+        "git_blob": "523a1280ab916734cefae836adb7c89b6ead2f2f",
+        "sha256": "3940d0296f55bfc2b7cff6f4998adc4a6caf3290c1fcae10ddea813edc50f7e4",
+        "citations": ["93-99", "249-262"]
+      },
+      "tests/editing_conformance/test_recorded_graph_roots.py": {
+        "git_blob": "7309e162c2ef2c1efe95e757c1d8f5c16361cd81",
+        "sha256": "10abe08639878ee746884736368977e5302f06a6db8ab6d0ac7198125d9f89a8",
+        "citations": ["112-123"]
+      },
+      "tests/sdk/test_timeline_commit_graph_roots.py": {
+        "git_blob": "303d076e108132d02133171aa77059b565e93e23",
+        "sha256": "72bf3c60cc006223c857ae5194280793a2be21ee0527ebb565a2a1cf271d9c21",
+        "citations": ["297-338"]
+      }
+    }
+  },
+  "reused_review_inputs": {
+    "original_1803_assessment_sha256": "7f2a46918c25f47ce8968c974ef562348177d43ba6e0cb800036793bc7b86a79",
+    "original_1808_review_sha256": "cd6f840d42ad6b4bfaec666acb4b1eb889ea7ae3a5cad75ba0d5bab6cf591c0b",
+    "app_1753_report_sha256": "81b00c9ec8747289ec9e969f5e759ae86d385f101ec13c4ceedf22f4184b7a48",
+    "app_1753_facts_sha256": "e4e3d586658db24a430962409bb19a3daed76abe3e369c13d4eea830a68657c5",
+    "peer_boundary_note_sha256": "ec4379ce05fc5411368bc2ef1da2b7cb34b45d15c9ac3418981a5b32d71ccda2"
+  },
+  "verification": {
+    "runtime_blobs_match": true,
+    "runtime_sha256_match": true,
+    "agent_blobs_match": true,
+    "agent_sha256_match": true,
+    "ast_compile_files": 5,
+    "callgraph_predicates": [
+      "native_site occurrence boundary",
+      "validate_step command boundary",
+      "created projection",
+      "validate source then later inputs",
+      "store authenticated validate dispatch"
+    ],
+    "contract_json_examples": 20
+  },
+  "limits": [
+    "No accepted records, ordinals, stage pairs, closure snapshots, physical bindings, continuations, or historical-root facts reconstructed",
+    "No causal attribution beyond the source ownership seam",
+    "No provider, body, test, socket, browser, acquisition, collector, or D130 qualification"
+  ]
+}

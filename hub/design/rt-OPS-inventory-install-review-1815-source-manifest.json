@@ -1,0 +1,60 @@
+{
+  "task": "rt-OPS-inventory-install-review-1815",
+  "reviewed_worktree_commit": "a5c39e412b8974932bb20a726ef08f8853c594a4",
+  "source_commit": {
+    "commit": "09ed4999741b822fba7e8b3033ca28db6bcf8fa1",
+    "tree": "32dbfb3e6ec08b032db2c9f75c6fae29e5e4abcc",
+    "path": "ops-child-custody/make-child-venv",
+    "sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+    "bytes": 69516,
+    "mode": "0755",
+    "git_mode": "100755",
+    "regular_single_link": true
+  },
+  "expected_preimage": {
+    "commit": "9428f515fcd8dccaef26193438b3ac89f903f5aa",
+    "tree": "7952f3e9e155320720664ea9d151fe79114bd6",
+    "path": "ops-child-custody/make-child-venv",
+    "sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+    "bytes": 68351,
+    "mode": "0755",
+    "git_mode": "100755",
+    "regular_single_link": true
+  },
+  "actual1656_read_only": {
+    "target": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+      "sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+      "bytes": 68351,
+      "mode": "0755",
+      "uid": 0,
+      "nlink": 1,
+      "type": "regular"
+    },
+    "backup": {
+      "sha256": "1243cb6c203b7f9c23015f2fc0e3fe4722eb53c1c703f171b89123cf9c8afd0b",
+      "bytes": 68506,
+      "mode": "0755",
+      "regular_single_link": true
+    },
+    "protected_helpers_unchanged": true,
+    "verdict": "PASS_INSTALL"
+  },
+  "independent1659_read_only": {
+    "verdict": "PASS_INSTALLED_SOURCE",
+    "candidate_byte_identity": true,
+    "actual_child_acceptance": "UNVERIFIED",
+    "actual_layout": "UNVERIFIED / EXACTMISSING",
+    "live_child_build": "NOTRUN",
+    "live_diagnostic": "NOTRUN"
+  },
+  "prep_artifacts": {
+    "ops-child-custody/install-prep/README.md": "814b2a5690cc2158918270452b038c9a83a35dbe2c8592c02171def6dcfd40b9",
+    "ops-child-custody/install-prep/apply-reviewed-maker.sh": "2d9b81574efbdeff7ffe5e5721f913f65f1278d2502fa7f2822ec50245f8eb53",
+    "ops-child-custody/install-prep/dry_run_controls.py": "0d45b62dd5a5746fe41317a7173d8d12f7e93019409f0f94f7253c7e2f81cb5c"
+  },
+  "protected_bench_and_dependency_hashes": {
+    "bench_store.py": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "verify_dependency_seed.py": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+  }
+}
