@@ -492,7 +492,7 @@ describe('bounded stage passes', () => {
     }
   });
 
-  it.each([false, true])('connects to the empty Inspector card center when visible (phone: %s)', (isPhone) => {
+  it.each([false, true])('connects to the empty Inspector card when visible: its centre, or its top edge on phones (phone: %s)', (isPhone) => {
     phone = isPhone;
     const view = render(<Stage inspectorHidden />);
     settle();
@@ -512,7 +512,7 @@ describe('bounded stage passes', () => {
     settle();
     const endpoint = view.container.querySelector('.astrid-callout-dot-end[data-callout="effects"]')!;
     expect(Number(endpoint.getAttribute('cx'))).toBe(150);
-    expect(Number(endpoint.getAttribute('cy'))).toBe(140);
+    expect(Number(endpoint.getAttribute('cy'))).toBe(isPhone ? 100 : 140);
     expect(frames.size).toBe(0);
   });
 

@@ -1526,7 +1526,7 @@
   .astrid-brand { min-height: 44px; gap: 9px; }
   .astrid-brand-name { font-size: 23px; }
   .astrid-audience-switch { min-width: 0; }
-  .astrid-audience-switch button { min-height: 40px; padding-inline: 15px; }
+  .astrid-audience-switch button { min-height: 44px; padding-inline: 15px; }
   .astrid-hero-copy h1 { max-width: 11ch; margin: 14px 0 0; font-size: clamp(44px, 12.6vw, 56px); }
   .astrid-hero-subtitle { margin-bottom: 28px; font-size: 16.5px; }
   .astrid-mobile-hero-subtitles { display: grid; margin-bottom: 28px; }
@@ -1561,20 +1561,23 @@
   .astrid-hero-cta > .astrid-button[data-active="false"] > :not(.astrid-visually-hidden) { translate: 0 4px; }
   .astrid-hero-cta > .astrid-button:focus-visible { outline: 2px solid var(--astrid-ink); outline-offset: 3px; }
   .astrid-button { min-height: 52px; }
-  .astrid-hero-note { justify-self: stretch; width: 100%; margin-top: -10px; justify-content: center; }
+  .astrid-hero-note { justify-self: stretch; width: 100%; margin-top: 20px; justify-content: center; }
   .astrid-hero-note .astrid-social-links { margin-left: 0; }
-  .astrid-showcase { grid-template-rows: auto; padding: 26px 0 30px; }
-  .astrid-public-site[data-audience="app"] .astrid-showcase { padding-top: 46px; }
-  .astrid-public-site[data-audience="app"] .astrid-hero-note { margin-top: 20px; }
-  .astrid-editor-stage { aspect-ratio: 390 / 552; border-radius: 16px; }
+  /* Both audiences frame the demo the same way: cards hang 44px over the stage's top edge and 20px
+     under its bottom edge, and the demo sits one gap below the top cards and one gap above the bottom
+     ones. PublicAstridCallouts reports each rail's tallest card (and Agent's conversation height) as
+     custom properties; the fallbacks are typical phone values for the first frame. */
+  .astrid-showcase { grid-template-rows: auto; padding: 46px 0 30px; }
+  .astrid-editor-stage { aspect-ratio: 390 / 552; border-radius: 16px; --astrid-phone-gap: 24px; }
   /* The App has one timeline row. Size its stage from the inspector, 16:9 player, row, and
      label clearance instead of stretching a portrait aspect ratio on wider phones. */
   .astrid-editor-stage[data-audience="app"] {
-    --astrid-app-top: 64px;
-    --astrid-app-label-space: clamp(94px, calc(280px - 42vw), 146px);
+    --astrid-app-top: calc(var(--astrid-phone-rail-top, 60px) - 44px + var(--astrid-phone-gap));
+    --astrid-app-label-space: calc(var(--astrid-phone-rail-bottom, 130px) - 20px + var(--astrid-phone-gap));
     width: 100%; min-width: 0; min-height: 0; aspect-ratio: auto;
-    height: calc(var(--astrid-app-top) + 100px + (100vw - 62px) * .5625 + 112px + var(--astrid-app-label-space));
+    height: calc(var(--astrid-app-top) + 100px + (100vw - 62px) * .5625 + 112px + var(--astrid-app-label-space) + 2px);
   }
+  .astrid-editor-stage[data-audience="app"] .astrid-editor-tilt { inset: var(--astrid-app-top) 12px var(--astrid-app-label-space); }
   /* The labels hang over the top and bottom edges; the composition tucks just under them. */
   .astrid-editor-tilt { inset: 64px 12px 40px; }
   .astrid-editor-stage[data-audience="agent"] { cursor: auto; }
@@ -1598,25 +1601,30 @@
     left: 0; top: calc(100px + (100vw - 62px) * .5625); bottom: auto; width: 100%; height: 112px;
     transform: none;
   }
-  /* A compact clip-name row sits above evenly spaced tabs; the full inspector controls stay hidden. */
+  /* A compact clip-name row sits above evenly spaced tabs; the full inspector controls stay hidden. The
+     selected-clip card keeps a small radius and real padding so its title and tabs clear its border. */
   .astrid-public-site[data-audience="app"] .astrid-inspector-panel-frame { zoom: 1; font-size: 11px; }
   .astrid-public-site[data-audience="app"] .astrid-inspector-surface [role="tabpanel"] { margin-top: 0; gap: 0; }
   .astrid-public-site[data-audience="app"] .astrid-inspector-surface .text-sm { font-size: 11px; line-height: 1.2; }
+  .astrid-public-site[data-audience="app"] .astrid-inspector-surface .truncate.text-sm { font-size: 12px; }
   .astrid-public-site[data-audience="app"] .astrid-inspector-surface [role="tabpanel"] > div > div > :first-child :is(.mt-1, .rounded-full) { display: none; }
   .astrid-public-site[data-audience="app"] .astrid-inspector-panel-frame > div > div > [role="tablist"],
   .astrid-public-site[data-audience="app"] .astrid-inspector-surface fieldset { display: none; }
-  .astrid-public-site[data-audience="app"] .astrid-inspector-surface [role="tabpanel"] > div { padding: 5px; overflow: hidden; }
+  .astrid-public-site[data-audience="app"] .astrid-inspector-surface [role="tabpanel"] > div {
+    padding: 6px 8px; border-radius: 10px; overflow: hidden;
+  }
   .astrid-public-site[data-audience="app"] .astrid-inspector-surface [role="tabpanel"] > div > div {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 24px 30px;
+    grid-template-rows: 22px 30px;
+    align-content: center;
     align-items: center;
     gap: 4px;
     height: 100%;
   }
   .astrid-public-site[data-audience="app"] .astrid-inspector-surface [role="tabpanel"] > div > div > * { margin: 0; }
   .astrid-public-site[data-audience="app"] .astrid-inspector-surface [role="tabpanel"] > div > div > :first-child {
-    height: 24px; min-width: 0; align-items: center; padding: 0 2px;
+    height: 22px; min-width: 0; align-items: center; padding: 0 0 0 4px;
     border: 0; border-radius: 0; background: transparent;
   }
   .astrid-public-site[data-audience="app"] .astrid-inspector-surface [data-clip-inspector-read-only] > :first-child button { width: 24px; height: 24px; min-height: 0; }
@@ -1625,7 +1633,10 @@
     height: 30px;
     min-height: 0;
   }
-  .astrid-public-site[data-audience="app"] .astrid-inspector-surface [role="tablist"].grid-cols-4 > [role="tab"] { font-size: 11px; padding-inline: 2px; }
+  /* The tabs fill the 30px strip (the coarse-pointer 44px tab would spill out of it and be clipped). */
+  .astrid-public-site[data-audience="app"] .astrid-inspector-surface [role="tablist"].grid-cols-4 > [role="tab"] {
+    height: 100%; min-height: 0; padding-block: 0; font-size: 11px; padding-inline: 2px;
+  }
   .astrid-public-site[data-audience="agent"] .astrid-chat-surface {
     /* Sized so the finished exchange just fills it, rather than the whole stage, and centred. */
     left: 4%; top: calc(50% - min(50%, 190px)); width: 92%; height: min(100%, 380px);
@@ -1665,7 +1676,9 @@
   .astrid-scripted-conversation [data-conversation-presentation] > div:last-child { padding: 8px 10px; }
   .astrid-preview-transport-outlet .astrid-preview-transport button { flex: 0 0 40px; width: 40px; }
 
-  /* Half-width cards on the top and bottom rails, hanging ~a fifth of their height over the edge. */
+  /* Both audiences hang one full-width card over the stage's top edge and a half-width pair under its
+     bottom edge, so switching morphs every card in place: Effects <-> Tools, Timeline <-> Workflows,
+     Models <-> Community. */
   .astrid-callout {
     --astrid-callout-width: calc(50% - 14px);
     padding: 9px 11px;
@@ -1674,22 +1687,11 @@
   .astrid-callout h2 { font-size: 13px; line-height: 1.22; }
   .astrid-callout p { margin-top: 3px; font-size: 11.5px; line-height: 1.32; }
   .astrid-callout[data-callout] { top: auto; right: auto; bottom: auto; left: auto; }
-  .astrid-callout:is([data-callout="community"], [data-callout="timeline"], [data-callout="workflows"]) { left: 8px; }
-  .astrid-callout:is([data-callout="effects"], [data-callout="tools"], [data-callout="models"]) { right: 8px; }
-  .astrid-callout:is([data-callout="community"], [data-callout="tools"], [data-callout="effects"]) { top: -20px; }
-  .astrid-callout:is([data-callout="timeline"], [data-callout="workflows"], [data-callout="models"]) { bottom: -20px; }
-  /* On phones the App rail reads more cleanly as a pair: Effects right, editing left. */
-  .astrid-public-site[data-audience="app"] .astrid-callout[data-callout="timeline"] {
-    top: -20px;
-    bottom: auto;
-    left: 8px;
-  }
-  .astrid-public-site[data-audience="app"] .astrid-callout:is([data-callout="timeline"], [data-callout="effects"]) { top: -44px; }
-  .astrid-public-site[data-audience="app"] .astrid-callout[data-callout="models"] {
-    --astrid-callout-width: calc(66.666% - 14px);
-    left: 0;
-    right: 0;
-    margin-inline: auto;
+  .astrid-callout:is([data-callout="timeline"], [data-callout="workflows"]) { left: 8px; bottom: -20px; }
+  .astrid-callout:is([data-callout="models"], [data-callout="community"]) { right: 8px; bottom: -20px; }
+  .astrid-callout:is([data-callout="effects"], [data-callout="tools"]) {
+    --astrid-callout-width: calc(100% - 16px);
+    top: -44px; left: 8px; right: 8px;
   }
   .astrid-result-handoff-button { min-height: 44px; }
 
@@ -1702,15 +1704,6 @@
   .astrid-public-site[data-audience="app"] .astrid-inspector-surface [role="tabpanel"] > div > div > :first-child :is(.mt-1, .rounded-full) { display: none; }
   .astrid-public-site[data-audience="app"] .astrid-inspector-surface [role="tabpanel"] > div { padding: 8px; }
   .astrid-public-site[data-audience="app"] .astrid-inspector-surface [role="tabpanel"] > div > div > :first-child { padding: 8px 10px; }
-}
-@media (max-width: 380px) {
-  /* Narrow phones wrap the labels onto more lines, so the composition gets a little more room under them. */
-  .astrid-editor-stage { aspect-ratio: 390 / 600; }
-  .astrid-editor-tilt { inset: 84px 12px 58px; }
-}
-@media (min-width: 411px) and (max-width: 640px) {
-  /* Wider phones wrap the exchange onto fewer lines, so the conversation can be shorter. */
-  .astrid-public-site[data-audience="agent"] .astrid-chat-surface { top: calc(50% - min(50%, 175px)); height: min(100%, 350px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1756,22 +1749,21 @@
 /* Phones use a shallow full-width integration rail and balanced lower callouts. Geometry switches
    immediately; only opacity fades, avoiding reflowing the live editor throughout a 720ms morph. */
 @media (max-width: 640px) {
+  /* Agent: the conversation is the demo. The stage is exactly the rails plus the conversation, so the
+     space above it and below it is the same gap the App leaves around its editor. */
   .astrid-editor-stage[data-audience="agent"] {
+    --astrid-agent-top: calc(var(--astrid-phone-rail-top, 155px) - 44px + var(--astrid-phone-gap));
+    --astrid-agent-bottom: calc(var(--astrid-phone-rail-bottom, 100px) - 20px + var(--astrid-phone-gap));
     width: 100%;
     min-width: 0;
-    min-height: 650px;
+    min-height: 0;
     aspect-ratio: auto;
+    height: calc(var(--astrid-agent-top) + var(--astrid-agent-chat-height, 350px) + var(--astrid-agent-bottom) + 2px);
   }
-  .astrid-editor-stage[data-audience="agent"] .astrid-editor-tilt { inset: 148px 12px 108px; }
-  .astrid-callout[data-callout="tools"] {
-    --astrid-callout-width: calc(100% - 16px);
-    top: -20px; left: 8px; right: 8px;
+  /* The conversation sits 12px inside the composition box (see the chat rule below). */
+  .astrid-editor-stage[data-audience="agent"] .astrid-editor-tilt {
+    inset: calc(var(--astrid-agent-top) - 12px) 12px calc(var(--astrid-agent-bottom) - 12px);
   }
-  .astrid-public-site[data-audience="agent"] .astrid-callout[data-callout="tools"] {
-    top: -24px;
-  }
-  .astrid-callout[data-callout="community"] { top: auto; left: auto; right: 8px; bottom: -20px; }
-  .astrid-public-site[data-audience="agent"] .astrid-callout:is([data-callout="community"], [data-callout="workflows"]) { bottom: 10px; }
   .astrid-integration-logos { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-block: 7px; }
   .astrid-integration-logos a { font-size: 10px; letter-spacing: -.02em; min-height: 52px; }
   .astrid-integration-logos span { white-space: nowrap; overflow-wrap: normal; }
@@ -1795,11 +1787,6 @@
   .astrid-public-site[data-audience="agent"] .astrid-chat-surface { transform: none !important; }
 }
 
-@media (max-width: 380px) {
-  /* Extra line wrapping makes both lower cards taller. Keep them clear of the composer. */
-  .astrid-editor-stage[data-audience="agent"] { min-height: 710px; }
-  .astrid-editor-stage[data-audience="app"] { --astrid-app-top: 84px; }
-}
 
 /* A short compositor-only arrival preserves the switch's motion without resizing text layers. */
 @keyframes astrid-mobile-app-arrive {
@@ -1857,7 +1844,7 @@
     transition: none;
   }
   .astrid-public-site[data-audience="agent"] .astrid-chat-surface {
-    top: 12px; height: auto; max-height: calc(100% - 12px);
+    top: 12px; height: auto; max-height: none;
     display: flex; flex-direction: column;
     border-color: color-mix(in srgb, var(--astrid-ink) 24%, var(--astrid-panel));
     border-radius: 14px;
@@ -1887,9 +1874,6 @@
   .astrid-public-site[data-audience="agent"] :is(.astrid-player-surface, .astrid-inspector-surface, .astrid-timeline-surface) { opacity: .22; }
 }
 
-@media (min-width: 480px) and (max-width: 640px) {
-  .astrid-editor-stage[data-audience="agent"] { min-height: 570px; }
-}
 
 .astrid-workflows-title-line { display: block; white-space: nowrap; }
 

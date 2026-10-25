@@ -58,8 +58,12 @@ interface Props {
   reducedMotion: boolean;
   active: boolean;
   move: MutableRefObject<CalloutMove | null>;
+  /** Called once the new audience is committed, before the cards' destinations are measured. */
+  prepareLayout?: () => void;
   children: ReactNode;
 }
+/** Keep in step with the phone breakpoint in PublicAstridShell.css. */
+const PHONE_QUERY = '(max-width: 640px)';
 interface Snapshot { epoch: number; boxes: DOMRect[]; curves: number[][]; content: HTMLElement[][] }
 
 function primeRetractedCurve(curve: number[]) {
@@ -160,6 +164,7 @@ export class PublicAstridCalloutLayout extends Component<Props> {
   };
 
   componentDidUpdate(previous: Props, _state: unknown, snapshot: Snapshot | null) {
+    if (previous.audience !== this.props.audience) this.props.prepareLayout?.();
     if (!this.props.active || this.props.reducedMotion) { this.stop(); return; }
     if (previous.audience === this.props.audience || !snapshot) return;
     this.stop(false);
@@ -170,12 +175,18 @@ export class PublicAstridCalloutLayout extends Component<Props> {
     const destinations = cards.map(card => card.getBoundingClientRect());
     const move = this.props.move.current;
     if (!move || move.epoch !== snapshot.epoch) return;
-    // Agent's visual order should enter counterclockwise from App. App -> Agent
-    // deliberately pairs Effects -> Community, Models -> Tools, Timeline ->
-    // Workflows; the reverse direction keeps the established Agent -> App path.
-    const sourceOrder = previous.audience === 'app' && this.props.audience === 'agent'
-      ? [1, 2, 0]
-      : snapshot.boxes.map((_, index) => index);
+    // Which old card each slot morphs from. Desktop: Agent's visual order enters counterclockwise from App,
+    // so App -> Agent pairs Effects -> Community, Models -> Tools, Timeline -> Workflows, and the reverse
+    // keeps the established Agent -> App path. Phones hang the cards on a top and a bottom rail instead,
+    // one full-width card above and two half-width cards below in both audiences, where a rotation would
+    // fly cards across the whole demo. There every card morphs in place, both ways: Tools <-> Effects
+    // (top), Workflows <-> Timeline (bottom left) and Community <-> Models (bottom right).
+    const phone = typeof window.matchMedia === 'function' && window.matchMedia(PHONE_QUERY).matches;
+    const sourceOrder = phone
+      ? [2, 1, 0]
+      : previous.audience === 'app' && this.props.audience === 'agent'
+        ? [1, 2, 0]
+        : snapshot.boxes.map((_, index) => index);
     const sourceBoxes = sourceOrder.map(index => snapshot.boxes[index]);
     const sourceCurves = sourceOrder.map(index => snapshot.curves[index]);
     const sourceContent = sourceOrder.map(index => snapshot.content[index]);
