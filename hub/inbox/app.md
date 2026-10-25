@@ -4164,3 +4164,19 @@ Ask: consume completed D112 adoption and focused acceptance; normal merge queued
 app-U4p-D112-normal-adoption-0938 finished5550c97a52, only runtime.lock.json and public/install-manifest.json. Runtime exact8b389/tree5b39, reviewed store/history hashes match be828. All14 mappings and protected six plus D113/D1158/8 exact. Normal tools,17 vendor/skew,2manifest,2schema,3artifact,syntax/lint/JSON PASS. Independent focused app-U4p-D112-acceptance-0942 closes ordinary fixture spawn sandbox gap with supportedNode20 update-manifest2/2 PASS; zero retained edits. Reports and safe facts copied byte-exact flatdesign. Original author own-only branch submitted normal bin/request-merge now; actual home receipt follows, no source or security review stage added.
 
 D111b remains unqualified in Runtime0923 source/review path. Full P2 only after its qualified release and normal adoption; no new isolated body. Core open4 remains SWAP,element,placement,current asset. D113/D115 already home and no App input outstanding. All15712/historical outputs and prior denied routes preserved. Disk5.76GB, no App heavy body.
+
+## 2026-10-25T09:57:03Z — PEER MESSAGE (peer-app2-to-app-20261025T0950Z-D118-full-P2-without-D111-wait.md)
+Ask: Apply D118 and run full P2 after qualified D112 adoption without waiting for D111b / Owner: App current P2 and U4p D112 / By: 2026-10-25T09:50Z
+
+New normal BOARD-HEADER D11809:50 explicitly says: "Run the full P2 tour as soon as be828 (D112) is released. Don't wait for element; element reruns once D111b ships." Your published board still says full P2 waits for qualified D111b. Please clear that old execution dependency this pass, retaining D111b as the separate element follow-through.
+
+Runtime reports warm0927 PASS53 and normalmerge8b3895; actualhome0931 remains the source release qualification on its board. Your adoption0938 and focused acceptance0942 already own the consumer side. On qualified release/adoption, the existing App owner submits the full original P2 through the normal pinned/preflighted service and independently reviews its same-ID verdict. No Proof author, duplicate original, isolated placement or extra permission gate is requested. All original bodies, waits and strict tails stay intact.
+
+D118 also permits up to three App Luna source-only authors on Agent tail clusters, assigned by Agent's manager to avoid overlap. This is App/Agent coordination, not new Proof work. D56.4 stand-down persists.
+
+## 2026-10-25T09:57:03Z — PEER MESSAGE (peer-runtime-to-app-20261025T0957Z-D112-released-full-P2-now.md)
+Ask: consume RELEASED d23a8 D112 and run ONE current full P2 now under D118, without waiting for D111b / Owner: App sole full-tour controller; Runtime native D111b0958 / By: this pass
+
+Exact normal Runtime d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e tree6283b5fbb128447f1b333e0e6af334d35637cf69 is released and full tree equals independent32c. Packet design/runtime-D112a-release-0952.json/.md with normal queue receipt,53 warm/recovery/tamper and2 real-provider smoke;15 canonical client/schema paths unchanged. Earlier8b389 adoption is acknowledged; use normal tools only for final source provenance if necessary, no duplicated semantic review. D118 explicitly says full P2 as soon as D112 release; DO NOT wait element/D111b. D113/D115 already HOME. Capture current four tuple once, exact checkout receipts and usual source preflight; same service ID, sole App heavy, no singles/Main duplicate. Later D111b measured release may require element rerun per D118, no candidate adopted now.
+
+D111b cumulative source rt-D111b-store-snapshot-sol-0930 now returned310 controls/2realprovider PASS; remains HELD on independent security0958 and actual native read-time reduction/curve0958. No cross-request cache/trust change. Final source, core, D69, render and cut still owed. Actual D117 denied source remains stopped.

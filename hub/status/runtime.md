@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T09:57:03Z | dispatcher heartbeat 11s | live 2 (sol 0, luna 2, other 0) | busy30 19 | status age 5m -->
-# runtime board, 2026-10-25T09:44:21Z
+<!-- main | 2026-10-25T10:01:04Z | dispatcher heartbeat 9s | live 4 (sol 0, luna 4, other 0) | busy30 21 | status age 2m -->
+# runtime board, 2026-10-25T09:57:21Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -309,7 +309,7 @@
 
 | D102b-integrated | Verify combined released diagnostics | Luna | Normal integrated head | merged | rt-D102b-integrated-0550 PASS | Actual c97a: 53 PASS in 28.93s; five reviewed blobs exact, App API and scoped statics passed. | c97a12456 |
 | D101-result-review | Verify six-case source and result custody | Luna read only | Exact six originals PASS | merged | rt-D101-result-review-0550 PASS | Actual 6205 source, tuple, controls and original 45s verified. Runtime half merged; Agent half normal 01d516. | Runtime 7463 / Agent 01d516 |
-| R2-restore-ID5 | Qualify restore and choice originals | Luna / independent | Authentic declared profile | review | Controller0933; route review0943 | Zero body submitted. Main lacks complete Composition0.0.14 profile; no0013 or partial substitute used. | 44cf held |
+| R2-restore-ID5 | Qualify restore and choice originals | Luna / service | Upstream23 heavy terminal | doing | Ordinary0953 from same WIP0933 | Source review0943 proves normal non-render path; ordinary targeted route prepares exact three unchanged originals. | 44cf held |
 | R2-restore-inputs | Export original restore setup boundary | Luna read only | Finite evidence complete | merged | rt-R2-restore-safe-export-0550 | Safe per-ID, provenance and inventory published. Old 31475 and candidate 30269 retain their original setup errors. | Evidence only |
 | D86-1565-export | Return exact 60-case outcomes | Luna read only | Safe publication complete | merged | rt-D86-1565-safe-export-0552 | Nine exact safe files published: 3 FAIL, 57 ERROR, zero PASS. Held ten and original 550/23 remain separate. | Evidence only |
 | D86-new13 | Qualify new opaque script and CLI sources | Luna / service | Actual source follow-through | review | Actual 17724; exporter 0618 | All 13 executed: four FAIL, nine ERROR. Exact bde578/0c62/9cb56/635f; source owners 0627 and Agent CLI follow-through. No unchanged repeat. | Recorded source proof |
@@ -381,7 +381,7 @@
 | D112-security | Review full-verification recovery authority | Luna independent | Native acceptance before release | review | rt-D112-security-review-0827 PASS | 344 source controls PASS; two authorizer failures reproduced on parent. Existing Pyright diagnostics disclosed. Native proof remains separate. | be828d92c held |
 | D112-native | Prove SWAP and identity recovery | Sol / Luna | D112a accepted criterion | merged | Native0850; comparison0907; review0945 | Identical lifecycle counters; existing warm53 PASS. Actual source is byte-exact reviewed normal d23a8. | d23a8e0d2 |
 
-| D111b-read-snapshot | Remove repeated request reads | Sol / Luna | Dominant store read cost | doing | Sol0930; review0930 PASS | Corrected cold-read test is parent RED and candidate GREEN. Source PASS only; scaling remains open. | Corrected candidate held |
+| D111b-read-snapshot | Reduce repeated authenticated reads | Sol / Luna | Native read-time reduction and review | review | Sol0930; security0958; native0958 | Source310, socket8 and realprovider2 PASS; source held until native curve cuts source-document wall. | Sol0930 held |
 
 | D108-legacy-archive-input | Return retained authentic archive | Luna / independent | Independent safe handback | review | Author0912; review0923 | Existing26543byte archive matches2915 hash and normalreceipt. Original43ENV remain until corrected-input proof. | Evidence only |
 
@@ -389,29 +389,31 @@
 | D112-curve-criterion | Apply owner flatness criterion | Orchestrator | D112a09:25 | merged | Header D112a | Same-lifecycle counters equal meets criterion. Existing D94 warm forward/read test is sole remaining release check. | Decision only |
 | D108-archive-handback | Verify and publish existing archive | Luna independent | Verified original2915 | merged | rt-D108-archive-review-0923 PASS | Original safe bytes and receipt published; Agent handback complete. Existing43ENV remain until corrected-input proof. | Evidence only |
 
-| D115-fixture-purpose | Review historical fixture purpose | Luna read only | Agent validation27 source packet | doing | rt-D115-fixture-purpose-0934 | Exact 27 legacy-binding cases; source and purpose review. No authored input, archive or guard changes. | Source facts pending |
+| D115-fixture-purpose | Review historical fixture purpose | Luna / independent | Agent D116 per-case replacement | merged | Source0934; review0943 PASS | All27 exact. No generator pin loss; tenD107 approved,17 current replacements unqualified. Peer0950 published. | Evidence only |
 
-| D77-footprint | Bound a future normal stage | Luna read only | D117 retained stage evidence | doing | rt-F-D77-footprint-bound-0947 | Source-only bytes and peak budget assessment. No install, acquisition, profile, carrier or render. | Evidence only |
+| D77-footprint | Bound a future normal stage | Luna independent | D117 denied source | review | Source0947; review0958 | Measured1.169GB exceeded750MB; complete peak unknown. No stage/acquisition retry. | Evidence only |
 
-| D118-upstream23 | Isolate pristine upstream failures | Luna / service | Genuine upstream checkouts | doing | rt-D118-upstream23-0951 | Authoritative membership and actual module origins before targeted proof on Agent08e6 and Runtimed4f. | Pristine upstream only |
+| D118-upstream23 | Isolate pristine upstream failures | Luna / independent | Independent per-node classification | review | Source0951; review1001 | Exact23:16 counterparts,7absent;15PASS1FAIL. Child imports pristine. NEW versus REG labels need independent review. | Pristine upstream only |
 
-Runtime producer: RELEASED d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e, full tree6283b5 EXACT reviewed32c. D112 fallback, typing correction and e6b snapshot tests qualified; normal adoption now ready. Agent070dfc D110 released, App04be includes reviewed portable capture and D110 adoption.
-core open: 1 Runtime finding: D111b element read cost. D112 identity recovery is qualified and released. Agent437 current core-open after exact D110 fixture proof, PRE0/KNOWN1/ENV59/NEWcore438/NONCORE8/REG0 proven; upstream Runtime isolation UNCERTAIN. App core open3.
-regressions: D102 context regression closed on1daca; D110 KeyError released. Current full P2 remains owed.
-Gates: Recorded P1/P3 independent GO; P4 independent GO28.101s. Final tuple/core/P2/render remain required.
+| D115-effect83 | Verify unchanged intermediate images | Luna read only | Authentic Agent0932 source packet | doing | rt-D115-effect-path-0958 | Genuine2PASS1FAIL reported; independent client-to-store comparison assigned. No auth relaxation or product fix yet. | Source unchanged |
+| D111b-security | Review cumulative request snapshots | Luna independent | Exact Sol0930 tree | doing | rt-D111b-security-0958 | Scope includes freshness, authorization, isolation, lifecycle, D112 recovery and strict guards. | Held candidate |
+| D111b-native | Measure source-document read reduction | Luna / service | Prior main heavy terminal | doing | rt-D111b-native-return-0958 | Prepares existing relative diagnostic route; _read wall must drop and native curve qualify. | Held candidate |
+| D112-release | Publish qualified normal source | Luna | Independent32c and warm53 | merged | rt-D112a-release-publish-0952 | Packet published; full normal tree exact6283. App full P2 proceeds now perD118. | d23a8e0d2 |
 
-Blockers: Agent core — D115 service107 splits83 effect-image cases and other inverse/sequential groups; AgentSol0932 owns producer. Runtime fixture-purpose0934 queued for exact27 historical legacy inputs. No competing author.
-Blockers: Runtime D111b — Corrected cold-read regression source PASS0930; native16269 remains nonflat. Sol0930 owns the measured source-document/store boundary, 97.2% of retained read time. No cross-request cache or trust change.
-D112 RELEASED: Normal d23a8 full tree equals independent32c tree6283b5. Warm/recovery/tamper53 and real-provider2 PASS; Pyright55/55 zero new identities. App full P2 may adopt now per D118, without waiting D111b.
-Blockers: Runtime D69 — Runtime normalized113function JOIN and72assert/8raises verified, RT07 snapshot repair actual20PASS on e6b669. Agent recovered129/113/287 membership; predicate-purpose mappings still owed. App scoped mapping0742PASS; lexical limits remain.
-Blockers: Final render — D117 confirms GitHub scope denial and classifier refusal, surfaced to owner. No retry or other source. Actual stage produced no profile/carrier/render; footprint plan0947 is source only.
-Blockers: Final cut — D69, green current core, final pinned P1-P5 and genuine installed render remain owed. No final tuple or ZIP.
-KIT CHANGE installed: test-run5df4145 independentlyPASS33 before/after. No live-kit blocker.
-Next ready: D112 typing review0945, D111b Sol0930, D100 outcome0945, fixture-purpose review0943, R2 route review0943 and stage footprint0947 assigned. Candidate product merges remain held on meaningful proof.
-Venues: Main D100 actual26 terminal; R2three submitted no body. D111b native acceptance is next when source is ready. Agent core repair follows D115 clusters; no unchanged full or App duplicate.
-Delivery: Applied rehearsal source trees and durable patches retained. Source-only D07/Windows later tests require final application at cut; no ZIP.
-Later: D107 held2154; D100new26/R2three held until needed proof, originalTEN distinct and unchanged. P4 and prior passed controls not repeated. Three Remotion copies await owner disposition.
-Safety: Withdrawn D88 and D111memo stay stopped. D106 ORCH-only outputs; denied hub target never retried. Manager changes no product/test/generated/pin files.
-Disk: About5.9GB available after automatic staging cleanup. Fresh sweep3 removed0. No new eligible ended clean Runtime v1 worktree was found. Sweep3 removed0. Existing five dirty v1 trees and prohibited Codex session paths untouched; compact-scratch not invoked because it touches those paths.
-live 3 / cap 6; ready-undispatched 0. One Sol for the measured core read boundary after Luna failed; other active reviews and source assessments are Luna.
-INBOX consumed through 1099866 bytes. Updated 2026-10-25T09:44:21Z.
+Runtime producer: RELEASED d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e, tree6283b5 EXACT independent32c. Packet design/runtime-D112a-release-0952.json;15 canonical mappings unchanged. App normal8b389 adoption acknowledged; current full P2 is READY underD118 without D111b wait.
+core open: Runtime D111b measured source-document read cost remains open; cumulative source310PASS/socket8PASS/native smoke2PASS, exact source under independent security0958 and native acceptance0958. Agent437; full2016 remains8763PASS159FAIL347ERROR,173subtests. D54a upstream23 actual16:15PASS1FAIL;7absent. Independent1001 checks classification.
+regressions: D102 context and D110 inverse repaired. D112 identity recovery released; no new overall P2 credit.
+Gates: P1/P3 recorded GO; P4 independentGO28.101s. Final tuple/core/currentP2/render remain required.
+Blockers: D111b — Runtime source held until independent security and actual source-document _read wall reduction/flat native curve. No cross-request cache or trust change.
+Blockers: D115 effect83 — Runtime read-only0958 compares unchanged intermediate image boundary; authentic Agent0932 source packet requested this pass. No competing producer writer.
+Blockers: Final render — D117 GitHub scope/classifier refusal remains stopped; no retry/alternate source. Footprint source0947 independently reviewed0958; actual stage produced no profile/carrier/render.
+Blockers: D69 — Runtime113-function JOIN72assert/8raises and snapshot20PASS qualified. Agent129/113/287 recovered membership needs exact purpose mappings; App finite mappingPASS. No full audit closure.
+Blockers: Final cut — D69, green current core, final pinned P1-P5 and genuine installed render owed. No final tuple or ZIP.
+Next ready: Every current independent source/review assigned. Native0958 queues after upstream23 and ordinaryR2three; App fullP2 now owns separate venue. No unchanged full/P4/family repeats.
+Venues: Main upstream23 terminal; ordinaryR2three-0953 prepares non-render route; D111b native0958 follows serially. No local duplicate bodies.
+Delivery: Applied rehearsal trees and durable patches retained; later D07/Windows final application and platform checks owed. Footprint complete peak unknown.
+Later: D107 held2154; D100 candidate20PASS6FAIL at duplicatechapter seed remains held; originalTEN distinct. Fixturepurpose27 complete: no pin-loss bug,17 not retired. Three Remotion copies await owner disposition.
+Safety: Withdrawn D88/D111memo stopped. D106 ORCH outputs only; denied hub target never retried. Manager edits no product/test/generated/pin files.
+Disk: About5.9GB available. Fresh eligible-worktree audit and sweep3 underway. Five dirty v1 trees/prohibited Codex session paths untouched; compact-scratch touches those paths and is not run.
+live 6 / cap 6; ready-undispatched 0. Six Luna workers: two main controllers, security, two source assessments and D54a result review. No Sol source author active.
+INBOX consumed through1105557 bytes. Updated 2026-10-25T09:57:21Z.

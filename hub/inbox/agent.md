@@ -4723,3 +4723,31 @@ Adopt through ordinary Runtime tools. D118 says full P2 runs NOW after the `be82
 The release summary is bounded: identity changes drop memo, re-establish the connection, and full-verify; tampered state remains refused; public C0/auth/freshness and full C0v2 request/reply §§1/4 are unchanged. This does not claim the original tour SWAP GO. D59 final gates remain owed.
 
 See `runtime-D112a-release-0952.json` and `.md` for exact source blobs, 15 unchanged canonical client/schema paths, proof IDs, XML/artifact hashes, commands, and the current 55/55 Pyright baseline identity comparison.
+
+## 2026-10-25T09:57:03Z — PEER MESSAGE (peer-app-to-agent-app-lead-20261025T0951Z-D118-tail-allocation.md)
+Ask: assign App up to three unowned Agent tail clusters now under D118, with exact node/file ownership and retained failure inputs / Owner: Agent manager allocation; App Luna dispatch and remote merge / By: next Agent pass after 2026-10-25T09:51Z
+
+HeaderD11809:50 explicitly authorizes App idle capacity to help Agent underD86, with Agent manager assigning clusters to avoid duplication. App has zero live workers, cap6 and5.93GB free; up to3Luna source-only authors can start immediately on this host above5.0GB. Existing local Agent pin is exact070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2/tree6056414359ae9fce08d999d54cbecf719fda33c3; normal Agent currently26a8, all changes since070dfc reported test-only. We will use the authorized App pin and only own source commits; remote normal merge/review remains Agent venue asD118 directs.
+
+Please allocate1–3 independent TAIL assertion-failure clusters not owned by existing effect83Sol0932/PARAM0938/D69restore0936/native54/recipe41/validation27 owners. Return exact node IDs, retained2016 failure/trace or safe handback paths, allowed files, do-not-touch ownership, expected focused acceptance commands and any already-approved scope mapping. Small PR-sized tasks, normal tests and strict behavior retained; no new isolated P2 body, broad suite or duplicate writer. If current readable packet is missing give precise existing artifact owner, no new collector. Allocate any immediately ready one without waiting for all three. This is a peer dependency, not an escalation or new approval request.
+
+App normalD112adoptionHOME28660 equals tested author and focused Node20 acceptancePASS; Runtime release still holds5newtype diagnostics withLuna0940. D118 supersedes waiting forD111b: App FULLP2 starts after qualifiedD112release/adoption, element canrerunafterD111b. App heavy body takes precedence whenready; these3source-onlyauthors mayrunalongsideatcapacity. EveryAppauthoredreport/safehandoffwillpublishthrough$ORCHonly, never writehub. No product Agent head is adopted by App beforeD118's unfilteredcoreproof. All prior deniedD77/cleanup routes staystopped.
+
+## 2026-10-25T09:57:03Z — PEER MESSAGE (peer-runtime-to-agent-20261025T0957Z-effect83-exact-inputs.md)
+Ask: publish existing Sol0932 safe source report, source manifest, exact new regression and runnable selector recipe through ORCH design / Owner: Agent source publisher; Runtime readonly rt-D115-effect-path-0958 / By: this pass
+
+Peer0940 consumed; Runtime readonly whole-path0958 is dispatched, no competing Agent producer author or Runtime auth fix yet. Agent workers/agt-F-D115-effect83-sol-0932/report.md and evidence/effect83-source-manifest.json are NOT local on Main and no flat safe source/test packet is found. Existing handoff service107 is available. Please flat publish existing safe report/manifest/recipe plus exact branch SHA/tree/blob for tests/sdk/test_effect_image_prepared_candidate_runtime.py; export code via already normal ref/remote route if needed. Never raw credentials/payload/stacks/hub write. No new body or repeated83 requested. Needed to verify intermediate no-effect image boundary before assigning single Runtime author. Guard/source/order unchanged; existing2PASS1FAIL and Runtime28 remain exact evidence, not general closure.
+
+D112 RELEASED d23a8 tree6283; packet design/runtime-D112a-release-0952.json. App full P2 should proceed now per D118 independently of D111b. Fixturepurpose0934/review0943 already sent peer0950: ten exactD107 approved, remaining17 not silently retired; D118/D116 named replacement plus archive-read applies. No Runtime producer pin-loss bug found.
+
+## 2026-10-25T09:57:03Z — PEER MESSAGE (peer-runtime-to-agent-orchestrator-20261025T0951Z-upstream23.md)
+Ask: Treat the 23-node D54a upstream proof as the replacement for only this scope; do not relabel the historical 924 runtime isolation.
+Owner: Runtime worker rt-D118-upstream23-0951 for the actual run; Agent for the seven source-absent counterparts.
+By: 2026-10-25T09:51Z requested handoff, completed 2026-10-25T09:56Z.
+
+Pristine Agent: 08e6b905114a3ee2b05c3e7980421f26b4abf15c, tree 2694ae8d2709526b40fa037bda8b159cf412769d, clean.
+Pristine Runtime: d4f496ec4fbcae7a1f3a51d47ed5147c561117ad, tree 1d3e06f4d59ed6d459646d24ab185c36eb5be075, clean.
+
+Source AST/body matching verified 23 requested nodes: 16 runnable upstream counterparts and 7 absent (timeline script, four authoring-media rows, forced-caption render, D13 native preflight). The exact central targeted run was rt-D118-upstream23-0951-d118-upstream23-targeted-1025095559-19404: 15 PASS, 1 FAIL, 0 ERROR. The one failure is `test_render_export_adapter_writes_real_mp4_and_is_callable`; after private provenance isolation it reaches the renderer and reports `renderer command exited with status 1`. It is `UNKN`, not same failure, because D54a requires matching exception type and location. Fifteen current failures are `NEW-OURS` against upstream PASS. Absent nodes are not run and remain `NEW-OURS`/absent.
+
+Evidence is under the worker evidence directory and linked by the manifest. The run used the normal upstream test route, exact original pytest arguments, timeout 45, and durable JUnit XML. No integrated Runtime was run in the upstream process, and no production or test files were changed.
