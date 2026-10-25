@@ -1,0 +1,66 @@
+{
+  "task": "D136c original-nine diagnostics qualification",
+  "run_identity": {
+    "runtime_receiving_commit": "777f203885ba66d89439d45d584aadd41487119f",
+    "runtime_receiving_tree": "2c022e367128da7c556d94613fb0a4b2d1915a09",
+    "runtime_immutable_parent": "ab1e4f6141987706132916e2da16477f5a019464",
+    "agent_commit": "d133a14838a4e607947893408bc34ba2742a19c6",
+    "agent_tree": "f87d59a9deb3b64efddd4707d2c8eb8a52e31bf5",
+    "reviewed_runtime_donor": "2f1fbb1fc2954dc54eda7f29656de8f15e38683a",
+    "interpreter": "/home/user/work/venv-agent/bin/python",
+    "python_version": "3.13.16",
+    "retry": false,
+    "adaptation": false
+  },
+  "admission": {
+    "free_available_bytes_before": 5339742208,
+    "free_available_bytes_after": 5339279360,
+    "floor_bytes": 5000000000,
+    "stop_bytes": 4000000000,
+    "no_concurrent_heavy_body": true,
+    "stop_triggered": false,
+    "admitted": true
+  },
+  "original9": {
+    "status": "FAIL_ACTUAL_ORIGINAL9",
+    "collected": 9,
+    "errors": 9,
+    "passes": 0,
+    "failures": 0,
+    "skipped": 0,
+    "duration_ns": 39339905578,
+    "xml_reported_case_times_seconds": [4.076, 2.348, 2.631, 2.555, 3.270, 2.696, 2.390, 2.449, 2.502],
+    "exit_code": 1,
+    "first_seam_all_cases": "provider intermediate command lacks an authenticated physical observation"
+  },
+  "outcomes": [
+    {"selector_suffix": "test_real_saved_projection_config_registry_and_full_pins_golden", "status": "ERROR", "boundary": "setup", "classification": "UNKNOWN"},
+    {"selector_suffix": "test_real_saved_entire_expansion_golden", "status": "ERROR", "boundary": "setup", "classification": "UNKNOWN"},
+    {"selector_suffix": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows", "status": "ERROR", "boundary": "setup", "classification": "UNKNOWN"},
+    {"selector_suffix": "test_real_candidate_matches_sdk_opener_exactly[parent]", "status": "ERROR", "boundary": "setup", "classification": "UNKNOWN"},
+    {"selector_suffix": "test_real_candidate_matches_sdk_opener_exactly[child]", "status": "ERROR", "boundary": "setup", "classification": "UNKNOWN"},
+    {"selector_suffix": "test_real_candidate_matches_sdk_opener_exactly[new_shot]", "status": "ERROR", "boundary": "setup", "classification": "UNKNOWN"},
+    {"selector_suffix": "test_real_candidate_matches_sdk_opener_exactly[duplicate]", "status": "ERROR", "boundary": "setup", "classification": "UNKNOWN"},
+    {"selector_suffix": "test_real_candidate_matches_sdk_opener_exactly[remove]", "status": "ERROR", "boundary": "setup", "classification": "UNKNOWN"},
+    {"selector_suffix": "test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]", "status": "ERROR", "boundary": "setup", "classification": "UNKNOWN"}
+  ],
+  "missing_records_for_classification": [
+    "structured refusal map from the setup exception",
+    "per-boundary captured-ref/path/native-site observation values",
+    "per-boundary creation-exemption outcome and ownership/binding/continuation state"
+  ],
+  "credit": {
+    "source_readiness": false,
+    "original9": false,
+    "core": false,
+    "release": false
+  },
+  "private_artifacts": {
+    "directory_mode": "0700",
+    "files_mode": "0600",
+    "xml_sha256": "4cc06cd135004d051d25eeaec87c348b516102f0ba2e38584877acdd152c5b88",
+    "stdout_sha256": "72853191be48cd2e47218060d06d4c8ac2f3636d010b73615be5d21f07ca7c24",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sentinel_tokens_in_private_stdout": 0
+  }
+}

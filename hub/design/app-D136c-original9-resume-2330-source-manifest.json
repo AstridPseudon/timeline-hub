@@ -1,0 +1,66 @@
+{
+  "task": "D136c/D100/V2 original-nine resume",
+  "status": "SOURCE_VERIFIED_BEHAVIOR_RUN_COMPLETE",
+  "agent": {
+    "checkout_label": "Agent d133 exact checkout",
+    "commit": "d133a14838a4e607947893408bc34ba2742a19c6",
+    "tree": "f87d59a9deb3b64efddd4707d2c8eb8a52e31bf5",
+    "clean": true,
+    "qualified_union_preserved": true
+  },
+  "runtime_carrier": {
+    "receiving_commit": "777f203885ba66d89439d45d584aadd41487119f",
+    "tree": "2c022e367128da7c556d94613fb0a4b2d1915a09",
+    "parent_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "parent_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "clean_after_run": true,
+    "changed_paths_exactly_three": true,
+    "outside_three_conserved": true
+  },
+  "reviewed_runtime_donor": {
+    "commit": "2f1fbb1fc2954dc54eda7f29656de8f15e38683a",
+    "tree": "37cfcd4f6108c1fdda401e563e3674503bc328ef",
+    "source_equality_separate_from_carrier_identity": true,
+    "review_status": "PASS",
+    "finding_count": 0,
+    "ab1e_applicability": "PASS"
+  },
+  "received_files": [
+    {
+      "path": "runtime_protocol/timeline_commit_auth.py",
+      "git_blob": "b2b238a716b55276e63d23d2886ef8542a382faa",
+      "sha256": "6e227fe16740aa93c1880beea0ff741275a195c0e0d460e9b3d186aed6392598",
+      "equal_to_reviewed_donor": true,
+      "baseline_preimage_equal_to_ab1e": true
+    },
+    {
+      "path": "runtime_protocol/timeline_commit_store.py",
+      "git_blob": "3388fa923c7aaeec2980a8981280146eaa30cbc7",
+      "sha256": "fce6c3ebe916d3a5f6be48125d3214d7cf15b1e51a6f276681a825d0e3925f99",
+      "equal_to_reviewed_donor": true,
+      "baseline_preimage_equal_to_ab1e": true
+    },
+    {
+      "path": "tests/test_timeline_missing_observation_diagnostics.py",
+      "git_blob": "15c35c662480d98443b66210a823e3f00967d6db",
+      "sha256": "e2c82f375397a7bc64c198b61b06561e2d11e7fda205ed4aeb2f721af117dc4e",
+      "equal_to_reviewed_donor": true,
+      "new_reviewed_test": true
+    }
+  ],
+  "protected_agent_projection": {
+    "path": "tests/sdk/test_timeline_capture_projection.py",
+    "sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+    "predicates": 43,
+    "test_bodies": 11,
+    "fixture_statements": 54,
+    "preserved": true
+  },
+  "production_loader_precheck": {
+    "agent_modules_first": true,
+    "runtime_modules_from_carrier": true,
+    "registered_provider_type": "RuntimeCommitService",
+    "diagnostics_source_loaded_from_carrier": true,
+    "python": "3.13.16"
+  }
+}

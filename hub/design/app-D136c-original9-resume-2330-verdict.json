@@ -1,0 +1,29 @@
+{
+  "task": "D136c original-nine diagnostics qualification",
+  "verdict": "NOT_QUALIFIED",
+  "original9": "FAIL_ACTUAL_ORIGINAL9",
+  "result": {
+    "collected": 9,
+    "errors": 9,
+    "passes": 0,
+    "failures": 0,
+    "skipped": 0,
+    "exit_code": 1,
+    "first_seam": "provider intermediate command lacks an authenticated physical observation"
+  },
+  "cause_classification": "UNKNOWN",
+  "source_and_privacy": {
+    "reviewed_runtime_security": "PASS",
+    "source_conservation": "PASS",
+    "safe_detail_schema": "PASS",
+    "private_custody": "PASS"
+  },
+  "credit": {
+    "source_readiness": false,
+    "original9": false,
+    "core": false,
+    "release": false
+  },
+  "review_gate": "manager-independent result/privacy/custody review pending",
+  "next_step": "Retain the exact run and private artifacts; do not retry or route around the refusal. Resolve the missing structured refusal-map record before any new qualification decision. D130 SWAP/WAL/recovery/related tours remain held."
+}

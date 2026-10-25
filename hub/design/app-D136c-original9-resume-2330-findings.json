@@ -1,0 +1,31 @@
+{
+  "task": "D136c original-nine diagnostics qualification",
+  "findings": [
+    {
+      "id": "D136c-ORIGINAL9-001",
+      "severity": "qualification-blocking",
+      "finding": "All nine exact selectors errored during setup at the common authenticated physical-observation refusal seam.",
+      "classification": "UNKNOWN",
+      "reason": "The run proves the reached seam but does not expose the structured refusal map needed to prove PRODUCT GAP or SETUP.",
+      "missing_records": ["structured refusal map", "per-boundary safe diagnostic values"]
+    },
+    {
+      "id": "D136c-PRIVACY-001",
+      "severity": "none",
+      "finding": "Reviewed safe-detail schema is closed, typed, bounded, and non-authoritative; private run artifacts contain no exported sentinel content.",
+      "classification": "PASS"
+    },
+    {
+      "id": "D136c-CUSTODY-001",
+      "severity": "none",
+      "finding": "The carrier, Agent source, protected projection, private artifact modes, and exact three-file conservation checks passed.",
+      "classification": "PASS"
+    }
+  ],
+  "independent_review": {
+    "source_security_review": "PASS",
+    "result_privacy_custody_post_run_check": "PASS",
+    "manager_independent_review": "PENDING"
+  },
+  "not_claimed": ["product gap", "core credit", "release credit", "source readiness as behavior"]
+}

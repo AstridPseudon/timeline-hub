@@ -1,0 +1,34 @@
+{
+  "files": [
+    {
+      "file": "app-D136c-original9-resume-2330-source-manifest.json",
+      "sha256": "65c01e4107e6f61bf8dce1d3c5e7b21593a8c3532f59bc9d4f19c3988856f7e7"
+    },
+    {
+      "file": "app-D136c-original9-resume-2330-predicate-map.json",
+      "sha256": "2cfb775ca57b8f739f67674d6b9c48b158c179766d8319b6ddf6c3cec745580e"
+    },
+    {
+      "file": "app-D136c-original9-resume-2330-submission-facts.json",
+      "sha256": "5386bdb3e14b5c4003aa6e4b06176737519ecabf46ca7d83df4407407ce4dbe6"
+    },
+    {
+      "file": "app-D136c-original9-resume-2330-commands-results.md",
+      "sha256": "27795aefb08e7e8ba3f91a739a0936773423ae259e28d51ded321468ba506360"
+    },
+    {
+      "file": "app-D136c-original9-resume-2330-diagnostic-facts.json",
+      "sha256": "8c646b0ccb2d64b137eb1414fb0433c8e5309cd0aa6abab6192155cdba494603"
+    },
+    {
+      "file": "app-D136c-original9-resume-2330-findings.json",
+      "sha256": "51b8cbf10312c5dd95e9102c7f1ca3ca8cfa15335ace9826882646794904cb21"
+    },
+    {
+      "file": "app-D136c-original9-resume-2330-verdict.json",
+      "sha256": "1336fd03ac006a7d9c755a555b7766b39b43d1c7d1627f9d7cd15df5302037a9"
+    }
+  ],
+  "raw_copied": false,
+  "scope": "provisional author safe evidence; independent review pending"
+}

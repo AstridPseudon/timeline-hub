@@ -1,0 +1,63 @@
+{
+  "source_review": {
+    "status": "PASS",
+    "reviewed_candidate": "2f1fbb1fc2954dc54eda7f29656de8f15e38683a",
+    "finding_count": 0,
+    "refusal_status_code_message_guard_preserved": true,
+    "authorization_cas_no_write_rollback_preserved": true
+  },
+  "allowlisted_schema": {
+    "field_names": [
+      "verification_phase",
+      "step_ordinal",
+      "command_ordinal",
+      "captured_ref_present",
+      "captured_path_present",
+      "native_site_present",
+      "physical_digest_present",
+      "physical_digest_hash",
+      "creation_exemption",
+      "creation_exemption_outcome",
+      "ownership_state",
+      "binding_state",
+      "continuation_state"
+    ],
+    "types": {
+      "verification_phase": "fixed enum",
+      "step_ordinal": "integer 0..1000000 or UNKNOWN",
+      "command_ordinal": "integer 0..1000000 or UNKNOWN",
+      "*_present": "boolean",
+      "physical_digest_hash": "UNKNOWN or sha256:<64 lowercase hex>",
+      "creation_exemption": "fixed enum",
+      "creation_exemption_outcome": "fixed enum",
+      "*_state": "fixed enum"
+    },
+    "privacy": {
+      "identifiers_echoed": false,
+      "paths_echoed": false,
+      "payload_or_user_content_echoed": false,
+      "raw_digest_echoed": false,
+      "url_or_private_path_echoed": false,
+      "one_way_digest_hash_only": true
+    }
+  },
+  "actual_run": {
+    "safe_serializer_assignment_reached_per_case": 9,
+    "structured_safe_detail_values_observed_in_junit": false,
+    "physical_digest_presence": "NOT_CAPTURED",
+    "missing_records": [
+      "structured refusal map from the setup exception",
+      "per-boundary captured-ref/path/native-site flags",
+      "per-boundary physical digest presence/hash",
+      "per-boundary creation exemption, ownership, binding, and continuation values"
+    ],
+    "classification": "UNKNOWN",
+    "product_gap_proven": false,
+    "setup_only_proven": false
+  },
+  "custody": {
+    "private_xml_stdout_stderr_modes_verified": true,
+    "private_sentinel_scan": "PASS",
+    "raw_exception_exported": false
+  }
+}
