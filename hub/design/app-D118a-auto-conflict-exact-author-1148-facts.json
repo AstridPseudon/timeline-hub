@@ -1,0 +1,29 @@
+{
+  "task": "D118a/D120 exact current-contract reason adaptation",
+  "proposal": "independent purpose review 1141",
+  "changed_file": "tests/editing_conformance/test_commit_runtime_parent_auto_completion.py",
+  "changed_expression": "expected_reason = 'value_conflict'",
+  "exact_nodes": ["image-at", "image-hold", "video-at", "video-hold"],
+  "test_result": "4 passed in 20.03s",
+  "runtime": {
+    "path": "/home/user/work/wt/rt-pin-42aad0e9",
+    "commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0"
+  },
+  "target_sha256": "24181b4206844cea66c3ca3dcd43b26b889f6cfac9b17cf4e3d7b1c8cc7e6ac1",
+  "base_target_sha256": "3138f2ac264cf3a5e52bdd44677eb6f8cf9f70d362a0630e5b16490307a6b22c",
+  "normalized_ast_conserved": true,
+  "production_changed": false,
+  "changed_paths": ["tests/editing_conformance/test_commit_runtime_parent_auto_completion.py"],
+  "production_hashes": {
+    "astrid/sdk/timeline/native_auto_placement.py": "c46e23ac43dc506ba8362abc0dbb2bf145f96ed6365b594936f83476d5490907",
+    "astrid/sdk/timeline/native_parent_media_commands.py": "673643ab9dd0f094c57da49f78c581fba5f08e7b00c7b364a41e20a0a13d5964",
+    "astrid/sdk/timeline/_recording.py": "85aefe0328a7c9787a18c2b7e19eb8b3e4220a1c53627d1e16102b42b29c8b43",
+    "astrid/sdk/timeline/_commit_patch.py": "76224a62434ade240e298bf6a1d14b64bdc2ed650923c2160cf22bdbb23a4a50"
+  },
+  "checks": {
+    "ruff": "pass",
+    "mypy_follow_imports_skip": "pass",
+    "py_compile": "pass",
+    "git_diff_check": "pass"
+  }
+}
