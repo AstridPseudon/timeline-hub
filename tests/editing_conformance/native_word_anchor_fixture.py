@@ -138,13 +138,20 @@ def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scop
     tracked = execute(initialized, [parent_track]).bundle
     card = capture_clip_add(tracked, "parent", {
         "id": "card", "clipType": "am-type", "track": "picture", "at": 0,
-        "hold": 1, "app": {"astrid": {"on": DECLARATION, "for": 0.5}},
+        "hold": 1,
     })
     carded = execute(tracked, [card]).bundle
+    authored_card = copy.deepcopy(carded)
+    authored_card["parent"]["clips"][0]["app"] = {
+        "astrid": {"on": DECLARATION, "for": 0.5},
+    }
+    card_declaration = emit_document_commands(carded, authored_card)
+    authored_card = execute(carded, card_declaration).bundle
     occurrence = capture_occurrence_create(
-        carded, "occ", "shot", name="Voice", track="picture", on=2, duration=duration_ms / 1000,
+        authored_card, "occ", "shot", name="Voice", track="picture", on=2,
+        duration=duration_ms / 1000,
     )
-    occurred = execute(carded, [occurrence]).bundle
+    occurred = execute(authored_card, [occurrence]).bundle
 
     voices = [{"id": "voice", "clipType": "media", "track": "vo", "asset": "take",
                "at": 1, "from": 2, "to": 6, "speed": 2}]
@@ -181,7 +188,8 @@ def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scop
         "schema_version": 1, "op": "media.admit", "version": "1", "select": None,
         "args": {"inputs": [{"pin": {"media_id": media, "content_digest": media}}]},
     }
-    submit([initialize, parent_track, card, occurrence, media_admission, *changes], "initial-commit")
+    submit([initialize, parent_track, card, *card_declaration, occurrence, media_admission,
+            *changes], "initial-commit")
 
     service.close()
     return {'project': project, 'pin': pin, 'source': source}
