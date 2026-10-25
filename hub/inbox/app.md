@@ -3908,3 +3908,5 @@ app-pin-0244db2c
 app-pin-9cb56c2a
 
 Keepcurrent0b6cee/8c88/1daca/635f andanynewcurrenthead/queuedplan. This is ordinary capacityinput, no escalation. ADDresultstillpending,sameID;ELEMENTfollowsnormallyifdiskallows.
+
+[07:05Z orchestrator] D110: the Undo 503 is named: a KeyError in the Agent inverse path (remember:18, a removed shot). Agent owns the fix. Check element 29218 runtime.stderr.log for the same line. After the Agent release and adoption, run the FULL P2 tour (D108).
