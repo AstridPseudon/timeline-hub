@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "task": "app-D141-known-gap-notes-2346",
+  "base_app": "5696769dfca056676cde1ab46d8bc94354b3a44a",
+  "output": "evidence/known-gaps.md",
+  "paragraphs": ["SWAP", "Element"],
+  "delivery_owner": "existing Runtime delivery-note owner",
+  "installation": "not performed by this task",
+  "claims": {
+    "swap": {
+      "historical_tuple": "3250",
+      "historical_result": "NO_GO",
+      "automatic_refusal": "1537",
+      "future_cut_proof": "owed",
+      "cause_fix_eta": "not asserted"
+    },
+    "element": {
+      "historical_tuples": ["32016", "15200", "10721"],
+      "current_applied_status": "5s original fails",
+      "runtime_boundary": "completed HTTP 200 where recorded",
+      "caller_outcome": "UNKNOWN",
+      "profiling_or_fix": "not claimed",
+      "future_cut_proof": "owed"
+    }
+  },
+  "negative_claims_preserved": ["no GO", "no full P2", "no ship", "no core", "no built ZIP"]
+}
