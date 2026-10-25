@@ -787,6 +787,7 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - The ZIP README lists it as a post-install check, with the exact env vars to set.
   - Agent's core-open target is therefore 6 (4 fork + 2 forward), all on D62 / forward-created auth.
   - This is not a permission-refusal case, so no owner action is needed.
+- **H66 (15:55Z):** ETA ~14:00Z 26 Oct (08:00Z 26 Oct to 00:00Z 27 Oct; Opus the same), confidence low. REG14 fixed and merged; P2 6/8 with both causes identified (a 20 s real-lifecycle commit, the D112 reestablish ProtocolError). Agent core unmeasured since 10:24 (425), so D128 runs it locally; the farm is time-boxed to 16:30Z. 12 merges/3 h.
 - **H63 (12:55Z):** ETA ~10:00Z 26 Oct (04:00Z to 20:00Z 26 Oct; Opus the same), confidence low-medium. P2 6/8 on the current tuple; Agent core 425 plus 14 REG; D124: farm hosts Agent heavy runs, shared-root clustering, host14 fix-or-revert by 14:00Z. 27 merges/3 h.
 - **H60 (09:55Z):** ETA ~04:00Z 26 Oct (23:00Z 25 Oct to 14:00Z 26 Oct; Opus the same). P1/P3 GO on current heads; P4/P5 GO; P2 4/8 on the current tuple. Agent core open 438 (all ours, 0 regressions proven; about 7 root locations). D117 GitHub access is an owner decision. 20 merges/3 h.
 - **H57 (06:50Z):** ETA ~01:00Z 26 Oct (20:00Z 25 Oct to 12:00Z 26 Oct; Opus 03:00Z). P1/P3/P5 GO on recorded tuples; P4 GO (28.1 s); P2 4/8. Agent: 160 merged, 47 proof owed, so D108 runs one full core suite. F-final rehearsal un-gated. 46 merges/3 h; regressions vs upstream 0.

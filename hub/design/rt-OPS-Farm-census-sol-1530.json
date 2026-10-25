@@ -1,0 +1,58 @@
+{
+  "task": "rt-OPS-Farm-census-sol-1530",
+  "actual_farm_census": "EXACTMISSING",
+  "diagnostic_fitness": "PARTIAL_SOURCE_DIAGNOSTIC_REVIEW_REQUIRED",
+  "diagnostic_sha256": "07e79ac3005a60192958c95e0974019c9c249fdc94fc8bed43636adb421ea19c",
+  "source_pins": {
+    "make-child-venv": "e62f89eaf226897a36bd4c7f715d43a7a1d4206ff371432296c01de6bdd52dc3",
+    "bench_store.py": "7d5870433a76b7a611703f47a385cba9584f7213fe4b8a27005317f27bf26495",
+    "verify_dependency_seed.py": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+  },
+  "schema_tree": "242f9c4306bf3b501222cb041a9eb246ef47bc85:packages/timeline-schema/python",
+  "coverage": {
+    "root_predicates": "unchanged pinned readonly AST predicates independently evaluated per node",
+    "embedded": "exact full source attempted with first-refusal semantics; no-process boundary remains SKIPPED",
+    "store": "exact constructor/index/entry/projection reads; transactional locks and candidate binding SKIPPED",
+    "dependency": "Farm/bootstrap/in-memory local inventory prerequisites SKIPPED, not counted as executed",
+    "complete_verdict_possible": false,
+    "static_count_is_coverage": false
+  },
+  "bounds": {
+    "default_deadline_seconds": 180,
+    "maximum_deadline_seconds": 900,
+    "report_bytes": 1048576,
+    "file_bytes": 33554432,
+    "charged_read_bytes": 268435456,
+    "address_space_bytes": 268435456,
+    "filesystem_operations": 100000,
+    "execution_trace_events": 10000000
+  },
+  "tests": {
+    "command": "python3 -I -B /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-Farm-census-sol-1530/evidence/test_census.py",
+    "exit": 0,
+    "passed": 8,
+    "seconds": 1.686,
+    "full_suite_requested": false,
+    "absent_probe_command": "workers/rt-OPS-Farm-census-sol-1530/evidence/absent-command.json",
+    "absent_probe_exit": 3,
+    "absent_probe_result": "EXACTMISSING"
+  },
+  "decisions": [
+    "A retained stage is intentionally not an indexed published entry; reject 1516's indexed-stage requirement.",
+    "Do not substitute unauthenticated source files for the production Git archive prerequisite.",
+    "Do not continue failed production execution by replacing fail, identity, interpreter, or imports.",
+    "Report partial execution honestly; no all-refusal census or narrow fix is established."
+  ],
+  "blocked": [
+    "Exact Farm retained stage, Store and physical Agent/schema inputs unavailable locally.",
+    "Source/Git execution, writable lock contexts, Farm temporary extraction and child execution cannot be credited under this task's read-only/no-process constraints."
+  ],
+  "mutations": {
+    "installed_kit": false,
+    "repositories": false,
+    "registration": false,
+    "build_install_reissue_provider_body": false,
+    "shared_dependencies": false
+  },
+  "next": "Independent review of the partial diagnostic and its limits; Farm handoff through the existing supported retention path. No use as a completed census, narrow fix, merge or live execution authorization."
+}
