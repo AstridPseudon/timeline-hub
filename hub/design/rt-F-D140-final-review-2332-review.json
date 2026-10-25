@@ -1,0 +1,26 @@
+{
+  "schema": "timeline.d140.final-source-review/v1",
+  "task": "rt-F-D140-final-review-2332",
+  "verdict": "FAIL_SOURCE",
+  "reviewed_head": "d7727b99fb9cb063d4c0ee73fdfa54d752666135",
+  "reviewed_tree": "222476a7f8eea57f46402ab4fefabce4e2b8a703",
+  "prior_return": "tl/rt-F-D140-recipe-return-2322",
+  "prior_independent_review": "FAIL_SOURCE; all seven findings retained as the acceptance checklist",
+  "source_tuple": {
+    "agent": {"commit": "41ad656529fa8489829de9078b1b6e157c7433c8", "tree": "d29e47fe7be6e55940b42fa1477a23e7925f62fa", "current_main_head": "547e10456250c1b5bcf63b44a50c90ff0563ce1e"},
+    "runtime": {"commit": "f103bb46866999c961a8865636f2e66d544e0c9b", "tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883", "current_main_head": "0ca306dfd3cf4e21976271cc4b2e779b10e025b0"},
+    "app": {"commit": "5696769dfca056676cde1ab46d8bc94354b3a44a", "tree": "0748df404125114a0f68b701fa76f43abd3fc79a", "current_main_head": "5696769dfca056676cde1ab46d8bc94354b3a44a"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "current_main_head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"}
+  },
+  "findings": [
+    {"id": "D140-ORDER-001", "status": "CLOSED_SOURCE", "evidence": "receive-farm.sh:52-56,567-596; test_recipe.py:112-130; private subprocess showed pre-child omitted CHILD_RECEIPT/P4_D73_MANIFEST/OUTPUT_ROOT and invoked no route"},
+    {"id": "D140-DURABILITY-002", "status": "CLOSED_SOURCE_MECHANICS_ONLY", "evidence": "commands.md:150-190; private execution of the extracted core block produced exact JUnit/raw/start-stop/disk/KEEP/runmanifest files and passed --junitxml argv; no real Farm route was run"},
+    {"id": "D140-C0-003", "status": "CLOSED_SOURCE", "evidence": "commands.md:95-117 matches Runtime f103 contract/schemas/timeline-commit.json request, accepted, preview, conflict and history nesting"},
+    {"id": "D140-GATE-004", "status": "CLOSED_SOURCE", "evidence": "commands.md:47-93; private failing checker subprocess returned 9 and left dry/core markers absent"},
+    {"id": "D140-RECEIPT-005", "status": "REMAINS_FAILING", "evidence": "receive-farm.sh:238-293 accepts any timeline.* JSON with recursively matching tuple strings; a private real receiver subprocess accepted a forged producer-free synthetic receipt when git reported the pinned checkout"},
+    {"id": "D140-POISON-006", "status": "CLOSED_SOURCE", "evidence": "receive-farm.sh:476-504; commands.md:119-148; private control subprocess called positive once with rc 17 and poison zero times with nonzero rc"},
+    {"id": "D140-SCHEMA-007", "status": "CLOSED_SOURCE", "evidence": "receive-farm.sh:176-236; test_recipe.py:153-171; physical dist-info path binding, 18/12/six closure, direct URL pin and exact trusted manifest are enforced"}
+  ],
+  "live_farm": "UNKNOWN_NOT_READY; no installed schema, current receipts, child, service, or Farm result was claimed or run",
+  "safety": "No source, product, package, venv, Store, queue, registration, Git internal, hub, or live Farm write"
+}

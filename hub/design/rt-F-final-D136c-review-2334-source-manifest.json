@@ -1,0 +1,50 @@
+{
+  "task": "rt-F-final-D136c-review-2334",
+  "candidate": {
+    "root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-D136c-inventory-2328/evidence/candidate",
+    "core_inventory_sha256": "e6a1fa17796e493532c3927e2ec6fc8fdb4e1928b7540be8c6644b3d0894bb14",
+    "matrix_manifest_sha256": "01ddd1522cc42c3be60699ed6eac502afa6f37b58f8035d711f5971d222fe9f2",
+    "core_runner_sha256": "a2d463b32c9a1e13be1c0c7f1c003867094554b3a9a78ed6c332d273e03ce963",
+    "tuple_status": "PENDING"
+  },
+  "runtime_source": {
+    "commit": "0ca306dfd3cf4e21976271cc4b2e779b10e025b0",
+    "tree": "37cfcd4f6108c1fdda401e563e3674503bc328ef",
+    "new_test": {
+      "path": "tests/test_timeline_missing_observation_diagnostics.py",
+      "git_blob": "15c35c662480d98443b66210a823e3f00967d6db",
+      "sha256": "e2c82f375397a7bc64c198b61b06561e2d11e7fda205ed4aeb2f721af117dc4e"
+    },
+    "security": {
+      "task": "rt-D136c-security-review-2312",
+      "status": "PASS",
+      "review_json_sha256": "ed84fc47edf2f984679ed73b3e0dd094ee3cbe788c54264587d1e6259d8eeeea",
+      "source_manifest_sha256": "b281f4179ffabdc594c2d67d03a92a969a03476536d30cf8b7201f3d7ed25c15",
+      "validation_sha256": "4fd6d7df10f96b83353fd7f532c7f69999543934f58d52a69d0dfe0c8c3041e5"
+    },
+    "integrated_home": {
+      "task": "rt-D136c-home-2318",
+      "status": "PASS",
+      "result_json_sha256": "7938cd7604df4ec588f6dd31e91aad1f4f79bc92ca11c7b3fd70d3c5efa7045c",
+      "source_manifest_sha256": "ccc411d231f9bf77255ab7cf4c08cfd2357d0508508928dd9a6af659f8f1514b",
+      "validation_sha256": "38c6fdc596af2b39e474383a69e548aaf60906134cc1dc8f1dd5a73d18c09e8b",
+      "junit_xml_sha256": "8a9ce803297c6e0de66c0014203aad75f80c8b235e727df58cfbf8488a8bd397",
+      "raw_output_sha256": "d8a663a81cc181eb028d17573d86a44e87e9eb4782bc7ccdebd61962aeaf7d77",
+      "summary": "4 passed in 1.42s"
+    }
+  },
+  "production_chain": [
+    "released guard",
+    "reject/CommitRejected",
+    "public_failure",
+    "mounted Service._execute_timeline_commit refusal path"
+  ],
+  "schema_shape_check": {
+    "source": "Runtime 0ca306dfd3cf4e21976271cc4b2e779b10e025b0:contract/schemas/timeline-commit.json",
+    "requested_step_reads_property": true,
+    "requested_step_uses_optionalreads": false,
+    "accepted_step_dependencies_property": true,
+    "client_regeneration": false,
+    "renamed_canonical_aliases": false
+  }
+}

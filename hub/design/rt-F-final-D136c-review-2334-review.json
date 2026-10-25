@@ -1,0 +1,32 @@
+{
+  "task": "rt-F-final-D136c-review-2334",
+  "status": "FAIL",
+  "verdict": "FAIL",
+  "finding_count": 1,
+  "candidate": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-D136c-inventory-2328/evidence/candidate",
+  "base": "tl/integration",
+  "finding": {
+    "id": "F1",
+    "severity": "blocking",
+    "title": "101-target inventory is dead metadata for the existing core runner",
+    "proof": {
+      "inventory_targets": 101,
+      "runner_targets": 98,
+      "runner_file_sha256": "a2d463b32c9a1e13be1c0c7f1c003867094554b3a9a78ed6c332d273e03ce963",
+      "missing_from_runner": [
+        "tests/test_timeline_commit_ancestry_reads.py",
+        "tests/test_timeline_commit_closure_growth.py",
+        "tests/test_timeline_missing_observation_diagnostics.py"
+      ],
+      "runner_reads_core_inventory": false
+    },
+    "source": "candidate/run-final-services.py: CORE_TEST_FILES and CORE_COMMAND",
+    "impact": "The promised 101 Python+TS inventory is not what the existing future core runner executes; the new D136c target and the two retained 7070 targets cannot receive core-runner coverage.",
+    "required_followup": "Make the existing runner consume the authoritative target inventory or otherwise update its selector through the owner’s approved final-runner change, then re-review the exact source and rerun the private controls."
+  },
+  "limits": [
+    "No product tests, real test bodies, full suite, original-nine, browser, provider, render, build, ZIP, network, checkout, installation, registry mutation, or Git write was performed.",
+    "D136c security receipt and integrated home receipt are inherited evidence only; this review does not extend their scope.",
+    "Candidate remains private and final/gate tuple markers remain pending."
+  ]
+}

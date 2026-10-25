@@ -1,0 +1,12 @@
+# D141 cut tuple: upstream tips frozen at 2026-10-25T23:42:41Z (lead fetch; equal to ls-remote)
+- agent upstream main = 8b6ed2116fd1803d24b2be5bc08bd9490407fe4a
+- app upstream main = 7ca61bb3280beca21d98a854af266a382f7ce5df
+- runtime upstream main = fa9cd5464a8b37b02f971de375e56be846cd69e2
+- composition upstream main = 67b8aa3d0d6831d3e3504a340ff583c3da253707
+
+Each lane: ONE final merge-forward of integration to its tip above, through the normal reviewed route; then integration is FROZEN for the cut. Record the resulting integration heads below as they land.
+
+## Integration heads after the final merge-forward
+- agent: (pending)
+- app: (pending)
+- runtime: (pending)
