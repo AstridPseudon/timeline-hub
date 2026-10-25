@@ -1,0 +1,1 @@
+timeline/agent/tl/rt-D124-host14-upstream-revert-1338 96df3f5b48 runtime D124 host14 fix: ONE line in astrid/sdk/host_bootstrap.py restored toward upstream; independent review 1345 PASS (the 14 original nodes PASS, source identity 73, local schema 29, security 12); filed by main host lead

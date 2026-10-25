@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T13:44:20Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 8 | status age 3m -->
-# runtime board, 2026-10-25T13:41:13Z
+<!-- main | 2026-10-25T13:48:28Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 2m -->
+# runtime board, 2026-10-25T13:45:49Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
@@ -461,7 +461,7 @@
 | D124-custody-union | Preserve stopped duplicate source join | Luna | Agent owns earlier join 1318 | gated:duplicate-stopped | rt-D124-custody-union-1330 | Delayed peer revealed earlier Agent join. Stopped immediately; exact imported WIP held. No normal integration or new semantics. | Donor1307 and1311 PASS | WIP retained |
 | D125-tagged-tour | Name current SWAP refusing branch | App / Proof Luna | Normal pinned tour preflight | blocked:app | App and Proof managers | Header permits one tagged full P2 before corrected capture. App owns independent verdict. No Main duplicate. | App owns verdict | Runtime5e9ad |
 
-| D124-host14-revert | Restore upstream host bootstrap behavior | Luna | Direct owner 13:38 instruction | doing | rt-D124-host14-upstream-revert-1338 | Exact normal0b586 base; unchanged original14 and strict origins. Source revert races Farm9ea repair. First independently green source wins. | Independent review next | Source pending |
+| D124-host14-revert | Restore upstream host bootstrap behavior | Luna / independent Luna | Independent core and security PASS | review | Author1338; review1345 | Author14 PASS, source73 PASS, schema29 PASS. One-file trusted-schema selection change; central zero-body failure and incomplete neighbors disclosed. | rt-D124-host14-core-review-1345 | 96df3f5b486 |
 
 Runtime producer: RELEASED5e9ad1c6f74241d8771d3284fdd2ce7a214fd344 / tree de2954a0ceadb4455903d9abdfec3b773318a50f. Normal56 controls and provider2 PASS; canonical15 and schema exact7070. App normald8a1 has adopted tags.
 core open: Agent30693 independently425 core open,14 regressions,450 bad. Normal ready producer/XML/atomic source is now Agentb545; no functional reduction credited before Farm batch core.
@@ -472,12 +472,12 @@ Blockers: SWAP — tags5e9ad are normal Appd8a1. Next App full tour names the br
 Blockers: Final render — Farm owns full normal installer stage and genuine render underD124.6. Exact source and recipe1253 published; private wrapper independent1257 PASS. Custody1300 PASS for both packets; Farm owns actual stage inputs.
 Blockers: D69 — source XML107 is normal Agentb545, applicability and batch proof pending. Genuine installed render90 remains open. No whole audit PASS.
 Blockers: Final cut — green core, REG0, full current P2, D69, final tuple P1–P5 and genuine installed render required. No build or ZIP.
-Next ready: Host14 revert1338 final source then independent review immediately. Exact recipe2 resumes after its existing5000000KiB guard clears. Agent owns disjoint join and sole semantic union; a1 filed13:34.
+Next ready: Host14 review1345 dispatched immediately on96df. PASS triggers host filing. Frozen recipe2 waits existing5000000KiB guard; source checks ready. Agent owns semantic union; a1 filed13:34.
 Host filing: Lead filed Agent rt-D124-producer-sol-1247 a1a8bc6 at13:34. Independent1307 source/security PASS; two-file source only. Await Agent normal result; original four failures remain. Farm core before release.
 Venues: No Main heavy body. Farm has exact core checkouts and awaits keyed normal profile and D73 inputs; host14 and render serialize there. D125 Proof hosts the next tagged full P2; App owns verdict and later sampling.
 Delivery: Private100Python+TS/41 matrix inventory qualified. Current D123 source5bd01 with patchb0ff4205 independently1317 SOURCEPASS onb742 and capturednormalb545.173predicates conserved. Historical47f6/failed41702 retained. Wheelastrid.core fixture gap, full C0/finalmatrix/actualWindows proof remain unverified. Finalcut uses b742.
 Later: R2c81b and D1160643 exact donor seed source PASS, raw/config behavior remains owed. D100 six custody PASS at donor scope only; originalTEN unchanged. Occurrence stage and promotion records EXACTMISSING, no cross-lane input wait.
 Safety: D88/D111 memos withdrawn. D106 ORCH only; no worker hub writes or remote filing. D117a pinned public Git/local input with unchanged integrity only. Four host retirement targets remain held under owner12:25, no attempt or alternative route.
 Disk: About5.08GB. Sweep3 removed0; compact passes packed1 scratch directory and gzipped13 old logs losslessly. Existing recipe2 guard requires5.12GB. Active source finalization restores space; held targets remain untouched.
-live 1 / cap 3; ready-undispatched 0; queued 0. Host14 revert1338 active. Recipe2 has zero actual bodies; pending on stricter existing disk guard. Duplicate union1330 stopped and WIP held.
-INBOX consumed through 1230792 bytes. Updated 2026-10-25T13:41:13Z.
+live 0 / cap 3; ready-undispatched 0; queued 1. Host14 independent1345 queued on finalized96df. Recipe2 remains zero-body at stricter disk guard; no ready source task waits. Duplicate union1330 held.
+INBOX consumed through 1233557 bytes. Updated 2026-10-25T13:45:49Z.

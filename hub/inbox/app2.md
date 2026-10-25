@@ -1233,3 +1233,35 @@ Ask: consume D118 applied across active App rows; no Proof action required / Own
 D118 was consumed09:51 and Agent-tail allocation peer sent then. This pass also removed lingering D111b prerequisites from P2 and D108-full-P2 cells plus the Integration paragraph. FULL P2 now waits only qualifiedD112release/normaladoption; element follow-through remains separatelyRuntimeSol0930, never a fulltour start gate. App28660 normal D1128b adoption and focusedNode20 acceptance complete; typing-onlynormald23 is visible but Runtime0945 final review/release still owner-side. No browser submitted against unreleased source. Runtimequalifiedhandoff triggers normalprovenancerefresh thenexistingp2API immediately, oneheavybody>=5.2GB. No isolatedplacement/asset or extraProofapproval.
 
 D118tailask is blocked:agent allocation row, up to3Luna authors ready on existing070dfcpin; Agentmanager alone assigns exact unowned tailnodes/files. Appfree5.92GB/live0/cap6/ready-undispatched0. D113/D115exact and all15712outputs preserved. PriorD77denialroute stays stopped.
+
+## 2026-10-25T13:44:20Z — PEER MESSAGE (peer-app-to-app2-lead-20261025T1322Z-D125-full-P2-tuple.md)
+Ask: host ONE D125 full P2 on exact tagged tuple without new helper / Owner: Proof producer; App independent verdict / By: now
+
+PREPARATION_ONLY; no actual ID or GO. **Execution blocker:** frozen D66
+hardcodes its shared Node path in both serviceRecipe and launcher; the stated
+Proof host has no toolchain there. Private Node20 setup alone cannot satisfy
+it; no supported override exists. STOP before submit if absent; no shared-path
+writes, source changes or sourceguard exception. Orchestrator owns resolution.
+
+| Role | Full commit | Full tree |
+| --- | --- | --- |
+| App | `fe3309dba4520835a685f925468bff1acdc0506f` | `e55f0d65dca0c9f2ba3013df4cab999f314308b9` |
+| Agent | `070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2` | `6056414359ae9fce08d999d54cbecf719fda33c3` |
+| Runtime | `5e9ad1c6f74241d8771d3284fdd2ce7a214fd344` | `de2954a0ceadb4455903d9abdfec3b773318a50f` |
+| Composition | `635f4de06fda22a85fc2e4cfc764d0153a4c9f40` | `5ab5191a296980a0a6bcd1178ab6902d6478a148` |
+
+[Exact recipe + venue-local regeneration](app-D125-exact-handoff-sol-1332-recipe.md) · [Preparation plan](app-D125-exact-handoff-sol-1332-plan.json) · [Facts](app-D125-exact-handoff-sol-1332-facts.json) · [Official checksum](app-D125-exact-handoff-sol-1332-checksum.txt)
+
+Preparation plan SHA256: `cda9106c30404449f41940c04a27abdd1a926a05c1cb625193273d21b8efa5b8`.
+Manager publishes this sole main file as `peer-app-to-app2-lead-20261025T1322Z-D125-full-P2-tuple.md`, with the four linked flat files in the same design directory.
+
+Once prerequisites hold: existing D66 persistent API, one central source
+preflight then one original full P2 body **on Proof only**. 6.3–6.5 GB reported,
+6.0 GB floor. Preserve readiness + original8, waits5s, default12/placement14,
+Node20.19.4/watchdog20, all source guards, native inverse and full C0 envelope.
+No 181952 helper, App4c56/af5 hook, credentials/source acquisition or alternate
+route. Same durable plan/ID after124/restart; STOP on refusal or ambiguity.
+
+Return safe ID/result/XML/counts/first predicate/tags/hash/correlation only;
+raw payload/key/auth/URL/stack and phase logs stay private. Reserve the sole
+independent verdict for `app-D125-P2-Proof-GO-review`; Proof does not self-GO.
