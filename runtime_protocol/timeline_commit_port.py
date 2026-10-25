@@ -86,11 +86,14 @@ def objects(value):
             yield from objects(child)
 
 
-def refused(reason, message, *, current=None):
+def refused(reason, message, *, current=None, diagnostic_reason=None):
     from .timeline_commit import CommitRejected
-    return CommitRejected({"http_status": 409, "code": "conflict", "message": message,
-                           "details": {"status": "refused", "reason": reason,
-                                       "base": None, "current": current, "conflicts": []}})
+    error = CommitRejected({"http_status": 409, "code": "conflict", "message": message,
+                            "details": {"status": "refused", "reason": reason,
+                                        "base": None, "current": current, "conflicts": []}})
+    if diagnostic_reason is not None:
+        setattr(error, "_diagnostic_reason", diagnostic_reason)
+    return error
 
 
 def public_failure(failure):
@@ -250,7 +253,8 @@ class RequestCommitPort:
             while current and current["publication_id"] not in seen:
                 entry = self.__store._history_entry_view(self.__project, self.__timeline, current["publication_id"])
                 if entry["revision_id"] != current["revision_id"]:
-                    raise refused("history_unavailable", "publication/revision pins disagree")
+                    raise refused("history_unavailable", "publication/revision pins disagree",
+                                  diagnostic_reason="port_ancestor_pin_mismatch")
                 seen[current["publication_id"]] = current["revision_id"]
                 if current["publication_id"] == publication_id:
                     from .timeline_commit_inputs import reachable_document_input_pins
@@ -260,7 +264,8 @@ class RequestCommitPort:
                     self.__ancestry.update(seen)
                     return entry
                 current = entry["previous"]
-        raise refused("history_unavailable", "publication is outside request ancestry")
+        raise refused("history_unavailable", "publication is outside request ancestry",
+                      diagnostic_reason="port_ancestor_outside_request")
 
     def history_entry(self, publication_id):
         return self._read(lambda: self._ancestor(publication_id))
@@ -268,7 +273,8 @@ class RequestCommitPort:
     def history(self, through, after_publication_id=None, cursor=None, limit=100):
         def read():
             if self._ancestor(through["publication_id"])["revision_id"] != through["revision_id"]:
-                raise refused("history_unavailable", "history bounds disagree")
+                raise refused("history_unavailable", "history bounds disagree",
+                              diagnostic_reason="port_history_bounds_mismatch")
             return self.__store._history_view(self.__project, self.__timeline, through,
                                         after_publication_id=after_publication_id, cursor=cursor, limit=limit)
         return self._read(read)
@@ -301,12 +307,14 @@ class RequestCommitPort:
                     allowed.add(entry["revision_id"])
                     cursor = entry["previous"]
             if revision_id not in allowed:
-                raise refused("history_unavailable", "revision is outside request ancestry or declared source")
+                raise refused("history_unavailable", "revision is outside request ancestry or declared source",
+                              diagnostic_reason="port_revision_outside_ancestry")
             # The original base pair must itself be a proven accepted edge.
             if revision_id == self.__request["base_revision_id"]:
                 entry = self._ancestor(self.__request["base_publication_id"])
                 if entry["revision_id"] != revision_id:
-                    raise refused("history_unavailable", "base pins disagree")
+                    raise refused("history_unavailable", "base pins disagree",
+                                  diagnostic_reason="port_base_pins_mismatch")
             value = self.__store.revision_closure(self.__project, self.__timeline, revision_id)
             self.__closures[revision_id] = copy.deepcopy(value)
             self.__declared.extend(objects(value))
@@ -655,7 +663,8 @@ class RequestCommitPort:
         prepared = detached(prepared)
         self._materializations(prepared)
         if prepared["expected_head"] not in self.__observed.values():
-            raise refused("history_unavailable", "candidate head was not observed through this port")
+            raise refused("history_unavailable", "candidate head was not observed through this port",
+                          diagnostic_reason="port_candidate_head_unobserved")
         restore = any(item.get("op") == "timeline.restore" for item in self.__request["commands"])
         if restore and prepared["records"]["restored_from"] != self.__request["commands"][0]["args"]:
             raise ValidationError("restore recorder must preserve the exact historical source pins")

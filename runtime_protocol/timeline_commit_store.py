@@ -23,6 +23,7 @@ from .errors import ConflictError, ProtocolError, ValidationError
 from .idempotency import command_result
 from .timeline_commit_validation import detached, digest
 from .timeline_materialization import has_materialization, item_identity, materialization_join, root_identity
+from .timeline_commit_types import CommitFailure
 from .util import canonical_json, new_id, now
 
 _METADATA = ("source", "label", "rationale", "group_id")
@@ -32,12 +33,18 @@ _TEXT_BINDING_REF = re.compile(r"occurrence:([^/]+)/text-binding:(prompt|voiceov
 _LOGGER = logging.getLogger(__name__)
 
 
-def reject(reason, message=None, *, status=409):
+def reject(reason, message=None, *, status=409, diagnostic_reason=None):
     from .timeline_commit import CommitRejected
 
-    raise CommitRejected({"http_status": status, "code": "conflict" if status == 409 else "validation_error",
-                          "message": message or reason, "details": {"status": "refused", "reason": reason,
-                          "base": None, "current": None, "conflicts": []}})
+    failure = cast(CommitFailure, {
+        "http_status": status, "code": "conflict" if status == 409 else "validation_error",
+        "message": message or reason, "details": {"status": "refused", "reason": reason,
+        "base": None, "current": None, "conflicts": []}
+    })
+    error = CommitRejected(failure)
+    if diagnostic_reason is not None:
+        setattr(error, "_diagnostic_reason", diagnostic_reason)
+    raise error
 
 
 def request_identity(context):
@@ -568,7 +575,7 @@ class TimelineCommitStore:
                                 "WHERE t.id=? AND t.project_id=? AND t.archived_at IS NULL",
                                 (timeline_id, project_id)).fetchone()
         if row is None:
-            reject("history_unavailable")
+            reject("history_unavailable", diagnostic_reason="store_membership_missing")
         return row["realm_id"]
 
     @_evaluation
@@ -975,11 +982,11 @@ class TimelineCommitStore:
             row = self.conn.execute("SELECT revision_id, publication_id FROM parent_composition_heads "
                                     "WHERE project_id=? AND timeline_id=?", (project_id, timeline_id)).fetchone()
             if row is None or not row["revision_id"] or not row["publication_id"]:
-                reject("history_unavailable")
+                reject("history_unavailable", diagnostic_reason="store_head_missing")
             assert row is not None
             entry = self._history_entry_view(project_id, timeline_id, row["publication_id"])
             if entry["revision_id"] != row["revision_id"]:
-                reject("history_unavailable")
+                reject("history_unavailable", diagnostic_reason="store_head_revision_mismatch")
             from .timeline_catalog import verify_catalog_tail
             from .timeline_commit_baseline import _shot_projection, _text_bindings
             ledger = self.conn.execute("SELECT resulting_stream_seq, last_project_seq FROM command_idempotency WHERE txn_id=?",
@@ -991,7 +998,8 @@ class TimelineCommitStore:
                 if catalog:
                     document = self.revision_closure(project_id, timeline_id, row["revision_id"])
                     if entry["intent"] == "recorded" and document != entry["receipt"]["result"]["canonical_document"]:
-                        reject("history_unavailable", "canonical film differs from accepted publication")
+                        reject("history_unavailable", "canonical film differs from accepted publication",
+                               diagnostic_reason="store_head_canonical_mismatch")
                     for shot in document["shot_revisions"]:
                         _shot_projection(self.conn, project_id, shot["shot_id"])
                         _text_bindings(self.conn, project_id, shot, self._read_history_object)
@@ -1001,7 +1009,8 @@ class TimelineCommitStore:
                                       "message": "timeline has untracked writes",
                                       "details": {"base": None, "current": None, "conflicts": [], **exc.details}}) from exc
             except (KeyError, TypeError, ValueError, IndexError):
-                reject("history_unavailable", "timeline catalog facts are corrupt")
+                reject("history_unavailable", "timeline catalog facts are corrupt",
+                       diagnostic_reason="store_head_catalog_corrupt")
             self._history_state["heads"][(project_id, timeline_id)] = dict(row)
             return dict(row), entry
 
@@ -1020,7 +1029,7 @@ class TimelineCommitStore:
                     "SELECT p.realm_id FROM timelines t JOIN projects p ON p.id=t.project_id "
                     "WHERE t.id=? AND t.project_id=?", (timeline_id, project_id)).fetchone()
                 if row is None:
-                    reject("history_unavailable")
+                    reject("history_unavailable", diagnostic_reason="store_archived_scope_missing")
             else:
                 self._membership(project_id, timeline_id)
             identity = (project_id, timeline_id, publication_id)
@@ -1033,11 +1042,11 @@ class TimelineCommitStore:
             row = self.conn.execute("SELECT * FROM timeline_commit_history WHERE publication_id=? "
                                     "AND project_id=? AND timeline_id=?", (publication_id, project_id, timeline_id)).fetchone()
             if row is None:
-                reject("history_unavailable")
+                reject("history_unavailable", diagnostic_reason="store_history_entry_missing")
             assert row is not None
             ledger = self.conn.execute("SELECT * FROM command_idempotency WHERE txn_id=?", (publication_id,)).fetchone()
             if ledger is None or ledger["first_project_seq"] != row["project_seq"]:
-                reject("history_unavailable")
+                reject("history_unavailable", diagnostic_reason="store_history_ledger_mismatch")
             assert ledger is not None
             if row["intent"] == "recorded" or ledger["command_kind"] == "timeline.commit":
                 self._verify_accepted(ledger, row, allow_archived=allow_archived)
@@ -1096,7 +1105,7 @@ class TimelineCommitStore:
     def _history_page(self, project_id, timeline_id, through, bound, *,
                       after_publication_id=None, cursor=None, limit, _entry_views=False):
         if bound["revision_id"] != through["revision_id"]:
-            reject("history_unavailable")
+            reject("history_unavailable", diagnostic_reason="store_history_bound_revision_mismatch")
         read_entry = self._history_entry_view if _entry_views else self.history_entry
         after = read_entry(project_id, timeline_id, after_publication_id) if after_publication_id else None
         low = after["receipt"]["project_seq"][0] if after else 0
@@ -1112,7 +1121,7 @@ class TimelineCommitStore:
             except (ValueError, KeyError, TypeError) as exc:
                 raise ValidationError("invalid history cursor") from exc
         if low > high:
-            reject("history_unavailable")
+            reject("history_unavailable", diagnostic_reason="store_history_bound_order_invalid")
         rows = self.conn.execute("SELECT publication_id FROM timeline_commit_history WHERE project_id=? AND timeline_id=? "
                                  "AND project_seq>? AND project_seq<=? ORDER BY project_seq LIMIT ?",
                                  (project_id, timeline_id, start, high, limit + 1)).fetchall()
@@ -1126,10 +1135,10 @@ class TimelineCommitStore:
         expected = dict(previous) if previous else None
         for entry in items:
             if entry["previous"] != expected:
-                reject("history_unavailable")
+                reject("history_unavailable", diagnostic_reason="store_history_chain_break")
             expected = {"publication_id": entry["publication_id"], "revision_id": entry["revision_id"]}
         if len(rows) <= limit and expected != through:
-            reject("history_unavailable")
+            reject("history_unavailable", diagnostic_reason="store_history_through_mismatch")
         next_cursor = None
         if len(rows) > limit:
             next_cursor = base64.urlsafe_b64encode(canonical_json({"scope": cursor_scope,
@@ -1145,7 +1154,7 @@ class TimelineCommitStore:
                     (timeline_id, project_id),
                 ).fetchone()
                 if row is None:
-                    reject("history_unavailable")
+                    reject("history_unavailable", diagnostic_reason="store_revision_scope_missing")
             else:
                 self._membership(project_id, timeline_id)
             identity = (project_id, timeline_id, revision_id)
@@ -1155,7 +1164,7 @@ class TimelineCommitStore:
             parent = self.conn.execute("SELECT * FROM parent_composition_revisions WHERE id=? AND project_id=? AND timeline_id=?",
                                        (revision_id, project_id, timeline_id)).fetchone()
             if parent is None:
-                reject("history_unavailable")
+                reject("history_unavailable", diagnostic_reason="store_revision_missing")
             if parent["commit_manifest_json"] is None:
                 from .timeline_commit_baseline import verify_revision_source
                 document = verify_revision_source(self.conn, project_id, timeline_id, revision_id,
@@ -1172,7 +1181,7 @@ class TimelineCommitStore:
                 for pin in pins:
                     row = self.conn.execute(f"SELECT * FROM {table} WHERE id=? AND project_id=?", (pin["revision_id"], project_id)).fetchone()
                     if row is None:
-                        reject("history_unavailable")
+                        reject("history_unavailable", diagnostic_reason="store_revision_dependency_missing")
                     image = self._image(row)
                     image.update({key: row[key] for key in ("shot_id", "internal_timeline_revision_id") if key in row.keys()})
                     if family == "internal_timeline_revisions":
@@ -1282,13 +1291,14 @@ class TimelineCommitStore:
                 "WHERE p.project_id=? AND o.shot_id=? AND o.shot_revision_id=? AND p.commit_manifest_json IS NOT NULL LIMIT 2",
                 (project_id, shot_id, revision_id)).fetchall()
             if len(manifests) != 1:
-                reject("history_unavailable", "shot input closure is unavailable or ambiguous")
+                reject("history_unavailable", "shot input closure is unavailable or ambiguous",
+                       diagnostic_reason="store_shot_input_closure_ambiguous")
             parent = self.conn.execute("SELECT p.timeline_id, p.id FROM parent_composition_revisions p "
                 "JOIN composition_revision_occurrences o ON o.parent_revision_id=p.id "
                 "WHERE p.project_id=? AND o.shot_id=? AND o.shot_revision_id=? AND p.commit_manifest_json IS NOT NULL ORDER BY p.id LIMIT 1",
                 (project_id, shot_id, revision_id)).fetchone()
             if parent is None:
-                reject("history_unavailable")
+                reject("history_unavailable", diagnostic_reason="store_shot_parent_missing")
             document = self.revision_closure(project_id, parent["timeline_id"], parent["id"])
             return {"shot_revision": shot, "internal_timeline_revision": image,
                     "media": document["dependency_manifest"]["media"], "documents": document["dependency_manifest"]["documents"]}
@@ -1298,7 +1308,7 @@ class TimelineCommitStore:
         occurrences = document["parent_revision"]["payload"]["occurrences"]
         rows = self.conn.execute("SELECT * FROM composition_revision_occurrences WHERE parent_revision_id=? ORDER BY ordinal", (parent_id,)).fetchall()
         if len(rows) != len(occurrences):
-            reject("history_unavailable")
+            reject("history_unavailable", diagnostic_reason="store_occurrence_rows_mismatch")
         for ordinal, (row, occurrence) in enumerate(zip(rows, occurrences)):
             expected = {"parent_revision_id": parent_id, "project_id": document["project_id"], "ordinal": ordinal,
                         **{k: occurrence[k] for k in ("occurrence_id", "shot_id", "shot_revision_id", "duration_ms", "track")},
@@ -1308,7 +1318,7 @@ class TimelineCommitStore:
                         **{k + "_json": canonical_json(occurrence.get(k, default)) for k, default in
                            (("source_offset", 0), ("speed", 1), ("transform", {}), ("provenance", {}))}}
             if dict(row) != expected:
-                reject("history_unavailable")
+                reject("history_unavailable", diagnostic_reason="store_occurrence_row_mismatch")
         manifest = document["dependency_manifest"]
         expected = [("shot_revision", p["revision_id"], p["content_digest"]) for p in manifest["shots"]]
         expected += [("internal_timeline_revision", p["revision_id"], p["content_digest"]) for p in manifest["internal_timelines"]]
@@ -1316,7 +1326,7 @@ class TimelineCommitStore:
         rows = self.conn.execute("SELECT dependency_kind, dependency_id, content_digest, ordinal FROM composition_revision_dependencies "
                                  "WHERE parent_revision_id=? ORDER BY ordinal", (parent_id,)).fetchall()
         if [tuple(row) for row in rows] != [(*pin, ordinal) for ordinal, pin in enumerate(expected)]:
-            reject("history_unavailable")
+            reject("history_unavailable", diagnostic_reason="store_dependency_rows_mismatch")
 
     @staticmethod
     def _image(row):
@@ -1332,7 +1342,7 @@ class TimelineCommitStore:
                 (timeline_id, project_id),
             ).fetchone()
             if row is None:
-                reject("history_unavailable")
+                reject("history_unavailable", diagnostic_reason="store_shot_revision_scope_missing")
         else:
             self._membership(project_id, timeline_id)
         parent = document["parent_revision"]
@@ -1451,7 +1461,8 @@ class TimelineCommitStore:
         continuations, cursor, seen = {}, expected, set()
         while cursor is not None and cursor["publication_id"] != base_publication:
             if cursor["publication_id"] in seen:
-                reject("history_unavailable", "history ancestry contains a cycle")
+                reject("history_unavailable", "history ancestry contains a cycle",
+                       diagnostic_reason="store_history_ancestry_cycle")
             seen.add(cursor["publication_id"])
             entry = self.history_entry(project, timeline, cursor["publication_id"], allow_archived=allow_archived)
             if entry["records"]:
@@ -1461,7 +1472,8 @@ class TimelineCommitStore:
                             continuations.setdefault(binding["physical_ref"], set()).add(binding["successor"])
             cursor = entry["previous"]
         if cursor is None:
-            reject("history_unavailable", "base is outside evaluated head ancestry")
+            reject("history_unavailable", "base is outside evaluated head ancestry",
+                   diagnostic_reason="store_history_base_outside_ancestry")
         return continuations
 
     def _inverse_stage_history(self, project, timeline, records, *, allow_archived=False):
@@ -1471,7 +1483,8 @@ class TimelineCommitStore:
             return None
         publications = records.get("undo_of")
         if not isinstance(publications, list):
-            reject("history_unavailable", "inverse stage history targets are unavailable")
+            reject("history_unavailable", "inverse stage history targets are unavailable",
+                   diagnostic_reason="store_inverse_stage_targets_unavailable")
         return {publication: self.history_entry(project, timeline, publication, allow_archived=allow_archived)
                 for publication in publications}
 
@@ -1802,7 +1815,7 @@ class TimelineCommitStore:
         if context["invocation"]["operation"] == "commitTimeline" and request != context["invocation"]["body"]:
             reject("invocation_mismatch", status=422)
         if self.history_entry(request["project_id"], request["timeline_id"], request["base_publication_id"])["revision_id"] != request["base_revision_id"]:
-            reject("history_unavailable")
+            reject("history_unavailable", diagnostic_reason="store_request_base_mismatch")
 
     def _check_head(self, context, expected):
         from .timeline_commit import StaleHead
@@ -1843,6 +1856,7 @@ class TimelineCommitStore:
                     ReferenceProjectionError,
                     prepare_reference_projection,
                 )
+                reference_projection = None
                 try:
                     previous_document = self.revision_closure(
                         request["project_id"], request["timeline_id"], previous["revision_id"]
@@ -1856,7 +1870,11 @@ class TimelineCommitStore:
                         next_version=int(timeline["version"]) + 1,
                     )
                 except ReferenceProjectionError as exc:
-                    reject(exc.reason, exc.message, status=exc.status)
+                    reject(exc.reason, exc.message, status=exc.status,
+                           diagnostic_reason=(
+                               "store_reference_projection_prepare_history"
+                               if exc.reason == "history_unavailable" else None
+                           ))
                 base = {"revision_id": request["base_revision_id"], "publication_id": request["base_publication_id"]}
                 modern = _is_v2_request(request, prepared["records"])
                 data = {"status": ("accepted" if previous == base else ("merged" if modern else "rebased")),
@@ -1880,7 +1898,14 @@ class TimelineCommitStore:
                     apply_reference_projection,
                 )
                 if reference_projection is not None:
-                    apply_reference_projection(self.conn, reference_projection)
+                    try:
+                        apply_reference_projection(self.conn, reference_projection)
+                    except ReferenceProjectionError as exc:
+                        reject(exc.reason, exc.message, status=exc.status,
+                               diagnostic_reason=(
+                                   "store_reference_projection_apply_history"
+                                   if exc.reason == "history_unavailable" else None
+                               ))
                 self._project_text_bindings(candidate["canonical_document"], prepared["records"], result["receipt"]["receipt_id"])
                 if inputs is not None:
                     inputs.persist(prepared, result["receipt"]["receipt_id"], data["accepted_revision_id"])
@@ -2115,21 +2140,21 @@ class TimelineCommitStore:
             current = self.conn.execute("SELECT project_id, revision_id, publication_id FROM parent_composition_heads WHERE timeline_id=?",
                                         (timeline_id,)).fetchone()
             if current is not None and (current["project_id"] != project_id or current["publication_id"] is not None):
-                reject("history_unavailable")
+                reject("history_unavailable", diagnostic_reason="store_adopt_existing_head")
             if not timeline_scope_is_empty(self.conn, timeline_id, project_id=project_id):
-                reject("history_unavailable")
+                reject("history_unavailable", diagnostic_reason="store_adopt_nonempty_scope")
             if current is None or current["revision_id"] is None:
                 if self.conn.execute("SELECT 1 FROM parent_composition_revisions WHERE timeline_id=? LIMIT 1", (timeline_id,)).fetchone():
-                    reject("history_unavailable")
+                    reject("history_unavailable", diagnostic_reason="store_adopt_existing_parent")
                 # Normal create retains its empty legacy projection as well.
                 empty_legacy = {"shots": [], "references": []}
                 for row in self.conn.execute("SELECT * FROM internal_timeline_revisions WHERE timeline_id=?", (timeline_id,)):
                     if row["project_id"] != project_id or row["payload_json"] != canonical_json(empty_legacy) or row["content_digest"] != digest(empty_legacy):
-                        reject("history_unavailable")
+                        reject("history_unavailable", diagnostic_reason="store_adopt_legacy_shell_mismatch")
                 if self.conn.execute("SELECT 1 FROM command_idempotency WHERE command_kind='parent_composition.publish' AND aggregate_id=? LIMIT 1",
                                      (timeline_id,)).fetchone() or self.conn.execute(
                         "SELECT 1 FROM timeline_events WHERE timeline_id=? AND kind='parent.composition.published' LIMIT 1", (timeline_id,)).fetchone():
-                    reject("history_unavailable")
+                    reject("history_unavailable", diagnostic_reason="store_adopt_prior_publication")
                 head = self.bootstrap(project_id, timeline_id, authorize=authorize)
                 entry = self.history_entry(project_id, timeline_id, head["publication_id"])
                 return entry["receipt"]["event_ids"][0]
@@ -2152,7 +2177,7 @@ class TimelineCommitStore:
             if current is not None and current["revision_id"]:
                 if current["publication_id"]:
                     return self.head(project_id, timeline_id)
-                reject("history_unavailable")
+                reject("history_unavailable", diagnostic_reason="store_bootstrap_unpublished_head")
             document = empty_bootstrap_document(project_id, timeline_id, "bootstrap-" + new_id())
             self._validate_closure(document)
             self._persist_closure(document)

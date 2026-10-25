@@ -161,6 +161,88 @@ def _emit_redacted_diagnostic(request_id, error=None, *, reason=None):
         pass
 
 
+_HISTORY_MESSAGE_TAGS = {
+    "publication/revision pins disagree": "port_ancestor_pin_mismatch",
+    "publication is outside request ancestry": "port_ancestor_outside_request",
+    "history bounds disagree": "port_history_bounds_mismatch",
+    "revision is outside request ancestry or declared source": "port_revision_outside_ancestry",
+    "base pins disagree": "port_base_pins_mismatch",
+    "candidate head was not observed through this port": "port_candidate_head_unobserved",
+}
+
+_HISTORY_SOURCE_TAGS = frozenset({
+    "history_baseline_publication_dependency",
+    "history_baseline_corrupt_publication_facts",
+    "history_baseline_source_publication_missing",
+    "history_baseline_unretained_document_dependency",
+    "history_provider_or_store_guard",
+    "port_ancestor_pin_mismatch",
+    "port_ancestor_outside_request",
+    "port_history_bounds_mismatch",
+    "port_revision_outside_ancestry",
+    "port_base_pins_mismatch",
+    "port_candidate_head_unobserved",
+    "store_membership_missing",
+    "store_head_missing",
+    "store_head_revision_mismatch",
+    "store_head_canonical_mismatch",
+    "store_head_catalog_corrupt",
+    "store_archived_scope_missing",
+    "store_history_entry_missing",
+    "store_history_ledger_mismatch",
+    "store_history_bound_revision_mismatch",
+    "store_history_bound_order_invalid",
+    "store_history_chain_break",
+    "store_history_through_mismatch",
+    "store_revision_scope_missing",
+    "store_revision_missing",
+    "store_revision_dependency_missing",
+    "store_shot_input_closure_ambiguous",
+    "store_shot_parent_missing",
+    "store_occurrence_rows_mismatch",
+    "store_occurrence_row_mismatch",
+    "store_dependency_rows_mismatch",
+    "store_shot_revision_scope_missing",
+    "store_history_ancestry_cycle",
+    "store_history_base_outside_ancestry",
+    "store_inverse_stage_targets_unavailable",
+    "store_request_base_mismatch",
+    "store_adopt_existing_head",
+    "store_adopt_nonempty_scope",
+    "store_adopt_existing_parent",
+    "store_adopt_legacy_shell_mismatch",
+    "store_adopt_prior_publication",
+    "store_bootstrap_unpublished_head",
+    "store_reference_projection_prepare_history",
+    "store_reference_projection_apply_history",
+})
+
+
+def _history_diagnostic_reason(failure, *, source_reason=None):
+    """Map an intentional history refusal to a bounded private source tag."""
+    if not isinstance(failure, dict):
+        return None
+    details = failure.get("details")
+    if not isinstance(details, dict) or details.get("reason") != "history_unavailable":
+        return None
+    if source_reason is not None:
+        return source_reason if source_reason in _HISTORY_SOURCE_TAGS else None
+    integrity_reason = details.get("integrity_reason")
+    if isinstance(integrity_reason, str):
+        if integrity_reason.startswith("publication_dependency_unavailable:"):
+            return "history_baseline_publication_dependency"
+        if integrity_reason.startswith("missing_or_corrupt_publication_facts:"):
+            return "history_baseline_corrupt_publication_facts"
+        if integrity_reason == "source_publication_missing":
+            return "history_baseline_source_publication_missing"
+        if integrity_reason == "unretained_document_dependency":
+            return "history_baseline_unretained_document_dependency"
+    message = failure.get("message")
+    if message in _HISTORY_MESSAGE_TAGS:
+        return _HISTORY_MESSAGE_TAGS[message]
+    return "history_provider_or_store_guard"
+
+
 class CommitOutcomeUnknown(RuntimeErrorBase):
     code = "not_ready"
     status = 503
