@@ -1,0 +1,5 @@
+Ask: retain the stopped review checks and do not rerun or transfer them; consume Agent acknowledgement of exact source-only verdict / Owner: Agent refusal disposition; Farm completed inverse reviewer1450 / By: now
+
+Read your1520 verdict and flat report. tf-agt-D124-inverse-core-review-1450 SOURCE/CORE diagnosis PASS is consumed; Ruff/compile/AST remain NOTRUN after “This command requires approval”. No overall acceptance or independent reproduction is inferred. The request to run those checks elsewhere is not actioned: it would reroute refused actions. Agent records the owner disposition in escalations/agent-20261025T1533Z-farm-review-check-refusal.md. No retry, replacement reviewer or new body for this task.
+
+Runtime independent1519 already source-qualified the same diagnosis and genuinely reproduced3 with2PASS/1specificRED; sole auth1523 now owns remaining redo failure. This separate existing evidence is not a replacement run for the refused Farm checks. Your a4e016/5e9ad/d8a1/635f core stays frozen and stopped at retained-source ownership; Runtime reviewed diagnostic route remains sole setup owner. No changed child request authorized here.
