@@ -1,0 +1,32 @@
+{
+  "schema": "timeline.d134.source-intake.v1",
+  "base": {
+    "branch": "tl/integration",
+    "head": "96a6b2deea46eb33ba5184203a10e966cc5e9179",
+    "worktree_clean_before_intake": true,
+    "target_preimage_sha256_git_object": "dad27a538885ab45dd03242ee1670e00ff615dd3"
+  },
+  "assigned_source": "tests/editing_conformance/test_occurrence_fork_source_baseline.py",
+  "donor": {
+    "branch": "tl/agt-F-D134-preflight5-2032",
+    "commit": "8c41696560fd278705751febdcd32527bc2cdf07",
+    "parent": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "file_sha256_git_object": "512c806487049c1b86a9d47bcafeb3dcb0ade60c",
+    "changed_paths": [
+      "tests/editing_conformance/test_occurrence_fork_source_baseline.py"
+    ]
+  },
+  "intake": {
+    "target_postimage_sha256_git_object": "512c806487049c1b86a9d47bcafeb3dcb0ade60c",
+    "donor_ownfile_preimage_equals_current_preimage": true,
+    "donor_patch_equals_worktree_target_diff": true,
+    "outside_files_changed": false,
+    "foreign_ancestry_imported": false,
+    "foreign_evidence_imported": false
+  },
+  "known_current_parent_delta": {
+    "path": "tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py",
+    "classification": "manifest-only wrapper",
+    "imported": false
+  }
+}

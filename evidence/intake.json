@@ -1,0 +1,22 @@
+{
+  "task": "D134 clean source-only intake",
+  "source_acceptance": "PASS",
+  "source_sha": "512c806487049c1b86a9d47bcafeb3dcb0ade60c",
+  "own_preimage_sha": "dad27a538885ab45dd03242ee1670e00ff615dd3",
+  "donor_commit": "8c41696560fd278705751febdcd32527bc2cdf07",
+  "only_assigned_source_changed": true,
+  "ast_assertions_and_inputs_conserved": true,
+  "protected_review": "D120 protected review PASS (preflight5 review artifacts supplied by orchestrator)",
+  "ordinary_sheet_four": "unchanged; UNAPPLIED",
+  "functional": {
+    "status": "NOTRUN",
+    "reason": "Source import does not clear the blocked unsupported central immutable Runtime route for exact own1."
+  },
+  "policy": {
+    "registered_daemon": true,
+    "authenticated_astrid_client": true,
+    "classifier_or_policy_refusal": "STOP/report; no retry or transfer",
+    "new_source_approval": false,
+    "repeated_own1": false
+  }
+}
