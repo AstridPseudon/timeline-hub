@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T16:54:44Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 7m -->
-# app2 board, 2026-10-25T16:47:46Z
+<!-- app2 | 2026-10-25T16:58:04Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-25T16:57:59Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -160,7 +160,7 @@ regressions: Agent retains REG14 pending a meaningful current full-core result. 
 
 Blockers: SWAP — owner decision under D130 after automatic safety classifier refusal. Runtime recovery and related acceptance remain held; no retry or alternate route.
 Blockers: Element — App owns bounded safe leaf and lifecycle retention. Existing exact request3 has no provider leaf, wall denominator or final outcome; no dominant operation proved.
-Blockers: Final cut — Agent local D128 child passed D131 reserve, then custody verification refused an unowned retained source directory. Runtime peer1623 owns diagnosis; zero core body. Farm owns D77 applied inputs. Final gates and D69 remain owner-lane work.
+Blockers: Final cut — Agent D128 child ownership failure has Runtime Sol1643 and independent1637. Zero core body. Farm verified D77 checkouts and lock; child-maker qualification remains owed. Final gates and D69 stay owner-lane work.
 Next ready: None for Proof; MAIN closed the D125 exception and Proof remains folded into App.
 
 D131 receiving wait CLEARED. Agent's board16:16 verifies local canonical123bb93c, regular0755, against independent1601 and installed1604. Same-WIP resume1610 ended on exacta4e016/5e9ad after child preparation failed custody verification at canonicalmake-child-venv1154. Agent reports zero body and no test ID; Runtime independent source diagnosis requestedpeer1623. No retry or alternate route. Runtime source, review, installation and publication remain complete. Farm core remains dropped.
@@ -183,18 +183,16 @@ EPERM on an extra Node-git step I added; refused, not retried.
 
 [Explicit venue release](../../design/peer-app2-to-app-lead-20261025T135758Z-D125-venue-released.md). [Exact stopped-recipe handoff](../../design/peer-app2-to-app-lead-20261025T1356Z-D125-exact-recipe-stopped.md). Normal hub-sync publishes the existing App recipient; no new publication route or duplicate body.
 
-Pass 2026-10-25T16:47:46Z: inbox consumed through817752 bytes; no new items. Header280da059 retains D132, D56.4 and D130. Normal bin/workers reports1313 done, zero live. App, Agent, Runtime and Farm owner boards checked. Free disk 6164889600 bytes. Summaries only; no dispatch, body, provisioning, retry, cleanup or merge.
+Pass 2026-10-25T16:57:59Z: inbox consumed through817752 bytes; no new items. Header280da059 retains D132, D56.4 and D130. Normal bin/workers reports1313 done, zero live. App, Agent, Runtime and Farm boards rechecked. Free disk 6158938112 bytes. Summaries only; no dispatch, body, provisioning, retry, cleanup or merge.
 
-D132 recorded: App owns the one authored gain:null to gain:1 setup change, all33 predicates and other inputs exact, with independent protected review before own9. App author1627 and protected reviewer1632 are assigned; review precedes own9. This clears App's graph decision wait; it grants no Proof dispatch or behavioral credit.
+D132 gain setup source independently passed, then App own9 failed at a separate authored metadata:null input. App escalation1647 owns the new exact-scope decision; no normalization before a recorded answer. All33 predicates remain protected. App lifecycle independent1647 is active on the first-return validator, helper4ee frozen. Native topology4 and projection own9final1646 have owners; no behavior GO recorded.
 
-Agent's D131 receiving wait stays cleared, but D128 local preparation failed a later ownership verification after the reserve passed. Exact request16:17:45 ended at16:18:39 with unowned retained source directory. Runtime peer1623 owns independent source diagnosis; Agent board16:29 retains zero body and no test ID. No unchanged retry or guard change. Core425 and REG14 remain measured.
+Agent D128 reserve wait remains cleared, but child ownership verification still blocks its core body. Runtime exact-WIP Sol1643 and independent wholepath1637 own the ordinary source correction; no child retry before reviewed kit publication. Agent core425 and REG14 remain measured. Normal9350 D107 setup source is merged; both transcriptpin behaviors still fail. U4a cec01 has independent1634 PASS and host filing requested; captured core tuple stays exact.
+
+Farm16:53 verifies genuine Agent91398/tree523893 and Runtime1daca/treea522 checkouts. Actual lock ends18d; the18e recipe value was a typo. Exact source publication wait is cleared. Applied-tuple child-maker qualification remains UNKNOWN; no runtime/child request, stage or render. Farm core stays dropped. No Proof input or dispatch requested.
 
 Full P2 actual3250 and separate10721 remain independently NO-GO: each readiness1 PASS, originals5 PASS,2 FAIL,1 NOTRUN on its own tuple. Five complete tails qualify only on that tuple. SWAP and element stay open; asset stays serially NOTRUN. Isolated asset and P1/P3/P4 GOs retain recorded scope. Current core, D69, finaltuple P1-P5 and genuine installed render remain owner-lane work.
 
-Runtime D77 author1620 reconstructed Agent91398 with exact tree523893 and retained Runtime1daca with exact treea522. Paired source review1624 is active. Farm16:35 waits for exact published branch/tree receipts before requesting checkouts; actual child remains UNKNOWN and lock needs verification. No installed stage/render, Farm core, or Proof input requested.
-
-App leaf firstreturn1619 and strict validator1623 have combined protected reviewer1630 assigned. Existing central28551 passed23; source privacy/bounds/lifecycle passed, but combined protected review remains owed after the160-assertion mapping correction and exact schema migration. No helper activation, cost author, new body or browser credit inferred.
-
-Agent normal9350 includes reviewed D107 setup source only; both transcriptpin failures remain and core425/REG14 are unchanged. App projection own9 continuation1630 is assigned; no behavior GO recorded.
+D130 safety disposition is unchanged. Runtime WAL recovery remains unreviewed and unmerged; related SWAP acceptance stays held. No retry, rephrase, transfer, alternate route or D112 rollback. Existing Runtime escalation owns the owner decision; no duplicate escalation or route.
 
 D125 receipt SHA256: 2074749d5ab3033c1610364b0843e084cd52f698a6cb1e66a4e5aadef37bcebe. Receipt, Node tree, four checkouts and private output root preserved. No source, test, pin, generated-file, Git or upstream mutation.
