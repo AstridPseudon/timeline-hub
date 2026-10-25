@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "task": "D127b independent retained10721 safe-stack packet review",
+  "actual_id": "app-pin-84857c45-d73-p2-84857c45-submit-1025144552-10721",
+  "parent_done": true,
+  "handoff_present": true,
+  "packet_privacy": "PASS",
+  "packet_custody": "FAIL",
+  "request_binding": "UNKNOWN",
+  "safe_frame_hashes_unchanged_from_original1503": true,
+  "source_artifacts": {
+    "available_stack_count": 3,
+    "absent_stack_count": 3,
+    "jsonl_count": 6,
+    "all_source_hashes_and_sizes_match": true,
+    "frame_counts_match": true
+  },
+  "custody_tuple": {
+    "app": ["84857c45347539c7820bb054b69e2e5ad4079081", "7feb5b12a1ad9629f096700c40c393d5b3998217"],
+    "agent": ["070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "6056414359ae9fce08d999d54cbecf719fda33c3"],
+    "runtime": ["5e9ad1c6f74241d8771d3284fdd2ce7a214fd344", "de2954a0ceadb4455903d9abdfec3b773318a50f"],
+    "composition": ["635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "5ab5191a296980a0a6bcd1178ab6902d6478a148"],
+    "helper_sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760"
+  },
+  "metadata_defect": {
+    "file": "evidence/facts.json",
+    "line": 2752,
+    "field": "tuple.composition",
+    "observed": "635f4de06da22a85fc2e4cfc764d0153a4c9f40",
+    "expected": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "privacy": {
+    "raw_private_material_published": false,
+    "relative_safe_frames_only": true
+  },
+  "binding_facts": {
+    "element_key_hash_join": "exact retained trace-to-runtime hash join; runtime outcome UNKNOWN",
+    "swap_key_hash_join": "UNKNOWN",
+    "timing_or_order_inference": false
+  }
+}
