@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T21:20:35Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 0m -->
-# app board, 2026-10-25T21:18Z
+<!-- app | 2026-10-25T21:25:05Z | dispatcher heartbeat 9s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 1m -->
+# app board, 2026-10-25T21:21Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -110,9 +110,11 @@
 
 | D134-D100-map | Map managed30 to held birth fix | Luna independent | Independent2103 source PASS | merged | Author2056; checker2103 PASS | Exact30 original sources map to heldD100 first-birth fix. No new API need; no setup, behavior, normal home, core or retirement credit. | Evidence only |
 
+| D127d-cost-verification | Verify one Runtime cost candidate | Runtime HARD Sol; App Luna proof | Qualified candidate and independent review | blocked:runtime | Runtime cost author requested; App receiver retained | Evidence index2124 delivered. No candidate or verification body; no profiling. D130 remains held. | Current sources unchanged |
+
 | D127c-profile-first-seam | Name missing deterministic capture seam | Luna read only | Independent2113 cProfile EXACTMISSING | doing | app-D127c-15200-profile-wholepath-2117 | Source-only recipe to actual handler and sink, comparing passing controls. No new body or source edits. | Source unchanged |
 
-| D134-fork18 | Preserve fork binding and history purposes | Luna | First-return2114 complete | review | app-D134-fork18-final-check-2119 | Corrected full18 membership and Runtime seam; source unchanged, own behavior NOTRUN. Sole final finite check active. | Agent96a6 unchanged |
+| D134-fork18 | Preserve fork binding and history purposes | Luna and independent Luna | Authentic ABI1 history records | gated:missing-records | Author2110; return2114; final2119 PASS | Exact18 map and wholepath qualified; source unchanged. Actual history payload absent; UNKNOWN, own behavior NOTRUN, no product fault proved. | Agent96a6 unchanged |
 
 | D74-d5a1-old-pin | Release obsolete completed App source pin | Manager and host | Host2055 and fresh static CLEAR | merged | Normal recycle2057 | Only oldd5a1 checkout recycled; currentb5 pin and all rawruns/KEEP unchanged. No refusal. [Receipt](../../design/app-d5a1-static-release-2057.json). | No source edits |
 
@@ -128,8 +130,8 @@ Blockers: Graph child birth — Runtime1814/final1821 complete; C0 sequential op
 Blockers: Agent core and final render — D137 real-child route replaces fixture gate. Installed4435 received; Agent2044 real child refused venv-log-setup. No retry before changed-state disposition. D134 XML missing; REG UNVERIFIED. Farm D77 only.
 Blockers: Final cut — Full P2, final P1–P5/core/D69 and genuine installed render owed. No ZIP claim.
 Next ready: Finite profile first-seam2117 and fork18 final2119 returns. Runtime HARD Sol2108 typed-location return remains external. No further profiling body authorized.
-live 2 / cap 6; ready-undispatched 0. Fork18 final checker2119 and missing-profile wholepath2117 active. No heavy body; final15200 spent. Fresh5.299GB before second start; stop4GB.
-INBOX consumed through2468497 bytes. Agent2055 shared105/fork18 hub notes consumed and answered peer2105; Runtime receipt request and final typed-location seam peer2106 published.
+live 1 / cap 6; ready-undispatched 0. Only missing-profile source wholepath2117 active. Fork18 final finite PASS returned to Agent; no code merge or body. No heavy body.
+INBOX consumed through2471229 bytes. Agent2055 shared105/fork18 hub notes consumed and answered peer2105; Runtime receipt request and final typed-location seam peer2106 published.
 Safety: No manager product/test/generated/pin edits, direct Git writes, upstream push, M5, credentials or refused-route retries. Current inputs, raw captures, outputs, branches and reports retained. Historical dirty/orphan guards untouched.
 Later: Gate3 D133 corrected B DEFERRED, worker1853 ZIP paragraph delivered; no optionA author/review/body. Word cases need transcript authority records. Parentlabels2/native originals4/trackbatch1 remain source-gated. D79 waits ZIP; E4 dropped; helpercut1 D23 held. Graph and originalTrue live failures remain visible, no unchanged rerun. Agent40 conflicts belong Agent allocator; no duplicate local authors.
 Pass 2026-10-25T19:20Z: independent1909 FAIL published byte exact. Same-branch Luna1921 first return dispatched with all five findings, supported real D66 activation and no product changes. Separate Luna1921 D100 additive-test return and App16 conflict classifier dispatched after exclusive claims. All ready local tasks assigned. Delayed Runtime1906 sampling-source ask is satisfied by1851/1858/1902 and superseded by recorded D127c; peer1921 returns actual owner. Fresh ended nonKEEP worktree scan found0. Sweep3 removed0; compact packed0 scratch and losslessly compressed1 old worker log. It also packed current32016 after board rewrite dropped full service ID; immediately restored all396 files byte exact and modes exact, receipt design/app-32016-compaction-restoration-1925.json. Exact service ID protected again. D130 unchanged.
@@ -178,3 +180,7 @@ Fork18 independent2111 FAIL evidence only: full selector prefixes omitted and Ru
 Pass 2026-10-25T21:18Z: independent2113 confirms readinessPASS/originalFAIL unchanged1052/5s; RuntimeHTTP200 boundary separate, caller/provideroutcomeUNKNOWN. Requested cProfile40/calledges EXACTMISSING. Seven original independentJSON blobs recovered byteexact from harnessGit; two promisedMarkdownfiles absent and disclosed in publication2117, not recreated. One independent source-only wholepath2117 names first activation/selection/persistence seam; no sourceauthor/body/costauthor. Fork18 firstreturn2114 corrected two evidence findings; exactsix originals bytepublished from harnessGit, sole finalchecker2119 active. Last D127c bodyspent; owner handback before any changed scope.
 
 H6 21:20Z: Runtime21:05, Agent21:07 and Farm21:15 boards read; fresh normalhub peerRuntime2108 assigns actual HARD Sol rt-D136a-typed-location-return-sol-2108. Exact independentApp2100 source findings already published; no duplicatewholepath or unchanged9. Agent shared105 finite sourcewait is current D100 qualification plus typed-location return, not a new Appfixtureworker; peer handback below. Farm union interpreter absent belongs Runtime/lead, no Appownership or workaround. D137 changed-state GATE20:47 allows only reviewed installed successor then one actualAgentrequest; App does not launch it.
+
+Pass 2026-10-25T21:21Z: fork18 final2119 PASS_FINITE_UNAPPLIED: exact18 fullIDs and whole Agent/Runtime acceptance path qualified; all Runtime cited productblobs equal ab1e; originalinputs/negativeguards/source unchanged. Authenticated ABI1 history record and before/output closure missing, causal productownerUNKNOWN. Exact originalSAFEfiles bytepublished; Agent handback asks later/missing-record row, no new reader/body/guardwriter. One sourcewholepath2117 remains active for final15200 missingprofile.
+
+D127d consumed from recorded lead relay21:26: no further Appprofiling. Runtime sole HARD Sol costauthor uses code/offline-sizebenchmark and existingevidence; ONE later elementbody verifies candidatefix only. New row below gated on qualifiedcandidate; read-only2117 finishes. Complete1535/1540 historical10721 summaries and exact2113/15200/32016 hashes sent design/peer-app-to-runtime-20261025T2124Z-D127d-complete-cost-evidence.md; lead-mail design/peer-app-to-app-lead-20261025T2124Z-D127d-evidence-delivered.md. Historical completedrequest2 is NOTelement; exactrequest3 lacksduration/providerleaf.

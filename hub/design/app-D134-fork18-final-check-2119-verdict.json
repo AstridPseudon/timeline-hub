@@ -1,0 +1,51 @@
+{
+  "task": "D134 root-008 final independent source/evidence check",
+  "result": "PASS_FINITE_UNAPPLIED",
+  "behavior_status": "NOTRUN",
+  "base": "96a6b2deea46eb33ba5184203a10e966cc5e9179",
+  "agent_head": "96a6b2deea46eb33ba5184203a10e966cc5e9179",
+  "findings": {
+    "F001": {
+      "status": "RESOLVED",
+      "check": "authoritative root-008 exact full node-ID multiset",
+      "count": 18,
+      "raw_multiset_equal": true,
+      "duplicates": 0,
+      "unlisted_root_members": 0,
+      "normalization": null
+    },
+    "F002": {
+      "status": "RESOLVED",
+      "check": "public Agent caller through Runtime provider registration/invocation, Agent history guard, Runtime verified acceptance and persistence",
+      "historical_payload_available": false,
+      "current_caller_proved": true
+    }
+  },
+  "finite_conclusion": {
+    "classification": "UNKNOWN_UNAPPLIED",
+    "owner": "Agent provider / Runtime producer-history custody seam",
+    "product_fault_proved": false,
+    "behavior_credit": false,
+    "retirement_credit": false,
+    "missing_record": "authenticated historical ABI-1 Runtime entry with predecessor/output closures, records.commands[0].bindings, recorder_abi, and exact history boundary fields"
+  },
+  "source_conservation": {
+    "owned_files_byte_equal_base": true,
+    "owned_function_asts_equal_base": true,
+    "abi1_request_omission_preserved": true,
+    "negative_guard_purposes_preserved": true,
+    "no_product_or_runtime_change": true,
+    "runtime_product_files_equal_immutable_ab1e": true,
+    "runtime_cf0b_only_changes": [
+      "tests/helpers/p2_commit_phase_capture.py",
+      "tests/test_p2_commit_phase_capture.py"
+    ],
+    "frozen_owned_test_blobs_present": false
+  },
+  "artifacts": {
+    "return_2114": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D134-fork18-return-2114-{source-manifest.json,predicate-map.json,findings.json,validation.md,correction.json,wholepath.md,report.md}",
+    "original_2110": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D134-fork18-source-2110-{source-manifest.json,predicate-map.json,findings.json,validation.md,report.md}",
+    "review_2111": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D134-fork18-review-2111-{verdict.json,source-manifest.json,findings.md,validation.md,report.md}",
+    "publication_2119": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D134-fork18-return-publication-2119.json"
+  }
+}

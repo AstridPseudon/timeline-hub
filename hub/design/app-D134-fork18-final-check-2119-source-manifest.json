@@ -1,0 +1,70 @@
+{
+  "task": "D134 root-008 final independent source/evidence check",
+  "result": "PASS_FINITE_UNAPPLIED",
+  "behavior_status": "NOTRUN",
+  "base": "96a6b2deea46eb33ba5184203a10e966cc5e9179",
+  "agent_head": "96a6b2deea46eb33ba5184203a10e966cc5e9179",
+  "owned_files": {
+    "tests/editing_conformance/test_fork_abi1_binding_set.py": {
+      "sha256": "901ac04ba8ced15c183432565eb8ecb4f1edd4901f71bef2d11f0d5aec33e3c2",
+      "base_blob": "fe4b81c92dceda1750fb6effd6ee6deb9e8f4c47",
+      "byte_equal_to_base": true,
+      "function_ast_equal_to_base": true,
+      "function_count": 12
+    },
+    "tests/editing_conformance/test_recipe_occurrence_fork.py": {
+      "sha256": "19b1e47a89604803d0f0f90964db48788d0bfc82955eb229949d9dee158ade2a",
+      "base_blob": "1ad7b6c1b1b1190152270b7f106d449ac8aa4479",
+      "byte_equal_to_base": true,
+      "function_ast_equal_to_base": true,
+      "function_count": 10
+    }
+  },
+  "root_008_membership": {
+    "authoritative": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D134-root-clusters-2022-root-clusters.json",
+    "count": 18,
+    "cases_count": 18,
+    "exact_member_index_count": 18,
+    "raw_multiset_equal": true,
+    "duplicates": 0,
+    "unlisted_root_members": 0,
+    "normalization": null
+  },
+  "agent_cited_sources": {
+    "tests/editing_conformance/test_doc_patch_v2.py": "32e2fd46443106221e424fda9aa432efab6bccd55773a59664d86a400ba15629",
+    "tests/editing_conformance/test_provider_occurrence_fork.py": "febd9b5261ce768375dbbb7efe3844ecf76e9283ebd6a3595c8d368b84c3cbe4",
+    "astrid/sdk/timeline/_recording.py": "3940d0296f55bfc2b7cff6f4998adc4a6caf3290c1fcae10ddea813edc50f7e4",
+    "astrid/sdk/timeline/_commit_patch.py": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f",
+    "astrid/sdk/timeline/commit.py": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3"
+  },
+  "runtime": {
+    "worktree": "/home/user/work/runtime",
+    "head": "cf0b82dd47452a7a34fc63eb233e9b1dc0532806",
+    "immutable_product_base": "ab1e4f6141987706132916e2da16477f5a019464",
+    "cited_product_files_byte_equal_to_ab1e": true,
+    "files": {
+      "runtime_protocol/server.py": "672ebcb59a923b96d3189980c197315a09fd31d44444d502ea5d3750e7bb52fc",
+      "runtime_protocol/service.py": "13587d2c3b58ecb6838525e69cbaa38a045b2491a34170275e1d5e55354bf51b",
+      "runtime_protocol/daemon.py": "3dd152c1c3b2744287cedc5fc6b51e39676b3870bae3577cbc555b8d21d8e9fb",
+      "runtime_protocol/timeline_commit_provider.py": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf",
+      "runtime_protocol/timeline_commit_execution.py": "5956b4850e11d517a6bcc9aa8ae7f0074b45810e26faa8ffe391b907e764c257",
+      "runtime_protocol/timeline_commit_port.py": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14",
+      "runtime_protocol/timeline_commit_store.py": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4"
+    },
+    "only_nonproduct_deltas": [
+      "tests/helpers/p2_commit_phase_capture.py",
+      "tests/test_p2_commit_phase_capture.py"
+    ]
+  },
+  "frozen_reference": {
+    "ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+    "owned_files_present": false,
+    "comparison_note": "Neither owned test path exists on the frozen reference; no frozen test blob was substituted."
+  },
+  "historical_evidence": {
+    "retained_log_sha256": "65def166348d4ffde949d530bff1a7bcba820ad674ca85b8ccc3e708c781ae8e",
+    "authenticated_historical_record_available": false,
+    "predecessor_output_closures_available": false,
+    "fabricated_records": false
+  }
+}
