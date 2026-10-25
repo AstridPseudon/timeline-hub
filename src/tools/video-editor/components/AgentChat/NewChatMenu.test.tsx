@@ -102,6 +102,33 @@ describe('NewChatMenu + button', () => {
 });
 
 describe('NewChatMenu agent rows', () => {
+  it('treats a ready but signed-out row as needing sign-in', () => {
+    openMenu({ defaultAgent: 'codex', agents: ready.map(row => row.id === 'codex' ? { ...row, signIn: 'signed-out' } : row) });
+    expect(screen.getByRole('option', { name: /Codex/ })).toHaveTextContent('Sign in');
+    expect(screen.queryByRole('button', { name: 'Choose a Codex model' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'New chat · Codex' })).toBeDisabled();
+  });
+  it.each([undefined, 'unknown', 'signed-in'] as const)('allows ready rows with signIn %s', signIn => {
+    openMenu({ defaultAgent: 'codex', agents: ready.map(row => ({ ...row, signIn })) });
+    expect(screen.getByRole('option', { name: /Codex/ })).toHaveTextContent('Ready');
+    expect(screen.getByRole('button', { name: 'Choose a Codex model' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'New chat · Codex' })).toBeEnabled();
+  });
+  it.each([{ agents: undefined }, { agents: [] }])('only keeps the no-rows fallback when loading failed ($agents)', ({ agents }) => {
+    const { rerender, onNewChat } = renderMenu({ agents });
+    const plus = screen.getByRole('button', { name: 'New chat · Claude Code' });
+    expect(plus).toBeDisabled();
+    rerender({ agents, agentsLoading: true });
+    expect(plus).toBeDisabled();
+    rerender({ agents, agentsError: new Error('Could not load agents') });
+    expect(plus).toBeEnabled();
+    fireEvent.click(plus);
+    expect(onNewChat).toHaveBeenCalledOnce();
+  });
+  it('does not apply the load-error fallback to a missing row in a loaded list', () => {
+    renderMenu({ agents: ready.filter(row => row.id !== 'claude-code'), agentsError: new Error('Refresh failed') });
+    expect(screen.getByRole('button', { name: 'New chat · Claude Code' })).toBeDisabled();
+  });
   it('shows an agent row\'s default model and no Last used mark', () => {
     openMenu({ agentModelNames: { 'claude-code': 'Sonnet 4.5' } });
     expect(screen.getByLabelText('Ready, using Sonnet 4.5')).toHaveTextContent('Sonnet 4.5');

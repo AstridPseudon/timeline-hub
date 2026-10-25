@@ -246,10 +246,15 @@ function AvailableAgentChatPanel({
   const pausedQueuedIdsRef = useRef(new Set<string>());
   const [optimisticMessage, setOptimisticMessage] = useState<OptimisticMessage | null>(null);
   const [attachmentLightboxMedia, setAttachmentLightboxMedia] = useState<GenerationRow | null>(null);
-  const [setupRequest, setSetupRequest] = useState<{ agent: LocalAgentId; error?: unknown } | null>(null);
+  const [setupRequest, setSetupRequest] = useState<{ agent: LocalAgentId; sessionId: string | null; error?: unknown } | null>(null);
+  // Mutation errors can outlive the chat they came from.
+  const setupErrorScopes = useRef(new Map<unknown, { agent: LocalAgentId; sessionId: string | null }>());
+  const dismissedSetupErrors = useRef(new Set<unknown>());
+  // Back leaves creation running, but its response must not select a chat.
+  const setupStartIsCurrentRef = useRef<(() => boolean) | undefined>(undefined);
   const [setupDone, setSetupDone] = useState<{ agent: LocalAgentId; sessionId: string | null } | null>(null);
   const [startingAgent, setStartingAgent] = useState<LocalAgentId | null>(null);
-  const [startFailure, setStartFailure] = useState<{ agent: LocalAgentId; choice?: LocalAgentId; model?: string; thoughtLevel?: string; sessionId?: string; error: unknown; details: string; updateNeeded: boolean } | null>(null);
+  const [startFailure, setStartFailure] = useState<{ agent: LocalAgentId; choice?: LocalAgentId; model?: string; thoughtLevel?: string; sessionId?: string; sourceSessionId: string | null; error: unknown; details: string; updateNeeded: boolean } | null>(null);
   // Engagement flag local to AgentChatPanel: flipped by markEngaged() (split-button click)
   // and decoupled from pane open state so the close-path bug from the rev-4
   // setIsTasksPaneOpenProgrammatic approach can't recur.
@@ -473,7 +478,10 @@ function AvailableAgentChatPanel({
   const idlePlaceholder = !CHAT_VOICE_ENABLED
     ? 'Type a message...'
     : coarsePointer ? 'Type, or tap the mic to talk...' : 'Type or press Cmd+Shift+R to talk...';
-  const inputPlaceholder = startingAgent
+  const setupAgentName = chatAgent === 'astrid' ? AGENT_CHAT_COPY.astridAgent : agentNames[chatAgent];
+  const inputPlaceholder = agentBroken
+    ? AGENT_CHAT_COPY.setupPlaceholder(setupAgentName)
+    : startingAgent
     ? `Starting ${agentNames[startingAgent]}…`
     : showNoProjectState
       ? 'Select a project to start chatting...'
@@ -485,7 +493,12 @@ function AvailableAgentChatPanel({
   const optimisticTurnAlreadyMaterialized = optimisticMessage !== null
     && Boolean(activeSessionData?.turns.some((turn) => turn.role === 'user' && turn.request_id === optimisticMessage.id));
   const promptFailure = sendMessage.localError && isAgentSetupError(sendMessage.error) ? sendMessage.error : sendMessage.localError;
-  const chatFailures = [activeSession.error, promptFailure, createSession.error, sessions.error, projectChat.error];
+  const chatFailures = [activeSession.error, promptFailure, createSession.error, sessions.error, projectChat.error].filter(error => {
+    if (!isAgentSetupError(error)) return true;
+    if (!setupErrorScopes.current.has(error)) setupErrorScopes.current.set(error, { agent: chatAgent, sessionId: activeSessionId });
+    const source = setupErrorScopes.current.get(error)!;
+    return !dismissedSetupErrors.current.has(error) && source.agent === chatAgent && source.sessionId === activeSessionId;
+  });
   // No chat service on this computer is a state, not a failure: the pane says so in one plain line, with no alert or retry.
   const chatUnavailable = chatFailures.some(isAcpUnavailable);
   const showEmptyState = !startingAgent && !activeSession.isLoading && renderedTurns.length === 0 && !isProcessing && !sendMessage.isPending;
@@ -494,13 +507,26 @@ function AvailableAgentChatPanel({
   const defaultAgentRow = localAgents.data?.agents.find(agent => agent.id === defaultAgent);
   const defaultAgentReady = isAgentUsable(defaultAgentRow) && defaultAgentRow?.signIn !== 'unknown';
   const hasAvailableProjectSession = Boolean(projectChat.data?.sessions.some(session => !session.missing));
-  const showSetupCard = writableChat && (setupRequest !== null || (!activeSessionId && !hasAvailableProjectSession && Boolean(localAgents.data) && !defaultAgentReady));
+  const currentSetupRequest = setupRequest?.sessionId === activeSessionId ? setupRequest : null;
+  const showSetupCard = writableChat && (currentSetupRequest !== null || (!activeSessionId && !hasAvailableProjectSession && Boolean(localAgents.data) && !defaultAgentReady));
+  const showSetupOnHost = !writableChat && (agentBroken || isAgentSetupError(turnFailure) || currentSetupRequest !== null);
+  useEffect(() => {
+    setupErrorScopes.current.forEach((source, error) => {
+      if (source.sessionId !== activeSessionId) dismissedSetupErrors.current.add(error);
+    });
+    if (startFailure && isAgentSetupError(startFailure.error) && startFailure.sourceSessionId !== activeSessionId) setStartFailure(null);
+    if (setupRequest && setupRequest.sessionId !== activeSessionId) {
+      setupStartIsCurrentRef.current = undefined;
+      setSetupRequest(null);
+      setStartFailure(null);
+    }
+  }, [activeSessionId, setupRequest, startFailure]);
   useEffect(() => {
     if (!writableChat || !isAgentSetupError(turnFailure)) return;
     setSetupDone(null);
-    setSetupRequest({ agent: chatAgent, error: turnFailure });
+    setSetupRequest({ agent: chatAgent, sessionId: activeSessionId, error: turnFailure });
     void localAgents.refetch();
-  }, [turnFailure, writableChat, chatAgent, localAgents.refetch]);
+  }, [turnFailure, writableChat, chatAgent, activeSessionId, localAgents.refetch]);
   // One update flow: a reply from the local chat service this page can't read also puts Settings on Update Astrid
   // (it never gates the app). The next chat read that comes back readable clears it.
   const chatServiceOutOfDate = startFailure?.updateNeeded === true
@@ -607,6 +633,7 @@ function AvailableAgentChatPanel({
   // selection queued before this render's opening-default updater applies.
   useEffect(() => {
     if (hasProject && !projectChat.data) return;
+    if (setupStartIsCurrentRef.current?.() === false) return;
     setActiveSessionId(current => {
       if (current && (current === projectChat.data?.selected_session_id || sessionOptions.some(session => session.id === current))) return current;
       const preferred = projectChat.data?.selected_session_id ?? projectChat.data?.main_session_id;
@@ -843,40 +870,45 @@ function AvailableAgentChatPanel({
     && optimisticMessage?.id !== item.id
     && !(sessionControl?.active && item.id === sessionControl.activeRequestId);
 
-  const handleNewSession = useCallback(async (agent?: LocalAgentId, model?: string): Promise<string | null> => {
+  const handleNewSession = useCallback(async (agent?: LocalAgentId, model?: string, isCurrent?: () => boolean): Promise<string | null> => {
     if (!projectId) return null;
     if (!manualCreateOperationIdRef.current || manualCreateOperationIdRef.current.agent !== agent || manualCreateOperationIdRef.current.model !== model) {
       manualCreateOperationIdRef.current = { projectId, id: createMessageId(), agent, model };
     }
     const operation = manualCreateOperationIdRef.current;
     const session = await createNewSession.mutateAsync({ operationId: operation.id, ...(agent ? { agent } : {}), ...(model ? { defaultModelId: model } : {}) });
-    if (!isPanelMountedRef.current || manualCreateOperationIdRef.current !== operation
+    if (!isPanelMountedRef.current || isCurrent?.() === false || manualCreateOperationIdRef.current !== operation
       || currentContextRef.current?.projectId !== operation.projectId) return null;
     manualCreateOperationIdRef.current = null;
     const sessionId = readSessionId(session);
     if (sessionId) {
       setPausedQueueHeadId(null);
       setOptimisticMessage(null);
+      setSetupRequest(current => current ? { ...current, sessionId } : null);
       setActiveSessionId(sessionId);
       setIsTasksPaneOpen?.(true);
     }
     return sessionId ?? null;
   }, [createNewSession, projectId, setIsTasksPaneOpen]);
 
-  const startChatWith = useCallback(async (agent?: LocalAgentId, model?: string, thoughtLevel?: string, recoverySessionId?: string) => {
+  const startChatWith = useCallback(async (agent?: LocalAgentId, model?: string, thoughtLevel?: string, recoverySessionId?: string, isCurrent?: () => boolean) => {
     const chosen = agent ?? defaultAgent;
+    const sourceSessionId = currentSessionRef.current;
+    setupStartIsCurrentRef.current = isCurrent;
     let sessionId: string | null = null;
     setStartFailure(null);
     setStartingAgent(chosen);
     try {
-      sessionId = recoverySessionId ?? await handleNewSession(agent, model);
+      sessionId = recoverySessionId ?? await handleNewSession(agent, model, isCurrent);
+      if (isCurrent?.() === false) return {};
       // Join this chat's initial options read before validating its fixed model
       // and applying the selected thinking level.
       if (sessionId) await configureSession.mutateAsync({ sessionId, model, thoughtLevel });
       return { sessionId };
     } catch (error) {
-      if (isAgentSetupError(error) && hasProject && !isFollower) { setSetupDone(null); setSetupRequest({ agent: chosen, error }); void localAgents.refetch(); }
-      setStartFailure({ agent: chosen, choice: agent, model, thoughtLevel, sessionId: sessionId ?? undefined, error, details: error instanceof Error ? error.message : String(error), updateNeeded: isChatUpdateError(error) });
+      if (isCurrent?.() === false || (currentSessionRef.current !== sourceSessionId && currentSessionRef.current !== sessionId)) return {};
+      if (isAgentSetupError(error) && hasProject && !isFollower) { setSetupDone(null); setSetupRequest({ agent: chosen, sessionId: sessionId ?? sourceSessionId, error }); void localAgents.refetch(); }
+      setStartFailure({ agent: chosen, choice: agent, model, thoughtLevel, sessionId: sessionId ?? undefined, sourceSessionId: sessionId ?? sourceSessionId, error, details: error instanceof Error ? error.message : String(error), updateNeeded: isChatUpdateError(error) });
       return { error };
     } finally {
       setStartingAgent(null);
@@ -1122,20 +1154,23 @@ function AvailableAgentChatPanel({
         {showSetupCard && <AgentSetupCard
           agents={localAgents.data?.agents ?? []}
           defaultAgent={defaultAgent}
-          initialAgent={setupRequest?.agent}
-          initialError={setupRequest?.error}
+          initialAgent={currentSetupRequest?.agent}
+          initialError={currentSetupRequest?.error}
           refetchAgents={localAgents.refetch}
-          onSetup={agent => setSetupRequest({ agent })}
-          startChatWith={async (agent, model) => {
-            setSetupRequest(current => current ?? { agent });
+          onSetup={agent => setSetupRequest({ agent, sessionId: activeSessionId })}
+          startChatWith={async (agent, model, isCurrent) => {
+            setSetupRequest(current => current ?? { agent, sessionId: activeSessionId });
             hasAutoCreatedSessionRef.current = true;
             const recovery = startFailure?.agent === agent && (!model || model === startFailure.model) ? startFailure : null;
             return startChatWith(agent, model ?? recovery?.model, recovery?.thoughtLevel, recovery ? recovery.sessionId
-              : !startFailure && activeSessionId && sessionAgentId(activeSessionId) === agent && (!model || model === chatModelId) ? activeSessionId : undefined);
+              : !startFailure && activeSessionId && sessionAgentId(activeSessionId) === agent && (!model || model === chatModelId) ? activeSessionId : undefined, isCurrent);
           }}
           onComplete={(agent, sessionId) => {
+            setupStartIsCurrentRef.current = undefined;
             setSetupRequest(null);
             setStartFailure(null);
+            setupErrorScopes.current.forEach((_scope, error) => dismissedSetupErrors.current.add(error));
+            createSession.reset();
             sendMessage.clearLocalError?.();
             setSetupDone({ agent, sessionId: sessionId ?? currentSessionRef.current });
             requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }));
@@ -1365,7 +1400,7 @@ function AvailableAgentChatPanel({
           <p className="mb-2 px-1 text-xs text-muted-foreground">{CHAT_UNAVAILABLE}</p>
         )}
 
-        {!isProcessing && !sendMessage.isPending && !isCancelled && !chatUnavailable && !isAgentSetupError(turnFailure) && (turnFailure || (activeStatus === 'error' && setupDone?.sessionId !== activeSessionId)) && (
+        {!agentBroken && !showSetupCard && !showSetupOnHost && !isProcessing && !sendMessage.isPending && !isCancelled && !chatUnavailable && !isAgentSetupError(turnFailure) && (turnFailure || (activeStatus === 'error' && setupDone?.sessionId !== activeSessionId)) && (
           <div role="alert" className="mb-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
             {isChatUpdateError(turnFailure) ? <ChatUpdateNeeded detail={turnFailure.message} /> : turnFailureMessage}
             {(sessions.error || projectChat.error) && (
@@ -1388,9 +1423,10 @@ function AvailableAgentChatPanel({
           </div>
         )}
 
-        {writableChat && agentBroken && <p className="mb-2 text-xs text-muted-foreground">
+        {showSetupOnHost && <p className="mb-2 text-xs text-muted-foreground">{AGENT_CHAT_COPY.setupOnHost(setupAgentName)}</p>}
+        {writableChat && agentBroken && !showSetupCard && <p className="mb-2 text-xs text-muted-foreground">
           {activeAgentRow?.line && <CommandLine line={activeAgentRow.line} />}{' '}
-          <button type="button" className="underline" onClick={() => { setSetupDone(null); setSetupRequest({ agent: chatAgent }); }}>{AGENT_CHAT_COPY.setUp}</button>
+          <button type="button" className="underline" onClick={() => { setSetupDone(null); setSetupRequest({ agent: chatAgent, sessionId: activeSessionId }); }}>{AGENT_CHAT_COPY.setUp}</button>
         </p>}
         <AgentChatComposer
           inputRef={inputRef}
