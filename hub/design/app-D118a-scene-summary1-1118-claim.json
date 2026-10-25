@@ -1,0 +1,9 @@
+{
+  "utc": "2026-10-25T11:17Z",
+  "file": "tests/sdk/test_scene_real_public_summary_rle.py",
+  "ordinal": 5957,
+  "board_sha256": "320d23943f25800addbaba3171f90189a6b32206b17c8396cc978d1d79fd4f39",
+  "active_worker_refs": [],
+  "claim_posted_before_dispatch": true,
+  "route": "normal peer delivery to Agent INBOX"
+}

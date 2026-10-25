@@ -1,0 +1,52 @@
+{
+  "task": "app-D118c-occurrence2-protected-review-1111",
+  "candidate": "2f9c56bb141f3c1fe85c25e1dec055b2fc272108",
+  "authorbase": "942855e56e774d83b3930bbfd87df22dbcd94ad1",
+  "verdict": "FAIL",
+  "disposition": "unapplied finding; source held",
+  "allowed_file": "tests/editing_conformance/test_commit_runtime_occurrence_create.py",
+  "changed_files": [
+    "tests/editing_conformance/test_commit_runtime_occurrence_create.py"
+  ],
+  "source_hashes": {
+    "authorbase": "26ecb3e8da202dc9a1113f942cf9c1a7384600d8662cb9c1e8d983caf17afe6f",
+    "candidate": "91b0d3e7f5815892e58cb0256640a08173fe3e7703cff0a4caa480d0e9bcf855"
+  },
+  "conservation": {
+    "assert_count_authorbase": 29,
+    "assert_count_candidate": 29,
+    "assert_ast_conserved": true,
+    "target_test_function_ast_conserved": true,
+    "semantic_inputs_changed": false
+  },
+  "static_checks": [
+    {"command": "/home/user/work/venv-agent/bin/ruff check tests/editing_conformance/test_commit_runtime_occurrence_create.py", "result": "pass"},
+    {"command": "/home/user/work/venv-agent/bin/mypy --follow-imports=skip tests/editing_conformance/test_commit_runtime_occurrence_create.py", "result": "pass"},
+    {"command": "parent mypy via --shadow-file", "result": "pass"},
+    {"command": "parent Ruff via stdin", "result": "pass"},
+    {"command": "PYTHONPYCACHEPREFIX=$TMPDIR/pycache python -m py_compile tests/editing_conformance/test_commit_runtime_occurrence_create.py", "result": "pass"},
+    {"command": "git diff --check", "result": "pass"}
+  ],
+  "findings": [
+    {
+      "severity": "blocking",
+      "kind": "no_causal_repair_proof",
+      "detail": "C0 permits omission of label and steps for compatible semantic ABI-1 callers, synthesizes the step, defaults merge to fields, and retains native captured dependencies. The candidate adds all metadata but supplies no source-level or authentic post-change evidence that the retained invalid occurrence.create timing setup was invalid or that these additions repair it."
+    },
+    {
+      "severity": "blocking",
+      "kind": "semantic_mode_change",
+      "detail": "The additions label/steps/merge/reads make CommitPatch.v2 true. That changes the provider recorder/effect-boundary path; it is not a neutral required-field repair. Explicit reads: [] does not add a demonstrated dependency and must not be treated as proof of fixture validity."
+    },
+    {
+      "severity": "blocking",
+      "kind": "retained_failure_unresolved",
+      "detail": "The retained allocation records both ordinals 1286 and 1289 at line 70. The authentic prior XML exposes the inner boundary at _prove_birth line 173: error.value.status == 409 failed with status 1. Current Agent source catches CommandError at commit.py:1456-1469 and _commit_errors.py classifies unsupported_* at the base as HTTP 422; the candidate does not touch that mapping or the invalid timing command."
+    }
+  ],
+  "proof_limits": [
+    "Per allocation, no original/service/family/full/P4/browser run was performed.",
+    "No candidate prepared record or post-change authentic exception was available within the permitted source-only review.",
+    "Therefore this review does not claim behavioral GREEN, history/inverse/redo/retry/no-write GREEN, or functional closure."
+  ]
+}

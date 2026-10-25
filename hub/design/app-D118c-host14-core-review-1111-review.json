@@ -1,0 +1,61 @@
+{
+  "task": "D118c host14 independent protected core/security review",
+  "verdict": "SOURCEPASS_ADOPTION_HOLD",
+  "candidate": "bae5ab76f0acbf08b2d92d9f770fcf3dbe95f2fd",
+  "normal_base": "942855e56e774d83b3930bbfd87df22dbcd94ad1",
+  "pristine_reference": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+  "scope": {
+    "changed_files": [
+      "astrid/sdk/host_bootstrap.py",
+      "tests/sdk/test_host_bootstrap_environment.py"
+    ],
+    "protected_file": "tests/sdk/test_host_bootstrap_source_identity.py",
+    "protected_file_sha256": "08dfa8dcafeb80c347923630864a29d58dea97e257428e204fc316567795161b",
+    "protected_file_byteexact_to_parent": true,
+    "working_tree_clean": true
+  },
+  "causal_audit": {
+    "forbidden_key": "PYTHONNOUSERSITE",
+    "validator": "astrid/core/rendering/remotion_runtime.py:225-244",
+    "validator_basis": "PYTHONNOUSERSITE is a member of _UNSUPPORTED_PYTHON_STARTUP and probe_context rejects it",
+    "upstream_failure_path": "ensure_pack_host -> _host_render_environment -> _prepare_render_validation -> prepare_remotion_validation -> probe_context",
+    "production_fix": "remove only PYTHONNOUSERSITE from the copied host environment before validation and launch",
+    "launch_path": "ensure_pack_host passes the same child_env to popen_owned_group(env=child_env) after _prepare_render_validation",
+    "strict_refusals_retained": ["NODE_OPTIONS", "PYTHONHOME"],
+    "caller_environment_unchanged": true,
+    "provenance_unchanged": "Runtime/Agent/Remotion source and validation arguments are outside the two-line environment change"
+  },
+  "protected_purpose": {
+    "identical_to_pristine_functions": [
+      "test_bootstrap_stops_on_correlated_terminal_registration_failure",
+      "test_startup_budget_polling_preserves_identity_and_original_cleanup"
+    ],
+    "assertions": "8 and 8 in the two protected function bodies; AST bodies byte-equivalent to pristine",
+    "original_14": "unchanged and retained; no original selector was weakened or rewritten"
+  },
+  "checks": {
+    "additive_pytest": "PYTHONNOUSERSITE=1 PYTHONPYCACHEPREFIX=$TMPDIR/pycache PYTHONPATH=$PWD:/home/user/work/runtime /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_host_bootstrap_environment.py: PASS (3 passed)",
+    "ruff": "/home/user/work/venv-agent/bin/ruff check astrid/sdk/host_bootstrap.py tests/sdk/test_host_bootstrap_environment.py: PASS",
+    "mypy": "/home/user/work/venv-agent/bin/mypy --follow-imports=skip astrid/sdk/host_bootstrap.py tests/sdk/test_host_bootstrap_environment.py: PASS (no issues)",
+    "py_compile": "PYTHONPYCACHEPREFIX=$TMPDIR/pycache python -m py_compile astrid/sdk/host_bootstrap.py tests/sdk/test_host_bootstrap_environment.py: PASS",
+    "git_diff_check": "git diff --check: PASS",
+    "scope_check": "candidate diff contains exactly the two allowed paths: PASS"
+  },
+  "proof_limit": {
+    "original_14": "NOT RUN",
+    "reason": "No target-authentic retained Remotion profile/environment receipt was available. The existing bench profile is source-marked 079580ca and is a disallowed near-match; no profile was acquired or substituted.",
+    "status": "AUTHENTIC_14_SERVICE_PROOF_OWED"
+  },
+  "required_service_run": {
+    "command": "cd /home/user/work/wt/app-D118c-host14-bootstrap-1105 && env -i HOME=/root LANG=C.UTF-8 PATH=\"$NODE_DIR:/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/usr/local/bin:/usr/bin:/bin\" PYTHONNOUSERSITE=1 ASTRID_REMOTION_PROJECT_DIR=\"$REMOTION_PROFILE\" ASTRID_NODE_EXECUTABLE=\"$NODE_DIR/node\" ASTRID_TIMELINE_SCHEMA_PYTHONPATH=/home/user/work/venv-agent/lib/python3.13/site-packages ASTRID_RUNTIME_CHECKOUT=\"$RUNTIME_CHECKOUT\" ASTRID_CHECKOUT=/home/user/work/wt/app-D118c-host14-bootstrap-1105 ASTRID_AGENT_SOURCE_COMMIT=bae5ab76f0acbf08b2d92d9f770fcf3dbe95f2fd ASTRID_RUNTIME_SOURCE_COMMIT=\"$RUNTIME_SHA\" PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=\"/home/user/work/wt/app-D118c-host14-bootstrap-1105:$RUNTIME_CHECKOUT\" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider tests/sdk/test_host_bootstrap_source_identity.py -k 'bootstrap_stops_on_correlated_terminal_registration_failure or startup_budget_polling_preserves_identity_and_original_cleanup'",
+    "must_not_substitute": ["$REMOTION_PROFILE", "$NODE_DIR", "$RUNTIME_CHECKOUT", "$RUNTIME_SHA"],
+    "receipt_required": [
+      "existing profile path and digest/ownership receipt",
+      "ASTRID_NODE_EXECUTABLE path plus node version receipt",
+      "ASTRID_RUNTIME_CHECKOUT exact approved Runtime 369 path and commit/tree receipt",
+      "profile source/component/module/package/node integrity receipts",
+      "ASTRID_AGENT_SOURCE_COMMIT equals the candidate source under test",
+      "test result for exactly the 14 original selector nodes, with no assertion edits"
+    ]
+  }
+}
