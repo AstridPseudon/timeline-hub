@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T01:28:51Z | dispatcher heartbeat 13s | live 3 (sol 0, luna 3, other 0) | busy30 12 | status age 1m -->
-# app board, 2026-10-25T01:27Z
+<!-- app | 2026-10-25T01:32:27Z | dispatcher heartbeat 1s | live 3 (sol 0, luna 3, other 0) | busy30 14 | status age 0m -->
+# app board, 2026-10-25T01:31Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -149,7 +149,7 @@
 | P2-asset-import-current | Qualify exact import and catalogue ABI | Luna; service | Actual32587 terminal | gated:strict-oracle | Launcher0055; registry author0064 | Readiness1 PASS; original FAIL36s at missing config.registry527. Raw import, semantic request, acceptance and canonical readback advance. Later tail NOTRUN. | App913686448c |
 
 | P2-placement-import-current | Qualify embedded geometry and exact ABI | Luna; service | Preflight2470 PASS | doing | Actual16952; launcher0062 | Sole App placement body submitted01:05:28 on fixed913686/0d142/a3cd/635f. Original NO-GO213s at semantic row580; exactexpectedV2/9 versus actualV3/4.5. Source proposal0112 assigned. | App913686448c |
-| P2-asset-registry | Prove canonical registry boundary | Luna; independent | Review0115 DiffA FAIL | doing | app-P2-registry-identity-return-0124 | First return: cross-check authoritative import generation/variant IDs through selection and canonical binding. Failed source held. | Branch4b633d09 |
+| P2-asset-registry | Prove canonical registry boundary | Luna; independent | First return0124 complete | review | app-P2-registry-return-review-submit-0130 | Import-to-selection identity now strict;26 Node/18 Vitest/types/lint PASS. Fresh whole-diff review before merge; one asset submission on PASS. | Source41800de935 |
 
 | P2-placement-16952 | Prove actual embedded drop geometry | HARD Sol; Luna applies | Retained16952 and source | merged | Sol0112 complete; application0127 | Real generic coordinator resolves V3/4.5; asset planner expects V2/9. Old5FAIL93PASS versus proposal98PASS. Source unchanged; proposal artifacts ephemeral. | Evidence only |
 | P2-SWAP-11089 | Assert exact conditional created claim | Luna; independent | Independent0115 DiffB PASS | merged | Author0112; review0115 | Four oracle and37 producer controls; three types/lint PASS. Exact two reviewed blobs home. Original browser proof owed. | Home3a2d6067b4 |
@@ -157,12 +157,14 @@
 
 | P2-ADD-selection-current | Qualify mounted selection repair | Luna; service | Actual29065 terminal | gated:readiness-fix | Launcher0114; source0125 | NO-GO238s. Native setup PASS; readiness fails strict outbox verified301. Original ADD NOTRUN. No gesture credit. | App18de74bd43 |
 
-| P2-ADD-29065 | Attribute readonly readiness failure | Luna | Retained actual29065 | doing | app-P2-ADD-29065-readiness-0125 | Bounded bootstrap/outbox attribution and minimum proved correction. Protected originals and waits locked. | Base18de |
+| P2-ADD-29065 | Attribute readonly readiness failure | Luna | Existing actual29065 | merged | app-P2-ADD-29065-readiness-0125 | Missing status at connection5s; handshake/page error absent. Earlier same support passed; no product fix proved.13 controls/types/lint PASS; two known diagnostic failures. | Evidence only |
 
 | P2-SWAP-current | Qualify reviewed complete creation claim | Luna; main service | Exact App3a2d and released a3cd | blocked:runtime | Main venue reservation asked0124 | One meaningful original after current main heavy priority; no App duplicate. Genuine checkouts and preflight required. | App3a2d6067 |
 
 | A3-placement-coordinator | Apply real managed image drop resolution | Luna | Sol0112 finite proposal | doing | app-A3-placement-coordinator-apply-0127 | Two product files and real mounted controls. Spec and strict V2/9 unchanged; fresh independent core review follows. | Base3a2d |
 | P2-native-Undo-reply | Assert source-derived native reply labels and steps | Luna | Actual24629 | doing | app-P2-native-Undo-reply-0127 | Audit native and modern reply/step branches once; retain full strict assertions and fallback. No new original. | Base3a2d |
+
+| P2-bootstrap-diagnostics | Retain bounded missing bootstrap facts | Luna harness | Finite readiness0125 report | doing | app-P2-bootstrap-diagnostics-0132 | Existing safe producer only; capture before close and cleanup. Original specs/waits locked. No diagnostic-only run or product cause claimed. | Base3a2d |
 
 Integration: App3a2d6067b4 merges independently reviewed full popup creation-claim oracle over mounted selection18de and Undo5f/import913686. Registry candidate4b633 remains held after independent FAIL. No original or final-cut credit inferred.
 
@@ -172,12 +174,12 @@ regressions: No browser closure from source controls. D69 complete at its record
 Blockers: Runtime source — element8897 still fails five seconds on a3cd. Complete ordinal3 frame/phase packet is published; Runtime owns next source decision. No App capture input remains owed.
 Blockers: Runtime venue — main SWAP3a2 reservation requested0124. Parent24629 and single11446 use existing0107; next source reply correction is App0127. Bulk21061 waits retained finite Runtime packet, requested0126.
 Blockers: Final cut — eight isolated P2, one full App tour, final pinned P1–P5/core and genuine installed render remain required. Runtime coordinates matrix and ZIP.
-Next ready: Four source authors. Batch independent review of disjoint completed diffs, separate verdicts; product/protected fixes merge only on PASS. Asset after registry PASS, placement after source PASS, main SWAP reservation0124.
-live 4 / cap 6; ready-undispatched 0. Registry0124, readiness0125, placement application0127 and native Undo oracle0127 assigned. No App service body active.
+Next ready: Reviewer0130 whole registry diff then one asset on PASS; optional disjoint review of completed placement/native reply. Readiness0125 finite report complete; additive diagnostics0132 active. Main SWAP reservation0124; no unchanged originals.
+live 4 / cap 6; ready-undispatched 0. Registry reviewer0130, bootstrap diagnostics0132, placement application0127 and native Undo oracle0127 assigned. No App service body active.
 Capacity: Source authors and completed reviewers auto-recycle; no idle worker holds a body wait. Every remaining ended nonKEEP App worktree scan is empty. Historical refused dirty U3 and cleanup targets remain untouched; all actual run output retained.
-Disk: 6.196GB at01:26 before two source dispatches. Guarded stale c9 and50cf pins recycled; outputs kept, no refusal. D89: six source above5.5GB, one body above5.2GB; no new below4.5GB; stop newest nongate4.0GB.
+Disk: 6.009GB at01:29 before fresh registry reviewer0130. Guarded stale c9 and50cf pins recycled; outputs kept, no refusal. D89: six source above5.5GB, one body above5.2GB; no new below4.5GB; stop newest nongate4.0GB.
 Safety: No new App safety or permission refusal. Runtime peer0106 reports D88 safety-review denial and integrity failure; candidate held with existing orchestrator escalation. No App adoption, retry or alternate review of that candidate; releaseda3cd retained.
-Inbox consumed through1850842 bytes. Runtime0106 parent/single0107 and D88 held denial consumed. D89 six source above5.5GB/one body above5.2GB applies; no new below4.5GB, newest nongate stop4.0GB.
+Inbox consumed through1852325 bytes. Runtime0118 actual parent24629 and serial single11446 consumed; App reply0127 owns strict follow-through. D88 held denial retained. D89 six source above5.5GB/one body above5.2GB applies; no new below4.5GB, newest nongate stop4.0GB.
 Later: F-final App upstream d11417a59 refresh and applied-result full suite are Runtime final coordinator-owned, gated on D59 cut. Gating App keeps frozen upstream3881.
 Evidence: [ADD review and submission](../../workers/app-P2-ADD-selector-review-submit-0042/report.md), [Undo author](../../workers/app-A2-Undo-reads-current-sol-0033/report.md), [import author](../../workers/app-P2-assets-import-ABI-0038/report.md), [element facts](../../design/app-P2-element-8897-safe-facts-0019.md).
 
