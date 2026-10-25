@@ -25,10 +25,14 @@ def manifest_media(tmp_path, monkeypatch):
     from tests.editing_conformance.test_commit_runtime_parent_media_swap import (
         editing as native_parent_media_fixture,
     )
+    from tests.editing_conformance.test_commit_runtime_parent_media_swap import source_bytes
 
     # This helper builds the film with historical public APIs in a separate
     # interpreter, settles decodable PNGs, then opens it with current Runtime.
-    fixture = native_parent_media_fixture.__wrapped__(SimpleNamespace(param='image'), tmp_path, monkeypatch)
+    fixture = native_parent_media_fixture.__wrapped__(
+        SimpleNamespace(param='image'), tmp_path, monkeypatch, 'swap', 'parent',
+        source_bytes.__wrapped__(tmp_path),
+    )
     case = next(fixture)
     try:
         service, project = case.service, case.project
