@@ -1224,7 +1224,9 @@ def test_http_semantic_batch_original_pins_reload_inverse_redo(runtime, tmp_path
     seed(runtime)
     session, sheet, path = export(runtime, capsys, tmp_path)
     head = copy.deepcopy(runtime.history()['head'])
-    before = session.client.timelines.open_bundle(runtime.project, 'film', revision_id=head['revision_id']).data['bundle']
+    before = session.client.timelines.open_bundle(
+        runtime.project, 'film', revision_id=head['revision_id'], publication_id=head['publication_id'],
+    ).data['bundle']
     expected = execute(before, raw())
     assert sheet.preview(path.read_text()).commands == expected.commands
     cli_commands = None
