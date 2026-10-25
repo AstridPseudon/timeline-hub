@@ -20,10 +20,10 @@ the route.
 | input | value |
 | --- | --- |
 | reviewed source commit | exact 40-hex final source commit bound by the D137 decision |
-| candidate SHA-256 | `7905232e0dc4b77921ecf257f89f2a951614e0dcbc9eea547c08c992062e5792` |
-| candidate bytes/mode | `81516` / `0755` |
-| installed preimage SHA-256 | `4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36` |
-| installed preimage bytes/mode | `75503` / `0755` |
+| candidate SHA-256 | `5b6bfa01a74e7760e2cefe6713c0557cca695abb61074b3f01c9391949cfb064` |
+| candidate bytes/mode | `93300` / `0755` |
+| installed preimage SHA-256 | `f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f` |
+| installed preimage bytes/mode | `75541` / `0755` |
 | protected `bench_store.py` | `123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2` |
 | protected `verify_dependency_seed.py` | `116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2` |
 | normal child reserve | `5905580032` bytes |
@@ -88,7 +88,8 @@ The gate verifier accepts only a D137 JSON with `authorization=D137`,
 `fixture_e2e_gate=WITHDRAWN`, `e2e_result=NOTRUN`, `e2e_pass=false`,
 `install_route=CAS_MANAGER_ONLY`, `production_install=false`, this post-D137
 candidate SHA-256/byte count and an exact 40-hex final source commit, and
-`reviewed_installer=installer1826`. Missing,
+`reviewed_installer=installer1826`, and the exact f07 preimage hash/byte count.
+Missing,
 malformed, symlinked, hardlinked, foreign-owned, or broadly writable artifacts
 are refused before any receiving-tree write.
 
@@ -129,8 +130,8 @@ and Composition has no configured mypy/pyright baseline.
 OPS inventory maker install gate
 
 D137 decision: WITHDRAWN / NOTRUN — decision path: <...>
-Candidate: 7905232e0dc4b77921ecf257f89f2a951614e0dcbc9eea547c08c992062e5792 / 81516 bytes / 0755
-Preimage required: 4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36 / 75503 bytes / 0755
+Candidate: 5b6bfa01a74e7760e2cefe6713c0557cca695abb61074b3f01c9391949cfb064 / 93300 bytes / 0755
+Preimage required: f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f / 75541 bytes / 0755
 Protected helpers: bench_store.py 123bb93c…7adfe2; verify_dependency_seed.py 116b4e6…d7bfe2
 Admission: normal reserve >=5905580032; stop line >=4000000000; source floor >=4600000000
 Decision: INSTALL|HOLD — D137 decision input is not E2E PASS and this worker does not install.

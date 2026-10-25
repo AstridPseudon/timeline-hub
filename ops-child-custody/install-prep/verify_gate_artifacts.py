@@ -10,8 +10,10 @@ import stat
 import sys
 
 
-CANDIDATE_SHA256 = "7905232e0dc4b77921ecf257f89f2a951614e0dcbc9eea547c08c992062e5792"
-CANDIDATE_BYTES = 81516
+CANDIDATE_SHA256 = "5b6bfa01a74e7760e2cefe6713c0557cca695abb61074b3f01c9391949cfb064"
+CANDIDATE_BYTES = 93300
+PREIMAGE_SHA256 = "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f"
+PREIMAGE_BYTES = 75541
 MAX_ARTIFACT_BYTES = 2 * 1024 * 1024
 
 
@@ -90,6 +92,8 @@ def main() -> int:
     if not isinstance(source_commit, str) or not re.fullmatch(r"[0-9a-f]{40}", source_commit):
         fail("source_commit is not an exact commit")
     require(decision.get("candidate_bytes"), CANDIDATE_BYTES, "candidate_bytes")
+    require(decision.get("preimage_sha256"), PREIMAGE_SHA256, "preimage_sha256")
+    require(decision.get("preimage_bytes"), PREIMAGE_BYTES, "preimage_bytes")
     require(decision.get("reviewed_installer"), "installer1826", "reviewed_installer")
     require(decision.get("decision_path"), str(decision_path), "decision_path")
     print(f"PASS: exact D137 decision input accepted; E2E remains NOTRUN\nsource_commit={source_commit}")

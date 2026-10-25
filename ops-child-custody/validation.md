@@ -114,7 +114,7 @@ The public failure marker and summary retain only stage, exit status, timing,
 source identities, lock identity, and the fixed diagnostic string.
 
 The final maker source in this worktree is 75,503 bytes, mode `0755`,
-SHA-256 `4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36`.
+SHA-256 `f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f`.
 The reviewed embedded `STORE_PY` and `STORE_VERIFY` blocks remain byte-exact
 at `0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c` and
 `f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209`.

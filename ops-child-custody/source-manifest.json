@@ -1,12 +1,12 @@
 {
-  "task": "rt-OPS-D139-child-imports-2153",
+  "task": "rt-OPS-D139-first-return-2217",
   "base_commit": "cf80cfcb918ee9e311a294fb7291ad5e11c48d0b",
   "observed_utc": "2026-10-25T21:00:00Z",
   "live_sources_read_only": {
     "make-child-venv": {
-      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
-      "sha256": "4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36",
-      "bytes": 75503,
+      "path": "ops-child-custody/make-child-venv",
+      "sha256": "5b6bfa01a74e7760e2cefe6713c0557cca695abb61074b3f01c9391949cfb064",
+      "bytes": 93300,
       "mode": "0o755"
     },
     "bench_store.py": {
@@ -23,9 +23,9 @@
     }
   },
   "candidate": {
-      "path": "/home/user/work/wt/rt-OPS-D139-child-imports-2153/ops-child-custody/make-child-venv",
-      "sha256": "7905232e0dc4b77921ecf257f89f2a951614e0dcbc9eea547c08c992062e5792",
-      "bytes": 81516,
+      "path": "ops-child-custody/make-child-venv",
+      "sha256": "5b6bfa01a74e7760e2cefe6713c0557cca695abb61074b3f01c9391949cfb064",
+      "bytes": 93300,
     "mode": "0o755"
   },
   "blocks": {
@@ -39,17 +39,17 @@
     },
     "STORE_PY": {
       "preimage_sha256": "0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c",
-      "postimage_sha256": "d0a00a6d8577d340a5733cf64488b3ba3524b8f01492cb094e3b3c4f2afa636a",
+      "postimage_sha256": "93bc8b6f30f4d217db88eb8e01b07f6ad4fbfb28eaab129cc0b1fffc248b4860",
       "unchanged": false
     },
     "STORE_BUILD": {
-      "preimage_sha256": "a3d9b63f5b99ce4e3ae5b72be93e5140000f99dc4e50e954a00777e420d09409",
-      "postimage_sha256": "2e5c3bcdf71a8944dc2c647eb8fbdea963f54ed271bf97bd7cdc5dfd55472e33",
+      "preimage_sha256": "729036a7bca12cba36b87e39c556a82859d2e5fe76fba102cc6c7b5f86c253c3",
+      "postimage_sha256": "41a4549c3a59c3d85b8db8ce26836b490b543823d84d2544586f8c686194f373",
       "unchanged": false
     },
     "STORE_VERIFY": {
       "preimage_sha256": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209",
-      "postimage_sha256": "a5d0ddd7074561537fcb2721c96d9ce3f6cef861c44fb0d403fd0d02934023f0",
+      "postimage_sha256": "f8bdea167a567a1af9efeee1a0c6f8bc86eafde94c8fb9062d525471d731a54a",
       "unchanged": false
     },
     "STAGING_INVENTORY": {
@@ -67,12 +67,12 @@
     },
     "DIST_METADATA_SCRIPT": {
       "preimage_sha256": "54ea91773be42a9f5a513cb10cc1706ab89d2c061a0d0a4c3ba2c392153b8d67",
-      "postimage_sha256": "cb38dfcb5275f27cbb88d6d718c2d66a8d5d3d664c8dbfd507e74ecc9fcc7a10",
+      "postimage_sha256": "3bd21992ad5c0244d1200d90602fca590aa73952347ca08a1ce9296d14a296c8",
       "unchanged": false
     },
     "IDENTITY_SCRIPT": {
       "preimage_sha256": "05f8c82c7ea9b28f6f12ac8cad3557a08b0885e455ee22719c9e3ddebc3ccf77",
-      "postimage_sha256": "91467dbda90072978a56fd65f96779561243efee266d514647560669d0852ef3",
+      "postimage_sha256": "b79735ebd1645e22180e641b2bc2ee223eb06ad10c543c53d3053014ba512f06",
       "unchanged": false
     }
   },
@@ -103,14 +103,20 @@
     },
     {
       "path": "ops-child-custody/check-child-imports",
-      "sha256": "997bfc95e7024f9da66d68e7de9f10a211582c6bdcae3a438db224008c1709e1",
-      "bytes": 8136,
+      "sha256": "049fe77efb1504487b6b022899c93a56ce7dd0ed2ef7feeb3503f7480027076b",
+      "bytes": 11057,
       "mode": "0o755"
+    },
+    {
+      "path": "ops-child-custody/tests/test_d139_controls.py",
+      "sha256": "217685e8a09341b706bbc84b1ebda2375e43809075c2d0818d670c0665c3076e",
+      "bytes": 11152,
+      "mode": "0o644"
     }
   ],
   "existing_controls_preserved": true,
-  "new_controls": 4,
-  "total_unittest_tests": 44,
+  "new_controls": 7,
+  "total_unittest_tests": 51,
   "embedded_python_blocks_compiled_in_memory": 7,
   "admission": {
     "free_bytes": 5027573760,
@@ -136,20 +142,22 @@
     "network_acquisition": false,
     "new_fixture_Store_initialized": false
   },
-  "e2e_result": "NOTRUN / WITHDRAWN by D137 owner",
+  "e2e_result": "NOTRUN / WITHDRAWN by D137 owner; D139 schema carrier sourceNOT_READY",
   "installer_route": {
     "reviewed_reference": "a3e707dbcb80a200dbb5d8f60a8f0d63fd807da4",
     "gate": "D137 decision input; no E2E PASS fabricated",
     "cas": "descriptor-bound lock, no-follow/no-clobber backup, identity CAS, atomic rename",
-    "candidate_sha256": "7905232e0dc4b77921ecf257f89f2a951614e0dcbc9eea547c08c992062e5792",
-    "candidate_bytes": 81516,
+    "candidate_sha256": "5b6bfa01a74e7760e2cefe6713c0557cca695abb61074b3f01c9391949cfb064",
+    "candidate_bytes": 93300,
+    "preimage_sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+    "preimage_bytes": 75541,
     "source_commit": "bound exactly by the later D137 decision input"
   },
   "protected_unchanged": {
     "bench_store_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
     "verify_dependency_seed_sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
-    "STORE_PY_sha256": "d0a00a6d8577d340a5733cf64488b3ba3524b8f01492cb094e3b3c4f2afa636a",
-    "STORE_VERIFY_sha256": "a5d0ddd7074561537fcb2721c96d9ce3f6cef861c44fb0d403fd0d02934023f0"
+    "STORE_PY_sha256": "93bc8b6f30f4d217db88eb8e01b07f6ad4fbfb28eaab129cc0b1fffc248b4860",
+    "STORE_VERIFY_sha256": "f8bdea167a567a1af9efeee1a0c6f8bc86eafde94c8fb9062d525471d731a54a"
   },
   "prior_candidate": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e / 69516 bytes; superseded by D137 stderr-retention source"
 }

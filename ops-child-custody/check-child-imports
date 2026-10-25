@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Check the imports which a sealed child can satisfy.
+"""Bounded import preflight for an already selected child interpreter.
 
-The checker deliberately separates a source census from the bounded child
-probe.  A census is static (plus literal importlib/__import__ calls); it does
-not claim to discover imports computed from arbitrary runtime data.
+This command probes only names classified as genuine installed distributions.
+It is deliberately not a launcher, installer, Store registrar, or proof of a
+registered child. Static enumeration has an explicit dynamic-import limit.
 """
 from __future__ import annotations
 
@@ -15,19 +15,22 @@ from pathlib import Path
 import subprocess
 import sys
 
-
-KNOWN_LOCAL = {
-    "astrid", "astrid_runtime", "astrid_runtime_client", "runtime_protocol",
-}
+KNOWN_LOCAL = {"astrid", "astrid_runtime", "astrid_runtime_client", "runtime_protocol"}
 OPTIONAL_NAMES = {"numpy", "torch", "cv2"}
+TEST_PARTS = {"test", "tests", "fixtures", "conftest.py"}
+
+
+def _parents(tree: ast.AST) -> dict[ast.AST, ast.AST]:
+    result = {}
+    for parent in ast.walk(tree):
+        for child in ast.iter_child_nodes(parent):
+            result[child] = parent
+    return result
 
 
 def _guard_kind(tree: ast.AST, node: ast.AST) -> str:
-    """Return a conservative guard label for an import node."""
-    parents = {}
-    for parent in ast.walk(tree):
-        for child in ast.iter_child_nodes(parent):
-            parents[child] = parent
+    """Return a source-backed, conservative guard classification."""
+    parents = _parents(tree)
     current = node
     while current in parents:
         current = parents[current]
@@ -38,79 +41,128 @@ def _guard_kind(tree: ast.AST, node: ast.AST) -> str:
     return "applicable"
 
 
-def _imports(path: Path) -> list[dict[str, object]]:
+def _package_parts(path: Path, roots: list[Path]) -> tuple[str, ...]:
+    for root in roots:
+        try:
+            relative = path.relative_to(root)
+        except ValueError:
+            continue
+        package = [root.name] if (root / "__init__.py").is_file() else []
+        cursor = root
+        for part in relative.parent.parts:
+            cursor /= part
+            if (cursor / "__init__.py").is_file():
+                package.append(part)
+            else:
+                package = []
+        return tuple(package)
+    return ()
+
+
+def _relative_name(path: Path, module: str | None, level: int,
+                   roots: list[Path]) -> str | None:
+    package = _package_parts(path, roots)
+    if level < 1 or level > len(package) + 1:
+        return None
+    base = package[:len(package) - level + 1]
+    return ".".join((*base, *(module.split(".") if module else ()))) or "."
+
+
+def _is_test_helper(path: Path) -> bool:
+    return any(part in TEST_PARTS or part.startswith("test_") for part in path.parts)
+
+
+def _imports(path: Path, roots: list[Path]) -> list[dict[str, object]]:
     try:
         tree = ast.parse(path.read_text(), filename=str(path))
     except (OSError, SyntaxError) as error:
         return [{"file": str(path), "line": 0, "name": "<parse>",
-                 "kind": "parse-error", "error": str(error),
-                 "applicable": False}]
-    rows: list[dict[str, object]] = []
+                 "kind": "parse-error", "classification": "parse-error",
+                 "applicable": False, "error": str(error)}]
+    rows = []
     for node in ast.walk(tree):
-        names: list[str] = []
-        dynamic = False
+        names: list[tuple[str, str]] = []
         if isinstance(node, ast.Import):
-            names = [item.name for item in node.names]
-        elif isinstance(node, ast.ImportFrom) and node.module:
-            names = [node.module]
-        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
-            if isinstance(node.func.value, ast.Name) and node.func.value.id == "importlib" and node.func.attr == "import_module":
+            names = [(item.name, "static") for item in node.names]
+        elif isinstance(node, ast.ImportFrom):
+            if node.level:
+                names = [(_relative_name(path, node.module, node.level, roots)
+                          or "<relative-unresolved>", "relative")]
+            elif node.module:
+                names = [(node.module, "static")]
+        elif isinstance(node, ast.Call):
+            dynamic = False
+            if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
+                dynamic = (node.func.value.id == "importlib"
+                           and node.func.attr == "import_module") or (
+                               node.func.value.id == "builtins"
+                               and node.func.attr == "__import__")
+            elif isinstance(node.func, ast.Name):
+                dynamic = node.func.id == "__import__"
+            if dynamic:
                 if node.args and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str):
-                    names = [node.args[0].value]
-                    dynamic = True
-            elif isinstance(node.func.value, ast.Name) and node.func.value.id == "builtins" and node.func.attr == "__import__":
-                if node.args and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str):
-                    names = [node.args[0].value]
-                    dynamic = True
-        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "__import__":
-            if node.args and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str):
-                names = [node.args[0].value]
-                dynamic = True
-        for name in names:
-            top = name.split(".", 1)[0]
-            rows.append({
-                "file": str(path), "line": getattr(node, "lineno", 0),
-                "name": name, "top_level": top,
-                "kind": "dynamic-literal" if dynamic else "static",
-                "guard": _guard_kind(tree, node),
-            })
+                    names = [(node.args[0].value, "dynamic-literal")]
+                else:
+                    names = [("<dynamic>", "dynamic-unresolved")]
+        for name, kind in names:
+            top = name.split(".", 1)[0].lstrip(".")
+            guard = _guard_kind(tree, node)
+            if kind == "relative":
+                classification, applicable = "relative_source", False
+            elif kind == "dynamic-unresolved":
+                classification, applicable = "dynamic_unresolved", False
+            elif _is_test_helper(path):
+                classification, applicable = "test_helper", False
+            elif top in set(getattr(sys, "stdlib_module_names", ())) | {"__future__"}:
+                classification, applicable = "stdlib", False
+            elif top in KNOWN_LOCAL or any(top == root.name for root in roots):
+                classification, applicable = "our_source", False
+            elif guard == "platform-conditional":
+                classification, applicable = "static_conditional", False
+            elif top in OPTIONAL_NAMES and guard != "applicable":
+                classification, applicable = "platform_optional", False
+            else:
+                classification, applicable = "installed_distribution", True
+            rows.append({"file": str(path), "line": getattr(node, "lineno", 0),
+                         "name": name, "top_level": top, "kind": kind,
+                         "guard": guard, "classification": classification,
+                         "applicable": applicable})
     return rows
-
-
-def _stdlib() -> set[str]:
-    names = set(getattr(sys, "stdlib_module_names", ()))
-    names.update({"__future__", "typing_extensions"})
-    return names
 
 
 def _census(roots: list[Path], launcher: Path) -> list[dict[str, object]]:
     files = [launcher]
     for root in roots:
         files.extend(sorted(path for path in root.rglob("*.py") if path.is_file()))
-    rows: list[dict[str, object]] = []
+    rows = []
     for path in dict.fromkeys(files):
-        rows.extend(_imports(path))
-    stdlib = _stdlib()
-    root_names = {path.name for path in roots}
-    for row in rows:
-        top = str(row.get("top_level", ""))
-        if top in stdlib:
-            classification = "stdlib"
-        elif top in KNOWN_LOCAL or top in root_names:
-            classification = "our_source"
-        else:
-            classification = "installed_distribution"
-        row["classification"] = classification
-        row["applicable"] = row.get("guard") == "applicable"
-        if top in OPTIONAL_NAMES and row.get("guard") != "applicable":
-            row["classification"] = "platform_optional"
-            row["applicable"] = False
+        rows.extend(_imports(path, roots))
+    return rows
+
+
+def _external_census(path: Path) -> list[dict[str, object]]:
+    value = json.loads(path.read_text())
+    if isinstance(value, dict):
+        value = value.get("census", value.get("imports"))
+    if not isinstance(value, list):
+        raise ValueError("census file must contain a list or census/imports list")
+    rows = []
+    for item in value:
+        if isinstance(item, str):
+            item = {"name": item}
+        if not isinstance(item, dict) or not isinstance(item.get("name"), str):
+            raise ValueError("census rows require a string name")
+        row = dict(item)
+        row.setdefault("classification", "installed_distribution")
+        row.setdefault("applicable", row["classification"] == "installed_distribution")
+        row.setdefault("kind", "merged-census")
+        rows.append(row)
     return rows
 
 
 def _probe(child: Path, names: list[str]) -> dict[str, object]:
     code = """
-import importlib, json, sys, traceback
+import importlib, json, sys
 results = []
 for name in json.loads(sys.stdin.read()):
     try:
@@ -123,11 +175,9 @@ for name in json.loads(sys.stdin.read()):
 print(json.dumps(results, sort_keys=True))
 """
     env = {"PATH": os.environ.get("PATH", ""), "PYTHONNOUSERSITE": "1"}
-    completed = subprocess.run(
-        [str(child), "-I", "-B", "-P", "-c", code],
-        input=json.dumps(names), text=True, capture_output=True, env=env,
-        timeout=300,
-    )
+    completed = subprocess.run([str(child), "-I", "-B", "-P", "-c", code],
+                               input=json.dumps(names), text=True,
+                               capture_output=True, env=env, timeout=300)
     if completed.returncode != 0:
         return {"child_returncode": completed.returncode,
                 "child_stderr": completed.stderr[-4000:], "results": []}
@@ -147,38 +197,47 @@ def main() -> int:
     parser.add_argument("--launcher", required=True, type=Path)
     parser.add_argument("--root", action="append", type=Path, default=[])
     parser.add_argument("--imports-file", type=Path)
+    parser.add_argument("--census-file", type=Path)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
+    sources = "imports-file" if args.imports_file else "census-file" if args.census_file else "source"
     if args.imports_file:
         requested = json.loads(args.imports_file.read_text())
         if not isinstance(requested, list) or any(not isinstance(item, str) for item in requested):
             parser.error("--imports-file must contain a JSON list of module names")
-        rows = [{"name": name, "classification": "requested",
+        rows = [{"name": name, "classification": "installed_distribution",
                  "applicable": True, "kind": "bounded-control"}
                 for name in dict.fromkeys(requested)]
+    elif args.census_file:
+        try:
+            rows = _external_census(args.census_file)
+        except (OSError, ValueError, json.JSONDecodeError) as error:
+            parser.error(str(error))
     else:
         rows = _census(args.root, args.launcher)
-    applicable = [row for row in rows if row.get("applicable") and
-                  row.get("classification") != "stdlib"]
+    applicable = [row for row in rows if row.get("applicable")
+                  and row.get("classification") == "installed_distribution"]
     names = list(dict.fromkeys(str(row["name"]) for row in applicable))
     probe = _probe(args.child, names)
-    failures = [result for result in probe.get("results", []) if not result.get("ok")]
-    if probe.get("child_returncode") != 0 or probe.get("probe_error"):
-        failures.append({"name": "<child-probe>", "error": probe.get("probe_error") or probe.get("child_stderr")})
     by_name = {result["name"]: result for result in probe.get("results", [])}
-    for row in rows:
-        if row.get("applicable") and row.get("classification") != "stdlib":
-            row["probe"] = by_name.get(row["name"], {"ok": False, "error": "not returned"})
+    failures = []
+    for row in applicable:
+        result = by_name.get(row["name"], {"ok": False, "error": "not returned"})
+        row["probe"] = result
+        if not result.get("ok"):
+            failures.append({**result, "classification": row["classification"]})
+    if probe.get("child_returncode") != 0 or probe.get("probe_error"):
+        failures.append({"name": "<child-probe>",
+                         "error": probe.get("probe_error") or probe.get("child_stderr")})
     result = {
-        "schema": "timeline.ops.child-import-check/v1",
-        "child": str(args.child.resolve()),
-        "launcher": str(args.launcher.resolve()),
-        "scope": {
-            "roots": [str(root.resolve()) for root in args.root],
-            "dynamic_boundary": "literal importlib.import_module and __import__ calls only; computed runtime names are not statically enumerable",
-        },
-        "census": rows,
-        "attempted_modules": names,
+        "schema": "timeline.ops.child-import-check/v2",
+        "child": str(args.child.resolve()), "launcher": str(args.launcher.resolve()),
+        "scope": {"roots": [str(root.resolve()) for root in args.root],
+                  "census_source": sources,
+                  "dynamic_boundary": "literal importlib.import_module and __import__ calls only; computed runtime names are dynamic_unresolved"},
+        "census": rows, "attempted_modules": names,
+        "missing_installed_distributions": sorted({row["name"] for row in failures
+                                                    if row.get("classification") == "installed_distribution"}),
         "failures": failures,
         "status": "passed" if not failures else "failed",
     }
