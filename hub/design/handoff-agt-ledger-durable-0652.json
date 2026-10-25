@@ -1,0 +1,132 @@
+{
+  "schema": "astrid.timeline.f-d86-durable-ledger-source/v1",
+  "task": "F-D86 ordinary durable ledger reconciliation",
+  "status": "SOURCEQUALIFIED/BEHAVIORPENDING",
+  "source_only": true,
+  "generated_combined_ledger_edited": false,
+  "cas": {
+    "path": "deletion-ledger.agent.md",
+    "prefix_bytes": 88200,
+    "prefix_sha256": "f482770924e1eb107a7e96f9becbdb11497baa405ee55fdfea5abb66620873e1",
+    "final_bytes": 95086,
+    "final_sha256": "1ca791747bdf88d999f42ebc25426890147844dd9f812cc2602f377f55e10727",
+    "prefix_readback": "PASS"
+  },
+  "generator_semantics": {
+    "source": "scratchpad/orch/bin/ledger-index",
+    "read_only_inspection": true,
+    "selects": "non-separator lines beginning with |, excluding the header row",
+    "sort": "second pipe field, version sort",
+    "normal_main_regeneration": "includes all eight rows"
+  },
+  "markers": [
+    "F-D86-word-mirror-0622",
+    "D106-opaque6",
+    "D106-script4",
+    "D106-D98a",
+    "D106-parentmedia",
+    "D106-sheetCLI",
+    "F-D86-D103-0648",
+    "F-D86-S3-0648"
+  ],
+  "marker_counts": {
+    "F-D86-word-mirror-0622": 1,
+    "D106-opaque6": 1,
+    "D106-script4": 1,
+    "D106-D98a": 1,
+    "D106-parentmedia": 1,
+    "D106-sheetCLI": 1,
+    "F-D86-D103-0648": 1,
+    "F-D86-S3-0648": 1
+  },
+  "historical_reconciliation": {
+    "d106_recovered_block_bytes": 3747,
+    "d106_recovered_ledger_bytes": 172066,
+    "d106_recovered_ledger_sha256": "eb745e019c99fe2daa655d81838995e34dc28b7e1dddbaee71646bc9609af306",
+    "prior_canonical_bytes": 173720,
+    "prior_canonical_sha256": "ebe797dc4f450f1895e111aadf34e6368ae450f907f0ac907fccec629f6d90ee"
+  },
+  "receipts": [
+    {
+      "marker": "F-D86-word-mirror-0622",
+      "source_commit": "5e9acf59d266d45d74e5ae844bf62fddb64267f3",
+      "source_tree": "d68a366224e28ee58045805008be092a5a560944",
+      "path": "tests/editing_conformance/native_word_anchor_fixture.py",
+      "source_sha256": "f70d2e9cc65ea6207d4ca4b5c0b85527c70495e29696e4acbee120718ddeddac",
+      "review": "agt-F-word-mirror-review-0620 PASS_SOURCE; F-D86-source-review.md sha256 1e5ca1cdbca5f9d99792cef252bcaa66a044cf61896472f5640c9e9da51e9a44",
+      "normal_receipt": "normal5554fe792b",
+      "membership": "original ID5 receipt rt-R2-ID5-route-return-0558-r2-id5-route-return-0558-1025055758-1023; actual1565 receipt rt-D86-new-source-body-0537-fd86-new-source-body-0537-1025054041-1565; behavior credit none"
+    },
+    {
+      "marker": "D106-opaque6",
+      "source_commit": "3c742a9cfa1509234ca70048612e7302e4e2298c",
+      "path": "tests/editing_conformance/test_commit_runtime_opaque_items.py",
+      "source_sha256": "3a5558085a78f3d8558219921da81029b3cb648e876b84eaefaf713d1e6e722a",
+      "review": "rt-D86-opaque6-protected-0517-report.md PASS_SOURCE",
+      "normal_receipt": "fd3cbf2b1a9adf772296f54c23649673c054e9b6",
+      "membership": "six cases / 29 assertions"
+    },
+    {
+      "marker": "D106-script4",
+      "source_commit": "060d51642bbffdba51297acfe2341329212e82a2",
+      "source_blobs": ["f8bccaaad1e5a1b4c35157cbaade24e2c10e1e02", "ab01bba8f17a2946464dc9cabdaab4fee9c03286"],
+      "review": "rt-D86-script4-protected-0518-report.md PASS_SOURCE",
+      "normal_receipt": "bde578505c035ae949ee8176b466bf8297772904",
+      "membership": "four selectors; original script blob retained"
+    },
+    {
+      "marker": "D106-D98a",
+      "source_commit": "a09ebcbd80fa7d9a83288f1ceded790321ce1877",
+      "path": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+      "source_sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+      "review": "handoff-agt-D98a-review-0550-report.md PASS_SOURCE",
+      "normal_receipt": "a90bc7f9e1653e94384c094aaa87adf32239f5bc",
+      "membership": "48 selectors; 4 tests"
+    },
+    {
+      "marker": "D106-parentmedia",
+      "source_commit": "f261c9e26935dd0ef64f80e7512a4f27066b1c27",
+      "path": "tests/editing_conformance/test_commit_runtime_parent_media.py",
+      "source_sha256": "6f6084fff5f645f19adf767c757ba1ee5b7c6cd4b4a097cfe90f85e103512123",
+      "review": "reviewbatch0553 B PASS",
+      "normal_receipt": "1a97728baafcef69ed3d081b03902ad3d5ac2032",
+      "membership": "retained 20; historical actual 2 PASS / 18 setup ERROR"
+    },
+    {
+      "marker": "D106-sheetCLI",
+      "source_commit": "b68d6b96af9a830da3c4402c3d5fa6bb8a1b3206",
+      "path": "tests/editing_conformance/test_native_sheet_current_runtime.py",
+      "source_sha256": "3d391f6362053159a15f7d8ee15c7088c4b4e44a85431c0b094195a07027b8b7",
+      "review": "reviewbatch0553 C PASS",
+      "normal_receipt": "b9484befcadb9427ebac65de938dfa10217edb4f",
+      "membership": "retained 3; historical actual 2 PASS / 1 FAIL"
+    },
+    {
+      "marker": "F-D86-D103-0648",
+      "integrated_commit": "dac3df399f204126e802f7888bd006c81dffa7af",
+      "path": "tests/editing_conformance/test_cli_trim_runtime.py",
+      "source_blob": "9c425dea9b9aa01f6811bed76512c09b1154ad97",
+      "source_sha256": "f95422aa07b917aafda4d533ddc2ff887336e2ff9e4c9d5a56f073056e41229d",
+      "review": "A-D103.md PASS_SOURCE",
+      "canonical_predecessor": {"bytes": 169696, "sha256": "db446389e7746d91cf7c972a0e94af16d76b9c98af89d118c7af904b30809ed5"},
+      "membership": "38 assertions; historical 17724 D103 three ERROR"
+    },
+    {
+      "marker": "F-D86-S3-0648",
+      "integrated_commit": "dac3df399f204126e802f7888bd006c81dffa7af",
+      "path": "tests/editing_conformance/test_s3_reviewed_cohort_runtime.py",
+      "source_blob": "e754ff53b3df0f0541e5484cc38167caf3dd1844",
+      "source_sha256": "b611bf469880172b725c8cf6052a1288a3d101bf65218b86f00028df4d07cafe",
+      "review": "rt-D86-script13-protected-0629-report.md PASS",
+      "canonical_predecessor": {"bytes": 169696, "sha256": "db446389e7746d91cf7c972a0e94af16d76b9c98af89d118c7af904b30809ed5"},
+      "membership": "12 assertions; historical 17724 ordinary-script four FAILs retained"
+    }
+  ],
+  "claims": {
+    "functional_pass": false,
+    "d107_retirement": false,
+    "d100_fixture_valid": false,
+    "behavior_credit": false,
+    "foreign_area_inputs_touched": false
+  }
+}
