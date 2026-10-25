@@ -1,0 +1,4124 @@
+{
+  "runtime": {
+    "head": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+    "tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a",
+    "files": [
+      {
+        "path": "/home/user/work/wt/rt-R2-inverse-auth-sol-0333/runtime_protocol/timeline_commit_auth.py",
+        "sha256": "4ac2b8792fe0389afb6eb710a348c35fa196131a13cab175bd3646f7d2cc0aeb",
+        "bytes": 179147,
+        "functions": {
+          "require": [
+            18,
+            21
+          ],
+          "images": [
+            24,
+            27
+          ],
+          "normalized_path": [
+            30,
+            33
+          ],
+          "_text_binding_key": [
+            42,
+            43
+          ],
+          "_text_binding_members": [
+            46,
+            56
+          ],
+          "_text_binding_site": [
+            59,
+            97
+          ],
+          "site": [
+            100,
+            173
+          ],
+          "location": [
+            176,
+            199
+          ],
+          "stored_path": [
+            202,
+            206
+          ],
+          "normalized": [
+            209,
+            211
+          ],
+          "native_site": [
+            214,
+            219
+          ],
+          "covers": [
+            222,
+            230
+          ],
+          "validate_read": [
+            233,
+            252
+          ],
+          "_omitted_inverse_created_is_authenticated": [
+            255,
+            287
+          ],
+          "_omitted_track_created_is_authenticated": [
+            290,
+            313
+          ],
+          "validate_claims": [
+            316,
+            326
+          ],
+          "_authoring_identity": [
+            329,
+            331
+          ],
+          "_sequential_assertion": [
+            334,
+            367
+          ],
+          "validate_step": [
+            370,
+            448
+          ],
+          "validate_bindings": [
+            451,
+            564
+          ],
+          "project_observation": [
+            567,
+            601
+          ],
+          "_physical_owner": [
+            604,
+            615
+          ],
+          "_coherent_materialization": [
+            618,
+            657
+          ],
+          "_materialization_input": [
+            660,
+            685
+          ],
+          "_align_materialized_images": [
+            688,
+            712
+          ],
+          "_parent_materialization_reconciles": [
+            715,
+            734
+          ],
+          "_reconcile_materialized_owner_images": [
+            737,
+            754
+          ],
+          "step_output": [
+            757,
+            828
+          ],
+          "_inverse_stage_write_site": [
+            831,
+            841
+          ],
+          "_inverse_stage_occurrence_collection": [
+            844,
+            881
+          ],
+          "_inverse_stage_state": [
+            884,
+            895
+          ],
+          "_inverse_stage_root": [
+            898,
+            920
+          ],
+          "_inverse_stage_root_equal": [
+            923,
+            930
+          ],
+          "_inverse_stage_retire_occurrence_images": [
+            933,
+            979
+          ],
+          "_inverse_stage_inherited": [
+            982,
+            1039
+          ],
+          "_inverse_stage_shared_source": [
+            1042,
+            1195
+          ],
+          "_inverse_stage_restore_shared": [
+            1198,
+            1227
+          ],
+          "_inverse_stage_history": [
+            1230,
+            1297
+          ],
+          "_inverse_stage_ranges": [
+            1300,
+            1394
+          ],
+          "_inverse_stage_boundaries": [
+            1397,
+            1770
+          ],
+          "_authoring_parent_identity": [
+            1773,
+            1787
+          ],
+          "_fork_owner_before": [
+            1790,
+            1833
+          ],
+          "_project_created_child": [
+            1836,
+            2093
+          ],
+          "_following_read_observes": [
+            2096,
+            2108
+          ],
+          "command_output": [
+            2111,
+            2240
+          ],
+          "_capture_document_images": [
+            2243,
+            2267
+          ],
+          "_capture_projection_equal": [
+            2270,
+            2282
+          ],
+          "_capture_binding_identity": [
+            2285,
+            2301
+          ],
+          "_capture_source_chain": [
+            2304,
+            2332
+          ],
+          "sequential_proof_required": [
+            2335,
+            2360
+          ],
+          "_capture_head": [
+            2363,
+            2366
+          ],
+          "_capture_records": [
+            2369,
+            2434
+          ],
+          "_capture_binding_image": [
+            2437,
+            2445
+          ],
+          "_capture_owners": [
+            2448,
+            2459
+          ],
+          "_capture_step": [
+            2462,
+            2465
+          ],
+          "validate_sequential_capture": [
+            2468,
+            2775
+          ],
+          "validate": [
+            2778,
+            2881
+          ],
+          "payload": [
+            628,
+            632
+          ],
+          "shot_ids": [
+            634,
+            636
+          ],
+          "owner_token": [
+            738,
+            744
+          ],
+          "projection": [
+            2277,
+            2280
+          ]
+        }
+      },
+      {
+        "path": "/home/user/work/wt/rt-R2-inverse-auth-sol-0333/runtime_protocol/timeline_commit_store.py",
+        "sha256": "2a68990b180326585b7f0abaf1ee54c8ff9340e83663f17cd1efff1b2bd78a5c",
+        "bytes": 123252,
+        "functions": {
+          "reject": [
+            30,
+            35
+          ],
+          "request_identity": [
+            38,
+            41
+          ],
+          "scope": [
+            44,
+            46
+          ],
+          "_effective_merge_mode": [
+            49,
+            65
+          ],
+          "_is_v2_request": [
+            68,
+            78
+          ],
+          "_history_metadata": [
+            81,
+            95
+          ],
+          "_validate_record_metadata": [
+            98,
+            109
+          ],
+          "has_authored_content": [
+            116,
+            121
+          ],
+          "timeline_scope_is_empty": [
+            124,
+            153
+          ],
+          "_evaluation": [
+            156,
+            167
+          ],
+          "contains_document_patch": [
+            55,
+            61
+          ],
+          "evaluate": [
+            158,
+            166
+          ],
+          "__init__": [
+            219,
+            228
+          ],
+          "_read": [
+            175,
+            183
+          ],
+          "fetchone": [
+            185,
+            186
+          ],
+          "fetchall": [
+            188,
+            189
+          ],
+          "__iter__": [
+            191,
+            192
+          ],
+          "execute": [
+            201,
+            202
+          ],
+          "check": [
+            204,
+            215
+          ],
+          "clear_replay_memo": [
+            230,
+            233
+          ],
+          "_store_version": [
+            235,
+            239
+          ],
+          "_sync_replay_memo": [
+            241,
+            249
+          ],
+          "_accepting": [
+            252,
+            262
+          ],
+          "verification_scope": [
+            265,
+            279
+          ],
+          "history_read_scope": [
+            282,
+            299
+          ],
+          "_history_inputs": [
+            302,
+            307
+          ],
+          "conn": [
+            310,
+            312
+          ],
+          "_read_history_object": [
+            314,
+            325
+          ],
+          "_membership": [
+            327,
+            333
+          ],
+          "lookup": [
+            336,
+            351
+          ],
+          "_lookup": [
+            353,
+            364
+          ],
+          "_verify_accepted": [
+            367,
+            455
+          ],
+          "_verify_accepted_record": [
+            457,
+            551
+          ],
+          "_accepted_replay": [
+            553,
+            584
+          ],
+          "_history_chain": [
+            586,
+            603
+          ],
+          "_verify_accepted_replay": [
+            605,
+            618
+          ],
+          "_historical_sequential": [
+            620,
+            663
+          ],
+          "_check_inherited_allocations": [
+            665,
+            691
+          ],
+          "_envelope": [
+            694,
+            701
+          ],
+          "head": [
+            704,
+            705
+          ],
+          "_head_entry": [
+            707,
+            739
+          ],
+          "history_entry": [
+            742,
+            775
+          ],
+          "_read_history": [
+            778,
+            795
+          ],
+          "history": [
+            798,
+            804
+          ],
+          "_history_page": [
+            806,
+            846
+          ],
+          "revision_closure": [
+            849,
+            887
+          ],
+          "source_revision_closure": [
+            890,
+            909
+          ],
+          "_verify_inputs": [
+            911,
+            925
+          ],
+          "integrity_errors": [
+            928,
+            964
+          ],
+          "shot_closure": [
+            966,
+            997
+          ],
+          "_verify_parent_rows": [
+            999,
+            1022
+          ],
+          "_image": [
+            1025,
+            1026
+          ],
+          "_validate_closure": [
+            1028,
+            1151
+          ],
+          "_binding_continuations": [
+            1153,
+            1168
+          ],
+          "_inverse_stage_history": [
+            1170,
+            1179
+          ],
+          "_validate": [
+            1181,
+            1255
+          ],
+          "_materializations": [
+            1257,
+            1264
+          ],
+          "_same_materialization_slot": [
+            1267,
+            1287
+          ],
+          "_check_shot_destinations": [
+            1289,
+            1451
+          ],
+          "_reservation_identity": [
+            1454,
+            1462
+          ],
+          "_check_birth_destinations": [
+            1464,
+            1477
+          ],
+          "preview": [
+            1480,
+            1498
+          ],
+          "_check_context": [
+            1500,
+            1508
+          ],
+          "_check_head": [
+            1510,
+            1519
+          ],
+          "accept": [
+            1522,
+            1589
+          ],
+          "_project_text_bindings": [
+            1591,
+            1612
+          ],
+          "_project_text_binding": [
+            1614,
+            1680
+          ],
+          "_persist_closure": [
+            1682,
+            1730
+          ],
+          "_publish": [
+            1732,
+            1763
+          ],
+          "_install_entries": [
+            1765,
+            1777
+          ],
+          "install_verified_baseline": [
+            1779,
+            1802
+          ],
+          "adopt_empty_shell": [
+            1804,
+            1840
+          ],
+          "bootstrap": [
+            1842,
+            1879
+          ],
+          "collect": [
+            1131,
+            1141
+          ],
+          "unchanged": [
+            1332,
+            1333
+          ],
+          "edges": [
+            1352,
+            1354
+          ]
+        }
+      },
+      {
+        "path": "/home/user/work/wt/rt-R2-inverse-auth-sol-0333/runtime_protocol/timeline_commit_port.py",
+        "sha256": "e1d9397bc8164af8b4afd7f2b8d3133805c7404bce26b25cad32432d1f17badd",
+        "bytes": 69011,
+        "functions": {
+          "_producer_guard_matches": [
+            41,
+            48
+          ],
+          "validate_provider": [
+            51,
+            53
+          ],
+          "route_path": [
+            56,
+            57
+          ],
+          "validate_request": [
+            60,
+            65
+          ],
+          "command_leaves": [
+            68,
+            76
+          ],
+          "objects": [
+            79,
+            86
+          ],
+          "refused": [
+            89,
+            93
+          ],
+          "public_failure": [
+            96,
+            100
+          ],
+          "_media_metadata": [
+            682,
+            694
+          ],
+          "_source_kind": [
+            697,
+            713
+          ],
+          "_linked_pins": [
+            716,
+            719
+          ],
+          "read_project_source_document": [
+            722,
+            736
+          ],
+          "_pack_object": [
+            739,
+            750
+          ],
+          "read_project_pack_object": [
+            753,
+            769
+          ],
+          "verify_text_object": [
+            772,
+            773
+          ],
+          "verify_retained_text_object": [
+            776,
+            793
+          ],
+          "_verify_text_object": [
+            796,
+            817
+          ],
+          "validate_narration_artifacts": [
+            1128,
+            1151
+          ],
+          "__init__": [
+            821,
+            825
+          ],
+          "_restore_integrity": [
+            147,
+            172
+          ],
+          "_provider_context": [
+            174,
+            175
+          ],
+          "capture_sequential_execution": [
+            177,
+            204
+          ],
+          "close": [
+            206,
+            208
+          ],
+          "_read": [
+            210,
+            216
+          ],
+          "head": [
+            218,
+            223
+          ],
+          "_ancestor": [
+            225,
+            244
+          ],
+          "history_entry": [
+            246,
+            247
+          ],
+          "history": [
+            249,
+            255
+          ],
+          "revision_closure": [
+            257,
+            286
+          ],
+          "source_revision_closure": [
+            288,
+            332
+          ],
+          "shot_closure": [
+            334,
+            349
+          ],
+          "selected_media": [
+            351,
+            358
+          ],
+          "raw_media_info": [
+            1032,
+            1054
+          ],
+          "text_selection": [
+            381,
+            388
+          ],
+          "narration_take": [
+            390,
+            397
+          ],
+          "_document": [
+            399,
+            425
+          ],
+          "transcript_source": [
+            427,
+            428
+          ],
+          "config_source": [
+            430,
+            431
+          ],
+          "document_object": [
+            433,
+            443
+          ],
+          "producer_attempt": [
+            445,
+            461
+          ],
+          "_producer_captures": [
+            463,
+            492
+          ],
+          "validate": [
+            494,
+            582
+          ],
+          "_materializations": [
+            584,
+            603
+          ],
+          "_validate_producer_consumption": [
+            605,
+            608
+          ],
+          "persist": [
+            610,
+            622
+          ],
+          "_prepared": [
+            624,
+            638
+          ],
+          "preview": [
+            640,
+            649
+          ],
+          "accept": [
+            651,
+            663
+          ],
+          "_validate_sequential_execution": [
+            665,
+            675
+          ],
+          "verify_outcome": [
+            677,
+            679
+          ],
+          "selection": [
+            827,
+            856
+          ],
+          "_variant_matches": [
+            859,
+            864
+          ],
+          "_output_selection_binding": [
+            866,
+            920
+          ],
+          "_selected_project_media": [
+            922,
+            1021
+          ],
+          "selected": [
+            1023,
+            1030
+          ],
+          "text": [
+            1056,
+            1058
+          ],
+          "narration": [
+            1060,
+            1125
+          ],
+          "read": [
+            465,
+            491
+          ],
+          "captured": [
+            587,
+            590
+          ],
+          "prepare_restore": [
+            131,
+            144
+          ]
+        }
+      },
+      {
+        "path": "/home/user/work/wt/rt-R2-inverse-auth-sol-0333/runtime_protocol/timeline_commit_execution.py",
+        "sha256": "133db865d0b5d0ba93093d0de3ad495e6166eea636b91d8a9d92300c4a9e6452",
+        "bytes": 5140,
+        "functions": {
+          "__init__": [
+            29,
+            32
+          ],
+          "_execution": [
+            35,
+            56
+          ],
+          "_lookup": [
+            58,
+            67
+          ],
+          "execute": [
+            69,
+            71
+          ],
+          "_execute": [
+            73,
+            121
+          ]
+        }
+      },
+      {
+        "path": "/home/user/work/wt/rt-R2-inverse-auth-sol-0333/runtime_protocol/service.py",
+        "sha256": "5e79c3b9ed3d2ba5efc129d1cc8d7a43075c4ebc9194026fdb641a8eeb7ff19a",
+        "bytes": 513662,
+        "functions": {
+          "_canonical_execution_input_filename": [
+            120,
+            138
+          ],
+          "_canonical_managed_output_filename": [
+            141,
+            153
+          ],
+          "_validate_rational": [
+            156,
+            169
+          ],
+          "_validate_coverage": [
+            172,
+            231
+          ],
+          "_contains_latest": [
+            234,
+            241
+          ],
+          "_validate_regeneration": [
+            244,
+            272
+          ],
+          "validate_idempotency_key": [
+            275,
+            281
+          ],
+          "require_idempotency_key": [
+            284,
+            288
+          ],
+          "_wire_string": [
+            289,
+            293
+          ],
+          "_wire_integer": [
+            296,
+            301
+          ],
+          "_wire_object": [
+            302,
+            312
+          ],
+          "_require_runtime_epoch_for_lease": [
+            315,
+            321
+          ],
+          "_probe_media_bytes": [
+            324,
+            374
+          ],
+          "_page_args": [
+            377,
+            398
+          ],
+          "_page_cursor": [
+            401,
+            406
+          ],
+          "_page_rows": [
+            409,
+            431
+          ],
+          "_clear_replay_on_refusal": [
+            434,
+            443
+          ],
+          "_verified_mutation": [
+            446,
+            453
+          ],
+          "_durable_mutation": [
+            456,
+            473
+          ],
+          "_refuse_direct_shot_write": [
+            476,
+            477
+          ],
+          "wrapped": [
+            459,
+            472
+          ],
+          "__init__": [
+            483,
+            575
+          ],
+          "close": [
+            577,
+            578
+          ],
+          "_local_claim_fence_path": [
+            580,
+            581
+          ],
+          "_load_local_claim_fence": [
+            583,
+            593
+          ],
+          "set_local_claim_generation_verifier": [
+            595,
+            598
+          ],
+          "_assert_local_claim_admission": [
+            600,
+            617
+          ],
+          "hold_local_claim_fence": [
+            619,
+            641
+          ],
+          "release_local_claim_fence": [
+            643,
+            660
+          ],
+          "set_readiness_callback": [
+            662,
+            664
+          ],
+          "catalog_admission": [
+            666,
+            673
+          ],
+          "validate_catalog_admission": [
+            675,
+            686
+          ],
+          "backup": [
+            688,
+            690
+          ],
+          "restore": [
+            692,
+            698
+          ],
+          "export_structured": [
+            700,
+            704
+          ],
+          "doctor": [
+            706,
+            720
+          ],
+          "tombstone": [
+            723,
+            725
+          ],
+          "recover_realm": [
+            728,
+            746
+          ],
+          "purge": [
+            748,
+            757
+          ],
+          "health": [
+            759,
+            789
+          ],
+          "_assert_mutation_admitted": [
+            791,
+            796
+          ],
+          "runtime_lifecycle": [
+            798,
+            802
+          ],
+          "realm_resource": [
+            804,
+            814
+          ],
+          "handshake": [
+            816,
+            831
+          ],
+          "_assert_executor_identity": [
+            834,
+            850
+          ],
+          "_trusted_execution_placement": [
+            853,
+            859
+          ],
+          "_placement_recovery_qualification_matches": [
+            861,
+            874
+          ],
+          "_remote_activation_history": [
+            876,
+            892
+          ],
+          "_latest_remote_activation": [
+            894,
+            902
+          ],
+          "_remote_drain": [
+            904,
+            918
+          ],
+          "_task_drain": [
+            920,
+            924
+          ],
+          "_drain_continuation_matches": [
+            926,
+            934
+          ],
+          "_assert_exact_drain_generation": [
+            936,
+            956
+          ],
+          "begin_remote_drain": [
+            959,
+            978
+          ],
+          "finish_remote_drain": [
+            981,
+            1000
+          ],
+          "_task_requires_remote_activation": [
+            1002,
+            1034
+          ],
+          "_activation_scope_matches": [
+            1036,
+            1101
+          ],
+          "_activation_allows_child": [
+            1103,
+            1112
+          ],
+          "_remote_activation_matches": [
+            1114,
+            1162
+          ],
+          "assert_remote_activation_admissible": [
+            1164,
+            1204
+          ],
+          "record_remote_activation": [
+            1207,
+            1281
+          ],
+          "revoke_remote_activation": [
+            1284,
+            1302
+          ],
+          "_assert_attempt_identity": [
+            1304,
+            1349
+          ],
+          "create_project": [
+            1352,
+            1356
+          ],
+          "get_project": [
+            1358,
+            1359
+          ],
+          "list_projects": [
+            1361,
+            1365
+          ],
+          "select_project": [
+            1368,
+            1375
+          ],
+          "current_project": [
+            1377,
+            1384
+          ],
+          "update_project": [
+            1387,
+            1388
+          ],
+          "_project_resource": [
+            1390,
+            1391
+          ],
+          "_timeline_resource": [
+            1393,
+            1395
+          ],
+          "_timeline_public_resource": [
+            1397,
+            1402
+          ],
+          "_legacy_timeline_payload": [
+            1404,
+            1410
+          ],
+          "_record_legacy_timeline_revision": [
+            1412,
+            1419
+          ],
+          "_record_internal_revision": [
+            1421,
+            1443
+          ],
+          "_shot_revision_payload": [
+            1445,
+            1451
+          ],
+          "_record_legacy_shot_revision": [
+            1453,
+            1468
+          ],
+          "_validate_published_shot_payload": [
+            1471,
+            1477
+          ],
+          "_validate_published_text_bindings": [
+            1479,
+            1572
+          ],
+          "_apply_published_shot_projection": [
+            1574,
+            1589
+          ],
+          "_shot_projection_matches_revision": [
+            1591,
+            1623
+          ],
+          "_verify_shot_head_projection": [
+            1625,
+            1639
+          ],
+          "_record_timeline_revision": [
+            1641,
+            1646
+          ],
+          "_timeline_revision": [
+            1648,
+            1655
+          ],
+          "_expected_version": [
+            1658,
+            1662
+          ],
+          "_require_timeline_command": [
+            1665,
+            1672
+          ],
+          "update_timeline": [
+            1674,
+            1675
+          ],
+          "replace_timeline_clip": [
+            1677,
+            1678
+          ],
+          "_timeline_name": [
+            1680,
+            1686
+          ],
+          "rename_timeline": [
+            1689,
+            1707
+          ],
+          "create_timeline": [
+            1710,
+            1755
+          ],
+          "_adopt_empty_shell_create": [
+            1757,
+            1777
+          ],
+          "create_timeline_document": [
+            1779,
+            1780
+          ],
+          "list_timelines": [
+            1782,
+            1787
+          ],
+          "_shot_resource": [
+            1789,
+            1792
+          ],
+          "_reference_resource": [
+            1794,
+            1797
+          ],
+          "list_project_tasks": [
+            1799,
+            1809
+          ],
+          "list_project_runs": [
+            1811,
+            1817
+          ],
+          "list_project_shots": [
+            1819,
+            1826
+          ],
+          "list_project_references": [
+            1828,
+            1835
+          ],
+          "_require_object_body": [
+            1838,
+            1840
+          ],
+          "_receipt_payload": [
+            1842,
+            1864
+          ],
+          "_active_task_admission_result": [
+            1866,
+            1874
+          ],
+          "_publication_replay_result": [
+            1876,
+            1919
+          ],
+          "committed_receipt": [
+            1921,
+            1940
+          ],
+          "_command_replay_state": [
+            1942,
+            1971
+          ],
+          "_command_replay": [
+            1973,
+            1978
+          ],
+          "_command_record": [
+            1980,
+            2023
+          ],
+          "_open_publication_directory": [
+            2025,
+            2046
+          ],
+          "_begin_cas_publication_journal": [
+            2049,
+            2077
+          ],
+          "_remove_publication_journal_at": [
+            2080,
+            2091
+          ],
+          "_publication_committed": [
+            2094,
+            2128
+          ],
+          "_recover_cas_publication_journals": [
+            2130,
+            2201
+          ],
+          "_revision_digest": [
+            2204,
+            2206
+          ],
+          "_revision_id": [
+            2209,
+            2212
+          ],
+          "_revision_payload": [
+            2215,
+            2223
+          ],
+          "_complete_internal_timeline_payload": [
+            2226,
+            2254
+          ],
+          "_validate_timeline_track_roles": [
+            2257,
+            2268
+          ],
+          "_complete_shot_payload": [
+            2271,
+            2285
+          ],
+          "_complete_parent_payload": [
+            2288,
+            2315
+          ],
+          "get_project_shot_revision": [
+            2317,
+            2322
+          ],
+          "get_project_timeline_revision": [
+            2324,
+            2329
+          ],
+          "get_project_timeline": [
+            2331,
+            2341
+          ],
+          "get_project_parent_composition_revision": [
+            2343,
+            2355
+          ],
+          "list_project_parent_composition_revisions": [
+            2357,
+            2389
+          ],
+          "register_timeline_commit_provider": [
+            2391,
+            2411
+          ],
+          "_timeline_commits": [
+            2413,
+            2423
+          ],
+          "_timeline_authorize": [
+            2425,
+            2445
+          ],
+          "commit_timeline": [
+            2448,
+            2461
+          ],
+          "_execute_timeline_commit": [
+            2464,
+            2524
+          ],
+          "_ensure_timeline_commit_baseline": [
+            2526,
+            2534
+          ],
+          "list_timeline_commits": [
+            2537,
+            2554
+          ],
+          "_verified_read": [
+            2557,
+            2566
+          ],
+          "get_project_media_selection": [
+            2568,
+            2574
+          ],
+          "get_project_verified_media": [
+            2576,
+            2579
+          ],
+          "get_project_verified_document_object": [
+            2581,
+            2584
+          ],
+          "get_project_verified_document": [
+            2586,
+            2589
+          ],
+          "restore_project_parent_composition_revision": [
+            2591,
+            2613
+          ],
+          "inspect_timeline": [
+            2615,
+            2619
+          ],
+          "create_timeline_view": [
+            2622,
+            2665
+          ],
+          "replace_parent_composition_media": [
+            2667,
+            2668
+          ],
+          "_finite_number": [
+            2671,
+            2674
+          ],
+          "_normalize_occurrence": [
+            2676,
+            2746
+          ],
+          "_validate_media_dependencies": [
+            2748,
+            2781
+          ],
+          "_collect_digest_media": [
+            2783,
+            2799
+          ],
+          "publish_parent_composition": [
+            2801,
+            2802
+          ],
+          "_project_shot_resource": [
+            2804,
+            2810
+          ],
+          "_shot_item_resource": [
+            2813,
+            2817
+          ],
+          "create_project_shot": [
+            2820,
+            2849
+          ],
+          "update_project_shot": [
+            2852,
+            2884
+          ],
+          "add_shot_item": [
+            2887,
+            2932
+          ],
+          "_renumber_shot_items": [
+            2934,
+            2937
+          ],
+          "remove_shot_item": [
+            2940,
+            2966
+          ],
+          "reorder_shot_items": [
+            2969,
+            3001
+          ],
+          "promote_project_shot_candidate": [
+            3008,
+            3115
+          ],
+          "create_project_reference": [
+            3118,
+            3150
+          ],
+          "get_project_shot": [
+            3152,
+            3156
+          ],
+          "_text_binding_id": [
+            3161,
+            3167
+          ],
+          "_require_project_shot_scope": [
+            3169,
+            3174
+          ],
+          "_require_unplaced_project_shot": [
+            3176,
+            3219
+          ],
+          "_freeze_text": [
+            3222,
+            3234
+          ],
+          "_verify_text_object": [
+            3236,
+            3274
+          ],
+          "_text_binding_events": [
+            3277,
+            3303
+          ],
+          "_text_binding_resource": [
+            3305,
+            3332
+          ],
+          "_resolve_text_binding": [
+            3334,
+            3366
+          ],
+          "_text_binding_identity": [
+            3368,
+            3382
+          ],
+          "_record_text_binding_event": [
+            3384,
+            3401
+          ],
+          "_materialize_text_object": [
+            3403,
+            3446
+          ],
+          "_text_binding_event_payload": [
+            3448,
+            3455
+          ],
+          "set_project_shot_text_binding": [
+            3458,
+            3536
+          ],
+          "rebind_project_shot_text_binding": [
+            3539,
+            3596
+          ],
+          "get_project_shot_text_binding": [
+            3598,
+            3604
+          ],
+          "list_project_shot_text_bindings": [
+            3606,
+            3615
+          ],
+          "_project_reference_resource": [
+            3617,
+            3622
+          ],
+          "get_project_reference": [
+            3624,
+            3627
+          ],
+          "update_project_reference": [
+            3630,
+            3643
+          ],
+          "associate_reference": [
+            3646,
+            3660
+          ],
+          "link_references": [
+            3663,
+            3675
+          ],
+          "set_primary_reference": [
+            3678,
+            3688
+          ],
+          "list_timeline_history": [
+            3690,
+            3699
+          ],
+          "_diff_items": [
+            3702,
+            3705
+          ],
+          "diff_timeline": [
+            3707,
+            3711
+          ],
+          "archive_timeline": [
+            3714,
+            3751
+          ],
+          "recover_timeline": [
+            3754,
+            3856
+          ],
+          "get_shot": [
+            3858,
+            3861
+          ],
+          "create_reference": [
+            3864,
+            3865
+          ],
+          "_validate_preference_document": [
+            3871,
+            3879
+          ],
+          "_preference_target": [
+            3881,
+            3895
+          ],
+          "_preference_resource": [
+            3898,
+            3906
+          ],
+          "get_preferences": [
+            3908,
+            3919
+          ],
+          "update_preferences": [
+            3922,
+            3954
+          ],
+          "_app_state_target": [
+            3959,
+            3965
+          ],
+          "_app_state_resource": [
+            3968,
+            3975
+          ],
+          "get_app_state": [
+            3977,
+            3982
+          ],
+          "update_app_state": [
+            3985,
+            4009
+          ],
+          "_transcript_document_id": [
+            4012,
+            4017
+          ],
+          "_transcript_string": [
+            4020,
+            4029
+          ],
+          "_transcript_time": [
+            4032,
+            4037
+          ],
+          "_validate_transcript_document": [
+            4039,
+            4109
+          ],
+          "_validate_project_document": [
+            4111,
+            4116
+          ],
+          "_document_resource": [
+            4118,
+            4125
+          ],
+          "_reject_canonical_document_write": [
+            4128,
+            4130
+          ],
+          "create_document": [
+            4133,
+            4159
+          ],
+          "list_documents": [
+            4161,
+            4172
+          ],
+          "get_document": [
+            4174,
+            4179
+          ],
+          "update_document": [
+            4182,
+            4224
+          ],
+          "_generation_resource": [
+            4226,
+            4230
+          ],
+          "create_generation": [
+            4233,
+            4257
+          ],
+          "list_generations": [
+            4259,
+            4268
+          ],
+          "get_generation": [
+            4270,
+            4274
+          ],
+          "create_variant": [
+            4277,
+            4307
+          ],
+          "_variant_resource": [
+            4310,
+            4327
+          ],
+          "list_variants": [
+            4329,
+            4334
+          ],
+          "get_variant": [
+            4336,
+            4340
+          ],
+          "attach_variant_thumbnail": [
+            4343,
+            4403
+          ],
+          "mark_variant_viewed": [
+            4406,
+            4435
+          ],
+          "mark_generation_variants_viewed": [
+            4438,
+            4472
+          ],
+          "get_reference": [
+            4474,
+            4477
+          ],
+          "update_shot": [
+            4479,
+            4479
+          ],
+          "archive_shot": [
+            4480,
+            4480
+          ],
+          "recover_shot": [
+            4481,
+            4481
+          ],
+          "_update_reference_state": [
+            4484,
+            4485
+          ],
+          "update_reference": [
+            4487,
+            4487
+          ],
+          "archive_reference": [
+            4488,
+            4488
+          ],
+          "recover_reference": [
+            4489,
+            4489
+          ],
+          "stage_object": [
+            4491,
+            4493
+          ],
+          "ingest": [
+            4495,
+            4498
+          ],
+          "_ingest_transfer": [
+            4500,
+            4571
+          ],
+          "_media_import_operation_id": [
+            4574,
+            4579
+          ],
+          "_media_import_aggregate_id": [
+            4582,
+            4583
+          ],
+          "_media_import_subkey": [
+            4586,
+            4589
+          ],
+          "_media_import_optional_integer": [
+            4592,
+            4599
+          ],
+          "_media_import_optional_duration": [
+            4602,
+            4611
+          ],
+          "_media_import_request": [
+            4613,
+            4661
+          ],
+          "_claim_media_import_task": [
+            4663,
+            4705
+          ],
+          "_settle_media_import_catalog": [
+            4708,
+            4818
+          ],
+          "_validate_media_file": [
+            4821,
+            4854
+          ],
+          "import_media": [
+            4856,
+            4885
+          ],
+          "get_media_import": [
+            4887,
+            4926
+          ],
+          "_generic_output_idempotency_key": [
+            4929,
+            4930
+          ],
+          "_validate_generic_output_binding": [
+            4932,
+            4984
+          ],
+          "_generic_output_request_hash": [
+            4987,
+            4996
+          ],
+          "ingest_object": [
+            4998,
+            5002
+          ],
+          "_discard_published_digest": [
+            5004,
+            5010
+          ],
+          "_object_resource": [
+            5012,
+            5013
+          ],
+          "object": [
+            5015,
+            5021
+          ],
+          "open_object": [
+            5023,
+            5045
+          ],
+          "object_location": [
+            5047,
+            5088
+          ],
+          "objects": [
+            5090,
+            5091
+          ],
+          "list_project_objects": [
+            5093,
+            5097
+          ],
+          "create_media_relation": [
+            5100,
+            5130
+          ],
+          "_source_frame_thumbnail_descriptor": [
+            5133,
+            5153
+          ],
+          "_source_frame_thumbnail_identity": [
+            5156,
+            5158
+          ],
+          "get_source_frame_thumbnail": [
+            5160,
+            5187
+          ],
+          "ensure_source_frame_thumbnail": [
+            5190,
+            5239
+          ],
+          "list_media_relations": [
+            5241,
+            5246
+          ],
+          "_child_policy": [
+            5249,
+            5363
+          ],
+          "_validate_discovery_grant_binding": [
+            5365,
+            5381
+          ],
+          "create_task": [
+            5384,
+            5458
+          ],
+          "_live_delegating_parent": [
+            5460,
+            5487
+          ],
+          "_child_identity_digest": [
+            5489,
+            5495
+          ],
+          "issue_child_authority": [
+            5498,
+            5529
+          ],
+          "_verify_derived_association": [
+            5531,
+            5550
+          ],
+          "_verify_child_object_bytes": [
+            5552,
+            5561
+          ],
+          "_register_derived_inputs": [
+            5563,
+            5621
+          ],
+          "_decode_child_authority": [
+            5623,
+            5636
+          ],
+          "_delegated_stage_rows": [
+            5638,
+            5657
+          ],
+          "_resolve_delegated_stage_inputs": [
+            5659,
+            5691
+          ],
+          "admit_delegated_child": [
+            5694,
+            5887
+          ],
+          "_recoverable_child_grant": [
+            5890,
+            5897
+          ],
+          "publish_recoverable_snapshot": [
+            5900,
+            5999
+          ],
+          "task": [
+            6001,
+            6003
+          ],
+          "managed_outputs": [
+            6005,
+            6007
+          ],
+          "managed_output_page": [
+            6009,
+            6012
+          ],
+          "managed_output": [
+            6014,
+            6016
+          ],
+          "_export_source": [
+            6018,
+            6070
+          ],
+          "_ensure_export_root": [
+            6072,
+            6087
+          ],
+          "_materialize_export": [
+            6089,
+            6118
+          ],
+          "_export_leaf_max_bytes": [
+            6120,
+            6130
+          ],
+          "_truncate_utf8": [
+            6133,
+            6138
+          ],
+          "_collision_safe_export_filename": [
+            6140,
+            6154
+          ],
+          "export_managed_output": [
+            6157,
+            6234
+          ],
+          "adopt_managed_output": [
+            6237,
+            6268
+          ],
+          "update_managed_output_lifecycle": [
+            6271,
+            6308
+          ],
+          "run": [
+            6310,
+            6322
+          ],
+          "_task_resource": [
+            6324,
+            6361
+          ],
+          "_require_placement_recovery_owner": [
+            6364,
+            6369
+          ],
+          "_placement_evidence_digest": [
+            6372,
+            6375
+          ],
+          "_validate_placement_loss_evidence": [
+            6377,
+            6425
+          ],
+          "_validate_replacement_qualification": [
+            6427,
+            6451
+          ],
+          "_delegated_children": [
+            6453,
+            6465
+          ],
+          "_assert_placement_recovery_quiescent": [
+            6467,
+            6514
+          ],
+          "recover_task_placement": [
+            6517,
+            6688
+          ],
+          "cancel": [
+            6691,
+            6692
+          ],
+          "cancel_task_canonical": [
+            6695,
+            6715
+          ],
+          "retry_task": [
+            6718,
+            6758
+          ],
+          "events": [
+            6760,
+            6761
+          ],
+          "cancel_run": [
+            6764,
+            6765
+          ],
+          "retry_run": [
+            6768,
+            6770
+          ],
+          "_run_resource": [
+            6772,
+            6780
+          ],
+          "list_capabilities": [
+            6782,
+            6790
+          ],
+          "_capability_resource": [
+            6792,
+            6797
+          ],
+          "register_capability": [
+            6800,
+            6804
+          ],
+          "register_executor": [
+            6807,
+            6889
+          ],
+          "executor_observation": [
+            6891,
+            6909
+          ],
+          "claim_next": [
+            6912,
+            7086
+          ],
+          "settle_attempt": [
+            7089,
+            7221
+          ],
+          "publish_timeline_render": [
+            7223,
+            7224
+          ],
+          "_is_authorized_generic_output": [
+            7226,
+            7293
+          ],
+          "_stage_outputs": [
+            7295,
+            7561
+          ],
+          "_verify_open_file": [
+            7565,
+            7592
+          ],
+          "_cas_prefix_fds": [
+            7594,
+            7616
+          ],
+          "_copy_open_file_at": [
+            7619,
+            7684
+          ],
+          "_verify_file_at": [
+            7687,
+            7695
+          ],
+          "_unlink_stage_entry": [
+            7698,
+            7707
+          ],
+          "_unlink_cas_destination": [
+            7709,
+            7727
+          ],
+          "_publish_staged_outputs": [
+            7728,
+            7832
+          ],
+          "_discard_staged_outputs": [
+            7835,
+            7883
+          ],
+          "_checkpoint_row": [
+            7885,
+            7897
+          ],
+          "_reboot_authorized": [
+            7899,
+            7920
+          ],
+          "_validate_attempt_lease": [
+            7922,
+            7944
+          ],
+          "prepare_reboot": [
+            7946,
+            7976
+          ],
+          "checkpoint_attempt": [
+            7979,
+            8035
+          ],
+          "request_reboot": [
+            8039,
+            8121
+          ],
+          "resume_attempt": [
+            8124,
+            8235
+          ],
+          "heartbeat_attempt": [
+            8240,
+            8310
+          ],
+          "fail_attempt": [
+            8313,
+            8347
+          ],
+          "events_page": [
+            8349,
+            8390
+          ],
+          "contains_nested_composition": [
+            2229,
+            2236
+          ],
+          "check": [
+            2429,
+            2442
+          ],
+          "require_active": [
+            2477,
+            2488
+          ],
+          "port_factory": [
+            2502,
+            2505
+          ],
+          "attempt_resource": [
+            8138,
+            8160
+          ],
+          "record": [
+            7202,
+            7210
+          ]
+        }
+      },
+      {
+        "path": "/home/user/work/wt/rt-R2-inverse-auth-sol-0333/runtime_protocol/server.py",
+        "sha256": "1ca8ec077415e988856e3b7c747a3a123ab6a982344c32293d60fd00931562c0",
+        "bytes": 76556,
+        "functions": {
+          "_reject_duplicate_json_keys": [
+            21,
+            27
+          ],
+          "_reject_non_finite_json": [
+            30,
+            31
+          ],
+          "_validate_finite_json": [
+            34,
+            46
+          ],
+          "server_bind": [
+            77,
+            81
+          ],
+          "log_message": [
+            92,
+            93
+          ],
+          "_request_id": [
+            95,
+            102
+          ],
+          "runtime": [
+            105,
+            106
+          ],
+          "_identity": [
+            108,
+            116
+          ],
+          "_header_values": [
+            118,
+            122
+          ],
+          "_content_length": [
+            124,
+            134
+          ],
+          "_binary_chunks": [
+            136,
+            183
+          ],
+          "_read_raw_body": [
+            185,
+            192
+          ],
+          "_prefetch_body": [
+            194,
+            206
+          ],
+          "_raw_body": [
+            208,
+            214
+          ],
+          "_body": [
+            216,
+            221
+          ],
+          "_strict_json_body": [
+            223,
+            237
+          ],
+          "_commit_body": [
+            239,
+            240
+          ],
+          "_restore_body": [
+            242,
+            243
+          ],
+          "_project_mutation_body": [
+            245,
+            249
+          ],
+          "_timeline_options": [
+            251,
+            255
+          ],
+          "_idempotency_key": [
+            257,
+            264
+          ],
+          "_commit_idempotency_key": [
+            266,
+            273
+          ],
+          "_authorize_timeline_commit": [
+            275,
+            279
+          ],
+          "_authorize_timeline_read": [
+            281,
+            285
+          ],
+          "_timeline_path": [
+            288,
+            292
+          ],
+          "_timeline_commit": [
+            294,
+            319
+          ],
+          "_send": [
+            321,
+            341
+          ],
+          "_send_file": [
+            343,
+            367
+          ],
+          "_is_binary_io": [
+            369,
+            381
+          ],
+          "_is_timeline_commit": [
+            383,
+            392
+          ],
+          "_error": [
+            394,
+            403
+          ],
+          "_is_owner_identity_probe": [
+            405,
+            409
+          ],
+          "_route": [
+            411,
+            1141
+          ],
+          "_is_local_worker_control": [
+            1143,
+            1148
+          ],
+          "_is_remote_credential_control": [
+            1150,
+            1152
+          ],
+          "_local_worker_control": [
+            1154,
+            1172
+          ],
+          "_dispatch": [
+            1174,
+            1232
+          ],
+          "do_GET": [
+            1234,
+            1235
+          ],
+          "do_HEAD": [
+            1237,
+            1238
+          ],
+          "do_POST": [
+            1240,
+            1241
+          ],
+          "do_PATCH": [
+            1243,
+            1244
+          ],
+          "do_PUT": [
+            1246,
+            1247
+          ],
+          "do_DELETE": [
+            1249,
+            1250
+          ],
+          "authorize": [
+            618,
+            622
+          ]
+        }
+      },
+      {
+        "path": "/home/user/work/wt/rt-R2-inverse-auth-sol-0333/tests/test_timeline_inverse_stage_authentication.py",
+        "sha256": "c5b44e6d11209385cbf85af4cfa7114802d2ab5e8e7b8712f9ec0a8d14fc155b",
+        "bytes": 67382,
+        "functions": {
+          "_request": [
+            17,
+            43
+          ],
+          "_seed_request": [
+            46,
+            64
+          ],
+          "_seed": [
+            67,
+            121
+          ],
+          "_prepared": [
+            124,
+            222
+          ],
+          "test_grouped_inverse_effects_use_authenticated_stage_images": [
+            228,
+            256
+          ],
+          "test_current_agent_inverse_stage_round_trip": [
+            268,
+            328
+          ],
+          "test_current_agent_inverse_rejects_forged_stage": [
+            334,
+            367
+          ],
+          "test_current_agent_inverse_native_membership_is_authenticated": [
+            372,
+            419
+          ],
+          "test_reviewer_replaced_native_write_is_refused_before_persistence": [
+            423,
+            457
+          ],
+          "test_grouped_canonical_stage_observations_retry_exactly": [
+            460,
+            481
+          ],
+          "_split_and_note_body": [
+            484,
+            512
+          ],
+          "test_store_authenticated_split_and_note_inverse_restores_both_native_mirrors": [
+            516,
+            563
+          ],
+          "test_store_split_and_note_native_mirror_forgery_refuses_without_writes": [
+            569,
+            591
+          ],
+          "test_store_split_and_note_requires_exact_forward_history": [
+            596,
+            631
+          ],
+          "source_copy_stage": [
+            635,
+            682
+          ],
+          "test_source_copy_native_roots_authenticate_and_round_trip": [
+            686,
+            698
+          ],
+          "test_source_copy_native_root_forgeries_refuse_without_durable_writes": [
+            704,
+            752
+          ],
+          "retained_leaf_inverse": [
+            756,
+            769
+          ],
+          "test_actual_leaf_and_fork_inverse_stages_authenticate_losslessly": [
+            772,
+            797
+          ],
+          "test_actual_leaf_inverse_forgery_is_refused": [
+            806,
+            872
+          ],
+          "retained_occurrence_order_inverse": [
+            876,
+            885
+          ],
+          "test_retained_occurrence_order_inverse_preserves_authenticated_physical_pins": [
+            888,
+            898
+          ],
+          "test_retained_occurrence_order_forgeries_refuse_losslessly": [
+            907,
+            972
+          ],
+          "retained_native_order_packet": [
+            976,
+            980
+          ],
+          "test_retained_native_order_packet_authenticates_against_physical_closure": [
+            983,
+            989
+          ],
+          "test_retained_native_order_packet_rejects_coordinated_forgery": [
+            996,
+            1030
+          ],
+          "retained_nested_inverse": [
+            1034,
+            1044
+          ],
+          "_nested_projection": [
+            1047,
+            1078
+          ],
+          "test_retained_nested_ranges_bind_immediate_identity_and_exact_captures": [
+            1081,
+            1093
+          ],
+          "test_nested_inverse_authenticates_boundaries_without_durable_forgery": [
+            1098,
+            1170
+          ],
+          "retained_nested_auth_input": [
+            1174,
+            1178
+          ],
+          "test_actual_nested_inverse_authenticates_complete_retained_boundaries": [
+            1181,
+            1187
+          ],
+          "test_actual_nested_inverse_forgeries_refuse_losslessly": [
+            1195,
+            1250
+          ],
+          "record": [
+            80,
+            100
+          ],
+          "image": [
+            147,
+            149
+          ],
+          "effect_binding": [
+            160,
+            166
+          ],
+          "execute": [
+            1109,
+            1155
+          ],
+          "forbidden": [
+            476,
+            477
+          ],
+          "forged_accept": [
+            716,
+            743
+          ],
+          "commit": [
+            656,
+            664
+          ],
+          "change": [
+            489,
+            493
+          ],
+          "capture": [
+            606,
+            608
+          ],
+          "document": [
+            653,
+            654
+          ]
+        }
+      },
+      {
+        "path": "/home/user/work/wt/rt-R2-inverse-auth-sol-0333/contract/commit-v2.md",
+        "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+        "bytes": 210581
+      }
+    ]
+  },
+  "agent": {
+    "head": "657bc2e8dba066df1c7d21851315bdb6b0f16a3a",
+    "tree": "9dee25d783fbb7d70a4eaf76e66de2db1743663f",
+    "files": [
+      {
+        "path": "/home/user/work/agent/astrid/sdk/timeline/_step_undo.py",
+        "sha256": "a38bb078ecd2579399f131fa0a08a9bedd339226f92b9d8ac27de2b6d27827a6",
+        "bytes": 29712,
+        "functions": {
+          "_commands": [
+            10,
+            20
+          ],
+          "_steps": [
+            23,
+            50
+          ],
+          "entry_records": [
+            71,
+            84
+          ],
+          "select_inverse_records": [
+            87,
+            114
+          ],
+          "selected_dependencies": [
+            117,
+            128
+          ],
+          "_native_mirror_partition": [
+            131,
+            264
+          ],
+          "_nested_mirrors": [
+            267,
+            268
+          ],
+          "_nested_mirror_partition": [
+            271,
+            326
+          ],
+          "inverse_stages": [
+            329,
+            382
+          ],
+          "validate_nested_history": [
+            385,
+            429
+          ],
+          "_causal_commands": [
+            432,
+            443
+          ],
+          "_check_groups": [
+            446,
+            456
+          ],
+          "check_step_dependents": [
+            459,
+            467
+          ],
+          "check_later_steps": [
+            470,
+            498
+          ],
+          "__init__": [
+            56,
+            61
+          ],
+          "selected_for": [
+            63,
+            65
+          ],
+          "boundary": [
+            67,
+            68
+          ],
+          "projection": [
+            139,
+            140
+          ],
+          "compile_mirror": [
+            197,
+            209
+          ]
+        }
+      },
+      {
+        "path": "/home/user/work/agent/astrid/sdk/timeline/_commit_patch.py",
+        "sha256": "05a1ebc6b251c75f4d5dc272598adc295ce5bf5a8c4596ad08497de6676264be",
+        "bytes": 75237,
+        "functions": {
+          "_text": [
+            13,
+            14
+          ],
+          "_effect_key": [
+            17,
+            18
+          ],
+          "validate_reads": [
+            21,
+            39
+          ],
+          "normalize_steps": [
+            42,
+            88
+          ],
+          "canonical_site": [
+            91,
+            145
+          ],
+          "_prefix": [
+            148,
+            149
+          ],
+          "effect_diff": [
+            152,
+            226
+          ],
+          "_restore_inverse_baselines": [
+            229,
+            250
+          ],
+          "inverse_closure": [
+            253,
+            256
+          ],
+          "record_sites": [
+            678,
+            708
+          ],
+          "_shape_changed": [
+            711,
+            733
+          ],
+          "_managed_boundaries": [
+            736,
+            804
+          ],
+          "rebase_patch": [
+            807,
+            953
+          ],
+          "_materialization_sites": [
+            956,
+            1125
+          ],
+          "inverse_address_resolver": [
+            1128,
+            1231
+          ],
+          "walk": [
+            163,
+            184
+          ],
+          "logical_parent": [
+            186,
+            202
+          ],
+          "topology": [
+            204,
+            208
+          ],
+          "__init__": [
+            260,
+            288
+          ],
+          "step": [
+            290,
+            291
+          ],
+          "capture": [
+            293,
+            334
+          ],
+          "before": [
+            336,
+            389
+          ],
+          "compiler": [
+            391,
+            437
+          ],
+          "after": [
+            439,
+            492
+          ],
+          "finish": [
+            494,
+            655
+          ],
+          "materializations": [
+            658,
+            675
+          ],
+          "continuation": [
+            1180,
+            1195
+          ],
+          "guarded_ref": [
+            871,
+            876
+          ],
+          "replay_ref": [
+            878,
+            886
+          ],
+          "resolve": [
+            1197,
+            1206
+          ],
+          "site": [
+            1208,
+            1229
+          ],
+          "replay_binding": [
+            347,
+            366
+          ],
+          "physical_ref": [
+            1016,
+            1022
+          ],
+          "valid_image": [
+            1044,
+            1047
+          ]
+        }
+      },
+      {
+        "path": "/home/user/work/agent/astrid/sdk/timeline/_root_inverse.py",
+        "sha256": "217735ed42e2d483674a54e2c6e29a8387c56791fc7f9419be1be771ea6f6f0d",
+        "bytes": 17917,
+        "functions": {
+          "normalize_root_inputs": [
+            12,
+            44
+          ],
+          "inverse_root_manifest": [
+            47,
+            71
+          ],
+          "clip_cache_stages": [
+            74,
+            115
+          ],
+          "recover_source": [
+            118,
+            134
+          ],
+          "recover_rebound_sources": [
+            137,
+            162
+          ],
+          "restore_root_baselines": [
+            165,
+            235
+          ],
+          "occurrence_orders": [
+            238,
+            281
+          ],
+          "arrange_restored": [
+            284,
+            299
+          ]
+        }
+      },
+      {
+        "path": "/home/user/work/agent/astrid/sdk/timeline/_recording.py",
+        "sha256": "85aefe0328a7c9787a18c2b7e19eb8b3e4220a1c53627d1e16102b42b29c8b43",
+        "bytes": 15781,
+        "functions": {
+          "active": [
+            11,
+            13
+          ],
+          "selection": [
+            16,
+            55
+          ],
+          "selection_matches": [
+            58,
+            68
+          ],
+          "guard": [
+            283,
+            287
+          ],
+          "__init__": [
+            72,
+            87
+          ],
+          "capture_input": [
+            89,
+            91
+          ],
+          "read": [
+            93,
+            99
+          ],
+          "select": [
+            101,
+            111
+          ],
+          "bind": [
+            113,
+            115
+          ],
+          "dependency": [
+            117,
+            119
+          ],
+          "assign": [
+            121,
+            138
+          ],
+          "write": [
+            140,
+            141
+          ],
+          "clear": [
+            143,
+            144
+          ],
+          "object": [
+            146,
+            153
+          ],
+          "create": [
+            155,
+            182
+          ],
+          "create_entity": [
+            184,
+            208
+          ],
+          "create_asset": [
+            210,
+            220
+          ],
+          "compile_inputs": [
+            222,
+            233
+          ],
+          "compile_mirrors": [
+            235,
+            244
+          ],
+          "finish": [
+            246,
+            280
+          ]
+        }
+      },
+      {
+        "path": "/home/user/work/agent/astrid/sdk/timeline/_collections.py",
+        "sha256": "c9f4bb22dab33cf393c4eab2aba604766c3ea6509a5912c029fbacf1e11f9c5e",
+        "bytes": 16311,
+        "functions": {
+          "member": [
+            13,
+            18
+          ],
+          "container": [
+            21,
+            29
+          ],
+          "_identity": [
+            32,
+            34
+          ],
+          "shape": [
+            37,
+            62
+          ],
+          "rows": [
+            65,
+            92
+          ],
+          "order": [
+            95,
+            111
+          ],
+          "arrange": [
+            114,
+            125
+          ],
+          "selection_overlap": [
+            128,
+            160
+          ],
+          "_ordinary_create": [
+            185,
+            197
+          ],
+          "insertion_boundary": [
+            200,
+            204
+          ],
+          "_boundary_order": [
+            207,
+            213
+          ],
+          "restoration_orders": [
+            216,
+            301
+          ],
+          "tagged": [
+            38,
+            42
+          ],
+          "__init__": [
+            166,
+            168
+          ],
+          "boundary": [
+            170,
+            182
+          ]
+        }
+      },
+      {
+        "path": "/home/user/work/agent/astrid/sdk/timeline/_doc_patch.py",
+        "sha256": "15cc750407eb3b057900befd95cd2bd30c28f41acda9bb2f31e5c2f48f5ad00f",
+        "bytes": 31157,
+        "functions": {
+          "identity_key": [
+            9,
+            17
+          ],
+          "identities": [
+            20,
+            29
+          ],
+          "null_clip_mirror": [
+            32,
+            36
+          ],
+          "location": [
+            39,
+            63
+          ],
+          "storage_path": [
+            66,
+            76
+          ],
+          "value_at": [
+            79,
+            84
+          ],
+          "replace_at": [
+            87,
+            106
+          ],
+          "normalized_path": [
+            109,
+            115
+          ],
+          "managed_edges": [
+            270,
+            279
+          ],
+          "validate_payload": [
+            282,
+            300
+          ],
+          "allocations": [
+            303,
+            328
+          ],
+          "verify_media": [
+            331,
+            356
+          ],
+          "validate_submitted_change": [
+            359,
+            376
+          ],
+          "apply_change": [
+            379,
+            457
+          ],
+          "item_scoped_removal": [
+            460,
+            475
+          ],
+          "patch": [
+            478,
+            534
+          ],
+          "inverse_changes": [
+            537,
+            566
+          ],
+          "__init__": [
+            120,
+            140
+          ],
+          "resolve": [
+            142,
+            153
+          ],
+          "payload": [
+            155,
+            172
+          ],
+          "binding": [
+            174,
+            181
+          ],
+          "native_sites": [
+            183,
+            222
+          ],
+          "install": [
+            224,
+            267
+          ],
+          "media": [
+            332,
+            347
+          ]
+        }
+      },
+      {
+        "path": "/home/user/work/agent/astrid/sdk/timeline/commands.py",
+        "sha256": "b89798a439daace286e6702647c670c532a21575719e4df1bda87607b855ee96",
+        "bytes": 16807,
+        "functions": {
+          "operations": [
+            29,
+            115
+          ],
+          "validate_command": [
+            132,
+            164
+          ],
+          "_normalize": [
+            167,
+            183
+          ],
+          "_verify_claims": [
+            186,
+            198
+          ],
+          "execute": [
+            201,
+            308
+          ],
+          "commands": [
+            128,
+            129
+          ]
+        }
+      },
+      {
+        "path": "/home/user/work/agent/astrid/sdk/timeline/inverse.py",
+        "sha256": "06bd41f404a40c17a1ec06b49c8443e0e755f622134822ede55fb3ca79234cee",
+        "bytes": 69553,
+        "functions": {
+          "_inverse_item_path": [
+            36,
+            81
+          ],
+          "_physical_state": [
+            93,
+            108
+          ],
+          "_input_read_state": [
+            111,
+            148
+          ],
+          "_set_physical": [
+            151,
+            162
+          ],
+          "_validate_occurrences": [
+            165,
+            176
+          ],
+          "_recording_storage": [
+            180,
+            195
+          ],
+          "_row_identity": [
+            198,
+            202
+          ],
+          "_patch": [
+            205,
+            275
+          ],
+          "_root_addresses": [
+            278,
+            314
+          ],
+          "coalesce": [
+            317,
+            475
+          ],
+          "_effect_writes": [
+            478,
+            482
+          ],
+          "_dependency_overlap": [
+            485,
+            524
+          ],
+          "check_intervening": [
+            527,
+            688
+          ],
+          "_consumer_conflict": [
+            691,
+            693
+          ],
+          "_dependents": [
+            696,
+            733
+          ],
+          "_asset_dependents": [
+            736,
+            754
+          ],
+          "_legacy_inverse_sites": [
+            757,
+            784
+          ],
+          "_materialized_payload_read": [
+            787,
+            823
+          ],
+          "_authenticated_timeline_scope_binding": [
+            826,
+            836
+          ],
+          "_authenticated_timeline_scope_read": [
+            839,
+            844
+          ],
+          "_validate_inputs": [
+            847,
+            916
+          ],
+          "_restore_write": [
+            918,
+            941
+          ],
+          "_stage_restoration_orders": [
+            944,
+            992
+          ],
+          "_validate_materializations": [
+            995,
+            1029
+          ],
+          "apply_inverse": [
+            1032,
+            1218
+          ],
+          "__init__": [
+            85,
+            87
+          ],
+          "get": [
+            89,
+            90
+          ],
+          "address": [
+            576,
+            592
+          ],
+          "source_address": [
+            338,
+            352
+          ],
+          "value_address": [
+            354,
+            356
+          ],
+          "fold": [
+            358,
+            382
+          ],
+          "selected_overlap": [
+            594,
+            612
+          ],
+          "binding_consumes": [
+            614,
+            617
+          ],
+          "references": [
+            739,
+            745
+          ],
+          "proven_sites": [
+            850,
+            883
+          ],
+          "identities": [
+            502,
+            508
+          ],
+          "selection_address": [
+            609,
+            610
+          ],
+          "contains": [
+            1210,
+            1215
+          ],
+          "historical_order": [
+            469,
+            470
+          ]
+        }
+      },
+      {
+        "path": "/home/user/work/agent/astrid/sdk/timeline/commit.py",
+        "sha256": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7",
+        "bytes": 89194,
+        "functions": {
+          "_json": [
+            32,
+            37
+          ],
+          "_digest": [
+            40,
+            41
+          ],
+          "_require": [
+            44,
+            46
+          ],
+          "_id": [
+            49,
+            50
+          ],
+          "_document_pin": [
+            53,
+            59
+          ],
+          "_manifest": [
+            62,
+            74
+          ],
+          "_verify_document": [
+            77,
+            151
+          ],
+          "bundle_from_document": [
+            154,
+            166
+          ],
+          "_inverse_media_removals": [
+            169,
+            258
+          ],
+          "_inverse_clip_transcripts": [
+            261,
+            299
+          ],
+          "document_from_bundle": [
+            302,
+            420
+          ],
+          "_failure": [
+            423,
+            429
+          ],
+          "_load": [
+            432,
+            439
+          ],
+          "_hydrate": [
+            442,
+            525
+          ],
+          "_inverse_element_sources": [
+            528,
+            570
+          ],
+          "_schema_resolver": [
+            573,
+            658
+          ],
+          "_history": [
+            661,
+            687
+          ],
+          "_records": [
+            690,
+            704
+          ],
+          "_reservation_refs": [
+            707,
+            727
+          ],
+          "_check_reservations": [
+            730,
+            1022
+          ],
+          "create_runtime_commit_service": [
+            1472,
+            1476
+          ],
+          "contains": [
+            281,
+            284
+          ],
+          "resolve": [
+            579,
+            656
+          ],
+          "valid": [
+            735,
+            749
+          ],
+          "boundary": [
+            767,
+            768
+          ],
+          "restore_native_fork": [
+            770,
+            932
+          ],
+          "scan": [
+            934,
+            995
+          ],
+          "__init__": [
+            1029,
+            1030
+          ],
+          "capture_candidate_inputs": [
+            1032,
+            1038
+          ],
+          "project_capture": [
+            1040,
+            1158
+          ],
+          "commit": [
+            1160,
+            1469
+          ],
+          "load_boundary": [
+            1272,
+            1282
+          ],
+          "select_at": [
+            1290,
+            1297
+          ],
+          "patch_boundary": [
+            1364,
+            1369
+          ]
+        }
+      },
+      {
+        "path": "/home/user/work/agent/astrid/sdk/timeline/_commit_preview.py",
+        "sha256": "9380dd2e3eb9c041b8515e20d979e2cce4aa0ca9cbfeed81f40c315357f77c36",
+        "bytes": 5371,
+        "functions": {
+          "prepared_records": [
+            7,
+            22
+          ],
+          "capture_sequential_execution": [
+            25,
+            90
+          ],
+          "complete_preview": [
+            93,
+            115
+          ],
+          "source": [
+            50,
+            55
+          ],
+          "execution": [
+            77,
+            83
+          ],
+          "read_binding": [
+            63,
+            67
+          ]
+        }
+      },
+      {
+        "path": "/home/user/work/agent/astrid/sdk/timeline/native_word_anchor.py",
+        "sha256": "771d833188de33556a1853e95e84703e7ce5b36e2a6b2d2c55cb975f93f36744",
+        "bytes": 20984,
+        "functions": {
+          "_namespace": [
+            28,
+            31
+          ],
+          "reference_schema": [
+            34,
+            37
+          ],
+          "guard_basis": [
+            40,
+            45
+          ],
+          "authored": [
+            48,
+            54
+          ],
+          "binding": [
+            57,
+            133
+          ],
+          "legacy_binding": [
+            136,
+            170
+          ],
+          "_legacy_beat": [
+            173,
+            179
+          ],
+          "_has_legacy_beat": [
+            182,
+            185
+          ],
+          "_legacy_beat_source": [
+            188,
+            194
+          ],
+          "_guard_legacy_beat_inputs": [
+            197,
+            227
+          ],
+          "compile_authored": [
+            230,
+            281
+          ],
+          "declare": [
+            284,
+            335
+          ],
+          "_derived": [
+            338,
+            343
+          ],
+          "compile_recorded": [
+            346,
+            392
+          ],
+          "capture_anchor": [
+            395,
+            400
+          ]
+        }
+      },
+      {
+        "path": "/home/user/work/agent/astrid/sdk/timeline/sync.py",
+        "sha256": "e0b9aa8815623299aaf24547f0f6bcff9178c2db59ed5cc178a1bdc18a58c254",
+        "bytes": 34670,
+        "functions": {
+          "_flight_kind": [
+            29,
+            39
+          ],
+          "_connection": [
+            42,
+            48
+          ],
+          "_response": [
+            51,
+            55
+          ],
+          "_pin": [
+            58,
+            62
+          ],
+          "_native_command": [
+            65,
+            72
+          ],
+          "_ack": [
+            75,
+            134
+          ],
+          "__init__": [
+            138,
+            141
+          ],
+          "require": [
+            79,
+            81
+          ],
+          "open": [
+            144,
+            181
+          ],
+          "_state": [
+            183,
+            191
+          ],
+          "_bundle": [
+            193,
+            197
+          ],
+          "_capture_bundle": [
+            199,
+            216
+          ],
+          "queue_move": [
+            218,
+            222
+          ],
+          "admit_assembly": [
+            224,
+            267
+          ],
+          "queue_assembly": [
+            269,
+            276
+          ],
+          "queue_proposal": [
+            278,
+            293
+          ],
+          "queue": [
+            295,
+            300
+          ],
+          "queue_many": [
+            302,
+            311
+          ],
+          "commit": [
+            313,
+            318
+          ],
+          "commit_many": [
+            320,
+            369
+          ],
+          "_queue": [
+            371,
+            372
+          ],
+          "_stage": [
+            374,
+            400
+          ],
+          "move": [
+            402,
+            410
+          ],
+          "trim": [
+            412,
+            420
+          ],
+          "undo": [
+            422,
+            462
+          ],
+          "restore": [
+            464,
+            488
+          ],
+          "flush": [
+            490,
+            492
+          ],
+          "submit": [
+            494,
+            523
+          ],
+          "_flush": [
+            525,
+            601
+          ],
+          "_flight_body": [
+            603,
+            623
+          ],
+          "prepare": [
+            506,
+            521
+          ]
+        }
+      },
+      {
+        "path": "/home/user/work/agent/tests/editing_conformance/test_word_binding_recipe.py",
+        "sha256": "f23e227bce165d3c7ada70d9742c1e6f36159823c845df9903903f71575228bd",
+        "bytes": 26065,
+        "functions": {
+          "recipe": [
+            29,
+            32
+          ],
+          "bundle": [
+            35,
+            41
+          ],
+          "pick": [
+            44,
+            56
+          ],
+          "history": [
+            59,
+            64
+          ],
+          "projected": [
+            67,
+            69
+          ],
+          "undo": [
+            72,
+            74
+          ],
+          "restore": [
+            77,
+            80
+          ],
+          "window_command": [
+            83,
+            109
+          ],
+          "test_undo_recovers_before_binding_even_when_text_writes_are_equal": [
+            114,
+            139
+          ],
+          "test_follow_rebases_original_choice_after_source_move_and_reorder": [
+            143,
+            168
+          ],
+          "test_phrase_records_all_consecutive_main_word_ids": [
+            171,
+            181
+          ],
+          "test_same_word_in_reused_cas_clips_retains_raw_source_through_undo": [
+            185,
+            207
+          ],
+          "test_last_write_clear_undo_restore_and_restore_inverse": [
+            210,
+            230
+          ],
+          "test_equal_text_references_produce_distinct_canonical_revisions": [
+            233,
+            248
+          ],
+          "test_equal_text_restore_recovers_the_selected_publications_binding": [
+            251,
+            266
+          ],
+          "test_invalid_inputs_fail_closed_before_acceptance": [
+            270,
+            294
+          ],
+          "test_raw_canonical_bundle_compiles_in_fresh_process_without_history": [
+            297,
+            325
+          ],
+          "test_reference_is_authoritative_and_kernel_never_searches_echo": [
+            329,
+            353
+          ],
+          "test_legacy_ambiguous_text_refuses_choose_occurrence": [
+            357,
+            363
+          ],
+          "test_legacy_unique_word_in_reused_cas_is_still_ambiguous_without_raw_clip": [
+            367,
+            371
+          ],
+          "test_unique_legacy_word_compiles_without_persisting_a_reference": [
+            374,
+            382
+          ],
+          "test_on_until_clear_preserves_other_reference_and_opaque_fields": [
+            385,
+            414
+          ],
+          "test_half_open_window_and_exact_rational_fps_are_validated_at_acceptance": [
+            417,
+            440
+          ],
+          "test_stale_anchor_refuses_when_intervening_window_excludes_selected_word": [
+            443,
+            456
+          ],
+          "test_invalid_authored_reference_never_falls_back_to_valid_echo": [
+            475,
+            516
+          ],
+          "test_typed_second_offset_preserves_main_precision_at_rational_frame_boundary": [
+            519,
+            528
+          ],
+          "test_stale_choice_and_guarded_inverse_refuse_competing_target_writes": [
+            531,
+            552
+          ],
+          "trim": [
+            87,
+            91
+          ],
+          "checked": [
+            99,
+            105
+          ],
+          "no_search": [
+            347,
+            348
+          ]
+        }
+      },
+      {
+        "path": "/home/user/work/agent/tests/editing_conformance/word_binding_recipe.py",
+        "sha256": "5f22b3f0c8d9a81a5bd5cc520fc5295c3049ab89c9c9f46f565dd1c87f55307c",
+        "bytes": 11096,
+        "functions": {
+          "authored": [
+            62,
+            68
+          ],
+          "binding": [
+            71,
+            104
+          ],
+          "legacy_binding": [
+            107,
+            139
+          ],
+          "compile_authored": [
+            142,
+            164
+          ],
+          "declare": [
+            167,
+            195
+          ],
+          "install": [
+            198,
+            229
+          ],
+          "registered": [
+            204,
+            205
+          ],
+          "checked": [
+            207,
+            213
+          ],
+          "compiled": [
+            215,
+            225
+          ]
+        }
+      },
+      {
+        "path": "/home/user/work/agent/tests/editing_conformance/test_timing_retained_inputs.py",
+        "sha256": "058d82106471efe8d586007f78784775622d962ce551e882fb65d95a62f4b60c",
+        "bytes": 21444,
+        "functions": {
+          "first_selection": [
+            41,
+            77
+          ],
+          "retained": [
+            81,
+            163
+          ],
+          "test_exact_retained_v1_compiles_after_cas_v2_restart_and_cache_corruption": [
+            166,
+            241
+          ],
+          "test_accepted_rebase_has_exact_document_but_no_reconstructible_word_choice": [
+            244,
+            270
+          ],
+          "test_reselecting_ordinal_after_real_rebase_silently_changes_raw_source_clip": [
+            274,
+            303
+          ],
+          "test_source_authority_refuses_without_latest_fallback": [
+            307,
+            362
+          ],
+          "test_retained_v1_and_explicit_v2_keep_window_and_raw_source_identity": [
+            367,
+            418
+          ],
+          "head": [
+            98,
+            100
+          ],
+          "request": [
+            102,
+            106
+          ],
+          "submit": [
+            108,
+            113
+          ],
+          "observed": [
+            118,
+            121
+          ],
+          "restart": [
+            148,
+            151
+          ],
+          "create": [
+            153,
+            157
+          ],
+          "authorize": [
+            333,
+            335
+          ],
+          "project": [
+            386,
+            387
+          ],
+          "commit": [
+            343,
+            349
+          ]
+        }
+      },
+      {
+        "path": "/home/user/work/agent/tests/editing_conformance/test_native_sheet_current_runtime.py",
+        "sha256": "11f92ff62731dbf9a7876a84bb1a5db6869f8a8cca618107a206e7eebefe16ac",
+        "bytes": 61926,
+        "functions": {
+          "run": [
+            53,
+            55
+          ],
+          "export": [
+            58,
+            71
+          ],
+          "detached_commit_file": [
+            74,
+            79
+          ],
+          "seed": [
+            82,
+            89
+          ],
+          "raw": [
+            92,
+            95
+          ],
+          "tiny_cut_parent": [
+            98,
+            134
+          ],
+          "_public_document": [
+            137,
+            159
+          ],
+          "_publish_current_candidate": [
+            162,
+            186
+          ],
+          "_seed_authoring_document": [
+            189,
+            193
+          ],
+          "seed_tiny_cut_parent": [
+            196,
+            201
+          ],
+          "seed_labeled_tiny_cut_parent": [
+            204,
+            214
+          ],
+          "seed_rational_tiny_cut_parent": [
+            217,
+            227
+          ],
+          "_replace_media_ids": [
+            230,
+            239
+          ],
+          "seed_shared_occurrence_parent": [
+            242,
+            416
+          ],
+          "seed_document_diff_parent": [
+            419,
+            432
+          ],
+          "test_http_emitter_null_presence_and_track_roundtrip_is_authenticated": [
+            435,
+            607
+          ],
+          "occurrence_source_pin": [
+            610,
+            622
+          ],
+          "persisted_bundle": [
+            625,
+            629
+          ],
+          "test_http_omitted_native_clip_row_delete_retries_rebases_and_refuses_changed_selection": [
+            632,
+            705
+          ],
+          "test_http_cut_owned_native_sheet_hold_reloads_and_undoes": [
+            708,
+            757
+          ],
+          "test_http_connected_label_clear_is_lossless_across_native_frontends": [
+            761,
+            820
+          ],
+          "test_http_attached_parent_label_publish_retries_exact_capture_and_inverse": [
+            823,
+            879
+          ],
+          "test_http_original_attached_add_track_publish_retries_exact_capture_and_guarded_inverse": [
+            882,
+            937
+          ],
+          "test_http_connected_rational_move_is_lossless_across_native_frontends": [
+            941,
+            1015
+          ],
+          "test_http_connected_occurrence_move_preserves_shared_source_across_native_frontends": [
+            1019,
+            1111
+          ],
+          "test_http_semantic_batch_original_pins_reload_inverse_redo": [
+            1115,
+            1152
+          ],
+          "test_http_sheet_lost_ack_restart_exact_retry_original_guards_and_aba": [
+            1155,
+            1192
+          ],
+          "collect": [
+            248,
+            256
+          ],
+          "append_source": [
+            304,
+            307
+          ],
+          "prepare": [
+            421,
+            428
+          ],
+          "child": [
+            475,
+            476
+          ],
+          "forbidden_legacy_publish": [
+            1039,
+            1040
+          ],
+          "no_read": [
+            1174,
+            1175
+          ]
+        }
+      },
+      {
+        "path": "/home/user/work/agent/tests/editing_conformance/test_inverse_stage_runtime_regressions.py",
+        "sha256": "6c02629fded13bbd97a2cd62d5954083c04cbead04a67e6b30df500f2a4fc1f1",
+        "bytes": 18723,
+        "functions": {
+          "_public_inverse": [
+            52,
+            60
+          ],
+          "_origin_snapshot": [
+            63,
+            75
+          ],
+          "_assert_source_identity": [
+            78,
+            90
+          ],
+          "_durable_snapshot": [
+            93,
+            94
+          ],
+          "_full_request": [
+            97,
+            114
+          ],
+          "_submit": [
+            117,
+            128
+          ],
+          "_inverse_request": [
+            131,
+            145
+          ],
+          "runtime_case": [
+            149,
+            234
+          ],
+          "_forward_case": [
+            237,
+            254
+          ],
+          "test_known_whole_inverse_authenticates_forward_history_and_exact_redo": [
+            258,
+            341
+          ],
+          "_accepted_case": [
+            344,
+            354
+          ],
+          "test_known_inverse_refuses_forged_source_publication_and_step_without_writes": [
+            357,
+            378
+          ],
+          "test_known_inverse_refuses_native_write_and_aba_without_writes": [
+            381,
+            413
+          ]
+        }
+      }
+    ]
+  },
+  "historical_comparisons": [
+    {
+      "repo": "runtime",
+      "historical_head": "a3cd1a3214fa1632879c21d82d1abb9ea720b1de",
+      "path": "runtime_protocol/timeline_commit_auth.py",
+      "sha256": "4ac2b8792fe0389afb6eb710a348c35fa196131a13cab175bd3646f7d2cc0aeb",
+      "equal_current": true
+    },
+    {
+      "repo": "agent",
+      "historical_head": "0ae146e1b0acc6e4a82ba6b4f905d88bad48320c",
+      "path": "astrid/sdk/timeline/_step_undo.py",
+      "sha256": "a38bb078ecd2579399f131fa0a08a9bedd339226f92b9d8ac27de2b6d27827a6",
+      "equal_current": true
+    },
+    {
+      "repo": "agent",
+      "historical_head": "0ae146e1b0acc6e4a82ba6b4f905d88bad48320c",
+      "path": "astrid/sdk/timeline/_commit_patch.py",
+      "sha256": "05a1ebc6b251c75f4d5dc272598adc295ce5bf5a8c4596ad08497de6676264be",
+      "equal_current": true
+    },
+    {
+      "repo": "agent",
+      "historical_head": "0ae146e1b0acc6e4a82ba6b4f905d88bad48320c",
+      "path": "astrid/sdk/timeline/_root_inverse.py",
+      "sha256": "217735ed42e2d483674a54e2c6e29a8387c56791fc7f9419be1be771ea6f6f0d",
+      "equal_current": true
+    }
+  ],
+  "checks": {
+    "ast_parse_and_in_memory_compile": "PASS",
+    "python_files": 24,
+    "product_imports_or_execution": false,
+    "product_or_test_changes": false,
+    "baseline_candidate_bytes_identical": true
+  }
+}

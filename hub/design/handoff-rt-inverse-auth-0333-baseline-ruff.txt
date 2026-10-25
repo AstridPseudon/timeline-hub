@@ -1,0 +1,4 @@
+cwd=/tmp/w-b57f3556a9/inverse-source-audit/baseline
+command=['/home/user/work/venv-agent/bin/ruff', 'check', '--no-cache', 'runtime_protocol/timeline_commit_auth.py', 'tests/test_timeline_inverse_stage_authentication.py']
+exit=0
+All checks passed!

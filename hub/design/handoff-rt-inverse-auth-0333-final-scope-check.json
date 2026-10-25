@@ -1,0 +1,24 @@
+{
+  "git_status_porcelain": "",
+  "git_diff_check_exit": 0,
+  "source_test_hashes": [
+    {
+      "path": "runtime_protocol/timeline_commit_auth.py",
+      "sha256": "4ac2b8792fe0389afb6eb710a348c35fa196131a13cab175bd3646f7d2cc0aeb",
+      "equal_head": true
+    },
+    {
+      "path": "runtime_protocol/timeline_commit_store.py",
+      "sha256": "2a68990b180326585b7f0abaf1ee54c8ff9340e83663f17cd1efff1b2bd78a5c",
+      "equal_head": true
+    },
+    {
+      "path": "tests/test_timeline_inverse_stage_authentication.py",
+      "sha256": "c5b44e6d11209385cbf85af4cfa7114802d2ab5e8e7b8712f9ec0a8d14fc155b",
+      "equal_head": true
+    }
+  ],
+  "tests_executed": false,
+  "candidate": null,
+  "completion": "finite source handback"
+}

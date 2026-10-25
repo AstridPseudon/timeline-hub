@@ -1,0 +1,6 @@
+cwd=/tmp/w-b57f3556a9/inverse-source-audit/baseline
+command=['/home/user/work/venv-agent/bin/mypy', '--no-incremental', '--follow-imports=skip', '--ignore-missing-imports', '--cache-dir', '/tmp/w-b57f3556a9/inverse-source-audit/mypy-cache-baseline', 'runtime_protocol/timeline_commit_auth.py', 'tests/test_timeline_inverse_stage_authentication.py']
+exit=0
+runtime_protocol/timeline_commit_auth.py:1859: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+runtime_protocol/timeline_commit_auth.py:1860: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+Success: no issues found in 2 source files

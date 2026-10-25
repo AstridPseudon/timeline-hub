@@ -1,0 +1,87 @@
+{
+  "selectors": [
+    "tests/editing_conformance/test_word_binding_recipe.py::test_same_word_in_reused_cas_clips_retains_raw_source_through_undo[True]",
+    "tests/editing_conformance/test_word_binding_recipe.py::test_last_write_clear_undo_restore_and_restore_inverse",
+    "tests/editing_conformance/test_word_binding_recipe.py::test_on_until_clear_preserves_other_reference_and_opaque_fields",
+    "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_omitted_native_clip_row_delete_retries_rebases_and_refuses_changed_selection"
+  ],
+  "artifacts": {
+    "10077": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D86-10077-d86-incremental-main-0107-body.xml",
+      "sha256": "7d41234f24b5378b548472ae1d07e1d9bc66bb9138a5443e725e03c140c8c3e0",
+      "bytes": 2722093,
+      "counts": {
+        "pass": 30,
+        "fail": 39,
+        "error": 176,
+        "skip": 0
+      },
+      "exact_selector_matches": [
+        {
+          "selector": "tests/editing_conformance/test_word_binding_recipe.py::test_same_word_in_reused_cas_clips_retains_raw_source_through_undo[True]",
+          "outcome": "fail",
+          "messages": [
+            "inverse stage native ranges are missing, reordered, or overlapping"
+          ],
+          "original_test_sites": [
+            "tests/editing_conformance/test_word_binding_recipe.py:200:",
+            "tests/editing_conformance/test_word_binding_recipe.py:73: in undo"
+          ],
+          "record_payload_available": false
+        },
+        {
+          "selector": "tests/editing_conformance/test_word_binding_recipe.py::test_last_write_clear_undo_restore_and_restore_inverse",
+          "outcome": "fail",
+          "messages": [
+            "inverse stage timeline effects differ from authenticated source history"
+          ],
+          "original_test_sites": [
+            "tests/editing_conformance/test_word_binding_recipe.py:229:",
+            "tests/editing_conformance/test_word_binding_recipe.py:73: in undo"
+          ],
+          "record_payload_available": false
+        },
+        {
+          "selector": "tests/editing_conformance/test_word_binding_recipe.py::test_on_until_clear_preserves_other_reference_and_opaque_fields",
+          "outcome": "fail",
+          "messages": [
+            "inverse stage native ranges are missing, reordered, or overlapping"
+          ],
+          "original_test_sites": [
+            "tests/editing_conformance/test_word_binding_recipe.py:396:",
+            "tests/editing_conformance/test_word_binding_recipe.py:73: in undo"
+          ],
+          "record_payload_available": false
+        },
+        {
+          "selector": "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_omitted_native_clip_row_delete_retries_rebases_and_refuses_changed_selection",
+          "outcome": "fail",
+          "messages": [
+            "inverse stage native writes do not cover its authenticated effect image"
+          ],
+          "original_test_sites": [
+            "tests/editing_conformance/test_native_sheet_current_runtime.py:654:"
+          ],
+          "record_payload_available": false
+        }
+      ]
+    },
+    "11789": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D86-later102-first-body-0303/evidence/fd86-later102-first-body-0303/output/fd86-later102-first-body-0303.xml",
+      "sha256": "284160dafc14842a784c577a3b5b80f9a30976dcaf5324982242da5c595ecef4",
+      "bytes": 1554703,
+      "counts": {
+        "pass": 10,
+        "fail": 24,
+        "error": 68,
+        "skip": 0
+      },
+      "exact_selector_matches": []
+    }
+  },
+  "original_fixture_root": {
+    "path": "/tmp/pytest-of-root/pytest-1",
+    "exists": false
+  },
+  "claim": "Historical XML/source facts only; no current execution, authenticated source rows, or rejected prepared records recreated."
+}
