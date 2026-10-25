@@ -54,7 +54,8 @@ def film(runtime):  # noqa: F811
     service = runtime.service()
     imported = service.import_media(
         runtime.project, VIDEO_BYTES, media_type='video/mp4', original_name='picture.mp4',
-        actor_id='cli-trim-fixture', idempotency_key='picture',
+        actor_id='cli-trim-fixture', width=1920, height=1080, duration_seconds=42.0,
+        idempotency_key='picture',
     )['data']
     selection = service.get_project_media_selection(runtime.project, {
         'asset': imported['variant_id'], 'generation_id': imported['generation_id'],
