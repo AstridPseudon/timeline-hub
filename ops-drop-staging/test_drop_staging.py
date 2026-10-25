@@ -4,15 +4,20 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import os
-from pathlib import Path
 import stat
 import subprocess
 import tarfile
 import tempfile
 import unittest
+from contextlib import redirect_stdout
+from pathlib import Path
+from unittest.mock import patch
 
+import drop_staging
+from drop_staging import DropError, execute, preflight
 
 ROOT = Path(__file__).resolve().parent
 CALLER = ROOT / "drop-staging"
@@ -29,7 +34,9 @@ def _manifest(evidence: Path, names: list[str]) -> None:
                 "mode": stat.S_IMODE(path.stat().st_mode),
             }
         )
-    (evidence / "manifest.json").write_text(json.dumps({"schema_version": 1, "files": rows}) + "\n")
+    (evidence / "manifest.json").write_text(
+        json.dumps({"schema_version": 1, "files": rows}) + "\n"
+    )
 
 
 class DropStagingCliTests(unittest.TestCase):
@@ -65,6 +72,16 @@ class DropStagingCliTests(unittest.TestCase):
         os.chmod(staging / "mode.txt", 0o640)
         return staging
 
+    def make_worker(self, name: str) -> Path:
+        worker = self.workers / name
+        worker.mkdir(parents=True)
+        (worker / "ended").write_text("done\n")
+        evidence = worker / "evidence"
+        evidence.mkdir()
+        (evidence / "raw.txt").write_text("raw evidence\n")
+        _manifest(evidence, ["raw.txt"])
+        return worker
+
     def test_finished_worker_packs_and_preserves_evidence(self) -> None:
         staging = self.make_staging()
         before = (self.worker / "evidence" / "raw.txt").read_bytes()
@@ -76,14 +93,24 @@ class DropStagingCliTests(unittest.TestCase):
         archive = self.worker / "staging.tgz"
         self.assertTrue(archive.is_file())
         with tarfile.open(archive, "r:gz") as bundle:
-            self.assertEqual(sorted(member.name for member in bundle.getmembers()), ["staging", "staging/mode.txt", "staging/nested", "staging/nested/frame.txt"])
+            self.assertEqual(
+                sorted(member.name for member in bundle.getmembers()),
+                [
+                    "staging",
+                    "staging/mode.txt",
+                    "staging/nested",
+                    "staging/nested/frame.txt",
+                ],
+            )
         self.assertEqual((self.worker / "evidence" / "raw.txt").read_bytes(), before)
         self.assertTrue((self.worker / "evidence" / "manifest.json").is_file())
         self.assertTrue((self.worker / "staging-drop.log").is_file())
 
     def test_low_disk_uses_durable_fallback(self) -> None:
         staging = self.make_staging()
-        result = self.run_cli("finished-worker", "staging", "--pack-reserve-bytes", str(1 << 60))
+        result = self.run_cli(
+            "finished-worker", "staging", "--pack-reserve-bytes", str(1 << 60)
+        )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         payload = json.loads(result.stdout)
         self.assertEqual(payload["status"], "fallback")
@@ -142,10 +169,22 @@ class DropStagingCliTests(unittest.TestCase):
 
     def test_refusals_leave_fixture_unchanged(self) -> None:
         cases = [
-            ("running", lambda: (self.worker / "running").write_text("1\n"), "running marker"),
+            (
+                "running",
+                lambda: (self.worker / "running").write_text("1\n"),
+                "running marker",
+            ),
             ("not-ended", lambda: (self.worker / "ended").unlink(), "has not ended"),
-            ("missing-manifest", lambda: (self.worker / "evidence" / "manifest.json").unlink(), "manifest"),
-            ("bad-hash", lambda: (self.worker / "evidence" / "raw.txt").write_text("tampered\n"), "hash mismatch"),
+            (
+                "missing-manifest",
+                lambda: (self.worker / "evidence" / "manifest.json").unlink(),
+                "manifest",
+            ),
+            (
+                "bad-hash",
+                lambda: (self.worker / "evidence" / "raw.txt").write_text("tampered\n"),
+                "hash mismatch",
+            ),
             ("keep", lambda: (self.worker / "KEEP").write_text("hold\n"), "KEEP"),
         ]
         for name, setup, expected in cases:
@@ -157,7 +196,9 @@ class DropStagingCliTests(unittest.TestCase):
                 self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
                 self.assertIn(expected, result.stdout)
                 self.assertTrue(staging.exists())
-                self.assertEqual((staging / "nested" / "frame.txt").read_bytes(), before)
+                self.assertEqual(
+                    (staging / "nested" / "frame.txt").read_bytes(), before
+                )
                 # Give each subcase a fresh target and remove only this fixture's
                 # own marker so later cases are independent.
                 if (self.worker / "running").exists():
@@ -192,6 +233,129 @@ class DropStagingCliTests(unittest.TestCase):
         self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
         self.assertIn("symlink", result.stdout)
         self.assertTrue(outside.exists())
+
+    def test_active_ancestor_refuses_before_archive_or_fallback(self) -> None:
+        staging = self.worker / "parent" / "ACTIVE" / "staging"
+        staging.mkdir(parents=True)
+        (staging / "payload.txt").write_text("payload\n")
+        result = self.run_cli(
+            "finished-worker",
+            "parent/ACTIVE/staging",
+            "--pack-reserve-bytes",
+            str(1 << 60),
+        )
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn("protected marker applies to target ancestor", result.stdout)
+        self.assertTrue(staging.is_dir())
+        self.assertEqual((staging / "payload.txt").read_text(), "payload\n")
+        self.assertFalse((self.worker / "staging-drop.log").exists())
+
+    def test_worker_swap_after_preflight_refuses_the_replacement(self) -> None:
+        self.make_staging()
+        original = self.workers / "original-worker"
+        replacement_staging: Path | None = None
+        real_preflight = drop_staging.preflight
+
+        def preflight_then_swap(
+            workers_root: Path, worker_name: str, relative_target: str
+        ) -> tuple[object, list[str]]:
+            nonlocal replacement_staging
+            checked, reasons = real_preflight(
+                workers_root, worker_name, relative_target
+            )
+            self.assertEqual(reasons, [])
+            self.assertIsNotNone(checked)
+            self.worker.rename(original)
+            replacement = self.make_worker("finished-worker")
+            replacement_staging = replacement / "staging"
+            replacement_staging.mkdir()
+            (replacement_staging / "replacement.txt").write_text("replacement\n")
+            return checked, reasons
+
+        with patch.object(drop_staging, "preflight", side_effect=preflight_then_swap):
+            with redirect_stdout(io.StringIO()):
+                status = drop_staging.main(
+                    ["--workers-root", str(self.workers), "finished-worker", "staging"]
+                )
+        self.assertEqual(status, 1)
+        self.assertTrue((original / "staging").is_dir())
+        assert replacement_staging is not None
+        self.assertTrue(replacement_staging.is_dir())
+        self.assertEqual(
+            (original / "staging" / "nested" / "frame.txt").read_text(), "frame\n"
+        )
+        self.assertEqual(
+            (replacement_staging / "replacement.txt").read_text(), "replacement\n"
+        )
+
+    def test_ancestor_marker_added_after_preflight_refuses(self) -> None:
+        staging = self.worker / "parent" / "staging"
+        staging.mkdir(parents=True)
+        (staging / "payload.txt").write_text("payload\n")
+        checked, reasons = preflight(self.workers, "finished-worker", "parent/staging")
+        self.assertEqual(reasons, [])
+        self.assertIsNotNone(checked)
+        (self.worker / "parent" / "KEEP").write_text("hold\n")
+        with self.assertRaises(DropError):
+            execute(checked)
+        self.assertTrue(staging.is_dir())
+        self.assertEqual((staging / "payload.txt").read_text(), "payload\n")
+
+    def test_manifest_symlink_is_refused_without_reading_external_file(self) -> None:
+        staging = self.make_staging()
+        external = self.root / "external-manifest.json"
+        external.write_text('{"schema_version": 1, "files": []}\n')
+        manifest = self.worker / "evidence" / "manifest.json"
+        manifest.unlink()
+        manifest.symlink_to(external)
+        result = self.run_cli("finished-worker", "staging")
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn("manifest", result.stdout)
+        self.assertTrue(staging.is_dir())
+        self.assertEqual(external.read_text(), '{"schema_version": 1, "files": []}\n')
+
+    def test_symlinked_manager_root_refuses_without_external_read_or_delete(
+        self,
+    ) -> None:
+        staging = self.make_staging()
+        external = self.root / "outside-orch"
+        lease_notes = external / "managers" / "runtime" / "notes"
+        lease_notes.mkdir(parents=True)
+        lease = lease_notes / "runtime.lease"
+        lease.write_text("finished-worker\n")
+        (self.root / "managers").symlink_to(
+            external / "managers", target_is_directory=True
+        )
+        result = self.run_cli("finished-worker", "staging")
+        self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+        self.assertIn("manager lease root", result.stdout)
+        self.assertTrue(staging.is_dir())
+        self.assertEqual(lease.read_text(), "finished-worker\n")
+
+    def test_listing_digest_distinguishes_hardlink_identity(self) -> None:
+        hard_worker = self.make_worker("hard-worker")
+        copy_worker = self.make_worker("copy-worker")
+        hard_staging = hard_worker / "staging"
+        copy_staging = copy_worker / "staging"
+        hard_staging.mkdir()
+        copy_staging.mkdir()
+        os.link(hard_worker / "evidence" / "raw.txt", hard_staging / "shared.txt")
+        (copy_staging / "shared.txt").write_text("raw evidence\n")
+        hard_result = self.run_cli("hard-worker", "staging")
+        copy_result = self.run_cli("copy-worker", "staging")
+        self.assertEqual(
+            hard_result.returncode, 0, hard_result.stdout + hard_result.stderr
+        )
+        self.assertEqual(
+            copy_result.returncode, 0, copy_result.stdout + copy_result.stderr
+        )
+        hard_log = json.loads((hard_worker / "staging-drop.log").read_text())
+        copy_log = json.loads((copy_worker / "staging-drop.log").read_text())
+        self.assertNotEqual(hard_log["listing_sha256"], copy_log["listing_sha256"])
+        self.assertTrue((hard_worker / "evidence" / "raw.txt").is_file())
+        self.assertEqual(
+            (hard_worker / "evidence" / "raw.txt").read_text(), "raw evidence\n"
+        )
 
 
 if __name__ == "__main__":
