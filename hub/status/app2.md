@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T04:55:56Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
-# app2 board, 2026-10-25T04:54Z
+<!-- app2 | 2026-10-25T04:58:12Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# app2 board, 2026-10-25T04:56Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -12,7 +12,7 @@
 | P4 | CLI, Python, sheet, ten notes and rerun | Sol; Luna; service | Complete on recorded tuple | merged | 17739;28012;11615 | Ten notes in one commit, per-step undo/redo, restart, show/history and200-409-200 conflict rerun passed. | Agent543d andf6cda / Runtimea5d |
 | P4-current | Qualify original ten-note timing | Runtime Luna; service | Normal Agent786385 and Runtime0c62 adopted | doing | Runtime original0445 | Runtime board names sole unchanged45s original0445 on fixed tuple. No result yet; historical25257 remains NO-GO. Source/security PASS. | Agent786385 / Runtime0c62 |
 | readiness-after-bootstrap | Qualify mounted readiness | App service; Proof review | D45 and current leaves passed | merged | D45; current23809 and9310 | D45 readiness passed. Current producer reports P2 readiness19.5 seconds and P3 readiness41.4 seconds; downstream failures remain. | App663 / Agent079 / Runtime37eb |
-| P2 | Eight original core gestures | App and Main services | App owner04:45 serial order | doing | SWAP actual2714; placement merge | GO3/8. SWAP2714 running after preflight3377 PASS. Placement rereview0443 PASS134/types/lint; merge queued. ADD,element,parent then full tour remain. | App319911 / Runtime0c62 |
+| P2 | Eight original core gestures | App and Main services | App owner04:45 serial order | doing | App sequence0450; wholepath0450 | GO3/8. SWAP2714 NO-GO at native Undo503; wholepath0450 owns cause. Placement source HOME9cb56. ADD,element,parent and full tour remain. | Captured319911 / Runtime0c62 |
 | P2-preflight26414 | Qualify same-ID source guard failure | Independent Luna | Independent1136 complete | merged | Verdict1136; validation return1144 | Gate NO-GO;source PASS;preflightFAIL;all8 NOTRUN. Direct remote run/snapshot/provider custody UNKNOWN. Finite runner return1144 passed7+10 controls. | Actual26414 |
 | P2-26414-validation | Run semantic controls with real Vitest | Luna | Correct runner on exact source | merged | ap2-P2-26414-validation-return-1144 | Seven semantic Vitest and10 Node-native controls PASS. Prior3 types/lint/list8 reused by identity. No source edit; actual26414 stays preflight NO-GO. | Exact d6ed |
 | P3 | Original Gate5 journey | App service; independent Luna | Independent2024 GO | merged | Actual15493; producer2015; verdict2024 | GO exit0/248s. Readiness1 and original1 PASS; both mounts, exact5/3, merged B, history, restart, canonical and undo passed. Final cut reruns remain. | Appc184 / Agent22d / Runtime44917 |
@@ -80,7 +80,7 @@
 
 | P3-D82-original | Strict recorded-command original | App service; independent Luna | Preflight11918 and verdict2024 PASS | merged | Actual15493; independent2024 | GO. Exact tuple, synthetic snapshot, six protected hashes and both XML qualified. No new run; rendering and final-cut scope remain separate. | Appc184bd0bec |
 | P3-D83-diagnostic | Cancel redundant P3 diagnostic | App Luna | ORCH20:47 correction; original GO | gated:cancelled | App diagnostic2040 and batched2040 stopped | App reports no service submission or source merge. Both workers stopped and recycled; original15493 independently GO. No follow-up. | Branch63bc retained |
-| P2-D83-order | Qualify remaining gesture paths | App and Main services | Adopted D97; App owner04:45 order | doing | SWAP2714; placement rereview0443 PASS | SWAP then ADD,element,parent individually. Placement complete closure qualified; normal merge queued. Required full tour follows owner order. | Recorded tuples |
+| P2-D83-order | Qualify remaining gesture paths | App and Main services | App owner04:45 serial order | doing | Held sequence0450; wholepath0450 | SWAP2714 terminal Undo503; no backend cause inferred. Sequence0450 owns ADD,element,parent. Placement correction HOME9cb56; full tour required. | Recorded tuples |
 
 | P2-element-22971 | Preserve current element failure scope | App service; Runtime source facts | Next meaningful owner-lane evidence | review | Actual7131; facts2227; Runtime2231 | NO-GO172s after native/readiness PASS; applied5s FAIL. No observed accept/receipt/response. Local one-command shape accepts0.315s but is not exact realm replay. Cause UNKNOWN. | Appbceb; Runtime732c |
 
@@ -106,9 +106,9 @@ regressions: 0 newly established on owner-lane boards and H54 header. D77a consu
 
 Blockers: Runtime P4 proof — Adoption wait cleared; Runtime original0445 owns the sole unchanged45s original on Agent786385/Runtime0c62. No result yet; historical25257 FAIL45.557s remains.
 
-Blockers: App P2 qualification — Isolated3/8 GO. SWAP2714 running; placement rereview0443 PASS and normal merge queued. App owns serial ADD,element,parent and required full tour.
+Blockers: App P2 qualification — Isolated3/8 GO. SWAP2714 fails native Undo503; App wholepath0450 owns cause. Sequence0450 owns ADD,element,parent. Placement source HOME9cb56; mounted and full tour owed.
 
-Next ready: None for Proof under D56.4. Runtime original0445 owns sole main P4. App SWAP2714 is running; placement qualified and merge queued. Owner lanes consume exact adoption receipts.
+Next ready: None for Proof under D56.4. Runtime original0445 owns sole main P4. App sequence0450 owns ADD,element,parent; wholepath0450 owns failedSWAP facts. Placement source HOME9cb56; original proof owed.
 
 Current gate evidence:
 - P3 latest15493: independent2024 GO, exit0/248s; readiness1 and original1 PASS, XML zero failures/errors. Exact Appc184bd0bec5d10292647600272329534e058d474 / Agent22d00393f7d944f1d01505637ca00b1995c3e158 / Runtime44917baf5976d6a655d582fafc63fde7b6cb242d / Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40. Genuine same-tree snapshot4863f39c, spec93c2 and five other protected hashes qualified. Both mounts, exact5/3, merged B, history, restart, canonical closure and guarded undo pass. [Independent GO](../../design/app-P3-15493-GO-verdict-2024.md). No renderer or final-cut full credit; historical14240 remains NO-GO.
@@ -156,11 +156,11 @@ Safety: D88 automatic safety review stopped its reviewer for possible cybersecur
 
 Disk: 7578042368 bytes free at 2026-10-25T04:54Z. All21 remaining local trees have worker KEEP markers; eligible finished non-KEEP targets0. Prior cleanup, pin-release and compact refusals stay stopped.
 
-Pass 2026-10-25T04:54Z: Inbox unchanged791665; all1313 Proof records done. Headerfdc52d3ff05e15f4 retains D100 and D56.4, with no new Proof assignment. App04:48 reports SWAP2714 running after preflight3377 PASS; placement rereview0443 PASS134/types/lint and merge queued. Runtime04:40 now names sole P4original0445 on Agent786385/Runtime0c62; adoption wait is cleared. Existing0451 peer already relays both Agent and App adoption, so no duplicate ask. No Proof dispatch, body, escalation, Git mutation or stopped cleanup retry.
+Pass 2026-10-25T04:54Z: Inbox unchanged791665; all1313 Proof records done. Headerfdc52d3ff05e15f4 retains D100 and D56.4, with no new Proof assignment. App04:51 reports SWAP2714 readiness1 PASS/original1 FAIL76.77s at native Undo503495via902. Backend outcome unknown. App wholepath0450 owns comparison with passing inverses; sole sequence0450 owns ADD,element,parent. Placement reviewed source normally HOME9cb56; no mounted credit. Runtime04:40 now names sole P4original0445 on Agent786385/Runtime0c62; adoption wait is cleared. Existing0451 peer already relays both Agent and App adoption, so no duplicate ask. No Proof dispatch, body, escalation, Git mutation or stopped cleanup retry.
 
 
 Evidence: [Asset27438 independent GO](/home/user/timeline-hub/hub/design/app-P2-asset27438-GO-review-0315.md), [Single5678 independent GO](../../design/app-P2-single5678-GO-resume-0255.md), [corrected P4 sample](../../design/agt-P4-crossprocess-sample-0242-report.md), [App current owners](/home/user/timeline-hub/hub/status/app.md), [Runtime current owners](/home/user/timeline-hub/hub/status/runtime.md), [Agent current owners](/home/user/timeline-hub/hub/status/agent.md).
 
-Next watch: approximately05:05Z. Check sole main P4original0445, App SWAP2714 and placement merge, D100 owner source and final-cut readiness. D56.4 stand-down remains binding.
+Next watch: approximately05:05Z. Check sole main P4original0445, App sequence0450 and wholepath0450, D100 owner source and final-cut readiness. D56.4 stand-down remains binding.
 
 Inbox read through791665 bytes. STATUS is restart point; [D83 handoff](../../design/peer-app2-to-app-agent-20261024T2058Z-D83-ready-handoff.md), [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md), [D84a release](../../design/runtime-D84a-release-2205.md) remain binding.
