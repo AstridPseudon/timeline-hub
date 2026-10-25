@@ -1184,7 +1184,10 @@ class ForegroundRuntimeBoundary(LocalRuntimeBoundary):
         if self.daemon is None:
             raise BootstrapError("Runtime is already running in another process; stop it before using run")
         daemon = self.daemon
-        for thread, name in ((daemon.thread, "Runtime listener"), (daemon.door_thread, "browser door")):
+        threads = [(daemon.thread, "Runtime listener")]
+        if daemon.door is not None:
+            threads.append((daemon.door_thread, "browser door"))
+        for thread, name in threads:
             if thread is None or not thread.is_alive():
                 raise BootstrapError(f"{name} stopped unexpectedly")
         if daemon.service is None or not daemon.service._verified:

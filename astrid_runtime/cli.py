@@ -413,7 +413,8 @@ def _run_foreground(paths: RuntimePaths, config: BootstrapConfig, *, json_mode: 
                         result = bootstrap(paths, boundary, config)
                         cancellation.check()
                         boundary.check_running()
-                        _wait_for_door(paths, result, boundary)
+                        if config.door is not None:
+                            _wait_for_door(paths, result, boundary)
                         startup_ready = True
                         cancellation.check()
                         _emit_ready(result, json_mode=json_mode)
@@ -490,9 +491,6 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if result["healthy"] else 1
     if args.command == "run":
         config = _config(args, paths)
-        if config.door is None:
-            _emit({"ok": False, "error": "run requires the browser door; enable --hosted-origin"}, json_mode=True)
-            return 1
         try:
             return _run_foreground(paths, config, json_mode=args.json)
         except Exception as exc:

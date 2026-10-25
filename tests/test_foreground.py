@@ -53,6 +53,10 @@ def test_parser_accepts_up_wait_and_foreground_run(tmp_path):
     assert up.command == "up" and up.wait
     run = cli.parser().parse_args(["run", "--data-root", str(tmp_path / "data")])
     assert run.command == "run"
+    offline_run = cli.parser().parse_args([
+        "run", "--data-root", str(tmp_path / "offline-data"), "--hosted-origin", "off",
+    ])
+    assert cli._config(offline_run, RuntimePaths.sandbox(tmp_path / "offline-support")).door is None
 
 
 def test_wait_for_door_accepts_matching_runtime_and_realm(tmp_path, monkeypatch):
@@ -262,6 +266,63 @@ def test_run_command_routes_to_in_process_foreground_owner(tmp_path, monkeypatch
     monkeypatch.setattr(subprocess, "Popen", lambda *_a, **_k: pytest.fail("run must own its daemon in this process"))
     assert cli.main(["run", "--data-root", str(tmp_path / "data"), "--json"]) == 0
     assert boundary.stops == 1
+
+
+def test_run_command_accepts_disabled_hosted_door_and_stays_foreground(tmp_path, monkeypatch):
+    paths = RuntimePaths.sandbox(tmp_path / "support")
+    config = cli.BootstrapConfig(door=None)
+    boundary = _Boundary()
+    registration = {}
+
+    class FakeEvent:
+        def __init__(self):
+            self.stopped = False
+
+        def is_set(self):
+            return self.stopped
+
+        def wait(self, _timeout):
+            if not self.stopped:
+                registration["handler"]()
+                return False
+            return True
+
+        def set(self):
+            self.stopped = True
+
+    monkeypatch.setattr(cli, "_paths", lambda _args: paths)
+    monkeypatch.setattr(cli, "_config", lambda *_: config)
+    monkeypatch.setattr(cli.process_control, "configure_from", lambda _support: None)
+    monkeypatch.setattr(cli.threading, "Event", FakeEvent)
+    monkeypatch.setattr(cli, "ForegroundRuntimeBoundary", lambda: boundary)
+    monkeypatch.setattr(cli, "bootstrap", lambda *_: _result(endpoint=None, origin=None))
+    monkeypatch.setattr(cli, "_wait_for_door", lambda *_: pytest.fail("door-off foreground run must not wait for a door"))
+    monkeypatch.setattr(cli, "platform", SimpleNamespace(
+        log_dir=lambda _home: tmp_path / "logs",
+        owner_only=lambda _path: None,
+        install_stop_handlers=lambda callback: (registration.update(handler=callback) or (lambda: None)),
+    ))
+
+    assert cli.main(["run", "--hosted-origin", "off", "--json"]) == 0
+    assert boundary.stops == 1
+
+
+def test_foreground_boundary_requires_door_thread_only_when_door_is_configured():
+    from astrid_runtime.runtime_boundary import ForegroundRuntimeBoundary
+
+    alive = SimpleNamespace(is_alive=lambda: True)
+    boundary = ForegroundRuntimeBoundary()
+    boundary.daemon = SimpleNamespace(
+        thread=alive,
+        door=None,
+        door_thread=None,
+        service=SimpleNamespace(_verified=True),
+    )
+    boundary.check_running()
+
+    boundary.daemon.door = object()
+    with pytest.raises(BootstrapError, match="browser door stopped unexpectedly"):
+        boundary.check_running()
 
 
 def test_foreground_constructor_failure_removes_private_bootstrap_token(tmp_path, monkeypatch):

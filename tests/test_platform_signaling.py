@@ -3,9 +3,9 @@ from __future__ import annotations
 import ctypes
 import errno
 import os
-import signal
 import subprocess
 import sys
+import threading
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -13,6 +13,104 @@ import pytest
 
 from runtime_protocol import platform
 from tests.lanes import requires_linux_tree_custody
+
+
+@pytest.mark.parametrize("control_event", [2, 5, 6])
+def test_windows_console_close_waits_for_runtime_cleanup_before_return(monkeypatch, control_event):
+    handlers = {}
+    registrations = []
+    requested = threading.Event()
+    callback_calls = []
+
+    def fake_signal(signum, handler):
+        previous = handlers.get(signum, f"previous:{signum}")
+        handlers[signum] = handler
+        return previous
+
+    def register(handler, add):
+        registrations.append((handler, add))
+
+    windows_signals = SimpleNamespace(SIGINT=2, SIGTERM=15, SIGBREAK=21, signal=fake_signal)
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
+    monkeypatch.setattr(platform, "signal", windows_signals)
+    monkeypatch.setattr(platform, "_windows_console_handler_api", lambda: (lambda function: function, register))
+
+    def stop(signum, frame):
+        callback_calls.append((signum, frame))
+        requested.set()
+
+    restore = platform.install_stop_handlers(stop)
+    native_handler = registrations[0][0]
+    assert handlers[windows_signals.SIGBREAK] is stop
+    assert native_handler(0) is False
+
+    results = []
+    thread = threading.Thread(target=lambda: results.append(native_handler(control_event)))
+    thread.start()
+    requested.wait()
+    assert callback_calls == [(windows_signals.SIGTERM, None)]
+    assert thread.is_alive()
+
+    restore()
+    thread.join()
+
+    assert results == [True]
+    assert [add for _handler, add in registrations] == [True, False]
+    assert handlers[windows_signals.SIGINT] == "previous:2"
+    assert handlers[windows_signals.SIGTERM] == "previous:15"
+    assert handlers[windows_signals.SIGBREAK] == "previous:21"
+
+
+@pytest.mark.parametrize("failure", ["api", "registration"])
+def test_windows_console_handler_failure_restores_python_signals(monkeypatch, failure):
+    handlers = {}
+
+    def fake_signal(signum, handler):
+        previous = handlers.get(signum, f"previous:{signum}")
+        handlers[signum] = handler
+        return previous
+
+    def api():
+        if failure == "api":
+            raise OSError("console API unavailable")
+
+        def register(_handler, add):
+            assert add is True
+            raise OSError("console handler unavailable")
+
+        return lambda function: function, register
+
+    windows_signals = SimpleNamespace(SIGINT=2, SIGTERM=15, SIGBREAK=21, signal=fake_signal)
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
+    monkeypatch.setattr(platform, "signal", windows_signals)
+    monkeypatch.setattr(platform, "_windows_console_handler_api", api)
+
+    expected_error = "console API unavailable" if failure == "api" else "console handler unavailable"
+    with pytest.raises(OSError, match=expected_error):
+        platform.install_stop_handlers(lambda *_: None)
+
+    assert handlers[windows_signals.SIGINT] == "previous:2"
+    assert handlers[windows_signals.SIGTERM] == "previous:15"
+    assert handlers[windows_signals.SIGBREAK] == "previous:21"
+
+
+def test_windows_hidden_service_without_console_keeps_signal_handlers(monkeypatch):
+    handlers = {}
+
+    def fake_signal(signum, handler):
+        previous = handlers.get(signum, "previous")
+        handlers[signum] = handler
+        return previous
+
+    windows_signals = SimpleNamespace(SIGINT=2, SIGTERM=15, SIGBREAK=21, signal=fake_signal)
+    monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
+    monkeypatch.setattr(platform, "signal", windows_signals)
+    monkeypatch.setattr(platform, "_windows_console_handler_api", lambda: None)
+    callback = lambda *_: None
+    restore = platform.install_stop_handlers(callback)
+    assert all(handler is callback for handler in handlers.values())
+    restore()
+    assert set(handlers.values()) == {"previous"}
 
 
 def _intercept_close(monkeypatch, record, pidfd=18):

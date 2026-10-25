@@ -1306,15 +1306,83 @@ def signal_process(expected, signum):
         os.close(fd)
 
 
+def _windows_console_handler_api():
+    """Return the typed Windows console callback and registration function."""
+    from ctypes import wintypes
+
+    handler_type = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.DWORD)
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel.GetConsoleCP.argtypes = []
+    kernel.GetConsoleCP.restype = wintypes.UINT
+    if not kernel.GetConsoleCP():
+        # pythonw and hidden login services have no console-close channel.
+        return None
+    register = kernel.SetConsoleCtrlHandler
+    register.argtypes = [handler_type, wintypes.BOOL]
+    register.restype = wintypes.BOOL
+
+    def set_handler(handler, add):
+        if not register(handler, add):
+            raise ctypes.WinError(ctypes.get_last_error())
+
+    return handler_type, set_handler
+
+
 def install_stop_handlers(callback):
-    """Install native console/service-manager stop handlers; return a restore callable."""
+    """Install native console/service-manager stop handlers; return a restore callable.
+
+    Windows does not deliver console close, logoff, or shutdown through Python's
+    signal module. Its native handler asks the Runtime's normal stop path to run,
+    then stays alive until the owner has finished reclaiming its children.
+    """
     signals = [signal.SIGINT, signal.SIGTERM]
     if hasattr(signal, "SIGBREAK"):
         signals.append(signal.SIGBREAK)
     previous = {value: signal.signal(value, callback) for value in signals}
+
+    native_handler = None
+    cleanup_complete = None
+    set_native_handler = None
+    if sys.platform == "win32":
+        try:
+            api = _windows_console_handler_api()
+            if api is not None:
+                handler_type, set_native_handler = api
+                cleanup_complete = threading.Event()
+
+            def on_console_control(control):
+                # CTRL_CLOSE_EVENT, CTRL_LOGOFF_EVENT and CTRL_SHUTDOWN_EVENT.
+                # Ctrl+C and Ctrl+Break already flow through the signal handlers.
+                if control not in (2, 5, 6):
+                    return False
+                try:
+                    callback(signal.SIGTERM, None)
+                except BaseException:
+                    # Never let a Python exception cross the native callback ABI.
+                    pass
+                cleanup_complete.wait()
+                return True
+
+            if api is not None:
+                native_handler = handler_type(on_console_control)
+                set_native_handler(native_handler, True)
+        except BaseException:
+            if cleanup_complete is not None:
+                cleanup_complete.set()
+            for value, handler in previous.items():
+                signal.signal(value, handler)
+            raise
+
     def restore():
-        for value, handler in previous.items():
-            signal.signal(value, handler)
+        try:
+            for value, handler in previous.items():
+                signal.signal(value, handler)
+            if native_handler is not None:
+                set_native_handler(native_handler, False)
+        finally:
+            if cleanup_complete is not None:
+                cleanup_complete.set()
+
     return restore
 
 
