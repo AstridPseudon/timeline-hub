@@ -16,7 +16,9 @@ from astrid.core.timeline import moments
 from astrid.core.timeline.authoring_bundle import _digest
 from astrid.sdk.media_transcript import build_transcript, transcript_document_id
 from astrid.sdk.timeline import commit as agent
+from astrid.sdk.timeline._clip_commands import capture_clip_add
 from astrid.sdk.timeline.capture import capture_track_create
+from astrid.sdk.timeline.commit import bundle_from_document
 from astrid.sdk.timeline.compiler import WordBinding
 from astrid.sdk.timeline.units import source_to_timeline_time
 from tests.helpers.runtime import runtime_checkout, use_runtime
@@ -65,10 +67,17 @@ def first_selection(bundle):
 
 
 def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scope=None):
-    # Historical data is authored with the pre-cut public API; measured edits
-    # use the current Runtime and normal provider after reopening this realm.
+    # Source documents are ordinary Runtime data.  The timeline fixture is
+    # bootstrapped through the live commit provider below, not the retired
+    # parent-composition publisher.
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.store import RealmStore
+    from runtime_protocol.timeline_commit_port import route_path
+
+    from astrid.sdk.timeline.commands import execute
+    from astrid.sdk.timeline.emitter import emit_document_commands
+    from astrid.sdk.timeline.native_initialize import capture_initialize
+    from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
 
     root = Path(root)
     RealmStore.initialize(root).close()
@@ -84,39 +93,96 @@ def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scop
         "kind": "media.transcript", "content": content}, idempotency_key="transcript-v1")["data"]
     pin = {"document_id": document_id, "version": 1, "content_digest": _digest(content)}
     opaque = {"opaque_transcript": {"pin": pin, "raw": [None, False, 0, 0.0, {}, [], ""]}}
-    service.create_project_shot(project, {"shot_id": "shot", "name": "Voice"},
-                                idempotency_key="shot")
+
+    service.register_timeline_commit_provider(agent.create_runtime_commit_service())
+    service.create_timeline(project, "film", idempotency_key="timeline")
+
+    def head():
+        value = service.get_project_timeline(project, "film")
+        return {"revision_id": value["head_revision_id"],
+                "publication_id": value["head_publication_id"]}
+
+    def submit(commands, key):
+        current = head()
+        result = service.commit_timeline(
+            project, "film", {
+                "api_version": 1, "project_id": project, "timeline_id": "film",
+                "base_revision_id": current["revision_id"],
+                "base_publication_id": current["publication_id"],
+                "commands": commands,
+            }, idempotency_key=key, publisher="timing-editor",
+            invocation_path=route_path(project, "film"), authorize=lambda: None,
+        )
+        return result["data"]["canonical_document"]
+
+    bootstrap = service.get_project_parent_composition_revision(
+        project, "film", head()["revision_id"])
+    empty = {
+        "schema_version": 1, "project_id": project, "timeline_id": "film",
+        "parent_revision": {key: bootstrap[key] for key in
+                             ("revision_id", "content_digest", "payload")},
+        "shot_revisions": [], "internal_timeline_revisions": [],
+        "dependency_manifest": bootstrap["dependency_manifest"],
+    }
+    bundle = bundle_from_document(empty)
+    initialized = execute(bundle, [capture_initialize(
+        bundle, name="Voice", slug="film", output={
+            "resolution": "1280x720", "fps": FPS, "file": "output.mp4",
+            "background": None, "background_scale": None,
+        },
+    )]).bundle
+    parent_track = capture_track_create(initialized, "parent", {
+        "id": "picture", "kind": "visual",
+    })
+    tracked = execute(initialized, [parent_track]).bundle
+    card = capture_clip_add(tracked, "parent", {
+        "id": "card", "clipType": "am-type", "track": "picture", "at": 0,
+        "hold": 1, "app": {"astrid": {"on": DECLARATION, "for": 0.5}},
+    })
+    carded = execute(tracked, [card]).bundle
+    occurrence = capture_occurrence_create(
+        carded, "occ", "shot", name="Voice", track="picture", on=2, duration=duration_ms / 1000,
+    )
+    occurred = execute(carded, [occurrence]).bundle
+
     voices = [{"id": "voice", "clipType": "media", "track": "vo", "asset": "take",
                "at": 1, "from": 2, "to": 6, "speed": 2}]
     if source_window is not None:
         voices[0]['source_window'] = source_window
     if reused:
         voices.append(dict(voices[0], id="other", at=4))
-    # Initial untracked publication, before a commit history exists. No SQL,
-    # fabricated receipts, or canonical Document aliases seed this realm.
-    service.publish_parent_composition(project, "film", {
-        "project_id": project, "timeline_id": "film", "expected_head": None,
-        "parent_revision_id": "initial-parent",
-        "internal_timeline_revisions": [{"timeline_id": "film", "revision_id": "internal",
-            "payload": {"tracks": [{"id": "vo", "kind": "audio"}],
-                "clips": voices,
-                "registry": {"assets": {"take": {"media_id": media, "type": "audio"}}}}}],
-        "shot_revisions": [{"shot_id": "shot", "revision_id": "shot-revision",
-            "internal_timeline_revision_id": "internal", "payload": {"items": [],
-                **(opaque if opaque_pin_scope == "shot" else {})}}],
-        # The legacy publication seam only accepts numeric output.fps; main's
-        # canvas retains the exact rational consumed by the timing compiler.
-        "parent_composition": {"config": {"output": {"fps": 30000 / 1001},
-            "theme_overrides": {"visual": {"canvas": {"fps": FPS}}},
-            "tracks": [{"id": "picture", "kind": "visual"}]},
-            "clips": [{"id": "card", "clipType": "am-type", "track": "picture", "at": 0,
-                       "hold": 1, "app": {"astrid": {"on": DECLARATION, "for": 0.5}}}],
-            **(opaque if opaque_pin_scope == "parent" else {}),
-            "occurrences": [{"occurrence_id": "occ", "shot_id": "shot",
-                "shot_revision_id": "shot-revision", "placement": {"start_ms": 2000, "track": "picture"},
-                "duration_ms": duration_ms, "source_offset": 0, "speed": 1,
-                **(opaque if opaque_pin_scope == "occurrence" else {})}]}},
-        idempotency_key="initial-publication")
+    after = copy.deepcopy(occurred)
+    after["parent"]["config"]["theme_overrides"] = {"visual": {"canvas": {"fps": FPS}}}
+    after["shots"]["shot"]["payload"].update(
+        {"items": [], **(opaque if opaque_pin_scope == "shot" else {})})
+    internal = after["shots"]["shot"]["internal_timeline"]
+    internal["tracks"] = [{"id": "vo", "kind": "audio"}]
+    internal["clips"] = voices
+    internal["registry"] = {"assets": {"take": {"media_id": media, "type": "audio"}}}
+    if opaque_pin_scope == "parent":
+        after["parent"]["opaque"] = copy.deepcopy(opaque)
+    if opaque_pin_scope == "occurrence":
+        after["placements"][0]["opaque"] = copy.deepcopy(opaque)
+    changes = emit_document_commands(occurred, after)
+    # occurrence.create quantizes its input placement.  The fixture's source
+    # contract retains the original literal 2000ms placement, so carry that
+    # authored field through the generic patch path with its exact guard.
+    placement_start = occurred["placements"][0]["placement"]["start_ms"]
+    changes[0]["args"]["changes"].insert(0, {
+        "op": "set", "ref": "parent",
+        "path": ["occurrences", "occurrence:occ", "placement", "start_ms"],
+        "before": {"state": "present", "value": placement_start}, "value": 2000,
+    })
+    media_admission = {
+        "schema_version": 1, "op": "media.admit", "version": "1", "select": None,
+        "args": {"inputs": [{"pin": {"media_id": media, "content_digest": media}}]},
+    }
+    submit([capture_initialize(
+        bundle, name="Voice", slug="film", output={
+            "resolution": "1280x720", "fps": FPS, "file": "output.mp4",
+            "background": None, "background_scale": None,
+        },
+    ), parent_track, card, occurrence, media_admission, *changes], "initial-commit")
 
     service.close()
     return {'project': project, 'pin': pin, 'source': source}
