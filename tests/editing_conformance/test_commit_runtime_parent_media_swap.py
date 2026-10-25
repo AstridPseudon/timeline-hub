@@ -8,16 +8,13 @@ from __future__ import annotations
 import copy
 import io
 import json
-import os
 import subprocess
-import sys
 from types import SimpleNamespace
 
 import pytest
 from PIL import Image
 
 from tests.editing_conformance.test_commit_runtime_occurrence_media import (
-    body,
     commit,
     foreign_pin,
     inverse,
@@ -67,85 +64,41 @@ def source_bytes(tmp_path):
 
 
 @pytest.fixture(params=['image', 'video'])
-def editing(request, tmp_path, monkeypatch):
-    from tests.helpers.runtime import runtime_checkout, use_runtime
+def editing(request, tmp_path, monkeypatch, operation, media_owner, source_bytes):
+    from tests.editing_conformance.test_commit_runtime_occurrence_media import (
+        editing as occurrence_editing,
+    )
 
-    current = use_runtime()
-    # Build through the genuine historical APIs in a separate interpreter,
-    # then exercise current acceptance after the normal realm migration.
-    seed_runtime = os.environ.get('ASTRID_PARENT_MEDIA_SEED_RUNTIME')
-    if not seed_runtime:
-        seed_runtime = str(runtime_checkout(commit='b2a1d9fd82121a5509769531a2e91aece97d78b9'))
-    script = r'''
-import json, sys
-from pathlib import Path
-from types import SimpleNamespace
-import pytest
-from tests.helpers.runtime import use_runtime
-use_runtime()
-from tests.editing_conformance.test_commit_runtime_occurrence_media import editing
-from tests.editing_conformance.test_commit_runtime_parent_media_swap import source_bytes
-root, kind = Path(sys.argv[1]), sys.argv[2]
-with pytest.MonkeyPatch.context() as patch:
-    fixture = editing.__wrapped__(SimpleNamespace(param=kind), root, patch, 'swap',
-                                  'parent', source_bytes.__wrapped__(root))
-    state = next(fixture)
+    # The current fixture performs the real empty bootstrap, media admission,
+    # native capture and provider acceptance in this process.  Keep the
+    # parent-swap scenarios unchanged while removing the retired historical
+    # publisher and cross-interpreter seed.
+    fixture = occurrence_editing.__wrapped__(
+        SimpleNamespace(param=request.param), tmp_path, monkeypatch, operation, media_owner,
+        source_bytes.__wrapped__(tmp_path),
+    )
     try:
-        fields = ('project', 'old', 'new', 'associations', 'outputs', 'kind', 'operation')
-        value = {key: getattr(state, key) for key in fields}
-        value['effect_template'] = state.effect(state.project)
-        (root / 'seed.json').write_text(json.dumps(value))
+        yield next(fixture)
     finally:
         fixture.close()
-'''
-    seeded = subprocess.run([sys.executable, '-c', script, str(tmp_path), request.param],
-                            env={**os.environ, 'ASTRID_RUNTIME_CHECKOUT': seed_runtime},
-                            capture_output=True, text=True)
-    assert seeded.returncode == 0, seeded.stdout + seeded.stderr
-    from runtime_protocol.auth import CredentialStore
-    from runtime_protocol.service import RuntimeService
-    from runtime_protocol.timeline_commit_port import RequestCommitPort
-    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
-    from runtime_protocol.timeline_commit_validation import validate_commit_value
 
-    state = SimpleNamespace(**json.loads((tmp_path / 'seed.json').read_text()),
-                            root=tmp_path / 'publish', selected=[], closures=[], candidates=[],
-                            before_accept=None, owner=media_owner)
-    state.effect = lambda project: {**copy.deepcopy(state.effect_template), 'target_id': project}
-    state.service = RuntimeService(state.root)
-    state.service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
-    state.credentials = CredentialStore(tmp_path / 'current-credentials')
-    token, _ = state.credentials.provision('media-editor', ['projects:read', 'projects:write'])
-    state.authorize = lambda: state.credentials.require(token, 'projects:write')
-    real_selected = RequestCommitPort.selected_media
-    real_closure = RequestCommitPort.revision_closure
-    real_accept = RequestCommitPort.accept
 
-    def selected_media(port, pin):
-        value = real_selected(port, pin)
-        validate_commit_value(value, 'VerifiedMedia')
-        state.selected.append(copy.deepcopy(value))
-        return value
-
-    def revision_closure(port, revision):
-        value = real_closure(port, revision)
-        state.closures.append(copy.deepcopy(value))
-        return value
-
-    def accept(port, prepared):
-        state.candidates.append(copy.deepcopy(prepared))
-        if state.before_accept:
-            state.before_accept()
-        return real_accept(port, prepared)
-
-    monkeypatch.setattr(RequestCommitPort, 'selected_media', selected_media)
-    monkeypatch.setattr(RequestCommitPort, 'revision_closure', revision_closure)
-    monkeypatch.setattr(RequestCommitPort, 'accept', accept)
-    monkeypatch.syspath_prepend(str(current / 'tests'))
-    try:
-        yield state
-    finally:
-        state.service.close()
+def body(editing, commands=None, *, dry_run=False):
+    commands = commands or [command(editing)]
+    head = editing.service.get_project_timeline(editing.project, 'film')
+    label = 'Parent media swap'
+    changes = [change for call in commands if call['op'] == 'doc.patch'
+               for change in call['args']['changes']]
+    step = {'id': 'parent-media-swap', 'label': label, 'intent': 'Parent media swap',
+            'tags': ['parent-media'], 'command_ordinals': list(range(len(commands))),
+            'patch': changes, 'reads': []}
+    return {'api_version': 1, 'project_id': editing.project, 'timeline_id': 'film',
+            'base_revision_id': head['head_revision_id'],
+            'base_publication_id': head['head_publication_id'], 'commands': commands,
+            'label': label, 'steps': [step], 'merge': 'fields', 'reads': [],
+            'dry_run': dry_run, 'source': {'via': 'python'},
+            'rationale': 'Replace one parent media selection.',
+            'group_id': 'D86-parent-media-swap'}
 
 
 @pytest.fixture(params=['parent', 'occurrence:occ-a'])
