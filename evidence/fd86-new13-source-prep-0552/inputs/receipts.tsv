@@ -1,0 +1,4 @@
+family	protected_receipt	normal_receipt	normal_source	status	selector_count	reason
+opaqueSIX	protected0517 / 3c742a9cfa1509234ca70048612e7302e4e2298c	fd3cbf2b1a9adf772296f54c23649673c054e9b6	bde578505c035ae949ee8176b466bf8297772904	PASS_SOURCE; normal joined	6	meaningful ordered-step source delta; no unchanged 6058 repeat
+ordinaryscriptFOUR	protected0518 / 060d51642bbffdba51297acfe2341329212e82a2	bde578505c035ae949ee8176b466bf8297772904	bde578505c035ae949ee8176b466bf8297772904	PASS_SOURCE; normal joined	4	meaningful capture source delta; no unchanged 6058 repeat
+D103-CLItrim	PASS_SOURCE / ef3d6c0b60c87601b6ba0adb415609e585d33e3e	9c9ba51f65b94b6ea9363caf04329dad5b33f201	bde578505c035ae949ee8176b466bf8297772904	PASS_SOURCE; normal joined	3	D103 handback exact; genuine video setup; no projection/D100 source

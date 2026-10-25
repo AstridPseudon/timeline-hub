@@ -1,0 +1,5 @@
+component	commit	tree	state	role
+agent	bde578505c035ae949ee8176b466bf8297772904	1df31228fa89d4b56c09e505ea2c0aed8c7fc2b0	clean normal source containing opaque339bf, scriptf8bccaaa/ab01bba8, trim793ab7	actual Agent source
+runtime	0c62dfa63db9ff608ac9338388431e31a814e080	e22cdd54b668acea9fe593e6724b34d1a56f7530	generated Runtime lock and consumer	Runtime lock
+app	9cb56c2a3f408b21a7610823b6c3b02a5b2e4f07	4f2babc3f26b4a09a023cc7bf72e8a1000e7bb96	clean exact prior normal body tuple	exact App once
+composition	635f4de06fda22a85fc2e4cfc764d0153a4c9f40	5ab5191a296980a0a6bcd1178ab6902d6478a148	clean exact prior normal body tuple	exact Composition once

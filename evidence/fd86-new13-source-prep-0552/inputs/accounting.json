@@ -1,0 +1,20 @@
+{
+  "packet": "fd86-new13-source-prep-0552",
+  "mode": "source-only preparation; no functional credit",
+  "selected_unique": 13,
+  "families": {"opaqueSIX": 6, "ordinaryscriptFOUR": 4, "D103-CLItrim": 3},
+  "selection_rule": "exact canonical selector set plus meaningful source-delta applicability; never sum historical family counts",
+  "historical_actuals": {
+    "actual19214": {"selected": 61, "policy": "immutable; no selector overlap with NEW13"},
+    "actual1565": {"selected": 60, "PASS": 0, "FAIL": 3, "ERROR": 57, "policy": "immutable; all 60 selectors excluded; never repeat"},
+    "actual6058": {"selected": 96, "PASS": 14, "FAIL": 7, "ERROR": 75, "policy": "immutable; NEW13 overlaps only where source delta is meaningful"}
+  },
+  "source_delta": {
+    "opaqueSIX": "339bf637 source changes ordered setup step claims; normal in bde578",
+    "ordinaryscriptFOUR": "f8bccaaa/ab01bba8 capture changes; script blob retained unchanged; normal in bde578",
+    "D103-CLItrim": "793ab7 source changes invalid PNG setup to genuine tracked MP4; normal 9c9b and bde578"
+  },
+  "excluded": ["prepared60 body at central ID ...1565", "unchanged 6058 selectors without meaningful source delta", "D100 projection source", "D95 NEW2", "restore controls", "inverse7", "P4", "19214/6058/1565 historical outcomes"],
+  "body_status": "not run; requires restored rt-R2-restore-ID5-main-0552 terminal and central capacity above 5.2GB",
+  "source_status": "PASS_SOURCE only; no behavior or semantic verdict"
+}

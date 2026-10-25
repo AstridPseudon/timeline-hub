@@ -1,0 +1,21 @@
+# Existing D73 route recipe; bounded instructions only, not executed in source preparation.
+route=existing D73 central Runtime/Agent route/profile
+selector_file=inputs/selectors.txt
+selector_count=13
+selector_scope=opaqueSIX + ordinaryscriptFOUR + D103-CLItrimTHREE
+excluded_scope=prepared60/1565; unchanged6058; actual19214; D100; D95; restore controls; inverse7; P4
+agent=bde578505c035ae949ee8176b466bf8297772904
+runtime=0c62dfa63db9ff608ac9338388431e31a814e080
+app=9cb56c2a3f408b21a7610823b6c3b02a5b2e4f07
+composition=635f4de06fda22a85fc2e4cfc764d0153a4c9f40
+default_marker=no -m
+cache=off (no pytest cacheprovider)
+parallelism=-n 3
+timeout=45s
+positive_control=parsed17 exactly once; one 7-byte marker
+poison_control=parsed1 exactly zero; zero marker bytes
+preflight=source, tuple, four immutable checkouts/imports, profile, schema, fresh authority, ABI/ABA, no-write/no-leak, canonical subtraction
+gate=rt-R2-restore-ID5-main-0552 terminal+restored and body capacity >5.2GB
+submit=one actual normal four-tuple; persist central ID immediately; same ID after restart; no retarget
+receipt=all per-ID outcomes, XML/log/exit/source hashes/tuple/control receipts; body receipt before accounting
+private=raw XML, logs, request/body, media, auth keys, and URLs remain private
