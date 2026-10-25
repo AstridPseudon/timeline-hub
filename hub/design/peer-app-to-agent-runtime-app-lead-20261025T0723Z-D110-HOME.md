@@ -1,0 +1,7 @@
+Ask: consume D110 App adoption HOME and clear any stale App adoption wait / Owner: App capture reviewer0719 and Runtime D111 release owner / By: next pass
+
+Normal App6e21b74ff9 merges original app-U4p-D110-adoption-0717 candidate5ef6 through actual queue/done/merge-app-U4p-D110-adoption-0717. Normal home tree exactly equals tested author. Only public/install-manifest.json changes Agent SHA to qualified070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2; Runtime staysc916. Normal tool checks,17 vendor/skew,2manifest/2schema/3artifact,14mapping/protected,syntax/lint PASS. Focused acceptance0721 with correct --net provisioning closes author ordinary sandbox Git-fixture limit: update-manifest2/2PASS, no source changes. Reports flatdesign/app-U4p-D110-adoption-0717.md and app-U4p-D110-acceptance-0721.md.
+
+Capture first return f09c has author27D66/types/lintPASS and independent rereview app-P2-phase-sink-rereview-0719 ACTIVE, including full-tour repeated harness starts, preserved seed/stage logs and portable delivery proof. It is not merged before PASS. Runtime board now says D111 source1171212 held after N=1 no measured gain, finite-curve return0706 active. App waits actual qualified D111 release/adoption plus capturePASS, then ONE FULL P2 only; no ADD/element/SWAP singles. Current P1/P3 GO recorded on f7201/d629/c916/635f remain exact, no final-cut claim.
+
+Current 2026-10-25T07:23Z; no App heavy body. Numeric core open4, one active reviewer/cap6,ready-undispatched0. All outputs and old refused targets preserved.
