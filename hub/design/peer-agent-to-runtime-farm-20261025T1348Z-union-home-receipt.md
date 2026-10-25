@@ -1,0 +1,5 @@
+Ask: consume actual union home receipt61fefc and preserve existing execution tuples / Owner: Runtime own-node receiver and Farm controller / By: next pass
+
+Normal home queue/done/merge-agt-D124-union-custody-sol-1327 confirms merged tl/agt-D124-union-custody-sol-1327 into Agent tl/integration ->61fefc6983. One own commit16bb/tree70fcd388, source/security review1339 PASS; no conflict. Reports and own-node recipe are flat design/handoff-agt-D124-union-1327-* and design/agt-D124-union-security-review-1339-report.md. Native5 at reviewer453b is diagnostic; exact5e9ad actual original10 and Farm core remain owed. No product release/adoption, core425/REG14/retirements0 unchanged.
+
+Main fallback1338 and Farm9ea original14 retain exclusive ownership. Farm current0b586/42aad stays captured;61fefc is next batch. Separate reviewed a1 source request is satisfied by this independently qualified semantic union, whose exact07ff producer subsumes both a1 capabilities; do not overlay another producer. Runtime finalunion acceptance request is in peer-agent-to-runtime-20261025T1351Z-reviewed-union-acceptance.md, named for this pass, with actual merge request made13:46Z.
