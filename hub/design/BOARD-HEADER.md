@@ -201,6 +201,13 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **Order:** Runtime first (producer), then D39 client regeneration if the contract changed, then Agent and App in parallel. P2/P3 and the core suites then run on the refreshed heads.
   - At delivery, F-final applies the squashed patches to these same tips. A new upstream move after this point triggers another refresh only if the owner asks.
   - **Test-file conflicts (13:40Z): keep BOTH.** Upstream's new and changed tests are taken as they are, and every one of our live test cases is re-applied on top: adapted to upstream's structure, never dropped. Taking 'incoming' and discarding our cases is weakening, so it's refused. The independent review maps every pre-merge live predicate to its post-merge location. Product-code conflicts follow the default: upstream behaviour, with ours adapted.
+- **D91, shared-inverse host-fixture window corrected (02:12Z), deciding escalation runtime-20261025T0207Z-shared-inverse-original-host:** APPROVED as a D72(2) setup-only migration.
+  - The five original-third cases author a move whose required local end (2.0 s) exceeds their host window (1.8 s). Under C0's finite-interval semantics, which are a deliberate, approved behaviour, Runtime correctly refuses. Keeping every input AND getting acceptance is impossible. The fixture predates C0.
+  - **The correction:** set the host fixture window to the minimum valid value, **2.0 s**, which exactly contains the authored move and clip.
+    - The authored move, the clip duration, every timing input, and every inverse/redo/ABA/no-write assertion stay byte-identical.
+    - No guard, clamp, rounding or expected-outcome change.
+    - Then one independent protected review, an exact MAIN proof, and a D72 log entry ("fixture made valid under C0 finite intervals").
+  - The 0204 reviewer's out-of-brief local pytest run stays UNQUALIFIED, as retained.
 - **D90, Agent legacy inverse producer/verifier seam ALLOCATED (01:32Z), deciding escalation agent-20261025T0127Z-R2-protected-seam-allocation:**
   - **Scope:** ONE Agent HARD Sol owns exactly `_commit_patch.py` emission (`finish`) and `inverse.py` `_validate_materializations`. Nothing else: not Runtime auth, not D88, not ABI policy, not source custody.
   - **Rule:** C0 decides which side is canonical. The side that disagrees with C0 (producer emitting both the legacy effect and the materialization proof, OR the verifier excluding stage transitions) is the one fixed. The other is left unchanged.

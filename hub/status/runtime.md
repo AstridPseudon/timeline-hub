@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T02:06:08Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 0m -->
+<!-- main | 2026-10-25T02:09:21Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 2m -->
 # runtime board, 2026-10-25T01:58:33Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -221,7 +221,7 @@
 | D88b-replay-memo | Reuse replay for recomputed content identity | HARD Sol / Luna | Actual original qualification | merged | Author0109; protective0125 PASS | Integrated6634 tree equals reviewedb69a. Auth172/history81/forgery1/HTTP14 PASS; warm replay0. Original P4/App timing unproved. [Release](../../design/runtime-D88b-release-0142.md) | 6634a17f3 / b69a9f2 |
 | D86-publication1 | Preserve publication revalidation original | Luna | Normal Agent merge then qualification | merging | Review0133 PASS; remote request0142 | Exact one original and genuine provider/publication caller retained. Source/static PASS; behavioral proof pending. | e9aef83258 |
 
-| D86-core-element2 | Preserve two current element originals | Luna | Exact remaining caller findings | review | Review0145 SOURCE_EXACT | SOURCE_EXACT. Lost-ACK metadata refusal and merged versus rebased expectation remain bounded unapplied findings. | Blob91b8d15 |
+| D86-core-element2 | Preserve two current element originals | Luna | Source floor above5.5GB | ready | Bounded source return0210 brief ready | Standing D83 exact merged literal correction prepared; Lost-ACK metadata seam requires precise source attribution. No product or guard changes. | Blob91b8d15 |
 
 | D86-unexecuted23 | Account exact missing JUnit cases | Luna | First actual body still owed | review | rt-D86-10077-unexecuted-facts-0155 complete | 23-ID packet: source-supported integration marker filter; retained deselection record absent. All remain no-JUnit and unqualified. No body/collection. | Existing10077 only |
 
@@ -235,6 +235,8 @@
 
 | P4-D88b-main | Qualify remaining ten-note original | Luna / main service | Actual original body and result | doing | rt-P4-D88b-tennote-0206 requested | Explicit Agent0153 main venue. Exactd407/6634; sole unprofiled45s original; D90 preparation checkpointed before body. | Fixed Agentd407 / Runtime6634 |
 
+| D86-inverse-original-third | Preserve valid original shared move scope | Orchestrator | Incompatible original timing inputs | blocked:orchestrator | Scope request0207 | Exact3.5/3.3/1.8/1.8 cannot fit. Minimum genuine host setup allowance requested; no guard, authored move, clip or assertion changed. | No source change |
+
 Runtime producer: RELEASED D88b product6634a17f3ffd885567ba3c91b6c7a560df7375a4, tree47b376 equals independent reviewedb69a exactly. Auth172/history81/warm forgery1/central14 PASS; canonical15/schema867f unchanged. Old withdrawn D88 prototype never released.
 core open: P4 main3362 FAIL45.244s versus45s and element8897 FAIL5s retain olda3cd scope. D88b warm replay0 is source qualified with uneven timings; next meaningful originals owed. Four R2 retain qualified7c48/732 until final matrix.
 regressions: No newly established Runtime regression. Actual10077 family failures remain real and live; source/static PASS is not functional credit. D77 genuine installed render remains cut blocking.
@@ -242,6 +244,7 @@ Gates: P1 GO31083 and P3 GO15493/2024 retain recorded scopes. All eight P2 unqua
 
 Blockers: Agent families — Exact10077 packet received. MAIN word/M1/inverse functional fixture corrections0145 assigned. Agent owns occurrence48/projection9/M2/sheet/scalar and narrow R2 source. No unchanged whole batch repeat.
 Blockers: App P2 — Parent/single await existing native reply0127 correction. Bulk21061 intended gesture POST absent; exact finite packet published and Runtime-facts wait cleared. Main one meaningful SWAP3a2d assigned0145.
+Blockers: Orchestrator scope — Five original-third inverse cases have incompatible original time inputs. Exact bounded host-fixture decision requested in escalations/runtime-20261025T0207Z-shared-inverse-original-host.md.
 Blockers: Final cut — D59 needs all lanes core0/regressions0, final pinned P1–P5/core, D69 and genuine installed render. Rehearsal/build candidates remain gated; fresh upstream packaging overlaps retained.
 Safety hold: D88 withdrawn after integrity failure and automatic security-analysis denial. Prototype and denied action stay stopped. Distinct owner-authorized D88b protective review passed using existing regression only; no new attack construction.
 Next ready: Finish six0145 source/review/SWAP jobs, review returned fixes immediately and merge PASS branches. D87 six livefrontend source0148 returned; fresh full-stack review0202 next. D90candidate0200 has next heavy priority; parent/single4b984 next.

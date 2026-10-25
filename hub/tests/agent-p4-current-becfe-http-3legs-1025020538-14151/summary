@@ -1,0 +1,64 @@
+test agent-p4-current-becfe-http-3legs-1025020538-14151: fail exit=1 in 50s — p4-current-becfe-http-3legs on integration:agent (agent tree 2dc4afdecc0db062a65d620d215f9272dd1db586)
+cmd: env -i HOME=/root LANG=C.UTF-8 LC_ALL=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 P4_D73_MANIFEST=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P4-D88b-tennote-0206/evidence/p4-d88b.manifest P4_D73_EVIDENCE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P4-D88b-tennote-0206/evidence P4_D73_REQUEST_ID=p4-d88b-tennote-0206 /bin/bash --noprofile --norc -c 'set -eu; exec /home/user/work/wt/agt-pin-d407b877/tools/p4-d73-pinned-launch.sh "$P4_D73_MANIFEST" run -- -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 -m integration "--junitxml=$P4_D73_EVIDENCE/p4-d88b.xml" tests/editing_conformance/test_p4_ten_note_v2_runtime.py::test_http_ten_note_commit_per_step_inverse_and_redo'
+counts: 1 failed in 47.26s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-current-becfe-http-3legs-1025020538-14151/log.txt ---
+../rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py:566: in _accepted_replay
+    original = self.revision_closure(edge["project_id"], edge["timeline_id"], base["revision_id"],
+../rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py:161: in evaluate
+    return method(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py:885: in revision_closure
+    self._validate_closure(document, allow_archived=allow_archived)
+../rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py:1127: in _validate_closure
+    data = self._read_history_object(pin["media_id"][7:])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py:317: in _read_history_object
+    data = ContentAddressedStore(self.store.cas_root).read(object_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../rt-pin-6634a17f/runtime_protocol/cas.py:43: in __init__
+    self.root = Path(root).resolve()
+                ^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/pathlib/_local.py:670: in resolve
+    return self.with_segments(os.path.realpath(self, strict=strict))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+<frozen posixpath>:391: in realpath
+    ???
+/usr/lib/python3.13/pathlib/_local.py:167: in __fspath__
+    return str(self)
+           ^^^^^^^^^
+/usr/lib/python3.13/pathlib/_local.py:233: in __str__
+    self._str = self._format_parsed_parts(self.drive, self.root,
+                                          ^^^^^^^^^^
+/usr/lib/python3.13/pathlib/_local.py:295: in drive
+    self._drv, self._root, self._tail_cached = self._parse_path(self._raw_path)
+                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'pathlib._local.PosixPath'>
+path = '/tmp/pytest-of-root/pytest-2/test_http_ten_note_commit_per_0/realm/cas/sha256'
+
+    @classmethod
+    def _parse_path(cls, path):
+        if not path:
+            return '', '', []
+        sep = cls.parser.sep
+        altsep = cls.parser.altsep
+        if altsep:
+            path = path.replace(altsep, sep)
+        drv, root, rel = cls.parser.splitroot(path)
+        if not root and drv.startswith(sep) and not drv.endswith(sep):
+            drv_parts = drv.split(sep)
+            if len(drv_parts) == 4 and drv_parts[2] not in '?.':
+                # e.g. //server/share
+                root = sep
+            elif len(drv_parts) == 6:
+                # e.g. //?/unc/server/share
+                root = sep
+>       parsed = [sys.intern(str(x)) for x in rel.split(sep) if x and x != '.']
+                                              ^^^^^^^^^^^^^^
+E       Failed: Timeout (>45.0s) from pytest-timeout.
+
+/usr/lib/python3.13/pathlib/_local.py:274: Failed
+=========================== short test summary info ============================
+FAILED tests/editing_conformance/test_p4_ten_note_v2_runtime.py::test_http_ten_note_commit_per_step_inverse_and_redo
+1 failed in 47.26s
