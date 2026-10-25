@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T09:47:29Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 1m -->
-# app board, 2026-10-25T09:46Z
+<!-- app | 2026-10-25T09:51:14Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 0m -->
+# app board, 2026-10-25T09:51Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -285,18 +285,24 @@
 
 | U4p-D112 | Adopt verified identity recovery | Luna normal tools | Normal Runtime 8b389; D112a warm PASS53 | merged | Author0938; acceptance0942 PASS | Normal home tree equals tested author. Node20 updater2,17 vendor/skew,manifest/schema/artifacts/lint PASS; protected8 exact. | Home 28660e72fa |
 
-Integration: App28660e72fa normal merge tree59f8bdd20e equals independently accepted author5550c97a52. Only lock and installer manifest adopt normal Runtime8b389 D112; schema/mappings, D113 and D115 exact. Runtime actualhome0931 qualification and D111b remain owner-side inputs before the full tour.
+| D118-Agent-tail | Help assigned Agent tail clusters | Luna up to three | Agent manager assigns exact unowned nodes and files | blocked:agent | App dispatch after allocation | Local capacity ready above5.0GB; peer requests exact ownership and retained failure inputs. No duplicate writer. | Base Agent070dfc |
+
+Integration: App28660e72fa normal merge tree59f8bdd20e equals independently accepted author5550c97a52. Only lock and installer manifest adopt normal Runtime8b389 D112; schema/mappings, D113 and D115 exact. Runtime D112 release is held for five new Pyright diagnostics, Luna0940; D111b remains owner-side input before the full tour. App source adoption is not release or gate credit.
 core open: 4 — SWAP, element, placement and current asset lack GO. ADD, parent, single and bulk have independent full-tail caseGO in19078. Older asset27438 GO is a separate tuple; current full tour and current asset proof remain owed.
 regressions: D102 context and D110 inverse KeyError source repairs released. Current SWAP initial409 is Runtime D112; placement error is a protected original modal sequence, not a demonstrated product defect.
 
 Decision: D113 conditions satisfied and source merged normally: upstream modal exact, real Close, meaningful dialog-gone assertion, all pre-existing bytes preserved, independent139/types/lint PASS and existing ledger paragraph. No isolated placement body; next proof full P2.
 Blockers: Runtime D111b — corrected cold-read source review0930 PASS; scaling remains open. Sol0930 owns measured source-document/store reads, 97.2 percent of retained read time.
-Blockers: Runtime D112 — App normal adoption is home28660, complete checks and exact tree. Runtime actualhome0931 verifies the normal merged source before its release; no App body submitted.
+Blockers: Runtime D112 — home0931 warm53 and native2 PASS. Five new Pyright optional-connection diagnostics hold release; Runtime Luna0940 owns narrow static fix. App body remains held.
 Blockers: Final cut — complete current P2, final pinned P1-P5/core and genuine installed render remain owed. No ZIP or final-cut claim.
-Next ready: Consume Runtime D112 actualhome qualification. Adopt qualified D111b then FULL P2 on exact current tuple; D113 and D115 already home. No isolated successor.
-live 0 / cap 6; ready-undispatched 0; core open: 4. D112 adoption merged28660 with exact tested tree; no App heavy body. Qualified D111b and Runtime actualhome0931 awaited.
+Next ready: D118 full P2 immediately after qualified D112 release/adoption, without waiting for D111b. Dispatch up to three assigned Agent tail clusters. D113/D115 home; no isolated successor.
+live 0 / cap 6; ready-undispatched 0; core open: 4. D112 adoption merged28660 with exact tested tree; no App heavy body. Runtime D112 static narrowing0940/release and Agent tail allocation awaited. D118 full P2 no longer waits D111b.
 Capacity: Free5.93GB after completed adoption workers recycled normally. Sweep3 removed zero; no eligible clean ended nonKEEP worktrees. Last normal recycle of recreated old04be pin preserved all outputs. Fresh static guards and host0921 CLEAR; zero refusals. All15712 and historical outputs/branches/reports retained. Current inputs and old dirty/refused targets untouched.
-Inbox consumed through2050732 bytes. D114 asset15712 terminal FAIL236s after preflight9872 and readiness PASS on explicit04be/070dfc/1daca/635f; exact native reply equality source0904 assigned. Delayed selfpeer0837 superseded by normalD113HOMEdc8c. D112a answers the scope question and warm0927 PASS53 is published; peer requests actual normal release. D111b firstreturn0923 remains active. Normal D1128b389 adopted by author0938; required Node20 updater acceptance0942 PASS2/2 and normal merge queued; no D111b candidate adopted. No refusal.
+Inbox consumed through2052260 bytes. D114 asset15712 terminal FAIL236s after preflight9872 and readiness PASS on explicit04be/070dfc/1daca/635f; exact native reply equality source0904 assigned. Delayed selfpeer0837 superseded by normalD113HOMEdc8c. D112a answers the scope question and warm0927 PASS53 is published; peer requests actual normal release. D111b firstreturn0923 remains active. Normal D1128b389 adopted by author0938; required Node20 updater acceptance0942 PASS2/2 and normal merge queued; no D111b candidate adopted. No refusal.
 Later: D79 and E paused until ZIP. F-final fresh Appd11417a59/Agent08e6 applied-result suites and genuine installed render belong to Runtime final coordinator. Gating upstream3881 remains frozen. Current P1/P3 GO do not constitute final-cut proofs. Withdrawn D88 and denied cleanup routes remain stopped.
 Evidence: [Modal finding](../../design/app-A2-placement19078-undo-sol-0819-facts.md), [Exact proposal](../../design/app-A2-placement19078-undo-sol-0819-proposal.patch), [Four case GO](../../design/app-D108-P2-19078-pass-review-0807-verdict.md), [Current P1 GO](../../design/app-D108-P1-15075-GO-review-0657.md), [Current P3 GO](../../design/app-D108-P3-31792-GO-review-0706.md), [Asset GO](../../design/app-P2-asset27438-GO-review-0315.md).
 Retained run: app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712. Preserve every output through D55 disposition; no compact, sweep or raw cleanup of this run.
+
+Later: Runtime peer0940 D77 staging OMP fetch returned HTTP403 origin/network permission denial. D117 owner stop applies to that route; no App retry, alternate acquisition, render or ZIP claim. Runtime coordinator owns disposition.
+
+Decision: D11809:50 supersedes the D111b full-tour hold. Next FULL P2 after D112 qualified release/adoption; element reruns when D111b ships. Agent manager assigns up to three unowned tail clusters before App Luna dispatch; peer allocation request sent this pass. Agent product releases require unfiltered core proof before adoption elsewhere.
