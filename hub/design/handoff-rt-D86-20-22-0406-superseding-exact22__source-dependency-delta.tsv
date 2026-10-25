@@ -1,0 +1,3 @@
+scope	current_meaningful_delta	authorization	note
+selected source files	false	source-only corrected packet	No product, test, helper, fixture, schema, pin, generated, dependency, or ledger file changed.
+producer artifacts	false	read-only git-show verification	XML, body log, command, manifest, selector, membership, receipts, and summary were hashed only; none were exported.

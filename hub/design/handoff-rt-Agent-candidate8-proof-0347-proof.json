@@ -1,0 +1,164 @@
+{
+  "task": "F-R1/V2",
+  "packet": "rt-Agent-candidate13-proof-0347",
+  "source_only": true,
+  "semantic_verdict": null,
+  "product_candidate": {
+    "agent_commit": "b415a4277558f62184d5c738f8178635fc551960",
+    "agent_tree": "621daad0bf1e6f2e2be323349787f1f6b7b8c52c",
+    "status": "HELD"
+  },
+  "proof": {
+    "request_id": "f-r1-v2-candidate13-main",
+    "actual_central_id": "EXACTMISSING",
+    "central_id_coverage": "main request-id is retained; manifest retains <ACTUAL_SERVICE_ID> placeholder and no actual central service ID was retained",
+    "selected_unique": 8,
+    "outcome_counts": {
+      "FAIL": 6,
+      "ERROR": 2,
+      "PASS": 0,
+      "SKIP": 0
+    },
+    "preflight_exit": 0,
+    "body_exit": 1,
+    "worker_parallelism": 3,
+    "timeout_seconds": 45,
+    "cache": "disabled",
+    "marker_filter": "none",
+    "selected_manifest_sha256": "9b56953b1a7d0435cd2a216782899cb00a07c415c5da1fce03f2fa94cc16b8e5"
+  },
+  "private_artifacts": [
+    {
+      "artifact": "f-r1-v2-candidate13-main.xml",
+      "sha256": "018f27b951601d3c7e2da94f79aaefa4d2994e7eafe5506b5931d125a667f0cc",
+      "bytes": 85614,
+      "exported": false
+    },
+    {
+      "artifact": "f-r1-v2-candidate13-main.body.log",
+      "sha256": "43e1799ec54b12574fc3b3ab0dd24965d81ae65ba493355e0f35f9835fa9aed3",
+      "bytes": 85449,
+      "exported": false
+    },
+    {
+      "artifact": "f-r1-v2-candidate13-main.preflight.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "exported": false
+    },
+    {
+      "artifact": "f-r1-v2-candidate13-main.command",
+      "sha256": "3a5e76eb66c44b376af26bc1014b73eb371e6b72426f3d797d6dc25e995c7fd1",
+      "bytes": 1466,
+      "exported": false
+    },
+    {
+      "artifact": "f-r1-v2-candidate13-main.runmanifest",
+      "sha256": "27a11858d2af2d3c922dc609dbbcae555e22b3f6a71aa684ff4b61b25a80dff0",
+      "bytes": 788,
+      "exported": false
+    }
+  ],
+  "captured_tuple": {
+    "agent": {
+      "commit": "b415a4277558f62184d5c738f8178635fc551960",
+      "tree": "621daad0bf1e6f2e2be323349787f1f6b7b8c52c",
+      "parents": "b415a4277558f62184d5c738f8178635fc551960 657bc2e8dba066df1c7d21851315bdb6b0f16a3a"
+    },
+    "runtime": {
+      "commit": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+      "tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a",
+      "parents": "6634a17f3ffd885567ba3c91b6c7a560df7375a4 766fd6700c3128ea9fc833086a517de2acb535e2 b69a9f2cb43a6826efc43bb8c6f38d94fee47fc0"
+    },
+    "app": {
+      "commit": "24865fa212148e9bc149a1285936372656037e55",
+      "tree": "741333cebfb2b6505a080507bb6c9789df494d43",
+      "parents": "24865fa212148e9bc149a1285936372656037e55 4b98436552bf30f5fb28bbb958b1817430b12e34 c8e689fd5d7725c6d2fd3ed7e6cac83d2ab7326e"
+    },
+    "composition": {
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "parents": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40 7a95a40b07ea0d273e17afb69dbc3456b603f2bc c05fdb171fe37c1d5817a060ecb716a329ee821a"
+    }
+  },
+  "source_hashes": {
+    "_commit_patch.py": "93075fbc5bb075e1628b8712e7babd40e306fb88c9a4ab347cc3ae7552f80cde",
+    "native_word_anchor.py": "1b74fd5f43bade668a9467b41f006273aa46b7dc668f80bf5c36717273492c51",
+    "_commit_timing_validation.py": "522d632acdb7e0e836694b43065849dfec24bc22dccdfb8025077e5bde724d85",
+    "original_p4_test_hash": "3a33fb4b20643270258405b0c7cc41573db7ee723eafa61f7592b95abd6572f2",
+    "source_metadata_sha256": "16391e2044b249918f73e12bfbb2b6f3f3f06b845cafa1ffa6367458854d58d6",
+    "source_tuple_receipt_sha256": "8f012c2221e70b9088b957a611886eb467dc736443e8599c0f244545ebd91c81",
+    "selector_file_sha256": "4771c793206ef2c6324cdb0fadaf6d7782445e52874fb22603c90be6e651d411"
+  },
+  "mandatory_records": [
+    {
+      "selector": "tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_disjoint_head_accept_reload_exact_retry_undo_redo_and_reserved_id[image-anchor]",
+      "status": "FAIL",
+      "first_exception_class": "RuntimeErrorBase",
+      "first_exception_message": "provider dependency union omits a captured read",
+      "first_exception_source": "runtime_protocol/service.py:2518"
+    },
+    {
+      "selector": "tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_disjoint_head_accept_reload_exact_retry_undo_redo_and_reserved_id[image-fallback]",
+      "status": "FAIL",
+      "first_exception_class": "RuntimeErrorBase",
+      "first_exception_message": "provider dependency union omits a captured read",
+      "first_exception_source": "runtime_protocol/service.py:2518"
+    },
+    {
+      "selector": "tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_disjoint_head_accept_reload_exact_retry_undo_redo_and_reserved_id[image-lane-end]",
+      "status": "FAIL",
+      "first_exception_class": "RuntimeErrorBase",
+      "first_exception_message": "provider dependency union omits a captured read",
+      "first_exception_source": "runtime_protocol/service.py:2518"
+    },
+    {
+      "selector": "tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_disjoint_head_accept_reload_exact_retry_undo_redo_and_reserved_id[video-anchor]",
+      "status": "FAIL",
+      "first_exception_class": "RuntimeErrorBase",
+      "first_exception_message": "provider dependency union omits a captured read",
+      "first_exception_source": "runtime_protocol/service.py:2518"
+    },
+    {
+      "selector": "tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_disjoint_head_accept_reload_exact_retry_undo_redo_and_reserved_id[video-fallback]",
+      "status": "FAIL",
+      "first_exception_class": "RuntimeErrorBase",
+      "first_exception_message": "provider dependency union omits a captured read",
+      "first_exception_source": "runtime_protocol/service.py:2518"
+    },
+    {
+      "selector": "tests/editing_conformance/test_commit_runtime_parent_auto_completion.py::test_disjoint_head_accept_reload_exact_retry_undo_redo_and_reserved_id[video-lane-end]",
+      "status": "FAIL",
+      "first_exception_class": "RuntimeErrorBase",
+      "first_exception_message": "provider dependency union omits a captured read",
+      "first_exception_source": "runtime_protocol/service.py:2518"
+    },
+    {
+      "selector": "tests/editing_conformance/test_word_binding_recipe.py::test_follow_rebases_original_choice_after_source_move_and_reorder[True]",
+      "status": "ERROR",
+      "first_exception_class": "CommandError",
+      "first_exception_message": "clip.add v1 does not support on",
+      "first_exception_source": "astrid/sdk/timeline/_clip_commands.py:68"
+    },
+    {
+      "selector": "tests/editing_conformance/test_word_binding_recipe.py::test_stale_anchor_refuses_when_intervening_window_excludes_selected_word",
+      "status": "ERROR",
+      "first_exception_class": "CommandError",
+      "first_exception_message": "clip.add v1 does not support on",
+      "first_exception_source": "astrid/sdk/timeline/_clip_commands.py:68"
+    }
+  ],
+  "optional_records": {
+    "status": "NOTSELECTED",
+    "count": 5,
+    "selectors": [
+      "tests/editing_conformance/test_word_binding_recipe.py::test_raw_canonical_bundle_compiles_in_fresh_process_without_history",
+      "tests/editing_conformance/test_word_binding_recipe.py::test_half_open_window_and_exact_rational_fps_are_validated_at_acceptance",
+      "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_semantic_batch_original_pins_reload_inverse_redo[cli]",
+      "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_semantic_batch_original_pins_reload_inverse_redo[sheet-cli]",
+      "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_sheet_lost_ack_restart_exact_retry_original_guards_and_aba"
+    ],
+    "reason": "optional word-oracle and sheet-CLI bindings were not independently bound to this joined source"
+  },
+  "raw_data_exported": false
+}

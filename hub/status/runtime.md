@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T04:10:23Z | dispatcher heartbeat 14s | live 5 (sol 1, luna 4, other 0) | busy30 22 | status age 1m -->
-# runtime board, 2026-10-25T04:09:18Z
+<!-- main | 2026-10-25T04:13:49Z | dispatcher heartbeat 9s | live 2 (sol 2, luna 0, other 0) | busy30 20 | status age 3m -->
+# runtime board, 2026-10-25T04:10:53Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -248,7 +248,7 @@
 | D86-9211-classification | Route exact161 outcomes | Luna read only | Packet completed | merged | rt-D86-9211-outcomes-0303 | Exact161:6 PASS43 FAIL112 ERROR;34 exception clusters. [Packet](../../design/handoff-rt-D86-9211-outcomes-0303-README.md) | Evidence only |
 | R-P4-history-input-fix | Preserve no-gain history trials | HARD Sol | D94 replaces earlier narrow scope | gated:superseded | Authors0301/0310 ended | No source retained. Snapshot-copy trial had no gain; finite control found SQL/graph multiplication. Source6634 unchanged. | 6634 baseline |
 | D94-history-state | Harden verified history reuse | HARD Sol / Luna | Exact security and deployment premise | review | Author0348; security0409 | Candidate09a27:246centralPASS; forward and warm history work flat. Inverse ancestry grows. Data-root permissions unknown. | 09a27efc6c held |
-| D94-security | Review exact transactional change detection | Luna independent | Final tree and flat curve ready | doing | rt-D94a-security-review-0409 | Exact09a27 review covers baseline race, connection/WAL/rewind/restart and retained witness. Deployment premise unresolved. | Tree6a0db1ec |
+| D94-security | Review transactional change detection | Luna independent | D97 final source after initial review | doing | Initial0409; final after0412 | Current09a27 review cannot release D97. Final review covers permission fallback, race, external writes and retained witness. | D97 pending |
 | D86-next32 | Qualify exact new source subset | Luna / service | Meaningful source correction after actual result | review | Actual22; safe exporter0347 | One exact22 body: 4 PASS,18 ERROR; media setup rejects transition. Prior inverse7 PASS and D92 FAIL not repeated. | 657bc/6634/5465/635f |
 | R2-inverse-auth-four | Return exact inverse producer seam | Agent inverse owner | Conditional complete producer records | blocked:agent | Runtime0333; Agent peer0348 | No Runtime verifier fix justified. Ordinary restore lacks nested-only effects; exact ranges and collection order need complete real records. | 6634 auth unchanged |
 | P2-parent12208-trace | Return retained parent pointer facts | Luna read only | Safe artifacts published | merged | rt-P2-parent12208-trace-0328 | Recorded pointer181/494 to341/494 and fixture DOM identity. Capture/scheduling UNKNOWN. Safe hash-bound handback published; raw log private. | Actual12208 |
@@ -269,28 +269,27 @@
 | Agent-candidate8-followup | Preserve held candidate failures | Agent product and fixture owners | Exact mandatory8 NO-GO packet | blocked:agent | Runtime0403 peer sent | Six parent dependency-union failures and two word setup errors; optional5 unexecuted. No product merge. | b415 held |
 | App-ADD11713-facts | Preserve exact native inverse boundary | App Luna / Runtime D94a | D94a adoption before full tour | gated:D94a | App0346 safe packet consumed | Initial save200 accepted and selection passed; native Undo503 without receipt. Action correlation and eventual outcome unknown. | App043631/6634 |
 
-| D94a-deployment-premise | Settle code and data protection premise | Orchestrator | Authoritative data root or narrowed trade | blocked:orchestrator | Escalation0409 written | Code dirs0:0 0755,module0644. Actual production data root unknown; no protection trade assumed and no release. | Candidate09a27 |
+| D94a-deployment-premise | Enforce protection on each installation | HARD Sol | D97 resolves deployment assumption | doing | rt-D97-permission-gate-sol-0412 | Check DB,WAL,SHM and directory owner/mode; otherwise full verify. Add uid/mode invalidation and protected default curve. | Base09a27 |
 | D86-current-source-delta | Bind next corrected affected cases | Luna source only | Exact reviewed current home receipts | doing | rt-D86-current-delta-bind-0407 | Ready27 plus source-eligible word46/D92three and other exact changed overlaps. Preserve550/23 and exclude active or passed scopes. | Private plan |
 | D86-video4-correspondence | Return retained physical item mapping | Luna read only | Existing actual9211 artifacts | doing | rt-peer-proof-packets-0406 | Inspect only requested identifiers and materialization maps. Return exact absence where not retained; no new collector. | Existing9211 |
 | D91-wholepath | Compare failed and passing step claims | Luna read only | Actual17648 ten errors | doing | rt-D91-wholepath-0409 | Independent full caller-path comparison runs beside Sol correction. No product or test writes, no new body. | Source39fcc |
 
-Runtime producer: Released6634 unchanged. D94a09a27 author246centralPASS; flat forwardaccept andwarmhistorycounts. Independentsecurity0409 assigned afterfinalcurve; productiondata-root premise unknown and escalated0409. No release/adoption.
-core open: Original14151 FAIL45.448s; diagnostic25257 FAIL45.557s. NewD91ten17648 all10ERROR atstep-patchclaim; candidate8 sixFAILtwoERROR. Source-only qualifications do not close these originals.
-regressions: No newly established Runtime regression. Historical9211=6PASS43FAIL112ERROR;11789=10PASS24FAIL68ERROR;18575=7PASS3FAIL10ERROR;22=4PASS18ERROR retained.
-Gates: P1/P3 historical GO. P2 isolated3/8 recordedGO: single5678,asset27438,bulk21852. Hold element,parent,SWAP,ADD untilD94adoption; thenfullP2directly, isolateonlyfailedgestures. D95/D96 read.
+Runtime producer: Released 6634 unchanged. D94a 09a27 passed 246 targeted cases with flat forward and warm history work. D97 now requires a runtime permission check; sole author 0412 is assigned from exact 09a27. No release or adoption.
+core open: Original 14151 FAIL 45.448s; diagnostic 25257 FAIL 45.557s. D91 ten-case proof 17648 has ten setup errors. Candidate mandatory eight has six failures and two setup errors. All original outcomes remain visible.
+regressions: No newly established Runtime regression. Historical 9211: 6 PASS,43 FAIL,112 ERROR; 11789:10 PASS,24 FAIL,68 ERROR;18575:7 PASS,3 FAIL,10 ERROR;22:4 PASS,18 ERROR.
+Gates: P1/P3 historical GO. P2 isolated3/8 recorded GO: single5678, asset27438 and bulk21852. Hold element,parent,SWAP,ADD until D94 adoption, then full P2 directly. D95/D96/D97 consumed.
 
-Blockers: Orchestrator deployment premise — escalationruntime-20261025T0409Z-D94a-data-protection.md. Provide authoritative data-root protection or narrowapprovedtrade; code0:0 dirs0755/module0644, data root unknown.
-Blockers: Runtime release — exactD94a09a27 independentsecurity0409 mustPASS; review baselineabsorptionrace/pinnedconnection/externalwrite/WAL/rewind/restart/legacy/retainedwitness. No prematuremerge.
-Blockers: Agent proof — D91ten nowstep-patch10ERROR, Sol0409 andindependentwholepath0409 dispatched. Productcandidate8 staysheld6FAIL2ERROR; Agentcorrectsourcefollow-through requested0403.
-Blockers: Agent complete records — inversefour andnumericthree sourcefindings do notjustifyverifierchange. Exactproducerseams/missingrecords returned; no guessedfix or scopebroadening.
-Blockers: Final cut — D59 core0/regressions0, finalP1-P5/core,D69 andgenuineinstalledrender required. F-final existing-cloneworktreecandidate0358 passedprivatecontrols, noactualbuild/ZIP.
-Safety: OldwithdrawnD88prototype anddeniedaction remainstopped. D93 originalcredential/session/grantedscopes/calls only. No newexploittooling, credentialinvention or deniedrouteretry.
-Next ready: D94asecurity0409, D91Sol0409/wholepath0409, packets0406 andcurrentdelta0407 assigned. Source-only ready27 bindsnow;49 newerhomewait clears viaactualf518. MediareviewPASS andnormalremotemerge requested0406.
-Venues: Mainheavyfree afterexactD91ten17648terminal. Familyreceiving0407 sourceprepnow; D94arelease andP4 getpriority whenapproved. No repeatedP4/Apporiginal/sample orunchangedfamilybody.
-Delivery: Privatefinalreceipt0358 supportscompleteshallowexistingclones andexactobjectfailurechecks. No livefetch/worktreecreation/install/build/rehearsalbody. Earlierinstalleddocs retained.
-Source ownership: Managerprocessfiles only. Agent0355 commonM1fixture exclusive. D91Sol0409 ownssharedinversefixture; Luna0409readonly. D94astoresourcefinished, securityreadonly; no competingauthor.
-Later: Agentcurrentdelta includesnewreviewedword46/D92three; media18 onlyafteractualnormaljoin. Optionalcandidate5 NOTSELECTED needexactsourceapplicability beforeproof. Passed inverse7 excluded.
-Disk: Lastmeasured5.98GB. No endedclean nonKEEPworktrees; olddirty/refusedtargets untouched. Sweep3removed0;compactpacked0/gzipped5 oldlogs, finishedtestcompactionpending. Earlierstalepins/U1ctreesreleased withallrecordsretained.
-live 5 plus queued0 / cap 6; ready-undispatched 0 eligible starts. Source/reviewabove5.0GB; heavy1above5.2GB; nothingnewbelow4.5GB.
-Dispatcher: Security0409/D91Sol0409/wholepath0409 queuedorstarting; packets0406/currentdelta0407active. D94aauthor andD91proof ended withdurablereports.
-INBOX consumed through867894 bytes. Updated 2026-10-25T04:09:18Z. Exactsource/scopedproofonly; noprematurecore0, finaltupleorZIP.
+Blockers: Runtime release — D97 author0412 adds owner/mode eligibility and full-verify fallback. Final flat curve precedes exact independent security review. Initial0409 review of09a27 cannot release the later candidate.
+Blockers: Agent proof — D91 ten errors now reach the step-patch claim guard. Sol0409 and independent wholepath0409 are assigned. Product candidate eight remains held; exact failures returned to Agent.
+Blockers: Agent records — Inverse four and numeric three source findings do not justify verifier changes. Complete accepted/rejected producer records are missing; exact conditional seams and limits returned.
+Blockers: Final cut — D59 requires all-lane core0/regressions0, final P1–P5/core, D69 and genuine installed render. Existing-clone final candidate has private checks only; no build or ZIP.
+Safety: Withdrawn D88 prototype and denied action remain stopped. D93 permits original fixture credentials, session, granted scopes and calls only. No new exploit tooling or denied-route retry.
+Next ready: D97 author0412 assigned immediately after owner disposition. Security0409, D91Sol0409, wholepath0409, packets0406 and currentdelta0407 fill the remaining source/review slots. No eligible ready start waits.
+Venues: Main heavy slot free after D91 ten proof17648. Source receiver0407 prepares the exact next family delta. Approved Runtime release and P4 take priority when ready; no unchanged family or App body.
+Delivery: Private final receipt0358 accepts complete shallow existing clones and reports exact missing objects. No fetch, worktree creation, install, build or rehearsal body. Earlier installed prose and renderer checks retained.
+Source ownership: Manager edits process files only. D97Sol0412 owns store. D91Sol0409 owns shared-inverse fixture; Luna0409 reads the whole path. Agent0355 owns common M1 fixture; no competing Runtime author.
+Later: Current delta includes reviewed word46/D92three and meaningful corrected overlaps. Media18 joins after actual normal receipt. Optional candidate five were not selected. Passed inverse7 stays excluded.
+Disk: Last measured5.70GB. No ended clean nonKEEP worktrees remain. Old dirty and refused targets untouched. Sweep3 removed0; compact packed0 and gzipped5 old logs. Branches, reports and receipts retained.
+live 6 plus queued0 / cap 6; ready-undispatched 0 eligible starts. Source/review above5.0GB; one heavy above5.2GB; nothing new below4.5GB.
+Dispatcher: D97 author0412 queued; initial security0409, D91Sol0409, wholepath0409, packets0406 and currentdelta0407 assigned. No current original gate body.
+INBOX consumed through867894 bytes. Updated 2026-10-25T04:10:53Z. D97 clears the orchestrator premise blocker; final exact source review remains required.

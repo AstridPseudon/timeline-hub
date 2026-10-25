@@ -1,0 +1,4 @@
+artifact	sha256	bytes	exported	coverage
+actual9211 XML	eef3d52683227fe57b2d5e63abce044d11fd68cb31960e9a4ff5194cfeb5aab2	2625666	false	all161; selected107-110
+actual9211 body log	796efbbcbed165da591506305129f7fce9a99a172b6a0576a2e3bf8134c61981	2612623	false	selected107-110
+actual9211-video12.json	45ca7797941ee9e86476e02ab755604442681d064026e6b92a57288ef655a6e4	9215	false	safe selector projection

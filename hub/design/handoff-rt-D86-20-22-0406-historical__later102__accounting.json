@@ -1,0 +1,37 @@
+{
+  "actual_trace_required_for_any_new_meaningful_delta": true,
+  "classifier_0303_owned_actual9211_not_duplicated": true,
+  "current_meaningful_source_delta": false,
+  "executed": 102,
+  "family_counts": {
+    "CLI-document8": 8,
+    "D86-core-element-reply-literal1": 1,
+    "D86-provider-custody-netzero": 1,
+    "D87-live-frontends6": 6,
+    "F-M2-pool6": 6,
+    "M1-baseline10": 10,
+    "WC6-eleven": 11,
+    "current-sheet13": 13,
+    "word-bootstrap46": 46
+  },
+  "historical_inputs": {
+    "dispositions_retained": true,
+    "original550_rows": 550,
+    "unexecuted23_rows": 23
+  },
+  "membership_matches": true,
+  "membership_rows": 102,
+  "missing_case_PASSES": 0,
+  "no_count_sum_membership_rule": true,
+  "per_id_source_rows": 102,
+  "schema": "timeline.f-d86-11789.accounting.v1",
+  "selected": 102,
+  "source_only_no_functional_closure": true,
+  "status_counts": {
+    "ERROR": 68,
+    "FAIL": 24,
+    "PASS": 10
+  },
+  "task": "F-D86-11789",
+  "xml_testcase_count": 102
+}
