@@ -1,0 +1,75 @@
+{
+  "diff_whitelist": {
+    "correct_lock_everywhere": true,
+    "old_operational_identities_absent": true,
+    "only_identity_path_lock_and_handoff_provenance_changes": true,
+    "provenance_added_to_handoff_only": true
+  },
+  "files": {
+    "handoff.json": {
+      "new_sha256": "2303c3098409d17c278051ba03a1b54dd017d89138f49b7e35cd91e82c06f8e5",
+      "old_sha256": "a51601cdf9cf2061af332c8d4dfd0026ca372c0b86132c7d6a8de7c79a61a58b",
+      "source_copy_normalizes_exactly": true
+    },
+    "handoff.md": {
+      "new_sha256": "3bd7ec635517447b6484be969e69db9d22a547d5ef0862c10d489580398cbf6a",
+      "old_sha256": "f92beefe4db6c104bff77273f5b5e7cf9b621b428c91b7e3b4de17fee19b2803",
+      "source_copy_normalizes_exactly": true
+    },
+    "recipe.sh": {
+      "new_sha256": "07f945e4af0e2c97da1dc547816079e6adaae3241a1a77735a8c2b4d842abf43",
+      "old_sha256": "93121f68d45b9d2b0c635be4bdc1c3f69f4fcde49091ef8f9b522e3e01fa90d7",
+      "source_copy_normalizes_exactly": true
+    }
+  },
+  "result": "PASS",
+  "static_contract_and_route": {
+    "bash_n": true,
+    "exact_publication_refs_clear": true,
+    "full_c0_tokens_present_in_approved_contract": {
+      "\"receipt\": null": true,
+      "accepted": true,
+      "api_version": true,
+      "base_publication_id": true,
+      "base_revision_id": true,
+      "bindings": true,
+      "canonical_document": true,
+      "code": true,
+      "commands": true,
+      "dependencies": true,
+      "dry_run": true,
+      "effects": true,
+      "group_id": true,
+      "head": true,
+      "hint": true,
+      "history": true,
+      "idempotency": true,
+      "invalid": true,
+      "label": true,
+      "merge": true,
+      "merged": true,
+      "path": true,
+      "project_id": true,
+      "rationale": true,
+      "reads": true,
+      "reason": true,
+      "receipt": true,
+      "records": true,
+      "source": true,
+      "steps": true,
+      "suggested_command": true,
+      "timeline_id": true,
+      "undo_steps": true,
+      "would_status": true
+    },
+    "guard_and_admission_barriers_preserved": true,
+    "historical_agent_eof_warning_count_preserved": 120,
+    "json_parse": true,
+    "normal_installer_route_preserved": true,
+    "original_selectors_preserved": true,
+    "original_v2_summary_unchanged": true,
+    "public_tool_and_source_hashes_unchanged": true,
+    "unknown_and_safety_dispositions_clear": true
+  },
+  "task": "rt-D77-source-review-handoff-1624"
+}

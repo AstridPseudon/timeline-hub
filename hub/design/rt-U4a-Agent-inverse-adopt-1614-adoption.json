@@ -1,0 +1,19 @@
+{
+  "task": "U4a",
+  "repo": "agent",
+  "agent_base": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "agent_base_tree": "68433c5f77be90063b1f43d3e8f1407346a50675",
+  "runtime_checkout": "/home/user/work/wt/rt-pin-ab1e4f61",
+  "runtime_source_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+  "runtime_source_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+  "runtime_receipt": "checkout-runtime-ab1e4f6141987706132916e2da16477f5a019464",
+  "runtime_clean_before": true,
+  "runtime_clean_after": true,
+  "agent_changed_files": ["runtime.lock.json"],
+  "agent_change": "runtime.lock.json source_commit 5e9ad1c6f74241d8771d3284fdd2ce7a214fd344 -> ab1e4f6141987706132916e2da16477f5a019464",
+  "generated_consumer_bytes_changed": false,
+  "source_only": true,
+  "held_wal_d130_used": false,
+  "d131_touched": false,
+  "qualification": "PASS"
+}
