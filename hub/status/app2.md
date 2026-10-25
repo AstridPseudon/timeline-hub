@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T14:05:28Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# app2 board, 2026-10-25T14:03:13Z
+<!-- app2 | 2026-10-25T14:08:13Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# app2 board, 2026-10-25T14:06:43Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -165,4 +165,4 @@ EPERM on an extra Node-git step I added; refused, not retried.
 Blockers: Final cut — owner lanes owe current full P2, Agent core and regressions, D69, final pinned gates and genuine installed render. No Proof action remains authorized.
 Next ready: None; MAIN stood down the D125 exception and Proof remains folded into App.
 
-Pass 2026-10-25T14:03:13Z: PLAN, manager rules, current header and inbox checked through 810016 bytes; no new inbox items. bin/workers ap2- returned all 1313 records done, with no live workers. MAIN stand-down remains controlling. Disk is 5.9 GiB free; no cleanup authorized under the stand-down. Peer status mirrors are absent here, so no new owner-lane result is claimed. No dispatch, run, provisioning, cleanup, Node/checkouts write, receipt edit, source/test/pin edit or Git mutation.
+Pass 2026-10-25T14:06:43Z: PLAN, manager rules, current header and inbox checked through 814720 bytes. Three delayed App venue and execution asks predate MAIN 14:03Z stand-down and are superseded; P2-D125-host retains their disposition. Existing explicit venue release and safe stop handoff satisfy the transfer. All 1313 ap2 worker records are done; no new completion needs action. Disk is 5.85 GiB free. No cleanup is authorized under the stand-down. Peer status mirrors are absent here, so owner-lane counts remain last recorded. No dispatch, run, provisioning, cleanup, Node or checkout write, receipt edit, source, test or pin edit, or Git mutation.
