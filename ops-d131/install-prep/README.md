@@ -12,17 +12,17 @@ python3 ops-d131/retire_entry.py \
   --root /home/user/work/bench-store \
   --tests-dir /home/user/work/tests \
   --entry child-<64-hex-key> \
-  --authorization /path/to/owner-retirement-audit.json \
-  --now 2026-10-25T22:24:50Z
+  --authorization /path/to/owner-retirement-audit.json
 ```
 
-The authorization binds owner, identity, path, entry and lease in the existing
-Store index, and records the one-hour `registered_at`/`not_before` guard plus
-empty process, cwd, fd, command, registration, suite, worker and queue
-reference sets.  Store rechecks those guards, takes the existing exclusive
-lease, and uses the normal journal/projection/index/recovery route for one
-victim.  No live Store, entry, suite or registration is touched by this
-candidate.
+The authorization binds only the owner, identity, path, entry and lease in the
+existing Store index.  Store-generated `registered_at`/`not_before` state is
+persisted on the entry and registration; Store-owned activity, projections,
+markers, leases and process references are audited under the Store mutex.  The
+retirement route takes the exclusive entry lease, atomically quarantines the
+entry to close path admission, and uses the normal journal/projection/index/
+recovery route for one victim.  No live Store, entry, suite or registration is
+touched by this candidate.
 
 `check-cas.sh` is a read-only preflight for the expected installed-source
 preimage `123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2`
