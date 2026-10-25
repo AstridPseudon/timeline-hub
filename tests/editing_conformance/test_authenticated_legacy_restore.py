@@ -14,9 +14,10 @@ from astrid.sdk.timeline import validation
 from astrid.sdk.timeline._command_state import ABSENT, present
 from astrid.sdk.timeline._commit_timing_validation import _reference_basis
 from astrid.sdk.timeline.capture import capture_move
-from astrid.sdk.timeline.commit import bundle_from_document, create_runtime_commit_service
+from astrid.sdk.timeline.commit import bundle_from_document
 from tests.editing_conformance.test_doc_patch_v2 import change, patch, step
-from tests.helpers.runtime import use_runtime
+
+pytest_plugins = ("tests.editing_conformance.test_current_pair_reader",)
 
 pytestmark = pytest.mark.integration
 
@@ -42,22 +43,10 @@ def document(service):
 
 
 @pytest.fixture
-def case(tmp_path, monkeypatch, request):
-    runtime = use_runtime()
-    assert Path(os.environ["ASTRID_RUNTIME_CHECKOUT"]).resolve() == runtime.resolve()
-    monkeypatch.syspath_prepend(str(runtime / "tests"))
-    from precut_realm_fixture import FIXTURE_BACKUP_KEY, _extract_archive
-    from runtime_protocol.backup import restore_backup, verify_backup
-    from runtime_protocol.service import RuntimeService
+def case(reader, tmp_path, monkeypatch, request):
+    service, _ = reader
     from runtime_protocol.timeline_commit_baseline import verify_baseline
 
-    archive = Path(os.environ["ASTRID_AUTHENTIC_LEGACY_ARCHIVE"])
-    assert hashlib.sha256(archive.read_bytes()).hexdigest() == ARCHIVE_HASH
-    backup = _extract_archive(tmp_path / "extract", archive)
-    verify_backup(backup, key=FIXTURE_BACKUP_KEY)
-    restore_backup(backup, tmp_path / "realm", key=FIXTURE_BACKUP_KEY)
-    service = RuntimeService(tmp_path / "realm")
-    service.register_timeline_commit_provider(create_runtime_commit_service())
     evidence = Path(os.environ.get("ASTRID_LEGACY_RESTORE_EVIDENCE", str(tmp_path / "evidence"))) / request.node.name
     evidence.mkdir(parents=True, exist_ok=True)
     captures = []
@@ -120,10 +109,7 @@ def case(tmp_path, monkeypatch, request):
             assert result["receipt"]["result"] == result["data"]
         return result
 
-    try:
-        yield service, submit, source, captures, save
-    finally:
-        service.close()
+    yield service, submit, source, captures, save
 
 
 def moved(case):
