@@ -21,6 +21,7 @@ import { EDITOR_TOUR_TIMELINE_ID } from '@/tools/video-editor/tour/timeline/tour
 import { EditorTourTimelineDriver } from '@/tools/video-editor/tour/timeline/EditorTourTimelineDriver.tsx';
 import { EditorTourRunner } from '@/tools/video-editor/tour/runner/EditorTourRunner.tsx';
 import { registerBrowserTourFinish } from '@/tools/video-editor/tour/runner/tourBeats.ts';
+import { useEditorDeviceClass } from '@/tools/video-editor/tour/runner/useIsDesktopEditor.ts';
 import { TourChatPanel } from '@/tools/video-editor/components/AgentChat/TourChatPanel.tsx';
 import { TimelineEditorShellCore } from '@/tools/video-editor/components/TimelineEditorShellCore.tsx';
 import { TimelineEditorCoreBody } from '@/tools/video-editor/components/TimelineEditor/TimelineEditorCoreBody.tsx';
@@ -67,6 +68,10 @@ function BrowserTourFrame() {
   const tasksPaneWidth = usePanesStore(state => state.tasksPaneWidth);
   const touchPane = usePaneControlsHosted();
   const beat = useEditorTour(state => state.beat);
+  // The demo editor is a picture behind the tour: the spotlight already takes every pointer, so keep focus and
+  // assistive tech on the card (and the chat's Send) too.
+  const touring = useEditorTour(state => state.status === 'running');
+  const phone = useEditorDeviceClass() === 'phone';
   const chatVisible = !touchPane || beat === 'compose' || beat === 'respond';
   const tasksPaneReserve = touchPane ? '0px' : `${tasksPaneWidth}px`;
   const contentStyle = { marginRight: tasksPaneReserve, willChange: 'margin, padding' } as CSSProperties;
@@ -82,7 +87,7 @@ function BrowserTourFrame() {
   />;
 
   return <AppFrame fullEditor>
-    <AppMainContent
+    <div className="contents" {...(touring ? { inert: '' } : {})}><AppMainContent
       headerContent={projectControls}
       tasksPaneReserve={tasksPaneReserve}
       contentStyle={contentStyle}
@@ -95,10 +100,11 @@ function BrowserTourFrame() {
       mainLabel="Lantern Valley guided demo"
     >
       <BrowserTourEditorSurface />
-    </AppMainContent>
+    </AppMainContent></div>
     <div className="pointer-events-none" style={{
       position: 'fixed', right: 0, top: 0, bottom: 0,
-      width: touchPane ? 'min(28rem, calc(100vw - 3rem))' : `${tasksPaneWidth}px`,
+      // A phone's chat takes the whole screen while it has the spotlight, rather than leaving a sliver of editor.
+      width: phone ? '100vw' : touchPane ? 'min(28rem, calc(100vw - 3rem))' : `${tasksPaneWidth}px`,
       zIndex: UI_Z_LAYERS.TASKS_PANE_CONTENT,
     }}>
       <TasksPaneSurface role="complementary" aria-label="Task and chat pane" aria-hidden={!chatVisible}

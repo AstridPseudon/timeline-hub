@@ -10,6 +10,11 @@ import { placeCard } from './cardPlacement';
 import { useSettledRects } from './useSettledRects';
 import { useSpotlightRects } from './useSpotlightRects';
 import { useTourKeys } from './useTourKeys';
+import { useEditorDeviceClass } from './useIsDesktopEditor';
+import type { TimelineDeviceClass } from '../../lib/mobile-interaction-model';
+
+/** Matches the phone card's `w-[calc(100vw-24px)]`. */
+const PHONE_EDGE = 12;
 
 const ACT_TRACK: Record<EditorTourAct, string> = {
   1: EDITOR_TOUR_TRACK_IDS.scene,
@@ -17,15 +22,20 @@ const ACT_TRACK: Record<EditorTourAct, string> = {
   3: EDITOR_TOUR_TRACK_IDS.videos,
 };
 
-/** What each beat spotlights: chat composer and Send, the transcript, the act's new row with the preview, or nothing (the welcome, the finale and the feedback card, centred). */
-export function editorTourTargets(act: EditorTourAct, beat: EditorTourBeat): string[] {
+/**
+ * What each beat spotlights: chat composer and Send, the transcript, the act's new row with the preview, or nothing (the welcome,
+ * the finale and the feedback card). A phone's timeline sits below the fold under the card, so there the preview alone carries `land`.
+ */
+export function editorTourTargets(act: EditorTourAct, beat: EditorTourBeat, device: TimelineDeviceClass = 'desktop'): string[] {
   switch (beat) {
     case 'compose':
       return [editorTourSelector(EDITOR_TOUR_ANCHORS.chatComposer)];
     case 'respond':
       return [editorTourSelector(EDITOR_TOUR_ANCHORS.chatTranscript)];
     case 'land':
-      return [editorTourTrackSelector(ACT_TRACK[act]), editorTourSelector(EDITOR_TOUR_ANCHORS.preview)];
+      return device === 'phone'
+        ? [editorTourSelector(EDITOR_TOUR_ANCHORS.preview)]
+        : [editorTourTrackSelector(ACT_TRACK[act]), editorTourSelector(EDITOR_TOUR_ANCHORS.preview)];
     case 'welcome':
     case 'finale':
     case 'feedback':
@@ -67,9 +77,10 @@ function RunningTour() {
   const beat = useEditorTour((s) => s.beat);
   const reducedMotion = useEditorTour((s) => s.reducedMotion);
   const runId = useEditorTour((s) => s.runId);
+  const device = useEditorDeviceClass();
   const beatKey = `${runId}:${act}:${beat}`;
   // The card and spotlight show the beat whose targets have settled; it trails the store's beat by a frame or two.
-  const settled = useSettledRects(beatKey, useSpotlightRects(editorTourTargets(act, beat)));
+  const settled = useSettledRects(beatKey, useSpotlightRects(editorTourTargets(act, beat, device)));
   const [, shownAct, shownBeat] = settled.beatKey.split(':') as [string, `${EditorTourAct}`, EditorTourBeat];
   const pending = settled.beatKey !== beatKey;
   // The Send button is the one thing outside the card the user may press.
@@ -94,7 +105,8 @@ function RunningTour() {
     return () => observer.disconnect();
   }, []);
 
-  const position = placeCard(settled.value, size, { width: window.innerWidth, height: window.innerHeight });
+  // A phone's card spans the width and rests along the bottom, under the thumb.
+  const position = placeCard(settled.value, size, { width: window.innerWidth, height: window.innerHeight }, device === 'phone' ? { edge: PHONE_EDGE, dock: 'bottom' } : undefined);
   return (
     <>
       <TourSpotlight rects={settled.value} clickable={sendRects[0] ?? null} reducedMotion={reducedMotion} />
@@ -111,7 +123,7 @@ function RunningTour() {
           pointerEvents: pending ? 'none' : undefined,
         }}
       >
-        <TourCard act={Number(shownAct) as EditorTourAct} beat={shownBeat} onPrimary={runEditorTourPrimary} onBack={backEditorTour} onSkip={finishEditorTour} />
+        <TourCard act={Number(shownAct) as EditorTourAct} beat={shownBeat} device={device} onPrimary={runEditorTourPrimary} onBack={backEditorTour} onSkip={finishEditorTour} />
       </div>
     </>
   );

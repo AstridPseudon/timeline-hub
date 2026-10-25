@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { CLIP_BODY_SELECTOR } from '../../lib/timeline-dom';
+import { EDITOR_TOUR_TRACK_ATTRIBUTE } from '../anchors';
 
 export interface SpotlightRect {
   x: number;
@@ -29,12 +31,24 @@ function visibleBox(element: Element): { left: number; top: number; right: numbe
   return visible;
 }
 
+/**
+ * A track row runs the timeline's whole width; its spotlight ends with its last clip, so the empty rest of the row stays
+ * dimmed and free for the card.
+ */
+function trackContentRight(element: Element): number {
+  const right = element.getBoundingClientRect().right;
+  if (!element.hasAttribute(EDITOR_TOUR_TRACK_ATTRIBUTE)) return right;
+  const clips = Array.from(element.querySelectorAll(CLIP_BODY_SELECTOR), (clip) => clip.getBoundingClientRect().right);
+  return clips.length ? Math.min(right, Math.max(...clips)) : right;
+}
+
 function measure(selectors: readonly string[]): SpotlightRect[] {
   const rects: SpotlightRect[] = [];
   for (const selector of selectors) {
     const element = document.querySelector(selector);
     if (!element) continue;
     const box = visibleBox(element);
+    box.right = Math.min(box.right, trackContentRight(element));
     const width = box.right - box.left;
     const height = box.bottom - box.top;
     if (width <= 0 || height <= 0) continue;

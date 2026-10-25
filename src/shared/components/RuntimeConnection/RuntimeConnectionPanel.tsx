@@ -164,8 +164,9 @@ function Card({ title, sentence, action, children, status, pointer, showHelp = f
   </>;
 }
 
+/** On a touch screen its hit area grows to 44 px (up and out, so the card's layout does not move). */
 function BackButton({ onBack }: { readonly onBack: () => void }) {
-  return <Button type="button" variant="ghost" className="inline-flex h-auto items-center gap-0.5 rounded-md py-1 pl-1 pr-2 text-[13px] text-muted-foreground hover:bg-muted/60 hover:text-foreground" onClick={onBack}><ChevronLeft aria-hidden="true" className="h-4 w-4" />Back</Button>;
+  return <Button type="button" variant="ghost" className="inline-flex h-auto items-center gap-0.5 rounded-md py-1 pl-1 pr-2 text-[13px] text-muted-foreground hover:bg-muted/60 hover:text-foreground [@media(pointer:coarse)]:-mt-2 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:pr-3 [@media(pointer:coarse)]:text-sm" onClick={onBack}><ChevronLeft aria-hidden="true" className="h-4 w-4" />Back</Button>;
 }
 
 /**
