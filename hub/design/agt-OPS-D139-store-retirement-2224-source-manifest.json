@@ -1,0 +1,59 @@
+{
+  "schema": "timeline.d139.store-retirement-source-manifest/v1",
+  "task": "D139",
+  "installed_sources": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py",
+      "sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+      "mode": "0755"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/retire-child-venv",
+      "sha256": "954d5d87fe2e6fcf42b34953ec0edc519a2eb97ade8f66f0f2f96f523516b791",
+      "mode": "0755"
+    }
+  ],
+  "candidate_sources": [
+    {
+      "path": "ops-d139-retirement/bench_store.py",
+      "sha256": "42107263303af5c71cedb07e38f68660d2cf9f192611da9b893e38d54a3f993a",
+      "mode": "0755",
+      "installed_preimage": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+      "diff": [
+        "pre-existing Python style diagnostics normalized in the private copy",
+        "Store.retirement_target and Store.retire added",
+        "retirement report-preserving projection and journal recovery support added",
+        "narrow retire and retirement-target CLI actions added"
+      ]
+    },
+    {
+      "path": "ops-d139-retirement/retire-child-venv",
+      "sha256": "1672424e94280f0937aac6ac5bc574b8ae7aead792979ce3422d80f8e35a3517",
+      "mode": "0755",
+      "installed_preimage": "954d5d87fe2e6fcf42b34953ec0edc519a2eb97ade8f66f0f2f96f523516b791",
+      "diff": [
+        "Store probe and exact-entry route added",
+        "Store target uses existing all-guard scan and fingerprint race check",
+        "Store-owned retire API replaces shell filesystem removal only on Store route",
+        "legacy workroot route is unchanged"
+      ]
+    }
+  ],
+  "unchanged_callers": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-retire-venv",
+      "sha256": "21f61833a6718794ab2a06a3a96d34ca58c050ccd0151622e16866ac78758139"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/dispatcher-daemon",
+      "sha256": "d5c6753312e485f2368ab61d34161f0853b27aa6c5e2b5c22036d3bd628da8ed"
+    }
+  ],
+  "tests": {
+    "path": "ops-d139-retirement/tests/test_store_retirement.py",
+    "sha256": "4349e61e23805491ac9050b4e10b6e263fdfbd1d967ac78ffb8b432474a85d3d",
+    "note": "private finite fixtures; no live Store roots or generated carriers"
+  },
+  "comparison_command": "diff -u installed bench_store.py candidate; diff -u installed retire-child-venv candidate",
+  "comparison_result": "reviewed; only the listed private candidate additions and style-normalization changes are present"
+}

@@ -1,0 +1,26 @@
+{
+  "schema": "timeline.d139.store-retirement-guard-map/v1",
+  "guards": {
+    "exact_registration": "retirement_target and retire require one registered child entry and validate its derived key/path",
+    "ownership_hash_identity": "existing Store._validate_index, _validate_entry, key_for and .bench-owner.json checks",
+    "age": "wrapper and Store.retire both require path age greater than 3600 seconds",
+    "KEEP": "Store route refuses KEEP marker before deletion",
+    "lease": "Store.retire takes the existing nonblocking exclusive entry lock",
+    "references": "existing wrapper scans suites.conf, env files, pending requests and worker metadata for name/path",
+    "process": "existing wrapper scans process argv, cwd, executable and open files",
+    "fingerprint_race": "existing wrapper fingerprints candidate before Store.retire; Store revalidates entry inode/ownership",
+    "journal": "retirement uses existing pending.json format, _roll, _validate_transition and recover",
+    "index_registration": "retirement removes only the exact registration and entry and appends the name to retired",
+    "receipts": "retirement projection omits only the target report deletion; unrelated and target provision receipts remain",
+    "owned_delete": "existing _delete_owned is the sole Store-route payload deletion implementation",
+    "mode_symlink": "existing physical/inode/O_NOFOLLOW/owned-tree checks remain authoritative",
+    "legacy": "Store route is considered only when the legacy workroot target and associated leftovers are absent"
+  },
+  "unrelated_protected": [
+    "ordinary Store._evict admission behavior",
+    "other Store entries and registrations",
+    "suite-referenced child",
+    "real bench-store index and receipts",
+    "request-retire-venv and dispatcher files"
+  ]
+}

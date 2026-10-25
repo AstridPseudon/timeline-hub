@@ -1,0 +1,110 @@
+{
+  "schema": "timeline.agent.d73.missing_inputs.v1",
+  "task": "agt-OPS-D73-receiving-inputs-2227",
+  "status": "NOT_READY",
+  "policy": "all missing inputs are listed; no placeholder values are promoted to a manifest",
+  "items": [
+    {
+      "id": "D73-M01",
+      "missing": "genuine receipt-rendered newline key=value manifest and its absolute path",
+      "fields": ["format", "agent_sha", "agent_tree", "agent_parents", "agent_path", "runtime_sha", "runtime_tree", "runtime_path", "app_sha", "app_tree", "app_path", "composition_sha", "composition_tree", "composition_path", "python", "node", "profile", "schema", "node_version", "profile_lock_sha", "profile_archive_sha", "profile_registry_sha", "composition_version", "original_p4_test_hash", "service_versions", "junit_paths"],
+      "owner": "Runtime normal service owner / D73 manifest owner",
+      "required_proof": "rendered manifest must be receipt-backed and parse as the launcher’s first-equals key=value format"
+    },
+    {
+      "id": "D73-M02",
+      "missing": "clean canonical Agent 2eca checkout and matching checkout receipt",
+      "fields": ["agent_path", "agent_sha", "agent_tree", "agent_parents", "agent receipt content"],
+      "known_source": {
+        "commit": "2eca9a1da94eb35bb969540e150192ff920ce326",
+        "tree": "888c16e3dbbff2d6827e7ffcfea64208b0e2a5e4",
+        "parents": ["d066e3b7a82a1e7853963ea357510ccef0c0aa34", "cbdc731789d0d6ebe1c0935ca722ef83a30c1979"],
+        "origin": "https://github.com/peteromallet/astrid-agent"
+      },
+      "owner": "Agent own-node receipt owner",
+      "required_proof": "the exact clean checkout at /home/user/work/wt/agt-pin-2eca9a1d plus the done receipt; no alternate checkout or current Agent home"
+    },
+    {
+      "id": "D73-M03",
+      "missing": "receipt-derived App identity",
+      "fields": ["app_sha", "app_tree", "app_parents", "app_path", "app origin/clean proof", "App checkout receipt"],
+      "owner": "App/Reigh lane",
+      "peer_ask_fields": ["commit", "tree", "parents", "absolute clean checkout path", "origin", "receipt path", "receipt exact content", "receipt sha256"],
+      "required_proof": "provide the exact tuple for this D73 route; do not reuse another App pin"
+    },
+    {
+      "id": "D73-M04",
+      "missing": "receipt-derived Composition identity for afda candidate",
+      "fields": ["composition_path", "composition receipt", "composition clean proof"],
+      "known_source": {
+        "candidate_commit": "afda6c66a11608d8cb012df1a54bf2489d8c20b3",
+        "candidate_tree": "67bd2d4ee1d50bd95ebb8b0de55d4d1ed1e3e87f",
+        "parent": "ff6498859bb2a72b1b7d52d807dd04d3852fc055",
+        "origin": "https://github.com/peteromallet/timeline-composition",
+        "branch": "tl/rt-D73-exact-node-source-sol-2156"
+      },
+      "owner": "Composition/viewing lane receipt owner",
+      "peer_ask_fields": ["commit", "tree", "parents", "absolute clean checkout path", "origin", "receipt path", "receipt exact content", "receipt sha256"],
+      "required_proof": "the object is present, but the current Composition checkout is not at afda and no afda receipt is present"
+    },
+    {
+      "id": "D73-M05",
+      "missing": "qualified interpreter and source origins",
+      "fields": ["python", "node", "node_version", "schema", "profile", "runtime client import origin", "shared schema import origin", "schema digest proof"],
+      "owner": "Runtime D139 child-imports-2153 / Runtime maker2212 security",
+      "required_proof": "supported interpreter, pinned schema distribution, profile and Node inputs with real import/origin checks; no Main-only schema overlay"
+    },
+    {
+      "id": "D73-M06",
+      "missing": "profile custody and installed Composition package proof",
+      "fields": ["profile_lock_sha", "profile_archive_sha", "profile_registry_sha", "composition_version"],
+      "owner": "Runtime D139 dependency-recipe owner",
+      "required_proof": "nonsymlink node_modules, package-lock, registry state, archive hash, and installed @banodoco/timeline-composition version from the same profile"
+    },
+    {
+      "id": "D73-M07",
+      "missing": "runtime service and JUnit path metadata",
+      "fields": ["service_versions", "junit_paths"],
+      "owner": "Runtime normal service owner",
+      "required_proof": "metadata rendered from the actual receiving environment and actual per-ID output paths"
+    },
+    {
+      "id": "D73-M08",
+      "missing": "central registry installation of both exact private recipe rows",
+      "fields": ["d73-ab1e-selected4-exact-nodes", "d73-ab1e-fork-exact-nodes"],
+      "owner": "Runtime normal service / central registry owner",
+      "required_proof": "rows installed through the existing central owner only after manifest and dependency gates pass"
+    },
+    {
+      "id": "D73-M09",
+      "missing": "fresh selected4 central request receipt and result set",
+      "fields": ["central request ID", "request", "snap", "log.txt", "runner.log", "status", "exit", "summary", "D66 manifest", "request-id", "runmanifest", "preflight.log", "preflight.exit", "command", "body.log", "body.exit", "JUnit XML", "submit/end disk witnesses"],
+      "owner": "Agent own-node receiving lane via central test service",
+      "required_proof": "exact four selectors, no cache, supported launcher, real preflight and body artifacts bound to one central ID"
+    },
+    {
+      "id": "D73-M10",
+      "missing": "fresh fork central request receipt and result set",
+      "fields": ["central request ID", "request", "snap", "log.txt", "runner.log", "status", "exit", "summary", "D66 manifest", "request-id", "runmanifest", "preflight.log", "preflight.exit", "command", "body.log", "body.exit", "JUnit XML", "submit/end disk witnesses"],
+      "owner": "Agent own-node receiving lane via central test service",
+      "required_proof": "exact one selector, no cache, supported launcher, real preflight and body artifacts bound to a distinct central ID"
+    },
+    {
+      "id": "D73-M11",
+      "missing": "fresh disk headroom witness meeting the receiving gate",
+      "fields": ["available_bytes_at_submit", "available_bytes_at_end", "submit/end witness paths"],
+      "owner": "Runtime normal service / central test operator",
+      "required_proof": "at least 5000000000 bytes before receiving; stop and report below 4000000000 bytes; no transfer or retry after a safety refusal"
+    }
+  ],
+  "not_missing": {
+    "runtime": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "path": "/home/user/work/wt/rt-pin-ab1e4f61",
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-ab1e4f6141987706132916e2da16477f5a019464"
+    },
+    "source_controls": "independent rt-D73-source-review-2209 PASS7; do not rerun or relabel as receiving evidence",
+    "private_recipe_rows": "present in the exact Composition source tree only"
+  }
+}

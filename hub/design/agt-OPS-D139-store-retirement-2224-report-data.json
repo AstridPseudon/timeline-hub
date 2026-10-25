@@ -1,0 +1,33 @@
+{
+  "schema": "timeline.d139.store-retirement-candidate/v1",
+  "task": "D139",
+  "status": "PASS_PRIVATE_CANDIDATE",
+  "scope": "private source kit and isolated fixtures only",
+  "candidate": {
+    "directory": "ops-d139-retirement",
+    "sources": ["bench_store.py", "retire-child-venv"],
+    "tests": ["tests/test_store_retirement.py"]
+  },
+  "behavior": {
+    "store_route": "exact registered child name only, after legacy workroot target/leftover absence",
+    "retirement": "Store.retire uses the existing mutex, entry lease lock, journal, index transition, owned deletion and recovery",
+    "receipts": "retirement preserves tests/provision/<name>.txt and unrelated registrations/receipts",
+    "legacy_route": "existing workroot path remains the fallback and is exercised by a private fixture",
+    "admission_eviction": "ordinary Store._evict path remains unchanged"
+  },
+  "coverage": {
+    "targeted_tests": "11 passed",
+    "refusals": ["young", "suite-referenced", "KEEP", "held lease", "process cwd", "wrong identity", "unknown name", "missing Store route"],
+    "positive": ["exact eligible child retirement", "unrelated entry retained", "provisioning receipt retained", "journal recovery", "legacy workroot retirement"]
+  },
+  "live_state": {
+    "store_operations": false,
+    "request_retire": false,
+    "real_cleanup": false,
+    "real_store_mutation": false,
+    "floor_change": false,
+    "recorded_free_bytes": 5247508480,
+    "source_floor_bytes": 5000000000,
+    "stop_bytes": 4000000000
+  }
+}

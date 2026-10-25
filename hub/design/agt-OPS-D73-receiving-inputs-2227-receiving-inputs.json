@@ -1,0 +1,191 @@
+{
+  "schema": "timeline.agent.d73.receiving_inputs.v1",
+  "task": "agt-OPS-D73-receiving-inputs-2227",
+  "observed_on": "2026-10-25",
+  "status": "NOT_READY",
+  "result": "finite_source_bound_packet",
+  "scope": "existing private earlier-owner D73 own-node route only",
+  "source_review": {
+    "runtime_peer_report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-runtime-to-agent-20261025T2214Z-D73-reviewed-private-route.md",
+    "composition_candidate_commit": "afda6c66a11608d8cb012df1a54bf2489d8c20b3",
+    "composition_candidate_tree": "67bd2d4ee1d50bd95ebb8b0de55d4d1ed1e3e87f",
+    "composition_candidate_branch": "tl/rt-D73-exact-node-source-sol-2156",
+    "independent_source_review": "rt-D73-source-review-2209 PASS7",
+    "source_qualification": "PASS",
+    "receiving_qualification": "NOT_READY"
+  },
+  "route_boundary": {
+    "agent_commit": "2eca9a1da94eb35bb969540e150192ff920ce326",
+    "agent_tree": "888c16e3dbbff2d6827e7ffcfea64208b0e2a5e4",
+    "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "runtime_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "route_kind": "own_node_agent_2eca9a1d_runtime_ab1e4f61",
+    "distinct_from": "D139 merged cd63/f103 child/core",
+    "substitutions": [],
+    "oldtuple_core": false,
+    "source_overlay": false,
+    "fabricated_receipts": false
+  },
+  "manifest": {
+    "status": "MISSING",
+    "format": "newline key=value",
+    "path": null,
+    "receipt_rendered": false,
+    "fields": {},
+    "required_keys": [
+      "format",
+      "agent_sha",
+      "agent_tree",
+      "agent_parents",
+      "agent_path",
+      "runtime_sha",
+      "runtime_tree",
+      "runtime_path",
+      "app_sha",
+      "app_tree",
+      "app_path",
+      "composition_sha",
+      "composition_tree",
+      "composition_path",
+      "python",
+      "node",
+      "profile",
+      "schema",
+      "node_version",
+      "profile_lock_sha",
+      "profile_archive_sha",
+      "profile_registry_sha",
+      "composition_version",
+      "original_p4_test_hash",
+      "service_versions",
+      "junit_paths"
+    ]
+  },
+  "receipt_bindings": {
+    "agent": {
+      "commit": "2eca9a1da94eb35bb969540e150192ff920ce326",
+      "tree": "888c16e3dbbff2d6827e7ffcfea64208b0e2a5e4",
+      "origin": "https://github.com/peteromallet/astrid-agent",
+      "expected_path": "/home/user/work/wt/agt-pin-2eca9a1d",
+      "checkout_present": false,
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-2eca9a1da94eb35bb969540e150192ff920ce326",
+      "receipt_present": false,
+      "status": "object_present_but_receipt_bound_checkout_missing"
+    },
+    "runtime": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime",
+      "path": "/home/user/work/wt/rt-pin-ab1e4f61",
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-ab1e4f6141987706132916e2da16477f5a019464",
+      "checkout_present": true,
+      "receipt_present": true,
+      "status": "source_bound"
+    },
+    "app": {
+      "commit": null,
+      "tree": null,
+      "origin": "https://github.com/banodoco/reigh-app",
+      "path": null,
+      "receipt": null,
+      "checkout_present": false,
+      "receipt_present": false,
+      "status": "no_D73_receipt_bound_identity"
+    },
+    "composition": {
+      "candidate_commit": "afda6c66a11608d8cb012df1a54bf2489d8c20b3",
+      "candidate_tree": "67bd2d4ee1d50bd95ebb8b0de55d4d1ed1e3e87f",
+      "origin": "https://github.com/peteromallet/timeline-composition",
+      "candidate_object_present": true,
+      "eligible_clean_checkout_at_candidate": false,
+      "path": null,
+      "receipt": null,
+      "receipt_present": false,
+      "status": "candidate_object_present_but_receipt_bound_checkout_missing"
+    }
+  },
+  "suite_rows": [
+    {
+      "suite": "d73-ab1e-selected4-exact-nodes",
+      "private_recipe_row": "present",
+      "central_registry_row": "absent",
+      "qualified": false,
+      "selectors": [
+        "tests/sdk/test_timeline_selected_schema_runtime.py::test_native_rebase_after_v2_and_selection_removal_uses_original_object",
+        "tests/sdk/test_timeline_selected_schema_runtime.py::test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive[pin]",
+        "tests/sdk/test_timeline_selected_schema_runtime.py::test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive[element]",
+        "tests/sdk/test_timeline_selected_schema_runtime.py::test_http_attached_selected_param_retains_original_pin_after_v2_removal_restart"
+      ],
+      "fresh_result": null
+    },
+    {
+      "suite": "d73-ab1e-fork-exact-nodes",
+      "private_recipe_row": "present",
+      "central_registry_row": "absent",
+      "qualified": false,
+      "selectors": [
+        "tests/editing_conformance/test_occurrence_fork_source_baseline.py::test_current_runtime_retained_fork_then_emitter"
+      ],
+      "fresh_result": null
+    }
+  ],
+  "static_command_binding": {
+    "target": "integration:agent",
+    "selected4": "$ORCH/bin/request-test integration:agent d73-ab1e-selected4-exact-nodes --no-cache --files '<four exact selectors>'",
+    "fork": "$ORCH/bin/request-test integration:agent d73-ab1e-fork-exact-nodes --no-cache --files '<one exact selector>'",
+    "launcher": "tools/p4-d73-pinned-launch.sh <manifest> run -- -m pytest -q -o addopts= -m integration -p no:cacheprovider --timeout=45 --junitxml=<D66_OUTPUT_DIR>/<central-id>.xml",
+    "request_id_binding": "P4_D73_REQUEST_ID=basename(D66_OUTPUT_DIR parent)",
+    "evidence_binding": "P4_D73_EVIDENCE=D66_OUTPUT_DIR",
+    "status": "static_only_not_invoked"
+  },
+  "c0_wire_shape_guard": {
+    "request_fields": [
+      "api_version",
+      "project_id",
+      "timeline_id",
+      "base_revision_id",
+      "base_publication_id",
+      "commands[{schema_version,op,version,select,args}]",
+      "label",
+      "steps[{id,label,intent,tags,command_ordinals,patch,reads?}]",
+      "merge",
+      "reads",
+      "idempotency",
+      "dry_run",
+      "source",
+      "rationale",
+      "group_id"
+    ],
+    "reply_fields": [
+      "accepted",
+      "merged",
+      "canonical",
+      "base",
+      "landing",
+      "receipt",
+      "records",
+      "bindings",
+      "effects",
+      "dependencies",
+      "history",
+      "undo_steps",
+      "conflict{reason,head}",
+      "invalid{code,path,hint,suggested_command}",
+      "preview{would_status,nullreceipt,no_writes}"
+    ],
+    "dto_change": false
+  },
+  "qualification_boundary": {
+    "preflight": "NOTRUN",
+    "functional_bodies": "NOTRUN",
+    "central_submission": "NOT_REQUESTED",
+    "fresh_per_id_receipts": "ABSENT",
+    "source_controls": "preserved_from_independent_2209_PASS7",
+    "headroom_gate": {
+      "required_floor_bytes": 5000000000,
+      "stop_below_bytes": 4000000000,
+      "fresh_witness": false
+    }
+  },
+  "missing_inputs": "missing-inputs.json"
+}
