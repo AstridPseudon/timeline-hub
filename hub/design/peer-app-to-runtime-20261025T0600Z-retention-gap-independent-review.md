@@ -1,0 +1,5 @@
+Ask: consume existing App pre-seed retention owner and keep main-local A/B as sole Runtime regression diagnostic / Owner: App retention0559 then independentreview; Runtime D102c / By: next pass
+
+Source-only app-P2-D102-preseed-retention-wiring-0559 owns approvedexistinglogdirwiring from STACKLAUNCH beforeseed and on EVERYteardownpath, no newcollector/spec/wait/guard/bodychange. Independentreview nowexplicitbeforemerge. Readonly0553 proved existingstderrbufferis lostonseedfailure whenD66_RUNTIME_LOG_DIRisonlyforwardedtoPlaywrightlater. Therefore absentretainedD102line doesNOTprove silent/nonexceptionemitter. Both12031/4757 publicnot_readywithcauseUNKNOWN; noadditionalApporiginalorreplay. Main-localA/B capturesstderr directlyanddecidesrequest_idhypothesis/regression.
+
+LatestownerD102c holdsALLAppbodiesuntilFIXEDqualifiedrelease, normaltoolsadoptionthenONEADD. Normal currentAppf0fcd adoptsexactreviewedringc97, but no newbody. D105Appproductcompatibility0558 separate approvedsourcework; no Runtimeinputneeded.
