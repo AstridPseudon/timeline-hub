@@ -11,7 +11,12 @@ import {
 import './PublicAstridSky.css';
 import { PUBLIC_ASTRID_SKY_LAYERS as SKY_LAYERS, type PublicAstridSkyLayer as SkyLayer } from './publicAstridSkyRenderer';
 
-/** Parallax: each layer is drawn this much larger on every side, so shifting it never shows an edge. */
+/**
+ * Touch browsers (iOS Safari above all) draw the page under the status bar and the floating toolbar, outside
+ * the layout viewport that a fixed `inset: 0` layer covers. Without more sky there, those strips show the
+ * bare page colour as a band at the top and bottom of the screen. The sky runs this far past both edges.
+ */
+const TOUCH_SKY_BLEED = 120;
 
 export type { PublicAstridSkySettings } from './publicAstridSkySession';
 export {
@@ -62,6 +67,7 @@ function useSkyGeometry(
 
 export function PublicAstridSky({ session, active = true, geometryRoot, geometryOwner = 'sky', quietBehind }: PublicAstridSkyProps) {
   const canvasRefs = useRef<Record<SkyLayer, HTMLCanvasElement | null>>({ sky: null, stars: null, far: null, near: null });
+  const skyRef = useRef<HTMLDivElement>(null);
   const { settings } = useSkyControls(session, active);
   useSkyGeometry(session, settings.enabled && active, geometryRoot, quietBehind, geometryOwner);
 
@@ -88,9 +94,13 @@ export function PublicAstridSky({ session, active = true, geometryRoot, geometry
       const snapshot = session.getSnapshot();
       if (!snapshot.visible || !snapshot.settings.enabled) return;
       const settings = snapshot.settings;
+      const bleed = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches ? TOUCH_SKY_BLEED : 0;
       const columns = Math.ceil((window.innerWidth + 2 * PARALLAX_MARGIN) / PUBLIC_ASTRID_SKY_PIXEL);
-      const rows = Math.ceil((window.innerHeight + 2 * PARALLAX_MARGIN) / PUBLIC_ASTRID_SKY_PIXEL);
-      session.setGeometryViewport(columns, rows);
+      const viewRows = Math.ceil((window.innerHeight + 2 * PARALLAX_MARGIN) / PUBLIC_ASTRID_SKY_PIXEL);
+      const rows = viewRows + 2 * Math.ceil(bleed / PUBLIC_ASTRID_SKY_PIXEL);
+      // The sun and moon are sized from the canvas height; keep them the size the window alone would give.
+      const bodyScale = viewRows / rows;
+      session.setGeometryViewport(columns, rows, { pixel: PUBLIC_ASTRID_SKY_PIXEL, left: PARALLAX_MARGIN, top: PARALLAX_MARGIN + (rows - viewRows) / 2 * PUBLIC_ASTRID_SKY_PIXEL });
       const geometry = session.getGeometrySnapshot();
       const quiet = geometry.columns === columns && geometry.rows === rows ? geometry.quiet : null;
       if (rasterDirty) session.renderer.paint({
@@ -103,12 +113,17 @@ export function PublicAstridSky({ session, active = true, geometryRoot, geometry
         reveal: snapshot.reveal,
         tick: snapshot.tick,
         path: settings.path,
-        size: settings.size[settings.path],
+        size: settings.size[settings.path] * bodyScale,
         lift: settings.lift[settings.path],
         moonScale: settings.moonScale,
         quiet: quiet ?? undefined,
       }, canvasRefs.current);
       rasterDirty = false;
+      const bleedOffset = `${-(rows - viewRows) / 2 * PUBLIC_ASTRID_SKY_PIXEL}px`;
+      if (skyRef.current && skyRef.current.style.top !== bleedOffset) {
+        skyRef.current.style.top = bleedOffset;
+        skyRef.current.style.bottom = bleedOffset;
+      }
       for (const layer of SKY_LAYERS) {
         const canvas = canvasRefs.current[layer];
         if (!canvas) continue;
@@ -119,13 +134,13 @@ export function PublicAstridSky({ session, active = true, geometryRoot, geometry
         if (canvas.style.height !== height) canvas.style.height = height;
         if (canvas.style.transform !== transform) canvas.style.transform = transform;
       }
-      const nextMoonKey = [rows, snapshot.phase, settings.size[settings.path], settings.moonScale].join('|');
+      const nextMoonKey = [rows, snapshot.phase, settings.size[settings.path] * bodyScale, settings.moonScale].join('|');
       if (nextMoonKey !== moonKey) {
         moonKey = nextMoonKey;
         if (idleHandle !== null) cancelIdle(idleHandle);
         idleHandle = idle(() => {
           idleHandle = null;
-          if (alive && session.getSnapshot().visible) session.renderer.prepareMoon(rows, snapshot.phase, settings.size[settings.path], settings.moonScale);
+          if (alive && session.getSnapshot().visible) session.renderer.prepareMoon(rows, snapshot.phase, settings.size[settings.path] * bodyScale, settings.moonScale);
         });
       }
     }
@@ -155,7 +170,7 @@ export function PublicAstridSky({ session, active = true, geometryRoot, geometry
     />
   );
   return (
-    <div className="astrid-sky" aria-hidden="true">
+    <div ref={skyRef} className="astrid-sky" aria-hidden="true">
       {SKY_LAYERS.map(renderLayer)}
     </div>
   );

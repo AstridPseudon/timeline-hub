@@ -19,7 +19,7 @@ import {
   zonedHours,
   type PublicAstridLocation,
 } from './publicAstridLocation';
-import { createPublicAstridSkyGeometry, type PublicAstridSkyGeometry, type PublicAstridSkyGeometrySnapshot } from './publicAstridSkyGeometry';
+import { createPublicAstridSkyGeometry, type PublicAstridSkyFrame, type PublicAstridSkyGeometry, type PublicAstridSkyGeometrySnapshot } from './publicAstridSkyGeometry';
 import { createPublicAstridSkyRenderer, type PublicAstridSkyRenderer } from './publicAstridSkyRenderer';
 
 const DAY_MS = 864e5;
@@ -125,7 +125,7 @@ export interface PublicAstridSkySession {
   subscribeControls: (listener: () => void) => () => void;
   getGeometrySnapshot: () => PublicAstridSkyGeometrySnapshot;
   subscribeGeometry: (listener: () => void) => () => void;
-  setGeometryViewport: (columns: number, rows: number) => void;
+  setGeometryViewport: (columns: number, rows: number, frame?: PublicAstridSkyFrame) => void;
   registerGeometryRoot: (root: HTMLElement | null, selector: string, owner: string) => () => void;
   mount: () => void;
   destroy: () => void;
