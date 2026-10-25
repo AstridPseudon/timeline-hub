@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T17:47:30Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 0m -->
+<!-- agent | 2026-10-25T17:51:54Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 2m -->
 # agent board, 2026-10-25T17:46Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -105,10 +105,10 @@ D131 disposition: actual local canonical123bb93c regular0755 matches independent
 Next ready: Runtime Sol1725 full remaining-verifier source, independent review and exact kit install/publication; then prepared same-WIP controller1722 receives actual changed hash/mode and issues ONE authorized normal child request/core. Hosted D100 R1 source peer1742 awaits actual author ID. App Gate3 setup peer1736 awaits source slot. Current graph clean source is HOME; child boundary remains later.
 live 0 / cap 1 core or normal receiving; ready-undispatched 0 local. Local source authors remain remote while D128 is critical. Runtime critical Sol1725 active; D100 exact source and App Gate3 have remote dispatch requests. No local heavy body, duplicate review or Farm core.
 
-Disk:6725099520bytes at16:44Z. Fresh scan16:43 found0 ended clean nonKEEP worktrees. Sweep3 completed4 removed directories; compact0 scratch,0 logs,0 testdirs. Protected d22/f1012 untouched; all branches/current outputs/evidence retained. Earlier six-pin receipt remains design/agent-D128-six-pin-guards-1557.json.
+Disk:6671634432bytes at17:48Z. Fresh scan17:49 found0 ended clean nonKEEP worktrees. Sweep3 completed0 removed directories; compact0 scratch/0testdirs and1oldlog gzipped. Protected d22/f1012 untouched; all branches/current outputs/evidence retained. Earlier six-pin receipt remains design/agent-D128-six-pin-guards-1557.json.
 Later: current17 selector-specific topology companions require precise setup; shared source map alone does not qualify replacement/retirement. D23/D14 deferred anchors exact. E2/D79 wait ZIP; D13 installed environment gap explicit. Historical physical records EXACTMISSING. Coalesce ordinary Runtime adoption with qualified inverse batch, never retarget captured a4e016/5e9ad body or held SWAP source.
 
-INBOX consumed through1763648 bytes; source1651, install1656 and independent installed1659 consumed from normal hub. Actual local maker, Git candidate blob/tree and mode match, malformed historical reviewer tree disclosed. Manager edits only board, briefs and peer notes.
+INBOX consumed through1765435 bytes; source1651, install1656 and independent installed1659 consumed from normal hub. Actual local maker, Git candidate blob/tree and mode match, malformed historical reviewer tree disclosed. Manager edits only board, briefs and peer notes.
 
 
 Current pass17:46: native source78db and graph sourcea30e normal merges complete. Native actualnew4 zeroPASS3FAIL1ERROR; transcriptthree UNKNOWN/EXACTMISSING, Gate3 semantic setup has exactsource request1736. Graph protected1720 actualeightPASSoneFAIL8.15s; child alias live. D100 applicability independently1727 PASS, Agent state seam proved; ONE HARD R1 source requested1742, no held product import. Maker reader1726 identifies rawfreeze/canonicalinventory producer mismatch; sole Sol1725 owns all remainingverifier checks, independent review/install still owed before new child. No actual serviceID/body/core count. D130 stays held.
