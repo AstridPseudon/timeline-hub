@@ -1,0 +1,14 @@
+{
+  "name": "agt-pin-9ea67534",
+  "sha": "9ea67534f61d3604c9cb136de449803c4cbe51c2",
+  "dirty": "",
+  "KEEP": true,
+  "references": [],
+  "host_CLEAR": "Agent INBOX13:10:27Z owner relay lead13:12 /proc cmdline,cwd,environ,fd CLEAR; no pending reference",
+  "before": 4842053632,
+  "returncode": 0,
+  "output": "recycled agt-pin-9ea67534\n",
+  "stderr": "",
+  "after": 4970450944,
+  "utc": "2026-10-25T13:14:57.221051+00:00"
+}
