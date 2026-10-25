@@ -1,0 +1,43 @@
+2026-10-25T14:51:00Z child-venv source agent=a4e016b6a9f91fbe372672bdcf382c630bf59186 runtime=5e9ad1c6f74241d8771d3284fdd2ce7a214fd344 requirements=requirements/proof.lock lock_sha256=6f6e3843fbb39d91e80d5be952cb3d589053503541b61202d341f9757902c110
+2026-10-25T14:51:00Z child-venv stage=venv start budget=600s
+2026-10-25T14:51:02Z child-venv stage=venv complete
+2026-10-25T14:51:02Z child-venv stage=bootstrap-pip start budget=600s
+2026-10-25T14:51:08Z child-venv stage=bootstrap-pip complete
+2026-10-25T14:51:08Z child-venv stage=requirements start budget=600s
+2026-10-25T14:51:08Z child-venv stage=requirements complete
+2026-10-25T14:51:08Z child-venv stage=filter-requirements start budget=600s
+2026-10-25T14:51:08Z child-venv stage=filter-requirements complete
+2026-10-25T14:51:08Z child-venv stage=pinned-requirements start budget=600s
+2026-10-25T14:51:41Z child-venv stage=pinned-requirements complete
+2026-10-25T14:51:41Z child-venv stage=source-directories start budget=600s
+2026-10-25T14:51:41Z child-venv stage=source-directories complete
+2026-10-25T14:51:41Z child-venv stage=archive-agent start budget=600s
+2026-10-25T14:51:41Z child-venv stage=archive-agent complete
+2026-10-25T14:51:41Z child-venv stage=archive-runtime start budget=600s
+2026-10-25T14:51:41Z child-venv stage=archive-runtime complete
+2026-10-25T14:51:41Z child-venv stage=install-agent start budget=600s
+2026-10-25T14:51:52Z child-venv stage=install-agent complete
+2026-10-25T14:51:52Z child-venv stage=install-runtime start budget=600s
+2026-10-25T14:51:54Z child-venv stage=install-runtime complete
+2026-10-25T14:51:54Z child-venv stage=import-provenance start budget=600s
+2026-10-25T14:51:54Z child-venv stage=import-provenance complete
+2026-10-25T14:51:54Z child-venv stage=runtime-cli start budget=600s
+2026-10-25T14:51:55Z child-venv stage=runtime-cli complete
+2026-10-25T14:51:55Z child-venv stage=markers start budget=600s
+2026-10-25T14:51:55Z child-venv stage=markers complete
+2026-10-25T14:51:55Z child-venv stage=distribution-provenance start budget=600s
+2026-10-25T14:51:55Z child-venv stage=distribution-provenance complete
+2026-10-25T14:51:55Z child-venv stage=freeze start budget=120s
+2026-10-25T14:51:55Z child-venv stage=freeze complete
+2026-10-25T14:51:55Z child-venv stage=freeze-identity start budget=600s
+2026-10-25T14:51:55Z child-venv stage=freeze-identity complete
+2026-10-25T14:51:55Z child-venv stage=shebang-relocation start budget=600s
+2026-10-25T14:51:55Z child-venv stage=shebang-relocation complete
+2026-10-25T14:51:55Z child-venv stage=origin-relocation start budget=600s
+2026-10-25T14:51:55Z child-venv stage=origin-relocation complete
+2026-10-25T14:51:55Z child-venv stage=path-metadata-relocation start budget=600s
+2026-10-25T14:52:00Z child-venv stage=path-metadata-relocation complete
+2026-10-25T14:52:00Z child-venv stage=readonly-source start budget=600s
+2026-10-25T14:52:00Z child-venv stage=readonly-source complete
+unowned retained source directory
+REFUSED: bench store: Command '['python3', '-I', '-', '/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30', 'packages/python/astrid_runtime_client/__init__.py=d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2\npackages/python/astrid_runtime_client/contract_metadata.py=b42c58a36fff3e3136824492382eb05e983c247e5ca0656b35836e1a4e9ee72b\npackages/python/astrid_runtime_client/generated.py=952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b\npackages/python/astrid_runtime_client/timeline_commit_types.py=6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417', '/home/user/work/wt/agt-pin-a4e016b6', 'a4e016b6a9f91fbe372672bdcf382c630bf59186', '/home/user/work/wt/rt-pin-5e9ad1c6', '5e9ad1c6f74241d8771d3284fdd2ce7a214fd344', '/home/user/work', 'python3.13']' returned non-zero exit status 1.
