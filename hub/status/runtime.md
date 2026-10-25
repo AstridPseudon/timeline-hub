@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T22:40:05Z | dispatcher heartbeat 10s | live 4 (sol 2, luna 2, other 0) | busy30 20 | status age 0m -->
+<!-- main | 2026-10-25T22:44:51Z | dispatcher heartbeat 10s | live 2 (sol 0, luna 2, other 0) | busy30 20 | status age 0m -->
 # runtime board, 2026-10-25T22:39:28Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
@@ -495,7 +495,7 @@
 
 | D127d-element-cost | Preserve stopped offline cost trial | HARD Sol / Luna | D127e waiter census | gated:D127e | Source2123; path2135; stopped2143 | No safe optimization; warm123ms and synthetic267ms do not reproduce live delay. Later author stopped before product change. | Independent2135 source only | No product change |
 | CLI22-scope-relay | Apply owner D138 CLI scope | Agent owner | Recorded D138 decision | later | Agent existing CLI22 allocator | No new ingress. Per-case current caller migration only with exact predicates; legacy cases listed and boundary changes stopped. | Source decision only | No source change |
-| D139-child-imports | Complete child dependency recipe | HARD Sol after two Luna failures | Canonical census adapter then source review | doing | Review2228 FAIL; Sol2238 | Maker security recheck PASS; canonical1146-row input exits2. Sol adapter only; no maker/source admission changes or installation. | Two prior FAIL retained | 4e0fa held |
+| D139-child-imports | Complete child dependency recipe | Sol / independent Luna | Canonical adapter and D139a source join | review | Sol2238; reviewer2244 | Exact1146-row adapter own57 PASS; CLI lists12 misses, no schemaexit2. Maker and installer exact; independent source review active. | Two prior FAIL retained | Treec440 held |
 | D127e-waiter-census | Trace Runtime and Agent waiters | Luna read only | Independent source review | review | Author2153; reviewer2202 PASS | Static D112 reconnect path reachable; actual waiter UNKNOWN. Stopped under D130. No test, fix or profile. | Independent2202 PASS | Source unchanged |
 | OPS-staging-route | Guard regenerable staging removal | HARD Sol after two FAIL | Five residual mutation findings | doing | Review2235 FAIL; Sol2239 | Private14 PASS but five adversarial failures. Archive/evidence/lease/mutation guarantees remain required; no install or cleanup. | Both FAIL retained | 9524356 held |
 | D77-complete-inputs | Bind final installed render inputs | Luna / independent Luna | Genuine final sources and finite peak | merged | Author2218; review2224 PASS | Complete24 input rows and10 stages qualified. [Review](../../design/rt-D77-input-review-2224-review.json). Run NOT_READY; peak UNKNOWN_UNBOUNDED. | Independent2224 PASS source | Evidence only |
@@ -507,7 +507,7 @@
 
 | OPS-store-retirement | Add guarded explicit Store retirement | Luna / independent Luna | Exact firstreturn lifecycle review | review | Return2235; finalreview2241 | Private14 PASS. Independent source and actual oldentry metadata applicability checks; no install or cleanup. | Original2228 FAIL retained | Candidate5af3 held |
 
-| D136b-observation-producer | Trace genuine observation consistency | HARD Sol, owner D136b | Actual2136 source and C0 | doing | rt-D136b-producer-trace-sol-2233 | Read only producer-to-guard trace. App2211 and independent2220 complete inventory PASS received. No product fault, fix or original9 proof yet. | Independent review after return | Source unchanged |
+| D136b-observation-producer | Trace genuine observation consistency | Sol / independent Luna | Qualified exact source finding | review | Sol2233; reviewer2247 | Conditional grouped-birth mismatch proposed; actual cause UNKNOWN. Stale547e home claim challenged; no producer or guard edit. | Independent2247 active | Source unchanged |
 
 | D139-schema-input | Implement approved pinned installed input | Luna, D139a | Five strict owner conditions | doing | rt-OPS-D139a-installed-schema-2239 | Decision resolved: exact RECORD closure and pinned directURL; verifier/D131 unchanged. One source implementation and security review, no child yet. | Decision resolved2234 | Source held |
 
@@ -526,5 +526,7 @@ Element: D127d UNAPPLIED; offline warm123ms/synthetic267ms did not reproduce liv
 Delivery: prepared joins merge now under D139; second upstream merge at final D59 cut. Farm old union harness STOPPED. D77 final merged tuple inputs remain incomplete.
 Safety: All prior refusals held. Manager writes ORCH board/briefs/peers and byte-exact handbacks only. No product/test/generated/pin/Git internals/credentials mutation.
 Disk:4.617GB before read-only review2202. Five unused clean pins released after full audit; a30e,369f,c916 plus b742,d4ba. Latest two net191MB. All branches and evidence retained. Source cap3/floor4.6GB, stop4GB. Sweep3 removed0; compact packed0 and compressed7 logs. Registered pins and protected test KEEP remain.
-live5 / cap6; ready-undispatched0. Sol census2238, Luna maker2239, Store review2241, Sol staging2239 and D136b Sol2233 trace active. Fresh5.06GB; no heavy body. D139a applied.
-INBOX consumed through1639020 bytes including App completeinventory2220 PASS and Agent receiving2227 ownership. Agent laterStore2224 overlaps earlierMain2222 actual22:21:24; normal stop requested by peer2234, earlierMainfirstreturn2235 remains sole owner. Round continues from terminal receipts.
+live5 / cap6; ready-undispatched0. Censusreview2244, Luna maker2239, Store review2241, Sol staging2239 and D136b review2247 active. Fresh5.10GB; no heavy body. D139a applied.
+INBOX consumed through1643067 bytes. LaterAgent2224 source/review overlap alreadyaskedstop; earlierMainStore owner22:21:24 and current2241 remainsoleintake. Agent laterStore2224 overlaps earlierMain2222 actual22:21:24; normal stop requested by peer2234, earlierMainfirstreturn2235 remains sole owner. Round continues from terminal receipts.
+
+Model rule: owner2250 requires hard=<actual reason> in every new Sol worker meta; otherwise Luna. D136b2233 owner HARD and census2238 second-Luna-failure reasons recorded. Staging next round Luna per owner.

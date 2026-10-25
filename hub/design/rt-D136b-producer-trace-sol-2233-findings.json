@@ -1,0 +1,83 @@
+{
+  "findings": [
+    {
+      "actual_failure_attribution": "UNKNOWN",
+      "after_shape_required": "Every used sequential boundary has actual parent/shot/internal images and exact owner edges, revision/digest/step/ordinal/phase binding; no timeline pseudo-image, invented read, copied future payload or guard exception.",
+      "before_shape": "One structure step spans independent native aggregate births/removal; command_output needs a same-step physical projection but the next command has no native dependency on the previous birth.",
+      "disposition": "UNAPPLIED. Manager/orchestrator receives this source finding before any product author. No Runtime guard change; no setup migration; no assertion/body change.",
+      "id": "D136B-PRODUCER-01",
+      "owner": "Agent R1/G3 authoring request producer",
+      "premise": "The source-produced grouped structure step contains an independent duplicate followed by another duplicate of the original owner; the generated records reach Runtime native projection.",
+      "producer_correction_target": "Agent authoring_commit_request step construction and its generated authoritative execution records. Structural births must be emitted at boundaries that have complete authenticated physical closure/owner observations. A finite producer-side candidate is one structural command per step in the same atomic request, using existing genuine per-step captures/effects, subject to owner approval of step/undo semantics and protected verification. This is not a proven sufficient patch.",
+      "proof": [
+        "Producer places all semantic commands into one structure command_ordinals range; native duplicate creates an aggregate shot root and then an occurrence root.",
+        "Following duplicate reads/selects/binds the original source and creates its own different destination. commit.input names physical images; it is not a native ref to the earlier destination occurrence. Step effect/materialization bindings are attached at the step tail.",
+        "_project_created_child considers only immediately following reads/bindings/writes. Earlier destination occurrence is not named, so its occurrence branch continues; the paired shot branch also continues in the absence of a fork owner write.",
+        "projected_roots lacks this aggregate. command_output does not take the authenticated-created-root skip. native_site maps the aggregate shot path [] to timeline, while images produces only parent/shot-revision/internal-revision keys. Membership guard B022 must refuse.",
+        "Private input/output capture can contain the real born images, but validate reconstructs command_output first; later capture equality cannot repair the missing native projection."
+      ],
+      "source_refs": [
+        "authoring_request",
+        "materialize_duplicates",
+        "duplicate",
+        "duplicate_copy",
+        "record_create",
+        "patch_before_original",
+        "patch_after",
+        "project_created",
+        "native_site",
+        "images",
+        "command_output",
+        "validate"
+      ],
+      "status": "PROVED_STATIC_CONDITIONAL_INCONSISTENCY"
+    },
+    {
+      "finding": "D100 accepted first-item and initializer use single-command setup boundaries; they do not prove grouped independent births. Strict sequential controls consume the born occurrence immediately.",
+      "id": "D136B-CONTROL-02",
+      "status": "SOURCE_PROVED"
+    },
+    {
+      "finding": "Runtime auth/port/store/coordinator/provider and selected controls/contract are byte-identical from ab1e to f103. Service differs only in unrelated media-object filename storage; commit entry/context methods are unchanged. Agent current home lacks the held D100 branch; its recorder before logic differs. The exact original source remains the diagnosis basis. Source inequality is not a behavior result.",
+      "id": "D136B-HOME-03",
+      "status": "SOURCE_PROVED"
+    },
+    {
+      "finding": "No original input invalidity under a correct guard is established. D104 cannot classify this as setup or authorize rewriting source/fixture/expected behavior.",
+      "id": "D136B-SETUP-04",
+      "status": "NOT_PROVED"
+    },
+    {
+      "finding": "Original2136 nine setup ERROR at B022 and 2144 custody/NO_GO are retained. App2211 alone owns citation inventory corrections. Exact failed coordinates/private records were not read or transferred; downstream outcomes are UNKNOWN.",
+      "id": "D136B-CUSTODY-05",
+      "status": "UNCHANGED"
+    }
+  ],
+  "next_finite_owner": "Runtime manager/orchestrator first: review producer inconsistency and route to Agent R1/G3; App original evidence custodian alone can bind existing private coordinates in place under a separate approved task. No new run/acquisition is authorized here.",
+  "overall_result": "UNKNOWN_ACTUAL_B022_CAUSE",
+  "release": "NO_GO",
+  "source_result": "PROVED_STATIC_CONDITIONAL_PRODUCER_CONSUMER_INCONSISTENCY",
+  "task": "D136b",
+  "unapplied_seams": [
+    {
+      "need": "Identify which existing saved_closure publication invocation actually reaches B022, using retained request identity/hash and prepared digest; do not reconstruct a request from source.",
+      "owner": "App2136 original evidence custodian; manager approves any in-place access",
+      "seam": "U01"
+    },
+    {
+      "need": "Retained step id and ordered command ordinals, failing current/following record correspondence, writes versus derived_writes index, ref/path and resolved physical ref; all actual coordinates remain UNKNOWN here.",
+      "owner": "App evidence custodian, with Runtime verifier reviewer",
+      "seam": "U02"
+    },
+    {
+      "need": "Authenticated source boundary image membership/ownership, created allocation and aggregate write before/after, and following reads/bindings/writes needed to decide whether _project_created_child should run. Keep raw payload local.",
+      "owner": "App evidence custodian; Agent R1 producer reviewer",
+      "seam": "U03"
+    },
+    {
+      "need": "Actual request-private original/landing command input/output documents and records, context/prepared_digest binding and availability; verification against exact immutable head closure, not a hand-built capture.",
+      "owner": "App evidence custodian; Runtime port/store reviewer",
+      "seam": "U04"
+    }
+  ]
+}

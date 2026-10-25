@@ -1,0 +1,1261 @@
+{
+  "checks": [
+    {
+      "check": "agent_actual2136 resolves exactly",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_reviewed20db resolves exactly",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_D100 resolves exactly",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_projection resolves exactly",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home resolves exactly",
+      "result": "PASS"
+    },
+    {
+      "check": "runtime_original resolves exactly",
+      "result": "PASS"
+    },
+    {
+      "check": "runtime_home resolves exactly",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home:astrid/core/timeline/authoring_bundle.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home:astrid/sdk/timeline/authoring_commit.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home:astrid/sdk/timeline/emitter.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home:astrid/sdk/timeline/commands.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home:astrid/sdk/timeline/compiler.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home:astrid/sdk/timeline/validation.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home:astrid/sdk/timeline/_timing_evaluators.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home:astrid/sdk/timeline/_command_state.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home:astrid/sdk/timeline/_recording.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home:astrid/sdk/timeline/_commit_patch.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home:astrid/sdk/timeline/_commit_preview.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home:astrid/sdk/timeline/_doc_patch.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home:astrid/sdk/timeline/_doc_patch_materialize.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home:astrid/sdk/timeline/commit.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home:astrid/sdk/timeline/native_initialize.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home:astrid/sdk/timeline/native_occurrence_duplicate.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home:astrid/sdk/timeline/native_occurrence_shared.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home:astrid/sdk/timeline/native_occurrence_create.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home:tests/sdk/test_capture_source_runtime.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home:tests/sdk/test_timeline_capture_projection.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "runtime_home:runtime_protocol/service.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "runtime_home:runtime_protocol/timeline_commit.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "runtime_home:runtime_protocol/timeline_commit_provider.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "runtime_home:runtime_protocol/timeline_commit_execution.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "runtime_home:runtime_protocol/timeline_commit_port.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "runtime_home:runtime_protocol/timeline_commit_store.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "runtime_home:runtime_protocol/timeline_commit_auth.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "runtime_home:tests/test_timeline_commit_authentication.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "runtime_home:tests/test_timeline_commit_sequential_verifier.py worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "runtime_home:contract/commit-v2.md worktree equality",
+      "result": "PASS"
+    },
+    {
+      "check": "Runtime original/home identical: runtime_protocol/timeline_commit.py",
+      "result": "PASS"
+    },
+    {
+      "check": "Runtime original/home identical: runtime_protocol/timeline_commit_provider.py",
+      "result": "PASS"
+    },
+    {
+      "check": "Runtime original/home identical: runtime_protocol/timeline_commit_execution.py",
+      "result": "PASS"
+    },
+    {
+      "check": "Runtime original/home identical: runtime_protocol/timeline_commit_port.py",
+      "result": "PASS"
+    },
+    {
+      "check": "Runtime original/home identical: runtime_protocol/timeline_commit_store.py",
+      "result": "PASS"
+    },
+    {
+      "check": "Runtime original/home identical: runtime_protocol/timeline_commit_auth.py",
+      "result": "PASS"
+    },
+    {
+      "check": "Runtime original/home identical: tests/test_timeline_commit_authentication.py",
+      "result": "PASS"
+    },
+    {
+      "check": "Runtime original/home identical: tests/test_timeline_commit_sequential_verifier.py",
+      "result": "PASS"
+    },
+    {
+      "check": "Runtime original/home identical: contract/commit-v2.md",
+      "result": "PASS"
+    },
+    {
+      "check": "Runtime service commit method AST identical: RuntimeService.commit_timeline",
+      "result": "PASS"
+    },
+    {
+      "check": "Runtime service commit method AST identical: RuntimeService._execute_timeline_commit",
+      "result": "PASS"
+    },
+    {
+      "check": "Agent original/home identical: astrid/sdk/timeline/authoring_commit.py",
+      "result": "PASS"
+    },
+    {
+      "check": "Agent original/home identical: astrid/sdk/timeline/native_occurrence_duplicate.py",
+      "result": "PASS"
+    },
+    {
+      "check": "Agent original/home identical: astrid/sdk/timeline/commands.py",
+      "result": "PASS"
+    },
+    {
+      "check": "Agent original/home identical: astrid/sdk/timeline/_commit_preview.py",
+      "result": "PASS"
+    },
+    {
+      "check": "Agent original/home identical: astrid/sdk/timeline/native_initialize.py",
+      "result": "PASS"
+    },
+    {
+      "check": "Agent original/home identical: astrid/sdk/timeline/_doc_patch.py",
+      "result": "PASS"
+    },
+    {
+      "check": "Held source exact in actual2136: astrid/sdk/timeline/_command_state.py",
+      "result": "PASS"
+    },
+    {
+      "check": "Held source exact in actual2136: tests/sdk/test_d100_item_birth_boundary.py",
+      "result": "PASS"
+    },
+    {
+      "check": "Held source exact in actual2136: tests/sdk/test_timeline_capture_projection.py",
+      "result": "PASS"
+    },
+    {
+      "check": "Reviewed20db validation exact in actual2136",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_actual2136 one grouped structure step",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_actual2136 authoritative real sequential documents",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_actual2136 duplicate writes aggregate then occurrence",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_actual2136 aggregate root before/after captured",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home one grouped structure step",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home authoritative real sequential documents",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home duplicate writes aggregate then occurrence",
+      "result": "PASS"
+    },
+    {
+      "check": "agent_home aggregate root before/after captured",
+      "result": "PASS"
+    },
+    {
+      "check": "B022 exact immutable source line",
+      "result": "PASS"
+    },
+    {
+      "check": "physical image dictionary has no timeline root",
+      "result": "PASS"
+    },
+    {
+      "check": "native aggregate shot maps to timeline scope",
+      "result": "PASS"
+    },
+    {
+      "check": "birth projection examines only immediately following native refs",
+      "result": "PASS"
+    },
+    {
+      "check": "reconstruction precedes private captured-output comparison",
+      "result": "PASS"
+    },
+    {
+      "check": "protected projection 11 test bodies",
+      "result": "PASS"
+    },
+    {
+      "check": "protected projection 43 test-body assertions",
+      "result": "PASS"
+    }
+  ],
+  "files": [
+    {
+      "ast_parse": "PASS",
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "e329c565bbaea9acac81c71929b7f3c3cadd0a17",
+      "line_count": 1934,
+      "path": "astrid/core/timeline/authoring_bundle.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_actual2136",
+      "sha256": "0611d655f3386f9b06888fa87fa9c38c0ee2d8f89411e944715daa80fa819a4d"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "8d1db8c3b3a424477ffaa345cb1b27c73fcfa63d",
+      "line_count": 325,
+      "path": "astrid/sdk/timeline/authoring_commit.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_actual2136",
+      "sha256": "6a03a0030a02c58fefe99e6f07f620f401a7a673259920c4086a3dab6615feac"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "e8983b0a3d7824790d200481bfdc07a6e1713c26",
+      "line_count": 307,
+      "path": "astrid/sdk/timeline/emitter.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_actual2136",
+      "sha256": "c399e4d9522f9c43c10f23d039c0211d5f3dd11f9bb7edffb06da07151c1e48a"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "10a6c7f0548f04af4820443a0b01cc38bbacbc43",
+      "line_count": 308,
+      "path": "astrid/sdk/timeline/commands.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_actual2136",
+      "sha256": "b89798a439daace286e6702647c670c532a21575719e4df1bda87607b855ee96"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "7a2f3e2168342fbb5500e70cf0d8d5f578627025",
+      "line_count": 142,
+      "path": "astrid/sdk/timeline/compiler.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_actual2136",
+      "sha256": "148e496685c7a70e8c9a6f6f02ed666e7d85663ad2a2cd888069f94a44c05fc6"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "e39103bab6f293cb6b078cbe0bdd9c1739302c3a",
+      "line_count": 686,
+      "path": "astrid/sdk/timeline/validation.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_actual2136",
+      "sha256": "e632b2fc36ba78cac330ffe7b59fb4eb002a7cf78f1fc45e8e1ecbc8e21fedae"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "7b2937887351251594137628cfbfb58f86cb059e",
+      "line_count": 616,
+      "path": "astrid/sdk/timeline/_timing_evaluators.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_actual2136",
+      "sha256": "493fa0a5ee39dfba8a7e878f2a5247fc95fe8590741d0c7232377fd36d7b6268"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+      "line_count": 689,
+      "path": "astrid/sdk/timeline/_command_state.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_actual2136",
+      "sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "523a1280ab916734cefae836adb7c89b6ead2f2f",
+      "line_count": 290,
+      "path": "astrid/sdk/timeline/_recording.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_actual2136",
+      "sha256": "3940d0296f55bfc2b7cff6f4998adc4a6caf3290c1fcae10ddea813edc50f7e4"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "ac72a2cb8c549393869a96d753a04fc2d88b91ec",
+      "line_count": 1274,
+      "path": "astrid/sdk/timeline/_commit_patch.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_actual2136",
+      "sha256": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "daeed358b72e852abe9ee4bad367dc454bd91ba1",
+      "line_count": 115,
+      "path": "astrid/sdk/timeline/_commit_preview.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_actual2136",
+      "sha256": "9380dd2e3eb9c041b8515e20d979e2cce4aa0ca9cbfeed81f40c315357f77c36"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "e55d400c00ed727a244aecdaef95a67205e623fa",
+      "line_count": 566,
+      "path": "astrid/sdk/timeline/_doc_patch.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_actual2136",
+      "sha256": "15cc750407eb3b057900befd95cd2bd30c28f41acda9bb2f31e5c2f48f5ad00f"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "981f1e2ee1ba6209fb4df4fa5e863b9d91d25786",
+      "line_count": 108,
+      "path": "astrid/sdk/timeline/_doc_patch_materialize.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_actual2136",
+      "sha256": "fa63d5dc7e3c5645d0225d0146a8b7b820cf3295e6fc87ff02b0aff918aeb252"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "3ca7c6e970cc162cef30989ad9cb5e0e2a61715c",
+      "line_count": 1476,
+      "path": "astrid/sdk/timeline/commit.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_actual2136",
+      "sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "7cec29956e0280d8fe682701ab5de42ce5b07edd",
+      "line_count": 35,
+      "path": "astrid/sdk/timeline/native_initialize.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_actual2136",
+      "sha256": "9ba19ebc1212cca4fbde005728a410e68a128297abb4e39ccf3f2abd2e39df82"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "4338045a2272765dd1e35ff17bbca357ccc4fe04",
+      "line_count": 81,
+      "path": "astrid/sdk/timeline/native_occurrence_duplicate.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_actual2136",
+      "sha256": "f2936a59859e2069169b6371669e2faf2cdc6def3a2c067a8bf08fa452986f86"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "a439abcdab7bf73931766f1150a6be1b08ebc68e",
+      "line_count": 358,
+      "path": "astrid/sdk/timeline/native_occurrence_shared.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_actual2136",
+      "sha256": "931a9c6ce96b1655660c2c0c3452480e56fa56d1d9097d93d123508d4b7a1840"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "0b98d05acaec55c353ad9ec58d5b8b038dc7ba31",
+      "line_count": 61,
+      "path": "astrid/sdk/timeline/native_occurrence_create.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_actual2136",
+      "sha256": "962016ffdba404dfd88ed4fbf62bd4882e96e42038a0548549a0cf727ef25d22"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "092b212d4708c0a19fa4d183632ca5c64abc4da7",
+      "line_count": 454,
+      "path": "tests/sdk/test_capture_source_runtime.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_actual2136",
+      "sha256": "3cb21a6a3033ee81bb22305ec8c48dad6fc510fc202e509175738f9fe82f5c48"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "16954294f9f70018e4bbd1012083f51594f6cb19",
+      "line_count": 569,
+      "path": "tests/sdk/test_timeline_capture_projection.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_actual2136",
+      "sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "39ed571d5f3e49d2545fc31e1f868ee7c58dbc8a",
+      "line_count": 246,
+      "path": "tests/sdk/test_d100_item_birth_boundary.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_actual2136",
+      "sha256": "fcd5f187e185faa2222fb23c69827bd6d8bcbb710fdad131f649973f95e6de37"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "20dbfdef45f71fa28a63f5382c154f5cca50b83a",
+      "git_blob": "e39103bab6f293cb6b078cbe0bdd9c1739302c3a",
+      "line_count": 686,
+      "path": "astrid/sdk/timeline/validation.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_reviewed20db",
+      "sha256": "e632b2fc36ba78cac330ffe7b59fb4eb002a7cf78f1fc45e8e1ecbc8e21fedae"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "20dbfdef45f71fa28a63f5382c154f5cca50b83a",
+      "git_blob": "4bbb4615d276ecae57965993e38080c77a93f757",
+      "line_count": 662,
+      "path": "astrid/sdk/timeline/_command_state.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_reviewed20db",
+      "sha256": "689c59d323aca2d508d152f5d5513beed094edf2f6fd9b8ef93f12f475104c39"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "20dbfdef45f71fa28a63f5382c154f5cca50b83a",
+      "git_blob": "337379f6d9cc9732664b8423dfe537b6cd71fa09",
+      "line_count": 495,
+      "path": "tests/sdk/test_timeline_capture_projection.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_reviewed20db",
+      "sha256": "90c4625a7481fdcd570ec8b85bbe95325f4d3c57f0a3a26017dd405b8269b638"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+      "git_blob": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+      "line_count": 689,
+      "path": "astrid/sdk/timeline/_command_state.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_D100",
+      "sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+      "git_blob": "39ed571d5f3e49d2545fc31e1f868ee7c58dbc8a",
+      "line_count": 246,
+      "path": "tests/sdk/test_d100_item_birth_boundary.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_D100",
+      "sha256": "fcd5f187e185faa2222fb23c69827bd6d8bcbb710fdad131f649973f95e6de37"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "f53b016900c99e46998268e36c7c431ac0eec61e",
+      "git_blob": "16954294f9f70018e4bbd1012083f51594f6cb19",
+      "line_count": 569,
+      "path": "tests/sdk/test_timeline_capture_projection.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_projection",
+      "sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "git_blob": "e329c565bbaea9acac81c71929b7f3c3cadd0a17",
+      "line_count": 1934,
+      "path": "astrid/core/timeline/authoring_bundle.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_home",
+      "sha256": "0611d655f3386f9b06888fa87fa9c38c0ee2d8f89411e944715daa80fa819a4d",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "git_blob": "8d1db8c3b3a424477ffaa345cb1b27c73fcfa63d",
+      "line_count": 325,
+      "path": "astrid/sdk/timeline/authoring_commit.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_home",
+      "sha256": "6a03a0030a02c58fefe99e6f07f620f401a7a673259920c4086a3dab6615feac",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "git_blob": "e8983b0a3d7824790d200481bfdc07a6e1713c26",
+      "line_count": 307,
+      "path": "astrid/sdk/timeline/emitter.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_home",
+      "sha256": "c399e4d9522f9c43c10f23d039c0211d5f3dd11f9bb7edffb06da07151c1e48a",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "git_blob": "10a6c7f0548f04af4820443a0b01cc38bbacbc43",
+      "line_count": 308,
+      "path": "astrid/sdk/timeline/commands.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_home",
+      "sha256": "b89798a439daace286e6702647c670c532a21575719e4df1bda87607b855ee96",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "git_blob": "7a2f3e2168342fbb5500e70cf0d8d5f578627025",
+      "line_count": 142,
+      "path": "astrid/sdk/timeline/compiler.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_home",
+      "sha256": "148e496685c7a70e8c9a6f6f02ed666e7d85663ad2a2cd888069f94a44c05fc6",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "git_blob": "84f0a307e765a469ae5d1f267f84b360a05dbe88",
+      "line_count": 656,
+      "path": "astrid/sdk/timeline/validation.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_home",
+      "sha256": "65524a27d75469422fe0bd7d2759eb2e8cec0a4b861422b670de57a6ec129d8c",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "git_blob": "29471c40804ab88f6cbddb92cb1774dbd2c5c6b6",
+      "line_count": 601,
+      "path": "astrid/sdk/timeline/_timing_evaluators.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_home",
+      "sha256": "a3f6247434b2bb5258ce044fa7e0391d9405ad36d33749e49365eb7c5db79749",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "git_blob": "4bbb4615d276ecae57965993e38080c77a93f757",
+      "line_count": 662,
+      "path": "astrid/sdk/timeline/_command_state.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_home",
+      "sha256": "689c59d323aca2d508d152f5d5513beed094edf2f6fd9b8ef93f12f475104c39",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "git_blob": "10b17db43964ed0016e3d0527910bc9e56ccaf4f",
+      "line_count": 287,
+      "path": "astrid/sdk/timeline/_recording.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_home",
+      "sha256": "85aefe0328a7c9787a18c2b7e19eb8b3e4220a1c53627d1e16102b42b29c8b43",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "git_blob": "f8e3bd950fef4af21030b05dd10d4c64ede79c89",
+      "line_count": 1254,
+      "path": "astrid/sdk/timeline/_commit_patch.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_home",
+      "sha256": "76224a62434ade240e298bf6a1d14b64bdc2ed650923c2160cf22bdbb23a4a50",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "git_blob": "daeed358b72e852abe9ee4bad367dc454bd91ba1",
+      "line_count": 115,
+      "path": "astrid/sdk/timeline/_commit_preview.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_home",
+      "sha256": "9380dd2e3eb9c041b8515e20d979e2cce4aa0ca9cbfeed81f40c315357f77c36",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "git_blob": "e55d400c00ed727a244aecdaef95a67205e623fa",
+      "line_count": 566,
+      "path": "astrid/sdk/timeline/_doc_patch.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_home",
+      "sha256": "15cc750407eb3b057900befd95cd2bd30c28f41acda9bb2f31e5c2f48f5ad00f",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "git_blob": "95d03cca60fe39077f00d6f2f41fa30f9d852796",
+      "line_count": 107,
+      "path": "astrid/sdk/timeline/_doc_patch_materialize.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_home",
+      "sha256": "68b7494031f739344826d21d690fcf22836c5bcfe5295f736432552fcd86ad2f",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "git_blob": "0ab8cb16761c9ce6a971fae3e8600f35f391760e",
+      "line_count": 1476,
+      "path": "astrid/sdk/timeline/commit.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_home",
+      "sha256": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "git_blob": "7cec29956e0280d8fe682701ab5de42ce5b07edd",
+      "line_count": 35,
+      "path": "astrid/sdk/timeline/native_initialize.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_home",
+      "sha256": "9ba19ebc1212cca4fbde005728a410e68a128297abb4e39ccf3f2abd2e39df82",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "git_blob": "4338045a2272765dd1e35ff17bbca357ccc4fe04",
+      "line_count": 81,
+      "path": "astrid/sdk/timeline/native_occurrence_duplicate.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_home",
+      "sha256": "f2936a59859e2069169b6371669e2faf2cdc6def3a2c067a8bf08fa452986f86",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "git_blob": "a439abcdab7bf73931766f1150a6be1b08ebc68e",
+      "line_count": 358,
+      "path": "astrid/sdk/timeline/native_occurrence_shared.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_home",
+      "sha256": "931a9c6ce96b1655660c2c0c3452480e56fa56d1d9097d93d123508d4b7a1840",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "git_blob": "0b98d05acaec55c353ad9ec58d5b8b038dc7ba31",
+      "line_count": 61,
+      "path": "astrid/sdk/timeline/native_occurrence_create.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_home",
+      "sha256": "962016ffdba404dfd88ed4fbf62bd4882e96e42038a0548549a0cf727ef25d22",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "git_blob": "092b212d4708c0a19fa4d183632ca5c64abc4da7",
+      "line_count": 454,
+      "path": "tests/sdk/test_capture_source_runtime.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_home",
+      "sha256": "3cb21a6a3033ee81bb22305ec8c48dad6fc510fc202e509175738f9fe82f5c48",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "git_blob": "337379f6d9cc9732664b8423dfe537b6cd71fa09",
+      "line_count": 495,
+      "path": "tests/sdk/test_timeline_capture_projection.py",
+      "present": true,
+      "repo": "agent",
+      "repository_path": "/home/user/work/agent",
+      "role": "agent_home",
+      "sha256": "90c4625a7481fdcd570ec8b85bbe95325f4d3c57f0a3a26017dd405b8269b638",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "path": "tests/sdk/test_d100_item_birth_boundary.py",
+      "present": false,
+      "repo": "agent",
+      "role": "agent_home"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "48f9d1b94e0cda5feece2bf51cb7d6e1fca03144",
+      "line_count": 8532,
+      "path": "runtime_protocol/service.py",
+      "present": true,
+      "repo": "runtime",
+      "repository_path": "/home/user/work/runtime",
+      "role": "runtime_original",
+      "sha256": "13587d2c3b58ecb6838525e69cbaa38a045b2491a34170275e1d5e55354bf51b"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "044a82a3b2305b37833c5dd80c99d6a9f0f69848",
+      "line_count": 60,
+      "path": "runtime_protocol/timeline_commit.py",
+      "present": true,
+      "repo": "runtime",
+      "repository_path": "/home/user/work/runtime",
+      "role": "runtime_original",
+      "sha256": "f60abe96c8e21e9a43cd0962f4c2511b02b36f557c4d18e68dee7f8b5e539c13"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "a05812e82ee2930f29e277f260f3329855378932",
+      "line_count": 93,
+      "path": "runtime_protocol/timeline_commit_provider.py",
+      "present": true,
+      "repo": "runtime",
+      "repository_path": "/home/user/work/runtime",
+      "role": "runtime_original",
+      "sha256": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "ec2b50120122a6ebf9b62e44fd19761ca798a896",
+      "line_count": 445,
+      "path": "runtime_protocol/timeline_commit_execution.py",
+      "present": true,
+      "repo": "runtime",
+      "repository_path": "/home/user/work/runtime",
+      "role": "runtime_original",
+      "sha256": "5956b4850e11d517a6bcc9aa8ae7f0074b45810e26faa8ffe391b907e764c257"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "fa59975da670786e7e05e79b4d1231a4fbac50f3",
+      "line_count": 1190,
+      "path": "runtime_protocol/timeline_commit_port.py",
+      "present": true,
+      "repo": "runtime",
+      "repository_path": "/home/user/work/runtime",
+      "role": "runtime_original",
+      "sha256": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "f9cf50c1aee3b0a8c7caeb3d8a307a65f5f910e9",
+      "line_count": 2205,
+      "path": "runtime_protocol/timeline_commit_store.py",
+      "present": true,
+      "repo": "runtime",
+      "repository_path": "/home/user/work/runtime",
+      "role": "runtime_original",
+      "sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "75c290edb73a8f8e39c77a64368bf4b11705f7f0",
+      "line_count": 2975,
+      "path": "runtime_protocol/timeline_commit_auth.py",
+      "present": true,
+      "repo": "runtime",
+      "repository_path": "/home/user/work/runtime",
+      "role": "runtime_original",
+      "sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "ee0d19f1615664d572a712dd4a4585413a3a8439",
+      "line_count": 1165,
+      "path": "tests/test_timeline_commit_authentication.py",
+      "present": true,
+      "repo": "runtime",
+      "repository_path": "/home/user/work/runtime",
+      "role": "runtime_original",
+      "sha256": "10f4f9b53e9a39afa735e26543c29cdb620c776a364b61e0009591212059ad6e"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "95d648834bbfcad83e7846a467cfbaf221a9c293",
+      "line_count": 645,
+      "path": "tests/test_timeline_commit_sequential_verifier.py",
+      "present": true,
+      "repo": "runtime",
+      "repository_path": "/home/user/work/runtime",
+      "role": "runtime_original",
+      "sha256": "dc6e2526a922139f53ef7ddc79f1b335a1f7b2b401a899042d1e8bbbdae87585"
+    },
+    {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "257024df6fa93be767f0c74ee10014a6770c4fcb",
+      "line_count": 5275,
+      "path": "contract/commit-v2.md",
+      "present": true,
+      "repo": "runtime",
+      "repository_path": "/home/user/work/runtime",
+      "role": "runtime_original",
+      "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7"
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+      "git_blob": "9522969da2818772590032e695323d4e010943a0",
+      "line_count": 8534,
+      "path": "runtime_protocol/service.py",
+      "present": true,
+      "repo": "runtime",
+      "repository_path": "/home/user/work/runtime",
+      "role": "runtime_home",
+      "sha256": "dab94d49434670374f6af1cf0d3c66655af6fdafc083c9367ea99afff1d9ab7a",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+      "git_blob": "044a82a3b2305b37833c5dd80c99d6a9f0f69848",
+      "line_count": 60,
+      "path": "runtime_protocol/timeline_commit.py",
+      "present": true,
+      "repo": "runtime",
+      "repository_path": "/home/user/work/runtime",
+      "role": "runtime_home",
+      "sha256": "f60abe96c8e21e9a43cd0962f4c2511b02b36f557c4d18e68dee7f8b5e539c13",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+      "git_blob": "a05812e82ee2930f29e277f260f3329855378932",
+      "line_count": 93,
+      "path": "runtime_protocol/timeline_commit_provider.py",
+      "present": true,
+      "repo": "runtime",
+      "repository_path": "/home/user/work/runtime",
+      "role": "runtime_home",
+      "sha256": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+      "git_blob": "ec2b50120122a6ebf9b62e44fd19761ca798a896",
+      "line_count": 445,
+      "path": "runtime_protocol/timeline_commit_execution.py",
+      "present": true,
+      "repo": "runtime",
+      "repository_path": "/home/user/work/runtime",
+      "role": "runtime_home",
+      "sha256": "5956b4850e11d517a6bcc9aa8ae7f0074b45810e26faa8ffe391b907e764c257",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+      "git_blob": "fa59975da670786e7e05e79b4d1231a4fbac50f3",
+      "line_count": 1190,
+      "path": "runtime_protocol/timeline_commit_port.py",
+      "present": true,
+      "repo": "runtime",
+      "repository_path": "/home/user/work/runtime",
+      "role": "runtime_home",
+      "sha256": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+      "git_blob": "f9cf50c1aee3b0a8c7caeb3d8a307a65f5f910e9",
+      "line_count": 2205,
+      "path": "runtime_protocol/timeline_commit_store.py",
+      "present": true,
+      "repo": "runtime",
+      "repository_path": "/home/user/work/runtime",
+      "role": "runtime_home",
+      "sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+      "git_blob": "75c290edb73a8f8e39c77a64368bf4b11705f7f0",
+      "line_count": 2975,
+      "path": "runtime_protocol/timeline_commit_auth.py",
+      "present": true,
+      "repo": "runtime",
+      "repository_path": "/home/user/work/runtime",
+      "role": "runtime_home",
+      "sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+      "git_blob": "ee0d19f1615664d572a712dd4a4585413a3a8439",
+      "line_count": 1165,
+      "path": "tests/test_timeline_commit_authentication.py",
+      "present": true,
+      "repo": "runtime",
+      "repository_path": "/home/user/work/runtime",
+      "role": "runtime_home",
+      "sha256": "10f4f9b53e9a39afa735e26543c29cdb620c776a364b61e0009591212059ad6e",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "ast_parse": "PASS",
+      "commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+      "git_blob": "95d648834bbfcad83e7846a467cfbaf221a9c293",
+      "line_count": 645,
+      "path": "tests/test_timeline_commit_sequential_verifier.py",
+      "present": true,
+      "repo": "runtime",
+      "repository_path": "/home/user/work/runtime",
+      "role": "runtime_home",
+      "sha256": "dc6e2526a922139f53ef7ddc79f1b335a1f7b2b401a899042d1e8bbbdae87585",
+      "worktree_bytes_equal_commit": true
+    },
+    {
+      "commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+      "git_blob": "257024df6fa93be767f0c74ee10014a6770c4fcb",
+      "line_count": 5275,
+      "path": "contract/commit-v2.md",
+      "present": true,
+      "repo": "runtime",
+      "repository_path": "/home/user/work/runtime",
+      "role": "runtime_home",
+      "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+      "worktree_bytes_equal_commit": true
+    }
+  ],
+  "input_documents": [
+    {
+      "bytes": 1157,
+      "path": "/home/user/timeline-hub/hub/design/app-D136a-typed-output-original9-2136-report.md",
+      "sha256": "299ea34df202547f977a80fcac95776429579c32eee7cad59de376cf6752b81f"
+    },
+    {
+      "bytes": 4421,
+      "path": "/home/user/timeline-hub/hub/design/app-D136a-typed-output-original9-2136-source-manifest.json",
+      "sha256": "628e50b820c1f3170d995c5fe912137458f8a6362ed9a2bae358882f66599fe7"
+    },
+    {
+      "bytes": 1258,
+      "path": "/home/user/timeline-hub/hub/design/app-D136a-typed-output-original9-2136-submission-facts.json",
+      "sha256": "116c620dbf53e43218c0e847a52bb34d50f423d4253349f374e6fc42a85dd702"
+    },
+    {
+      "bytes": 1949,
+      "path": "/home/user/timeline-hub/hub/design/app-D136a-2136-result-wholepath-review-2144-wholepath.md",
+      "sha256": "df8192b517e9616af49316399afe12acbda5dacdb2f704c7cb2ffa34053c5c00"
+    },
+    {
+      "bytes": 3136,
+      "path": "/home/user/timeline-hub/hub/design/app-D136a-2136-result-wholepath-review-2144-source-manifest.json",
+      "sha256": "7e1729f130aa07c4f3b996ad08d73779a6dd176efd844b2b348c7bda5578245b"
+    },
+    {
+      "bytes": 9113,
+      "path": "/home/user/timeline-hub/hub/design/app-D136a-all-boundaries-return-2150-boundaries.md",
+      "sha256": "565ee23f72523f20444151687ea5d39ca998e6baf2760c3839402c55fff5fb5c"
+    },
+    {
+      "bytes": 43759,
+      "path": "/home/user/timeline-hub/hub/design/app-D136a-all-boundaries-return-2150-table.json",
+      "sha256": "060790bd5814446d6edc14afff497341bfbac491fea7ae613950e16a7ce07b6e"
+    },
+    {
+      "bytes": 801,
+      "path": "/home/user/timeline-hub/hub/design/app-D136a-boundary-first-return-2159-findings.md",
+      "sha256": "10db45dc56cc637e000145c4daeb8df74e0bb9d3a127554bee7ba53f5868b2e5"
+    },
+    {
+      "bytes": 2606,
+      "path": "/home/user/timeline-hub/hub/design/app-D136a-boundary-final-review-2205-handoff.md",
+      "sha256": "a7699e28127ca6feca7124ed161e371e208b5299aa498504ab7ce097d6699dfd"
+    },
+    {
+      "bytes": 2158,
+      "path": "/home/user/timeline-hub/hub/design/app-D136a-boundary-custody-sol-2211-findings.md",
+      "sha256": "007677458ecc52508b3f10edb3b296c70ba5066b5034cd78961e0b27a7c92842"
+    },
+    {
+      "bytes": 23477,
+      "path": "/home/user/timeline-hub/hub/design/app-D136a-boundary-custody-sol-2211-source-manifest.json",
+      "sha256": "c820174ec267ed4d43c33cd442e4b596967737c00aa50e4bc4fad28ece217b25"
+    },
+    {
+      "bytes": 2824,
+      "path": "/home/user/timeline-hub/hub/design/app-D100-final-receiving-proof-1939-facts.json",
+      "sha256": "a502001aa410c6335422f41862c809630c819525a216021c3927203bcd1baa37"
+    },
+    {
+      "bytes": 1508,
+      "path": "/home/user/timeline-hub/hub/design/app-D100-final-result-review-1946-report.md",
+      "sha256": "e096963f85b279c29b93bc8f88530182c3eb7096043a283d169da5c7f012550f"
+    },
+    {
+      "bytes": 11149,
+      "path": "/home/user/timeline-hub/hub/design/handoff-runtime-R2r-atomic-birth-sol-1546.md",
+      "sha256": "697b5546a438a0cb3cba14c72812cddaa2c77a380ee91fbb8f1cfb2703d83435"
+    },
+    {
+      "bytes": 195715,
+      "path": "/home/user/timeline-hub/hub/design/BOARD-HEADER.md",
+      "sha256": "d633de72a1c3c7ca044e21802d75f6232643dda20d62607269840423209ac683"
+    },
+    {
+      "bytes": 210581,
+      "path": "/home/user/timeline-hub/hub/design/commit-v2.md",
+      "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7"
+    },
+    {
+      "bytes": 14837,
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md",
+      "sha256": "bdff6fbea3f6021af1f739eaff0c91650f90a17c34dccb62fb76d120eceb5075"
+    }
+  ],
+  "references": {
+    "agent_D100": [
+      "agent",
+      "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1"
+    ],
+    "agent_actual2136": [
+      "agent",
+      "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db"
+    ],
+    "agent_home": [
+      "agent",
+      "547e10456250c1b5bcf63b44a50c90ff0563ce1e"
+    ],
+    "agent_projection": [
+      "agent",
+      "f53b016900c99e46998268e36c7c431ac0eec61e"
+    ],
+    "agent_reviewed20db": [
+      "agent",
+      "20dbfdef45f71fa28a63f5382c154f5cca50b83a"
+    ],
+    "runtime_home": [
+      "runtime",
+      "f103bb46866999c961a8865636f2e66d544e0c9b"
+    ],
+    "runtime_original": [
+      "runtime",
+      "ab1e4f6141987706132916e2da16477f5a019464"
+    ]
+  },
+  "task": "D136b",
+  "tool": {
+    "binary": "/usr/bin/python3",
+    "project_imports": false,
+    "script_sha256": "892b625329fc1249951d6951862413c0476652fc3acb12e85efe2e5f7abe2765",
+    "version": "3.13.16"
+  }
+}

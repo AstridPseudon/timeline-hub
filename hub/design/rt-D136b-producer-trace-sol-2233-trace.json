@@ -1,0 +1,866 @@
+{
+  "D104": [
+    {
+      "condition": 1,
+      "reason": "No invalid original input and correct-guard diagnosis proved.",
+      "status": "NOT_ESTABLISHED"
+    },
+    {
+      "condition": 2,
+      "reason": "No product/setup/authored timing/topology/opaque input/assertion bytes changed.",
+      "status": "PRESERVED_NO_MIGRATION"
+    },
+    {
+      "condition": 3,
+      "reason": "No new host/media/seed or containment proof; changing input is not authorized by this trace.",
+      "status": "NO_MIGRATION_PROPOSED"
+    },
+    {
+      "condition": 4,
+      "reason": "Shared helper open_source_runtime and saved_closure source read only. No caller migrated.",
+      "status": "PRESERVED_NO_SHARED_SEED_EDIT"
+    },
+    {
+      "condition": 5,
+      "reason": "No fixture author, independent migration approval, D72 entry or meaningful proof run. Source review is not behavioral qualification.",
+      "status": "NOT_MET_FOR_MIGRATION"
+    }
+  ],
+  "nodes": [
+    {
+      "boundary": "Registered genuine initializer",
+      "id": "T01",
+      "reachability": "Source path; actual per-command records UNKNOWN unless explicitly retained by prior safe evidence",
+      "source_refs": [
+        "source_fixture",
+        "initializer",
+        "provider_loader"
+      ],
+      "trace": "Runtime creates bootstrap; helper captures parent-only init; fixture submits each setup command separately. Provider checks bootstrap ancestry and unchanged base. This is not an intermediate child-birth proof."
+    },
+    {
+      "boundary": "Accepted first physical item",
+      "id": "T02",
+      "reachability": "Source path; actual per-command records UNKNOWN unless explicitly retained by prior safe evidence",
+      "source_refs": [
+        "D100",
+        "source_fixture"
+      ],
+      "trace": "One guarded doc.patch changes existing shot items [] to the media-bound item list. Actual accepted canonical readback and wrong-previous no-write evidence are retained by D100. No command-output adjacency exists in this single-command request."
+    },
+    {
+      "boundary": "Original fixture publications",
+      "id": "T03",
+      "reachability": "Source path; actual per-command records UNKNOWN unless explicitly retained by prior safe evidence",
+      "source_refs": [
+        "saved_fixture",
+        "saved_writer",
+        "publish"
+      ],
+      "trace": "Captured fixture first admits source item, then publishes/reloads authored source, then reserves two independent duplicates, removes source and publishes final candidate. Only source order is known; private retained failure coordinates are unavailable."
+    },
+    {
+      "boundary": "Command/request producer",
+      "id": "T04",
+      "reachability": "Source path; actual per-command records UNKNOWN unless explicitly retained by prior safe evidence",
+      "source_refs": [
+        "authoring_request",
+        "materialize_duplicates"
+      ],
+      "trace": "Exact Runtime base is read; duplicate reservations execute on preceding bundle; deletes follow; guarded payload patches follow. All semantic structural ordinals are placed in one structure step; payload commands form authoring step. No read/capture invented."
+    },
+    {
+      "boundary": "Registered coordinator and scoped port",
+      "id": "T05",
+      "reachability": "Source path; actual per-command records UNKNOWN unless explicitly retained by prior safe evidence",
+      "source_refs": [
+        "service_entry",
+        "service_context",
+        "provider_loader",
+        "coordinator",
+        "port_closure"
+      ],
+      "trace": "Provider factory ABI is checked. Detached context binds invocation/key/request hash/realm/publisher. Port authenticates base revision/publication ancestry and retains exact immutable closure. These roots, not arbitrary client snapshots, seed Agent."
+    },
+    {
+      "boundary": "Execution and native records",
+      "id": "T06",
+      "reachability": "Source path; actual per-command records UNKNOWN unless explicitly retained by prior safe evidence",
+      "source_refs": [
+        "provider",
+        "execute",
+        "record_create",
+        "record_finish"
+      ],
+      "trace": "Per ordinal execute records actual native reads/writes/derived writes/created allocations. Shot birth is an aggregate with payload plus internal_timeline; occurrence birth is a separate absent-to-present write. Submitted claims are checked against generated records."
+    },
+    {
+      "boundary": "Physical normalization and boundary binding",
+      "id": "T07",
+      "reachability": "Source path; actual per-command records UNKNOWN unless explicitly retained by prior safe evidence",
+      "source_refs": [
+        "document",
+        "closure",
+        "patch_before_original",
+        "patch_before_home",
+        "patch_after"
+      ],
+      "trace": "Closure compiles exact parent/shot/internal physical images with revision, digest and owners. before captures per-command input, after captures real output. commit.input and operation bindings retain command/step/base/head/phase. Original/current before differ; neither invents a physical timeline image."
+    },
+    {
+      "boundary": "Authoritative steps and private transport",
+      "id": "T08",
+      "reachability": "Source path; actual per-command records UNKNOWN unless explicitly retained by prior safe evidence",
+      "source_refs": [
+        "patch_finish",
+        "patch_effects",
+        "capture",
+        "port_capture"
+      ],
+      "trace": "Step effects come from full image unions, with before/after effect bindings and materializations. Original/landing input-output documents and records travel only through request-private capture bound to detached context and prepared_digest, outside public PreparedCommit."
+    },
+    {
+      "boundary": "Store and private proof authentication",
+      "id": "T09",
+      "reachability": "Source path; actual per-command records UNKNOWN unless explicitly retained by prior safe evidence",
+      "source_refs": [
+        "port_accept",
+        "store_accept",
+        "store_validate",
+        "port_validate_capture",
+        "validate_sequential"
+      ],
+      "trace": "Acceptance verifies context/head/destinations and closure/records before persistence. Private proof verifies schema, digest, exact original/landing heads, ordinals, step attribution, first-head equality, output-to-next-input equality and final canonical output. A valid capture does not waive native projection."
+    },
+    {
+      "boundary": "Independent native physical reconstruction",
+      "id": "T10",
+      "reachability": "Source path; actual per-command records UNKNOWN unless explicitly retained by prior safe evidence",
+      "source_refs": [
+        "images",
+        "native_site",
+        "site",
+        "project_created",
+        "command_output",
+        "validate"
+      ],
+      "trace": "validate reconstructs each same-step command boundary before comparing private output. Created-child projector requires immediately following native occurrence refs. Unprojected aggregate shot has native_site=(timeline,[]); images has no timeline image. B022 refuses membership before before/after projection."
+    },
+    {
+      "boundary": "Strict sequential contrast",
+      "id": "T11",
+      "reachability": "Source path; actual per-command records UNKNOWN unless explicitly retained by prior safe evidence",
+      "source_refs": [
+        "strict_unit",
+        "strict_fixture",
+        "strict_registered",
+        "strict_refusals",
+        "private_two_stages",
+        "private_context_refusal",
+        "private_correspondence"
+      ],
+      "trace": "Existing genuine control creates occurrence then track/media on that same occurrence; following native refs explicitly name the born owner. Accepted fields/atomic grouped/separate and strict foreign/future/ambiguous/owner/input/scope refusals address this connected dependency shape, not two independent duplicates. Private carrier controls separately require invocation identity and complete correspondence; _verify_packet deliberately invokes both private-proof authentication and native validate. Retained packet/synthetic provider tests are transport/security controls, not real-child or production-join acceptance."
+    },
+    {
+      "boundary": "Persistence/reply boundary",
+      "id": "T12",
+      "reachability": "Source path; actual per-command records UNKNOWN unless explicitly retained by prior safe evidence",
+      "source_refs": [
+        "step_output",
+        "store_accept",
+        "publish"
+      ],
+      "trace": "Only after validation can closure/history/receipt/reference projection persist. The failing publication does not reach these operations or final nine predicates. Earlier fixture setup acceptances must not be confused with acceptance of the failed publication."
+    }
+  ],
+  "observed": {
+    "capture_path": null,
+    "capture_ref": null,
+    "command_ordinal": null,
+    "downstream": "UNREACHED/UNKNOWN",
+    "errors": 9,
+    "exit_code": 1,
+    "failures": 0,
+    "guard": "runtime_protocol/timeline_commit_auth.py:2209",
+    "message": "provider intermediate command lacks an authenticated physical observation",
+    "passes": 0,
+    "private_raw_access": false,
+    "publication_invocation": null,
+    "resolved_ref": null,
+    "skips": 0,
+    "source": "App2136 safe manifest plus independent2144 safe review; not a new run",
+    "step_id": null,
+    "tests": 9
+  },
+  "references": {
+    "D100": {
+      "commit": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+      "git_blob": "39ed571d5f3e49d2545fc31e1f868ee7c58dbc8a",
+      "lines": [
+        206,
+        246
+      ],
+      "path": "tests/sdk/test_d100_item_birth_boundary.py",
+      "repo": "agent",
+      "sha256": "fcd5f187e185faa2222fb23c69827bd6d8bcbb710fdad131f649973f95e6de37",
+      "symbol": "test_registered_runtime_first_source_item_birth_and_no_write_refusal"
+    },
+    "authoring_request": {
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "8d1db8c3b3a424477ffaa345cb1b27c73fcfa63d",
+      "lines": [
+        84,
+        187
+      ],
+      "path": "astrid/sdk/timeline/authoring_commit.py",
+      "repo": "agent",
+      "sha256": "6a03a0030a02c58fefe99e6f07f620f401a7a673259920c4086a3dab6615feac",
+      "symbol": "authoring_commit_request"
+    },
+    "capture": {
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "daeed358b72e852abe9ee4bad367dc454bd91ba1",
+      "lines": [
+        25,
+        90
+      ],
+      "path": "astrid/sdk/timeline/_commit_preview.py",
+      "repo": "agent",
+      "sha256": "9380dd2e3eb9c041b8515e20d979e2cce4aa0ca9cbfeed81f40c315357f77c36",
+      "symbol": "capture_sequential_execution"
+    },
+    "closure": {
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "e55d400c00ed727a244aecdaef95a67205e623fa",
+      "lines": [
+        118,
+        267
+      ],
+      "path": "astrid/sdk/timeline/_doc_patch.py",
+      "repo": "agent",
+      "sha256": "15cc750407eb3b057900befd95cd2bd30c28f41acda9bb2f31e5c2f48f5ad00f",
+      "symbol": "Closure"
+    },
+    "command_output": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "75c290edb73a8f8e39c77a64368bf4b11705f7f0",
+      "lines": [
+        2189,
+        2335
+      ],
+      "path": "runtime_protocol/timeline_commit_auth.py",
+      "repo": "runtime",
+      "sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+      "symbol": "command_output"
+    },
+    "compile": {
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "e329c565bbaea9acac81c71929b7f3c3cadd0a17",
+      "lines": [
+        1000,
+        1404
+      ],
+      "path": "astrid/core/timeline/authoring_bundle.py",
+      "repo": "agent",
+      "sha256": "0611d655f3386f9b06888fa87fa9c38c0ee2d8f89411e944715daa80fa819a4d",
+      "symbol": "compile_authoring_candidate"
+    },
+    "coordinator": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "ec2b50120122a6ebf9b62e44fd19761ca798a896",
+      "lines": [
+        373,
+        431
+      ],
+      "path": "runtime_protocol/timeline_commit_execution.py",
+      "repo": "runtime",
+      "sha256": "5956b4850e11d517a6bcc9aa8ae7f0074b45810e26faa8ffe391b907e764c257",
+      "symbol": "CommitExecutionCoordinator._execute"
+    },
+    "document": {
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "3ca7c6e970cc162cef30989ad9cb5e0e2a61715c",
+      "lines": [
+        302,
+        420
+      ],
+      "path": "astrid/sdk/timeline/commit.py",
+      "repo": "agent",
+      "sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+      "symbol": "document_from_bundle"
+    },
+    "duplicate": {
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "4338045a2272765dd1e35ff17bbca357ccc4fe04",
+      "lines": [
+        11,
+        45
+      ],
+      "path": "astrid/sdk/timeline/native_occurrence_duplicate.py",
+      "repo": "agent",
+      "sha256": "f2936a59859e2069169b6371669e2faf2cdc6def3a2c067a8bf08fa452986f86",
+      "symbol": "occurrence_duplicate"
+    },
+    "duplicate_copy": {
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "4338045a2272765dd1e35ff17bbca357ccc4fe04",
+      "lines": [
+        48,
+        72
+      ],
+      "path": "astrid/sdk/timeline/native_occurrence_duplicate.py",
+      "repo": "agent",
+      "sha256": "f2936a59859e2069169b6371669e2faf2cdc6def3a2c067a8bf08fa452986f86",
+      "symbol": "copy_child"
+    },
+    "execute": {
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "10a6c7f0548f04af4820443a0b01cc38bbacbc43",
+      "lines": [
+        201,
+        308
+      ],
+      "path": "astrid/sdk/timeline/commands.py",
+      "repo": "agent",
+      "sha256": "b89798a439daace286e6702647c670c532a21575719e4df1bda87607b855ee96",
+      "symbol": "execute"
+    },
+    "images": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "75c290edb73a8f8e39c77a64368bf4b11705f7f0",
+      "lines": [
+        24,
+        27
+      ],
+      "path": "runtime_protocol/timeline_commit_auth.py",
+      "repo": "runtime",
+      "sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+      "symbol": "images"
+    },
+    "initializer": {
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "7cec29956e0280d8fe682701ab5de42ce5b07edd",
+      "lines": [
+        7,
+        22
+      ],
+      "path": "astrid/sdk/timeline/native_initialize.py",
+      "repo": "agent",
+      "sha256": "9ba19ebc1212cca4fbde005728a410e68a128297abb4e39ccf3f2abd2e39df82",
+      "symbol": "initialize"
+    },
+    "materialize_duplicates": {
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "8d1db8c3b3a424477ffaa345cb1b27c73fcfa63d",
+      "lines": [
+        190,
+        261
+      ],
+      "path": "astrid/sdk/timeline/authoring_commit.py",
+      "repo": "agent",
+      "sha256": "6a03a0030a02c58fefe99e6f07f620f401a7a673259920c4086a3dab6615feac",
+      "symbol": "_materialize_duplicates"
+    },
+    "native_site": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "75c290edb73a8f8e39c77a64368bf4b11705f7f0",
+      "lines": [
+        213,
+        218
+      ],
+      "path": "runtime_protocol/timeline_commit_auth.py",
+      "repo": "runtime",
+      "sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+      "symbol": "native_site"
+    },
+    "patch_after": {
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "ac72a2cb8c549393869a96d753a04fc2d88b91ec",
+      "lines": [
+        459,
+        512
+      ],
+      "path": "astrid/sdk/timeline/_commit_patch.py",
+      "repo": "agent",
+      "sha256": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f",
+      "symbol": "CommitPatch.after"
+    },
+    "patch_before_home": {
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "git_blob": "f8e3bd950fef4af21030b05dd10d4c64ede79c89",
+      "lines": [
+        354,
+        407
+      ],
+      "path": "astrid/sdk/timeline/_commit_patch.py",
+      "repo": "agent",
+      "sha256": "76224a62434ade240e298bf6a1d14b64bdc2ed650923c2160cf22bdbb23a4a50",
+      "symbol": "CommitPatch.before"
+    },
+    "patch_before_original": {
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "ac72a2cb8c549393869a96d753a04fc2d88b91ec",
+      "lines": [
+        354,
+        409
+      ],
+      "path": "astrid/sdk/timeline/_commit_patch.py",
+      "repo": "agent",
+      "sha256": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f",
+      "symbol": "CommitPatch.before"
+    },
+    "patch_effects": {
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "ac72a2cb8c549393869a96d753a04fc2d88b91ec",
+      "lines": [
+        170,
+        244
+      ],
+      "path": "astrid/sdk/timeline/_commit_patch.py",
+      "repo": "agent",
+      "sha256": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f",
+      "symbol": "effect_diff"
+    },
+    "patch_finish": {
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "ac72a2cb8c549393869a96d753a04fc2d88b91ec",
+      "lines": [
+        514,
+        698
+      ],
+      "path": "astrid/sdk/timeline/_commit_patch.py",
+      "repo": "agent",
+      "sha256": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f",
+      "symbol": "CommitPatch.finish"
+    },
+    "port_accept": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "fa59975da670786e7e05e79b4d1231a4fbac50f3",
+      "lines": [
+        688,
+        700
+      ],
+      "path": "runtime_protocol/timeline_commit_port.py",
+      "repo": "runtime",
+      "sha256": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14",
+      "symbol": "RequestCommitPort.accept"
+    },
+    "port_capture": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "fa59975da670786e7e05e79b4d1231a4fbac50f3",
+      "lines": [
+        182,
+        209
+      ],
+      "path": "runtime_protocol/timeline_commit_port.py",
+      "repo": "runtime",
+      "sha256": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14",
+      "symbol": "RequestCommitPort.capture_sequential_execution"
+    },
+    "port_closure": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "fa59975da670786e7e05e79b4d1231a4fbac50f3",
+      "lines": [
+        282,
+        322
+      ],
+      "path": "runtime_protocol/timeline_commit_port.py",
+      "repo": "runtime",
+      "sha256": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14",
+      "symbol": "RequestCommitPort.revision_closure"
+    },
+    "port_validate_capture": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "fa59975da670786e7e05e79b4d1231a4fbac50f3",
+      "lines": [
+        702,
+        712
+      ],
+      "path": "runtime_protocol/timeline_commit_port.py",
+      "repo": "runtime",
+      "sha256": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14",
+      "symbol": "RequestCommitPort._validate_sequential_execution"
+    },
+    "private_context_refusal": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "95d648834bbfcad83e7846a467cfbaf221a9c293",
+      "lines": [
+        151,
+        161
+      ],
+      "path": "tests/test_timeline_commit_sequential_verifier.py",
+      "repo": "runtime",
+      "sha256": "dc6e2526a922139f53ef7ddc79f1b335a1f7b2b401a899042d1e8bbbdae87585",
+      "symbol": "test_private_sequential_carrier_rejects_context_tampering_without_write"
+    },
+    "private_correspondence": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "95d648834bbfcad83e7846a467cfbaf221a9c293",
+      "lines": [
+        437,
+        450
+      ],
+      "path": "tests/test_timeline_commit_sequential_verifier.py",
+      "repo": "runtime",
+      "sha256": "dc6e2526a922139f53ef7ddc79f1b335a1f7b2b401a899042d1e8bbbdae87585",
+      "symbol": "test_real_capture_requires_complete_ordered_correspondence"
+    },
+    "private_two_stages": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "95d648834bbfcad83e7846a467cfbaf221a9c293",
+      "lines": [
+        238,
+        252
+      ],
+      "path": "tests/test_timeline_commit_sequential_verifier.py",
+      "repo": "runtime",
+      "sha256": "dc6e2526a922139f53ef7ddc79f1b335a1f7b2b401a899042d1e8bbbdae87585",
+      "symbol": "_verify_packet"
+    },
+    "project_created": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "75c290edb73a8f8e39c77a64368bf4b11705f7f0",
+      "lines": [
+        1896,
+        2153
+      ],
+      "path": "runtime_protocol/timeline_commit_auth.py",
+      "repo": "runtime",
+      "sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+      "symbol": "_project_created_child"
+    },
+    "provider": {
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "3ca7c6e970cc162cef30989ad9cb5e0e2a61715c",
+      "lines": [
+        1160,
+        1469
+      ],
+      "path": "astrid/sdk/timeline/commit.py",
+      "repo": "agent",
+      "sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+      "symbol": "RuntimeCommitService.commit"
+    },
+    "provider_loader": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "a05812e82ee2930f29e277f260f3329855378932",
+      "lines": [
+        70,
+        93
+      ],
+      "path": "runtime_protocol/timeline_commit_provider.py",
+      "repo": "runtime",
+      "sha256": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf",
+      "symbol": "load_timeline_commit_provider"
+    },
+    "publish": {
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "e329c565bbaea9acac81c71929b7f3c3cadd0a17",
+      "lines": [
+        1833,
+        1914
+      ],
+      "path": "astrid/core/timeline/authoring_bundle.py",
+      "repo": "agent",
+      "sha256": "0611d655f3386f9b06888fa87fa9c38c0ee2d8f89411e944715daa80fa819a4d",
+      "symbol": "publish_authoring_candidate"
+    },
+    "record_create": {
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "523a1280ab916734cefae836adb7c89b6ead2f2f",
+      "lines": [
+        184,
+        208
+      ],
+      "path": "astrid/sdk/timeline/_recording.py",
+      "repo": "agent",
+      "sha256": "3940d0296f55bfc2b7cff6f4998adc4a6caf3290c1fcae10ddea813edc50f7e4",
+      "symbol": "Recording.create_entity"
+    },
+    "record_finish": {
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "523a1280ab916734cefae836adb7c89b6ead2f2f",
+      "lines": [
+        249,
+        283
+      ],
+      "path": "astrid/sdk/timeline/_recording.py",
+      "repo": "agent",
+      "sha256": "3940d0296f55bfc2b7cff6f4998adc4a6caf3290c1fcae10ddea813edc50f7e4",
+      "symbol": "Recording.finish"
+    },
+    "saved_fixture": {
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "16954294f9f70018e4bbd1012083f51594f6cb19",
+      "lines": [
+        280,
+        441
+      ],
+      "path": "tests/sdk/test_timeline_capture_projection.py",
+      "repo": "agent",
+      "sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+      "symbol": "saved_closure"
+    },
+    "saved_writer": {
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "16954294f9f70018e4bbd1012083f51594f6cb19",
+      "lines": [
+        251,
+        276
+      ],
+      "path": "tests/sdk/test_timeline_capture_projection.py",
+      "repo": "agent",
+      "sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+      "symbol": "_RuntimeAuthoringWriter"
+    },
+    "service_context": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "48f9d1b94e0cda5feece2bf51cb7d6e1fca03144",
+      "lines": [
+        2486,
+        2622
+      ],
+      "path": "runtime_protocol/service.py",
+      "repo": "runtime",
+      "sha256": "13587d2c3b58ecb6838525e69cbaa38a045b2491a34170275e1d5e55354bf51b",
+      "symbol": "RuntimeService._execute_timeline_commit"
+    },
+    "service_entry": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "48f9d1b94e0cda5feece2bf51cb7d6e1fca03144",
+      "lines": [
+        2469,
+        2483
+      ],
+      "path": "runtime_protocol/service.py",
+      "repo": "runtime",
+      "sha256": "13587d2c3b58ecb6838525e69cbaa38a045b2491a34170275e1d5e55354bf51b",
+      "symbol": "RuntimeService.commit_timeline"
+    },
+    "site": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "75c290edb73a8f8e39c77a64368bf4b11705f7f0",
+      "lines": [
+        100,
+        172
+      ],
+      "path": "runtime_protocol/timeline_commit_auth.py",
+      "repo": "runtime",
+      "sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+      "symbol": "site"
+    },
+    "source_fixture": {
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "git_blob": "092b212d4708c0a19fa4d183632ca5c64abc4da7",
+      "lines": [
+        155,
+        301
+      ],
+      "path": "tests/sdk/test_capture_source_runtime.py",
+      "repo": "agent",
+      "sha256": "3cb21a6a3033ee81bb22305ec8c48dad6fc510fc202e509175738f9fe82f5c48",
+      "symbol": "open_source_runtime"
+    },
+    "step_output": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "75c290edb73a8f8e39c77a64368bf4b11705f7f0",
+      "lines": [
+        798,
+        871
+      ],
+      "path": "runtime_protocol/timeline_commit_auth.py",
+      "repo": "runtime",
+      "sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+      "symbol": "step_output"
+    },
+    "store_accept": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "f9cf50c1aee3b0a8c7caeb3d8a307a65f5f910e9",
+      "lines": [
+        1832,
+        1915
+      ],
+      "path": "runtime_protocol/timeline_commit_store.py",
+      "repo": "runtime",
+      "sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+      "symbol": "TimelineCommitStore.accept"
+    },
+    "store_validate": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "f9cf50c1aee3b0a8c7caeb3d8a307a65f5f910e9",
+      "lines": [
+        1491,
+        1565
+      ],
+      "path": "runtime_protocol/timeline_commit_store.py",
+      "repo": "runtime",
+      "sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+      "symbol": "TimelineCommitStore._validate"
+    },
+    "strict_fixture": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "ee0d19f1615664d572a712dd4a4585413a3a8439",
+      "lines": [
+        762,
+        838
+      ],
+      "path": "tests/test_timeline_commit_authentication.py",
+      "repo": "runtime",
+      "sha256": "10f4f9b53e9a39afa735e26543c29cdb620c776a364b61e0009591212059ad6e",
+      "symbol": "created_child_public"
+    },
+    "strict_refusals": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "ee0d19f1615664d572a712dd4a4585413a3a8439",
+      "lines": [
+        995,
+        1048
+      ],
+      "path": "tests/test_timeline_commit_authentication.py",
+      "repo": "runtime",
+      "sha256": "10f4f9b53e9a39afa735e26543c29cdb620c776a364b61e0009591212059ad6e",
+      "symbol": "test_created_child_public_atomic_keeps_birth_tamper_refusals"
+    },
+    "strict_registered": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "ee0d19f1615664d572a712dd4a4585413a3a8439",
+      "lines": [
+        968,
+        988
+      ],
+      "path": "tests/test_timeline_commit_authentication.py",
+      "repo": "runtime",
+      "sha256": "10f4f9b53e9a39afa735e26543c29cdb620c776a364b61e0009591212059ad6e",
+      "symbol": "test_created_child_public_sequential_birth_aliases_accept_fields_and_atomic"
+    },
+    "strict_unit": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "ee0d19f1615664d572a712dd4a4585413a3a8439",
+      "lines": [
+        444,
+        510
+      ],
+      "path": "tests/test_timeline_commit_authentication.py",
+      "repo": "runtime",
+      "sha256": "10f4f9b53e9a39afa735e26543c29cdb620c776a364b61e0009591212059ad6e",
+      "symbol": "test_sequential_created_child_boundary_uses_the_native_birth_not_future_output"
+    },
+    "validate": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "75c290edb73a8f8e39c77a64368bf4b11705f7f0",
+      "lines": [
+        2873,
+        2975
+      ],
+      "path": "runtime_protocol/timeline_commit_auth.py",
+      "repo": "runtime",
+      "sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+      "symbol": "validate"
+    },
+    "validate_sequential": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "git_blob": "75c290edb73a8f8e39c77a64368bf4b11705f7f0",
+      "lines": [
+        2563,
+        2870
+      ],
+      "path": "runtime_protocol/timeline_commit_auth.py",
+      "repo": "runtime",
+      "sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+      "symbol": "validate_sequential_capture"
+    }
+  },
+  "restrictions": {
+    "App2211_metadata_correction": false,
+    "D112_work": false,
+    "D130_work": false,
+    "D139_body": false,
+    "guard_relaxation": false,
+    "product_edits": false,
+    "test_edits": false
+  },
+  "result": "UNKNOWN_ACTUAL_B022_CAUSE",
+  "scope": "Read-only source/hash/AST review; no imports, tests, collection, suites, providers, browser, acquisition or private App raw transfer.",
+  "source_consistency_finding": {
+    "actual_failure_attribution": "UNKNOWN",
+    "after_shape_required": "Every used sequential boundary has actual parent/shot/internal images and exact owner edges, revision/digest/step/ordinal/phase binding; no timeline pseudo-image, invented read, copied future payload or guard exception.",
+    "before_shape": "One structure step spans independent native aggregate births/removal; command_output needs a same-step physical projection but the next command has no native dependency on the previous birth.",
+    "disposition": "UNAPPLIED. Manager/orchestrator receives this source finding before any product author. No Runtime guard change; no setup migration; no assertion/body change.",
+    "id": "D136B-PRODUCER-01",
+    "owner": "Agent R1/G3 authoring request producer",
+    "premise": "The source-produced grouped structure step contains an independent duplicate followed by another duplicate of the original owner; the generated records reach Runtime native projection.",
+    "producer_correction_target": "Agent authoring_commit_request step construction and its generated authoritative execution records. Structural births must be emitted at boundaries that have complete authenticated physical closure/owner observations. A finite producer-side candidate is one structural command per step in the same atomic request, using existing genuine per-step captures/effects, subject to owner approval of step/undo semantics and protected verification. This is not a proven sufficient patch.",
+    "proof": [
+      "Producer places all semantic commands into one structure command_ordinals range; native duplicate creates an aggregate shot root and then an occurrence root.",
+      "Following duplicate reads/selects/binds the original source and creates its own different destination. commit.input names physical images; it is not a native ref to the earlier destination occurrence. Step effect/materialization bindings are attached at the step tail.",
+      "_project_created_child considers only immediately following reads/bindings/writes. Earlier destination occurrence is not named, so its occurrence branch continues; the paired shot branch also continues in the absence of a fork owner write.",
+      "projected_roots lacks this aggregate. command_output does not take the authenticated-created-root skip. native_site maps the aggregate shot path [] to timeline, while images produces only parent/shot-revision/internal-revision keys. Membership guard B022 must refuse.",
+      "Private input/output capture can contain the real born images, but validate reconstructs command_output first; later capture equality cannot repair the missing native projection."
+    ],
+    "source_refs": [
+      "authoring_request",
+      "materialize_duplicates",
+      "duplicate",
+      "duplicate_copy",
+      "record_create",
+      "patch_before_original",
+      "patch_after",
+      "project_created",
+      "native_site",
+      "images",
+      "command_output",
+      "validate"
+    ],
+    "status": "PROVED_STATIC_CONDITIONAL_INCONSISTENCY"
+  },
+  "source_result": "PROVED_STATIC_CONDITIONAL_PRODUCER_CONSUMER_INCONSISTENCY",
+  "task": "D136b",
+  "unapplied_seams": [
+    {
+      "need": "Identify which existing saved_closure publication invocation actually reaches B022, using retained request identity/hash and prepared digest; do not reconstruct a request from source.",
+      "owner": "App2136 original evidence custodian; manager approves any in-place access",
+      "seam": "U01"
+    },
+    {
+      "need": "Retained step id and ordered command ordinals, failing current/following record correspondence, writes versus derived_writes index, ref/path and resolved physical ref; all actual coordinates remain UNKNOWN here.",
+      "owner": "App evidence custodian, with Runtime verifier reviewer",
+      "seam": "U02"
+    },
+    {
+      "need": "Authenticated source boundary image membership/ownership, created allocation and aggregate write before/after, and following reads/bindings/writes needed to decide whether _project_created_child should run. Keep raw payload local.",
+      "owner": "App evidence custodian; Agent R1 producer reviewer",
+      "seam": "U03"
+    },
+    {
+      "need": "Actual request-private original/landing command input/output documents and records, context/prepared_digest binding and availability; verification against exact immutable head closure, not a hand-built capture.",
+      "owner": "App evidence custodian; Runtime port/store reviewer",
+      "seam": "U04"
+    }
+  ],
+  "wire_shape_preserved": {
+    "modifications": false,
+    "replies": [
+      "accepted|merged with canonical/base/landing/merge_mode/receipt/records/bindings/effects/dependencies/history/undo_steps",
+      "conflict with reason/head",
+      "invalid with code/path/hint/suggested_command",
+      "preview with would_status/null receipt"
+    ],
+    "request": [
+      "api_version",
+      "project_id",
+      "timeline_id",
+      "base_revision_id",
+      "base_publication_id",
+      "commands[{schema_version,op,version,select,args}]",
+      "label",
+      "steps[{id,label,intent,tags,command_ordinals,patch,optional reads}]",
+      "merge fields|atomic",
+      "reads",
+      "Idempotency-Key header",
+      "dry_run",
+      "source",
+      "rationale",
+      "group_id"
+    ]
+  }
+}
