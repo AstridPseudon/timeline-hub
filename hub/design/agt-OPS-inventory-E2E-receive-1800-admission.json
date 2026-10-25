@@ -1,0 +1,14 @@
+{
+  "task": "D128/F",
+  "observed_utc": "2026-10-25T18:03:00Z",
+  "free_bytes": 6710943744,
+  "required_start_reserve_bytes": 5905580032,
+  "ongoing_stop_bytes": 4000000000,
+  "approved_private_fixture": true,
+  "fixture_root": "/tmp/w-00f6a646ed",
+  "production_store_touched": false,
+  "production_maker_started": false,
+  "production_request_sent": false,
+  "network_acquisition": false,
+  "heavy_body_started": false
+}

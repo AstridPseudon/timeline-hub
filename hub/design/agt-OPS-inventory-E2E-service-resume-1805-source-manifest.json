@@ -1,0 +1,8 @@
+{
+  "source1747_commit": "f6b9d4d52802d3cc5cd6bf9be070cd4c40d1e2fe",
+  "source1747_runner_sha256": "4249af6c2f99a01d3eed7fa951a3c2477c25a5e0c6a9c0f61f55f2c505ba4788",
+  "source_manifest_sha256": "bcb635d082fdb8835ce814ae79f8313dd27ed21f01926206ea364b01cfd08456",
+  "candidate_maker_sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+  "bench_store_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+  "fixture_commits": "NOTCREATED: service stopped before wrapper setup"
+}

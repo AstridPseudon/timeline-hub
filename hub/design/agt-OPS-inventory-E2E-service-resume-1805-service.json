@@ -1,0 +1,13 @@
+{
+  "task": "D128/F",
+  "suite": "composition inventory-whole-maker",
+  "service_id": "agt-OPS-inventory-E2E-service-resume-1805-inventory-whole-maker-1025180750-27131",
+  "status": "fail",
+  "exit_code": 2,
+  "log_summary": "wrapper preflight failed parsing df header; no fixture or maker body ran",
+  "wrapper_corrected_after_run": true,
+  "resubmitted": false,
+  "production_store_touched": false,
+  "production_request_sent": false,
+  "network_acquisition": false
+}

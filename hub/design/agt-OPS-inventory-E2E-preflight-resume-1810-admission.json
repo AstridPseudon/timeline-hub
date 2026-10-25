@@ -1,0 +1,11 @@
+{
+  "normal_reserve_bytes": 5905580032,
+  "stop_line_bytes": 4000000000,
+  "free_bytes_observed_after_service": 6707437568,
+  "numeric_preflight": "PASS",
+  "service_admission": "NOTRUN: missing /home/user/work/venv-runtime/bin/python",
+  "production_store_touched": false,
+  "production_request_sent": false,
+  "network_acquisition": false,
+  "safety_permission_classifier_refusal": false
+}

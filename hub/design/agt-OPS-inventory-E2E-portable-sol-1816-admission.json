@@ -1,0 +1,15 @@
+{
+  "local_prerequisites": "PASS",
+  "normal_reserve_bytes": 5905580032,
+  "stop_line_bytes": 4000000000,
+  "free_bytes_observed": 6701105152,
+  "no_other_live_heavy_body_at_census": true,
+  "approved_private_fixture": true,
+  "execution_admitted": false,
+  "independent_exact_final_bindings": "PENDING",
+  "manager_new_service_authorization": "PENDING",
+  "production_store_touched": false,
+  "production_request_sent": false,
+  "network_acquisition": false,
+  "safety_permission_classifier_refusal": false
+}

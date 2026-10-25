@@ -1,0 +1,15 @@
+{
+  "task": "D128/F",
+  "suite": "composition inventory-whole-maker",
+  "service_id": "agt-OPS-inventory-E2E-preflight-resume-1810-inventory-whole-maker-1025181215-16002",
+  "status": "fail",
+  "exit_code": 1,
+  "log_empty": true,
+  "wrapper_sha256": "94e13634031004cc1f6badc7e7e23c520db375126d1ddc5f423ceb845c039b73",
+  "failure_boundary": "initial prerequisite guard: /home/user/work/venv-runtime/bin/python missing",
+  "resubmitted": false,
+  "production_store_touched": false,
+  "production_request_sent": false,
+  "network_acquisition": false,
+  "safety_permission_classifier_refusal": false
+}

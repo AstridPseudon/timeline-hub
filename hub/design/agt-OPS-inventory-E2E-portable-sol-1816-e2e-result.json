@@ -1,0 +1,14 @@
+{
+  "whole_make_e2e": "NOTRUN",
+  "parent_red": false,
+  "candidate_green": false,
+  "adversarial_checks": 0,
+  "commands": [],
+  "verifier_mocked": false,
+  "store_initialized_by_worker": false,
+  "admission_changed": false,
+  "reason": "Prepared only: exact final binding independent verdict and manager service authorization pending",
+  "whole_maker_bodies_this_worker": 0,
+  "fixture_git_commits": 0,
+  "private_store_initializations": 0
+}

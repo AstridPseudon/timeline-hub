@@ -1,0 +1,20 @@
+{
+  "suite": "composition inventory-whole-maker",
+  "status": "PREPARED_NOT_SUBMITTED",
+  "service_id": null,
+  "command": "test \"$(sha256sum /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-OPS-inventory-E2E-portable-sol-1816/evidence/inventory_whole_maker.sh | cut -d' ' -f1)\" = 564716bca87c9b48251ceecb3b6455bea40147e94cae9b5e25d98dee9747fa3f && bash -n /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-OPS-inventory-E2E-portable-sol-1816/evidence/inventory_whole_maker.sh && env -i HOME=/root LANG=C.UTF-8 LC_ALL=C.UTF-8 TMPDIR=/tmp/w-f24ccbdde1 PATH=/home/user/work/venv-agent/bin:/usr/local/bin:/usr/bin:/bin /bin/bash /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-OPS-inventory-E2E-portable-sol-1816/evidence/inventory_whole_maker.sh",
+  "wrapper_sha256": "564716bca87c9b48251ceecb3b6455bea40147e94cae9b5e25d98dee9747fa3f",
+  "suite_row_sha256": "fcfd280bb6441a462707e645743187efec6a6ff95d83528903579bac67b0fd8f",
+  "suite_file_before_sha256": "6dd7f176e2c958df499c95d757c5ec454d470b3674bf24669c38d37a03c4789c",
+  "suite_file_after_sha256": "2e6aa69d58e10e0b4186c70ca06c5cf099ca9ac7d4bfe0a9ec4adb8903f1db41",
+  "cas": "PASS",
+  "all_other_rows_byte_exact": true,
+  "bash_parse": "PASS",
+  "shlex_parse": "PASS",
+  "independent_final_bindings_verdict": "PENDING",
+  "manager_new_service_authorization": "PENDING",
+  "prior_terminal_zero_body_services": [
+    "agt-OPS-inventory-E2E-service-resume-1805-inventory-whole-maker-1025180750-27131",
+    "agt-OPS-inventory-E2E-preflight-resume-1810-inventory-whole-maker-1025181215-16002"
+  ]
+}
