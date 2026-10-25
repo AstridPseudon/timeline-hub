@@ -1,0 +1,67 @@
+{
+  "subject": "P2 SWAP 3250 Runtime bounded source diagnostic",
+  "date": "2026-10-25",
+  "runtime_base": "453b3e6f92045980219ec4948419ee5ad25c817d",
+  "runtime_head_at_start": "453b3e6f92045980219ec4948419ee5ad25c817d",
+  "source_hashes": {
+    "runtime_protocol/timeline_commit_execution.py": "0e6dfd3b1d1eaacd5eae1c8b9ac52b61eee8d472237b282f2b3a97840b9fcafd",
+    "runtime_protocol/service.py": "5a55432f5925f053de6033532177b50acf7c151194b9fac84f707027f74234ff",
+    "runtime_protocol/server.py": "2b638ffc1790c5aaa4e6a6f382bd5567ac3fd173b19631a24375993929310178",
+    "runtime_protocol/timeline_commit_store.py": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+    "runtime_protocol/timeline_commit_port.py": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14",
+    "runtime_protocol/timeline_commit_reference_projection.py": "8143e69bc50775ab045d77977a3824923b37affc44eb8dd35930ab9927449370",
+    "tests/test_timeline_history_diagnostics.py": "ebc6994564b8fdac837adf397d8974b6fee7e1a281218225deaeeff6571cfd45"
+  },
+  "emitter_map": {
+    "provider": {
+      "tag": "provider_history_guard",
+      "boundary": "runtime_protocol/timeline_commit_execution.py provider.commit call",
+      "agent_origin": "astrid/sdk/timeline/commit.py:1160 and authenticated history guards"
+    },
+    "store_direct_count": 31,
+    "store_projection_tags": [
+      "store_reference_projection_prepare_history",
+      "store_reference_projection_apply_history"
+    ],
+    "port_tags": [
+      "port_ancestor_pin_mismatch",
+      "port_ancestor_outside_request",
+      "port_history_bounds_mismatch",
+      "port_revision_outside_ancestry",
+      "port_base_pins_mismatch",
+      "port_candidate_head_unobserved"
+    ]
+  },
+  "correlation": {
+    "public_field": "public_request_id_hash",
+    "algorithm": "sha256",
+    "scope": "private bounded diagnostic only",
+    "strict_commit_context_changed": false,
+    "public_envelope_changed": false,
+    "observed_local_prefix": "20ef9f38",
+    "observed_swap_public_prefix": "61c84a4e",
+    "same_run_proved": false
+  },
+  "native_proof": {
+    "status": "not_observed",
+    "reason": "retained App facts packet absent and free space 4.6 GB is below 5 GB admission",
+    "facts_path": "design/app-D127-full-P2-3250-terminal-1421-facts.json",
+    "submission_id": "app-pin-fe3309db-d73-p2-fe3309db-submit-1025140943-3250",
+    "tuple": {
+      "app": "fe3309db",
+      "agent": "070dfc5e",
+      "runtime": "5e9ad1c6f7",
+      "composition": "635f"
+    },
+    "body_or_private_payload_retained_here": false,
+    "native_command_executed": false,
+    "next_command": "Use the existing native harness with the exact retained request from the facts packet, same submission id and tuple, only after ordinary light admission >=5 GB; otherwise publish the precise missing retained request source."
+  },
+  "verification": {
+    "targeted": "210 passed",
+    "diff_check": "passed",
+    "compileall": "passed",
+    "known_baseline_failures": 2,
+    "known_baseline_failure_cause": "authorizer denies existing PRAGMA data_version in TimelineCommitStore._store_version"
+  }
+}

@@ -776,6 +776,30 @@ from urllib.parse import unquote, urlparse
 def fail(message):
     raise SystemExit(message)
 
+def owned_local_metadata(metadata_rel, content, source_files):
+    if metadata_rel in {'METADATA', 'WHEEL', 'top_level.txt', 'entry_points.txt',
+                        'direct_url.json', 'INSTALLER', 'REQUESTED', 'RECORD'}:
+        return True
+    return metadata_rel == 'licenses/LICENSE' and source_files.get('LICENSE') == content
+
+def metadata_diagnostic_ref(distribution, metadata_rel):
+    raw = f'{distribution}:{metadata_rel}'
+    safe_chars = frozenset('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._/-:')
+    safe_distribution = ''.join(char if char in safe_chars else '_' for char in distribution)
+    safe_relative = ''.join(char if char in safe_chars else '_' for char in metadata_rel)
+    if metadata_rel.startswith(('/', '\\')):
+        safe_relative = '_' + safe_relative.lstrip('_/')
+    safe = safe_distribution + ':' + safe_relative
+    digest = hashlib.sha256(raw.encode('utf-8', 'surrogatepass')).hexdigest()[:12]
+    if (raw and len(raw) <= 96 and safe == raw
+            and not metadata_rel.startswith(('/', '\\'))):
+        return raw
+    prefix_length = 96 - len(digest) - 1
+    return safe[:prefix_length] + '~' + digest
+
+def fail_unowned_metadata(distribution, metadata_rel):
+    fail('unowned local distribution metadata: ' + metadata_diagnostic_ref(distribution, metadata_rel))
+
 staging = sys.argv[-1] == '--staging'
 farm_source = sys.argv[sys.argv.index('--farm-source') + 1] if '--farm-source' in sys.argv else None
 
@@ -946,9 +970,8 @@ for name, (checkout, commit) in checkouts.items():
         content = path.read_bytes()
         metadata_rel = path.relative_to(dist_path).as_posix() if path.is_relative_to(dist_path) else None
         if metadata_rel is not None:
-            if metadata_rel not in {'METADATA', 'WHEEL', 'top_level.txt', 'entry_points.txt',
-                                    'direct_url.json', 'INSTALLER', 'REQUESTED', 'RECORD'}:
-                fail('unowned local distribution metadata')
+            if not owned_local_metadata(metadata_rel, content, files):
+                fail_unowned_metadata(name, metadata_rel)
             if metadata_rel in {'INSTALLER', 'REQUESTED'} and content != (b'pip\n' if metadata_rel == 'INSTALLER' else b''):
                 fail('unexpected local installer bookkeeping')
         elif rel in files and content == files[rel]:

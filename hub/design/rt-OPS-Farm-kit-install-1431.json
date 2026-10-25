@@ -1,0 +1,37 @@
+{
+  "status": "PASS_SOURCE_ONLY_INSTALL",
+  "timestamp_utc": "2026-10-25T14:33:28Z",
+  "composition_head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "candidate": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-Farm-metadata-return-1423/evidence/make-child-venv.candidate",
+    "sha256": "e62f89eaf226897a36bd4c7f715d43a7a1d4206ff371432296c01de6bdd52dc3",
+    "mode": "0755"
+  },
+  "preimage": {
+    "sha256": "ff8dbf0ecb615a665e346b36d9d179526a58127d09749748990ea0fa885cf8f8",
+    "mode": "0755"
+  },
+  "installed": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+    "sha256": "e62f89eaf226897a36bd4c7f715d43a7a1d4206ff371432296c01de6bdd52dc3",
+    "mode": "0755",
+    "atomic_rename": true
+  },
+  "backup": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv.20261025T143328Z.bak",
+    "sha256": "ff8dbf0ecb615a665e346b36d9d179526a58127d09749748990ea0fa885cf8f8",
+    "mode": "0755"
+  },
+  "checks": {
+    "bash_n": "PASS",
+    "store_verify_compile": "PASS",
+    "ownership_microcontrols": "PASS",
+    "diagnostic_microcontrols": "PASS",
+    "installed_equals_candidate": "PASS",
+    "worktree_clean": true,
+    "active_process_namespace": "none_observed",
+    "active_queue_namespace": "none_observed",
+    "farm_root": "unknown_unobserved"
+  },
+  "no_live_build_statement": "No request-child-venv, child build, package installation, bench registration, Farm-entry access, full maker execution, or Farm reissue was performed."
+}
