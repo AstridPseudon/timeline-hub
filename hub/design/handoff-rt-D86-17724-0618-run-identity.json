@@ -1,0 +1,16 @@
+{
+  "packet":"F-D86-17724-0618",
+  "central_result_id":"rt-D86-new13-body-0611-fd86-new13-body-0611-1025061304-17724",
+  "suite":"fd86-new13-body-0611",
+  "repo":"runtime",
+  "result":"fail",
+  "tuple":{"agent_commit":"bde578505c035ae949ee8176b466bf8297772904","agent_tree":"1df31228fa89d4b56c09e505ea2c0aed8c7fc2b","runtime_commit":"0c62dfa63db9ff608ac9338388431e31a814e080","runtime_tree":"e22cdd54b668acea9fe593e6724b34d1a56f7530","app_commit":"9cb56c2a3f408b21a7610823b6c3b02a5b2e4f07","app_tree":"4f2babc3f26b4a09a023cc7bf72e8a1000e7bb96","composition_commit":"635f4de06fda22a85fc2e4cfc764d0153a4c9f40","composition_tree":"5ab5191a296980a0a6bcd1178ab6902d6478a148"},
+  "source_scope":{"opaqueSIX":6,"ordinaryscriptFOUR":4,"D103-CLItrim":3,"membership":"prepared-source-delta-only"},
+  "argv_controls":{"selector_count":13,"selector_sha256":"a43f7ea0dd142ed3493979af0e1dcc23cf56be203969a9b10f7f651dff1f542d","workers":3,"timeout_seconds":45,"cache_provider_disabled":true,"addopts_cleared":true,"integration_marker_used":false,"original_p4_test_hash":"e42f992eb760292fbf8592e5f123b3eb2a0166237a46aea2b014b1ef1fc8821f"},
+  "execution_controls":{"preflight_exit":0,"body_exit":1,"passed":0,"failed":4,"errors":9,"positive_exit":17,"positive_invocations":1,"poison_exit":1,"poison_invocations":1,"poison_body_invocations":0,"body_invocations":1,"route_bash_n":0},
+  "artifact_hashes":{"launcher_sha256":"d3508e68c9b32cddcb6213ffe32135091ec7525838658efda818916df54316f8","manifest_sha256":"3c3a308c30083cbb628a5e06765bf0b96eb476dd2db1cd2637983f797e81a695","source_hashes_sha256":"68b500559e1f4fcd5c9d81aaac6252afc616e3813890553400588c5787941267","xml_sha256":"2da8fd1042f5a71ddc725d498de33d349b2fc22355cbb0195357ed67f742b42c","xml_bytes":403856,"central_log_sha256":"2751d0a98566477f56e10f18daa7327f91d4f56993cebe312605104108b89400","central_log_bytes":403019},
+  "profile_facts":{"node_version":"v20.19.4","client_contract":"0.2.14","composition_version":"0.0.13","schema_digest":"sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b","profile_lock_sha256":"c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24","profile_archive_sha256":"9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738","profile_registry_sha256":"b0de93a936fa0f406cc4e6901dfdc558f55c633f7e349ae5d5704492dacb0f1d"},
+  "registry_restore":{"before_sha256":"4fbde9ca7b2d8766e24940cff711246e87516a09a0af03f3b7746400ce8bd76c","after_register_sha256":"679ddc838c3ea8c4fece44c4600883c8b701103142f34abc0041f38a1d3a3a9f","after_restore_sha256":"4fbde9ca7b2d8766e24940cff711246e87516a09a0af03f3b7746400ce8bd76c","byte_for_byte":true},
+  "safety_observation":"central retained log did not show a classifier or safety/permission refusal; no semantic verdict assigned",
+  "privacy":{"raw_exported":false,"safe_scalar_hash_facts_only":true,"unknown_opaque_values":"hashed_or_private"}
+}

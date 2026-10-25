@@ -1,0 +1,19 @@
+{
+  "packet":"F-D86-17724-0618",
+  "central_result_id":"rt-D86-new13-body-0611-fd86-new13-body-0611-1025061304-17724",
+  "selected_unique":13,
+  "executed_unique":13,
+  "expected_unique":13,
+  "status_counts":{"PASS":0,"FAIL":4,"ERROR":9,"SKIP":0,"UNKNOWN":0},
+  "family_counts":{"opaqueSIX":{"selected":6,"executed":6,"PASS":0,"FAIL":0,"ERROR":6},"ordinaryscriptFOUR":{"selected":4,"executed":4,"PASS":0,"FAIL":4,"ERROR":0},"D103-CLItrim":{"selected":3,"executed":3,"PASS":0,"FAIL":0,"ERROR":3}},
+  "membership_matches_retained_per_id":true,
+  "membership_matches_retained_xml":true,
+  "no_absent_case_pass":true,
+  "no_reconstructed_missing_records":true,
+  "no_new_semantic_verdict":true,
+  "owner_policy":"UNKNOWN unless allowed evidence proves ownership",
+  "scope_policy":"source-delta-only; exact new13 set; old60/old61/old96 immutable and excluded",
+  "preservation":"original inputs, assertions, opaque values, pins, timing, retry, undo, ABA, and 45-second guard retained by source/run records",
+  "private_artifacts":{"xml":{"sha256":"2da8fd1042f5a71ddc725d498de33d349b2fc22355cbb0195357ed67f742b42c","bytes":403856},"central_log":{"sha256":"2751d0a98566477f56e10f18daa7327f91d4f56993cebe312605104108b89400","bytes":403019}},
+  "export_policy":{"raw_xml":false,"raw_logs":false,"raw_commands":false,"raw_requests":false,"raw_bodies":false,"raw_media":false,"raw_credentials":false,"raw_urls":false,"private_stack_text":false}
+}
