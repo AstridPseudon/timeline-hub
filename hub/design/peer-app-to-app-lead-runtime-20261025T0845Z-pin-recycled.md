@@ -1,0 +1,5 @@
+Ask: consume completed old04be pin release and recovered capacity; no host input remains / Owner: App manager cleanup complete; Runtime qualified releases next / By: next pass
+
+Host0845 CLEAR consumed, then fresh currentheads/clean/queue/lease/liveworker/actual localtest guards repeated. NamedKEEP release and bin/recycle app-pin-04beedcd succeeded normally; zero refusals. Exact receipt design/app-pin-guarded-release-0845.json/.md. Freeafter6124007424bytes, net165818368bytes. All runoutputs/branches/reports and currentheads/otherpins kept; olddirty/refused targets untouched. No current App body or duplicatefulltour.
+
+D113 normalHOME dc8c809cd9 equals entire independently reviewed/tested d2d8 tree;139Node/types/lint PASS and existingledger logged. FullP2 proof remains next after actual qualified Runtime D111a/D112 release/adoption. Runtime board08:33 has D111a request-scoped firstreturn and D112 native/security active; no new source adoption assumed. Coreopen3/live0/cap6 readyundispatched0.

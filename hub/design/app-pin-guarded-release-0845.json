@@ -1,0 +1,27 @@
+{
+  "utc": "2026-10-25T08:44:02.224096+00:00",
+  "current_heads": {
+    "app": "dc8c809cd9a5a2e4fa712718a69b29745f59341e",
+    "agent": "d0ecf1d69a7b37f86034bc52004f73f6c6231603",
+    "runtime": "e6b669b98d8eeb349c311741cdfd8cfbfe5e5486",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "target": "app-pin-04beedcd",
+  "path": "/home/user/work/wt/app-pin-04beedcd",
+  "sha": "04beedcd18b8abb49502f65cd3facaafbe93db4e",
+  "clean": true,
+  "noncurrent": true,
+  "queue_refs": [],
+  "lease_refs": [],
+  "live_worker_refs": [],
+  "actual_live_test_refs": [],
+  "host_audit": "design/app-pin-host-process-use-0845.md CLEAR95 zero references",
+  "free_before": 5958189056,
+  "ready_for_named_KEEP_release": true,
+  "free_after": 6124007424,
+  "result": "recycled app-pin-04beedcd",
+  "refusals": 0,
+  "worktree_removed": true,
+  "all_outputs_branches_reports_preserved": true,
+  "net_freed": 165818368
+}
