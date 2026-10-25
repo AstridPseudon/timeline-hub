@@ -12,7 +12,7 @@ from astrid.core.timeline.shot_composition_projection import _placement_speed
 from astrid.sdk import timeline_intent as intent
 from astrid.sdk.timeline._timing_evaluators import _fps, _maps, _ReadLookup
 from astrid.sdk.timeline.compiler import TimingCompileError, TimingInputs, compile_timing
-from astrid.sdk.timeline.native_word_anchor import binding, legacy_binding
+from astrid.sdk.timeline.native_word_anchor import authored_refs, binding, legacy_binding
 from astrid.sdk.timeline.units import _time_fraction
 
 
@@ -563,7 +563,7 @@ def validate_candidate_timing(
                 raise TimingCompileError("word anchors require parent ownership")
     for clip in projection["parent"].get("clips", []):
         declarations = intent._app(clip)
-        refs = declarations.get("word_anchors", {})
+        refs = authored_refs(projection, clip)
         if not isinstance(refs, dict) or set(refs) - {"on", "until"}:
             raise TimingCompileError("invalid authored word anchor fields")
         for field in ("on", "until"):

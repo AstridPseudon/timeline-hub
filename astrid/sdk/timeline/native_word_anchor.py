@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 import json
 import re
+from collections.abc import Mapping
 from dataclasses import replace
 from decimal import Decimal
 from fractions import Fraction
@@ -28,7 +29,23 @@ PATH = ["app", "astrid"]
 def _namespace(row):
     app = row.get('app')
     value = app.get('astrid') if isinstance(app, dict) else None
-    return value if isinstance(value, dict) else {}
+    return value if isinstance(value, Mapping) else {}
+
+
+def authored_refs(bundle, clip):
+    """Read the exact namespaced choice from the active parent representation."""
+    namespace = _namespace(clip)
+    if "word_anchors" in namespace:
+        return namespace["word_anchors"]
+    parent = bundle.get("parent", {})
+    config = parent.get("config", {}) if isinstance(parent, Mapping) else {}
+    mirrors = config.get("clips") if isinstance(config, Mapping) else None
+    if isinstance(mirrors, list):
+        mirror = next((row for row in mirrors
+                       if isinstance(row, Mapping) and row.get("id") == clip.get("id")), None)
+        if isinstance(mirror, Mapping):
+            return _namespace(mirror).get("word_anchors", {})
+    return {}
 
 
 def reference_schema():
@@ -237,7 +254,7 @@ def compile_authored(bundle, sources):
     targets = set()
     for clip in projection["parent"]["clips"]:
         app = _namespace(clip)
-        refs = app.get("word_anchors", {})
+        refs = authored_refs(projection, clip)
         if not isinstance(refs, dict) or set(refs) - {"on", "until"}:
             raise TimingCompileError("invalid authored word anchor fields")
         for field in ("on", "until"):
