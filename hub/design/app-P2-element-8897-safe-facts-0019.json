@@ -1,0 +1,229 @@
+{
+  "task": "app-P2-element-8897-safe-facts-0019",
+  "scope": "finite same-ID safe evidence handoff; no source change, rerun, or causal diagnosis",
+  "run": {
+    "id": "app-pin-fd2f843a-p2-provider-element-0014-1025001412-8897",
+    "host": "app-pin-fd2f843a",
+    "suite": "p2-element",
+    "started_at": "2026-10-25T00:14:32.547Z",
+    "finished_at": "2026-10-25T00:17:48.243Z",
+    "service_wall_seconds": 201,
+    "terminal": "NO-GO"
+  },
+  "pins": {
+    "app": {
+      "commit": "fd2f843a6957deef0a059a97d36671cee9d39e91",
+      "tree": "9fd43cb9b47d64c747508ed2436d275019bc2599"
+    },
+    "agent": {
+      "commit": "0d142f79518ba4ec20eb195657ccc7eb6e903fc3",
+      "tree": "f490451a3fa92f847a9ff2d26daac9e1157925e3"
+    },
+    "runtime": {
+      "commit": "a3cd1a3214fa1632879c21d82d1abb9ea720b1de",
+      "tree": "64bb0caf0b7b950e02c4075077868a3dcd12ee06"
+    },
+    "composition": {
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    }
+  },
+  "results": {
+    "readiness": {
+      "tests": 1,
+      "failures": 0,
+      "time_seconds": 26.681106,
+      "testcase_seconds": 9.775,
+      "timestamp": "2026-10-25T00:16:21.046Z"
+    },
+    "original": {
+      "tests": 1,
+      "failures": 1,
+      "time_seconds": 59.728402,
+      "suite_seconds": 26.388,
+      "testcase_seconds": 26.388,
+      "timestamp": "2026-10-25T00:16:48.883Z",
+      "failure_boundary": "line 412: dialog status did not contain applied within 5 seconds",
+      "response_watcher_afterward": "page_closed"
+    }
+  },
+  "retained_artifacts": {
+    "manifest": {
+      "path": "d66/manifest.json",
+      "mode": "0644",
+      "size_bytes": 6415,
+      "mtime": "2026-10-25 00:17:48.240254289 +0000",
+      "sha256": "ab2d85cb43662bfe9f6233a99b0627dcf97165432e74e9c2b7be9b1543dc8e90"
+    },
+    "original_xml": {
+      "path": "d66/p2-element.xml",
+      "mode": "0644",
+      "size_bytes": 5505,
+      "mtime": "2026-10-25 00:17:48.204254290 +0000",
+      "sha256": "aa209cd69b5d02c7d799453f2d3861c4feed24ed5995c903c6f0fd1a1e217baf"
+    },
+    "readiness_xml": {
+      "path": "d66/readiness.xml",
+      "mode": "0644",
+      "size_bytes": 1681,
+      "mtime": "2026-10-25 00:16:47.460255680 +0000",
+      "sha256": "df04afc5c56bdc5aedd44da7b8689297785f874dc6d5fb1c306532f8a039536a"
+    },
+    "phase_jsonl": {
+      "path": "d66/runtime-private/p2-commit-phase.jsonl",
+      "mode": "0600",
+      "size_bytes": 14401,
+      "mtime": "2026-10-25 00:17:47.432254308 +0000",
+      "sha256": "9160ba07276164ba64a6e33d27207a73144fbd5719997a7af140e8453962ce2b"
+    },
+    "private_stack_dump": {
+      "path": "d66/runtime-private/p2-commit-phase.stacks.txt",
+      "mode": "0600",
+      "size_bytes": 7261,
+      "mtime": "2026-10-25 00:16:56.428255474 +0000",
+      "sha256": "795fb8c2077d8a580f54916bc840e9a2e770d3b80fbee5bb781decd27bca7521"
+    },
+    "safe_apply_diagnostic": {
+      "path": "d66/p2-element/.../p2-element-apply-diagnostic-json-931a9b7da0a1b95fabe2b4fb0e54b94786e46931.json",
+      "mode": "0600",
+      "size_bytes": 2344,
+      "mtime": "2026-10-25 00:17:45.944936140 +0000",
+      "sha256": "1d831539e7300cb7ca74c0120a6add3ab2452d51013f44792704e5ce9ae92a53"
+    }
+  },
+  "phase_capture": {
+    "schema_version": 1,
+    "request_ordinals": 3,
+    "phase_event_records": 120,
+    "summary_records": 3,
+    "total_jsonl_records": 123,
+    "bounds": {
+      "max_requests": 8,
+      "max_events": 128,
+      "max_bytes": 65536,
+      "watchdog_seconds": 2,
+      "max_watchdog_captures": 1
+    },
+    "event_budget": {
+      "truncated": false,
+      "bytes_used": 14401,
+      "events_used_including_summaries": 123
+    },
+    "ordinal_correlation": {
+      "request_1": {
+        "last_phase": "http_response",
+        "http_statuses": [200, 200],
+        "phase_counts": {
+          "handler_entry": 1,
+          "authorization": 14,
+          "coordinator_admission": 1,
+          "coordinator_lock": 1,
+          "provider": 1,
+          "accept": 1,
+          "receipt": 1,
+          "http_response": 2
+        },
+        "spans_ms": {
+          "handler_entry": 2208.047,
+          "authorization": 1701.942,
+          "coordinator_admission": 2111.537,
+          "coordinator_lock": 2111.117,
+          "provider": 1665.831,
+          "accept": 658.716,
+          "receipt": 647.989,
+          "http_response": 1.314
+        },
+        "handler_window_ms": 2208.971
+      },
+      "request_2": {
+        "last_phase": "http_response",
+        "http_statuses": [200, 200],
+        "phase_counts": {
+          "handler_entry": 1,
+          "authorization": 23,
+          "coordinator_admission": 1,
+          "coordinator_lock": 1,
+          "provider": 1,
+          "accept": 1,
+          "receipt": 1,
+          "http_response": 2
+        },
+        "spans_ms": {
+          "handler_entry": 18125.279,
+          "authorization": 11673.584,
+          "coordinator_admission": 17581.7,
+          "coordinator_lock": 17580.553,
+          "provider": 11285.098,
+          "accept": 6021.501,
+          "receipt": 5852.263,
+          "http_response": 5.44
+        },
+        "handler_window_ms": 18129.731
+      },
+      "request_3": {
+        "correlated_to": "element apply request-start in retained diagnostic",
+        "last_phase": "authorization",
+        "phase_counts": {
+          "handler_entry": 1,
+          "authorization": 5,
+          "coordinator_admission": 1,
+          "coordinator_lock": 1,
+          "provider": 1,
+          "accept": 0,
+          "receipt": 0,
+          "http_response": 0
+        },
+        "observed_spans_ms": {
+          "authorization": 101.137
+        },
+        "started_without_end": [
+          "handler_entry",
+          "coordinator_admission",
+          "coordinator_lock",
+          "provider"
+        ],
+        "unknown": [
+          "accept",
+          "receipt",
+          "http_response"
+        ]
+      }
+    }
+  },
+  "watchdog": {
+    "owner_request_ordinal": 3,
+    "captures": 1,
+    "configured_seconds": 2,
+    "configured_capture_cap": 1,
+    "thread_sections": 4,
+    "safe_frame_count": 72,
+    "safe_provider_frame": {
+      "category": "provider_validation",
+      "function": "validate_commit_value",
+      "file": "runtime_protocol/timeline_commit_validation.py",
+      "line": 173
+    },
+    "raw_dump": "retained privately at mode 0600; not copied or printed"
+  },
+  "pending_window": {
+    "apply_click_elapsed_ms": 40770,
+    "request_start_elapsed_ms": 41480,
+    "test_outcome_elapsed_ms": 45998,
+    "page_close_elapsed_ms": 46043,
+    "request_to_test_outcome_ms": 4518,
+    "request_to_page_close_ms": 4563,
+    "test_outcome_to_page_close_ms": 45,
+    "late_outcome_limit": "No post-close outcome is retained; any later response is UNKNOWN. The body log records the response watcher observing page closure during teardown."
+  },
+  "comparisons": {
+    "7131_runtime_732": "Published packet reports the same line-412 applied-status boundary and no observed accept/receipt/HTTP response; it does not provide this run's three-ordinal phase capture. Boundary difference only; no common-cause inference.",
+    "11589_runtime_bc04": "Published packet reports request ordinal 3 at provider validation and pending windows of 4558 ms to test outcome and 4626 ms to page close. Current a3cd facts are 4518 ms and 4563 ms, with request 3 provider-started but incomplete. Boundary difference only; no common-cause, deadlock, or permanent-failure inference."
+  },
+  "contract_check": {
+    "path": "/home/user/work/runtime/contract/commit-v2.md",
+    "unchanged": true,
+    "request_shape_checked": true,
+    "reply_shapes_checked": ["accepted", "merged", "conflict", "invalid", "preview"],
+    "notes": "The complete v2 request/reply examples and fields were read; no contract or production source was edited."
+  }
+}
