@@ -1,0 +1,76 @@
+{
+  "body_exit": 1,
+  "no_absent_case_pass": true,
+  "no_new_verdict": true,
+  "no_reconstructed_records": true,
+  "outcome_counts": {
+    "ERROR": 10,
+    "FAIL": 3,
+    "PASS": 7,
+    "SKIP": 0,
+    "executed": 20,
+    "selected": 20
+  },
+  "preflight_exit": 0,
+  "private_artifacts": [
+    {
+      "bytes": 123218,
+      "exported": false,
+      "name": "xml",
+      "sha256": "531696a41451b2ef5155a58a5aacdeb0e7fbabdc401fce065b3777a35184637e"
+    },
+    {
+      "bytes": 121124,
+      "exported": false,
+      "name": "body_log",
+      "sha256": "bfb95727c9d85ce701a3a01a85c1f5d346c39ed1b9c8a70756fc5888fd1f4889"
+    },
+    {
+      "bytes": 3133,
+      "exported": false,
+      "name": "command",
+      "sha256": "bb76e0f5f2f77ccd2b1bcff60a124b47e2408e3e913027859500c054cad0e84a"
+    },
+    {
+      "bytes": 2293,
+      "exported": false,
+      "name": "manifest",
+      "sha256": "8c9d946bfcb1b56c2f998ac1968571d446b1b75b205c28302d41953ff1b4423e"
+    }
+  ],
+  "profile": {
+    "client": "0.2.14",
+    "helper_harness_sha256": "6e7489f9cdbe9b2a888e29dd7d7b5efeef624aca4a843af62a8016fd0e4abe7a",
+    "node": "v20.19.4",
+    "schema_sha256": "867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b"
+  },
+  "proof": "actualimmutable20",
+  "request_id": "agent-d91-first20-immutable20-0313-1025031717-18575",
+  "route": "existing-main-D73",
+  "selector": {
+    "count": 20,
+    "sha256": "3990ec904ef9c9a1707e9c91b0288130a4639cee44b6872b695b5e17d261485f"
+  },
+  "service_id": "d91-first20-immutable20-0313-1025031717-18575",
+  "source_only": true,
+  "status": "terminal",
+  "task": "F-D86-20-22-safe-export-0347",
+  "tuple": {
+    "agent": {
+      "commit": "562ee30b6ed567a90a114f5029a96da2ece9789e",
+      "tree": "b4a181a97fd07406ccf5f3c3fd675175f77a2ccf"
+    },
+    "app": {
+      "commit": "24865fa212148e9bc149a1285936372656037e55",
+      "tree": "741333cebfb2b6505a080507bb6c9789df494d43"
+    },
+    "composition": {
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    },
+    "runtime": {
+      "commit": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+      "tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a"
+    }
+  }
+}

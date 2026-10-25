@@ -1,0 +1,17 @@
+{
+  "selected_unique": 161,
+  "executed_unique": 161,
+  "PASS": 6,
+  "FAIL": 43,
+  "ERROR": 112,
+  "missing_case_PASSES": 0,
+  "xml_testcase_count": 161,
+  "per_id_source_rows": 161,
+  "membership_rows": 161,
+  "membership_matches_xml": true,
+  "membership_matches_per_id": true,
+  "historical_original550_rows": 550,
+  "historical_unexecuted23_rows": 23,
+  "historical_dispositions_retained": true,
+  "no_count_sum_membership_rule": true
+}
