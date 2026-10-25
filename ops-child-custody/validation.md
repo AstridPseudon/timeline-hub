@@ -1,23 +1,40 @@
-Private OPS child custody candidate; actual layout UNVERIFIED.
+Private OPS child inventory contract candidate — SOURCE CHECKS PASS; WHOLE-MAKE E2E BLOCKED.
 
-The maker is preserved byte-for-byte from held WIP ad120ae33, SHA-256
+Base: 9428f515fcd8dccaef26193438b3ac89f903f5aa. Exact installed parent is
 0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39,
-mode 0755. Its only difference from live maker 1243cb6c is to reuse the
-existing authenticated archive installation route for unseeded builds too.
-Both retained source snapshots therefore remain committed-only while pip
-unpacks and builds the archives outside those snapshots. No verifier,
-metadata whitelist, owner marker, Store, dependency helper or reserve changed.
+68351 bytes, mode0755. Protected live bench_store123bb and dependency116b
+hashes and all 29 inherited test/source controls remain unchanged. The candidate
+retains the previous archive installation fix and all diagnostic lifecycle fixes.
 
-Production chain: source_state -> STORE_PY.build -> STORE_BUILD source
-archives and archive installations -> provenance/freeze/relocation ->
-Store.ensure('child', ..., verify, seal=seal) -> unchanged STORE_VERIFY ->
-registration. The diagnostic branch retains its existing --staging verifier
-invocation, seals even on failure/cancellation, and never calls registration
-or Store.ensure. The outer STORE_PY and STORE_VERIFY blocks are byte-identical
-to their live preimages. Source manifest binds all three live sources,
-candidate/test hashes, exact Git trees, archive hashes and file inventories.
+The complete pre-edit audit is evidence/audit-all-checks.json (20 conditions and
+prerequisites, original source line1142 through verifier end). Source line1154
+through end includes source-file ancestry, exact markers, metadata row order,
+all source metadata fields, six report header values, section boundaries and
+provenance bytes, installed distribution enumeration, local/direct and dependency
+row rendering, canonical tuple sort/duplicates, complete text equality, file size,
+file executable mode and returned inventory. Missing/malformed/unreadable data
+remain failures. The audit binds the exact installed source hash above.
 
-Acceptance commands:
+Fault proved by source and real pip freeze: pip freeze has a different contract
+from the verifier. It uses direct references for dependencies carrying direct_url,
+sorts raw names and deduplicates canonical names. The verifier requires every
+installed distribution, canonical tuple ordering, exact raw dependency Name and
+Version, and local source references from authenticated installed provenance.
+The new producer uses ONE explicit installed-site distribution inventory for
+both report sections. It retains strict local Name/Version matching, copies
+source URLs/hashes from validated installed direct_url, preserves dependency
+names and duplicate rows, bounds output to1MiB, and writes maker files0600.
+No report content grants ownership. STORE_VERIFY and STORE_PY are byte-exact.
+Relocation, archive authentication, RECORD hashes, registration and all reserves
+remain unchanged. No product/schema/generated/pin/C0 wire edit was made. D130
+SWAP/WAL is untouched.
+
+Farm's supplied log proves report equality failed after readonly-source. It does
+not expose the report or installed inventory. The EXACT differing production
+rows remain EXACTMISSING; no dependency/path is invented as the actual culprit.
+evidence/requested-census.md specifies the minimal safe in-place Farm census.
+
+Exact acceptance commands (from this worktree):
 
 ```sh
 bash -n ops-child-custody/make-child-venv
@@ -26,66 +43,61 @@ PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python -m unittest di
 git diff --check
 ```
 
-Results: shell syntax PASS; 29 unittest tests PASS; Ruff PASS; whitespace PASS.
-The unittest suite compiles all seven embedded Python blocks in memory:
-STORE_PY, STORE_VERIFY, STAGING_INVENTORY, RELOCATE, PROVENANCE_SCRIPT,
-DIST_METADATA_SCRIPT and IDENTITY_SCRIPT. Python mypy/pyright comparison is
-not applicable: this Composition repo has no configured Python baseline;
-no product TypeScript changed.
+Results: shell syntax exit0; unittest40/40 PASS in4.124s (all inherited29 plus
+11 added controls), Ruff exit0, whitespace exit0. The suite compiles all seven
+embedded Python blocks in memory; an independent compile() check also passed
+for those seven and all four test Python files. Explicit compile() checks ran
+in memory; acceptance used PYTHONDONTWRITEBYTECODE=1 and Ruff --no-cache.
+Durable unittest output: evidence/unittest.log. A new exact-shell-stage test first
+failed because its fixture omitted TIMEOUT_BIN; adding the real timeout command
+to that fixture fixed it without changing any producer/verifier expectation.
 
-The parent RED / candidate GREEN control executes the real source/install
-shell branch, with exact-argument Git and installer doubles, then executes
-the unmodified embedded verifier. Parent directory provenance and candidate
-archive provenance match their actual branches. The installer double models
-in-place build/lib and egg-info writes; it does not invoke pip or build real
-packages. A bounded read-only census lists all 10 extra fixture paths,
-including every extra directory ancestor and file; the candidate has zero.
-These are fixture observations, not observations of the lost actual layout.
+New controls cover real pip freeze RED versus installed-inventory producer GREEN
+on a synthetic installed layout; exact shell invocation/0600 output; optional
+Farm schema order; both source kinds; every header/section/origin/metadata/freeze
+row mutation and newline/order; dependency duplicates; strict local Name identity;
+installed inventory scope; executable metadata; and producer size cap. These
+controls execute the actual unchanged verifier with exact-argument Git archive
+doubles. They are NOT real whole-make end-to-end evidence. The ten-path model and
+all inherited controls likewise receive no genuine E2E credit.
 
-Controls retain every inherited WIP expectation and add missing-file, clean
-exact source identity, foreign snapshot, editable provenance, committed
-symlink, and source/carrier/metadata ancestor replacement challenges. Other
-controls cover empty/generated/foreign paths at several depths, changed
-source/archive bytes, direct_url location/hash, source markers, RECORD
-hashes and additions, license bytes, foreign owners, hardlinks, writable
-sealed trees, and the existing exact lib64 exception. Initial held-WIP
-fixtures lacked an executable fake interpreter, one supported Git archive
-argv, and two report identity fields; those fixture defects were repaired
-without weakening assertions or changing production code.
+Prepared genuine E2E: tests/e2e_inventory.py. fixture_sources() defines exact tiny
+Agent/Runtime packages, canonical-client bytes, actual Runtime CLI entry points,
+and two private dependencies whose raw punctuation ordering differs from the
+canonical inventory order. The input writer ran successfully, creating only
+small source files in TMPDIR; it does not write Git or initialize a Store.
+The runner requires manager-admitted preinitialized private fixture Stores,
+clean exact committed tiny sources and already-available local no-index wheels.
+It runs the whole parent0857 make to report refusal, the whole candidate make
+through real installation/unchanged verifier/normal fixture Store registration,
+then unchanged sealed verification and adversarial report/metadata/marker checks.
+It never mocks a verifier/installer/Git command, initializes a Store, changes a
+reserve or substitutes a venv/profile. Raw stderr/private bodies/URLs are not
+persisted. This route is prepared, not qualified by execution.
 
-The qualified D127a1535/1540 lifecycle predicates were rerun against the
-candidate: success, verifier refusal, cancellation, seal refusal, unchanged
-index/no final entries/no journal, all six publication/body barriers false,
-normal Store.ensure dispatch, exact staging argv, malformed/unknown/duplicate
-and missing options, and diagnostic reserve rejection before build. The
-earlier review reports no retained authored test blobs; these current tests
-exercise the real installed lifecycle functions. D131 is untouched:
-normal child reserve 5905580032 bytes; runtime and diagnostic reserve
-8589934592 bytes. No additional D131 reserve change was needed.
+Exact attempted E2E command:
 
-Read-only exact-source checks PASS: Agent a4e016b6 has 3565 files/694 archive
-directories; Runtime 5e9ad1c6 has 535 files/33 archive directories. Every
-archive directory is a committed-file ancestor; no symlink or unsupported
-archive entry exists. The independent1637 generator diagnosis and historical
-Farm refusals are preserved. No actual offending path is invented.
+```sh
+PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python ops-child-custody/tests/e2e_inventory.py --venue-manifest "$TMPDIR/ops-child-inventory-venue.json" --result /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-child-inventory-contract-sol-1725/evidence/e2e-result.json
+```
 
-Actual Main diagnostic/build NOTRUN. At 16:48:06Z free space was
-5221408768 bytes, below normal child reserve by 684171264 bytes and below
-diagnostic reserve by 3368525824 bytes. Main's default
-/home/user/work/bench-store is absent. Exact Agent and Runtime checkouts
-are present and clean. Manager must provide authenticated Store custody and
-disk/body admission before any diagnostic; no Store was initialized here.
-The normal unseeded invocation also contains package installation stages;
-the no-acquisition restriction remains binding and no alternative bootstrap,
-wheelhouse, profile or venv was introduced.
+It exited2: EXACTMISSING
+approved private fixture venue manifest, Store custody, committed tiny sources
+and local wheels. evidence/e2e-result.json records whole_make_e2e=NOTRUN,
+parent_red=false, candidate_green=false, adversarial_checks=0. No full make,
+package installation, child request or body ran. Do not count this as E2E PASS.
 
-No live build/registration/adoption/reuse/publication/READY action, package
-acquisition, full/core/browser/P4/original body, hub write, Git mutation or
-SWAP WAL/recovery action occurred. C0 sections 1-7 and all wire, authority,
-privacy and no-write semantics remain unchanged.
+Observed admission: 5027573760 bytes free versus unchanged normal child reserve
+5905580032 and diagnostic reserve8589934592. Default /home/user/work/bench-store
+is absent. No new bench, production Store, profile or replacement venv was
+created. Ordinary-body floor5GB and stop4GB remain binding; source floor4.6GB,
+cap3/no-heavy are unchanged. Type baseline N/A: Composition has no configured
+Python mypy/pyright baseline; no product TypeScript changed. No full suite was
+requested, and no localhost/browser/live-socket test ran.
 
-Handoff: independent Luna custody review, then a separate exact installer.
-Agent alone issues ONE new normal request after publication. Actual retained
-layout census remains UNVERIFIED pending the authorized diagnostic inputs.
-Per D30 this worker does not write design/ or report.md; the harness captures
-the final report and the manager can publish safe flat evidence.
+Handoff: obtain the existing Farm retained-child safe census and an authorized
+private fixture venue/local inputs with real unchanged admission; execute the
+prepared genuine E2E. Independent source/security review follows, then a separate
+exact installer only after manager acceptance. No Agent/Farm request is authorized
+by this report; each issues ONE changed request only after installed receipts.
+The candidate is not release-qualified while genuine E2E remains NOTRUN.

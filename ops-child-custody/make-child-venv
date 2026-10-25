@@ -664,16 +664,26 @@ run_stage markers "$LOCAL_TIMEOUT_SECONDS" bash -c \
 
 # PEP 610 direct_url.json is the installed distribution provenance. Local
 # source installs have directory metadata; wheel installs have archive hashes.
-# Record the actual names, versions, source URLs and provenance kind in the
-# retained report, then validate those values against the live child venv below.
-DIST_METADATA_SCRIPT='import hashlib, importlib.metadata as metadata, json, pathlib, sys, tomllib
+# Render both report sections from the installed inventory. pip freeze has a
+# different contract for dependency direct URLs, duplicate names and ordering.
+DIST_METADATA_SCRIPT='import hashlib, importlib.metadata as metadata, json, pathlib, re, sys, tomllib
 from urllib.parse import unquote, urlparse
 roots = {"astrid": pathlib.Path(sys.argv[1]).resolve(), "astrid-runtime": pathlib.Path(sys.argv[2]).resolve()}
 if (roots["astrid"].parent / "schema").is_dir():
     roots["banodoco-timeline-schema"] = roots["astrid"].parent / "schema"
+child = roots["astrid"].parent.parent
+sites = list((child / "lib").glob("python*/site-packages"))
+assert len(sites) == 1, "ambiguous installed inventory"
+inventory = list(metadata.distributions(path=[str(sites[0])]))
+def canonical(name):
+    return re.sub(r"[-_.]+", "-", name).lower()
+metadata_lines = []
+freeze_urls = {}
 for name, root in roots.items():
     project = tomllib.loads((root / "pyproject.toml").read_text())["project"]
-    dist = metadata.distribution(name)
+    matches = [dist for dist in inventory if canonical(dist.metadata.get("Name", "")) == name]
+    assert len(matches) == 1, (name, "ambiguous installed distribution")
+    dist = matches[0]
     assert dist.metadata["Name"] == project["name"] == name, (name, dist.metadata["Name"], project["name"])
     assert dist.version == project["version"], (name, dist.version, project["version"])
     direct = json.loads((pathlib.Path(dist._path) / "direct_url.json").read_text())
@@ -691,17 +701,30 @@ for name, root in roots.items():
         assert pathlib.Path(unquote(parsed.path)).resolve() == carrier, (name, url)
         assert archive.get("hashes", {}).get("sha256") == hashlib.sha256(carrier.read_bytes()).hexdigest(), (name, direct)
         kind = "archive"
-    print("{}_name={}".format(name, dist.metadata["Name"]))
-    print(f"{name}_version={dist.version}")
-    print(f"{name}_direct_url={url}")
-    print(f"{name}_provenance={kind}")'
-run_stage distribution-provenance "$LOCAL_TIMEOUT_SECONDS" bash -c \
-  'set -e; "$1" -I -c "$2" "$3" "$4" > "$5"' _ \
-  "$P" "$DIST_METADATA_SCRIPT" "$AGENT_SRC" "$RUNTIME_SRC" "$T/.astrid-distribution-metadata"
-
+    metadata_lines.extend((f"{name}_name={name}", f"{name}_version={dist.version}",
+                           f"{name}_direct_url={url}", f"{name}_provenance={kind}"))
+    freeze_urls[name] = url if kind == "directory" else url + "#sha256=" + archive["hashes"]["sha256"]
+metadata_text = "\n".join(metadata_lines) + "\n"
+freeze = []
+for dist in inventory:
+    name = canonical(dist.metadata.get("Name", ""))
+    freeze.append((name, f"{name} @ {freeze_urls[name]}" if name in roots
+                   else dist.metadata["Name"] + "==" + dist.version))
+agent_sha, runtime_sha, client, requirements, lock_sha = sys.argv[3:]
+report = (f"status=passed\nagent_sha={agent_sha}\nruntime_sha={runtime_sha}\n"
+          + "runtime_client_identity_sha256=" + hashlib.sha256(client.encode()).hexdigest() + "\n"
+          + f"requirements_path={requirements}\nrequirements_lock_sha256={lock_sha}\n"
+          + "installed_import_origins:\n" + (child / ".astrid-import-origins").read_text()
+          + "installed_distribution_metadata:\n" + metadata_text + "pip_freeze:\n"
+          + "".join(line + "\n" for _, line in sorted(freeze)))
+assert max(len(metadata_text.encode()), len(report.encode())) <= 1024 * 1024, "maker metadata exceeds limit"
+metadata_path = child / ".astrid-distribution-metadata"
+metadata_path.write_text(metadata_text)
+metadata_path.chmod(0o600)
+print(report, end="")'
 run_stage freeze "$FREEZE_TIMEOUT_SECONDS" bash -c \
-  'set -e; { printf "status=passed\nagent_sha=%s\nruntime_sha=%s\nruntime_client_identity_sha256=%s\nrequirements_path=%s\nrequirements_lock_sha256=%s\n" "$4" "$5" "$(printf %s "$6" | sha256sum | cut -d" " -f1)" "$7" "$8"; printf "installed_import_origins:\n"; cat "$3"; printf "installed_distribution_metadata:\n"; cat "$9"; printf "pip_freeze:\n"; "$1" -I -m pip freeze --all; } > "$2"' \
-  _ "$P" "$REPORT_TMP" "$T/.astrid-import-origins" "$S" "$RUNTIME_SHA" "$CLIENT_IDENTITY" "$REQUIREMENTS_PATH" "$LOCK_SHA" "$T/.astrid-distribution-metadata"
+  'set -e; umask 077; "$1" -I -c "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" > "${10}"; chmod 600 "${10}"' \
+  _ "$P" "$DIST_METADATA_SCRIPT" "$AGENT_SRC" "$RUNTIME_SRC" "$S" "$RUNTIME_SHA" "$CLIENT_IDENTITY" "$REQUIREMENTS_PATH" "$LOCK_SHA" "$REPORT_TMP"
 
 IDENTITY_SCRIPT='import hashlib, importlib.metadata as metadata, json, pathlib, sys, tomllib
 from urllib.parse import unquote, urlparse
