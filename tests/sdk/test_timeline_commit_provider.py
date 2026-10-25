@@ -1010,6 +1010,45 @@ def test_restore_undo_redo_exact_full_closure_and_unknown_fields():
     assert realm.entries[-1]["records"]["restored_from"] is None
 
 
+@pytest.mark.parametrize('v2', [False, True], ids=['legacy-dual-proof', 'v2-effect-proof'])
+@pytest.mark.parametrize('selected', [False, True], ids=['whole', 'step'])
+def test_restore_inverse_proof_representations_allow_preview_and_redo(v2, selected):
+    from tests.editing_conformance.test_doc_patch_v2 import submit
+
+    document = document_fixture()
+    for occurrence in document['parent_revision']['payload']['occurrences']:
+        occurrence.update(source_offset=0, speed=1)
+    document['parent_revision']['content_digest'] = _digest(document['parent_revision']['payload'])
+    realm = DetachedRealm(document)
+    original = detached(realm.documents['parent-1'])
+    realm.call([realm.move('occurrence:occ-a/clip:clip-a')])
+    changed = realm.call([realm.move()])['data']['canonical_document']
+    restored = realm.call([restore(original)])
+    command = inverse([restored['receipt']['receipt_id']])
+    # The default native request has no v2 controls. Exercise both genuine
+    # provider representations without rewriting accepted records or bindings.
+    undone = (submit(realm, command, label='Undo restore') if v2 else realm.call([command]))
+    assert undone['data']['canonical_document'] == changed
+    record = realm.entries[-1]['records']['commands'][0]
+    assert any(binding['key'] == 'inverse.stage' for binding in record['bindings'])
+    assert any(binding['key'] == 'commit.effect' for binding in record['bindings'])
+    assert any(binding['key'] == 'commit.materialization' for binding in record['bindings']) is (not v2)
+    command = inverse([undone['receipt']['receipt_id']])
+    if selected:
+        command['args']['steps'] = {undone['receipt']['receipt_id']: ['edit']}
+    before = detached((realm.head, realm.entries, realm.documents, realm.accepted, realm.prepared))
+    preview = realm.call([command], dry_run=True)
+    assert preview['receipt'] is None
+    assert preview['data']['would_status'] == 'accepted'
+    assert preview['data']['canonical_document'] == original
+    assert before == detached((realm.head, realm.entries, realm.documents, realm.accepted, realm.prepared))
+    redone = realm.call([command])
+    assert redone['data']['canonical_document'] == original
+    assert redone['data']['canonical_document'] == preview['data']['canonical_document']
+    assert redone['receipt']['result'] == redone['data']
+    assert realm.entries[:-1] == before[1]
+
+
 @pytest.mark.parametrize("later", ["overlap", "same-value", "aba", "child", "create"])
 def test_restore_inverse_refuses_all_intervening_writes(later):
     document = document_fixture()
