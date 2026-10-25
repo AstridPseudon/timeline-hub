@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import json
 from types import SimpleNamespace
 
 import pytest
@@ -9,10 +10,12 @@ import pytest
 from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline.commit import (
     bundle_from_document,
+    document_from_bundle,
 )
 from astrid.sdk.timeline.native_auto_placement import unplace_shared
 from tests.editing_conformance.test_recipe_occurrence_media import inputs
 from tests.helpers.runtime import use_runtime
+from tests.sdk.test_timeline_commit_provider_document import MEDIA
 
 pytestmark = pytest.mark.integration
 OWNER = 'occurrence:occ-a'
@@ -33,7 +36,7 @@ def editing(request, tmp_path, monkeypatch):
     from test_generation_publish_v1_settlement import _effect, _fixture, _output, _settle
     from test_timeline_commit_acceptance import validate_prepared
 
-    from astrid.sdk.timeline.capture import capture_track_create
+    from astrid.sdk.timeline._doc_patch import Closure, allocations, value_at
     from astrid.sdk.timeline.commands import execute
     from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
     from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_add_media
@@ -68,21 +71,14 @@ def editing(request, tmp_path, monkeypatch):
             'version': association['lifecycle']['version']}, authorize=authorize)
         state.verified = service.get_project_verified_media(project, state.new, authorize=authorize)
         document, _, _, _ = inputs(kind)
+        document = json.loads(json.dumps(document).replace(MEDIA, state.new['object_id']))
+        document['shot_revisions'][0]['payload']['text_bindings'] = []
+        for occurrence in document['parent_revision']['payload']['occurrences']:
+            occurrence['gain'] = 1
         input_parent = document['parent_revision']['payload']
         input_occurrences = input_parent['occurrences']
+        input_shot = document['shot_revisions'][0]['payload']
         input_internal = document['internal_timeline_revisions'][0]['payload']
-        old_result = service.import_media(
-            project, b'old-' + kind.encode(),
-            media_type='video/mp4' if kind == 'video' else 'image/png',
-            original_name='old.' + ('mp4' if kind == 'video' else 'png'),
-            actor_id='media-editor',
-            **({'duration_seconds': 6} if kind == 'video' else {}),
-            idempotency_key='old-media',
-        )['data']
-        old = service.get_project_media_selection(project, {
-            'asset': old_result['variant_id'], 'generation_id': old_result['generation_id'],
-            'variant_id': old_result['variant_id']}, authorize=authorize)
-        old_verified = service.get_project_verified_media(project, old, authorize=authorize)
         service.create_timeline(project, 'main', idempotency_key='timeline')
         TimelineCommitStore(service.store, validate_prepared=validate_prepared).bootstrap(
             project, 'main', authorize=authorize)
@@ -91,45 +87,100 @@ def editing(request, tmp_path, monkeypatch):
         initial = service._timeline_commits()[0].revision_closure(
             project, 'main', head['head_revision_id'])
         bundle = bundle_from_document(initial)
-        commands = []
+        # Runtime verifies the original fixture's one media object before patching.
+        commands = [{'schema_version': 1, 'op': 'media.admit', 'version': '1', 'select': None,
+                     'args': {'inputs': [{'pin': {'media_id': state.new['object_id'],
+                                                'content_digest': state.new['object_id']}}]},
+                     'created': []}]
 
         def append(command):
             nonlocal bundle
             commands.append(command)
-            bundle = execute(bundle, [command]).bundle
+            bundle = execute(bundle, [command], verified_media=[state.verified]).bundle
 
-        append(capture_track_create(bundle, 'parent', input_parent['config']['tracks'][0]))
+        def patch(ref, value, path=()):
+            closure = Closure(bundle)
+            physical = closure.resolve(ref)
+            before = closure.payload(physical)
+            created = [] if path else [row['ref'] for row in allocations(
+                closure, physical, before, value)]
+            append({'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
+                    'created': created, 'args': {'changes': [{
+                        'op': 'set', 'ref': ref, 'path': list(path),
+                        'before': value_at(before, physical, list(path)), 'value': value}]}})
+
+        def submit(key):
+            request = body(state, commands)
+            request['steps'] = [{'id': str(index), 'label': key, 'intent': 'Fixture setup',
+                                 'tags': ['integration', 'video-unplace'],
+                                 'command_ordinals': [index], 'reads': [],
+                                 'patch': command['args']['changes']
+                                 if command['op'] == 'doc.patch' else []}
+                                for index, command in enumerate(commands)]
+            return commit(state, request, key)
+
+        parent = copy.deepcopy(input_parent)
+        parent['occurrences'] = []
+        patch('parent', parent)
         occurrence = input_occurrences[0]
         append(capture_occurrence_create(
             bundle, occurrence['occurrence_id'], occurrence['shot_id'], name='Chapter One',
             track=occurrence['track'], on=occurrence['placement']['start_ms'] / 1000,
             duration=occurrence['duration_ms'] / 1000,
         ))
-        for track in input_internal['tracks']:
-            append(capture_track_create(bundle, 'occurrence:' + occurrence['occurrence_id'], track))
-        for row in input_internal['clips']:
-            old_row = copy.deepcopy(row)
-            old_row['asset'] = old['asset']
-            append(capture_occurrence_add_media(
-                bundle, 'occurrence:' + occurrence['occurrence_id'], old_row, old,
-                verified_media=[old_verified],
-            ))
-        source = commit(state, body(state, commands), 'setup-source')
+        patch('internal:main', copy.deepcopy(input_internal))
+        shot = copy.deepcopy(input_shot)
+        shot.pop('internal_timeline_revision_id')
+        patch('shot:' + occurrence['shot_id'], shot)
+        current = Closure(bundle).payload('parent')['occurrences'][0]
+        patch('parent', {**copy.deepcopy(occurrence),
+                         'shot_revision_id': current['shot_revision_id']},
+              ('occurrences', 'occurrence_id:' + occurrence['occurrence_id']))
+        source = submit('setup-source')
         bundle = bundle_from_document(source['data']['canonical_document'])
         shared = capture_occurrence_place_shared(
             bundle, OWNER, input_occurrences[1]['occurrence_id'],
             on=input_occurrences[1]['placement']['start_ms'] / 1000,
         )
         shared_setup = commit(state, body(state, [shared]), 'setup-shared')
-        bundle = bundle_from_document(shared_setup['data']['canonical_document'])
+        shared_document = shared_setup['data']['canonical_document']
+        shared_shot, = shared_document['shot_revisions']
+        shared_internal, = shared_document['internal_timeline_revisions']
+        expected_parent = copy.deepcopy(input_parent)
+        for row in expected_parent['occurrences']:
+            row['shot_revision_id'] = shared_shot['revision_id']
+        expected_shot = copy.deepcopy(input_shot)
+        expected_shot['internal_timeline_revision_id'] = shared_internal['revision_id']
+        assert shared_document['parent_revision']['payload'] == expected_parent
+        assert shared_shot['shot_id'] == occurrence['shot_id']
+        assert shared_shot['payload'] == expected_shot
+        assert shared_internal['timeline_id'] == 'main'
+        assert shared_internal['payload'] == input_internal
+        bundle = bundle_from_document(shared_document)
         placed = {'id': 'placed', 'clipType': kind, 'track': 'picture', 'asset': state.new['asset'],
                   'at': 1, 'hold': 4, 'opaque': {'clear': None},
                   **({'from': 0, 'to': 4, 'speed': 1} if kind == 'video' else {})}
+        # The original setup edited just occ-a's opened source, retaining occ-b's image.
+        expected = copy.deepcopy(bundle)
+        expected_internal = State(expected).config(OWNER)
+        expected_internal['registry']['assets'][state.new['asset']] = {
+            'media_id': state.new['object_id'], 'type': kind,
+            'generationId': state.new['generation_id'], 'variantId': state.new['variant_id'],
+            'opaque': {'keep': [None, False]}}
+        expected_internal['clips'].insert(1, copy.deepcopy(placed))
         placed_command = capture_occurrence_add_media(
             bundle, OWNER, placed, state.new, verified_media=[state.verified],
         )
         setup = commit(state, body(state, [placed_command]), 'setup')
-        state.baseline = setup['data']['canonical_document']
+        bundle = bundle_from_document(setup['data']['canonical_document'])
+        commands = []
+        closure = Closure(bundle)
+        internal_ref, = [ref for ref, owners in closure.owners.items()
+                         if ref.startswith('internal-revision:')
+                         and any(owner == OWNER for owner, _ in owners)]
+        patch(internal_ref, copy.deepcopy(expected_internal))
+        state.baseline = submit('setup-opaque')['data']['canonical_document']
+        assert state.baseline == document_from_bundle(expected)
         real_selected = RequestCommitPort.selected_media
 
         def selected(port, pin):
