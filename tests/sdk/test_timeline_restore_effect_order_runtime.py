@@ -47,6 +47,8 @@ def test_id5_public_undo_of_restore_preserves_authenticated_effect_order(tmp_pat
         "summary": {"head_revision_id": service.get_project_timeline(p, t)["head_revision_id"]}})
     client.timelines.open_bundle = lambda p, t, revision_id=None, **kw: DomainResult.success({
         "bundle": bundle_from_document(service._timeline_commits()[0].revision_closure(p, t, revision_id))})
+    generated.list_timeline_commits = lambda p, t, cursor=None, limit=200: service.list_timeline_commits(
+        p, t, cursor=cursor, limit=limit, authorize=lambda: None)
     wires = []
 
     def send(p, t, body, *, idempotency_key):
