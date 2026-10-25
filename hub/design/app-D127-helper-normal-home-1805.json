@@ -1,0 +1,12 @@
+{
+  "normal_head": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+  "normal_tree": "d5cb9335a03bf4764548e379ce180a66bf966910",
+  "reviewed_donor": "8faff00d412521ba4b004858e1290250dcdfe0dc",
+  "entire_tree_equals_reviewed_import": true,
+  "independent_source": "combined1630 helper and160predicates; lifecycle final1723",
+  "bootstrap": "retained actual1731 PASS independently qualified1738; original raw capture absent",
+  "helper_sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+  "remote_result": "MERGED e319fdbcd5",
+  "scope": "source only; no new activation, original, element outcome/cost, core, latency or tour credit",
+  "d130": "absolute hold"
+}

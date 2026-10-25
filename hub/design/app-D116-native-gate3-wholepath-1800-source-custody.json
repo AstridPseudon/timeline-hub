@@ -1,0 +1,26 @@
+{
+  "schema": "app-d116-gate3-wholepath-source-custody-v1",
+  "repo": "agent",
+  "branch": "tl/app-D116-native-gate3-wholepath-1800",
+  "head": "65d1dead09331f2615d5649c9a2ede8191799724",
+  "tree": "cca8202a39d17744a30675646078253c6cd3ea9b",
+  "protected_baseline": "795608e1b9d8077487b26eea50b65c1e79c3f522",
+  "author_parent": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "runtime_pin_from_protected_evidence": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+  "runtime_tree_from_protected_evidence": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+  "runtime_checkout_from_protected_evidence": "/home/user/work/wt/rt-pin-5e9ad1c6",
+  "protected_author_delta": [
+    "tests/editing_conformance/native_checkout_current_fixture.py"
+  ],
+  "current_source_hashes": {
+    "tests/editing_conformance/native_checkout_current_fixture.py": "abad1cf334bf977092ec2fde1d5255805ce9dd2435d8f676770ea11b534f9e6e",
+    "tests/editing_conformance/test_native_checkout_current_equivalent.py": "999c1848c59254db7fd75a3a741685bbfa979a4b6864b85bd2b29c8eb87cb395",
+    "tests/editing_conformance/native_word_anchor_fixture.py": "7da0e3db8ad190251f0266918a6d01771b235c748d00027c6e70a7d370f321e8",
+    "astrid/sdk/timeline/native_occurrence_delete.py": "fea3a2352d66dae9156f5daaa526c1185f26130ccad31732066fa4b76a7f5886",
+    "astrid/sdk/timeline/native_word_anchor.py": "771d833188de33556a1853e95e84703e7ce5b36e2a6b2d2c55cb975f93f36744",
+    "astrid/sdk/timeline/commands.py": "b89798a439daace286e6702647c670c532a21575719e4df1bda87607b855ee96"
+  },
+  "modified_by_this_worker": [],
+  "tests_or_bodies_run_by_this_worker": [],
+  "source_only_review": true
+}

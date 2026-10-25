@@ -1,0 +1,27 @@
+{
+  "schema": "app-d116-gate3-first-return-source-custody-v1",
+  "agent_head": "65d1dead09331f2615d5649c9a2ede8191799724",
+  "agent_tree": "cca8202a39d17744a30675646078253c6cd3ea9b",
+  "author_parent": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "protected_baseline": "795608e1b9d8077487b26eea50b65c1e79c3f522",
+  "runtime_pin": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+  "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+  "candidate_delta_from_author_parent": [
+    "tests/editing_conformance/native_checkout_current_fixture.py"
+  ],
+  "read_only_companion_sha256": {
+    "tests/editing_conformance/test_native_checkout_current_equivalent.py": "999c1848c59254db7fd75a3a741685bbfa979a4b6864b85bd2b29c8eb87cb395",
+    "tests/editing_conformance/native_word_anchor_fixture.py": "7da0e3db8ad190251f0266918a6d01771b235c748d00027c6e70a7d370f321e8",
+    "tests/editing_conformance/current_word_baseline_fixture.py": "c219e1a2bd5e04e7e68825552cbb1e85e12b3d77f4124609ce1942b1679b40d5"
+  },
+  "candidate_fixture_sha256": "abad1cf334bf977092ec2fde1d5255805ce9dd2435d8f676770ea11b534f9e6e",
+  "protected_source_custody": "The protected source review was admitted at PASS_AT_ADMISSION and revised to FAIL after its one authorized Gate3 setup run; no source or product change was made by this worker.",
+  "unmodified": [
+    "Original17/ten/M1/shared seeds",
+    "native_word_anchor.py",
+    "compiler.py",
+    "native_occurrence_delete.py",
+    "emitter.py",
+    "Runtime/provider/auth/schema/pins"
+  ]
+}

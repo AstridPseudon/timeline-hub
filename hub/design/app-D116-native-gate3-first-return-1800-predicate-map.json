@@ -1,0 +1,69 @@
+{
+  "schema": "app-d116-gate3-first-return-predicate-map-v1",
+  "selector": "tests/editing_conformance/test_native_checkout_current_equivalent.py::test_current_checkout_gate3_reload_undo_and_visualize_report_unavailable",
+  "source_verdict": "SOURCE_DEPENDENCY",
+  "source_ast_inventory": {
+    "native_checkout_current_fixture.py:prepare": {
+      "assert_count": 10,
+      "assert_lines": [29, 30, 31, 63, 64, 67, 70, 74, 100, 101]
+    },
+    "native_checkout_current_fixture.py:_current_commit": {
+      "assert_count": 1,
+      "assert_lines": [21]
+    },
+    "test_native_checkout_current_equivalent.py:gate3_test": {
+      "assert_count": 10,
+      "assert_lines": [217, 219, 221, 223, 228, 229, 230, 231, 232, 233]
+    }
+  },
+  "exact_gate3_input": {
+    "source_bundle": "current_bundle(case)",
+    "authenticated_anchor": {
+      "target": "parent/clip:card",
+      "field": "on",
+      "declaration": "\"again\" in line #2 +1f",
+      "source": "occurrence:occ/clip:voice",
+      "choice_document": "case.pin"
+    },
+    "title": {
+      "id": "gate3-title",
+      "at": 0,
+      "track": "picture",
+      "clipType": "text-card",
+      "hold": 1,
+      "params": {"content": "Gate3"},
+      "elementRef": {"packId": "rendering", "kind": "effects", "id": "text-card"}
+    },
+    "command_order": ["occurrence.delete", "clip.add"],
+    "label": "native-checkout-current-gate3"
+  },
+  "preserved_gate3_predicates": [
+    "parent['occurrences'] == []",
+    "parent['clips'][-1]['elementRef']['id'] == 'text-card'",
+    "accepted['data']['accepted_revision_id'] is truthy",
+    "reloaded.clip('parent/clip:music-bed').start == 1",
+    "undone['data']['accepted_revision_id'] is truthy",
+    "after_undo.clip('parent/clip:music-bed').start == 0",
+    "preview.ok is false",
+    "preview.error['sdk_error'] == 'CapabilityRuntimeError'",
+    "preview.error['sdk_category'] == 'runtime'",
+    "preview.error['code'] == 'not_found'",
+    "preview.error['details']['capability_id'] == 'rendering.timeline_visualize'",
+    "preview.error['message'] == 'capability is not registered'"
+  ],
+  "conservation": {
+    "test_file_changed": false,
+    "assertions_changed": false,
+    "anchor_removed_or_rebound": false,
+    "card_removed_or_rebound": false,
+    "word_or_occurrence_retimed": false,
+    "private_pin_or_history_fabricated": false
+  },
+  "blocking_edge": "occurrence.delete clears occurrence:occ; native_word_anchor.binding then finds zero placements for the still-authored occurrence:occ/clip:voice source.",
+  "inadmissible_routes": [
+    "clear the on anchor before deletion",
+    "rebind the anchor to another occurrence",
+    "retain occurrence:occ and falsify the empty-occurrences predicate",
+    "use a generic document membership patch or private execution/history authority"
+  ]
+}

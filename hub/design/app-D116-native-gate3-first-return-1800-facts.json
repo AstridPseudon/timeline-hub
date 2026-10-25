@@ -1,0 +1,43 @@
+{
+  "schema": "app-d116-native-gate3-first-return-facts-v1",
+  "task": "D116/G3",
+  "verdict": "SOURCE_DEPENDENCY",
+  "source_only": true,
+  "behavior": "NOT_RUN_BY_POLICY",
+  "candidate_head": "65d1dead09331f2615d5649c9a2ede8191799724",
+  "candidate_tree": "cca8202a39d17744a30675646078253c6cd3ea9b",
+  "candidate_parent": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "protected_baseline": "795608e1b9d8077487b26eea50b65c1e79c3f522",
+  "changed_file_delta": [
+    "tests/editing_conformance/native_checkout_current_fixture.py"
+  ],
+  "working_tree": "clean",
+  "static_checks": {
+    "python311_ast_compile": "PASS",
+    "ruff": "PASS",
+    "mypy": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "independently_inventoried_predicates": {
+    "prepare_assert_nodes": 10,
+    "current_commit_assert_nodes": 1,
+    "gate3_behavior_assert_nodes": 10,
+    "gate3_setup_final_assert_nodes": 2
+  },
+  "first_failure": {
+    "file": "tests/editing_conformance/native_checkout_current_fixture.py",
+    "line": 91,
+    "route": "capture_occurrence_delete -> commands.execute -> compile_recorded -> native_word_anchor.binding",
+    "error": "bound source occurrence/clip is missing or ambiguous",
+    "root": "astrid/sdk/timeline/native_word_anchor.py:71",
+    "wrapper": "astrid/sdk/timeline/commands.py:381"
+  },
+  "dependency": {
+    "final_required_occurrences": [],
+    "remaining_authored_anchor_source": "occurrence:occ/clip:voice",
+    "remaining_authored_anchor_target": "parent/clip:card:on",
+    "reason": "The exact Gate3 final topology deletes occurrence:occ while the authenticated card anchor still resolves through that occurrence. The registered public semantic recorder recompiles the remaining authored anchor and refuses the missing source before commit."
+  },
+  "no_edit": true,
+  "no_behavior_credit": true
+}

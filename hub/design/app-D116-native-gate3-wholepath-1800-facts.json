@@ -1,0 +1,67 @@
+{
+  "schema": "app-d116-gate3-wholepath-facts-v1",
+  "task": "D116/G3 independent read-only whole-path review",
+  "verdict": "SOURCE_DEPENDENCY",
+  "exact_missing": "No supported fixture-only caller route preserves the protected current companion word anchor while deleting its sole source occurrence.",
+  "candidate_head": "65d1dead09331f2615d5649c9a2ede8191799724",
+  "candidate_tree": "cca8202a39d17744a30675646078253c6cd3ea9b",
+  "protected_baseline": "795608e1b9d8077487b26eea50b65c1e79c3f522",
+  "author_change": [
+    "tests/editing_conformance/native_checkout_current_fixture.py"
+  ],
+  "worktree_clean": true,
+  "protected_failure": {
+    "selector": "tests/editing_conformance/test_native_checkout_current_equivalent.py::test_current_checkout_gate3_reload_undo_and_visualize_report_unavailable",
+    "setup_file": "tests/editing_conformance/native_checkout_current_fixture.py",
+    "setup_line": 91,
+    "call_chain": [
+      "capture_occurrence_delete(authored, occurrence:occ)",
+      "commands.execute(authored, [delete_occurrence])",
+      "compile_recorded",
+      "compile_authored",
+      "native_word_anchor.py:71"
+    ],
+    "exception": "CommandError: bound source occurrence/clip is missing or ambiguous",
+    "result": "FAIL_SETUP",
+    "gate3_assertions_executed": false,
+    "authorized_run_count": 1,
+    "retry": "forbidden"
+  },
+  "protected_current_input": {
+    "card": "parent/clip:card",
+    "field": "on",
+    "declaration": "\"again\" in line #2 +1f",
+    "choice_source": "occurrence:occ/clip:voice",
+    "choice_document": "case.pin",
+    "choice_word": "current picker index 1",
+    "source_media": "case.source.content.media_id",
+    "opaque_audio_extension": [
+      null,
+      {
+        "keep": true
+      }
+    ]
+  },
+  "target": {
+    "required_occurrences": [],
+    "required_added_clip": {
+      "id": "gate3-title",
+      "clipType": "text-card",
+      "track": "picture",
+      "params_content": "Gate3",
+      "elementRef": {
+        "packId": "rendering",
+        "kind": "effects",
+        "id": "text-card"
+      }
+    },
+    "card_removal": "not permitted"
+  },
+  "source_checks": {
+    "ast_compile": "PASS",
+    "protected_json_parse": "PASS",
+    "ruff": "PASS",
+    "git_diff_check": "PASS",
+    "pytest": "NOT RUN BY TASK"
+  }
+}

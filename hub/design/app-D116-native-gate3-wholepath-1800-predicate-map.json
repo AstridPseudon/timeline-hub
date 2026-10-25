@@ -1,0 +1,97 @@
+{
+  "schema": "app-d116-gate3-wholepath-predicate-map-v1",
+  "selector_mapping": {
+    "retained": {
+      "fixture": "tests/editing_conformance/test_commit_runtime_native_checkout.py:71-131",
+      "test": "tests/editing_conformance/test_commit_runtime_native_checkout.py:248-299",
+      "setup": [
+        "parent.occurrences = []",
+        "append parent clip gate3-title",
+        "mirror parent.config.clips",
+        "emit through Runtime commitTimeline"
+      ]
+    },
+    "current_companion": {
+      "fixture": "tests/editing_conformance/native_checkout_current_fixture.py:25-109",
+      "test": "tests/editing_conformance/test_native_checkout_current_equivalent.py:196-233",
+      "setup": [
+        "current_pick(case, 1, text=current_inputs.DECLARATION):27",
+        "commit native-checkout-current-binding:28",
+        "add music/music-other tracks and clips with opaque extension:33-74",
+        "capture occurrence.delete and clip.add for Gate3:76-101"
+      ]
+    }
+  },
+  "protected_vs_incidental": {
+    "protected_current_input": [
+      "case.source content and media_id",
+      "case.pin exact transcript DocumentPin",
+      "picker index 1",
+      "DECLARATION = \"again\" in line #2 +1f",
+      "choice source occurrence:occ/clip:voice",
+      "music/music-other track topology",
+      "music-bed/music-other audio rows",
+      "opaque extension [null, {keep: true}]",
+      "Gate3 renderer-off/reload/undo/visualize predicates"
+    ],
+    "incidental_setup_only": [
+      "native-checkout-current-binding commit label is fixture setup, but its protected picker/declaration payload is not disposable under the exact input map",
+      "gate3-title is the required Gate3 addition, not a replacement for card",
+      "occurrence.delete and clip.add are the attempted supported setup route"
+    ],
+    "forbidden_shortcuts": [
+      "remove parent/clip:card",
+      "clear or rebind its on anchor",
+      "invent another occurrence, pin, history, or source",
+      "change the Gate3 assertions"
+    ]
+  },
+  "exact_route_trace": [
+    {
+      "source": "tests/editing_conformance/native_checkout_current_fixture.py:91-93",
+      "operation": "capture_occurrence_delete -> execute -> capture_clip_add",
+      "status": "unsupported for the protected authored topology"
+    },
+    {
+      "source": "astrid/sdk/timeline/native_occurrence_delete.py:9-24",
+      "operation": "occurrence.delete clears the selected occurrence owner",
+      "status": "supported in isolation"
+    },
+    {
+      "source": "astrid/sdk/timeline/commands.py:224-275",
+      "operation": "execute applies the delete and invokes compile_recorded on the final command",
+      "status": "reaches compile before a valid bundle exists"
+    },
+    {
+      "source": "astrid/sdk/timeline/native_word_anchor.py:67-76",
+      "operation": "binding requires exactly one placement and one source clip",
+      "status": "fails when occurrence:occ is cleared"
+    },
+    {
+      "source": "astrid/sdk/timeline/native_word_anchor.py:366-381",
+      "operation": "compile_recorded recompiles remaining parent word anchors",
+      "status": "raises invalid_anchor rather than accepting dangling source"
+    }
+  ],
+  "current_initial_source_alternative": {
+    "source": "tests/editing_conformance/native_word_anchor_fixture.py:164-170,228-264,269-303",
+    "genuine_state": "current_form seed returns after authenticated anchor creation and clear; the active anchor and word_anchors are removed before current_retained is yielded",
+    "why_not_exact": "native_checkout_current_fixture.prepare immediately reintroduces the protected current picker/declaration binding at lines 27-31; omitting that step would change the preserved current companion authored input, not merely repair incidental history",
+    "unapplied_scope_if_requirements_change": "Gate3-only prepare path may start from current_bundle(case) after current_retained and omit current_pick/current-binding; this is not an exact-conservation fix under the present predicate map and was not applied"
+  },
+  "unchanged_predicates": {
+    "current_test_assertions": [
+      "accepted data accepted_revision_id:217",
+      "reload music-bed start == 1:219",
+      "undo accepted_revision_id:221",
+      "after undo music-bed start == 0:223",
+      "preview unavailable sdk_error/category/code/capability/message:228-233"
+    ],
+    "fixture_assertions": [
+      "binding source/document:29-31",
+      "config clips mirror and tracks:63-74",
+      "occurrences empty and title text-card:100-101"
+    ]
+  },
+  "verdict": "SOURCE_DEPENDENCY/EXACTMISSING"
+}
