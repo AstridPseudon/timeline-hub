@@ -1,0 +1,4 @@
+scope	count	disposition	reason
+current-sheet-inverse-coverage	1	LIVE_HELD	Exact 10077 failure says inverse stage native writes do not cover its authenticated effect image; review 0203 explicitly leaves inverse effect coverage open.
+current-sheet-retired-cli	3	LIVE_HELD	Three exact current-sheet CLI-scope findings remain open; source review 0203 grants no broad retirement.
+native-word-semantic	9	LIVE_HELD	The nine native-word semantic FAIL rows are separate from the corrected bootstrap ERROR rows; no exact source correction authorizes them.

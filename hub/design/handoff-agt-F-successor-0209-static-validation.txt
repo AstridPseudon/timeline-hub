@@ -1,0 +1,13 @@
+F-D89 static validation (2026-10-25 UTC)
+
+Counts: additional=69; combined=230; combined-remainder=111; additional family keys=3; original 0200 family keys=15; combined family keys=18.
+TSV rectangularity: PASS (10 files).
+JSON parse: PASS (continuation-accounting, source-manifest, C0 sections 1-5).
+bash -n inherited-main-recipe.sh: PASS.
+AST selector existence: PASS (69 additional selectors).
+Hash equality: PASS for current-sheet, M1, and rational-FPS fixture source against their protected candidate commits and captured home.
+Exact set/status accounting: PASS (69/230 unique, disjoint, authentic outcome status match, 550/23 preserved).
+Evidence bytes: 5968192 (<50MB).
+Repository status: clean; no repository edits.
+
+No pytest, collection, helper/function/fixture execution, service, build, browser, render, probe, install, registry, pins, checkout, reconstructed outcome, or environment result was run.

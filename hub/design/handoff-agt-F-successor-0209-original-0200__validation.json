@@ -1,0 +1,15 @@
+{
+  "forbidden_execution": "none; no pytest/collection/function/helper/fixture/service/build/browser/render/probe/install/registry/pins/checkouts",
+  "results": {
+    "actual10077_accounting": "PASS:88 observed eligible +180 remainder =268; 23 NO_JUNIT_CASE preserved",
+    "bash_n_inherited_recipe": "PASS",
+    "evidence_size": "PASS:<50MB",
+    "exact_membership_set": "PASS:161 unique selectors,16 eligible disjoint families",
+    "json_parse": "PASS",
+    "original550_preservation": "PASS:550 rows and dispositions hash unchanged",
+    "reviewed_home_sha256": "PASS:all file hashes equal",
+    "static_ast_existence": "PASS:all reviewed/home source files parse and exist",
+    "tsv_rectangular_parse": "PASS"
+  },
+  "schema": "astrid.timeline.d89-successor-static-validation/v1"
+}

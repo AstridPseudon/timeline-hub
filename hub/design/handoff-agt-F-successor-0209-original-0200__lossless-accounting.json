@@ -1,0 +1,53 @@
+{
+  "actual10077": 268,
+  "actual10077_observed_new": 88,
+  "actual10077_remainder": 180,
+  "actual10077_unexecuted_no_junit": 23,
+  "eligible_observed_status_counts": {
+    "ERROR": 84,
+    "NO_JUNIT_CASE": 4
+  },
+  "family_counts": {
+    "CLItrim3": 3,
+    "M2placement20": 20,
+    "graph2": 2,
+    "numeric9": 9,
+    "occurrence48": 48,
+    "opaque9": 9,
+    "ordinaryscript4": 4,
+    "ordinarysheet11": 11,
+    "ownedmove8": 8,
+    "projection9": 9,
+    "publication1": 1,
+    "recipe3": 3,
+    "scalar11": 11,
+    "video12": 12,
+    "word11": 11
+  },
+  "files": {
+    "held": "held.tsv",
+    "historical_dispositions": "historical-dispositions.tsv",
+    "membership": "membership.tsv",
+    "original550_rollup": "historical-original550-rollup.tsv",
+    "remainder": "remainder.tsv",
+    "selector_argv": "selector-argv.txt",
+    "unexecuted": "unexecuted.tsv"
+  },
+  "historical289_reused": false,
+  "new_membership": 161,
+  "new_membership_not_in_actual10077": 73,
+  "original550": 550,
+  "schema": "astrid.timeline.d89-successor-lossless-accounting/v1",
+  "set_checks": {
+    "d87_retirements_ledgered": true,
+    "families_disjoint": true,
+    "membership_unique": true,
+    "observed_plus_remainder_equals_268": true,
+    "original550_rollup_count": true,
+    "prior_dispositions_preserved": true,
+    "six_live_frontends_visible": true,
+    "unexecuted_rows_exact23": true
+  },
+  "unchanged268_retry_authorized": false,
+  "unique_selectors": 161
+}

@@ -1,0 +1,112 @@
+{
+  "Idempotency-Key": "<idempotency_key>",
+  "accepted_or_merged_reply": {
+    "base": "<base>",
+    "bindings": "<bindings>",
+    "dependencies": "<dependencies>",
+    "effects": "<effects>",
+    "fullcanonical": "<fullcanonical>",
+    "history": "<history>",
+    "landingpair": "<landingpair>",
+    "merge_mode": "<merge_mode>",
+    "receipt": "<receipt>",
+    "records": "<records>",
+    "steps": "<steps>",
+    "undo_steps": "<undo_steps>"
+  },
+  "api_version": 1,
+  "atomic": true,
+  "base_publication_id": "<base_publication_id>",
+  "caller": "registered Runtime commitTimeline/provider",
+  "commands": {
+    "args": "<args>",
+    "op": "<op>",
+    "schema_version": "<schema_version>",
+    "select": "<select>",
+    "version": "<version>"
+  },
+  "conflict_reply": {
+    "head": "<head>",
+    "reason": "<reason>"
+  },
+  "dry_run": false,
+  "exactbase_revision_id": "<base_revision_id>",
+  "group_id": "<group_id>",
+  "guards": "authority/ABI/ABA/no-write/no-leak/45s unchanged",
+  "invalid_reply": {
+    "code": "<code>",
+    "hint": "<hint>",
+    "path": "<path>",
+    "suggestedcommand": "<suggestedcommand>"
+  },
+  "label": "<label>",
+  "mergefields": "<mergefields>",
+  "optionaldeclaredreads": "<optionaldeclaredreads>",
+  "preview_reply": {
+    "receipt": null,
+    "would_status": "<would_status>"
+  },
+  "project_id": "<project_id>",
+  "rationale": "<rationale>",
+  "responses": {
+    "accepted": {
+      "base": "<base>",
+      "bindings": "<bindings>",
+      "dependencies": "<dependencies>",
+      "effects": "<effects>",
+      "fullcanonical": "<fullcanonical>",
+      "history": "<history>",
+      "landingpair": "<landingpair>",
+      "merge_mode": "<merge_mode>",
+      "receipt": "<receipt>",
+      "records": "<records>",
+      "steps": "<steps>",
+      "undo_steps": "<undo_steps>"
+    },
+    "conflict": {
+      "head": "<head>",
+      "reason": "<reason>"
+    },
+    "invalid": {
+      "code": "<code>",
+      "hint": "<hint>",
+      "path": "<path>",
+      "suggestedcommand": "<suggestedcommand>"
+    },
+    "merged": {
+      "base": "<base>",
+      "bindings": "<bindings>",
+      "dependencies": "<dependencies>",
+      "effects": "<effects>",
+      "fullcanonical": "<fullcanonical>",
+      "history": "<history>",
+      "landingpair": "<landingpair>",
+      "merge_mode": "<merge_mode>",
+      "receipt": "<receipt>",
+      "records": "<records>",
+      "steps": "<steps>",
+      "undo_steps": "<undo_steps>"
+    },
+    "preview": {
+      "receipt": null,
+      "would_status": "<would_status>"
+    }
+  },
+  "source": "<source>",
+  "steps": [
+    {
+      "command_ordinals": [
+        0
+      ],
+      "id": "<id>",
+      "intent": "<intent>",
+      "label": "<label>",
+      "optionalreads": "<optionalreads>",
+      "patch": "<patch>",
+      "tags": [
+        "<tag>"
+      ]
+    }
+  ],
+  "timeline_id": "<timeline_id>"
+}

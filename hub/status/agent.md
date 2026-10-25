@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T02:14:08Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 1m -->
-# agent board, 2026-10-25T02:10:05Z
+<!-- agent | 2026-10-25T02:17:06Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 13 | status age 0m -->
+# agent board, 2026-10-25T02:14:26Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -156,7 +156,7 @@
 | F projection9 | Preserve genuine captured sources | Luna | MAIN successor qualification | merging | BatchE0151 PASS; homeb0ac | Exact4a8ec protected PASS, original9 predicates retained. Normal home blob qualifies source only; behavior owed. | b0ac6891b2 |
 | F numeric9 | Preserve numeric revision fixtures | Luna | Main affected-node batch | merging | Source2328; review2342 PASS | Independent audit PASS after author merge; nine cases and exact test ASTs retained. Functional batch owed. | 3edc45cb26 |
 | D86 main M1 10 | Preserve outbox and restart scenarios | Main Luna | MAIN meaningful successor proof | merging | Functional0145; review0147 PASS | Exact4f4f predicate/source PASS peer0152; normalhome9838 source exact. All10 actual setup errors retained until body. | 9838f7ca34 |
-| D86 main inverse10 | Preserve shared inverse scenarios | Main Luna | Actual corrected-source proof | merging | Titleb270; host0158; review0204 PASS | Exacta1eb restores original authored-first13s host; normal merge queued. Original-third five incompatible inputs live. Unauthorized local5FAIL5ERROR gets no credit. | a1eb3fd3be |
+| D86 main inverse10 | Preserve shared inverse scenarios | Main Luna | Actual corrected-source proof | merging | Host0158; review0204 PASS; home8dad | Restores original authored-first13s host. Five original-third incompatible inputs live. Unqualified local5FAIL5ERROR retained without acceptance credit. | 8dadab251a |
 | D86 main word46 | Preserve native word binding behavior | Main Luna | MAIN source successor proof | merging | Functional0145; review0152 PASS | Exact9e88 supported init then original rational fps; normal5dc9. Nine semantic failures remain separate; no body. | 5dc9f0c898 |
 | D86 main CLI8 | Preserve real CLI idempotency | Main Luna | Main affected-node batch | merging | Runtime0022 PASS; home a0b8a3c078 | Real store retries and exact mismatch reason verified; eight assigned scenarios and twelve tests conserved. Functional proof pending. | Home a0b8a3c078 |
 | F next cohort11 | Preserve next-command scenarios | Luna | MAIN meaningful successor proof | merging | Word9e88; normal5dc9; inputs0200 | Exact2 historical PASS retained;9 prior setup errors now eligible via reviewed shared word fps correction. Actual behavior owed. | 5dc9f0c898 |
@@ -179,7 +179,7 @@
 | D86 parent track3 | Preserve parent track inverse and labels | Main Luna requested | Protected source review on return | doing | agt-D86-parent-track-0121 | Actual main Luna dispatched for3 originals/two files, complete source and exact predicates retained; no body. | Current main base |
 | D86 ordinary script4 | Preserve union and script behavior | Main Luna | MAIN meaningful successor proof | merging | Return0145; review0147 PASS | Exact96dbc cumulative source PASS peer0152; normalhomef67b source exact. Canonical identity preserves all4 predicates. | f67bc19086 |
 | D86-provider-custody4 | Preserve remaining provider behavior | Luna | Exact outside source seam | doing | Source0100; trace0107 | SOURCE_EXACT test files; no repair or functional proof. Four retained semantic failures need bounded source attribution. No P4 diagnosis. | Agent0ae1 |
-| D86-docpatch5 | Preserve document patch behavior | Local Sol / Main Luna | Genuine existing admitted source pair | blocked:runtime | Sol0131; MAIN held-source0202 | Exact unused manifest-only pin requires genuine source. Finite MAIN existing-input assessment0202 owns return; no fabricated acceptance or body. | Source unchanged |
+| D86-docpatch5 | Preserve document patch behavior | Agent / Orchestrator | Current unused-pin source admission | blocked:orchestrator | Sol0131; MAIN0202 complete; scope0216 | Genuine legacy unusedpin exists; no usable current authenticated pair. Narrow source-admission scope decision escalated; no fake history or changed predicates. | Source unchanged |
 | D86-owned-move8 | Preserve owned move and video birth | Local Luna | Later MAIN functional qualification | merging | Sol0131; batchD0135 PASS; home6386 | Exact canonical placements/delete setup reviewed and normal joined. All8 scenarios and complete opaque topology retained. | 6386c700ee |
 | D86-cli-trim3 | Preserve current CLI trim behavior | Luna / Luna | Later MAIN functional proof | merging | Correction0122; batchC0127 PASS | Normalhomec6c has explicit guarded fps30 and all3 original scenarios. Source/static PASS only; MAIN behavior owed. | c6c3158d33 |
 | D86-occurrence-recipe3 | Preserve occurrence recipe behavior | Local Luna | MAIN incremental proof | merging | Author0112; batchB0122 PASS; home2050 | Three original scenarios source-reviewed and normal joined. Exact hash1f3d retained; functional MAIN proof owed. | Home2050221347 |
@@ -201,8 +201,10 @@
 
 | F successor inputs | Publish exact eligible node delta | Luna | Existing MAIN runner and venue | merging | agt-F-successor-inputs-0200 PASS | Exact161 selectors,15 family keys;84 priorERROR+4no-case+73new. Prose16 typo disclosed. Flat packet ready; actualbody pending. | Captured5dc9 |
 
-| F later source delta | Add precise later setup corrections | Luna | Newly reviewed normal joins | doing | agt-F-successor-delta-0209 | Private exact additional set from M1, word and sheet;161 MAIN ready set proceeds independently. No unchanged failures repeated. | Base3b8f |
-| R2 net-zero oracle | Bind exact original recorder expectation | Luna | Complete retained record facts | doing | agt-F-netzero-oracle-0210 | D90 separate D82/D83 oracle seam only. Correct only from complete authentic facts; otherwise source unchanged and precise missing fact. | Base3b8f |
+| F later source delta | Publish exact later setup corrections | Luna | Existing MAIN targeted runner | merging | agt-F-successor-delta-0209 PASS | Exact69 extra:sheet13,M1ten,word46; combined230. Root and preserved originals flat-published; no unchanged268 retry. | Captured3b8f |
+| R2 net-zero oracle | Bind exact native recorder expectation | Luna | Protected oracle review then MAIN proof | review | Author0210; review0215 | Complete sequential inverse writes and restoration fact asserted; only net-zero oracle changed. All other inputs/guards retained; no body. | tl/agt-F-netzero-oracle-0210 |
+
+| D91 inverse window | Make five original-third hosts valid | Main Luna requested | Approved D91 setup-only scope | ready | Existing MAIN sharedinverse owner | Exacthost2.0s permitted; authored move/clip/timings/asserts unchanged. One protectedreview, exact MAINproof and D72log entry owed. | No new source yet |
 
 Integration: Normal3b8f341cf6 now includes reviewed M2/projection/opaque, M1 semantic steps, script, word rationalfps, ordinarysheet and current-sheet setup sources. D88b normal adoptiond407 binds released Runtime6634; P4 remains FIXED d407/6634 despite newer home. R2 candidate8964 remains unmerged pending MAIN proof.
 core open: P4 MAIN3362 retains FAIL45.244s versus45s on a3cd. MAIN sole successor ten-note requested0153 on d407/6634. Four R2 passing originals stay unrepeated until final matrix. Source joins are not functional closure.
@@ -212,7 +214,8 @@ Families: Current-sheet and ordinarysheet protected PASS sources merged. Exact s
 Admission: Withdrawn D88 prototype and denied security analysis stay stopped. Distinct D88b protective review passed and normal6634 adopted; no denied action retry, competing diagnosis or old-source original.
 Disk: D89 source/review cap6 above5.5GB, heavy1 above5.2GB, nothing new below4.5GB. Latest5578928128 bytes before packet request. Sweep3 and compact running; compact reports packed0. No ended clean nonKEEP worktree exists; dirty/KEEP/refused targets untouched.
 Blockers: MAIN proof — Sole P4 owner0206 runs exactd407/6634; D90 exact8964/a3cd prep retained and resumes afterward. Source corrections and successor mapping precede meaningful affected-node body; no unchanged268 retry.
+Blockers: Orchestrator — Compound unused-pin current source-admission scope decision0216; legacy accepted evidence lacks current history pair.
 Blockers: Final cut — D59 pinned P1-P5/core, D69 and genuine installed render required.
 Next ready: MAIN ready161 corrected-node qualification and sole P4, then D90 candidate proof serially. Finish exact later delta and net-zero bounded source facts. No unchanged268 retry.
-live 2 requested / cap 6; ready-undispatched 0 eligible starts after floor checks. Private delta0209 and net-zero oracle0210; source free5574529024 bytes at newest request. MAIN161 packet and P4/D90 bodies remain unique requests.
-Inbox consumed through1285132 bytes. Updated 2026-10-25T02:00:08Z: normal M2/projection/opaque joins verified, ordinary-sheet reviewer and exact successor input worker assigned. All behavior proof limits retained; no manager product/test/pin edits or bodies.
+live 1 / cap 6; ready-undispatched 0 eligible local starts. Net-zero review0215 live; exact69delta completed. MAIN D91 nextsource requested under existing reservation; ready230 and P4/D90 body requests unique.
+Inbox consumed through1290033 bytes. Updated 2026-10-25T02:00:08Z: normal M2/projection/opaque joins verified, ordinary-sheet reviewer and exact successor input worker assigned. All behavior proof limits retained; no manager product/test/pin edits or bodies.
