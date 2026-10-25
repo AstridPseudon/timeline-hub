@@ -1,0 +1,50 @@
+{
+  "task": "app-D127-lifecycle-final-review-1723",
+  "repository": "App",
+  "review_worktree": "/home/user/work/wt/app-D127-lifecycle-final-review-1723",
+  "review_branch": "tl/app-D127-lifecycle-final-review-1723",
+  "normal_base": {
+    "commit": "d4e5284dfcc20801977cef12253b12f9cc8798fd",
+    "tree": "5efca939546f30b039cb9cacba7a29d7db690f2a"
+  },
+  "source_and_review_head": {
+    "branch": "tl/app-D127-lifecycle-source-sol-1705",
+    "commit": "54c91d77fa51cb8d21dd86a76d8297d13d8d19e9",
+    "tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20",
+    "parent": "5a9e0eb523353a95af45563a4f3e80bd8772222e",
+    "subject": "test: D127 validate actual frozen helper lifecycle projections"
+  },
+  "source_equals_review_head": true,
+  "changed_files_vs_normal": [
+    "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts"
+  ],
+  "diff": {
+    "stat": "1 file changed, 500 insertions(+), 42 deletions(-)",
+    "binary_patch_sha256": "a3232ea99524666e0ad612c9f8363167c04a3f5d18b97f3bc1a3e543ecf0ee2e",
+    "review_file_blob": "51047a0247450eef3dadccdd2de53ba88a977b24",
+    "review_file_sha256": "92586e7fb9603bec32b6fbee03aeb0fff9176d7cf16a35534ae8a2287e4ad48c"
+  },
+  "runtime_authority": {
+    "helper_commit": "231ddb5a6605b535d26172d34439ebe7b90804de",
+    "helper_tree": "834b6c71e5030976b121d527f36066461166c13a",
+    "helper_sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+    "helper_basename": "p2_commit_phase_capture.py",
+    "qualified_runtime": {
+      "path": "/home/user/work/wt/rt-pin-ab1e4f61",
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657"
+    },
+    "qualified_agent": {
+      "path": "/home/user/work/wt/agt-pin-070dfc5e",
+      "commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+      "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"
+    }
+  },
+  "write_status": {
+    "repository_status_clean": true,
+    "runtime_source_modified": false,
+    "agent_source_modified": false,
+    "git_commit_merge_rebase_checkout_push_by_worker": false,
+    "shared_dependency_writes": false
+  }
+}

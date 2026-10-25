@@ -1,0 +1,46 @@
+{
+  "task": "D127",
+  "source_verdict": "PASS",
+  "positive_controls": {
+    "D78_bootstrap": "PASS",
+    "P2_Runtime_observer_bootstrap": "NOTRUN_AFTER_SETUP_REFUSAL"
+  },
+  "integration_verdict": "NOTRUN",
+  "review_scope": {
+    "only_allowed_app_file_changed": true,
+    "normal_arm_preserved": true,
+    "legacy_6c9_arm_preserved": true,
+    "D105_control_preserved": true,
+    "frozen_runtime_helper_used": true,
+    "helper_sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e"
+  },
+  "coverage": {
+    "flag_combinations": 16,
+    "observable_generated_cases": 53,
+    "phase_projection_shapes": 128,
+    "retention_pairs": 16,
+    "direct_callback_recipes": 13,
+    "original_callback_projection_set": "all prior 12 plus the source-derived completed_without_handler_boundary case"
+  },
+  "fixed_bounds": {
+    "max_requests": 8,
+    "max_events": 128,
+    "max_bytes": 65536,
+    "sampling_interval_ms": 20,
+    "sink_mode": "0600",
+    "directory_mode": "0700",
+    "max_phase_count": 32
+  },
+  "source_consistency": {
+    "pending_at_stop": "accepted with ended or raised queue and with response observations because dispatch_finished is the priority boundary and stop can interleave",
+    "raised": "requires no response; only an unhandled pre-handler dispatch requires a raised queue; raised-after-handler retains observed queue",
+    "completed": "requires observed response; response priority permits null dispatch completion timing after dispatch error",
+    "returned_without_response": "requires no response; observed dispatch requires observed queue and numeric dispatch return timing, while missing dispatch remains UNKNOWN/null",
+    "missing_boundaries": "accepted only as exact UNKNOWN/null projections; no phase-presence relaxation of caps or keysets"
+  },
+  "reused_evidence": {
+    "runtime_original_predicates": 160,
+    "runtime_central_result": "28551 PASS23",
+    "source": "prior independent 1630 custody; not rerun"
+  }
+}

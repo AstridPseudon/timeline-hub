@@ -1,0 +1,29 @@
+{
+  "baseline": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "candidate_source_tree": "b809955fe54988c2ef092b4379030fdf78a8b06c",
+  "checks": {
+    "fixture_test_bodies": 22,
+    "fixture_assertions": 90,
+    "fixture_parametrize_decorators": 6,
+    "graph_test_bodies": 11,
+    "graph_assertions": 33,
+    "graph_parametrize_decorators": 7,
+    "fixture_test_body_ast_equal": true,
+    "fixture_assertion_ast_equal": true,
+    "fixture_parametrize_ast_equal": true,
+    "graph_test_body_ast_equal": true,
+    "graph_assertion_ast_equal": true,
+    "graph_parametrize_ast_equal": true,
+    "semantic_reservations_consumer_byte_exact": true,
+    "created_root_stage_redo_consumer_byte_exact": true,
+    "created_refs": ["shot:new-shot", "occurrence:new-occ"],
+    "created_order_matches_handler_input_order": true,
+    "handler_calls_ctx_create_entity": true,
+    "changed_slots_only": [
+      "root_values()[0].value.payload.metadata: null -> {}",
+      "root_values()[1].value.gain: null -> 1"
+    ],
+    "no_behavior_predicate_changes": true,
+    "all_other_inputs_order_opaque_open_null_byte_exact": true
+  }
+}

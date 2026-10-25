@@ -1,0 +1,33 @@
+{
+  "task": "D127 independent final review",
+  "source": {
+    "status": "PASS",
+    "command_result": "Node20: 3 passed, 2 skipped; D105 plus both D127 selectors"
+  },
+  "disk_admission": [
+    {"selector":"D78 bootstrap","free_bytes":5032046592,"floor_decimal_bytes":5000000000,"admitted":true},
+    {"selector":"P2 Runtime observer bootstrap","free_bytes":5031952384,"floor_decimal_bytes":5000000000,"admitted":true}
+  ],
+  "qualified_tuple": {
+    "runtime_checkout":"/home/user/work/wt/rt-pin-ab1e4f61",
+    "runtime_commit":"ab1e4f6141987706132916e2da16477f5a019464",
+    "agent_checkout":"/home/user/work/wt/agt-pin-070dfc5e",
+    "agent_commit":"070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "runtime_python":"/home/user/work/venv-runtime/bin/python",
+    "external_helper":"/tmp/w-d127-combined-Ntc0E0/p2_commit_phase_capture.py",
+    "external_helper_basename":"p2_commit_phase_capture.py",
+    "external_helper_sha256":"4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+    "hash_hook":"D66_P2_COMMIT_PHASE_CAPTURE_HELPER and D66_P2_COMMIT_PHASE_CAPTURE_HELPER_SHA256"
+  },
+  "controls": {
+    "D78 bootstrap":"PASS: 1 passed, 4 skipped",
+    "P2 Runtime observer bootstrap":"NOTRUN_AFTER_SETUP_REFUSAL: exact one permitted run exited before observer bootstrap because /home/user/work/wt/agt-pin-070dfc5e/.venv/bin/python is absent",
+    "retry":"not performed; one run per selector and no alternate Agent checkout/interpreter"
+  },
+  "safety": {
+    "tour_browser_native_full_family_recovery_swap":"not run",
+    "new_collector_or_service_replay":"not run",
+    "below_floor_run":"false",
+    "source_or_runtime_writes":"false"
+  }
+}

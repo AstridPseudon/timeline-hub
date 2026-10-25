@@ -1,0 +1,48 @@
+{
+  "source": "Runtime helper 231ddb5a6605b535d26172d34439ebe7b90804de, exact SHA256 4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+  "app_predicates": [
+    {
+      "app_lines": "304-406",
+      "purpose": "schema and privacy",
+      "mapping": "Exact summary/event keysets, schema_version, safe identifiers, bounded counts, unsupported arrival, privacy keys, and safe phase metadata preserve the helper's emitted shape and original redaction purpose."
+    },
+    {
+      "app_lines": "244-302",
+      "purpose": "lifecycle and timing",
+      "mapping": "dispatch_start_ms equals dispatch_queue.start_ms; queue duration uses dispatch-to-handler boundaries; provider/response durations use their own observed boundaries; unsupported lock/receipt remain null; dispatch error leaves completion timing null; response count has completion priority; missing dispatch remains UNKNOWN/null."
+    },
+    {
+      "app_lines": "106-176",
+      "purpose": "retention and loss accounting",
+      "mapping": "Exact rolling_plus_final_request fields, final lifecycle values, buffer_complete equals complete, max-byte drop accounting, output bytes/events and 128-event capacity."
+    },
+    {
+      "app_lines": "178-240",
+      "purpose": "sampling and privacy",
+      "mapping": "Exact 20ms sampling, loss propagation on leaf rows, safe frame identities, top-10 cap, shares and denominator arithmetic, counter limits and sampler errors."
+    },
+    {
+      "app_lines": "530-578",
+      "purpose": "meaningful contradiction negatives",
+      "mapping": "Rejects missing/unknown lifecycle, missing leaf/loss fields, leaf arithmetic/privacy mutations, duration/response contradictions, unknown fields/content, and all fixed-cap/buffer mutations."
+    },
+    {
+      "app_lines": "580-777",
+      "purpose": "differential source coverage",
+      "mapping": "Loads frozen helper by git show and exact hash, runs stdlib-only callback/matrix/retention projections, validates 16 flags, 16 retention pairs, 53 cases and contradiction mutations without Runtime activation or sockets."
+    }
+  ],
+  "preserved_arms": [
+    "normal helper hash a17a92115661fcef13b49169504ad8726e6f6c0cdce66b195128b14477fa76a4",
+    "legacy reviewed helper hash 6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760",
+    "D105 launch ownership",
+    "D78 and existing P2 bootstrap bodies"
+  ],
+  "no_relaxations": [
+    "no arbitrary hash",
+    "no generic optionalization",
+    "no unknown-field acceptance",
+    "no budget or privacy relaxation",
+    "no product/runtime/generated/pin changes"
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "task": "D132a/G3",
+  "base_commit": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb",
+  "base_tree": "6abf383217363d08fe0cf00558b010f5a9dd506f",
+  "baseline": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "source_commit": "160c675a2d58ab9ec2dde7517860075ad85e41d2",
+  "source_tree": "b809955fe54988c2ef092b4379030fdf78a8b06c",
+  "changed_paths": [
+    "tests/editing_conformance/test_recorded_graph_roots.py",
+    "tests/sdk/test_timeline_commit_graph_roots.py"
+  ],
+  "candidate_blobs": {
+    "tests/editing_conformance/test_recorded_graph_roots.py": "7309e162c2ef2c1efe95e757c1d8f5c16361cd81",
+    "tests/sdk/test_timeline_commit_graph_roots.py": "303d076e108132d02133171aa77059b565e93e23"
+  },
+  "source_candidate_byte_exact": true,
+  "patch_equals_reviewed_donor_patch": true,
+  "outside_authorized_files_unchanged": true,
+  "cumulative_delta": {
+    "graph_request_metadata_lines": 6,
+    "fixture_gain": {"before": null, "after": 1},
+    "fixture_metadata": {"before": null, "after": {}},
+    "created_declaration": "[root['ref'] for root in roots]",
+    "created_refs": ["shot:new-shot", "occurrence:new-occ"]
+  },
+  "predicate_input_mapping": {
+    "fixture": {"test_bodies": 22, "assertions": 90, "parametrize_decorators": 6, "ast_equal": true},
+    "graph": {"test_bodies": 11, "assertions": 33, "parametrize_decorators": 7, "ast_equal": true},
+    "other_consumers_byte_exact": true,
+    "all_other_inputs_order_opaque_open_null_preserved": true
+  },
+  "route": {
+    "registered_provider": "astrid",
+    "caller": "RuntimeService.commit_timeline",
+    "c0_wire_metadata": ["label", "steps", "merge", "reads"]
+  },
+  "retained_review_result": {
+    "source_verdict": "PASS",
+    "requested": 9,
+    "passed": 8,
+    "failed": 1,
+    "duration_seconds": 8.15,
+    "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "failure": "invalid_records: provider occurrence alias is outside its boundary",
+    "failure_frame": "runtime_protocol/timeline_commit_auth.py:156",
+    "failure_nodeid": "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_created_child_stages_reload_inverse_redo_exact_closure"
+  },
+  "tests_rerun": false,
+  "tests_rerun_reason": "Explicit task instruction says to reuse the unchanged independent graph9/fixture47 result and not rerun those suites or other consumers."
+}

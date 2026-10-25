@@ -1,0 +1,20 @@
+{
+  "task": "D127",
+  "source": {
+    "status": "PASS",
+    "basis": "Frozen helper exact hash, differential lifecycle matrix, caps/privacy/keysets, and required static checks pass."
+  },
+  "positive_control": {
+    "status": "PARTIAL",
+    "D78_bootstrap": "PASS",
+    "P2_Runtime_observer_bootstrap": "NOTRUN_AFTER_SETUP_REFUSAL",
+    "shortfall": "qualified Agent checkout /home/user/work/wt/agt-pin-070dfc5e has no .venv/bin/python; one permitted run stopped before observer bootstrap"
+  },
+  "integration": {
+    "status": "NOTRUN",
+    "reason": "This was a read-only validator review; no product or integration suite was requested or claimed."
+  },
+  "overall": "SOURCE_PASS_CONTROLS_PARTIAL_INTEGRATION_NOTRUN",
+  "self_go_or_merge_request": false,
+  "repository_changes": false
+}

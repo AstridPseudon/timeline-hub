@@ -1,0 +1,45 @@
+{
+  "authority": "Runtime helper 231ddb5a6605b535d26172d34439ebe7b90804de",
+  "formula": [
+    "not dispatch_finished -> pending_at_stop",
+    "dispatch_finished and dispatch_returned and http_response.count > 0 -> completed",
+    "dispatch_finished and dispatch_raised -> raised",
+    "otherwise -> returned_without_response"
+  ],
+  "flag_matrix_16": [
+    {"finished":false,"returned":false,"raised":false,"response":false,"outcome":"pending_at_stop"},
+    {"finished":false,"returned":false,"raised":false,"response":true,"outcome":"pending_at_stop"},
+    {"finished":false,"returned":false,"raised":true,"response":false,"outcome":"pending_at_stop"},
+    {"finished":false,"returned":false,"raised":true,"response":true,"outcome":"pending_at_stop"},
+    {"finished":false,"returned":true,"raised":false,"response":false,"outcome":"pending_at_stop"},
+    {"finished":false,"returned":true,"raised":false,"response":true,"outcome":"pending_at_stop"},
+    {"finished":false,"returned":true,"raised":true,"response":false,"outcome":"pending_at_stop"},
+    {"finished":false,"returned":true,"raised":true,"response":true,"outcome":"pending_at_stop"},
+    {"finished":true,"returned":false,"raised":false,"response":false,"outcome":"returned_without_response"},
+    {"finished":true,"returned":false,"raised":false,"response":true,"outcome":"returned_without_response"},
+    {"finished":true,"returned":false,"raised":true,"response":false,"outcome":"raised"},
+    {"finished":true,"returned":false,"raised":true,"response":true,"outcome":"raised"},
+    {"finished":true,"returned":true,"raised":false,"response":false,"outcome":"returned_without_response"},
+    {"finished":true,"returned":true,"raised":false,"response":true,"outcome":"completed"},
+    {"finished":true,"returned":true,"raised":true,"response":false,"outcome":"raised"},
+    {"finished":true,"returned":true,"raised":true,"response":true,"outcome":"completed"}
+  ],
+  "projection_matrix": {
+    "generated_cases": 53,
+    "shape_count": 128,
+    "dimensions": ["dispatch boundary present/missing", "handler boundary present/missing", "response present/missing", "pending/returning/error_returning/finished/error_finished"],
+    "validity_rule": "Every generated frozen-helper summary is accepted; each case receives duration, privacy, retention and lifecycle contradiction mutations that must be rejected."
+  },
+  "retention_pairs": {
+    "count": 16,
+    "outcomes": ["pending_at_stop", "completed", "raised", "returned_without_response"],
+    "selection": "final_request is the newest non-completed request; null only when every request completed; same-request outcome must equal summary lifecycle"
+  },
+  "source_specific_edges": [
+    "handler_entry ends dispatch_queue before dispatch completion",
+    "raised after handler therefore retains observed queue",
+    "dispatch error can leave completion timestamps null even when response makes lifecycle completed",
+    "stop can observe an ended queue while lifecycle remains pending_at_stop",
+    "missing dispatch is represented as zero-count UNKNOWN/null, not invented presence"
+  ]
+}

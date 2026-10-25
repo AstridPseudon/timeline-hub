@@ -1,0 +1,37 @@
+{
+  "source_review": {
+    "commit": "160c675a2d58ab9ec2dde7517860075ad85e41d2",
+    "tree": "b809955fe54988c2ef092b4379030fdf78a8b06c",
+    "baseline": "20177e66564f9f91735ed1a11bac821682d60edf",
+    "review_verdict": "PASS",
+    "only_changed_files": [
+      "tests/editing_conformance/test_recorded_graph_roots.py",
+      "tests/sdk/test_timeline_commit_graph_roots.py"
+    ],
+    "reviewed_scope": [
+      "six graph request metadata lines",
+      "gain null to numeric 1 setup migration",
+      "payload metadata null to empty object setup migration",
+      "created refs projected from the existing ordered roots sequence"
+    ]
+  },
+  "runtime_custody": {
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "qualified_and_clean_in_review": true,
+    "provider_profile": "astrid",
+    "caller": "RuntimeService.commit_timeline"
+  },
+  "candidate_custody": {
+    "base_commit": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb",
+    "base_tree": "6abf383217363d08fe0cf00558b010f5a9dd506f",
+    "target_blobs_match_source_tree": true,
+    "outside_tree_unchanged": true,
+    "no_product_schema_runtime_generated_pin_or_fixture_changes": true
+  },
+  "retained_owner_dependencies": {
+    "authenticated_child_staging_inverse_redo_failure": "unchanged Runtime owner dependency",
+    "classification": "invalid_records occurrence alias outside boundary at auth156",
+    "action": "preserved visibly failing; no retirement, skip, suppression, invented record, or behavior claim"
+  }
+}
