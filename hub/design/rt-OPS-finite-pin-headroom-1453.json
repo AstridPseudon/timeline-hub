@@ -1,0 +1,261 @@
+{
+  "decision": "No eligible pins. KEEP is an existing manager-owned guard for all five; no mutation, retirement, sweep, acquisition, or retry performed.",
+  "eligible_pins": [],
+  "filesystem_available_bytes": 4841418752,
+  "host_audit_limits": "No held venv/runtime targets, old denied archives, credentials, Codex sessions, or unrelated directories were inspected.",
+  "integration": {
+    "agent": {
+      "branch": "tl/integration",
+      "clean": true,
+      "head": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "path": "/home/user/work/agent",
+      "tree": "68df11fad2b082fa12d99ca20404e1e40e350cd7"
+    },
+    "app": {
+      "branch": "tl/integration",
+      "clean": true,
+      "head": "84857c45347539c7820bb054b69e2e5ad4079081",
+      "path": "/home/user/work/app",
+      "tree": "7feb5b12a1ad9629f096700c40c393d5b3998217"
+    },
+    "composition": {
+      "branch": "tl/integration",
+      "clean": true,
+      "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "path": "/home/user/work/composition",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    },
+    "runtime": {
+      "branch": "tl/integration",
+      "clean": true,
+      "head": "453b3e6f92045980219ec4948419ee5ad25c817d",
+      "path": "/home/user/work/runtime",
+      "tree": "d4b7756ea3ba3b27344ef7339102b1e0188488b9"
+    }
+  },
+  "light_admission": false,
+  "light_admission_threshold_bytes": 5000000000,
+  "measured_bytes": {
+    "per_pin": {
+      "agt-pin-16bbd56d": 116984543,
+      "agt-pin-82b6d00d": 120070782,
+      "app-pin-0b6cee26": 150195681,
+      "rt-pin-1daca2a3": 22821041,
+      "rt-pin-d4f496ec": 6655855
+    },
+    "total_named_pins": 416727902
+  },
+  "mode": "READ-ONLY finite pin audit",
+  "orchestration_guards": {
+    "active_test_service_matches": [],
+    "external_active_target_matches": [],
+    "external_active_worker_dirs": [
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-Farm-ownership-census-1457"
+    ],
+    "lease_active_file_count": 2,
+    "lease_active_matches": [],
+    "manager_status_historical_sha_citations": [
+      {
+        "classification": "historical-source-SHA-citation",
+        "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app2/STATUS.md",
+        "line": 114,
+        "matches": [
+          {
+            "head_prefix": "0b6cee",
+            "pin": "app-pin-0b6cee26"
+          }
+        ],
+        "physical_path_reference": false
+      },
+      {
+        "classification": "historical-source-SHA-citation",
+        "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/app2/STATUS.md",
+        "line": 120,
+        "matches": [
+          {
+            "head_prefix": "1daca2",
+            "pin": "rt-pin-1daca2a3"
+          }
+        ],
+        "physical_path_reference": false
+      },
+      {
+        "classification": "historical-source-SHA-citation",
+        "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/STATUS.md",
+        "line": 317,
+        "matches": [
+          {
+            "head_prefix": "1daca2",
+            "pin": "rt-pin-1daca2a3"
+          }
+        ],
+        "physical_path_reference": false
+      },
+      {
+        "classification": "historical-source-SHA-citation",
+        "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/STATUS.md",
+        "line": 329,
+        "matches": [
+          {
+            "head_prefix": "0b6cee",
+            "pin": "app-pin-0b6cee26"
+          }
+        ],
+        "physical_path_reference": false
+      },
+      {
+        "classification": "historical-source-SHA-citation",
+        "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/managers/runtime/STATUS.md",
+        "line": 453,
+        "matches": [
+          {
+            "head_prefix": "d4f496",
+            "pin": "rt-pin-d4f496ec"
+          }
+        ],
+        "physical_path_reference": false
+      }
+    ],
+    "manager_status_physical_path_matches": [],
+    "own_audit_worker_excluded": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-finite-pin-headroom-1453",
+    "queue_done_historical_refs": 5,
+    "queue_pending_refs": 0,
+    "queue_running_refs": 0,
+    "running_test_service_count": 0,
+    "suite_registration_matches": [
+      {
+        "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+        "refs": [
+          {
+            "file": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+            "line": 156,
+            "tokens": [
+              "rt-pin-d4f496ec",
+              "/home/user/work/wt/rt-pin-d4f496ec"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "pins": [
+    {
+      "blockers": [
+        "KEEP"
+      ],
+      "branch": "(detached)",
+      "brief": "requested producer checkout of agent 16bbd56dbf016bcddeafa891291129efcfa87196: D124 final reviewed union recipe2 pending independent1339; old07ff body never executed\n",
+      "clean": true,
+      "du_bytes": 116984543,
+      "eligible": false,
+      "expected_head": "16bbd56dbf016bcddeafa891291129efcfa87196",
+      "head": "16bbd56dbf016bcddeafa891291129efcfa87196",
+      "id": "agt-pin-16bbd56d",
+      "keep": true,
+      "not_current_integration": true,
+      "path": "/home/user/work/wt/agt-pin-16bbd56d",
+      "recycled_marker": false,
+      "repo": "agent",
+      "running_marker": false,
+      "tree": "70fcd38844e7d93cdf97e4aebaf248d3736a312a"
+    },
+    {
+      "blockers": [
+        "KEEP"
+      ],
+      "branch": "(detached)",
+      "brief": "requested producer checkout of agent 82b6d00d7fcca643c6eaf3246028d9a20f96252a: D115 exact genuine mounted regression for Runtime output projection; candidate stays held\n",
+      "clean": true,
+      "du_bytes": 120070782,
+      "eligible": false,
+      "expected_head": "82b6d00d7fcca643c6eaf3246028d9a20f96252a",
+      "head": "82b6d00d7fcca643c6eaf3246028d9a20f96252a",
+      "id": "agt-pin-82b6d00d",
+      "keep": true,
+      "not_current_integration": true,
+      "path": "/home/user/work/wt/agt-pin-82b6d00d",
+      "recycled_marker": false,
+      "repo": "agent",
+      "running_marker": false,
+      "tree": "019ae9944d5f445776bd19c7d0c441190955c1a3"
+    },
+    {
+      "blockers": [
+        "KEEP"
+      ],
+      "branch": "(detached)",
+      "brief": "requested producer checkout of app 0b6cee269f32079c5446036bbca8a484176799bc: rt-R2-three-body-0933 actual D73 four-checkout route\n",
+      "clean": true,
+      "du_bytes": 150195681,
+      "eligible": false,
+      "expected_head": "0b6cee269f32079c5446036bbca8a484176799bc",
+      "head": "0b6cee269f32079c5446036bbca8a484176799bc",
+      "id": "app-pin-0b6cee26",
+      "keep": true,
+      "not_current_integration": true,
+      "path": "/home/user/work/wt/app-pin-0b6cee26",
+      "recycled_marker": true,
+      "repo": "app",
+      "running_marker": false,
+      "tree": "9456c9edf3229ddcfd824b0f626516f2c602ccfa"
+    },
+    {
+      "blockers": [
+        "KEEP"
+      ],
+      "branch": "(detached)",
+      "brief": "requested producer checkout of runtime 1daca2a33f6d7b10053e07c539a54843e3984e19: D86 fixed24 qualified released producer captured 06:40\n",
+      "clean": true,
+      "du_bytes": 22821041,
+      "eligible": false,
+      "expected_head": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+      "head": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+      "id": "rt-pin-1daca2a3",
+      "keep": true,
+      "not_current_integration": true,
+      "path": "/home/user/work/wt/rt-pin-1daca2a3",
+      "recycled_marker": false,
+      "repo": "runtime",
+      "running_marker": false,
+      "tree": "a522511414947e48e317a5e5c2103483b121a750"
+    },
+    {
+      "blockers": [
+        "KEEP"
+      ],
+      "branch": "(detached)",
+      "brief": "requested producer checkout of runtime d4f496ec4fbcae7a1f3a51d47ed5147c561117ad: D118 pristine upstream 23-node baseline, source isolation\n",
+      "clean": true,
+      "du_bytes": 6655855,
+      "eligible": false,
+      "expected_head": "d4f496ec4fbcae7a1f3a51d47ed5147c561117ad",
+      "head": "d4f496ec4fbcae7a1f3a51d47ed5147c561117ad",
+      "id": "rt-pin-d4f496ec",
+      "keep": true,
+      "not_current_integration": true,
+      "path": "/home/user/work/wt/rt-pin-d4f496ec",
+      "recycled_marker": false,
+      "repo": "runtime",
+      "running_marker": false,
+      "tree": "1d3e06f4d59ed6d459646d24ab185c36eb5be075"
+    }
+  ],
+  "process_guard": {
+    "excluded_own_audit_ancestors": [],
+    "external_matches": [],
+    "guard_clear": true,
+    "host_certified": true,
+    "scope": "/proc cmdline,cwd,environ,fd checked only for the five exact worktree paths; raw fields not retained",
+    "unreadable_by_namespace": {
+      "cmdline": 0,
+      "cwd": 0,
+      "environ": 0,
+      "fd": 0
+    },
+    "unreadable_field_count": 0
+  },
+  "scope": "exactly five named pin worktrees plus named orchestration guard namespaces and target-path-only process fields",
+  "source_head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "task": "rt-OPS-finite-pin-headroom-1453",
+  "timestamp_utc": "2026-10-25T14:54:54Z"
+}
