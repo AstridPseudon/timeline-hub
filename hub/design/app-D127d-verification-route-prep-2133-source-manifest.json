@@ -1,0 +1,60 @@
+{
+  "manifest_kind": "D127d source-only normal-route preparation",
+  "status": "FINITE_UNAPPLIED",
+  "acceptance": "NOTRUN",
+  "app": {
+    "root": "/home/user/work/wt/app-D127d-verification-route-prep-2133",
+    "commit": "b5c9eadfa1950f46feac50d7d6a89c47f27f4881",
+    "tree": "8e10af0976b012205f27a18a432c750a27de0725",
+    "source_files": [
+      {
+        "path": "/home/user/work/wt/app-D127d-verification-route-prep-2133/scripts/testing/d66-plain-stack.mjs",
+        "lines": ["21-24", "67-87", "241-256", "289-305", "627-689", "702-750", "767-875"],
+        "functions": ["diagnosticHelperIdentity", "playwrightLaunchEnv", "submitUnlocked", "main"],
+        "sha256": "56668b2a02abffd947a9045d081e4fdc2d56c226b656c43b1e823fb182ad4def",
+        "git_blob_sha1": "7eed3b4f13fb1812db7b255b77757de6978ed6a0"
+      },
+      {
+        "path": "/home/user/work/wt/app-D127d-verification-route-prep-2133/scripts/testing/d66-plain-stack.test.mjs",
+        "lines": ["18-34"],
+        "functions": ["D66 p2-element launch environment assertions"],
+        "sha256": "3b22f3e83e332d5d6834389192d62fa07d5b581c5af4974e619841ab1cb0d6c0",
+        "git_blob_sha1": "bc29ca546619e45da8c013d3ca5c871c5608eaad"
+      },
+      {
+        "path": "/home/user/work/wt/app-D127d-verification-route-prep-2133/tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+        "lines": ["1018-1036", "1038-1131"],
+        "functions": ["assertReload", "P2 mounted element edit"],
+        "sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+        "git_blob_sha1": "b6a0ebb2597177c9719f0b23fbc3d135ecdcc019"
+      },
+      {
+        "path": "/home/user/work/wt/app-D127d-verification-route-prep-2133/tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts",
+        "lines": ["14-17", "516-553"],
+        "functions": ["p2CommitPhaseCaptureConfig", "assertSourcePinnedHelper"],
+        "sha256": "59a4d116683f88d415024b6d9236e578cf03c11e2c913b56278f9d57448b40ef",
+        "git_blob_sha1": "dea8cda5c28fb4cfe9142c046e9771398274aac9"
+      }
+    ],
+    "runtime_normal_helper": {
+      "path": "/home/user/work/runtime/tests/helpers/p2_commit_phase_capture.py",
+      "exists_verified": true,
+      "sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d"
+    }
+  },
+  "product_tuple": {
+    "agent": {"commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"},
+    "runtime": "PENDING exact COST-CANDIDATE",
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "prior_qualified_source_refs": [
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D127c-element15200-review-2113-source-manifest.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D127c-element15200-review-2113-verdict.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D127c-App-final-guard-review-2013-verdict.json"
+  ],
+  "source_changes": {
+    "worktree_status": "clean_at_inspection",
+    "product_source_or_tests_changed": false,
+    "pins_changed": false
+  }
+}

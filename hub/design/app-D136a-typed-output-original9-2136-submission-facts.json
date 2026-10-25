@@ -1,0 +1,42 @@
+{
+  "task": "D136a/D100",
+  "worker": "app-D136a-typed-output-original9-2136",
+  "repo": "agent",
+  "receiver_base_commit": "e22217705f422436c111b65d40e4f155971864c7",
+  "receiver_base_tree": "b3df00f58bdf40ed8a7b5c1e3e19d07b6da9d44d",
+  "reviewed_candidate_commit": "20dbfdef45f71fa28a63f5382c154f5cca50b83a",
+  "reviewed_candidate_tree": "f790baff841baea889c1fdd8a92422a7aecf68a4",
+  "runtime_review": "PASS_BOUNDED_SOURCE_SECURITY",
+  "received_exact_three": true,
+  "source_only_receiving": true,
+  "focused_targeted": {
+    "tests": 57,
+    "result": "PASS",
+    "ruff": "PASS",
+    "mypy": "PASS",
+    "compile": "PASS",
+    "diff_check": "PASS"
+  },
+  "original9": {
+    "run_once": true,
+    "admission_free_bytes_before": 5316198400,
+    "admission_free_bytes_after": 5309915136,
+    "duration_ns": 35996764405,
+    "exit_code": 1,
+    "tests": 9,
+    "passed": 0,
+    "errors": 9,
+    "failures": 0,
+    "skipped": 0,
+    "first_seams": [
+      "provider intermediate command lacks an authenticated physical observation"
+    ],
+    "retry": false,
+    "alternate_runtime": false,
+    "fixture_migration": false,
+    "selector_substitution": false
+  },
+  "private_artifacts_mode": "0600",
+  "release": "HELD",
+  "verdict": "FAIL_ACTUAL_ORIGINAL9"
+}

@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "task": "D127c",
+  "source_tuple": {
+    "app_commit": "b5c9eadfa1950f46feac50d7d6a89c47f27f4881",
+    "app_tree": "8e10af0976b012205f27a18a432c750a27de0725",
+    "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "runtime_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "agent_commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "agent_tree": "6056414359ae9fce08d999d54cbecf719fda33c3"
+  },
+  "sha256": {
+    "scripts/testing/d66-plain-stack.mjs": "56668b2a02abffd947a9045d081e4fdc2d56c226b656c43b1e823fb182ad4def",
+    "scripts/testing/sitecustomize.py": "83c28b437417753a221e0fec36047dd6bb267256366dd4acacb8ef8d8137615e",
+    "runtime/tests/helpers/p2_commit_phase_capture.py": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d",
+    "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts": "59a4d116683f88d415024b6d9236e578cf03c11e2c913b56278f9d57448b40ef"
+  },
+  "source_paths": [
+    "scripts/testing/d66-plain-stack.mjs",
+    "scripts/testing/sitecustomize.py",
+    "runtime/tests/helpers/p2_commit_phase_capture.py",
+    "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts"
+  ],
+  "safe_artifact_status": {
+    "verdict": "NO_GO_ORIGINAL_ELEMENT",
+    "profile_totals": "PARTIAL_EXACTMISSING",
+    "profile_table": "PARTIAL_EXACTMISSING"
+  },
+  "source_changed": false,
+  "private_material_published": false
+}

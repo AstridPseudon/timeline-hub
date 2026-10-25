@@ -1,0 +1,32 @@
+{
+  "task": "D136a/D100",
+  "status": "FAIL_ACTUAL_ORIGINAL9",
+  "findings": [
+    {
+      "id": "D136A-ORIGINAL9-1",
+      "severity": "blocking",
+      "finding": "All nine exact original9 selectors errored during setup at the common registered-provider seam: provider intermediate command lacks an authenticated physical observation.",
+      "disposition": "Retain the complete actual failure; no retry or adaptation."
+    },
+    {
+      "id": "D136A-SOURCE-1",
+      "severity": "informational",
+      "finding": "The three final-reviewed source/test blobs were received byte-exactly onto the held receiver base.",
+      "disposition": "PASS source receiving."
+    },
+    {
+      "id": "D100-CUSTODY-1",
+      "severity": "informational",
+      "finding": "D100 product, boundary test, and projection source remain byte-exact with the required 43/11/54 census.",
+      "disposition": "Preserved unchanged."
+    },
+    {
+      "id": "D136A-FOCUSED-1",
+      "severity": "informational",
+      "finding": "Focused D136a validation and static checks pass: 57 tests, Ruff, mypy, compileall, and diff check.",
+      "disposition": "PASS bounded source checks; does not override the original9 result."
+    }
+  ],
+  "source_or_body_failures": [],
+  "release": "HELD"
+}

@@ -1,0 +1,35 @@
+{
+  "task": "D136a/D100",
+  "worker_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-typed-output-original9-2136",
+  "held_projection": {
+    "path": "tests/sdk/test_timeline_capture_projection.py",
+    "sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+    "predicates": 43,
+    "test_bodies": 11,
+    "fixture_statements": 54,
+    "preserved": true
+  },
+  "original9": {
+    "count": 9,
+    "selectors": [
+      "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden",
+      "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+    ],
+    "result": "9 errors, 0 passes, 0 failures, 0 skipped",
+    "first_seam_all_tests": "provider intermediate command lacks an authenticated physical observation"
+  },
+  "source_conservation": {
+    "received_files": 3,
+    "exact_hashes": true,
+    "evaluator_unchanged": true,
+    "held_D100_unchanged": true,
+    "other_paths_changed": false
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "task": "D127d",
+  "verdict": "FINITE_UNAPPLIED",
+  "acceptance": "NOTRUN",
+  "source_only": true,
+  "finding": {
+    "id": "D127d-F001",
+    "severity": "blocker_for_normal_no_hooks_route",
+    "status": "confirmed_from_current_source",
+    "summary": "The existing p2-element D66 path retains Runtime logs and resolves the existing phase-capture helper for retained suites; current App source has no supported disabled arm.",
+    "source": [
+      "scripts/testing/d66-plain-stack.mjs:21-24",
+      "scripts/testing/d66-plain-stack.mjs:248-256",
+      "scripts/testing/d66-plain-stack.mjs:702-750",
+      "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts:525-553"
+    ],
+    "effect": "A normal original-element verification body cannot be authorized from this source without either a source-supported no-hooks route or a future reviewed source change mounted in the existing launcher/provider seam.",
+    "required_disposition": "Do not invent an env flag, disable guard, hook, CJS loader, collector, or reuse the spent profiling recipe; keep this packet finite UNAPPLIED."
+  },
+  "preserved_route": {
+    "selector": "P2 mounted element edit: real catalog apply, exact params patch, reload and guarded Undo",
+    "selector_count": 1,
+    "body_path": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:1038-1131",
+    "original_5s_assertion": true,
+    "canonical_history_reload_guarded_undo": true,
+    "zero_legacy_route_assertions": true
+  },
+  "future_conditions": [
+    "Runtime sole cost author and offline benchmark",
+    "exact Runtime COST-CANDIDATE author plus independent review/source receipt",
+    "normal immutable checkout receipt with exact SHA/tree/path and controller-owned absolute output root",
+    "ordinary App/Agent/Runtime/Composition tuple and separate source preflight",
+    "one persistent normal ID and one body only",
+    "D130 SWAP/WAL/recovery/full-tour hold remains"
+  ],
+  "execution_receipts": {
+    "preflight": null,
+    "bootstrap": null,
+    "service": null,
+    "submission": null,
+    "body": null,
+    "acceptance": "NOTRUN"
+  }
+}

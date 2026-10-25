@@ -1,0 +1,21 @@
+{
+  "task": "D136a/D100",
+  "verdict": "FAIL_ACTUAL_ORIGINAL9",
+  "original9": "FAIL",
+  "actual_result": {
+    "tests": 9,
+    "passed": 0,
+    "errors": 9,
+    "failures": 0,
+    "skipped": 0,
+    "exit_code": 1,
+    "first_seam": "provider intermediate command lacks an authenticated physical observation"
+  },
+  "source_receiving": "PASS_EXACT_THREE_REVIEWED_BLOBS",
+  "focused_checks": "PASS",
+  "D100_custody": "PASS_BYTE_EXACT",
+  "retry": false,
+  "adaptation": false,
+  "release": "HELD",
+  "next_action": "Independent actual-result/custody review; no source release or qualification claim."
+}

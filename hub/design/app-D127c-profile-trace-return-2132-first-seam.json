@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "task": "D127c",
+  "result": "SOURCE_QUALIFIED_FIRST_SEAM",
+  "case": "NO_GO_ORIGINAL_ELEMENT",
+  "runtime": "completed_http_200_provider_outcome_unknown",
+  "first_seam": {
+    "name": "helper_cprofile_eligibility_gate",
+    "actual_completed_request_crossed": false,
+    "actual_selector_predicate": "UNKNOWN",
+    "reason_unknown": "safe packet omits the actual command operand and private payload fields"
+  },
+  "limits": {
+    "max_functions": 40,
+    "max_edges": 1600,
+    "raw_pstats_destination": "ABSENT_IN_D66_BOOTSTRAP"
+  },
+  "qualification": {
+    "safe_projection": "EXACTMISSING",
+    "call_edges": "EXACTMISSING",
+    "raw_pstats": "OPTIONAL_AND_NOT_CONFIGURED",
+    "no_source_change": true
+  },
+  "source_citations": [
+    {"path": "tests/helpers/p2_commit_phase_capture.py", "lines": "542-564", "fact": "eligibility is set only after dispatch/prefetch provenance, element-command selection, and the full element-request predicate"},
+    {"path": "tests/helpers/p2_commit_phase_capture.py", "lines": "1133-1134", "fact": "summary adds cprofile only when profile_eligible is true"},
+    {"path": "tests/helpers/p2_commit_phase_capture.py", "lines": "131-150,173-177,661-693", "fact": "raw_pstats_sink is optional, defaults to None, and is guarded before private persistence"},
+    {"path": "scripts/testing/sitecustomize.py", "lines": "20-30,45-60", "fact": "bootstrap supplies only watchdog_seconds to the helper"},
+    {"path": "scripts/testing/d66-plain-stack.mjs", "lines": "377-384,748-750", "fact": "D66 selects helper path/hash and watchdog only; no raw-pstats destination is configured"}
+  ],
+  "safe_artifacts": {
+    "verdict": "NO_GO_ORIGINAL_ELEMENT",
+    "profile_totals": "PARTIAL_EXACTMISSING",
+    "profile_table": "PARTIAL_EXACTMISSING"
+  },
+  "privacy": "safe_fields_only; no payload, args, locals, headers, URLs, raw pstats, or stacks"
+}

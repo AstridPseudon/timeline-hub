@@ -1,0 +1,65 @@
+{
+  "task": "D127d",
+  "status": "FINITE_UNAPPLIED",
+  "acceptance": "NOTRUN",
+  "source_only": true,
+  "route": {
+    "name": "existing D66 p2-element --submit browser controller",
+    "command": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs p2-element --submit",
+    "source_path": "scripts/testing/d66-plain-stack.mjs",
+    "suite_lines": "21-24",
+    "selector_count": 1,
+    "body_path": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "body_lines": "1038-1131",
+    "body_run": false
+  },
+  "current_seam": {
+    "retained_runtime_logs": true,
+    "helper_resolution": "main() requires diagnosticHelperIdentity when suite.retainRuntimeLogs is true",
+    "helper_source": "selected Runtime checkout/tests/helpers/p2_commit_phase_capture.py",
+    "helper_override": "absent in current route; absence does not disable the default helper",
+    "runtime_sink": "playwrightLaunchEnv/configureRuntimeLogEnv sets D66_RUNTIME_LOG_DIR and launch ordinal for retained suites",
+    "no_hooks_off_arm": false,
+    "reason": "No current supported source arm disables the optional diagnostic/sampling/profiling path for p2-element"
+  },
+  "submit_order": [
+    "ordinary four exact source checkout requests",
+    "receipt and immutable source validation",
+    "preflight recipe registration and run",
+    "one normal suite request",
+    "one future original-element body"
+  ],
+  "future_product_tuple": {
+    "app": {"commit": "b5c9eadfa1950f46feac50d7d6a89c47f27f4881", "tree": "8e10af0976b012205f27a18a432c750a27de0725"},
+    "agent": {"commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"},
+    "runtime_candidate": "PENDING exact author+independent-review/source+immutable-checkout receipt",
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "requirements": {
+    "node": "20.19.4",
+    "unchanged_original_5s_assertion": true,
+    "canonical_history_reload_guarded_undo": true,
+    "zero_legacy_tail": true,
+    "disk_admission_bytes": 5200000000,
+    "disk_stop_bytes": 4000000000,
+    "bodies": 1,
+    "d130_hold": ["SWAP", "WAL", "recovery", "full tour"]
+  },
+  "prohibited_now": [
+    "preflight",
+    "bootstrap",
+    "service",
+    "checkout",
+    "install",
+    "registration",
+    "submission",
+    "browser",
+    "socket",
+    "body",
+    "profiling",
+    "sampling",
+    "diagnostic instrumentation",
+    "source change",
+    "hook or CJS-loader injection"
+  ]
+}
