@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T03:24:21Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 17 | status age 1m -->
+<!-- agent | 2026-10-25T03:27:28Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 19 | status age 1m -->
 # agent board, 2026-10-25T03:12:03Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -223,6 +223,11 @@
 
 | F word oracle two | Match current operation and C0 invalid | Luna | Independent protected source review | merging | Author0317; review0320 PASS | Two exact assertions independently qualify source. Normal merge queued; original bodies still owed. | d1b1d10191 |
 
+| F9211 command identity | Trace exact executed-command mismatches | Luna read only | Actual68 error records | doing | agt-F-command-identity-source-0325 | Occurrence48, M2placement16 and recipe3 share outer message; exact common cause not assumed. No body. | Actual9211 |
+| F9211 ordinary sheet | Correct truthful bootstrap source caller | Luna | Actual11 setup errors | doing | agt-F-sheet11-source-0325 | Exact source.via test-bootstrap violates enum. Original data and eleven predicates preserved. | Actual9211 |
+| F9211 projection | Restore original opaque source fixture | Luna | Actual9 setup errors | doing | agt-F-projection9-source-0325 | Exact opaque_timeline loss traced before faithful source correction. No default to hide missing original fields. | Actual9211 |
+| F9211 numeric six | Preserve numeric move invocation | Luna | Local source floor | ready | Brief0325 prepared | Six invalid app/at command calls; inverse three separately live. Next source slot above5GB. | Actual9211 |
+
 Integration: Agentac9a00f18e includes media0240, auto0241 and protected current-sheet CLI3 migration. All target blobs match independent reviews. D90 remains qualified by actual28969 PASS36; final tuple separate.
 core open: P4 historical14151 FAIL45.448s; corrected diagnostic25257 FAIL45.557s. All requested timed stacks captured. One Runtime cost0301 owns evidence-directed repair; no Agent diagnosis or duplicate original.
 Gates: P1 and P3 historical GO. D59 final pinned P1-P5/core, D69 and genuine installed render still owed. No full PASS, core0, final tuple or ZIP claim. E2/D79 after ZIP.
@@ -235,6 +240,6 @@ Blockers: Runtime source — P4 measured correction0301 requires one independent
 Blockers: MAIN proof — Actual161 then D91 and exact later delta must qualify merged scenarios. All no-case and held live scenarios remain visible.
 Blockers: Final cut — D59 pinned P1-P5/core, D69 and genuine installed render required.
 Next ready: Assigned parent guardSol, word choiceLuna, word oracleLuna and protected sheet review0317. Source findings need one review; exact MAIN bodies stay serialized.
-live 2 plus queued1 / cap6; ready-undispatched0 eligible source starts. Current pending review inventory is24 scopes, not24 unresolved diffs.
+live 2 plus queued2 / cap6; ready-undispatched1 held by post-dispatch source floor; ready-undispatched0 eligible source starts. Current pending review inventory is24 scopes, not24 unresolved diffs.
 
-Inbox consumed through1326922 bytes. Updated 2026-10-25T03:17:50Z. Exact media/auto source joins verified; held13 disposition and original artifacts byte-published. No manager product/test/generated/pin edits or bodies.
+Inbox consumed through1326922 bytes; normaldesign0315 owner note consumed. Updated 2026-10-25T03:17:50Z. Exact media/auto source joins verified; held13 disposition and original artifacts byte-published. No manager product/test/generated/pin edits or bodies.
