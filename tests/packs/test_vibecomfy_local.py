@@ -6,8 +6,11 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
+import pytest
+
 from astrid.packs.vibecomfy.actions.run.run import _stage_managed_asset_manifest
 from astrid.packs.vibecomfy.asset_manifest import read_archive
+from astrid.packs.vibecomfy import local as local_scan
 from astrid.packs.vibecomfy.local import pack_images, scan
 
 
@@ -47,6 +50,22 @@ class _ComfyHandler(BaseHTTPRequestHandler):
         return
 
 
+class _PinokioHandler(BaseHTTPRequestHandler):
+    payload: dict[str, object]
+
+    def do_GET(self) -> None:
+        assert self.path == "/pinokio/info"
+        body = json.dumps(self.payload).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, _format: str, *_args: object) -> None:
+        return
+
+
 def _server(tmp_path: Path) -> tuple[ThreadingHTTPServer, threading.Thread]:
     custom_nodes = tmp_path / "custom_nodes"
     (custom_nodes / "ComfyUI-Manager").mkdir(parents=True)
@@ -58,6 +77,21 @@ def _server(tmp_path: Path) -> tuple[ThreadingHTTPServer, threading.Thread]:
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     return server, thread
+
+
+def _pinokio_server(
+    payload: dict[str, object],
+) -> tuple[ThreadingHTTPServer, threading.Thread]:
+    _PinokioHandler.payload = payload
+    server = ThreadingHTTPServer(("127.0.0.1", 0), _PinokioHandler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    return server, thread
+
+
+@pytest.fixture(autouse=True)
+def _default_to_absent_pinokio(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(local_scan, "_PINOKIO_INFO_URL", "http://127.0.0.1:1/pinokio/info")
 
 
 def test_scan_reports_local_comfyui_and_endpoint_data(tmp_path: Path) -> None:
@@ -98,6 +132,83 @@ def test_scan_returns_errors_for_unavailable_ports() -> None:
     assert result["errors"]
     assert result["errors"][0]["port"] == 1
     assert result["errors"][0]["endpoint"] == "/system_stats"
+
+
+def test_scan_discovers_pinokio_running_comfyui_and_python(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    comfy, comfy_thread = _server(tmp_path / "app")
+    pinokio_home = tmp_path / "pinokio"
+    pinokio, pinokio_thread = _pinokio_server({
+        "home": str(pinokio_home),
+        "apps": ["comfy.git"],
+        "scripts": [{
+            "path": "comfy.git/start.js",
+            "app": "comfy.git",
+            "local": {"url": f"http://localhost:{comfy.server_address[1]}"},
+        }],
+    })
+    env_python = tmp_path / "app" / "env" / "bin" / "python"
+    env_python.parent.mkdir(parents=True)
+    env_python.touch()
+    monkeypatch.setattr(
+        local_scan,
+        "_PINOKIO_INFO_URL",
+        f"http://127.0.0.1:{pinokio.server_address[1]}/pinokio/info",
+    )
+    try:
+        result = scan([])
+    finally:
+        comfy.shutdown()
+        comfy.server_close()
+        comfy_thread.join(timeout=2)
+        pinokio.shutdown()
+        pinokio.server_close()
+        pinokio_thread.join(timeout=2)
+
+    assert result["pinokio"] == {"available": True, "home": str(pinokio_home)}
+    assert len(result["servers"]) == 1
+    found = result["servers"][0]
+    assert found["url"] == f"http://127.0.0.1:{comfy.server_address[1]}"
+    assert found["base_dir"] == str(tmp_path / "app")
+    assert found["output_dir"] == str(tmp_path / "app" / "renders")
+    assert found["python"] == str(env_python)
+    assert found["pinokio_apps"] == ["comfy.git"]
+    assert result["errors"] == []
+
+
+def test_scan_reports_pinokio_when_no_script_is_running(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pinokio_home = tmp_path / "pinokio"
+    pinokio, thread = _pinokio_server({"home": str(pinokio_home), "scripts": []})
+    monkeypatch.setattr(
+        local_scan,
+        "_PINOKIO_INFO_URL",
+        f"http://127.0.0.1:{pinokio.server_address[1]}/pinokio/info",
+    )
+    try:
+        result = scan([])
+    finally:
+        pinokio.shutdown()
+        pinokio.server_close()
+        thread.join(timeout=2)
+
+    assert result == {
+        "servers": [],
+        "errors": [],
+        "pinokio": {"available": True, "home": str(pinokio_home)},
+    }
+
+
+def test_scan_continues_when_pinokio_is_absent() -> None:
+    result = scan([])
+
+    assert result == {
+        "servers": [],
+        "errors": [],
+        "pinokio": {"available": False, "home": None},
+    }
 
 
 def test_pack_images_round_trips_through_manifest_and_run_staging(tmp_path: Path) -> None:

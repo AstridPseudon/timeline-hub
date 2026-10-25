@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import ipaddress
 import io
 import json
 import urllib.error
@@ -15,10 +16,13 @@ from typing import Any
 from astrid.core.contracts.errors import AstridError, AstridValueError, render_astrid_error
 from astrid.packs.vibecomfy.asset_manifest import build_asset_manifest
 
+_PINOKIO_INFO_URL = "http://127.0.0.1:42000/pinokio/info"
+_PINOKIO_TIMEOUT_SECONDS = 0.25
 
-def _get_json(url: str) -> Any:
+
+def _get_json(url: str, timeout: float = 2) -> Any:
     request = urllib.request.Request(url, headers={"Accept": "application/json"})
-    with urllib.request.urlopen(request, timeout=2) as response:
+    with urllib.request.urlopen(request, timeout=timeout) as response:
         return json.loads(response.read().decode("utf-8"))
 
 
@@ -53,6 +57,8 @@ def _python_guess(base_dir: Path | None, embedded: bool) -> str | None:
         candidate = base_dir.parent / "python_embeded" / "python.exe"
         return str(candidate) if candidate.exists() else None
     candidates = (
+        base_dir / "env" / "bin" / "python",
+        base_dir / "env" / "Scripts" / "python.exe",
         base_dir / "venv" / "bin" / "python",
         base_dir / ".venv" / "bin" / "python",
         base_dir / "venv" / "Scripts" / "python.exe",
@@ -74,11 +80,100 @@ def _manager_present(base_dir: Path | None) -> bool:
         return False
 
 
+def _loopback_http_port(value: str) -> int | None:
+    try:
+        parsed = urllib.parse.urlsplit(value)
+        host = parsed.hostname
+        if parsed.scheme.casefold() != "http" or not host:
+            return None
+        if host.casefold() not in {"localhost", "localhost."}:
+            try:
+                if not ipaddress.ip_address(host).is_loopback:
+                    return None
+            except ValueError:
+                return None
+        port = parsed.port if parsed.port is not None else 80
+        return port if 1 <= port <= 65535 else None
+    except ValueError:
+        return None
+
+
+def _local_urls(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, dict):
+        return [url for item in value.values() for url in _local_urls(item)]
+    if isinstance(value, list):
+        return [url for item in value for url in _local_urls(item)]
+    return []
+
+
+def _pinokio_scripts(info: Any) -> list[dict[str, Any]]:
+    if not isinstance(info, dict):
+        return []
+    scripts = info.get("scripts", [])
+    if isinstance(scripts, dict):
+        scripts = list(scripts.values())
+    if not isinstance(scripts, list):
+        return []
+    return [script for script in scripts if isinstance(script, dict)]
+
+
+def _script_app(script: dict[str, Any]) -> str | None:
+    app = script.get("app")
+    if isinstance(app, str) and app.strip():
+        return app.strip()
+    path = script.get("path")
+    if isinstance(path, str) and path.strip():
+        parts = [
+            part
+            for part in Path(path.replace("\\", "/")).parts
+            if part not in {"/", "\\"}
+        ]
+        if parts:
+            app_path = next((part for part in parts if part.casefold().endswith(".git")), None)
+            if app_path:
+                return app_path
+            return parts[0]
+    return None
+
+
+def _pinokio_snapshot() -> tuple[dict[str, Any] | None, dict[int, list[str]]]:
+    """Read Pinokio's optional local control plane without affecting discovery."""
+    try:
+        info = _get_json(_PINOKIO_INFO_URL, timeout=_PINOKIO_TIMEOUT_SECONDS)
+    except Exception:
+        return None, {}
+    if not isinstance(info, dict):
+        return None, {}
+
+    apps_by_port: dict[int, list[str]] = {}
+    for script in _pinokio_scripts(info):
+        if script.get("running") is False:
+            continue
+        if str(script.get("status", "")).casefold() in {"stopped", "finished", "failed"}:
+            continue
+        app = _script_app(script)
+        for url in _local_urls(script.get("local")):
+            port = _loopback_http_port(url)
+            if port is None:
+                continue
+            apps = apps_by_port.setdefault(port, [])
+            if app and app not in apps:
+                apps.append(app)
+    return info, apps_by_port
+
+
 def scan(ports: list[int]) -> dict[str, Any]:
     """Probe loopback ComfyUI servers and report endpoint errors as data."""
     servers: list[dict[str, Any]] = []
     errors: list[dict[str, Any]] = []
-    for port in ports:
+    pinokio_info, pinokio_apps = _pinokio_snapshot()
+    pinokio_home = pinokio_info.get("home") if pinokio_info else None
+    if not isinstance(pinokio_home, str):
+        pinokio_home = None
+    probe_ports = list(dict.fromkeys([*ports, *pinokio_apps]))
+    for port in probe_ports:
         url = f"http://127.0.0.1:{port}"
         try:
             stats = _get_json(url + "/system_stats")
@@ -104,6 +199,8 @@ def scan(ports: list[int]) -> dict[str, Any]:
             "manager_present": False,
             "python": None,
         }
+        if pinokio_apps.get(port):
+            server["pinokio_apps"] = pinokio_apps[port]
         try:
             folders = _get_json(url + "/internal/folder_paths")
             server["folder_paths"] = folders
@@ -130,7 +227,11 @@ def scan(ports: list[int]) -> dict[str, Any]:
                     "error": "workflow listing was not a JSON list",
                 })
         servers.append(server)
-    return {"servers": servers, "errors": errors}
+    return {
+        "servers": servers,
+        "errors": errors,
+        "pinokio": {"available": pinokio_info is not None, "home": pinokio_home},
+    }
 
 
 def pack_images(out_path: str, images: list[str]) -> dict[str, Any]:
