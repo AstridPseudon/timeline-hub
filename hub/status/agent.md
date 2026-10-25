@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T00:06:07Z | dispatcher heartbeat 4s | live 5 (sol 0, luna 5, other 0) | busy30 36 | status age 9m -->
+<!-- agent | 2026-10-25T00:09:02Z | dispatcher heartbeat 12s | live 2 (sol 0, luna 2, other 0) | busy30 36 | status age 2m -->
 # agent board, 2026-10-24T23:56:47Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -151,7 +151,7 @@
 | F providerABI20 | Preserve selected-PARAM provider identities | Luna | Main affected-node batch | merging | Author2316; review2322; home387c | Source merged; exact21, reverse21 and13 controls PASS on reviewed branch. Functional batch owed. | 387c85afa7 |
 | F WC6 fixture11 | Preserve failure and capture identities | Luna | Main affected-node batch | merging | Review2328 PASS; home159e | All59 assertions conserved; Ruff/mypy/compile PASS. Source merged; functional proof pending. [Review](../../workers/agt-F-wc6-review-2328/report.md) | 159e11abf5 |
 | F remaining core | Repair other independent live families | Luna slots as available | Exact550 cluster map | ready | Next available source slots | Dozens of ready families in linked rollup; preserve original assertions. No extra bodies before meaningful source/setup corrections. | No new source yet |
-| F native batch24 | Preserve real CLI batch capability | HARD Sol | CLI format scope decision | blocked:orchestrator | Sol2350 exact source return | No current interface preserves native captures and CLI retries. [Decision](../../escalations/agent-20261024T2355Z-current-CLI-native-batch-scope.md);24 assertions retained. | Held b9f0140619 |
+| F native batch24 | Ledger retired native CLI batches | Luna | D87 coverage mapping | doing | agt-F-D87-ledger-0007 | D87 rejects new envelope. Map24 exact retired IDs to current tests; heldb9f stays unmerged. One gap test only if needed. | No product changes |
 | F NativeSheet11 | Preserve ordinary sheet behavior | Luna | Main affected-node batch | merging | Finalreview2348 PASS; home6722 | Sequential captures and ABSENT state fixed; all11 original bodies conserved. Source merged; functional proof pending. | 672250b4be |
 | F projection9 | Preserve genuine captured sources | Luna | Main affected-node batch | merging | Source2328; review2342 PASS | Genuine Runtime source path;43 assertions and2 raises conserved. Source mergedefa. Functional batch owed. | efa0504f35 |
 | F numeric9 | Preserve numeric revision fixtures | Luna | Main affected-node batch | merging | Source2328; review2342 PASS | Independent audit PASS after author merge; nine cases and exact test ASTs retained. Functional batch owed. | 3edc45cb26 |
@@ -183,7 +183,6 @@ Rehearsal categories: PRE-EXISTING16 / KNOWN GAP37 / ENV73 / NEW-OURS core424 / 
 Families: LOCAL placement20,pool6,video12,inverse7,frontends7 source; mainword46 review. Current-sheet17 firstreturn and parentauto14 review ready at cap. MAIN parentmedia20 active;CLI8/inverse10 firstreturns requested. Exact424core accounting unchanged.
 Blockers: Runtime P4 source — final candidate6a9 author2330 complete, independent security2346 active. Released732 until PASS and normal receipt; no new P4/adoption or passing R2 repeat.
 Blockers: Runtime first returns — CLI8 fabricated idempotency and sharedinverse10 unsupported placement-emitter setup sent to main. Extra parentmedia20/auto14 names now received; old capacity/worker wait cleared.
-Blockers: Orchestrator CLI scope — decide existing commit --file native-batch format versus approved retirement with exact replacements. Escalation agent-20261024T2355Z-current-CLI-native-batch-scope.md; other work continues.
 Blockers: Final cut — final P1–P5/core tuple and genuine installed render remain D59 gated.424live core outcomes require repairs/qualification, no core0.
 Next ready: Main dispatch six published D86 rows. Local source reviews apply on PASS, then ONE affected-node batch on MAIN. Runtime released successor triggers normal adoption and remaining P4 once.
 live 6 / cap 6 source-only; ready-undispatched 3: current-sheet17 firstreturn, parentauto14 review, grouped remaining core. Capacity full; main CLI8/inverse10 first returns requested separately.
