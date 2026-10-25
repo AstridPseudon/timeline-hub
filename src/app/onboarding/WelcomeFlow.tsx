@@ -14,9 +14,10 @@ const WelcomeConnection = lazy(() => import('./WelcomeConnection.tsx'));
 export function WelcomeFlow({ entry, localBuild = false }: { entry: WelcomeEntry; localBuild?: boolean }) {
   const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
   const [phase, setPhase] = useState<WelcomeEntry>(() => {
+    const savedPhase = readWelcomePhase();
     // An installer handoff must not change a fully local setup into the hosted route.
-    if (entry === 'connection' && readWelcomePhase() === 'local') return 'local';
-    if (entry !== 'editor') writeWelcomePhase(entry);
+    if (entry === 'connection' && savedPhase === 'local') return 'local';
+    if (entry !== 'editor' && savedPhase !== 'complete') writeWelcomePhase(entry);
     return entry;
   });
   const [windowMode, setWindowMode] = useState<WindowMode>('app-window');

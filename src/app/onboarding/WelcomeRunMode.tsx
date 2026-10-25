@@ -7,6 +7,8 @@ import { detectInstallScenario } from '@/pages/Home/installScenario.ts';
 import { LOCAL_SETUP, type WindowMode } from '@/shared/components/RuntimeConnection/copy.ts';
 import { EditorCard } from '@/shared/components/RuntimeConnection/EditorCard.tsx';
 import { EditorCardLayer } from '@/shared/components/RuntimeConnection/EditorCardLayer.tsx';
+import { CopyFallback, useCopyAction } from '@/shared/components/RuntimeConnection/CopyInstallCommand.tsx';
+import { RUNTIME_CONNECTION_COPY } from '@/shared/components/RuntimeConnection/copy.ts';
 import { readWelcomePhase, writeWelcomePhase } from './welcomeProgress.ts';
 
 export type { WindowMode };
@@ -27,14 +29,10 @@ export function WelcomeRunMode({ onContinue, windowMode, setWindowMode, runMode,
   const [installUnavailable, setInstallUnavailable] = useState(false);
   const canInstall = !standalone && scenario === 'chromium' && deferredPrompt !== null && !installUnavailable;
   const [opened, setOpened] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const linkCopy = useCopyAction(window.location.href);
 
   const continueHere = () => {
     onContinue('connection');
-  };
-  const copyForChromium = async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
   };
   const installApp = async () => {
     if (!deferredPrompt) return continueHere();
@@ -114,10 +112,11 @@ export function WelcomeRunMode({ onContinue, windowMode, setWindowMode, runMode,
           </RadioGroup>
           <Button type="button" className="h-11 w-full rounded-xl" onClick={() => {
             if (runMode === 'local') onContinue('local');
-            else if (scenario === 'unsupported') void copyForChromium();
+            else if (scenario === 'unsupported') void linkCopy.copy();
             else if (canInstall && windowMode === 'app-window') void installApp();
             else continueHere();
-          }}>{runMode === 'hosted' && scenario === 'unsupported' ? copied ? 'Copied. Open it in Chrome or Edge.' : 'Copy link for Chrome or Edge' : buttonLabel}</Button>
+          }}>{runMode === 'hosted' && scenario === 'unsupported' ? linkCopy.status === 'copied' ? 'Copied. Open it in Chrome or Edge.' : 'Copy link for Chrome or Edge' : buttonLabel}</Button>
+          {runMode === 'hosted' && scenario === 'unsupported' && linkCopy.status === 'failed' && <CopyFallback text={window.location.href} label="Copy link for Chrome or Edge" />}
         </div>
       </EditorCard>
     </EditorCardLayer>

@@ -86,6 +86,12 @@ it('keeps a saved local setup when an installer connection handoff arrives', asy
   expect(spies.connected).not.toHaveBeenCalled();
 });
 
+it('does not let a stale onboarding tab overwrite completed setup', () => {
+  localStorage.setItem('astrid:welcome-v1', 'complete');
+  render(<WelcomeFlow entry="choose" />);
+  expect(localStorage.getItem('astrid:welcome-v1')).toBe('complete');
+});
+
 it.each([['local editor', { localBuild: true }], ['phone', { localBuild: false }]])('%s goes from the tour straight to connection', async (_name, props) => {
   if (_name === 'phone') {
     vi.spyOn(navigator, 'platform', 'get').mockReturnValue('iPhone');

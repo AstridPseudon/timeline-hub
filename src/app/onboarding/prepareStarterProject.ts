@@ -69,7 +69,7 @@ export async function prepareStarterProject({
   }
   if (!project) {
     if (discovered.some(item => item.metadata?.[STARTER_PROJECT_INTENT_METADATA] === intentId)) {
-      throw new Error('This starter project was archived. Open an existing project from the editor.');
+      throw new Error('Your only project is archived. Unarchive it or create a new one in the editor.');
     }
     project = await client.createProject('My first project', `astrid-onboarding-project-${intentId}`,
       `my-first-project-${intentId.slice(0, 8)}`, {

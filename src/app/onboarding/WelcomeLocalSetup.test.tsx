@@ -96,4 +96,10 @@ describe('local setup card', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
     expect(onBack).toHaveBeenCalledOnce();
   });
+
+  it('offers the local editor in a new tab', () => {
+    render(<WelcomeLocalSetup onBack={vi.fn()} />);
+    expect(screen.getByRole('link', { name: 'Open my local editor' })).toHaveAttribute('href', 'http://127.0.0.1:5180');
+    expect(screen.getByRole('link', { name: 'Open my local editor' })).toHaveAttribute('target', '_blank');
+  });
 });

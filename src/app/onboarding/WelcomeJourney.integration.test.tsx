@@ -20,6 +20,7 @@ const REALM = 'onboarding-journey-realm';
 const PROJECT = 'onboarding-journey-project';
 const NOW = '2026-10-01T00:00:00Z';
 const navigate = vi.fn();
+const replaceNavigate = vi.fn();
 const permission = {
   state: 'prompt',
   onchange: null as ((this: unknown, event: Event) => unknown) | null,
@@ -113,6 +114,7 @@ beforeEach(() => {
   sessionStorage.clear();
   writeWelcomePhase(null);
   navigate.mockReset();
+  replaceNavigate.mockReset();
   permissions.query.mockClear();
   permission.state = 'prompt';
   permission.onchange = null;
@@ -125,7 +127,7 @@ beforeEach(() => {
   // window/document/events, replacing only the navigation boundary the handoff calls.
   const browserWindow = window;
   const location = { href: browserWindow.location.href, origin: browserWindow.location.origin,
-    pathname: browserWindow.location.pathname, search: '', hash: '', assign: navigate };
+    pathname: browserWindow.location.pathname, search: '', hash: '', assign: navigate, replace: replaceNavigate };
   vi.stubGlobal('window', new Proxy(browserWindow, { get(target, property) {
     if (property === 'location') return location;
     const value = Reflect.get(target, property, target);
@@ -150,8 +152,8 @@ function chooseHosted() {
 }
 
 function destination() {
-  expect(navigate).toHaveBeenCalledOnce();
-  return new URL(navigate.mock.calls[0][0] as string, window.location.origin);
+  expect(replaceNavigate).toHaveBeenCalledOnce();
+  return new URL(replaceNavigate.mock.calls[0][0] as string, window.location.origin);
 }
 
 it('recovers from hosted permission denial, creates a real canonical starter timeline, and hands its selection to normal editor entry', async () => {
@@ -167,7 +169,7 @@ it('recovers from hosted permission denial, creates a real canonical starter tim
   door.acceptNextPrompt();
   act(() => changePermission('prompt'));
   fireEvent.click(await screen.findByRole('button', { name: 'Connect' }));
-  await waitFor(() => expect(navigate).toHaveBeenCalledOnce());
+  await waitFor(() => expect(replaceNavigate).toHaveBeenCalledOnce());
 
   const url = destination();
   expect(url.pathname).toBe('/tools/video-editor');

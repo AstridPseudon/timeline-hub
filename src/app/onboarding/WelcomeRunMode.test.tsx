@@ -94,6 +94,14 @@ describe('run-mode choice', () => {
     expect(localStorage.getItem('astrid:welcome-v1')).toBeNull();
   });
 
+  it('shows a selectable link if copying for Chrome or Edge fails', async () => {
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Macintosh) Version/17.0 Safari/605.1.15');
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: undefined });
+    mount();
+    fireEvent.click(screen.getByRole('button', { name: 'Copy link for Chrome or Edge' }));
+    expect(await screen.findByRole('textbox', { name: 'Copy link for Chrome or Edge' })).toHaveValue(window.location.href);
+  });
+
   it('Firefox offers the browser tab only', () => {
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 Firefox/132.0');
     mount();

@@ -48,7 +48,7 @@ describe('StarterProjectHandoff', () => {
   });
 
   it('lets a user enter the editor after setup fails without fabricating a selection', async () => {
-    vi.mocked(prepareStarterProject).mockRejectedValue(new Error('This starter project was archived.'));
+    vi.mocked(prepareStarterProject).mockRejectedValue(new Error('Your only project is archived. Unarchive it or create a new one in the editor.'));
     const ready = vi.fn();
     const openEditor = vi.fn();
     render(<StarterProjectHandoff onReady={ready} onContinueWithoutProject={openEditor} />);
@@ -56,5 +56,16 @@ describe('StarterProjectHandoff', () => {
     expect(openEditor).toHaveBeenCalledOnce();
     expect(ready).not.toHaveBeenCalled();
     expect(localStorage.getItem(PENDING_STARTER_PROJECT_KEY)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
+    expect(screen.getByText('Your only project is archived. Unarchive it or create a new one in the editor.')).toBeInTheDocument();
+  });
+
+  it('shows the archived-only message and keeps Open editor available', async () => {
+    vi.mocked(prepareStarterProject).mockRejectedValue(new Error('Your only project is archived. Unarchive it or create a new one in the editor.'));
+    render(<StarterProjectHandoff onReady={vi.fn()} onContinueWithoutProject={vi.fn()} />);
+    await screen.findByRole('alert');
+    expect(screen.getByText('Your only project is archived. Unarchive it or create a new one in the editor.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open editor' })).toBeInTheDocument();
   });
 });

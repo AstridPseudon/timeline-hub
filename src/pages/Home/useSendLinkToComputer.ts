@@ -10,6 +10,7 @@ const COPIED_MS = 1_800;
  */
 export function useSendLinkToComputer(getUrl: () => string, active = true) {
   const [copied, setCopied] = useState(false);
+  const [fallback, setFallback] = useState(() => !navigator.share && !navigator.clipboard?.writeText);
   const activeRef = useRef(active);
   const requestRef = useRef(0);
   const resetRef = useRef<number | null>(null);
@@ -45,7 +46,10 @@ export function useSendLinkToComputer(getUrl: () => string, active = true) {
         await navigator.share({ title: 'Astrid', url });
         return;
       }
-      if (!navigator.clipboard?.writeText) return;
+      if (!navigator.clipboard?.writeText) {
+        setFallback(true);
+        return;
+      }
       await navigator.clipboard.writeText(url);
       if (!activeRef.current || request !== requestRef.current) return;
       setCopied(true);
@@ -59,5 +63,5 @@ export function useSendLinkToComputer(getUrl: () => string, active = true) {
     }
   }, [clearReset, getUrl]);
 
-  return { copied, send };
+  return { copied, fallback, send };
 }
