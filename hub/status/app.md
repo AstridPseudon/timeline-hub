@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T21:29:39Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 3m -->
-# app board, 2026-10-25T21:26Z
+<!-- app | 2026-10-25T21:34:03Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 0m -->
+# app board, 2026-10-25T21:33Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -110,9 +110,11 @@
 
 | D134-D100-map | Map managed30 to held birth fix | Luna independent | Independent2103 source PASS | merged | Author2056; checker2103 PASS | Exact30 original sources map to heldD100 first-birth fix. No new API need; no setup, behavior, normal home, core or retirement credit. | Evidence only |
 
+| D127d-normal-route | Prepare normal candidate verification recipe | Luna read only | Recorded D127d; Runtime candidate pending | doing | app-D127d-verification-route-prep-2133 | Existing D66 route with optional instrumentation off; source only, no preflight or body. Candidate SHA and review remain required. | Appb5c9 unchanged |
+
 | D127d-cost-verification | Verify one Runtime cost candidate | Runtime HARD Sol; App Luna proof | Qualified candidate and independent review | blocked:runtime | Runtime cost author requested; App receiver retained | Evidence index2124 delivered. No candidate or verification body; no profiling. D130 remains held. | Current sources unchanged |
 
-| D127c-profile-first-seam | Name missing deterministic capture seam | Luna read only | Independent2113 cProfile EXACTMISSING | doing | app-D127c-15200-profile-wholepath-2117 | Source-only recipe to actual handler and sink, comparing passing controls. No new body or source edits. | Source unchanged |
+| D127c-profile-first-seam | Name missing deterministic capture seam | Luna read only | Independent2113 cProfile EXACTMISSING | doing | app-D127c-profile-trace-return-2132 | Prior2117 hit API output limit with no saved report. Same-branch bounded evidence completion; no source change or profiling. | Source unchanged |
 
 | D134-fork18 | Preserve fork binding and history purposes | Luna and independent Luna | Authentic ABI1 history records | gated:missing-records | Author2110; return2114; final2119 PASS | Exact18 map and wholepath qualified; source unchanged. Actual history payload absent; UNKNOWN, own behavior NOTRUN, no product fault proved. | Agent96a6 unchanged |
 
@@ -124,14 +126,14 @@ Integration: App b5c9eadfa1950f46feac50d7d6a89c47f27f4881/tree8e10af0976b012205f
 Current P2 NO-GO. Historical six cases qualified; full original tour and final tuple proof remain owed. Actual element32016 independently FAIL at unchanged five second wait; Runtime lifecycle 21.741s and provider 13.781s qualified. App receipt, outcome and wall duration UNKNOWN. Raw capture stays private and retained. D127b-A counts confirmed828/lost15 but no chains/full counters recoverable.
 
 Blockers: SWAP safety — D130 holds recovery, related acceptance, release, adoption and tours after automatic classifier refusal. No retry, alternate route, transfer or rollback.
-Blockers: Projection9 — Independent2100 proves new output.fps=30 initialization is rejected by typed-location set equality, validation.py143-144. Runtime HARD Sol2108 owns minimal typed-location return; exact independent2100 wholepath published. Fixture unchanged, no retry.
+Blockers: Projection9 — Independent2100 proves new output.fps=30 initialization is rejected by typed-location set equality, validation.py143-144. Runtime Sol2108 candidate20db has 57 own/138 nearest PASS; final independent2119 pending. Original9 only after source PASS; fixture unchanged.
 
 Blockers: Graph child birth — Runtime1814/final1821 complete; C0 sequential operands defined. Authentic intermediate bindings/stages absent, causal owner UNKNOWN.
 Blockers: Agent core and final render — D137 real-child route replaces fixture gate. Installed4435 received; Agent2044 real child refused venv-log-setup. No retry before changed-state disposition. D134 XML missing; REG UNVERIFIED. Farm D77 only.
 Blockers: Final cut — Full P2, final P1–P5/core/D69 and genuine installed render owed. No ZIP claim.
-Next ready: Finite profile first-seam2117 and fork18 final2119 returns. Runtime HARD Sol2108 typed-location return remains external. No further profiling body authorized.
-live 1 / cap 6; ready-undispatched 0. Only missing-profile source wholepath2117 active. Fork18 final finite PASS returned to Agent; no code merge or body. No heavy body.
-INBOX consumed through2472304 bytes. Agent2055 shared105/fork18 hub notes consumed and answered peer2105; Runtime receipt request and final typed-location seam peer2106 published.
+Next ready: Source trace completion2132 and D127d normal recipe2133. Sole original9 after Runtime final FPS review2119 PASS; later candidate element verification only after qualified cost fix.
+live 2 / cap 6; ready-undispatched 0. Bounded read-only trace completion2132 and normal verification recipe prep2133 active. No profiling, optimization or heavy body.
+INBOX consumed through2475913 bytes. Agent2055 shared105/fork18 hub notes consumed and answered peer2105; Runtime receipt request and final typed-location seam peer2106 published.
 Safety: No manager product/test/generated/pin edits, direct Git writes, upstream push, M5, credentials or refused-route retries. Current inputs, raw captures, outputs, branches and reports retained. Historical dirty/orphan guards untouched.
 Later: Gate3 D133 corrected B DEFERRED, worker1853 ZIP paragraph delivered; no optionA author/review/body. Word cases need transcript authority records. Parentlabels2/native originals4/trackbatch1 remain source-gated. D79 waits ZIP; E4 dropped; helpercut1 D23 held. Graph and originalTrue live failures remain visible, no unchanged rerun. Agent40 conflicts belong Agent allocator; no duplicate local authors.
 Pass 2026-10-25T19:20Z: independent1909 FAIL published byte exact. Same-branch Luna1921 first return dispatched with all five findings, supported real D66 activation and no product changes. Separate Luna1921 D100 additive-test return and App16 conflict classifier dispatched after exclusive claims. All ready local tasks assigned. Delayed Runtime1906 sampling-source ask is satisfied by1851/1858/1902 and superseded by recorded D127c; peer1921 returns actual owner. Fresh ended nonKEEP worktree scan found0. Sweep3 removed0; compact packed0 scratch and losslessly compressed1 old worker log. It also packed current32016 after board rewrite dropped full service ID; immediately restored all396 files byte exact and modes exact, receipt design/app-32016-compaction-restoration-1925.json. Exact service ID protected again. D130 unchanged.
@@ -186,3 +188,5 @@ Pass 2026-10-25T21:21Z: fork18 final2119 PASS_FINITE_UNAPPLIED: exact18 fullIDs 
 D127d consumed from recorded lead relay21:26: no further Appprofiling. Runtime sole HARD Sol costauthor uses code/offline-sizebenchmark and existingevidence; ONE later elementbody verifies candidatefix only. New row below gated on qualifiedcandidate; read-only2117 finishes. Complete1535/1540 historical10721 summaries and exact2113/15200/32016 hashes sent design/peer-app-to-runtime-20261025T2124Z-D127d-complete-cost-evidence.md; lead-mail design/peer-app-to-app-lead-20261025T2124Z-D127d-evidence-delivered.md. Historical completedrequest2 is NOTelement; exactrequest3 lacksduration/providerleaf.
 
 Pass 2026-10-25T21:26Z: delayed Agent2104 normalc992-intake source note consumed; it does not authorize unchanged9 because actual2056/independent2100 already failed at typed-location addition, and Runtime Sol2108 owns meaningfulchangedreturn. No duplicate9, normalhome prerequisite or Appfixturewriter. D127d fullcostindex/1535/1540 limits delivered and correctleadmailpath2124 published. Exactraw15200 andpreflight4786 KEEP plus all prior6 rawKEEP confirmed. Sourcewholepath2117 remains active with no newbody/costwriter.
+
+Pass 2026-10-25T21:33Z: 2117 endedexit1 API max_output_tokens, no safety refusal; zero saved evidence and no report. Same-branch Luna2132 completes bounded validation/publication of two provisional sourcefacts, no new diagnosis/body/profile. FPS20db Sol2108 source ready57/138PASS, actualsourceinit parent2RED/candidate2GREEN; wait finalindependent2119 before meaningfuloriginal9. D127d normal candidate-verification sourceprep2133 dispatched independently now; optional instrumentation OFF, no candidate/preflight/body/optimization. Fresh5293539328bytes before secondstart; no heavy. Cleanup2127 complete0scratch/0testdirs/2losslesslogs; all8rawKEEP retained.
