@@ -272,7 +272,7 @@ def main():
         # Use the opened session's pinned closure read.  Besides keeping the
         # base and session on one authenticated path, this lets callers supply
         # the same session seam for detached-document publication.
-        base = session._bundle(session_state)
+        base = session._capture_bundle(session_state)
         imported = import_authoring_media(plan, transport)
         media_selections, verified_media = resolve_media_rebinds(
             transport, candidate["project_id"], imported["candidate"], base
