@@ -1,0 +1,111 @@
+{
+  "schema": "timeline.d124.farm-command-final-review.v1",
+  "status": "source_only_command_ready_pending_farm_receipts",
+  "verdict": "PASS",
+  "source_packet_preserved": "workers/agt-D124-Farm-input-command-1330/evidence/{farm-core-command.md,farm-host14-command.md,input-map.json}",
+  "scope": {
+    "core": "agent-core-full",
+    "host14": "separate original14 light proof",
+    "inventory_metadata_count": 23,
+    "actual_selector_root_count": 22,
+    "root_filters": "none",
+    "includes_live_scene_composition": true,
+    "farm_order": ["host14-light", "agent-core-full", "render-after-normal-resource-admission"]
+  },
+  "core_tuple": {
+    "agent": {
+      "commit": "0b586e4b56cffbcd066ea8792adf46b660f5395a",
+      "tree": "bb23455ea5f38120c251a91f4a4afeeb1ea3d5ce",
+      "parents": "0b586e4b56cffbcd066ea8792adf46b660f5395a 225fccb77e59d9ab8dc456feaff910625d2d12f8 c474325862e5d45aaf97906fd09f560fb65ffe0b",
+      "path": "<FARM_NORMAL_CHECKOUT_AGENT_0B586E4B>",
+      "origin": "owner-corrected normal binding 225fccb plus captured-redo merge 0b; receipt pending"
+    },
+    "runtime": {
+      "commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+      "tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c",
+      "parents": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0 369ffa7c00bd3d45c610fac7651ff79e7a283a1a",
+      "path": "<FARM_NORMAL_CHECKOUT_RUNTIME_42AAD0E9>",
+      "origin": "original Farm capture; unchanged"
+    },
+    "app": {
+      "commit": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7",
+      "tree": "dd2afd6c5c7a1ac73feaac4390cc64d7f31fe7b9",
+      "parents": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7 34d4644589970274a5252c0f7c68b6288eb0b0b4",
+      "path": "<FARM_NORMAL_CHECKOUT_APP_D8A1CD40>",
+      "origin": "original Farm capture; unchanged"
+    },
+    "composition": {
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "parents": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40 7a95a40b07ea0d273e17afb69dbc3456b603f2bc",
+      "path": "<FARM_NORMAL_CHECKOUT_COMPOSITION_635F4DE0>",
+      "origin": "original Farm capture; unchanged"
+    }
+  },
+  "host14_tuple": {
+    "agent": {
+      "commit": "9ea67534f61d3604c9cb136de449803c4cbe51c2",
+      "tree": "ded3451dca1546b971d512cc97f5d83181490d93",
+      "path": "<FARM_NORMAL_CHECKOUT_AGENT_9EA67534>"
+    },
+    "runtime": {
+      "commit": "369ffa7c00bd3d45c610fac7651ff79e7a283a1a",
+      "tree": "9bf331d68df8c966e8927a3f083ba03687803c99",
+      "path": "<FARM_NORMAL_CHECKOUT_RUNTIME_369FFA7C>"
+    },
+    "profile_is_separate": true
+  },
+  "launcher": {
+    "core_path": "<FARM_NORMAL_CHECKOUT_AGENT_0B586E4B>/tools/p4-d73-pinned-launch.sh",
+    "host14_path": "<FARM_NORMAL_CHECKOUT_AGENT_9EA67534>/tools/p4-d73-pinned-launch.sh",
+    "blob": "2844cec15b97fa995ecaf120961fc891b8e13b1c",
+    "sha256": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1",
+    "source": "existing qualified tools/p4-d73-pinned-launch.sh"
+  },
+  "source_invariance": {
+    "from": "b545b616a41388e24d6f2a59b7b45c26cb057d2c",
+    "to": "0b586e4b56cffbcd066ea8792adf46b660f5395a",
+    "changed_paths": [
+      "astrid/sdk/timeline/native_text_binding.py",
+      "tests/editing_conformance/test_captured_redo_media_closure.py",
+      "tests/sdk/test_native_text_binding_authority_fields.py"
+    ],
+    "launcher_invariant": true,
+    "remotion_tree": "b01dca9b3b24f54093c20b7c5657316f997725db",
+    "timeline_schema_tree": "8729690bef06784028a0474ad55b811fea52406d",
+    "schema_source_blob": "1b3f12da05da3bb89fa76881184eefdf8232e076",
+    "runtime_lock_blob": "e3b3e2ac385ae1d9a025c81d75811f9dacd4f0fc",
+    "qualified_maker_invariant": true,
+    "host14_source_test_sha256": "08dfa8dcafeb80c347923630864a29d58dea97e257428e204fc316567795161b"
+  },
+  "d73_generation": {
+    "maker_source": "AGENT_CHECKOUT/tests/suites.conf.candidate.request.md",
+    "manifest_format": "p4-d73-v1",
+    "generation_rule": "Farm generates from all new normal receipts after profile and child-venv receipt verification",
+    "old_manifest_reuse": false,
+    "core_manifest": "<FARM_GENERATED_D73_MANIFEST_FROM_0B_NORMAL_RECEIPTS>",
+    "core_evidence": "<FARM_OWNED_D124_CORE_EVIDENCE_DIRECTORY>",
+    "host14_evidence": "<FARM_OWNED_D124_HOST14_EVIDENCE_DIRECTORY>"
+  },
+  "controls": {
+    "core_positive": {
+      "expected": "nonzero exit 17 and exactly one counter line",
+      "status": "pending lead control and fresh counter"
+    },
+    "core_poison": {
+      "expected": "nonzero exit and zero counter lines",
+      "status": "pending lead control and fresh counter"
+    },
+    "host14": "same existing parsed-once/poison-zero route with separate fresh counters"
+  },
+  "production_contract": {
+    "request": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps", "merge", "reads", "Idempotency-Key", "dry_run"],
+    "reply": ["accepted|merged", "canonical", "head", "receipt", "records", "bindings", "effects", "dependencies", "history", "undo_steps", "conflict.reason", "conflict.head", "invalid.code", "invalid.path", "invalid.hint", "invalid.suggested_command", "preview.would_status", "preview.receipt=null"]
+  },
+  "pending": [
+    "Farm normal Agent checkout receipt for 0b586e4b",
+    "Farm normal runtime profile and child-venv receipts keyed to 0b/42aad",
+    "Farm-generated D73 manifest/evidence and actual positive/poison counters",
+    "No body, pytest, replay, full, family, P4, collector, profile acquisition, build, install, or socket execution by this worker"
+  ]
+}
