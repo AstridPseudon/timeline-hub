@@ -4,6 +4,7 @@ Uses the existing in-memory HTTP transport: no sockets or daemon substitute.
 """
 from __future__ import annotations
 
+import base64
 import copy
 import json
 
@@ -11,16 +12,21 @@ import pytest
 
 from astrid.core.timeline.authoring_bundle import open_authoring_bundle
 from astrid.packs.timeline.cli import build_parser
+from astrid.sdk.timeline._clip_commands import capture_clip_add
 from astrid.sdk.timeline._command_state import State
 from astrid.sdk.timeline._trim_commands import capture_clip_trim
-from astrid.sdk.timeline.capture import capture_move
+from astrid.sdk.timeline.capture import capture_move, capture_track_create
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.commit import bundle_from_document
+from astrid.sdk.timeline.native_parent_media_commands import capture_clip_add_media
 from astrid.sdk.timeline.sync import TimelineSession
 from tests.editing_conformance.test_native_batch_ingress import runtime  # noqa: F401
 
 pytestmark = pytest.mark.integration
 REF = 'parent/clip:literal'
+PNG = base64.b64decode(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='
+)
 
 
 def run(world, capsys, *args):
@@ -33,30 +39,52 @@ def run(world, capsys, *args):
 @pytest.fixture
 def film(runtime):  # noqa: F811
     client = runtime.client()
-    imported = client.media.import_bytes(project=runtime.project, data=b'CLI trim fixture',
-                                         filename='picture.png', media_type='image/png', idempotency_key='picture')
-    assert imported.ok, imported.as_dict()
-    media = imported.data['object_id']
-    head = runtime.history()['head']
-    opened = client.timelines.open_bundle(runtime.project, 'film', revision_id=head['revision_id'])
-    assert opened.ok, opened.as_dict()
-    parent = copy.deepcopy(opened.data['bundle']['parent'])
-    parent['config'].update(output={'fps': 30}, tracks=[{'id': 'picture', 'kind': 'visual'}])
-    parent['registry'] = {'assets': {'picture': {'media_id': media, 'type': 'image', 'duration': 10}}}
-    parent['clips'] = [
-        {'id': 'literal', 'track': 'picture', 'clipType': 'media', 'asset': 'picture',
-         'at': 0, 'from': 1, 'to': 6, 'hold': 5, 'speed': 2,
-         'app': {'astrid': {'for': 2.5, 'opaque': [None, False]}, 'extension': {'keep': True}}},
-        {'id': 'title', 'track': 'picture', 'clipType': 'text', 'at': 5, 'hold': 1, 'params': {'text': 'Keep me'}},
-    ]
-    parent['config']['clips'] = copy.deepcopy(parent['clips'])
-    client._remote._transport.publish_parent_composition(runtime.project, 'trim-film', {
-        'project_id': runtime.project, 'timeline_id': 'trim-film', 'expected_head': None,
-        'parent_revision_id': 'trim-baseline', 'parent_composition': parent,
-    }, idempotency_key='trim-baseline')
-    # A first legacy import on a new timeline is still the supported fixture
-    # ingress. All subsequent edits below use the real native commit route.
-    runtime.restart()  # Startup verifies and installs the initial import's baseline.
+    service = runtime.service()
+    imported = service.import_media(
+        runtime.project, PNG, media_type='image/png', original_name='picture.png',
+        actor_id='cli-trim-fixture', idempotency_key='picture',
+    )['data']
+    selection = service.get_project_media_selection(runtime.project, {
+        'asset': imported['variant_id'], 'generation_id': imported['generation_id'],
+        'variant_id': imported['variant_id'],
+    }, authorize=lambda: None)
+    verified = service.get_project_verified_media(runtime.project, selection, authorize=lambda: None)
+    assert verified['selection'] == selection
+
+    service.create_timeline(runtime.project, 'trim-film', idempotency_key='trim-timeline')
+    session = TimelineSession.open(runtime.project, 'trim-film', client=client)
+    bundle = session._bundle(session.outbox.read())
+    output = {'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
+              'args': {'changes': [{
+                  'op': 'set', 'ref': 'parent', 'path': ['config', 'output'],
+                  'before': {'state': 'absent'}, 'value': {'fps': 30},
+              }]}}
+    configured = session.commit(output, idempotency_key='trim-output')
+    bundle = bundle_from_document(configured['data']['canonical_document'])
+    tracked = session.commit(capture_track_create(bundle, 'parent', {
+        'id': 'picture', 'kind': 'visual',
+    }), idempotency_key='trim-track')
+    bundle = bundle_from_document(tracked['data']['canonical_document'])
+    row = {
+        'id': 'literal', 'track': 'picture', 'clipType': 'media', 'asset': selection['asset'],
+        'at': 0, 'from': 1, 'to': 6, 'hold': 5, 'speed': 2,
+        'app': {'astrid': {'for': 2.5, 'opaque': [None, False]}, 'extension': {'keep': True}},
+    }
+    added = session.commit(capture_clip_add_media(bundle, row, selection, verified_media=[verified]),
+                           idempotency_key='trim-clip', verified_media=[verified])
+    bundle = bundle_from_document(added['data']['canonical_document'])
+    duration = {'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
+                'args': {'changes': [{
+                    'op': 'set', 'ref': 'parent',
+                    'path': ['registry', 'assets', selection['asset'], 'duration'],
+                    'before': {'state': 'absent'}, 'value': 10,
+                }]}}
+    patched = session.commit(duration, idempotency_key='trim-duration')
+    bundle = bundle_from_document(patched['data']['canonical_document'])
+    title = {'id': 'title', 'track': 'picture', 'clipType': 'text', 'at': 5, 'hold': 1,
+             'params': {'text': 'Keep me'}}
+    session.commit(capture_clip_add(bundle, 'parent', title), idempotency_key='trim-title')
+    runtime.restart()  # Reopen the current semantic bootstrap through the provider.
     runtime.history = lambda: client.timelines.history(runtime.project, 'trim-film', limit=100).data
     return runtime
 
