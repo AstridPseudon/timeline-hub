@@ -1,0 +1,39 @@
+{
+  "schema": "timeline.ops.d139.security-review-source/v1",
+  "candidate": {
+    "commit": "86a1a97617445905694e63ca6bb118879a7ecedd",
+    "tree": "049e8b5bec9da892b0ea9d1003e2f09f1d361d46",
+    "parent": "cf80cfcb918ee9e311a294fb7291ad5e11c48d0b",
+    "maker": {
+      "path": "ops-child-custody/make-child-venv",
+      "sha256": "7905232e0dc4b77921ecf257f89f2a951614e0dcbc9eea547c08c992062e5792",
+      "bytes": 81516,
+      "mode": "0755"
+    }
+  },
+  "pinned_schema_manifest_claim": {
+    "url": "https://github.com/banodoco/ArtAgents.git",
+    "commit": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+    "source_tree": "75a5a697f630affee40632e500b3f5b704a9b834",
+    "subdirectory": "packages/timeline-schema/python",
+    "source_carrier_available": false,
+    "authority_status": "manifest claim only; no authenticated portable carrier"
+  },
+  "prior_inputs": {
+    "agent2136": "qualified distribution/direct_url/12 RECORD evidence; no current source carrier or registered receipt",
+    "input2149": "pure static AST/metadata census; no execution or source authority"
+  },
+  "registered_child": {
+    "status": "UNAVAILABLE",
+    "bench_store": "/home/user/work/bench-store absent",
+    "author_interpreter": "/usr/bin/python3.13",
+    "interpretation": "system interpreter is not a registered-child receipt"
+  },
+  "cas": {
+    "attempted": false,
+    "parent_helper_sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+    "parent_helper_bytes": 75541,
+    "prepared_live_preimage_sha256": "4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36",
+    "prepared_live_preimage_bytes": 75503
+  }
+}
