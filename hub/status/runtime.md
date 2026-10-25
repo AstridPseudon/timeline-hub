@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T02:09:21Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 11 | status age 2m -->
+<!-- main | 2026-10-25T02:12:34Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 12 | status age 2m -->
 # runtime board, 2026-10-25T01:58:33Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -233,9 +233,9 @@
 | D86-compound-input | Find existing admitted unused manifest source | Luna | Current authenticated source pair absent | blocked:agent | rt-compound-held-source-0202 complete | Legacy schema31 unused pin found; current history pair absent. Exact report returned; no new consumer, synthetic history or current admission closure. | Input need only |
 | P2-parent-single-current | Qualify reviewed native reply successor | Luna / main service | Next heavy slot after D90 | ready | Exact App4b984 plan source ready | App0138 protectedPASS and home4b984; exact0d142/a3cd/635f. Two originals serial; prior24629/11446 stay failed. | Captured App4b984365 |
 
-| P4-D88b-main | Qualify remaining ten-note original | Luna / main service | Actual original body and result | doing | rt-P4-D88b-tennote-0206 requested | Explicit Agent0153 main venue. Exactd407/6634; sole unprofiled45s original; D90 preparation checkpointed before body. | Fixed Agentd407 / Runtime6634 |
+| P4-D88b-main | Qualify remaining ten-note original | Luna / main service | New measured source correction | review | rt-P4-D88b-tennote-0206; actual14151 | Exactd407/6634 original FAIL45.448s versus45; preflight/receipts PASS. No unchanged retry or independent NO-GO verdict. | Fixed Agentd407 / Runtime6634 |
 
-| D86-inverse-original-third | Preserve valid original shared move scope | Orchestrator | Incompatible original timing inputs | blocked:orchestrator | Scope request0207 | Exact3.5/3.3/1.8/1.8 cannot fit. Minimum genuine host setup allowance requested; no guard, authored move, clip or assertion changed. | No source change |
+| D86-inverse-original-third | Preserve valid original shared move scope | Luna | Approved D91 minimum host correction | ready | Source brief0213 prepared | OwnerD91 approves hostwindow2.0 only; move/clip/allotherinputs and guards/assertions exact. Fresh review and exactMAINproof owed. | No source change |
 
 Runtime producer: RELEASED D88b product6634a17f3ffd885567ba3c91b6c7a560df7375a4, tree47b376 equals independent reviewedb69a exactly. Auth172/history81/warm forgery1/central14 PASS; canonical15/schema867f unchanged. Old withdrawn D88 prototype never released.
 core open: P4 main3362 FAIL45.244s versus45s and element8897 FAIL5s retain olda3cd scope. D88b warm replay0 is source qualified with uneven timings; next meaningful originals owed. Four R2 retain qualified7c48/732 until final matrix.
@@ -244,7 +244,6 @@ Gates: P1 GO31083 and P3 GO15493/2024 retain recorded scopes. All eight P2 unqua
 
 Blockers: Agent families — Exact10077 packet received. MAIN word/M1/inverse functional fixture corrections0145 assigned. Agent owns occurrence48/projection9/M2/sheet/scalar and narrow R2 source. No unchanged whole batch repeat.
 Blockers: App P2 — Parent/single await existing native reply0127 correction. Bulk21061 intended gesture POST absent; exact finite packet published and Runtime-facts wait cleared. Main one meaningful SWAP3a2d assigned0145.
-Blockers: Orchestrator scope — Five original-third inverse cases have incompatible original time inputs. Exact bounded host-fixture decision requested in escalations/runtime-20261025T0207Z-shared-inverse-original-host.md.
 Blockers: Final cut — D59 needs all lanes core0/regressions0, final pinned P1–P5/core, D69 and genuine installed render. Rehearsal/build candidates remain gated; fresh upstream packaging overlaps retained.
 Safety hold: D88 withdrawn after integrity failure and automatic security-analysis denial. Prototype and denied action stay stopped. Distinct owner-authorized D88b protective review passed using existing regression only; no new attack construction.
 Next ready: Finish six0145 source/review/SWAP jobs, review returned fixes immediately and merge PASS branches. D87 six livefrontend source0148 returned; fresh full-stack review0202 next. D90candidate0200 has next heavy priority; parent/single4b984 next.
@@ -257,4 +256,4 @@ Later: Shared inverse original-third host followthrough prepared0158; no interva
 Disk: Free6.009GB at six0145 requests; each start rechecked current source5.5GB or heavy5.2GB floor. All prior workers recycled. Sweep3 removed0; compact packed4 old test dirs and gzipped4 logs. Five ended nonKEEP trees are old dirty targets and untouched. After inverse ended, newly stale766 pin passed currenthead/test/queue/lease/process audit with zero unreadable and recycled; free5.537GB. Outputs retained.
 live 4 requested / cap 6; ready-undispatched 0 eligible starts after floor checks. Wordreview0152 requested at5.564GB; D87source next when currentfree stays above5.5GB. D89 source above5.5GB, heavy one above5.2GB, nothing new below4.5GB; stop newest non-gate at4GB. Source floor after request governs remaining D87 start; all actual starts rechecked.
 
-INBOX consumed through755721 bytes. Updated 2026-10-25T01:43:04Z: D88b protectivePASS and normal6634 exact-tree release published immediately; bulk finite no-POST packet returned. Agent actual source joins consumed; six new bounded jobs requested.
+INBOX consumed through756869 bytes. Updated 2026-10-25T01:43:04Z: D88b protectivePASS and normal6634 exact-tree release published immediately; bulk finite no-POST packet returned. Agent actual source joins consumed; six new bounded jobs requested.
