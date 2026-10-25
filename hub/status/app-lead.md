@@ -1,1 +1,1 @@
-app-lead 02:42Z: daemons up (uptime ~2440m, no restart), disk ~5.4G (D89), no blockers, no LEAD FETCH, no new refusals; codex unchanged; P1/P3 GO, P2 isolated 0 PASS (element 3111 pending)
+app-lead 03:12Z: daemons up (uptime 2471m, machine up 41h, no restart), 3 workers running, disk 6.6G free (21 wt dirs after 35-pin release freed 2.7G), codex sizes unchanged since 17:12Z; board 'live 5 / cap 6; ready-undispatched 0'; no blockers, no LEAD FETCH, no new refusals; P1/P3 GO, P2 isolated 0 PASS
