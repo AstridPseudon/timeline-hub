@@ -201,6 +201,12 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **Order:** Runtime first (producer), then D39 client regeneration if the contract changed, then Agent and App in parallel. P2/P3 and the core suites then run on the refreshed heads.
   - At delivery, F-final applies the squashed patches to these same tips. A new upstream move after this point triggers another refresh only if the owner asks.
   - **Test-file conflicts (13:40Z): keep BOTH.** Upstream's new and changed tests are taken as they are, and every one of our live test cases is re-applied on top: adapted to upstream's structure, never dropped. Taking 'incoming' and discarding our cases is weakening, so it's refused. The independent review maps every pre-merge live predicate to its post-merge location. Product-code conflicts follow the default: upstream behaviour, with ours adapted.
+- **D90, Agent legacy inverse producer/verifier seam ALLOCATED (01:32Z), deciding escalation agent-20261025T0127Z-R2-protected-seam-allocation:**
+  - **Scope:** ONE Agent HARD Sol owns exactly `_commit_patch.py` emission (`finish`) and `inverse.py` `_validate_materializations`. Nothing else: not Runtime auth, not D88, not ABI policy, not source custody.
+  - **Rule:** C0 decides which side is canonical. The side that disagrees with C0 (producer emitting both the legacy effect and the materialization proof, OR the verifier excluding stage transitions) is the one fixed. The other is left unchanged.
+  - **Guards:** every existing strict guard and fail-closed path stays, no materialization is skipped silently, and the two retained redo originals are the proof.
+  - **Then:** one independent protected review, then a candidate proof on MAIN's service, then a normal merge.
+  - The separate net-zero native recorder expectation correction goes under the D82/D83 standing rule once its full record facts are known.
 - **D89, disk floors re-based now the swings are fixed (01:02Z).** The 0.5–3 GB swings came from git repacks and auto-gc, fixed by LOOPS #76. With those gone, the old margins over-throttle every lane: Agent has 29 reviews pending at local cap 0, and main sits at 6.0 GB.
   - **New rule on EVERY machine:**
     - SOURCE-ONLY authors and reviewers (~0.2 GB each, no build): up to 6 at once while free disk is above **5.5 GB**.

@@ -3244,3 +3244,23 @@ Completed bodies: ADD6954 NO-GO selectedlabel874 after projectedclip/canvas adva
 Runtime newmainpeer0106 consumed: parent/single rt-P2-parent-single-0107 prepares exactreviewed5f/0d142/a3cd/635f, bodies afterprioritymainD86. SWAP11089unexpectedcreated now Appsourceworker0112; bulk21061 UNKNOWNPOST/provider/accept/response despite90swait, explicitlater/blockedrow awaitingexistingRuntimefinitepacketrequested0112. No duplicate Appmaincases. D88 received safety-reviewdenial and integrityfailure: Runtimeheld/escalated, no retry/alternate review/adoption. Releaseda3cdretained; actualelement8897stillfive-secondfailure, no newbody.
 
 D89 consumed: sourcecap6above5.5GB, onebodyabove5.2GB, no newbelow4.5GB, stopnewestnongate4.0GB. Free6.040GB at01:18 withADDbuild. Thisround guard-recycled newlyunusedc9and50cfpins after full head/test/queue/lease/processchecks; zero otherhits/unreadableprocesses/refusals; alloutputkept. Oldrefusedtargetsuntouched. Three active source/reviewworkers, no independentreadyrowwaiting. No P3/D79/E/finalcut/ZIPclaim; freshAppd114 remainsF-final-only.
+
+## 2026-10-25T01:30:28Z — PEER MESSAGE (peer-app-to-app-lead-20261025T0125Z-reviewed-SWAP-and-readiness.md)
+Ask: consume reviewed SWAP home and current three source owners; no new decision owed / Owner: App registry0124, readiness0125 and geometrySol0112; Runtime main SWAP / By: next lead pass
+
+Independent registry/SWAP batch0115 finished. SWAP DiffB PASS4 oracle/37 producer controls and all three types/lint; same reviewer normal merged exact adf067 into App3a2d6067b4. Full conditional created claim expectations preserve original predicates. Exact report copied to design and existing ledger. Ordinary peer0124 requests one meaningful main SWAP on3a2d/0d142/a3cd/635f, serialized after current main heavy priority; no duplicate App body. Main parent/single0107 remains its captured5f tuple.
+
+Registry DiffA FAILED authoritative import generation/variant pair not cross-checked against selection before canonical binding. First-return Luna app-P2-registry-identity-return-0124 dispatched on exact4b633 retained branch; failed source never merged. GeometrySol app-P2-placement-16952-geometry-sol-0112 still active with recent progress, review-only proposal and exclusive registry file ownership preserved. Proposal application/review follows without competing writers.
+
+Actual ADD29065 terminal NO-GO238s: native launch/identity/history pass, mounted readiness301 requires verified readonly outbox but sees unknown. Original ADD NOTRUN, so no new selection/tail/browser credit. Luna app-P2-ADD-29065-readiness-0125 owns bounded retained bootstrap attribution and minimum proved source correction; six protected originals/readiness waits locked. No unchanged ADD body, collector or independent NO-GO verdict.
+
+Three source workers live, cap6 underD89; no independently ready row undispatched. App body slot clear. Disk6.035GB01:24; scan found zero eligible ended clean nonKEEP App trees. All outputs retained and prior refused cleanup/D88 source routes stopped. P1/P3 recorded GO remain scoped, zero of eight isolated P2 PASS and final D59 matrix/render still owed. F-final Appd11417/Agent08e6 remains packaging-only.
+
+## 2026-10-25T01:30:28Z — PEER MESSAGE (peer-runtime-to-app-20261025T0129Z-bulk-finite-owner-parent-complete.md)
+Ask: consume actual bulk finite-return owner and completed newer parent/single wave; clear stale source/venue waits / Owner: Runtime facts0129; App label/SWAP owners / By: 2026-10-25T01:30:58Z
+
+rt-P2-bulk21061-facts-0129 dispatched READONLY actualsaved21061 evidence on originalproducerbranch. Returns intendedPOSTpresent/absent, exactordinal/phases/dumpcorrelation andterminalwindow ORexplicitunavailablelimit. No newcollector/body/fix/causalassumption. Oldschema1andprovenancehashdiscrepancykept. Exactreport/factsnormalpublicationoncompletion.
+
+Parent/single requested0053 ALREADYcomplete on exactreviewed5f4/0d142/a3cd/635f. Actualparent24629NO-GO208s; actualsingle11446NO-GO222s; both readiness/sourcepreflightPASS and both fail exactUndo label expectedTimelineedit/actualUndotimeline. Earlierreads[]shapeprogressed. BothsameID terminal; no unchangedrepeat or sourceapproval owed. Mainreport design/rt-P2-parent-single-0107.md and priorpeer0118/0127. Assigntruthfulstrict batchcorrectiontoexistingAppsource/oracleownerunderD83, no droppedfields/unions. Currentall8P2stillunqualified/fulltourheld.
+
+D88bprotectivereview0125 active onauthor0109, unmerged; no newRuntimeadoptionyet. OldD88safetystopandwithdrawnprototypeunchanged. ExistingAppSWAP0112 sourceowneracknowledged, no mainwriter/bodyduplicate.

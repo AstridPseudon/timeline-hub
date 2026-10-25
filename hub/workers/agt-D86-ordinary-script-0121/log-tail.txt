@@ -1,269 +1,3 @@
-tests/sdk/test_timeline_script.py:106:            return DomainResult.success({"revision_id": "parent", "snapshot_digest": "", "selected": [], "next_cursor": None})
-tests/sdk/test_timeline_script.py:114:            return DomainResult.success({"revision_id": "parent", "snapshot_digest": "s", "selected": [
-tests/sdk/test_timeline_script.py:123:            return DomainResult.success({"revision_id": "parent", "snapshot_digest": digest,
-tests/sdk/test_timeline_script.py:133:            return DomainResult.success({"revision_id": "parent", "snapshot_digest": "s", "selected": [
-tests/sdk/test_timeline_script.py:152:    assert calls == [(("project", "timeline"), {"revision_id": "parent-9", "occurrence": "occ-2", "kind": "voiceover_script"})]
-tests/sdk/test_timeline_script.py:173:                "parent_revision_id": parent_id,
-tests/sdk/test_timeline_script.py:174:                "internal_timeline_revisions": [{"timeline_id": "main", "revision_id": internal_revision,
-tests/sdk/test_timeline_script.py:176:                "shot_revisions": [{"shot_id": "shot-1", "revision_id": shot_revision,
-tests/sdk/test_timeline_script.py:177:                    "internal_timeline_revision_id": internal_revision,
-tests/sdk/test_timeline_script.py:182:                    "occurrence_id": "opening", "shot_id": "shot-1", "shot_revision_id": shot_revision,
-tests/sdk/test_timeline_script.py:192:                    "base_revision_id": head["head_revision_id"],
-tests/sdk/test_timeline_script.py:203:            project_id, "main", head["head_revision_id"])
-tests/sdk/test_timeline_script.py:205:                 "parent_revision": {key: bootstrap[key] for key in ("revision_id", "content_digest", "payload")},
-tests/sdk/test_timeline_script.py:231:        assert binding_result["data"]["accepted_revision_id"]
-tests/sdk/test_timeline_script.py:248:        assert result.data["revision_id"] == "parent-2"
-astrid/sdk/invocation.py:690:            before_revision_id=values.get("before_revision_id"), after_revision_id=values.get("after_revision_id"),
-astrid/sdk/invocation.py:1078:                                    before_revision_id: str, after_revision_id: str,
-astrid/sdk/invocation.py:1088:                        ("before_revision_id", before_revision_id),
-astrid/sdk/invocation.py:1089:                        ("after_revision_id", after_revision_id)):
-astrid/sdk/invocation.py:1095:    for side, revision in (("before", before_revision_id), ("after", after_revision_id)):
-astrid/sdk/invocation.py:1096:        opened = reader.open_bundle(project, timeline_ref, revision_id=revision)
-astrid/sdk/invocation.py:1104:                or data.get("revision_id") != revision
-astrid/sdk/invocation.py:1107:                or not isinstance(parent, Mapping) or parent.get("revision_id") != revision
-astrid/sdk/invocation.py:1116:            client=_client, project_id=current_scope[0], timeline_id=current_scope[1], parent_revision_id=revision)
-astrid/sdk/invocation.py:1122:        sides[side] = {"revision_id": revision, "parent_content_digest": parent["content_digest"],
-astrid/sdk/invocation.py:1341:                revision_id = shot.get("revision_id")
-astrid/sdk/invocation.py:1342:                if not isinstance(revision_id, str) or not revision_id:
-astrid/sdk/invocation.py:1346:                shot_key = (shot_id, revision_id)
-astrid/sdk/invocation.py:1365:                    "revision_id": revision_id,
-astrid/sdk/invocation.py:1367:                    "version": revision_id,
-astrid/sdk/invocation.py:1375:                revision_id = occurrence.get("revision_id")
-astrid/sdk/invocation.py:1377:                if (not isinstance(shot_id, str) or not isinstance(revision_id, str)
-astrid/sdk/invocation.py:1380:                shot_key = (shot_id, revision_id)
-astrid/sdk/invocation.py:1393:                    "revision_id": revision_id,
-astrid/sdk/invocation.py:2890:                       and bool(capture_authority.get("parent_revision_id"))
-astrid/sdk/invocation.py:2913:            revision_id = provenance.get("revision_id")
-astrid/sdk/invocation.py:2917:            if isinstance(working_copy, Mapping) and working_copy.get("candidate_parent_revision_id") == revision_id:
-astrid/sdk/invocation.py:2923:                        "base_revision_id": base.get("revision_id"),
-astrid/sdk/invocation.py:2926:            source_kind = "working_copy" if binding is not None else ("revision" if revision_id else "cas")
-astrid/sdk/invocation.py:2931:                "revision_id": revision_id,
-astrid/sdk/invocation.py:2943:                "revision_id": render_authority.get("parent_revision_id"),
-astrid/sdk/invocation.py:2958:                    "revision_id": context.get("revision_id") or canonical.get("parent_revision_id") or capture.get("parent_revision_id"),
-astrid/sdk/invocation.py:4329:                                     and bool(capture_authority.get("parent_revision_id")))
-astrid/sdk/_timeline_filmstrip_scene.py:93:        base_revision = base_parent.get("revision_id") if isinstance(base_parent, Mapping) else None
-astrid/sdk/_timeline_filmstrip_scene.py:99:            "actual_revision_id": None,
-astrid/sdk/_timeline_filmstrip_scene.py:100:            "base_revision_id": base_revision,
-astrid/sdk/_timeline_filmstrip_scene.py:102:    revision = capture.get("parent_revision_id")
-astrid/sdk/_timeline_filmstrip_scene.py:108:        "actual_revision_id": revision,
-astrid/sdk/_timeline_filmstrip_scene.py:109:        "base_revision_id": None,
-astrid/sdk/timeline_editing.py:489:            "revision_id": _stable_id("source-shot", new_id),
-astrid/sdk/timeline_editing.py:492:            "internal_timeline_revision_id": _stable_id("source-timeline", new_id),
-astrid/sdk/timeline_script.py:10:def read_composition_script(timelines, transport, project, ref, *, revision_id=None,
-astrid/sdk/timeline_script.py:16:    rows, cursor, pinned, snapshot = [], None, revision_id, None
-astrid/sdk/timeline_script.py:20:        inspected = timelines.inspect(project, ref, revision_id=pinned, occurrence=occurrence,
-astrid/sdk/timeline_script.py:25:        if (not isinstance(page, Mapping) or not isinstance(page.get("revision_id"), str)
-astrid/sdk/timeline_script.py:26:                or not page["revision_id"] or not isinstance(page.get("snapshot_digest"), str)
-astrid/sdk/timeline_script.py:30:            pinned, snapshot = page["revision_id"], page.get("snapshot_digest")
-astrid/sdk/timeline_script.py:31:        elif page["revision_id"] != pinned:
-astrid/sdk/timeline_script.py:56:                    "ordinal", "occurrence_id", "shot_id", "shot_revision_id", "name",
-astrid/sdk/timeline_script.py:57:                    "start", "duration", "track_id", "internal_timeline_revision_id",
-astrid/sdk/timeline_script.py:88:    return DomainResult.success({"revision_id": pinned, "snapshot_digest": snapshot,
-astrid/sdk/authoring_revision_diff.py:20:        revision, owner = row.get("revision_id"), row.get("timeline_id")
-astrid/sdk/authoring_revision_diff.py:29:def read_authoring_revision(reader, project_id, timeline_id, revision_id):
-astrid/sdk/authoring_revision_diff.py:36:                {**dict(result.error.details), "requested_parent_revision": revision_id,
-astrid/sdk/authoring_revision_diff.py:43:                {"requested_parent_revision": revision_id, "dependency": operation, "expected": expected},
-astrid/sdk/authoring_revision_diff.py:47:    parent = read("get_project_parent_composition_revision", project_id, timeline_id, revision_id,
-astrid/sdk/authoring_revision_diff.py:48:                  expected={"project_id": project_id, "timeline_id": timeline_id, "revision_id": revision_id})
-astrid/sdk/authoring_revision_diff.py:61:            shot_revision = occurrence.get("shot_revision_id")
-astrid/sdk/authoring_revision_diff.py:66:                              expected={"project_id": project_id, "shot_id": shot_id, "revision_id": shot_revision})
-astrid/sdk/authoring_revision_diff.py:76:            internal_revision = shot.get("internal_timeline_revision_id") or shot_payload.get("internal_timeline_revision_id")
-astrid/sdk/authoring_revision_diff.py:85:                                        "revision_id": internal_revision})
-astrid/sdk/authoring_revision_diff.py:98:            "project_id": project_id, "timeline_id": timeline_id, "revision_id": revision_id,
-astrid/sdk/remote.py:666:                "head_revision_id": data.get("accepted_revision_id"), "created": True,
-astrid/sdk/remote.py:832:        revision_id=None,
-astrid/sdk/remote.py:850:        if revision_id:
-astrid/sdk/remote.py:851:            options["revision_id"] = str(revision_id)
-astrid/sdk/remote.py:868:        revision_id=None,
-astrid/sdk/remote.py:899:        pinned_revision = revision_id or timeline.data.get("head_revision_id") or timeline.data.get("parent_revision_id")
-astrid/sdk/remote.py:901:            revision_id=pinned_revision,
-astrid/sdk/remote.py:922:        revision_id=None,
-astrid/sdk/remote.py:969:                name for name in ("before_revision_id", "after_revision_id")
-astrid/sdk/remote.py:984:                        "view=diff requires both explicit before_revision_id and after_revision_id",
-astrid/sdk/remote.py:988:            if view_options.get("revision_id") not in (None, ""):
-astrid/sdk/remote.py:993:                        {"field": "revision_id", "view": "diff"},
-astrid/sdk/remote.py:1018:        requested_revision = revision_id or view_options.get("revision_id")
-astrid/sdk/remote.py:1019:        pinned_revision = requested_revision or timeline.data.get("head_revision_id") or timeline.data.get("parent_revision_id")
-astrid/sdk/remote.py:1083:                executor_inputs["revision_id"] = str(requested_revision)
-astrid/sdk/remote.py:1088:                executor_inputs.pop("revision_id", None)
-astrid/sdk/remote.py:1090:                executor_inputs["revision_id"] = pinned_revision
-astrid/sdk/remote.py:1119:            revision_id=pinned_revision,
-astrid/sdk/remote.py:1214:                "revision_id": data.get("revision_id"),
-astrid/sdk/remote.py:1215:                "head_revision_id": data.get("head_revision_id"),
-astrid/sdk/remote.py:1243:        revision_id=None,
-astrid/sdk/remote.py:1279:            revision_id=revision_id,
-astrid/sdk/remote.py:1306:    def script(self, project, ref, *, revision_id=None, occurrence=None, kind="voiceover_script"):
-astrid/sdk/remote.py:1315:            self, self._client, project, ref, revision_id=revision_id,
-astrid/sdk/remote.py:1440:            shot_revision_id = row.get("shot_revision_id", row.get("revision_id"))
-astrid/sdk/remote.py:1441:            if not isinstance(shot_id, str) or not isinstance(shot_revision_id, str):
-astrid/sdk/remote.py:1446:            if shot_revision_id not in shot_revisions:
-astrid/sdk/remote.py:1447:                result = self._typed("get_project_shot_revision", project_id, shot_id, shot_revision_id)
-astrid/sdk/remote.py:1451:                    return DomainResult.failure(ErrorObject("protocol_error", "shot revision read did not return an object", {"shot_revision_id": shot_revision_id}), idempotency_key=key)
-astrid/sdk/remote.py:1452:                shot_revisions[shot_revision_id] = result.data
-astrid/sdk/remote.py:1453:            shot = shot_revisions[shot_revision_id]
-astrid/sdk/remote.py:1454:            internal_revision_id = shot.get("internal_timeline_revision_id")
-astrid/sdk/remote.py:1455:            if not isinstance(internal_revision_id, str):
-astrid/sdk/remote.py:1457:                internal_revision_id = shot_payload.get("internal_timeline_revision_id") if isinstance(shot_payload, Mapping) else None
-astrid/sdk/remote.py:1458:            if not isinstance(internal_revision_id, str):
-astrid/sdk/remote.py:1459:                return DomainResult.failure(ErrorObject("protocol_error", "shot revision is missing its pinned internal timeline", {"shot_revision_id": shot_revision_id}), idempotency_key=key)
-astrid/sdk/remote.py:1460:            if internal_revision_id not in internal_revisions:
-astrid/sdk/remote.py:1461:                result = self._typed("get_project_timeline_revision", project_id, timeline_id, internal_revision_id)
-astrid/sdk/remote.py:1465:                    return DomainResult.failure(ErrorObject("protocol_error", "internal timeline revision read did not return an object", {"revision_id": internal_revision_id}), idempotency_key=key)
-astrid/sdk/remote.py:1466:                internal_revisions[internal_revision_id] = result.data
-astrid/sdk/remote.py:1541:                def get_project_timeline_revision(self, *args):
-astrid/sdk/remote.py:1547:                def commit_timeline(self, project_id, timeline_id, body, *, idempotency_key):
-astrid/sdk/workspace_client.py:419:    def get_project_timeline_revision(self, project_id: str, timeline_id: str, revision: str) -> Any:
-astrid/sdk/workspace_client.py:470:    def create_timeline(self, project_id: str, timeline_id: str, *, name: str | None = None, idempotency_key: str) -> Any:
-astrid/sdk/workspace_client.py:476:    def create_timeline_document(self, project_id: str, timeline_id: str, *, config: Mapping[str, Any], registry: Mapping[str, Any], slug: str | None = None, name: str | None = None, idempotency_key: str) -> Any:
-astrid/sdk/workspace_client.py:485:    def commit_timeline(
-astrid/sdk/workspace_client.py:556:    def create_timeline_view(
-astrid/sdk/workspace_client.py:680:    def list_project_shot_text_bindings(self, project_id: str, *, shot_id: str | None = None, kind: str | None = None, slot: str | None = None) -> Any:
-astrid/sdk/workspace_client.py:779:    def ingest_object(self, data: bytes, *, media_type: str, idempotency_key: str, filename: str | None = None, upload_binding: Mapping[str, Any] | None = None) -> Any:
-astrid/sdk/workspace_client.py:782:    def ingest_project_object(
-astrid/sdk/timeline_restructure.py:569:        occ["shot_revision_id"] = f"r-{sid}"
-astrid/sdk/timeline_restructure.py:571:        shot_revisions.append({"shot_id": sid, "revision_id": f"r-{sid}", "internal_timeline_revision_id": f"i-{sid}", "payload": {}})
-astrid/sdk/timeline_restructure.py:572:        internals.append({"revision_id": f"i-{sid}", "payload": copy.deepcopy(bundle["shots"][sid].get("internal_timeline") or {})})
-astrid/sdk/timeline_restructure.py:576:        {"project_id": str(bundle.get("project_id")), "timeline_id": str(bundle.get("timeline_id")), "revision_id": "x", "payload": payload},
-astrid/sdk/timeline/journal.py:173:            "base": {key: before["base_parent"][key] for key in ("revision_id", "publication_id")}}
-astrid/sdk/timeline/journal.py:293:        basis = {key: base["base_parent"][key] for key in ("revision_id", "publication_id")}
-astrid/sdk/timeline/assembly.py:32:                     'base_revision_id': state['base']['revision_id'],
-astrid/sdk/timeline/assembly.py:85:              'base_revision_id': state['base']['revision_id'],
-astrid/sdk/timeline/assembly.py:195:    base = {'revision_id': batch['base_revision_id'],
-astrid/sdk/timeline/_commit_timing_validation.py:533:        shots = {row["revision_id"]: row for row in document["shot_revisions"]}
-astrid/sdk/timeline/_commit_timing_validation.py:534:        internals = {row["revision_id"]: row for row in document["internal_timeline_revisions"]}
-astrid/sdk/timeline/_commit_timing_validation.py:536:            physical = shots[occurrences[row["occurrence_id"]]["shot_revision_id"]]
-astrid/sdk/timeline/_commit_timing_validation.py:537:            internal = internals[physical["internal_timeline_revision_id"]]
-astrid/sdk/timeline/_commit_timing_validation.py:540:                "internal_timeline_revision_id": internal["revision_id"],
-astrid/sdk/timeline/_doc_patch_materialize.py:25:            'source_shot_revision': origin['revision_id'],
-astrid/sdk/timeline/_doc_patch_materialize.py:26:            'source_internal_revision': origin['internal_timeline_revision_id'],
-astrid/sdk/timeline/_doc_patch_materialize.py:54:    source_shots = {row['revision_id']: row for row in originals['shot_revisions']}
-astrid/sdk/timeline/_doc_patch_materialize.py:55:    source_internals = {row['revision_id']: row for row in originals['internal_timeline_revisions']}
-astrid/sdk/timeline/_doc_patch_materialize.py:56:    shot_index = {row['revision_id']: row for row in result['shot_revisions']}
-astrid/sdk/timeline/_doc_patch_materialize.py:57:    internal_index = {row['revision_id']: row for row in result['internal_timeline_revisions']}
-astrid/sdk/timeline/_doc_patch_materialize.py:78:                child = {'revision_id': _identity('authoring-timeline-revision', bundle['project_id'],
-astrid/sdk/timeline/_doc_patch_materialize.py:88:        payload['internal_timeline_revision_id'] = child['revision_id']
-astrid/sdk/timeline/_doc_patch_materialize.py:94:                     'revision_id': _identity('authoring-shot-revision', bundle['project_id'], target['shot_id'], payload),
-        *,
-        occurrence_id: str,
-        clip_id: str,
-        source_object_id: str,
-        expected_head: str,
-        idempotency_key: str,
-        timing: str = "preserve-duration",
-    ) -> Any:
-        return self._call_generated(
-            "replace_parent_composition_media",
-            project_id,
-            timeline_id,
-            occurrence_id=occurrence_id,
-            clip_id=clip_id,
-            source_object_id=source_object_id,
-            expected_head=expected_head,
-            idempotency_key=idempotency_key,
-            timing=timing,
-        )
-
-    def create_timeline(self, project_id: str, timeline_id: str, *, name: str | None = None, idempotency_key: str) -> Any:
-        return self._call_generated("create_timeline", project_id, timeline_id, name=name, idempotency_key=idempotency_key)
-
-    def rename_timeline(self, project_id: str, timeline_id: str, name: str, *, idempotency_key: str) -> Any:
-        return self._call_generated("rename_timeline", project_id, timeline_id, name, idempotency_key=idempotency_key)
-
-    def create_timeline_document(self, project_id: str, timeline_id: str, *, config: Mapping[str, Any], registry: Mapping[str, Any], slug: str | None = None, name: str | None = None, idempotency_key: str) -> Any:
-        return self._call_generated("create_timeline_document", project_id, timeline_id, config=config, registry=registry, slug=slug, name=name, idempotency_key=idempotency_key)
-
-    def update_timeline_document(self, project_id: str, timeline_id: str, *, expected_version: int, config: Mapping[str, Any], registry: Mapping[str, Any], slug: str | None = None, name: str | None = None, idempotency_key: str) -> Any:
-        return self._call_generated("update_timeline_document", project_id, timeline_id, expected_version=expected_version, config=config, registry=registry, slug=slug, name=name, idempotency_key=idempotency_key)
-
-    def list_timelines(self, project_id: str, *, cursor: str | None = None, limit: int = 50) -> Any:
-        return self._call_generated("list_timelines", project_id, cursor=cursor, limit=limit)
-
-    def commit_timeline(
-        self,
-        project_id: str,
-        timeline_id: str,
-        body: Mapping[str, Any],
-        *,
-        idempotency_key: str,
-    ) -> Any:
-        """Commit one command batch through Runtime's canonical timeline route."""
-        return self._call_generated(
-            "commit_timeline",
-            project_id,
-            timeline_id,
-            body,
-            idempotency_key=idempotency_key,
-        )
-
-    def list_timeline_commits(
-        self,
-        project_id: str,
-        timeline_id: str,
-        *,
-        cursor: str | None = None,
-        limit: int = 50,
-    ) -> Any:
-        """Read the immutable accepted publication history and exact head pair."""
-        return self._call_generated(
-            "list_timeline_commits",
-            project_id,
-            timeline_id,
-            cursor=cursor,
-            limit=limit,
-        )
-
-    def get_project_verified_document(self, project_id: str, pin: Mapping[str, Any]) -> Any:
-        return self._call_generated("get_project_verified_document", project_id, pin)
-
-    def get_project_verified_document_object(self, project_id: str, pin: Mapping[str, Any], object_id: str) -> Any:
-        return self._call_generated("get_project_verified_document_object", project_id, pin, object_id)
-
-    def get_timeline(self, timeline_id: str, *, project_id: str | None = None) -> Any:
-        if hasattr(self._generated, "get_timeline"):
-            return self._call_generated("get_timeline", timeline_id)
-        if project_id is None:
-            projects = paged_rows(self.list_projects, limit=50) or []
-            for project in projects:
-                candidate = str(project.get("project_id") or project.get("id") or "")
-                timelines = paged_rows(self.list_timelines, candidate, limit=50) or []
-                if any(str(row.get("timeline_id")) == timeline_id for row in timelines):
-                    project_id = candidate
-                    break
-        if project_id is None:
-            raise WorkspaceClientError(404, "not_found", "timeline not found", {"timeline_id": timeline_id})
-        return self._call_generated("get_project_timeline", project_id, timeline_id)
-
-    def inspect_timeline(
-astrid_runtime_client/generated.py:963:    def commit_timeline(self, project_id: str, timeline_id: str, request: CommitRequest, *, idempotency_key: str) -> CommitAcceptedMutation | CommitPreviewResponse:
-astrid/sdk/remote.py:1547:                def commit_timeline(self, project_id, timeline_id, body, *, idempotency_key):
-astrid/sdk/workspace_client.py:485:    def commit_timeline(
-astrid/core/timeline/authoring_bundle.py:47:    def commit_timeline(
-
-apply patch
-patch: completed
-/home/user/work/wt/agt-D86-ordinary-script-0121/tests/sdk/test_timeline_script.py
-diff --git a/tests/editing_conformance/test_next_ordinary_union_runtime.py b/tests/editing_conformance/test_next_ordinary_union_runtime.py
-index 9cc012e0e80b5b1b1f1bda7d207e64f92b280722..e9351f0b6eb623a331bce10b99042cfdd61bf18c
---- a/tests/editing_conformance/test_next_ordinary_union_runtime.py
-+++ b/tests/editing_conformance/test_next_ordinary_union_runtime.py
-@@ -29,9 +29,11 @@
-                                           name='Text chapter', track='V1', on=0, duration=8)
- 
-         def text(kind, *, clear=False):
--            return parent.call('text-binding.set', {
-+            command = parent.call('text-binding.set', {
-                 'binding': {'kind': kind, 'slot': None},
-                 **({'clear': True} if clear else {'text': pin})}, 'occurrence:text-occ')
-+            command['intent'] = {'ownership': 'occurrence'}
-+            return command
- 
-         request = parent.body(case, [birth, text('transcript'), text('voiceover_script')])
-         accepted = parent.commit(case, request, 'union-birth-text')
-diff --git a/tests/editing_conformance/test_s3_reviewed_cohort_runtime.py b/tests/editing_conformance/test_s3_reviewed_cohort_runtime.py
-index ae2b766ecddb4cfdc75655d76cdb554f92c68a62..99c2cda19fcab8d892fd58462ed901da381e7b15
---- a/tests/editing_conformance/test_s3_reviewed_cohort_runtime.py
-+++ b/tests/editing_conformance/test_s3_reviewed_cohort_runtime.py
-@@ -10,6 +10,7 @@
  from astrid.sdk.timeline.capture import capture_track_create
  from astrid.sdk.timeline.commit import _digest, bundle_from_document
  from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
@@ -271,7 +5,7 @@ index ae2b766ecddb4cfdc75655d76cdb554f92c68a62..99c2cda19fcab8d892fd58462ed901da
  from tests.editing_conformance import test_commit_runtime_parent_media as parent
  from tests.editing_conformance.test_next_command_cohort_runtime import reopen
  from tests.editing_conformance.test_pristine_initialize import batch
-@@ -47,8 +48,12 @@
+@@ -47,8 +48,13 @@
          source = {'id': 'voice', 'clipType': 'video', 'track': 'picture',
                    'asset': case.pins['new']['asset'], 'at': 0, 'hold': 4,
                    'from': 0, 'to': 4, 'speed': 1, 'opaque': [None, False, 0.0]}
@@ -279,6 +13,7 @@ index ae2b766ecddb4cfdc75655d76cdb554f92c68a62..99c2cda19fcab8d892fd58462ed901da
 -                            'occurrence:born-occ')], 's3-child-media')
 +        raw_media = parent.call('occurrence.add-media', {'row': source, 'media': case.pins['new']},
 +                                'occurrence:born-occ')
++        raw_media['intent'] = {'ownership': 'occurrence'}
 +        parent.commit(case, parent.body(case, [raw_media], dry_run=True), 's3-child-media-selection')
 +        child_media = capture_occurrence_add_media(
 +            bundle(), 'occurrence:born-occ', source, case.pins['new'], verified_media=case.selected)
@@ -287,7 +22,7 @@ index ae2b766ecddb4cfdc75655d76cdb554f92c68a62..99c2cda19fcab8d892fd58462ed901da
                 's3-overlay')
          row = parent.row(case, 'parent-media', asset='raw-old-alias', track='overlay')
 diff --git a/tests/sdk/test_timeline_script.py b/tests/sdk/test_timeline_script.py
-index a7e4c0f311c7b677087ad72d0ff2e18004e7b20f..a0beb5045b4c228505fad4a6c318796ff3069df5
+index a7e4c0f311c7b677087ad72d0ff2e18004e7b20f..d7d04a0ec740d094c6ef93ed6a1e7c42615918f6
 --- a/tests/sdk/test_timeline_script.py
 +++ b/tests/sdk/test_timeline_script.py
 @@ -1,6 +1,12 @@
@@ -327,7 +62,7 @@ index a7e4c0f311c7b677087ad72d0ff2e18004e7b20f..a0beb5045b4c228505fad4a6c318796f
          service.create_timeline(project_id, "main", idempotency_key="timeline")
  
          def publication(parent_id, expected_head, shot_revision, internal_revision, *, text_bindings=None):
-@@ -177,14 +186,61 @@
+@@ -177,14 +186,64 @@
                  }]},
              }
  
@@ -386,9 +121,12 @@ index a7e4c0f311c7b677087ad72d0ff2e18004e7b20f..a0beb5045b4c228505fad4a6c318796f
 +        pin = stored["data"]
 +        text_pin = {key: pin[key] for key in ("object_id", "digest", "size", "media_type")}
 +        verified = {**text_pin, "utf8": True}
++        rebound_template = publication("parent-2", "parent-1", "shot-1-r2", "internal-r2",
++                                       text_bindings=[pin])
++        rebound_occurrence = rebound_template["parent_composition"]["occurrences"][0]
 +        bundle = bundle_from_document(born["data"]["canonical_document"])
 +        captured = capture_text_binding_set(
-+            bundle, "occurrence:" + occurrence["occurrence_id"],
++            bundle, "occurrence:" + rebound_occurrence["occurrence_id"],
 +            {"kind": "voiceover_script", "slot": None}, text=text_pin, verified_text=[verified])
 +        binding_result = commit([captured], "publish-pin")
 +        assert binding_result["data"]["accepted_revision_id"]
@@ -398,3 +136,265 @@ index a7e4c0f311c7b677087ad72d0ff2e18004e7b20f..a0beb5045b4c228505fad4a6c318796f
          class Timelines:
              def inspect(self, project_ref, timeline_ref, **options):
 
+exec
+/bin/bash -lc "sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-ordinary-script-0121/commit-msg; git status --short --untracked-files=all" in /home/user/work/wt/agt-D86-ordinary-script-0121
+ succeeded in 185ms:
+test(timeline): F-D86 migrate ordinary scripts to commit provider
+
+F-D86 ordinary-script4 routes the reserved conformance and SDK scenarios
+through the current Runtime commitTimeline/provider ABI with native capture
+and verified media/text custody.
+ M tests/editing_conformance/test_next_ordinary_union_runtime.py
+ M tests/editing_conformance/test_s3_reviewed_cohort_runtime.py
+ M tests/sdk/test_timeline_script.py
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-ordinary-script-0121/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-ordinary-script-0121/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-ordinary-script-0121/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-ordinary-script-0121/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-ordinary-script-0121/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..8a98514c18587db2e9d58e8c9a2ed1f9584618de
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-ordinary-script-0121/commit-msg
+@@ -0,0 +1,5 @@
++test(timeline): F-D86 migrate ordinary scripts to commit provider
++
++F-D86 ordinary-script4 routes the reserved conformance and SDK scenarios
++through the current Runtime commitTimeline/provider ABI with native capture
++and verified media/text custody.
+diff --git a/tests/editing_conformance/test_next_ordinary_union_runtime.py b/tests/editing_conformance/test_next_ordinary_union_runtime.py
+index 9cc012e0e80b5b1b1f1bda7d207e64f92b280722..e9351f0b6eb623a331bce10b99042cfdd61bf18c
+--- a/tests/editing_conformance/test_next_ordinary_union_runtime.py
++++ b/tests/editing_conformance/test_next_ordinary_union_runtime.py
+@@ -29,9 +29,11 @@
+                                           name='Text chapter', track='V1', on=0, duration=8)
+ 
+         def text(kind, *, clear=False):
+-            return parent.call('text-binding.set', {
++            command = parent.call('text-binding.set', {
+                 'binding': {'kind': kind, 'slot': None},
+                 **({'clear': True} if clear else {'text': pin})}, 'occurrence:text-occ')
++            command['intent'] = {'ownership': 'occurrence'}
++            return command
+ 
+         request = parent.body(case, [birth, text('transcript'), text('voiceover_script')])
+         accepted = parent.commit(case, request, 'union-birth-text')
+diff --git a/tests/editing_conformance/test_s3_reviewed_cohort_runtime.py b/tests/editing_conformance/test_s3_reviewed_cohort_runtime.py
+index ae2b766ecddb4cfdc75655d76cdb554f92c68a62..de9f02efa055e0999500432334b5ea21a0819ac8
+--- a/tests/editing_conformance/test_s3_reviewed_cohort_runtime.py
++++ b/tests/editing_conformance/test_s3_reviewed_cohort_runtime.py
+@@ -10,6 +10,7 @@
+ from astrid.sdk.timeline.capture import capture_track_create
+ from astrid.sdk.timeline.commit import _digest, bundle_from_document
+ from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
++from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_add_media
+ from tests.editing_conformance import test_commit_runtime_parent_media as parent
+ from tests.editing_conformance.test_next_command_cohort_runtime import reopen
+ from tests.editing_conformance.test_pristine_initialize import batch
+@@ -47,8 +48,13 @@
+         source = {'id': 'voice', 'clipType': 'video', 'track': 'picture',
+                   'asset': case.pins['new']['asset'], 'at': 0, 'hold': 4,
+                   'from': 0, 'to': 4, 'speed': 1, 'opaque': [None, False, 0.0]}
+-        submit([parent.call('occurrence.add-media', {'row': source, 'media': case.pins['new']},
+-                            'occurrence:born-occ')], 's3-child-media')
++        raw_media = parent.call('occurrence.add-media', {'row': source, 'media': case.pins['new']},
++                                'occurrence:born-occ')
++        raw_media['intent'] = {'ownership': 'occurrence'}
++        parent.commit(case, parent.body(case, [raw_media], dry_run=True), 's3-child-media-selection')
++        child_media = capture_occurrence_add_media(
++            bundle(), 'occurrence:born-occ', source, case.pins['new'], verified_media=case.selected)
++        submit([child_media], 's3-child-media')
+         submit([capture_track_create(bundle(), 'parent', {'id': 'overlay', 'kind': 'visual'})],
+                's3-overlay')
+         row = parent.row(case, 'parent-media', asset='raw-old-alias', track='overlay')
+diff --git a/tests/sdk/test_timeline_script.py b/tests/sdk/test_timeline_script.py
+index a7e4c0f311c7b677087ad72d0ff2e18004e7b20f..d7d04a0ec740d094c6ef93ed6a1e7c42615918f6
+--- a/tests/sdk/test_timeline_script.py
++++ b/tests/sdk/test_timeline_script.py
+@@ -1,6 +1,12 @@
+ import hashlib
++
+ import pytest
++
+ from astrid.sdk.contracts import DomainResult
++from astrid.sdk.timeline.capture import capture_track_create
++from astrid.sdk.timeline.commit import bundle_from_document, create_runtime_commit_service
++from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
++from astrid.sdk.timeline.native_text_binding import capture_text_binding_set
+ from astrid.sdk.timeline_script import read_composition_script
+ 
+ 
+@@ -133,6 +139,7 @@
+ 
+ def test_timeline_script_cli_forwards_revision_occurrence_and_kind(monkeypatch):
+     from types import SimpleNamespace
++
+     import astrid.packs.timeline.cli as cli
+ 
+     calls = []
+@@ -149,6 +156,7 @@
+ def test_runtime_pin_flow_returns_old_script_after_binding_rebind(tmp_path):
+     from runtime_protocol import service as service_module
+     from runtime_protocol import store as store_module
++    from runtime_protocol.timeline_commit_port import route_path
+ 
+     realm = tmp_path / "realm"
+     store_module.RealmStore.initialize(realm).close()
+@@ -156,6 +164,7 @@
+     try:
+         project = service.create_project({"slug": "narration", "name": "Narration"}, idempotency_key="project")
+         project_id = project["id"]
++        service.register_timeline_commit_provider(create_runtime_commit_service())
+         service.create_timeline(project_id, "main", idempotency_key="timeline")
+ 
+         def publication(parent_id, expected_head, shot_revision, internal_revision, *, text_bindings=None):
+@@ -177,14 +186,64 @@
+                 }]},
+             }
+ 
+-        service.publish_parent_composition(project_id, "main", publication(
+-            "parent-1", None, "shot-1-r1", "internal-r1"), idempotency_key="publish-no-script")
+-        pin = service.set_project_shot_text_binding(project_id, {
+-            "shot_id": "shot-1", "kind": "voiceover_script", "text": "Pinned before rebind.", "expected_head": 0,
+-        }, idempotency_key="register-script")["data"]
+-        service.publish_parent_composition(project_id, "main", publication(
+-            "parent-2", "parent-1", "shot-1-r2", "internal-r2", text_bindings=[pin]),
+-            idempotency_key="publish-pin")
++        def body(calls):
++            head = service.get_project_timeline(project_id, "main")
++            label = "Timeline script setup"
++            changes = [change for command in calls if command["op"] == "doc.patch"
++                       for change in command["args"]["changes"]]
++            step = {"id": "timeline-script", "label": label, "intent": label,
++                    "tags": ["timeline-script"], "command_ordinals": list(range(len(calls))),
++                    "patch": changes, "reads": []}
++            return {"api_version": 1, "project_id": project_id, "timeline_id": "main",
++                    "base_revision_id": head["head_revision_id"],
++                    "base_publication_id": head["head_publication_id"], "commands": calls,
++                    "label": label, "steps": [step], "merge": "fields", "reads": [],
++                    "dry_run": False, "source": {"via": "python"},
++                    "rationale": "Set up the timeline script binding.",
++                    "group_id": "D86-timeline-script"}
++
++        def commit(calls, key):
++            return service.commit_timeline(
++                project_id, "main", body(calls), idempotency_key=key, publisher="timeline-script-test",
++                invocation_path=route_path(project_id, "main"), authorize=lambda: None)
++
++        template = publication("parent-1", None, "shot-1-r1", "internal-r1")
++        head = service.get_project_timeline(project_id, "main")
++        bootstrap = service.get_project_parent_composition_revision(
++            project_id, "main", head["head_revision_id"])
++        empty = {"schema_version": 1, "project_id": project_id, "timeline_id": "main",
++                 "parent_revision": {key: bootstrap[key] for key in ("revision_id", "content_digest", "payload")},
++                 "shot_revisions": [], "internal_timeline_revisions": [],
++                 "dependency_manifest": bootstrap["dependency_manifest"]}
++        bundle = bundle_from_document(empty)
++        parent_track = capture_track_create(bundle, "parent", {"id": "voice", "kind": "visual"})
++        tracked = commit([parent_track], "parent-track")
++        bundle = bundle_from_document(tracked["data"]["canonical_document"])
++        occurrence = template["parent_composition"]["occurrences"][0]
++        shot = template["shot_revisions"][0]
++        birth = capture_occurrence_create(
++            bundle, occurrence["occurrence_id"], shot["shot_id"], name=shot["payload"]["metadata"]["title"],
++            track="voice", on=occurrence["placement"]["start_ms"] / 1000,
++            duration=occurrence["duration_ms"] / 1000)
++        born = commit([birth], "publish-no-script")
++
++        raw = b"Pinned before rebind."
++        stored = service.ingest(project_id, raw, media_type="text/plain; charset=utf-8",
++                                idempotency_key="register-script")
++        pin = stored["data"]
++        text_pin = {key: pin[key] for key in ("object_id", "digest", "size", "media_type")}
++        verified = {**text_pin, "utf8": True}
++        rebound_template = publication("parent-2", "parent-1", "shot-1-r2", "internal-r2",
++                                       text_bindings=[pin])
++        rebound_occurrence = rebound_template["parent_composition"]["occurrences"][0]
++        bundle = bundle_from_document(born["data"]["canonical_document"])
++        captured = capture_text_binding_set(
++            bundle, "occurrence:" + rebound_occurrence["occurrence_id"],
++            {"kind": "voiceover_script", "slot": None}, text=text_pin, verified_text=[verified])
++        binding_result = commit([captured], "publish-pin")
++        assert binding_result["data"]["accepted_revision_id"]
++        pin = next(row for row in service.list_project_shot_text_bindings(
++            project_id, kind="voiceover_script")["items"] if row["shot_id"] == shot["shot_id"])
+ 
+         class Timelines:
+             def inspect(self, project_ref, timeline_ref, **options):
+
+exec
+/bin/bash -lc 'test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-ordinary-script-0121/DONE && echo DONE_OK
+git status --short --untracked-files=all
+git diff --stat' in /home/user/work/wt/agt-D86-ordinary-script-0121
+ succeeded in 352ms:
+DONE_OK
+ M tests/editing_conformance/test_next_ordinary_union_runtime.py
+ M tests/editing_conformance/test_s3_reviewed_cohort_runtime.py
+ M tests/sdk/test_timeline_script.py
+ .../test_next_ordinary_union_runtime.py            |  4 +-
+ .../test_s3_reviewed_cohort_runtime.py             | 10 ++-
+ tests/sdk/test_timeline_script.py                  | 75 +++++++++++++++++++---
+ 3 files changed, 78 insertions(+), 11 deletions(-)
+
+codex
+## Completed
+
+Updated only the three assigned tests:
+
+- Current Runtime provider/native capture migration for ordinary text and S3 media flows.
+- Full commit request envelope, provider registration, verified text ingestion, and current `commitTimeline` route in the SDK script test.
+- Preserved original assertions, parameters, decorators, branches, fixture inputs, and custody guards.
+
+## Verification
+
+- AST parsing: passed.
+- `compileall`: passed.
+- Ruff baseline/candidate: candidate passed; two pre-existing import-order findings were normalized.
+- Mypy baseline/candidate: both passed.
+- `git diff --check`: passed.
+- Changed-file allowlist: passed.
+- No pytest, collection, service, browser, build, or function execution run.
+
+Dependency identities:
+
+- Agent base: `219b9ca8b196bcf4ee6fda6e08c2e50ae251ae4b`
+- Runtime: `a3cd1a3214fa1632879c21d82d1abb9ea720b1de`
+- Runtime tree: `64bb0caf0b7b950e02c4075077868a3dcd12ee06`
+- Schema digest: `sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b`
+
+The commit message was written to the requested path, and `DONE` was created.
+
+Unverified seam: the preserved original assertion expects literal revision ID `parent-2`; the current provider may generate deterministic authoring revision IDs instead. No synthetic history or ID override was introduced.
+tokens used
+320,742
+## Completed
+
+Updated only the three assigned tests:
+
+- Current Runtime provider/native capture migration for ordinary text and S3 media flows.
+- Full commit request envelope, provider registration, verified text ingestion, and current `commitTimeline` route in the SDK script test.
+- Preserved original assertions, parameters, decorators, branches, fixture inputs, and custody guards.
+
+## Verification
+
+- AST parsing: passed.
+- `compileall`: passed.
+- Ruff baseline/candidate: candidate passed; two pre-existing import-order findings were normalized.
+- Mypy baseline/candidate: both passed.
+- `git diff --check`: passed.
+- Changed-file allowlist: passed.
+- No pytest, collection, service, browser, build, or function execution run.
+
+Dependency identities:
+
+- Agent base: `219b9ca8b196bcf4ee6fda6e08c2e50ae251ae4b`
+- Runtime: `a3cd1a3214fa1632879c21d82d1abb9ea720b1de`
+- Runtime tree: `64bb0caf0b7b950e02c4075077868a3dcd12ee06`
+- Schema digest: `sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b`
+
+The commit message was written to the requested path, and `DONE` was created.
+
+Unverified seam: the preserved original assertion expects literal revision ID `parent-2`; the current provider may generate deterministic authoring revision IDs instead. No synthetic history or ID override was introduced.

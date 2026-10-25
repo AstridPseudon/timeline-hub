@@ -31,7 +31,7 @@ echo "gzipped $g old worker logs; free now $(df -BM --output=avail /home/user | 
 tp=0
 for t in $O/tests/*/; do r=$(basename $t); [ -f $t/exit ] || continue; [ "$(cat $t/status 2>/dev/null)" = running ] && continue
   [ -f $t/running ] && kill -0 "$(cat $t/running 2>/dev/null)" 2>/dev/null && continue
-  [ $(stat -c %Y $t/exit) -lt $cut ] || continue; grep -qw -- "$r" <<< "$REF" && continue
+  [ $(stat -c %Y $t/exit) -lt $(date -d "-15 min" +%s) ] || continue; grep -qw -- "$r" <<< "$REF" && continue   # 01:35Z 25 Oct: 15 min, not 1 h (Agent disk +1.1 GB per 30 min)
   for s in $(find $t -mindepth 1 -maxdepth 2 -type d 2>/dev/null); do [ -d "$s" ] || continue
     [ $(du -sm "$s" | cut -f1) -gt $MIN ] || continue
     tar czf "$s.tgz" -C "$(dirname "$s")" "$(basename "$s")" && rm -rf "$s" && tp=$((tp+1)); done

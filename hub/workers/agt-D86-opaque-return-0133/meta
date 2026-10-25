@@ -1,0 +1,9 @@
+name=agt-D86-opaque-return-0133
+repo=agent
+base=tl/agt-D86-occurrence-opaque-0121
+base_sha=6b9e14efd7
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-D86-opaque-return-0133
+started=2026-10-25T01:33:40Z
