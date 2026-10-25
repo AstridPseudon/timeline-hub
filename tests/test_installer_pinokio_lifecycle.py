@@ -20,7 +20,6 @@ class PinokioBackend:
         self.old = None
         self.candidate = None
         self.fail_upgrade = False
-        self.live = False
 
     def existing(self, _data):
         return self.old
@@ -30,11 +29,6 @@ class PinokioBackend:
 
     def reinstallable(self, _data):
         return False
-
-    def require_stopped(self, data):
-        self.calls.append(("require_stopped", data))
-        if self.live:
-            raise RuntimeError("Astrid is running; Stop Astrid in Pinokio first.")
 
     def stage(self, _manifest, root, _data):
         self.calls.append(("stage",))
@@ -186,17 +180,6 @@ def test_pinokio_doctor_is_read_only_and_does_not_start_service(tmp_path):
     assert [call[0] for call in backend.calls] == ["doctor"]
 
 
-def test_pinokio_lifecycle_refuses_to_run_while_pinokio_owns_live_runtime(tmp_path):
-    root, data = tmp_path / "app", tmp_path / "workspace"
-    backend = PinokioBackend(root, data)
-    backend.live = True
-
-    with pytest.raises(RuntimeError, match="Stop Astrid in Pinokio first"):
-        _managed(root, data, backend).run("install", {})
-
-    assert [call[0] for call in backend.calls] == ["require_stopped"]
-
-
 def test_pinokio_uninstall_keeps_workspace_and_skips_service_removal(tmp_path):
     root, data = tmp_path / "app", tmp_path / "workspace"
     root.mkdir()
@@ -344,9 +327,6 @@ def test_root_marker_retains_pinokio_manager_for_update_and_uninstall(tmp_path, 
             self.managed_by = None
             self.service = SimpleNamespace(selection=selection, recorded=lambda: {},
                                            login_service_exists=lambda: False)
-
-        def require_stopped(self, _data):
-            pass
 
         def existing(self, _data):
             return None
@@ -511,24 +491,6 @@ def test_interrupted_pinokio_update_recovery_does_not_activate_login_service(tmp
     assert names == ["stop", "register", "workspace"]
     assert "start" not in names
     assert "verify" not in names
-
-
-def test_real_managed_backend_rejects_live_runtime_before_mutation(tmp_path, monkeypatch):
-    from astrid.installer import backend as backend_module
-    from astrid.installer.backend import Backend
-
-    data = tmp_path / "workspace"
-    discovery = data / "runtime" / "discovery.json"
-    write_json(discovery, {"pid": 12345, "process_birth_id": "birth"})
-    monkeypatch.setattr(backend_module.platform, "process_identity", lambda _pid: {
-        "pid": 12345, "birth_id": "birth",
-    })
-    backend = Backend(tmp_path / "app", tmp_path / "install.log", tmp_path / "uv", managed_by="pinokio")
-
-    with pytest.raises(ValueError, match="Stop Astrid in Pinokio first"):
-        backend.require_stopped(data)
-
-    assert discovery.is_file()
 
 
 @pytest.mark.parametrize("manager", [None, "pinokio"])

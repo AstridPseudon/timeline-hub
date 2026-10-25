@@ -22,6 +22,11 @@ def test_pinokio_run_executes_foreground_runtime_and_drains_its_child(
 ):
     import runtime_protocol
 
+    home = tmp_path / "home"
+    for key, value in {"HOME": home, "USERPROFILE": home,
+                       "LOCALAPPDATA": home / "local", "XDG_DATA_HOME": home / "data"}.items():
+        monkeypatch.setenv(key, str(value))
+
     app_root = tmp_path / "Astrid"
     version_root = app_root / "versions" / "fixture"
     environment = version_root / "py"

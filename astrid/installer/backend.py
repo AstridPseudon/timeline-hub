@@ -233,11 +233,6 @@ class Backend:
             raise RuntimeError("Runtime discovery owner identity changed; refusing to change it.")
         return "live"
 
-    def require_stopped(self, data: Path) -> None:
-        discovery = data / "runtime" / "discovery.json"
-        if discovery.exists() and self._discovery_owner_state(discovery) == "live":
-            raise ValueError("Stop Astrid in Pinokio first, then try again.")
-
     def stop(self, version: Version | None, data: Path) -> None:
         if self.managed_by != "pinokio":
             self.service.disable()

@@ -14,6 +14,14 @@ from astrid.installer import foreground, launcher, service
 from astrid.installer.core import Version, current, write_json
 
 
+@pytest.fixture(autouse=True)
+def isolated_home(tmp_path, monkeypatch):
+    home = tmp_path / "home"
+    for key, value in {"HOME": home, "USERPROFILE": home,
+                       "LOCALAPPDATA": home / "local", "XDG_DATA_HOME": home / "data"}.items():
+        monkeypatch.setenv(key, str(value))
+
+
 def _runtime_args(command):
     return ast.literal_eval(ast.parse(command[3]).body[-1].value.args[0].args[0])
 
@@ -73,12 +81,20 @@ def test_launch_uses_current_version_service_command_and_pinokio_environment(
     monkeypatch.setenv("ASTRID_INSTALL_MANAGED_BY", "another-manager")
 
     seen: dict[str, object] = {}
+    lock_file = foreground.platform.lock_file
+
+    def acquire(fd, **kwargs):
+        seen["lock_fd"] = fd
+        lock_file(fd, **kwargs)
+
+    monkeypatch.setattr(foreground.platform, "lock_file", acquire)
 
     class ExecCalled(Exception):
         pass
 
     def execvpe(file: str, argv: list[str], env: dict[str, str]) -> None:
         seen.update(file=file, argv=argv, env=env)
+        assert os.get_inheritable(seen["lock_fd"])
         raise ExecCalled
 
     monkeypatch.setattr(foreground.os, "execvpe", execvpe)
@@ -148,6 +164,7 @@ def test_launch_uses_current_version_service_command_and_pinokio_environment(
         windows=False,
         env_file=root / "service-env.json",
         extra_args=extra_args,
+        lock_fd=seen["lock_fd"],
     )
     assert seen["file"] == expected[0]
     assert seen["argv"] == expected

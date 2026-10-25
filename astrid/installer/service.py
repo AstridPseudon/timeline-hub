@@ -49,21 +49,34 @@ def install_selection(home: Path, system: str) -> Path:
     return default_program_root(home, system).parent / "astrid-install.json"
 
 
+def installer_lock_path(home: Path, system: str) -> Path:
+    parent = default_program_root(home, system).parent
+    # The lock must survive removal of program files and workspace data.
+    if system == "win32":
+        parent = parent / "Astrid Installer"
+    return parent / "astrid-install.lock"
+
+
 def bootstrap_root(home: Path, system: str) -> Path:
     root = default_program_root(home, system)
     return (root.parent / "Astrid Installer" if system == "win32" else root) / "bootstrap"
 
 
 def command(version: Version, data: Path, *, windows: bool = False, log: Path | None = None,
-            env_file: Path | None = None, extra_args: list[str] | None = None) -> list[str]:
+            env_file: Path | None = None, extra_args: list[str] | None = None,
+            lock_fd: int | None = None) -> list[str]:
     python = version.python.with_name("pythonw.exe") if windows else version.python
     arguments = ["run", "--profile", "astrid", "--data-root", str(data),
                  "--source-manifest", str(version.profile), *(extra_args or [])]
-    if env_file is None and not windows:
+    if env_file is None and not windows and lock_fd is None:
         return [str(python), "-I", "-m", "astrid_runtime", *arguments]
     # Task Scheduler cannot set an environment and Hidden does not hide a
     # console. pythonw executes the foreground Runtime in this same process.
     script = "import json,os,sys\nfrom pathlib import Path\n"
+    if lock_fd is not None:
+        # The foreground owner inherited this locked descriptor across exec.
+        # Keep it open here, but never pass it to a subsequently exec'd child.
+        script += f"os.set_inheritable({lock_fd},False)\n"
     if windows:
         if log is None:
             raise ValueError("A log path is required for the Windows Runtime service.")

@@ -29,18 +29,24 @@ Pinokio selection with:
 
 > Astrid on this computer is managed by Pinokio. Update it from Pinokio.
 
-Install/repair, update and uninstall require the selected Runtime to be stopped:
+The foreground run entry holds the per-user installer lock for its entire
+lifetime. Install/repair, update and uninstall take that same kernel lock
+without waiting. If the foreground owner holds it, mutations fail with:
 
 > Stop Astrid in Pinokio first, then try again.
 
-This refusal avoids racing Pinokio's process ownership. The installer uses
-Runtime's `down` lifecycle only to clean up an update's temporary migration
-daemon or a failed transaction. Updates still back up, migrate and roll back
-through the normal Runtime APIs. They finish stopped. Workspace identity is
+This excludes foreground startup and installer mutations in both directions.
+The OS releases the lock when its owner exits or crashes; descendants do not
+retain it. Discovery is not the admission gate. A retry can recover an
+interrupted update even if its detached temporary migration daemon remains
+alive, stopping that daemon through Runtime's `down` lifecycle. Updates still
+back up, migrate and roll back through the normal Runtime APIs. They finish
+stopped. Workspace identity is
 checked without starting a browser door. Pinokio performs startup/readiness.
 
-Doctor uses the installed version and can also resolve Pinokio's per-user
-selection without `--root`. Skill sync remains best effort. Uninstall retains
+Doctor is read-only and does not take the exclusive installer lock. It uses
+the installed version and can also resolve Pinokio's per-user selection
+without `--root`. Skill sync remains best effort. Uninstall retains
 workspace data unless `--delete-data` is explicitly requested, and releases the
 manager/program pointer after successful removal. The existing uninstalled
 workspace receipt remains for a later reinstall. Partial removal retains its
@@ -169,64 +175,3 @@ binding, `run.cmd` quoting/status, Ctrl+Break, console-close cleanup, native Job
 containment, Windows ACL/file-lock behavior and Pinokio Stop. A real Linux run
 must prove native process/signal cleanup. No end-to-end Pinokio or editor-server
 qualification is claimed by these tests.
-
-## X1 validation, 25 October 2026
-
-Tests ran sequentially with test timeouts disabled, using existing lab
-interpreters and temporary homes/fake services. No tools or model assets were
-downloaded. No real login service, live Runtime, production directory or live
-workspace was used.
-
-| Focused run | Result |
-| --- | --- |
-| Installer lifecycle/platform/recovery/launcher/cleanup/shim/import/policy subset below | 245 passed, 13 native Windows tests skipped, 27 integration-lane cases deselected |
-| Final Pinokio/cleanup/current repeat after partial-uninstall marker fix | 68 passed |
-| Installer backup/tools/schema/Remotion/support/sources/ACL/checksum/OMP subset | 190 passed |
-| Runtime foreground/signaling/Windows platform subset | 120 passed, 21 native Linux/Windows tests skipped |
-| POSIX bootstrap plus two PowerShell source contracts | 32 passed |
-
-The first global-Python run lacked an installed Runtime in isolated child
-interpreters and used a symlinked Homebrew interpreter. It was rerun with the
-existing lab venv. The first ACL subset used macOS's symlinked `/var` temporary
-path; `TMPDIR=/private/tmp` resolved that environment issue. PowerShell execution
-was attempted and could not launch because `pwsh` is absent (`ENOENT`). Agent
-Ruff and all three worktrees' `git diff --check` passed.
-
-Reproduction commands from the corresponding worktree roots:
-
-```sh
-# Agent worktree.
-PY=/Users/hannahomalley/Developer/astrid-video/astrid-local/labs/review-agent109-custody/.venv/bin/python
-export PYTHONPATH=/Users/hannahomalley/Developer/astrid-video/astrid-local/labs/pinokio-runtime-run
-TMPDIR=/private/tmp "$PY" -m pytest -o timeout=0 -q \
-  tests/test_installer_pinokio_lifecycle.py tests/test_installer_pinokio_launcher.py \
-  tests/test_installer_pinokio_integration.py tests/test_installer_lifecycle.py \
-  tests/test_installer_platforms.py tests/test_installer_update_recovery.py \
-  tests/test_installer_cleanup.py tests/test_installer_current.py \
-  tests/test_installer_service_env.py tests/test_installer_startup_stop.py \
-  tests/test_installer_launcher_repair.py tests/test_installer_windows_tasks.py \
-  tests/test_installer_shim.py tests/test_installer_bootstrap_imports.py tests/test_skip_policy.py
-
-TMPDIR=/private/tmp "$PY" -m pytest -o timeout=0 -q \
-  tests/test_installer_pinokio_lifecycle.py tests/test_installer_pinokio_launcher.py \
-  tests/test_installer_pinokio_integration.py tests/test_installer_cleanup.py tests/test_installer_current.py
-
-TMPDIR=/private/tmp "$PY" -m pytest -o timeout=0 -q \
-  tests/test_installer_backup.py tests/test_installer_tools.py tests/test_installer_schema.py \
-  tests/test_installer_remotion.py tests/test_installer_support.py tests/test_installer_sources.py \
-  tests/test_installer_acl.py tests/test_installer_asset_checksums.py tests/test_installer_omp_source.py
-
-# Runtime worktree.
-ASTRID_CHECKOUT=/Users/hannahomalley/Developer/astrid-video/astrid-local/labs/pinokio-agent \
-  /Users/hannahomalley/Developer/astrid-video/astrid-local/labs/review-runtime-small/.venv/bin/python \
-  -m pytest -o timeout=0 -q tests/test_foreground.py tests/test_platform_signaling.py tests/test_platform_windows.py
-
-# App bootstrap worktree.
-sh -n public/install
-node --test --test-name-pattern='POSIX|PowerShell opens install log appends|PowerShell bootstrap source selects local manifest' \
-  scripts/installer/bootstrap.test.mjs scripts/installer/bootstrap-powershell.test.mjs
-```
-
-The first command now also collects the two final partial-uninstall regression
-cases; its previously recorded count predates those additions. The focused
-68-test repeat includes both.

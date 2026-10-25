@@ -18,7 +18,7 @@ from .core import (
     read_json,
     write_json,
 )
-from .service import LABEL, bootstrap_root, default_program_root
+from .service import LABEL, bootstrap_root, default_program_root, installer_lock_path
 from .support import FAILURE_MESSAGE, default_doctor_bundle
 from .tools import download, validate_manifest
 
@@ -54,15 +54,29 @@ def main(argv: list[str] | None = None) -> int:
         root = absolute(args.root or default_program_root(Path.home(), sys.platform))
         uv = args.uv or Path(os.environ.get("ASTRID_INSTALL_UV", bootstrap_root(Path.home(), sys.platform) / ("uv.exe" if sys.platform == "win32" else "uv")))
         backend = Backend(root, log, uv)
-        # Windows keeps open files locked, so its per-user lock must survive
-        # removal of both the program directory and the default workspace.
-        lock_parent = default_program_root(Path.home(), sys.platform).parent
-        if sys.platform == "win32":
-            lock_parent = lock_parent / "Astrid Installer"
-        lock_path = lock_parent / "astrid-install.lock"
+        lock_path = installer_lock_path(Path.home(), sys.platform)
         platform.private_directory(lock_path.parent)
         with lock_path.open("a+b") as lock:
-            platform.lock_file(lock.fileno(), blocking=False)
+            locked = False
+            if mode != "doctor":
+                try:
+                    platform.lock_file(lock.fileno(), blocking=False)
+                except BlockingIOError:
+                    # These reads only explain contention. Ownership and all
+                    # mutations are checked below, after obtaining the lock.
+                    prior = read_json(root / "install.json")
+                    recorded = backend.service.recorded()
+                    if not args.root and (recorded.get("managed_by") == "pinokio"
+                                          or prior.get("managed_by") == "pinokio"):
+                        raise ValueError("Astrid on this computer is managed by Pinokio. Update it from Pinokio.") from None
+                    if (args.managed_by == "pinokio" or prior.get("managed_by") == "pinokio"
+                            or (args.root and recorded.get("managed_by") == "pinokio"
+                                and recorded.get("program_root") == str(root))):
+                        raise ValueError("Stop Astrid in Pinokio first, then try again.") from None
+                    if recorded.get("managed_by") == "pinokio":
+                        raise ValueError("Astrid on this computer is managed by Pinokio. Update it from Pinokio.") from None
+                    raise
+                locked = True
             try:
                 # The single per-user selection is also the Pinokio pointer.
                 # Inspect it under the installer lock before claiming any root.
@@ -97,7 +111,8 @@ def main(argv: list[str] | None = None) -> int:
                         raise ValueError(f"Astrid's login-service installation is at {login_root}. Uninstall it before installing Astrid in Pinokio.")
                 if prior.get("managed_by") == "pinokio" and managed_by != "pinokio":
                     raise ValueError("Astrid on this computer is managed by Pinokio. Update it from Pinokio.")
-                if recorded.get("program_root") and not recorded.get("uninstalled") and managed_by != "pinokio":
+                if (recorded.get("program_root") and managed_by != "pinokio"
+                        and (not recorded.get("uninstalled") or mode == "uninstall")):
                     recorded_root = absolute(recorded["program_root"])
                     if args.root and recorded_root != root:
                         raise ValueError(f"The login service already belongs to {recorded_root}.")
@@ -125,8 +140,6 @@ def main(argv: list[str] | None = None) -> int:
                 if mode == "uninstall" and not marker and recorded.get("owner") != LABEL:
                     raise ValueError("No managed Astrid installation was found to uninstall.")
                 if mode not in {"uninstall", "doctor"}:
-                    if managed_by == "pinokio":
-                        backend.require_stopped(data)
                     platform.private_directory(root)
                     marker = {**marker, "owner": LABEL, "data_root": str(data)}
                     if managed_by:
@@ -154,7 +167,8 @@ def main(argv: list[str] | None = None) -> int:
                 options = {"managed_by": managed_by} if managed_by else {}
                 Installer(root, data, backend, **options).run(mode, manifest, delete_data=args.delete_data, bundle=bundle)
             finally:
-                platform.unlock_file(lock.fileno())
+                if locked:
+                    platform.unlock_file(lock.fileno())
         return 0
     except (Exception, KeyboardInterrupt) as failure:
         with contextlib.suppress(OSError):

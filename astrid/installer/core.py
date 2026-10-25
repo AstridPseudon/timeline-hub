@@ -180,8 +180,6 @@ class Installer:
 
     def run(self, mode: str, manifest: dict, *, delete_data: bool = False,
             bundle: Path | None = None) -> None:
-        if self.managed_by == "pinokio" and mode != "doctor":
-            self.backend.require_stopped(self.data)
         if mode not in {"doctor", "uninstall"}:
             self._recover_update()
         old = current(self.root)
