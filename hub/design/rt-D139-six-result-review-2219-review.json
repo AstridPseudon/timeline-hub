@@ -1,0 +1,79 @@
+{
+  "task": "D139",
+  "verdict": "PASS",
+  "central_service_id": "runtime-d139-integration-six-2214-1025221602-9082",
+  "runtime": {
+    "commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+    "tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883",
+    "required_ancestors": {
+      "cf0b82dd47452a7a34fc63eb233e9b1dc0532806": true,
+      "0bb3bc45cef22bc317398d79e1617da3eb430df2": true
+    },
+    "clean_before_and_after": true
+  },
+  "agent": {
+    "commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+    "tree": "d50fd98f7d1bc6860de810f38e8a0b3a55ca224e",
+    "clean_before_and_after": true
+  },
+  "service": {
+    "raw_exit": 0,
+    "collected": 1571,
+    "passed": 1571,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xfail": 0,
+    "xpass": 0,
+    "duration_seconds": 70.60,
+    "xml_time_seconds": 70.575,
+    "xml_sha256": "6442c80417d385363c5258e156135e6b3aaeb8d9614d245ee7f1cbe42b61f00f"
+  },
+  "selected_files": {
+    "tests/test_process_control.py": 26,
+    "tests/test_platform_signaling.py": 104,
+    "tests/test_door_routes.py": 1282,
+    "tests/test_managed_output_public_api.py": 4,
+    "tests/test_timeline_commit_contract.py": 75,
+    "tests/test_timeline_legacy_authority.py": 80
+  },
+  "body_comparison": {
+    "reviewed_revision": "0bb3bc45cef22bc317398d79e1617da3eb430df2",
+    "run_revision": "f103bb46866999c961a8865636f2e66d544e0c9b",
+    "all_six_bodies_equal": true,
+    "source_hashes": {
+      "tests/test_process_control.py": "260ea8f64aaf3f9e919d4086688cc5bed2aa427c0a963fb6a9e01ef0c6d8a696",
+      "tests/test_platform_signaling.py": "520dccc3cab41d9c8eded56b101c48bc960e1294d77246281880371bae2d10ec",
+      "tests/test_door_routes.py": "9b757d2c7d1125a76db1ad188672429e2b2e9ea2007cc0f248eda96331c8b67d",
+      "tests/test_managed_output_public_api.py": "89c4b3f0aa7998c334d4635524ebb22b75f2f4930f5a028ca8e390c260c82a90",
+      "tests/test_timeline_commit_contract.py": "59693de6b54c7b2660469a771e6d705cdcb4fd512c5700b9089ddb232838404b",
+      "tests/test_timeline_legacy_authority.py": "55194d035225111dd8989f8885899428b2ef60c86a4f927914eabca810f84305"
+    }
+  },
+  "controls": {
+    "exact_six_file_request": true,
+    "addopts_cleared": true,
+    "cache_provider_disabled": true,
+    "no_selection_filter_or_freshness_flag": true,
+    "six_files_have_no_pytestmark_skip_or_xfail_decorators": true,
+    "xml_has_unique_case_ids": true,
+    "raw_service_artifacts_retained": true,
+    "c0_v2_wire_fields_and_provider_route_static_checked": true
+  },
+  "disk": {
+    "floor_bytes": 5000000000,
+    "available_before_submit": 5129838592,
+    "available_after_run": 5154566144,
+    "normal_floor_admitted": true
+  },
+  "registry": {
+    "author_time_patch_added_one_isolated_row": true,
+    "author_time_patch_other_hunks": 0,
+    "author_time_before_blob": "d79b8791cc9bab4d5f9aa0a2aa330fa7038ed380",
+    "author_time_after_blob": "7b3b5658cdbb7c23267b41b282c68e657bb2139f",
+    "current_row_count": 1,
+    "current_file_has_later_shared_registry_changes": true,
+    "current_file_sha256": "675af56eca6d87169a4f67fc2cac57db8e6c648cf4ea70a474d40694b5f20edb"
+  },
+  "historical_context": "1491 passed / 80 errors / 1341 remains historical context only; it was not rewritten or merged into this run."
+}

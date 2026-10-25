@@ -1,0 +1,152 @@
+{
+  "schema": "timeline.d77.input-review-source-manifest/v1",
+  "task": "rt-D77-input-review-2224",
+  "verdict": "PASS",
+  "source_review_only": true,
+  "composition_base": {
+    "repository": "composition",
+    "branch": "tl/integration",
+    "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "current_d139_tuple": {
+    "agent": {
+      "commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+      "tree": "d50fd98f7d1bc6860de810f38e8a0b3a55ca224e",
+      "tree_resolution": "PASS",
+      "tracked_apparent_bytes": 117165635,
+      "allocation_or_installed_bytes": "UNKNOWN",
+      "qualification": "conditional source publication; 38 import occurrences remain outside the declared graph"
+    },
+    "runtime": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "tree_resolution": "PASS",
+      "tracked_apparent_bytes": 20081391,
+      "allocation_or_installed_bytes": "UNKNOWN",
+      "qualification": "conditional source publication pending the D139 documented exclusions"
+    },
+    "tuple_rule": "Only receipts tied to both current D139 identities qualify; historical D77 receipts do not."
+  },
+  "historical_d77_tuple": {
+    "agent": {
+      "commit": "91398e9de4500ce16c8e55741209ba3609cb1694",
+      "tree": "523893dcf54dbe756db8fe2915d14055b1da660b",
+      "tracked_apparent_bytes": 116931670,
+      "status": "historical_only"
+    },
+    "runtime": {
+      "commit": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+      "tree": "a522511414947e48e317a5e5c2103483b121a750",
+      "tracked_apparent_bytes": 19938578,
+      "status": "historical_only"
+    },
+    "tuple_separation": "PASS; both historical identities resolve to distinct trees from D139"
+  },
+  "public_locked_inputs": {
+    "vibecomfy": {
+      "commit": "31f90bb03d330283b76e7dbdda51197be787090d",
+      "tree": "101744f0d87eebe5ddf6752c10f01f52dc94e3e9",
+      "tracked_apparent_bytes": 169901555,
+      "status": "exact fixture/source custody; not an installer receipt"
+    },
+    "omp": {
+      "commit": "9e282751c0059e37d2f6fbc14ffa0b450710bd23",
+      "tree": "2074d7a2e26cc954b5cf3d77e91f3efbb25ad34f",
+      "archive_bytes": 166266880,
+      "archive_sha256": "a7673f9f9b77d24989a5a84b70380f77af3dd869a7be2b94c8d56de404065ecb",
+      "source_tree_sha256": "3a84ac8be7d11434de8b22f4f0f1d643582ecc01c644e347bb0e056401da7b2e",
+      "bun_lock_sha256": "f08eab1fd7e0519e8b131697d6a35815fd71d9b0a61a8d70cc57b499bcba53ee",
+      "status": "public custody only; no new acquisition or install"
+    },
+    "remotion_lock": {
+      "sha256": "f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d",
+      "status": "verified for current and historical Agent source; old 18e near-match is rejected"
+    },
+    "node": {
+      "version": "20.19.4",
+      "sha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490",
+      "status": "Farm inventory verified managed candidate; no current installed-render receipt"
+    },
+    "browser": {
+      "required_sha256": "85918a9937192b78da8edb51c38a7af4920ac6bd9ba19939ecb0bb724d5a1a95",
+      "status": "MISSING in Farm inventory"
+    },
+    "ffmpeg": {
+      "required_sha256": "ed16af623947494a72e284b6eb8ff225f2da22b38b5d5069c2fd4b4ba3384e41",
+      "status": "UNVERIFIED"
+    },
+    "ffprobe": {
+      "required_sha256": "272f6ebc634a63d9c8b4ca68e964119d980f25154e5aa2c35e5487da48e9a58f",
+      "status": "UNVERIFIED"
+    }
+  },
+  "installer_source_provenance": {
+    "agent_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+    "files": [
+      {
+        "path": "astrid/installer/cli.py",
+        "git_blob": "03d1423d9f197af3c690c4cbb989afafee485668",
+        "content_sha256": "a398d88a564ecf8ff148b6340eb885056bbbce53e83d2df1288347842905d792",
+        "bytes": 6884,
+        "trace": "main -> validate_manifest -> Installer.run"
+      },
+      {
+        "path": "astrid/installer/core.py",
+        "git_blob": "cd191b1dc7df774e5da69a31bdbe9c82311b3f18",
+        "content_sha256": "eaaf8b74f9a5588daa33d1acd49c0c4a7248ddb97e61ff77853b89c467a86204",
+        "bytes": 14058,
+        "trace": "Installer.run -> Backend.stage"
+      },
+      {
+        "path": "astrid/installer/backend.py",
+        "git_blob": "2669a68e1ed85a4621fa6503034e64338671fbab",
+        "content_sha256": "3892c447dc111cd0b41b06d38483b0cffc5cf2ae63ab519cad7388fc145029c0",
+        "bytes": 36939,
+        "trace": "source/uv/install_tools/npm ci/profile/service outputs"
+      },
+      {
+        "path": "astrid/installer/tools.py",
+        "git_blob": "44b3208124e0807728993fb0aa5fce0ec109d2ce",
+        "content_sha256": "6b1b1e1c2a4bb8eb5eb3c3fd2495f77aaa2ec335e76bc2c2705bf4b740b1c26b",
+        "bytes": 26557,
+        "trace": "asset downloads/media tools/OMP source and native path"
+      },
+      {
+        "path": "astrid/installer/launcher.py",
+        "git_blob": "244f690d97d06903a186ac503a56beebcef54091",
+        "content_sha256": "8fcd9eec68a3edaf2c0b63bae19a34f8758fa6ba5343e11bc2122f384203a30e",
+        "bytes": 8143,
+        "trace": "installed run-astrid launcher generation"
+      },
+      {
+        "path": "tests/packs/video_editing/test_runtime_publication_chain.py",
+        "git_blob": "38884ae901955ce59a949daaf788936812c4dd45",
+        "content_sha256": "efeb3dc4d02dc133831283e2c1e60b258da85e2dfe8f716a1627cd9d6260e361",
+        "bytes": 64933,
+        "trace": "D13 installed preflight and daemon-backed host/final-render selectors"
+      }
+    ]
+  },
+  "guard_receipts": {
+    "author": "Sol1243",
+    "helper_sha256": "5c821f9e3c958a8487cc17e9374281aa4d228a48e3b4ef2ab416ee4dd5b29386",
+    "independent_reviewer": "Luna1257",
+    "independent_receipt_sha256": "cdbb9fd919edf832e2da6f09e591f9aa9366cefd51d3f87ab44c8acf0211e57e",
+    "independent_verdict": "PASS",
+    "independent_controls": 18,
+    "scope": "diagnostics wrapper only; not live install/stage/render proof",
+    "custody_receipt_sha256": "8b29293a95628463bf567b82b852e23d679685af9b7a11d527b554ee58b8f588"
+  },
+  "reviewed_public_receipts": {
+    "farm_inventory_sha256": "a1a4172bf781220556c81c8fa5654e893a4b98713f88637651e24de6ad1de5e8",
+    "reviewed_inputs_sha256": "41b71f055719edabb08018efbf0b5d5ffa8cb56ab8367ef69018211c58694b0a",
+    "reviewed_source_manifest_sha256": "b8e46b70ee77413f5e62a6c470aa8e6d93e3979d78e202b9c2cf4a8bba623b8f"
+  },
+  "redaction": {
+    "credentials": "excluded",
+    "private_paths": "excluded from this manifest",
+    "private_identifiers": "excluded",
+    "raw_urls_and_tracebacks": "excluded; only safe status and public hashes retained"
+  }
+}

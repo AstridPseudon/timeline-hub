@@ -1,0 +1,94 @@
+{
+  "schema": "timeline.d77.complete-inputs-independent-review/v1",
+  "task": "rt-D77-input-review-2224",
+  "reviewed_task": "rt-D77-complete-inputs-2218",
+  "verdict": "PASS",
+  "run_disposition": "NOT_READY",
+  "footprint_disposition": "UNKNOWN_UNBOUNDED",
+  "scope": "read-only source, hash, JSON arithmetic, custody, call-chain, redaction, and recipe review",
+  "prohibited_actions_confirmed": [
+    "no installer",
+    "no stage",
+    "no preflight",
+    "no provider",
+    "no browser",
+    "no render",
+    "no acquisition",
+    "no product/source/tool/config edit",
+    "no D130 qualification"
+  ],
+  "checks": {
+    "reviewed_evidence_json": "PASS",
+    "required_input_coverage": "PASS",
+    "current_vs_historical_tuple_separation": "PASS",
+    "source_call_chain": "PASS_STATIC_TRACE",
+    "guard_custody_scope": "PASS_LIMITED_WRAPPER_ONLY",
+    "arithmetic": "PASS",
+    "phase_overlap_model": "PASS_CONSERVATIVE_UNKNOWN",
+    "private_data_redaction": "PASS",
+    "recipe_syntax": "PASS",
+    "installed_run_or_stage": "NOT_RUN_BY_SCOPE"
+  },
+  "arithmetic": {
+    "historical_staging_observation_bytes": 1168669468,
+    "runtime_tracked_bytes": 19938578,
+    "vibecomfy_tracked_bytes": 169901555,
+    "omp_archive_bytes": 166266880,
+    "known_only_formula": "1168669468 + 19938578 + 169901555",
+    "known_only_bytes": 1358509601,
+    "omp_inclusive_nonoverlap_formula": "1168669468 + 19938578 + 169901555 + 166266880",
+    "omp_inclusive_nonoverlap_bytes": 1524776481,
+    "arithmetic_reproduced": true,
+    "sums_are_peak_bound": false,
+    "d89_admission_floor_is_peak_bound": false,
+    "peak_status": "UNKNOWN_UNBOUNDED"
+  },
+  "coverage": {
+    "required_input_rows": 24,
+    "required_stage_order_rows": 10,
+    "all_required_categories_reviewed": [
+      "ASTRID_RUN",
+      "INSTALL_MANIFEST",
+      "PROGRAM_ROOT",
+      "DATA_ROOT",
+      "RUN_ROOT",
+      "RESULT_ROOT",
+      "current D139 Agent and Runtime sources",
+      "historical tuple receipts",
+      "request checkout/runtime/child receipts",
+      "UV",
+      "Node",
+      "Bun/OMP",
+      "ffmpeg",
+      "ffprobe",
+      "browser",
+      "Remotion lock and npm ci output",
+      "seven-key bindings",
+      "installed profile/service declaration",
+      "stage/preflight/render receipts",
+      "guard receipts"
+    ],
+    "missing_or_unverified_remain_blocking": true
+  },
+  "source_trace": {
+    "installer": "installed run-astrid -> astrid.installer.cli.main -> validate_manifest -> Installer.run",
+    "stage": "Installer.run -> Backend.stage",
+    "materialization": "source(agent/runtime/vibecomfy) -> uv venv and locked pip installs -> install_tools",
+    "tools": "install_tools -> Bun/Node/media tools -> OMP source/package path",
+    "remotion": "Backend.install_remotion_dependencies -> Node npm ci --no-audit --no-fund in agent/remotion",
+    "installed_outputs": "service declaration -> profile.json/version.json/manifest.json -> launcher/current selection",
+    "host": "installed Runtime/profile -> generic host / run_pack_host_foreground / ensure_pack_host",
+    "d13_selectors": [
+      "test_d13_installed_native_preflight",
+      "test_daemon_backed_host_executes_authoring_and_final_render"
+    ],
+    "static_source_seam": "Backend.stage writes a profile carrying source_digest and service_declaration; the D13 selector requires its exact four-key profile shape. No installed profile exists, so compatibility is unverified and no qualification is inferred."
+  },
+  "unresolved": [
+    "D139-tied launcher, authenticated manifest, UV receipt, roots, runtime/child receipts, installed profile, bindings, browser, media-tool hashes, and stage sizes are absent or unverified.",
+    "The retained ordinary stage stopped at the exact pinned OMP archive with HTTP 403; no alternate source or permission route is accepted.",
+    "Archive/unpack, UV/wheel/cache, Bun/OMP native, npm/node_modules, backup, browser, render input/output, and transient overlap maxima are not authenticated upper quantities.",
+    "The 1,623,728,128-byte OMP-phase observation is a lower bound only; it is not a complete stage peak or upper bound."
+  ],
+  "conclusion": "The reviewed permanent evidence is internally correct and honest as a NOT_READY handback. PASS does not authorize a run, reuse an old tuple, credit a staged render, fetch an artifact, or treat 4.6 GB/5.2 GB admission as a footprint limit."
+}
