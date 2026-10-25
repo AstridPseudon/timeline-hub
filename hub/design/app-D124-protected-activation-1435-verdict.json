@@ -1,0 +1,15 @@
+{
+  "task": "D124/D126",
+  "verdict": "PASS_PROTECTED_ACTIVATION",
+  "app_head": "84857c45347539c7820bb054b69e2e5ad4079081",
+  "app_tree": "7feb5b12a1ad9629f096700c40c393d5b3998217",
+  "source_changes": [],
+  "controls": {
+    "normal": {"status": "pass", "tests_passed": 2, "tests_failed": 0, "tests_skipped": 40},
+    "reviewed": {"status": "pass", "tests_passed": 2, "tests_failed": 0, "tests_skipped": 40}
+  },
+  "fresh_activation": true,
+  "protected_helper_sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760",
+  "raw_capture_policy": "private mode 0600 only; no raw request/auth/key/private URL/stack data published",
+  "full_tour": "not_run_by_task_instruction"
+}

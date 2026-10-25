@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T14:35:58Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 4m -->
-# app board, 2026-10-25T14:32Z
+<!-- app | 2026-10-25T14:40:15Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 1m -->
+# app board, 2026-10-25T14:37Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -84,16 +84,19 @@
 | D124-bootstrap | Qualify existing normal bootstrap controls | Luna read only | Own three existing controls | review | app-D124-normal-bootstrap-controls-1337 | D78 PASS; throw-fixture500 and event-key schema FAIL. D66 exact helper identity2 PASS. [Report](../../design/app-D124-normal-bootstrap-controls-1337-report.md). | af5fe0 source |
 | D125-full-P2 | Preserve Proof zero body handback | Proof; App receipt | D127 venue transfer | gated:venue-returned | Proof stood down; no service ID | Exact recipe stopped at missing tsx before central preflight. All eight NOTRUN. Owner transferred to App D127, no Proof duplicate. | Frozen fe3309 tuple |
 | D127-full-P2 | Qualify tagged original tour | Luna and independent Luna | Actual3250 terminal | review | Controller1407; sole verdict D125 review | Exit1/554s; readiness1 PASS; originals5 PASS,2 FAIL,1 NOTRUN. SWAP history unavailable; element applied absent. [Packet](../../design/app-D127-full-P2-3250-terminal-1421-facts.json). | fe3309 /070dfc /5e9ad /635f |
-| D124-bootstrap-return | Merge reviewed diagnostic bounds | Luna and independent Luna | Exact clean import1425 PASS | merging | app-D126-reviewed-clean-import-1425 | Full clean tree equals independent reviewed9d754. Node20 normal2, types and lint PASS. Own-only f4c3 queued for normal merge. Activation separate. | f4c3f94bc1 |
+| D124-bootstrap-return | Preserve reviewed diagnostic bounds | Luna and independent Luna | Exact clean import1425 PASS | merged | Import1425; normal receipt1437 | Normal full tree equals independent reviewed9d754. Node20 normal2, mutations, types and lint PASS. Actual helper activation stays separate. | 84857c4534 |
 | D126-notes | Preserve upstream change and ZIP note | Luna independent | Independent1414 PASS source | merged | Final reviewer1414; Runtime final notes | Exact worker paragraph in existing App ledger; UPSTREAM test and owner ZIP wording handed to Runtime. Normal source receipt follows clean import. | Evidence only |
 
-| D124-activation | Repair actual reviewed helper startup | HARD Sol | Repeated Luna startup failures | doing | app-D124-activation-wholepath-sol-1425 | First retained refusal is helper basename guard at sitecustomize51. Sol checks true path/hash activation and safe request correlation; no guard bypass. | Base af5fe0 |
+| D124-activation | Prove correct helper startup route | HARD Sol | Repeated Luna startup failures | merged | app-D124-activation-wholepath-sol-1425 | Configuration root proved: required helper basename with exact6c9 bytes. No source repair. Actual socket control pending Luna1435; no activation GO yet. | Source unchanged |
+
+| D124-activation-proof | Qualify actual helper startup | Luna independent | Normal84857 and canonical6c9 source | review | app-D124-protected-activation-1435 | Same two normal and reviewed unit controls; --net authorized. Must retain fresh phase and sampler witness; no original body or source edits. | App84857 |
+| D124-correlation | Join browser helper and error diagnostic | Runtime current author | Existing safe hash and source audit | blocked:runtime | Runtime MAIN14:29 source owner | Public and logged IDs differ. Existing exact key hash joins browser/helper; Runtime log needs supported safe join. Peer1435 sent; no App duplicate writer. | Source unchanged |
 
 | D125-local-prep | Prepare exact local fallback | Luna read only | Exact four local receipts | merged | app-D125-local-fallback-prep-1356 | Source/API/Node and source hashes PASS; no body. Dependency omission is explicit and assigned to D127 controller. | Frozen fe3309 tuple |
 
 | D74-D124-old-pins | Release obsolete completed tuple pins | Manager and host audit | Host1249 and fresh guards | merged | Guarded recycle1254 | Both34d464 and7070 recycled normally;187142144 bytes net. All outputs, reports, branches and current inputs kept. Zero refusal. | No source edits |
 
-Integration: App af5fe0a2748ce6df65fb36ce9cd435fc1df0502a/tree2afa38ba9e8ebfcefb23c81dbc1af3b1b9eabe0c equals entire protected1320 reviewed4c56 source. Only authorized D66/helper hook files changed. D125 remains locked to fe3309 and excludes new diagnostics. Runtime5e9ad, Agent070dfc and Composition635f retained. [Receipt](../../design/app-D124-hook-normal-home-1330.json).
+Integration: App84857c45347539c7820bb054b69e2e5ad4079081/tree7feb5b12a1ad9629f096700c40c393d5b3998217 equals the entire independently1414 reviewed candidate tree. Only exact two D126 and strict bootstrap test blobs imported. Targeted normal2, mutations, types and lint PASS. [Normal receipt](../../design/app-D126-normal-home-1437.json). Actual3250 remains frozenfe3309/070dfc/5e9ad/635f and excludes new helper/hook. No result retarget.
 
 Recorded full P2 actual15203 remains NO-GO on96d475/070dfc/d23a8/635f: readiness1 PASS; placement and ADD independently GO; element and SWAP FAIL; parent ERROR/no POST; asset and clears NOTRUN. Later source merges supply no browser credit. Prior P1/P3 and case GOs retain recorded tuple scope. No unchanged gate body queued.
 
@@ -103,13 +106,13 @@ D118a claim1124 posted to Agent INBOX before three starts: occurrence2 own-node 
 
 
 Blockers: App current SWAP — Actual3250 independent five-case GO; SWAP409 history_unavailable with lower private binding UNKNOWN. MAIN assigned Runtime root and correlation14:29; no App duplicate.
-Blockers: App element — Sole App owner. Actual3250 applied status absent. Strict bounds independently PASS source; Sol1425 owns reviewed-helper startup and safe correlation before later sampled tour. No timing attribution.
+Blockers: App element — Sole App owner. Strict bounds normal84857; startup root proved. Luna1435 qualifies canonical6c9 actual activation; Runtime current diagnostics author owns separate error-log join per peer1435. Existing exact key hash already joins browser/helper timing. No current original body.
 Blockers: Farm host14 and batch — Agent upstream fallback is normal a4e016 and original14 independently PASS. REG closure awaits core; Farm child metadata refusal remains stopped with Runtime1404 correction owner.
 Blockers: Farm batch — Atomic and native binding are normal Agent source; downstream product adoption waits unfiltered Farm core. Captured-redo test setup is home. No App author or review wait remains.
 Blockers: Final cut — Current full P2 remains NO-GO; final P1-P5/core/D69 and genuine installed render still owed. Existing denied acquisition and cleanup routes remain stopped.
-Next ready: Clean import1425 acceptance PASS and normal merge queued immediately. Activation Sol1425 is progressing. Sampled tour stays gated by protected activation; no additional body now.
-live 1 / cap 3; ready-undispatched 0; core open: 2. HARD Sol startup root active after two unsuccessful Luna attempts. Own-only normal merge queued; no heavy body.
-Capacity: Free5.181GB before Sol admission, after5.346GB clean-import admission. Sweep3 removed zero dirs; compact packed zero and gzipped one old log. Protected inputs and all original outputs retained.
-INBOX consumed through2253926 bytes. Lead14:35 relay assigns Runtime SWAP root and asks App helper correlation; both mapped to current owners. Exact3250 terminal independently qualified; no duplicate original.
+Next ready: Luna1435 protected activation is dispatched. Source repair is normal84857. After activation PASS and fresh5.2GB admission, prepared sampled controller1440 uses exact84857/070dfc/5e9ad/635f with qualified6c9. Runtime semantic repair/log join does not hold element timing.
+live 1 / cap 3; ready-undispatched 0; core open: 2. One independent Luna activation worker. Sol1425 completed exact root and finite source handback; no source edits or heavy body.
+Capacity: Free5.338GB before protected1435 admission. Sweep3 removed zero dirs; compact packed zero and gzipped one old log. Protected inputs and all original outputs retained.
+INBOX consumed through2255383 bytes. Delayed submit note does not reopen terminal3250. D126 source home and final notes delivered; Runtime current SWAP root/correlation asked directly. No duplicate original.
 Later: Nativecheckout4/trackbatch1 share known m1.film missingwordanchor setup; no diff/retirement. D116 reviewedjoin held for Agent raw/config batch. D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees retain guards. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakening, credentials or refused-route retry.
 

@@ -1,0 +1,32 @@
+{
+  "app": {
+    "head": "84857c45347539c7820bb054b69e2e5ad4079081",
+    "tree": "7feb5b12a1ad9629f096700c40c393d5b3998217",
+    "files": {
+      "scripts/testing/sitecustomize.py": "83c28b437417753a221e0fec36047dd6bb267256366dd4acacb8ef8d8137615e",
+      "tests/e2e/local/support/harness.ts": "b868c6bf8b47b63c3165466461a61fbfeb7a282a39f48bc5ae80860cec3e011e",
+      "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts": "9b255149cf3821e9fd6a9e688cc0a4e74b353e7d059feeb56993f20d4140c7d8",
+      "tests/e2e/fake-runtime/server.contract.test.mjs": "62dfab746b917e6e5539dadc4d56f2e36a5b72fb1519890e1f1aad55e08fdf3e"
+    }
+  },
+  "runtime": {
+    "checkout": "/home/user/work/wt/rt-pin-5e9ad1c6",
+    "files": {
+      "tests/helpers/p2_commit_phase_capture.py": "a17a92115661fcef13b49169504ad8726e6f6c0cdce66b195128b14477fa76a4",
+      "runtime_protocol/server.py": "5188ad162296d7abd121d79abd2f6d1c89ef655fc30b9e24ae3c80628c974832",
+      "runtime_protocol/service.py": "7277fc12e502a419ccd9eea9dfd2b3693bc8b2c8963e9fdf7224402d8a03a529",
+      "runtime_protocol/timeline_commit_execution.py": "75b8c8a214e4c54482046a59e7d051646bce22ed3ebcc2b62726e53f5a59d744"
+    }
+  },
+  "reviewed_helper": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D124-protected-activation-1435/evidence/p2_commit_phase_capture.py",
+    "basename": "p2_commit_phase_capture.py",
+    "sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760",
+    "byte_exact_runtime_candidate": false
+  },
+  "toolchain": {
+    "node": "v20.19.4",
+    "runtime_python": "Python 3.13.16",
+    "agent_python": "Python 3.13.16"
+  }
+}

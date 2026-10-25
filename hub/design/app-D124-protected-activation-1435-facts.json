@@ -1,0 +1,71 @@
+{
+  "task": "D124/D126 independent protected activation qualification",
+  "verdict": "PASS_PROTECTED_ACTIVATION",
+  "app_head": "84857c45347539c7820bb054b69e2e5ad4079081",
+  "app_tree": "7feb5b12a1ad9629f096700c40c393d5b3998217",
+  "source_changes": [],
+  "controls": {
+    "normal": {
+      "status": "pass",
+      "tests": 42,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 40,
+      "capture": {
+        "rows": 102,
+        "bytes": 13152,
+        "mode": "0600",
+        "schema_version": 1,
+        "truncated": false,
+        "retained_events": 102,
+        "events_seen": 102,
+        "max_events": 128,
+        "max_bytes": 65536,
+        "unsupported_boundaries": ["caller_receipt", "client_request_to_server_receive", "execution_lock_wait"]
+      }
+    },
+    "reviewed": {
+      "status": "pass",
+      "tests": 42,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 40,
+      "capture": {
+        "rows": 102,
+        "bytes": 30754,
+        "mode": "0600",
+        "schema_version": 1,
+        "truncated": false,
+        "retained_events": 102,
+        "events_seen": 102,
+        "max_events": 128,
+        "max_bytes": 65536,
+        "max_requests": 8,
+        "sampling_interval_ms": 20.0,
+        "sample_totals": [88, 11],
+        "lost_samples": [2, 0],
+        "sampler_errors": [],
+        "unsupported_boundaries": ["caller_receipt", "client_request_to_server_receive", "execution_lock_wait", "request_body_receive"]
+      }
+    }
+  },
+  "activation": {
+    "fresh_runtime_lifecycle": true,
+    "endpoint_health_and_registered_request": true,
+    "phase_capture": true,
+    "sampler_capture": true,
+    "bounded_capture": true,
+    "privacy_validator": true,
+    "normal_helper_overrides": "unset",
+    "reviewed_helper_override": "D66 path/hash only",
+    "reviewed_helper_basename": "p2_commit_phase_capture.py",
+    "reviewed_helper_sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760"
+  },
+  "correlation_limit": "public HTTP request_id and logged service diagnostic request_id remain distinct; existing idempotency_key_sha256 is an exact browser/helper join only for identical key bytes and is not an exact current error-log join",
+  "publication": {
+    "safe_fields_only": true,
+    "raw_capture_published": false,
+    "raw_request_auth_key_private_url_or_stack_published": false,
+    "full_tour": "not_run_by_task_instruction"
+  }
+}
