@@ -261,6 +261,8 @@ def historical_sheet_film(tmp_path, request):
             calls.append({'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
                           'args': {'changes': changes},
                           'created': ['occurrence:occ/clip:video', 'occurrence:occ/clip:title']})
+            calls.append({'schema_version': 1, 'op': 'media.admit', 'version': '1', 'select': None,
+                          'args': {'inputs': [{'pin': {'media_id': media, 'content_digest': media}}]}})
 
         steps = [{'id': f'bootstrap-{index + 1}', 'label': 'Bootstrap ordinary sheet',
                   'intent': '', 'tags': [], 'command_ordinals': [index],
@@ -278,6 +280,7 @@ def historical_sheet_film(tmp_path, request):
             project, 'film', request_body, idempotency_key='seed-sheet', publisher='author',
             invocation_path=route_path(project, 'film'), authorize=lambda: None)
         assert accepted['data']['status'] == 'accepted'
+        service.close()
         _preflight_detached_fixture(root, project)
         return root, project
     finally:
