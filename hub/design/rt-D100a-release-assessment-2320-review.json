@@ -1,0 +1,66 @@
+{
+  "task": "rt-D100a-release-assessment-2320",
+  "verdict": "PASS_RELEASE_ASSESSMENT",
+  "scope": "D100 additive physical-item-birth release gate only",
+  "assessment_basis": "Read-only comparison of immutable design evidence and exact Git objects; no product, test, collection, lint, or merge action was performed.",
+  "gates": {
+    "a_corrected27_independent": {
+      "status": "PASS",
+      "result": "27 tests, 27 passed, 0 failed, 0 errors, 0 skipped, exit 0, 2.86 seconds",
+      "candidate_commit": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+      "candidate_tree": "66c0215955332af8ed32ae7d4c17d4f71ccb17d4",
+      "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "runtime_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "provider_route": "registered Astrid provider through RuntimeService.commit_timeline",
+      "admission": "real 5,000,000,000-byte floor passed immediately before the command",
+      "receipt": {
+        "xml_sha256": "77117fa11c638142efc89c1bf6a497fb5d7dd8c73b37e27114bfd4d393726aa8",
+        "xml_timestamp": "2026-10-25T19:41:31.070462Z",
+        "custody": "private XML remains App-owned and was not copied or transferred"
+      },
+      "independent_record": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D100-final-result-review-1946-source-custody.json"
+    },
+    "b_b022_nonintersection": {
+      "status": "PASS",
+      "method": "Compared exact Git diff paths and changed hunks against the complete retained B022 path/function map.",
+      "result": "No path or function intersection; neither D100 commit causes or masks B022.",
+      "d100_commits": [
+        "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+        "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1"
+      ],
+      "b022_runtime": "ab1e4f6141987706132916e2da16477f5a019464",
+      "intersection": {
+        "paths": [],
+        "functions": [],
+        "hunks": []
+      }
+    },
+    "c_candidate_security": {
+      "status": "PASS",
+      "candidate_commit": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+      "base_commit": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb",
+      "candidate_tree": "0919e511bd28b3d3af76bb18155efda12c3e94f6",
+      "review_verdict": "PASS_SOURCE_SECURITY",
+      "behavioral_status": "NOTRUN in the source/security review; this gate relies on the later independent App 27/27 receipt for behavior.",
+      "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-Agent-D100-security-review-1803-review.json"
+    }
+  },
+  "disposition": {
+    "recommend": "Normal Agent home-queue adoption of the exact author branch range; worker does not merge.",
+    "branch": "tl/rt-Agent-D100-test-return-1914",
+    "commit": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+    "tree": "66c0215955332af8ed32ae7d4c17d4f71ccb17d4",
+    "base": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+    "diff_paths": [
+      "astrid/sdk/timeline/_command_state.py",
+      "tests/sdk/test_d100_item_birth_boundary.py"
+    ]
+  },
+  "limits": [
+    "This is not a broad Timeline release or whole-path projection qualification.",
+    "D136c original9 remains open: nine setup errors, zero body outcomes; diagnostics2312 is diagnostic-only.",
+    "D130 remains held.",
+    "The separate D104 authored FPS [30000, 1001] setup finding remains unchanged and receives no D100 credit.",
+    "No new body, retry, collector, fixture conversion, or source repair was authorized."
+  ]
+}

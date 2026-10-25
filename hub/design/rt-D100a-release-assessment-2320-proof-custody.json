@@ -1,0 +1,36 @@
+{
+  "task": "rt-D100a-release-assessment-2320",
+  "custody_policy": "Read-only assessment; source facts and existing proof only.",
+  "candidate27": {
+    "status": "PASS",
+    "membership": {"collected": 27, "passed": 27, "failed": 0, "errors": 0, "skipped": 0, "exit_code": 0},
+    "duration_seconds": 2.86,
+    "candidate": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+    "runtime": "ab1e4f6141987706132916e2da16477f5a019464",
+    "receipt_xml_sha256": "77117fa11c638142efc89c1bf6a497fb5d7dd8c73b37e27114bfd4d393726aa8",
+    "receipt_timestamp": "2026-10-25T19:41:31.070462Z",
+    "admission_floor": {"required_bytes": 5000000000, "status": "PASS"},
+    "independent_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D100-final-result-review-1946-report.md"
+  },
+  "source_receipt": {
+    "corrected_derivative": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-Agent-D100-receipt-correction-1934-source-manifest.json",
+    "corrected_product_sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+    "corrected_product_sha256_length": 64,
+    "product_git_blob_sha1": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+    "test_git_blob_sha1": "39ed571d5f3e49d2545fc31e1f868ee7c58dbc8a",
+    "source_manifest_sha256": "500b81c1be929f655d220ed8be39dde68f2e513c67530c0634b57816d9f1fe91"
+  },
+  "security_receipt": {
+    "review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-Agent-D100-security-review-1803-review.json",
+    "verdict": "PASS_SOURCE_SECURITY",
+    "candidate": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+    "base": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb",
+    "review_scope": "exact two-file candidate source/security review; no behavioral body run"
+  },
+  "privacy": {
+    "private_xml_read_in_place": true,
+    "raw_xml_copied": false,
+    "raw_logs_or_payloads_published": false,
+    "credentials_keys_urls_private_paths_or_stacks_published": false
+  }
+}

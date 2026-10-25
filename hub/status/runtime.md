@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T23:22:08Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 16 | status age 0m -->
+<!-- main | 2026-10-25T23:26:43Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 15 | status age 2m -->
 # runtime board, 2026-10-25T23:12:23Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
@@ -524,7 +524,7 @@
 
 | D138-CLI22-receiving | Receive reviewed current CLI recipe | Agent Luna / Runtime later | Actual D140 full-core coverage | gated:D140-core | Agent2251/final2259 PASS | Private f987 eleven source controls PASS. Prefer exact full-core per-ID outcomes; no duplicate22 body or premature row installation. | Independent2259 PASS_SOURCE | f987135c6 private |
 
-| D100a-release | Check independent release from B022 | Luna read only | Exact27 receipt and security source | doing | rt-D100a-release-assessment-2320 | Owner23:27 asks proof, security and zero B022 file/function intersection. Stop on intersection; no product edit or repeated body. | One independent assessment | 42040 /9486 held |
+| D100a-release | Release qualified item birth independently | Luna read only / Agent home | Agent normal intake | blocked:agent | Independent2320 PASS; homepeer2324 | All three gates PASS. Both commits Agent only. Remote helper exit3 D106; normal host filing requested, no retry. Original9 separate. | Independent2320 PASS_RELEASE | Agent42040 /9486 |
 
 Runtime producer: Normal0ca306dfd3cf4e21976271cc4b2e779b10e025b0 tree37cf exactly reviewed D136c; integrated4PASS1.42s on Agent4c. Priorf103 Actual9082 targeted1571 PASS70.60s, independent2219 PASS; Agent4c source scope only, no full/core/gate credit. Future Agent home41ad and App569 provenance receipts consumed; Main local Agent547e is stale and excluded.
 Core venue: D140 Farm. Agent remains source/author lane; old child3e163 retained. No new Agent child/core. Farm complete prerequisite --check-only before ONE merged child, in-child imports, D134 dry controls and exact22-root core.
@@ -537,13 +537,14 @@ D136c: Independent security/privacy2312 PASS. Normal merge queued; exact immutab
 Blockers: SWAP safety — D130 automatic classifier refusal1537 holds WAL/recovery and all related qualification. No retry, transfer, alternate test or rollback. Existing escalation retained.
 Blockers: D69 and cut — Ship-grade core, current REG0, full P2, installed render90, final tuple P1-P5, wheel, Windows and ZIP remain owed.
 Next ready: Kit installed2314 PASS and normal hubkit bytes exact; Farm receiving pending. Farm protected review2316 terminal -> complete handoff after kitpublication. D136c home2318 -> integrated four-case receipt; App sole nine source ready.
-D100: Candidate27 PASS; exact original2136 on20db has9setupERROR at missing authenticated physical observation. Complete App45-boundary inventory final2220 and135UNKNOWN classification final2240 PASS consumed. No cause proved; Runtime2233 supporting only. Diagnostics now owns next runtime facts.
+D100a: Independent2320 all three release gates PASS; no B022 intersection. Both9486/42040 are Agent-only. Home peer2324 requests normal intake; manager remotehelper exit3 D106, no retry or direct hub write. Managed153 measured later by Farm.
+D100 original9: Candidate27 PASS; exact original2136 on20db has9setupERROR at missing authenticated physical observation. Complete App45-boundary inventory final2220 and135UNKNOWN classification final2240 PASS consumed. No cause proved; Runtime2233 supporting only. Diagnostics now owns next runtime facts.
 Element: D127d UNAPPLIED; offline123ms/synthetic267ms did not reproduce live delay. D127e source2153/independent2202 reaches D112 statically; actual waiter UNKNOWN and D130 held. Actual32016/15200 are element boundaries;10721 request2 is not. No further profile body.
 Delivery: All D139 joins landed; final D59 cut gets second fresh upstream merge. Farm old union STOPPED. D77 complete24-input source inventory qualified but actual sources/launcher/manifest/roots/finite peak and installed render still owed.
 Staging: Main2303 DEFERRED until post ZIP; source held and uninstalled, no more rounds or cleanup. Resolved escalation2250 consumed.
 Store retirement: Main D140 DEFERRED; independent2304 PASS_ASSESSMENT confirms F1-F3 UNAPPLIED/F4-F5 fixed. Child3e163 retained; source uninstalled, no further author or cleanup. Resolved escalation2304 consumed.
 Disk: Fresh5047771136 bytes. Sweep3 removed0; compact packed0 worker/test dirs and compressed2 logs. Three remaining old V1 trees are dirty/unreferenced, total19MB, retained; no unsafe recycle attempted. Prior five clean pins released with guarded audits; all branches/evidence/registeredpins/testKEEP preserved. Source cap6 above5GB, cap3 above4.6GB; stop4GB.
-live2 / cap6; ready-undispatched0. Farm recipe return2322 and D100a read-only2320 active. D136c integrated4PASS; installed kit review2314PASS. Source handoffs ready after recipe correction. No heavy body. No heavy body.
+live1 / cap6; ready-undispatched0. Farm recipe return2322 active; D100a independent2320 PASS now Agent home intake. D136c integrated4PASS; installed kit review2314PASS. Source handoffs ready after recipe correction. No heavy body. No heavy body.
 Safety: All prior refusals held. Manager writes board/briefs/peers and exact handbacks only; Codex workers own product/tests/generated/pins and kit replacement. No direct Git mutation or credential access.
-INBOX consumed through1679462 bytes. D100a immediate independent assessment2320 dispatched; stop if B022 intersects. CLI22 private f987 source received as gated D140-core row; no duplicate body. D140 venue/source-only Agent2254 prep consumed; Farm2307 new venue packet is sole Runtime coordinator. Source and wrapper independent reviews qualified; publication follows installation.
+INBOX consumed through1681227 bytes. D100a immediate independent assessment2320 dispatched; stop if B022 intersects. CLI22 private f987 source received as gated D140-core row; no duplicate body. D140 venue/source-only Agent2254 prep consumed; Farm2307 new venue packet is sole Runtime coordinator. Source and wrapper independent reviews qualified; publication follows installation.
 Model rule: Every new worker this pass Luna/high/default180. Any Sol needs actual HARD reason recorded in meta; no new Sol dispatched. Staging and Store have no further round.

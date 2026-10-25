@@ -1,0 +1,49 @@
+{
+  "task": "rt-D100a-release-assessment-2320",
+  "method": "Exact Git object diff plus retained D136a/D136b source map; no textual relatedness inference.",
+  "d100": {
+    "base": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+    "candidate": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+    "commit_9486_diff_paths": [
+      "astrid/sdk/timeline/_command_state.py",
+      "tests/sdk/test_d100_item_birth_boundary.py"
+    ],
+    "commit_42040_diff_paths": ["tests/sdk/test_d100_item_birth_boundary.py"],
+    "changed_product_functions": [
+      {"path": "astrid/sdk/timeline/_command_state.py", "function": "State.shot_item_map", "hunks": "341-365"},
+      {"path": "astrid/sdk/timeline/_command_state.py", "function": "State._item_ids", "hunks": "368-392"},
+      {"path": "astrid/sdk/timeline/_command_state.py", "function": "State.project_shot_items", "hunks": "395-410"}
+    ],
+    "follow_up_test_hunks": [
+      {"path": "tests/sdk/test_d100_item_birth_boundary.py", "hunks": "49-63,157-197"}
+    ]
+  },
+  "b022_scope": {
+    "runtime": [
+      {"path": "runtime_protocol/timeline_commit_auth.py", "function": "native_site", "lines": "213-218"},
+      {"path": "runtime_protocol/timeline_commit_auth.py", "function": "command_output", "lines": "2189-2335", "refusal_line": 2209}
+    ],
+    "agent_physical_closure": [
+      {"path": "astrid/sdk/timeline/commit.py", "function": "document_from_bundle", "lines": "302-420"},
+      {"path": "astrid/sdk/timeline/_doc_patch.py", "function": "Closure.__init__", "lines": "120-140"},
+      {"path": "astrid/sdk/timeline/_doc_patch.py", "function": "Closure.binding", "lines": "174-181"}
+    ],
+    "agent_private_capture_producer": [
+      {"path": "astrid/sdk/timeline/_commit_patch.py", "function": "CommitPatch.before", "lines": "354-409"},
+      {"path": "astrid/sdk/timeline/_commit_patch.py", "function": "CommitPatch.after", "lines": "459-512"},
+      {"path": "astrid/sdk/timeline/_commit_patch.py", "function": "CommitPatch.finish", "lines": "514-698"},
+      {"path": "astrid/sdk/timeline/_commit_preview.py", "function": "capture_sequential_execution", "lines": "25-90"}
+    ]
+  },
+  "comparison": {
+    "path_intersection": [],
+    "function_intersection": [],
+    "hunk_intersection": [],
+    "conclusion": "Neither 9486 nor 42040 edits a B022 file or listed function. The additive test invokes the real registered route in its integration case but does not alter B022 production code; it cannot cause or mask the retained refusal."
+  },
+  "controlling_records": [
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136a-inventory-final-check-2220-review.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136b-observation-producer-sol-2231-producer-map.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D136b-trace-review-2247-findings.md"
+  ]
+}
