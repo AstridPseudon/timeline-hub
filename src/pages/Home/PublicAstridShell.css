@@ -1572,8 +1572,8 @@
   /* The App has one timeline row. Size its stage from the inspector, 16:9 player, row, and
      label clearance instead of stretching a portrait aspect ratio on wider phones. */
   .astrid-editor-stage[data-audience="app"] {
-    --astrid-app-top: calc(var(--astrid-phone-rail-top, 60px) - 44px + var(--astrid-phone-gap));
-    --astrid-app-label-space: calc(var(--astrid-phone-rail-bottom, 130px) - 20px + var(--astrid-phone-gap));
+    --astrid-app-top: calc(var(--astrid-phone-rail-top, 86px) - 44px + var(--astrid-phone-gap));
+    --astrid-app-label-space: calc(var(--astrid-phone-rail-bottom, 84px) - 20px + var(--astrid-phone-gap));
     width: 100%; min-width: 0; min-height: 0; aspect-ratio: auto;
     height: calc(var(--astrid-app-top) + 100px + (100vw - 62px) * .5625 + 112px + var(--astrid-app-label-space) + 2px);
   }
@@ -1676,9 +1676,8 @@
   .astrid-scripted-conversation [data-conversation-presentation] > div:last-child { padding: 8px 10px; }
   .astrid-preview-transport-outlet .astrid-preview-transport button { flex: 0 0 40px; width: 40px; }
 
-  /* Both audiences hang one full-width card over the stage's top edge and a half-width pair under its
-     bottom edge, so switching morphs every card in place: Effects <-> Tools, Timeline <-> Workflows,
-     Models <-> Community. */
+  /* Cards hang over the stage's top edge (44px) and under its bottom edge (20px). Agent: the full-width
+     Tools card on top, Workflows and Community below. App: Timeline and Effects on top, Models below. */
   .astrid-callout {
     --astrid-callout-width: calc(50% - 14px);
     padding: 9px 11px;
@@ -1687,11 +1686,19 @@
   .astrid-callout h2 { font-size: 13px; line-height: 1.22; }
   .astrid-callout p { margin-top: 3px; font-size: 11.5px; line-height: 1.32; }
   .astrid-callout[data-callout] { top: auto; right: auto; bottom: auto; left: auto; }
-  .astrid-callout:is([data-callout="timeline"], [data-callout="workflows"]) { left: 8px; bottom: -20px; }
-  .astrid-callout:is([data-callout="models"], [data-callout="community"]) { right: 8px; bottom: -20px; }
-  .astrid-callout:is([data-callout="effects"], [data-callout="tools"]) {
+  .astrid-callout:is([data-callout="timeline"], [data-callout="workflows"]) { left: 8px; }
+  .astrid-callout:is([data-callout="effects"], [data-callout="community"], [data-callout="models"]) { right: 8px; }
+  .astrid-callout:is([data-callout="timeline"], [data-callout="effects"]) { top: -44px; }
+  .astrid-callout:is([data-callout="workflows"], [data-callout="community"], [data-callout="models"]) { bottom: -20px; }
+  .astrid-callout[data-callout="tools"] {
     --astrid-callout-width: calc(100% - 16px);
     top: -44px; left: 8px; right: 8px;
+  }
+  .astrid-callout[data-callout="models"] {
+    --astrid-callout-width: calc(66.666% - 14px);
+    left: 0;
+    right: 0;
+    margin-inline: auto;
   }
   .astrid-result-handoff-button { min-height: 44px; }
 

@@ -136,9 +136,10 @@ const APP_CALLOUTS: readonly CalloutDefinition[] = [
     at: [0.5, 0.5],
     side: 'bottom',
     phoneSide: 'bottom',
-    // On phones this card spans the top rail and the inspector is a compact strip right under it: drop
-    // straight down onto the inspector's top edge rather than onto whichever tab sits at its centre.
-    phoneAt: [0.5, 0],
+    // On phones the inspector is a compact strip right under this card: drop straight down from the
+    // card's middle onto the inspector's top edge (the card's centre sits ~76% across the inspector)
+    // rather than landing on whichever tab happens to sit at the inspector's centre.
+    phoneAt: [0.76, 0],
     // Tablets draw the inspector small and zoomed out, with the label just above it: land on its top
     // edge there too, instead of on the clip title in the middle of the card.
     tabletAt: [0.5, 0],
@@ -153,11 +154,13 @@ const APP_CALLOUTS: readonly CalloutDefinition[] = [
     // The middle of the first track sits ~57px below the panel's top at every desktop and tablet size.
     at: [0.27, 0.2],
     atTop: 57,
-    // On phones this card hangs under the timeline's left half: rise straight up through the empty
-    // lower track onto the first clip's row.
-    phoneAt: [0.3, 0.45],
+    // Land near the upper-left fifth of the timeline instead of its visual centre.
+    phoneAt: [0.2, 0.2],
     side: 'top',
-    phoneSide: 'top',
+    // On phones this card sits on the top rail beside Effects, so the connector
+    // leaves its bottom-left corner while keeping the same timeline endpoint.
+    phoneSide: 'bottom',
+    phoneAnchor: 0.12,
   },
   {
     id: 'models',
@@ -178,7 +181,7 @@ const APP_CALLOUTS: readonly CalloutDefinition[] = [
 /** Which cards hang over the stage's top and bottom edges on phones. Keep in step with PublicAstridShell.css. */
 const PHONE_RAILS: Record<PublicAstridAudience, { top: readonly string[]; bottom: readonly string[] }> = {
   agent: { top: ['tools'], bottom: ['community', 'workflows'] },
-  app: { top: ['effects'], bottom: ['timeline', 'models'] },
+  app: { top: ['timeline', 'effects'], bottom: ['models'] },
 };
 
 /** A card's settled height, read from its content so a card that is still morphing reports its destination. */

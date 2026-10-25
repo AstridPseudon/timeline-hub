@@ -511,7 +511,8 @@ describe('bounded stage passes', () => {
     expect(path.getAttribute('data-connector-target')).toBe('effects');
     settle();
     const endpoint = view.container.querySelector('.astrid-callout-dot-end[data-callout="effects"]')!;
-    expect(Number(endpoint.getAttribute('cx'))).toBe(150);
+    // Phones drop straight down from the Effects card onto the inspector's top edge, ~76% across it.
+    expect(Number(endpoint.getAttribute('cx'))).toBe(isPhone ? 176 : 150);
     expect(Number(endpoint.getAttribute('cy'))).toBe(isPhone ? 100 : 140);
     expect(frames.size).toBe(0);
   });
