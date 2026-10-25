@@ -119,9 +119,17 @@ def _prove_birth(tmp_path, monkeypatch, grouped):
 
         def body(calls, *, timeline='film'):
             head = service.get_project_timeline(project, timeline)
+            label = 'Occurrence birth'
+            step = {'id': 'occurrence-birth', 'label': label, 'intent': label,
+                    'tags': ['occurrence'], 'command_ordinals': list(range(len(calls))),
+                    'patch': [], 'reads': []}
             return {'api_version': 1, 'project_id': project, 'timeline_id': timeline,
                     'base_revision_id': head['head_revision_id'],
-                    'base_publication_id': head['head_publication_id'], 'commands': calls}
+                    'base_publication_id': head['head_publication_id'], 'commands': calls,
+                    'label': label, 'steps': [step], 'merge': 'fields', 'reads': [],
+                    'dry_run': False, 'source': {'via': 'python'},
+                    'rationale': 'Create an occurrence and its child media.',
+                    'group_id': 'D118-occurrence-create2'}
 
         def commit(request, key):
             timeline = request['timeline_id']
