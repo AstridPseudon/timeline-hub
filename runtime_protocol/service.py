@@ -2464,8 +2464,16 @@ class RuntimeService:
     def _execute_timeline_commit(self, project_id, timeline_id, request, original_body, *,
                                  operation, idempotency_key, publisher, invocation_path, authorize):
         from .timeline_commit import CommitRejected
-        from .timeline_commit_execution import _emit_redacted_diagnostic, _new_request_id
-        from .timeline_commit_port import CommitUnavailable, RequestCommitPort, detached, public_failure
+        from .timeline_commit_execution import (
+            _emit_redacted_diagnostic,
+            _new_request_id,
+        )
+        from .timeline_commit_port import (
+            CommitUnavailable,
+            RequestCommitPort,
+            detached,
+            public_failure,
+        )
         if not isinstance(publisher, str) or not publisher:
             raise AuthorizationError("authenticated publisher is required")
         idempotency_key = require_idempotency_key(idempotency_key)

@@ -8,10 +8,13 @@ import pytest
 
 pytest_plugins = ["test_timeline_commit_acceptance"]
 
+from test_timeline_commit_acceptance import context
+
 from runtime_protocol.contract_metadata import SCHEMA_DIGEST
 from runtime_protocol.errors import RuntimeErrorBase
 from runtime_protocol.timeline_commit_execution import CommitOutcomeUnknown
-from test_timeline_commit_acceptance import context
+
+MAX_DIAGNOSTIC_BYTES = 4096
 
 
 class Provider:
@@ -126,3 +129,61 @@ def test_lookup_exception_maps_to_unknown_once_without_public_detail_change(real
     diagnostic = _diagnostic(stderr)
     assert diagnostic["exception_class_chain"] == ["builtins.OSError"]
     assert secret not in json.dumps(diagnostic)
+
+
+def test_malicious_exception_metadata_is_bounded_and_public_reply_is_unchanged(realm, capsys):
+    service, _, project, head, _ = realm
+    request = context(service, project, head, "redacted-metadata")
+    secret = "metadata-secret-sentinel"
+    class_sentinel = "class-metadata-sentinel"
+    filename_sentinel = "filename-metadata-sentinel"
+
+    class MetadataError(Exception):
+        pass
+
+    MetadataError.__module__ = class_sentinel + ("x" * 20_000)
+    MetadataError.__qualname__ = class_sentinel + ("y" * 20_000)
+    errors = [MetadataError(secret) for _ in range(32)]
+    for current, following in zip(errors, errors[1:] + errors[:1]):
+        current.__cause__ = following
+    namespace = {"MetadataError": MetadataError}
+    filename = (
+        "https://user:password@example.test/"
+        + filename_sentinel
+        + ("z" * 10_000)
+        + ".py"
+    )
+    exec(compile("def invoke(error):\n    raise error\n", filename, "exec"), namespace)  # noqa: S102
+
+    def fail(_, __):
+        namespace["invoke"](errors[0])
+
+    service.register_timeline_commit_provider(Provider(fail))
+    with pytest.raises(RuntimeErrorBase) as caught:
+        _commit(service, project, request["request"], request["idempotency_key"])
+
+    assert caught.value.status == 503
+    assert caught.value.code == "not_ready"
+    assert caught.value.as_dict() == {
+        "code": "not_ready",
+        "message": "Timeline commit outcome unavailable; retry the exact request",
+        "details": {"reason": "runtime_unavailable"},
+    }
+    stderr = capsys.readouterr().err
+    assert len(stderr.encode("utf-8")) <= MAX_DIAGNOSTIC_BYTES
+    diagnostic = _diagnostic(stderr)
+    assert set(diagnostic) == {
+        "event",
+        "request_id",
+        "exception_class_chain",
+        "frames",
+    }
+    assert re.fullmatch(r"[a-f0-9]{32}", diagnostic["request_id"])
+    assert len(diagnostic["exception_class_chain"]) <= 8
+    assert len(diagnostic["frames"]) <= 32
+    assert any("sha256:" in value for value in diagnostic["exception_class_chain"])
+    assert any("sha256:" in value for value in diagnostic["frames"])
+    assert secret not in stderr
+    assert class_sentinel not in stderr
+    assert filename_sentinel not in stderr
+    assert "user:password" not in stderr
