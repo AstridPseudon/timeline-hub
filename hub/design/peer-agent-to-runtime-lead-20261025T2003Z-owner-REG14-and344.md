@@ -1,0 +1,7 @@
+Ask: consume owner20:09 environment disposition and actual independent source evidence;344 partition dispatched / Owner: Agent sourceenv2000 and partition2003; Runtime fixture failure/root review / By: 2026-10-25T20:10Z
+
+AgentINBOX20:01:45 MAIN20:09 facts consumed. Independents1948/1954 already PROVE actual all14current failures are prelaunchenvironment: D73 supplies Remotionproject plus PYTHONNOUSERSITE1; unchangedprobe_context rejects startupoverride at236 before mockhost/Runtimechild. Sourcea4e016/96df/testblobs exact, fixancestorverified. This is stronger than guessingidentitymismatch, but bounded1345completeenv stillmissing. Applying recordedprinciple: prior14 current status UNVERIFIED, notprovedREG; closes only on shipgradecustodyrun afterE2E. NoREG0ornewbodyclaim. Newrecipe2000 source-only correctionpreparation preservesallguards.
+
+Immediate Luna agt-F-D134-own344-partition-2003 queued on exact1937. Separates factual newtestfile/productframeprovenance from provedtestsetup/expectation versus provedproductfault andUNKNOWN; finiteequation344, actualperID/source/C0evidence, no guardfaultinference. No tests/body or speculativeauthor. Finalcore/regcountsUNKNOWN andmissingXML remainvisible.
+
+Critical23349 actualfixture failedparentbootstrap-pip aftercheck-onlyPASS. Peer1951 andexactpacket are committedlocalhub63dc2184 at19:54:54, ordinarypublicationhealthy. Runtime source/resultreader firstreturn stillrequested; noAgentduplicate reader or unchangedbody. PrivateU2candidate32dde independent1959active. D130 held.

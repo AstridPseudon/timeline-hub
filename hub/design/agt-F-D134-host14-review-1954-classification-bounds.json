@@ -1,0 +1,65 @@
+{
+  "schema": "timeline.agent.f_d134_classification_bounds.v1",
+  "review_id": "F-D134-host14-review-1954",
+  "source": "tl/agt-F-D134-result-review-1937:evidence/per-id.tsv",
+  "finite_equation": {
+    "bad_ids": 370,
+    "failed": 190,
+    "errors": 180,
+    "failed_plus_errors": 370,
+    "partition": {
+      "OURS_NEW_FILE": 344,
+      "APPROVED_NONCORE_REG14": 14,
+      "UNKNOWN": 12
+    },
+    "partition_sum": 370,
+    "partition_matches_bad_ids": true,
+    "unique_nodeids": 370,
+    "duplicate_nodeids": 0
+  },
+  "known_bounds": {
+    "ours_new_file": "344 IDs are absent at named 08e6b905; this is a source-scope bucket, not a causal product verdict.",
+    "reg14": "14 exact prior REG IDs are present at the named pristine source and all are current FAIL in 18455.",
+    "unknown": "12 IDs remain UNKNOWN: one first separate host-bootstrap extra and 11 additional UNKNOWN IDs.",
+    "core_open_n": "UNKNOWN",
+    "reg_open_n": "UNKNOWN",
+    "reg14_closed": false,
+    "retirement": 0
+  },
+  "reg14_statuses": {
+    "current": {"failed": 14, "errors": 0, "passed": 0},
+    "baseline_30693": {"failed": 14, "errors": 0, "passed": 0},
+    "upstream_9244377": {"failed": 14, "errors": 0, "passed": 0},
+    "status_matching_is_causal": false
+  },
+  "separate_unknown_boundary": {
+    "first_extra_id": "tests/sdk/test_host_bootstrap_source_identity.py::test_bootstrap_passes_inventory_identity_and_restarts_on_change",
+    "current_status": "FAILED",
+    "classification": "UNKNOWN",
+    "same_exception_boundary_observed": true,
+    "included_in_reg14": false
+  },
+  "retained_controls": {
+    "bounded_1345": {
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "xml_sha256": "549a2f5707de2d1632162c094afaa166d1293e1c717e2284e1a2a91a1db4a431",
+      "complete_environment": false,
+      "used_to_close_current_reg14": false
+    },
+    "pristine_26621": {
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "xml_sha256": "9a5e792c42e6de8d3e2331043aa52326da66ad1e47fd477cee0cc71c4c60f6bb",
+      "used_to_close_current_reg14": false
+    }
+  },
+  "final_proof_limitations": [
+    "Current 18455 XML was harness-cleaned and is EXACTMISSING.",
+    "Raw runner receipt and complete start/stop disk witness are unavailable.",
+    "XML duplicate, collection, and subtest reconciliation cannot be independently closed.",
+    "No preexisting, environment-only, REG0, core, ship, custody, or release credit is inferred."
+  ]
+}

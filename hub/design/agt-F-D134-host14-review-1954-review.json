@@ -1,0 +1,101 @@
+{
+  "schema": "timeline.agent.f_d134_host14_review.v1",
+  "review_id": "F-D134-host14-review-1954",
+  "verdict": "FAIL_FINAL_PROOF",
+  "source_assessment": "PASS_SOURCE_ASSESSMENT",
+  "source_assessment_basis": "The current and bounded Agent commits have identical host-bootstrap, Remotion-runtime, and exact host-test blobs; the retained current launcher exports the environment keys that make the unchanged strict probe reachable.",
+  "subject": {
+    "immutable_review_branch": "tl/agt-F-D134-host14-wholepath-1948",
+    "subject_commit": "a7ca38d05be4a7f98b9592f140265494e11aca10",
+    "subject_tree": "c39ed49b1f16d66d40070203553f2f935f256e14",
+    "requested_1948_design_packet": "READ_FROM_ORCH_DESIGN",
+    "available_subject_evidence": "permanent_orchestrator_packet_composition_worktree_evidence_and_private_retained_service_log"
+  },
+  "current_measurement": {
+    "service": "agent-agent-core-full-1025191128-18455",
+    "status": "TERMINAL_FAIL",
+    "exit": 1,
+    "preflight_exit": 0,
+    "body_runs": 1,
+    "source_tuple": {
+      "agent_commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+      "agent_tree": "60d45288145414ee4702fcce61af7c7810c2a3df",
+      "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+      "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f"
+    },
+    "counts_retained_log_scope": {
+      "passed": 8926,
+      "failed": 190,
+      "errors": 180,
+      "warnings": 86,
+      "subtests_passed": 173,
+      "duration_seconds": 1379.05
+    },
+    "log_sha256": "65def166348d4ffde949d530bff1a7bcba820ad674ca85b8ccc3e708c781ae8e",
+    "xml": "EXACTMISSING",
+    "raw_runner_receipt": "EXACTMISSING"
+  },
+  "current_reg14_boundary": {
+    "id_count": 14,
+    "all_ids_present_in_retained_log": true,
+    "all_statuses": "FAILED",
+    "all_exception_type": "RemotionValidationError",
+    "all_exception_message": "runtime validation refuses unsupported loader/interpreter overrides",
+    "rejected_key": "PYTHONNOUSERSITE",
+    "stack_signature": [
+      "astrid/sdk/host_bootstrap.py:1651",
+      "astrid/sdk/host_bootstrap.py:836",
+      "astrid/core/rendering/remotion_runtime.py:1095",
+      "astrid/core/rendering/remotion_runtime.py:902",
+      "astrid/core/rendering/remotion_runtime.py:922",
+      "astrid/core/rendering/remotion_runtime.py:831",
+      "astrid/core/rendering/remotion_runtime.py:445",
+      "astrid/core/rendering/remotion_runtime.py:236"
+    ],
+    "same_stack_for_all_14": true,
+    "diagnostics": {
+      "registry_settle_failed": 14,
+      "launch_transaction_failed": 14,
+      "host_popen_reached": false,
+      "runtime_child_reached": false
+    },
+    "ids": [
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_bootstrap_stops_on_correlated_terminal_registration_failure",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_birth-False-1-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_instance-False-1-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_pid-False-1-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_source-False-1-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-terminal-False-1-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-25-ready-True-25-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-400-ready-True-400-400]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-30]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-120-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-150.3-30]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-25-ready-True-25-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-None-ready-False-300.0-None]"
+    ]
+  },
+  "causal_scope": {
+    "current_environment_difference": "PROVED_AT_CURRENT_FAILURE_BOUNDARY",
+    "current_launcher_exports": [
+      "PYTHONNOUSERSITE=1",
+      "ASTRID_REMOTION_PROJECT_DIR=<pinned profile>",
+      "PYTHONPATH=<pinned agent checkout>:<pinned runtime checkout>"
+    ],
+    "source_applicability": "PROVED",
+    "source_mismatch_between_a4e016b6_and_96df3f5b": "DISPROVED_FOR_RELEVANT_BLOBS",
+    "product_regression": "NOT_PROVED",
+    "1345_complete_environment_receipt": "EXACTMISSING",
+    "preexisting_or_reg0_claim": "UNPROVED",
+    "owner_scope": "D73/full-measurement environment contract and prior-vs-current environment custody"
+  },
+  "proof_limits": {
+    "final_custody": "FAIL",
+    "retirement": 0,
+    "ship_credit": false,
+    "custody_credit": false,
+    "release_credit": false,
+    "bounded_pass_used_to_close_current_reg14": false
+  }
+}

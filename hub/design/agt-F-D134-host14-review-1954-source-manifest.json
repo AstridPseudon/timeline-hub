@@ -1,0 +1,90 @@
+{
+  "schema": "timeline.agent.f_d134_host14_source_review.v1",
+  "review_id": "F-D134-host14-review-1954",
+  "assessment": "PASS_SOURCE_ASSESSMENT",
+  "current": {
+    "agent_commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+    "agent_tree": "60d45288145414ee4702fcce61af7c7810c2a3df",
+    "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "app_commit": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7",
+    "composition_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "bounded_candidate": {
+    "agent_commit": "96df3f5b4862b1c267e3816237bae8a64b5dc31f",
+    "agent_tree": "a3a37c09ed071879d92a51d963ca3fe65616115f"
+  },
+  "relevant_blob_equality": {
+    "astrid/sdk/host_bootstrap.py": {
+      "git_blob": "ac5308e8420819b976c5072d8f6b8b7043b3be9a",
+      "sha256": "0c3c8ae829991a22b7cda06cf08b3f4d089df46f5a4ea4f1af8e4c6dab07ec25",
+      "equal_current_and_bounded": true
+    },
+    "astrid/core/rendering/remotion_runtime.py": {
+      "git_blob": "1fbdad9bb8b75cb270186271e915b25f8e180a59",
+      "sha256": "0284b17ab0cb3adbfbfd5875c3655cb50e8f85348e93e011fdb2817585647ea2",
+      "equal_current_and_bounded": true
+    },
+    "tests/sdk/test_host_bootstrap_source_identity.py": {
+      "git_blob": "75a61d96ae7f275b03a2daca47903011c352ef6c",
+      "sha256": "08dfa8dcafeb80c347923630864a29d58dea97e257428e204fc316567795161b",
+      "equal_current_and_bounded": true
+    }
+  },
+  "actual_launcher": {
+    "git_blob": "2844cec15b97fa995ecaf120961fc891b8e13b1c",
+    "sha256": "cec561761cb90adbe94dbcc1b1f6b62afb107f1a90e079c6ce2b823405a072d1",
+    "measurement_recipe_sha256": "3d2333d9d17997512f614f16badf10c01eebf477aabd2466164a19ce41e2b398",
+    "exports_before_launcher_body": [
+      "PYTHONNOUSERSITE=1",
+      "PYTHONPATH=agent_checkout:runtime_checkout",
+      "ASTRID_RUNTIME_CHECKOUT=runtime_checkout",
+      "ASTRID_RUNTIME_SOURCE_ROOT=runtime_checkout"
+    ],
+    "launcher_exports": [
+      "ASTRID_REMOTION_PROJECT_DIR=pinned_profile",
+      "ASTRID_NODE_EXECUTABLE=pinned_node",
+      "ASTRID_TEST_NODE_MODULES=pinned_profile/node_modules"
+    ]
+  },
+  "module_origin_control": {
+    "preflight": "PASS",
+    "expected_origins": {
+      "astrid": "agent_checkout/astrid/__init__.py",
+      "runtime_protocol": "runtime_checkout/runtime_protocol/__init__.py",
+      "astrid_runtime_client": "agent_checkout/astrid_runtime_client/__init__.py",
+      "timeline_schema": "agent_checkout/astrid/core/timeline/banodoco_schema.py",
+      "shared_schema": "venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py"
+    },
+    "contrary_live_root_found": false,
+    "applicability_limit": "The preflight origins are controls for the pinned tuple; Runtime child origins are not reached at the REG14 boundary."
+  },
+  "source_path_and_lines": {
+    "host_bootstrap_caller": [
+      "astrid/sdk/host_bootstrap.py:1651",
+      "astrid/sdk/host_bootstrap.py:836"
+    ],
+    "remotion_validation": [
+      "astrid/core/rendering/remotion_runtime.py:445",
+      "astrid/core/rendering/remotion_runtime.py:236"
+    ],
+    "guard": "_UNSUPPORTED_PYTHON_STARTUP contains PYTHONNOUSERSITE"
+  },
+  "actual_log": {
+    "path": "tests/agent-agent-core-full-1025191128-18455/log.txt",
+    "sha256": "65def166348d4ffde949d530bff1a7bcba820ad674ca85b8ccc3e708c781ae8e",
+    "host_boundary_stack_occurrences": 15,
+    "reg14_occurrences": 14,
+    "extra_host_bootstrap_occurrence": 1,
+    "runtime_child_reached": false
+  },
+  "source_to_actual_environment": {
+    "current_remotion_enabled_path": true,
+    "current_python_no_user_site": true,
+    "unchanged_source_returns_before_probe_only_when_project_dir_missing": true,
+    "1345_complete_environment_receipt": "EXACTMISSING",
+    "1345_python_no_user_site_receipt": true,
+    "1345_project_dir_receipt": "EXACTMISSING",
+    "conclusion": "Current environment cause is proved at the current boundary; exact 1345 raw environment difference is not proved."
+  }
+}
