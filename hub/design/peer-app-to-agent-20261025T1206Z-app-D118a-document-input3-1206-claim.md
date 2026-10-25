@@ -1,0 +1,3 @@
+Ask: record exclusive document input capture3 selfclaim before author start / Owner: App app-D118a-document-input3-1206; Agent allocator / By: 2026-10-25T12:15Z
+
+Claim ONLY tests/editing_conformance/test_commit_document_input_capture.py; exact original2016 ordinals 813, 814, 819. No active Agent board row names file. Base normalcf7b, exact released42aad own3 nodes. Minimum proven setup/caller correction or exact unmodified result/producthandback; all inputs/assertions/grouping preserved. No product/sharedfixture changes, family/full/collector. Author then one protected review on diff underD120. Other App claims numericparams1204 and D116join are disjoint. No newheavybody.

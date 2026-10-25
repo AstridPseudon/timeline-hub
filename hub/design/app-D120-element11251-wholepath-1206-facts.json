@@ -1,0 +1,142 @@
+{
+  "investigation": "D120 current element11251 independent whole-path investigation",
+  "verdict": {
+    "overall": "NO-GO",
+    "element_case": "first observed failure is at App completion/status; Runtime and Agent outcome are UNKNOWN",
+    "repair_proved": false
+  },
+  "pinned_tuple": {
+    "app": {
+      "commit": "34d4644589970274a5252c0f7c68b6288eb0b0b4",
+      "tree": "48d71e1a0c18a13668e1d1e086def9dd6210affe"
+    },
+    "agent": {
+      "commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+      "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"
+    },
+    "runtime": {
+      "commit": "7070f1378d1917fcce69857ebd33cd2b3015568b",
+      "tree": "cd68015cb9fe85a6ecd2d15dd7e2eac69f67e2b1"
+    },
+    "composition": {
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    }
+  },
+  "retained_run": {
+    "service": "app-pin-34d46445-d73-p2-34d46445-submit-1025114516-11251",
+    "duration_seconds": 643,
+    "exit_code": 1,
+    "readiness": "1 PASS",
+    "original_cases": "5 PASS, 2 FAIL, 1 NOTRUN",
+    "manifest_sha256": "892c089c4a03c04c7ca12f487766116e39595be7970bd1a733418e65356588ca",
+    "p2_xml_sha256": "b349d93a672f3b5d8996eea63824035b06605dee0169190f86405efc0b0f8b8c",
+    "readiness_xml_sha256": "aee8a153c0f5dd86b21aa6b4a40125d3636642a975e29e9dcf1a81ff3dd5560c"
+  },
+  "source_hashes_sha256": {
+    "ElementsLibraryPanel.tsx": "2f0c716bd77a5efb7fe18436bfdc1e46b8a85f16d0f562b3986cf67bb30e3f4c",
+    "element-adapter.ts": "4f6e7621bcd8795c150a2282d5d41aa8a003ab0570bc1238e88f64d4328344b9",
+    "useTimelineSave.ts": "33e0ff6b26689e8af62b099557e8455f6ba87ad2b9bbbcbc69e42ac84918638a",
+    "timelineLocalSaveHandoff.ts": "fb64362cb44a83eb3554dac77158072ad91423b3d72927ae4fa8c4d20154312c",
+    "localSaveSession.ts": "def2c8c040daea9cff212c40f4f01062d2a6e7bfe6f76a4928cd53eabbf59230",
+    "p2-elements-assets.spec.ts": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+    "runtime_protocol/server.py": "5188ad162296d7abd121d79abd2f6d1c89ef655fc30b9e24ae3c80628c974832",
+    "runtime_protocol/timeline_commit_execution.py": "334c161f8cc652a6f645fb94d5b7667ad345fd33a44f1560b01547e5f765f655",
+    "astrid/sdk/timeline/commit.py": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7"
+  },
+  "retained_artifact_hashes_sha256": {
+    "element_trace_zip": "9e4338be3235e38cb1377bad8f2994785238e7ab5f8ca2ef2d5c6f0cc75cb668",
+    "element_diagnostic_json": "3ebfb19267ac21080a387bd2a0464d503be26152bb254c075932ee544d402821",
+    "runtime_phase_main": "4791f9ae12f9ab0597147bda846ec4434616d432faeae945e81c6b9aa400d86a",
+    "runtime_phase_populated_1": "1483390e615f1c95f03ba94f474625cfe3a7fda0390bed5e02ad621e18b200b5",
+    "runtime_phase_populated_2": "46ef01b6ca32d63e0976bbfedbdafa445368cad3db2cc87d70c830378fa42f4a",
+    "runtime_phase_empty": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "runtime_phase_populated_3": "2470ed4ebbb6a8ecbd9341aec80e75944335da26023ac6efa73c55f7b11d99e5",
+    "runtime_phase_populated_4": "b9ebe0962cbf3fbbdbbb753064db5337da8a01aae33fbe00015dc1124e7c5f6a"
+  },
+  "call_path": [
+    {
+      "stage": "gesture",
+      "source": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:1038-1052",
+      "observation": "Element dialog opens, AM Burst is found, Apply is clicked, and the test waits for status text applied."
+    },
+    {
+      "stage": "app_element_handler",
+      "source": "src/tools/video-editor/components/ElementsLibraryPanel.tsx:46-107",
+      "observation": "applyElement captures the adapter and awaits execute before setting the applied message; the status is rendered only when message is present."
+    },
+    {
+      "stage": "app_adapter",
+      "source": "src/tools/video-editor/runtime/element-adapter.ts:389-497",
+      "observation": "The element operation is applied to the mounted document and then awaits routes.save before acknowledged head/result return."
+    },
+    {
+      "stage": "app_save_route",
+      "source": "src/tools/video-editor/hooks/useTimelineSave.ts:743-801",
+      "observation": "The element route captures the gesture, adopts local data, then awaits handoff.flush."
+    },
+    {
+      "stage": "app_outbox",
+      "source": "src/tools/video-editor/hooks/timelineLocalSaveHandoff.ts:575-627; src/tools/video-editor/commands/localSaveSession.ts:158-208,315-321",
+      "observation": "The gesture is appended as an atomic v2 commit intent; flush waits for the session pump to reach saved/acknowledged state."
+    },
+    {
+      "stage": "runtime_to_agent",
+      "source": "runtime_protocol/server.py:294-321; runtime_protocol/timeline_commit_execution.py:222-275; astrid/sdk/timeline/commit.py:1160-1190",
+      "observation": "The retained source path is Runtime request handling to commit execution/provider invocation, but no retained record correlates this element request to a Runtime request or Agent outcome."
+    }
+  ],
+  "element_failure_timeline": {
+    "local_correlation": "apply-1",
+    "trace_times_ms": {
+      "apply_click": 42882.602,
+      "applied_wait_start": 43164.572,
+      "applied_wait_end": 48239.326,
+      "diagnostic_read": 48261.214,
+      "page_close": 48281.304
+    },
+    "network_observation": "A commit-classified POST was initiated; no response was retained before teardown. A second POST was also unresolved, with semantics not inferred.",
+    "diagnostic_observation": "request-start had scoped-commit and idempotencyKey present; responseStatus UNKNOWN, response none, terminal pending; retained state showed connected/dialog present/status pending/applying; pageClosed true after teardown.",
+    "first_observed_failure_boundary": "App completion/status after the commit request remained pending",
+    "applied_wait_hit_before_test_context_teardown": true,
+    "test_context_teardown": "The later waitForResponse failed because the page/context was closed; this did not establish a server result.",
+    "backend_outcome": "UNKNOWN",
+    "runtime_agent_correlation": "UNKNOWN; retained Runtime phase records have no apply-1 correlation"
+  },
+  "runtime_retained_summary": {
+    "phase_namespaces": 6,
+    "populated_through_http_phase": 4,
+    "authorization_or_provider_raised_without_http_phase": 1,
+    "empty": 1,
+    "stderr_nonempty": 0,
+    "element_assignment": "UNKNOWN",
+    "known_limits": [
+      "caller receipt boundary is outside the Runtime process",
+      "client request to server receive boundary is outside the Runtime process",
+      "execution lock wait has no exact retained boundary"
+    ]
+  },
+  "passing_path_comparison": {
+    "passing_cases": [
+      "popup ADD occurrence fork / A2 commit",
+      "single parent move",
+      "transition None single",
+      "transition None bulk",
+      "automatic child placement"
+    ],
+    "shared_result": "Each reached accepted/canonical closure, history, reload, guarded native Undo, and no legacy tail.",
+    "element_difference": "The element case uses the App element adapter and elementTimelineRoutes.save/handoff.flush completion path; its post-response assertions were never reached.",
+    "inference_limit": "No hidden payload, history, or Runtime cause is inferred from this path difference."
+  },
+  "exact_missing": [
+    "Cross-layer correlation between local apply-1 and a Runtime request/response.",
+    "Whether Runtime accepted, merged, refused, or never received the commit.",
+    "Whether an accepted response was lost after server processing.",
+    "Whether the App outbox retained pending or accepted state after page close."
+  ],
+  "checks": {
+    "source_changed": false,
+    "test_rerun": false,
+    "git_diff_check": "passed"
+  }
+}

@@ -1,0 +1,10 @@
+# D118a final protected review facts
+
+- Verdict: **PASS_SOURCE**. The candidate is source-minimal relative to Agent base `0ad49261ed36f043b059c07de989bd39cd3a5889`.
+- Exact final diff: one provider-registration insertion at line 153 and the matching deletion at the former line 170. No request-wrapper, grouping, default-ABI, authored-input, assertion, timing, or fixture/blob edits.
+- Byte/AST proof: base source `52c63fa1a59d4ac08ca9077b97e6facfe7947cc36fde2795d1538df31a14cfed`; candidate source `80b146829f4c493f1381b561c13b3b992bd792a5931747eea0725061822dbc1b`; request source SHA `fe74e5fc341000d15b18c0f9934aa5d5e286cf5ea496c4c64a8a89fd83df8282` on both; assertion AST SHA `87338def7bd21860bd64e9c39a7aa4c078ee6204990fab9fda3b914a30455a6e` on both; seed helper exact; test AST without provider calls and authored literals exact.
+- C0 basis: pinned `contract/commit-v2.md:68-79` permits ABI-1 omission of label/steps and synthesizes one step; merge defaults to fields. Lines `124-132` preserve omitted-read semantics. The restored wrapper therefore retains the original grouping/default behavior.
+- Causal result: registration now precedes project/timeline bootstrap, removing the original bootstrap provider absence. D120 worktree confirms the scalar file is absent (`git ls-files --error-unmatch` exit 1), so Agent `0ad49261…` is the review baseline.
+- Immutable Runtime receipt: `/home/user/work/wt/rt-pin-42aad0e9`, commit `42aad0e92f6da8ea83dd0a382a87e3acd12651b0`, tree/write-tree `085a5be70b56353deb41ae7d743336a4ccb7f29c`, clean.
+- Checks: Ruff, mypy `--follow-imports=skip`, py_compile with `PYTHONPYCACHEPREFIX=/tmp/w-027b130f20/pycache`, and `git diff --check` passed.
+- Authorized exact retained-node run: `3 failed in 14.93s`. Scalar, compound, and separate all progress through bootstrap to Runtime `timeline_commit_auth.py:2267`, failing `provider intermediate image lacks an authenticated physical promotion`. This is a live Runtime seam outside the allowed file; no functional GREEN claim.
