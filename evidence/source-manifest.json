@@ -1,29 +1,24 @@
 {
-  "schema_version": 1,
-  "task": "U2/D135",
-  "repo": "agent",
-  "candidate_base": "a30e74e901a28b39c28facba3deb00d76f186e23",
-  "candidate_base_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
-  "merge_head": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
-  "merge_head_tree": "f53cc8426ccef8760021ef6207303bce7b80e777",
-  "merge_base": "92443771676ef2bbb547d0a103d708fa8bec4c63",
-  "changed_file_count_from_candidate_base": 96,
-  "frozen_source_note": "The first20 and B-1936 packets use frozen ours 547e10456250c1b5bcf63b44a50c90ff0563ce1e, not the actual candidate base. They were used only as bounded source dispositions; actual conflicts and final source were checked against a30e and merge head.",
-  "resolved_paths": {
-    "astrid/chat/astrid-local-agents.test.ts": "53a14d2debc4c45618e2d40fdd6f42659bc51b6cee274a2c2a7fb4bfb63461e3",
-    "astrid/chat/service.mjs": "525e6dff9d4f2084c1167e6c3355e3bcea6a730ee876f99aea04d7d127206019",
-    "astrid/installer/backend.py": "3892c447dc111cd0b41b06d38483b0cffc5cf2ae63ab519cad7388fc145029c0",
-    "docs/install/OMP-LANDING.md": "ec58b4e1a22ca71e1c5acd28c7e823ab948e0fe6b7a24874e96895688f699061",
-    "tests/test_installer_omp_source.py": "1d925f6a343b8a85144967948fb4c80443c74b3c32510bc00645e734b31de4de",
-    "tests/test_installer_platforms.py": "77517d7eec667958ae2409146ac4d3bf472a0878a5965504fe8fac0961126e10"
+  "schema": "timeline.d141.pristine-source-manifest.v1",
+  "status": "SOURCE_INSPECTED_NOT_READY",
+  "base_agent": {"commit": "c585cb2aa73c5298d474e614cb2144f58f27e605", "tree": "81999820a81432c06ef7aefc4519dc84e71f56f7", "origin": "https://github.com/peteromallet/astrid-agent", "role": "current Agent source, read-only"},
+  "pristine_tuple": {
+    "agent": {"commit": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a", "tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed", "parent_line": "b24dd3de98b04d2387fc31eb08f736b573fa7f7a", "origin": "https://github.com/peteromallet/astrid-agent", "local_object": true},
+    "runtime": {"commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2", "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c", "parent_line": "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f", "origin": "https://github.com/banodoco/banodoco-workspace-runtime", "local_object": true},
+    "app": {"commit": "7ca61bb3280beca21d98a854af266a382f7ce5df", "tree": "974de7cd08900872eeb0bd6f6004d44323e01fab", "parent_line": "810ea0d25b9126b9db74cfa57500130561198569", "origin": "https://github.com/banodoco/reigh-app", "local_object": true},
+    "composition": {"commit": "67b8aa3d0d6831d3e3504a340ff583c3da253707", "tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120", "parent_line": "bd1011bce5fb4f172269911555568d18e6b22f3c", "origin": "https://github.com/peteromallet/timeline-composition", "local_object": true}
   },
-  "generated": {
-    "source": "astrid/chat/service.ts",
-    "source_sha256": "e6ca2f298d2785fac2d850fddd34f81c827c1c640f461bb63316fa3ee5ba4899",
-    "artifact": "astrid/chat/service.mjs",
-    "artifact_sha256": "525e6dff9d4f2084c1167e6c3355e3bcea6a730ee876f99aea04d7d127206019",
-    "command": "NODE_PATH=/home/user/work/runtimes/agent-remotion-current/node_modules bun run build:chat",
-    "freshness_command": "NODE_PATH=/home/user/work/runtimes/agent-remotion-current/node_modules bun run check:chat-bundle",
-    "result": "PASS"
-  }
+  "source_presence": {
+    "agent_p4_launcher": {"path": "tools/p4-d73-pinned-launch.sh", "present": false},
+    "agent_manifest_maker": {"path": "tests/suites.conf.candidate.request.md", "present": false},
+    "agent_artifact_manifest": {"path": "scripts/artifact_manifest.py", "present": true, "role": "artifact checker, not D73 launcher/manifest maker"},
+    "agent_vendor_lock": {"path": "scripts/vendor_lock.py", "present": true, "role": "dependency lock checker, not D73 launcher/manifest maker"},
+    "composition_d73_candidate": {"commit": "afda6c66a11608d8cb012df1a54bf2489d8c20b3", "status": "CANDIDATE_NOT_INSTALLED/NOT_READY", "role": "source-only admission controls, not supported comparator execution"}
+  },
+  "external_sources": {
+    "launcher": {"source": "current Agent tools/p4-d73-pinned-launch.sh", "sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd", "supported_only_with": "current Agent self-location guard; cannot overlay onto pristine"},
+    "manifest_maker": {"source": "current Agent tests/suites.conf.candidate.request.md", "commit": "91398e9de4500ce16c8e55741209ba3609cb1694", "git_blob": "fbde96168dca681a76cff1526c23b8d0b74001eb", "sha256": "782fb81cea67ce71b785dd5dbf891bb1d32df74c136425d83d53e938bdf8b51c", "supported_only_as": "normal manager recipe; not present in pristine"}
+  },
+  "dependencies": {"python": "/home/user/work/venv-agent/bin/python", "node": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node", "profile": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110", "schema": "/home/user/work/venv-agent/lib/python3.13/site-packages", "runtime_lock_source_commit": "fa9cd5464a8b37b02f971de375e56be846cd69e2", "runtime_lock_file_count": 15, "dependency_execution": "NOTRUN"},
+  "provenance": {"d134_command": "/home/user/timeline-hub/hub/design/agt-F-D134-dry-preflight-1848-measurement-command.sh", "core_command": "/home/user/timeline-hub/hub/design/agent-core-full-command.md", "stub_sha256": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0", "old_receipts_retargeted": false, "source_controls_run": false}
 }

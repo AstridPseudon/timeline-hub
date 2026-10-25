@@ -1,9 +1,11 @@
-# U2/D135 progress
+# D141 pristine comparator preparation
 
-1. Read AGENTS.md, PLAN, C0, BOARD-HEADER D135, and the independent first20 and B-1936 source packets.
-2. Confirmed the actual candidate base is `a30e74e901a28b39c28facba3deb00d76f186e23`; did not substitute frozen `547e...` census ours.
-3. Recorded manager-applied `MERGE_HEAD` `886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55`.
-4. Resolved six genuine conflict paths within scope, including the finite OMP documentation choice.
-5. Regenerated and freshness-checked `astrid/chat/service.mjs`.
-6. Targeted Python and chat tests pass; lint/typecheck failures are recorded without weakening.
-7. Candidate is ready for manager/harness staging and commit; no integration merge, package, gate, or ZIP action was taken.
+1. Read the settled PLAN, AGENTS.md, MANAGER-COMMON, D141 cut docs, C0 request/reply/history sections, and Agent INBOX 23:46:37 ruling.
+2. Inspected the frozen upstream Git objects read-only. The four tuple objects are local, but no normal receipt-backed checkout venue was created.
+3. Confirmed frozen Agent lacks `tools/p4-d73-pinned-launch.sh`, `tests/suites.conf.candidate.request.md`, and five of the required 22 roots. No overlay, copy, fetch, or alternate route was used.
+4. Prepared one exact 22-root service row/recipe with `-n3`, cleared addopts, no cache, timeout 45, D89a disk gates, one-heavy-body sequencing, and durable raw/JUnit/start-stop/disk/KEEP witnesses.
+5. Prepared the fresh positive/poison manifest invocation inputs and retained-stub hash. Expected control outcomes are recorded only; controls were not run.
+6. Prepared the complete D134 historical notes input, preserving all 370 IDs and disjoint root membership plus the independent root-review-2029 PASS boundary.
+
+Current disposition: `NOT_READY` with the finite missing-input list in
+`preflight-inventory.json`. No ship, REG, core, or behavior credit is claimed.

@@ -1,0 +1,26 @@
+{
+  "schema": "timeline.d141.pristine-preflight-inventory.v1",
+  "status": "NOT_READY",
+  "execution": "PREPARED_ONLY; no controls, imports, collection, pytest, or body",
+  "tuple": {
+    "agent": {"sha": "8b6ed2116fd1803d24b2be5bc08bd9490407fe4a", "tree": "0a3691a49b63fd7b0c22fb3478e9cf1947f266ed", "origin": "https://github.com/peteromallet/astrid-agent"},
+    "runtime": {"sha": "fa9cd5464a8b37b02f971de375e56be846cd69e2", "tree": "124e10dbcd54fb90219e783ec11aa34f8c91590c", "origin": "https://github.com/banodoco/banodoco-workspace-runtime"},
+    "app": {"sha": "7ca61bb3280beca21d98a854af266a382f7ce5df", "tree": "974de7cd08900872eeb0bd6f6004d44323e01fab", "origin": "https://github.com/banodoco/reigh-app"},
+    "composition": {"sha": "67b8aa3d0d6831d3e3504a340ff583c3da253707", "tree": "62f4456b71234a9d4d4ad9e2aa58cf7fe0de1120", "origin": "https://github.com/peteromallet/timeline-composition"}
+  },
+  "settings": {"python": "/home/user/work/venv-agent/bin/python", "node": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node", "profile": "/home/user/work/runtimes/agent-remotion-v3-819acf-1110", "schema": "/home/user/work/venv-agent/lib/python3.13/site-packages", "xdist_workers": 3, "addopts": "", "cache": "disabled", "timeout_seconds": 45, "disk_start_min_bytes": 4700000000, "disk_stop_min_bytes": 4000000000, "heavy_bodies": 1},
+  "roots": {
+    "count": 22,
+    "required": ["tests/editing_conformance", "tests/sdk", "tests/timeline", "tests/core/timeline", "tests/core/test_timeline_element_orphan_cleanup.py", "tests/core/test_timeline_element_publication.py", "tests/core/test_timeline_element_publication_runtime.py", "tests/core/rendering/test_timeline_visualize_cli_grammar.py", "tests/core/rendering/test_local_schema.py", "tests/packs/timeline", "tests/packs/rendering/test_composition_package.py", "tests/packs/rendering/test_live_scene_composition.py", "tests/packs/rendering/test_render_export_task_adapter.py", "tests/packs/rendering/test_timeline_filmstrip_cards.py", "tests/packs/rendering/test_timeline_filmstrip_execution.py", "tests/packs/video_editing/test_runtime_publication_chain.py", "tests/stage1/test_cold_launch_autobootstrap.py", "tests/test_installer_schema.py", "tests/test_installer_sources.py", "tests/test_installer_bootstrap_schema.py", "tests/test_timeline_clip_replacement.py", "tests/v10/test_timelines_create.py"],
+    "observed_absent_in_frozen_agent": ["tests/core/test_timeline_element_orphan_cleanup.py", "tests/core/test_timeline_element_publication_runtime.py", "tests/core/rendering/test_local_schema.py", "tests/packs/rendering/test_composition_package.py", "tests/test_installer_bootstrap_schema.py"]
+  },
+  "controls": {"stub_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-core-rehearsal-2234/evidence/positive-stub.sh", "stub_sha256": "38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0", "positive": {"preflight": 0, "stub": 17, "calls": 1}, "poison": {"exit": 1, "calls": 0}, "ran": false},
+  "missing_inputs": [
+    "Normal lead checkout receipts and immutable paths for all four frozen tuple commits; local Git objects are present but no worker checkout was created.",
+    "A supported pristine-compatible external launcher/manifest-generator. Frozen Agent lacks tools/p4-d73-pinned-launch.sh and tests/suites.conf.candidate.request.md; current launcher self-location guard forbids overlay.",
+    "Five required agent-core-full roots are absent from frozen Agent and cannot be copied or relaxed.",
+    "Fresh positive and poison manifests/counters bound to this tuple; historical D134 manifests are not inputs.",
+    "A final U2 freeze receipt/head for the comparator venue; this prep observes the frozen upstream tuple only."
+  ],
+  "supported_route": "Normal lead request-checkout plus an authenticated external D73-compatible launcher/manifest-maker; no child build, package acquisition, overlay, suite edit, or alternate route is permitted."
+}

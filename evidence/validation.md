@@ -1,18 +1,23 @@
-# U2/D135 validation
+# D141 preparation validation
 
-## PASS
+Status: `NOT_READY` for later service execution; preparation artifacts are complete.
 
-- `git diff --check` — exit 0.
-- Exact conflict-marker scan on the six conflict paths — no markers found.
-- `NODE_PATH=/home/user/work/runtimes/agent-remotion-current/node_modules bun run build:chat` — exit 0.
-- `NODE_PATH=/home/user/work/runtimes/agent-remotion-current/node_modules bun run check:chat-bundle` — exit 0.
-- `PYTHONPATH=/home/user/work/wt/agt-U2-D135-private-join-1953:/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 tests/sdk/test_host_bootstrap_source_identity.py tests/test_installer_omp_source.py tests/core/generation/test_gpu_environment.py tests/test_installer_platforms.py` — exit 0, 244 passed in 3.91s.
-- `test ! -e node_modules && ln -s /home/user/work/runtimes/agent-remotion-current/node_modules node_modules && realpath node_modules && test "$(realpath node_modules)" = /home/user/work/runtimes/agent-remotion-current/node_modules && bun test ./astrid/chat; rc=$?; rm node_modules; exit $rc` — exit 0, 195 passed, 0 failed, 428 expect() calls, 108.48s. The dependency symlink was temporary and removed.
+Read-only checks performed:
 
-## Baseline or environment failures retained honestly
+- `bash -n evidence/recipe.sh` — PASS.
+- Python JSON parse of `evidence/preflight-inventory.json` and `evidence/source-manifest.json` — PASS.
+- Frozen tuple Git object/tree inspection — PASS for all four local objects; no checkout, fetch, checkout, merge, or source write.
+- Frozen Agent source inventory — PASS; five required roots and both Agent D73 source files are explicitly recorded absent.
+- Stub hash inspection — PASS: retained 2234 stub is SHA-256 `38afc8a5b177801f86f33b0166c8ecd4489ee997629e91b336b9c248ca360ad0`.
+- Notes conservation against controlling D134 JSON/TSV — PASS: all 52 source root groups and all 370 IDs are included exactly once in the disjoint root table; named slices are explicitly non-additive annotations.
+- Exact command conservation — PASS: 22 roots, `-n 3`, `-o addopts=`, `-p no:cacheprovider`, and `--timeout=45` match D134/agent-core-full.
+- `git diff --check` — PASS.
+- Worktree source status — unchanged; only requested evidence files were added/updated.
 
-- `/home/user/work/venv-agent/bin/python -m ruff check <all changed Python files>` — exit 1, 76 findings across the merged source/test scope. No ignore or weakening was used; findings include existing configured-scope issues and upstream additions.
-- `/home/user/work/venv-agent-typecheck-v2/bin/python -m mypy <all changed Python files>` — exit 1, 74 errors in 11 files, 43 files checked. No ignore or acquisition was used.
-- The first direct Bun test invocation without the temporary local dependency link failed during module resolution (`Cannot find package 'zod'`); the authorized existing dependency tree resolved it without installation or modification.
+Not run by instruction: positive/poison controls, imports, dependency preflight,
+collection, pytest, service body, full suite, child build, package acquisition,
+Store/retirement, or live venue requests.
 
-Full/core suites and delivery/ZIP gates were not run, per task instructions.
+The later controller must supply exact normal lead checkout receipts, a
+pristine-compatible external launcher/manifest-maker, fresh manifests/counters,
+and a source-complete 22-root tuple before invoking the row.
