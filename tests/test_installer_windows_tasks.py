@@ -1,4 +1,4 @@
-"""Exercise Windows PowerShell exit semantics without touching real login tasks."""
+"""Exercise Windows PowerShell cleanup and task registration without touching installed tasks."""
 
 import shutil
 import subprocess

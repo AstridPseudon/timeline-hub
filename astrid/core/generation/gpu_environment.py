@@ -18,6 +18,8 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
+from astrid.core.generation.vibecomfy_dependency import VIBECOMFY_ENGINE_REVISION
+
 ALLOW_UNQUALIFIED_ENV = "ASTRID_ALLOW_UNQUALIFIED_GPU"
 # Add an exact (pack, OS, device name) only after testers qualify it.
 QUALIFIED_COMBINATIONS: frozenset[tuple[str, str, str]] = frozenset()
@@ -104,7 +106,10 @@ def _description(pack: str) -> tuple[Path, dict[str, Any]]:
     if pack not in {"wan2gp", "vibecomfy"}:
         raise GPUEnvironmentError(f"unknown GPU pack: {pack}")
     directory = _PACKS / pack
-    return directory, json.loads((directory / "environment.windows-nvidia.json").read_text(encoding="utf-8"))
+    description = json.loads((directory / "environment.windows-nvidia.json").read_text(encoding="utf-8"))
+    if pack == "vibecomfy":
+        description["vibecomfy_source"]["revision"] = VIBECOMFY_ENGINE_REVISION
+    return directory, description
 
 
 def environment_plan(

@@ -9,7 +9,7 @@ No API keys, GPU, ComfyUI, provider calls, cloud sessions, pushes, or PRs were u
 
 - Agent: `9ac48459a5ddab687bb9a1d8ed15e079044b1b1d` (lock-fix commit).
 - Runtime: `36aea8957ebd1d74b66bc06d177705fd62cff8b5` (current HEAD when tested).
-- VibeComfy: `31f90bb03d330283b76e7dbdda51197be787090d` (A5 pin), version 2.8.0.
+- VibeComfy: the revision pinned in `vibecomfy_dependency.py` at the time (A5 pin).
 
 Added `huggingface_hub[hf_xet]>=0.32.0` to `pyproject.toml`, then ran:
 

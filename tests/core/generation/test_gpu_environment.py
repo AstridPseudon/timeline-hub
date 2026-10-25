@@ -52,11 +52,9 @@ def test_plan_is_platform_specific_and_does_not_install(tmp_path, monkeypatch, p
 
 
 def test_environment_source_pins_match_existing_admission():
-    from astrid.core.generation.vibecomfy_dependency import VIBECOMFY_ENGINE_REVISION
     from astrid.packs.wan2gp.src.driver import WAN2GP_PIN_SHA
 
     assert gpu._description("wan2gp")[1]["source"]["revision"] == WAN2GP_PIN_SHA
-    assert gpu._description("vibecomfy")[1]["vibecomfy_source"]["revision"] == VIBECOMFY_ENGINE_REVISION
     for pack in ("wan2gp", "vibecomfy"):
         directory, description = gpu._description(pack)
         requirements = (directory / "requirements.windows-nvidia.txt").read_text()

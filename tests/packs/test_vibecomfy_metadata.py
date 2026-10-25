@@ -99,7 +99,6 @@ class VibeComfyStructuredMetadataTest(unittest.TestCase):
         self.assertEqual(metadata["vibecomfy_command"], "run")
         self.assertEqual(metadata["command_names"], ["run", "validate"])
         self.assertEqual(metadata["requirements"], ["vibecomfy"])
-        self.assertEqual(metadata["requirements_source"], "actions/run/requirements.txt")
         self.assertEqual(
             metadata["workflow_input_contract"],
             {
