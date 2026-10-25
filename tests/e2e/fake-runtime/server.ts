@@ -224,6 +224,26 @@ export async function startFakeRuntimeServer(options: { token: string; port?: nu
       return errorReply(404, 'not_found', `No fake route for ${pathname}`);
     }
 
+    // The editor records the open project in the Runtime (PUT /v1/projects/selection); the fake accepts the demo project only.
+    if (pathname === '/v1/projects/selection') {
+      if (method !== 'PUT') return errorReply(405, 'method_not_allowed', 'project selection is PUT only');
+      let selector = '';
+      try { selector = String((JSON.parse(body.toString('utf8')) as { project?: unknown }).project ?? ''); } catch { selector = ''; }
+      const projectId = selector ? canonicalProjectId(selector) : null;
+      if (!projectId) return errorReply(404, 'not_found', `project ${selector} was not found`);
+      return {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+        body: jsonBody({
+          data: { project_id: projectId, scope: 'workspace' },
+          receipt: {
+            receipt_id: 'fake-selection-receipt', command_kind: 'project.select', idempotency_key: String(request.headers['idempotency-key'] ?? ''),
+            request_hash: 'fake', project_id: projectId, project_seq: [0, 0], event_ids: [], result: null, created_at: new Date(0).toISOString(),
+          },
+        }),
+      };
+    }
+
     if (pathname === '/v1/health' || pathname === '/v1/handshake' || pathname === '/v1/realm') {
       return await callFixture(live.defaultInstance, method, pathname, request, body);
     }

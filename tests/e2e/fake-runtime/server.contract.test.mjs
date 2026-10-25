@@ -335,6 +335,23 @@ describe('projects, timelines and the seed', () => {
   });
 });
 
+describe('project selection', () => {
+  test('PUT /v1/projects/selection records the demo project and refuses an unknown one', async () => {
+    const put = (project) => call('/v1/projects/selection', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': 'selection-test' },
+      body: JSON.stringify({ project, scope: 'workspace' }),
+    });
+    const selected = await put(SLUG);
+    assert.equal(selected.status, 200);
+    const body = await selected.json();
+    assert.equal(body.data.project_id, PROJECT_ID);
+    assert.equal(body.receipt.idempotency_key, 'selection-test');
+    assert.equal((await put('no-such-project')).status, 404);
+    assert.equal((await call('/v1/projects/selection')).status, 405);
+  });
+});
+
 describe('the object layer is one content-addressed store', () => {
   test('the project object list holds the seeded assets only: the router placeholders are gone', async () => {
     const page = await json(`/v1/projects/${SLUG}/objects`);
