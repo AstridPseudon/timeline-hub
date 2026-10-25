@@ -1,1 +1,1 @@
-2026-10-25T21:43:43Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 10G free; union proof dropped (D139); ZIP dry-run staging removed; D77 stage/render held at step 0 awaiting Runtime-supplied inputs (launcher, manifest, browser, roots/stage receipt, footprint bound)
+2026-10-25T22:04:47Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 10G free; D77 held at step 0 (MAIN 21:59Z: Runtime to produce the complete input list; no downloads/installs until it arrives); union proof dropped
