@@ -61,6 +61,27 @@ def fixture_sources():
     return result
 
 
+def source_hashes_from_manifest(manifest, check):
+    """Return manifest source hashes while recording malformed entries."""
+    result = {}
+    roles = manifest.get('roles') if isinstance(manifest, dict) else None
+    if not isinstance(roles, dict):
+        check('fixture source manifest has a roles map', False)
+        return result
+    for role, entry in roles.items():
+        files = entry.get('files') if isinstance(entry, dict) else None
+        if not isinstance(files, dict):
+            check('fixture source manifest files map is valid: ' + str(role), False)
+            continue
+        result[role] = {}
+        for name, expected in files.items():
+            if not isinstance(name, str) or not isinstance(expected, str):
+                check('fixture source manifest entry is valid: ' + str(role), False)
+                continue
+            result[role][name] = expected
+    return result
+
+
 def fixture_makers():
     manifest = json.loads(FIXTURE_MANIFEST.read_text())
     result = {}
@@ -97,6 +118,17 @@ def command(argv, **kwargs):
 def require(condition, reason):
     if not condition:
         raise RuntimeError(reason)
+
+
+def committed_source_bytes(path, revision, name):
+    """Read one committed source blob without decoding or checking it out."""
+    result = subprocess.run(
+        ['git', '-C', str(path), 'cat-file', 'blob', revision + ':' + name],
+        capture_output=True, timeout=600,
+    )
+    if result.returncode:
+        raise RuntimeError('committed source blob is unreadable: ' + name)
+    return result.stdout
 
 
 def parse_df_available(text):
@@ -161,9 +193,18 @@ def check_only(args):
     check('fixture manifest is valid JSON with expected schema',
           isinstance(manifest, dict) and manifest.get('schema') == 'timeline.ops-child-custody.tiny-source.v1')
 
+    source_hashes = source_hashes_from_manifest(manifest, check)
     if isinstance(manifest, dict):
-        for role, entry in manifest.get('roles', {}).items():
-            for name, expected in entry.get('files', {}).items():
+        roles = manifest.get('roles', {})
+        if not isinstance(roles, dict):
+            roles = {}
+        for role, entry in roles.items():
+            files = entry.get('files', {}) if isinstance(entry, dict) else {}
+            if not isinstance(files, dict):
+                files = {}
+            for name, expected in files.items():
+                if not isinstance(name, str) or not isinstance(expected, str):
+                    continue
                 path = FIXTURE_ROOT / role / name
                 try:
                     matches = (path.is_file() and not path.is_symlink()
@@ -172,7 +213,11 @@ def check_only(args):
                 except OSError:
                     matches = False
                 check('fixture source ' + role + '/' + name, matches)
-        for role, entry in manifest.get('makers', {}).items():
+        makers = manifest.get('makers', {})
+        if not isinstance(makers, dict):
+            makers = {}
+        for role, entry in makers.items():
+            entry = entry if isinstance(entry, dict) else {}
             path = FIXTURE_ROOT / entry.get('path', '')
             try:
                 matches = (path.is_file() and not path.is_symlink()
@@ -256,7 +301,8 @@ def check_only(args):
                         ('Runtime source carrier checkout', args.runtime)):
         candidate = Path(path) if path else Path('')
         if candidate.is_dir():
-            expected = fixture_sources().get('agent' if label.startswith('Agent') else 'runtime', {})
+            role = 'agent' if label.startswith('Agent') else 'runtime'
+            expected = source_hashes.get(role, {})
             head = command(['git', '-C', str(candidate), 'rev-parse', '--verify', 'HEAD^{commit}'])
             status = command(['git', '-C', str(candidate), 'status', '--porcelain', '--untracked-files=all'])
             names = command(['git', '-C', str(candidate), 'ls-tree', '-r', '--name-only', 'HEAD'])
@@ -267,6 +313,15 @@ def check_only(args):
                   and status.stdout == '' and names.returncode == 0 and modes.returncode == 0
                   and set(names.stdout.splitlines()) == set(expected)
                   and all(mode_map.get(name) == '100644' for name in expected))
+            if head.returncode == 0 and re.fullmatch('[0-9a-f]{40}\n', head.stdout):
+                revision = head.stdout.strip()
+                for name, expected_hash in expected.items():
+                    try:
+                        actual = committed_source_bytes(candidate, revision, name)
+                        matches = hashlib.sha256(actual).hexdigest() == expected_hash
+                    except (OSError, RuntimeError, subprocess.TimeoutExpired):
+                        matches = False
+                    check(label + ' committed source bytes ' + name, matches)
         else:
             check(label + ' Git history and exact committed source are readable', False)
 
