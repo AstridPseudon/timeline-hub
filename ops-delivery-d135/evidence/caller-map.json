@@ -1,0 +1,32 @@
+{
+  "format": "timeline-delivery-d135-caller-map-v1",
+  "entrypoint": "ops-delivery-d135/delivery-build",
+  "flow": [
+    "parse explicit roots and required D59 source tuple",
+    "validate exact tuple fields and source object/tree identity",
+    "resolve fresh origin/main and pinned tuple tip for every selected repo",
+    "run all selected git merge-base --is-ancestor checks before writes",
+    "create private alternates-backed verifier views from resolved base/tip",
+    "squash/verify/bundle using the private pinned endpoint",
+    "render README, add guarded extras, write checksums, and optionally ZIP"
+  ],
+  "tuple_authority": {
+    "format": "D68/D73-compatible plain object keyed by the four repo names",
+    "required_entry_fields": ["root", "sha", "tree"],
+    "agent_rule": "Agent tip is item.agent.sha from the tuple; never resolve or fallback to local tl/integration",
+    "identity_rule": "root sha and root sha^{tree} must match the tuple exactly",
+    "dirty_rule": "every selected source root must be clean"
+  },
+  "roots": {
+    "delivery": ["--delivery-root", "TIMELINE_DELIVERY_ROOT", "default ORCH/delivery"],
+    "work": ["--work-root", "TIMELINE_WORK_ROOT", "default /home/user/work"],
+    "template": ["--template", "TIMELINE_TEMPLATE", "default DELIVERY/README.template.md"],
+    "gate_results": ["--gate-results", "TIMELINE_GATE_RESULTS", "default DELIVERY/gate-results.md"]
+  },
+  "caller_contract": {
+    "preflight_failure": "exit 2; exact repo/base/tip; no staging or export writes",
+    "source_writes": "none",
+    "verifier_writes": "private work root only",
+    "public_wire_or_pins": "unchanged"
+  }
+}

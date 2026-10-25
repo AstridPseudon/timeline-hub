@@ -1,0 +1,47 @@
+{
+  "format": "timeline-delivery-d135-source-manifest-v1",
+  "owner": "D135",
+  "source": {
+    "installed_delivery_build_sha256": "f25dfab13bbfb090bf26cf97a85e59bd4818859f5b974dac94aae7e6f2272708",
+    "installed_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/delivery-build",
+    "candidate_path": "ops-delivery-d135/delivery-build",
+    "candidate_sha256": "afd7625ca64a13eda1f4506e69cb6d1103bd28053b9cde09a1a752dc77b9b84e",
+    "tuple_path": "ops-delivery-d135/evidence/d59-source-tuple.json",
+    "tuple_sha256": "ce3d06b41014bcd5cd42454c62828c7d240d3beb0a570467be0375109b1c4338"
+  },
+  "expected_tuple_fields": ["root", "sha", "tree"],
+  "repositories": {
+    "agent": {
+      "root": "/home/user/peteromallet/astrid-agent",
+      "pinned_sha": "a30e74e901a28b39c28facba3deb00d76f186e23",
+      "pinned_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+      "fresh_upstream_main": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+      "authority": "Agent-home integration hub ref; local work/agent 547e1045 is stale and not authoritative"
+    },
+    "runtime": {
+      "root": "/home/user/work/runtime",
+      "pinned_sha": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+      "pinned_tree": "d5cb9335a03bf4764548e379ce180a66bf966910",
+      "fresh_upstream_main": "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f"
+    },
+    "app": {
+      "root": "/home/user/work/app",
+      "pinned_sha": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+      "pinned_tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20",
+      "fresh_upstream_main": "213318f1ec6ea5c324787bbd1c30a73072d1151a"
+    },
+    "composition": {
+      "root": "/home/user/work/composition",
+      "pinned_sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "pinned_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "fresh_upstream_main": "67b8aa3d0d6831d3e3504a340ff583c3da253707"
+    }
+  },
+  "policy": {
+    "tip_source": "d59-source-tuple.json only",
+    "base_source": "each source root origin/main resolved during all-repository preflight",
+    "ancestry_gate": "git merge-base --is-ancestor base tip for every selected repository",
+    "failed_ancestry": "nonzero with exact repo/base/tip; no staging, format-patch, tree rewrite, or full-export fallback",
+    "source_git": "read-only; temporary alternates-backed verifier refs are private"
+  }
+}

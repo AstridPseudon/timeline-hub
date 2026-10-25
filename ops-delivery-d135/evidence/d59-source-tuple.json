@@ -1,0 +1,22 @@
+{
+  "agent": {
+    "root": "/home/user/peteromallet/astrid-agent",
+    "sha": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0"
+  },
+  "runtime": {
+    "root": "/home/user/work/runtime",
+    "sha": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+    "tree": "d5cb9335a03bf4764548e379ce180a66bf966910"
+  },
+  "app": {
+    "root": "/home/user/work/app",
+    "sha": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+    "tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20"
+  },
+  "composition": {
+    "root": "/home/user/work/composition",
+    "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  }
+}
