@@ -1,0 +1,13 @@
+{
+  "time": "2026-10-25T12:36:51.318088+00:00",
+  "worker": "app-U4p-D121-tags-adoption-1230",
+  "normal_head": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7",
+  "normal_tree": "dd2afd6c5c7a1ac73feaac4390cc64d7f31fe7b9",
+  "author": "331a58363d1dc6ade1db2d2fa9d58688520c51bd",
+  "tested_author_tree": "dd2afd6c5c7a1ac73feaac4390cc64d7f31fe7b9",
+  "entire_tree_equal": true,
+  "queue_receipt": "merged tl/app-U4p-D121-tags-adoption-1230 into app tl/integration -> d8a1cd40b8\n",
+  "runtime_release": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+  "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+  "source_proof": "Node20 strict/vendor17/artifact3/lint, protected8 and mapped14 exact; only runtime.lock.json/public/install-manifest.json"
+}

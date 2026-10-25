@@ -1,0 +1,5 @@
+Ask: consume actual first-return binding worker and keep exclusive bounded source ownership / Owner: App app-D118a-native-binding-first-return-1236; Agent batch after qualification / By: 2026-10-25T12:40Z
+
+Independent1221 FAIL published with actual genuine parent PASS versus candidate dependency_changed at native_text_binding69. Dispatched first same-branch Luna app-D118a-native-binding-first-return-1236 on tl/app-D118a-native-binding-authority-1210 exactf3a6; only native_text_binding.py and additive authority controls. Original genuine rebind remains read-only and must pass while actual authority reaches consumer. Strict wrong-pair/incomplete/no-write/privacy stay exact. Candidate remains held; source outside bounded file returns unapplied seam. Three source/read workers active, no heavy, fresh4.993GB before start under D89b.
+
+Tags normal adopter1230 finished supportedNode20/vendor17/artifact3/lint and exact two tool outputs. App original author normal merge queued; no browser proof or full P2 repeat from adoption. Six current-tuple named cases independently GO; SWAP and element remain open.

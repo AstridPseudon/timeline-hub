@@ -1,0 +1,196 @@
+{
+  "task": "D120 sole independent protected verdict for current isolated registerAsset actual8974",
+  "verdict": "GO",
+  "scope": {
+    "reviewed_case": "P2 mounted registerAsset save: real file drop, exact media/registry fields, reload and guarded Undo",
+    "service_id": "app-pin-34d46445-d73-p2-register-asset-34d46445-submit-1025122001-8974",
+    "preflight_id": "app-pin-34d46445-d73-p2-register-asset-34d46445-submit-preflight-1025121931-5383",
+    "no_borrowed_scope": ["27438", "15712"],
+    "not_reviewed": ["earlier five-case verdict", "source-cause investigation", "SWAP", "element"]
+  },
+  "run": {
+    "service_target": "app-pin-34d46445",
+    "exit": 0,
+    "central_duration_seconds": 204,
+    "d66_duration_seconds": 199.166,
+    "readiness": {
+      "status": "PASS",
+      "tests": 1,
+      "failures": 0,
+      "skipped": 0,
+      "errors": 0,
+      "source": "tests/e2e/local/three-products.mounted-readiness.spec.ts:268",
+      "xml": "d66/readiness.xml",
+      "sha256": "06739d2d28de7ff3e67cfba3b01e0b25ce5861d41a39c368173436f9a3243e86"
+    },
+    "original": {
+      "status": "PASS",
+      "tests": 1,
+      "failures": 0,
+      "skipped": 0,
+      "errors": 0,
+      "source": "tests/e2e/local/three-products.p2-elements-assets.spec.ts:1133",
+      "xml": "d66/p2-register-asset.xml",
+      "sha256": "48d8e860da172814af1ed95cf3c6acd33fb9e00eb773b95b9197368060705813"
+    }
+  },
+  "tuple": {
+    "app": {
+      "commit": "34d4644589970274a5252c0f7c68b6288eb0b0b4",
+      "tree": "48d71e1a0c18a13668e1d1e086def9dd6210affe",
+      "checkout": "/home/user/work/wt/app-pin-34d46445",
+      "receipt_sha256": "cc9659251666cf4b2a5d43e52de26b078fde0788676078817b430a0fcec4e106"
+    },
+    "agent": {
+      "commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+      "tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+      "checkout": "/home/user/work/wt/agt-pin-070dfc5e",
+      "receipt_sha256": "a8abf836cedf70334caaa9030d021a0c20d52b05b0b671a607c7d0c45d5fbc05"
+    },
+    "runtime": {
+      "commit": "7070f1378d1917fcce69857ebd33cd2b3015568b",
+      "tree": "cd68015cb9fe85a6ecd2d15dd7e2eac69f67e2b1",
+      "checkout": "/home/user/work/wt/rt-pin-7070f137",
+      "receipt_sha256": "7519cfc6151d0463a170f256e8b198b3690c1153194ebed4036098a7496d2b6d"
+    },
+    "composition": {
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "checkout": "/home/user/work/wt/vw-pin-635f4de0",
+      "receipt_sha256": "ea43438c8e7327f152faf44d2d8e56133dd4b6aaf2205c4196d61b6c7b1e9ab1"
+    }
+  },
+  "custody": {
+    "immutable_four_checkouts": "PASS: all four exact commit/tree pairs above are clean",
+    "service_source": {
+      "root": "/home/user/work/wt/.test-app-pin-34d46445-d73-p2-register-asset-34d46445-submit-1025122001-8974",
+      "head": "5e4abf3594ad046f033a160bcf59341e58bd2cc5",
+      "tree": "48d71e1a0c18a13668e1d1e086def9dd6210affe",
+      "dirty": false,
+      "app_tree_equal": true
+    },
+    "import_roots": {
+      "astrid": {
+        "path": "/home/user/work/wt/agt-pin-070dfc5e/astrid/__init__.py",
+        "version": "0.1.0",
+        "sha256": "f5fc47afc0afbd81507fecbb41a6d7405f14596bf09400c287bf1e4624fed578"
+      },
+      "astrid_runtime": {
+        "path": "/home/user/work/wt/rt-pin-7070f137/astrid_runtime/__init__.py",
+        "version": "0.1.0",
+        "sha256": "b0d1a06374c421bd85ef6bfc308e6b2ef3b2c0472266a2a85e4894138a9bcbe3"
+      },
+      "astrid_runtime_client": {
+        "path": "/home/user/work/wt/agt-pin-070dfc5e/astrid_runtime_client/__init__.py",
+        "version": null,
+        "sha256": "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2"
+      },
+      "runtime_protocol": {
+        "path": "/home/user/work/wt/rt-pin-7070f137/runtime_protocol/__init__.py",
+        "version": null,
+        "sha256": "4e4064e1d9b80c6637576490150f44f3c710fabc520af1e640abf2493dcbb0d2"
+      }
+    },
+    "versions": {
+      "node": "v20.19.4",
+      "npm": "10.8.2",
+      "python": "3.13.16",
+      "runtime_server": "AstridRuntime/0.1 Python/3.13.16",
+      "protocol": "workspace.v1",
+      "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+      "provider": "astrid-v1",
+      "compiler": "authoring-bundle-1"
+    }
+  },
+  "artifacts": {
+    "preflight_manifest": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D120-current-asset-isolated-1217/submission/p2-register-asset/manifest.json",
+      "sha256": "b5d8de204dbfd0b3abf826868a8b0b8c5d32de948e8329acf91c627348c341e3",
+      "status": "PASS"
+    },
+    "normal_manifest": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-34d46445-d73-p2-register-asset-34d46445-submit-1025122001-8974/d66/manifest.json",
+      "sha256": "babaaa8eda80f24e1b40dd5dfbb4758728b65042c430d9437322b53bb8c8edb2",
+      "status": "PASS"
+    },
+    "source_hashes_before_after_equal": true,
+    "source_hashes": {
+      "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+      "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+      "scripts/testing/d66-plain-stack.mjs": "81d273e626240cb02b0f1a5cee7314325bf935bf487874a178acede4d9de0dd3"
+    },
+    "json_xml_parse": "PASS: jq empty on both manifests and two dist manifests; xmllint --noout on both JUnit XMLs",
+    "worktree": "PASS: assigned App worktree clean; git diff --check PASS"
+  },
+  "predicate_qualification": [
+    {
+      "predicate": "normal preflight 5383",
+      "status": "PASS",
+      "evidence": "preflight manifest status PASS; exact pinned tuple and source checkout state recorded"
+    },
+    {
+      "predicate": "supported Node 20 / actual source / import roots / manifests / XML",
+      "status": "PASS",
+      "evidence": "Node v20.19.4; service tree equals App tree 48d71e; manifest imports immutable Agent/Runtime roots; JSON/XML parse and hashes match preserved artifacts"
+    },
+    {
+      "predicate": "original D115 exact field-union request",
+      "status": "PASS",
+      "evidence": "source assertRequestV2 exact envelope and native inverse shape; semantic registerAsset emits clip.add-media with exact selected media/row; Idempotency-Key is captured and checked"
+    },
+    {
+      "predicate": "D115 exact C0/D101 asset read union",
+      "status": "PASS",
+      "evidence": "nativeAssetReads derives exactly two field dependencies: ref parent path [registry] with state present/value from the physical parent registry, and ref parent path [config, registry] with state absent when the mirror is absent; no optionalized envelope"
+    },
+    {
+      "predicate": "original D115 exact response deep equality",
+      "status": "PASS",
+      "evidence": "native accepted-reply helper compares independently derived data, canonical document/digest, commands, steps, receipt, authenticated history, recorder metadata, and undo history; mutation controls reject missing/extra/wrong path/ref/state/value"
+    },
+    {
+      "predicate": "canonical registry/config.registry/media manifest",
+      "status": "PASS",
+      "evidence": "registerAsset source asserts config.registry absent before/after, parent registry exact except one new asset, normalized catalogue entry, unchanged existing assets, and manifest media identity"
+    },
+    {
+      "predicate": "canonical history and scoped reload",
+      "status": "PASS",
+      "evidence": "original test reached authoritative history assertion, reload head/document assertion with new clip visible, then post-undo reload with the new clip absent"
+    },
+    {
+      "predicate": "complete guarded native Undo",
+      "status": "PASS",
+      "evidence": "original test reached timeline.inverse target-publication assertion, independently derived native undo context, canonical restoration equality, undo history entry, and final scoped reload"
+    },
+    {
+      "predicate": "zero legacy traffic / no-write tail",
+      "status": "PASS",
+      "evidence": "assertNoLegacy(wire) reached after forward commit and after native Undo; source records only the intended commit route and old-write list remains empty"
+    }
+  ],
+  "limits": {
+    "actual_case_observed": "accepted forward clip.add-media and accepted guarded native inverse",
+    "not_observed_in_8974": ["merged reply branch", "refused reply branch", "new test body", "second service run"],
+    "mutable_normal_workspace_after_run": {
+      "app": {"commit": "34d4644589970274a5252c0f7c68b6288eb0b0b4", "tree": "48d71e1a0c18a13668e1d1e086def9dd6210affe", "matches_pin": true},
+      "agent": {"commit": "3ab324c891d3121c46d4aff0a339468a9339e0f2", "tree": "eee58bae6c33eb1158f0bcc2b15bb507ee9a32e6", "matches_pin": false},
+      "runtime": {"commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344", "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f", "matches_pin": false},
+      "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "matches_pin": true}
+    },
+    "interpretation": "The GO is only for the preserved 8974 service run against the immutable four-checkout tuple. No claim is made for the later mutable Agent/Runtime integration heads."
+  },
+  "overall": {
+    "p2": "NO-GO",
+    "reason": "SWAP and element remain NO-GO/zero credit; this isolated registerAsset GO would make 6/8 on the named tuple runs, not a full-tour GO",
+    "production_path": "mounted gesture -> persisted A2 outbox -> Runtime provider -> authoritative accepted/merged/refused -> canonical history/reload -> guarded native Undo"
+  },
+  "review_commands": [
+    "jq empty <two manifests and two dist manifests>",
+    "xmllint --noout <readiness.xml> <p2-register-asset.xml>",
+    "sha256sum <manifests, XMLs, test sources, launcher, import roots>",
+    "git diff --check",
+    "git status --porcelain / git rev-parse HEAD / HEAD^{tree} on assigned and four immutable checkouts"
+  ],
+  "not_run_by_instruction": ["tests", "typecheck", "lint", "backend", "HTTP", "browser", "new body", "source edit"]
+}
