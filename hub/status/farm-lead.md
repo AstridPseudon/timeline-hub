@@ -1,1 +1,1 @@
-2026-10-25T18:39:14Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 12G free; D77 render HELD: Runtime's reviewed kit not yet published (kit still 0857a5e0, mtime 17:05Z)
+2026-10-25T19:11:12Z procs: hub-syncd dispatcher run-manager up; workers running: tf-zip-dryrun-1905 (F-ZIP-dryrun, Claude Haiku fallback); disk 10G free; D77 render HELD: Runtime reviewed kit not yet published (kit still 0857a5e0)
