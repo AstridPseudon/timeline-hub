@@ -1,0 +1,51 @@
+{
+  "task": "app-U4p-D110-adoption-0717",
+  "repo": "app",
+  "base": "f7201e02dc53ca7b1e70e38894284528fc78aa70",
+  "app_diff": [
+    "public/install-manifest.json"
+  ],
+  "agent": {
+    "release": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+    "reviewed_tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+    "status": "qualified"
+  },
+  "runtime": {
+    "producer": "c91626f5e905f9336b51aae0486a071d83f0bac7",
+    "tree": "16264479ae18fbb05ec5356ce5b5ab6f69dea9aa",
+    "product": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+    "product_tree": "a522511414947e48e317a5e5c2103483b121a750",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b"
+  },
+  "lock": {
+    "artifact_mappings": 14,
+    "producer_version": "sha256:084f3f2510edff28c18d33aac4a459f8aa6df3cb4fd71cba4fb292274ea8ade5",
+    "manifest_schema_version": 1
+  },
+  "verification": {
+    "vitest": {
+      "installManifestSkew": { "passed": 2, "total": 2 },
+      "vendorLock": { "passed": 15, "total": 15 }
+    },
+    "manifest": { "passed": 2, "total": 2 },
+    "schema_guard": { "passed": 2, "total": 2 },
+    "artifact_manifest": { "passed": 3, "total": 3 },
+    "syntax": { "passed": 3, "total": 3 },
+    "exact_mappings": { "passed": 14, "total": 14 },
+    "protected_bytes": { "passed": 14, "total": 14 },
+    "scoped_eslint": "0 warnings/errors",
+    "updater_test": "blocked: sandbox spawnSync git EPERM"
+  },
+  "source_review": {
+    "agent_release_doc": "PASS",
+    "agent_independent_review": "PASS",
+    "additional_review": false
+  },
+  "scope_limits": [
+    "no product source changes",
+    "no manual pins or generated edits",
+    "no D111 substitution",
+    "no P1/P2/P3 body"
+  ]
+}
