@@ -1447,6 +1447,7 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
         native_image = copy.deepcopy(stage_before)
         inherited_effects = stage["source_stage"].get("source_effects")
         root_checks = []
+        native_sites = []
         # Native captures observe each preceding write (including empty ancestor
         # removals); canonical effects describe the complete stage transition.
         for write in writes:
@@ -1473,6 +1474,7 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
                         native_image[ref] = copy.deepcopy(stage_after[ref])
                 continue
             ref, path = _inverse_stage_write_site(native_image, write)
+            native_sites.append((ref, path))
             if (inherited_effects is not None and write["ref"].startswith("occurrence:")
                     and "/" not in write["ref"] and write["path"] == ["shot_id"]):
                 occurrence_path = ["occurrences", "occurrence_id:" + write["ref"].partition(":")[2]]
@@ -1762,12 +1764,15 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
                 require(value_equal(_inverse_stage_root(native_image, write["ref"])[0],
                                     _inverse_stage_root(stage_after, write["ref"])[0]),
                         "inverse stage roots differ from its authenticated effect image")
-                continue
-            before_ref, before_path = _inverse_stage_write_site(native_image, write)
-            after_ref, after_path = _inverse_stage_write_site(stage_after, write)
-            require(before_ref == after_ref and before_path == after_path
-                    and value_equal(_inverse_stage_state(native_image, before_ref, before_path),
-                                    _inverse_stage_state(stage_after, after_ref, after_path)),
+        # Each native site belongs to its sequential input. Later writes may
+        # remove its alias/owner; compare the resolved physical site, following
+        # only the complete source turnovers authenticated above.
+        for ref, path in native_sites:
+            for old, new, _, _, _, _ in transitions:
+                if ref == old:
+                    ref = new
+            require(value_equal(_inverse_stage_state(native_image, ref, path),
+                                _inverse_stage_state(stage_after, ref, path)),
                     "inverse stage writes differ from its authenticated effect image")
         for index in range(effect_start, effect_end):
             effect = step["patch"][index]
