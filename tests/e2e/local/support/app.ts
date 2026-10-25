@@ -10,6 +10,7 @@ import { DirectHarness, DOOR_PORT, startDirectHarness } from './harness.ts';
 import type { TimelineConfig } from '../../../../src/tools/video-editor/types/index.ts';
 import type { TimelineDraftRecord } from '../../../../src/tools/video-editor/data/timelineDraftIndexedDb.ts';
 import type { OutboxRecord } from '../../../../src/tools/video-editor/commands/commitOutbox.ts';
+import { DEFAULT_VISIBLE_CLIP_SPAN_SECONDS } from '../../../../src/tools/video-editor/lib/timeline-asset-durations.ts';
 import { clearMountedBootstrapFailure, MountedBootstrapError, recordMountedBootstrapFailure, retainMountedBootstrapDiagnostics, type MountedBootstrapDiagnosticTestInfo, type MountedBootstrapStage } from '../mounted-readiness-safety.ts';
 import { MOUNTED_DIAGNOSTIC_MAX_RECORDS, mountedDiagnosticInitScript } from '../p1-diagnostic-safety.ts';
 import { closeElementApplyDiagnosticContext, elementApplyDiagnosticPageFixture } from './p2-element-diagnostic.ts';
@@ -297,6 +298,29 @@ export async function dragTimelineClip(page: Page, clipId: string, referenceId: 
   await page.mouse.up();
 }
 
+/**
+ * External file drops have no asset duration at dragover time, so the real
+ * coordinator previews the production default span and interprets the
+ * pointer as the preview centre. Keep the helper's requested time as the
+ * preview's left edge while deriving the centre offset from that source
+ * contract.
+ */
+export function timelineFileDropClientX({
+  clipLeft,
+  from,
+  time,
+  pixelsPerSecond,
+  previewDurationSeconds = DEFAULT_VISIBLE_CLIP_SPAN_SECONDS,
+}: {
+  clipLeft: number;
+  from: number;
+  time: number;
+  pixelsPerSecond: number;
+  previewDurationSeconds?: number;
+}): number {
+  return clipLeft + (time - from + previewDurationSeconds / 2) * pixelsPerSecond;
+}
+
 /** Dispatch the mounted timeline's real external-file drop with a browser File. */
 export async function dropFileOnTimeline(
   page: Page,
@@ -317,7 +341,10 @@ export async function dropFileOnTimeline(
   const wrapperBox = await wrapper.boundingBox();
   if (!box || !other || !wrapperBox || referenceAt === from) throw new Error('Cannot measure timeline file-drop scale');
   const pixelsPerSecond = (other.x - box.x) / (referenceAt - from);
-  const clientX = box.x + (time - from) * pixelsPerSecond;
+  // The P2 image call declares `time` as the desired left edge. Keep the
+  // established center-pointer contract for the existing video/audio calls.
+  const previewDurationSeconds = file.type.startsWith('image/') ? DEFAULT_VISIBLE_CLIP_SPAN_SECONDS : 0;
+  const clientX = timelineFileDropClientX({ clipLeft: box.x, from, time, pixelsPerSecond, previewDurationSeconds });
   const clientY = box.y + box.height / 2;
   if (clientX < wrapperBox.x || clientX > wrapperBox.x + wrapperBox.width) {
     throw new Error(`Timeline file drop at ${time}s is outside the mounted timeline viewport`);
