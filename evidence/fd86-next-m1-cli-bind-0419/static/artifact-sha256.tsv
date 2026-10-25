@@ -1,0 +1,13 @@
+path	sha256
+evidence/fd86-next-m1-cli-bind-0419/README.md	14ce644617a22a0a67ba502898c58fabd194af40d279416b9f60ad1d5ca0d192
+evidence/fd86-next-m1-cli-bind-0419/inputs/selector-argv.txt	0cf9b5ae3800965a5573b75060e104370e5f129af9272380a580f15822067b2a
+evidence/fd86-next-m1-cli-bind-0419/inputs/selector-argv.sha256	e632349e4b56f350d66c51995479935e56d1ada7a3e3d76f1586412ac103e40b
+evidence/fd86-next-m1-cli-bind-0419/inputs/current-receiving-tuple.tsv	304e48919332a24724daaf789f50d4e504cbbd047fd92173f0564a564bafb676
+evidence/fd86-next-m1-cli-bind-0419/inputs/source-dependencies.tsv	eaf8d012c39b0987b047c704e105788afb72b960f8e7f608853e22531f9ed4a3
+evidence/fd86-next-m1-cli-bind-0419/inputs/per-id-provenance.tsv	2ed3d3b9b6399abb152df39087cf8a519129bdabf935fe2074c2857c305ec920
+evidence/fd86-next-m1-cli-bind-0419/inputs/ownership.tsv	ed9c89152d51d2d15f7d2ab2a3ab1a46c3ae4e8b817fca08a6d316665fad4b60
+evidence/fd86-next-m1-cli-bind-0419/inputs/preservation-boundaries.tsv	fecac0a83353bf96a1d4c52c80da7042862fca394de7846fd1badfc51bb4ffa6
+evidence/fd86-next-m1-cli-bind-0419/route/main-affected-batch-recipe.sh	bd5692d6d25d86eee16de05890fc34534018487f13ec2f4c8db08aa33b56e881
+evidence/fd86-next-m1-cli-bind-0419/static/route-controls.txt	a69e19878355919e64833f6c6eadc8db9e44708eb0060a6fc70585603203d142
+evidence/fd86-next-m1-cli-bind-0419/static/source-only-validation.txt	218832b38de060d540d742b6ba88e5a603cde7a9a6fe10f9662cec6114ae0cf3
+evidence/fd86-next-m1-cli-bind-0419/static/source-packet-validation.json	78b10c1c45f4da626936c1a6b86a1d66b8043ecd8539f07ccf5f4cf97ede0299

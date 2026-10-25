@@ -1,0 +1,9 @@
+bash_n=REQUIRED_BEFORE_BODY
+selector_count=33
+selector_unique=33
+marker_filter=none
+pytest_flags=-n 3 -o addopts= -p no:cacheprovider --timeout=45
+positive_control=exit 17, exactly one invocation, marker bytes 7
+poison_control=exit 1, zero invocations
+preflight=required before body
+body=NOT RUN BY SOURCE-ONLY WORKER

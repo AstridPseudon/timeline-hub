@@ -1,0 +1,12 @@
+scope	count	status	authority_or_hash	note
+new-selector-union	33	SOURCE_ONLY	selector-argv.txt	23 legacy M1/owned/D87/scalar + 8 CLI + 2 retained-input selectors
+predecessor-0407	96	CLAIMED_BY_0415	4b0cbc5fe; selector sha256 92c8106560858632ac5bc77b68eba78b00f764aec6253d87067c7b8c06414d6f	exact canonical predecessor set, not family-count subtraction
+actual9211	161	IMMUTABLE_NOT_REBOUND	handoff-rt-D86-9211-outcomes-0303	prior actual outcomes retained; new source eligibility is not a cure claim
+actual11789	102	IMMUTABLE_NOT_REBOUND	handoff-rt-D86-11789-outcomes-0310	CLI eight remain prior failures with 12 bodies retained
+actual9211-all-outcomes	161	PRESERVED	per-id-outcomes.tsv sha256 70f99290d1cc09fd4eb692497326181b235e5176497e6645c4d84901e9d7d421; JSON sha256 885e63ebf1d323e5da9e261d86ed706e40d94161adb6b9e2ad46cd4133e1a6f6	all per-ID outcomes remain external handoff authority
+actual11789-all-outcomes	102	PRESERVED	per-id-outcomes.tsv sha256 610390447cbd610e91982851ac0d070dbb56f2ca66598072343e99af005c3396; JSON sha256 4e2b670c36282b462fe3e9f32600ce7172f823e197363bfbf6b0a41b22b5ec83	all per-ID outcomes remain external handoff authority
+actual18575	20	IMMUTABLE_EXECUTED_OR_SCHEDULED	D91 immutable ledger	D91 ten scheduled elsewhere; inverse7 PASS excluded
+original550	550	PRESERVED	4b0cbc5fe preservation-boundaries sha256 d5ee030f41d80b5aa1fd4da50057ff7986fa05e7088351a287679e6b521ec474	original rollup and per-ID dispositions remain authoritative
+NO_JUNIT_CASE	23	PRESERVED	4b0cbc5fe unexecuted-23.tsv sha256 7f70512cfdf3d6db36c5c59106805beae7a73391803eb5d161683d8d4f98dfca	not promoted by approximate count
+word-binding-99-101	2	EXCLUDED	selected-safe-outcomes.json	word IDs 99/101 excluded exactly
+retained-input-D14-D23	2	CLAIMED_BY_NEW_PACKET	f51844083737a484422bb07a9d6679f489bbcd78	distinct unchanged boundary; exact fixture source is b5247b5ef47b

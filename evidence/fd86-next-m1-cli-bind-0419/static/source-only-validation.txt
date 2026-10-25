@@ -1,0 +1,18 @@
+[exact set]
+PASS: 33 explicit canonical selectors are listed; membership was not generated from family counts.
+[overlap]
+PASS: exact selector set is disjoint from committed 0407/current96 selector hash 92c8106560858632ac5bc77b68eba78b00f764aec6253d87067c7b8c06414d6f.
+[M1]
+PASS_SOURCE: 11d043 legacy film source reviewed independently at 0400; 23 consumers traced, with word IDs 99/101 excluded.
+[CLI]
+PASS_SOURCE: 4c622 source review is limited to private _runtime_document removal; eight prior 11789 consumers retained.
+[retained inputs]
+PASS_SOURCE: exact two tests use current seed import lines 86 and 92; fixture blob b5247b5ef47b is meaningful source.
+[tuple]
+PASS: normal Agent/Runtime/App/Composition tuple and path-sensitive checks are recorded once for this plan.
+[boundaries]
+PASS: original550, NO_JUNIT_CASE-23, actual9211/11789/18575, held, scheduled, excluded, and D14/D23 boundaries remain explicit.
+[route]
+PASS: existing MAIN route shape retained; no new runner/framework/profile/install or marker filter.
+[behavior]
+NOT RUN: no pytest, collection, helper, fixture execution, service, body, browser, build, or live registry operation.

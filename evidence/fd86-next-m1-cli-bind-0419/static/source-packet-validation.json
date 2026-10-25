@@ -1,0 +1,11 @@
+{
+  "schema": "F-D86-next-source-only/v1",
+  "new_selector_count": 33,
+  "legacy_m1_consumers": 23,
+  "cli_consumers": 8,
+  "retained_input_consumers": 2,
+  "predecessor_selector_count": 96,
+  "predecessor_selector_sha256": "92c8106560858632ac5bc77b68eba78b00f764aec6253d87067c7b8c06414d6f",
+  "body_run": false,
+  "source_checks": "exact selectors, hashes, AST/source references, route syntax, and boundary accounting only"
+}

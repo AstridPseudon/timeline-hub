@@ -1,0 +1,5 @@
+repo	branch	commit	tree	status	purpose
+agent	tl/integration	b8a48a91b01a543ec56e44cee6f6f251d6c90986	57905f08c6454545642bed98c1e6ada021f0c495	clean	current qualified Agent source; reviewed M1/CLI/retained sources are ancestors
+runtime	tl/integration	6634a17f3ffd885567ba3c91b6c7a560df7375a4	47b376717ce7a919a697c62133de3e74dc9f6d3a	clean	released Runtime receiving source
+app	tl/integration	043631dbabfed566cfe037709c7fe861d6435b52	e3aa703cc3aaf6d152279881dca4c0c6916b7256	clean	current normal App checkout captured once
+composition	tl/integration	635f4de06fda22a85fc2e4cfc764d0153a4c9f40	5ab5191a296980a0a6bcd1178ab6902d6478a148	clean	released Composition checkout

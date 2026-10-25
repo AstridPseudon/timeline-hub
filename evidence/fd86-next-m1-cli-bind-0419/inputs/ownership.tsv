@@ -1,0 +1,8 @@
+owner	selector_count	selector_sha256	request_or_source	status	note
+rt-D86-current96-body-0415	96	92c8106560858632ac5bc77b68eba78b00f764aec6253d87067c7b8c06414d6	agent-fd86-current96-body-0415-1025041953-6058	CLAIMED	0415 owns exact predecessor set from committed 0407; no overlap rebound
+rt-D86-next-M1-CLI-bind-0419	33	0cf9b5ae3800965a5573b75060e104370e5f129af9272380a580f15822067b2a	new source packet	CLAIMED	this packet's exact union; count is validation only
+inverse7	7	-	4b0cbc5fe / executed-inverse7-per-id.tsv	EXCLUDED	prior immutable PASS
+D91	10	-	4b0cbc5fe / scheduled-D91-per-id.tsv	SCHEDULED_ELSEWHERE	not rebound
+candidate-product	8	-	4b0cbc5fe / held-per-id.tsv	HELD	no normal product merge
+optional-word-oracle-sheet-cli	5	-	candidate13 source record	EXCLUDED	no exact current-normal applicability proof
+media20-transition	18	-	reviewed blob 369b	EXCLUDED_PENDING_RECEIPT	join only after exact normal receipt and blob match
