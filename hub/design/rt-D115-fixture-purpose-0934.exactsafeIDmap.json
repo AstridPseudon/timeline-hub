@@ -1,0 +1,469 @@
+{
+  "schema": "rt-d115-fixture-purpose-v1",
+  "task": "D115 Runtime-owned pre-cut-v31 fixture SOURCE/PURPOSE review",
+  "count": 27,
+  "common_finding": "All 27 reach the same legacy_binding failure through the shared m1.film pre-cut fixture. The retained archive contains transcript/binding rows, while the historical baseline timeline dependency_manifest has no document pin.",
+  "generator_drop": "none_proven",
+  "unknown_case_count": 0,
+  "entries": [
+    {
+      "ordinal": 1085,
+      "selector": "tests/editing_conformance/test_commit_runtime_m1.py::test_cli_python_outbox_restart_and_guarded_inverse[disjoint-rebase-undo]",
+      "purpose": "M1 CLI move; lost ACK; dependent outbox; restart; exact retry; disjoint rebase; inverse; history/readback/no-write",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "d107_exact_approved",
+      "current_producer_baseline": "tests/editing_conformance/test_m1_current_equivalent.py plus test_m1_legacy_archive_read.py",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 1091,
+      "selector": "tests/editing_conformance/test_commit_runtime_m1.py::test_cli_python_outbox_restart_and_guarded_inverse[touched-basis-conflict]",
+      "purpose": "M1 touched-basis conflict; pending command; exact base pair; refusal/no-write",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "d107_exact_approved",
+      "current_producer_baseline": "tests/editing_conformance/test_m1_current_equivalent.py plus test_m1_legacy_archive_read.py",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 1100,
+      "selector": "tests/editing_conformance/test_commit_runtime_m1.py::test_keyed_view_lost_ack_restart_and_fresh_head",
+      "purpose": "keyed view lost ACK; restart; exact key replay; changed-body idempotency conflict; fresh head",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "d107_exact_approved",
+      "current_producer_baseline": "tests/editing_conformance/test_m1_current_equivalent.py plus test_m1_legacy_archive_read.py",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 1106,
+      "selector": "tests/editing_conformance/test_commit_runtime_m1.py::test_keyed_view_requires_write_but_inspection_remains_read_only",
+      "purpose": "keyed view read-only refusal/no persistence; inspection readable; writer accepts same view",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "d107_exact_approved",
+      "current_producer_baseline": "tests/editing_conformance/test_m1_current_equivalent.py plus test_m1_legacy_archive_read.py",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 1112,
+      "selector": "tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[anchor-image]",
+      "purpose": "auto placement anchor/image; dry-run; canonical equality; restart/retry; inverse/redo",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "d107_exact_approved",
+      "current_producer_baseline": "tests/editing_conformance/test_m1_current_equivalent.py plus test_m1_legacy_archive_read.py",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 1116,
+      "selector": "tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[anchor-video]",
+      "purpose": "auto placement anchor/video; duration/output selection; dry-run; retry; inverse/redo",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "d107_exact_approved",
+      "current_producer_baseline": "tests/editing_conformance/test_m1_current_equivalent.py plus test_m1_legacy_archive_read.py",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 1121,
+      "selector": "tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[fallback-image]",
+      "purpose": "auto placement fallback/image at fallback_at=1; dry-run; retry; inverse/redo",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "d107_exact_approved",
+      "current_producer_baseline": "tests/editing_conformance/test_m1_current_equivalent.py plus test_m1_legacy_archive_read.py",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 1126,
+      "selector": "tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[fallback-video]",
+      "purpose": "auto placement fallback/video at fallback_at=1; duration/output; dry-run; retry; inverse/redo",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "d107_exact_approved",
+      "current_producer_baseline": "tests/editing_conformance/test_m1_current_equivalent.py plus test_m1_legacy_archive_read.py",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 1131,
+      "selector": "tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[shared-image]",
+      "purpose": "auto placement shared/image at frame=24; dry-run; retry; inverse/redo",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "d107_exact_approved",
+      "current_producer_baseline": "tests/editing_conformance/test_m1_current_equivalent.py plus test_m1_legacy_archive_read.py",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 1138,
+      "selector": "tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[shared-video]",
+      "purpose": "auto placement shared/video at frame=24; duration/output; dry-run; retry; inverse/redo",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "d107_exact_approved",
+      "current_producer_baseline": "tests/editing_conformance/test_m1_current_equivalent.py plus test_m1_legacy_archive_read.py",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 1143,
+      "selector": "tests/editing_conformance/test_commit_runtime_native_checkout.py::test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[False]",
+      "purpose": "attached move/trim; lost ACK; restart; original suffix; guarded undo; disjoint peer",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "legacy_only_exact_missing",
+      "current_producer_baseline": "none; exact selector-specific current equivalent not approved in D107",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 1147,
+      "selector": "tests/editing_conformance/test_commit_runtime_native_checkout.py::test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[True]",
+      "purpose": "attached move/trim; lost ACK; restart; original suffix; guarded undo; touching peer",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "legacy_only_exact_missing",
+      "current_producer_baseline": "none; exact selector-specific current equivalent not approved in D107",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 1152,
+      "selector": "tests/editing_conformance/test_commit_runtime_native_checkout.py::test_attached_param_commands_keep_exact_cli_ingress_and_unchanged_write_history",
+      "purpose": "attached parameter commands; exact CLI ingress; unchanged write history",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "legacy_only_exact_missing",
+      "current_producer_baseline": "none; exact selector-specific current equivalent not approved in D107",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 1159,
+      "selector": "tests/editing_conformance/test_commit_runtime_native_checkout.py::test_authenticated_v1_commit_reload_undo_survives_stopped_renderer_and_preview_reports_unavailable",
+      "purpose": "authenticated v1 commit; reload/undo; renderer stopped; preview unavailable",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "legacy_only_exact_missing",
+      "current_producer_baseline": "none; exact selector-specific current equivalent not approved in D107",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 1165,
+      "selector": "tests/editing_conformance/test_commit_runtime_native_frontends.py::test_sheet_lost_ack_attached_suffix_restart_exact_retry_and_peer_guards[False]",
+      "purpose": "sheet lost ACK; attached suffix; restart; exact retry; disjoint peer guard",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "legacy_only_exact_missing",
+      "current_producer_baseline": "none; exact selector-specific current equivalent not approved in D107",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 1171,
+      "selector": "tests/editing_conformance/test_commit_runtime_native_frontends.py::test_sheet_lost_ack_attached_suffix_restart_exact_retry_and_peer_guards[True]",
+      "purpose": "sheet lost ACK; attached suffix; restart; exact retry; touching peer guard",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "legacy_only_exact_missing",
+      "current_producer_baseline": "none; exact selector-specific current equivalent not approved in D107",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 1180,
+      "selector": "tests/editing_conformance/test_commit_runtime_native_frontends.py::test_checkout_first_refuses_sheet_suffix_keeps_draft_and_pending_intent",
+      "purpose": "checkout-first sheet suffix refusal; preserve draft and pending intent",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "legacy_only_exact_missing",
+      "current_producer_baseline": "none; exact selector-specific current equivalent not approved in D107",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 2913,
+      "selector": "tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_parent_asset_clear_lost_ack_reload_retry_undo",
+      "purpose": "HTTP original SDK parent asset clear; lost ACK; reload/retry/undo",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "legacy_only_exact_missing",
+      "current_producer_baseline": "none; exact selector-specific current equivalent not approved in D107",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 2923,
+      "selector": "tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_parent_transition_clear_lost_ack_reload_retry_undo",
+      "purpose": "HTTP original SDK parent transition clear; lost ACK; reload/retry/undo",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "legacy_only_exact_missing",
+      "current_producer_baseline": "none; exact selector-specific current equivalent not approved in D107",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 2927,
+      "selector": "tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_parent_trim_stale_rebase_lost_ack_reload_retry_undo",
+      "purpose": "HTTP original SDK parent trim stale rebase; lost ACK; reload/retry/undo",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "legacy_only_exact_missing",
+      "current_producer_baseline": "none; exact selector-specific current equivalent not approved in D107",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 2940,
+      "selector": "tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_parent_split_stale_rebase_lost_ack_reload_retry_undo",
+      "purpose": "HTTP original SDK parent split stale rebase; lost ACK; reload/retry/undo",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "legacy_only_exact_missing",
+      "current_producer_baseline": "none; exact selector-specific current equivalent not approved in D107",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 2958,
+      "selector": "tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_parent_delete_stale_rebase_lost_ack_reload_retry_undo",
+      "purpose": "HTTP original SDK parent delete stale rebase; lost ACK; reload/retry/undo",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "legacy_only_exact_missing",
+      "current_producer_baseline": "none; exact selector-specific current equivalent not approved in D107",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 2996,
+      "selector": "tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_ambiguous_owner_and_mixed_edits_keep_original_draft",
+      "purpose": "HTTP ambiguous owner and mixed edits; retain original draft",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "legacy_only_exact_missing",
+      "current_producer_baseline": "none; exact selector-specific current equivalent not approved in D107",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 3649,
+      "selector": "tests/editing_conformance/test_commit_runtime_parent_track_batch_inverse.py::test_grouped_parent_track_create_move_reload_undo_redo",
+      "purpose": "grouped parent track create/move; reload; undo/redo",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "legacy_only_exact_missing",
+      "current_producer_baseline": "none; exact selector-specific current equivalent not approved in D107",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 3651,
+      "selector": "tests/editing_conformance/test_commit_runtime_parent_track_label.py::test_move_then_parent_label_reload_inverse_preserves_newer_disjoint_move",
+      "purpose": "move then parent label; reload inverse; preserve newer disjoint move",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "legacy_only_exact_missing",
+      "current_producer_baseline": "none; exact selector-specific current equivalent not approved in D107",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 3653,
+      "selector": "tests/editing_conformance/test_commit_runtime_parent_track_label.py::test_native_label_cli_lost_ack_then_python_suffix_keeps_original_claims",
+      "purpose": "native label CLI lost ACK then Python suffix; preserve original claims",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "legacy_only_exact_missing",
+      "current_producer_baseline": "none; exact selector-specific current equivalent not approved in D107",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    },
+    {
+      "ordinal": 3654,
+      "selector": "tests/editing_conformance/test_commit_runtime_scalar.py::test_move_then_scalar_outbox_handoff_reload_and_guarded_inverse",
+      "purpose": "move then scalar outbox handoff; reload; guarded inverse",
+      "fixture_ownership": "Runtime precut-v31 fixture; shared Agent caller",
+      "pin_class": "intentional_historical_unpinned_author_input",
+      "generator_drop": "not_found_shared_fixture",
+      "disposition": "legacy_only_exact_missing",
+      "current_producer_baseline": "none; exact selector-specific current equivalent not approved in D107",
+      "evidence": [
+        "Runtime tests/precut_realm_fixture.py:46-176",
+        "Runtime tests/timeline_commit_film_fixture.py:28-44",
+        "Agent tests/editing_conformance/test_commit_runtime_m1.py:21-84",
+        "Agent tests/editing_conformance/test_m1_legacy_archive_read.py:91-93",
+        "D107 current-0633-predicates.tsv"
+      ]
+    }
+  ]
+}

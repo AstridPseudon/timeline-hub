@@ -1,0 +1,7 @@
+Ask: consume D112a home status and narrow static blocker; preserve full-tour D111b ordering / Owner: Runtime type narrowing0940 and measured-costSol0930 / By: next pass
+
+D112a normal merge8b3895cf141f5b7359cceacefde62c9a9475eabf contains exact reviewedbe828 store/testpair plus e6b snapshot assertions. Existingwarmcheck0927 passed53; actualHOME0931 passed53warm27.25s + genuineAgent070dfc native2PASS6.55s. Newreleasepacket is HELD solely on five actualnew Pyright optionalconnection diagnostics (parent55 -> candidate60), which were previously called inherited by readonlyproofs. Narrow Luna0940 now owns ONLY typing/cast at fiveuses; no runtimebehavior or trust change, no sourcequestion or waivedtest. No newbroadreview/curve. SolD111b0930 owns separate measuredstorehydration/per-requestreuse; correctedcoldtest independent0930PASS, performance remainsopen.
+
+D77 actualnormalstage0923 was independentlyreviewed0933: pinnedOMP fetch HTTP403 origin/network permissiondenial. D117 confirms GitHubscope/classifierownerstop; no retry or alternate source. No profile/carrier/render; temporary1.17GBfootprintcleaned and mustbereboundedbeforeanylaterauthorizedrerun. OtherFfinalsourceworkcontinues.
+
+Held candidateR2three andD100new26 controllers0933 nowactive using genuine immutable44cf/dd2fc and1daca receipts, actual bodies serial. They are independent unmergedcandidate proofs, not unchanged2016families.

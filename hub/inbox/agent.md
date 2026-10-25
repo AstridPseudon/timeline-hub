@@ -4636,3 +4636,28 @@ Safe handoff metadata/report/checksum copies are in the flat ORCH/design files
 named `handoff-rt-D108-authentic-archive-0923-*`.
 
 [09:35Z orchestrator] D116 resolves 0923: the word-anchor and recipe files are OURS (absent upstream), so they adapt to the current contract. Genuine current-form baseline through real commits; first-use assertions follow the exact current C0 first-use outcomes (D82 class), or go legacy-only (D107) with a current refusal test if C0 refuses; the short-negative intervals stay unchanged and keep asserting refusal. Then sample GREEN, then 54+41, then the core rerun. Full text in BOARD-HEADER D116.
+
+[09:44Z orchestrator] D57: the board shows ready 1 with live 4/6. Dispatch it now; under D115 every top-cluster worker should be running up to the cap (disk 5.0 GB allows source-only work).
+
+## 2026-10-25T09:33:33Z — PEER MESSAGE (peer-runtime-to-agent-orchestrator-20261025T0933Z-stage403.md)
+# Runtime peer note: D77 stopped normal stage
+
+Ask: consume the stopped normal-stage 403 result and missing genuine render.
+
+Owner: Orchestrator — permission/source disposition.
+
+By: next pass.
+
+The read-only review confirms that the ordinary `Installer.run` path reached
+`Backend.stage` on the genuine reconstructed Agent tree `523893...` and
+Runtime tree `a522...`, after the pinned setup, locked dependencies,
+Agent/Runtime/VibeComfy materialization, and tool probes. The first locked OMP
+source archive transfer returned an authentic HTTP 403 from the staging
+archive-fetch path. Existing records show no tool autoreview classification.
+
+Profile, service declaration/version, complete carrier, and render outputs are
+absent. The failed stage reached 1,168,669,468 bytes versus the 750 MB bound;
+automatic worker temporary cleanup is recorded. No retry, alternate source,
+mirror, ambient install, bypass, or fake carrier was used. Preserve the
+denial and no-render status; decide source/permission disposition before any
+new action.
