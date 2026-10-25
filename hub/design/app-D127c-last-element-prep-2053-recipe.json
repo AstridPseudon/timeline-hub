@@ -1,0 +1,70 @@
+{
+  "status": "PREPARED_SOURCE_READY",
+  "task": "D127c",
+  "execution": {
+    "preflight": false,
+    "bootstrap": false,
+    "submit": false,
+    "browser_body": false,
+    "runtime_body": false,
+    "request_test": false
+  },
+  "controller": {
+    "route": "existing D66 normal p2-element --submit",
+    "selector": "P2 mounted element edit: real catalog apply, exact params patch, reload and guarded Undo$",
+    "selector_count": 1,
+    "watchdog_seconds": 2,
+    "app_source_root": "/home/user/work/app",
+    "app_commit": "b5c9eadfa1950f46feac50d7d6a89c47f27f4881",
+    "app_tree": "8e10af0976b012205f27a18a432c750a27de0725",
+    "future_output_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/<actual-future-controller>/submission/p2-element",
+    "future_plan": "<actual-future-controller>/submission/p2-element/p2-element-submit-plan.json",
+    "body_count": 1,
+    "preflight_then_body": true
+  },
+  "product_tuple": {
+    "agent": {"commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"},
+    "runtime": {"commit": "ab1e4f6141987706132916e2da16477f5a019464", "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "app_source_guard": {
+    "path": "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts",
+    "sha256": "59a4d116683f88d415024b6d9236e578cf03c11e2c913b56278f9d57448b40ef",
+    "git_blob_sha1": "dea8cda5c28fb4cfe9142c046e9771398274aac9",
+    "accepted_helper_sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d"
+  },
+  "helper": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127c-last-element-prep-2053/evidence/p2_commit_phase_capture.py",
+    "basename": "p2_commit_phase_capture.py",
+    "sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d",
+    "source_commit": "368f53f4454d5908c86de53d174f0bedcf23781c",
+    "source_alternate_review_commit": "fb4addba95ca4bae0482c93be94e5cae2770ca09",
+    "source_path": "tests/helpers/p2_commit_phase_capture.py",
+    "mode": "0600",
+    "directory_mode": "0700",
+    "external_only": true
+  },
+  "runtime": {
+    "normal_home_helper_receipt": "PENDING_RUNTIME_OWNER_LEADHOST_2050",
+    "targeted_source_result": "61 passed; reviewed blobs; no product retarget",
+    "prior_request": "30318",
+    "node": {"version": "20.19.4", "path": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node"},
+    "python": "/home/user/work/venv-runtime/bin/python"
+  },
+  "app": {
+    "python": "/home/user/work/venv-agent/bin/python",
+    "normal_node_modules": "/home/user/work/app/node_modules",
+    "tsx_loader": "/home/user/work/app/node_modules/tsx/dist/loader.mjs",
+    "source_lineage": "U3 independent 2040 source PASS; home 2f362; current normal b5c9"
+  },
+  "profiling": {
+    "activation": "existing documented opt-in cProfile element-selection env only",
+    "selected_request": "first traced mounted App element doc.patch/list.insert selection",
+    "excluded": ["setup", "native", "media", "parameter doc.patch", "timeline.inverse", "mixed commands", "dry-run", "retry promotion"],
+    "published_fields": ["file", "line", "function", "ncalls", "tottime", "cumtime", "caller-callee edges"],
+    "top_limit": 40,
+    "raw_capture": "private 0600 only"
+  },
+  "holds": ["D130 SWAP/WAL/recovery/full-tour", "no body until future Runtime home receipt", "no D135 cut-pin claim"],
+  "disk_policy": {"dispatch_floor_bytes": 5200000000, "stop_bytes": 4000000000, "floor_applied_once": true, "heavy_concurrency": 1}
+}

@@ -1,0 +1,199 @@
+{
+  "schema": "timeline.agent.d134_d100_predicate_map.v1",
+  "task": "app-D134-D100-applicability-2056",
+  "base_commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "selector_count": 30,
+  "common_input": {
+    "authority": "tests/editing_conformance/test_recipe_occurrence_media.py::inputs",
+    "ast_sha256": "a9f23d917b8530c06fd5bba716c7d7ff1d8a5d4e56259b49df994b55b3800913",
+    "fields_preserved": [
+      "authored parent occurrences and managed shot/revision links",
+      "shot item-1 identity and media_id",
+      "internal clips, source windows, timing and tracks",
+      "registry aliases, generation/variant identities and opaque values",
+      "verified media selections and dependency manifest",
+      "sibling occurrence ownership and shared physical shot topology"
+    ]
+  },
+  "common_first_boundary": {
+    "original_author": "tests/editing_conformance/test_commit_runtime_occurrence_media.py:_create_fixture:21-115",
+    "sequence": [
+      "bootstrap empty document",
+      "explicit parent occurrences=[] patch",
+      "registered occurrence.create creates a new physical shot with items=[]",
+      "registered doc.patch restores the exact authored internal timeline and shot payload containing item-1",
+      "registered parent occurrence leaf patch restores authored occurrence fields while retaining provider-managed edges"
+    ],
+    "current_pre_d100_guard": "astrid/sdk/timeline/_command_state.py:341-369,371-390,626-637; astrid/sdk/timeline/_doc_patch.py:359-376,450-456",
+    "held_d100_boundary": "42040 astrid/sdk/timeline/_command_state.py:341-420",
+    "held_d100_rule": "For the unchanged physical un-copied source, preserve exact shot/revision/internal custody, allow unique non-empty physical item IDs with item_id_map={}, and keep copied/remapped correspondence strict.",
+    "same_first_boundary_for_all_30": true,
+    "distinct_unsupported_route_or_record_gap": false,
+    "behavior_status": "NOT_RUN",
+    "behavior_credit": false,
+    "all_tail_status": "NOT_PROVEN"
+  },
+  "cohorts": [
+    {
+      "file": "tests/editing_conformance/test_commit_runtime_video_unplace.py",
+      "count": 4,
+      "selectors": [
+        "tests.editing_conformance.test_commit_runtime_video_unplace::test_capture_commit_reload_undo_redo_and_restart_safe_retry[image-False]",
+        "tests.editing_conformance.test_commit_runtime_video_unplace::test_capture_commit_reload_undo_redo_and_restart_safe_retry[image-True]",
+        "tests.editing_conformance.test_commit_runtime_video_unplace::test_capture_commit_reload_undo_redo_and_restart_safe_retry[video-False]",
+        "tests.editing_conformance.test_commit_runtime_video_unplace::test_capture_commit_reload_undo_redo_and_restart_safe_retry[video-True]"
+      ],
+      "selector_ast_sha256": "da33719af3176bdb97188a72aa01588b873c9c0a6e284714c242ee006c86b7f9",
+      "input_and_caller": "custom editing fixture at :73-186; media admission and explicit C0 request body at :90-120,201-218; same semantic birth -> first item patch -> occurrence.place-shared route",
+      "reads": "request reads=[] and step reads=[] in body/submit; provider-captured source mapping remains authoritative",
+      "item_map_boundary": "new occurrence's un-copied physical shot, empty item_id_map before authored item-1; later shared owner reopens same physical image",
+      "guard_boundary": "D100 physical custody branch applies to first shot item birth and shared reopen; copied/remapped correspondence remains strict",
+      "preserved_predicates": [
+        "image/video media selection and exact generation/variant identity",
+        "unplace removal, keep-as-pooled behavior, registry preservation and sibling isolation",
+        "dry-run no-write, accepted canonical document, reload, inverse/redo, idempotent retry and changed-key refusal",
+        "source-map, membership, order, timing, ownership and media verification guards"
+      ],
+      "applicability": "APPLIES_TO_FIRST_BOUNDARY_ONLY"
+    },
+    {
+      "file": "tests/editing_conformance/test_recipe_m2_auto_placement.py",
+      "count": 6,
+      "selectors": [
+        "tests.editing_conformance.test_recipe_m2_auto_placement::test_exact_capture_replay_inverse_and_redo[image-anchor]",
+        "tests.editing_conformance.test_recipe_m2_auto_placement::test_exact_capture_replay_inverse_and_redo[image-absent]",
+        "tests.editing_conformance.test_recipe_m2_auto_placement::test_exact_capture_replay_inverse_and_redo[video-anchor]",
+        "tests.editing_conformance.test_recipe_m2_auto_placement::test_exact_capture_replay_inverse_and_redo[video-absent]",
+        "tests.editing_conformance.test_recipe_m2_auto_placement::test_provider_accepts_completion_placement_with_exact_undo_and_redo[image]",
+        "tests.editing_conformance.test_recipe_m2_auto_placement::test_provider_accepts_completion_placement_with_exact_undo_and_redo[video]"
+      ],
+      "selector_ast_sha256": {
+        "test_exact_capture_replay_inverse_and_redo": "14ace663017563996c11d94459bdd3f81e3fdd715f8bac173230df6cadc115a9",
+        "test_provider_accepts_completion_placement_with_exact_undo_and_redo": "ac67d865372871578f34b9e4d446b9df4dc1964352d019bf69d5863d7d0b7131"
+      },
+      "input_and_caller": "GenuineTimeline.create :31-219 calls runtime occurrence _create_fixture; build/case :224-246; registered provider body :143-160",
+      "reads": "request reads=[] and per-step reads=[] in GenuineTimeline.body; auto placement captures anchor/lane/extent reads",
+      "item_map_boundary": "shared original document starts after _create_fixture's first item-bearing source; placement commands do not allocate shot item identity",
+      "guard_boundary": "D100 applies to the common first source setup; auto-placement anchor/lane/extent guards are independent downstream behavior and were not proven here",
+      "preserved_predicates": [
+        "four image/video anchor and absent-anchor cases",
+        "anchor-after and lane-end timing, verified duration, exact completed variant and sibling untouched",
+        "capture/replay/inverse/redo, provider accepted path, refusal/no-write and rebase conflict predicates"
+      ],
+      "applicability": "APPLIES_TO_FIRST_BOUNDARY_ONLY"
+    },
+    {
+      "file": "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py",
+      "count": 4,
+      "selectors": [
+        "tests.editing_conformance.test_recipe_m2_placement_create_unplace::test_exact_capture_replay_inverse_and_redo[create]",
+        "tests.editing_conformance.test_recipe_m2_placement_create_unplace::test_exact_capture_replay_inverse_and_redo[unplace]",
+        "tests.editing_conformance.test_recipe_m2_placement_create_unplace::test_provider_accepts_create_with_exact_undo_and_redo",
+        "tests.editing_conformance.test_recipe_m2_placement_create_unplace::test_provider_accepts_unplace_with_exact_undo_and_redo"
+      ],
+      "selector_ast_sha256": {
+        "test_exact_capture_replay_inverse_and_redo": "046785c52b98a9156aadaced028ebce971738b17560e323ada15cfc4183da317",
+        "test_provider_accepts_create_with_exact_undo_and_redo": "4b39be499ef4da84630d421443faf67f6e6cfe7f9b11875c9e9d7b807ec910f5",
+        "test_provider_accepts_unplace_with_exact_undo_and_redo": "6fbac558ec83adfa64670d92546996def3bb6229d4ea6629f9eaba45a7d9a04e"
+      },
+      "input_and_caller": "GenuineTimeline.create :39-45 -> auto-placement helper -> runtime occurrence _create_fixture; create/unplace setup :48-71; provider request :143-160",
+      "reads": "request reads=[] and per-step reads=[]; placement command captures occurrence-owned clip/registry dependencies",
+      "item_map_boundary": "authored item-1 is needed only in the shared first source fixture; placement.create allocates a clip/asset alias, not a shot item",
+      "guard_boundary": "D100 applies to first item birth; placement create/unplace identity, relation, timing and binding guards remain unchanged",
+      "preserved_predicates": [
+        "create/unplace capture, replay, inverse and redo",
+        "scoped clip birth, parent/sibling untouched, registry binding preservation and dependency manifest",
+        "provider acceptance, refusal/no-write, ABA and surviving-consumer inverse guards"
+      ],
+      "applicability": "APPLIES_TO_FIRST_BOUNDARY_ONLY"
+    },
+    {
+      "file": "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py",
+      "count": 6,
+      "selectors": [
+        "tests.editing_conformance.test_recipe_m2_shared_auto_placement::test_exact_capture_replay_inverse_and_redo[image-append]",
+        "tests.editing_conformance.test_recipe_m2_shared_auto_placement::test_exact_capture_replay_inverse_and_redo[video-append]",
+        "tests.editing_conformance.test_recipe_m2_shared_auto_placement::test_exact_capture_replay_inverse_and_redo[image-shift]",
+        "tests.editing_conformance.test_recipe_m2_shared_auto_placement::test_exact_capture_replay_inverse_and_redo[video-overlay-anchor]",
+        "tests.editing_conformance.test_recipe_m2_shared_auto_placement::test_provider_accepts_shared_placement_with_exact_undo_and_redo[image]",
+        "tests.editing_conformance.test_recipe_m2_shared_auto_placement::test_provider_accepts_shared_placement_with_exact_undo_and_redo[video]"
+      ],
+      "selector_ast_sha256": {
+        "test_exact_capture_replay_inverse_and_redo": "c75826f0c6cc02f9eb6ffe8181235b8260c8b47c6b1bd0ad273bb491ff75e32b",
+        "test_provider_accepts_shared_placement_with_exact_undo_and_redo": "5da32adb09181123b176b937f4bd20bc3f45ce02e22d95ed3b80a973388d8077"
+      },
+      "input_and_caller": "GenuineTimeline.create imported at :18 and called by fixture :37-47; shared build :50-68; same original _create_fixture route",
+      "reads": "request and step reads are inherited from GenuineTimeline.body; anchor/lane/shot extent/pool reads are semantic captures",
+      "item_map_boundary": "shared-auto commands operate on the already materialized physical shot; first item birth occurs in common setup",
+      "guard_boundary": "D100 shared physical-source branch applies only to first item birth/reopen; shared placement ownership and timing guards are not changed",
+      "preserved_predicates": [
+        "four shared append/shift/overlay-anchor image/video cases",
+        "lane/end arithmetic, start-frame shift, four-second hold and sibling untouched",
+        "shared placement provider acceptance, inverse/redo, retry, refusal/no-write and conflict predicates"
+      ],
+      "applicability": "APPLIES_TO_FIRST_BOUNDARY_ONLY"
+    },
+    {
+      "file": "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+      "count": 7,
+      "selectors": [
+        "tests.editing_conformance.test_recipe_m2_shot_pool::test_exact_capture_replay_inverse_and_redo[add-first]",
+        "tests.editing_conformance.test_recipe_m2_shot_pool::test_exact_capture_replay_inverse_and_redo[add-second]",
+        "tests.editing_conformance.test_recipe_m2_shot_pool::test_exact_capture_replay_inverse_and_redo[remove-middle]",
+        "tests.editing_conformance.test_recipe_m2_shot_pool::test_provider_accepts_add_and_remove_with_exact_undo_and_redo",
+        "tests.editing_conformance.test_recipe_m2_shot_pool::test_placing_pooled_media_promotes_it_in_one_batch_that_undoes_as_one[image]",
+        "tests.editing_conformance.test_recipe_m2_shot_pool::test_placing_pooled_media_promotes_it_in_one_batch_that_undoes_as_one[video]",
+        "tests.editing_conformance.test_recipe_m2_shot_pool::test_promotion_and_keep_as_pooled_round_trip_through_the_provider"
+      ],
+      "selector_ast_sha256": {
+        "test_exact_capture_replay_inverse_and_redo": "0b62a3d8a35b6eee477809f67fc45b4d0ecb8d213d5dde70362cc630aa6fb1d9",
+        "test_provider_accepts_add_and_remove_with_exact_undo_and_redo": "05d0fae86cc6373d412367096db35f7da6ed06d89b88ac3efc9ba2fea2da61af",
+        "test_placing_pooled_media_promotes_it_in_one_batch_that_undoes_as_one": "4759be9ae0a1004265c1a62d0b64805fdbe4bc87500d5bcc69994b41b3a43ef0",
+        "test_promotion_and_keep_as_pooled_round_trip_through_the_provider": "6ddbc75b7e628919a697e4f8536eb4e693528acf09992b2f2073ba466b852827"
+      },
+      "input_and_caller": "GenuineTimeline.create :35-133 calls runtime occurrence _create_fixture; pool seed/call :175-205; provider request :153-163",
+      "reads": "request and step reads=[]; shot.pool captures ordered pool membership, owner, source and verified media",
+      "item_map_boundary": "pool add/remove/promotion consumes an already item-bearing source; no pool operation allocates shot item identity",
+      "guard_boundary": "D100 applies to first item birth; pool list membership/order and promotion guards remain independent",
+      "preserved_predicates": [
+        "add-first/add-second/remove-middle exact pool order and golden records",
+        "provider add/remove undo/redo, pooled promotion and keep-as-pooled round trips",
+        "absent versus empty pool, binding, ownership, legacy provenance, refusal, conflict and no-write guards"
+      ],
+      "applicability": "APPLIES_TO_FIRST_BOUNDARY_ONLY"
+    },
+    {
+      "file": "tests/editing_conformance/test_recipe_occurrence_media.py",
+      "count": 3,
+      "selectors": [
+        "tests.editing_conformance.test_recipe_occurrence_media::test_same_alias_materialized_whole_payload_read_allows_exact_undo_redo",
+        "tests.editing_conformance.test_recipe_occurrence_media::test_provider_exact_reload_inverse_redo_and_retired_asset_reservation[add]",
+        "tests.editing_conformance.test_recipe_occurrence_media::test_provider_exact_reload_inverse_redo_and_retired_asset_reservation[swap]"
+      ],
+      "selector_ast_sha256": {
+        "test_same_alias_materialized_whole_payload_read_allows_exact_undo_redo": "8cafe6199a1de5011c874c19ae0faa65b1ea543afa13fe1a0cdb03e337011855",
+        "test_provider_exact_reload_inverse_redo_and_retired_asset_reservation": "cf6eb7081ccc274020507ad1df16d58d7577ecbd6026ec13e7c2af57a7b55d06"
+      },
+      "input_and_caller": "same-alias and provider fixtures :279-300 use runtime_occurrence.editing.__wrapped__ and _create_fixture; C0 request :302-315",
+      "reads": "request reads=[] and step reads=[]; media selection/verified media are explicit provider dependencies",
+      "item_map_boundary": "occurrence add/swap changes existing clip/registry/media fields after the common item-bearing fixture; no new shot item allocation",
+      "guard_boundary": "D100 applies to common first item birth; same-alias materialization and media identity/retired-alias guards remain independent",
+      "preserved_predicates": [
+        "same-alias whole payload exact undo/redo and opaque-field preservation",
+        "image/video add/swap exact reload, inverse/redo, idempotency and retired asset reservation",
+        "source window, media fingerprint, item identity, compiler link, missing pin and no-write refusal guards"
+      ],
+      "applicability": "APPLIES_TO_FIRST_BOUNDARY_ONLY"
+    }
+  ],
+  "negative_boundaries": {
+    "not_proven_by_applicability": [
+      "current joined original9 behavior",
+      "D134 setup acceptance on current integrated source",
+      "all 30 behavior results or all-tail qualification",
+      "any source retirement or publication/home claim"
+    ],
+    "unrelated_gaps": [],
+    "owner": "UNKNOWN only if a later current behavior run exposes a distinct record gap; none is proven by this source pass"
+  }
+}

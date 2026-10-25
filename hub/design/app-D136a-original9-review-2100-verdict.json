@@ -1,0 +1,33 @@
+{
+  "task": "D136a/D100",
+  "review": "independent actual-original9 result and whole-path first-seam review",
+  "verdict": "FAIL_ACTUAL_ORIGINAL9",
+  "qualification": "The exact nine-selector run is a valid bounded actual result, but it is not a current GO or nine-behavior credit.",
+  "actual_original9": {
+    "selectors": 9,
+    "tests": 9,
+    "passed": 0,
+    "failures": 0,
+    "errors": 9,
+    "skipped": 0,
+    "exit_code": 1,
+    "first_failed_seam": "Agent provider final-candidate validation during the explicit timeline.init setup commit",
+    "message": "candidate: all authored fps declarations must retain their typed locations",
+    "run_once": true,
+    "retry": false,
+    "fixture_adaptation": false
+  },
+  "first_seam": {
+    "classification": "finite_actual_failure_with_derived_source_root",
+    "proven_fault": "validation.py:143-144 compares candidate-only authored output.fps against a pristine baseline with no output.fps path and rejects the initialization.",
+    "caller_removes_typed_output": false,
+    "semantic_default_or_open_canvas_misclassified": false,
+    "unknown_record_gap": "The private run does not publish candidate/baseline payloads; the source and traceback establish the location-set mismatch without exporting those payloads."
+  },
+  "source_receiving": "PASS_EXACT_THREE_REVIEWED_BLOBS",
+  "runtime_custody": "PASS_IMMUTABLE_PIN_AND_REGISTERED_PROVIDER_ROUTE",
+  "release": "HELD",
+  "current_go": false,
+  "product_fix_made": false,
+  "fixture_migration_made": false
+}

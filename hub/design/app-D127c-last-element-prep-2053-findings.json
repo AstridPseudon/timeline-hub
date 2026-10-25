@@ -1,0 +1,10 @@
+{
+  "verdict": "PREPARED_SOURCE_READY",
+  "blocking_source_seams": [],
+  "closed_source_seams": [{"id": "D127c-F001", "description": "App bootstrap source guard explicitly accepts reviewed-profiler helper 095c252b...", "evidence": "current b5c9 source guard SHA 59a4d116..."}],
+  "prerequisites_not_claimed": ["manager-requested detached App b5c9 checkout receipt", "Runtime owner/leadhost2050 normal-home exact helper receipt", "genuine >=5.2 GB dispatch admission", "future source preflight PASS", "future single body result"],
+  "preserved_behavior": {"selector_count": 1, "wait_seconds": 5, "watchdog_seconds": 2, "history_reload_guarded_undo": true, "zero_legacy_route_assertions": true, "request_reply_semantics": "unchanged C0 v2", "D130_holds": true},
+  "profiling_scope": {"opt_in": true, "selection": "first traced mounted App element doc.patch/list.insert request only", "safe_top": 40, "edges": "caller-callee", "raw_private": true, "new_collector_or_framework": false},
+  "prior_actual": {"element_request": "32016 body failed unchanged 5-second applied assertion; not retried", "execution_closure": "separate 3 intended Node20 CJS API unit controls passed; not browser/body qualification"},
+  "holds": ["No preflight/bootstrap/submit/browser/body", "No source fix or alternate body", "No upstream/hub write", "No D135 cut-pin claim"]
+}

@@ -1,0 +1,19 @@
+{
+  "verdict": "FAIL_ACTUAL_ORIGINAL9",
+  "source_receiving": "PASS_EXACT_THREE_REVIEWED_BLOBS",
+  "scoped_controls": "PASS",
+  "original9": "FAIL",
+  "reason": "The exact unchanged nine-selector original9 run produced nine setup errors at the common Agent/provider seam: candidate: all authored fps declarations must retain their typed locations.",
+  "actual_result": {
+    "tests": 9,
+    "passed": 0,
+    "errors": 9,
+    "failures": 0,
+    "skipped": 0,
+    "exit_code": 1
+  },
+  "worktree_scope": "PASS; only the reviewed three paths changed relative to the held base",
+  "d100_custody": "PASS; product, boundary test, and projection source unchanged byte-exact",
+  "release": "HELD",
+  "next_action": "Independent result review of this actual failure; no retry or source adaptation by this worker"
+}

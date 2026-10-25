@@ -1,0 +1,113 @@
+{
+  "schema": "timeline.agent.d134_d100_map_check_source_manifest.v1",
+  "task": "app-D134-D100-map-check-2103",
+  "base_commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "base_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+  "source_scope": "read-only source applicability comparison; no product, test, fixture, generated, schema, pin, or Runtime change",
+  "original_fixture_authority": {
+    "path": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+    "sha256": "cf73444ebe59c7a5e62f29cff072d3c3dea87ead85043d92ef632d433cb110a1",
+    "bytes": 25622,
+    "assertions": 28,
+    "_create_fixture_ast_sha256": "006645cc418e3e07ecfe5a52c1013b6717360fded7e897437db7a603844d2a12",
+    "lines": "21-115"
+  },
+  "cohort_files": [
+    {
+      "path": "tests/editing_conformance/test_commit_runtime_video_unplace.py",
+      "sha256": "fe54a4f5d41677d95f4d7c4fa9edde56028333250be405080b41ad2101429cd2",
+      "bytes": 15349,
+      "assertions": 23,
+      "selector_count": 4,
+      "selector_ast_sha256": {"test_capture_commit_reload_undo_redo_and_restart_safe_retry": "da33719af3176bdb97188a72aa01588b873c9c0a6e284714c242ee006c86b7f9"},
+      "first_boundary": "direct setup at :73-143; same semantic birth and first item-bearing patch"
+    },
+    {
+      "path": "tests/editing_conformance/test_recipe_m2_auto_placement.py",
+      "sha256": "5146188c84a4911ff42ff5c39be5b9da650f8cc5ebdf80bb4900903dad90f861",
+      "bytes": 26008,
+      "assertions": 46,
+      "selector_count": 6,
+      "selector_ast_sha256": {
+        "test_exact_capture_replay_inverse_and_redo": "14ace663017563996c11d94459bdd3f81e3fdd715f8bac173230df6cadc115a9",
+        "test_provider_accepts_completion_placement_with_exact_undo_and_redo": "ac67d865372871578f34b9e4d446b9df4dc1964352d019bf69d5863d7d0b7131"
+      },
+      "first_boundary": "GenuineTimeline.create :44-219 -> _create_fixture :53"
+    },
+    {
+      "path": "tests/editing_conformance/test_recipe_m2_placement_create_unplace.py",
+      "sha256": "51c047472cf0677baf5ce9d0c252afa00b28ccda09b1b2cb60f7ed674e7e8af9",
+      "bytes": 14679,
+      "assertions": 36,
+      "selector_count": 4,
+      "selector_ast_sha256": {
+        "test_exact_capture_replay_inverse_and_redo": "046785c52b98a9156aadaced028ebce971738b17560e323ada15cfc4183da317",
+        "test_provider_accepts_create_with_exact_undo_and_redo": "4b39be499ef4da84630d421443faf67f6e6cfe7f9b11875c9e9d7b807ec910f5",
+        "test_provider_accepts_unplace_with_exact_undo_and_redo": "6fbac558ec83adfa64670d92546996def3bb6229d4ea6629f9eaba45a7d9a04e"
+      },
+      "first_boundary": "GenuineTimeline imported from auto-placement; wrapper calls the same _create_fixture"
+    },
+    {
+      "path": "tests/editing_conformance/test_recipe_m2_shared_auto_placement.py",
+      "sha256": "033deddcf43a49967c92a0a8fe827d96c0ea758bf071026f5629ec3606e728a6",
+      "bytes": 23917,
+      "assertions": 71,
+      "selector_count": 6,
+      "selector_ast_sha256": {
+        "test_exact_capture_replay_inverse_and_redo": "c75826f0c6cc02f9eb6ffe8181235b8260c8b47c6b1bd0ad273bb491ff75e32b",
+        "test_provider_accepts_shared_placement_with_exact_undo_and_redo": "5da32adb09181123b176b937f4bd20bc3f45ce02e22d95ed3b80a973388d8077"
+      },
+      "first_boundary": "GenuineTimeline imported from auto-placement; wrapper calls the same _create_fixture"
+    },
+    {
+      "path": "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+      "sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e",
+      "bytes": 28695,
+      "assertions": 59,
+      "selector_count": 7,
+      "selector_ast_sha256": {
+        "test_exact_capture_replay_inverse_and_redo": "0b62a3d8a35b6eee477809f67fc45b4d0ecb8d213d5dde70362cc630aa6fb1d9",
+        "test_provider_accepts_add_and_remove_with_exact_undo_and_redo": "05d0fae86cc6373d412367096db35f7da6ed06d89b88ac3efc9ba2fea2da61af",
+        "test_placing_pooled_media_promotes_it_in_one_batch_that_undoes_as_one": "4759be9ae0a1004265c1a62d0b64805fdbe4bc87500d5bcc69994b41b3a43ef0",
+        "test_promotion_and_keep_as_pooled_round_trip_through_the_provider": "6ddbc75b7e628919a697e4f8536eb4e693528acf09992b2f2073ba466b852827"
+      },
+      "first_boundary": "GenuineTimeline.create :48-130 -> _create_fixture :57,128"
+    },
+    {
+      "path": "tests/editing_conformance/test_recipe_occurrence_media.py",
+      "sha256": "1f3da43c999670ae7d99d3ddbd1bc51ca09db181f1363c986343df18a3dd70fd",
+      "bytes": 25046,
+      "assertions": 43,
+      "selector_count": 3,
+      "selector_ast_sha256": {
+        "inputs": "a9f23d917b8530c06fd5bba716c7d7ff1d8a5d4e56259b49df994b55b3800913",
+        "test_same_alias_materialized_whole_payload_read_allows_exact_undo_redo": "8cafe6199a1de5011c874c19ae0faa65b1ea543afa13fe1a0cdb03e337011855",
+        "test_provider_exact_reload_inverse_redo_and_retired_asset_reservation": "cf6eb7081ccc274020507ad1df16d58d7577ecbd6026ec13e7c2af57a7b55d06"
+      },
+      "first_boundary": "runtime_occurrence.editing.__wrapped__ -> common _create_fixture at test_commit_runtime_occurrence_media.py:227"
+    }
+  ],
+  "shared_input_hashes": {
+    "inputs_function_ast_sha256": "a9f23d917b8530c06fd5bba716c7d7ff1d8a5d4e56259b49df994b55b3800913",
+    "original_fixture_create_function_ast_sha256": "006645cc418e3e07ecfe5a52c1013b6717360fded7e897437db7a603844d2a12",
+    "meaning": "all six groups either call the original helper directly or through a wrapper; occurrence_media supplies the common input"
+  },
+  "held_d100_source": {
+    "qualified_state_commit": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+    "product_path": "astrid/sdk/timeline/_command_state.py",
+    "actual_sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+    "changed_methods": ["shot_item_map", "_item_ids", "project_shot_items"],
+    "positive_boundary_test": "tests/sdk/test_d100_item_birth_boundary.py:test_first_physical_item_preserves_custody_and_opaque_fields",
+    "strict_negative_boundary_tests": "tests/sdk/test_d100_item_birth_boundary.py:test_wrong_physical_custody_refuses_without_writes; test_copied_placement_correspondence_remains_exact"
+  },
+  "current_guard_sources": {
+    "command_state_sha256": "689c59d323aca2d508d152f5d5513beed094edf2f6fd9b8ef93f12f475104c39",
+    "doc_patch_sha256": "15cc750407eb3b057900befd95cd2bd30c28f41acda9bb2f31e5c2f48f5ad00f",
+    "birth_source_sha256": "962016ffdba404dfd88ed4fbf62bd4882e96e42038a0548549a0cf727ef25d22"
+  },
+  "source_delta": {
+    "git_diff_from_base": false,
+    "source_files_changed": [],
+    "fixture_or_shared_dependency_changed": false
+  }
+}

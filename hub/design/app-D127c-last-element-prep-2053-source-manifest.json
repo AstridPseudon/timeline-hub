@@ -1,0 +1,58 @@
+{
+  "manifest_kind": "D127c source-only preparation",
+  "authority": "current App Git source plus reviewed Runtime helper blob",
+  "app": {
+    "normal_home": "/home/user/work/app",
+    "commit": "b5c9eadfa1950f46feac50d7d6a89c47f27f4881",
+    "tree": "8e10af0976b012205f27a18a432c750a27de0725",
+    "branch": "tl/integration",
+    "clean": true,
+    "upstream_base": "2f36246a32",
+    "source_guard": {
+      "path": "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts",
+      "sha256": "59a4d116683f88d415024b6d9236e578cf03c11e2c913b56278f9d57448b40ef",
+      "git_blob_sha1": "dea8cda5c28fb4cfe9142c046e9771398274aac9",
+      "profiler_helper_arm": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d"
+    },
+    "source_files": {
+      "scripts/testing/d66-plain-stack.mjs": {"sha256": "56668b2a02abffd947a9045d081e4fdc2d56c226b656c43b1e823fb182ad4def", "git_blob_sha1": "7eed3b4f13fb1812db7b255b77757de6978ed6a0"},
+      "scripts/testing/d66-plain-stack.test.mjs": {"sha256": "3b22f3e83e332d5d6834389192d62fa07d5b581c5af4974e619841ab1cb0d6c0", "git_blob_sha1": "bc29ca546619e45da8c013d3ca5c871c5608eaad"},
+      "tests/e2e/local/three-products.p2-elements-assets.spec.ts": {"sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637", "git_blob_sha1": "b6a0ebb2597177c9719f0b23fbc3d135ecdcc019"},
+      "tests/e2e/local/support/harness.ts": {"sha256": "b868c6bf8b47b63c3165466461a61fbfeb7a282a39f48bc5ae80860cec3e011e", "git_blob_sha1": "4a163448acb5c5446a00a37468840ef959c885df"},
+      "scripts/testing/sitecustomize.py": {"sha256": "83c28b437417753a221e0fec36047dd6bb267256366dd4acacb8ef8d8137615e", "git_blob_sha1": "51db46c7de80d38a4d3a8ae06645948dedac697d"},
+      "playwright.three-products.config.ts": {"sha256": "099fd699063d100abe40b7d79e656af853f91bb8568860f3967d1e67247ea8ad", "git_blob_sha1": "7e0c40e067383a57988465e09764088b37a1eabd"},
+      "runtime.lock.json": {"sha256": "cb6c9b01d5c06cecf4257dece098bf477da9c11b5967a8b0c7e9e00783b57cee", "git_blob_sha1": "4ccd0278ee4152b01fceaefc01f0fd084cb68ded"}
+    }
+  },
+  "product_tuple": {
+    "agent": {"commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3", "checkout_expected": "/home/user/work/wt/agt-pin-070dfc5e"},
+    "runtime": {"commit": "ab1e4f6141987706132916e2da16477f5a019464", "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657", "checkout_expected": "/home/user/work/wt/rt-pin-ab1e4f61"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "checkout_expected": "/home/user/work/wt/vw-pin-635f4de0"},
+    "app_future_pin": {"commit": "b5c9eadfa1950f46feac50d7d6a89c47f27f4881", "tree": "8e10af0976b012205f27a18a432c750a27de0725", "checkout_expected": "/home/user/work/wt/app-pin-b5c9eadf", "receipt": "MANAGER_REQUEST_REQUIRED"}
+  },
+  "helper": {
+    "path": "tests/helpers/p2_commit_phase_capture.py",
+    "private_copy": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127c-last-element-prep-2053/evidence/p2_commit_phase_capture.py",
+    "sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d",
+    "git_blob_sha1": "2ae83f1bb8420f1b409165382711aaaeb485fb1f",
+    "source_commit": "368f53f4454d5908c86de53d174f0bedcf23781c",
+    "qualified_source_commit": "fb4addba95ca4bae0482c93be94e5cae2770ca09",
+    "mode": "0600",
+    "directory_mode": "0700",
+    "product_retarget": false
+  },
+  "toolchain": {
+    "node": {"path": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node", "version": "v20.19.4", "sha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490"},
+    "agent_python": "/home/user/work/venv-agent/bin/python",
+    "runtime_python": "/home/user/work/venv-runtime/bin/python",
+    "node_modules_realpath": "/home/user/work/app/node_modules",
+    "tsx_loader_realpath": "/home/user/work/app/node_modules/tsx/dist/loader.mjs",
+    "shared_dependency_write": false
+  },
+  "future_receipts": {
+    "runtime_normal_home_helper": "PENDING_RUNTIME_OWNER_LEADHOST_2050",
+    "app_detached_b5c9": "manager must request through normal request-checkout route",
+    "agent_runtime_composition": "existing exact product receipts may be reused only after manager verifies local receipt files"
+  },
+  "prohibited_claims": ["preflight pass", "bootstrap pass", "body pass", "browser pass", "raw capture custody", "historical profile reconstruction", "D135 cut pin", "Runtime product retarget"]
+}

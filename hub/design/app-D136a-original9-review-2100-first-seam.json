@@ -1,0 +1,39 @@
+{
+  "classification": {
+    "actual_failure": "FINITE_ACTUAL_FAILURE",
+    "derived_source_root": "PROVEN",
+    "unknown_record_gap": "PAYLOAD_MAP_NOT_PUBLISHED"
+  },
+  "common_actual_seam": {
+    "public_reason": "candidate: all authored fps declarations must retain their typed locations",
+    "stack_source": "astrid/sdk/timeline/validation.py:565 -> _validate_fps:141-144",
+    "provider_boundary": "astrid/sdk/timeline/commit.py:1410-1417",
+    "runtime_call_boundary": "runtime_protocol/timeline_commit_execution.py:390-401"
+  },
+  "before_authored_location_map": {
+    "operation": "pristine timeline.init base bundle",
+    "typed_fps_paths": [],
+    "source_basis": [
+      "astrid/sdk/timeline/native_initialize.py:10-17 requires empty output",
+      "tests/sdk/test_capture_source_runtime.py:262-268 submits initialization"
+    ]
+  },
+  "after_authored_location_map": {
+    "operation": "candidate after explicit timeline.init",
+    "typed_fps_paths": ["parent.config.output.fps"],
+    "source_basis": [
+      "tests/sdk/test_capture_source_runtime.py:265 supplies output.fps=30",
+      "astrid/sdk/timeline/native_initialize.py:18-20 writes parent.config.output"
+    ]
+  },
+  "guard_comparison": "validation.py:143 compares candidate paths != baseline paths and fails; candidate-only authored paths are not permitted by this condition.",
+  "caller_removed_typed_output": false,
+  "open_canvas_or_semantic_default": "not involved in the first seam",
+  "preserve": [
+    "C0 typed-output validation",
+    "finite-number refusal",
+    "open namespace/fallback rule",
+    "Runtime authority/privacy and D130 holds"
+  ],
+  "recommendation": "Existing Runtime D136a owner: make the location guard distinguish newly authored canonical declarations from removal/move of an existing declaration; do not lower assertions or migrate fixtures."
+}

@@ -1,0 +1,51 @@
+{
+  "schema": "timeline.agent.d134_d100_map_check.v1",
+  "task": "app-D134-D100-map-check-2103",
+  "verdict": "PASS_FINITE_D100_APPLICABLE_UNAPPLIED",
+  "result": "SOURCE_APPLICABILITY_CONFIRMED",
+  "base": {
+    "commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+    "worktree_source_delta": false
+  },
+  "cohort": {
+    "selector_count": 30,
+    "file_count": 6,
+    "partition_counts": {
+      "test_commit_runtime_video_unplace.py": 4,
+      "test_recipe_m2_auto_placement.py": 6,
+      "test_recipe_m2_placement_create_unplace.py": 4,
+      "test_recipe_m2_shared_auto_placement.py": 6,
+      "test_recipe_m2_shot_pool.py": 7,
+      "test_recipe_occurrence_media.py": 3
+    },
+    "selector_set_exact_and_distinct": true,
+    "all_original_inputs_preserved": true,
+    "all_original_assertions_preserved": true,
+    "source_hashes_and_ast_match_author_manifest": true
+  },
+  "applicability": {
+    "same_first_physical_birth_boundary": true,
+    "held_d100_state_commit": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+    "held_d100_command_state_sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+    "distinct_missing_case_or_failing_seam_found": false,
+    "current_a30e_behavior": "cannot construct the new item membership through the pre-D100 correspondence guard",
+    "held_d100_source": "adds the exact physical, un-copied, empty-item-map branch while retaining strict copied/remapped correspondence"
+  },
+  "scope": {
+    "source_applicability_only": true,
+    "behavior_credit": false,
+    "setup_acceptance": "NOT_PROVEN",
+    "all_tail_or_whole_cohort": "NOT_PROVEN",
+    "current_joined_original9": "NOT_RERUN; actual App failure remains with reviewer2100",
+    "api_decision_or_speculative_author": false,
+    "release_or_ship_credit": false
+  },
+  "validation": {
+    "json_ast_source_hash_diff_checks": "PASS",
+    "pytest_or_provider_execution": "NOT_RUN_BY_DESIGN",
+    "functional_setup_service_socket_browser_full_suite": "NOT_RUN_BY_DESIGN",
+    "source_edit": false,
+    "fixture_or_shared_dependency_edit": false
+  }
+}

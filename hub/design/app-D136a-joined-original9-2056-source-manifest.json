@@ -1,0 +1,84 @@
+{
+  "task": "app-D136a-joined-original9-2056",
+  "status": "IMPORTED_ORIGINAL9_FAILED",
+  "base": {
+    "commit": "3082cad490ce1cee764ff137f99cb791a67ddd08",
+    "tree": "84e9d485a7ee8fdf2969eaf19d159e400f0ca1d4"
+  },
+  "reviewed_candidate": {
+    "commit": "c99214a227154df5fbaf681c2e0fc52c54500025",
+    "tree": "515fca228e943e35ef2d58b5de1300aedbd9fc60",
+    "runtime_review": "rt-D136a-fps-final-review-2034 PASS_SOURCE_SECURITY",
+    "files": [
+      {
+        "path": "astrid/sdk/timeline/validation.py",
+        "mode": "100644",
+        "git_blob": "edda2e123a5907ddf1671c705e17fd3aee0cabe6",
+        "sha256": "74c14ade6dd564eadaf26f27ff6dc64d5168175f3320029768a3684754e5a0d8"
+      },
+      {
+        "path": "astrid/sdk/timeline/_timing_evaluators.py",
+        "mode": "100644",
+        "git_blob": "7b2937887351251594137628cfbfb58f86cb059e",
+        "sha256": "493fa0a5ee39dfba8a7e878f2a5247fc95fe8590741d0c7232377fd36d7b6268"
+      },
+      {
+        "path": "tests/sdk/test_d136_fps_upstream_compat.py",
+        "mode": "100644",
+        "git_blob": "b80b771236ab181d9e84bb96187a5b17e329a4f3",
+        "sha256": "570dc2040dd7f8c1eca887c2a22827d5963e67599f3d69df834f854bde34dfc3"
+      }
+    ]
+  },
+  "joined_tree": {
+    "status_scope": "PASS",
+    "tracked_changes": [
+      "astrid/sdk/timeline/validation.py",
+      "astrid/sdk/timeline/_timing_evaluators.py"
+    ],
+    "new_reviewed_file": "tests/sdk/test_d136_fps_upstream_compat.py",
+    "foreign_changes": false,
+    "git_diff_check": "PASS"
+  },
+  "held_d100": {
+    "product": {
+      "path": "astrid/sdk/timeline/_command_state.py",
+      "git_blob": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+      "sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3"
+    },
+    "test": {
+      "path": "tests/sdk/test_d100_item_birth_boundary.py",
+      "git_blob": "39ed571d5f3e49d2545fc31e1f868ee7c58dbc8a",
+      "sha256": "fcd5f187e185faa2222fb23c69827bd6d8bcbb710fdad131f649973f95e6de37"
+    },
+    "projection": {
+      "path": "tests/sdk/test_timeline_capture_projection.py",
+      "git_blob": "16954294f9f70018e4bbd1012083f51594f6cb19",
+      "sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+      "test_functions": 11,
+      "predicates": 43,
+      "fixture_statements": 54
+    }
+  },
+  "runtime_pin": {
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "checkout": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "origin": "immutable supported Runtime pin",
+    "module_hashes_unchanged": true,
+    "module_hashes_before_after": {
+      "runtime_protocol/timeline_commit_provider.py": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf",
+      "runtime_protocol/server.py": "672ebcb59a923b96d3189980c197315a09fd31d44444d502ea5d3750e7bb52fc",
+      "runtime_protocol/timeline_commit_execution.py": "5956b4850e11d517a6bcc9aa8ae7f0074b45810e26faa8ffe391b907e764c257"
+    }
+  },
+  "actual_original9": {
+    "admission_free_bytes_before": 5039394816,
+    "admission_free_bytes_after": 5038260224,
+    "duration_ns": 11977741395,
+    "exit_code": 1,
+    "xml_sha256": "2ca6517bfa5027cab5fdb1bab2c96cf42980e19d132d6606e4cce13cfbeed1a2",
+    "log_sha256": "fa2695167b4b8c2f648f43351cdcfe47f30217876304bf6d60e58a2a37ede6cf",
+    "raw_artifacts": "private mode 0600"
+  }
+}

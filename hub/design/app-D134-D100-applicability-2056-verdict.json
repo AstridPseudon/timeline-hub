@@ -1,0 +1,73 @@
+{
+  "schema": "timeline.agent.d134_d100_applicability.v1",
+  "task": "app-D134-D100-applicability-2056",
+  "verdict": "PASS_FINITE_D100_APPLICABLE_UNAPPLIED",
+  "result": "SOURCE_APPLICABILITY_CORRECTED",
+  "base": {
+    "commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+    "worktree_source_delta": false
+  },
+  "cohort": {
+    "selector_count": 30,
+    "files": 6,
+    "partition_counts": {
+      "test_commit_runtime_video_unplace.py": 4,
+      "test_recipe_m2_auto_placement.py": 6,
+      "test_recipe_m2_placement_create_unplace.py": 4,
+      "test_recipe_m2_shared_auto_placement.py": 6,
+      "test_recipe_m2_shot_pool.py": 7,
+      "test_recipe_occurrence_media.py": 3
+    },
+    "selector_set_exact": true,
+    "all_original_assertions_preserved": true,
+    "all_original_inputs_preserved": true
+  },
+  "correction": {
+    "earlier_claim": "categorical no-existing-caller/no-faithful-route conclusion for the first item-birth boundary",
+    "corrected_claim": "the held D100 source directly addresses the first physical item-birth correspondence for all 30 original selectors through the existing registered doc.patch/provider path",
+    "scope": "source applicability only; not behavior, setup acceptance, all-tail proof, retirement, REG, core, ship, or source-home/publication credit",
+    "distinct_unsupported_route_or_record_gap": false,
+    "owner_for_unproved_gap": "NONE_ASSIGNED"
+  },
+  "d100": {
+    "product_commit": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+    "qualified_test_state_commit": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+    "qualified_tree": "66c0215955332af8ed32ae7d4c17d4f71ccb17d4",
+    "product_path": "astrid/sdk/timeline/_command_state.py",
+    "product_sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+    "test_path": "tests/sdk/test_d100_item_birth_boundary.py",
+    "test_sha256_at_42040": "fcd5f187e185faa2222fb23c69827bd6d8bcbb710fdad131f649973f95e6de37",
+    "source_security": "PASS_SOURCE_SECURITY_BEHAVIOR_NOTRUN",
+    "product27_review": "PASS source custody / 27-test candidate pass in app-D100-final-result-review-1946",
+    "joined_original9": "PENDING; current joined source was not rerun here",
+    "applicability": "APPLIES_TO_FIRST_PHYSICAL_ITEM_BIRTH",
+    "behavior_credit": false
+  },
+  "source_boundary": {
+    "original_setup": "tests/editing_conformance/test_commit_runtime_occurrence_media.py:21-115",
+    "semantic_birth": "astrid/sdk/timeline/native_occurrence_create.py:41-50",
+    "current_guard": "astrid/sdk/timeline/_command_state.py:316-369,371-390,626-637",
+    "current_closure_guard": "astrid/sdk/timeline/_doc_patch.py:359-376,450-456",
+    "held_d100_mapping": "held 42040 astrid/sdk/timeline/_command_state.py:341-420",
+    "held_regressions": "42040 tests/sdk/test_d100_item_birth_boundary.py:35-70,72-113,130-170,173-214",
+    "same_first_boundary": true,
+    "later_routes": "existing registered occurrence.add-media, occurrence.swap-media, placement.create/unplace, shot.pool, occurrence.place-shared semantics remain downstream and were not behavior-run"
+  },
+  "prior_packets": {
+    "agent_peer_2029": "read; corrects categorical no-existing-caller conclusion",
+    "media48_review_2024": "read; PASS_FINITE_UNAPPLIED and D100 applicability correction",
+    "app_managed14_2033": "read; original-normal-only source finding, not held D100",
+    "app_managed14_review_2036": "read; original-normal-only independent source review, not held D100",
+    "managed16_wip_6c5": "invalid/input-changed; rejected by review2037; no final PASS",
+    "managed16_first_return_2050": "restored exact a30e blobs and all 173 assertions; retained unmerged"
+  },
+  "no_credit": [
+    "D134 behavior",
+    "D134 setup acceptance",
+    "all-tail or whole-cohort proof",
+    "source home/publication",
+    "retirement",
+    "REG/core/ship"
+  ]
+}

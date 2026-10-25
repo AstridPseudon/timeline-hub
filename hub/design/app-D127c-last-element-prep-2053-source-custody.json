@@ -1,0 +1,70 @@
+{
+  "task": "D127c last-element profile source-only preparation",
+  "status": "PREPARED_SOURCE_READY",
+  "source_only": true,
+  "current_app": {
+    "home": "/home/user/work/app",
+    "commit": "b5c9eadfa1950f46feac50d7d6a89c47f27f4881",
+    "tree": "8e10af0976b012205f27a18a432c750a27de0725",
+    "branch": "tl/integration",
+    "clean": true,
+    "source_guard_path": "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts",
+    "source_guard_sha256": "59a4d116683f88d415024b6d9236e578cf03c11e2c913b56278f9d57448b40ef",
+    "source_guard_blob": "dea8cda5c28fb4cfe9142c046e9771398274aac9",
+    "future_checkout": "/home/user/work/wt/app-pin-b5c9eadf",
+    "future_checkout_receipt": "PENDING_MANAGER_REQUEST_CHECKOUT"
+  },
+  "product_tuple": {
+    "agent": {
+      "commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+      "tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+      "checkout": "/home/user/work/wt/agt-pin-070dfc5e",
+      "receipt": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "sha256": "a8abf836cedf70334caaa9030d021a0c20d52b05b0b671a607c7d0c45d5fbc05"}
+    },
+    "runtime": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "checkout": "/home/user/work/wt/rt-pin-ab1e4f61",
+      "receipt": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-ab1e4f6141987706132916e2da16477f5a019464", "sha256": "c831313057b1ecc70f8423ede180a8b939647905513db51660cde35c2f2f346d"}
+    },
+    "composition": {
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "checkout": "/home/user/work/wt/vw-pin-635f4de0",
+      "receipt": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "sha256": "ea43438c8e7327f152faf44d2d8e56133dd4b6aaf2205c4196d61b6c7b1e9ab1"}
+    }
+  },
+  "helper": {
+    "private_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127c-last-element-prep-2053/evidence/p2_commit_phase_capture.py",
+    "basename": "p2_commit_phase_capture.py",
+    "mode": "0600",
+    "directory_mode": "0700",
+    "sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d",
+    "git_blob_sha1": "2ae83f1bb8420f1b409165382711aaaeb485fb1f",
+    "source_commit": "368f53f4454d5908c86de53d174f0bedcf23781c",
+    "qualified_runtime_source": "fb4addba95ca4bae0482c93be94e5cae2770ca09",
+    "role": "external reviewed diagnostic helper; not Runtime product source"
+  },
+  "runtime_home_receipt": {
+    "status": "PENDING",
+    "owner": "Runtime owner/leadhost2050",
+    "requirement": "exact received helper receipt before any future body",
+    "not_claimed_by_prep": true
+  },
+  "dependencies": {
+    "node": {"path": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node", "version": "v20.19.4", "sha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490"},
+    "app_node_modules": "/home/user/work/app/node_modules",
+    "tsx": "file:///home/user/work/app/node_modules/tsx/dist/loader.mjs",
+    "agent_python": "/home/user/work/venv-agent/bin/python",
+    "runtime_python": "/home/user/work/venv-runtime/bin/python",
+    "install_or_mutation": false
+  },
+  "execution_receipts": {
+    "preflight": null,
+    "submit": null,
+    "body": null,
+    "browser": null,
+    "raw_capture": null,
+    "historical_profile_reconstruction": false
+  }
+}
