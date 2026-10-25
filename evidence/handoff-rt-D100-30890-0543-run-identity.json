@@ -1,0 +1,99 @@
+{
+  "packet": "handoff-rt-D100-30890-0543",
+  "format": "safe-flat-export-v1",
+  "plan": "PLAN3F/G3/R1,C0",
+  "base_revision": "tl/rt-D100-candidate-main-0527",
+  "source_immutable": true,
+  "runs": {
+    "baseline_oldred_7351": {
+      "central_request_id": "rt-D100-candidate-main-0527-d100-oldred-candidate-main-0527-1025053840-7351",
+      "route_request_id": "d100-oldred-body-rt-D100-candidate-main-0527-d100-oldred-candidate-main-0527-1025053840-7351",
+      "preflight_exit": 0,
+      "body_exit": 1,
+      "selected": 26,
+      "outcomes": {"PASS": 12, "FAIL": 14, "ERROR": 0, "SKIPPED": 0},
+      "selector_sha256": "ebbb3f2fa13e249cbe025f011ff1bd823bc3ab605229af50646c96ebd8a430f5",
+      "xml_sha256": "1346c77447fa20d8447118487060ec476900e6b684750c83b7fff5e1e6e62b2c",
+      "body_log_sha256": "dd493a3e0497a6976eaf36dee7981128e53846d4d9edfe210a537441b73dd1fa",
+      "argv_sha256": "ebbb3f2fa13e249cbe025f011ff1bd823bc3ab605229af50646c96ebd8a430f5",
+      "body_receipt": "rt-D100-candidate-main-0527-d100-oldred-candidate-main-0527-1025053840-7351"
+    },
+    "candidate_30890": {
+      "central_request_id": "rt-D100-candidate-main-0527-d100-green-candidate-main-0527-1025053927-30890",
+      "route_request_id": "d100-green-body-rt-D100-candidate-main-0527-d100-green-candidate-main-0527-1025053927-30890",
+      "preflight_exit": 0,
+      "body_exit": 1,
+      "selected": 59,
+      "outcomes": {"PASS": 38, "FAIL": 16, "ERROR": 5, "SKIPPED": 0},
+      "selector_sha256": "083a6056e42098db5497d902dd1d2b5341f2b12c5d7bf1f90aef39809f967d17",
+      "xml_sha256": "0b7e08130e6551db428cd987c6ee14f14e22baac847c90fa55e83f69ed81f5c8",
+      "body_log_sha256": "bdc3bf10cff193abc659b9bae18d3f0b3ef83d8c418ce3540d80d2972ee78aba",
+      "argv_sha256": "083a6056e42098db5497d902dd1d2b5341f2b12c5d7bf1f90aef39809f967d17",
+      "body_receipt": "rt-D100-candidate-main-0527-d100-green-candidate-main-0527-1025053927-30890"
+    }
+  },
+  "immutable_tuple": {
+    "baseline": {
+      "agent_full_sha": "6aefd11766c019f8deff0ca5a1bfe18e9e730822",
+      "agent_tree": "6f6aee59e510a0d6baea023486b97302db58477b",
+      "runtime_full_sha": "0c62dfa63db9ff608ac9338388431e31a814e080",
+      "runtime_tree": "e22cdd54b668acea9fe593e6724b34d1a56f7530",
+      "app_full_sha": "1e34f8eac5e3d5a54dbba12d538a7f3bf8509b66",
+      "app_tree": "73b0a07be3ffdc86d82d6dc45f1584113dff1dcb",
+      "composition_full_sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "tuple_sha256": "c865dea7cc1e2c11a1b1be1bb4ba5ab49b0c9159fe54dc221e7d5197a70df2ca"
+    },
+    "candidate": {
+      "agent_full_sha": "d3b5cfef76b4b3abef5db5f8288abc214a61354f",
+      "agent_tree": "abe592ddd56aa1a376370e8ab9f5c0507d2587ec",
+      "runtime_full_sha": "0c62dfa63db9ff608ac9338388431e31a814e080",
+      "runtime_tree": "e22cdd54b668acea9fe593e6724b34d1a56f7530",
+      "app_full_sha": "1e34f8eac5e3d5a54dbba12d538a7f3bf8509b66",
+      "app_tree": "73b0a07be3ffdc86d82d6dc45f1584113dff1dcb",
+      "composition_full_sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "tuple_sha256": "551d3838b0e86d9564ea6198dc5c4e5ae3f7a0a518f52aa469852f9c5d88060a"
+    }
+  },
+  "source_receipts": {
+    "agent_candidate": "d3b5cfef76b4b3abef5db5f8288abc214a61354f; tree abe592ddd56aa1a376370e8ab9f5c0507d2587ec; clean immutable candidate",
+    "agent_baseline": "6aefd11766c019f8deff0ca5a1bfe18e9e730822; tree 6f6aee59e510a0d6baea023486b97302db58477; clean immutable baseline",
+    "runtime": "0c62dfa63db9ff608ac9338388431e31a814e080; tree e22cdd54b668acea9fe593e6724b34d1a56f7530",
+    "app": "1e34f8eac5e3d5a54dbba12d538a7f3bf8509b66; tree 73b0a07be3ffdc86d82d6dc45f1584113dff1dcb",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40; tree 5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "imports_and_profile": {
+    "python": "/home/user/work/venv-agent/bin/python",
+    "node": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
+    "node_version": "v20.19.4",
+    "profile": "agent-remotion-0013",
+    "schema": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "profile_lock_sha256": "c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24",
+    "profile_archive_sha256": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738",
+    "profile_registry_sha256": "b0de93a936fa0f406cc4e6901dfdc558f55c633f7e349ae5d5704492dacb0f1d",
+    "client": "0.2.14",
+    "composition_version": "0.0.13"
+  },
+  "controls": {
+    "baseline_positive_exit": 17,
+    "baseline_poison_exit": 1,
+    "candidate_positive_exit": 17,
+    "candidate_poison_exit": 1,
+    "positive_marker_bytes": 7,
+    "poison_marker_bytes": 0,
+    "meaning": "actual route controls; no behavior credit"
+  },
+  "registry_restoration": {
+    "saved_baseline_sha256": "4fbde9ca7b2d8766e24940cff711246e87516a09a0af03f3b7746400ce8bd76c",
+    "restored_at_completion_sha256": "4fbde9ca7b2d8766e24940cff711246e87516a09a0af03f3b7746400ce8bd76c",
+    "later_current_sha256": "90184e63cf484e67e900f1f82bc9f8f750bbd7b580bd617fbd2790c3f8ae1d5b",
+    "later_change": "one unrelated fd86-new-source-body-0537 row preserved; D100 rows absent"
+  },
+  "private_artifacts": "raw XML/log/argv/request/body/media/auth/key/URL values remain private; only filenames and hashes are exported",
+  "missing_limits": [
+    "top-frame function is UNKNOWN where retained XML/log had no in-function annotation",
+    "baseline old-RED source classification is frame-limited",
+    "no receipt payloads or sensitive values exported"
+  ]
+}

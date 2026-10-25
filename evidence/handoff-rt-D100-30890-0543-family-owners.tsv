@@ -1,0 +1,6 @@
+family	selected	executed	PASS	FAIL	ERROR	owner	source_origin	source_commit	normal_receipt	review_refs	accounting_note
+newexacttime	4	4	3	1	0	Agent candidate source	tests/sdk/test_capture_move_exact_time.py	d3b5cfef76	candidate body 30890	agt-G3-D100-exact-time-review-0502	direct body outcomes; no source-review credit
+newshareditem	22	22	11	11	0	Agent candidate source	tests/sdk/test_sequential_shared_item_provenance.py	d3b5cfef76	candidate body 30890	agt-R1-D100-shared-review-0513	direct body outcomes; no source-review credit
+originalTEN	10	10	1	4	5	Runtime/Agent existing original source	tests/editing_conformance/test_commit_runtime_shared_inverse.py	d3b5cfef76	candidate body 30890	rt-D100-protected-review-0450; source facts retained	each ID retained; no broad common-cause claim
+docpatchphysicalcontrol	1	1	1	0	0	Runtime/Agent existing control	tests/editing_conformance/test_doc_patch_v2.py	d3b5cfef76	candidate body 30890	existing control source	direct body outcome
+historicalneighbors	22	22	22	0	0	Runtime/Agent existing neighbors	tests/editing_conformance/test_occurrence_shared_historical.py	d3b5cfef76	candidate body 30890	existing neighbor source	direct body outcomes; no re-run
