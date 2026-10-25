@@ -272,6 +272,7 @@ class ExecutionGuardPolicy:
         *,
         immutable_inputs: Mapping[str, tuple[int, str]] | None = None,
         path_sample_limit: int = 64,
+        excluded_roots: tuple[Path, ...] = (),
     ) -> dict[str, Any]:
         """Return bounded, metadata-only evidence accounting for one sample.
 
@@ -303,9 +304,15 @@ class ExecutionGuardPolicy:
         # below the root resolves to the resolved root plus its relative path;
         # one resolve() per sample instead of one realpath per file.
         resolved_root = directory.resolve()
+        excluded = tuple(path.resolve() for path in excluded_roots)
         try:
             for path in directory.rglob("*"):
                 try:
+                    if excluded and any(
+                        (resolved_root / path.relative_to(directory)).is_relative_to(root)
+                        for root in excluded
+                    ):
+                        continue
                     if path.is_symlink() or not path.is_file():
                         continue
                     stat = path.stat()
@@ -384,14 +391,17 @@ class ExecutionGuardPolicy:
         *,
         immutable_inputs: Mapping[str, tuple[int, str]] | None = None,
         cap_bytes: int | None = None,
+        excluded_roots: tuple[Path, ...] = (),
     ) -> dict[str, Any]:
         """Reject one attempt's generated evidence beyond its cap.
 
-        ``cap_bytes`` lets a task with an admitted storage envelope raise its
-        own cap to that envelope; the default is the host's per-attempt cap.
+        Render media/workspaces may be excluded from diagnostic evidence:
+        their capacity is protected by the live free-volume guard instead.
         """
         cap = self.evidence_cap_bytes if cap_bytes is None else int(cap_bytes)
-        measurement = self.evidence_measurement(root, immutable_inputs=immutable_inputs)
+        measurement = self.evidence_measurement(
+            root, immutable_inputs=immutable_inputs, excluded_roots=excluded_roots,
+        )
         observed_bytes = int(measurement["observed_bytes"])
         try:
             accounting = self.evidence_budget.account(
