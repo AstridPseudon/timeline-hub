@@ -61,3 +61,11 @@ no absent-case PASS. Existing D63/upstream-924 matching produced 2940 same
 status, 15 different status/cause, and 6311 current-only unclassified nodes;
 D13_ENV and D23_DEFERRED boundaries remain preserved, and no numeric core-open
 or independent NO-GO verdict was issued.
+
+## D118 readiness
+
+At `2026-10-25T10:05Z`, the next D118 run is not submitted: the protected
+D116 word-seed worker `agt-F-D116-word-seed-0947` is still running, and disk
+availability is exactly `4,923,437,056` bytes, below the existing heavy-run
+strict floor of `5,200,000,000` bytes. No checkout was pinned and no body was
+submitted against an unsettled Agent source or below-floor disk.
