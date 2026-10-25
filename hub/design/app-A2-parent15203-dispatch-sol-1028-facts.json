@@ -1,0 +1,355 @@
+{
+  "task": "A2 parent15203 mounted input/capture/save/outbox disposition",
+  "result": "Current original starts mouse-down while the mounted parent editor is inert. Protected-spec readiness proposal retained UNAPPLIED. No justified production change.",
+  "app_head": "96d4754b4eef0591a208d6b51b60c30fc44b6915",
+  "app_tree": "3f9da34c4f116026ec21022421850e0608ba653b",
+  "immutable_actualtuple": {
+    "app": "96d4754b4eef0591a208d6b51b60c30fc44b6915",
+    "runtime": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e",
+    "agent": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "service_id": "app-pin-96d4754b-d73-p2-96d4754b-submit-1025100712-15203",
+  "retained_trace": {
+    "archive": "trace.zip",
+    "archive_sha256": "1db6cd2496ab97b71c1cf73a3ae43bb98a48e1f5e9f16f77c0522e98ae516814",
+    "archive_entries_sha256": {
+      "0-trace.trace": "f04b8c45199f0af8662f40e895435f75ca03106fd9f79fa8f7b5a9e7e39b3f44",
+      "0-trace.network": "879e99ff2de8ad5d491f080cedcdeea8ca12915ac06f375bde25a08afc47745a",
+      "test.trace": "0b1f93cd32d699d8d555e4ec8e27c7dfa7e2a9b43ac5817fcf47388a2fa7575d"
+    },
+    "commit_posts": 0,
+    "input_calls": [
+      {
+        "callId": "call@34",
+        "point": {
+          "x": 181,
+          "y": 494.484375
+        },
+        "inputSnapshot": "input@call@34"
+      },
+      {
+        "callId": "call@36",
+        "point": {
+          "x": 181,
+          "y": 494.484375
+        },
+        "inputSnapshot": "input@call@36"
+      },
+      {
+        "callId": "call@38",
+        "point": {
+          "x": 341,
+          "y": 494.484375
+        },
+        "inputSnapshot": "input@call@38"
+      },
+      {
+        "callId": "call@40",
+        "point": {
+          "x": 341,
+          "y": 494.484375
+        },
+        "inputSnapshot": "input@call@40"
+      }
+    ],
+    "snapshots": [
+      {
+        "snapshot": "after@call@22",
+        "trace_time_ms": 369696.425,
+        "panel": {
+          "present": true,
+          "state": "connecting",
+          "leaving": false,
+          "pointer_events_none": false
+        },
+        "connection_state": "connected",
+        "parent_clip": {
+          "selected": false,
+          "inert_ancestor_count": 1,
+          "positioned_wrapper_style": "left: 144px; top: 4px; width: 96px; height: 28px; z-index: 2;"
+        }
+      },
+      {
+        "snapshot": "before@call@24",
+        "trace_time_ms": 370122.655,
+        "panel": {
+          "present": true,
+          "state": "connecting",
+          "leaving": true,
+          "pointer_events_none": true
+        },
+        "connection_state": "connected",
+        "parent_clip": {
+          "selected": false,
+          "inert_ancestor_count": 1,
+          "positioned_wrapper_style": "left: 144px; top: 4px; width: 96px; height: 28px; z-index: 2;"
+        }
+      },
+      {
+        "snapshot": "input@call@36",
+        "trace_time_ms": 370393.424,
+        "panel": {
+          "present": true,
+          "state": "connecting",
+          "leaving": true,
+          "pointer_events_none": true
+        },
+        "connection_state": "connected",
+        "parent_clip": {
+          "selected": false,
+          "inert_ancestor_count": 1,
+          "positioned_wrapper_style": "left: 144px; top: 4px; width: 96px; height: 28px; z-index: 2;"
+        }
+      },
+      {
+        "snapshot": "after@call@36",
+        "trace_time_ms": 370415.968,
+        "panel": {
+          "present": true,
+          "state": "connecting",
+          "leaving": true,
+          "pointer_events_none": true
+        },
+        "connection_state": "connected",
+        "parent_clip": {
+          "selected": false,
+          "inert_ancestor_count": 1,
+          "positioned_wrapper_style": "left: 144px; top: 4px; width: 96px; height: 28px; z-index: 2;"
+        }
+      },
+      {
+        "snapshot": "input@call@38",
+        "trace_time_ms": 370422.299,
+        "panel": {
+          "present": true,
+          "state": "connecting",
+          "leaving": true,
+          "pointer_events_none": true
+        },
+        "connection_state": "connected",
+        "parent_clip": {
+          "selected": false,
+          "inert_ancestor_count": 1,
+          "positioned_wrapper_style": "left: 144px; top: 4px; width: 96px; height: 28px; z-index: 2;"
+        }
+      },
+      {
+        "snapshot": "after@call@38",
+        "trace_time_ms": 370838.043,
+        "panel": {
+          "present": false
+        },
+        "connection_state": "connected",
+        "parent_clip": {
+          "selected": false,
+          "inert_ancestor_count": 0,
+          "positioned_wrapper_style": "left: 144px; top: 4px; width: 96px; height: 28px; z-index: 2;"
+        }
+      },
+      {
+        "snapshot": "input@call@40",
+        "trace_time_ms": 370843.577,
+        "panel": {
+          "present": false
+        },
+        "connection_state": "connected",
+        "parent_clip": {
+          "selected": false,
+          "inert_ancestor_count": 0,
+          "positioned_wrapper_style": "left: 144px; top: 4px; width: 96px; height: 28px; z-index: 2;"
+        }
+      },
+      {
+        "snapshot": "after@call@40",
+        "trace_time_ms": 370864.969,
+        "panel": {
+          "present": false
+        },
+        "connection_state": "connected",
+        "parent_clip": {
+          "selected": false,
+          "inert_ancestor_count": 0,
+          "positioned_wrapper_style": "left: 144px; top: 4px; width: 96px; height: 28px; z-index: 2;"
+        }
+      },
+      {
+        "snapshot": "after@call@24",
+        "trace_time_ms": 460100.712,
+        "panel": {
+          "present": false
+        },
+        "connection_state": "connected",
+        "parent_clip": {
+          "selected": false,
+          "inert_ancestor_count": 0,
+          "positioned_wrapper_style": "left: 144px; top: 4px; width: 96px; height: 28px; z-index: 2;"
+        }
+      }
+    ],
+    "browser_page_error_events": 0,
+    "direct_event_target_or_callback_record": false
+  },
+  "direct_observations": [
+    "Mouse move/down/move/up were issued; start (181,494.484375), end (341,494.484375), 12 move steps.",
+    "Connection status is connected while a contents DIV ancestor of the parent clip still has inert at input@call@36 and after@call@36.",
+    "Leaving connection panel is present with pointer-events-none at mouse-down. It and inert are absent by after@call@38.",
+    "Parent wrapper left=144px, top=4px, width=96px, height=28px remains unchanged through the timeout snapshot; parent data-selected stays absent.",
+    "Retained frames show page text selection after the move; this is corroboration, not a callback observation.",
+    "Zero POST requests with path ending /commit in the retained network."
+  ],
+  "source_inference": {
+    "first_pretransport_divergence": "Test readiness permits a measurable/visible parent clip while RuntimeConnectionGate deliberately keeps its app inert until the panel calls exit.left.",
+    "gesture_delivery": "Native inert prevents the down from targeting the clip subtree. useClipDrag requires a target inside its wrapper/clip at pointer-down to create a pending session; later pointer moves cannot create one. Exact event.target and handler invocation were not retained.",
+    "not_a_disconnection_claim": "connected is retained throughout these snapshots; this is the connection gate exit interval, not proof of a Runtime disconnect or server failure."
+  },
+  "phase_disposition": {
+    "physical_input": "OBSERVED issued by browser automation",
+    "clip_gesture_admission": "BLOCKED by retained inert ancestor at down; source/native behavior inference",
+    "upstream_editor_change": "No DOM move or selected clip observed; full in-memory editor state was not captured",
+    "capture_called": "UNKNOWN directly; not established by retained stage records",
+    "capture_refused": "UNKNOWN; no genuine current rejection record",
+    "callback_thrown": "No browser pageError event retained; exact callback execution UNKNOWN",
+    "save_scheduled": "UNKNOWN directly; not established by retained stage records",
+    "outbox_intent_or_pending": "UNKNOWN; no current IndexedDB record retained",
+    "commit_transmitted": "ABSENT in retained browser network",
+    "Runtime_response_receipt_canonical_history_reload_Undo": "NOT REACHED by the original parent test"
+  },
+  "source_call_path": [
+    "TimelineEditor.tsx imports TimelineEditorCore.tsx; Core mounts useClipDrag; ClipAction exposes clip and row identity.",
+    "useClipDrag pointer-down admission -> pending session with original moveReadBasis -> threshold/coordinator plan -> pointer-up commitDraggingSession -> ops.applyResolvedClipMove (or moveClipToRow fallback).",
+    "useTimelineState binds real upstream trackManagement ops. applyResolvedClipMove calls save.applyEdit with rows plus gestureBasis. useTimelineSave delegates non-element edits to useTimelineCommit.",
+    "useTimelineCommit materializes rows and emits scheduleSave; useTimelineSave subscribes persistence.scheduleSave; persistence captures localDocumentSave before debounce and awaits localCapture before flush.",
+    "useTimelineSave.capture clones input/basis and awaits the original owner handoff. timelineLocalSaveHandoff validates the original physical/source/gesture basis, preserves the child closure, and appends a guarded document intent.",
+    "localSaveSession.appendDocument validates before bytes, persists the original intent with predecessor; flush/pump builds the v2 doc.patch request and calls shared commitOutbox.dispatch.",
+    "commitOutbox reserves pending exact body and Idempotency-Key in a completed readwrite transaction before transmit; localSaveSession send delegates provider.commitTimeline.",
+    "commitSession.ts move capture port is a separate command-session route; the current upstream parent row gesture is wired through localSaveSession, not that port. ADD uses ordinary command-session options.send; placement may use operation.transmit."
+  ],
+  "guarantees_untouched": [
+    "Original dependent intent operands/reads/IDs remain persisted; only ready base advances after predecessor acceptance.",
+    "Canonical result is adopted before dependent replay; refused prefix and descendants remain retained while visible preview rolls back with conflict/error state.",
+    "Exact pending bytes survive retry; authoritative accepted/merged/refused results, history and guarded Undo have no modifications. These are source facts, not fresh end-to-end qualification."
+  ],
+  "proposal": {
+    "file": "evidence/proposal.patch",
+    "sha256": "c9a6fa6d36ef161fa527c4247ddfbe3aa42590a695cd509ace819f52b570f0d4",
+    "applied": false,
+    "target": "tests/e2e/local/three-products.p2-tour.spec.ts",
+    "change": "One readiness assertion after visible Track name: await expect(page.getByTestId('runtime-not-connected')).toHaveCount(0);",
+    "precedent": "tests/e2e/local/support/app.ts:256-257 already requires this gate exit before editing.",
+    "preserves": "Same gesture coordinates/formula, commands, protected expectations, response wait and all existing budgets; no production delta.",
+    "limits": "No oldRED/newGREEN or original-browser GO. Requires exact protected-test scope handback and independent core/protected review before application/merge."
+  },
+  "source_citations": [
+    {
+      "file": "tests/e2e/local/three-products.p2-tour.spec.ts",
+      "sha256": "54ea18f3f3fa8fef2eb31cc0a05809ede76099f9f3bee9bf0511824e652a85f7",
+      "lines": "124-147,679-775"
+    },
+    {
+      "file": "tests/e2e/local/support/app.ts",
+      "sha256": "238f7b5422dadf0ec7e1df361f7c74d8310c8064a056e4e22bfa53a779d6845f",
+      "lines": "249-257"
+    },
+    {
+      "file": "src/integrations/runtime/RuntimeConnectionProvider.tsx",
+      "sha256": "cf07a243f882591446965e161e20d611bb422a4f0767d3e20955c3d4dc7260f0",
+      "lines": "410-490"
+    },
+    {
+      "file": "src/shared/components/RuntimeConnection/RuntimeConnectionPanel.tsx",
+      "sha256": "7285e0ad6dc9700dfb48483eef0070c15e5ff16723520e2ea718e1dcb4ebc5fd",
+      "lines": "25-78,168-194"
+    },
+    {
+      "file": "src/tools/video-editor/components/TimelineEditor/TimelineEditor.tsx",
+      "sha256": "3922ac34eaeee865ab0e84be8967de5fc84802f2ffb6b2b3060e5471fbdbd2f6",
+      "lines": "1-12"
+    },
+    {
+      "file": "src/tools/video-editor/components/TimelineEditor/TimelineEditorCore.tsx",
+      "sha256": "d567994764256ceddf2b841067f786c8bfaccced15ea7020d1b33f895545a15a",
+      "lines": "435,810-825"
+    },
+    {
+      "file": "src/tools/video-editor/components/TimelineEditor/ClipAction.tsx",
+      "sha256": "7efcfbf56dee3f02e11490002cfdd8445d838ba925db88507422437a489831c2",
+      "lines": "558-585"
+    },
+    {
+      "file": "src/tools/video-editor/hooks/useClipDrag.ts",
+      "sha256": "ef8fd49457b4a28edd7529fdb437128ad998d86044cee3c1c98dfe5f61087dbf",
+      "lines": "303-357,374-438,486-511"
+    },
+    {
+      "file": "src/tools/video-editor/hooks/useClipDrag.helpers.ts",
+      "sha256": "6a76faf24af973e8175de6689838ccc6ce4c1abbe1b1b2eb8651ac57f814df9b",
+      "lines": "333-374,501-515"
+    },
+    {
+      "file": "src/tools/video-editor/hooks/useTimelineState.ts",
+      "sha256": "57327c2f37b35914cf4a7896fcd69adc4dcbae08f0877997e3c55e9a71f2c6c5",
+      "lines": "620,696-711,936-945,1158-1162"
+    },
+    {
+      "file": "src/tools/video-editor/hooks/useTimelineTrackManagement.ts",
+      "sha256": "1ed27a73ceb4579a0a5f03747448345b26e44e19774633d0cc50f1173fa91c71",
+      "lines": "251-340"
+    },
+    {
+      "file": "src/tools/video-editor/hooks/useTimelineCommit.ts",
+      "sha256": "639785e7212aab6cd6631d90ce218c1bc83c8e606341d3bd63c0c322f7f3ee7e",
+      "lines": "367-447,506-556"
+    },
+    {
+      "file": "src/tools/video-editor/hooks/useTimelineSave.ts",
+      "sha256": "33e0ff6b26689e8af62b099557e8455f6ba87ad2b9bbbcbc69e42ac84918638a",
+      "lines": "134-158,318-355,376-391,440-442,803-805"
+    },
+    {
+      "file": "src/tools/video-editor/hooks/useTimelinePersistence.ts",
+      "sha256": "348e0481e13150ff63dea94884800e8d030fe09734e66a8da3573910bed3e63a",
+      "lines": "415,682-694,1013-1018,1040-1105"
+    },
+    {
+      "file": "src/tools/video-editor/hooks/timelineLocalSaveHandoff.ts",
+      "sha256": "fb64362cb44a83eb3554dac77158072ad91423b3d72927ae4fa8c4d20154312c",
+      "lines": "260-335,576-633"
+    },
+    {
+      "file": "src/tools/video-editor/commands/localSaveSession.ts",
+      "sha256": "def2c8c040daea9cff212c40f4f01062d2a6e7bfe6f76a4928cd53eabbf59230",
+      "lines": "108-208,268-330"
+    },
+    {
+      "file": "src/tools/video-editor/commands/commitSession.ts",
+      "sha256": "7bddb9c4adc28ff7d7079c4011ae965e65952570abe248f3d0247789a3532648",
+      "lines": "218-253,681-710"
+    },
+    {
+      "file": "src/tools/video-editor/commands/commitOutbox.ts",
+      "sha256": "dc497f0676b72abee0736abe19f0c33848a059776440db507375847a12160b21",
+      "lines": "464-534"
+    }
+  ],
+  "verification": {
+    "tests_run": [],
+    "reason": "No justified production/test edit; task explicitly requests no meaningless broad tests. Browser/service/full/P2/P1/P3 and HTTP were not run.",
+    "commands_passed": [
+      "python \"$TMPDIR/inspect_parent15203.py\" (read-only archive assertions)",
+      "git diff --check",
+      "git status --short (empty)",
+      "git apply --check <worker>/evidence/proposal.patch (unapplied)",
+      "Python SHA256 protected-file comparison: 487/487 identical"
+    ],
+    "protected_originals": {
+      "count": 487,
+      "aggregate_before_sha256": "e2064bb5f9641f5807b34f1206d330fe93ca10ceb7989f87772b7105e7d60cbd",
+      "aggregate_algorithm": "SHA256 of sorted UTF-8 lines: <file SHA256><two spaces><repo-relative path><newline>",
+      "selection": "tracked tests/e2e/local/**, vendor/**, src/integrations/runtime/generated*, public/astrid/**, package.json, package-lock.json, runtime.lock.json, *source.lock.json, *schema.json",
+      "after": "identical",
+      "aggregate_after_sha256": "e2064bb5f9641f5807b34f1206d330fe93ca10ceb7989f87772b7105e7d60cbd",
+      "all_files_equal": true
+    }
+  }
+}
