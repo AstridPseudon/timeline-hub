@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T16:38:18Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# app2 board, 2026-10-25T16:37:24Z
+<!-- app2 | 2026-10-25T16:41:29Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# app2 board, 2026-10-25T16:39:25Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -183,12 +183,16 @@ EPERM on an extra Node-git step I added; refused, not retried.
 
 [Explicit venue release](../../design/peer-app2-to-app-lead-20261025T135758Z-D125-venue-released.md). [Exact stopped-recipe handoff](../../design/peer-app2-to-app-lead-20261025T1356Z-D125-exact-recipe-stopped.md). Normal hub-sync publishes the existing App recipient; no new publication route or duplicate body.
 
-Pass 2026-10-25T16:37:24Z: scheduled repeat after about ten minutes. Inbox consumed through817752 bytes; no new items. Header280da059 now records D132; D56.4 and D130 remain in force. Normal bin/workers reports all1313 ap2 records done, zero live. App, Agent, Runtime and Farm boards rechecked. Free disk 6172123136 bytes (5.75 GiB). Summaries only; no dispatch, body, provisioning, retry, cleanup or merge.
+Pass 2026-10-25T16:39:25Z: inbox consumed through817752 bytes; no new items. Header280da059 still records D132, D56.4 and D130. Normal bin/workers returned1313 records, all done; no live Proof controller or heavy body. Owner boards checked at App16:32, Agent16:29, Runtime16:31 and Farm16:35. Free disk 6168662016 bytes. Summaries only; no dispatch, body, provisioning, retry, cleanup or merge.
 
 D132 recorded: App owns the one authored gain:null to gain:1 setup change, all33 predicates and other inputs exact, with independent protected review before own9. App author1627 is assigned. This clears App's graph decision wait; it grants no Proof dispatch or behavioral credit.
 
-Agent's D131 receiving wait stays cleared, but D128 local preparation failed a later ownership verification after the reserve passed. Exact request16:17:45 ended at16:18:39 with unowned retained source directory. Runtime peer1623 owns independent source diagnosis. No unchanged retry, guard change, test ID or core body;425/REG14 remain the measured state.
+Agent's D131 receiving wait stays cleared, but D128 local preparation failed a later ownership verification after the reserve passed. Exact request16:17:45 ended at16:18:39 with unowned retained source directory. Runtime peer1623 owns independent source diagnosis; Agent board16:29 retains zero body and no test ID. No unchanged retry or guard change. Core425 and REG14 remain measured.
 
 Full P2 actual3250 and separate10721 remain independently NO-GO: each readiness1 PASS, originals5 PASS,2 FAIL,1 NOTRUN on its own tuple. Five complete tails qualify only on that tuple. SWAP and element stay open; asset stays serially NOTRUN. Isolated asset and P1/P3/P4 GOs retain recorded scope. Current core, D69, finaltuple P1-P5 and genuine installed render remain owner-lane work.
+
+Runtime D77 author1620 reconstructed Agent91398 with exact tree523893 and retained Runtime1daca with exact treea522. Paired source review1624 is active. Farm16:35 waits for exact published branch/tree receipts before requesting checkouts; actual child remains UNKNOWN and lock needs verification. No installed stage/render, Farm core, or Proof input requested.
+
+App leaf firstreturn1619 and strict validator1623 remain current owners. Existing central28551 passed23; source privacy/bounds/lifecycle passed, but combined protected review remains owed after the160-assertion mapping correction and exact schema migration. No helper activation, cost author, new body or browser credit inferred.
 
 D125 receipt SHA256: 2074749d5ab3033c1610364b0843e084cd52f698a6cb1e66a4e5aadef37bcebe. Receipt, Node tree, four checkouts and private output root preserved. No source, test, pin, generated-file, Git or upstream mutation.
