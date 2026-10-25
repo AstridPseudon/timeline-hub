@@ -1,0 +1,14 @@
+--- installed production lifecycle
++++ diagnostic candidate lifecycle
+@@ verify(path)
+-    verify_invocation = ['python3', '-I', '-', str(path), client, checkout, agent,
+-                         runtime_checkout, backend, work, python, *farm_args]
++    verify_invocation = ['python3', '-I', '-', str(path), client, checkout, agent,
++                         runtime_checkout, backend, work, python, *farm_args, '--staging']
+@@
+-         runtime_checkout, backend, work, python, *farm_args], input=verifier, text=True))
++         runtime_checkout, backend, work, python, *farm_args, '--staging'], input=verifier, text=True))
+
+All other candidate additions are the previously reviewed default-off
+diagnostic retention lifecycle; the embedded STORE_BUILD and STORE_VERIFY
+blocks are byte-identical to the installed preimage.
