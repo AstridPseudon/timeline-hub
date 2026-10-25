@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T02:38:11Z | dispatcher heartbeat 2s | live 2 (sol 0, luna 2, other 0) | busy30 8 | status age 0m -->
-# agent board, 2026-10-25T02:36:19Z
+<!-- agent | 2026-10-25T02:41:17Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 0m -->
+# agent board, 2026-10-25T02:41:16Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -165,7 +165,7 @@
 | F current sheet17 | Preserve current sheet scenarios | Luna | MAIN corrected subset proof | merging | Author0157; review0203 PASS | Normal3b8f exact reviewed64166; original17 conserved. Init/emitter source corrected; inverse1 and retired CLI3 findings held. | 3b8f341cf6 |
 | F main batch recipe | Hand back exact affected-node inputs | Luna | Main recipe2337 and source joins | merging | agt-F-main-batch-prep-2342 | Exact251 source-only snapshot exported. Extra37 assigned cases join later; remaining live core stays visible. No registry install or body. | Private bundle only |
 | F M2 placement20 | Preserve placement recipe scenarios | Luna | MAIN successor qualification | merging | BatchE0151 PASS; home536b | Exact85e046 protected PASS, mirrored parent clips preserved; all20 retained. Source joined; behavior owed. | 536bb82153 |
-| F inverse stage7 | Preserve authenticated inverse regressions | Luna | Current source literals then fresh review | doing | Review0230 FAIL; return0242 queued | Four stale custody literals need exact bd3c/6634. All7 strict predicates retained; no body. | Author branch held |
+| F inverse stage7 | Preserve authenticated inverse regressions | Luna | Fresh protected current-pair review | review | Return0242; review-log0239 | Four exact bd3c/6634 literals returned; all7 strict predicates retained. Original NumPy environment limit; no body. | a07e9eb283 |
 | F M2 pool6 | Preserve shot-pool recipe behavior | Luna | MAIN exact six needed proof | merging | agt-F-pool6-actual-0223 SOURCE_EXACT | All6 directly use shared helper now fixed by095177 semantic birth/canonical reload. Exact dependency traced; no new source or behavior claim. | Source unchanged |
 | F video unplace12 | Preserve video placement and removal | Main HARD Sol requested | Later MAIN functional proof | merging | HARD0107; review0117 PASS; home27c6 | Full original12 source reviewed, genuine shared topology and opaque graph preserved. Normal source now home; functional proof pending. | 27c68177c1 |
 | F native frontends7 | Retain exact retirement and live split | Luna | D87 named coverage and live source | merging | Ledger0007; protected0202 PASS | One case retired with named coverage. Six live source cases normal8d938, functional MAIN proof still owed. Held95fe not merged. | Home8d93889e01 |
@@ -206,7 +206,7 @@
 
 | D91 inverse window | Make five original-third hosts valid | Luna | Protected PASS then exact MAIN proof | merging | Author0218; independent0223 PASS | Approved host1.8 to2.0s only. Normal 9f697 has exact source; other timing and predicates exact. MAIN proof and D72 log owed. | 9f697afcf0 |
 
-| P4 cross-process sample | Measure actual ten-note process costs | MAIN Luna requested | Existing original route and heavy slot | blocked:runtime | Reserved agt-P4-crossprocess-sample-0242 | Owner02:29 authorizes ONE sample: CPU/stacks10/25/40, CLI spawn/startup wall, actual Agent versus Runtime frames. No source change. | Current6634 tuple pending |
+| P4 cross-process sample | Measure actual ten-note process costs | MAIN Luna requested | Existing original route and heavy slot | blocked:runtime | Reserved agt-P4-crossprocess-sample-0242 | Owner02:29 and02:32 authorize ONE sample: CPU/stacks10/25/40, CLI spawn/startup wall, actual Agent versus Runtime frames. No source change. | Current6634 tuple pending |
 
 Integration: Normal a836 includes occurrence095177 via25c1, D91b003 via9f697, core-elementf643 viaa836 over bd3c D90. Exact reviewed blobs match home. Exact28969 D90 passed36; final tuple remains separate.
 core open: P4 service14151 FAIL45.448s versus45 on d407/6634. Owner now authorizes ONE cross-process sample through the existing original route; MAIN host requested. Four R2 retain qualified historical scope.
@@ -214,11 +214,11 @@ Gates: P1 and P3 historical GO. D59 final pinned P1-P5/core, D69 and genuine ins
 Rehearsal categories: PRE16 / KNOWN37 / ENV73 / NEWcore424 / NEWnoncore0 / REG0 =550. Eighteen ENV contrasts later passed; every identity and scope limit retained.
 Families: Exact161 packet0200 plus69 packet0209 yields230 corrected selectors. MAIN existing161 prep0218 owns qualification route. Newly merged occurrence48, pending D91/core-element and netzero need exact successor mapping. All23 no-case remain unqualified first bodies.
 Admission: D92 resolves decision0216; one Luna queued on retained0131 for genuine consumer admission then removal. Migrate three originals if unused pin survives; otherwise legacy-only ledger with exact replacement coverage. Atomic/ABA remain separate.
-Safety: Old D88 denial/prototype stay stopped. Runtime private cost0215 separately stopped on HTTP401 scope refusal; no retry or scope change. The authorized sample may use only existing working original14151 route; stop if it requires refused harness.
-Disk: Latest5.388GB after two source starts; D89 source/review6 above5.5GB, heavy1 above5.2GB, nothing new4.5GB. Sweep3 removed0; compact0. No ended nonKEEP unrecycled tree; old dirty/KEEP/refused paths untouched.
-Blockers: Runtime venue — ONE owner-authorized cross-process sample requested via peer0242; host returns actual owner/ID. Existing private HTTP401 harness remains stopped.
+Safety: Old D88 denial/prototype stay stopped. D93 classifies private401 as product-fixture scope mismatch; only the exact original credential/session/calls are allowed. Runtime0228 resumes under D93; no invented scopes. Sample remains one existing-route body.
+Disk: Latest5.372GB after independent reviewer starts; D89 source/review6 above5.5GB, heavy1 above5.2GB, nothing new4.5GB. Sweep3 removed0; compact0. No ended nonKEEP unrecycled tree; old dirty/KEEP/refused paths untouched.
+Blockers: Runtime venue — ONE owner-authorized cross-process sample requested via peer0242; host returns actual owner/ID. D93 exact original setup only, no extra scopes.
 Blockers: MAIN proof — Exact230 corrected input and new reviewed fixture joins need meaningful existing-runner qualification; all23 no-case/livefrontend6/netzero1 remain visibly unqualified.
 Blockers: Final cut — D59 pinned P1-P5/core, D69 and genuine installed render required.
-Next ready: D92 genuine API route and inverse7 exact current-source correction are running. MAIN sample and corrected-node proof retain exclusive receiving requests; no local duplicate.
-live 2 / cap 6; ready-undispatched 0 eligible local source starts at5.388GB below5.5GB. Source joins complete; D72 log and exact successor packet are next after source floor clears.
-Inbox consumed through1301519 bytes. Updated 2026-10-25T02:37:59Z: D92 decision applied; protected occurrence PASS queued and merged; D91/core-element normal source verified; inverse7 returned once; sample requested. No manager product/test/pin edits or bodies.
+Next ready: D92 genuine API route and inverse7 exact current-source review are running. MAIN sample and corrected-node proof retain exclusive receiving requests; no local duplicate.
+live 2 / cap 6; ready-undispatched 0 eligible local starts at5.372GB below5.5GB. Review-log0239 checks inverse7, appends approved D91/D83 log and prepares exact receipt handoff. D92 genuine route active.
+Inbox consumed through1303924 bytes. Updated 2026-10-25T02:37:59Z: D92 decision applied; protected occurrence PASS queued and merged; D91/core-element normal source verified; inverse7 returned once; sample requested. No manager product/test/pin edits or bodies.
