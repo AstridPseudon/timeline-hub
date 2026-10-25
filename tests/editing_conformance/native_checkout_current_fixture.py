@@ -39,13 +39,16 @@ def prepare(case, *, gate3: bool = False):
         "media_id": media_id,
         "type": "audio",
     }
-    desired["parent"]["config"]["tracks"].append({"id": "music-other", "kind": "audio"})
-    for clip_id in ("music-bed", "music-other"):
+    desired["parent"]["config"]["tracks"].extend([
+        {"id": "music", "kind": "audio"},
+        {"id": "music-other", "kind": "audio"},
+    ])
+    for clip_id, track_id in (("music-bed", "music"), ("music-other", "music-other")):
         desired["parent"]["clips"].append({
             "id": clip_id,
             "clipType": "audio",
             "asset": "music-bed",
-            "track": "music-other",
+            "track": track_id,
             "at": 0,
             "hold": 5.5,
             "extension": {"opaque": [None, {"keep": True}]},
@@ -58,6 +61,12 @@ def prepare(case, *, gate3: bool = False):
     )
     parent = topology["data"]["canonical_document"]["parent_revision"]["payload"]
     assert parent["config"]["clips"] == parent["clips"]
+    assert [track["id"] for track in parent["config"]["tracks"][-2:]] == [
+        "music", "music-other",
+    ]
+    assert {
+        clip["id"]: clip["track"] for clip in parent["clips"][-2:]
+    } == {"music-bed": "music", "music-other": "music-other"}
     assert parent["registry"]["assets"]["music-bed"] == {
         "media_id": media_id,
         "type": "audio",

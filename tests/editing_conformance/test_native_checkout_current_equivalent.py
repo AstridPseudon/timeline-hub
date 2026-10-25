@@ -143,6 +143,7 @@ def test_current_checkout_move_trim_lost_ack_restart_and_guarded_undo(
         return
 
     accepted = editing.flush()
+    assert observed[-1]["key"] != flight["key"]
     assert accepted["data"]["commands"] == [suffix]
     loaded = _attach(case, client, tmp_path / "loaded-outbox.json")
     assert loaded.clip("music-bed").data["hold"] == 3
