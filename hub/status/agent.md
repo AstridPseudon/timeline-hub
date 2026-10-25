@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T00:49:59Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 1 | status age 0m -->
+<!-- agent | 2026-10-25T00:52:50Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 2m -->
 # agent board, 2026-10-25T00:49:47Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -189,7 +189,7 @@
 | D87 live frontends6 | Preserve six current frontend scenarios | Main Luna requested | First source return after D87 split | blocked:runtime | Main list0027 | One native-param case retired separately. Preserve all six live scenarios and every original predicate. | Held95fe input |
 | P4 current main checkpoint | Retain exact remaining-original result | Main Luna / Service | Terminal evidence complete | merged | Main0033; actual3362 NO-GO | FAIL45.244s versus45s; suite46.935s. Profile discrepancy retained. Automatic failure summary only; no independent NO-GO review. | fbbae / a3cd / fd2f /635f |
 | D87 ZIP prose | Hand back reviewed migration notes | Runtime Luna | Docs owner capacity | blocked:runtime | Coverage0033 PASS; exact text published | Runtime board names final docs ready. Agent appendix published byte-exact; no extra review or product changes. | Evidence only |
-| F affected union refresh | Bind reviewed source and exact live IDs | Luna | Local review capacity and source joins | ready | Next source slot | Existing251 must join sheet17 and other exact reviewed memberships; D87 retirements separately mapped. ONE main batch; no suite repeat. | Home2cde |
+| F affected incremental batch | Qualify already merged families now | Main Luna / Service | Main serialized body capacity | blocked:runtime | ORCH00:50; main runner requested0051 | Owner lifts full-union wait. Start exact eligible reviewed IDs now; later newly merged families follow. No full suite or D59 credit. | Home2cde / Runtimea3cd |
 
 Integration: Actual Agent2cde6002b9 includes normal a3cd adoption, reviewed CLI8/inverse10 and sheet17. These family source merges still await ONE main affected-node proof. Product7c48 plus normal provenance remains qualified only at recorded scopes.
 core open: Main P4 original3362 FAIL45.244s versus45s on a3cd. Runtime current-cost Sol0039 owns measured follow-through; no Agent diagnosis or unchanged repeat. Four R2 originals remain closed at7c48/732 scope until final matrix. Historical rehearsal424 is classified core, not current qualified proof.
@@ -199,8 +199,9 @@ Admission: Historical safety and access refusals remain stopped. Owner-approved3
 Disk: Dispatch sample6560288768 bytes; post-dispatch6431596544 bytes is below6.5GB. Approved compact packed0/gzipped0; sweep3 running. No ended clean nonKEEP worktree exists. No pin/dirty/denied target touched.
 Families: Local review0053 owns swap12 and numeric9 exclusively. Main video rereview0039, scalar first correction0042 and word product correction0036 remain exclusive main requests. Sheet17 source is home2cde; all behavioral proof joins ONE main affected batch.
 Blockers: Runtime source — Remaining P4 needs meaningful reviewed successor from current-cost Sol0039. Scalar/word corrections and reserved source families need main capacity; local review0053 does not overlap.
-Blockers: Main qualification — Exact reviewed live selector union and source joins must bind the existing main runner before ONE affected-node batch. No functional proof from source-only PASS.
+Blockers: Main qualification — ORCH00:50 releases incremental batch NOW on already merged families. Existing main runner must bind exact eligible IDs and submit after current body; peer0051 published.
 Blockers: Final cut — Final P1–P5/core on one tuple and genuine installed render remain D59 gated. No current core0 or full-suite PASS claimed.
-Next ready: Refresh affected union when local review frees capacity; normal merges on protected PASS. Main scalar/word and reserved families dispatch under capacity. P4 only after meaningful qualified successor.
-live 1 / cap 0 new source below6.5GB; ready-undispatched 1 capacity-held affected-union refresh. No eligible local row waiting below an open cap. Other source rows are exclusively reserved on main.
-Inbox consumed through1225100 bytes. Updated 2026-10-25T00:49:47Z: actual Runtime00:40 board and flat P4/sheet/D87 results consumed. Sheet original merge2cde verified. D87 exact worker appendix published. Local review0053 assigned; peer0056 published. No manager product edits or test bodies.
+Next ready: MAIN incremental batch now under ORCH00:50; normal merges on protected PASS. Main scalar/word and reserved families dispatch under capacity. P4 only after meaningful qualified successor.
+live 1 / cap 0 new source below6.5GB; ready-undispatched 0 locally eligible; MAIN incremental submission assigned by peer0051. No eligible local row waiting below an open cap. Other source rows are exclusively reserved on main.
+Inbox consumed through1227141 bytes. Updated 2026-10-25T00:49:47Z: actual Runtime00:40 board and flat P4/sheet/D87 results consumed. Sheet original merge2cde verified. D87 exact worker appendix published. Local review0053 assigned; peer0056 published. No manager product edits or test bodies.
+Owner00:50 incremental qualification applied 2026-10-25T00:50:33Z; main peer0051 requests immediate existing-runner submission on already reviewed home2cde. No wait for full union.
