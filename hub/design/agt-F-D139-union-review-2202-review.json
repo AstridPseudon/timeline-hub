@@ -1,0 +1,58 @@
+{
+  "schema": "timeline.agent.d139.union-review.v1",
+  "task": "agt-F-D139-union-review-2202",
+  "result": "PASS",
+  "scope": "independent read-only review of the five-path D139 source union",
+  "candidate": {
+    "commit": "d133a14838a4e607947893408bc34ba2742a19c6",
+    "tree": "f87d59a9deb3b64efddd4707d2c8eb8a52e31bf5",
+    "parent": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+    "base_tree": "d50fd98f7d1bc6860de810f38e8a0b3a55ca224e"
+  },
+  "findings": [],
+  "source_checks": {
+    "exact_five_paths": true,
+    "all_final_blobs_equal_named_donors": true,
+    "donor_parent_preimages_checked": true,
+    "base_is_direct_ancestor": true,
+    "outside_files_conserved": true,
+    "timing_evaluators_conserved": true,
+    "runtime_lock_conserved": true,
+    "foreign_ancestry": false,
+    "normal_cd63_fps_blobs_match_20db": true,
+    "physical_correspondence_guards_checked": true,
+    "ast_predicates_and_inputs_conserved": true,
+    "projection_test_bodies": 11,
+    "projection_assertions": 43,
+    "d100_test_functions": 10,
+    "d136_test_functions": 6
+  },
+  "contract_audit": {
+    "document": "/home/user/timeline-hub/hub/design/commit-v2.md",
+    "request_fields": [
+      "api_version", "project_id", "timeline_id", "base_revision_id",
+      "base_publication_id", "commands[{schema_version,op,version,select,args}]",
+      "label", "steps[{id,label,intent,tags,command_ordinals,patch,reads?}]",
+      "merge(fields|atomic)", "reads", "idempotency", "dry_run", "source",
+      "rationale", "group_id"
+    ],
+    "reply_shapes_checked": [
+      "accepted", "merged", "canonical", "base", "landing", "receipt",
+      "records", "bindings", "effects", "dependencies", "history", "undo_steps",
+      "conflict(reason,head)", "invalid(code,path,hint,suggested_command)",
+      "preview(would_status,receipt:null,no writes)"
+    ],
+    "status": "contract fields are documented; this source review claims no implementation or behavior credit"
+  },
+  "behavior": {
+    "status": "NOTRUN",
+    "reason": "source-only review boundary; no pytest/provider/collection/core/browser/live-socket/full-suite/App proof"
+  },
+  "prior_review_refs": [
+    "rt-Agent-D100-security-review-1803 PASS_SOURCE_SECURITY",
+    "rt-Agent-D100-test-review-1931 corrected source-purpose review",
+    "rt-D136a-typed-location-final-review-2119 PASS_BOUNDED_SOURCE_SECURITY",
+    "app-D118d-projection-own9-final-1646 source qualification",
+    "agt-F-D139-original9-source-union-2151 source packet"
+  ]
+}

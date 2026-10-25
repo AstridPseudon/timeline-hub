@@ -1,0 +1,125 @@
+{
+  "task": "D139",
+  "reviewed_worker": "agt-OPS-D139-disk-headroom-audit-2154",
+  "reviewed_at_utc": "2026-10-25T22:01:15Z",
+  "verdict": "FAIL",
+  "verdict_scope": "The author's finite no-normal-cleanup conclusion is supported; the packet's normal-route and future-eligibility characterization for bench-store entries is not.",
+  "source": {
+    "repo": "composition",
+    "branch": "tl/agt-OPS-D139-disk-audit-review-2202",
+    "base_branch": "tl/integration",
+    "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "worktree_clean": true
+  },
+  "author_packet": {
+    "report_sha256": "24715fe94be006ee059d539a86dfce30ba38fe74edad5521985e7ff9ba9ab0a1",
+    "audit_json_sha256": "6b0e6bf8206b776d484733d627d3cd8ccd0512c49ce63c566a14af999ff65f83",
+    "candidates_json_sha256": "dc96e66f9516d35e3f8f3510c992155880472fe634d58255c05ce37c48388528",
+    "validation_md_sha256": "8fa79e82b76a59c0835861e592986fca362f341fb2af3e6912d1cbe49263b252",
+    "candidate_count": 0,
+    "author_capture_utc": "2026-10-25T21:56:57Z",
+    "author_result": "finite_no_eligible_normal_cleanup_candidate",
+    "author_witness_hashes_match_current": true,
+    "omitted_authoritative_hash": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/retire-child-venv",
+      "sha256": "954d5d87fe2e6fcf42b34953ec0edc519a2eb97ade8f66f0f2f96f523516b791"
+    }
+  },
+  "current_disk": {
+    "filesystem": "/dev/vda",
+    "available_bytes": 5172244480,
+    "child_admission_threshold_bytes": 5905580032,
+    "deficit_bytes": 733335552,
+    "source_worker_estimate_bytes": 200000000,
+    "post_estimate_deficit_bytes": 533335552,
+    "source_floor_bytes": 5000000000,
+    "stop_bytes": 4000000000,
+    "above_source_floor_bytes": 172244480,
+    "above_stop_bytes": 1172244480
+  },
+  "finite_witnesses": {
+    "pending_real_entries": 0,
+    "pending_hidden_why_notes": 12,
+    "running_entries": 0,
+    "manager_lease_reference_matches": 0,
+    "process_cwd_or_fd_matches": 0,
+    "g2_worktree_dirty": true,
+    "g2_head_ancestor_of_integration": true,
+    "final_source_worker_keep_marker": true,
+    "d40_suite_reference": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf:173",
+    "protected_paths": [
+      "/home/user/work/venv-agent-child-d22-8c3b926e",
+      "/home/user/work/venv-agent-child-f1012-installed"
+    ],
+    "prior_refused_targets_preserved": [
+      "agent-remotion-main95bd",
+      "agent-remotion-published14-091aa23e",
+      "agent-remotion-0013",
+      "venv-agent-child-f1012-installed"
+    ]
+  },
+  "bench_store": {
+    "index_sha256": "6ea9e569f623784a3dfbd53c5ecff37c22fde4587a495a89f394d14f0af899f6",
+    "active_entries": 2,
+    "d137": {
+      "name": "venv-agent-child-d137-a4e016",
+      "entry_key": "child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30",
+      "path": "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30",
+      "size_bytes": 848089088,
+      "seq": 4,
+      "registered_at_receipt": "2026-10-25T21:24:50Z",
+      "age_seconds_at_review": 2185,
+      "age_guard_3600_earliest": "2026-10-25T22:24:50Z",
+      "process_cwd_or_fd": false,
+      "normal_root_child_path_exists": false,
+      "classification": "active_store_entry_not_a_retire-child-venv_target"
+    },
+    "d40": {
+      "name": "venv-agent-child-d40-ba8f-f320",
+      "entry_key": "child-3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9",
+      "path": "/home/user/work/bench-store/entries/child-3b5cb98c4f2dfc20ce8747f68bf2e1124ff47b9dd5f04dabaada3a22278fdfc9",
+      "size_bytes": 772354048,
+      "seq": 3,
+      "suite_reference": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf:173",
+      "process_cwd_or_fd": false,
+      "normal_root_child_path_exists": false,
+      "classification": "active_store_entry_with_live_suite_reference"
+    }
+  },
+  "route_finding": {
+    "worktree": "bin/recycle agt-G2-open-commit; currently refuses because worker worktree is dirty, despite merged ancestry.",
+    "legacy_root_child": "bin/request-retire-venv NAME -> dispatcher RETIREVENV -> bin/retire-child-venv NAME; this route operates /home/user/work/NAME.",
+    "bench_store_entry": "No standalone request-retire-venv route was found for /home/user/work/bench-store/entries/child-*; bench_store.py Store.ensure performs guarded _evict during ordinary child admission and updates registrations/suite projections.",
+    "d137_next_change": "Passing 3600 seconds at 2026-10-25T22:24:50Z is only the age boundary recorded by the guard; it does not create retirement authority for the active bench-store entry. The next normal state change is a qualifying Store.ensure admission at the 5905580032-byte reserve, subject to its lease/retention policy.",
+    "d40_next_change": "Its suite reference must cease to be live through the normal store projection/eviction path; age alone does not make it a retire-child-venv target."
+  },
+  "findings": [
+    {
+      "id": "D139-R1",
+      "severity": "material",
+      "status": "FAIL",
+      "finding": "The author labels bench-store entries as eligible for bin/request-retire-venv after ordinary age/registration guards, but those entries do not exist at the work-root names accepted by retire-child-venv. make-child-venv explicitly states legacy benches have no store deletion authority; Store.ensure/_evict is the source-controlled bench lifecycle route."
+    },
+    {
+      "id": "D139-R2",
+      "severity": "pass",
+      "status": "PASS",
+      "finding": "The finite no-normal-cleanup result remains supported at review time: free space is below the child reserve, G2 is dirty, the source KEEP worktree is protected, d40 has a suite reference, d137 is a live store entry, d22/f1012 are protected, and prior refused targets remain untouched."
+    },
+    {
+      "id": "D139-R3",
+      "severity": "pass",
+      "status": "PASS",
+      "finding": "No product, repository, queue, bench, process, lease, KEEP, or guard state was mutated; no test/build/venv/provider/Store operation was run."
+    }
+  ],
+  "authoritative_hashes_current": {
+    "recycle": "b3a0e1687954d3dd46eb47ad6807726ef2f4584ed4e64508fcaa8f6c14823ddb",
+    "request_retire_venv": "21f61833a6718794ab2a06a3a96d34ca58c050ccd0151622e16866ac78758139",
+    "retire_child_venv": "954d5d87fe2e6fcf42b34953ec0edc519a2eb97ade8f66f0f2f96f523516b791",
+    "bench_store_py": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "suites_conf": "84d3045878ea806439b73b0a5ca983c06371fcac2d42bc8c7e8add0ebfbd3988",
+    "bench_index": "6ea9e569f623784a3dfbd53c5ecff37c22fde4587a495a89f394d14f0af899f6"
+  }
+}
