@@ -201,6 +201,7 @@ class RunControls(unittest.TestCase):
             .read_text()
             .replace("__P4_D73_AGENT_PATH__", shlex.quote(str(agent)))
             .replace("__P4_D73_MANIFEST__", shlex.quote(str(manifest)))
+            .replace("__P4_D73_GUARD__", shlex.quote(str(HERE)))
             .replace("PATH=/usr/bin:/bin", f"PATH={shlex.quote(str(root) + ':/usr/bin:/bin')}")
         )
         (private_orch / "tests/suites.conf").write_text(rows)
@@ -244,42 +245,33 @@ class RunControls(unittest.TestCase):
             self.assertTrue((output / f"{suite}.{suffix}").is_file(), suffix)
         self.assertEqual(preflight.read_text().splitlines(), ["None", "None"])
         positive = manifest.read_text()
-        # Invalid manifest input is rejected before the supported launcher is invoked.
+        # Every invalid manifest is rejected by the production row before the supported
+        # launcher is invoked; no evidence directory is created by pre-admission.
+        calls_before = len(marker.read_text().splitlines())
+        preflight_before = preflight.read_text().splitlines()
         for label, invalid in (
-            ("wrong-source", positive.replace(f"agent_sha={values['agent_sha']}", "agent_sha=" + "0" * 40)),
+            ("wrong-source", positive.replace(f"agent_path={values['agent_path']}", f"agent_path={root / 'foreign-agent'}")),
             ("wrong-lock", positive.replace(f"runtime_sha={values['runtime_sha']}", "runtime_sha=" + "0" * 40)),
+            ("poison", positive.replace(f"agent_sha={values['agent_sha']}", "agent_sha=" + "0" * 40)),
             ("duplicate", positive + "format=p4-d73-v1\n"),
             ("malformed", positive + "not-a-key-value-line\n"),
         ):
             manifest.write_text(invalid)
-            invalid_values, parse_errors = parse_manifest(invalid)
-            parse_errors.extend(tuple_errors(invalid_values))
-            self.assertTrue(parse_errors, label)
             invalid_output = root / (suite + "-" + label) / "d66"
-            self.assertFalse(invalid_output.exists())
-            self.assertEqual(len(marker.read_text().splitlines()), 1)
+            refused = subprocess.run(
+                ["bash", "-c", parsed],
+                env={**env, "D66_OUTPUT_DIR": str(invalid_output)},
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertNotEqual(refused.returncode, 0, label)
+            self.assertIn("D73 pre-admission:", refused.stderr, label)
+            self.assertEqual(len(marker.read_text().splitlines()), calls_before, label)
+            self.assertEqual(preflight.read_text().splitlines(), preflight_before, label)
+            self.assertFalse(invalid_output.exists(), label)
         manifest.write_text(positive)
-        # Poison only source SHA. Both preflight and body must remain unreachable.
-        manifest.write_text(
-            positive.replace(f"agent_sha={values['agent_sha']}", "agent_sha=" + "0" * 40)
-        )
-        poison_output = root / (suite + "-poison") / "d66"
-        poisoned = subprocess.run(
-            ["bash", "-c", parsed],
-            env={**env, "D66_OUTPUT_DIR": str(poison_output)},
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        (root / "poison.stdout").write_text(poisoned.stdout)
-        (root / "poison.stderr").write_text(poisoned.stderr)
-        self.assertNotEqual(poisoned.returncode, 0)
-        self.assertIn("Agent SHA mismatch", poisoned.stderr.replace("agent", "Agent"))
-        self.assertEqual(len(marker.read_text().splitlines()), 1)
-        self.assertEqual(preflight.read_text().splitlines(), ["None", "None"])
-        self.assertFalse(poison_output.exists())
-        print(f"{suite}: run positive exit=17 calls=1; poison exit={poisoned.returncode} calls=0")
-        manifest.write_text(positive)
+        print(f"{suite}: run positive exit=17 calls=1; five pre-admission refusals calls=0")
 
 
 if __name__ == "__main__":

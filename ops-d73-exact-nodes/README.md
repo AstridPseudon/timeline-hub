@@ -66,10 +66,13 @@ Do not render guessed paths or reuse a frozen-core manifest.
 [suites.conf](suites.conf) contains the two complete candidate rows in the real
 central registry format, named `d73-f103-selected4-exact-nodes` and
 `d73-f103-fork-exact-nodes`. Render `__P4_D73_AGENT_PATH__` to the current Agent
-path above and `__P4_D73_MANIFEST__` to the genuine manifest's absolute path;
-shell-quote render values if needed. There is no central installation in this
-change. Only the normal owner install after independent review may add these
-rows to `$ORCH/tests/suites.conf`.
+path above, `__P4_D73_MANIFEST__` to the genuine manifest's absolute path, and
+`__P4_D73_GUARD__` to this private directory's absolute path; shell-quote
+rendered values if needed. The row runs `pre-dispatch.py` first, which rejects
+malformed/duplicate manifests and non-current source or lock tuples without
+touching `D66_OUTPUT_DIR`, then `exec`s the unchanged pinned launcher. There is
+no central installation in this change. Only the normal owner install after
+independent review may add these rows to `$ORCH/tests/suites.conf`.
 
 The immutable launcher still enforces canonical source location, clean four-repo
 commit/tree/parents, original P4 source hash, runtime lock provenance/all 15
@@ -95,9 +98,10 @@ resolves the Agent repo, verifies the named row, requires `--files` for
 `*-nodes`, and queues a central ID. `test-run` snapshots the scheduling target,
 selects the row by repo/suite with
 its existing awk parser, validates and appends the exact selectors, then runs
-`bash -c "$CMD"` with `D66_OUTPUT_DIR="$ORCH/tests/$ID/d66"`. The row intentionally
-invokes the pinned Agent launcher rather than the disposable snapshot launcher;
-the launcher checks its own location against the pinned manifest. The central
+`bash -c "$CMD"` with `D66_OUTPUT_DIR="$ORCH/tests/$ID/d66"`. The row admits
+through the private pre-dispatch guard and then invokes the pinned Agent launcher
+rather than the disposable snapshot launcher; the launcher checks its own
+location against the pinned manifest. The central
 `snap` describes current merged scheduling source; the per-ID launcher manifest
 and source guards identify this exact current merged source. They must remain
 explicitly distinct in the result. Snapshotting does not authorize a different
@@ -138,9 +142,10 @@ request guard against private rows, then invokes the unchanged launcher with
 only fixture PATH and receipt placeholders are substituted in the rows.
 The private Python stub accepts the exact `-P -m pytest` argv, checks private
 origins/startup environment/cwd and all selectors, records exactly one dispatch,
-writes explicitly bounded-stub XML, and exits **17**. Poisoning only `agent_sha`
-returns nonzero with **zero additional calls**, zero preflight calls and no
-body artifacts. Two separate central-ID-shaped directories prove non-overwrite.
+writes explicitly bounded-stub XML, and exits **17**. Wrong source, wrong lock,
+poison, duplicate, and malformed manifests return the distinct pre-admission
+error with **zero additional calls**, zero preflight calls, and no body
+artifacts. Two separate central-ID-shaped directories prove non-overwrite.
 These are source controls, not a real preflight, pytest body or schema admission.
 No dry control is relabelled as production mode.
 
