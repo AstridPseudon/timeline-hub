@@ -1,0 +1,53 @@
+{
+  "task": "D136a/D100 independent actual-result/custody review",
+  "repository": "Agent",
+  "source_origin": {
+    "receiver_base": {
+      "commit": "e22217705f422436c111b65d40e4f155971864c7",
+      "tree": "b3df00f58bdf40ed8a7b5c1e3e19d07b6da9d44d"
+    },
+    "candidate": {
+      "commit": "20dbfdef45f71fa28a63f5382c154f5cca50b83a",
+      "tree": "f790baff841baea889c1fdd8a92422a7aecf68a4",
+      "parent": "c99214a227154df5fbaf681c2e0fc52c54500025",
+      "diff_sha256": "1f3f7af792722507c9d61ad7f4c6f13468424fb75b7a5fe60daa3b44e9cdde91"
+    },
+    "received_tree": {
+      "commit": "90b59fd2f517b8ebb2afb1b5b76931d4bbf689db",
+      "tree": "0b66c7a0c1b1af0400055cce16827e42a2908dd9",
+      "diff_from_receiver_sha256": "3ffa61f81dfdf088693fc728e824454321c82963b73b3abbe5b1066074919cda"
+    }
+  },
+  "received_files": [
+    {"path": "astrid/sdk/timeline/validation.py", "git_blob": "e39103bab6f293cb6b078cbe0bdd9c1739302c3a", "sha256": "e632b2fc36ba78cac330ffe7b59fb4eb002a7cf78f1fc45e8e1ecbc8e21fedae", "mode": "100644"},
+    {"path": "astrid/sdk/timeline/_timing_evaluators.py", "git_blob": "7b2937887351251594137628cfbfb58f86cb059e", "sha256": "493fa0a5ee39dfba8a7e878f2a5247fc95fe8590741d0c7232377fd36d7b6268", "mode": "100644", "changed_from_receiver": false},
+    {"path": "tests/sdk/test_d136_fps_upstream_compat.py", "git_blob": "32cf9e15a13fb4bf16a45184789bb3431f01ef0c", "sha256": "44bebdc4063bbb97a1e2395daa7aa9a21e5410294c67a286979b432e68b12042", "mode": "100644"}
+  ],
+  "protected_d100": [
+    {"path": "astrid/sdk/timeline/_command_state.py", "sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3"},
+    {"path": "tests/sdk/test_d100_item_birth_boundary.py", "sha256": "fcd5f187e185faa2222fb23c69827bd6d8bcbb710fdad131f649973f95e6de37"},
+    {"path": "tests/sdk/test_timeline_capture_projection.py", "sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436", "predicates": 43, "test_bodies": 11, "fixture_statements": 54}
+  ],
+  "runtime_pin": {
+    "checkout": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "clean": true,
+    "module_sha256": {
+      "runtime_protocol/server.py": "672ebcb59a923b96d3189980c197315a09fd31d44444d502ea5d3750e7bb52fc",
+      "runtime_protocol/timeline_commit_execution.py": "5956b4850e11d517a6bcc9aa8ae7f0074b45810e26faa8ffe391b907e764c257",
+      "runtime_protocol/timeline_commit_provider.py": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf"
+    }
+  },
+  "actual_original9": {
+    "selectors": 9,
+    "xml_sha256": "bf6b273e5747804ad2d5675704b2395661f488fcdfbae00750fc386687695fdc",
+    "log_sha256": "1cca4d88094de9022219b0be0a9e4e432a2a1bcaef6cec0519c6b08d8b675351",
+    "metadata_sha256": "3efd96b9217532e6ccfc50a2ee14979c3e7bfd0c48172f417252168b05898b56",
+    "private_modes": "0600",
+    "counts": {"tests": 9, "errors": 9, "failures": 0, "passes": 0, "skips": 0},
+    "exit_code": 1,
+    "first_seam": "provider intermediate command lacks an authenticated physical observation",
+    "retry": false
+  }
+}
