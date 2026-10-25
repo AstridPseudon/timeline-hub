@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "task": "agt-F-Runtime-conflict-review-1926",
+  "source_repositories": {
+    "composition_review_worktree": "/home/user/work/wt/agt-F-Runtime-conflict-review-1926",
+    "runtime_objects": "/home/user/work/runtime"
+  },
+  "refs": {
+    "base": "d4f496ec4fbcae7a1f3a51d47ed5147c561117ad",
+    "ours": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+    "upstream": "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f",
+    "frozen_r4_runtime": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd"
+  },
+  "trees": {
+    "base": "1d3e06f4d59ed6d459646d24ab185c36eb5be075",
+    "ours": "d5cb9335a03bf4764548e379ce180a66bf966910",
+    "upstream": "904d3d90d8235d4a27f2d5a8cbf88298d5ec0210"
+  },
+  "merge_tree": {
+    "command": "git merge-tree --trivial-merge d4f496ec4fbcae7a1f3a51d47ed5147c561117ad e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9 dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f",
+    "bytes": 71105,
+    "sha256_recomputed": "2d341b37bafebc1feb09d4e69971bcde5ed12b729dcdc6e1c041838e7142540e",
+    "sha256_recorded_by_classification": "2d341b37bafebc1feb09d4e69971bcde5ed12b729dcdc6e1c041838e714254e0",
+    "changed_in_both": 10,
+    "hunks": 22
+  },
+  "classification_inputs": {
+    "census": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-tail-upstream-census-1844-census.json",
+    "conflicts": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-tail-upstream-census-1844-conflicts.md",
+    "already_upstream": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-tail-upstream-census-1844-already-upstream.json",
+    "independent_review": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-tail-census-review-1850-review.json",
+    "conflict_classes": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-F-tail-Runtime-conflicts-1902-conflict-classes.json",
+    "c0": "/home/user/work/runtime/contract/commit-v2.md"
+  },
+  "actual_merge_or_service": "not_run"
+}

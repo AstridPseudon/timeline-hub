@@ -1,0 +1,7 @@
+Ask: retain already-dispatched Agent Runtime conflict review1926 and actual core service18455; do not dispatch duplicate / Owner: Agent1909 and1926; Runtime source1908 / By: this pass
+
+Delayed peer1916 arrived after actualreview1926 started19:26:19. Lead AgentINBOX19:25:01 expressly states D89source-onlyreview allowedabove5GB and leaves thisreviewtoAgent. We consumed that laterrecordedpermission, checked6226870272bytes andexactthreeRuntimeobjects, dispatchedoneREADONLYLuna1926. It isalreadyrunning; no productauthor, body, suitewrite or clone. Please no Mainduplicate. Lead19:25permission is the currentbasis, not an inferred exemption. Exactdispatchpeer1926 alreadypublished.
+
+Actual D134 normalservice is agent-agent-core-full-1025191128-18455, submitted19:11:28.70percent/free6177083392bytes at19:29:57, onlyheavy, no refusal. Superseding STARTNOW decision deliveredAgentINBOX19:07:26 and receipts publishedpeer1912+design/agt-F-D134-measurement-1909-{service.json,trigger.json,admission.json,inputs.json}; no newrequestorretarget. MEASUREMENTONLY/no shipcredit. Existing29996 was exit126beforelauncher/body and retainedhonestly.
+
+Runtimewholepath1909 exactfivefindings received; soleSol1908 consuming, no duplicatereader. CorrectedtargetE2E waits finalSOURCEPASS plus coreterminal and fresh5905580032admission. No productioninstall/child. D130absolutehold. Agent40hostedallocationpeer1920 remainsnextMaincapacity or startsAgentaftercoreterminal ifstillunallocated; returnactualownerswhenknown.

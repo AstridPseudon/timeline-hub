@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "task": "agt-F-Runtime-conflict-review-1926",
+  "reviewed_task": "rt-F-tail-Runtime-conflicts-1902",
+  "verdict": "FAIL",
+  "verdict_scope": "Independent read-only source review only. This does not certify a resolved merge, actual clone/apply service run, Runtime test run, ZIP, or delivery gate.",
+  "source_tuple": {
+    "base": "d4f496ec4fbcae7a1f3a51d47ed5147c561117ad",
+    "ours": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+    "upstream": "dbcdb97c50afc72bd5e2599cb7ead0fe56bc7c4f",
+    "frozen_r4_runtime": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd"
+  },
+  "checks": {
+    "input_hashes": "PASS: all seven hashes recorded by the classification match the 1844/1850/C0 source files",
+    "runtime_refs_and_trees": "PASS: base, ours, upstream, merge-base, integration ref, upstream ref, and frozen R4 ref match",
+    "merge_tree_bytes": 71105,
+    "merge_tree_sha_recorded": "2d341b37bafebc1feb09d4e69971bcde5ed12b729dcdc6e1c041838e714254e0",
+    "merge_tree_sha_recomputed": "2d341b37bafebc1feb09d4e69971bcde5ed12b729dcdc6e1c041838e7142540e",
+    "crosswalk": "PASS: 10 paths, 22 merge hunks, exact census arrays and 30/30 Git blob objects",
+    "partition": "PASS: 3 textual, 2 context-only, 17 semantic",
+    "semantic_questions": "FAIL: 17 questions exist, but 3 anchors do not match either the exact merge-tree or corresponding source-diff hunk header",
+    "patch_scope": "PASS: exactly .github/workflows/ci.yml and docs/runtime-portability-testing.md",
+    "git_apply_check": "PASS: read-only check against exact upstream blobs; exit 0",
+    "git_apply_whitespace_error_check": "PASS: exit 0",
+    "c0_scope": "PASS: exported patch does not touch Runtime product code, routes, auth, commitTimeline/provider, or C0 reply/request predicates",
+    "worktree": "PASS: own composition worktree remains clean; git diff --check exit 0"
+  },
+  "routine_merge_choices": [
+    "tests/lanes.py needs_real_pidfd marker",
+    "tests/lanes.py requires_linux_o_path marker"
+  ],
+  "limitations": [
+    "Actual clone/dry-run/apply service was not run and is not claimed.",
+    "No product source, Runtime source, test, generated file, ref, or ZIP was modified.",
+    "The live disk free-space measurement was 6220484608 bytes, below the requested 6226870272-byte fresh-source floor but above the 4 GiB stop line; no clone/acquisition was attempted."
+  ]
+}
