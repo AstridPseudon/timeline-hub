@@ -1,0 +1,12 @@
+{
+  "task": "D108 P3",
+  "verdict": "PASS",
+  "preflight": { "id": "app-pin-f7201e02-d108-p3-current-0655-preflight-1025065907-15346", "exit": 0, "duration_seconds": 3, "counts": { "readiness": "not applicable", "original": "not applicable" } },
+  "original": { "id": "app-pin-f7201e02-d108-p3-current-0655-1025065937-31792", "exit": 0, "duration_seconds": 217, "counts": { "readiness": "1/1", "original": "1/1" }, "failures": 0, "skipped": 0, "errors": 0, "first_failure": null },
+  "tuple": { "app": ["f7201e02dc53ca7b1e70e38894284528fc78aa70", "cdc1809f3ec82fa1f360092041eb2a8597fc62e5"], "agent": ["d6294843286c18e57af3c1874cf1996be42212d2", "6aeae30f0892a424104a4348bca6fd74ba1315d6"], "runtime": ["c91626f5e905f9336b51aae0486a071d83f0bac7", "16264479ae18fbb05ec5356ce5b5ab6f69dea9aa"], "composition": ["635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "5ab5191a296980a0a6bcd1178ab6902d6478a148"] },
+  "source_sha256": { "p3": "93c2bf4c72ac3c91442a1a52174e36311113751ab9d8b7e0f52e4a958559a64b", "readiness": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593" },
+  "manifest_sha256": { "public/install-manifest.json": "d6663383e457c23123d64843a08250a4e50084ec59cb0e24954f81a2ebd384ab", "runtime.lock.json": "401ad6d8e0057f4c3570f8befb41225551361113ee007f34096d9d35b008c0b3" },
+  "artifact_sha256": { "manifest": "43e5d1ee6bc9b18dd26b3d8b5741bf9f5c04e76e0f9f67e5cbf4704a7617d269", "readiness_xml": "24a8e1bf4f6c9361abb98b467608f89ca77cc704515d5afe713187fb4b4d565e", "p3_xml": "f049e684c4c20a13a1ea223c322f26f50dd19137be558dce013eb841af963901" },
+  "predicates": { "recovery_mounts": "PASS", "observed_requests": 5, "forwarded_requests": 3, "exact_retry_body_key_origin_order": "PASS", "merged_B_and_recorder_shape": "PASS", "authenticated_history_and_canonical_document": "PASS", "restart_persistence": "PASS", "guarded_undo": "PASS", "legacy_traffic": "none" },
+  "evidence": "workers/app-D108-P1-P3-resume-0655/submission/p3/evidence"
+}

@@ -1,0 +1,11 @@
+{
+  "task": "D108 P1",
+  "verdict": "GO",
+  "preflight": { "id": "app-pin-f7201e02-d108-p1-current-0648-preflight-1025064914-13611", "exit": 0, "duration_seconds": 2, "counts": { "readiness": "1/1", "original": "not applicable" } },
+  "original": { "id": "app-pin-f7201e02-d108-p1-current-0648-1025064944-15075", "exit": 0, "duration_seconds": 177, "counts": { "readiness": "1/1", "original": "2/2" }, "failures": 0, "skipped": 0, "errors": 0, "first_failure": null },
+  "tuple": { "app": ["f7201e02dc53ca7b1e70e38894284528fc78aa70", "cdc1809f3ec82fa1f360092041eb2a8597fc62e5"], "agent": ["d6294843286c18e57af3c1874cf1996be42212d2", "6aeae30f0892a424104a4348bca6fd74ba1315d6"], "runtime": ["c91626f5e905f9336b51aae0486a071d83f0bac7", "16264479ae18fbb05ec5356ce5b5ab6f69dea9aa"], "composition": ["635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "5ab5191a296980a0a6bcd1178ab6902d6478a148"] },
+  "source_sha256": { "p1": "50960dd2efadc8350b8647a1f7e88a6cad2b44907bf36a7108832ee0ea9ebf17", "readiness": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593" },
+  "artifact_sha256": { "manifest": "502755e6e979335f6cadba00450305f0cd49f2c968760a97f684cb49bf8532ca", "readiness_xml": "e9ff8854e297a9231cf0d340b2d0867ab878eb318e2a92e783e7e3ff88a340cb", "p1_xml": "cb5a8f2aff463ffd0ee4058a836eecf15db0a8afa4807d25348ab2a9f1457a1a" },
+  "independent_review": { "worker": "app-D108-P1-independent-GO-review-0655-r2", "verdict": "GO", "limitation": "temporary App snapshot directory recycled; immutable recorded snapshot commit/tree/sole-parent relation independently matched" },
+  "evidence": "workers/app-D108-P1-P3-resume-0655/submission/p1/evidence"
+}
