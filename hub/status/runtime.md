@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T09:11:05Z | dispatcher heartbeat 15s | live 4 (sol 1, luna 3, other 0) | busy30 17 | status age 0m -->
-# runtime board, 2026-10-25T09:10:38Z
+<!-- main | 2026-10-25T09:16:35Z | dispatcher heartbeat 14s | live 3 (sol 0, luna 3, other 0) | busy30 15 | status age 3m -->
+# runtime board, 2026-10-25T09:13:22Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -383,15 +383,17 @@
 
 | D111b-read-snapshot | Remove repeated per-request read work | Luna / independent | Core review and native curve | review | Author0858; core0905; native0905 | Exact7d433 twofiles:124focused+2realproviderPASS. Missing timings/curve assigned native0905; normalized neighbor limits under review. | 7d43311f held |
 
+| D108-legacy-archive-input | Locate exact retained legacy archive | Luna read only | Existing2915 bytes and custody | doing | rt-D108-authentic-archive-input-0912 | Agent43ENV errors lack archiveenv input. Exact expected2915 path/hash/receipt lookup assigned; no acquisition or new archive. | Existing bytes only |
+
 Runtime producer: RELEASED1daca2a33 reviewed treea522. Normale6b669 adds reviewed snapshot tests afterc916 release tooling; product unchanged. Agent070dfc D110 released; App04be includes reviewed portable capture and D110 adoption.
-core open: 2 Runtime findings: element cost D111a and SWAP identity recovery D112. Agent count UNKNOWN until actual2016 terminal. App core open3; early19078 independently GO for ADD,parent,single,bulk.
+core open: 2 Runtime findings: element cost D111a and SWAP identity recovery D112. Agent reports438 current core-open after exact506-node classification; upstream Runtime isolation remains UNCERTAIN. App core open3; early19078 independently GO for ADD,parent,single,bulk.
 regressions: D102 context regression closed on1daca; D110 inverse KeyError released. Current full-tour proof remains owed.
 Gates: P1/P3 independently GO on recordedf7201/d629/c916/635f. P4 independent GO28.101s; per-note intervals UNKNOWN. Final tuple/core/P2/render still required.
 
-Blockers: Agent classification — Actual2016 terminal:8763PASS159FAIL347ERROR across9269. Agent184/226/96 disjoint D54a classifications active; current numericcore unknown. Main fullcore never submitted.
+Blockers: Agent core — Agent reports438 current core-open from exact506 outcomes: PRE0/KNOWN1/ENV59/NEWcore438/NONCORE8/REG0 proven. Upstream Runtime isolation UNCERTAIN; no unchanged full retry.
 Blockers: Runtime D111b — Exact author7d433 returns124focused+2realproviderPASS, with nativecurve/timers omitted. Independent core0905 and sole native0905 assigned immediately. Mainheavy follows D1120850 terminal; no release before both qualify.
 Blockers: Runtime D112 — Return0850 executes baselineRED3/candidateGREEN3; tamper and native positives PASS. Current nativecurve nonflat. HARD Sol0907 compares actual baseline/path; independent wholepath0907 dispatched under second-failure rule. No release.
-Blockers: Runtime D69 — Runtime snapshot and assertion purpose proof now PASS20 on actuale6b669 with durable XML. Agent113 membership accounting remains open; App scoped mappings passed0742.
+Blockers: Runtime D69 — Runtime snapshot/purpose proof PASS20 on actuale6b669 with XML. Agent original129/113/287 membership now recovered; exact predicate mappings still owed. App scoped mapping0742 PASS; lexical limits remain.
 Blockers: Final render — Agent applied-input inventory completed with exact normalroute and absentcarrier. Runtime Luna0908 now owns ordinary authentic source/stage continuation. Checker0849 PASS; actual render NOTRUN, D13/schema source limits preserved.
 Blockers: Final cut — D69, current full core, final pinned P1-P5 and genuine installed render remain owed. No final tuple or ZIP.
 KIT CHANGE installed: bin/test-run SHA5df4145, independent0746 PASS33 before and after; predecessor backed up. No live-kit blocker.
@@ -401,5 +403,5 @@ Delivery: Rehearsal0645 applied trees and patches retained; manifest37e559 and i
 Later: D107 held2154 and full core; D100new26/R2three and original ten remain held. P4 and passed controls are not repeated. Three Remotion copies await owner disposition.
 Safety: Withdrawn D88 remains stopped; D111 memo withdrawn. D106 ORCH-only outputs; no denied hub write retries. Manager edits no product, test, generated file or pin.
 Disk: About5.85GB free. Fresh scan found no ended clean non-KEEP Runtime v1/U1 worktree. Five dirty v1 trees retained. Sweep3 removed0 directories; free about5.92GB. Compact-scratch would touch prohibited Codex sessions, so it is not invoked.
-live 5 / cap 6; ready-undispatched 0. D111b native0905 owns next Mainheavy; D112Sol0907 baseline stage after it. Core/wholepath and stage source work parallel. Candidate controllers prepared.
-INBOX consumed through 1090575 bytes. Updated 2026-10-25T09:10:38Z.
+live 5 / cap 6; ready-undispatched 0. D111b core/native0905, D112Sol0907, stage0908 and archiveinput0912 assigned. Wholepath0907 complete; no identity reopen in retained nonflatcurve. Candidate checkouts received.
+INBOX consumed through 1090575 bytes. Updated 2026-10-25T09:13:22Z.
