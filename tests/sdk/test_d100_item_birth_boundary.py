@@ -46,7 +46,17 @@ def test_first_physical_item_preserves_custody_and_opaque_fields(aggregate):
     state = State(plan.bundle)
     assert state.get(REF, ['payload', 'items']) == present([ITEM])
     assert state.get(REF, ['payload', 'items', 'item_id:first-item', 'media_id']) == present(MEDIA)
-    assert plan.bundle['source_mapping'] == before['source_mapping']
+    for key in ('shots', 'placements', '_runtime_document'):
+        assert plan.bundle['source_mapping'][key] == before['source_mapping'][key]
+    assert set(plan.bundle['source_mapping']) == set(before['source_mapping']) | {'_doc_patch_images'}
+    assert plan.bundle['source_mapping']['_doc_patch_images'] == {
+        'occurrence:occ-a': {
+            'shot_id': 'chapter-shot', 'internal_timeline_id': 'chapter-1',
+            'source_shot_revision': 'shot-1', 'source_internal_revision': 'internal-1',
+            'payload': replacement,
+            'internal_timeline': document['internal_timeline_revisions'][0]['payload'],
+        },
+    }
     assert plan.bundle['source_mapping']['shots']['chapter-shot']['item_id_map'] == {}
     result = document_from_bundle(plan.bundle)
     assert result['shot_revisions'][0]['payload'] == replacement
@@ -154,7 +164,10 @@ def test_existing_owner_cannot_switch_to_another_valid_physical_source():
 
 
 def test_registered_shared_owner_uses_the_same_physical_custody_without_alias_birth():
-    bundle = bundle_from_document(empty_source())
+    document = empty_source()
+    document['parent_revision']['payload']['occurrences'][0]['source_offset'] = 0
+    document['parent_revision']['content_digest'] = _digest(document['parent_revision']['payload'])
+    bundle = bundle_from_document(document)
     before = copy.deepcopy(bundle)
     shared = {'schema_version': 1, 'op': 'occurrence.place-shared', 'version': '1',
               'select': 'occurrence:occ-a', 'created': ['occurrence:shared'],
@@ -162,7 +175,19 @@ def test_registered_shared_owner_uses_the_same_physical_custody_without_alias_bi
     plan = execute(bundle, [shared, patch(change(
         ['items'], present([]), [ITEM], ref='shot-revision:shot-1'))])
     assert State(plan.bundle).get('occurrence:shared/shot', ['payload', 'items']) == present([ITEM])
-    assert plan.bundle['source_mapping'] == before['source_mapping']
+    for key in ('shots', 'placements', '_runtime_document'):
+        assert plan.bundle['source_mapping'][key] == before['source_mapping'][key]
+    assert set(plan.bundle['source_mapping']) == set(before['source_mapping']) | {'_doc_patch_images'}
+    expected_cache = {
+        'shot_id': 'chapter-shot', 'internal_timeline_id': 'chapter-1',
+        'source_shot_revision': 'shot-1', 'source_internal_revision': 'internal-1',
+        'payload': {**document['shot_revisions'][0]['payload'], 'items': [ITEM]},
+        'internal_timeline': document['internal_timeline_revisions'][0]['payload'],
+    }
+    assert plan.bundle['source_mapping']['_doc_patch_images'] == {
+        'occurrence:occ-a': expected_cache,
+        'occurrence:shared': expected_cache,
+    }
     result = document_from_bundle(plan.bundle)
     assert len(result['shot_revisions']) == 1
     assert result['shot_revisions'][0]['payload']['items'] == [ITEM]
