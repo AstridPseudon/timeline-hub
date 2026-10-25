@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T03:01:42Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 15 | status age 2m -->
-# app board, 2026-10-25T02:59Z
+<!-- app | 2026-10-25T03:05:09Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 2m -->
+# app board, 2026-10-25T03:02Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -187,14 +187,14 @@
 
 | P2-native-next | Prepare asset and placement originals | Luna source only | Strict native5337 reviewed home | doing | app-P2-native-asset-placement-prep-0257 | Fixed5337/6386/6634/635f; prepare two plans only. Asset follows current ADD terminal; placement follows asset. | App5337 |
 
-Integration: App5337b439b9 normally merges strict native oracle after independent0242 PASS over reviewed Core06014. Exact reviewed native blobs home. Canonical client/schema unchanged; bulk6ef70 remains held in review0255.
+Integration: App2d25dc460c normally merges opaque-preserving bulk materializer after semantic0255 PASS over native5337 and Core06014. Exact reviewed blobs home. Explicit App/Node types missing from root-only review; readonly completion0302 dispatched. No bulk original until complete.
 
 core open: One of eight isolated P2 gestures independently qualified: single-clear5678 GO0255 on24865/6386/6634/635f. Seven remain open; no final full-tour credit. Element3111 fails applied433 after5s on6634. ADD3964 reaches selected label892. Asset15897 needs strict native Undo oracle. Main pair terminal: parent12208 response90s; single5678 independently GO0255. Bulk21061 sent no intended POST; exact mounted fixture return0230 active.
 regressions: No new proven regression. P1 actual31083 and P3 actual15493 retain GO only on their recorded tuples.
 
 Blockers: Final cut — Runtime coordinates current eight isolated P2, full App tour, final pinned P1–P5/core and genuine installed render before ZIP.
-Next ready: Bulk fresh0255 and native asset/placement preparation0257. Corrected ADD27885 is sole current Appbody; asset follows its terminal using reviewed native5337. Single5678 GO and SWAP safe return complete, no extra review/body.
-live 2 source plus 1 finishing launcher / cap 6 source and 1 App body; ready-undispatched 0. Bulk review0255, nativeprep0257; sole Appbody27885 pending. D89 amended02:45: source6>5.0GB; heavy1>5.2GB; nothingnew4.5GB; stopnewestnongate4.0GB.
+Next ready: Required explicit bulk App/Node types0302 and native asset/placement preparation0257. Corrected ADD27885 is sole current Appbody; asset follows its terminal using reviewed native5337. Single5678 GO and SWAP safe return complete, no extra review/body.
+live 2 source / cap 6; ready-undispatched 0. Nativeprep0257 and required bulktypes0302 active; sole Appbody27885 pending. Corrected launcher0256 ended with actual persistentplan. D89 amended02:45: source6>5.0GB; heavy1>5.2GB; nothingnew4.5GB; stopnewestnongate4.0GB.
 Capacity: Full host0255 audit plus fresh current-head/queue/lease/test/live-brief checks clear all35 stale pins. Normal namedKEEP release/bin/recycle succeeded all35; no refusals. Net2,727,251,968 bytes freed,8.313GB after. Protected06014/24865/6386/6634/635f and all outputs/branches/reports kept. Old dirty/prior-refused targets untouched.
 Inbox consumed through1878992 bytes. Host cleanup and single packet needs cleared same pass; no stale Blockers line. Runtime cost0215 permission refusal remains orchestrator-owned and stopped. WrongtupleADD30177 cancelled with outputs preserved; no retarget or proof credit.
 
