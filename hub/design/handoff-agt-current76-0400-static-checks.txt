@@ -1,0 +1,23 @@
+F-D86 source-only static acceptance checks
+=============================================
+Working tree: /home/user/work/wt/agt-F-current-inputs-home-0400
+Base: 68404b8484749d1d8ec2bdaef34faa004ad87dbe
+Normal receipts: b7c5ce47fd6b1bdc3ae84b4de6b7734acfb4991b (D92), f51844083737a484422bb07a9d6679f489bbcd78 (word-bootstrap46)
+
+AST parse/compile (parent/candidate snapshots): PASS 6/6
+  Snapshots: word parent/candidate, D92 parent/candidate, retained timing base/candidate.
+Ruff current allowed files:
+  /home/user/work/venv-agent/bin/python -m ruff check tests/editing_conformance/native_word_anchor_fixture.py tests/editing_conformance/test_timing_retained_inputs.py tests/timeline/test_authoring_media.py
+  Result: PASS (All checks passed!)
+Ruff parent/candidate snapshots:
+  /home/user/work/venv-agent/bin/python -m ruff check <word-parent.py> <word-candidate.py> <d92-parent.py> <d92-candidate.py> <timing-base.py> <timing-f518.py>
+  Result: PASS (All checks passed!)
+Mypy current allowed files:
+  /home/user/work/venv-agent/bin/python -m mypy --no-incremental --cache-dir=/tmp/w-77054e5998/agt-F-current-inputs-home-0400-static/mypy-current tests/editing_conformance/native_word_anchor_fixture.py tests/editing_conformance/test_timing_retained_inputs.py tests/timeline/test_authoring_media.py
+  Result: PASS (Success: no issues found in 3 source files)
+Mypy candidate snapshots:
+  /home/user/work/venv-agent/bin/python -m mypy --no-incremental --cache-dir=/tmp/w-77054e5998/agt-F-current-inputs-home-0400-static/mypy-candidate <word-candidate.py> <timing-f518.py> <d92-candidate.py>
+  Result: PASS (Success: no issues found in 3 source files)
+git diff --check:
+  Result: PASS
+No pytest, collection, helper/fixture/function execution, probes, services, browsers, renders, installs, or full suites were run.

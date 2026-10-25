@@ -1,0 +1,6 @@
+SOURCE-ONLY STATIC CALL TRACE
+
+Word: native_word_anchor_fixture.py:69 seed; :97 registers agent.create_runtime_commit_service(); :107 calls service.commit_timeline; :244/:250 retained wrapper and provider registration; :266 restart re-registers the same provider. Agent provider: astrid/sdk/timeline/commit.py:1025 RuntimeCommitService, :1160 commit, :1472 create_runtime_commit_service.
+D92: test_authoring_media.py:443 RuntimeService, :444 registers create_runtime_commit_service(), :474 calls service.commit_timeline with route_path/authorization.
+Shared timing decision: actual9211 selectors 102/103 are in test_timing_retained_inputs.py. f518 changes only native_word_anchor_fixture.py; timing file is byte-identical at blob 6ea60c464413c25fbefb3a94c161f6f61ee32677, so no import/call dependency is proven and both remain held.
+No helper, fixture, function, provider, registry, schema, pin, or test execution was performed.

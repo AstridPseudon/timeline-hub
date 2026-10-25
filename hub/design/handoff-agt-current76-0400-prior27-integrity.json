@@ -1,0 +1,11 @@
+{
+  "base_commit": "68404b8484749d1d8ec2bdaef34faa004ad87dbe",
+  "base_tree": "bc0eaa245fe5ec6f16b17b3b64c2b499f85e82f2",
+  "prior_packet": "agt-F-current-source-inputs-0351",
+  "prior_ready_count": 27,
+  "current_ready_count": 76,
+  "prior_ready_subset_sha256": "0edd85668ea9300b0724635241ff3f2b7957d5f6a312c8f1d1c0940e9c1dd7d1",
+  "current_same_27_subset_sha256": "0edd85668ea9300b0724635241ff3f2b7957d5f6a312c8f1d1c0940e9c1dd7d1",
+  "same_selector_set": true,
+  "same_source_and_dependency_fields": true
+}
