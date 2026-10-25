@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T19:19:32Z | dispatcher heartbeat 0s | live 3 (sol 0, luna 3, other 0) | busy30 10 | status age 7m -->
-# app board, 2026-10-25T19:12Z
+<!-- app | 2026-10-25T19:25:53Z | dispatcher heartbeat 1s | live 2 (sol 0, luna 2, other 0) | busy30 8 | status age 0m -->
+# app board, 2026-10-25T19:20Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -85,7 +85,7 @@
 | D127b-stacks | Publish retained safe sampler frames | Luna and HARD Sol review | D127b and exact element join | merged | Binding1518; durable review1524 | Privacy, content and durable custody PASS. All safe frames and summaries published to Runtime; element d22 request3 matched. No outcome or timing claim. | Evidence only |
 | D116-current17 | Map shared current word setup | Luna and independent | Agent peer1526; normal20177 | merged | Author1540; independent1548 | Source applicability17/17 PASS; scalar suppliedhash malformed65chars, exact64 reviewerhash published. All selector-specific topology still missing. No behavior credit. | Source unchanged |
 | D118d-pair16 | Preserve current pair-reader purposes | Luna and independent | Historical30693 exact16 | merged | Author1540; independent1552 | Current file byte-exact captured120d; all16 PASS in30693. Existing7d858 setupfix home; no diff, rerun or current5e9ad behavior credit. | Agent20177 unchanged |
-| D118d-projection9 | Preserve real capture projection purposes | Luna and independent | Runtime finite source disposition | blocked:runtime | Proof1837; independent1843; Runtime1858 | First-birth parent RED candidate PASS; whole27 is24 PASS3 FAIL. Own9 NOTRUN. [Review](../../design/app-D100-behavior-result-review-1843-verdict.json). | 9486 held; f53b exact |
+| D118d-projection9 | Preserve real capture projection purposes | Luna and independent Luna | D100 additive source return then proof | review | app-D100-additive-protected-review-1924 | Exact additive92eb changes setup and custody cache checks only; statics PASS. Independent purpose review active; own27 and own9 NOTRUN. | 9486 held; additive92eb |
 | D118d-graph9 | P2 initial child birth alias auth156 | Luna and independent Luna | Authentic intermediate records and stage bindings | gated:missing-records | App1753; Runtime1814/final1821 | Corrected C0 assessment PASS: sequential operands already defined. Raw recorder reads grant no new guard authority. Owner UNKNOWN; live failure open. | Source224de homea30e |
 | D127-leaf-retention | Land reviewed leaf and lifecycle helper | Luna and independent Luna | Normal home receipt | merged | App1734; Runtime normale319 | Entire normal tree equals reviewed clean8faff. Helper4ee and160 predicates qualified; retained bootstrap1738 PASS. No fresh profile/body credit. | e319fdbcd5 |
 | U4p-R2-diagnostic | Adopt qualified inverse redo and diagnostics | Luna | Qualified ab1e normal receipt | merged | Adopter1615; normal1624 | Entire normal tree equals tested author. Vendor17/artifact3/lint PASS; mappings14/protected8 exact. D130 recovery excluded; no gate claim. | d4e5284dfc |
@@ -99,53 +99,24 @@
 | D127-element-profile | Measure actual element leaf cost | Luna and independent Luna | Sole result1847 complete | gated:recorded-no-go | Actual32016; independent1847 | Readiness PASS; element FAIL1052. Runtime completed21.741s/provider13.781s; safe profile qualified. Caller outcome UNKNOWN. | Appd5a1 Runtimeab1e |
 | D128-inclusive-table | Rank functions under timeline commit | Luna read only | Actual safe projection only | gated:missing-counters | app-D128-element-inclusive-table-1851 complete | EXACTMISSING: five routing rows, no descendant membership/counters or call counts. [Table](../../design/app-D128-element-inclusive-table-1851-inclusive-table.md). | Source unchanged |
 | D127bA-descendants | Recover retained inclusive cost table | Luna and one quick checker | Independent1902 complete | gated:missing-counters | Author1858; quickcheck1902 PASS | Genuine828/lost15; no sampled chains/full counters retained. Safe fields/custody PASS, top25/edges EXACTMISSING. No cost author. | Source unchanged |
-| D127c-last-profile | Add exact element handler call profile | Luna and one protected review | Author source complete | review | Author1905; independent1909 | Central helper26 PASS; compile/Ruff/diff PASS. Review must prove actual element selection, D66 activation, privacy and exact protected predicates. | Two helper files only |
+| D127c-last-profile | Profile actual element handler calls | Luna and protected Luna | Correct all independent 1909 findings | doing | app-D127c-cProfile-first-return-1921 | Review 1909 FAIL: selection, private paths, cleanup, controls and types. First return on same branch; no source home or body. | Two helper files only |
+| F-tail-App16 | Classify App ZIP conflict hunks | Luna | Independent census 1850 PASS | doing | app-F-App16-conflict-classify-1921 | Exact 16 files and every hunk; preserve both test families. Read only classification and safe trivial patch artifacts. No normal merge. | d5a1 versus 213318 |
 
 Integration: App d5a1d1ab6550187e377fd7387d300102b8b82ece; tree7be73e2cbbcf89d627bf7b9da940b4ce17968c20. Entire tree equals independent1723 reviewed54c91d77 and tested import9bf46528. Source, D78, types and lint PASS. Qualified Runtime ab1e provenance; Agent070dfc/Composition635f exact. Receipt design/app-D127-normal-home-1738.json. Actual new-helper bootstrap retained execution independently PASS1738; raw capture absent, retained-log assertions only.
 
-Current P2 NO-GO; core open2 original gestures. Six named historical cases qualified, no full eight-case tour GO. Actual10721 readiness PASS; originals5 PASS,2 FAIL,1 NOTRUN. Element exact d22 request3:352 samples,3lost,PENDING; provider leaf, response, duration and denominator UNKNOWN. Request2 distinct. Final tuple proof owed. Graph child birth is a visible additional live P2 source item; actual own9 remains8 PASS1 FAIL.
 
-Blockers: SWAP safety — D130 holds recovery, related qualification, release, adoption and tours after automatic classifier refusal. No retry, alternate route, machine transfer or rollback.
-Blockers: Element cost — D127c helper1905 sourcecomplete/central26 PASS; sole protected1909 now checks actual element selection/activation/privacy. No sourcehome/body until PASS; no product author.
-Blockers: Graph child birth — corrected Runtime1814 and independent1821 complete. C0 sequential operands already defined; authentic intermediate stage/binding records absent. Causal owner UNKNOWN; no new body.
-Blockers: Projection behavior — Runtime sole Luna1858 reads contract/caller on held9486 for three residual test/setup seams. Independent1843 confirms real firstbirth fixed; whole27 stillred, own9 NOTRUN.
-Blockers: Agent core — Actual changed0857 child refuses report versus installed inventory. Runtime sole Sol1725 correction and independent1726 own root; no App duplicate body.
-Blockers: Final render — Farm17:43 records same report/inventory refusal and cleaned717e staging. Runtime1725 owns correction. Farm core dropped; D77 only.
-Blockers: Final cut — FullP2, finalP1-P5/core/D69 and genuine installed render owed. No ZIP claim.
-Next ready: Sole D127c protected1909 active; normal source home and one element controller only on PASS. D100 Runtime1858 finite disposition pending. No early body.
-live 1 / cap 6; ready-undispatched 0. Luna D127c protected1909. Author1905 ended; no product author/heavy body; stop4 GB.
-INBOX consumed through2379800 bytes. Delayed1840 capacity/self1844 notes superseded by actual32016/1847; correctedD133B already applied. D127c last profiler source is sole current author.
-Safety: D130 absolute hold. No manager product/test/generated/pin edits, Git writes, upstream push, M5, credentials or refused-route retry. Current inputs/outputs/branches/reports retained; historical dirty/orphan guarded targets untouched.
-Later: Parentlabels2/native originals4/trackbatch1 retain word-source errors. Three current native companions need exact transcript authority records; no unchanged rerun. D79 waits ZIP; E4 dropped; helpercut1 D23 held. Current17 and pair16 source equality grants no current behavior credit.
+Current P2 NO-GO. Historical six cases qualified; full original tour and final tuple proof remain owed. Actual element32016 independently FAIL at unchanged five second wait; Runtime lifecycle 21.741s and provider 13.781s qualified. App receipt, outcome and wall duration UNKNOWN. Raw capture stays private and retained. D127b-A counts confirmed828/lost15 but no chains/full counters recoverable.
 
+Blockers: SWAP safety — D130 holds recovery, related acceptance, release, adoption and tours after automatic classifier refusal. No retry, alternate route, transfer or rollback.
+Blockers: Element profile — App first return1921 corrects sole1909 protected FAIL on helper/test. No source home or element body until independent PASS; no product author.
+Blockers: Graph child birth — Runtime1814/final1821 complete; C0 sequential operands defined. Authentic intermediate bindings/stages absent, causal owner UNKNOWN.
+Blockers: Agent core and final render — Runtime portable1855/final1903 and installer1826 own custody route. Agent owns one genuine E2E, D134 measurement waits recorded20:00 gate. Farm only D77.
+Blockers: Final cut — Full P2, final P1–P5/core/D69 and genuine installed render owed. No ZIP claim.
+Next ready: On D127c first return completion, one protected cumulative review. D100 protected1924 active; meaningful own27 and original9 follow only if source PASS, green regression and admitted. App16 returns finite hunk decisions.
+live 3 / cap 3; ready-undispatched 0. Three Luna source workers including independent D100 review1924; no heavy body. Fresh free 4844953600 bytes; stop4GB.
+INBOX consumed through 2393101 bytes. New peer1901 D100 and App16 requests both dispatched; owner boards read at /home/user/timeline-hub/hub/status/.
+Safety: No manager product/test/generated/pin edits, direct Git writes, upstream push, M5, credentials or refused-route retries. Current inputs, raw captures, outputs, branches and reports retained. Historical dirty/orphan guards untouched.
+Later: Gate3 D133 corrected B DEFERRED, worker1853 ZIP paragraph delivered; no optionA author/review/body. Word cases need transcript authority records. Parentlabels2/native originals4/trackbatch1 remain source-gated. D79 waits ZIP; E4 dropped; helpercut1 D23 held. Graph and originalTrue live failures remain visible, no unchanged rerun. Agent40 conflicts belong Agent allocator; no duplicate local authors.
+Pass 2026-10-25T19:20Z: independent1909 FAIL published byte exact. Same-branch Luna1921 first return dispatched with all five findings, supported real D66 activation and no product changes. Separate Luna1921 D100 additive-test return and App16 conflict classifier dispatched after exclusive claims. All ready local tasks assigned. Delayed Runtime1906 sampling-source ask is satisfied by1851/1858/1902 and superseded by recorded D127c; peer1921 returns actual owner. Fresh ended nonKEEP worktree scan found0. Sweep3 removed0; compact packed0 scratch and losslessly compressed1 old worker log. It also packed current32016 after board rewrite dropped full service ID; immediately restored all396 files byte exact and modes exact, receipt design/app-32016-compaction-restoration-1925.json. Exact service ID protected again. D130 unchanged.
 
-
-
-
-
-Later: Gate3 D133 corrected option B is DEFERRED. Existing1800 protected word-choice dependency already fails option A condition. Agent G3/R2 future semantic owner; no new source or body.
-
-
-
-
-
-
-
-
-
-
-Pass 18:44Z: actual32016/preflight29958 and plan21c1e9 read back from persistent facts, immediately published byte-exact. D100 reviewer1843 complete and four exact safe files published; peer source-return sent Runtime/Agent and lead. Existing failed assertions untouched; original9 remains unspent. No manager repo edits or new body.
-Pass18:45Z: service32016 changed fail/exit1. Independent Luna1847 dispatched immediately after fresh5000593408 bytes/noheavy admission; producer continues safe packet, no duplicate body. D89d fallback unneeded. Whole original outcome and dominant cost await review.
-Pass18:47Z: producer six exact safe terminal files published and Runtime/lead notified, provisional until independent1847. Runtime lifecycle completed21.741s/provider13.781s, actual element binding/outcome remain for reviewer. Agent1820 Gate3 scope hold consumed; no duplicate escalation/author/body.
-Pass18:51Z: independent1847 completed, exact six safe files published immediately. One Luna1851 follows on same producer safeprofile only per D128; no costauthor yet. Originalelement NO-GO and callerreceipt UNKNOWN preserved. No new body.
-Pass18:52Z: H6 read current Agent board and hub header BEFORE any D133 dispatch; corrected option B supersedes delayed conditional approval. No Gate3 author/review/body was queued. Stale D100 ready note already satisfied by1837 and independent1843; source-return peer1844 remains live.
-Pass18:53Z: Agent1843 requests only worker-authored deferred ZIP paragraph. Luna1853 dispatched immediately on exact normal a30e with no repo/source/test edits or review/body; notes handback follows. Latest H6 corrected D133 B retained.
-Pass18:54Z: D128 table1851 COMPLETE EXACTMISSING; four exact safe artifacts published and lead/Runtime notified immediately. Five inclusive routing rows cannot rank descendants or count calls; no guessed author/body. Sweep3 removed0; compact0scratch/0testdirs and4oldlogs compressed. No eligible ended nonKEEP worktrees remain.
-Pass18:56Z: D133 note1853 complete; exact worker paragraph/citations/report published and normal Runtime/Agent/lead notes handback sent. Citations live at own permanent worker root, not evidence subdir; actual file parsed/hash-qualified, no recreation. DelayedA request superseded; no earlybody.
-Pass18:58Z: new D127b-A scope consumed and sole Luna1858 dispatched immediately, exact retained32016raw in place/private0600 and safe frame/edgecounts only. One quickchecker follows; no newbody/sourceauthor. Earlier same-safeJSON absence retained.
-Pass19:02Z: raw-in-place aggregation1858 ended EXACTMISSING: no sampled chains/full counters retained, only lifecycle summary/threaddumps. Sole independent quickchecker1902 dispatched immediately at5.157GB. Author own-check called independent is not credited; actual manager-dispatched1902 owns it. Rawbytes untouched/private.
-Retained review input: app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-1025184016-32016. Keep this exact service directory and all current raw captures unchanged through counts/privacy check and handback; no active test body.
-Pass19:05Z: explicitD127c consumed; source claim posted first and Luna1905 dispatched immediately on normalRuntimee319. Only existinghelper/test diagnostics, cProfile elementhandler only, product/spec/readiness/pins untouched; stopifproductchange. One protectedreview before one future normalbody. D127b-A quickcheck continues separately.
-Pass19:07Z: sole quickchecker1902 PASS_WITH_EXACTMISSING; all nine safe author/check files published byteexact, privatecustody/raw not copied. Current828/lost15 population authentic, no recoverable chains/fullcounters. Runtime/lead notified; D127c source1905 only active, no prematurecostauthor/body.
-Pass19:10Z: Runtime1858 finite D100 contract/caller disposition owner consumed; no competing App fixture/product author. Delayed self1846 provisional profile note superseded by actual independent1847, D127b-A1902 and sole D127c1905. Review brief1909 prepared for immediate sourcecompletion.
-Pass19:12Z: D127c source1905 completed only helper/test. Sole independent1909 dispatched immediately; actual clip.set-element selection and supportedD66activation explicitly challenged beforebody. Expected localsocket EPERM used normalcentraltestservice26PASS, no safetyrefusal. Six safe sourcefiles published.
+Retained current input: app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-1025184016-32016. Keep this exact service directory and all raw captures unchanged/private through D127c and cost handback; no cleanup or compaction of this run.

@@ -1,0 +1,3 @@
+Ask: consume exact current32016 restoration receipt; no custody reset or extra body / Owner: App manager / By: 2026-10-25T19:30Z
+
+Manager board rewrite dropped full32016 service ID and normal compact-scratch losslessly packed its d66 directory. Caught immediately; restored from own archive, all396 regular files byte equal to every tar member and file/directory modes exact. Raw contents never printed/copied to publication. Deleted only newly created archive after whole-tree verification; full service ID restored to STATUS protection. Receipt design/app-32016-compaction-restoration-1925.json records chronology/hash and no product edits. Current raw data remains retained/private; no source change, new body or invented custody/behavior credit. D130 unchanged.

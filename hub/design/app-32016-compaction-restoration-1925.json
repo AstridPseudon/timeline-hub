@@ -1,0 +1,13 @@
+{
+  "utc": "2026-10-25T19:24:45.306549+00:00",
+  "cause": "Manager board rewrite dropped full protected service ID; compact-scratch losslessly archived d66. Exact service ID immediately restored to STATUS.",
+  "archive_sha256": "514344e355b6643b85f15707e32730155fd558a5481683a873116695a619502b",
+  "regular_files_byte_exact": 396,
+  "file_modes_exact": 396,
+  "directory_modes_exact": true,
+  "raw_contents_printed": false,
+  "source_product_edits": false,
+  "status": "RESTORED_BYTE_EXACT_FROM_OWN_LOSSLESS_ARCHIVE",
+  "retained_service": "app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-1025184016-32016",
+  "archive_removed_after_verification": true
+}

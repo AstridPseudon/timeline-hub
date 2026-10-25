@@ -1,0 +1,52 @@
+{
+  "task": "app-D100-additive-first-return-1921",
+  "changed_assertions": [
+    {
+      "location": "tests/sdk/test_d100_item_birth_boundary.py:49-50",
+      "assertion": "source_mapping.shots, placements, and _runtime_document equal their pre-edit values",
+      "custody_purpose": "preserves authenticated source ownership, placement provenance, and immutable runtime input",
+      "equal_strength_cache_companion": "the allowed cache is checked separately rather than included in custody equality"
+    },
+    {
+      "location": "tests/sdk/test_d100_item_birth_boundary.py:51",
+      "assertion": "the only additional source_mapping key is _doc_patch_images",
+      "custody_purpose": "rejects any unapproved provenance mutation or cache key",
+      "equal_strength_cache_companion": "the following exact cache mapping supplies the sole permitted derived state"
+    },
+    {
+      "location": "tests/sdk/test_d100_item_birth_boundary.py:52-59",
+      "assertion": "occurrence:occ-a cache owner, physical IDs, source revisions, projected payload, and internal timeline match exactly",
+      "custody_purpose": "proves the cache is a compiler projection and not a custody rewrite",
+      "equal_strength_cache_companion": "exact full mapping; no optional or unspecified cache values"
+    },
+    {
+      "location": "tests/sdk/test_d100_item_birth_boundary.py:167-169",
+      "assertion": "direct shared-owner authored source_offset is 0 and parent content_digest is recomputed",
+      "custody_purpose": "uses the admitted fixture boundary without widening non-default trim semantics",
+      "equal_strength_cache_companion": "keeps the shared-owner cache projection asserted below"
+    },
+    {
+      "location": "tests/sdk/test_d100_item_birth_boundary.py:178-180",
+      "assertion": "shared-owner authoritative regions remain exact and only _doc_patch_images is added",
+      "custody_purpose": "proves shared placement does not allocate or rewrite physical source custody",
+      "equal_strength_cache_companion": "occurrence:occ-a and occurrence:shared each have the exact source projection"
+    },
+    {
+      "location": "tests/sdk/test_d100_item_birth_boundary.py:181-191",
+      "assertion": "both shared-owner cache keys and all cache fields match the expected authored projection",
+      "custody_purpose": "preserves physical identity while recording both logical owners",
+      "equal_strength_cache_companion": "exact full mapping; no optional or unspecified cache values"
+    }
+  ],
+  "preserved_predicates": [
+    "item_id_map remains empty",
+    "canonical shot payload and internal revision remain exact",
+    "opaque item fields survive",
+    "wrong custody/revision/digest refuses without writes",
+    "duplicate, empty, or malformed IDs refuse without writes",
+    "wrong previous value refuses the whole patch",
+    "existing owner cannot switch physical source",
+    "original input bundle remains unchanged",
+    "registered Runtime first-birth acceptance and wrong-previous refusal remain unchanged"
+  ]
+}

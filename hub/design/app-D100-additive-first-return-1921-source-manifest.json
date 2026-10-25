@@ -1,0 +1,24 @@
+{
+  "task": "app-D100-additive-first-return-1921",
+  "repo": "Agent",
+  "base_head": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+  "changed_paths": [
+    "tests/sdk/test_d100_item_birth_boundary.py"
+  ],
+  "protected_product": {
+    "path": "astrid/sdk/timeline/_command_state.py",
+    "sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+    "required_sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+    "status": "exact"
+  },
+  "runtime_reference": {
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "role": "existing registered-provider Runtime commitTimeline recipe/origin"
+  },
+  "source_disposition": "held; no normal merge-to-run prerequisite",
+  "app_packets": {
+    "actual1837": "PASS_WITH_BOUNDARY; parent 23/27, candidate 24/27 retained",
+    "independent1843": "PASS_WITH_BOUNDARY; registered-provider first-birth behavior retained"
+  },
+  "outside_blobs": "not modified"
+}

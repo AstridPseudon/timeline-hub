@@ -1,0 +1,35 @@
+{
+  "task": "app-D100-additive-first-return-1921",
+  "status": "STATIC_VALIDATION_PASS_BEHAVIOR_DEFERRED",
+  "decision": "Use admitted default source_offset 0 in the new direct shared-owner setup and separate authoritative custody from the private compiler cache.",
+  "source": {
+    "candidate": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+    "product_sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+    "status": "HELD"
+  },
+  "changed_files": [
+    "tests/sdk/test_d100_item_birth_boundary.py"
+  ],
+  "static_checks": {
+    "python311_ast_compile": "PASS",
+    "python311_py_compile_privatecache": "PASS",
+    "ruff_exact_file": "PASS",
+    "mypy_exact_file": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "not_run": [
+    "unit bodies because free space was below 5 GB light-admission threshold",
+    "corrected own27",
+    "unchanged original9",
+    "full/browser/socket/acquisition/native/fixture-receiving/D130 suites"
+  ],
+  "retained_prior_evidence": {
+    "actual1837": "parent 23/27, candidate 24/27; registered first-birth node candidate PASS",
+    "independent1843": "PASS_WITH_BOUNDARY; whole candidate green not established",
+    "source_security1803": "PASS retained"
+  },
+  "blockers": [
+    "Required independent protected purpose review and later normal service acceptance remain pending.",
+    "No product or Runtime change is authorized or needed by this disposition."
+  ]
+}
