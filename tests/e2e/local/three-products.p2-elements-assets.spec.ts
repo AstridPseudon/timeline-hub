@@ -43,7 +43,7 @@ interface Wire {
 
 const test = appTest.extend<object, { seed3: ThreeProductsSeed }>({
   seed3: [async ({ harness }, use) => {
-    await use(await harness.seedThreeProducts(THREE_PRODUCTS_REFERENCE_AT, 'native-none'));
+    await use(await harness.seedThreeProducts(THREE_PRODUCTS_REFERENCE_AT, 'native-none', 14));
   }, { scope: 'worker', timeout: 240_000 }],
 });
 
