@@ -1,0 +1,17 @@
+{
+  "schema": "timeline.agent.d73.adoption.v1",
+  "status": "PRIVATE_SOURCE_QUALIFIED",
+  "scope": "ops-d73-exact-nodes only",
+  "current_source": {
+    "agent_commit": "41ad656529fa8489829de9078b1b6e157c7433c8",
+    "agent_tree": "d29e47fe7be6e55940b42fa1477a23e7925f62fa",
+    "runtime_commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+    "runtime_tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883",
+    "agent_path": "/home/user/work/agent",
+    "runtime_path": "/home/user/work/runtime"
+  },
+  "change": "Private pre-dispatch admission is integrated into both candidate suites.conf rows and preserves the unchanged launcher after valid admission.",
+  "historical": "The 2eca/ab1e qualification remains historical evidence only.",
+  "receiving": "NOT_READY; no receiving receipt, central installation, or real product/preflight run is claimed.",
+  "D140": "Agent remains the source lane. No child/core request or retirement was made; Farm owns heavy proof."
+}

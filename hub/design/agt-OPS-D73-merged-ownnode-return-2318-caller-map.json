@@ -1,0 +1,26 @@
+{
+  "schema": "timeline.agent.d73.caller_map.v1",
+  "production_chain": [
+    "request-test named row",
+    "test-run awk row extraction and selector append",
+    "env -i candidate suites.conf row",
+    "ops-d73-exact-nodes/pre-dispatch.py",
+    "/home/user/work/agent/tools/p4-d73-pinned-launch.sh"
+  ],
+  "guard": {
+    "path": "ops-d73-exact-nodes/pre-dispatch.py",
+    "rejects_before_launcher": ["duplicate keys", "malformed lines", "missing required keys", "wrong Agent source tuple", "wrong Runtime lock tuple", "runtime lock producer/count/file hash mismatch"],
+    "artifact_behavior": "No D66 output path is created or written by pre-admission."
+  },
+  "rows": {
+    "selected4": "d73-f103-selected4-exact-nodes",
+    "fork1": "d73-f103-fork-exact-nodes"
+  },
+  "argv": "run -- -m pytest -q -o addopts= -m integration -p no:cacheprovider --timeout=45 --junitxml=$D66_OUTPUT_DIR/$ID.xml",
+  "selectors": {
+    "selected4": 4,
+    "fork1": 1
+  },
+  "valid_behavior": "The guard execs the unchanged pinned launcher; private stub exits 17 after exactly one body call and expected launcher artifacts are produced.",
+  "invalid_behavior": "Wrong-source, wrong-lock, poison, duplicate, and malformed cases return the distinct D73 pre-admission error with zero additional launcher/preflight calls and zero artifacts."
+}

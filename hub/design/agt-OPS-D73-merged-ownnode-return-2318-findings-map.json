@@ -1,0 +1,24 @@
+{
+  "schema": "timeline.agent.d73.merged_ownnode_return.v1",
+  "task": "D73/D139/D140",
+  "source_disposition": "COMPLETE",
+  "receiving_status": "NOT_READY",
+  "findings": [
+    {
+      "id": "D73-REVIEW-001",
+      "status": "RESOLVED",
+      "disposition": "Both named rows now run private pre-dispatch.py before the unchanged pinned launcher. It rejects malformed and duplicate key=value lines, missing required keys, non-current Agent/Runtime tuple values, and runtime-lock mismatches before the launcher can create D66 artifacts."
+    },
+    {
+      "id": "D73-REVIEW-002",
+      "status": "RESOLVED",
+      "disposition": "test_recipe.py renders the actual suites.conf rows, invokes the extracted test-run command for selected4 and fork1, and routes wrong-source, wrong-lock, poison, duplicate, and malformed manifests through that same path. Each refusal asserts zero additional launcher calls, zero additional preflight calls, and no output directory."
+    }
+  ],
+  "preserved": [
+    "selected4 and fork1 exact selectors",
+    "run -- argv, per-ID JUnit binding, timeout, no-cache controls",
+    "Agent 41ad and Runtime f103 identities and current canonical 15-file lock",
+    "historical Agent 2eca and Runtime ab1e evidence without retargeting"
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "schema": "timeline.d139.controller-final-review/v1",
+  "task": "D139/D139a/D140",
+  "review": "independent read-only review of first return against review2300",
+  "source_packet_verdict": "PASS",
+  "actual_request": "NOT_READY",
+  "controlling_decision": {
+    "source": "MAIN D140 received from Agent INBOX 23:03:28Z and relayed 23:12Z",
+    "agent_child_request": "NO",
+    "retirement": "DEFERRED",
+    "farm_owns": "future merged-tuple child/core proof",
+    "local_controller": "documentary source only; never execution authorization"
+  },
+  "scope": "Static source, packet, Git object, API, argv, root, and readiness review only. No imports, product execution, controller, requester, helper, launcher, Store, child, core, registry, install, acquisition, test service, credentials, or Git mutation.",
+  "reviewed_prior_findings": [
+    {
+      "id": "D139-SRC-001",
+      "status": "PASS_CORRECTED",
+      "finding": "Two core execution sites",
+      "evidence": "The returned shell exits at line 11 before its documentary comments; it contains exactly one future request-test reference and one matching wait-test reference. The launcher is explicitly service input and manual execution is false.",
+      "residual": "None in source packet. Farm must still bind the actual service owner and service ID."
+    },
+    {
+      "id": "D139-SRC-002",
+      "status": "PASS_CORRECTED",
+      "finding": "request-child-venv exit 0 was treated as completion",
+      "evidence": "The live requester source writes queue/pending/childvenv-N and prints that the result is in queue/done; the returned sequence requires waiting on the same N in queue/done or queue/refused, genuine Store child/provision report, authentic stage stderr or EXACTMISSING, and stop-first-refusal with no retry/fallback/rename.",
+      "residual": "None in source packet. Actual request remains blocked until the same-key terminal row and authentic owner receipts bind."
+    },
+    {
+      "id": "D139-SRC-003",
+      "status": "PASS_CORRECTED",
+      "finding": "Missing D89c 4700000000-byte core-start guard",
+      "evidence": "Returned tuple and required-inputs retain child admission 5905580032, source floor 4600000000, one-time core start 4700000000, ongoing stop 4000000000, one child request, one core service, no other heavy work, and no post-preparation child-floor recheck.",
+      "residual": "None in source packet. Farm must bind fresh venue disk observations at the authorized dispatch points."
+    },
+    {
+      "id": "D139-SRC-004",
+      "status": "PASS_CORRECTED",
+      "finding": "Incomplete freshness and custody guards",
+      "evidence": "Returned source-manifest, required-inputs, and tuple enumerate API/source freshness, received regular non-symlink 0755 mode/hash, maker/requester/helper/checker/CAS/review, inventory/seal/source and child registration, Runtime client identity, installed origins for the whole merged tuple, prooflock, dependency/input receipts, check-only identity, fresh manifest, and durable XML/runner/same-ID/start-stop/KEEP custody.",
+      "residual": "None in source packet. Every unpublished final value remains UNBOUND and therefore blocks invocation."
+    }
+  ],
+  "residual_findings": [
+    {
+      "id": "D139-FR-001",
+      "severity": "blocking_actual_request_only",
+      "status": "OPEN_BY_DESIGN",
+      "finding": "The returned source packet is not an executable authorization.",
+      "required_action": "Farm must bind all actual owner receipts and venue-dependent guards before any authorized request."
+    },
+    {
+      "id": "D139-FR-002",
+      "severity": "blocking_actual_request_only",
+      "status": "UNBOUND",
+      "finding": "Maker, terminal request row, provision report/failure, received kit, registered child, fresh manifest, service ID, check-only, control receipts, prooflock, dependency/input receipts, installed origins, and durable evidence paths are not present.",
+      "required_action": "Bind freshly from the normal Farm venue; do not copy historical receipts or invent values."
+    },
+    {
+      "id": "D140-FR-001",
+      "severity": "controlling_scope",
+      "status": "PASS_APPLIED",
+      "finding": "Agent must issue no child request and perform no retirement; Farm owns future merged-tuple ship-grade proof.",
+      "required_action": "Treat this packet as documentary handoff only."
+    }
+  ],
+  "historical_evidence_disposition": "The 1848 manifests and receipts bind old Agent a4e016 and Runtime 5e9ad measurement-only evidence. They are not retargeted, reused, or counted as current readiness; Farm must regenerate for the merged tuple or an explicitly reviewed successor.",
+  "tests_run": false,
+  "static_checks": [
+    "json.tool",
+    "bash -n on inert documentary shell",
+    "Git HEAD/tree/parents/origin/clean and physical-path comparison",
+    "requester/launcher/request-test API and hash inspection",
+    "22-root and complete unfiltered argv comparison"
+  ]
+}

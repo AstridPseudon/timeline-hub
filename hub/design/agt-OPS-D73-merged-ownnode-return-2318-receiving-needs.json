@@ -1,0 +1,19 @@
+{
+  "schema": "timeline.agent.d73.receiving_needs.v1",
+  "status": "NOT_READY",
+  "missing": [
+    "current Agent checkout receipt",
+    "current Runtime checkout receipt",
+    "genuine rendered receipt-backed manifest",
+    "App and Composition receipt-derived identities and environment/schema/profile inputs",
+    "central installation of both d73-f103 rows",
+    "fresh per-ID selected4/fork1 XML and raw logs",
+    "submit/end disk witnesses for both IDs",
+    "real interpreter import and product preflight evidence"
+  ],
+  "non_claims": [
+    "No central request was submitted.",
+    "No real product import, launcher preflight, pytest body, service, or browser/socket suite ran.",
+    "No receiving value was fabricated and no historical receipt was retargeted."
+  ]
+}

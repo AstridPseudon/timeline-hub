@@ -1,0 +1,205 @@
+{
+  "schema": "timeline.d139.controller-final-review-source-manifest/v1",
+  "task": "D139/D139a/D140",
+  "source_packet_verdict": "PASS",
+  "actual_request": "NOT_READY",
+  "reviewed_return": "agt-F-D139-controller-prep-return-2305",
+  "composition_review_base": {
+    "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "parents": [
+      "7a95a40b07ea0d273e17afb69dbc3456b603f2bc",
+      "c05fdb171fe37c1d5817a060ecb716a329ee821a"
+    ]
+  },
+  "current_source_tuple": {
+    "agent": {
+      "path": "/home/user/work/agent",
+      "physical_nonsymlink": true,
+      "commit": "41ad656529fa8489829de9078b1b6e157c7433c8",
+      "tree": "d29e47fe7be6e55940b42fa1477a23e7925f62fa",
+      "parents": [
+        "cd63be424d62226e3ee5c26fc5ce03227f5394a5",
+        "4fec53e0b14aea355e51c96c883fd75eef67a17c"
+      ],
+      "origin": "https://github.com/peteromallet/astrid-agent",
+      "clean": true
+    },
+    "runtime": {
+      "path": "/home/user/work/runtime",
+      "physical_nonsymlink": true,
+      "commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+      "tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883",
+      "parents": [
+        "cf0b82dd47452a7a34fc63eb233e9b1dc0532806",
+        "0bb3bc45cef22bc317398d79e1617da3eb430df2"
+      ],
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime",
+      "clean": true
+    },
+    "app": {
+      "path": "/home/user/work/app",
+      "physical_nonsymlink": true,
+      "commit": "5696769dca056676cde1ab46d8bc94354b3a44a",
+      "tree": "0748df404125114a0f68b701fa76f43abd3fc79a",
+      "parents": [
+        "b5c9eadfa1950f46feac50d7d6a89c47f27f4881",
+        "79699d23f0cabef17eaa68463618132556c47902"
+      ],
+      "origin": "https://github.com/banodoco/reigh-app",
+      "clean": true
+    },
+    "composition": {
+      "path": "/home/user/work/composition",
+      "physical_nonsymlink": true,
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "parents": [
+        "7a95a40b07ea0d273e17afb69dbc3456b603f2bc",
+        "c05fdb171fe37c1d5817a060ecb716a329ee821a"
+      ],
+      "origin": "https://github.com/peteromallet/timeline-composition",
+      "clean": true
+    }
+  },
+  "source_carriers": {
+    "request_child_venv": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-child-venv",
+      "sha256": "bddaee9c457fd3cb8fa55e452abbf9886512a08697d593ca5983e43dfa955e94",
+      "mode": "0755 regular non-symlink",
+      "api": "NAME AGENT_SHA [BASE_SUITE REMOTION_GRAPH] --source-carrier AGENT_CHECKOUT RUNTIME_CHECKOUT RUNTIME_SHA",
+      "semantics": "queue admission only; terminal result is same-key queue/done or queue/refused"
+    },
+    "request_test": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test",
+      "observed_sha256": "f839c0026eaa32eab43369120f6ddadfb6af382be7a9a19fc47e30b477bdf874",
+      "packet_bound_value": "UNBOUND",
+      "api": "request-test WORKER SUITE; prints result directory; matching wait-test consumes the same ID",
+      "suite": "agent-core-full",
+      "future_count": 1
+    },
+    "wait_test": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test",
+      "observed_sha256": "05ce7c90f1359d2dac8f340f8ce6e2d40f0a344c170811244c1c505c34d52204",
+      "packet_bound_value": "UNBOUND",
+      "same_id_restart": true,
+      "never_resubmit": true
+    },
+    "launcher_service_input": {
+      "path": "/home/user/work/agent/tools/p4-d73-pinned-launch.sh",
+      "sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+      "git_blob": "f1bde17ea107a8b669cb6924fbdbd2f3979da9883",
+      "mode": "0755 regular non-symlink",
+      "api": "MANIFEST MODE -- COMMAND...",
+      "manual_execution": false,
+      "owner": "normal agent-core-full service"
+    }
+  },
+  "documentary_controller_static_facts": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-D139-controller-prep-return-2305-controller-command.sh",
+    "inert_exit_line": 11,
+    "request_test_reference_count": 1,
+    "wait_test_reference_count": 1,
+    "noncomment_commands_after_exit": 0,
+    "core_route": "R=$(request-test <worker-name> agent-core-full) && wait-test \"$R\"",
+    "launcher_route": "service input only; no manual launcher execution"
+  },
+  "admission": {
+    "child_bytes": 5905580032,
+    "source_floor_bytes": 4600000000,
+    "core_start_bytes": 4700000000,
+    "stop_bytes": 4000000000,
+    "one_child_request": true,
+    "one_core_service": true,
+    "no_other_heavy": true,
+    "child_floor_recheck_after_own_prep": false,
+    "core_start_once": true
+  },
+  "core_argv": [
+    "-m",
+    "pytest",
+    "-q",
+    "-n",
+    "3",
+    "-o",
+    "addopts=",
+    "-p",
+    "no:cacheprovider",
+    "--timeout=45"
+  ],
+  "core_forbidden_flags": ["-k", "--skip", "--xfail", "-x"],
+  "core_root_count": 22,
+  "core_roots": [
+    "tests/editing_conformance",
+    "tests/sdk",
+    "tests/timeline",
+    "tests/core/timeline",
+    "tests/core/test_timeline_element_orphan_cleanup.py",
+    "tests/core/test_timeline_element_publication.py",
+    "tests/core/test_timeline_element_publication_runtime.py",
+    "tests/core/rendering/test_timeline_visualize_cli_grammar.py",
+    "tests/core/rendering/test_local_schema.py",
+    "tests/packs/timeline",
+    "tests/packs/rendering/test_composition_package.py",
+    "tests/packs/rendering/test_live_scene_composition.py",
+    "tests/packs/rendering/test_render_export_task_adapter.py",
+    "tests/packs/rendering/test_timeline_filmstrip_cards.py",
+    "tests/packs/rendering/test_timeline_filmstrip_execution.py",
+    "tests/packs/video_editing/test_runtime_publication_chain.py",
+    "tests/stage1/test_cold_launch_autobootstrap.py",
+    "tests/test_installer_schema.py",
+    "tests/test_installer_sources.py",
+    "tests/test_installer_bootstrap_schema.py",
+    "tests/test_timeline_clip_replacement.py",
+    "tests/v10/test_timelines_create.py"
+  ],
+  "c0_wire_inventory": {
+    "request": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps", "merge", "reads", "idempotency", "dry_run", "source", "rationale", "group_id"],
+    "command": ["schema_version", "op", "version", "select", "args"],
+    "step": ["id", "label", "intent", "tags", "command_ordinals", "patch", "reads"],
+    "accepted_merged": ["accepted", "merged", "canonical", "base", "landing", "receipt", "records", "bindings", "effects", "dependencies", "history", "undo_steps"],
+    "conflict": ["conflict", "reason", "head"],
+    "invalid": ["invalid", "code", "path", "hint", "suggested_command"],
+    "preview": ["would_status", "receipt", "writes"],
+    "preview_nulls": {"receipt": null, "writes": null}
+  },
+  "r4_refs_read_only": {
+    "agent": "11caf1d9de291d76f491cf69f7942606b7471d7a",
+    "runtime": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd",
+    "app": "8f0c2484463e9b666d184a744d52e252984e551a",
+    "composition": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a",
+    "policy": "reference only; not bound to current tuple"
+  },
+  "historical_1848": {
+    "disposition": "measurement evidence only",
+    "old_agent": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+    "old_runtime": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "positive_manifest_sha256": "b539c6bda83fcef7222a3be667a74465317fe05b8de359dc6e7784db5d9b676d",
+    "poison_manifest_sha256": "f41fef0062e6c1c3ceb766ca9fdb144d649d1408221a0ac35d4163f6525e6dad",
+    "reuse_or_retarget": false,
+    "farm_regeneration_required": true
+  },
+  "schema_boundary": {
+    "distribution": "banodoco-timeline-schema",
+    "version": "0.0.2",
+    "revision": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+    "subdirectory": "packages/timeline-schema/python",
+    "record_rows": 18,
+    "hashed_rows": 12,
+    "named_unhashed_rows": 6,
+    "physical_carrier": "EXACTMISSING",
+    "installed_input_only": true
+  },
+  "readiness": {
+    "source_packet": "QUALIFIED",
+    "actual_request": "NOT_READY",
+    "unbound_fields_remain_unbound": true,
+    "execution_authorized": false,
+    "farm_owner": true
+  },
+  "specified_r4_docs": {
+    "path": "/home/user/peteromallet/astrid-agent/docs/projects/timeline-r4/",
+    "present": false,
+    "fallback_read": "/home/user/timeline-hub/hub/design/commit-v2.md"
+  }
+}
