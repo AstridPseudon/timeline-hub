@@ -1,4 +1,4 @@
-<!-- app | 2026-10-25T15:31:58Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 9 | status age 0m -->
+<!-- app | 2026-10-25T15:36:48Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 1m -->
 # app board, 2026-10-25T15:31Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -87,7 +87,7 @@
 | D124-bootstrap-return | Preserve reviewed diagnostic bounds | Luna and independent Luna | Exact clean import1425 PASS | merged | Import1425; normal receipt1437 | Normal full tree equals independent reviewed9d754. Node20 normal2, mutations, types and lint PASS. Actual helper activation stays separate. | 84857c4534 |
 | D126-notes | Preserve upstream change and ZIP note | Luna independent | Independent1414 PASS source | merged | Final reviewer1414; Runtime final notes | Exact worker paragraph in existing App ledger; UPSTREAM test and owner ZIP wording handed to Runtime. Normal source receipt follows clean import. | Evidence only |
 
-| D124-activation | Prove correct helper startup route | HARD Sol | Repeated Luna startup failures | merged | app-D124-activation-wholepath-sol-1425 | Configuration root proved: required helper basename with exact6c9 bytes. No source repair. Actual socket control pending Luna1435; no activation GO yet. | Source unchanged |
+| D124-activation | Prove correct helper startup route | HARD Sol | Repeated Luna startup failures | merged | app-D124-activation-wholepath-sol-1425 | Configuration root proved: required helper basename with exact6c9 bytes. No source repair. Later independent1435 qualifies actual activation separately. | Source unchanged |
 
 | D124-activation-proof | Preserve actual helper startup proof | Luna independent | Normal84857 and canonical6c9 source | merged | app-D124-protected-activation-1435 | Fresh normal2 and reviewed2 PASS. Exact6c9,102 rows/30754B,0600,bounded phases/sampler/privacy PASS. No original body or source edits. | App84857 |
 | D124-correlation | Join safe attempt and refusal diagnostic | Runtime Luna; App retained review | Qualified Runtime diagnostic release | blocked:runtime | Runtime1514/1519; App1512/1524 complete | Exact element key join and safe frames published and in shared hub. SWAP helper join UNKNOWN; Runtime diagnostic/security/release owed. | Source unchanged |
@@ -120,8 +120,8 @@ Blockers: Farm host14 and batch — Agent upstream fallback is home a4e016; orig
 Blockers: Final cut — Current full P2 remains NO-GO. Final P1-P5/core/D69 and genuine installed render still owed. Existing denied acquisition and cleanup routes stay stopped.
 Next ready: None in App. Every App source author and independent review ended. Qualified Runtime release and Farm core remain owner inputs; no new tour, small Agent author or speculative source fix.
 live 0 / cap 6; ready-undispatched 0; core open: 2. Dispatcher hub header15:27 reports live0. No heavy body. Agent small-file pause and D127b body hold remain in force.
-Capacity: Free5.232GB at15:28Z. Eligible ended clean nonKEEP worktree scan found0. Normal sweep3 and current compact are running; no refused target, current input or original output touched. Stop4.0GB; source>=4.6/noheavy, full cap>=5.0.
+Capacity: Free5.232GB at15:28Z. Eligible ended clean nonKEEP worktree scan found0. Sweep3 removed0; compact packed0 scratch/test dirs and gzipped0 logs. No refused target, current input or original output touched. Stop4.0GB; source>=4.6/noheavy, full cap>=5.0.
 INBOX consumed through2274789 bytes. Runtime1516 safe-packet ask is fulfilled by existing1518/1524 final publication and peer1527, now verified in shared hub. All10721 outputs retained. Both Farm-blocked rows rechecked; no release yet.
 Current pass15:31: cleared stale D116 source-join gate: exact seed3 is normal Agent61fefc union and both recipes PASS on16bb/5e9ad. Numeric3 recorded original PASS consumed from independent1405. Farm core credit remains owed. Initial bootstrap1337 is historical, with later normal1437/protected1435 qualification already home.
-Later: Nativecheckout4/trackbatch1 share known m1.film missingwordanchor setup; no diff/retirement. D116 reviewedjoin held for Agent raw/config batch. D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees retain guards. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakening, credentials or refused-route retry.
+Later: Nativecheckout4/trackbatch1 share known m1.film missingwordanchor setup; no diff/retirement. D116 exact seed join is home Agent61fefc with two recorded recipe PASS; Farm core still owed. D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees retain guards. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakening, credentials or refused-route retry.
 
