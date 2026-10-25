@@ -1,0 +1,30 @@
+{
+  "utc": "2026-10-25T05:32:37.895554+00:00",
+  "host_audit": "app-pin-host-process-use-0535.md",
+  "free_before": 6933307392,
+  "free_after": 7120777216,
+  "results": [
+    {
+      "worker": "app-pin-24865fa2",
+      "ignored_imported_status_only": "agent-p4-current-becfe-http-3legs-1025020538-14151",
+      "reason": "Only snap, status, ext; no request, runner, pid or actual local job. Host process-use audit clear. Records kept unchanged."
+    },
+    {
+      "worker": "app-pin-24865fa2",
+      "keep_released": true,
+      "exit": 0,
+      "result": "recycled app-pin-24865fa2\n"
+    },
+    {
+      "worker": "rt-pin-6634a17f",
+      "ignored_imported_status_only": "agent-p4-current-becfe-http-3legs-1025020538-14151",
+      "reason": "Only snap, status, ext; no request, runner, pid or actual local job. Host process-use audit clear. Records kept unchanged."
+    },
+    {
+      "worker": "rt-pin-6634a17f",
+      "keep_released": true,
+      "exit": 0,
+      "result": "recycled rt-pin-6634a17f\n"
+    }
+  ]
+}

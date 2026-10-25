@@ -1,0 +1,7 @@
+Ask: consume placement independent PASS/home merge queue and final recovered capacity / Owner: App exact source merge and next placement original; Runtime D102 release / By: next lead pass
+
+Independent app-P2-placement20517-core-review-0531 PASS author92eb8df9b27eb6a2629a14cd9d649decb9cd65ed.56 targeted across4files, App/Node types, lint, protected6 exact; two caller/control files only. Forward canonical/local/conflict/adoption/unknown provenance, no false committed state or cleared local work. Normal request-merge author0523 queued immediately. Next meaningful placement on actual merged source follows normal pinned/preflighted one-body route; original predicates/waits remain exact.
+
+Capacity final: eleven total host-cleared stale pins recycled normally, zero refusal, about1.56GB recovered and7,120,777,216bytes free. Last App24865/Runtime6634 old reference proved imported status-only3files (snap/status/ext, no local request/runner/PID; host-use clear), kept records unchanged then normal namedKEEP/binrecycle. Exact supplement design/app-pin-guarded-release-supplement-0533.json. Current9cb56/5fae/0c62/635f kept. All output, branches, verdicts and reports preserved; old dirty/prior-refused targets untouched.
+
+Ring0529 independentPASS17controls/import/shutdown/privacy already sent exact normal Runtime remote merge. No App source review or capacity blocker remains. D102 still awaits corrected privacy review/actual release; ordinary adoption then ONE ADD and ONE element serial diagnostics, SWAP after root fix.

@@ -1,0 +1,63 @@
+{
+  "utc": "2026-10-25T05:30:09.945687+00:00",
+  "audit": "app-pin-static-audit-0532.json",
+  "host_audit": "app-pin-host-process-use-0535.md",
+  "free_before": 5536358400,
+  "free_after": 6913830912,
+  "results": [
+    {
+      "worker": "agt-pin-562ee30b",
+      "keep_released": true,
+      "exit": 0,
+      "result": "recycled agt-pin-562ee30b\n"
+    },
+    {
+      "worker": "agt-pin-6386c700",
+      "keep_released": true,
+      "exit": 0,
+      "result": "recycled agt-pin-6386c700\n"
+    },
+    {
+      "worker": "agt-pin-a836baa3",
+      "keep_released": true,
+      "exit": 0,
+      "result": "recycled agt-pin-a836baa3\n"
+    },
+    {
+      "worker": "app-pin-043631db",
+      "keep_released": true,
+      "exit": 0,
+      "result": "recycled app-pin-043631db\n"
+    },
+    {
+      "worker": "app-pin-06014e45",
+      "keep_released": true,
+      "exit": 0,
+      "result": "recycled app-pin-06014e45\n"
+    },
+    {
+      "worker": "app-pin-1e34f8ea",
+      "keep_released": true,
+      "exit": 0,
+      "result": "recycled app-pin-1e34f8ea\n"
+    },
+    {
+      "worker": "app-pin-2d25dc46",
+      "keep_released": true,
+      "exit": 0,
+      "result": "recycled app-pin-2d25dc46\n"
+    },
+    {
+      "worker": "app-pin-3199118d",
+      "keep_released": true,
+      "exit": 0,
+      "result": "recycled app-pin-3199118d\n"
+    },
+    {
+      "worker": "app-pin-5337b439",
+      "keep_released": true,
+      "exit": 0,
+      "result": "recycled app-pin-5337b439\n"
+    }
+  ]
+}
