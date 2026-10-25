@@ -17,8 +17,8 @@ const requestHelper = extract('assertRequestV2');
 const helperSource = [
   'object', 'exactKeys', 'digest', 'nativeImages', 'nativeChild', 'nativeState', 'nativeConfig', 'nativeRows',
   'nativeValue', 'nativeSite', 'nativeSelection', 'nativeBinding', 'nativeEffects', 'nativeUndoExpected',
-  'assertRequestV2', 'acceptedMutation', 'publicationId', 'assertNativeAcceptedReply', 'assertNativeHistoryEntry',
-  'assertAcceptedReply', 'assertHistoryEntry', 'assertUndoHistoryEntry',
+  'canonicalJson', 'materializedIdentity', 'assertRequestV2', 'acceptedMutation', 'publicationId', 'assertNativeAcceptedReply', 'assertNativeHistoryEntry',
+  'assertAcceptedReply', 'assertHistoryEntry', 'assertUndoHistoryEntry', 'assertOccurrenceParentProjection',
 ].map(extract).join('\n');
 const transpile = (input) => {
   const result = ts.transpileModule(input, { compilerOptions: { target: ts.ScriptTarget.ES2022 }, reportDiagnostics: true });
@@ -26,7 +26,7 @@ const transpile = (input) => {
   return result.outputText;
 };
 const sha256Hex = (bytes) => `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
-const helpers = compileFunction(`${transpile(helperSource)}\nreturn { assertAcceptedReply, assertHistoryEntry, assertUndoHistoryEntry };`, ['expect', 'sha256Hex'])(expect, sha256Hex);
+const helpers = compileFunction(`${transpile(helperSource)}\nreturn { assertAcceptedReply, assertHistoryEntry, assertUndoHistoryEntry, assertOccurrenceParentProjection };`, ['expect', 'sha256Hex'])(expect, sha256Hex);
 const checkRequest = compileFunction(`${transpile([extract('object'), requestHelper].join('\n'))}\nreturn assertRequestV2;`, ['expect'])(expect);
 
 const command = {
@@ -74,6 +74,114 @@ function historyFor(post, { publication = receiptId1, receipt = post.json.receip
     steps: [step], publisher: 'publisher', source: { via: 'app' }, label: 'Edit timeline',
   }] };
 }
+
+function fixtureDigest(value) {
+  return sha256Hex(Buffer.from(JSON.stringify(value, (_key, item) => item && typeof item === 'object' && !Array.isArray(item)
+    ? Object.fromEntries(Object.entries(item).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)) : item)));
+}
+
+function occurrenceProjectionFixture() {
+  const beforeParent = {
+    config: { output: { fps: 30 }, opaque: 'retained' },
+    occurrences: [
+      { occurrence_id: 'occ', shot_id: 'shot', shot_revision_id: 'shot-old', duration_ms: 20000 },
+      { occurrence_id: 'sibling', shot_id: 'sibling-shot', shot_revision_id: 'sibling-old', duration_ms: 10000 },
+    ],
+    opaque: { retained: true },
+  };
+  const source = {
+    objectId: `sha256:${'a'.repeat(64)}`,
+    digest: `sha256:${'b'.repeat(64)}`,
+    mediaType: 'image/png',
+    generationId: 'generation-1',
+    variantId: 'variant-1',
+  };
+  const row = { id: 'clip-added', track: 'V1', at: 5, hold: 5, asset: 'asset-new', clipType: 'hold' };
+  const normalized = { media_id: source.objectId, type: 'image', generationId: source.generationId, variantId: source.variantId };
+  const beforeChildPayload = {
+    output: { fps: 30 }, tracks: [{ id: 'V1', kind: 'visual' }],
+    clips: [{ id: 'clip-existing', track: 'V1', at: 0, hold: 5, asset: 'asset-existing', clipType: 'hold' }],
+    registry: { assets: { 'asset-existing': { media_id: `sha256:${'e'.repeat(64)}`, type: 'image' } } },
+    opaque: { keep: ['x', null] },
+  };
+  const beforeShotPayload = { name: 'Shot', internal_timeline_revision_id: 'child-old', metadata: { keep: true }, opaque: { keep: null } };
+  const expectedChildPayload = structuredClone(beforeChildPayload);
+  expectedChildPayload.clips.push(row);
+  expectedChildPayload.registry.assets['asset-new'] = normalized;
+  const internalRevisionId = 'authoring-timeline-revision-4768f43a29fe6fdb3b0c25d8a804863a6ece9212964adb9fa23d6f893b22f6f3';
+  const shotRevisionId = 'authoring-shot-revision-7c7a18d5cff6af7edb176720a27c7ac8dfff2405ea411e2bbadc76f7ffca8a46';
+  const expectedShotPayload = { ...beforeShotPayload, internal_timeline_revision_id: internalRevisionId };
+  const afterParent = structuredClone(beforeParent);
+  afterParent.occurrences[0].shot_revision_id = shotRevisionId;
+  const before = {
+    schema_version: 1, project_id: 'project', timeline_id: 'timeline',
+    parent_revision: { revision_id: 'parent-old', content_digest: fixtureDigest(beforeParent), payload: beforeParent },
+    shot_revisions: [{ shot_id: 'shot', revision_id: 'shot-old', internal_timeline_revision_id: 'child-old', timeline_id: 'timeline', content_digest: fixtureDigest(beforeShotPayload), payload: beforeShotPayload }],
+    internal_timeline_revisions: [{ revision_id: 'child-old', timeline_id: 'timeline', content_digest: fixtureDigest(beforeChildPayload), payload: beforeChildPayload }],
+    dependency_manifest: {
+      shots: [{ shot_id: 'shot', revision_id: 'shot-old', internal_timeline_revision_id: 'child-old', content_digest: fixtureDigest(beforeShotPayload) }],
+      internal_timelines: [{ timeline_id: 'timeline', revision_id: 'child-old', content_digest: fixtureDigest(beforeChildPayload) }],
+      media: [{ media_id: source.objectId, content_digest: source.digest }], documents: [],
+    },
+  };
+  const after = {
+    schema_version: 1, project_id: 'project', timeline_id: 'timeline',
+    parent_revision: { revision_id: 'parent-new', content_digest: fixtureDigest(afterParent), payload: afterParent },
+    shot_revisions: [{ shot_id: 'shot', revision_id: shotRevisionId, internal_timeline_revision_id: internalRevisionId, timeline_id: 'timeline', content_digest: fixtureDigest(expectedShotPayload), payload: expectedShotPayload }],
+    internal_timeline_revisions: [{ revision_id: internalRevisionId, timeline_id: 'timeline', content_digest: fixtureDigest(expectedChildPayload), payload: expectedChildPayload }],
+    dependency_manifest: {
+      shots: [{ shot_id: 'shot', revision_id: shotRevisionId, internal_timeline_revision_id: internalRevisionId, content_digest: fixtureDigest(expectedShotPayload) }],
+      internal_timelines: [{ timeline_id: 'timeline', revision_id: internalRevisionId, content_digest: fixtureDigest(expectedChildPayload) }],
+      media: [{ media_id: source.objectId, content_digest: source.digest }], documents: [],
+    },
+  };
+  const result = { data: { accepted_revision_id: 'parent-new', document_digest: fixtureDigest(after), canonical_document: after, steps: [{ patch: [
+    { op: 'set', ref: `internal-revision:${internalRevisionId}`, path: [], before: { state: 'absent' }, value: expectedChildPayload },
+    { op: 'set', ref: `shot-revision:${shotRevisionId}`, path: [], before: { state: 'absent' }, value: expectedShotPayload },
+    { op: 'set', ref: 'parent', path: ['occurrences', 'occurrence_id:occ', 'shot_revision_id'],
+      before: { state: 'present', value: 'shot-old' }, value: shotRevisionId },
+    { op: 'remove', ref: 'shot-revision:shot-old', path: [], before: { state: 'present', value: beforeShotPayload } },
+    { op: 'remove', ref: 'internal-revision:child-old', path: [], before: { state: 'present', value: beforeChildPayload } },
+  ] }] } };
+  return { before, after, result, occurrenceId: 'occ', row, source };
+}
+
+test('actual occurrence parent projection rejects the stale whole-parent expectation', () => {
+  const fixture = occurrenceProjectionFixture();
+  assert.throws(() => expect(fixture.after.parent_revision.payload).toEqual(fixture.before.parent_revision.payload));
+  assert.doesNotThrow(() => helpers.assertOccurrenceParentProjection(
+    fixture.before, fixture.after, fixture.result, fixture.occurrenceId, fixture.row, fixture.source,
+  ));
+});
+
+for (const [name, mutate] of [
+  ['wrong physical shot', (fixture) => { fixture.after.shot_revisions[0].shot_id = 'sibling-shot'; }],
+  ['sibling parent field', (fixture) => { fixture.after.parent_revision.payload.occurrences[1].duration_ms = 10001; }],
+  ['opaque parent field', (fixture) => { fixture.after.parent_revision.payload.opaque.retained = false; }],
+]) test(`actual occurrence parent projection rejects ${name}`, () => {
+  const fixture = occurrenceProjectionFixture();
+  mutate(fixture);
+  assert.throws(() => helpers.assertOccurrenceParentProjection(
+    fixture.before, fixture.after, fixture.result, fixture.occurrenceId, fixture.row, fixture.source,
+  ));
+});
+
+for (const [name, mutate] of [
+  ['fabricated shot payload', (fixture) => { fixture.after.shot_revisions[0].payload.name = 'fabricated'; }],
+  ['extra child fields', (fixture) => { fixture.after.internal_timeline_revisions[0].payload.extra = true; }],
+  ['extra shot records', (fixture) => { fixture.after.shot_revisions.push({ shot_id: 'extra', revision_id: 'extra', internal_timeline_revision_id: 'extra', payload: {}, content_digest: fixtureDigest({}) }); }],
+  ['changed existing child rows', (fixture) => { fixture.after.internal_timeline_revisions[0].payload.clips[0].hold = 99; }],
+  ['wrong child owner', (fixture) => { fixture.after.internal_timeline_revisions[0].timeline_id = 'wrong-timeline'; }],
+  ['missing shot image', (fixture) => { fixture.after.shot_revisions.splice(0, 1); }],
+  ['missing child payload', (fixture) => { delete fixture.after.internal_timeline_revisions[0].payload; }],
+  ['missing existing child row', (fixture) => { fixture.after.internal_timeline_revisions[0].payload.clips.splice(0, 1); }],
+]) test(`actual occurrence parent projection rejects ${name}`, () => {
+  const fixture = occurrenceProjectionFixture();
+  mutate(fixture);
+  assert.throws(() => helpers.assertOccurrenceParentProjection(
+    fixture.before, fixture.after, fixture.result, fixture.occurrenceId, fixture.row, fixture.source,
+  ));
+});
 
 test('actual accepted helper preserves distinct publication and idempotency identities', () => {
   const post = acceptedPost();
