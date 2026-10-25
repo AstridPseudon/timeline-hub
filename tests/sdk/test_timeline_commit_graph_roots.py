@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import tempfile
 
 import pytest
 from jsonschema import Draft202012Validator
@@ -21,10 +22,148 @@ from tests.editing_conformance.test_recorded_graph_roots import (
 from tests.editing_conformance.test_recorded_graph_roots import (
     root_ops as root_ops,
 )
-from tests.sdk.test_timeline_commit_provider import runtime_abi as runtime_abi
+from tests.helpers.runtime import use_runtime
+from tests.helpers.trusted_seed import seed_trusted_parent
 from tests.sdk.test_timeline_commit_provider_document import document_fixture
 
-pytestmark = pytest.mark.usefixtures('root_ops')
+pytestmark = [pytest.mark.integration, pytest.mark.usefixtures('root_ops')]
+
+
+def _replace_media(document, media_id):
+    document = copy.deepcopy(document)
+
+    def replace(value):
+        if isinstance(value, dict):
+            return {key: replace(child) for key, child in value.items()}
+        if isinstance(value, list):
+            return [replace(child) for child in value]
+        return media_id if value == 'sha256:' + '1' * 64 else value
+
+    document = replace(document)
+    parent = document['parent_revision']
+    shots = document['shot_revisions']
+    internals = document['internal_timeline_revisions']
+    for image in (parent, *shots, *internals):
+        image['content_digest'] = commit._digest(image['payload'])
+    document['dependency_manifest'] = commit._manifest(
+        shots, internals, [{'media_id': media_id, 'content_digest': media_id}], [])
+    return document
+
+
+class RuntimeRealm:
+    """Small facade over the genuine Runtime commit route used by these tests."""
+
+    def __init__(self, document):
+        use_runtime()
+        from runtime_protocol.service import RuntimeService
+        from runtime_protocol.store import RealmStore
+        from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+
+        self._temporary = tempfile.TemporaryDirectory(prefix='timeline-graph-')
+        RealmStore.initialize(self._temporary.name).close()
+        self.service = RuntimeService(self._temporary.name)
+        self.service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
+        self.project = self.service.create_project(
+            {'slug': 'graph-roots', 'name': 'Graph roots'}, idempotency_key='project')['id']
+        self.timeline = 'film'
+        self.service.create_timeline(self.project, self.timeline, idempotency_key='timeline')
+        media = self.service.ingest(
+            self.project, b'graph-root-media', media_type='image/png',
+            idempotency_key='graph-media')['data']['object_id']
+        self.document = _replace_media(document, media)
+        self.document['project_id'] = self.project
+        self.document['timeline_id'] = self.timeline
+        seed_trusted_parent(self.service, {
+            'project_id': self.project,
+            'timeline_id': self.timeline,
+            'expected_head': None,
+            'parent_revision_id': self.document['parent_revision']['revision_id'],
+            'parent_composition': self.document['parent_revision']['payload'],
+            'shot_revisions': self.document['shot_revisions'],
+            'internal_timeline_revisions': self.document['internal_timeline_revisions'],
+        }, idempotency_key='seed-parent')
+        self._commits, _ = self.service._timeline_commits()
+        self._request_count = 0
+        self.accepted = []
+        self.prepared = []
+
+    @property
+    def head(self):
+        return self._commits.head(self.project, self.timeline)
+
+    @property
+    def entries(self):
+        return self.service.list_timeline_commits(
+            self.project, self.timeline, authorize=lambda: None)['items']
+
+    @property
+    def documents(self):
+        return {
+            entry['revision_id']: self._commits.revision_closure(
+                self.project, self.timeline, entry['revision_id'])
+            for entry in self.entries
+        }
+
+    def call(self, calls, *, base=None, dry_run=False):
+        from runtime_protocol.errors import RuntimeErrorBase
+
+        from tests.sdk.test_timeline_commit_provider import CommitRejected
+
+        base = base or self.head
+        self._request_count += 1
+        body = {
+            'api_version': 1, 'project_id': self.project, 'timeline_id': self.timeline,
+            'base_revision_id': base['revision_id'],
+            'base_publication_id': base['publication_id'],
+            'commands': copy.deepcopy(calls), 'dry_run': dry_run,
+            'source': {'via': 'python'}, 'rationale': 'test intent',
+        }
+        try:
+            result = self.service.commit_timeline(
+                self.project, self.timeline, body,
+                idempotency_key='request-' + str(self._request_count), publisher='actor-1',
+                invocation_path=f'/v1/projects/{self.project}/timelines/{self.timeline}/commit',
+                authorize=lambda: None)
+        except RuntimeErrorBase as error:
+            raise CommitRejected({
+                'http_status': error.status, 'code': getattr(error, 'code', 'conflict'),
+                'message': str(error), 'details': copy.deepcopy(error.details),
+            }) from error
+        if result['receipt'] is not None:
+            self.prepared.append(copy.deepcopy(body))
+            self.accepted.append(copy.deepcopy(result))
+        return result
+
+
+class RuntimeHistoryPort:
+    """Authenticated history/closure reads for direct reservation verification."""
+
+    def __init__(self, realm, *, replacement=None, target_publication=None):
+        self.realm = realm
+        self.replacement = replacement
+        self.target_publication = target_publication
+
+    def head(self):
+        return copy.deepcopy(self.realm.head)
+
+    def revision_closure(self, revision):
+        return self.realm._commits.revision_closure(
+            self.realm.project, self.realm.timeline, revision)
+
+    def history_entry(self, publication):
+        return self.realm._commits.history_entry(
+            self.realm.project, self.realm.timeline, publication)
+
+    def history(self, through, after_publication_id=None, cursor=None, limit=100):
+        page = self.realm._commits.history(
+            self.realm.project, self.realm.timeline, through,
+            after_publication_id=after_publication_id, cursor=cursor, limit=limit)
+        if self.replacement is not None:
+            page = copy.deepcopy(page)
+            for entry in page['items']:
+                if entry['publication_id'] == self.target_publication:
+                    entry['records']['commands'] = copy.deepcopy(self.replacement)
+        return page
 
 
 def test_new_roots_close_exact_content_once_and_retain_original_closure():
@@ -77,33 +216,24 @@ class HistoryRejected(Exception):
 
 
 def reservation_check(monkeypatch, plan, history_records=()):
-    from tests.sdk.test_timeline_commit_provider import DetachedPort, DetachedRealm
-
-    # Model trusted history and exact closures through the unit port; this is
-    # not evidence of Runtime atomic acceptance.
-    realm = DetachedRealm()
-    entry = {
-        'intent': 'recorded', 'records': {'schema_version': 1, 'commands': history_records},
-        'previous': realm.head, 'revision_id': 'history-output',
-    }
-    output = commit.document_from_bundle(plan.bundle)
-    output['parent_revision']['revision_id'] = entry['revision_id']
-    realm.documents[entry['revision_id']] = output
-    monkeypatch.setattr(commit, '_history', lambda *args: [entry] if history_records else [])
-    commit._check_reservations(DetachedPort(realm, {}), plan, realm.head, HistoryRejected, realm.head)
+    realm = RuntimeRealm(document_fixture())
+    plan.bundle['project_id'] = realm.project
+    plan.bundle['timeline_id'] = realm.timeline
+    target = None
+    if history_records:
+        accepted = realm.call([create_command()])
+        target = accepted['receipt']['receipt_id']
+    port = RuntimeHistoryPort(realm, replacement=history_records or None,
+                              target_publication=target)
+    commit._check_reservations(port, plan, realm.head, HistoryRejected, realm.head)
 
 
 
 def test_typed_roots_are_valid_local_creations_and_retired_roots_are_reserved():
-    from tests.sdk.test_timeline_commit_provider import (
-        DetachedPort,
-        DetachedRealm,
-    )
-
-    original = commit.bundle_from_document(document_fixture())
-    plan = execute(original, [create_command()])
     for index in (0, 1):
-        realm = DetachedRealm(document_fixture())
+        realm = RuntimeRealm(document_fixture())
+        original = commit.bundle_from_document(realm.document)
+        plan = execute(original, [create_command()])
         accepted = realm.call([create_command()])
         assert (accepted['data']['commands'][0]['created'][index] ==
                 plan.records[0]['command']['created'][index])
@@ -111,7 +241,7 @@ def test_typed_roots_are_valid_local_creations_and_retired_roots_are_reserved():
                   copy.deepcopy(realm.documents), copy.deepcopy(realm.prepared))
         with pytest.raises(CommandError, match='already reserved') as error:
             commit._check_reservations(
-                DetachedPort(realm, {}), plan, realm.head, HistoryRejected, realm.head)
+                RuntimeHistoryPort(realm), plan, realm.head, HistoryRejected, realm.head)
         assert error.value.kind == 'identity_collision'
         assert (realm.head, realm.entries, realm.documents, realm.prepared) == before
 
@@ -158,9 +288,9 @@ def test_trusted_inverse_recreation_keeps_identity_reservation(monkeypatch):
 
 
 def test_authenticated_root_creation_reload_inverse_redo_exact_closure():
-    from tests.sdk.test_timeline_commit_provider import DetachedRealm, inverse
+    from tests.sdk.test_timeline_commit_provider import inverse
 
-    realm = DetachedRealm(document_fixture())
+    realm = RuntimeRealm(document_fixture())
     original = copy.deepcopy(realm.documents[realm.head['revision_id']])
     accepted = realm.call([create_command()])
     document = accepted['data']['canonical_document']
@@ -175,7 +305,7 @@ def test_authenticated_root_creation_reload_inverse_redo_exact_closure():
 @pytest.mark.usefixtures('child_ops')
 def test_authenticated_created_child_stages_reload_inverse_redo_exact_closure(monkeypatch):
     from tests.editing_conformance import test_recorded_graph_roots as graph_fixtures
-    from tests.sdk.test_timeline_commit_provider import DetachedRealm, inverse
+    from tests.sdk.test_timeline_commit_provider import inverse
 
     original_root_values = graph_fixtures.root_values
 
@@ -188,7 +318,7 @@ def test_authenticated_created_child_stages_reload_inverse_redo_exact_closure(mo
 
     monkeypatch.setattr(graph_fixtures, 'root_values', valid_root_values)
 
-    realm = DetachedRealm(document_fixture())
+    realm = RuntimeRealm(document_fixture())
     original = copy.deepcopy(realm.documents[realm.head['revision_id']])
     accepted = realm.call([create_command()])
     document = accepted['data']['canonical_document']
@@ -206,9 +336,9 @@ def test_authenticated_created_child_stages_reload_inverse_redo_exact_closure(mo
 @pytest.mark.parametrize('aba', [False, True])
 @pytest.mark.parametrize('noncontiguous', [False, True])
 def test_provider_root_child_aliases_guard_equal_state_publications(first_scope, aba, noncontiguous):
-    from tests.sdk.test_timeline_commit_provider import CommitRejected, DetachedRealm, inverse
+    from tests.sdk.test_timeline_commit_provider import CommitRejected, inverse
 
-    realm = DetachedRealm(document_fixture())
+    realm = RuntimeRealm(document_fixture())
     command = child_command('occurrence:occ-a/clip:clip-a')
     root = {**command, 'op': 'test.root-write'}
     first = realm.call([root if first_scope == 'root' else command])
