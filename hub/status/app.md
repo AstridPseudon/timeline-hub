@@ -1,4 +1,4 @@
-<!-- app | 2026-10-25T23:50:28Z | dispatcher heartbeat 16s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 0m -->
+<!-- app | 2026-10-25T23:54:59Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 9 | status age 0m -->
 # app board, 2026-10-25T23:46Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -121,23 +121,23 @@
 
 | D136c-reporting | Preserve finite reporting seam | Luna read only | D141 stop | gated:D141-stop | app-D136c-reporting-seam-2339 complete | JUnit omits exception details. Finite source handoff retained, no follow-up review/fix/body under D141. | Source unchanged |
 
-| U3-D141 | Merge exact frozen final upstream | Luna then independent Luna | Recorded D141 cut tuple file | gated:D141-tuple | Not dispatched before file exists | Full 7ca61bb3 object exists locally. Tuple file absent; no early merge. | App5696769 current |
-| D141-notes | Write SWAP and Element known gaps | Luna | Recorded D141 relay | review | app-D141-prep-evidence-review-2350 | Two factual worker paragraphs for existing Runtime notes owner; no ZIP or GO claim. | Evidence only |
+| U3-D141 | Merge exact frozen final upstream | Luna then independent Luna | D141 tuple7ca61bb3 recorded | doing | app-U3-D141-final-merge-2353 | Tuplefiles received and fullcommit/tree verified. Normal merge-forward next; no further upstream chasing. | App5696769 base |
+| D141-notes | Write SWAP and Element known gaps | Luna | Independent2350 findings | doing | app-D141-known-gap-notes-return-2354 | First delivery FAIL; repair actual ORCH paragraphs. Two factual worker paragraphs for existing Runtime notes owner; no ZIP or GO claim. | Evidence only |
 | D141-journeys | Prepare P1 P2 six and P3 cut proofs | Luna read only | Recorded D141 relay | doing | app-D141-journey-prep-2346 | Exact existing caller recipes only. Bodies held until all cut heads and MAIN GO. P4/P5 owner handoffs. | No source edits |
-| D141-full | Prepare App full and pristine comparator | Luna read only | Recorded D141 relay | review | app-D141-prep-evidence-review-2350 | Actual service route, exact frozen comparator and input census. No body before cut GO. | No source edits |
+| D141-full | Prepare App full and pristine comparator | Luna | Independent2350 findings | doing | app-D141-full-pristine-return-2354 | First delivery FAIL; repair actual ORCH packet. Actual service route, exact frozen comparator and input census. No body before cut GO. | No source edits |
 
 Integration: App 5696769dfca056676cde1ab46d8bc94354b3a44a/tree0748df404125114a0f68b701fa76f43abd3fc79a. Entire tree equals reviewed/tested79699 no-measurement route;30Node20 controls/types/lint PASS. Predecessor b5c9 retained for historical15200 only. U3 sourcehome2f362/tree687e4c equals reviewedeba8;127 affected and warmup2/types/lint PASS. Qualified bootstrap59a4 normalHOME atop U3. Existing manifest Runtimeab1e/Agent070dfc/Composition635f. D139 requested U3 join already HOME; fresh ancestor36e1 check PASS. Latest lead150a19 deferred to small live-tip cut merge-forward. Producer-first final cut pins/proofs still owed.
 
 Current P2 NO-GO. Historical six complete tails qualified on recorded tuples; full original tour/final tuple still owed. Actual2136 finalFPS20db+D10042040+f53b original9 failed9setupERROR at intermediate authenticated physical observation. Independent2144 custody/source/counts PASS and actualNO_GO; no next9 until owner all-boundary inventory and meaningful qualified repair.
 
 Blockers: SWAP safety — D130 holds recovery, acceptance, release, adoption and related tours after automatic classifier refusal1537. No retry, alternate route, transfer or rollback. Existing Runtime escalation owns decision.
-Blockers: D141 cut tuple — final App merge waits exact design/D141-cut-tuple.md. Local and hub files absent; full named7ca61bb3 object already local. No early merge or proofbody.
+Blockers: D141 cut proof — App finalmerge2353 active on exact7ca frozenupstream. Alljourney/full/comparator bodies held until allthreefinalheads and MAIN GO.
 Blockers: Element cost — D127e census2153 and independent2202 complete: D112 path statically reachable, actual waits UNKNOWN. Header22:16 records D130 hold and combined owner decision pending. No fix or verify body. App route HOME5696769 retained.
 Blockers: Graph child birth — Runtime1814/final1821 C0 sequential operands defined. Authentic intermediate physical bindings/stages absent; causalownerUNKNOWN. No invented guardwriter or unchangedrerun.
 Blockers: Agent core and render — Runtime D139 recipe2153 and Agent input census2149/reviewer2210 own missing child imports. No ship core started. Farm step0 remains held for complete final merged tuple inputs; no App duplicate.
 Blockers: Final cut — ship-grade core, REG0, full P2, final P1-P5/D69, installed render, platform and ZIP remain owed. No final gate or ZIP claim.
-Next ready: Final U3 merge immediately when D141 tuple file exists. Notes and both proof preparations dispatched now. Bodies wait final three heads and MAIN GO.
-live 2 / cap 6; ready-undispatched 0. Journey prep and combined evidence reviewer2350. Notes/full packets have missing ORCH artifacts; no branch merge. U3 tuple-gated; bodies held.
+Next ready: Manager merge-forward2353 then independentreview onsourcecompletion. Notes/full packets awaitfirstreturn afterreview2350. Journeyrecipe handoffready; allbodiesheld.
+live 3 / cap 3; ready-undispatched 0. U3 finalmerge and two evidencefirstreturns queued/running. Journeyready; allproofbodiesheld. No D136follow-up.
 INBOX consumed through 2546079 bytes. H6 Runtime23:12, Agent23:15 and Farm23:10 read. D136c handoff read directly from normal hub/design then byte-preserved locally.
 
 Safety: Manager edits only ORCH briefs/board/peers and byte-publishes authored SAFE artifacts. No manager product/test/generated/pin changes, direct Git writes, upstream push, M5, credentials or refused-route retry. Dirty U3/orphan guards and exact1.107GB orphan graph remain untouched.
@@ -164,3 +164,7 @@ Retained D136c raw input: workers/app-D136c-original9-resume-2330/private comple
 D141 2026-10-25T23:46Z: MAIN morningcut relay supersedes priorreportingfix/body instruction. Stop D136/B022, Element and allprofiling; source2339 complete retained with nofurtherline. SWAP and Element known gaps. Three readyD141 evidenceprepworkers queued; finalmergewaits authoritativecutfile, current7ca fullobjectverifiedlocal. No earlybody/merge or D130action.
 
 D141 2026-10-25T23:47Z: bothauthoritativecutfilesstillabsentlocally/hub; exactfull7ca objectexists. Threeactualsourceprepslive at4851326976bytes, cap3/ready0. No newmerge/body. Maintenance terminal sweep3removed0, compact0scratch/0tests/0logs, openKEEPunchanged. Prior2339evidenceonlypublished, nofollowingline.
+
+D141 2026-10-25T23:53Z: authoritativefilesarrived normalhub; exact7ca fullid/treeconfirmed. FinalU3 Luna2353 dispatched immediately; no furtherupstreamchasing. Main shipbar P1/P3/P4/P5 plusP2six, REG0versuspristine. OwnnewnonREGfailures remainexact/visible/clusterlisted. Unchangedrerunsneedreceiptsonly, noextrareview.
+
+D141 2026-10-25T23:55Z: ordinarymerge-forward2353 sixactualconflictpaths/exit1, sourceworkerresolves. Exactfinalproducerheads requestedpeer for normalmanifest/vendortools. Independent2350 bothprepdeliveryFAIL; notes/fullsamebranchfirstreturns2354 queued, sourcepreservation and absoluteORCHoutputrequired. No new proofbody.
