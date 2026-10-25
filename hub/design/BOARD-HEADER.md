@@ -218,6 +218,13 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
     2. Fix to the D94 contract: on any identity mismatch, clear the memo, re-establish the connection and baseline, and run the FULL verification. Refuse only if the full verification refuses.
     3. RED/GREEN: a WAL recreate, a DB replace, and a connection replace each trigger a full verify and the correct result (with tampered data still refused); the SWAP sequence passes; a real-provider seed smoke; the flat curve is unchanged.
     4. Security review (D94a scope), then release.
+- **D111b, the dominant boundary is already measured: `RequestCommitPort._read` (08:58Z).** The deepcopy and finite_json totals cannot be added up, because deepcopy recurses, so its 657 calls nest. Agreed. But `RequestCommitPort._read` is 11 NON-recursive calls taking 4227 ms inclusive out of a 6179 ms request, that is **68% at one top-level boundary**, with only 54 ms in `_read` itself. That is a valid majority, and it meets the D111a rule.
+  - **One author, now (Luna; Sol 0853 may continue in parallel, but it no longer gates this):**
+    1. Inside `_read`, add plain top-level timers per call (no setprofile): detached/deepcopy, finite_json, and the store read. Record bytes per call.
+    2. Remove the repeated work. Copy or validate each history/document value at most once per request: a per-request detached snapshot reused across the 11 reads, or read-only views. Use whatever the timers show dominates.
+    3. **Results stay identical:** byte-identical outputs and no mutation leaking between callers or reads, with a RED/GREEN test that mutates a returned value and shows the next read is unaffected.
+    4. **Gates:** element's request per-call time is flat as history grows, a real-provider seed smoke, then independent review and release.
+  - No cache across requests and no change to the trust model (that is D94's scope).
 - **D111a, the validation memo is WITHDRAWN; profile the whole element request first (08:05Z).**
   - **Why:** review 0729 FAILED the memo:
     - memo hits bypassed required per-value revalidation;
