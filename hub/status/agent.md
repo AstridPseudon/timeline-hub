@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T10:43:00Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 20 | status age 4m -->
+<!-- agent | 2026-10-25T10:46:36Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 19 | status age 2m -->
 # agent board, 2026-10-25T10:38Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -335,8 +335,12 @@
 | D118 App WC6three | Preserve mounted provider capture | App Luna / independent | Exact source successor and actual proof | merging | Author1015; review1021; normal7b96 | Two-line SOURCEPASS, offline12 PASS3 FAIL. Existing Appowner1042 asked exactmockcleanup/mountedwrapper/helper-hash follow-through. | 7b96e1effa |
 
 | D115 safe peer inputs | Publish existing exact source packets | Luna | Existing immutable artifacts | merged | agt-F-D118-peer-inputs-1020 PASS | Exact effect83 and producer packets published with full hashes; App reserved20 tail IDs and commands handed back1026. No body or source claim. | Evidence only |
-| D118 host bootstrap14 | Repair pristine-upstream regressions | Luna read only | Full run ends then narrow source author | gated:full-core | Diagnosis1022 complete | Fourteen exact REG at Remotion startup override guard before launch assertions. Productionhost environment is next writer; tests unchanged. | Source unchanged |
+| D118 host bootstrap14 | Repair pristine-upstream regressions | App Luna / independent | App author starts now under latest ruling | blocked:app | Diagnosis1022; allocation1048 | Root traced before all14 launch assertions. Exact upstream delta and faithful production correction assigned to App to avoid local full-run source hold. | Source unchanged |
 | U4a D112 Runtime adoption | Adopt qualified released producer | Luna | Normal tools and exact merge receipt | merged | Author1026 PASS; queue done | Lock-only tools PASS;15 mappings/schema exact. Normal0277 source equals tested14ac; current core captured120d/1daca stays unchanged. | 0277f46d55 |
+
+| D118c App host14 | Fix real bootstrap regressions | App Luna requested | App author and protected review | blocked:app | Allocation1048; diagnosis1022 | Fourteen identical-body upstream PASS/current FAIL; product environment root traced. Host source and additive controls reserved exclusively to App author. | Product unchanged |
+| D118c App birth2 | Preserve occurrence birth behavior | App Luna requested | Exact supported setup or source pairing | blocked:app | Allocation1048 | Original ordinals1286/1289, occurrence-create file70. All authored inputs and predicates remain exact; no Runtime guard writer. | Source pending |
+| D118c App video1 | Preserve prepared video behavior | App Luna requested | Exact supported setup or source pairing | blocked:app | Allocation1048 | Original ordinal3116, prepared-video file251. Exact source/failure hashes and file-only scope supplied; no full or body claim. | Source pending |
 
 Integration: Normal0277f46d55 adds tool-only Runtimed23a provenance to120d reviewed tests. All Agent product bytes remain070dfc. Actual30693 stays fixed120d/1daca/96d475/635f; original2016 immutable.
 core open: 437 current; actual2016 had438 on070dfc/1daca/04beed/635f. One D110 setup node now resolves to2 actual add/swap PASS on exact home treef3c0.  Exact506bad=438 NEWcore+59 ENV+8non-core+1D23deferred; Original924 PRE0/REG0 is historical; D118 pristine23 independently proves14 REG,8 NEW,1 UNKNOWN. Exact506 recategorization assigned1022. All506 have per-node924 comparison; Runtime baseline isolation UNCERTAIN.
@@ -377,3 +381,5 @@ Blockers: Full current count — actual30693 running; no source-only packet or h
 D69 review progress1032/1042: all19 residualodd and20 residueeven functions reviewed. Independentjoin checks machinecounts and explicit approvals; index107 two XMLpredicates requirefaithful addition. No globalauditPASS.
 
 Source holds1046: D116first-return1040 brief ready; host14 narrow author, D69twoXMLassertionauthor and D100duplicatefixture correction wait current30693terminal. No readylocal author left idle against source-start hold.
+
+D118c priority1048: Three NEW scopes sent to App lead: host14 product regression (top priority), occurrence-create2, prepared-video1. All exact IDs, locations and source/failure hashes supplied; existing sheet/WC6 source owners remain separate. No local duplicate author.
