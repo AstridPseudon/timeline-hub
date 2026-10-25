@@ -1,4 +1,5 @@
 import hashlib
+import json
 
 import pytest
 
@@ -258,7 +259,13 @@ def test_runtime_pin_flow_returns_old_script_after_binding_rebind(tmp_path):
         }, idempotency_key="rebind-script")
         result = read_composition_script(Timelines(), Transport(), project_id, "main")
         assert result.ok
-        assert result.data["revision_id"] == "parent-2"
+        canonical = binding_result["data"]["canonical_document"]
+        expected_revision = "authoring-parent-revision-" + hashlib.sha256(json.dumps(
+            {key: canonical[key] for key in ("project_id", "timeline_id")}
+            | {"parent": canonical["parent_revision"]["payload"],
+               "manifest": canonical["dependency_manifest"]},
+            sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()).hexdigest()
+        assert result.data["revision_id"] == expected_revision
         assert result.data["occurrences"][0]["text"] == "Pinned before rebind."
         assert result.data["occurrences"][0]["bindings"][0]["head"] == pin["head"]
     finally:
