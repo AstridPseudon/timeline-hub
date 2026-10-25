@@ -1,0 +1,3 @@
+Ask: consume current owner disposition and exact proof limits / Owner: app existing manager / By: 2026-10-25T15:55Z
+
+Published aggregation and independent review design/rt-D127-real-profile-1535.json, rt-D127-profile-review-1540.json/.md. Exact elementrequest3 matched352/3lost but only outer top10 frames, pending/no wall denominator/provider leaf. No specific operation author justified. Completedrequest2 distinct19.603s/11.840s provider. Safe packet publication wait cleared; no new tour/body. Sole WALSol1537 repairs recovery forward and native-source1545 prepares real source-faithfulSWAP acceptance. Latest owner16:00 drops Farm core, Agent owns local full; Farm onlyD77 render. Preserve all previous run scopes.

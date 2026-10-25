@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "task": "D127 read-only real retained20ms lifecycle aggregation",
+  "source_tuple": {
+    "runtime": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "agent": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "app_safe_artifact": "48464827dab6024c470c852d92d72b254a0131f8",
+    "composition": "635f4de06da22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "publication": {
+    "independent_privacy": "PASS",
+    "independent_source_hash_and_frame_count_reconciliation": "PASS",
+    "custody": "FAIL metadata-only Composition SHA typo in facts.json:2752; corrected stack-index and handoff are usable",
+    "raw_stacks_payloads_keys_auth_private_urls_published": false,
+    "safe_stack_hashes": [
+      {
+        "path": "evidence/p2-commit-phase.stacks.txt",
+        "source_sha256": "544c1590aade24c082f6d2a4130671ecfbd4eadef3b1fd283b8f156590c023ce",
+        "safe_sha256": "7d5d143cab62b79a6e239b8e5b51090f208fadef271a03149d831acbfdf46ea0",
+        "safe_sha256_check": "PASS",
+        "source_size": 4856,
+        "safe_size": 2359
+      },
+      {
+        "path": "evidence/per-launch-1b97ab3a-6918-4d73-888d-88ea4f1b3b7d.stacks.txt",
+        "source_sha256": "e387fbffb41850c5cdc3ca1b9d127fb32d329983cf104593b6be66a9d57a3013",
+        "safe_sha256": "5f07fda1b7d2591f167669e43f3f14ede0428d35aa6cadf3b07962b0de379f2c",
+        "safe_sha256_check": "PASS",
+        "source_size": 5600,
+        "safe_size": 2665
+      },
+      {
+        "path": "evidence/per-launch-d15d840a-f5ce-447f-8e06-e3b003792872.stacks.txt",
+        "source_sha256": "cd1f4659e4be13822ccdb4cade23e18fa4c9d7b825330353a868011179c64666",
+        "safe_sha256": "e8e0824d711ca0110afab9a523ae70255dcd35cdc89bfd72ba60855c081d7f54",
+        "safe_sha256_check": "PASS",
+        "source_size": 6209,
+        "safe_size": 2700
+      }
+    ],
+    "exact_element_stack": "ABSENT; retained d22 JSONL summary is authoritative"
+  },
+  "binding": {
+    "element": {
+      "status": "exact_key_hash_join",
+      "key_sha256": "69c6463f169cffb79e62788ca6d42b02ebeb00aaf6a4f72520a989b20312faf4",
+      "namespace": "pid-12960-birth-19014785-capture-1",
+      "pid": 12960,
+      "birth_ticks": 19014785,
+      "request": 3,
+      "utc": "2026-10-25T14:49:25.626Z",
+      "outcome": "pending",
+      "old_1455_unknown_superseded": true
+    },
+    "swap": "UNKNOWN: no retained key-hash match"
+  },
+  "exact_pending_request3": {
+    "sample_total": 352,
+    "sampling_interval_ms": 20.0,
+    "nominal_sample_wall_ms": 7040.0,
+    "lost_samples": 3,
+    "truncated": true,
+    "last_phase": "authorization",
+    "handler_ms": null,
+    "provider_ms": null,
+    "response_ms": null,
+    "dispatch_wall_denominator_ms": null,
+    "provider_wall_share": null,
+    "observed_sample_share_of_capture": 0.057809164,
+    "observer_cpu_ms": 743.938,
+    "observer_cpu_scope": "capture-wide, not request CPU",
+    "top_inclusive_frames": [
+      ["<runtime>/door.py", "_admit", 556, 352, 1.0],
+      ["<runtime>/door.py", "_door", 513, 352, 1.0],
+      ["<runtime>/door.py", "do_POST", 777, 352, 1.0],
+      ["<runtime>/server.py", "_dispatch", 1208, 352, 1.0],
+      ["<runtime>/server.py", "_route", 528, 352, 1.0],
+      ["<runtime>/server.py", "_timeline_commit", 313, 352, 1.0],
+      ["<runtime>/service.py", "wrapped", 438, 352, 1.0],
+      ["<stdlib>/server.py", "handle", 451, 352, 1.0],
+      ["<stdlib>/server.py", "handle_one_request", 439, 352, 1.0],
+      ["<stdlib>/socketserver.py", "__init__", 766, 352, 1.0]
+    ],
+    "frame_tuple": "file, function, line, observed sample_count, observed sample_share",
+    "denominator_honesty": "No handler end, response, backend outcome, or wall denominator; samples are not complete wall or CPU time"
+  },
+  "same_lifecycle_comparators": {
+    "request1": {
+      "utc": "2026-10-25T14:49:25.624Z",
+      "sample_total": 80,
+      "lost_samples": 1,
+      "handler_ms": 2055.124,
+      "provider_ms": 1509.814,
+      "dispatch_wall_denominator_ms": 2056.032,
+      "provider_wall_share": 0.734333901,
+      "runtime_remainder_wall_ms": 546.218,
+      "runtime_remainder_wall_share": 0.265666099,
+      "observed_sample_share_of_capture": 0.013138446,
+      "top_inclusive_frames": [
+        ["<runtime>/server.py", "_dispatch", 1208, 80, 1.0],
+        ["<runtime>/server.py", "_route", 528, 80, 1.0],
+        ["<runtime>/server.py", "_timeline_commit", 313, 80, 1.0],
+        ["<runtime>/server.py", "do_POST", 1243, 80, 1.0],
+        ["<runtime>/service.py", "wrapped", 438, 80, 1.0]
+      ],
+      "classification": "timing boundaries present; outcome not exported"
+    },
+    "request2": {
+      "utc": "2026-10-25T14:49:25.625Z",
+      "sample_total": 736,
+      "lost_samples": 14,
+      "handler_ms": 19601.985,
+      "provider_ms": 11840.358,
+      "dispatch_wall_denominator_ms": 19603.087,
+      "provider_wall_share": 0.604004767,
+      "runtime_remainder_wall_ms": 7762.729,
+      "runtime_remainder_wall_share": 0.395995233,
+      "observed_sample_share_of_capture": 0.120873707,
+      "top_inclusive_frames": [
+        ["<runtime>/server.py", "_dispatch", 1208, 735, 0.998641304],
+        ["<runtime>/server.py", "_route", 528, 735, 0.998641304],
+        ["<runtime>/server.py", "_timeline_commit", 313, 735, 0.998641304],
+        ["<runtime>/server.py", "do_POST", 1243, 735, 0.998641304],
+        ["<runtime>/service.py", "wrapped", 438, 735, 0.998641304]
+      ],
+      "classification": "distinct completed timing boundaries; never assign to element",
+      "wall_share_allowed": true
+    }
+  },
+  "capture_limits": {
+    "summary_records": 20,
+    "completed_requests": 19,
+    "pending_requests": 1,
+    "total_samples": 6089,
+    "total_lost_samples": 109,
+    "capacity_dropped_events": 5109,
+    "truncated_records": 19,
+    "events_seen": 7598,
+    "events_retained": 2489,
+    "observer_cpu_ms": 21000.903,
+    "observer_cpu_scope": "capture-wide",
+    "frame_method": "each safe frame identity counted at most once per 20ms sample; inclusive counts overlap and are not CPU time"
+  },
+  "callgraph_and_ownership": {
+    "runtime_current_path": "runtime_protocol/door.py:777 do_POST -> :510 _door -> :521 _admit -> :556 _dispatch -> runtime_protocol/server.py:294 _timeline_commit -> :313 RuntimeService.commit_timeline -> runtime_protocol/service.py:2469 commit_timeline -> :2485 _execute_timeline_commit -> runtime_protocol/timeline_commit_execution.py:304 execute -> :309 _execute -> :327 provider.commit",
+    "agent_provider_path": "astrid/sdk/timeline/commit.py:1160 RuntimeCommitService.commit -> :1188 capture_media_admissions/:1189 capture_producer -> :1227 _load/history -> :1331 commands.execute -> :1410 validate_final_candidate -> :1444 port.accept",
+    "runtime_source_blobs": {
+      "runtime_protocol/door.py": "674d8b55865dfdffa66c20cb51d7331fab18c4cd",
+      "runtime_protocol/server.py": "6ee6ff828447aa1d0e0e3973bd83914c6010150e",
+      "runtime_protocol/service.py": "d5e3ab4fd4f4c3b8243f2f6141d1eeb718c93fc4",
+      "runtime_protocol/timeline_commit_execution.py": "4f256cf6a5a9886564d8b38ee88b0a038adcdc4b",
+      "runtime_protocol/timeline_commit_provider.py": "a05812e82ee2930f29e277f260f3329855378932",
+      "runtime_protocol/timeline_commit_store.py": "f9cf50c1aee3b0a8c7caeb3d8a307a65f5f910e9"
+    },
+    "agent_commit_blob": "0ab8cb16761c9ce6a971fae3e8600f35f391760e",
+    "ownership": {
+      "runtime": "one author may own the observed HTTP/door/commit path, but exact internal dominant operation is not proven for pending request3",
+      "agent": "provider owns request2's measured provider interval, but no provider frame is retained for exact request3; no specific optimization author assigned"
+    }
+  },
+  "interpretation": {
+    "native_1_75_mismatch": "Observed same-lifecycle request1 is 2.055s and request2 is 19.602s; request2 provider is 11.840s. History length, cold state, and reopen are not evidenced causes and remain unclaimed.",
+    "no_inferred_timing_repair_or_source_author": true,
+    "aggregation_only": true,
+    "no_tests_body_sampler_native_replay_or_collector": true
+  }
+}
