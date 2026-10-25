@@ -4,9 +4,9 @@ Uses the existing in-memory HTTP transport: no sockets or daemon substitute.
 """
 from __future__ import annotations
 
-import base64
 import copy
 import json
+from pathlib import Path
 
 import pytest
 
@@ -24,9 +24,21 @@ from tests.editing_conformance.test_native_batch_ingress import runtime  # noqa:
 
 pytestmark = pytest.mark.integration
 REF = 'parent/clip:literal'
-PNG = base64.b64decode(
-    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='
-)
+VIDEO_BYTES = (
+    Path(__file__).resolve().parents[1] / 'fixtures' / 'reshape' / 'hype_regression' / 'main.mp4'
+).read_bytes()
+
+# D103 setup audit: the three live sequences keep their authored timing and
+# inputs.  In exact rational seconds, the source window is [1, 6), the initial
+# playback end is 0 + (6 - 1) / 2 = 5/2, trim-A reaches
+# (5000001/1000000 - 1) / 2 = 4000001/2000000, the dependent trim reaches
+# (4 - 1) / 2 = 3/2, the relevant peer trim reaches (3 - 1) / 2 = 1, and
+# the move sequence reaches 3 + 5/2 = 11/2.  The retained text title ends at
+# 5 + 1 = 6; app.astrid.for=2.5 is the same exact 5/2 duration.  The tracked
+# authentic main.mp4 fixture is declared as 42 s in
+# tests/fixtures/reshape/hype_regression/media_manifest.json, so its genuine
+# duration contains every source-window and occurrence end without rounding,
+# clamping, epsilon, or a changed authored bound.
 
 
 def run(world, capsys, *args):
@@ -41,7 +53,7 @@ def film(runtime):  # noqa: F811
     client = runtime.client()
     service = runtime.service()
     imported = service.import_media(
-        runtime.project, PNG, media_type='image/png', original_name='picture.png',
+        runtime.project, VIDEO_BYTES, media_type='video/mp4', original_name='picture.mp4',
         actor_id='cli-trim-fixture', idempotency_key='picture',
     )['data']
     selection = service.get_project_media_selection(runtime.project, {
