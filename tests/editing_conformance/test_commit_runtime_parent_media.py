@@ -76,10 +76,11 @@ def row(editing, identity='reserved-row', *, asset=None, track='visual'):
     return value
 
 
-def birth(editing, value=None, pin=None):
+def birth(editing, value=None, pin=None, *, claim_asset=True):
     command = call('clip.add-media', {'row': value or row(editing), 'media': pin or editing.pins['new']})
-    command['created'] = ['parent/asset:' + command['args']['row']['asset'],
-                          'parent/clip:' + command['args']['row']['id']]
+    command['created'] = ['parent/clip:' + command['args']['row']['id']]
+    if claim_asset:
+        command['created'].insert(0, 'parent/asset:' + command['args']['row']['asset'])
     return command
 
 
@@ -476,7 +477,8 @@ def test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes(editing
                                             row(editing), editing.pins['new'], verified_media=editing.selected)
     created = commit(editing, body(editing, calls), 'create')
     if interference == 'dependent':
-        dependent = commit(editing, body(editing, [birth(editing, row(editing, 'dependent'))]), 'dependent')
+        dependent = commit(editing, body(editing, [birth(editing, row(editing, 'dependent'),
+                                                          claim_asset=False)]), 'dependent')
         state = State(bundle_from_document(dependent['data']['canonical_document']))
         assert state.entity('parent/clip:dependent')['asset'] == state.entity('parent/clip:reserved-row')['asset']
     else:
