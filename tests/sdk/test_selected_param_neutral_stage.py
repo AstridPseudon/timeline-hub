@@ -325,6 +325,56 @@ def mounted_pack(monkeypatch, request):
 
 
 @pytest.mark.integration
+def test_mounted_accepted_selection_uses_predecessor_input(mounted_pack):
+    import yaml
+    from runtime_protocol.errors import RuntimeErrorBase
+    from runtime_protocol.service import RuntimeService
+
+    from astrid.core.element import project_packs
+    from astrid.sdk.timeline.commit import _digest
+    from tests.core import test_project_packs
+
+    case = mounted_pack
+    manifest = yaml.safe_load((case.source_root / 'pack.yaml').read_text())
+    test_project_packs.add_second_element(case.source_root, case.path.parent, manifest)
+    project_packs.admit_project_pack('realm', case.project)
+    document = case.service.get_document(case.project, case.pin['document_id'])
+    pin = {'document_id': document['document_id'], 'version': document['version'],
+           'content_digest': _digest(document['content'])}
+    assert pin != case.pin
+    body = case.request(_sequence(case.selected, {'schema_source': pin})[:2])
+    body.update(label='Select and hold', merge='fields', reads=[], steps=[{
+        'id': 'element', 'label': 'Update element', 'intent': '', 'tags': [],
+        'command_ordinals': [0, 1], 'patch': [], 'reads': []}])
+    before = case.head()
+    try:
+        accepted = case.submit(body, 'accepted-input')
+    except RuntimeErrorBase:
+        assert case.head() == before
+        raise
+    assert accepted['data']['status'] == 'accepted'
+    through = case.head()
+    entry = case.service._timeline_commits()[0].history_entry(
+        case.project, 'film', through['publication_id'])
+    assert entry['previous'] == {'revision_id': body['base_revision_id'],
+                                'publication_id': body['base_publication_id']}
+    binding, = [item for item in entry['records']['commands'][0]['bindings']
+                if item['key'] == 'params.element']
+    assert binding['boundary'] == {
+        'base_revision_id': before['revision_id'],
+        'base_publication_id': before['publication_id'], 'evaluated_head': before,
+        'step_id': 'element', 'command_ordinal': 0, 'phase': 'input'}
+    assert type(binding['boundary']['command_ordinal']) is int
+    case.service.close()
+    case.service = RuntimeService(case.root)
+    case.service.register_timeline_commit_provider(create_runtime_commit_service())
+    followup = case.request([selected._params({'schema_source': pin}, {'seed': 9})])
+    followup.update(label='PARAM from accepted input', merge='fields', reads=[])
+    assert case.submit(followup, 'accepted-param')['data']['status'] == 'accepted'
+    assert State(case.bundle()).entity(REF)['params']['seed'] == 9
+
+
+@pytest.mark.integration
 @pytest.mark.parametrize('damage', [None, *PHYSICAL_DAMAGE, 'source', 'element', 'object'])
 def test_mounted_param_custody_refuses_corruption_atomically(mounted_pack, monkeypatch, damage):
     from runtime_protocol.errors import RuntimeErrorBase
