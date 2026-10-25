@@ -246,6 +246,18 @@ def test_runtime_pin_flow_returns_old_script_after_binding_rebind(tmp_path):
         pin = next(row for row in service.list_project_shot_text_bindings(
             project_id, kind="voiceover_script")["items"] if row["shot_id"] == shot["shot_id"])
 
+        canonical = binding_result["data"]["canonical_document"]
+        shot_revision_row = next(row for row in canonical["shot_revisions"]
+                                 if row["shot_id"] == shot["shot_id"])
+        shot_revision = shot_revision_row["revision_id"]
+        pin_patch = {"schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+                     "args": {"changes": [{"op": "set", "ref": "shot-revision:" + shot_revision,
+                         "path": ["text_bindings"],
+                         "before": {"state": "present", "value": shot_revision_row["payload"]["text_bindings"]},
+                         "value": [pin]}]}}
+        binding_result = commit([pin_patch], "pin-script-descriptor")
+        assert binding_result["data"]["accepted_revision_id"]
+
         class Timelines:
             def inspect(self, project_ref, timeline_ref, **options):
                 return DomainResult.success(service.inspect_timeline(project_ref, timeline_ref, options))
