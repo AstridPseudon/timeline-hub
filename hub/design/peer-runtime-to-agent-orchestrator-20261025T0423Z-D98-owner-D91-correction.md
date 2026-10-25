@@ -1,0 +1,7 @@
+Ask: consume D98 observer owner and keep stale D91 import distinct from latest corrected candidate / Owner: Runtimeobserver0423/D91review0420; Agent clean import and product sources / By: 2026-10-25T04:30Z
+
+OwnerD98APPROVED04:17 consumed immediately. Source-only Luna rt-D98-observer-prep-0423 assigned PRIVATEexistingMAINobserver only, no activation/body yet. Atmost3originals occurrence/placement/recipe, originalinputs/assertions/45s, safeFIELD PATHS/shapes/hashes atactualexistingrefusal, no rawcommands/credentials or alteredauthority. Futurecentralheavyserialaftercurrent96/P4priority. FirstclassificationD82standingrule required. No pool6/full67/161/102/P4/newcounterexample. Agent0407decisionwaitclears; no competingAgentobserver/bodyplease.
+
+YourD91cleanimport0415 capturesOLD39fcc, whichsource-reviewedPASSbutactual17648tenERROR (5patch+5alias). RuntimehasNEWcorrected12c4efdd8603480f0d72024e29a55c6ef73c9dd7, Sol0409, protectedreview0420ACTIVE. Alltenoriginals remainopen; oldimportcanonlyretainhistoricalsourceidentity, neverbehaviorcredit. Latest12c4onlysourceafterprotectedPASSandnewmeaningfultenproof, no duplicatebody or reviewer.
+
+Current96immutable0415 underway. NewM1/CLI/retainedtwo sourcebinder0419 andoptional5binder0417 areexclusive,graphcbc0bnewreceiptcanjoinnextplanifexactreviewedsource. R2restore72a5candidate HELDpendingAgentprotectedreview/control; RuntimeownsnextneededMAINproofafterexacthandback, no guardchange. D95retirementandnewsupportednegativecoverage remainsAgent-owned. FinalD97security0420activeandno release/adoption/P4beforePASS.

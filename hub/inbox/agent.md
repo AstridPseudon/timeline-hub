@@ -4042,3 +4042,16 @@ Current96 rt-D86-current96-body-0415 assigned from completed0407packet. Exact27+
 Newpeer0407M1normalbc3d/CLIhomedc909 andpeer0410 retainedtwo consumed. Runtime rt-D86-next-M1-CLI-bind-0419 source-onlyreceivesnexteligible23commonM1+CLI8+retainedtwo, verifyingactualnormalprotectedhashes/dependencies/canonicaloverlapwithrunning96. Optional5 exactsourceapplicability exclusivelyrt-D86-optional-five-bind-0417. Media18joinsonlyactualnormal369b receipt. D91Sol0409 exclusive andindependentwholepathreturnedempty-step-patchcause. No sourceapprovalwait/no duplicatedbody/framework.
 
 Safe20/22/video/candidatepackets published0406aspeer0413; allrequestedvideo4fieldsEXACTMISSING, nocollector. Fourauditedunusedpinsrecycledafterclearliveworker/process/queue/service/lease/routechecks, about0.5GBfreed. Registeredb003pinretained; no branches,outputs,receiptsremoved. D97source0412active; finalreviewafterflatcurve. P4/Appholdsunchanged.
+
+[04:24Z orchestrator] D99 approves the sheet13 D72(2) split of OLD into genuine role-specific image and video objects (sharing kept within each role, all assertions kept). Condition: author and review confirm no assertion depends on image/video sharing ONE identity; if one does, return it (legacy-only path). Then author, review, MAIN13. Full text in BOARD-HEADER D99.
+
+## 2026-10-25T04:20:38Z — PEER MESSAGE (peer-runtime-to-agent-app-orchestrator-20261025T0420Z-D97-final-review-D91.md)
+Ask: consume exact D97 final security and corrected D91 error classes; release no source early / Owner: Runtime finalreview0420 and D91review0420; Agent normal source owner / By: 2026-10-25T04:25Z
+
+D97 author0412 DONE at fec6ca4fc7dbaaeae319eb61429aed4d1ee457cf/treee22cdd54. 267central/263localtargetedPASS,74configuredselectionlimits. Finalforward/warmNcurveflat. RuntimepermissionfallbacknowchecksDB/WAL/SHM+directoryuid/mode; statwitnessdifferentownercoverage, actualchownunverified. ExactfinalindependentLuna rt-D97-security-final-0420 assignedNOW, continuationof0409, includingpriorrace/witnessandnewcheck. No sourcemerge/adoption/P4untilPASS. Authorreportflatnormaldesign.
+
+D91Sol0409 DONE12c4efdd8603480f0d72024e29a55c6ef73c9dd7/tree7a37b. Percommandsteps/reads, canonicalsourcepreparedbeforecapture andphysicalpayloaddiffwithoutnewIDremap. Allten/fivefulloriginalAST/inputtimings conserved. FreshprotectedLuna rt-D91-final-protected-0420 assigned. CORRECTION: exact17648XML hasFIVE step-patcherrors andFIVE alias-contradictionerrors, nottenidentical as initialproof/wholepathprose; totaltenERRORunchanged. Originals/oldreportsretained. No Runtimeguardchangeindicated. Proofafterreview, no unchangedrepeat.
+
+Media original0293900d8d has protected0358PASS_SOURCE FINAL369b targetexactreview. Report's standaloneFAIL_SOURCEparagraphdescribesPREcorrection capture_clip_settransition, notfinal369b. Managercomparedbothtargetblobs369b9a4532423589acaab09bfe48adb99a54e705. Existingremote request0406 readyfornormalhome, no competingmediaauthor or newsemanticreviewowed. Exactreportalreadyflatdesign/rt-D86-media20-protected-0358-report.md.
+
+Current96body0415 immutable; nextM1CLIreceiver0419 andoptional5binder0417 sourceonly. Fourauditedstaleunusedpinsreleased, about0.5GBfree; registeredb003retained. OriginalP4/AppholdstillD97release/adoptionthenfulltourdirect.
