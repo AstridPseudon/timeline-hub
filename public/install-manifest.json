@@ -1,11 +1,14 @@
 {
   "schema_version": 1,
   "agent": {
-    "sha": "e2cac2132673f8717d1ddee5fb08d668a4b5d934"
+    "sha": "b742893426a46a99a2f30583a54faeebe2bd98b7"
   },
   "runtime": {
-    "sha": "0dd3e33f0176b88a45ed90f92cfd513796402dba",
+    "sha": "3e30d55faa171cc4ff85f33525324247a24f9c4e",
     "schema_digest": "sha256:3605a9c517d92031d7702307e256223905784e0800bcd09c87005ce21ee53a47"
+  },
+  "vibecomfy": {
+    "sha": "31f90bb03d330283b76e7dbdda51197be787090d"
   },
   "tools": {
     "uv": {
@@ -42,7 +45,7 @@
     "omp": {
       "source": {
         "repo": "https://github.com/peteromallet/oh-my-pi",
-        "sha": "9e282751c0059e37d2f6fbc14ffa0b450710bd23"
+        "sha": "78f0e0960f471c2c62b943272a48c33366f239fe"
       }
     },
     "node": {
