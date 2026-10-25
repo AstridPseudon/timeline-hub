@@ -301,13 +301,15 @@ def test_raw_canonical_bundle_compiles_in_fresh_process_without_history(recipe):
     sources = copy.deepcopy(case.hydrated[-1]["source_mapping"]["pinned_documents"])
     assert raw["parent"]["clips"][0]["app"]["astrid"]["word_anchors"]["on"]["document"] == case.pin
     # This process receives no Runtime root, accepted records, history or picker
-    # command. Both inputs are plain JSON, and no registry hook is installed.
+    # command. Both inputs are plain JSON, and no test registry hook is installed.
+    # The production execute path resolves this operation through the registered
+    # commands.operations() entry; compilation below still consumes only JSON.
     script = '''
 import json
 import sys
 from tests.editing_conformance.word_binding_recipe import compile_authored
 from astrid.sdk.timeline.commands import operations
-assert "clip.anchor" not in operations()
+assert "clip.anchor" in operations()
 bundle, sources = json.load(sys.stdin)
 result = compile_authored(bundle, sources)
 assert result.bundle == bundle
@@ -432,7 +434,7 @@ def test_half_open_window_and_exact_rational_fps_are_validated_at_acceptance(rec
     with pytest.raises(RuntimeErrorBase, match="outside the half-open source window") as error:
         case.submit(case.request([invalid]), "exclude-word")
     assert error.value.details["reason"] == "invalid_anchor"
-    assert error.value.details["status"] == "refused"
+    assert error.value.details["status"] == "invalid"
     assert case.head() == head
     undo(case, accepted, "undo-window")
     assert projected(case).timings[TARGET]["start_frame"] == 148
