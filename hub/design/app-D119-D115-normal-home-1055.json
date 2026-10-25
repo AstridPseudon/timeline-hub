@@ -1,0 +1,35 @@
+{
+  "time": "2026-10-25T10:54Z",
+  "app_head": "7e92cd9468b883b009e8840786e832301479c3ed",
+  "tree": "d7d1d8877dd226acef2d442275428c566fae4de0",
+  "source_base": "96d4754b4eef0591a208d6b51b60c30fc44b6915",
+  "changed_files": [
+    "public/install-manifest.json",
+    "runtime.lock.json",
+    "tests/e2e/local/three-products.p2-tour.spec.ts"
+  ],
+  "blobs": {
+    "tests/e2e/local/three-products.p2-tour.spec.ts": {
+      "home": "63dd04ef1055dbb380642f27f24d47e1fd104625",
+      "reviewed_or_tool_tested": "63dd04ef1055dbb380642f27f24d47e1fd104625",
+      "equal": true
+    },
+    "runtime.lock.json": {
+      "home": "72f30d7c169e27bb061463d3727347ac0f2d6135",
+      "reviewed_or_tool_tested": "72f30d7c169e27bb061463d3727347ac0f2d6135",
+      "equal": true
+    },
+    "public/install-manifest.json": {
+      "home": "1cc35e17bd3bce6f138db2505cd5926c3603a42a",
+      "reviewed_or_tool_tested": "1cc35e17bd3bce6f138db2505cd5926c3603a42a",
+      "equal": true
+    }
+  },
+  "normal_receipts": [
+    "queue/done/merge-app-U4p-D115-release-adoption-1050",
+    "queue/done/merge-app-P2-D119-panel-hidden-author-1043"
+  ],
+  "D119_independent": "app-P2-D119-final-protected-review-1050 PASS supported Node20 types/lint and exact original predicates",
+  "U4p": "app-U4p-D115-release-adoption-1050 tool acceptance PASS",
+  "no_browser_credit": true
+}
