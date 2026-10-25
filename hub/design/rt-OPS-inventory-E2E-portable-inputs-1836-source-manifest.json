@@ -1,0 +1,12 @@
+{
+  "schema": "timeline.ops-child-custody.portable-source.v1",
+  "source_commit": "f6b9d4d52802d3cc5cd6bf9be070cd4c40d1e2fe",
+  "files": {
+    "ops-child-custody/tests/e2e_inventory.py": {"sha256": "05c7dcc2781acff05d364fc34924298ee4a58204642651f8fbbb9121dde54ef5", "bytes": 34182, "mode": "100644"},
+    "ops-child-custody/tests/support.py": {"sha256": "e85b42ac7ffff730166443ed7d081a1a68062b828af3aa5d8e0dd9352afb6581", "bytes": 12553, "mode": "100644"},
+    "ops-child-custody/e2e-fixtures/tiny/manifest.json": {"sha256": "cee9435bcd6d522ddb814ef0e0679790b929f73a619dc0dc28be301b55cb68e8", "bytes": 2704, "mode": "100644"},
+    "ops-child-custody/e2e-fixtures/tiny/makers/parent-0857/make-child-venv": {"sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39", "bytes": 68351, "mode": "100755"},
+    "ops-child-custody/e2e-fixtures/tiny/makers/candidate-c3226b/make-child-venv": {"sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e", "bytes": 69516, "mode": "100755"}
+  },
+  "unchanged": {"store_verify": true, "parent_candidate_verifier": true, "production_maker": true, "bench_store": true, "dependency_helper": true, "admission_and_reserve": true}
+}

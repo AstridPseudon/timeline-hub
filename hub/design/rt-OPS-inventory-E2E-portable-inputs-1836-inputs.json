@@ -1,0 +1,23 @@
+{
+  "task": "rt-OPS-inventory-E2E-portable-inputs-1836",
+  "base_commit": "f6b9d4d52802d3cc5cd6bf9be070cd4c40d1e2fe",
+  "source_runner_sha256": "05c7dcc2781acff05d364fc34924298ee4a58204642651f8fbbb9121dde54ef5",
+  "support_sha256": "e85b42ac7ffff730166443ed7d081a1a68062b828af3aa5d8e0dd9352afb6581",
+  "parent_maker_commit": "9428f515fcd8dccaef26193438b3ac89f903f5aa",
+  "parent_maker_sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+  "candidate_maker_sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+  "store_helper_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+  "dependency_helper_sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+  "bootstrap_artifact_sha256": "443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548",
+  "bootstrap_wheels": {
+    "pip-26.2.1-py3-none-any.whl": "71138adf1f4ca900cdb7d289c21b7494329f2332b6d85f0e1c42108c0384ed3e",
+    "setuptools-80.9.0-py3-none-any.whl": "062d34222ad13e0cc312a4c02d73f059e86a4acbfbdea8f8f76b28c99f306922",
+    "wheel-0.46.3-py3-none-any.whl": "4b399d56c9d9338230118d705d9737a2a468ccca63d5e813e2a4fc7815d8bc4d"
+  },
+  "dependency_wheels": {
+    "custody_a-0.1.0-py3-none-any.whl": {"sha256": "7997736a950ea3c6a4fbe32ca5cde306ced6610cbb0a4baa392cb402c59a3a14", "bytes": 1142},
+    "custody_b-0.1.0-py3-none-any.whl": {"sha256": "1e3759d3710d3d92e31f10df3abe7ee8003532a19c1686fa5c2fbc75c407531e", "bytes": 1136}
+  },
+  "interpreters": {"runner_and_build": "/home/user/work/venv-agent/bin/python", "child": "/usr/bin/python3.13", "runner_version": "3.13.16", "build": "1.4.0", "setuptools": "80.9.0", "wheel": "0.46.3"},
+  "e2e": "NOTRUN; reserved for Agent after independent review and target check-only"
+}

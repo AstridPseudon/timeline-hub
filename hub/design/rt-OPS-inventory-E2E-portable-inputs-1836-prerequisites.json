@@ -1,0 +1,10 @@
+{
+  "schema": "timeline.ops-child-custody.portable-prerequisites.v1",
+  "status": "SOURCE_PASS_CHECK_ONLY_READY",
+  "known_inputs_consumed": ["wholepath-1816", "portable-sol-1816", "final-receive-1822", "failure-review-1829"],
+  "correction": "Packaged exact parent/candidate makers; no .git/source sibling dependency; create empty private tests/suites.conf before Store.initialize; bind runner/build to venv-agent and child to python3.13.",
+  "check_only": {"aggregates_simultaneous_missing_inputs": true, "runs_before_git_store_maker_or_body": true, "mutating_setup_started": false, "git_mutated": false, "store_initialized": false, "maker_started": false, "missing_exit_code": 2, "positive_exit_code": 0},
+  "guards": {"start_reserve_bytes": 5905580032, "stop_line_bytes": 4000000000, "source_floor_bytes": 4600000000, "ordinary_body_floor_bytes": 5000000000, "network": "no-index/no-acquisition", "verifier": "unchanged embedded STORE_VERIFY"},
+  "current_free_bytes": 4990287872,
+  "current_admission": "below start reserve; above 4GB stop line; no whole-maker body run"
+}
