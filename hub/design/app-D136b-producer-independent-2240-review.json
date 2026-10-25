@@ -1,0 +1,59 @@
+{
+  "schema": "timeline.d136b.independent-review.v1",
+  "task": "app-D136b-producer-independent-2240",
+  "verdict": "PASS",
+  "scope": {
+    "original_cases": 9,
+    "boundaries": "B022-B036",
+    "case_boundary_classifications": 135,
+    "PRODUCT_GAP": 0,
+    "SETUP": 0,
+    "UNKNOWN": 135,
+    "conserved_predicates": 43,
+    "conserved_test_bodies": 11,
+    "historical_fixture_statements": 54
+  },
+  "checks": [
+    {
+      "id": "immutable-source-and-span-custody",
+      "result": "PASS",
+      "basis": "25 manifest source files matched immutable joined Agent and Runtime ab1e bytes and line counts; 24 Python files parsed with stdlib ast."
+    },
+    {
+      "id": "producer-map-call-chain",
+      "result": "PASS",
+      "basis": "52 cited producer nodes and 43 call edges matched exact AST definitions/call sites and recorded lexical guards."
+    },
+    {
+      "id": "classification-conservation",
+      "result": "PASS",
+      "basis": "All nine selectors and all B022-B036 rows are conserved; every case-boundary value is UNKNOWN; every row records concrete unresolved phase, ordinal, image, attachment, or binding facts."
+    },
+    {
+      "id": "registered-production-flow",
+      "result": "PASS",
+      "basis": "The source reaches the registered RuntimeCommitService through the real authoring writer; initialization and source publication precede the authored intermediate-command flow."
+    },
+    {
+      "id": "physical-observation-and-b022",
+      "result": "PASS",
+      "basis": "Agent source produces canonical physical closures and attaches the request-private sequential capture; Runtime consumes it, reconstructs command inputs, resolves native_site, and requires authenticated physical membership before output projection."
+    },
+    {
+      "id": "producer-vs-observation-boundary",
+      "result": "PASS",
+      "basis": "Conditional source reachability is kept distinct from the retained dynamic refusal. No missing dynamic ref, path, ordinal, image, phase, or binding was invented."
+    },
+    {
+      "id": "original9-and-guard-preservation",
+      "result": "PASS",
+      "basis": "Retained result remains 9 collected, 9 setup errors, zero pass/fail/skip, exit 1; no guard, test, fixture, generated file, pin, or product source was changed."
+    }
+  ],
+  "findings": [],
+  "limits": [
+    "No product imports, execution, collection, tests, comparison run, browser, service, or raw private-artifact access was performed.",
+    "The supplied dynamic record does not identify the refused verification phase, command ordinal, capture ref/path, physical image, or attachment; B023-B036 and downstream outcomes remain UNKNOWN.",
+    "No App behavior qualification or passing same-boundary comparator is claimed."
+  ]
+}

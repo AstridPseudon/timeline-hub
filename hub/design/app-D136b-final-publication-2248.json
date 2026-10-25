@@ -1,0 +1,31 @@
+{
+  "time": "2026-10-25T22:48Z",
+  "scope": "Byte-exact SAFE independent final source-classification PASS; actual9 remains NO_GO",
+  "files": [
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136b-producer-independent-2240/report.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136b-producer-independent-2240-report.md",
+      "sha256": "0759f6db6058e790af45c23b67aa0ace5f5ce7a5a14cb936b37f814b5bea23bf"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136b-producer-independent-2240/evidence/review.json",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136b-producer-independent-2240-review.json",
+      "sha256": "70c769da7db1d73fe1f7db1eebe238e2d4a77a4362226e47488012f49462281e"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136b-producer-independent-2240/evidence/findings.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136b-producer-independent-2240-findings.md",
+      "sha256": "00363f6194e1d611bf532d9bf533d6a14f9efb313413b92ad0fd41557294fa4d"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136b-producer-independent-2240/evidence/validation.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136b-producer-independent-2240-validation.md",
+      "sha256": "f1238d1ca47fef0cb5efdf727e3e15d08dba6a2d9a59d3bcf728704c191844a8"
+    },
+    {
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136b-producer-independent-2240/evidence/handoff.md",
+      "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D136b-producer-independent-2240-handoff.md",
+      "sha256": "894ad65aff8125bd1403e6691af0775f04e1c3e8a534b3dbaee485f5b6659028"
+    }
+  ]
+}

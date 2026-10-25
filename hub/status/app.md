@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T22:46:24Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 0m -->
-# app board, 2026-10-25T22:46Z
+<!-- app | 2026-10-25T22:51:11Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 2m -->
+# app board, 2026-10-25T22:48Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -115,21 +115,21 @@
 
 | D139-original9-union | Retain prepared merged-base source union | Luna and independent Luna | Complete boundary list and qualified repair | gated:App-boundaries | Agent union2151 and independent2202 | Five donors and outside union qualified. Actual2136 failure stays visible; no next9 or normal D100 release. | Agent d133a14838 held |
 
-| D136b | Classify observation producer consistency | HARD Sol and independent Luna | Completed App2231; Runtime overlap reconciliation | review | app-D136b-producer-independent-2240 | Author maps135 UNKNOWN,0 proved product/setup. All7 SAFE outputs home; independent2240 queued. Runtime2233 actual start requested. | Source unchanged |
+| D136b | Classify observation producer consistency | HARD Sol and independent Luna | Final independent2240 PASS | merged | App2231 and independent2240 | Finite evidence only:135UNKNOWN,0 proved product/setup;25 hashes,52 nodes,43 edges and predicates PASS. Actual9 remains NO-GO. | No source change |
 
 Integration: App 5696769dfca056676cde1ab46d8bc94354b3a44a/tree0748df404125114a0f68b701fa76f43abd3fc79a. Entire tree equals reviewed/tested79699 no-measurement route;30Node20 controls/types/lint PASS. Predecessor b5c9 retained for historical15200 only. U3 sourcehome2f362/tree687e4c equals reviewedeba8;127 affected and warmup2/types/lint PASS. Qualified bootstrap59a4 normalHOME atop U3. Existing manifest Runtimeab1e/Agent070dfc/Composition635f. D139 requested U3 join already HOME; fresh ancestor36e1 check PASS. Latest lead150a19 deferred to small live-tip cut merge-forward. Producer-first final cut pins/proofs still owed.
 
 Current P2 NO-GO. Historical six complete tails qualified on recorded tuples; full original tour/final tuple still owed. Actual2136 finalFPS20db+D10042040+f53b original9 failed9setupERROR at intermediate authenticated physical observation. Independent2144 custody/source/counts PASS and actualNO_GO; no next9 until owner all-boundary inventory and meaningful qualified repair.
 
 Blockers: SWAP safety — D130 holds recovery, acceptance, release, adoption and related tours after automatic classifier refusal1537. No retry, alternate route, transfer or rollback. Existing Runtime escalation owns decision.
-Blockers: Projection9 — Complete45-boundary inventory and final2220 PASS delivered Runtime/Agent/lead. Evidence wait cleared. Actual auth2209 refusal remains causalownerUNKNOWN, no proved REG/setup fault. Missing exact physical records; no next body without qualified repair.
+Blockers: Projection9 — Complete45 inventory2220 and D136b internal-consistency2240 independentlyPASS. All135 case/boundary outcomes UNKNOWN; exact failed phase/ordinal/ref/image/bindings absent. No proved product/setup, no next body or guard/fixture change.
 Blockers: Element cost — D127e census2153 and independent2202 complete: D112 path statically reachable, actual waits UNKNOWN. Header22:16 records D130 hold and combined owner decision pending. No fix or verify body. App route HOME5696769 retained.
 Blockers: Graph child birth — Runtime1814/final1821 C0 sequential operands defined. Authentic intermediate physical bindings/stages absent; causalownerUNKNOWN. No invented guardwriter or unchangedrerun.
 Blockers: Agent core and render — Runtime D139 recipe2153 and Agent input census2149/reviewer2210 own missing child imports. No ship core started. Farm step0 remains held for complete final merged tuple inputs; no App duplicate.
 Blockers: Final cut — ship-grade core, REG0, full P2, final P1-P5/D69, installed render, platform and ZIP remain owed. No final gate or ZIP claim.
-Next ready: D136b independent2240 final verdict and Runtime actual-start reconciliation. Original9 stays gated on final classification and independently qualified repair; element stays D130 held. Cut refresh waits cut.
-live 1 / cap 6; ready-undispatched 0. Independent Luna2240 ACTUALSTART22:44:06; Sol2231 finished. No body/profiling.
-INBOX consumed through2508352 bytes. H6 Runtime22:02, Agent22:10 and Farm22:00 boards plus D139/H72 and D127e header consumed. All cross-lane asks have existing rows or later entries.
+Next ready: No admitted App source/body. Runtime source coordinator receives final D136b UNKNOWN/missing-record list; actual-start overlap reconciliation pending. Original9 and element safety/repair gates remain; final upstream refresh waits cut.
+live 0 / cap 6; ready-undispatched 0. D136b final2240 PASS delivered, all App source reviews complete. No body/profiling.
+INBOX consumed through2512213 bytes. H6 Runtime22:02, Agent22:10 and Farm22:00 boards plus D139/H72 and D127e header consumed. All cross-lane asks have existing rows or later entries.
 
 Safety: Manager edits only ORCH briefs/board/peers and byte-publishes authored SAFE artifacts. No manager product/test/generated/pin changes, direct Git writes, upstream push, M5, credentials or refused-route retry. Dirty U3/orphan guards and exact1.107GB orphan graph remain untouched.
 Later: D133 correctedB Gate3 DEFERRED, existing worker1853 paragraph installed Runtime1911; no optionA author/review/body. Word/native originals and originalTrue/graph require authentic records; no unchangedrerun. D79 ZIP-held; E4 dropped; helpercut D23; D14 retained. Agent shared105 sole2055 propagation waits D100/FPS qualification; managed30 source exact/restored. Agent CLI22 proof waits Runtime2104 route, no Appduplicate. D127e waiter census belongs Runtime/Agent owner; App only verification.
@@ -175,3 +175,5 @@ Pass22:43: delayed Runtime2231 overlapping Sol2233 claim arrived. App actual2231
 Pass2026-10-25T22:44Z: completed App2231 bytepublished7SAFE outputs, author135UNKNOWN across9x15,0provedproduct/setup; independent2240 dispatched immediately on terminal. Runtime2233 overlap addressed by exacttimestamps; preserve existing read-only supporting evidence and one finalreview, no newauthor/body. Source-publication receipt2244 and peer2244 sent normal route.
 
 H6 2026-10-25T22:46Z: Runtime22:29, Agent22:32, Farm22:45 and header D139a consumed. Schema installed-source binding now conditional owner-authorized for Runtime recipe; no App child/core duplicate and no merged recipe proof yet. Farm finalinputs still NOT_READY. D136b independent2240 active, no new ready App row. Ended nonKEEP worktree candidates remain only previously dirty/refused U3 targets, untouched; freshfree5388460032bytes. Prior sweep/compact zero reclaimable scratch/testdirs; all raw KEEP retained.
+
+Pass2026-10-25T22:48Z: independent D136b2240 terminalPASS0findings;5 SAFE outputs bytepublished, finalreceipt2248. Separate addressed Runtime/Agent/Applead final handbacks deliver135UNKNOWN and exact per-boundary missing-record facts; finite classification/evidence wait closed. No source merge applicable, no product or behavioral proof granted. Runtime2233 overlap preserved for actual-start reconciliation, no new App reader/review/body. Own delayedpeer2227 consumed.
