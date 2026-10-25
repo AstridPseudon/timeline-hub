@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -34,6 +35,12 @@ from .launcher import install_shim, owned_shim, remove_shim
 from .service import Service, bootstrap_root, platform_target, venv_python
 from .support import reveal_bundle
 from .tools import binary, install_tools, source
+
+
+def _runtime_json(output: str) -> dict:
+    """Runtime's one JSON result, after any stderr notes merged into output."""
+    start = next((match.start() for match in re.finditer(r"^\{", output, re.MULTILINE)), 0)
+    return json.loads(output[start:])
 
 
 class Backend:
@@ -80,7 +87,7 @@ class Backend:
         argv = [python, "-I", "-m", "astrid_runtime", *args, "--data-root", str(data), "--json"]
         if profile and version:
             argv += ["--source-manifest", str(version.profile)]
-        result = json.loads(self.run(argv, extra_env=version.env if version else None, timeout=timeout))
+        result = _runtime_json(self.run(argv, extra_env=version.env if version else None, timeout=timeout))
         if result.get("ok") is False:
             raise RuntimeError(str(result.get("error") or result))
         return result
