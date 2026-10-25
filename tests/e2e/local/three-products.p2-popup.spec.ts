@@ -848,7 +848,12 @@ async function assertReloadUndo(
   expect(await canonicalAt(harness, seed, committed.head.revision_id)).toEqual(expected);
   await page.reload();
   const dialog = await openPopup(page, harness, seed, false);
-  const editedId = post.body.commands[1].op === 'occurrence.swap-media' ? TARGET_CLIP_ID : String(object(post.body.commands[1].args.row, 'added row').id);
+  const canonicalEditedId = post.body.commands[1].op === 'occurrence.swap-media'
+    ? TARGET_CLIP_ID
+    : String(object(post.body.commands[1].args.row, 'added row').id);
+  // The canonical child id remains raw in the document, while the mounted
+  // timeline action is occurrence-qualified by projectClip().
+  const renderedEditedId = `${seed.sharedOccurrenceId}:${canonicalEditedId}`;
   const selected = array(expected.parent_revision.payload.occurrences, 'reloaded occurrences')
     .find((row) => row.occurrence_id === seed.sharedOccurrenceId)!;
   await expect(dialog.locator(`[data-canonical-occurrence-id="${seed.sharedOccurrenceId}"]`))
@@ -857,16 +862,16 @@ async function assertReloadUndo(
     .toHaveAttribute('data-canonical-revision-id', String(selected.shot_revision_id));
   await expect(dialog.locator('[data-shot-timeline-preview="true"]'))
     .toHaveAttribute('data-shot-timeline-head-revision-id', expected.parent_revision.revision_id);
-  await expect(dialog.locator(`.clip-action[data-clip-id="${editedId}"]`)).toBeVisible();
+  await expect(dialog.locator(`.clip-action[data-clip-id="${renderedEditedId}"]`)).toBeVisible();
   const canvas = dialog.locator('[data-shot-timeline-canvas="true"]');
   await expect(canvas).toHaveAttribute('data-shot-timeline-clip-count', post.body.commands[1].op === 'occurrence.add-media' ? '4' : '3');
   await expect(canvas).toHaveAttribute('data-shot-timeline-tracks', 'plate:visual|V2:visual');
   const editedFields = post.body.commands[1].op === 'occurrence.add-media'
-    ? `${editedId}:V2:0:no-from:no-to:5:hold:asset:image`
+    ? `${canonicalEditedId}:V2:0:no-from:no-to:5:hold:asset:image`
     : `${TARGET_CLIP_ID}:V2:3:no-from:no-to:3:media:asset:image`;
   await expect(canvas).toHaveAttribute('data-shot-timeline-clip-assets', new RegExp(editedFields));
-  await dialog.locator(`.clip-action[data-clip-id="${editedId}"]`).click();
-  await expect(dialog.getByText(`Selected clip: ${editedId}`, { exact: true })).toBeVisible();
+  await dialog.locator(`.clip-action[data-clip-id="${renderedEditedId}"]`).click();
+  await expect(dialog.getByText(`Selected clip: ${renderedEditedId}`, { exact: true })).toBeVisible();
   const reloaded = await history(harness, seed);
   expect(reloaded).toEqual(committed);
   expect(await canonicalAt(harness, seed, reloaded.head.revision_id)).toEqual(expected);
