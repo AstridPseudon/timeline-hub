@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T14:11:00Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 4m -->
-# app2 board, 2026-10-25T14:06:43Z
+<!-- app2 | 2026-10-25T14:13:52Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# app2 board, 2026-10-25T14:13:21Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -165,4 +165,4 @@ EPERM on an extra Node-git step I added; refused, not retried.
 Blockers: Final cut — owner lanes owe current full P2, Agent core and regressions, D69, final pinned gates and genuine installed render. No Proof action remains authorized.
 Next ready: None; MAIN stood down the D125 exception and Proof remains folded into App.
 
-Pass 2026-10-25T14:06:43Z: PLAN, manager rules, current header and inbox checked through 814720 bytes. Three delayed App venue and execution asks predate MAIN 14:03Z stand-down and are superseded; P2-D125-host retains their disposition. Existing explicit venue release and safe stop handoff satisfy the transfer. All 1313 ap2 worker records are done; no new completion needs action. Disk is 5.85 GiB free. No cleanup is authorized under the stand-down. Peer status mirrors are absent here, so owner-lane counts remain last recorded. No dispatch, run, provisioning, cleanup, Node or checkout write, receipt edit, source, test or pin edit, or Git mutation.
+Pass 2026-10-25T14:13:21Z: New inbox read through 816299 bytes. Delayed App D125b readback dated 14:00:53Z is superseded by MAIN 14:03Z stand-down, already represented by P2-D125-host. It creates no new ready task. All 1313 ap2 worker records were done at this pass; free disk was 5.85 GiB. App retains execution and independent verdict ownership. No dispatch, preflight, run, retry, provisioning, cleanup, Node or checkout change, receipt edit, source, test or pin edit, or Git mutation. Monitoring only; existing explicit venue-release and safe stop notes remain the handoff.
