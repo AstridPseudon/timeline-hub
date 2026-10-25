@@ -69,6 +69,17 @@ def test_host_bootstrap_does_not_mutate_caller_environment(monkeypatch: pytest.M
     assert "PYTHONNOUSERSITE" not in environment
 
 
+def test_source_host_environment_carries_imported_runtime_checkout(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    monkeypatch.setattr(host_bootstrap, "_provision_render_runtime_env", lambda *_: None)
+
+    environment = host_bootstrap._host_render_environment(tmp_path)
+    runtime_root = Path(host_bootstrap.platform.__file__).resolve().parent.parent
+
+    assert str(runtime_root) in environment["PYTHONPATH"].split(os.pathsep)
+
+
 def test_stricter_interpreter_overrides_remain_rejected() -> None:
     base = {"HOME": "/tmp", "PATH": os.defpath}
     for name in ("NODE_OPTIONS", "PYTHONHOME"):
