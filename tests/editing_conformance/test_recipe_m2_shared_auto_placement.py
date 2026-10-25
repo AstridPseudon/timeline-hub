@@ -14,9 +14,10 @@ from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundl
 from astrid.sdk.timeline.native_auto_placement import auto_place_shared, unplace_shared
 from astrid.sdk.timeline.native_shot_pool_commands import POOL, capture_shot_pool
 from astrid.sdk.timeline.rebase import replay
+from tests.editing_conformance import test_commit_runtime_occurrence_media as runtime_occurrence
 from tests.editing_conformance.test_recipe_m1_commands import inverse as _inverse
 from tests.editing_conformance.test_recipe_m2_auto_placement import GenuineTimeline
-from tests.editing_conformance.test_recipe_occurrence_media import inputs
+from tests.editing_conformance.test_recipe_occurrence_media import _create_managed_fixture, inputs
 from tests.sdk.test_timeline_commit_provider import (
     inverse as inverse_call,
 )
@@ -40,6 +41,7 @@ def genuine_runtime(request, tmp_path, monkeypatch):
     values = parameter.params if parameter is not None else {}
     name = values.get('name')
     kind = values.get('kind') or CASES[name][0]
+    monkeypatch.setattr(runtime_occurrence, '_create_fixture', _create_managed_fixture)
     context = GenuineTimeline.create(tmp_path, monkeypatch, kind)
     try:
         yield context

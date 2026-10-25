@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from astrid.sdk.timeline._command_state import CommandError, State, overlaps
+from astrid.sdk.timeline._command_state import CommandError, State, overlaps, present
 from astrid.sdk.timeline.commands import execute, validate_command
 from astrid.sdk.timeline.commit import (
     _digest,
@@ -15,10 +15,13 @@ from astrid.sdk.timeline.commit import (
     bundle_from_document,
     document_from_bundle,
 )
+from astrid.sdk.timeline.emitter import emit_document_commands
+from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
 from astrid.sdk.timeline.native_occurrence_media_commands import (
     capture_occurrence_add_media,
     capture_occurrence_swap_media,
 )
+from astrid.sdk.timeline.native_occurrence_shared import capture_occurrence_place_shared
 from astrid.sdk.timeline.rebase import replay
 from tests.editing_conformance import test_commit_runtime_occurrence_media as runtime_occurrence
 from tests.editing_conformance.fixture_loader import load_fixture
@@ -68,6 +71,104 @@ def inputs(kind='image'):
     verified = [{'selection': copy.deepcopy(pin), 'media_type': kind + '/fixture', 'size': 123,
                  **({'duration_seconds': 6} if kind == 'video' else {})} for pin in (old, new)]
     return document, old, new, verified
+
+
+def _create_managed_fixture(service, project, document, selection, *, authorize):
+    """Author this fixture with semantic closure creation and public payload emission."""
+    head = service.get_project_timeline(project, 'film')
+    parent = service.get_project_parent_composition_revision(
+        project, 'film', head['head_revision_id'])
+    empty = {'schema_version': 1, 'project_id': project, 'timeline_id': 'film',
+             'parent_revision': {key: parent[key] for key in
+                                 ('revision_id', 'content_digest', 'payload')},
+             'shot_revisions': [], 'internal_timeline_revisions': [],
+             'dependency_manifest': parent['dependency_manifest']}
+    bundle = bundle_from_document(empty)
+    verified = service.get_project_verified_media(project, selection, authorize=authorize)
+
+    def body(commands, label):
+        current = service.get_project_timeline(project, 'film')
+        steps = [{
+            'id': str(index), 'label': label, 'intent': 'Fixture setup', 'tags': [],
+            'command_ordinals': [index],
+            'patch': copy.deepcopy(command.get('args', {}).get('changes', [])), 'reads': [],
+        } for index, command in enumerate(commands)]
+        return {
+            'api_version': 1, 'project_id': project, 'timeline_id': 'film',
+            'base_revision_id': current['head_revision_id'],
+            'base_publication_id': current['head_publication_id'], 'commands': commands,
+            'label': label, 'steps': steps, 'merge': 'atomic', 'reads': [],
+            'dry_run': False, 'source': {'via': 'python'},
+            'rationale': 'Author the exact M2 fixture through registered semantic setup.',
+            'group_id': 'D134-managed16-fixture',
+        }
+
+    def submit(commands, label):
+        return service.commit_timeline(
+            project, 'film', body(commands, label), idempotency_key=label,
+            publisher='media-editor',
+            invocation_path=f'/v1/projects/{project}/timelines/film/commit',
+            authorize=authorize)
+
+    authored_parent = copy.deepcopy(document['parent_revision']['payload'])
+    occurrences = authored_parent['occurrences']
+    authored_parent.pop('occurrences')
+    target = copy.deepcopy(bundle)
+    target['parent'] = authored_parent
+    setup = emit_document_commands(bundle, target)
+    from astrid.sdk.timeline.commands import execute
+    for command in setup:
+        bundle = execute(bundle, [command], verified_media=[verified]).bundle
+    admission = {'schema_version': 1, 'op': 'media.admit', 'version': '1', 'select': None,
+                 'args': {'inputs': [{'pin': {'media_id': selection['object_id'],
+                                             'content_digest': selection['object_id']},
+                                      'selection': selection}]}}
+    birth = capture_occurrence_create(
+        bundle, 'occ-a', 'chapter-shot', name='Chapter One', track='picture', on=8, duration=10)
+    result = submit([*setup, admission, birth], 'popup-birth')
+    bundle = bundle_from_document(result['data']['canonical_document'])
+
+    current = document_from_bundle(bundle)
+    target = copy.deepcopy(bundle)
+    target['parent'] = copy.deepcopy(document['parent_revision']['payload'])
+    target['parent'].pop('occurrences')
+    local_shot = next(iter(target['shots']))
+    target['shots'][local_shot]['payload'] = copy.deepcopy(document['shot_revisions'][0]['payload'])
+    target['shots'][local_shot]['payload'].pop('internal_timeline_revision_id', None)
+    target['shots'][local_shot]['internal_timeline'] = copy.deepcopy(
+        document['internal_timeline_revisions'][0]['payload'])
+    baseline = emit_document_commands(bundle, target)
+    before_occurrence = current['parent_revision']['payload']['occurrences'][0]
+    occurrence = copy.deepcopy(occurrences[0])
+    occurrence['shot_revision_id'] = before_occurrence['shot_revision_id']
+    occurrence_patch = {
+        'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
+        'args': {'changes': [{
+            'op': 'set', 'ref': 'parent',
+            'path': ['occurrences', 'occurrence_id:occ-a'],
+            'before': present(before_occurrence), 'value': occurrence,
+        }]},
+    }
+    result = submit([*baseline, occurrence_patch], 'popup-baseline')
+    actual = result['data']['canonical_document']
+
+    sibling = capture_occurrence_place_shared(
+        bundle_from_document(actual), 'occurrence:occ-a', 'occ-b', on=10)
+    result = submit([sibling], 'popup-sibling')
+    actual = result['data']['canonical_document']
+    expected_parent = copy.deepcopy(document['parent_revision']['payload'])
+    actual_shot, = actual['shot_revisions']
+    actual_internal, = actual['internal_timeline_revisions']
+    for row in expected_parent['occurrences']:
+        row['shot_revision_id'] = actual_shot['revision_id']
+    expected_shot = copy.deepcopy(document['shot_revisions'][0]['payload'])
+    expected_shot['internal_timeline_revision_id'] = actual_internal['revision_id']
+    if (actual['parent_revision']['payload'] != expected_parent
+            or actual_shot['shot_id'] != 'chapter-shot'
+            or actual_shot['payload'] != expected_shot
+            or actual_internal['timeline_id'] != 'film'
+            or actual_internal['payload'] != document['internal_timeline_revisions'][0]['payload']):
+        pytest.fail('supported fixture commits changed authored payloads or shared ownership')
 
 
 def captured(operation, kind='image', *, clip_type=None):
@@ -278,14 +379,16 @@ class MediaRealm(DetachedRealm):
 
 def _genuine_editing_fixture(kind, operation, tmp_path, monkeypatch):
     """Reuse the current Runtime bootstrap and registered Agent provider."""
-    fixture = runtime_occurrence.editing.__wrapped__(
-        SimpleNamespace(param=kind), tmp_path, monkeypatch, operation,
-        OWNER, lambda media_kind, name: name.encode(),
-    )
-    try:
-        yield next(fixture)
-    finally:
-        next(fixture, None)
+    with monkeypatch.context() as override:
+        override.setattr(runtime_occurrence, '_create_fixture', _create_managed_fixture)
+        fixture = runtime_occurrence.editing.__wrapped__(
+            SimpleNamespace(param=kind), tmp_path, monkeypatch, operation,
+            OWNER, lambda media_kind, name: name.encode(),
+        )
+        try:
+            yield next(fixture)
+        finally:
+            next(fixture, None)
 
 
 @pytest.fixture

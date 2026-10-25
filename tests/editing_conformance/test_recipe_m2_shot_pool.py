@@ -54,7 +54,7 @@ class GenuineTimeline:
         from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
         from test_generation_publish_v1_settlement import _effect, _fixture, _output, _settle
 
-        from tests.editing_conformance.test_commit_runtime_occurrence_media import _create_fixture
+        from tests.editing_conformance.test_recipe_occurrence_media import _create_managed_fixture
         from tests.sdk.test_timeline_commit_provider_document import MEDIA
 
         names = ('old', 'new', 'pool-b', 'pool-c')
@@ -125,7 +125,7 @@ class GenuineTimeline:
                                    variantId=old['variant_id'])
             service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
             service.create_timeline(project, 'film', idempotency_key='pool-bootstrap')
-            _create_fixture(service, project, document, old, authorize=authorize)
+            _create_managed_fixture(service, project, document, old, authorize=authorize)
             document = cls._document(service, project, 'film')
             return cls(service, project, authorize, document, pins, verified)
         except Exception:
