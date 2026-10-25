@@ -1,0 +1,51 @@
+{
+  "task": "D118a-helper-cut1-1130",
+  "repo": "agent",
+  "worktree_head": "0ad49261ed36f043b059c07de989bd39cd3a5889",
+  "source_change": false,
+  "target": {
+    "path": "tests/sdk/test_timeline_helper_capture.py",
+    "sha256": "c0379c95ffe6e1f8f7ab9676d46e9b3b9cbf0fdacc6717a28caacedd431ef46a",
+    "base_blob": "0f21ba525996c539aaec60f4a39da49e56bf5a50",
+    "diff_from_base": "none",
+    "original2016_sha256": "c0379c95ffe6e1f8f7ab9676d46e9b3b9cbf0fdacc6717a28caacedd431ef46a",
+    "ast_function_bodies_equal": true,
+    "assert_statement_count": 35
+  },
+  "sync_source": {
+    "path": "astrid/sdk/timeline/sync.py",
+    "current_blob": "2b3418e521bd45913322bc220e94387f8335e7c4",
+    "base_blob": "2b3418e521bd45913322bc220e94387f8335e7c4",
+    "failure_location": "astrid/sdk/timeline/sync.py:556"
+  },
+  "retained_node": {
+    "nodeid": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[\"second\"]",
+    "source_sha256": "c0379c95ffe6e1f8f7ab9676d46e9b3b9cbf0fdacc6717a28caacedd431ef46a",
+    "failure_text_sha256": "3563b774aec825fabbb7dd89d7d7e5ebc3c7345c2a728f1fae44dfaa0218506a",
+    "classification": "D23_DEFERRED"
+  },
+  "runtime": {
+    "approved_release_commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+    "approved_release_tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c",
+    "approved_clean_checkout_available": false,
+    "held_available_checkout_not_used": "/home/user/work/runtime",
+    "held_available_checkout_head": "7070f1378d1917fcce69857ebd33cd2b3015568b"
+  },
+  "exact_node_check": {
+    "status": "not_run",
+    "reason": "Approved Runtime checkout was unavailable; running the held D111b checkout or copying the release into scratch was forbidden.",
+    "nonqualifying_import_probe": "The available non-held Runtime checkout lacked runtime_protocol.timeline_commit_provider during fixture setup; no behavioral result was inferred."
+  },
+  "unapplied_owner": {
+    "owner": "Agent SDK timeline timing/word-binding implementation",
+    "input": "The retained setup writes the exact legacy app.astrid.on=\"second\" declaration on parent clip inside without an authenticated captured word binding.",
+    "why_test_only_fix_is_not_safe": "Adding a transcript-backed clip.anchor binding changes the authored document/history and violates the exact-input/final-state constraint; no faithful test-only correction was proven."
+  },
+  "checks": {
+    "ruff": "pass",
+    "mypy_follow_imports_skip": "pass",
+    "py_compile": "pass",
+    "git_diff_check": "pass",
+    "git_status": "clean"
+  }
+}

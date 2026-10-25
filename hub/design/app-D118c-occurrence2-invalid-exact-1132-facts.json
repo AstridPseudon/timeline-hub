@@ -1,0 +1,89 @@
+{
+  "task": "D118c/D120 occurrence2 current-contract exact invalid timing migration",
+  "repo": "agent",
+  "worktree": "/home/user/work/wt/app-D118c-occurrence2-invalid-exact-1132",
+  "base": "36e44e1c0ed9b454faaf973715a2be7119552d0a",
+  "changed_paths": [
+    "tests/editing_conformance/test_commit_runtime_occurrence_create.py"
+  ],
+  "source_conservation": {
+    "old_file_sha256": "26ecb3e8da202dc9a1113f942cf9c1a7384600d8662cb9c1e8d983caf17afe6f",
+    "new_file_sha256": "f1d86c7a95140a3f69a60e3ac348511eedf2eca52d75da135eb04450f9935ca1",
+    "old_assert_count": 29,
+    "new_assert_count": 31,
+    "assertion_delta": [
+      "assert error.value.status == 422",
+      "assert error.value.details['status'] == 'invalid'",
+      "assert error.value.details['code'] == 'unsupported_timing'"
+    ],
+    "other_assertions_byte_exact": true,
+    "authored_input": "invalid_birth['args']['on'] = 1e308",
+    "reason_assertion": "assert error.value.details['reason'] == 'unsupported_timing'",
+    "upstream_frozen_candidate_file": "absent"
+  },
+  "contract_evidence": [
+    {
+      "source": "/home/user/work/runtime/contract/commit-v2.md",
+      "lines": "60-80",
+      "finding": "C0 §1 defines the exact base pair and preserves request/base semantics."
+    },
+    {
+      "source": "/home/user/work/runtime/contract/commit-v2.md",
+      "lines": "1299-1310",
+      "finding": "C0 §4 defines invalid-at-claimed-base final timing validation as HTTP 422/details.status invalid, and says not to diagnose a later-head guard failure as invalid."
+    },
+    {
+      "source": "/home/user/work/wt/app-D118c-occurrence2-invalid-exact-1132/astrid/sdk/timeline/_commit_errors.py",
+      "lines": "65-71, 90-110",
+      "sha256": "c0e11dcdd2e6f511f18ce08afd60eff5d54554bcfb93855ab667c7e047a476e3",
+      "finding": "Current Agent source classifies unchanged-base unsupported_* as invalid and emits http_status 422 with details.status invalid and details.code equal to the reason."
+    },
+    {
+      "source": "/home/user/timeline-hub/hub/design/app-P1-D16-caller-sol-2325.md",
+      "lines": "1-14, 26-33",
+      "finding": "Approved D16 records the caller binding and limited-scope update; no product or broad test change is authorized here."
+    }
+  ],
+  "runtime_pin": {
+    "path": "/home/user/work/wt/rt-pin-42aad0e9",
+    "head": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+    "tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c",
+    "write_tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c",
+    "clean": true,
+    "raw_sha256": {
+      "runtime_protocol/errors.py": "f10518c992c28d5836fdd7916337679f0ba92b9722dacc1dd94fe408a22a49f4",
+      "runtime_protocol/service.py": "5a051f014e01698746dfe48b39ecadc9042b228a7a26df1bb439a79aa77b2666",
+      "contract/commit-v2.md": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7"
+    }
+  },
+  "nodes": [
+    {
+      "node": "tests/editing_conformance/test_commit_runtime_occurrence_create.py::test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[False]",
+      "exit_code": 1,
+      "migration_observed": "passed",
+      "next_failure": "Runtime invalid_records during media_undo: inverse stage materialization differs from its recorded source image",
+      "owner": "Runtime timeline_commit_auth.py:1645 / Runtime inverse authentication",
+      "evidence": "evidence/node-false.log, evidence/node-false.xml"
+    },
+    {
+      "node": "tests/editing_conformance/test_commit_runtime_occurrence_create.py::test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[True]",
+      "exit_code": 1,
+      "migration_observed": "passed",
+      "next_failure": "Runtime invalid_records during grouped birth: provider intermediate image lacks an authenticated physical promotion",
+      "owner": "Runtime timeline_commit_auth.py:2267 / Runtime provider physical-promotion authentication",
+      "evidence": "evidence/node-true.log, evidence/node-true.xml"
+    }
+  ],
+  "static_checks": {
+    "ruff": "PASS",
+    "mypy_follow_imports_skip": "PASS",
+    "py_compile": "PASS",
+    "git_diff_check": "PASS"
+  },
+  "scope": {
+    "production_changes": false,
+    "other_tests_changed": false,
+    "full_or_broad_suites_run": false,
+    "later_original_tail_proven_green": false
+  }
+}

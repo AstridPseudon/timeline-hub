@@ -1,0 +1,59 @@
+{
+  "verdict": "PASS",
+  "review": "D118a protected independent review",
+  "candidate_commit": "706e835598f9b00d9b27bf02a5539be57de6025b",
+  "base_commit": "36e44e1c0ed9b454faaf973715a2be7119552d0a",
+  "changed_paths": ["tests/sdk/test_timeline_script.py"],
+  "diff": {"insertions": 12, "deletions": 0},
+  "agent_test_source_sha256": "72163d079c23ab7f67a2498cc6894de161556afc60969e7ca46a617d16168193",
+  "original_test_source_sha256": "c2cabefe8a55cd2d98aeb22ab2d37095bd7139cba9af516d26797c0e0c8c2fc5",
+  "retained_node": "tests/sdk/test_timeline_script.py::test_runtime_pin_flow_returns_old_script_after_binding_rebind",
+  "runtime": {
+    "checkout": "/home/user/work/wt/rt-pin-42aad0e9",
+    "commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+    "tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c",
+    "service_py_sha256": "5a051f014e01698746dfe48b39ecadc9042b228a7a26df1bb439a79aa77b2666",
+    "canonical_schema_py_sha256": "ad3a316aa60d2fd475327a2156373f77384f327bc96cccea1ee939bac7049d7f",
+    "checkout_receipt": "queue/done/checkout-runtime-42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+    "checkout_receipt_sha256": "ea5c454cbdced7e7f166c65cdc26e4751d4ebe80aaa65838ee0ceee73542ee1a",
+    "clean": true
+  },
+  "test_result": {
+    "command": "ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt/rt-pin-42aad0e9 PYTHONPATH=$PWD:/home/user/work/wt/rt-pin-42aad0e9 PYTHONPYCACHEPREFIX=/tmp/w-b3ce7467a4/app-D118a-script-pin-protected-review-1132/pycache /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -m integration tests/sdk/test_timeline_script.py::test_runtime_pin_flow_returns_old_script_after_binding_rebind",
+    "outcome": "1 passed in 2.41s",
+    "xml": "evidence/node.xml",
+    "log": "evidence/node.log"
+  },
+  "static_checks": {
+    "ruff": "pass",
+    "mypy_follow_imports_skip": "pass",
+    "py_compile": "pass",
+    "git_diff_check": "pass"
+  },
+  "conservation": {
+    "original_assertions": 7,
+    "candidate_assertions": 8,
+    "original_assertion_ast_multiset_subset": true,
+    "original_calls": 49,
+    "candidate_calls": 51,
+    "original_call_ast_multiset_subset": true,
+    "authored_media_inputs_preserved": true,
+    "old_script_text_head_revision_and_full_config_assertions_preserved": true
+  },
+  "upstream_check": {
+    "d60_upstream_tip": "0d5d16af6f83d595144d21ea1cef2b5a468b9836",
+    "original_test_present_at_d60": true,
+    "d118a_pin_script_descriptor_patch_present_at_d60": false,
+    "d118a_patch_is_local_to_candidate": true
+  },
+  "product_finding": {
+    "status": "unapplied_live_seam",
+    "owner": [
+      "astrid/sdk/timeline/native_text_binding.py",
+      "astrid/sdk/timeline_script.py"
+    ],
+    "native_producer_sha256": "19476d6eaba2e9ce8ee379db52e180da10364cd2a5bcfbd119a445b5d64f736d",
+    "reader_sha256": "9ce326dc839d9118932d0cdfd9bdb8cbb6e0051aac4a758a6a439df1c4c6b74e",
+    "finding": "native text-binding.set strips Runtime-derived binding_id/head from the authored descriptor; the reader correctly requires those fields. The test setup obtains the authoritative row from Runtime and commits it through the current v2 doc.patch caller."
+  }
+}
