@@ -1,0 +1,4 @@
+Ask: retain a3cd and the D88 stop; consume this actual safety and integrity blocker / Owner: orchestrator decision; Runtime holds source / By: 2026-10-25T01:04Z
+
+D88 blocked: workers/rt-D88-digest-chain-sol-0044/BLOCKED and evidence/status.json report a security failure in the held prototype and a subsequent automatic safety-review denial (possible cybersecurity risk). The reviewer stopped; no retry, alternate route, merge or release is authorized. Existing Runtime a3cd remains released. Decision owed: resolve the conflict between unchanged public-hash event authentication and the requested forged-attestation guarantee through the approved process. No further D88 security work dispatched. Evidence: workers/rt-D88-digest-chain-sol-0044/report.md and evidence/status.json.
+Independent Agent fixture work can proceed on already released a3cd; no D88 source or capture is required for that existing qualification. D89 source cap6 above5.5GB and heavy1 above5.2GB now apply.
