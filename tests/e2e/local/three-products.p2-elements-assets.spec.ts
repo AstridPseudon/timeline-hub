@@ -932,6 +932,50 @@ function assertMediaManifestIdentity(
   });
 }
 
+function projectedPlacementClipId(occurrenceId: string, rawClipId: unknown): string {
+  expect(occurrenceId).toEqual(expect.any(String));
+  expect(rawClipId).toEqual(expect.any(String));
+  expect(rawClipId).not.toBe('');
+  return `${occurrenceId}:${String(rawClipId)}`;
+}
+
+function projectedPlacementClipIdForRow(occurrenceId: string, row: JsonObject): string {
+  expect(row.id).toEqual(expect.any(String));
+  return projectedPlacementClipId(occurrenceId, row.id);
+}
+
+interface MountedPlacementIdentity {
+  clipId: string;
+  occurrenceId: string;
+  rawClipId: string;
+  physicalRef: string;
+  payloadDigest: string;
+}
+
+function assertMountedPlacementIdentity(
+  mounted: MountedPlacementIdentity[],
+  occurrenceId: string,
+  rawClipId: string,
+  payloadDigest: string,
+  present: boolean,
+): void {
+  const expected = {
+    clipId: projectedPlacementClipId(occurrenceId, rawClipId),
+    occurrenceId,
+    rawClipId,
+    physicalRef: `occurrence:${occurrenceId}`,
+    payloadDigest,
+  };
+  const rawMatches = mounted.filter((candidate) => candidate.rawClipId === rawClipId);
+  expect(rawMatches).toHaveLength(present ? 1 : 0);
+  if (present) {
+    expect(rawMatches[0]).toEqual(expected);
+    expect(mounted.filter((candidate) => candidate.clipId === expected.clipId)).toHaveLength(1);
+  } else {
+    expect(mounted.filter((candidate) => candidate.clipId === expected.clipId)).toHaveLength(0);
+  }
+}
+
 async function dropFileIn(scope: Locator, file: { name: string; type: string; bytesBase64: string }, occurrenceId: string, clipId: string, referenceId: string, from: number, referenceAt: number, time: number): Promise<void> {
   const clipLocator = scope.locator(`.clip-action[data-clip-id="${occurrenceId}:${clipId}"]`).first();
   const referenceLocator = scope.locator(`.clip-action[data-clip-id="${occurrenceId}:${referenceId}"]`).first();
@@ -1207,7 +1251,7 @@ placementTest('P2 mounted automatic child placement: embedded shot file gesture,
   assertMediaManifestIdentity(original, after, mediaEvidence.source);
   // The mounted child projection scopes an authored clip id to its selected physical occurrence.
   // Derive this expected identity from the canonical placement row, independently of the DOM.
-  const projectedPlacementClipId = `${seed3.occurrenceId}:${String(row.id)}`;
+  const projectedPlacementClipId = projectedPlacementClipIdForRow(seed3.occurrenceId, row);
   const committed = await history(harness, seed3);
   assertHistoryEntry(committed, post, result);
   assertNoLegacy(wire);
