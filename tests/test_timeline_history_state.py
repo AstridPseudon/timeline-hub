@@ -86,15 +86,35 @@ def test_nonaccept_change_forces_full_verification(service, monkeypatch, writer)
 
 
 @pytest.mark.parametrize("component", ["database", "wal"])
-def test_replaced_sqlite_file_requires_reopen_instead_of_trusting_disconnected_inode(service, monkeypatch, tmp_path,
-                                                                                   component):
-    commits, publication, _, _ = warm(service, monkeypatch)
+def test_replaced_sqlite_file_reopens_and_fully_verifies_current_state(service, monkeypatch, tmp_path,
+                                                                       component):
+    commits, publication, expected, calls = warm(service, monkeypatch)
+    old_connection = commits._connection
     target = service.store.db_path if component == "database" else service.store.db_path.with_name("realm.sqlite3-wal")
     replacement = tmp_path / "replacement.sqlite3"
     shutil.copyfile(target, replacement)
     replacement.replace(target)
-    with pytest.raises(ProtocolError, match="reopen required"):
+    assert commits.history_entry(service.test_project, "main", publication) == expected
+    assert calls == {publication: 2}
+    assert commits._connection is service.store.conn
+    assert commits._connection is not old_connection
+    assert any(commits._history_state.values())
+
+
+@pytest.mark.parametrize("component", ["database", "wal"])
+def test_recovered_identity_does_not_accept_tampered_history(service, monkeypatch, tmp_path, component):
+    commits, publication, expected, _ = warm(service, monkeypatch)
+    target = service.store.db_path if component == "database" else service.store.db_path.with_name("realm.sqlite3-wal")
+    replacement = tmp_path / "replacement.sqlite3"
+    shutil.copyfile(target, replacement)
+    replacement.replace(target)
+    assert commits.history_entry(service.test_project, "main", publication) == expected
+
+    service.store.conn.execute("UPDATE command_idempotency SET event_ids_json='[]' WHERE txn_id=?", (publication,))
+    before = rows(service)
+    with pytest.raises(RuntimeErrorBase):
         commits.history_entry(service.test_project, "main", publication)
+    assert rows(service) == before
     assert not any(commits._history_state.values())
 
 
@@ -272,16 +292,17 @@ def test_every_cached_read_checks_after_begin_and_across_threads(service, monkey
     assert not service.store.conn.in_transaction
 
 
-def test_replacing_connection_with_equal_data_version_requires_new_store(service, monkeypatch):
-    commits, publication, _, _ = warm(service, monkeypatch)
+def test_replacing_connection_rebinds_and_fully_verifies(service, monkeypatch):
+    commits, publication, expected, calls = warm(service, monkeypatch)
     connection = service.store.conn
     with closing(sqlite3.connect(service.store.db_path, isolation_level=None)) as other:
         assert other.execute("PRAGMA data_version").fetchone()[0] == connection.execute("PRAGMA data_version").fetchone()[0]
         service.store.conn = other
         try:
-            with pytest.raises(ProtocolError, match="connection was replaced; reopen required"):
-                commits.history_entry(service.test_project, "main", publication)
-            assert not any(commits._history_state.values())
+            assert commits.history_entry(service.test_project, "main", publication) == expected
+            assert calls == {publication: 2}
+            assert commits._connection is other
+            assert commits._connection.row_factory is sqlite3.Row
         finally:
             service.store.conn = connection
 
@@ -290,7 +311,7 @@ def test_closed_store_refuses_and_reopened_handle_verifies_cold(service, monkeyp
     commits, publication, expected, _ = warm(service, monkeypatch)
     root = service.store.root
     service.close()
-    with pytest.raises(ProtocolError, match="connection was replaced; reopen required"):
+    with pytest.raises(ProtocolError, match="reopen required"):
         commits.history_entry(service.test_project, "main", publication)
     assert not any(commits._history_state.values())
     reopened = RuntimeService(root)
@@ -528,7 +549,7 @@ def test_missing_shm_is_optional_but_missing_database_requires_reopen(service, m
         assert calls == {publication: 2}
     assert not caplog.records
     missing.add(service.store.db_path)
-    with pytest.raises(ProtocolError, match="database was replaced; reopen required"):
+    with pytest.raises(ProtocolError, match="database is missing; reopen required"):
         commits.history_entry(service.test_project, "main", publication)
     assert not any(commits._history_state.values())
 
