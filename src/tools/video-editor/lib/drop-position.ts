@@ -30,6 +30,8 @@ export interface DropPosition {
   time: number;
   rowIndex: number;
   trackId: string | undefined;
+  /** The rendered track directly under the pointer before collision resolution. */
+  pointerTrackId?: string;
   trackKind: TrackKind | null;
   trackName: string;
   isNewTrack: boolean;
@@ -187,6 +189,13 @@ export const computeDropPosition = ({
   const targetTrack = rowIndex >= 0 && rowIndex < (current?.tracks.length ?? 0)
     ? current?.tracks[rowIndex]
     : undefined;
+  const pointerTrack = visualRow?.kind === 'track'
+    ? current?.tracks.find((track) => track.id === visualRow.id)
+    : layout
+      ? undefined
+      : rawRowIndex >= 0 && rawRowIndex < plannerRows.length
+        ? current?.tracks.find((track) => track.id === plannerRows[rawRowIndex]?.id)
+        : undefined;
   const rowTop = visualRowIndex >= 0
     ? editRect.top + (layout?.trackRects.get(current?.tracks[visualRowIndex]?.id ?? '')?.top ?? visualRowIndex * rowHeight) - scrollTop
     : editRect.top;
@@ -233,6 +242,9 @@ export const computeDropPosition = ({
     time: plan.resolvedStart,
     rowIndex,
     trackId: plan.targetTrackId ?? undefined,
+    ...(invalidTarget || !pointerTrack || pointerTrack.kind !== (sourceKind ?? 'visual')
+      ? {}
+      : { pointerTrackId: pointerTrack.id }),
     trackKind: plan.needsNewTrack ? (sourceKind ?? plan.trackKind) : plan.trackKind,
     trackName: resolvedTrackName,
     isNewTrack: plan.needsNewTrack,

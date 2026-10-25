@@ -329,6 +329,15 @@ export async function handleFileDrop({
       ? null
       : getCompatibleTrackId(dataRef.current.tracks, targetTrackId, kind, selectedTrackId);
     const isImageVideo = isImageFile(file) || isVideoFile(file);
+    const managedImageTrackId = directAssetUploadAllFiles && mediaImportForImageVideo
+      && files.length === 1 && isImageFile(file)
+      ? dropPosition.pointerTrackId
+      : undefined;
+    if (managedImageTrackId) {
+      targetTrackId = managedImageTrackId;
+      compatibleTrackId = managedImageTrackId;
+      forceNewTrack = false;
+    }
 
     // A direct host without Runtime media-import capability must not fall
     // through to browser storage, local materialization, or a legacy
@@ -484,7 +493,11 @@ export async function handleFileDrop({
             removeSkeleton();
             return;
           }
-          if (!dropAsset(preparedAsset.assetKey, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId)) {
+          const preparedManagedImageTrackId = files.length === 1 && isImageFile(file) && preparedAsset.mediaSelection
+            ? dropPosition.pointerTrackId
+            : undefined;
+          if (!dropAsset(preparedAsset.assetKey, preparedManagedImageTrackId ?? compatibleTrackId ?? undefined, clipTime,
+            false, false, preparedAsset, skeletonId)) {
             removeSkeleton();
           }
           return;
