@@ -116,6 +116,8 @@ class RequestCommitPort:
         self.__takes = {}
         self.__texts = {}
         self.__documents = {}
+        self.__document_reads = {}
+        self.__history_reads = {}
         self.__document_objects = {}
         self.__producers = {}
         self.__history_pins = []
@@ -140,7 +142,7 @@ class RequestCommitPort:
                     args["content_digest"] = content_digest
                 elif args["content_digest"] != content_digest:
                     raise refused("dependency_unavailable", "restore source content digest disagrees with immutable revision")
-                self.__closures[args["revision_id"]] = copy.deepcopy(source)
+                self.__closures[args["revision_id"]] = source
                 self.__declared = list(objects(self.__request["commands"])) + list(objects(source))
             self._read(prepare_restore)
 
@@ -206,19 +208,28 @@ class RequestCommitPort:
     def close(self):
         self.__closed = True
         self.__sequential_capture = None
+        self.__document_reads.clear()
+        self.__history_reads.clear()
 
     def _read(self, call):
         if self.__closed:
             raise AuthorizationError("timeline commit port is closed")
-        with self.__service.store._mutex:
-            self.__authorize()
-            with self.__store.history_read_scope():
-                return copy.deepcopy(call())
+        try:
+            with self.__service.store._mutex:
+                self.__authorize()
+                with self.__store.history_read_scope():
+                    # Keep request-private read state separate from the provider's
+                    # mutable result; this is the sole provider-visible detach.
+                    return copy.deepcopy(call())
+        except BaseException:
+            self.__document_reads.clear()
+            self.__history_reads.clear()
+            raise
 
     def head(self):
         def read():
             pin = self.__store.head(self.__project, self.__timeline)
-            self.__observed[pin["publication_id"]] = copy.deepcopy(pin)
+            self.__observed[pin["publication_id"]] = pin
             return pin
         return self._read(read)
 
@@ -231,7 +242,10 @@ class RequestCommitPort:
             current, seen = root, set()
             while current and current["publication_id"] not in seen:
                 seen.add(current["publication_id"])
-                entry = self.__store.history_entry(self.__project, self.__timeline, current["publication_id"])
+                entry = self.__store.history_entry(
+                    self.__project, self.__timeline, current["publication_id"],
+                    _request_entries=self.__history_reads,
+                )
                 if entry["revision_id"] != current["revision_id"]:
                     raise refused("history_unavailable", "publication/revision pins disagree")
                 if current["publication_id"] == publication_id:
@@ -280,7 +294,7 @@ class RequestCommitPort:
                 if entry["revision_id"] != revision_id:
                     raise refused("history_unavailable", "base pins disagree")
             value = self.__store.revision_closure(self.__project, self.__timeline, revision_id)
-            self.__closures[revision_id] = copy.deepcopy(value)
+            self.__closures[revision_id] = value
             self.__declared.extend(objects(value))
             return value
         return self._read(read)
@@ -325,8 +339,8 @@ class RequestCommitPort:
                         ref["project_id"], ref["timeline_id"], ref["revision_id"],
                         ref["content_digest"]):
                 raise refused("dependency_unavailable", "source closure identity changed")
-            self.__source_closures[key] = copy.deepcopy(value)
-            self.__source_refs[key] = copy.deepcopy(ref)
+            self.__source_closures[key] = value
+            self.__source_refs[key] = ref
             self.__declared.extend(objects(value))
             return value
         return self._read(read)
@@ -343,7 +357,7 @@ class RequestCommitPort:
             if not declared and not pinned:
                 raise refused("dependency_unavailable", "source shot requires an exact declared pin")
             value = self.__store.shot_closure(self.__project, shot_id, revision_id)
-            self.__shots[(shot_id, revision_id)] = copy.deepcopy(value)
+            self.__shots[(shot_id, revision_id)] = value
             self.__declared.extend(objects(value))
             return value
         return self._read(read)
@@ -400,7 +414,6 @@ class RequestCommitPort:
         from .timeline_commit_inputs import (
             PROJECT_PACK_KIND,
             PROJECT_PACK_SCHEMA,
-            capture_document_input,
         )
         def read():
             reachable = [item for closure in self.__closures.values()
@@ -418,8 +431,10 @@ class RequestCommitPort:
                 if kind is None:
                     raise refused("dependency_unavailable", "source input requires a registered config or project pack kind")
                 schema = PROJECT_PACK_SCHEMA if kind == PROJECT_PACK_KIND else None
-            capture = capture_document_input(self.__service.store.conn, self.__project, pin,
-                                             reachable_pins=reachable, expected_kind=kind, expected_schema=schema)
+            capture = self.__store._capture_document_input(
+                self.__document_reads, self.__project, pin,
+                reachable_pins=reachable, expected_kind=kind, expected_schema=schema,
+            )
             self.__documents[canonical_json(pin)] = capture
             return {"pin": capture.pin, "document": capture.document}
         return self._read(read)

@@ -7,6 +7,7 @@ RealmStore's mutex.
 from __future__ import annotations
 
 import base64
+import copy
 import hashlib
 import json
 import logging
@@ -17,6 +18,7 @@ import threading
 from collections import deque
 from contextlib import contextmanager
 from functools import wraps
+from typing import cast
 
 from .errors import ConflictError, ProtocolError, ValidationError
 from .idempotency import command_result
@@ -217,6 +219,10 @@ class _HistoryReadInputs:
 
     def execute(self, query, parameters=()):
         return _HistoryReadCursor(self, query, tuple(parameters))
+
+    @property
+    def in_transaction(self):
+        return self.connection.in_transaction
 
     def check(self):
         from .cas import ContentAddressedStore
@@ -537,6 +543,33 @@ class TimelineCommitStore:
     def conn(self):
         inputs = self._history_inputs
         return inputs if inputs is not None else self.store.conn
+
+    @_evaluation
+    def _capture_document_input(self, snapshots, project_id, pin, *, reachable_pins,
+                                expected_kind, expected_schema):
+        from .timeline_commit_inputs import _pin, _reachable, capture_document_input
+
+        pin = _pin(pin)
+        key = canonical_json([project_id, pin, _reachable(pin, reachable_pins), expected_kind, expected_schema])
+        version = (self._replay_generation, self._replay_store_version)
+        cached = snapshots.get(key)
+        if cached is not None and cached[0] == version:
+            _, inputs, capture = cached
+            # Recheck every consumed row, including source custody. Only the
+            # parse/validation of identical bytes is reused, never authority.
+            inputs.check()
+            return capture
+        inputs = _HistoryReadInputs(self.store.conn, self.store.cas_root)
+        # This read-only connection view records the existing capture helper's
+        # queries inside our already-open read transaction.
+        capture = capture_document_input(
+            cast(sqlite3.Connection, inputs), project_id, pin, reachable_pins=reachable_pins,
+            expected_kind=expected_kind, expected_schema=expected_schema,
+        )
+        snapshots[key] = (version, inputs, capture)
+        # RequestCommitPort owns this private value; its outer read boundary
+        # supplies the provider's mutable copy.
+        return capture
 
     def _read_history_object(self, object_id):
         from .cas import ContentAddressedStore
@@ -998,7 +1031,8 @@ class TimelineCommitStore:
             return dict(row), entry
 
     @_evaluation
-    def history_entry(self, project_id, timeline_id, publication_id, *, allow_archived=False):
+    def history_entry(self, project_id, timeline_id, publication_id, *, allow_archived=False,
+                      _request_entries=None):
         with self.store._mutex:
             if allow_archived:
                 row = self.conn.execute(
@@ -1014,7 +1048,16 @@ class TimelineCommitStore:
                 row, ledger, entry = cached
                 if row["intent"] == "recorded" or ledger["command_kind"] == "timeline.commit":
                     self._verify_accepted(ledger, row, allow_archived=allow_archived)
-                return detached(entry)
+                if _request_entries is None:
+                    return detached(entry)
+                version = (self._replay_generation, self._replay_store_version)
+                snapshot = _request_entries.get(identity)
+                if snapshot is None or snapshot[0] != version:
+                    # The cached entry is already validated. Keep a separate
+                    # request-owned view after the current live checks above.
+                    snapshot = (version, copy.deepcopy(entry))
+                    _request_entries[identity] = snapshot
+                return snapshot[1]
             row = self.conn.execute("SELECT * FROM timeline_commit_history WHERE publication_id=? "
                                     "AND project_id=? AND timeline_id=?", (publication_id, project_id, timeline_id)).fetchone()
             if row is None:
@@ -1042,6 +1085,8 @@ class TimelineCommitStore:
                 entry["steps"] = records["steps"]
             if self._verification.current["traversal"] is None:
                 self._history_state["entries"][identity] = (dict(row), dict(ledger), detached(entry))
+                if _request_entries is not None:
+                    _request_entries[identity] = ((self._replay_generation, self._replay_store_version), entry)
             return entry
 
     @_evaluation
