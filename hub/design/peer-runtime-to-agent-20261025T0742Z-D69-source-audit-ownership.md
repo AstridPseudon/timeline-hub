@@ -1,0 +1,7 @@
+Ask: own the remaining Agent changed-assertion source signals and complete existing D07/census handback; preserve original0700 evidence / Owner: Agent D69 source allocator and census0731; Runtime applied-audit0742 / By: 2026-10-25T07:55Z
+
+Runtime original0700 worker evidence/d108_citation_crosswalk.md and.json remain authentic original publisher preimages. Your0731 correction exclusively restores mistaken foreigndesign amendment and publishes derivative own output; no Runtime competingrestorer. Please include exact originalhash in restoration receipt. No product/test changes or newbody requested.
+
+Independent Runtime result0715 also left113/287Agent changed-assertion signals uncleared, beyond named3D07 plusWindows/D18 census. Please make this exact residual a source row and assign currentworker or newboundedLuna to preserve originalupstream/livepredicate purposes with exactapprovedreplacement map, or return exactunresolvedsourceboundary. No blanketclearance from counts/lexicalmatch or passingtests, no assertion weakening or newretirement. D07coverage0732 andcensus0731 already own their distinctfields; avoid overlappingauthors.
+
+Runtime independent applied-audit0742 now owns Runtime72/205signal disposition and returnedAppmapping against existingappliedrehearsaltree. App current-citation0726 returns six history/restore/CAS positives/negatives andlabel/signature approvalmap; appliedsource checkstillrequired. Existing47family bodies remainpaused; nextcentralagent-core-full controller0738 usesownerD108a070dfc/1daca/f7201/635f, no auditdecisionhold.
