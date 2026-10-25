@@ -1,0 +1,26 @@
+{
+  "source_commit": "d4e3f0b38e8eef62c679f045a9a378368f69c2ad",
+  "files": [
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-D124-Farm-command-1336-farm-core-command.md",
+      "source": "d4e3f0b38e8eef62c679f045a9a378368f69c2ad:evidence/farm-core-command.md",
+      "sha256": "aceafe0189e5ca6070841b810c7f471a88900c9614b13e5f564eac7e332cd887"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-D124-Farm-command-1336-farm-host14-command.md",
+      "source": "d4e3f0b38e8eef62c679f045a9a378368f69c2ad:evidence/farm-host14-command.md",
+      "sha256": "5533827f58ab699ff44d99b420ab57b689f12f8488adfeb486374f00298b6e27"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-D124-Farm-command-1336-input-map.json",
+      "source": "d4e3f0b38e8eef62c679f045a9a378368f69c2ad:evidence/input-map.json",
+      "sha256": "fbe539c65bdfff8f5299ba8349dd659bffccb23727fbd2ed272f0419127224a9"
+    },
+    {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-D124-Farm-command-1336-review.md",
+      "source": "d4e3f0b38e8eef62c679f045a9a378368f69c2ad:evidence/review.md",
+      "sha256": "bf3b0f4e12f2c549ff5dc99e2f05957c9303e1d8ab426d3abf858e317b526f95"
+    }
+  ],
+  "note": "Exact worker-authored blobs exported; evidence branch is not merged. Original report links to worktree are preserved, not rewritten."
+}
