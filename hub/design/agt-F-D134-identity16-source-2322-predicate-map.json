@@ -1,0 +1,107 @@
+{
+  "schema": "timeline.agent.d134.identity16_predicate_map.v1",
+  "method": "read-only AST counts plus exact source diff; no behavior run",
+  "source_delta": {
+    "files": [
+      "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py",
+      "tests/editing_conformance/test_prepared_video_birth.py"
+    ],
+    "fields": [
+      "Gate1 NORMAL_RUNTIME literal",
+      "prepared expected_runtime_source literal",
+      "prepared expected_runtime_tree literal"
+    ],
+    "unchanged": [
+      "all assertions and raises",
+      "all authored input/media/transcript payloads",
+      "all request command envelopes, base/reads/idempotency fields",
+      "all guarded inverse/ABA/redo/no-write predicates",
+      "all selectors, markers, bodies, and fixture topology"
+    ]
+  },
+  "cases": [
+    {
+      "function": "test_fresh_word_transcript_frontends_exact_pin_roundtrip",
+      "node_count": 3,
+      "parameter_values": ["cli", "python", "sheet"],
+      "assertions": 15,
+      "pytest_raises": 0,
+      "status": "SETUP_DELTA_APPLIED",
+      "reason": "current runtime.lock source_commit is f103bb468669 and the current producer tree is 5d0cedf2e513; the prior qualified ab1e tuple is byte-equivalent for the canonical consumer set but no longer the integrated lock selection"
+    },
+    {
+      "function": "test_known_inverse_refuses_forged_source_publication_and_step_without_writes",
+      "node_count": 1,
+      "assertions": 7,
+      "pytest_raises": 2,
+      "status": "ALREADY_HOME",
+      "reason": "current blob equals reviewed inverse7 donor; retain Runtime 6634 source tuple and strict Agent a30e source hashes"
+    },
+    {
+      "function": "test_known_inverse_refuses_native_write_and_aba_without_writes",
+      "node_count": 1,
+      "assertions": 4,
+      "pytest_raises": 1,
+      "status": "ALREADY_HOME",
+      "reason": "same reviewed inverse7 setup boundary; ABA and no-write predicates unchanged"
+    },
+    {
+      "function": "test_known_whole_inverse_authenticates_forward_history_and_exact_redo",
+      "node_count": 5,
+      "parameter_values": ["case-16-two-step-clips-after", "case-28-two-step-config-clips-before", "case-4-two-step-clips-before", "case-40-two-step-config-clips-after", "case-49-native-whole"],
+      "assertions": 45,
+      "pytest_raises": 0,
+      "status": "ALREADY_HOME",
+      "reason": "same reviewed inverse7 setup boundary; history/authentication/redo predicates unchanged"
+    },
+    {
+      "function": "test_portable_native_captures",
+      "node_count": 2,
+      "parameter_values": ["a", "b"],
+      "assertions": 1,
+      "pytest_raises": 0,
+      "status": "UNKNOWN_GATED",
+      "reason": "fixture equality is an in-process Agent capture boundary with no retained provider identity evidence; expected vector bytes cannot be refreshed"
+    },
+    {
+      "function": "test_grouped_inverse_retains_surviving_opaque_transcript_pin",
+      "node_count": 1,
+      "parameter_values": ["retained1-shot"],
+      "assertions": 8,
+      "pytest_raises": 0,
+      "status": "UNKNOWN_GATED",
+      "reason": "public Runtime/provider route is present, but no authenticated accepted-record/source receipt proves a setup identity correction"
+    },
+    {
+      "function": "test_prepared_video_public_preview_accept_retry_undo_and_no_write",
+      "node_count": 1,
+      "assertions": 24,
+      "pytest_raises": 2,
+      "status": "SETUP_DELTA_APPLIED",
+      "reason": "vendored_runtime_commit and use_runtime(commit=runtime_pin) now agree with current runtime.lock source f103 and its exact tree"
+    },
+    {
+      "function": "test_stale_anchor_refuses_when_intervening_window_excludes_selected_word",
+      "node_count": 1,
+      "assertions": 3,
+      "pytest_raises": 1,
+      "status": "UNKNOWN_GATED",
+      "reason": "the narrowed window is authored topology, and no retained identity/provenance receipt proves it is a stale setup literal"
+    },
+    {
+      "function": "test_stale_head_retries_original_plan_and_created_ids_once",
+      "node_count": 1,
+      "assertions": 5,
+      "pytest_raises": 0,
+      "status": "UNKNOWN_GATED",
+      "reason": "DetachedRealm uses an in-process provider double; no supported public Runtime source selection exists in this node"
+    }
+  ],
+  "conservation": {
+    "original_root004_members": 16,
+    "mapped_exactly_once": 16,
+    "assertions_removed": 0,
+    "raises_removed": 0,
+    "functional_status": "NOTRUN"
+  }
+}

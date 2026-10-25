@@ -1,0 +1,210 @@
+{
+  "schema": "timeline.agent.d134.identity16_member_map.v1",
+  "task": "D134 root-004 identity16 source pass",
+  "base": {
+    "head": "41ad656529fa8489829de9078b1b6e157c7433c8",
+    "tree": "d29e47fe7be6e55940b42fa1477a23e7925f62fa",
+    "status_before": "clean",
+    "root_cluster": "/home/user/timeline-hub/hub/design/agt-F-D134-root-clusters-2022-root-clusters.json",
+    "root_review": "/home/user/timeline-hub/hub/design/agt-F-D134-root-review-2029-source-manifest.json",
+    "per_id": "/home/user/timeline-hub/hub/design/agt-F-D134-root-clusters-2022-per-id.tsv",
+    "retained_partition": "/home/user/timeline-hub/hub/design/agt-F-D134-own344-partition-2003-per-id.tsv"
+  },
+  "enumeration": {
+    "root": "root-004",
+    "expected_count": 16,
+    "actual_count": 16,
+    "unique_member_ids": 16,
+    "first_agent_frame": "EXACTMISSING",
+    "first_runtime_frame": "EXACTMISSING",
+    "error_type": "AssertionError",
+    "message_family": "source identity/hash mismatch",
+    "retained_log_sha256": "65def166348d4ffde949d530bff1a7bcba820ad674ca85b8ccc3e708c781ae8e"
+  },
+  "members": [
+    {
+      "ordinal": 1,
+      "nodeid": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py::test_fresh_word_transcript_frontends_exact_pin_roundtrip[cli]",
+      "classification": "TEST_SETUP_OR_EXPECTATION_PROVED",
+      "historical_fix": "HOME_BUT_REBOUND_TO_CURRENT_RUNTIME",
+      "original_source_blob": "3c4b03b966cc5986c9e1fdf50c3140f0b1efc199",
+      "current_source_sha256": "71ab19e7351f5e2b7d609d32a55aa1c6cf6af5d4bab865b353a64fecf1da86e5",
+      "current_boundary": "fresh_realm line 67 schema guard, line 70 runtime.lock source guard, line 71 use_runtime(commit=NORMAL_RUNTIME), lines 72-74 pinned runtime test import",
+      "setup_delta": "NORMAL_RUNTIME ab1e4f614198 -> f103bb468669; all frontend/body predicates shared with python and sheet",
+      "functional_status": "NOTRUN"
+    },
+    {
+      "ordinal": 2,
+      "nodeid": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py::test_fresh_word_transcript_frontends_exact_pin_roundtrip[python]",
+      "classification": "TEST_SETUP_OR_EXPECTATION_PROVED",
+      "historical_fix": "HOME_BUT_REBOUND_TO_CURRENT_RUNTIME",
+      "original_source_blob": "3c4b03b966cc5986c9e1fdf50c3140f0b1efc199",
+      "current_source_sha256": "71ab19e7351f5e2b7d609d32a55aa1c6cf6af5d4bab865b353a64fecf1da86e5",
+      "current_boundary": "shared fresh_realm identity/setup boundary; Python frontend route is selected after the same pinned provider root",
+      "setup_delta": "NORMAL_RUNTIME ab1e4f614198 -> f103bb468669; no Python request/assertion/input change",
+      "functional_status": "NOTRUN"
+    },
+    {
+      "ordinal": 3,
+      "nodeid": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py::test_fresh_word_transcript_frontends_exact_pin_roundtrip[sheet]",
+      "classification": "TEST_SETUP_OR_EXPECTATION_PROVED",
+      "historical_fix": "HOME_BUT_REBOUND_TO_CURRENT_RUNTIME",
+      "original_source_blob": "3c4b03b966cc5986c9e1fdf50c3140f0b1efc199",
+      "current_source_sha256": "71ab19e7351f5e2b7d609d32a55aa1c6cf6af5d4bab865b353a64fecf1da86e5",
+      "current_boundary": "shared fresh_realm identity/setup boundary; Sheet frontend is selected after the same pinned provider root",
+      "setup_delta": "NORMAL_RUNTIME ab1e4f614198 -> f103bb468669; no Sheet request/assertion/input change",
+      "functional_status": "NOTRUN"
+    },
+    {
+      "ordinal": 4,
+      "nodeid": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_inverse_refuses_forged_source_publication_and_step_without_writes",
+      "classification": "TEST_SETUP_OR_EXPECTATION_PROVED",
+      "historical_fix": "ALREADY_HOME_EXACT_REVIEWED_RECEIPT",
+      "original_source_blob": "b97bd6a6b6da650cd60b48f78a31fabd7471f26b",
+      "current_source_sha256": "c578ec36e41ec2d68fe6de8a7d3a443aab8477cbb8492f7cbd786abb9e48ddd3",
+      "current_boundary": "runtime_case lines 148-230; _origin_snapshot and _assert_source_identity lines 63-90; pinned Agent a30e74e901 and Runtime 6634a17f3f",
+      "setup_delta": "NONE; retain historical Runtime 6634 tuple because it is the observed reviewed provider boundary, not the current normal lock",
+      "functional_status": "NOTRUN"
+    },
+    {
+      "ordinal": 5,
+      "nodeid": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_inverse_refuses_native_write_and_aba_without_writes",
+      "classification": "TEST_SETUP_OR_EXPECTATION_PROVED",
+      "historical_fix": "ALREADY_HOME_EXACT_REVIEWED_RECEIPT",
+      "original_source_blob": "b97bd6a6b6da650cd60b48f78a31fabd7471f26b",
+      "current_source_sha256": "c578ec36e41ec2d68fe6de8a7d3a443aab8477cbb8492f7cbd786abb9e48ddd3",
+      "current_boundary": "same runtime_case identity guard and immutable Runtime 6634 archive selection",
+      "setup_delta": "NONE; ABA/no-write predicates and authored damage inputs remain exact",
+      "functional_status": "NOTRUN"
+    },
+    {
+      "ordinal": 6,
+      "nodeid": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-16-two-step-clips-after]",
+      "classification": "TEST_SETUP_OR_EXPECTATION_PROVED",
+      "historical_fix": "ALREADY_HOME_EXACT_REVIEWED_RECEIPT",
+      "original_source_blob": "b97bd6a6b6da650cd60b48f78a31fabd7471f26b",
+      "current_source_sha256": "c578ec36e41ec2d68fe6de8a7d3a443aab8477cbb8492f7cbd786abb9e48ddd3",
+      "current_boundary": "same strict Agent/Runtime source guard; case-16 selects clips with output_first true",
+      "setup_delta": "NONE; exact history, inverse, redo, and authenticated source predicates retained",
+      "functional_status": "NOTRUN"
+    },
+    {
+      "ordinal": 7,
+      "nodeid": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-28-two-step-config-clips-before]",
+      "classification": "TEST_SETUP_OR_EXPECTATION_PROVED",
+      "historical_fix": "ALREADY_HOME_EXACT_REVIEWED_RECEIPT",
+      "original_source_blob": "b97bd6a6b6da650cd60b48f78a31fabd7471f26b",
+      "current_source_sha256": "c578ec36e41ec2d68fe6de8a7d3a443aab8477cbb8492f7cbd786abb9e48ddd3",
+      "current_boundary": "same strict Agent/Runtime source guard; case-28 selects config.clips with output_first false",
+      "setup_delta": "NONE; exact history, inverse, redo, and authenticated source predicates retained",
+      "functional_status": "NOTRUN"
+    },
+    {
+      "ordinal": 8,
+      "nodeid": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-4-two-step-clips-before]",
+      "classification": "TEST_SETUP_OR_EXPECTATION_PROVED",
+      "historical_fix": "ALREADY_HOME_EXACT_REVIEWED_RECEIPT",
+      "original_source_blob": "b97bd6a6b6da650cd60b48f78a31fabd7471f26b",
+      "current_source_sha256": "c578ec36e41ec2d68fe6de8a7d3a443aab8477cbb8492f7cbd786abb9e48ddd3",
+      "current_boundary": "same strict Agent/Runtime source guard; case-4 selects clips with output_first false",
+      "setup_delta": "NONE; exact history, inverse, redo, and authenticated source predicates retained",
+      "functional_status": "NOTRUN"
+    },
+    {
+      "ordinal": 9,
+      "nodeid": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-40-two-step-config-clips-after]",
+      "classification": "TEST_SETUP_OR_EXPECTATION_PROVED",
+      "historical_fix": "ALREADY_HOME_EXACT_REVIEWED_RECEIPT",
+      "original_source_blob": "b97bd6a6b6da650cd60b48f78a31fabd7471f26b",
+      "current_source_sha256": "c578ec36e41ec2d68fe6de8a7d3a443aab8477cbb8492f7cbd786abb9e48ddd3",
+      "current_boundary": "same strict Agent/Runtime source guard; case-40 selects config.clips with output_first true",
+      "setup_delta": "NONE; exact history, inverse, redo, and authenticated source predicates retained",
+      "functional_status": "NOTRUN"
+    },
+    {
+      "ordinal": 10,
+      "nodeid": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py::test_known_whole_inverse_authenticates_forward_history_and_exact_redo[case-49-native-whole]",
+      "classification": "TEST_SETUP_OR_EXPECTATION_PROVED",
+      "historical_fix": "ALREADY_HOME_EXACT_REVIEWED_RECEIPT",
+      "original_source_blob": "b97bd6a6b6da650cd60b48f78a31fabd7471f26b",
+      "current_source_sha256": "c578ec36e41ec2d68fe6de8a7d3a443aab8477cbb8492f7cbd786abb9e48ddd3",
+      "current_boundary": "same strict Agent/Runtime source guard; case-49 selects native whole inverse",
+      "setup_delta": "NONE; native whole inverse, history, redo, and no-write predicates retained",
+      "functional_status": "NOTRUN"
+    },
+    {
+      "ordinal": 11,
+      "nodeid": "tests/editing_conformance/test_native_word_anchor_vectors.py::test_portable_native_captures[a]",
+      "classification": "UNKNOWN",
+      "historical_fix": "NONE_AUTHORIZED",
+      "original_source_blob": "85d85f96f167c576af310b097c02f8903926c7e7",
+      "current_source_sha256": "01258d742c30ccd018d7c7f86a29d05fdc5263659eaec0f9e989734e43adc377",
+      "current_boundary": "in-process fixture() -> vector('a') -> commands.execute/capture_anchor -> JSON fixture equality at line 69; no Runtime/provider identity guard",
+      "setup_delta": "UNAPPLIED; no retained caller/provider identity evidence authorizes changing the expected vector or fixture inputs",
+      "functional_status": "NOTRUN"
+    },
+    {
+      "ordinal": 12,
+      "nodeid": "tests/editing_conformance/test_native_word_anchor_vectors.py::test_portable_native_captures[b]",
+      "classification": "UNKNOWN",
+      "historical_fix": "NONE_AUTHORIZED",
+      "original_source_blob": "85d85f96f167c576af310b097c02f8903926c7e7",
+      "current_source_sha256": "01258d742c30ccd018d7c7f86a29d05fdc5263659eaec0f9e989734e43adc377",
+      "current_boundary": "same in-process source boundary; vector('b') selects a different stable word id before fixture equality",
+      "setup_delta": "UNAPPLIED; do not refresh expected fixture bytes or alter authored transcript/media topology",
+      "functional_status": "NOTRUN"
+    },
+    {
+      "ordinal": 13,
+      "nodeid": "tests/editing_conformance/test_next_command_cohort_runtime.py::test_grouped_inverse_retains_surviving_opaque_transcript_pin[retained1-shot]",
+      "classification": "UNKNOWN",
+      "historical_fix": "NONE_AUTHORIZED",
+      "original_source_blob": "74e25432f820740e23b7c843c07407f36f71fc8f",
+      "current_source_sha256": "d68d83ab729d8e559e1b056263993d1247ef0430fe622add7874b795b8782cc0",
+      "current_boundary": "retained fixture seed uses use_runtime() and RuntimeService; autouse route monkeypatch calls service.commit_timeline with route_path and registered Agent provider; test body starts at line 211",
+      "setup_delta": "UNAPPLIED; current provider selection is observed but no authenticated source identity receipt proves a faithful replacement tuple",
+      "functional_status": "NOTRUN"
+    },
+    {
+      "ordinal": 14,
+      "nodeid": "tests/editing_conformance/test_prepared_video_birth.py::test_prepared_video_public_preview_accept_retry_undo_and_no_write",
+      "classification": "TEST_SETUP_OR_EXPECTATION_PROVED",
+      "historical_fix": "HOME_BUT_REBOUND_TO_CURRENT_RUNTIME",
+      "original_source_blob": "9b3cd7f6f72a30f961bb20cad543fc042244799b",
+      "current_source_sha256": "2cb86c85e972ba324d0f71af6d38ea0cb58c31a98adc78c3c4200c778f5ea958",
+      "current_boundary": "vendored_runtime_commit line 250, use_runtime(commit=runtime_pin) line 252, exact HEAD and tree guards lines 253-256",
+      "setup_delta": "expected Runtime source/tree ab1e4f614198/7d8e77b2f5a4 -> f103bb468669/5d0cedf2e513, matching current lock and producer tree",
+      "functional_status": "NOTRUN"
+    },
+    {
+      "ordinal": 15,
+      "nodeid": "tests/editing_conformance/test_word_binding_recipe.py::test_stale_anchor_refuses_when_intervening_window_excludes_selected_word",
+      "classification": "UNKNOWN",
+      "historical_fix": "NONE_AUTHORIZED",
+      "original_source_blob": "4a0dd2b94c01c9df033f9ac4487ad7e5adade48a",
+      "current_source_sha256": "7f644c38f179fc37868b87a588da833947d16b1896210cfaf0fa016941fe8963",
+      "current_boundary": "recipe fixture uses native_word_anchor_fixture retained/provider route; line 467 narrows source window, line 470 submits stale captured command through Runtime provider",
+      "setup_delta": "UNAPPLIED; window mutation is authored test topology and no retained source identity evidence proves it stale",
+      "functional_status": "NOTRUN"
+    },
+    {
+      "ordinal": 16,
+      "nodeid": "tests/sdk/test_timeline_commit_provider.py::test_stale_head_retries_original_plan_and_created_ids_once",
+      "classification": "UNKNOWN",
+      "historical_fix": "NONE_AUTHORIZED",
+      "original_source_blob": "85c7b16316b3f7ba2e5830681d46e6925a5d19db",
+      "current_source_sha256": "cde797633e42e21fc7219c2b5288ce8238cdacf92e094450e02e4e746c871434",
+      "current_boundary": "DetachedRealm.call -> create_runtime_commit_service().commit -> DetachedPort; runtime_abi fakes only ABI exceptions/metadata and all command execution is Agent-local",
+      "setup_delta": "UNAPPLIED; this is an in-process provider double with no public Runtime source selection to retarget",
+      "functional_status": "NOTRUN"
+    }
+  ],
+  "summary": {
+    "historical_setup_or_expectation_proved": 11,
+    "current_setup_delta_applied": 2,
+    "already_home_without_delta": 7,
+    "unknown_gated": 5,
+    "product_fault_proved": 0,
+    "functional_not_run": 16
+  }
+}

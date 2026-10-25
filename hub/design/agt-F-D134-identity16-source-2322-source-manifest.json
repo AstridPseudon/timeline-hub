@@ -1,0 +1,57 @@
+{
+  "schema": "timeline.agent.d134.identity16_source_manifest.v1",
+  "task": "D134 root-004 identity16",
+  "repo": "agent",
+  "head": "41ad656529fa8489829de9078b1b6e157c7433c8",
+  "tree_before": "d29e47fe7be6e55940b42fa1477a23e7925f62fa",
+  "changed_paths": [
+    "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py",
+    "tests/editing_conformance/test_prepared_video_birth.py"
+  ],
+  "scope_paths": [
+    "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py",
+    "tests/editing_conformance/test_inverse_stage_runtime_regressions.py",
+    "tests/editing_conformance/test_native_word_anchor_vectors.py",
+    "tests/editing_conformance/test_next_command_cohort_runtime.py",
+    "tests/editing_conformance/test_prepared_video_birth.py",
+    "tests/editing_conformance/test_word_binding_recipe.py",
+    "tests/sdk/test_timeline_commit_provider.py"
+  ],
+  "current_source": [
+    {"path": "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py", "git_blob": "5508855be2034cc5c36dfd6f30e3b4ea44e6645e", "sha256": "71ab19e7351f5e2b7d609d32a55aa1c6cf6af5d4bab865b353a64fecf1da86e5"},
+    {"path": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py", "git_blob": "55e7cec5da3463360a4f862986bc28e6a1e39345", "sha256": "c578ec36e41ec2d68fe6de8a7d3a443aab8477cbb8492f7cbd786abb9e48ddd3"},
+    {"path": "tests/editing_conformance/test_native_word_anchor_vectors.py", "git_blob": "85d85f96f167c576af310b097c02f8903926c7e7", "sha256": "01258d742c30ccd018d7c7f86a29d05fdc5263659eaec0f9e989734e43adc377"},
+    {"path": "tests/editing_conformance/test_next_command_cohort_runtime.py", "git_blob": "74e25432f820740e23b7c843c07407f36f71fc8f", "sha256": "d68d83ab729d8e559e1b056263993d1247ef0430fe622add7874b795b8782cc0"},
+    {"path": "tests/editing_conformance/test_prepared_video_birth.py", "git_blob": "19b8ae33f0425ff6f9248ab66c943df65cc7c092", "sha256": "2cb86c85e972ba324d0f71af6d38ea0cb58c31a98adc78c3c4200c778f5ea958"},
+    {"path": "tests/editing_conformance/test_word_binding_recipe.py", "git_blob": "6d1f0f50394e5063a1de09564d89dd5c988ae93a", "sha256": "7f644c38f179fc37868b87a588da833947d16b1896210cfaf0fa016941fe8963"},
+    {"path": "tests/sdk/test_timeline_commit_provider.py", "git_blob": "85c7b16316b3f7ba2e5830681d46e6925a5d19db", "sha256": "cde797633e42e21fc7219c2b5288ce8238cdacf92e094450e02e4e746c871434"}
+  ],
+  "historical_receipts": {
+    "history_intake": "/home/user/timeline-hub/hub/design/agt-F-D134-history-source-intake-2119-intake.json",
+    "inverse7_return": "/home/user/timeline-hub/hub/design/rt-D134-inverse7-return-2053-source-manifest.json",
+    "history5_return": "/home/user/timeline-hub/hub/design/rt-D134-history5-return-2053-source-manifest.json",
+    "protected_root_review": "/home/user/timeline-hub/hub/design/agt-F-D134-root-review-2029-source-manifest.json",
+    "original_packets_retained": true
+  },
+  "current_runtime_selection": {
+    "lock_path": "runtime.lock.json",
+    "lock_source_commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+    "lock_sha256": "073d218447f28e48ef0d39cd01c811443b20b0328982eac1b126bcc5b9df390a",
+    "runtime_tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883",
+    "schema_path": "astrid/core/timeline/schema/edit-command.schema.json",
+    "schema_sha256": "d106dfe8212500709b4072d7bc0486f83c27d5d8de33d215cb52b9ea7d46357d",
+    "producer_evidence": "/home/user/timeline-hub/hub/design/agt-U4a-D139-provenance-review-2242-review.json",
+    "canonical_consumer_bytes_equal_ab1e": true
+  },
+  "inverse_reviewed_selection": {
+    "agent_commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "agent_commit_py_sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+    "agent_inverse_py_sha256": "6c794734cb763c21cec386f764bc63b94f3a74b4dd9f8464136a285c628d0423",
+    "runtime_commit": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+    "runtime_tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a"
+  },
+  "functional": {
+    "status": "NOTRUN",
+    "reason": "D134 source/author pass; no mirrored tests or live provider/preflight/central service run requested"
+  }
+}
