@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "task": "D127",
+  "result": "PASS_SOURCE_READY",
+  "verdict": "PASS_SOURCE_READY",
+  "review_scope": "Independent read-only review of the persistent D127 recipe and source custody against PLAN, A2/A3/P2, C0 sections 1-5 and 7, the corrected 1813 list, approved Runtime ab1e product custody, and D130 hold. No recipe, preflight, submit, test, browser, service, profile, build, collector, or product mutation was performed.",
+  "source_ready_only": true,
+  "execution_credit": false,
+  "body_or_go_credit": false,
+  "evidence": {
+    "recipe": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-element-durable-recipe-sol-1824/evidence/recipe.md",
+      "sha256": "3432c22a9c6838b9cda8ef18d71a37591fa8a53a1579664ec67cdfd4efb24254",
+      "size_bytes": 13360
+    },
+    "source_custody_input": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-element-durable-recipe-sol-1824/evidence/source-custody.json",
+      "sha256": "4184c934ea6196d364af913494cb83f3c503019dcef32cf9685d2954ecebf132",
+      "size_bytes": 18710
+    },
+    "readiness_input": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-element-durable-recipe-sol-1824/evidence/readiness.json",
+      "sha256": "f7e9867935fd469c734a05ed636467a1538f34bdb12dc408cb5f611fd9a900fa",
+      "size_bytes": 3674
+    },
+    "helper": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-element-durable-recipe-sol-1824/evidence/p2_commit_phase_capture.py",
+      "source_commit": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+      "source_blob": "6984ac1da77f1b499703cfac45d27149eddcbdae",
+      "sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+      "mode": "0600",
+      "directory_mode": "0700",
+      "regular_nonsymlink": true,
+      "role": "explicit reviewed helper source only; not Runtime product adoption and not raw capture"
+    }
+  },
+  "corrections_1813": {
+    "C1_released_runtime_ab1e_product": "PASS",
+    "C2_exact_external_helper_4ee_custody": "PASS",
+    "C3_all_four_receipts_and_app_target_metadata": "PASS",
+    "C4_complete_submit_command_and_fixed_paths": "PASS",
+    "C5_unescaped_markdown_fences": "PASS"
+  },
+  "product_sources": {
+    "app": {"head": "d5a1d1ab6550187e377fd7387d300102b8b82ece", "tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20", "checkout": "/home/user/work/wt/app-pin-d5a1d1ab", "detached_clean": true},
+    "agent": {"head": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3", "checkout": "/home/user/work/wt/agt-pin-070dfc5e", "detached_clean": true},
+    "runtime": {"head": "ab1e4f6141987706132916e2da16477f5a019464", "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657", "checkout": "/home/user/work/wt/rt-pin-ab1e4f61", "detached_clean": true},
+    "composition": {"head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "checkout": "/home/user/work/wt/vw-pin-635f4de0", "detached_clean": true}
+  },
+  "normal_app_controller": {
+    "path": "/home/user/work/app",
+    "head": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+    "tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20",
+    "clean": true,
+    "used_in_recipe": true,
+    "contaminated_inherited_branch_used": false,
+    "inherited_branch": {"head": "d8c0ce8be5c2fc317293dc5610fa6359c1131332", "tree": "3f5e08c818ec7fd15b43093fc7ac98f96a84eaaa", "tracked_evidence_additions": 3}
+  },
+  "receipt_and_metadata_checks": {
+    "four_receipt_files_exist_and_hash_match": true,
+    "receipt_paths_resolve_to_recorded_checkouts": true,
+    "all_recorded_heads_and_trees_match_git": true,
+    "all_recorded_checkouts_are_detached_and_clean": true,
+    "app_target": "app-pin-d5a1d1ab",
+    "app_target_metadata_matches_checkout": true
+  },
+  "recipe_checks": {
+    "submit_command": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs p2-element --submit",
+    "normal_output_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-element-durable-recipe-sol-1824/submission/p2-element",
+    "submit_plan_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-element-durable-recipe-sol-1824/submission/p2-element/p2-element-submit-plan.json",
+    "source_preflight_before_one_body": true,
+    "selector": "P2 mounted element edit: real catalog apply, exact params patch, reload and guarded Undo$",
+    "selector_count": 1,
+    "watchdog_seconds": 2,
+    "expect_timeout_ms": 5000,
+    "full_p2_watchdog_seconds": 20,
+    "lifecycle_body_unchanged": true,
+    "history_reload_guarded_undo_and_legacy_route_guards_present": true,
+    "v2_request_reply_oracles_match_c0": true,
+    "source_guards_present": true,
+    "normal_dependency_reuse": {"controller_node_modules": "/home/user/work/app/node_modules", "controller_tsx": "/home/user/work/app/node_modules/tsx/dist/loader.mjs", "detached_checkout_node_modules_absent": true, "no_install_or_shared_write": true},
+    "node": {"path": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node", "version": "v20.19.4", "sha256": "43d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490"}
+  },
+  "historical_limits": {
+    "raw_capture_1731": "ABSENT; retained-log claims only",
+    "request": 3,
+    "lifecycle": "pending_at_stop",
+    "samples": 352,
+    "lost_samples": 3,
+    "provider_response_wall_denominator": "UNKNOWN",
+    "request_2_or_20s_substitution": false,
+    "D130_hold": true
+  },
+  "static_acceptance": {
+    "json_parse": "PASS",
+    "helper_ast_parse_without_execution": "PASS",
+    "recipe_bash_n_without_execution": "PASS",
+    "node_check_d66_launcher": "PASS",
+    "node_check_d66_test": "PASS",
+    "product_source_or_test_changes": "NONE",
+    "runtime_or_browser_or_service_execution": "NOTRUN"
+  },
+  "findings": []
+}

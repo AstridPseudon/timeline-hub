@@ -1,0 +1,73 @@
+{
+  "task": "D100 independent result/custody and whole-path review",
+  "result": "PASS_WITH_BOUNDARY",
+  "meaningful_behavior_evidence": "PASS",
+  "whole_candidate_green": false,
+  "candidate": {
+    "commit": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+    "tree": "0919e511bd28b3d3af76bb18155efda12c3e94f6",
+    "product_sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+    "test_sha256": "be2c9d054d94fe741fa2c53552ec59de1510bf82dbf704018e0bc49f3218ec58"
+  },
+  "parent": {
+    "commit": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb",
+    "product_sha256": "689c59d323aca2d508d152f5d5513beed094edf2f6fd9b8ef93f12f475104c39",
+    "test_bytes": "candidate additive test retained verbatim in the private parent run"
+  },
+  "runtime": {
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "clean": true,
+    "provider_route": "registered Astrid provider through RuntimeService.commit_timeline"
+  },
+  "source_custody": {
+    "changed_paths_from_parent": [
+      "astrid/sdk/timeline/_command_state.py",
+      "tests/sdk/test_d100_item_birth_boundary.py"
+    ],
+    "working_tree_clean": true,
+    "protected_test_bytes_verified": true,
+    "projection_fixture_sha256": "90c4625a7481fdcd570ec8b85bbe95325f4d3c57f0a3a26017dd405b8269b638",
+    "projection_fixture_receiving_delta": false,
+    "source_security": "retained PASS_SOURCE_SECURITY from 1803; not repeated"
+  },
+  "retained_runs": {
+    "parent": {"tests": 27, "passed": 23, "failed": 4, "duration": "4.99s", "exit_code": 1},
+    "candidate": {"tests": 27, "passed": 24, "failed": 3, "duration": "3.65s", "exit_code": 1}
+  },
+  "registered_provider_first_birth": {
+    "status": "PASS",
+    "selector": "test_registered_runtime_first_source_item_birth_and_no_write_refusal",
+    "parent": "refused at the prior physical-item correspondence guard",
+    "candidate": "accepted first physical item and retained no-write refusal"
+  },
+  "failed_nodes": [
+    {
+      "selectors": [
+        "test_first_physical_item_preserves_custody_and_opaque_fields[False]",
+        "test_first_physical_item_preserves_custody_and_opaque_fields[True]"
+      ],
+      "classification": "EXPECTATION_SETUP_MISMATCH",
+      "assertion_purpose": "custody equality over the entire internal source_mapping object",
+      "first_causal_boundary": "_doc_patch_materialize.remember adds private _doc_patch_images before the assertion",
+      "product_fault": false,
+      "unknown": false
+    },
+    {
+      "selector": "test_registered_shared_owner_uses_the_same_physical_custody_without_alias_birth",
+      "classification": "EXPECTATION_SETUP_MISMATCH",
+      "assertion_purpose": "direct execute shared-owner birth path",
+      "first_causal_boundary": "existing authoring compiler rejects candidate.placements[1].source_offset before the doc.patch runs",
+      "parent_same_failure": true,
+      "product_fault": false,
+      "unknown": false
+    }
+  ],
+  "whole_path": {
+    "app_projection9": "NOTRUN",
+    "own9": "NOTRUN",
+    "fixture_receiving_delta": "NOT_APPLIED",
+    "whole_candidate_blocker": "retained direct tests are still red; no App projection closure is established"
+  },
+  "next_owner_question": "Agent/provider owner: should the direct shared-owner case use an admitted default source_offset fixture, or should occurrence.place-shared support the existing non-default source trim? Do not change App or weaken the source_mapping custody assertion automatically."
+}

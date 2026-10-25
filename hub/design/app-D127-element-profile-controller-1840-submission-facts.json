@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "task": "D127",
+  "stage": "source_preflight_pass_normal_submitted",
+  "admission": {
+    "manager_recorded_bytes": 5321138176,
+    "manager_recorded_at": "2026-10-25T18:41:00Z",
+    "d89c_measured_once_by_manager": true,
+    "ongoing_stop_bytes": 4000000000,
+    "one_heavy_body": true
+  },
+  "source": {
+    "app_head": "d5a1d1ab6550187e377fd7387d300102b8b82ece",
+    "app_tree": "7be73e2cbbcf89d627bf7b9da940b4ce17968c20",
+    "agent_head": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "agent_tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+    "runtime_head": "ab1e4f6141987706132916e2da16477f5a019464",
+    "runtime_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "composition_head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "helper_sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e"
+  },
+  "controller": {
+    "root": "/home/user/work/app",
+    "target": "app-pin-d5a1d1ab",
+    "output_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-element-profile-controller-1840/submission/p2-element",
+    "plan_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D127-element-profile-controller-1840/submission/p2-element/p2-element-submit-plan.json",
+    "plan_sha256_before_normal_submission": "8894bd6d3adebef61b63c9ba2d5fb290cfde7f8123f0ba1ecd865195be9a2e45",
+    "plan_sha256": "21c1e9471c61d3e7925062f3e0a0bf3b943d988dad200d789dcb4018bd1b403c",
+    "preflight_id": "app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-preflight-1025183946-29958",
+    "normal_id": "app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-1025184016-32016",
+    "preflight_result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-preflight-1025183946-29958",
+    "normal_result_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-d5a1d1ab-d73-p2-element-d5a1d1ab-submit-1025184016-32016",
+    "source_preflight_required_before_body": true,
+    "submission_count": 1
+  }
+}
