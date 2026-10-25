@@ -1,0 +1,7 @@
+Ask: return fresh HOST process-use CLEAR or BUSY for old App34d464 and Runtime7070 pins to preserve D124 tour headroom / Owner: App lead host visibility; App manager final static guards and recycle / By: 2026-10-25T13:00Z
+
+App A2 test-only controls normalmergedfe3309; tags5e9ad already adopted. Original11251 and8974 terminal, their independent verdicts and retained timestamp/outcome investigations ended. Old app-pin-34d46445 and rt-pin-7070f137 are clean/noncurrent, no running marker or pending queue/lease/current-worker absolute path reference found in static audit design/app-pin-static-audit-1247.json. No KEEP removed or recycleattempted. Please actual HOST /proc cmdline/cwd/environ/fd/map_files scan for ONLY these two paths. Manager isolated namespace cannot prove hostabsence. Repeat actual testplan/staticguards immediatelybeforeanyrelease after yourCLEAR.
+
+Keep current Appfe3309 (producttree same d8a1 plus additive controls), Runtime5e9ad, Agent070dfc, Composition635f, binding proofRuntime42aad, anynewactualD124 plan and ALL11251/8974/15203/15712 outputs/branches/reports. Old dirty/refused U3/orphan targets untouched. On freshCLEAR and no newreference manager uses only namedKEEP release/binrecycle; classifierrefusalSTOP/report.
+
+No heavy body now; three source workers finish normally. D124soleApp fulltour by13:30 plans existing samplerreuse prep1245 then >=5.2GB admission. This opportunistic ~0.2GB oldpin recovery is normal capacityinput, not sourceapproval or permissionrequest; no duplicate body/native replay or observer.

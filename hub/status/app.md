@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T12:45:25Z | dispatcher heartbeat 6s | live 2 (sol 0, luna 2, other 0) | busy30 14 | status age 0m -->
-# app board, 2026-10-25T12:45Z
+<!-- app | 2026-10-25T12:49:43Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 1m -->
+# app board, 2026-10-25T12:48Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -67,7 +67,7 @@
 | D118a-native-checkout4 | Preserve native checkout behavior | Luna | Exact own4 current check | blocked:agent | app-D118a-native-checkout4-1215 | No diff; four setupERROR at same shared m1.film missing legacy word anchor. Actual checkout behavior unverified. | Source unchanged |
 | D118a-track-batch1 | Preserve parent track batch inverse | Luna | Exact own1 current check | blocked:agent | app-D118a-track-batch1-1215 | No diff; one setupERROR at shared m1.film missing legacy word anchor. Grouping and all original predicates exact. | Source unchanged |
 
-| A2-current-element | Prove outcome reaches actual panel | HARD Sol and Luna | Independent1239 PASS | merging | Author1222; reviewer1239 | Five additive mounted controls,105 tests and types/lint PASS. Only own test file; no product defect or original outcome proved. | 67dc61b693 |
+| A2-current-element | Prove outcome reaches actual panel | HARD Sol and Luna | Independent1239 PASS | merged | Author1222; reviewer1239; normal1248 | Exact reviewed test blob home;105 controls/types/lint PASS. No product defect or original backend outcome proved. | fe3309dba4 |
 | D118a-binding-review | Challenge native binding repair | Luna independent core | Sourcef3a6 | merged | app-D118a-native-binding-core-review-1221 | FAIL genuine rebind at native69 dependency_changed; parent PASS. Four additive and52 unit controls PASS; no candidate release. | Evidence only |
 | D120-current-asset | Qualify asset on corrected tuple | Luna independent | Actual8974 terminal | merged | app-D120-asset8974-GO-review-1226 | GO readiness1 and original1; exact tuple and full protected tail. Six of eight across current-tuple runs; overall NO-GO. | Source unchanged |
 
@@ -79,7 +79,7 @@
 | D124-sampler-prep | Reuse sampler for actual element process | Luna | Existing Runtime sampler handoff | doing | app-D124-actual-element-sampler-prep-1245 | Source-only normal attach plan; exact existing sampler handoff requested1243. No new collector or body. | Source prep |
 | D124-full-P2 | Run tagged tour with actual element timing | Luna and service | Sampler prep and disk5.2GB | blocked:app | Sole App tour controller next | Owner D124 target13:30Z; exact tags5e9ad and current App provenance home. No semantic Runtime fix wait. | Tuple capture pending |
 
-Integration: Appd8a1cd40b866c49c0ab415682391f0ec87a7a8e7/treedd2afd6c5c7a1ac73feaac4390cc64d7f31fe7b9; ENTIRE tree equals tested author331a58363d. Runtime5e9ad/tree de2954 adopted through normal tools; Agent070dfc and Composition635f retained. D119/D115/D113 exact. [Home receipt](../../design/app-U4p-D121-normal-home-1237.json).
+Integration: Appfe3309dba4520835a685f925468bff1acdc0506f/treee55f0d65dca0c9f2ba3013df4cab999f314308b9; only reviewed additive A2 test differs from qualified tags Appd8a1. Exact reviewed test blob home, types/lint and protected source unchanged. Runtime5e9ad, Agent070dfc and Composition635f retained. [Receipt](../../design/app-A2-outcome-controls-normal-home-1248.json).
 
 Recorded full P2 actual15203 remains NO-GO on96d475/070dfc/d23a8/635f: readiness1 PASS; placement and ADD independently GO; element and SWAP FAIL; parent ERROR/no POST; asset and clears NOTRUN. Later source merges supply no browser credit. Prior P1/P3 and case GOs retain recorded tuple scope. No unchanged gate body queued.
 

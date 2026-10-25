@@ -1,0 +1,29 @@
+{
+  "free_bytes": 4975964160,
+  "targets": [
+    {
+      "worker": "app-pin-34d46445",
+      "path": "/home/user/work/wt/app-pin-34d46445",
+      "head": "34d4644589970274a5252c0f7c68b6288eb0b0b4",
+      "current_repo_head": "fe3309dba4520835a685f925468bff1acdc0506f",
+      "noncurrent": true,
+      "status": "",
+      "KEEP": true,
+      "running": false,
+      "references": [],
+      "host_process_use": "UNKNOWN isolated namespace; host clearance required"
+    },
+    {
+      "worker": "rt-pin-7070f137",
+      "path": "/home/user/work/wt/rt-pin-7070f137",
+      "head": "7070f1378d1917fcce69857ebd33cd2b3015568b",
+      "current_repo_head": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+      "noncurrent": true,
+      "status": "",
+      "KEEP": true,
+      "running": false,
+      "references": [],
+      "host_process_use": "UNKNOWN isolated namespace; host clearance required"
+    }
+  ]
+}

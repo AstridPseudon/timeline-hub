@@ -1,0 +1,14 @@
+{
+  "time": "2026-10-25T12:46:47.362267+00:00",
+  "normal_head": "fe3309dba4520835a685f925468bff1acdc0506f",
+  "normal_tree": "e55f0d65dca0c9f2ba3013df4cab999f314308b9",
+  "reviewed_author": "67dc61b693729850e6011454b52f7baeebaf44ce",
+  "reviewed_test_blob": "4e7c57cd657cf080df6c571ac668fc9b7d1edb97",
+  "exact_normal_test_blob": true,
+  "only_change_from_qualified_tags_app": [
+    "src/tools/video-editor/hooks/useTimelineSave.currentContract.test.tsx"
+  ],
+  "tags_parent": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7",
+  "queue_receipt": "merged tl/app-A2-element11251-outcome-sol-1222 into app tl/integration -> fe3309dba4\n",
+  "proof": "Independent1239 exact-tree105 cached PASS; actual types/lint PASS. No product change or original element outcome proved."
+}
