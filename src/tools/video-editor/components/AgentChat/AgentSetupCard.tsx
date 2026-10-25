@@ -16,6 +16,7 @@ const client = new AstridLocalClient({ projectSlug: 'astrid-acp', timeoutMs: 120
 // ACP model ids are provider/model selectors; the catalog lists bare ids per provider.
 const selectorOf = (providerId: string, modelId: string) => `${providerId}/${modelId}`;
 const setupName = (agent: LocalAgentId) => agent === 'astrid' ? copy.astridAgent : agentNames[agent];
+const setupState = (agent: LocalAgentChoice | undefined) => JSON.stringify([agent?.state, agent?.signIn, agent?.steps?.map(({ kind, command, label }) => [kind, command, label])]);
 
 type Props = {
   agents: LocalAgentChoice[];
@@ -23,7 +24,7 @@ type Props = {
   initialAgent?: LocalAgentId;
   initialError?: unknown;
   refetchAgents: () => Promise<unknown> | unknown;
-  startChatWith: (agent: LocalAgentId, model?: string) => Promise<{ error?: unknown; sessionId?: string | null } | void>;
+  startChatWith: (agent: LocalAgentId, model?: string, isCurrent?: () => boolean) => Promise<{ error?: unknown; sessionId?: string | null } | void>;
   onSetup?: (agent: LocalAgentId) => void;
   onComplete: (agent: LocalAgentId, sessionId?: string | null) => void;
 };
@@ -43,8 +44,10 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
       : LOCAL_AGENT_IDS.find(id => id !== 'astrid' && agents.some(agent => agent.id === id && agent.signIn === 'signed-in')) ?? 'astrid');
   });
   const [step, setStep] = useState<'choose' | 'setup' | 'starting' | 'failed'>(initialAgent ? 'setup' : 'choose');
-  const [failure, setFailure] = useState<unknown>(initialError);
-  const [canAdvance, setCanAdvance] = useState(!initialError);
+  const [agentFailure, setAgentFailure] = useState({ agent: initialAgent ?? selected, error: initialError });
+  const failure = agentFailure.agent === selected ? agentFailure.error : null;
+  const [failedRow, setFailedRow] = useState(() => initialError ? { id: initialAgent, state: setupState(agents.find(row => row.id === initialAgent)) } : null);
+  const [showStartingBack, setShowStartingBack] = useState(false);
   const [search, setSearch] = useState('');
   const [chosenModel, setChosenModel] = useState<string | null>(null);
   const [checkingKey, setCheckingKey] = useState(false);
@@ -52,13 +55,22 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
   const keyInput = useRef<HTMLInputElement>(null);
   const rows = useRef<Partial<Record<LocalAgentId, HTMLDivElement | null>>>({});
   const inFlight = useRef(false);
+  const attempt = useRef(0);
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   useEffect(() => {
     if (!initialAgent || inFlight.current) return;
-    setSelected(initialAgent); setFailure(initialError); setCanAdvance(!initialError); setStep('setup');
+    setSelected(initialAgent);
+    if (initialError) {
+      setAgentFailure({ agent: initialAgent, error: initialError });
+      setFailedRow({ id: initialAgent, state: setupState(agents.find(row => row.id === initialAgent)) });
+    }
+    setStep('setup');
   }, [initialAgent, initialError]);
   const agent = agents.find(row => row.id === selected);
+  const currentAgent = useRef(agent);
+  currentAgent.current = agent;
+  const canAdvance = failedRow?.id !== selected || failedRow.state !== setupState(agent);
   const models = useQuery({
     queryKey: ['agent-setup-models'], queryFn: () => client.acp.models(),
     enabled: step === 'setup' && selected === 'astrid', retry: false,
@@ -68,21 +80,23 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
   const begin = useCallback(async (model?: string) => {
     if (inFlight.current) return;
     inFlight.current = true;
+    const request = ++attempt.current;
+    const isCurrent = () => mounted.current && request === attempt.current;
     setStep('starting');
-    setFailure(null);
+    setAgentFailure({ agent: selected, error: null });
     try {
-      const result = await startChatWith(selected, model);
+      const result = await startChatWith(selected, model, isCurrent);
+      if (!isCurrent()) return;
       if (result?.error) throw result.error;
-      if (!mounted.current) return;
       await refetchAgents();
-      if (!mounted.current) return;
+      if (!isCurrent()) return;
       rememberNewChatChoice({ agent: selected, ...(model ? { model } : {}) });
       onComplete(selected, result?.sessionId);
     } catch (error) {
-      if (!mounted.current) return;
-      setFailure(error);
+      if (!isCurrent()) return;
+      setAgentFailure({ agent: selected, error });
+      setFailedRow({ id: selected, state: setupState(currentAgent.current) });
       if (isAgentSetupError(error)) {
-        setCanAdvance(false);
         setStep('setup');
         void refetchAgents();
         if (selected === 'astrid') void models.refetch();
@@ -90,17 +104,28 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
     } finally { inFlight.current = false; }
   }, [models.refetch, onComplete, refetchAgents, selected, startChatWith]);
 
+  const back = () => { attempt.current += 1; setStep('choose'); };
+  useEffect(() => {
+    setShowStartingBack(false);
+    if (step !== 'starting') return;
+    const timer = window.setTimeout(() => setShowStartingBack(true), 10_000);
+    return () => window.clearTimeout(timer);
+  }, [step]);
+
   useEffect(() => {
     if (step === 'choose') rows.current[selected]?.focus({ preventScroll: true });
   }, [step, selected]);
   useEffect(() => {
     if (step !== 'setup') return;
-    const refresh = () => { void Promise.resolve(refetchAgents()).then(() => { if (mounted.current) setCanAdvance(true); }); };
+    const refresh = () => { void refetchAgents(); };
     const focus = () => { refresh(); if (selected === 'astrid') void models.refetch(); };
     const timer = window.setInterval(refresh, 3000);
     window.addEventListener('focus', focus);
     return () => { window.clearInterval(timer); window.removeEventListener('focus', focus); };
   }, [models.refetch, refetchAgents, selected, step]);
+  useEffect(() => {
+    if (failedRow?.id === selected && failedRow.state !== setupState(agent)) setFailedRow(null);
+  }, [agent, failedRow, selected]);
   useEffect(() => {
     if (step === 'setup' && selected !== 'astrid' && canAdvance && isAgentUsable(agent)) void begin();
   }, [agent, begin, canAdvance, selected, step]);
@@ -108,9 +133,10 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
   const providers = [...(models.data?.providers ?? [])].sort((a, b) => Number(b.signedIn) - Number(a.signedIn));
   const hasModels = providers.some(provider => provider.signedIn && provider.models.length > 0);
   const availableModels = providers.filter(provider => provider.signedIn)
-    .flatMap(provider => provider.models.map(item => ({ ...item, selector: selectorOf(provider.id, item.id) })));
+    .flatMap(provider => provider.models.filter(item => `${provider.name} ${item.name} ${item.id}`.toLowerCase().includes(search.toLowerCase()))
+      .map(item => ({ ...item, selector: selectorOf(provider.id, item.id) })));
   const modelId = chosenModel && availableModels.some(model => model.selector === chosenModel) ? chosenModel
-    : availableModels.find(model => model.selector === models.data?.currentModel)?.selector ?? availableModels[0]?.selector;
+    : (!chosenModel ? availableModels.find(model => model.selector === models.data?.currentModel)?.selector : undefined) ?? availableModels[0]?.selector;
   const model = availableModels.find(model => model.selector === modelId);
   const setupError = isAgentSetupError(failure);
   const steps = agent?.steps?.length ? agent.steps.filter(item => agent.state === 'not-installed' || item.kind === 'sign-in') : [];
@@ -130,9 +156,9 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
           const row = agents.find(item => item.id === id);
           return <div key={id} ref={node => { rows.current[id] = node; }} role="option" aria-selected={selected === id} tabIndex={selected === id ? 0 : -1}
             className={`flex w-full items-center gap-2 rounded-md p-2 text-left hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${selected === id ? 'bg-muted' : ''}`}
-            onFocus={() => setSelected(id)} onClick={() => { setSelected(id); setFailure(null); setCanAdvance(true); setStep('setup'); onSetup?.(id); }}
+            onFocus={() => setSelected(id)} onClick={() => { setSelected(id); setStep('setup'); onSetup?.(id); }}
             onKeyDown={event => {
-              if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setSelected(id); setFailure(null); setCanAdvance(true); setStep('setup'); onSetup?.(id); return; }
+              if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setSelected(id); setStep('setup'); onSetup?.(id); return; }
               const next = event.key === 'ArrowDown' ? (index + 1) % LOCAL_AGENT_IDS.length : event.key === 'ArrowUp' ? (index + LOCAL_AGENT_IDS.length - 1) % LOCAL_AGENT_IDS.length : event.key === 'Home' ? 0 : event.key === 'End' ? LOCAL_AGENT_IDS.length - 1 : null;
               if (next !== null) { event.preventDefault(); setSelected(LOCAL_AGENT_IDS[next]); }
             }}>
@@ -145,8 +171,9 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
       </div>
     </> : step === 'starting' ? <>
       {waiting(copy.gettingReady(setupName(selected)))}<p className="text-xs text-muted-foreground">{copy.firstTime}</p>
+      {showStartingBack && <button type="button" className="text-xs underline" onClick={back}>{copy.back}</button>}
     </> : <>
-      <button type="button" className="text-xs underline" onClick={() => { setStep('choose'); setFailure(null); setCanAdvance(true); }}>{copy.back}</button>
+      <button type="button" className="text-xs underline" onClick={back}>{copy.back}</button>
       <h2 className="font-medium">{setupName(selected)}</h2>
       {errorMessage && <p role="alert">{errorMessage}</p>}
       {step === 'setup' && selected === 'astrid' && setupError && instructions}
@@ -170,7 +197,8 @@ export function AgentSetupCard({ agents, defaultAgent, initialAgent, initialErro
           <h3 className="font-medium">{copy.openRouterRecommendation}</h3>
           <form className="space-y-2" onSubmit={event => {
             event.preventDefault();
-            if (checkingKey || !keyInput.current?.value.trim()) return;
+            if (checkingKey) return;
+            if (!keyInput.current?.value.trim()) { setKeyError(copy.emptyKey); keyInput.current?.focus(); return; }
             const request = client.acp.saveAstridApiKey('openrouter', keyInput.current.value.trim());
             keyInput.current.value = '';
             setCheckingKey(true); setKeyError(null);

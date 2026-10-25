@@ -68,6 +68,91 @@ describe('AgentSetupCard choices', () => {
 });
 
 describe('external setup and recovery', () => {
+  it('does not start a missing agent row', async () => {
+    const view = mount({ agents: [] }); choose('Use Codex');
+    await act(async () => { window.dispatchEvent(new Event('focus')); });
+    expect(view.startChatWith).not.toHaveBeenCalled();
+    expect(screen.getByText('Waiting for you to sign in…')).toBeInTheDocument();
+  });
+  it.each(['state', 'signIn', 'steps'] as const)('waits through unchanged polls after failure, then retries when %s changes', async field => {
+    vi.useFakeTimers();
+    const error = new BridgeRouteError('Start', 502, { error: 'agent_sign_in_required', detail: 'Sign-in expired', next_action: 'codex login' });
+    const startChatWith = vi.fn().mockResolvedValueOnce({ error }).mockResolvedValue(undefined);
+    const view = mount({ startChatWith });
+    await act(async () => { choose('Use Codex'); });
+    const alert = screen.getByRole('alert');
+    const unchanged = ready();
+    unchanged[1].state = 'not-installed';
+    unchanged[2].line = 'A different description';
+    unchanged[2].models = [{ modelId: 'new-model', name: 'New model' }];
+    await act(async () => {
+      view.rerenderCard({ agents: unchanged });
+      window.dispatchEvent(new Event('focus'));
+      await vi.advanceTimersByTimeAsync(9000);
+    });
+    expect(startChatWith).toHaveBeenCalledOnce();
+    expect(screen.getByRole('alert')).toBe(alert);
+    expect(alert).toHaveTextContent('Sign-in expired');
+    const changed = ready();
+    if (field === 'state') changed[2].state = 'sign-in';
+    if (field === 'signIn') changed[2].signIn = 'unknown';
+    if (field === 'steps') changed[2].steps = [{ kind: 'sign-in', command: 'codex login', label: 'Sign in' }];
+    await act(async () => { view.rerenderCard({ agents: changed }); });
+    if (field === 'state') {
+      expect(startChatWith).toHaveBeenCalledOnce();
+      expect(screen.getByRole('alert')).toHaveTextContent('Sign-in expired');
+      await act(async () => { view.rerenderCard({ agents: ready() }); });
+    }
+    expect(startChatWith).toHaveBeenCalledTimes(2);
+    expect(view.onComplete).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+  it('keeps an initial setup error until its agent row changes', async () => {
+    vi.useFakeTimers();
+    const error = new BridgeRouteError('Start', 502, { error: 'agent_not_installed', detail: 'Agent is missing' });
+    const view = mount({ initialAgent: 'codex', initialError: error });
+    await act(async () => { await vi.advanceTimersByTimeAsync(6000); });
+    expect(screen.getByRole('alert')).toHaveTextContent('Agent is missing');
+    expect(view.startChatWith).not.toHaveBeenCalled();
+    const agents = ready(); agents[2].steps = [];
+    await act(async () => { view.rerenderCard({ agents }); });
+    expect(view.onComplete).toHaveBeenCalledOnce();
+  });
+  it('compares setup steps by value across refreshed rows', async () => {
+    const error = new BridgeRouteError('Start', 502, { error: 'agent_sign_in_required', detail: 'Sign-in expired' });
+    const agents = ready(); agents[2].steps = [{ kind: 'sign-in', command: 'codex login', label: 'Sign in' }];
+    const view = mount({ agents, initialAgent: 'codex', initialError: error });
+    const refreshed = ready(); refreshed[2].steps = [{ label: 'Sign in', command: 'codex login', kind: 'sign-in' }];
+    await act(async () => { view.rerenderCard({ agents: refreshed }); });
+    expect(view.startChatWith).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toHaveTextContent('Sign-in expired');
+    const changed = ready(); changed[2].steps = [{ kind: 'sign-in', command: 'codex login', label: 'Sign in again' }];
+    await act(async () => { view.rerenderCard({ agents: changed }); });
+    expect(view.onComplete).toHaveBeenCalledOnce();
+  });
+  it.each(['success', 'failure'] as const)('offers Back after 10 seconds and ignores a late %s without starting again', async outcome => {
+    vi.useFakeTimers();
+    let finish!: (result: { error?: Error; sessionId?: string }) => void;
+    const startChatWith = vi.fn().mockImplementation(() => new Promise(resolve => { finish = resolve; }));
+    const view = mount({ startChatWith });
+    await act(async () => { choose('Use Codex'); });
+    await act(async () => { await vi.advanceTimersByTimeAsync(9999); });
+    expect(screen.getByText('Getting Codex ready…')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
+    await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    expect(startChatWith.mock.calls[0][2]()).toBe(false);
+    await act(async () => {
+      finish(outcome === 'success' ? { sessionId: 'codex:late' } : { error: new Error('Late failure') });
+      await vi.advanceTimersByTimeAsync(6000);
+    });
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    expect(startChatWith).toHaveBeenCalledOnce();
+    expect(view.onComplete).not.toHaveBeenCalled();
+    expect(mocks.remember).not.toHaveBeenCalled();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
   it('renders install steps, polls every 3 seconds and on focus, then advances when ready', async () => {
     vi.useFakeTimers();
     const agents = ready();
@@ -81,7 +166,7 @@ describe('external setup and recovery', () => {
     await act(async () => { window.dispatchEvent(new Event('focus')); });
     expect(view.refetchAgents).toHaveBeenCalledTimes(2);
     await act(async () => { view.rerenderCard({ agents: ready() }); });
-    expect(view.startChatWith).toHaveBeenCalledExactlyOnceWith('codex', undefined);
+    expect(view.startChatWith).toHaveBeenCalledExactlyOnceWith('codex', undefined, expect.any(Function));
     expect(view.onComplete).toHaveBeenCalledWith('codex', undefined);
     await act(async () => { await vi.advanceTimersByTimeAsync(6000); });
     expect(view.refetchAgents).toHaveBeenCalledTimes(3);
@@ -125,11 +210,36 @@ describe('external setup and recovery', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Warm-up failed');
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     await waitFor(() => expect(view.onComplete).toHaveBeenCalledOnce());
-    expect(startChatWith.mock.calls).toEqual([['codex', undefined], ['codex', undefined]]);
+    expect(startChatWith.mock.calls.map(call => call.slice(0, 2))).toEqual([['codex', undefined], ['codex', undefined]]);
   });
 });
 
 describe("Astrid's setup", () => {
+  it('uses the first visible model when an explicit selection is filtered out and disables an empty search', async () => {
+    mocks.models.mockResolvedValue(catalog());
+    const view = mount(); choose("Astrid's agent");
+    fireEvent.click(await screen.findByRole('radio', { name: 'Sonnet' }));
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'OpenRouter' } });
+    expect(screen.getByRole('radio', { name: 'First model' })).toBeChecked();
+    expect(screen.getByRole('button', { name: 'Use First model' })).toBeEnabled();
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'no matching model' } });
+    expect(screen.getByRole('button', { name: 'Use' })).toBeDisabled();
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'Unavailable model' } });
+    expect(screen.getByRole('button', { name: 'Use' })).toBeDisabled();
+    expect(view.startChatWith).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'OpenRouter' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Use First model' }));
+    await waitFor(() => expect(view.startChatWith).toHaveBeenCalledWith('astrid', 'openrouter/first', expect.any(Function)));
+  });
+  it.each(['', '   '])('shows the empty-key message and focuses the field for %j', async value => {
+    mount(); choose("Astrid's agent");
+    const input = await screen.findByLabelText('OpenRouter key');
+    fireEvent.change(input, { target: { value } });
+    fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
+    expect(screen.getByRole('alert')).toHaveTextContent('Paste your OpenRouter key first.');
+    expect(input).toHaveFocus();
+    expect(mocks.saveKey).not.toHaveBeenCalled();
+  });
   it('groups and searches the full catalog, selects currentModel and starts with the selected model', async () => {
     const data = catalog();
     data.providers[1].models.push(...Array.from({ length: 60 }, (_, i) => ({ id: `model-${i}`, name: `Model ${i}` })));
@@ -141,9 +251,9 @@ describe("Astrid's setup", () => {
     expect(screen.getByRole('radio', { name: 'Unavailable model' })).toBeDisabled();
     fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'sonnet' } });
     expect(screen.queryByRole('radio', { name: 'Default model' })).toBeNull();
-    fireEvent.click(screen.getByRole('radio', { name: 'Sonnet' }));
+    expect(screen.getByRole('radio', { name: 'Sonnet' })).toBeChecked();
     fireEvent.click(screen.getByRole('button', { name: 'Use Sonnet' }));
-    await waitFor(() => expect(view.startChatWith).toHaveBeenCalledExactlyOnceWith('astrid', 'claude/sonnet'));
+    await waitFor(() => expect(view.startChatWith).toHaveBeenCalledExactlyOnceWith('astrid', 'claude/sonnet', expect.any(Function)));
     expect(mocks.remember).toHaveBeenCalledWith({ agent: 'astrid', model: 'claude/sonnet' });
   });
   it('polls the session-free model query every 3 seconds and on window focus', async () => {

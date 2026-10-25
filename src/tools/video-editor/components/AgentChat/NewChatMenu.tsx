@@ -71,11 +71,15 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
   const startedFromRow = useRef(false);
 
   const [stored, setStored] = useState<NewChatChoice | null>(readNewChatChoice);
+  const availability = (id: LocalAgentId) => {
+    const row = agents?.find(choice => choice.id === id);
+    // Keep the Ready fallback when older services fail to load any agent rows.
+    return !agents?.length && agentsError ? { usable: true, state: 'ready' as const, line: null } : agentAvailability(row);
+  };
   // A stored choice whose agent is no longer usable falls back to the open chat, or the default agent.
-  const choice = stored && (!agents || agentAvailability(agents.find(item => item.id === stored.agent)).usable) ? stored : null;
+  const choice = stored && availability(stored.agent).usable ? stored : null;
   const effective: NewChatLike = choice ?? current ?? { agent: defaultAgent };
   const homeValue = `agent:${effective.agent}`;
-  const availability = (id: LocalAgentId) => agentAvailability(agents?.find(choice => choice.id === id));
   const canBrowse = (id: LocalAgentId) => Boolean(agents?.some(choice => choice.id === id)) && availability(id).usable && agentCanBrowse?.[id] !== false;
   const astridSignInLine = agents?.find(choice => choice.id === 'astrid')?.signInLine;
   const updateNeeded = agentsError && isChatUpdateError(agentsError) ? agentsError : null;
@@ -214,7 +218,7 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
   return (
     <Popover open={open} onOpenChange={changeOpen}>
       <div role="group" aria-label="New chat" className="flex shrink-0 items-center rounded-md transition-colors hover:has-[:enabled]:bg-accent/50 has-[[aria-expanded=true]]:bg-accent/50">
-        <button type="button" disabled={disabled || newChatDisabled} aria-label={quickLabel} title={quickLabel}
+        <button type="button" disabled={disabled || newChatDisabled || !availability(quickAgent).usable} aria-label={quickLabel} title={quickLabel}
           className={cn(SPLIT_BUTTON, 'w-6 rounded-l-md [@media(pointer:coarse)]:w-8')}
           onClick={startQuick}>
           <Plus className="h-3.5 w-3.5" aria-hidden="true" />

@@ -55,6 +55,7 @@ class HostTransport {
   private readonly connectionAgents = new Map<string, string>();
   private readonly connectionModels = new Map<string, string>();
   onPrompt: (() => Promise<void>) | null = null;
+  onCreate: (() => Promise<void>) | null = null;
   onLoad: (() => Promise<void>) | null = null;
   assistant = 'Done.';
   private sequence = 0;
@@ -117,6 +118,7 @@ class HostTransport {
     const [, project, action] = match;
     const chat = this.chat(project);
     if (action === 'sessions') {
+      if (this.onCreate) await this.onCreate();
       expect(body.operation_id).toEqual(expect.any(String));
       expect(body.operation_id.length).toBeGreaterThan(0);
       if (body.mode === 'new' || !chat.selected_session_id) {
@@ -201,6 +203,24 @@ afterEach(async () => {
 });
 
 describe('real panel → real hooks → owned ACP transport', () => {
+  it('keeps the chooser open after Back during a slow start and ignores the late created session', async () => {
+    fixture.agents[0] = { ...fixture.agents[0], state: 'sign-in', signIn: 'signed-out' };
+    const pending = deferred();
+    fixture.onCreate = () => pending.promise;
+    mount();
+    await screen.findByRole('listbox', { name: 'How do you want Astrid to think?' });
+    fireEvent.click(screen.getByRole('option', { name: /Use Codex/ }));
+    await screen.findByText('Getting Codex ready…');
+    await screen.findByRole('button', { name: 'Back' }, { timeout: 20_000 });
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    await act(async () => { pending.resolve(); });
+    await waitFor(() => expect(fixture.chat('p1').sessions).toHaveLength(1));
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    expect(screen.queryByText('✓ Codex is set up.')).toBeNull();
+    expect(fixture.calls.filter(call => call.route.endsWith('/sessions'))).toHaveLength(1);
+    expect(screen.getByRole('textbox')).toBeDisabled();
+  });
   it('shows setup instead of auto-creating with an unready default, then finishes and focuses the composer', async () => {
     fixture.agents[0] = { ...fixture.agents[0], state: 'sign-in', signIn: 'signed-out', line: 'Run `astrid`, then `/login`.' };
     fixture.agents[1].signIn = 'signed-in';
@@ -261,6 +281,7 @@ describe('real panel → real hooks → owned ACP transport', () => {
     await send('Retry after sign-in');
     expect(await screen.findByText('codex login')).toBeVisible();
     fixture.promptSetupFailure = null;
+    fixture.agents[1] = { ...fixture.agents[1], signIn: 'signed-in' };
     await act(async () => { window.dispatchEvent(new Event('focus')); });
     await screen.findByText('✓ Codex is set up.');
     expect(fixture.calls.filter(call => call.route.endsWith('/sessions'))).toHaveLength(0);
@@ -288,8 +309,10 @@ describe('real panel → real hooks → owned ACP transport', () => {
     }
     expect(fixture.calls.filter(call => call.route.endsWith('/sessions'))).toHaveLength(1);
     fixture.modelReadFailure = null;
-    if (kind === 'setup') await act(async () => { window.dispatchEvent(new Event('focus')); });
-    else fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    if (kind === 'setup') {
+      fixture.agents[1] = { ...fixture.agents[1], steps: [] };
+      await act(async () => { window.dispatchEvent(new Event('focus')); });
+    } else fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     await screen.findByText('✓ Codex is set up.');
     expect(fixture.calls.filter(call => call.route.endsWith('/sessions'))).toHaveLength(1);
     await waitFor(() => expect(screen.getByRole('textbox')).toHaveFocus());
