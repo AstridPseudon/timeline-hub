@@ -19,7 +19,7 @@ Options beyond `--tier`, `--reference`, `--timeline` and `--summary`:
 | `--skip-app-render` | `runtime_restart` restarts the Runtime but does not admit the App-shaped render (on a real film that render is the whole film). |
 
 Before anything starts the journey refuses unless the temp volume has free disk of at least the Runtime floor
-(`ASTRID_RUNTIME_FREE_DISK_FLOOR_BYTES`, default 4 GiB) plus the expected scratch of one excerpt render
+(`ASTRID_RUNTIME_FREE_DISK_FLOOR_BYTES`, default 1 GiB) plus the expected scratch of one excerpt render
 (an estimate per backend, `SCRATCH_BYTES_PER_SECOND`; the real figure is the capability's and is unreadable before the
 Runtime is up). The numbers are in the refusal and in the summary (`disk_preflight`). Every child process gets a scrubbed
 environment (`scrub_child_env`): no `NODE_OPTIONS`, `NODE_PATH`, `LD_*`, `DYLD_*`, non-interactive `GIT_*`,

@@ -39,18 +39,10 @@ _INLINE_AUDIO_WAV_BYTES_PER_SECOND = 48_000 * 2 * 2
 _INLINE_AUDIO_WAV_HEADER_BYTES = 44
 _MUX_OVERHEAD_PERCENT = 3
 _MUX_FIXED_OVERHEAD_BYTES = _MIB
-_MIN_OPERATIONAL_GUARD_BYTES = 256 * _MIB
-_OPERATIONAL_GUARD_PERCENT = 20
+_OPERATIONAL_GUARD_PERCENT = 10
 # Remotion creates a webpack bundle, Chromium profile/cache, and renderer
-# bookkeeping outside the media-size model below. Keep that deployment-owned
-# workspace allowance explicit so the live guard cannot trip just above an
-# otherwise correct timeline estimate.
+# bookkeeping outside the media-size model below.
 _REMOTION_RUNTIME_WORKSPACE_BYTES = 128 * _MIB
-_PARALLEL_ENCODE_WORKING_COPIES = 1
-# The managed render-export adapter keeps one staged asset copy and then makes
-# a second writable copy for the renderer. Both live under the attempt while
-# the render is running and are charged by the generic-host envelope.
-_MANAGED_RENDERER_COPY_PASSES = 2
 
 
 REVIEW_MAX_WIDTH = 640
@@ -77,7 +69,7 @@ def remotion_frame_sequence_bytes(
     height: int,
     image_format: str,
 ) -> int:
-    """Conservative scratch bytes for one selected-format frame sequence."""
+    """Expected scratch bytes for one selected-format frame sequence."""
 
     if image_format not in {"png", "jpeg"}:
         raise StorageEstimateError(f"unknown Remotion frame format: {image_format!r}")
@@ -86,11 +78,10 @@ def remotion_frame_sequence_bytes(
             Fraction((int(width) * 4 + 1) * int(height), 1) * Fraction(101, 100)
         )
     else:
-        # JPEG95 storage is content-dependent. Reserve one byte per pixel
-        # plus 20%, with the live attempt guard enforcing the admitted budget.
-        per_frame = math.ceil(
-            Fraction(int(width) * int(height) * 6, 5)
-        )
+        # Nine representative 1080p film frames encoded at JPEG95 averaged
+        # 0.089 bytes/pixel (range 0.040-0.162). Use 0.25 for planning;
+        # actual free volume space guards content that exceeds the estimate.
+        per_frame = math.ceil(Fraction(int(width) * int(height), 4))
     return per_frame * int(frames)
 
 
@@ -538,8 +529,7 @@ def estimate_managed_render_storage(
         + _INLINE_AUDIO_WAV_HEADER_BYTES
         for _, start_frame, duration_frames in inline_audio_assets
     )
-    encoded_working_copy_bytes = estimated_output_bytes * _PARALLEL_ENCODE_WORKING_COPIES
-    managed_renderer_copy_bytes = managed_entry_bytes * _MANAGED_RENDERER_COPY_PASSES
+    encoded_working_copy_bytes = estimated_output_bytes
     alpha_frame_bytes_per_frame = (
         math.ceil(
             Fraction(profile.width * profile.height * 4 + profile.height, 1)
@@ -568,44 +558,30 @@ def estimate_managed_render_storage(
         raise StorageEstimateError("streaming memory budget must be a non-negative owner allocation")
     streaming_memory_required_bytes = profile.width * profile.height * 1000 + 2 * 1024**3
     streams_frames = (not alpha and streaming_memory_budget_bytes >= streaming_memory_required_bytes)
-    # Never subtract fallback scratch from admission: a codec/browser can
-    # refuse parallel encoding even after its memory gate admitted it. The
-    # fallback uses the selected format too; opaque renders do not switch to PNG.
-    frame_working_bytes = max(alpha_frame_working_bytes, frame_sequence_bytes)
+    # Streaming pipes frames directly to ffmpeg. If the renderer falls back
+    # to disk, the live volume guard still protects available space.
+    frame_working_bytes = 0 if streams_frames else max(alpha_frame_working_bytes, frame_sequence_bytes)
     base_bytes = (
         managed_input_bytes
-        + managed_renderer_copy_bytes
         + effect_asset_bytes
         + snapshot_bytes
     )
-    if alpha:
-        phase_working_bytes = (
-            managed_entry_bytes
-            + effect_asset_bytes
-            + audio_pcm_working_bytes
-            + inline_audio_mix_working_bytes
-            + frame_working_bytes
-            + estimated_output_bytes
-            + encoded_working_copy_bytes
-        )
-    else:
-        # Audio PCM and the staged/working encoded outputs coexist during the
-        # rich multi-clip render. They are not alternative peaks, so using
-        # max(audio_pcm, 2 * output) underestimates the live attempt.
-        phase_working_bytes = (
-            managed_entry_bytes
-            + effect_asset_bytes
-            + audio_pcm_working_bytes
-            + inline_audio_mix_working_bytes
-            + frame_working_bytes
-            + estimated_output_bytes
-            + encoded_working_copy_bytes
-        )
+    # A support probe stages one asset copy and removes it before rendering.
+    # The normal renderer reuses the host's materialized assets. Disk frames
+    # and the parallel encoder's working file are alternative paths, and CAS
+    # publication can need an additional output copy after frame cleanup.
+    phase_working_bytes = max(
+        managed_entry_bytes,
+        audio_pcm_working_bytes
+        + inline_audio_mix_working_bytes
+        + max(frame_working_bytes, encoded_working_copy_bytes)
+        + estimated_output_bytes,
+    )
     peak_before_guard_bytes = base_bytes + phase_working_bytes
-    operational_guard_bytes = max(
-        _MIN_OPERATIONAL_GUARD_BYTES,
-        math.ceil(peak_before_guard_bytes * _OPERATIONAL_GUARD_PERCENT / 100)
-        + _REMOTION_RUNTIME_WORKSPACE_BYTES,
+    operational_guard_bytes = (
+        math.ceil((peak_before_guard_bytes + _REMOTION_RUNTIME_WORKSPACE_BYTES)
+                  * _OPERATIONAL_GUARD_PERCENT / 100)
+        + _REMOTION_RUNTIME_WORKSPACE_BYTES
     )
     estimated_total_bytes = peak_before_guard_bytes + operational_guard_bytes
     estimated_scratch_bytes = estimated_total_bytes - estimated_output_bytes
@@ -613,7 +589,7 @@ def estimate_managed_render_storage(
     return {
         "schema_version": 1,
         "kind": "rendering.timeline_storage_estimate",
-        "status": "runtime_enforced",
+        "status": "expected_usage",
         "basis": "expanded_canonical_snapshot",
         "codec": codec,
         "bitrate_basis": bitrate_basis,
@@ -628,8 +604,6 @@ def estimate_managed_render_storage(
         "managed_object_count": len(normalized_sizes),
         "managed_input_bytes": managed_input_bytes,
         "managed_entry_bytes": managed_entry_bytes,
-        "managed_renderer_copy_passes": _MANAGED_RENDERER_COPY_PASSES,
-        "managed_renderer_copy_bytes": managed_renderer_copy_bytes,
         "effect_asset_bytes": effect_asset_bytes,
         "snapshot_bytes": snapshot_bytes,
         "video_bitrate_bps": video_bitrate,
@@ -658,10 +632,9 @@ def estimate_managed_render_storage(
         "streams_frames": streams_frames,
         "streaming_memory_budget_bytes": streaming_memory_budget_bytes,
         "streaming_memory_required_bytes": streaming_memory_required_bytes,
-        "frame_scratch_mode": "streaming_with_full_disk_fallback" if streams_frames else "disk_fallback",
+        "frame_scratch_mode": "streaming" if streams_frames else "disk_fallback",
         "alpha_frame_bytes_per_frame": alpha_frame_bytes_per_frame,
         "alpha_frame_working_bytes": alpha_frame_working_bytes,
-        "parallel_encode_working_copies": _PARALLEL_ENCODE_WORKING_COPIES,
         "encoded_working_copy_bytes": encoded_working_copy_bytes,
         "staged_output_bytes": estimated_output_bytes,
         "base_bytes": base_bytes,

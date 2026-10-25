@@ -74,7 +74,7 @@ def test_h264_estimate_exposes_every_peak_storage_component() -> None:
         effect_asset_sizes={"badge.png": 2000},
     )
 
-    assert estimate["status"] == "runtime_enforced"
+    assert estimate["status"] == "expected_usage"
     assert estimate["codec"] == "h264"
     assert estimate["duration_frames"] == 300
     assert estimate["duration_seconds_rational"] == [10, 1]
@@ -82,8 +82,6 @@ def test_h264_estimate_exposes_every_peak_storage_component() -> None:
     assert estimate["encoder_buffer_bps"] == 31_104_000
     assert estimate["managed_input_bytes"] == 1000
     assert estimate["managed_entry_bytes"] == 2000
-    assert estimate["managed_renderer_copy_passes"] == 2
-    assert estimate["managed_renderer_copy_bytes"] == 4000
     assert estimate["effect_asset_bytes"] == 2000
     assert estimate["audio_pcm_working_bytes"] == 3_840_000
     expected_payload = math.ceil(
@@ -95,17 +93,14 @@ def test_h264_estimate_exposes_every_peak_storage_component() -> None:
     ) + 1024**2
     assert estimate["estimated_output_bytes"] == expected_output
     assert estimate["phase_working_bytes"] == (
-        2000
-        + 2000
-        + estimate["audio_pcm_working_bytes"]
+        estimate["audio_pcm_working_bytes"]
         + expected_output
-        + estimate["encoded_working_copy_bytes"]
-        + estimate["frame_sequence_bytes"]
+        + max(estimate["encoded_working_copy_bytes"], estimate["frame_sequence_bytes"])
     )
     assert estimate["peak_before_guard_bytes"] == (
         estimate["base_bytes"] + estimate["phase_working_bytes"]
     )
-    assert estimate["operational_guard_bytes"] >= 256 * 1024**2
+    assert estimate["operational_guard_bytes"] >= 128 * 1024**2
     assert estimate["estimated_total_bytes"] == (
         estimate["estimated_scratch_bytes"] + estimate["estimated_output_bytes"]
     )
@@ -196,12 +191,10 @@ def test_h264_estimate_charges_simultaneous_audio_and_output_work_for_rich_topol
     assert estimate["inline_audio_asset_count"] == 30
     assert estimate["inline_audio_mix_working_bytes"] == 883_873_320
     assert estimate["phase_working_bytes"] == (
-        estimate["managed_entry_bytes"]
-        + estimate["audio_pcm_working_bytes"]
+        estimate["audio_pcm_working_bytes"]
         + estimate["inline_audio_mix_working_bytes"]
         + estimate["estimated_output_bytes"]
-        + estimate["encoded_working_copy_bytes"]
-        + estimate["frame_sequence_bytes"]
+        + max(estimate["encoded_working_copy_bytes"], estimate["frame_sequence_bytes"])
     )
 
 
@@ -252,11 +245,9 @@ def test_alpha_estimate_counts_raw_frame_workspace() -> None:
     assert estimate["alpha_frame_working_bytes"] == bytes_per_frame * 2
     assert estimate["audio_bitrate_bps"] == 48_000 * 2 * 16
     assert estimate["phase_working_bytes"] == (
-        estimate["managed_renderer_copy_bytes"]
-        + estimate["audio_pcm_working_bytes"]
-        + estimate["alpha_frame_working_bytes"]
+        estimate["audio_pcm_working_bytes"]
+        + max(estimate["alpha_frame_working_bytes"], estimate["encoded_working_copy_bytes"])
         + estimate["estimated_output_bytes"]
-        + estimate["encoded_working_copy_bytes"]
     )
 
 
@@ -310,15 +301,15 @@ def test_used_effect_asset_sizes_are_exact_and_deduplicated(tmp_path: Path) -> N
     assert sizes == {str(asset_path.resolve()): 5}
 
 
-def test_streaming_allocation_keeps_full_fallback_scratch_and_capture_canvas():
+def test_streaming_allocation_estimates_piped_frames_and_keeps_capture_canvas():
     full = estimate_managed_render_storage(timeline=_timeline(), registry={"assets": {}}, object_sizes={})
     streamed = estimate_managed_render_storage(timeline=_timeline(), registry={"assets": {}}, object_sizes={}, streaming_memory_budget_bytes=8 * 1024**3)
     assert not full["streams_frames"]
     assert streamed["streams_frames"]
-    assert streamed["estimated_scratch_bytes"] == full["estimated_scratch_bytes"]
+    assert streamed["estimated_scratch_bytes"] < full["estimated_scratch_bytes"]
     assert streamed["frame_sequence_bytes"] == streamed["frame_sequence_bytes_per_frame"] * 300
-    assert streamed["frame_sequence_bytes"] == math.ceil(1920 * 1080 * 6 / 5) * 300
-    assert streamed["frame_scratch_mode"] == "streaming_with_full_disk_fallback"
+    assert streamed["frame_sequence_bytes"] == math.ceil(1920 * 1080 * 1 / 4) * 300
+    assert streamed["frame_scratch_mode"] == "streaming"
     review = estimate_managed_render_storage(timeline=_timeline(), registry={"assets": {}}, object_sizes={}, review_render=True)
     assert review["frame_image_format"] == "jpeg"
     assert review["capture_canvas_width"] == 1920
@@ -350,11 +341,11 @@ def test_review_estimate_uses_native_scaled_jpeg_dimensions_but_keeps_paint_canv
     assert (estimate["frame_image_width"], estimate["frame_image_height"]) == (640, 360)
     assert estimate["video_bitrate_bps"] == 4_000_000
     assert estimate["duration_frames"] == 300
-    expected_per_frame = math.ceil(640 * 360 * 6 / 5)
+    expected_per_frame = math.ceil(640 * 360 * 1 / 4)
     assert estimate["frame_sequence_bytes_per_frame"] == expected_per_frame
     assert estimate["frame_sequence_bytes"] == expected_per_frame * 300
     assert estimate["frame_scratch_mode"] == "disk_fallback"
-    assert estimate["operational_guard_bytes"] >= 256 * 1024**2
+    assert estimate["operational_guard_bytes"] >= 128 * 1024**2
 
 
 def test_explicit_profile_disables_implicit_review_scaling_in_estimate():
@@ -366,7 +357,7 @@ def test_explicit_profile_disables_implicit_review_scaling_in_estimate():
     )
     assert (estimate["width"], estimate["height"]) == (1920, 1080)
     assert (estimate["frame_image_width"], estimate["frame_image_height"]) == (1920, 1080)
-    assert estimate["frame_sequence_bytes"] == math.ceil(1920 * 1080 * 6 / 5) * 300
+    assert estimate["frame_sequence_bytes"] == math.ceil(1920 * 1080 * 1 / 4) * 300
 
 
 @pytest.mark.parametrize("alpha,expected_width", [(False, 230), (True, 231)])
@@ -383,13 +374,13 @@ def test_scaled_review_rounding_matches_backend_opaque_and_alpha(alpha, expected
     per_frame = (
         math.ceil((expected_width * 4 + 1) * 360 * 101 / 100)
         if alpha
-        else math.ceil(expected_width * 360 * 6 / 5)
+        else math.ceil(expected_width * 360 * 1 / 4)
     )
     assert estimate["frame_sequence_bytes_per_frame"] == per_frame
     assert not estimate["streams_frames"]
 
 
-def test_review_streaming_allocation_still_reserves_selected_format_fallback():
+def test_review_streaming_allocation_reports_fallback_but_plans_piped_frames():
     ordinary = estimate_managed_render_storage(
         timeline=_timeline(), registry={"assets": {}}, object_sizes={}, review_render=True,
     )
@@ -399,5 +390,5 @@ def test_review_streaming_allocation_still_reserves_selected_format_fallback():
     )
     assert streamed["streams_frames"]
     assert streamed["frame_sequence_bytes"] == ordinary["frame_sequence_bytes"]
-    assert streamed["estimated_scratch_bytes"] == ordinary["estimated_scratch_bytes"]
-    assert streamed["frame_scratch_mode"] == "streaming_with_full_disk_fallback"
+    assert streamed["estimated_scratch_bytes"] < ordinary["estimated_scratch_bytes"]
+    assert streamed["frame_scratch_mode"] == "streaming"

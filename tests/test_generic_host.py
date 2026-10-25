@@ -1906,7 +1906,7 @@ def test_terminal_sidecar_progress_is_heartbeated_before_settlement(tmp_path):
     ]
 
 
-def test_run_does_not_require_a_filesystem_free_space_floor(tmp_path, monkeypatch):
+def test_run_accepts_at_free_disk_floor_without_task_estimate(tmp_path, monkeypatch):
     _write_manifest(tmp_path / "echo")
     runtime = FakeRuntime()
     host = GenericPackHost(pack_roots=[tmp_path], client=runtime)
@@ -1924,9 +1924,10 @@ def test_run_does_not_require_a_filesystem_free_space_floor(tmp_path, monkeypatc
     }
     runtime.tasks["task-low-space"] = task
 
+    monkeypatch.delenv("ASTRID_RUNTIME_FREE_DISK_FLOOR_BYTES", raising=False)
     monkeypatch.setattr(
         "astrid.core.execution.generic_host.shutil.disk_usage",
-        lambda _path: pytest.fail("the removed scratch-floor guard was invoked"),
+        lambda _path: SimpleNamespace(free=1024**3),
     )
     settled = host.run_task(task, lease_token="lease-low-space")
 
@@ -2113,6 +2114,39 @@ def test_explicit_task_storage_envelope_rejects_output_overrun_and_cleans_up(tmp
     assert runtime.settlements == []
     assert runtime.failures and "output bytes 2" in runtime.failures[0][2]
     assert not list(tmp_path.glob("astrid-attempt-*"))
+
+
+def test_render_uses_free_space_through_execution_evidence_and_settlement(tmp_path, monkeypatch):
+    manifest_path = _write_manifest(tmp_path / "echo", capability_id="rendering.render")
+    manifest = json.loads(manifest_path.read_text())
+    manifest["command"]["argv"][-1] = (
+        "from pathlib import Path; "
+        "root=Path('{out}').parent; "
+        "(root/'.remotion-runtime-fixture').mkdir(); "
+        "(root/'.remotion-runtime-fixture'/'frame.jpeg').write_bytes(b'x'*3*1024**2); "
+        "Path('{out}/answer.txt').write_bytes(b'y'*3*1024**2)"
+    )
+    manifest_path.write_text(json.dumps(manifest))
+    monkeypatch.setattr(
+        "astrid.core.execution.generic_host.shutil.disk_usage",
+        lambda _: SimpleNamespace(free=8 * 1024**3),
+    )
+    runtime = FakeRuntime()
+    host = GenericPackHost(
+        pack_roots=[tmp_path], client=runtime,
+        execution_policy=ExecutionGuardPolicy(evidence_cap_bytes=2 * 1024**2),
+    )
+    host.discover()
+    task = {"task": {
+        "id": "render-over-estimate", "capability": "rendering.render", "project_id": "demo",
+        "attempt_id": "render-over-estimate-attempt", "fence": 1,
+        "storage_estimate": {"scratch_bytes": 1, "output_bytes": 1},
+        "spec": {"spec": {"inputs": {}}},
+    }}
+    runtime.tasks["render-over-estimate"] = task
+    host.run_task(task, lease_token="render-lease")
+    assert len(runtime.settlements) == 1
+    assert runtime.failures == []
 
 
 def test_live_storage_overrun_preserves_bounded_scratch_diagnostic_before_cleanup(tmp_path):

@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -34,6 +35,35 @@ from .launcher import install_shim, owned_shim, remove_shim
 from .service import Service, bootstrap_root, platform_target, venv_python
 from .support import reveal_bundle
 from .tools import binary, install_tools, source
+
+
+def _last_logged_error(log: Path, *, tail: int = 65536) -> str | None:
+    """The last ``error`` field the Runtime wrote to its service log, if any."""
+    try:
+        with log.open("rb") as stream:
+            stream.seek(max(0, log.stat().st_size - tail))
+            text = stream.read().decode("utf-8", "replace")
+    except OSError:
+        return None
+    decoder = json.JSONDecoder()
+    found = None
+    index = text.find("{")
+    while index != -1:
+        try:
+            value, end = decoder.raw_decode(text, index)
+        except ValueError:
+            index = text.find("{", index + 1)
+            continue
+        if isinstance(value, dict) and isinstance(value.get("error"), str) and value["error"]:
+            found = value["error"]
+        index = text.find("{", end)
+    return found
+
+
+def _runtime_json(output: str) -> dict:
+    """Runtime's one JSON result, after any stderr notes merged into output."""
+    start = next((match.start() for match in re.finditer(r"^\{", output, re.MULTILINE)), 0)
+    return json.loads(output[start:])
 
 
 class Backend:
@@ -80,7 +110,7 @@ class Backend:
         argv = [python, "-I", "-m", "astrid_runtime", *args, "--data-root", str(data), "--json"]
         if profile and version:
             argv += ["--source-manifest", str(version.profile)]
-        result = json.loads(self.run(argv, extra_env=version.env if version else None, timeout=timeout))
+        result = _runtime_json(self.run(argv, extra_env=version.env if version else None, timeout=timeout))
         if result.get("ok") is False:
             raise RuntimeError(str(result.get("error") or result))
         return result
@@ -509,6 +539,11 @@ class Backend:
             except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
                 error = exc
                 time.sleep(0.25)
+        # A Runtime that died at startup records why in its service log; that is
+        # the real cause, not the missing door it leads to.
+        cause = _last_logged_error(self.service.log)
+        if cause:
+            raise VerificationError(f"Astrid Runtime did not start: {cause} (details: {self.service.log})")
         raise VerificationError(f"Astrid's browser door did not become ready: {error}")
 
     def sync_skills(self, version: Version) -> None:

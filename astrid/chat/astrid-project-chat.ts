@@ -260,6 +260,9 @@ export class ProjectChatRegistry {
       claimed = false;
       const replay = state.operations?.[operationId];
       if (replay) { operationSessionId = replay; return false; }
+      if (recoverableSession && !state.sessions.some(s => s.id === recoverableSession?.id && s.pending_first_message !== false)) {
+        throw new ChatError(409, 'session_not_recoverable', 'The chat started while its missing transcript was being checked');
+      }
       if (mode !== 'new' && !recoverableSession) {
         const existing = recoverSessionId
           ? state.sessions.find(s => !s.missing && s.id === recoverSessionId)
@@ -290,8 +293,9 @@ export class ProjectChatRegistry {
       const completed = await this.change(projectId, state => {
         if (state.creating?.owner !== owner) throw new ChatError(409, 'chat_claim_expired', 'Session creation claim expired; the unassigned OMP session is preserved');
         const recoveryIndex = recoverableSession
-          ? state.sessions.findIndex(session => session.id === recoverableSession?.id && session.missing)
+          ? state.sessions.findIndex(session => session.id === recoverableSession?.id && session.missing && session.pending_first_message !== false)
           : -1;
+        if (recoverableSession && recoveryIndex < 0) throw new ChatError(409, 'session_not_recoverable', 'The chat started while its replacement was being created');
         if (recoveryIndex >= 0 && recoverableSession) {
           const entry = { ...state.sessions[recoveryIndex]! };
           delete entry.missing;
@@ -300,9 +304,13 @@ export class ProjectChatRegistry {
             id,
             previousSessionId === recoverableSession.id ? sessionId : previousSessionId,
           ]));
-          state.draft.queued_messages = state.draft.queued_messages.map(message =>
-            message.session_id === recoverableSession?.id ? { ...message, session_id: sessionId } : message,
-          );
+          if (state.draft.queued_messages.some(message => message.session_id === recoverableSession?.id)) {
+            state.draft.queued_messages = state.draft.queued_messages.map(message =>
+              message.session_id === recoverableSession?.id ? { ...message, session_id: sessionId } : message,
+            );
+            // Reject a composer's in-flight save targeting the vanished session.
+            state.draft.revision++;
+          }
           if (state.selected_session_id === recoverableSession.id) state.selected_session_id = sessionId;
           if (state.main_session_id === recoverableSession.id) state.main_session_id = sessionId;
         } else {
