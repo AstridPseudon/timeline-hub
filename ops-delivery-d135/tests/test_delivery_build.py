@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -130,6 +131,59 @@ class MainBoundaryControls(unittest.TestCase):
             self.assertEqual(raised.exception.code, 2)
             self.assertFalse(delivery.exists())
             self.assertFalse(work.exists())
+
+    def test_invalid_private_inputs_are_structured_refusals_before_any_output_write(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            delivery = root / "delivery"
+            work = root / "work"
+            delivery.mkdir()
+            work.mkdir()
+            template = root / "README.template.md"
+            template.write_text("{{REPO_SUMMARY}}\n{{REPO_SECTIONS}}\n{{GATE_RESULTS}}\n")
+            gate = root / "gate-results.md"
+            gate.write_text("gates\n")
+            tuple_target = root / "source.json"
+            tuple_target.write_text("{}\n")
+
+            symlink_cases = [
+                ("--delivery-root", "delivery root", root / "delivery-link", delivery),
+                ("--work-root", "work root", root / "work-link", work),
+                ("--template", "README template", root / "template-link", template),
+                ("--gate-results", "gate-results path", root / "gate-link", gate),
+                ("--source-tuple", "source tuple", root / "source-link", tuple_target),
+            ]
+            for _option, _label, link, target in symlink_cases:
+                os.symlink(target, link)
+
+            cases = [
+                ("--delivery-root", "relative-delivery", "delivery root"),
+                *[(option, str(link), label) for option, label, link, _target in symlink_cases],
+            ]
+            for option, value, label in cases:
+                with self.subTest(option=option, label=label):
+                    argv = [
+                        sys.executable, str(SCRIPT),
+                        "--source-tuple", str(tuple_target),
+                        "--delivery-root", str(delivery),
+                        "--work-root", str(work),
+                        "--template", str(template),
+                        "--gate-results", str(gate),
+                    ]
+                    option_index = argv.index(option) if option in argv else None
+                    if option_index is None:
+                        argv.extend([option, value])
+                    else:
+                        argv[option_index + 1] = value
+                    if label == "source tuple":
+                        source_index = argv.index("--source-tuple")
+                        argv[source_index + 1] = value
+                    completed = subprocess.run(argv, capture_output=True, text=True, check=False)
+                    self.assertEqual(completed.returncode, 2, completed.stderr)
+                    self.assertNotIn("Traceback", completed.stderr)
+                    self.assertIn(f"error: {label}", completed.stderr)
+                    self.assertEqual(list(delivery.iterdir()), [])
+                    self.assertEqual(list(work.iterdir()), [])
 
 
 class BuildRepoControls(unittest.TestCase):

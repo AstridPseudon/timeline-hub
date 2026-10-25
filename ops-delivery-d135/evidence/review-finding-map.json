@@ -1,0 +1,33 @@
+{
+  "format": "timeline-delivery-d135-review-finding-map-v1",
+  "candidate_sha256": "ef9cd915a4c64f45c179e9ed8aa2ded6e29123847e8018db88ba8b0b680fd9ca",
+  "candidate_mode": "0755",
+  "installed_reference": {
+    "sha256": "f25dfab13bbfb090bf26cf97a85e59bd4818859f5b974dac94aae7e6f2272708",
+    "mode": "0755",
+    "mode_unchanged": true
+  },
+  "harness_labels": ["D135", "D135-REV-1", "PASS_WITH_FINDING", "Luna/high/default180"],
+  "findings": [
+    {
+      "id": "D135-REV-1",
+      "review_source": "independent-1949",
+      "result": "PASS_WITH_FINDING",
+      "finding": "Private delivery/work/template/gate path-guard refusals could escape the argparse error boundary; a symlink delivery root could traceback with exit 1.",
+      "fix": "Moved the existing private path and source-tuple validation calls inside the existing structured argparse refusal boundary.",
+      "preserved": [
+        "exact identity, path, ancestry, and pinned tuple guards",
+        "all selected ancestry checks before writes",
+        "no traceback or silent fallback",
+        "no source or installed-script writes"
+      ],
+      "verification": "8 focused unittest cases, including a subprocess caller probe for invalid and symlink private inputs; all assert exit 2 and empty delivery/work outputs"
+    }
+  ],
+  "next_review": {
+    "type": "bounded independent finding-only",
+    "scope": "D135-REV-1 caller boundary and no-write exit-2 controls",
+    "substantive_review_reused": "1949",
+    "full_build_or_install": false
+  }
+}

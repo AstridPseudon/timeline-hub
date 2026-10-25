@@ -640,22 +640,22 @@ def main():
         parser.error("source tuple is required; no Agent fallback is permitted")
     if len(set(names)) != len(names):
         parser.error("repositories must be unique")
-    delivery_root = private_root(
-        configured(args.delivery_root, "TIMELINE_DELIVERY_ROOT", "DELIVERY_ROOT", "DELIVERY", default=DELIVERY),
-        "delivery root")
-    work_root = private_root(
-        configured(args.work_root, "TIMELINE_WORK_ROOT", "WORK_ROOT", "WORK", default=WORK), "work root")
-    template_default = (os.path.join(delivery_root, "README.template.md")
-                        if args.delivery_root or os.environ.get("TIMELINE_DELIVERY_ROOT")
-                        else TEMPLATE)
-    template_path = regular_file(
-        configured(args.template, "TIMELINE_TEMPLATE", "TEMPLATE", default=template_default), "README template")
-    gate_results_path = absolute_path(
-        configured(args.gate_results, "TIMELINE_GATE_RESULTS", "GATE_RESULTS",
-                   default=(os.path.join(delivery_root, "gate-results.md")
-                            if args.delivery_root or os.environ.get("TIMELINE_DELIVERY_ROOT")
-                            else GATE_RESULTS)), "gate-results path")
     try:
+        delivery_root = private_root(
+            configured(args.delivery_root, "TIMELINE_DELIVERY_ROOT", "DELIVERY_ROOT", "DELIVERY", default=DELIVERY),
+            "delivery root")
+        work_root = private_root(
+            configured(args.work_root, "TIMELINE_WORK_ROOT", "WORK_ROOT", "WORK", default=WORK), "work root")
+        template_default = (os.path.join(delivery_root, "README.template.md")
+                            if args.delivery_root or os.environ.get("TIMELINE_DELIVERY_ROOT")
+                            else TEMPLATE)
+        template_path = regular_file(
+            configured(args.template, "TIMELINE_TEMPLATE", "TEMPLATE", default=template_default), "README template")
+        gate_results_path = absolute_path(
+            configured(args.gate_results, "TIMELINE_GATE_RESULTS", "GATE_RESULTS",
+                       default=(os.path.join(delivery_root, "gate-results.md")
+                                if args.delivery_root or os.environ.get("TIMELINE_DELIVERY_ROOT")
+                                else GATE_RESULTS)), "gate-results path")
         _, _tuple_sha, source = source_tuple(args.source_tuple, args.source_tuple_sha)
         resolved_all = preflight_all(source, names)
     except (Refused, RuntimeError, OSError) as exc:
