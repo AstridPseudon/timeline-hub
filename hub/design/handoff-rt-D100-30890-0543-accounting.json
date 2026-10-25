@@ -1,0 +1,35 @@
+{
+  "packet": "handoff-rt-D100-30890-0543",
+  "accounting_mode": "direct body outcomes per canonical ID; no count-sum inference and no semantic verdict",
+  "candidate_actual_outcomes": {"selected": 59, "PASS": 38, "FAIL": 16, "ERROR": 5, "SKIPPED": 0},
+  "baseline_actual_outcomes": {"selected": 26, "PASS": 12, "FAIL": 14, "ERROR": 0, "SKIPPED": 0},
+  "candidate_family_totals": {
+    "newexacttime": {"selected": 4, "PASS": 3, "FAIL": 1, "ERROR": 0},
+    "newshareditem": {"selected": 22, "PASS": 11, "FAIL": 11, "ERROR": 0},
+    "originalTEN": {"selected": 10, "PASS": 1, "FAIL": 4, "ERROR": 5},
+    "docpatchphysicalcontrol": {"selected": 1, "PASS": 1, "FAIL": 0, "ERROR": 0},
+    "historicalneighbors": {"selected": 22, "PASS": 22, "FAIL": 0, "ERROR": 0}
+  },
+  "baseline_scope": "exactly the two reviewed new regression files; 26 actual IDs preserved one-for-one",
+  "baseline_old_red_classification": "per-ID only from retained XML/log frames: production, input/refusal, setup/refusal, or UNKNOWN",
+  "baseline_old_red_classification_totals": {
+    "production": 3,
+    "input/refusal": 5,
+    "setup/refusal": 6,
+    "UNKNOWN": 0
+  },
+  "preserved_boundaries": {
+    "originalTEN": {"count": 10, "treatment": "all 29 assertions and original source facts retained; candidate outcomes only"},
+    "controls": {"positive_exit": 17, "poison_exit": 1, "treatment": "actual route controls, not behavior credit"}
+  },
+  "failure_categories": {
+    "source_offset": "separate authoring-refusal IDs",
+    "at_msFraction": "separate timing-input-refusal ID",
+    "internal_timeline_scope_mismatch": "separate runtime-closure-refusal IDs",
+    "inverse_materialization": "separate inverse-materialization-refusal IDs",
+    "textbinding": "separate text-binding-refusal IDs"
+  },
+  "semantic_verdict": "not produced by this mechanical export; candidate remains NO-GO per existing producer report",
+  "collection": "no collection, rerun, repeat, diagnosis, classifier, or semantic review performed",
+  "privacy": "raw XML/log/argv/request/body/media/auth/key/URL values remain private; packet contains only sanitized messages, generic file names, and hashes"
+}
