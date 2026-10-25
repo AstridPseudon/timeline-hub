@@ -20,7 +20,7 @@ import {
 import { TimelineEventBus } from '@/tools/video-editor/hooks/useTimelineEventBus.ts';
 import { buildTrackClipOrder } from '@/tools/video-editor/lib/coordinate-utils.ts';
 import { migrateToFlatTracks } from '@/tools/video-editor/lib/migrate.ts';
-import { serializeResolvedTimelineEdit, withHeldClipSourceFields } from '@/tools/video-editor/lib/serialize.ts';
+import { serializeResolvedTimelineEdit, withHeldClipSourceFields, TIMELINE_CLIP_FIELDS } from '@/tools/video-editor/lib/serialize.ts';
 import { getConfigSignature } from '@/tools/video-editor/lib/config-utils.ts';
 import { buildDataFromCurrentRegistry } from '@/tools/video-editor/lib/timeline-save-utils.ts';
 import { buildAssetReferenceMap, getAssetMediaId, getAssetResolutionToken, getAssetSourceForLocalEdit } from '@/tools/video-editor/lib/asset-registry.ts';
@@ -200,6 +200,31 @@ export interface UseTimelineCommitResult {
   selectedTrackIdRef: MutableRefObject<string | null>;
 }
 
+const TIMELINE_CLIP_FIELD_SET = new Set<string>(TIMELINE_CLIP_FIELDS);
+
+/**
+ * Rows are a display projection. A rows edit must overlay its canonical fields
+ * on the authored clip while carrying forward source-owned extension fields
+ * that are intentionally outside the editor's closed clip schema.
+ */
+const preserveAuthoredClipExtensions = (
+  authoredConfig: TimelineData['config'],
+  materializedConfig: TimelineData['config'],
+): TimelineData['config'] => {
+  const authoredClips = new Map(authoredConfig.clips.map((clip) => [clip.id, clip] as const));
+  return {
+    ...materializedConfig,
+    clips: materializedConfig.clips.map((clip) => {
+      const authored = authoredClips.get(clip.id);
+      if (!authored) return clip;
+      const extensions = Object.fromEntries(
+        Object.entries(structuredClone(authored)).filter(([key]) => !TIMELINE_CLIP_FIELD_SET.has(key)),
+      );
+      return { ...extensions, ...clip };
+    }),
+  };
+};
+
 export function useTimelineCommit({
   eventBus,
   lastSavedSignatureRef,
@@ -313,7 +338,7 @@ export function useTimelineCommit({
     // rowsToConfig receives the untouched pinnedShotGroups from the current config;
     // callers that need to update group membership must pass `pinnedShotGroupsOverride`
     // explicitly on the mutation, which `applyEdit` handles below.
-    const config = withHeldClipSourceFields(rowsToConfig(
+    const materializedConfig = withHeldClipSourceFields(rowsToConfig(
       rows,
       meta,
       current.output,
@@ -322,6 +347,7 @@ export function useTimelineCommit({
       current.config.pinnedShotGroups,
       current.config,
     ), meta);
+    const config = preserveAuthoredClipExtensions(current.config, materializedConfig);
 
     const registry = registryOverride ?? current.registry;
     const resolvedRegistry = Object.fromEntries(
