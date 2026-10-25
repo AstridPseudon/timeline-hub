@@ -1,0 +1,81 @@
+{
+  "task": "rt-D115-output-path-1028",
+  "status": "CONFIRMED_RUNTIME_SEAM",
+  "read_only": true,
+  "changes": [],
+  "runtime": {
+    "base_ref": "tl/integration",
+    "head": "369ffa7c00bd3d45c610fac7651ff79e7a283a1a",
+    "tree": "9bf331d68df8c966e8927a3f083ba03687803c99"
+  },
+  "agent": {
+    "candidate": "82b6d00d7fcca643c6eaf3246028d9a20f96252a",
+    "tree": "019ae9944d5f445776bd19c7d0c441190955c1a3",
+    "disposition": "HELD"
+  },
+  "authentic_pairing": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-D118-peer-inputs-1020-producer-pairing.json",
+    "sha256": "1b2a1f80e3669d2b54735e16b29b217ad0629cd9155799cf9daf6222cb079fe0",
+    "status": "HELD_OUTSIDE_OWNERSHIP",
+    "case": "same-element source-only turnover: sealed P1 input, consuming source adds P2, payload/content digest unchanged, deterministic parent revision changes"
+  },
+  "trace": [
+    {"owner": "Agent", "source": "astrid/sdk/timeline/commit.py:442-525", "fact": "authenticated source hydration and sealed _copy_manifest"},
+    {"owner": "Agent", "source": "astrid/sdk/timeline/_commit_patch.py:457-470", "fact": "verified source is added after its consuming command"},
+    {"owner": "Agent", "source": "astrid/sdk/timeline/commit.py:366-419", "fact": "parent revision identity includes parent payload and dependency manifest"},
+    {"owner": "Runtime", "source": "runtime_protocol/service.py:2447-2525", "fact": "canonical commit caller constructs the request port and coordinator"},
+    {"owner": "Runtime", "source": "runtime_protocol/timeline_commit_execution.py:222-275", "fact": "real provider execution and outcome verification"},
+    {"owner": "Runtime", "source": "runtime_protocol/timeline_commit_port.py:665-675", "fact": "private sequential capture enters Runtime authentication"},
+    {"owner": "Runtime", "source": "runtime_protocol/timeline_commit_auth.py:1791-1805", "fact": "manifest contributes to deterministic parent revision identity"},
+    {"owner": "Runtime", "source": "runtime_protocol/timeline_commit_auth.py:2129-2258", "fact": "command_output projects writes and retains predecessor on unchanged payload digest"},
+    {"owner": "Runtime", "source": "runtime_protocol/timeline_commit_auth.py:2813-2867", "fact": "manifest advances, then stale command output is rejected at the next-input comparison"}
+  ],
+  "ownership": {
+    "finding": "Runtime command_output projection seam",
+    "reported_refusal": "runtime_protocol/timeline_commit_auth.py:2864",
+    "not_agent_fault": "Agent candidate preserves sealed predecessor input and emits consumed-source manifest turnover; dropping P2 or changing the source metadata would be incorrect",
+    "not_unknown": true
+  },
+  "guards_preserved": [
+    "initial input identity",
+    "exact document/media pins",
+    "native/materialization/effect/read coverage",
+    "strict binding checks",
+    "immutable source capture",
+    "CAS/idempotency",
+    "no-write-on-refusal",
+    "D115 per-step image fix remains strict"
+  ],
+  "missing_unrecreated_inputs": [
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D115-producer-input-sol-1002/evidence/unapplied-pairing.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D115-producer-input-sol-1002/evidence/checks.json",
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D115-producer-input-sol-1002/evidence/producer.xml"
+  ],
+  "acceptance": {
+    "request_fields": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps", "merge", "reads", "dry_run", "Idempotency-Key"],
+    "step_fields": ["id", "label", "intent", "tags", "command_ordinals", "patch", "reads"],
+    "accepted_or_merged": ["canonical_document", "receipt", "head", "effects", "bindings", "dependencies"],
+    "conflict": ["head", "reason"],
+    "invalid": ["code", "path", "hint"],
+    "dry_run": "unchanged state",
+    "executed": false,
+    "reason": "read-only ownership review; no fabricated replay and no full/live suite"
+  },
+  "source_hashes": {
+    "runtime_protocol/timeline_commit_auth.py": "68e594537c09cc1c49f02ab9657fb8c76166763098b6932fc6c75741b957d9dc",
+    "runtime_protocol/timeline_commit_port.py": "e1d9397bc8164af8b4afd7f2b8d3133805c7404bce26b25cad32432d1f17badd",
+    "runtime_protocol/timeline_commit_execution.py": "334c161f8cc652a6f645fb94d5b7667ad345fd33a44f1560b01547e5f765f655",
+    "runtime_protocol/timeline_commit_store.py": "f0867b6bf083aef2ca280c3f1bcbbbc926c7dfc448c519836e286022f5e3d59a",
+    "runtime_protocol/service.py": "5a051f014e01698746dfe48b39ecadc9042b228a7a26df1bb439a79aa77b2666",
+    "agent:82b6d00d7f:astrid/sdk/timeline/commit.py": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+    "agent:82b6d00d7f:astrid/sdk/timeline/_commit_patch.py": "76224a62434ade240e298bf6a1d14b64bdc2ed650923c2160cf22bdbb23a4a50",
+    "agent:82b6d00d7f:astrid/sdk/timeline/_commit_preview.py": "9380dd2e3eb9c041b8515e20d979e2cce4aa0ca9cbfeed81f40c315357f77c36",
+    "agent:82b6d00d7f:tests/editing_conformance/test_commit_document_input_capture.py": "13d9bb81321fc81709c3a7b8f5212175edd5827e64dda5f470974ad4b09e1d57"
+  },
+  "checks": [
+    "AST parse PASS for five Runtime files and four Agent candidate files",
+    "git diff --check PASS",
+    "Runtime worktree clean",
+    "no tests/typecheck/lint/full suite run by this read-only task"
+  ]
+}

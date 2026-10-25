@@ -1,0 +1,56 @@
+{
+  "status": "PASS_SOURCE_FACTS",
+  "finding": "UNKNOWN",
+  "read_only": true,
+  "recorded_tuple": {
+    "app": {"sha": "96d4754b4eef0591a208d6b51b60c30fc44b6915", "tree": "3f9da34c4f116026ec21022421850e0608ba653b"},
+    "agent": {"sha": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"},
+    "runtime": {"sha": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e", "tree": "6283b5fbb128447f1b333e0e6af334d35637cf69"},
+    "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "current_runtime": {
+    "sha": "369ffa7c00bd3d45c610fac7651ff79e7a283a1a",
+    "tree": "9bf331d68df8c966e8927a3f083ba03687803c99",
+    "source_sha256": {
+      "runtime_protocol/timeline_commit_auth.py": "68e594537c09cc1c49f02ab9657fb8c76166763098b6932fc6c75741b957d9dc",
+      "runtime_protocol/timeline_commit_store.py": "f0867b6bf083aef2ca280c3f1bcbbbc926c7dfc448c519836e286022f5e3d59a",
+      "runtime_protocol/timeline_commit_port.py": "e1d9397bc8164af8b4afd7f2b8d3133805c7404bce26b25cad32432d1f17badd",
+      "runtime_protocol/timeline_commit_producer.py": "12bc59c54e47db5a950dd8e4828609931fabf481fce760d7d6fe794d72f7b33b"
+    }
+  },
+  "recorded_d112_runtime_source_sha256": {
+    "runtime_protocol/timeline_commit_auth.py": "357d7c473d8e1af42646aea57657222123cc039adde16f2700629991d25beafd",
+    "runtime_protocol/timeline_commit_store.py": "f0867b6bf083aef2ca280c3f1bcbbbc926c7dfc448c519836e286022f5e3d59a"
+  },
+  "packet": {
+    "readiness": "PASS",
+    "original": {"pass": 2, "fail": 2, "error": 1, "notrun": 3},
+    "passing_cases": ["popup ADD", "automatic child placement"],
+    "swap": {"status": "refused", "reason": "history_unavailable", "duration_seconds": 23.149},
+    "separate_failures": {"element_seconds": 11.905, "parent_wait_seconds": 90.0},
+    "stderr_empty": true,
+    "correlation": "UNKNOWN"
+  },
+  "source_comparison": {
+    "store_port_producer_unchanged": true,
+    "d115_auth_change": "authenticated sequential intermediate-image projection and final effect comparison",
+    "failure_mapping_unchanged": true,
+    "d112_native_lifecycle": "bounded positive; not original SWAP-409 proof"
+  },
+  "anchors": {
+    "registration_and_entry": ["runtime_protocol/service.py:2391-2411", "runtime_protocol/service.py:2447-2537"],
+    "coordinator": "runtime_protocol/timeline_commit_execution.py:222-275",
+    "history_port": "runtime_protocol/timeline_commit_port.py:225-255",
+    "history_replay": ["runtime_protocol/timeline_commit_store.py:601-695", "runtime_protocol/timeline_commit_store.py:697-783", "runtime_protocol/timeline_commit_store.py:808-838", "runtime_protocol/timeline_commit_store.py:862-875"],
+    "auth": ["runtime_protocol/timeline_commit_producer.py:60-70", "runtime_protocol/timeline_commit_auth.py:221-228", "runtime_protocol/timeline_commit_auth.py:245-263", "runtime_protocol/timeline_commit_auth.py:765-820", "runtime_protocol/timeline_commit_auth.py:2868-2879"],
+    "public_refusal": ["runtime_protocol/timeline_commit_baseline.py:24-27", "runtime_protocol/timeline_commit_port.py:89-100"]
+  },
+  "missing_for_attribution": [
+    "redacted SWAP request and response envelope",
+    "registered Agent producer output",
+    "observed/base/head pins",
+    "authenticated history entry",
+    "first correlated Runtime failure predicate"
+  ],
+  "checks": {"ast": "PASS", "json": "PASS", "git_diff_check": "PASS", "worktree": "clean", "tests_typecheck_lint": "NOT RUN by read-only scope"}
+}
