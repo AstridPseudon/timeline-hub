@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T01:01:37Z | dispatcher heartbeat 5s | live 6 (sol 0, luna 6, other 0) | busy30 7 | status age 0m -->
-# agent board, 2026-10-25T01:01:31Z
+<!-- agent | 2026-10-25T01:04:49Z | dispatcher heartbeat 0s | live 2 (sol 0, luna 2, other 0) | busy30 7 | status age 0m -->
+# agent board, 2026-10-25T01:04:05Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -189,7 +189,7 @@
 | D87 live frontends6 | Preserve six current frontend scenarios | Main Luna requested | First source return after D87 split | blocked:runtime | Main list0027 | One native-param case retired separately. Preserve all six live scenarios and every original predicate. | Held95fe input |
 | P4 current main checkpoint | Retain exact remaining-original result | Main Luna / Service | Terminal evidence complete | merged | Main0033; actual3362 NO-GO | FAIL45.244s versus45s; suite46.935s. Profile discrepancy retained. Automatic failure summary only; no independent NO-GO review. | fbbae / a3cd / fd2f /635f |
 | D87 ZIP prose | Hand back reviewed migration notes | Runtime Luna | Docs owner capacity | blocked:runtime | Coverage0033 PASS; exact text published | Runtime board names final docs ready. Agent appendix published byte-exact; no extra review or product changes. | Evidence only |
-| F affected incremental batch | Qualify already merged families now | Luna / Main service | Existing main runner and eligible inputs | doing | agt-F-incremental-inputs-0055 | Owner00:50 lifts full-union wait. Exact eligible source/membership worker running; then immediate main body. Later new merges follow. No D59 credit. | Home2cde / Runtimea3cd |
+| F affected incremental batch | Qualify already merged families now | Main Luna / Service | Main serialized body | blocked:runtime | Input0055 PASS; main submit requested0105 | Exact298 eligible and all550 dispositions published with1932 dependency hashes. Owner00:50 says submit now, no full-union wait. No functional proof. | 0ae1 / a3cd |
 
 Integration: Actual Agent0ae146e1b0 includes reviewed swap12/numeric9 plus normal a3cd adoption, reviewed CLI8/inverse10 and sheet17. These family source merges still await ONE main affected-node proof. Product7c48 plus normal provenance remains qualified only at recorded scopes.
 core open: Main P4 original3362 FAIL45.244s versus45s on a3cd. Runtime D88 digest-chain Sol0044 owns measured follow-through; no Agent diagnosis or unchanged repeat. Four R2 originals remain closed at7c48/732 scope until final matrix. Historical rehearsal424 is classified core, not current qualified proof.
@@ -199,12 +199,13 @@ Admission: Historical safety and access refusals remain stopped. Owner-approved3
 Disk: D89 now allows source cap6 above5.5GB, one heavy above5.2GB, nothing new below4.5GB. Five new source rows dispatched at6419MB free. Compact5 packed0/gzipped0; sweep3 removed0. Pins untouched.
 Families: Local scalar11 and provider4/docpatch5/owned8/CLItrim3 assigned under D89; exact existing family list marks local ownership. Main keeps word product0036 and video Sol correction. Reviewed merges qualify incrementally on main.
 Blockers: Runtime source — Remaining P4 needs meaningful reviewed successor from D88 digest-chain Sol0044. Scalar/word corrections and reserved source families need main capacity; local review0053 does not overlap.
-Blockers: Main qualification — ORCH00:50 releases incremental batch NOW on already merged families. Existing main runner must bind exact eligible IDs and submit after current body; peer0051 published.
+Blockers: Main qualification — Exact298 READY in flat handoff0055. Existing main runner must submit next serialized body under D89 above5.2GB; peer0105 published. No Agent input remains.
 Blockers: Final cut — Final P1–P5/core on one tuple and genuine installed render remain D59 gated. No current core0 or full-suite PASS claimed.
 Next ready: MAIN incremental batch now under ORCH00:50; normal merges on protected PASS. Main scalar/word and reserved families dispatch under capacity. P4 only after meaningful qualified successor.
-live 6 / cap 6 under D89 above5.5GB at dispatch; ready-undispatched 0 locally eligible. Input0055 plus scalar11/provider4/docpatch5/owned8/CLItrim3. Remaining main reservations retain owners.
+live 5 / cap 6 under D89; ready-undispatched 0 locally eligible. Input0055 finished; scalar11/provider4/docpatch5/owned8/CLItrim3 running. Next protected reviewer batches up to five independent verdicts.
 Inbox consumed through1233756 bytes. Updated 2026-10-25T00:49:47Z: actual Runtime00:40 board and flat P4/sheet/D87 results consumed. Sheet original merge2cde verified. D87 exact worker appendix published. Local review0053 assigned; peer0056 published. No manager product edits or test bodies.
 Owner00:50 incremental qualification applied 2026-10-25T00:50:33Z; main peer0051 requests immediate existing-runner submission on already reviewed home2cde. No wait for full union.
 Pass 2026-10-25T00:55:08Z: protected source0053 PASS bothbranches; originalauthors normalmergequeued. Incremental0055 dispatched at6555860992bytes. D88criticalowner0044 and videosecondFAIL consumed; exactpeer0055 published.
 Pass 2026-10-25T00:56:54Z: normal swap756f and numeric0ae1 merges verified; both actual home file SHA256 equal exact review. Worker0055 active on0ae1; post-dispatchfree6423920640bytes. Mainpeer0046 confirms incremental nextheavy.
 Pass 2026-10-25T01:01:31Z: D89 applied immediately. Five Luna source requests queued; exact local ownership note0100 and existing family-list reservations published. No main duplicate author; no test/helper bodies.
+Pass 2026-10-25T01:04:05Z: exact298 incrementalinputpacket complete/flatpublished; all550identities retained. Main0105 asks immediateexistingrunnersubmission; no futurefamily/D88sourcewait.

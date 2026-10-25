@@ -1,0 +1,31 @@
+{
+  "all_pass": true,
+  "checks": [
+    {
+      "check": "rollup_parse",
+      "result": true
+    },
+    {
+      "check": "eligible_unique",
+      "result": true
+    },
+    {
+      "check": "lossless_rollup_identity",
+      "result": true
+    },
+    {
+      "check": "d87_exact_exclusion",
+      "result": true
+    },
+    {
+      "check": "actual_home_head_matches",
+      "result": true
+    },
+    {
+      "check": "protected_review_hashes",
+      "result": true
+    }
+  ],
+  "functional_tests_run": false,
+  "schema": "astrid.timeline.main-affected-batch-validation/v1"
+}
