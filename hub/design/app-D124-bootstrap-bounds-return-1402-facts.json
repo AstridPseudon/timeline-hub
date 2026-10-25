@@ -1,0 +1,24 @@
+{
+  "task": "app-D124-bootstrap-bounds-return-1402",
+  "base": "4b4e0558ef3853bc999dd65c0df4580ad5704eff",
+  "parent": "af5fe0a2748ce6df65fb36ce9cd435fc1df0502a",
+  "owned_files_changed": [
+    "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts"
+  ],
+  "approved_fake_delta_preserved": true,
+  "helpers": {
+    "normal_sha256": "a17a92115661fcef13b49169504ad8726e6f6c0cdce66b195128b14477fa76a4",
+    "reviewed_sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760"
+  },
+  "validation": {
+    "normal_targeted": "PASS: 2 passed, 40 skipped",
+    "reviewed_capture_from_protected_run": "PASS",
+    "reviewed_live_startup": "BLOCKED before endpoint readiness: Runtime exited",
+    "mutation_controls": "PASS",
+    "eslint": "PASS",
+    "tsc_app": "PASS",
+    "tsc_node": "PASS",
+    "diff_check": "PASS",
+    "protected_spec_files_changed": false
+  }
+}

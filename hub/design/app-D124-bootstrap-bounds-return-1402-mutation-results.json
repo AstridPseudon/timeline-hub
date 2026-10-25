@@ -1,0 +1,11 @@
+{
+  "positive_control": "accepted",
+  "mutations": [
+    {"name": "rolling.events_retained=999999", "result": "rejected"},
+    {"name": "output.bytes=999999", "result": "rejected"},
+    {"name": "phase UNKNOWN with count=1", "result": "rejected"},
+    {"name": "phase start_ms=-1", "result": "rejected"},
+    {"name": "sample_share=2", "result": "rejected"},
+    {"name": "PRIVATE_MARKER safe free-string value", "result": "rejected"}
+  ]
+}
