@@ -1,0 +1,56 @@
+{
+  "task": "rt-R2-graph-boundary-review-1749",
+  "purpose": "Independent read-only source assessment of Runtime R2 authenticated-boundary applicability to the Agent graph child alias seam.",
+  "runtime": {
+    "review": {
+      "commit": "cd2360074c8691a90ea3ec26ef7418e1bf25f5c3",
+      "tree": "18eb500b00427c625878e957411d019fdd3b6295",
+      "auth_blob": "75c290edb73a8f8e39c77a64368bf4b11705f7f0",
+      "auth_sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47",
+      "store_blob": "f9cf50c1aee3b0a8c7caeb3d8a307a65f5f910e9",
+      "store_sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4"
+    },
+    "qualified_parent": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "auth_blob": "75c290edb73a8f8e39c77a64368bf4b11705f7f0",
+      "store_blob": "f9cf50c1aee3b0a8c7caeb3d8a307a65f5f910e9",
+      "review_source_equals_parent": true
+    },
+    "baseline": {
+      "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+      "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+      "auth_blob": "66d899edaac201a1700e7ddf9f62091753201bc9",
+      "store_blob": "f9cf50c1aee3b0a8c7caeb3d8a307a65f5f910e9",
+      "auth_diff_summary": "58 insertions, 15 deletions; store unchanged"
+    }
+  },
+  "agent": {
+    "graph_source": {
+      "commit": "160c675a2d58ab9ec2dde7517860075ad85e41d2",
+      "tree": "b809955fe54988c2ef092b4379030fdf78a8b06c",
+      "graph_test_blob": "303d076e108132d02133171aa77059b565e93e23",
+      "fixture_blob": "7309e162c2ef2c1efe95e757c1d8f5c16361cd81"
+    },
+    "normal_clean": {
+      "commit": "224de4697c",
+      "tree": "3db8babbbdaf9a011d2eab9e27884c6c195cd76c",
+      "graph_test_blob": "303d076e108132d02133171aa77059b565e93e23",
+      "fixture_blob": "7309e162c2ef2c1efe95e757c1d8f5c16361cd81",
+      "graph_and_fixture_unchanged_from_160": true
+    }
+  },
+  "source_paths_reviewed": [
+    "runtime_protocol/timeline_commit_auth.py",
+    "runtime_protocol/timeline_commit_store.py",
+    "Agent tests/editing_conformance/test_recorded_graph_roots.py",
+    "Agent tests/sdk/test_timeline_commit_graph_roots.py"
+  ],
+  "execution_packets": {
+    "retained_graph": "8 PASS / 1 FAIL on 5e9ad; not rerun by this source-only review",
+    "retained_original_true": "FAIL on ab1e during redo-birth; not rerun by this source-only review",
+    "accepted_records": "EXACTMISSING",
+    "stage_records": "EXACTMISSING",
+    "physical_records": "EXACTMISSING"
+  }
+}

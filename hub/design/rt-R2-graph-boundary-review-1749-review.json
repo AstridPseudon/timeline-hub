@@ -1,0 +1,71 @@
+{
+  "task": "rt-R2-graph-boundary-review-1749",
+  "verdict": "PASS_SOURCE_ASSESSMENT",
+  "scope": "independent source-only review; no product, auth, store, schema, test, generated-file, pin, provider, socket, or Git changes",
+  "source_basis": {
+    "review_commit": "cd2360074c8691a90ea3ec26ef7418e1bf25f5c3",
+    "production_source_parent": "ab1e4f6141987706132916e2da16477f5a019464",
+    "runtime_baseline": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "agent_graph_source": "160c675a2d58ab9ec2dde7517860075ad85e41d2",
+    "agent_graph_normal_clean": "224de4697c"
+  },
+  "findings": [
+    {
+      "id": "runtime-correction-scope",
+      "result": "The ab1e inverse-only exception is syntactically limited to an empty-path occurrence/<id>/collection:track read, with created-owner absence and one authenticated root restoration.",
+      "source": "runtime_protocol/timeline_commit_auth.py:400-421",
+      "baseline": "The 5e9ad source has no corresponding inverse exception at validate_step:398-419; its native reads proceed to native_site at :403.",
+      "scope_limit": "The branch does not match occurrence:<id>/collection:clip or occurrence:<id>/clip:<id>; graph uses occurrence:new-occ/collection:clip and occurrence:new-occ/clip:title."
+    },
+    {
+      "id": "generic-alias-resolution",
+      "result": "Native child aliases remain resolved through native_site -> site; site requires exactly one occurrence row before following shot/internal edges.",
+      "source": "runtime_protocol/timeline_commit_auth.py:100-172, 213-218",
+      "scope_limit": "The source proves non-coverage of the child aliases, not why the provider's graph record reached that boundary or whether another source emitted an invalid record."
+    },
+    {
+      "id": "later-ab1e-boundaries",
+      "result": "ab1e passes computed inverse stage boundaries into validate_step and uses bound input for effect/materialization validation.",
+      "source": "runtime_protocol/timeline_commit_auth.py:490-522, 588-605, 2938-2960",
+      "scope_limit": "These changes authenticate later effect/materialization checks; they do not broaden the native-read exception to collection:clip or clip:title."
+    },
+    {
+      "id": "agent-graph-vs-root-control",
+      "result": "The graph fixture selects collection.clips, reads and binds occurrence:new-occ/clip:title, and repeats child writes/reads; the child comparator enables child_ops. The passing root comparator does not enable child_ops.",
+      "source": "Agent 160c tests/editing_conformance/test_recorded_graph_roots.py:112-123; tests/sdk/test_timeline_commit_graph_roots.py:297-338",
+      "scope_limit": "The root-only pass is a control for shared root creation/inverse/redo, not evidence that the child alias seam passes."
+    }
+  ],
+  "retained_execution_evidence": {
+    "graph_result": "8 PASS / 1 FAIL on 5e9ad",
+    "graph_failure_selector": "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_created_child_stages_reload_inverse_redo_exact_closure",
+    "graph_failure": "invalid_records: provider occurrence alias is outside its boundary at runtime_protocol/timeline_commit_auth.py:156",
+    "root_comparator": "tests/sdk/test_timeline_commit_graph_roots.py::test_authenticated_root_creation_reload_inverse_redo_exact_closure PASS",
+    "original_true_result": "FAIL on ab1e during redo-birth with the same alias error; the packet does not identify the exact graph read, ordinal, stage, or physical binding"
+  },
+  "causal_owner": {
+    "value": "UNKNOWN",
+    "reason": "The admitted source/evidence packet lacks accepted records.commands and records.steps, failing read ref/path/state and ordinal, sequential command input/output closures, inverse stage ranges, effect/materialization bindings, continuations, and paired accepted history receipts."
+  },
+  "exact_missing": [
+    "accepted graph records.commands and records.steps",
+    "failing graph read ref/path/state and command ordinal",
+    "undo/redo phase and inverse stage phase",
+    "per-ordinal sequential input/output closure images",
+    "inverse.stage native_write_range and effect_range",
+    "per-stage before/after closure pins",
+    "commit.effect and commit.materialization physical bindings, owners, edge refs, ordinals, and phases",
+    "source/landing closures and authenticated continuations",
+    "paired accepted graph history receipts"
+  ],
+  "holds": {
+    "d130_swap_wal": "HELD and untouched",
+    "no_patch_authorized": true,
+    "disallowed": [
+      "new auth guard",
+      "body/retry/rerun or collector",
+      "test or qualifier changes",
+      "original True/native/full/P4/tour/provider/socket/acquisition qualification"
+    ]
+  }
+}
