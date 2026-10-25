@@ -25,13 +25,17 @@ test('the actual seed derives occurrence, full plate, and expected occurrence fr
   assert.match(harness, /parent_registry\['f2-video'\]\['duration'\] = 12/);
 });
 
-test('the 17 existing callers keep the omitted 12 default except the named placement fixture', () => {
+test('the 17 non-placement callers keep the omitted 12 default', () => {
   const callers = callerSources();
-  assert.equal(callers.length, 17);
+  assert.equal(callers.length, 18);
   assert.deepEqual(callers.filter(({ args }) => args.includes(', 14')).map(({ file }) => file), [
     'tests/e2e/local/three-products.p2-elements-assets.spec.ts',
   ]);
-  assert.equal(placementSpec.match(/seedThreeProducts\s*\([^)]*\)/)?.[0],
-    "seedThreeProducts(THREE_PRODUCTS_REFERENCE_AT, 'native-none', 14)");
+  assert.match(placementSpec, /const test = appTest\.extend<[\s\S]+?seedThreeProducts\(THREE_PRODUCTS_REFERENCE_AT, 'native-none'\)\);/);
+  assert.match(placementSpec, /const placementTest = appTest\.extend<[\s\S]+?seedThreeProducts\(THREE_PRODUCTS_REFERENCE_AT, 'native-none', 14\)\);/);
+  assert.match(placementSpec, /test\('P2 mounted element edit:[^\n]+async \(\{ page, harness, seed3 \}\)/);
+  assert.match(placementSpec, /test\('P2 mounted registerAsset save:[^\n]+async \(\{ page, harness, seed3 \}\)/);
+  assert.match(placementSpec, /placementTest\('P2 mounted automatic child placement:[^\n]+async \(\{ page, harness, seed3 \}\)/);
+  assert.equal(callers.filter(({ args }) => !args.includes(', 14')).length, 17);
   assert.equal(callers.filter(({ args }) => args.includes(', 14')).length, 1);
 });
