@@ -224,29 +224,10 @@ def test_attached_param_commands_keep_exact_cli_ingress_and_unchanged_write_hist
     captured = json.loads(path.read_bytes())
     commands_file = tmp_path / 'params.json'
     commands_file.write_text(json.dumps(captured['pending']))
-    # G5 retired ``edit commands-file``.  Keep the exact captured command input,
-    # then use the supported detached-document commit CLI for the same Runtime
-    # commitTimeline ingress and provenance.
-    from astrid.packs.timeline.cli import build_parser
-    from astrid.sdk.timeline.commands import execute
-
-    original = client.timelines.open_bundle(
-        fixture.project_id, fixture.timeline_id, revision_id=captured['base']['revision_id'])
-    plan = execute(original.data['bundle'], captured['pending'])
-    detached = commands_file.with_name(commands_file.name + '.detached.json')
-    candidate = Checkout(plan.bundle).document()
-    candidate['base_parent'] = {**candidate['base_parent'], **captured['base']}
-    detached.write_text(json.dumps(candidate))
-    parsed = build_parser(client).parse_args([
-        'commit', fixture.timeline_id, '--project', fixture.project_id,
-        '--file', str(detached), '--message', 'Timeline edit',
-        '--idempotency-key', 'params-cli', '--json',
-    ])
-    code = parsed.handler(parsed)
-    output = capsys.readouterr()
-    accepted = json.loads(output.out)
-    assert code == 0 and accepted['ok'] and accepted['data']['commands'] == captured['pending'], (
-        code, accepted, output.err)
+    accepted = m1.cli(client, fixture, capsys, 'edit', 'commands-file', fixture.timeline_id,
+                      str(commands_file), '--base-revision-id', captured['base']['revision_id'],
+                      '--base-publication-id', captured['base']['publication_id'])
+    assert accepted['data']['commands'] == captured['pending']
     # Reopen on a separate empty outbox: an unchanged public setter is still an
     # authored write, so it prevents undoing the earlier publication.
     other = Checkout.attach(TimelineSession.open(fixture.project_id, fixture.timeline_id,
