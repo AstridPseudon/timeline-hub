@@ -1,0 +1,54 @@
+{
+  "task": "rt-R2-three-result-path-1006",
+  "status": "SOURCE_PROVEN_SETUP_ERROR_BEFORE_BODY",
+  "source": {
+    "agent": {"commit": "44cfb2884e9ee918ba3ea19e354aeba31dfd2347", "tree": "5d6d1b0f128cc355c5ffa6b85efa3732c4dd6243"},
+    "runtime": {"commit": "1daca2a33f6d7b10053e07c539a54843e3984e19", "tree": "a522511414947e48e317a5e5c2103483b121a750"},
+    "app": {"commit": "0b6cee269f32079c5446036bbca8a484176799bc", "tree": "9456c9edf3229ddcfd824b0f626516f2c602ccfa"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "selection": {
+    "count": 3,
+    "ids": [5, 3, 9],
+    "selectors": [
+      "tests/editing_conformance/test_word_binding_recipe.py::test_last_write_clear_undo_restore_and_restore_inverse",
+      "tests/editing_conformance/test_word_binding_recipe.py::test_follow_rebases_original_choice_after_source_move_and_reorder[True]",
+      "tests/editing_conformance/test_word_binding_recipe.py::test_stale_anchor_refuses_when_intervening_window_excludes_selected_word"
+    ],
+    "timeout_seconds": 45,
+    "marker_filter": "existing integration mark only"
+  },
+  "actual": {
+    "central_request": "rt-R2-ordinary-three-0953-targeted-1025100327-19838",
+    "exit": 1,
+    "passed": 0,
+    "failed_assertions": 0,
+    "errors": 3,
+    "seconds": 4.784,
+    "body_reached": false,
+    "body_attempt_class": "one meaningful original three-selector attempt",
+    "earlier_wrapper_attempts": "no-body controls; not counted",
+    "prior_restore_id5": "different historical setup refusal; not this result",
+    "boundary": "shared recipe fixture initial commit"
+  },
+  "controls": {"preflight_once_exit": 0, "positive_once_exit": 17, "poison_once_nonzero": true, "central_raw_exit": 1, "import_origins": ["astrid.sdk.timeline.commit from Agent pin", "runtime_protocol.service from Runtime pin"], "registered_provider": "agent.create_runtime_commit_service", "receipt": "rt-R2-ordinary-three-0953-targeted-1025100327-19838"},
+  "root": {
+    "classification": "source_proven",
+    "owner": "Agent fixture/source",
+    "file": "tests/editing_conformance/native_word_anchor_fixture.py",
+    "line": 188,
+    "submitted_path": ["occurrences", "occurrence:occ", "placement", "start_ms"],
+    "required_identity_prefix": "occurrence_id",
+    "guard": "astrid/sdk/timeline/_doc_patch.py:9-17,39-48",
+    "exception": "array traversal requires an identity token",
+    "runtime_product_root": false
+  },
+  "path": {
+    "provider_registration": "native_word_anchor_fixture.py:97 and test_timing_retained_inputs.py:115",
+    "runtime_entry": "runtime_protocol/service.py:2448-2525",
+    "canonical_route_check": "runtime_protocol/service.py:2455",
+    "auth_or_provider_none_failure": false
+  },
+  "next": "Agent owner corrects only the fixture identity token, then one exact-three run with unchanged guards and tuple",
+  "unqualified": ["inverse behavior", "word-choice behavior", "accepted/merged/refused results for these three selectors"]
+}

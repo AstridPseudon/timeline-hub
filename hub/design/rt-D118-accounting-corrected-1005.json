@@ -1,0 +1,261 @@
+{
+  "$schema": "timeline.runtime.d118.accounting-corrected.v1",
+  "task": "rt-D118-accounting-return-1005",
+  "basis": "Independent checked map rt-D118-result-review-1001; immutable original handback rt-D118-upstream23-0951",
+  "verdict": "CORRECTED_ACCOUNTING",
+  "scope": {
+    "review_scope": "D54a exact 23-node upstream replacement scope only",
+    "requested": 23,
+    "exact_23_set_order": "independent review row order",
+    "exact_23_set_sha256": "c7d47597d749e94aa5003552a31d176b6ca42d35793e602494bb40b9fdefa38b",
+    "exact_23_set_sha256_definition": "SHA-256 of the UTF-8 nodeids joined by LF, with one final LF, in exact_23_set_order",
+    "exact_23_set": [
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_bootstrap_passes_inventory_identity_and_restarts_on_change",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_bootstrap_stops_on_correlated_terminal_registration_failure",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-25-ready-True-25-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-None-ready-False-300.0-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-25-ready-True-25-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-120-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-terminal-False-1-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_pid-False-1-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_birth-False-1-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_instance-False-1-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_source-False-1-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-None]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-400-ready-True-400-400]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-150.3-30]",
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-30]",
+      "tests/sdk/test_timeline_script.py::test_runtime_pin_flow_returns_old_script_after_binding_rebind",
+      "tests/timeline/test_authoring_media.py::test_public_document_swap_and_residual_patch_use_original_sequential_closure[True]",
+      "tests/timeline/test_authoring_media.py::test_public_document_swap_and_residual_patch_use_original_sequential_closure[False]",
+      "tests/timeline/test_authoring_media.py::test_public_document_compound_inverse_restores_exact_original",
+      "tests/timeline/test_authoring_media.py::test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba",
+      "tests/packs/rendering/test_render_export_task_adapter.py::test_render_export_adapter_writes_real_mp4_and_is_callable",
+      "tests/packs/rendering/test_render_export_task_adapter.py::test_forced_caption_uses_server_owned_executable_routing_and_isolation",
+      "tests/packs/video_editing/test_runtime_publication_chain.py::test_d13_installed_native_preflight"
+    ],
+    "original_upstream_run": {
+      "runnable_counterparts": 16,
+      "ran_counterparts": 16,
+      "pass": 15,
+      "fail": 1,
+      "error": 0,
+      "source_absent": 7,
+      "central_test_service_id": "rt-D118-upstream23-0951-d118-upstream23-targeted-1025095559-19404",
+      "raw_exit": 1,
+      "service_result": "15 passed, 1 failed, 0 errors",
+      "junit_xml_sha256": "84fcd41802112834d34164636d7ea5e59632826ae5e9e43bca45ac40a957ad12",
+      "first_run_provenance_failure": {
+        "retained": true,
+        "failure": "runtime_protocol missing in the first child run",
+        "junit_xml_sha256": "b7c68509b300bb94b3188d2b5cf3e0a0041a93f4a9adf07059d66cefae51d1a2",
+        "used_for_final_classification": false
+      }
+    }
+  },
+  "counts": {
+    "PRE": 0,
+    "REG": 14,
+    "NEW-OURS": 8,
+    "UNKN": 1,
+    "total": 23,
+    "reg14_set_sha256": "fbcd02ec13e992d28fdcfb3aaa591a2281143c874a7658ec0103bb17d477475d",
+    "new8_set_sha256": "07c127b5df3436952b96f3d2af9dfdc75aa414959677c9c3bbdd086543e090e8",
+    "unknown_set_sha256": "311fa15ec0ffbd4fbaf91bae2bc619d226e1d301851075e22f60693820bc9b5f"
+  },
+  "REG14_exact": [
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_bootstrap_stops_on_correlated_terminal_registration_failure",
+      "current": "failed",
+      "upstream": "PASS",
+      "body_hash_equal": true,
+      "current_location": "tests/sdk/test_host_bootstrap_source_identity.py:363",
+      "upstream_location": "tests/sdk/test_host_bootstrap_source_identity.py:348",
+      "current_body_sha256": "caa9ecdf6ce41fbb524aa2b4d45053b79f6986c62f3eb039bcadc00ef076e800",
+      "upstream_body_sha256": "caa9ecdf6ce41fbb524aa2b4d45053b79f6986c62f3eb039bcadc00ef076e800"
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-25-ready-True-25-None]",
+      "current": "failed",
+      "upstream": "PASS",
+      "body_hash_equal": true,
+      "current_location": "tests/sdk/test_host_bootstrap_source_identity.py:727",
+      "upstream_location": "tests/sdk/test_host_bootstrap_source_identity.py:636",
+      "current_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "upstream_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3"
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-None-ready-False-300.0-None]",
+      "current": "failed",
+      "upstream": "PASS",
+      "body_hash_equal": true,
+      "current_location": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+      "upstream_location": "tests/sdk/test_host_bootstrap_source_identity.py:640",
+      "current_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "upstream_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3"
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-25-ready-True-25-None]",
+      "current": "failed",
+      "upstream": "PASS",
+      "body_hash_equal": true,
+      "current_location": "tests/sdk/test_host_bootstrap_source_identity.py:727",
+      "upstream_location": "tests/sdk/test_host_bootstrap_source_identity.py:636",
+      "current_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "upstream_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3"
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-120-None]",
+      "current": "failed",
+      "upstream": "PASS",
+      "body_hash_equal": true,
+      "current_location": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+      "upstream_location": "tests/sdk/test_host_bootstrap_source_identity.py:640",
+      "current_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "upstream_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3"
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-terminal-False-1-None]",
+      "current": "failed",
+      "upstream": "PASS",
+      "body_hash_equal": true,
+      "current_location": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+      "upstream_location": "tests/sdk/test_host_bootstrap_source_identity.py:640",
+      "current_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "upstream_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3"
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_pid-False-1-None]",
+      "current": "failed",
+      "upstream": "PASS",
+      "body_hash_equal": true,
+      "current_location": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+      "upstream_location": "tests/sdk/test_host_bootstrap_source_identity.py:640",
+      "current_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "upstream_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3"
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_birth-False-1-None]",
+      "current": "failed",
+      "upstream": "PASS",
+      "body_hash_equal": true,
+      "current_location": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+      "upstream_location": "tests/sdk/test_host_bootstrap_source_identity.py:640",
+      "current_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "upstream_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3"
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_instance-False-1-None]",
+      "current": "failed",
+      "upstream": "PASS",
+      "body_hash_equal": true,
+      "current_location": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+      "upstream_location": "tests/sdk/test_host_bootstrap_source_identity.py:640",
+      "current_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "upstream_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3"
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_source-False-1-None]",
+      "current": "failed",
+      "upstream": "PASS",
+      "body_hash_equal": true,
+      "current_location": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+      "upstream_location": "tests/sdk/test_host_bootstrap_source_identity.py:640",
+      "current_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "upstream_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3"
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-None]",
+      "current": "failed",
+      "upstream": "PASS",
+      "body_hash_equal": true,
+      "current_location": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+      "upstream_location": "tests/sdk/test_host_bootstrap_source_identity.py:640",
+      "current_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "upstream_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3"
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-400-ready-True-400-400]",
+      "current": "failed",
+      "upstream": "PASS",
+      "body_hash_equal": true,
+      "current_location": "tests/sdk/test_host_bootstrap_source_identity.py:727",
+      "upstream_location": "tests/sdk/test_host_bootstrap_source_identity.py:636",
+      "current_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "upstream_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3"
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-150.3-30]",
+      "current": "failed",
+      "upstream": "PASS",
+      "body_hash_equal": true,
+      "current_location": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+      "upstream_location": "tests/sdk/test_host_bootstrap_source_identity.py:640",
+      "current_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "upstream_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3"
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-30]",
+      "current": "failed",
+      "upstream": "PASS",
+      "body_hash_equal": true,
+      "current_location": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+      "upstream_location": "tests/sdk/test_host_bootstrap_source_identity.py:640",
+      "current_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+      "upstream_body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3"
+    }
+  ],
+  "other_classes": {
+    "PRE": [],
+    "NEW-OURS": [
+      "tests/sdk/test_host_bootstrap_source_identity.py::test_bootstrap_passes_inventory_identity_and_restarts_on_change",
+      "tests/sdk/test_timeline_script.py::test_runtime_pin_flow_returns_old_script_after_binding_rebind",
+      "tests/timeline/test_authoring_media.py::test_public_document_swap_and_residual_patch_use_original_sequential_closure[True]",
+      "tests/timeline/test_authoring_media.py::test_public_document_swap_and_residual_patch_use_original_sequential_closure[False]",
+      "tests/timeline/test_authoring_media.py::test_public_document_compound_inverse_restores_exact_original",
+      "tests/timeline/test_authoring_media.py::test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba",
+      "tests/packs/rendering/test_render_export_task_adapter.py::test_forced_caption_uses_server_owned_executable_routing_and_isolation",
+      "tests/packs/video_editing/test_runtime_publication_chain.py::test_d13_installed_native_preflight"
+    ],
+    "UNKN": [
+      "tests/packs/rendering/test_render_export_task_adapter.py::test_render_export_adapter_writes_real_mp4_and_is_callable"
+    ]
+  },
+  "source_identity": {
+    "current_agent_head": "547e104562",
+    "current_runtime_head": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e",
+    "pristine_agent_head": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+    "pristine_agent_tree": "2694ae8d2709526b40fa037bda8b159cf412769d",
+    "pristine_runtime_head": "d4f496ec4fbcae7a1f3a51d47ed5147c561117ad",
+    "pristine_runtime_tree": "1d3e06f4d59ed6d459646d24ab185c36eb5be075",
+    "current_agent_source_file_sha256": "08dfa8dcafeb80c347923630864a29d58dea97e257428e204fc316567795161b",
+    "pristine_agent_source_file_sha256": "8143c3741b1024612c6cb8017d17ee83bd69d5fb64db31fff2d25b3bf0b05362",
+    "child_origins": "pristine Agent/Runtime roots only",
+    "shared_venv_admitted": false
+  },
+  "unknown_limits": [
+    "The sole UNKN render row has identical body but differing failure detail/location: upstream RenderExportRefused at line 109 with renderer status 1; current retained failure at line 134 has no retained exception class/detail.",
+    "The retained current handoff has no current exception class/detail for any current failure; no detail was inferred and no body was rerun.",
+    "Historical 924-runtime isolation is UNCERTAIN and outside this exact 23-node scope.",
+    "This is not a broad regression, core-zero, or full-suite claim."
+  ],
+  "immutable_inputs": {
+    "original_0951_artifacts": {
+      "handoff-rt-D118-upstream23-0951-README.md": "5d18f07b994fd48cdc93c7e20a7e452e2b3a65ddbeb3ce911aa162f68a1fff96",
+      "handoff-rt-D118-upstream23-0951-manifest.json": "b9aeb74037c69d3b5f11ee0b3e65a00995ef3d1ad1d9b3db4245169ff08fa9a5",
+      "handoff-rt-D118-upstream23-0951-comparison.json": "cd7cd2370a49ee4dbab1d740658ce36f770ffddfec32014bf46add862636b344",
+      "handoff-rt-D118-upstream23-0951-outcomes.tsv": "ca5c58f3012538bfa86fbc6a3814ab72815c27c0cd0b440b246e98c4b8d86c62",
+      "upstream23.xml": "84fcd41802112834d34164636d7ea5e59632826ae5e9e43bca45ac40a957ad12",
+      "first-run.xml": "b7c68509b300bb94b3188d2b5cf3e0a0041a93f4a9adf07059d66cefae51d1a2"
+    },
+    "independent_checked_map": {
+      "rt-D118-result-review-1001.md": "8b2b387e0baed5a560fd4de36d670e3bf63bbfad08a724062a77a98a00701639",
+      "rt-D118-result-review-1001.json": "fdae8e2ee8d551a18de0741177ec7b732c9a572b60dda6b9b783e17702f8e7da",
+      "rt-D118-result-review-1001.tsv": "440d77cdda5b8c2cfc6fdd038104adf51fbd15097374c33a5cee6ede4105eae0"
+    }
+  },
+  "non_actions": [
+    "No semantic review, body rerun, new source audit, collector/test/product edit, generated-file or pin operation, credential/hub operation, denied retry, or deletion was performed.",
+    "Original worker outputs remain immutable; this artifact is distinctly named and does not overwrite them."
+  ]
+}
