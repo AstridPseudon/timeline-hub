@@ -1,0 +1,27 @@
+{
+  "whole_make_e2e": "NOTRUN",
+  "parent_red": false,
+  "candidate_green": false,
+  "adversarial_checks": 0,
+  "commands": [
+    {
+      "label": "parent",
+      "argv": [
+        "bash",
+        "/tmp/w-f24ccbdde1/inventory-parent-0857",
+        "venv-agent-child-inventory-parent",
+        "7f3c9ec5f7b8a57f13adbb2f770497d72eacb6de",
+        "--source-carrier",
+        "/tmp/w-f24ccbdde1/tiny-agent-fixture",
+        "/tmp/w-f24ccbdde1/tiny-runtime-fixture",
+        "c0342526fe16160776c3ac5fdab1587434e69f73"
+      ],
+      "exit_code": 2
+    }
+  ],
+  "verifier_mocked": false,
+  "store_initialized_by_worker": true,
+  "admission_changed": false,
+  "parent_stages": [],
+  "blocker": "parent did not reach the expected inventory refusal"
+}
