@@ -17,29 +17,65 @@
     },
     "tests/packs/timeline/test_cli_document_commit.py": {
       "sha256": "e5ffb3e24a6fb13d6b9111d5fceb93ce1d5138eb0b9aaa4bef0b5d70cdef3865"
+    },
+    "tests/editing_conformance/test_commit_runtime_parent_media.py": {
+      "sha256": "9d79b56977e4e7c92d36ba49fde1a39ebde1822b3e1c0e9a4c5f3d5764bd5b4e"
+    },
+    "tests/editing_conformance/test_commit_runtime_parent_auto_completion.py": {
+      "sha256": "be1e54226f86500f0ffd864c62db11ea18a55dcc1c8e5c6f85b94fe4bdf8ced1"
+    },
+    "tests/sdk/test_selected_param_neutral_stage.py": {
+      "sha256": "fb9aa03b356bdfe5a51c93be06dd62ca2826be122ffd3a0874101d17885c9657"
+    },
+    "tests/sdk/test_timeline_selected_schema_runtime.py": {
+      "sha256": "7ca71b5ab49cad8035a328d8422a8772512c9878fc32e0d61dd73f8fe82553ff"
     }
   },
-  "format": "d86-main-source-manifest-v1",
+  "format": "d86-main-source-manifest-v2",
+  "input_provenance": {
+    "d86_families": "design/agt-D86-main-families.md and peer-runtime-to-agent-orchestrator-20261024T2353Z-D86-all-six-source-returned.md",
+    "abi20": {
+      "author_worker": "rt-Agent-ABI20-provider-2316",
+      "author_commit": "2378867874d364696391794fd47f40e1cbaaaaa1",
+      "review_worker": "rt-Agent-ABI20-review-2322",
+      "review_status": "PASS",
+      "selectors": [
+        "tests/sdk/test_selected_param_neutral_stage.py::test_mounted_param_custody_refuses_corruption_atomically",
+        "tests/sdk/test_timeline_selected_schema_runtime.py::test_paired_provider_requires_exact_installed_contract_digest"
+      ]
+    },
+    "excluded_2342_handback": {
+      "author_worker": "agt-F-native-batch-return-2342",
+      "review_worker": "agt-F-native-batch-review-2342",
+      "review_status": "FAIL",
+      "reason": "bypassed the real CLI",
+      "included_in_union": false
+    }
+  },
   "future_submission": {
     "held_input": "7627 is never an input; use a qualified successor tuple only",
     "original_test_hash": "recompute at actual pinned Agent checkout; do not inherit current-head value",
     "provider_origin": "module origin must resolve to pinned Agent astrid_runtime_client, pinned Runtime runtime_protocol, and the existing schema/profile paths",
-    "tuple": "capture Agent/Runtime/App/Composition SHAs once at eventual submit; verify four request-checkout receipts before rendering"
+    "tuple": "capture Agent/Runtime/App/Composition SHAs once at eventual submit; verify four request-checkout receipts before rendering",
+    "selector_union": "Recompute all source hashes and the manifest hash at the captured Agent checkout; the tuple remains PENDING until four genuine checkout receipts are verified."
   },
-  "preparation": "source-only; no collection, test body, service build, installation, or live request",
+  "preparation": "source-only; six-family union plus reviewed ABI20 selectors; no collection, test body, service build, installation, or live request",
   "runtime_reference": "732c48c6f5a9441a65c61b24595d454a1cd3e180",
   "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
   "selectors": {
     "families": {
+      "abi20-selected-param": 2,
       "cli-document": 8,
       "m1-outbox": 10,
       "native-word": 46,
+      "parent-auto": 14,
+      "parent-media": 20,
       "shared-inverse": 10
     },
-    "files": 5,
-    "selector_manifest_sha256": "07b2768ab17d6b196ef121d500d16e2ef763bae010ad6ab4fb7406e97f3b3c6b",
-    "source": "design/agt-D86-main-families.md",
-    "total": 74
+    "files": 9,
+    "selector_manifest_sha256": "b880cc982a18f97227ff4c27578879b6d33dc43ec485886f7e978c65ac444574",
+    "source": "design/agt-D86-main-families.md plus reviewed ABI20 selectorlist.txt",
+    "total": 110
   }
 }
 

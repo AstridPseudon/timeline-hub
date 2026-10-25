@@ -44,5 +44,11 @@
       "preflight_body_files": false
     }
   },
+  "candidate_union": {
+    "assigned_source_selectors": 108,
+    "abi20_selected_param_selectors": 2,
+    "total_selectors": 110,
+    "selector_manifest_sha256": "b880cc982a18f97227ff4c27578879b6d33dc43ec485886f7e978c65ac444574"
+  },
   "future_submission": "Capture four fresh request-checkout SHAs once, render the p4-d73-v1 manifest, and keep this control tuple separate."
 }
