@@ -1,0 +1,252 @@
+{
+  "host_audit": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-pin-host-process-use-0255.md",
+  "before_bytes": 5586018304,
+  "results": [
+    {
+      "worker": "agt-pin-039ff2c2",
+      "returncode": 0,
+      "stdout": "recycled agt-pin-039ff2c2",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "agt-pin-0d142f79",
+      "returncode": 0,
+      "stdout": "recycled agt-pin-0d142f79",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "agt-pin-263696c8",
+      "returncode": 0,
+      "stdout": "recycled agt-pin-263696c8",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "agt-pin-3b2db4bd",
+      "returncode": 0,
+      "stdout": "recycled agt-pin-3b2db4bd",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "agt-pin-3f1ceaed",
+      "returncode": 0,
+      "stdout": "recycled agt-pin-3f1ceaed",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "agt-pin-415181d9",
+      "returncode": 0,
+      "stdout": "recycled agt-pin-415181d9",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "agt-pin-5dec5dc6",
+      "returncode": 0,
+      "stdout": "recycled agt-pin-5dec5dc6",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "agt-pin-78738040",
+      "returncode": 0,
+      "stdout": "recycled agt-pin-78738040",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "agt-pin-831df37f",
+      "returncode": 0,
+      "stdout": "recycled agt-pin-831df37f",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "agt-pin-a60f8b39",
+      "returncode": 0,
+      "stdout": "recycled agt-pin-a60f8b39",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "agt-pin-d6e84eb0",
+      "returncode": 0,
+      "stdout": "recycled agt-pin-d6e84eb0",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "agt-pin-e39de26f",
+      "returncode": 0,
+      "stdout": "recycled agt-pin-e39de26f",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "agt-pin-ef036398",
+      "returncode": 0,
+      "stdout": "recycled agt-pin-ef036398",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "agt-pin-f4d6c72c",
+      "returncode": 0,
+      "stdout": "recycled agt-pin-f4d6c72c",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "app-pin-a90d4251",
+      "returncode": 0,
+      "stdout": "recycled app-pin-a90d4251",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "app-pin-adf06754",
+      "returncode": 0,
+      "stdout": "recycled app-pin-adf06754",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "app-pin-c1014775",
+      "returncode": 0,
+      "stdout": "recycled app-pin-c1014775",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "rt-pin-1bae0e8c",
+      "returncode": 0,
+      "stdout": "recycled rt-pin-1bae0e8c",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "rt-pin-21482a41",
+      "returncode": 0,
+      "stdout": "recycled rt-pin-21482a41",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "rt-pin-27f0306b",
+      "returncode": 0,
+      "stdout": "recycled rt-pin-27f0306b",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "rt-pin-2a9e347f",
+      "returncode": 0,
+      "stdout": "recycled rt-pin-2a9e347f",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "rt-pin-327da207",
+      "returncode": 0,
+      "stdout": "recycled rt-pin-327da207",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "rt-pin-34eac004",
+      "returncode": 0,
+      "stdout": "recycled rt-pin-34eac004",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "rt-pin-42855b64",
+      "returncode": 0,
+      "stdout": "recycled rt-pin-42855b64",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "rt-pin-45c3a7f4",
+      "returncode": 0,
+      "stdout": "recycled rt-pin-45c3a7f4",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "rt-pin-5c1a03f1",
+      "returncode": 0,
+      "stdout": "recycled rt-pin-5c1a03f1",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "rt-pin-691a9436",
+      "returncode": 0,
+      "stdout": "recycled rt-pin-691a9436",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "rt-pin-6ee4d904",
+      "returncode": 0,
+      "stdout": "recycled rt-pin-6ee4d904",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "rt-pin-732c48c6",
+      "returncode": 0,
+      "stdout": "recycled rt-pin-732c48c6",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "rt-pin-780da6d6",
+      "returncode": 0,
+      "stdout": "recycled rt-pin-780da6d6",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "rt-pin-a3cd1a32",
+      "returncode": 0,
+      "stdout": "recycled rt-pin-a3cd1a32",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "rt-pin-bc227de0",
+      "returncode": 0,
+      "stdout": "recycled rt-pin-bc227de0",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "rt-pin-e02f3e3d",
+      "returncode": 0,
+      "stdout": "recycled rt-pin-e02f3e3d",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "rt-pin-e89eb8c7",
+      "returncode": 0,
+      "stdout": "recycled rt-pin-e89eb8c7",
+      "stderr": "",
+      "worktree_exists": false
+    },
+    {
+      "worker": "rt-pin-f69ad581",
+      "returncode": 0,
+      "stdout": "recycled rt-pin-f69ad581",
+      "stderr": "",
+      "worktree_exists": false
+    }
+  ],
+  "after_bytes": 8313270272
+}
