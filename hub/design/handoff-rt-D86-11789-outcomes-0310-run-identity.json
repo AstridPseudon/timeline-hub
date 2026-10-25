@@ -1,0 +1,62 @@
+{
+  "private_artifacts": [
+    {
+      "bytes": 1554703,
+      "kind": "authentic_junit_xml",
+      "path_hint": "fd86-later102-first-body-0303.xml",
+      "published": false,
+      "sha256": "284160dafc14842a784c577a3b5b80f9a30976dcaf5324982242da5c595ecef4"
+    },
+    {
+      "bytes": 1529660,
+      "kind": "authentic_body_log",
+      "path_hint": "fd86-later102-first-body-0303.body.log",
+      "published": false,
+      "sha256": "d29db01223d04d468e271aafd19edb181ced3470c8504f8a24fb5132a77df15d"
+    }
+  ],
+  "publication": {
+    "auth_body_urls_private_stack_published": false,
+    "generated_or_schema_changes": false,
+    "product_changes": false,
+    "safe_excerpt_policy": "bounded message and source file:line only; use original hashes/private artifacts for full evidence",
+    "source_only": true,
+    "test_changes": false
+  },
+  "request_id": "agent-fd86-later102-first-body-0303-1025030606-11789",
+  "result": {
+    "automatic": "NO-GO",
+    "body_exit": 1,
+    "error": 68,
+    "fail": 24,
+    "pass": 10,
+    "preflight_exit": 0,
+    "retry": false,
+    "skip": 0,
+    "xml_testcases": 102
+  },
+  "runtime_service_tree": "b4a181a97fd07406ccf5f3c3fd675175f77a2ccf",
+  "runtime_tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a",
+  "schema": "timeline.f-d86-11789.outcome-export.v1",
+  "selection": {
+    "cacheprovider": "disabled",
+    "marker_filter": "none",
+    "pytest_options": "-m pytest -q -n 3 -o addopts= -p no:cacheprovider --timeout=45",
+    "selector_count": 102,
+    "selector_sha256": "b2265a32c2c931616a8430d774fbb8ad71a38d5d590dd528079d9e9a9627a5f9",
+    "timeout_seconds": 45
+  },
+  "source_capture": {
+    "all_12_match_expected": true,
+    "current_meaningful_source_delta": false,
+    "newer_head_alone_is_not_a_fix": true
+  },
+  "task": "F-D86-11789",
+  "terminal": "terminal:102XML10PASS24FAIL68ERROR",
+  "tuple": {
+    "agent": "562ee30b6ed567a90a114f5029a96da2ece9789e",
+    "app": "c101477597a765235d7cbbcd48ce588f0df3de73",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "runtime": "6634a17f3ffd885567ba3c91b6c7a560df7375a4"
+  }
+}

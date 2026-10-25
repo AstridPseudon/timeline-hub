@@ -1,400 +1,400 @@
-import copy
-import re
-from fractions import Fraction
-
-from astrid.core.timeline.duration import clip_start_frame
-
-from ._command_state import CommandError
-from ._delete_commands import _unreferenced
-from ._media_inputs import _verified
-from .capture import _duration, move, move_intent, number, occurrence_start, rate
-from .native_occurrence_media_commands import _exclusive, _owner, add_media
-
-PLACEMENT_INTENT = {'ownership': 'occurrence'}
-
-
-def placement_move(ctx, command):
-    ref = command['select']
-    owner = ref.rsplit('/', 1)[0]
-    if owner != 'parent':
-        if ctx.select('placement.owners', owner) != [owner]:
-            raise CommandError('shared authored placement is unsupported',
-                               kind='unsupported_ownership', ref=owner)
-    clip = ctx.state.entity(ref)
-    asset = clip.get('asset', clip.get('asset_id'))
-    if asset is not None:
-        # Guard the entire existing binding, including opaque selection pins.
-        # Read raw paths so accepted source writes also protect against ABA.
-        if owner == 'parent':
-            ctx.read('parent', ['registry', 'assets', str(asset)])
-            ctx.read('parent', ['config', 'registry', 'assets', str(asset)])
-        else:
-            ctx.read(owner + '/source', ['registry', 'assets', str(asset)])
-    move(ctx, command)
-    if owner != 'parent':
-        extent = number(ctx.read(owner, ['duration_ms']), 'occurrence.duration_ms', positive=True) / 1000
-        moved = ctx.state.entity(ref)
-        start = moved['at'] if 'at' in moved else moved['at_ms'] / 1000
-        if start + _duration(moved) > extent + 1e-9:
-            raise CommandError('placed interval exceeds occurrence duration',
-                               kind='occurrence_boundary', ref=owner)
-
-
-def capture_placement(bundle, owner, clip_id, on, *, ownership):
-    """Capture global seconds on the original bundle, before local preview.
-
-    owner is parent or occurrence:<raw ID>; clip_id is the raw child ID.
-    ownership must explicitly match that scope. Shared authoring, pooling,
-    automatic positioning, track changes and media selection are unsupported.
-    The result is placement.move v1, with its authoritative capture.
-    """
-    if ownership == 'shared':
-        raise CommandError('shared placement is unsupported', kind='unsupported_ownership')
-    expected = ('parent' if owner == 'parent' else 'occurrence'
-                if isinstance(owner, str) and re.fullmatch(r'occurrence:[^/]+', owner)
-                and '::' not in owner else None)
-    if expected is None or ownership != expected:
-        raise CommandError('placement requires matching explicit parent or occurrence ownership',
-                           kind='unsupported_ownership')
-    if (not isinstance(clip_id, str) or not clip_id.strip()
-            or '/' in clip_id or '::' in clip_id):
-        raise CommandError('placement requires a raw clip identity', kind='identity_conflict')
-    from .commands import execute
-
-    ref = owner + '/clip:' + clip_id
-    return execute(bundle, [{'schema_version': 1, 'op': 'placement.move', 'version': '1',
-                             'select': ref, 'args': {'on': on},
-                             'intent': move_intent(ref)}]).commands[0]
-
-
-def placement_create(ctx, command):
-    """Image-only expression at an absolute time; the wrapper adds no media semantics."""
-    owner, _ = _owner(ctx, command['select'])
-    _exclusive(ctx, owner)
-    args = command['args']
-    _, kind = _verified(ctx, args['media'])
-    if kind != 'image':
-        raise CommandError('placement.create v1 requires verified image media', kind='unsupported_media')
-    row = ctx.state.occurrence(owner)
-    lane = (row.get('placement') or {}).get('track', row.get('track'))
-    if not isinstance(lane, str):
-        raise CommandError('placement requires a referenced lane', kind='unsupported_timing', ref=owner)
-    fps = rate(ctx.read('parent', ['config', 'output', 'fps']))
-    frame = clip_start_frame({'at': number(args['on'], 'on'), 'hold': 1}, float(fps))
-    at = float(Fraction(frame, 1) / fps) - occurrence_start(row)
-    clip = {'id': args['id'], 'clipType': 'image', 'asset': args['media']['asset'], 'track': lane,
-            'at': at, 'hold': args['hold']}
-    add_media(ctx, {'select': owner, 'args': {'row': clip, 'media': args['media'],
-                                                  'consumed': args.get('consumed', [])}})
-
-
-def placement_unplace(ctx, command):
-    """Remove one raw media expression; its exact row and registry binding survive undo."""
-    ref = command['select']
-    owner = ref.rsplit('/', 1)[0]
-    _explicit_occurrence(owner, command.get('intent', {}).get('ownership'))
-    _exclusive(ctx, owner)
-    if ref not in ctx.select('collection.clips', owner):
-        raise CommandError('placement target disappeared', kind='identity_conflict', ref=ref)
-    row = ctx.read(ref)
-    if row.get('clipType') not in ('media', 'image', 'video') or not isinstance(row.get('asset'), str):
-        raise CommandError('unplace requires one placed media clip', kind='unsupported_media', ref=ref)
-    if any(row.get(key) is not None for key in ('clips', 'children', 'time_map', 'timeMap')):
-        raise CommandError('unplace does not support nested or mapped clips', kind='unsupported_map', ref=ref)
-    # Guard the whole binding the removed expression pointed at, including ABA.
-    ctx.read(owner + '/source', ['registry', 'assets', str(row['asset'])])
-    _unreferenced(ctx)
-    ctx.clear(ref, [])
-
-
-def _explicit_occurrence(owner, ownership):
-    if ownership != 'occurrence' or not isinstance(owner, str) or re.fullmatch(r'occurrence:(?!.*::)[^/]+', owner) is None:
-        raise CommandError('placement requires explicit occurrence ownership', kind='unsupported_ownership')
-
-
-def _raw_clip_id(clip_id):
-    if not isinstance(clip_id, str) or not clip_id.strip() or '/' in clip_id or '::' in clip_id:
-        raise CommandError('placement requires a raw clip identity', kind='identity_conflict')
-    return clip_id
-
-
-def capture_placement_create(bundle, owner, clip_id, media, on, hold, *, ownership, verified_media,
-                             consumed=()):
-    """Caller reserves clip_id and supplies the exact five-field Runtime media selection."""
-    from .commands import execute
-
-    _explicit_occurrence(owner, ownership)
-    args = {'id': _raw_clip_id(clip_id), 'on': on, 'hold': hold, 'media': copy.deepcopy(media)}
-    if consumed:
-        args['consumed'] = list(consumed)
-    return execute(bundle, [{'schema_version': 1, 'op': 'placement.create', 'version': '1',
-                             'select': owner, 'args': args, 'intent': dict(PLACEMENT_INTENT)}], verified_media=verified_media).commands[0]
-
-
-def capture_placement_unplace(bundle, owner, clip_id, *, ownership):
-    from .commands import execute
-
-    _explicit_occurrence(owner, ownership)
-    return execute(bundle, [{'schema_version': 1, 'op': 'placement.unplace', 'version': '1',
-                             'select': owner + '/clip:' + _raw_clip_id(clip_id), 'args': {},
-                             'intent': dict(PLACEMENT_INTENT)}]).commands[0]
-109:                               kind='unsupported_ownership')
-115:        raise CommandError('parent track requires parent ownership', kind='unsupported_ownership')
-125:        raise CommandError('shared authored placement is unsupported', kind='unsupported_ownership', ref=owner)
-232:        raise CommandError('shared authored placement is unsupported', kind='unsupported_ownership', ref=owner)
-282:def unplace_shared(bundle, owner, clip_id, *, ownership, keep_as_pooled=False, media=None,
-        frame = clip_start_frame({'at': number(fallback_at, 'fallback_at'), 'hold': 1}, float(fps))
-        resolution, consumed = 'fallback-at', []
-    else:
-        ends, consumed = [], []
-        for ref in members:
-            if query.read(ref, ['track']) == lane:
-                ends.append(_end_frame(clip(ref), 0, fps))
-                consumed.append(ref.split('/clip:', 1)[1])
-        frame, resolution = max(ends, default=0), 'lane-end'
-    on = float(Fraction(frame, 1) / fps)
-    length = COMPLETION_SECONDS if kind == 'image' or duration is None else duration
-    row = {'id': clip_id, 'clipType': kind, 'asset': media['asset'], 'track': lane,
-           'at': on, 'hold': length}
-    if kind == 'video':
-        row.update({'from': 0, 'to': length, 'speed': 1})
-    command = capture_clip_add_media(bundle, row, media, verified_media=verified_media)
-    for read in query.record['reads']:
-        if not any(item['ref'] == read['ref'] and item['path'] == read['path']
-                   for item in command['reads']):
-            command['reads'].append(read)
-    command = execute(bundle, [command], verified_media=verified_media).commands[0]
-    return {'commands': [command],
-            'capture': {'owner': 'parent', 'clip': clip_id, 'kind': kind, 'media': dict(media),
-                        'anchor': {'id': anchor, 'state': 'present' if found else 'absent'},
-                        'resolution': resolution, 'lane': lane, 'consumed': consumed,
-                        'fps': {'numerator': fps.numerator, 'denominator': fps.denominator},
-                        'start_frame': frame, 'on': on, 'seconds': length}}
-
-
-def auto_place_shared(bundle, owner, clip_id, media, *, ownership, verified_media,
-                      frame=None, anchor=None, pooled=False):
-    """Return {'commands': [...], 'capture': {...}} for one media placed into a shared shot.
-
-    owner is the canonical occurrence that exclusively owns the shot. frame=None appends;
-    an integer is an explicit global frame (clamped at 0, shifted while a start is taken).
-    """
-    _explicit_occurrence(owner, ownership)
-    _raw_clip_id(clip_id)
-    kind = _kind(media, verified_media)
-    if kind not in ('image', 'video'):
-        raise CommandError('shared placement requires image or video media', kind='unsupported_media')
-    state = State(bundle)
-    row = state.occurrence(owner)
-    if sum(1 for other in bundle['placements'] if other['shot_id'] == row['shot_id']) != 1:
-        raise CommandError('shared authored placement is unsupported', kind='unsupported_ownership', ref=owner)
-    if state.config('parent').get('pinnedShotGroups') not in (None, []):
-        raise CommandError('legacy groups require recorded migration', kind='migration_needed', ref=owner)
-    if pooled:
-        if frame is not None or anchor is not None:
-            raise CommandError('pooled media has no frame or anchor', kind='unsupported_timing')
-        command = capture_shot_pool(bundle, owner, 'add', media, ownership=ownership,
-                                    verified_media=verified_media)
-        return {'commands': [command],
-                'capture': {'owner': owner, 'clip': clip_id, 'kind': kind, 'media': dict(media),
-                            'resolution': 'pooled'}}
-    origin = occurrence_start(row)
-    fps = rate(state.config('parent').get('output', {}).get('fps'))
-    clips = state.collection(owner, 'clip')
-    found = next((clip for clip in clips if anchor is not None and clip.get('id') == anchor), None)
-    home = (row.get('placement') or {}).get('track', row.get('track'))
-    lane = found.get('track') if found is not None else home
-    consumed = [clip['id'] for clip in clips]
-    capture = {'owner': owner, 'clip': clip_id, 'kind': kind, 'media': dict(media),
-               'anchor': {'id': anchor, 'state': 'present' if found is not None else 'absent'},
-               'lane': lane, 'consumed': consumed,
-               'fps': {'numerator': fps.numerator, 'denominator': fps.denominator}}
-    if frame is None:
-        start = max((_end_frame(clip, origin, fps) for clip in clips), default=math.floor(origin * fps + Fraction(1, 2)))
-        capture.update(resolution='append', extent_frame=start)
-    else:
-        if isinstance(frame, bool) or not isinstance(frame, int):
-            raise CommandError('frame must be an integer', kind='unsupported_timing')
-        taken = {clip_start_frame({**clip, 'at': origin + number(clip.get('at'), 'clip.at')}, float(fps))
-                 for clip in clips}
-        start, skipped = max(frame, 0), []
-        while start in taken:
-            skipped.append(start)
-            start += 1
-"""shot.pool: ordered pool membership on the shot, exact capture, inverse, rebase and refusals."""
-from __future__ import annotations
-
-import copy
-import json
-from pathlib import Path
-
-import pytest
-from jsonschema import Draft202012Validator
-
-from astrid.sdk.timeline._command_state import CommandError, State
-from astrid.sdk.timeline.commands import execute as _execute
-from astrid.sdk.timeline.commands import operations, validate_command
-from astrid.sdk.timeline.commit import _digest, bundle_from_document, document_from_bundle
-from astrid.sdk.timeline.native_auto_placement import auto_place_shared, unplace_shared
-from astrid.sdk.timeline.native_shot_pool_commands import POOL, capture_shot_pool
-from astrid.sdk.timeline.rebase import replay
-from tests.editing_conformance.fixture_loader import load_fixture
-from tests.editing_conformance.test_recipe_m1_commands import inverse as _inverse
-from tests.editing_conformance.test_recipe_m1_commands import later
-from tests.editing_conformance.test_recipe_occurrence_media import inputs
-from tests.sdk.test_timeline_commit_provider import (
-    inverse as inverse_call,
-)
-
-execute = _execute
-inverse = _inverse
-
-OWNER = 'occurrence:occ-a'
-SOURCE = OWNER + '/source'
-FIXTURE = Path(__file__).parent / 'fixtures' / 'recipe_m2_shot_pool.json'
-SCHEMA = Path(__file__).parents[2] / 'astrid/core/timeline/schema/edit-command.schema.json'
-
-
-class GenuineTimeline:
-    """A current Runtime commitTimeline caller for the pool recipes."""
-
-    def __init__(self, service, project, authorize, document, pins, verified):
-        self.service = service
-        self.project = project
-        self.authorize = authorize
-        self.document = document
-        self.pins = pins
-        self.verified = verified
-        self.calls = 0
-
-    @classmethod
-    def create(cls, tmp_path, monkeypatch, kind):
-        from tests.helpers.runtime import use_runtime
-
-        runtime = use_runtime()
-        monkeypatch.syspath_prepend(str(runtime / 'tests'))
-        from runtime_protocol.auth import CredentialStore
-        from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
-        from test_generation_publish_v1_settlement import _effect, _fixture, _output, _settle
-
-        from tests.editing_conformance.test_commit_runtime_occurrence_media import _create_fixture
-        from tests.sdk.test_timeline_commit_provider_document import MEDIA
-
-        names = ('old', 'new', 'pool-b', 'pool-c')
-
-        def effect(project):
-            result = _effect(project, groups=[{'group_key': 'main', 'selectors': [
-                {'selector': name, 'ordinal': index, 'variant_key': name, 'output_port': kind}
-                for index, name in enumerate(names)]}])
-            result['payload']['metadata']['params'] = {'duration_seconds': 6} if kind == 'video' else {}
-            return result
-
-        service, project, task, attempt, admitted = _fixture(tmp_path, effect_factory=effect)
-        project = project['id']
-        credentials = CredentialStore(tmp_path / 'credentials')
-        token, _ = credentials.provision('pool-editor', ['projects:read', 'projects:write'])
-
-        def authorize():
-            return credentials.require(token, 'projects:write')
-
-        try:
-            outputs = [_output(name.encode(), output_port=kind, group_key='main', variant_key=name,
-                               ordinal=index, filename=name + ('.mp4' if kind == 'video' else '.png'),
-                               media_type=kind + ('/mp4' if kind == 'video' else '/png'))
-                       for index, name in enumerate(names)]
-            _settle(service, attempt, outputs, effect=admitted)
-            associations = service.managed_outputs(task['task']['id'])
-            selected = {}
-            aliases = {'old': 'picture', 'new': 'reserved-new', 'pool-b': 'pool-b', 'pool-c': 'pool-c'}
-            for association in associations:
-                canonical = service.get_project_media_selection(project, {
-                    'association_id': association['association_id'],
-                    'object_id': association['object_id'],
-                    'version': association['lifecycle']['version'],
-                }, authorize=authorize)
-                alias = aliases[association['variant_key']]
-                selected[alias] = service.get_project_media_selection(project, {
-                    'asset': alias, 'generation_id': canonical['generation_id'],
-                    'variant_id': canonical['variant_id'],
-68:def inverse(bundle, records, intervening=()):
-690:    from astrid.sdk.timeline._collections import AcceptedRecords
-702:    accepted = AcceptedRecords([entry], entry['records']['commands'], load_boundary)
-712:        from astrid.sdk.timeline._collections import AcceptedRecords
-716:        return AcceptedRecords([entry], records, lambda _: (before, after))
++-> RuntimeCommitService -> inverse, wrapped as CommitRejected at commit.py:1467.
++All reach actual inverse.py:1021, ambiguous/unexpected fork materialization.
++
++Current inverse.py is byte-identical to normal D90
++`bd3c95b1cebe3bf27c4a82919e5839efb37519db` (author `89642bafc8`). Its sole product
++delta from actual9211 is the complete seven-line change in D90-product-delta.patch.
++Legacy native requests via MediaRealm.context omit v2 control fields. Undo emits
++inverse.stage plus commit.effect and commit.materialization. Previously
++_materialization_sites proved those stages but omitted their transitions because
++include_inverse_stages defaulted false; _validate_materializations then rejected
++the existing materialization claim as unexpected. D90 passes true exactly when
++the managed segment contains commit.materialization. The same complete source,
++owner, edge, pin, step, ordinal, fixed-policy and dependency validation remains.
++V2 effect-only stages retain their default behavior.
++
++This is a direct family-specific source edge to all eight observed first
++refusals. The current provider regression at test_timeline_commit_provider.py:1013
++also represents legacy/v2 and whole/step redo with full preview no-write and
++canonical equality. Those sources are read-only. No recipe/helper changes are
++justified to bypass this now-corrected source predicate. This analysis establishes
++relevance; it cannot establish that any of the eight original cases passes or
++that there is no later refusal. Only later actual affected-subset proof can do so.
++
++## Remaining outside finding: original shot item birth
++
++Unapplied product seam, owner Agent R1/G3 with R2 item-provenance review:
++`_command_state.py:371-392`, `native_occurrence_create.py:42`,
++`_doc_patch.py:239-255,506-520`. It affects all four Runtime fixture parameters.
++
++After the new accepted birth, the exact shot still has items=[]: occurrence.create
++creates that value and does not accept an items argument. The next original whole
++shot patch adds item-1. Closure.install decomposes the root into payload fields;
++State.set(..., ['payload', 'items'], present(original_items)) calls
++project_shot_items. shot_item_map now finds occ-a, but its authenticated baseline
++item map is empty. _item_ids requires the new set {'item-1'} to equal that empty
++set and raises `shot item correspondence changed` / identity_conflict. Internal
++patch projection only remembers compiler input; it does not grant item creation.
++The current registered media add operation creates an asset/clip, not this item.
++
++This is a source-derived subsequent refusal, not an observed candidate outcome.
++The original shot item and full equality must remain. A source-only fixture cannot
++legally fix it by omitting items, replacing the shared source, modifying source
++mapping, injecting SQL/history, guessing pins, or disabling the guard. No such
++workaround was applied. Product-owner disposition is required before claiming
++that the four fixture cases can execute end to end. Other later behavior remains
++unverified because bodies were forbidden.
++
++## Whole caller and C0 boundary
++
++Current Runtime source is `6634a17f3ffd885567ba3c91b6c7a560df7375a4`, the actual9211
++Runtime revision. Fixture settlement, selection and bootstrap use real Runtime
++APIs; bootstrap installs only empty verified state. Registration loads exactly
++astrid.sdk.timeline.commit.create_runtime_commit_service, enforcing provider ID,
++interface version, contract digest and synchronous ABI.
++
++Production Python timeline.open/commit_session -> TimelineSession.commit_many /
++_flush -> client.timelines.commit (`_remote_timeline.py:225`) -> generated commit
++request. The HTTP door requires one Idempotency-Key, scope match and projects:write
++at server.py:295-318. The fixture calls that same service.commit_timeline at
++service.py:2448 with the canonical invocation path, live authorization callback,
++authenticated publisher and idempotency key; it does not exercise an HTTP socket.
++Service validates scope/body/path, authenticates before lookup, hashes publisher
++and original request, then CommitExecutionCoordinator.execute uses RequestCommitPort
++and the registered Agent provider. Coordinator checks invocation identity and
++replay before/after execution; store validates accepted output and does exact-head
++CAS. No force, old publisher, generic seed or alternative save route is used.
++
++Unchanged fixture body includes api_version, project/timeline, exact base revision/
++publication, ordered command schema_version/op/version/select/args/created captures,
++label, steps{id,label,intent,tags,command_ordinals,patch,reads}, fields merge,
++request reads, source, rationale, group_id and dry_run. Setup splits partition
++commands normally with semantic empty patches and exact submitted doc.patch
++changes; authoritative effects are provider output. No C0 request field is removed.
++
++Per design/commit-v2.md sections 1-5, accepted/merged uses {data,receipt} with full
++canonical closure/digest/id_map, authoritative commands/steps/dependencies/effects,
++base/previous/accepted pairs, versions, publisher and receipt_id. Preview carries
++would_status and null receipt; conflict carries reason/head, invalid code/path/hint/
++suggested_command. Undo is a fresh commit of actual receipt IDs. commit.py:1250-1340
++loads authenticated ancestry and previous/current closures, selects step records,
++normalizes physical addresses, and scans later publications including ABA; inverse.py
++checks materializations and surviving dependencies before writing. This candidate
++does not replace provider/store validation or claim to requalify every wire field.
++
++## Source checks and release state
++
++`python3 <evidence>/source_checks.py` passed original/base/candidate compile,
++exact-source, whole-AST/selector conservation, protected hashes and all161 accounting.
++validation.json lists exact tool argv, stdin hashes, outputs and exit codes:
++candidate Ruff and both exact-base Ruff stdin checks all exit 0; candidate and
++true-base shadow-file mypy both exit 0, no issues in 2 files; git diff --check exit 0.
++Only the two allowed files were type/lint targets. All caches and baseline source
++copies are in TMPDIR; shared dependencies were read only.
++
++type-environment.json records Python 3.13.16, mypy 1.17.0, Ruff 0.12.0, NumPy 2.5.2,
++no separate numpy-stubs distribution. Existing config pins mypy's target to Python
++3.11/platform darwin, follow_imports=skip and ignore_missing_imports=true; untyped
++bodies are not checked by default. These scoped checks are not Runtime, NumPy-stub
++or behavioral qualification. No packages or environments were installed or changed.
++
++No pytest/collection/helper/fixture/product function/service/browser/build/original
++timing/full suite ran. No functional credit and no new result was inferred.
++Independent protected review is pending; no merge, push or shared log edit occurred.
++After review and normal own-only remote Agent queue, orchestrator should resolve
++the item-birth seam with its product owner. Only then schedule one useful original
++affected-node batch, separating the four fixture cases from the eight D90-dependent
++recipe cases, keeping 45 seconds and every original guard.
++
++## Proposed existing D72 / F-D86 video12 incremental entry
++
++F-D86 actual9211 video12 | base 7e23790248f17b8a4492fc9aee88d2c4e1df328d |
++candidate blob 4abe70f006bf7a9a752a3d6ab9cc34bed507dafe; recipe
++feecedd16dbd09aa09de0e5b651f8efec3e4e18c unchanged | authentic original outcomes
++4 ERROR + 8 FAIL retained | real semantic birth acceptance/reload before item-source
++patch, complete original opaque/source/shared topology and predicates retained |
++current D90 directly addresses eight redo first-refusal predicates; no inferred
++behavior pass | original Runtime item-1 birth still blocked at immutable item-map
++guard, unapplied Agent R1/G3/R2 owner finding | AST/compile/selector conservation,
++true-baseline/candidate scoped Ruff+mypy, diff check PASS_SOURCE_ONLY | pending one
++independent protected review; HOLD until normal own-only merge and owner disposition;
++later one original affected subset only at unchanged 45s. Harness commit pending.
++
++Proposed text only; no shared log, ledger or selector disposition was changed.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-actual-sol-0315/evidence/source_checks.py b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-actual-sol-0315/evidence/source_checks.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..0c35983523f20cfb7f5862c8d9f3d9a2866a5ae7
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-actual-sol-0315/evidence/source_checks.py
+@@ -0,0 +1,183 @@
++"""Source-only F-D86 actual9211 checks; never import repository modules."""
++import ast
++import copy
++import csv
++import hashlib
++import io
++import json
++import os
++import shlex
++import subprocess
++from pathlib import Path
++
++ROOT = Path('/home/user/work/wt/agt-D86-video12-actual-sol-0315')
++EVIDENCE = Path(__file__).parent
++ORCH = EVIDENCE.parents[2]
++SCRATCH = Path('/tmp/w-a3c77f454d/video12-source')
++BASE = '7e23790248f17b8a4492fc9aee88d2c4e1df328d'
++ORIGINAL = 'bc498acf582a0d1542482edbe2e2d3c9eb023a36'
++REVIEWED = '9c149b0201f6cbca096064f5b516a673e8eb0a59'
++HOME = '27c68177c1f587acec0d2b615d1b8bb95c4a4fde'
++ACTUAL = 'cef8a5be53f68a7cd3b5403c362171c5633a5ae9'
++D90 = 'bd3c95b1cebe3bf27c4a82919e5839efb37519db'
++FILES = ['tests/editing_conformance/test_commit_runtime_video_unplace.py',
++         'tests/editing_conformance/test_recipe_m2_video_unplace.py']
++
++
++def git(*args):
++    return subprocess.check_output(['git', *args], cwd=ROOT)
++
++
++def source(revision, path):
++    return git('show', revision + ':' + path)
++
++
++def functions(data):
++    return {node.name: node for node in ast.parse(data).body
++            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))}
++
++
++def identity(data):
++    return {'sha256': hashlib.sha256(data).hexdigest(),
++            'blob': hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest(),
++            'bytes': len(data)}
++
++
++assert git('rev-parse', 'HEAD').decode().strip() == BASE
++assert git('diff', '--name-only').decode().splitlines() == FILES[:1]
++assert not git('ls-files', '--others', '--exclude-standard').strip()
++for revision in (REVIEWED, HOME, D90):
++    subprocess.run(['git', 'merge-base', '--is-ancestor', revision, BASE], cwd=ROOT, check=True)
++
++manifest = {'base': BASE, 'original': ORIGINAL, 'reviewed': REVIEWED, 'home': HOME,
++            'actual9211_agent': ACTUAL, 'D90': D90, 'files': {}, 'protected': {}}
++for path in FILES:
++    candidate = (ROOT / path).read_bytes()
++    versions = {rev: source(rev, path) for rev in (ORIGINAL, REVIEWED, HOME, ACTUAL, BASE)}
++    versions['candidate'] = candidate
++    manifest['files'][path] = {rev: identity(data) for rev, data in versions.items()}
++    assert versions[REVIEWED] == versions[HOME] == versions[ACTUAL] == versions[BASE]
++    for revision, data in versions.items():
++        compile(ast.parse(data, filename=path), path, 'exec')
++    old, current = ast.parse(versions[BASE]), ast.parse(candidate)
++    if path == FILES[0]:
++        stripped = copy.deepcopy(current)
++        editing = next(node for node in stripped.body
++                       if isinstance(node, ast.FunctionDef) and node.name == 'editing')
++        block = next(node for node in editing.body if isinstance(node, ast.Try)).body
++        expected = ast.parse("birth = submit('setup-birth')\n"
++                             "bundle = bundle_from_document(birth['data']['canonical_document'])\n"
++                             "commands = []\n").body
++        position, = [index for index, node in enumerate(block)
++                     if ast.dump(node) == ast.dump(expected[0])]
++        assert [ast.dump(node) for node in block[position:position + 3]] == [
++            ast.dump(node) for node in expected]
++        del block[position:position + 3]
++        assert ast.dump(old) == ast.dump(stripped)
++    else:
++        assert candidate == versions[ORIGINAL] == versions[BASE]
++    original_functions, candidate_functions = functions(versions[ORIGINAL]), functions(candidate)
++    for name, node in original_functions.items():
++        if name not in ('editing', 'body'):
++            assert ast.dump(node) == ast.dump(candidate_functions[name]), (path, name)
++    (SCRATCH / Path(path).name).write_bytes(versions[BASE])
++print('PASS exact parent/reviewed/home/actual source identity and original/base/candidate in-memory compile')
++print('PASS entire parent AST conserved after removing exactly three added setup assignments')
++print('PASS all original test bodies, asserts/raises/decorators/parameters/branches; recipe byte-identical')
++
++protected = [
++    'astrid/sdk/timeline/_command_state.py', 'astrid/sdk/timeline/_recording.py',
++    'astrid/sdk/timeline/_doc_patch.py', 'astrid/sdk/timeline/_commit_patch.py',
++    'astrid/sdk/timeline/_step_undo.py', 'astrid/sdk/timeline/commands.py',
++    'astrid/sdk/timeline/commit.py', 'astrid/sdk/timeline/inverse.py',
++    'astrid/sdk/timeline/native_occurrence_create.py',
++    'astrid/sdk/timeline/native_occurrence_shared.py',
++    'astrid/sdk/timeline/native_occurrence_media_commands.py',
++    'astrid/core/timeline/authoring_bundle.py',
++    'tests/editing_conformance/test_recipe_occurrence_media.py',
++    'tests/editing_conformance/test_recipe_m2_shared_auto_placement.py',
++    'tests/editing_conformance/test_recipe_m2_shot_pool.py',
++    'tests/editing_conformance/test_recipe_m1_commands.py',
++    'tests/editing_conformance/m2_authenticated_redo.py',
++    'tests/sdk/test_timeline_commit_provider.py',
++    'tests/sdk/test_timeline_commit_provider_document.py',
++    'tests/editing_conformance/fixtures/recipe_m2_video_unplace.json',
++    'pyproject.toml',
++]
++for path in protected:
++    data = (ROOT / path).read_bytes()
++    assert data == source(BASE, path), path
++    manifest['protected'][path] = {'current': identity(data), 'actual9211': identity(source(ACTUAL, path))}
++assert source(D90, 'astrid/sdk/timeline/inverse.py') == (ROOT / 'astrid/sdk/timeline/inverse.py').read_bytes()
++for path, name in [
++    ('tests/editing_conformance/test_recipe_occurrence_media.py', 'inputs'),
++    ('tests/sdk/test_timeline_commit_provider_document.py', 'document_fixture'),
++]:
++    assert ast.dump(functions(source(ORIGINAL, path))[name]) == ast.dump(
++        functions((ROOT / path).read_bytes())[name])
++
++safe = ORCH / 'workers/rt-D86-9211-outcomes-0303/evidence/fd86-successor161-outcomes-0303'
++outcomes = list(csv.DictReader(io.StringIO((safe / 'per-id-outcomes.tsv').read_text()), delimiter='\t'))
++assert len(outcomes) == len({row['canonical_node'] for row in outcomes}) == 161
++assert {status: sum(row['status'] == status for row in outcomes)
++        for status in ('PASS', 'FAIL', 'ERROR')} == {'PASS': 6, 'FAIL': 43, 'ERROR': 112}
++selected = [row for row in outcomes if row['family'] == 'video12']
++assert len(selected) == 12
++assert [row['status'] for row in selected] == ['ERROR'] * 4 + ['FAIL'] * 8
++original_selectors = (ORCH / 'workers/agt-D86-video-repair-sol-0107/evidence/selectors.txt').read_text().splitlines()
++selectors = [row['canonical_node'] for row in selected]
++assert selectors == original_selectors
++selector_map = []
++for row in selected:
++    node_id = row['canonical_node']
++    path, selector = node_id.split('::')
++    node = functions((ROOT / path).read_bytes())[selector.split('[')[0]]
++    selector_map.append({'node': node_id, 'actual9211_status': row['status'],
++                         'function_ast_sha256': hashlib.sha256(ast.dump(node).encode()).hexdigest(),
++                         'decorators': [ast.unparse(value) for value in node.decorator_list]})
++manifest['actual9211_all161_outcomes'] = identity((safe / 'per-id-outcomes.tsv').read_bytes())
++(EVIDENCE / 'source-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
++(EVIDENCE / 'selector-map.json').write_text(json.dumps(selector_map, indent=2) + '\n')
++(EVIDENCE / 'selectors.txt').write_text('\n'.join(selectors) + '\n')
++(EVIDENCE / 'actual9211-video12.json').write_text(json.dumps(selected, indent=2) + '\n')
++(EVIDENCE / 'candidate.patch').write_bytes(git('diff', '--', *FILES))
++(EVIDENCE / 'D90-product-delta.patch').write_bytes(git('diff', ACTUAL, BASE, '--', 'astrid/sdk/timeline/inverse.py'))
++print('PASS exact 12 original selectors and authentic statuses; all 161 outcomes retained without promotion')
++print('PASS original input-provider ASTs, unchanged protected sources and exact current D90 product identity')
++
++env = dict(os.environ, PYTHONDONTWRITEBYTECODE='1')
++checks = []
++
++
++def check(label, argv, stdin=None):
++    result = subprocess.run(argv, input=stdin, cwd=ROOT, env=env, capture_output=True)
++    output = (result.stdout + result.stderr).decode()
++    record = {'check': label, 'argv': argv, 'command': shlex.join(argv),
++              'exit_code': result.returncode, 'output': output}
++    if stdin is not None:
++        record['stdin_sha256'] = hashlib.sha256(stdin).hexdigest()
++    checks.append(record)
++    (EVIDENCE / (label + '.log')).write_text(output)
++    print(label, 'exit', result.returncode, output.strip())
++    return result.returncode
++
++
++ruff = '/home/user/work/venv-agent/bin/ruff'
++mypy = '/home/user/work/venv-agent/bin/mypy'
++check('ruff-candidate', [ruff, 'check', '--no-cache', *FILES])
++for index, path in enumerate(FILES):
++    check('ruff-baseline-' + str(index),
++          [ruff, 'check', '--no-cache', '--stdin-filename', path, '-'], source(BASE, path))
++check('mypy-candidate', [mypy, '--cache-dir=/tmp/w-a3c77f454d/mypy-candidate', *FILES])
++baseline_args = [mypy, '--cache-dir=/tmp/w-a3c77f454d/mypy-baseline']
++for path in FILES:
++    baseline_args.extend(['--shadow-file', path, str(SCRATCH / Path(path).name)])
++check('mypy-baseline', [*baseline_args, *FILES])
++check('diff-check', ['git', 'diff', '--check'])
++(EVIDENCE / 'validation.json').write_text(json.dumps(checks, indent=2) + '\n')
++for path in protected:
++    assert identity((ROOT / path).read_bytes()) == manifest['protected'][path]['current'], path
++assert git('diff', '--name-only').decode().splitlines() == FILES[:1]
++assert not git('ls-files', '--others', '--exclude-standard').strip()
++assert not any(row['exit_code'] for row in checks), 'See exact baseline/candidate diagnostics in validation.json'
++print('PASS all scoped source checks; no pytest, collection, helper, fixture, product function, service or build execution')
+diff --git a/tests/editing_conformance/test_commit_runtime_video_unplace.py b/tests/editing_conformance/test_commit_runtime_video_unplace.py
+index 4d0a0658bcfefa9f3e203017e68aca46fb03d90d..4abe70f006bf7a9a752a3d6ab9cc34bed507dafe
+--- a/tests/editing_conformance/test_commit_runtime_video_unplace.py
++++ b/tests/editing_conformance/test_commit_runtime_video_unplace.py
+@@ -128,6 +128,10 @@
+             track=occurrence['track'], on=occurrence['placement']['start_ms'] / 1000,
+             duration=occurrence['duration_ms'] / 1000,
+         ))
++        # Item guards resolve the new occurrence through its accepted source mapping.
++        birth = submit('setup-birth')
++        bundle = bundle_from_document(birth['data']['canonical_document'])
++        commands = []
+         patch('internal:main', copy.deepcopy(input_internal))
+         shot = copy.deepcopy(input_shot)
+         shot.pop('internal_timeline_revision_id')
 
 exec
 /bin/bash -lc "python3 - <<'PY'
-import hashlib,json,re,subprocess,xml.etree.ElementTree as E
 from pathlib import Path
-root=Path.cwd(); orch=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch'); evidence=orch/'workers/agt-D86-video12-actual-sol-0315/evidence'
-safe=orch/'workers/rt-D86-9211-outcomes-0303/evidence/fd86-successor161-outcomes-0303'
-run=json.loads((safe/'run-identity.json').read_text()); xml=next(row for row in run['private_artifacts'] if row['name']=='xml'); data=Path(xml['private_path']).read_bytes(); assert hashlib.sha256(data).hexdigest()==xml['sha256']
-selected=json.loads((evidence/'actual9211-video12.json').read_text()); expected={row['canonical_node'] for row in selected}; stacks=[]
-for tc in E.fromstring(data).iter('testcase'):
- node=tc.get('classname','').replace('.','/')+'.py::'+tc.get('name','')
- if node not in expected: continue
- error=tc.find('error'); error=tc.find('failure') if error is None else error; assert error is not None
- frames=[]
- for line in (error.text or '').splitlines():
-  match=re.match(r'"'^(astrid/sdk/timeline/['"\\w/]+\\.py|tests/editing_conformance/[\\w/]+\\.py):(\\d+):(?: in ([\\w<>]+))?',line)
-  if match: frames.append({'file':match[1],'line':int(match[2]),'function':match[3]})
- stacks.append({'node':node,'frames':frames})
-assert len(stacks)==12 and {row['node'] for row in stacks}==expected
-(evidence/'actual9211-safe-call-stacks.json').write_text(json.dumps({'authentic_xml_sha256':xml['sha256'],'stacks':stacks},indent=2)+'\\n')
-runtime=Path('/home/user/work/runtime'); manifest={'runtime_head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=runtime,text=True).strip(),'paths':{}}
-paths=['runtime_protocol/server.py','runtime_protocol/service.py','runtime_protocol/timeline_commit_execution.py','runtime_protocol/timeline_commit_port.py','runtime_protocol/timeline_commit_provider.py','runtime_protocol/timeline_commit_store.py','runtime_protocol/timeline_commit_baseline.py','tests/test_generation_publish_v1_settlement.py','tests/test_timeline_commit_acceptance.py']
-for path in paths:
- b=(runtime/path).read_bytes(); assert b==subprocess.check_output(['git','show','HEAD:'+path],cwd=runtime); manifest['paths'][str(runtime/path)]={'sha256':hashlib.sha256(b).hexdigest()}
-for path in ['astrid/sdk/_remote_timeline.py','astrid/sdk/timeline/commit_session.py','astrid/sdk/timeline/sync.py','astrid/sdk/timeline/_doc_patch_materialize.py']:
- b=(root/path).read_bytes(); assert b==subprocess.check_output(['git','show','HEAD:'+path]); manifest['paths'][str(root/path)]={'sha256':hashlib.sha256(b).hexdigest()}
-(evidence/'caller-source-manifest.json').write_text(json.dumps(manifest,indent=2)+'\\n')
-print('PASS authentic XML hash and safe per-ID frame extraction: exactly 12 originals; no raw XML/auth/body/URL export')
-print('PASS current Runtime 6634 and SDK caller source hashes match committed source')
-PY
-sed -n '220,245p' astrid/sdk/_remote_timeline.py; sed -n '62,77p' tests/editing_conformance/test_recipe_m1_commands.py" in /home/user/work/wt/agt-D86-video12-actual-sol-0315
- succeeded in 73ms:
-PASS authentic XML hash and safe per-ID frame extraction: exactly 12 originals; no raw XML/auth/body/URL export
-PASS current Runtime 6634 and SDK caller source hashes match committed source
-            "revision_id": revision,
-            "head_revision_id": head,
-            "is_current_head": revision == head,
-        })
+import hashlib,json,subprocess
+root=Path.cwd(); worker=Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-actual-sol-0315'); evidence=worker/'evidence'
+m=json.loads((evidence/'source-manifest.json').read_text()); checks=json.loads((evidence/'validation.json').read_text()); assert all(row['exit_code']==0 for row in checks)
+for path,versions in m['files'].items(): assert hashlib.sha256((root/path).read_bytes()).hexdigest()==versions['candidate']['sha256']
+for path,value in m['protected'].items(): assert hashlib.sha256((root/path).read_bytes()).hexdigest()==value['current']['sha256']
+subprocess.run(['git','diff','--check'],check=True)
+assert subprocess.check_output(['git','diff','--name-only'],text=True).splitlines()==['tests/editing_conformance/test_commit_runtime_video_unplace.py']
+assert not subprocess.check_output(['git','ls-files','--others','--exclude-standard'],text=True).strip()
+assert (worker/'commit-msg').is_file()
+summary={'base':m['base'],'normal_final':subprocess.check_output(['git','rev-parse','tl/integration'],text=True).strip(),'normal_delta':['tests/editing_conformance/test_native_sheet_current_runtime.py'],'candidate_commit':'pending harness','functional_status':'unverified; original 4 ERROR and 8 FAIL retained','source_status':'bounded candidate; static checks passed; protected review pending','evidence_bytes':sum(p.stat().st_size for p in evidence.rglob('*') if p.is_file())}
+(evidence/'completion.json').write_text(json.dumps(summary,indent=2)+'\\n')
+(worker/'DONE').touch()
+print(json.dumps(summary,indent=2)); print('DONE and conventional F-D86 actual9211 commit message recorded.')
+PY" in /home/user/work/wt/agt-D86-video12-actual-sol-0315
+ succeeded in 766ms:
+{
+  "base": "7e23790248f17b8a4492fc9aee88d2c4e1df328d",
+  "normal_final": "ac9a00f18e1d90a9fdd61938e3bfc3862552e89a",
+  "normal_delta": [
+    "tests/editing_conformance/test_native_sheet_current_runtime.py"
+  ],
+  "candidate_commit": "pending harness",
+  "functional_status": "unverified; original 4 ERROR and 8 FAIL retained",
+  "source_status": "bounded candidate; static checks passed; protected review pending",
+  "evidence_bytes": 82126
+}
+DONE and conventional F-D86 actual9211 commit message recorded.
 
-    def commit(self, project, ref, body: Mapping[str, Any], *, idempotency_key=None):
-        """Commit a scoped command batch without changing its request body."""
-        key = idempotency_key or uuid.uuid4().hex
-        resolved = self._resolve_timeline(project, ref)
-        if not resolved.ok:
-            return DomainResult.failure(resolved.error, idempotency_key=key)
-        scope = resolved.data
-        project_id = scope.get("project_id") if isinstance(scope, Mapping) else None
-        timeline_id = scope.get("timeline_id") if isinstance(scope, Mapping) else None
-        if not isinstance(project_id, str) or not project_id or not isinstance(timeline_id, str) or not timeline_id:
-            return DomainResult.failure(
-                ErrorObject("protocol_error", "timeline scope has no canonical project/timeline identity", {}),
-                idempotency_key=key,
-            )
-        if not isinstance(body, Mapping) or body.get("project_id") != project_id or body.get("timeline_id") != timeline_id:
-            return DomainResult.failure(
-                ErrorObject(
-                    "validation_error",
-                    "commit body does not match the resolved timeline scope",
-                    {"project_id": project_id, "timeline_id": timeline_id},
-                ),
+codex
+Bounded source candidate complete; **functional qualification remains held**.
 
+Added a real birth commit/reload boundary in [test_commit_runtime_video_unplace.py](/home/user/work/wt/agt-D86-video12-actual-sol-0315/tests/editing_conformance/test_commit_runtime_video_unplace.py:131). All original payloads, topology, predicates and 12 selectors remain conserved. Recipe unchanged.
 
-def clip(bundle, ref='parent/clip:direct'):
-    return State(bundle).entity(ref)
+- Base: `7e23790248f17b8a4492fc9aee88d2c4e1df328d`
+- Candidate blob: `4abe70f006bf7a9a752a3d6ab9cc34bed507dafe`
+- Recipe blob: `feecedd16dbd09aa09de0e5b651f8efec3e4e18c`
+- Commit pending harness; conventional F-D86 actual9211 message and `DONE` written.
 
+Source checks passed: original/base/candidate in-memory compilation, complete AST conservation, exact selectors, protected-source hashes, baseline/candidate scoped Ruff and mypy, and `git diff --check`. [Exact commands and results](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-actual-sol-0315/evidence/validation.json>). Mypy used existing import-skipping settings; NumPy-stub qualification was not established. No pytest, collection, fixture/helper, service, browser or build execution occurred.
 
-def inverse(bundle, records, intervening=()):
-    context = _REMOVALS.get(id(records))
-    if context is not None and context[0] is records:
-        _, realm, entry, previous = context
-        later_commands = emit_document_commands(previous, bundle)
-        if later_commands:
-            removal_commit(realm, later_commands, 'Edit surviving row')
-        publications = [entry['publication_id']]
-        command = {'schema_version': 1, 'op': 'timeline.inverse', 'version': '1',
-                   'select': None, 'args': {'publications': publications}}
+Remaining findings:
 
+- **Four Runtime cases:** after reload, adding original `item-1` still encounters the product’s empty item-correspondence guard. Left unapplied; owner Agent R1/G3 with R2 provenance review.
+- **Eight recipe cases:** current D90 directly addresses their observed redo materialization predicate. Recipe edits were unnecessary; behavior remains unverified.
+
+Original actual9211 **4 ERROR + 8 FAIL** remain retained. [All 12 exact IDs](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-actual-sol-0315/evidence/selectors.txt>), [caller/topology/predicate trace](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-actual-sol-0315/evidence/source-trace.md>), and [proposed existing D72 log entry](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-actual-sol-0315/evidence/proposed-D72-entry.txt>) are recorded.
+
+Next: one independent protected-source review, normal own-only Agent merge queue, product-owner disposition, then one useful original affected-subset proof at unchanged 45 seconds.
+tokens used
+169,070
+Bounded source candidate complete; **functional qualification remains held**.
+
+Added a real birth commit/reload boundary in [test_commit_runtime_video_unplace.py](/home/user/work/wt/agt-D86-video12-actual-sol-0315/tests/editing_conformance/test_commit_runtime_video_unplace.py:131). All original payloads, topology, predicates and 12 selectors remain conserved. Recipe unchanged.
+
+- Base: `7e23790248f17b8a4492fc9aee88d2c4e1df328d`
+- Candidate blob: `4abe70f006bf7a9a752a3d6ab9cc34bed507dafe`
+- Recipe blob: `feecedd16dbd09aa09de0e5b651f8efec3e4e18c`
+- Commit pending harness; conventional F-D86 actual9211 message and `DONE` written.
+
+Source checks passed: original/base/candidate in-memory compilation, complete AST conservation, exact selectors, protected-source hashes, baseline/candidate scoped Ruff and mypy, and `git diff --check`. [Exact commands and results](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-actual-sol-0315/evidence/validation.json>). Mypy used existing import-skipping settings; NumPy-stub qualification was not established. No pytest, collection, fixture/helper, service, browser or build execution occurred.
+
+Remaining findings:
+
+- **Four Runtime cases:** after reload, adding original `item-1` still encounters the product’s empty item-correspondence guard. Left unapplied; owner Agent R1/G3 with R2 provenance review.
+- **Eight recipe cases:** current D90 directly addresses their observed redo materialization predicate. Recipe edits were unnecessary; behavior remains unverified.
+
+Original actual9211 **4 ERROR + 8 FAIL** remain retained. [All 12 exact IDs](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-actual-sol-0315/evidence/selectors.txt>), [caller/topology/predicate trace](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-actual-sol-0315/evidence/source-trace.md>), and [proposed existing D72 log entry](</tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-video12-actual-sol-0315/evidence/proposed-D72-entry.txt>) are recorded.
+
+Next: one independent protected-source review, normal own-only Agent merge queue, product-owner disposition, then one useful original affected-subset proof at unchanged 45 seconds.

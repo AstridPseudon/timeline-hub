@@ -1,0 +1,2644 @@
+{
+  "accounting": {
+    "actual_trace_required_for_any_new_meaningful_delta": true,
+    "classifier_0303_owned_actual9211_not_duplicated": true,
+    "current_meaningful_source_delta": false,
+    "executed": 102,
+    "family_counts": {
+      "CLI-document8": 8,
+      "D86-core-element-reply-literal1": 1,
+      "D86-provider-custody-netzero": 1,
+      "D87-live-frontends6": 6,
+      "F-M2-pool6": 6,
+      "M1-baseline10": 10,
+      "WC6-eleven": 11,
+      "current-sheet13": 13,
+      "word-bootstrap46": 46
+    },
+    "historical_inputs": {
+      "dispositions_retained": true,
+      "original550_rows": 550,
+      "unexecuted23_rows": 23
+    },
+    "membership_matches": true,
+    "membership_rows": 102,
+    "missing_case_PASSES": 0,
+    "no_count_sum_membership_rule": true,
+    "per_id_source_rows": 102,
+    "schema": "timeline.f-d86-11789.accounting.v1",
+    "selected": 102,
+    "source_only_no_functional_closure": true,
+    "status_counts": {
+      "ERROR": 68,
+      "FAIL": 24,
+      "PASS": 10
+    },
+    "task": "F-D86-11789",
+    "xml_testcase_count": 102
+  },
+  "family_owners": [
+    {
+      "ERROR": 0,
+      "FAIL": 8,
+      "PASS": 0,
+      "executed": 8,
+      "family": "CLI-document8",
+      "home_receipt": "a0b8a3c0783c34da3e98f18725bdd99b7c874acb",
+      "owner_review_refs": "rt-D86-CLI-review-0022-report.md",
+      "selected": 8,
+      "source_authorization": "LATER_FIRST_BODY_TARGETED_ROUTE_PENDING",
+      "source_commit": "27dc8f04cd1fff78debcf07d5f7e14aaf5c76b59",
+      "source_paths": [
+        "tests/packs/timeline/test_cli_document_commit.py"
+      ]
+    },
+    {
+      "ERROR": 0,
+      "FAIL": 0,
+      "PASS": 1,
+      "executed": 1,
+      "family": "D86-core-element-reply-literal1",
+      "home_receipt": "a836baa3b11208d66bf8d23d6abfb1c8e59257e2",
+      "owner_review_refs": "rt-D86-core-element-review-0222.md",
+      "selected": 1,
+      "source_authorization": "NEW_ELIGIBLE_D86_CORE_ELEMENT_LITERAL_ONLY",
+      "source_commit": "f643a5e12a88bb533f372248485525793f2368e8",
+      "source_paths": [
+        "tests/core/test_timeline_element_publication_runtime.py"
+      ]
+    },
+    {
+      "ERROR": 0,
+      "FAIL": 1,
+      "PASS": 0,
+      "executed": 1,
+      "family": "D86-provider-custody-netzero",
+      "home_receipt": "cef8a5be53f68a7cd3b5403c362171c5633a5ae9",
+      "owner_review_refs": "agt-F-netzero-review-0215.md",
+      "selected": 1,
+      "source_authorization": "LATER_FIRST_BODY_PENDING",
+      "source_commit": "f32a890e3b949557bd0677cbe6b448d195dce3aa",
+      "source_paths": [
+        "tests/sdk/test_timeline_commit_provider_add_delete_runtime.py"
+      ]
+    },
+    {
+      "ERROR": 6,
+      "FAIL": 0,
+      "PASS": 0,
+      "executed": 6,
+      "family": "D87-live-frontends6",
+      "home_receipt": "8d93889e017d1984db9ea3594681794c91503212",
+      "owner_review_refs": "rt-D87-live-review-0202.md",
+      "selected": 6,
+      "source_authorization": "LATER_FIRST_BODY_PENDING",
+      "source_commit": "7e0ac7b242cf9492ef4fbdd12676ba9cbe8a7347",
+      "source_paths": [
+        "tests/editing_conformance/test_commit_runtime_native_frontends.py"
+      ]
+    },
+    {
+      "ERROR": 6,
+      "FAIL": 0,
+      "PASS": 0,
+      "executed": 6,
+      "family": "F-M2-pool6",
+      "home_receipt": "25c1e182614145c54decb07afc384180cc8e7e34",
+      "owner_review_refs": "handoff-agt-F-pool6-source-exact.md",
+      "selected": 6,
+      "source_authorization": "NEW_ELIGIBLE_D86_POOL6_CONTINUATION_ONLY",
+      "source_commit": "095177db7903075eaa9cae35308b28492a74a008",
+      "source_paths": [
+        "tests/editing_conformance/test_recipe_m2_shot_pool.py"
+      ]
+    },
+    {
+      "ERROR": 10,
+      "FAIL": 0,
+      "PASS": 0,
+      "executed": 10,
+      "family": "M1-baseline10",
+      "home_receipt": "9838f7ca34",
+      "owner_review_refs": "review-M1-0147.md",
+      "selected": 10,
+      "source_authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "source_commit": "4f4f26c706c784612a373523722c92b44b082aaf",
+      "source_paths": [
+        "tests/editing_conformance/test_commit_runtime_m1.py"
+      ]
+    },
+    {
+      "ERROR": 0,
+      "FAIL": 2,
+      "PASS": 9,
+      "executed": 11,
+      "family": "WC6-eleven",
+      "home_receipt": "159e11abf5e19973cab462f264c6c51f8267bdd1",
+      "owner_review_refs": "agt-F-wc6-review-2328.md",
+      "selected": 11,
+      "source_authorization": "LATER_FIRST_BODY_TARGETED_ROUTE_PENDING",
+      "source_commit": "b9aa2809eb27793af9ac60c8a73d56c6b353626e",
+      "source_paths": [
+        "tests/sdk/test_wc6_completion_capture.py"
+      ]
+    },
+    {
+      "ERROR": 0,
+      "FAIL": 13,
+      "PASS": 0,
+      "executed": 13,
+      "family": "current-sheet13",
+      "home_receipt": "3b8f341cf6e8821f9316b5b4e2ac6946f7269be8",
+      "owner_review_refs": "review-0203.md",
+      "selected": 13,
+      "source_authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "source_commit": "64166f709dd86cf4998d5c66dedf305f1989d867",
+      "source_paths": [
+        "tests/editing_conformance/test_native_sheet_current_runtime.py"
+      ]
+    },
+    {
+      "ERROR": 46,
+      "FAIL": 0,
+      "PASS": 0,
+      "executed": 46,
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "owner_review_refs": "review-word-0152.md",
+      "selected": 46,
+      "source_authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ]
+    }
+  ],
+  "firstexception_clusters": [
+    {
+      "count": 1,
+      "exception_type": "AssertionError",
+      "family": "CLI-document8",
+      "node_ids": [
+        "tests/packs/timeline/test_cli_document_commit.py::test_document_commit_uses_the_authenticated_commit_door"
+      ],
+      "owner": "rt-D86-CLI-review-0022-report.md",
+      "safe_message": "assert 1 == 0",
+      "source_file_line": "tests/packs/timeline/test_cli_document_commit.py:182",
+      "status": "FAIL"
+    },
+    {
+      "count": 1,
+      "exception_type": "AssertionError",
+      "family": "CLI-document8",
+      "node_ids": [
+        "tests/packs/timeline/test_cli_document_commit.py::test_document_commit_retry_uses_runtime_idempotency_without_history_scan"
+      ],
+      "owner": "rt-D86-CLI-review-0022-report.md",
+      "safe_message": "assert 1 == 0",
+      "source_file_line": "tests/packs/timeline/test_cli_document_commit.py:204",
+      "status": "FAIL"
+    },
+    {
+      "count": 1,
+      "exception_type": "AssertionError",
+      "family": "CLI-document8",
+      "node_ids": [
+        "tests/packs/timeline/test_cli_document_commit.py::test_document_commit_retry_does_not_scan_a_long_history_page"
+      ],
+      "owner": "rt-D86-CLI-review-0022-report.md",
+      "safe_message": "assert 1 == 0",
+      "source_file_line": "tests/packs/timeline/test_cli_document_commit.py:225",
+      "status": "FAIL"
+    },
+    {
+      "count": 1,
+      "exception_type": "AssertionError",
+      "family": "CLI-document8",
+      "node_ids": [
+        "tests/packs/timeline/test_cli_document_commit.py::test_document_commit_clean_raw_empty_app_is_a_noop"
+      ],
+      "owner": "rt-D86-CLI-review-0022-report.md",
+      "safe_message": "assert 1 == 0",
+      "source_file_line": "tests/packs/timeline/test_cli_document_commit.py:252",
+      "status": "FAIL"
+    },
+    {
+      "count": 1,
+      "exception_type": "AssertionError",
+      "family": "CLI-document8",
+      "node_ids": [
+        "tests/packs/timeline/test_cli_document_commit.py::test_document_commit_preserves_unknown_parent_app_data"
+      ],
+      "owner": "rt-D86-CLI-review-0022-report.md",
+      "safe_message": "assert 1 == 0",
+      "source_file_line": "tests/packs/timeline/test_cli_document_commit.py:266",
+      "status": "FAIL"
+    },
+    {
+      "count": 1,
+      "exception_type": "AssertionError",
+      "family": "CLI-document8",
+      "node_ids": [
+        "tests/packs/timeline/test_cli_document_commit.py::test_document_commit_human_output_keeps_label_and_receipt"
+      ],
+      "owner": "rt-D86-CLI-review-0022-report.md",
+      "safe_message": "assert 1 == 0",
+      "source_file_line": "tests/packs/timeline/test_cli_document_commit.py:286",
+      "status": "FAIL"
+    },
+    {
+      "count": 1,
+      "exception_type": "AssertionError",
+      "family": "CLI-document8",
+      "node_ids": [
+        "tests/packs/timeline/test_cli_document_commit.py::test_document_commit_changed_body_with_same_key_is_runtime_refusal"
+      ],
+      "owner": "rt-D86-CLI-review-0022-report.md",
+      "safe_message": "assert 1 == 0",
+      "source_file_line": "tests/packs/timeline/test_cli_document_commit.py:304",
+      "status": "FAIL"
+    },
+    {
+      "count": 1,
+      "exception_type": "AssertionError",
+      "family": "CLI-document8",
+      "node_ids": [
+        "tests/packs/timeline/test_cli_document_commit.py::test_document_commit_preview_has_no_accepted_receipt"
+      ],
+      "owner": "rt-D86-CLI-review-0022-report.md",
+      "safe_message": "assert 1 == 0",
+      "source_file_line": "tests/packs/timeline/test_cli_document_commit.py:323",
+      "status": "FAIL"
+    },
+    {
+      "count": 1,
+      "exception_type": "RuntimeErrorBase",
+      "family": "D86-provider-custody-netzero",
+      "node_ids": [
+        "tests/sdk/test_timeline_commit_provider_add_delete_runtime.py::test_native_add_delete_one_publication_inverse_redo_restart_reservations[net-zero]"
+      ],
+      "owner": "agt-F-netzero-review-0215.md",
+      "safe_message": "nested inverse mirrors exceed accepted effects",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "status": "FAIL"
+    },
+    {
+      "count": 6,
+      "exception_type": "RuntimeErrorBase",
+      "family": "D87-live-frontends6",
+      "node_ids": [
+        "tests/editing_conformance/test_commit_runtime_native_checkout.py::test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[False]",
+        "tests/editing_conformance/test_commit_runtime_native_checkout.py::test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[True]",
+        "tests/editing_conformance/test_commit_runtime_native_checkout.py::test_authenticated_v1_commit_reload_undo_survives_stopped_renderer_and_preview_reports_unavailable",
+        "tests/editing_conformance/test_commit_runtime_native_frontends.py::test_checkout_first_refuses_sheet_suffix_keeps_draft_and_pending_intent",
+        "tests/editing_conformance/test_commit_runtime_native_frontends.py::test_sheet_lost_ack_attached_suffix_restart_exact_retry_and_peer_guards[False]",
+        "tests/editing_conformance/test_commit_runtime_native_frontends.py::test_sheet_lost_ack_attached_suffix_restart_exact_retry_and_peer_guards[True]"
+      ],
+      "owner": "rt-D87-live-review-0202.md",
+      "safe_message": "candidate.shots['m1-shot-1'].internal_timeline.clips['clip-1'].elementRef: historical text binding requires an unchanged declaration and source",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "status": "ERROR"
+    },
+    {
+      "count": 6,
+      "exception_type": "RuntimeErrorBase",
+      "family": "F-M2-pool6",
+      "node_ids": [
+        "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_exact_capture_replay_inverse_and_redo[add-first]",
+        "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_exact_capture_replay_inverse_and_redo[add-second]",
+        "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_exact_capture_replay_inverse_and_redo[remove-middle]",
+        "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_placing_pooled_media_promotes_it_in_one_batch_that_undoes_as_one[image]",
+        "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_placing_pooled_media_promotes_it_in_one_batch_that_undoes_as_one[video]",
+        "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_provider_accepts_add_and_remove_with_exact_undo_and_redo"
+      ],
+      "owner": "handoff-agt-F-pool6-source-exact.md",
+      "safe_message": "provider executed a different command",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "status": "ERROR"
+    },
+    {
+      "count": 10,
+      "exception_type": "RuntimeErrorBase",
+      "family": "M1-baseline10",
+      "node_ids": [
+        "tests/editing_conformance/test_commit_runtime_m1.py::test_cli_python_outbox_restart_and_guarded_inverse[disjoint-rebase-undo]",
+        "tests/editing_conformance/test_commit_runtime_m1.py::test_cli_python_outbox_restart_and_guarded_inverse[touched-basis-conflict]",
+        "tests/editing_conformance/test_commit_runtime_m1.py::test_keyed_view_lost_ack_restart_and_fresh_head",
+        "tests/editing_conformance/test_commit_runtime_m1.py::test_keyed_view_requires_write_but_inspection_remains_read_only",
+        "tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[anchor-image]",
+        "tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[anchor-video]",
+        "tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[fallback-image]",
+        "tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[fallback-video]",
+        "tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[shared-image]",
+        "tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[shared-video]"
+      ],
+      "owner": "review-M1-0147.md",
+      "safe_message": "candidate.shots['m1-shot-1'].internal_timeline.clips['clip-1'].elementRef: historical text binding requires an unchanged declaration and source",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "status": "ERROR"
+    },
+    {
+      "count": 1,
+      "exception_type": "AssertionError",
+      "family": "WC6-eleven",
+      "node_ids": [
+        "tests/sdk/test_wc6_completion_capture.py::test_preserved_original_and_mounted_source_attachment"
+      ],
+      "owner": "agt-F-wc6-review-2328.md",
+      "safe_message": "assert '113994232e2c...1f095d9e7ffef' == '62c30a6d9d3a...9a5aa446e10f7'",
+      "source_file_line": "tests/sdk/test_wc6_completion_capture.py:234",
+      "status": "FAIL"
+    },
+    {
+      "count": 1,
+      "exception_type": "AssertionError",
+      "family": "WC6-eleven",
+      "node_ids": [
+        "tests/sdk/test_wc6_completion_capture.py::test_session_calls_mounted_service_real_provider_and_port_offline"
+      ],
+      "owner": "agt-F-wc6-review-2328.md",
+      "safe_message": "assert 'transport_error' == 'not_ready'",
+      "source_file_line": "tests/sdk/test_wc6_completion_capture.py:304",
+      "status": "FAIL"
+    },
+    {
+      "count": 4,
+      "exception_type": "DocumentPatchError",
+      "family": "current-sheet13",
+      "node_ids": [
+        "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_connected_occurrence_move_preserves_shared_source_across_native_frontends[cli]",
+        "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_connected_occurrence_move_preserves_shared_source_across_native_frontends[python]",
+        "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_connected_occurrence_move_preserves_shared_source_across_native_frontends[sheet]",
+        "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_emitter_null_presence_and_track_roundtrip_is_authenticated"
+      ],
+      "owner": "review-0203.md",
+      "safe_message": "closure membership or provenance changed; use a semantic command",
+      "source_file_line": "astrid/sdk/timeline/emitter.py:267",
+      "status": "FAIL"
+    },
+    {
+      "count": 9,
+      "exception_type": "WorkspaceClientError",
+      "family": "current-sheet13",
+      "node_ids": [
+        "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_attached_parent_label_publish_retries_exact_capture_and_inverse",
+        "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_connected_label_clear_is_lossless_across_native_frontends[cli]",
+        "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_connected_label_clear_is_lossless_across_native_frontends[python]",
+        "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_connected_label_clear_is_lossless_across_native_frontends[sheet]",
+        "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_connected_rational_move_is_lossless_across_native_frontends[cli]",
+        "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_connected_rational_move_is_lossless_across_native_frontends[python]",
+        "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_connected_rational_move_is_lossless_across_native_frontends[sheet]",
+        "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_cut_owned_native_sheet_hold_reloads_and_undoes",
+        "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_original_attached_add_track_publish_retries_exact_capture_and_guarded_inverse"
+      ],
+      "owner": "review-0203.md",
+      "safe_message": "patch references media outside Runtime-verified inputs",
+      "source_file_line": "astrid/sdk/workspace_client.py:294",
+      "status": "FAIL"
+    },
+    {
+      "count": 46,
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "node_ids": [
+        "tests/editing_conformance/test_native_word_anchor.py::test_equal_text_references_produce_distinct_canonical_revisions",
+        "tests/editing_conformance/test_native_word_anchor.py::test_equal_text_restore_recovers_the_selected_publications_binding",
+        "tests/editing_conformance/test_native_word_anchor.py::test_first_anchor_inverse_recovers_literal_timing_and_exact_absence",
+        "tests/editing_conformance/test_native_word_anchor.py::test_first_use_retains_v1_before_producer_removes_words_and_exact_retry_after_restart",
+        "tests/editing_conformance/test_native_word_anchor.py::test_follow_rebases_original_choice_after_source_move_and_reorder[True]",
+        "tests/editing_conformance/test_native_word_anchor.py::test_half_open_window_and_exact_rational_fps_are_validated_at_acceptance",
+        "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[duplicate-ids-invalid authored word reference]",
+        "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[empty-ids-invalid authored word reference]",
+        "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[malformed-id-invalid authored word reference]",
+        "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[missing-clip-source occurrence/clip is missing]",
+        "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[missing-occurrence-source occurrence/clip is missing]",
+        "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[missing-pin-exact transcript pin is missing]",
+        "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[missing-word-stable word is missing]",
+        "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[nonfinite-offset-expected finite JSON]",
+        "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[null-reference-invalid authored word reference]",
+        "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[offset-precision-exceeds main Moment precision]",
+        "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[outside-window-outside the half-open source window]",
+        "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[unknown-field-invalid authored word anchor fields]",
+        "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[unsupported-owner-word anchors require parent ownership]",
+        "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[wrong-pin-exact transcript pin is missing]",
+        "tests/editing_conformance/test_native_word_anchor.py::test_last_write_clear_undo_restore_and_restore_inverse",
+        "tests/editing_conformance/test_native_word_anchor.py::test_native_move_refuses_anchor_basis_until_explicit_clear",
+        "tests/editing_conformance/test_native_word_anchor.py::test_occurrence_window_is_rechecked_for_source_move_stale_replay_and_inverse",
+        "tests/editing_conformance/test_native_word_anchor.py::test_on_until_clear_preserves_other_reference_and_opaque_fields",
+        "tests/editing_conformance/test_native_word_anchor.py::test_phrase_records_all_consecutive_main_word_ids",
+        "tests/editing_conformance/test_native_word_anchor.py::test_raw_canonical_bundle_compiles_in_fresh_process_without_history",
+        "tests/editing_conformance/test_native_word_anchor.py::test_reference_is_authoritative_and_kernel_never_searches_echo[\"stop\" #99 +300f]",
+        "tests/editing_conformance/test_native_word_anchor.py::test_reference_is_authoritative_and_kernel_never_searches_echo[None]",
+        "tests/editing_conformance/test_native_word_anchor.py::test_reference_is_authoritative_and_kernel_never_searches_echo[obsolete display label]",
+        "tests/editing_conformance/test_native_word_anchor.py::test_same_word_in_reused_cas_clips_retains_raw_source_through_undo[True]",
+        "tests/editing_conformance/test_native_word_anchor.py::test_source_removal_and_changed_media_refuse_atomically",
+        "tests/editing_conformance/test_native_word_anchor.py::test_stale_anchor_refuses_when_intervening_window_excludes_selected_word",
+        "tests/editing_conformance/test_native_word_anchor.py::test_stale_choice_and_guarded_inverse_refuse_competing_target_writes",
+        "tests/editing_conformance/test_native_word_anchor.py::test_typed_second_offset_preserves_main_precision_at_rational_frame_boundary",
+        "tests/editing_conformance/test_native_word_anchor.py::test_undo_recovers_before_binding_even_when_text_writes_are_equal[True-False]",
+        "tests/editing_conformance/test_native_word_anchor.py::test_undo_recovers_before_binding_even_when_text_writes_are_equal[True-True]",
+        "tests/editing_conformance/test_native_word_anchor.py::test_word_ending_at_occurrence_end_preserves_revision_only_restore_and_inverse[retained0]",
+        "tests/editing_conformance/test_next_command_cohort_runtime.py::test_first_parent_media_then_stable_same_echo_word_choices_reload_inverse_and_retry[False]",
+        "tests/editing_conformance/test_next_command_cohort_runtime.py::test_first_parent_media_then_stable_same_echo_word_choices_reload_inverse_and_retry[True]",
+        "tests/editing_conformance/test_next_command_cohort_runtime.py::test_grouped_clip_cache_inverse_keeps_only_owned_transcript_pins[introduced]",
+        "tests/editing_conformance/test_next_command_cohort_runtime.py::test_grouped_clip_cache_inverse_keeps_only_owned_transcript_pins[opaque]",
+        "tests/editing_conformance/test_next_command_cohort_runtime.py::test_grouped_clip_cache_inverse_keeps_only_owned_transcript_pins[preexisting]",
+        "tests/editing_conformance/test_next_command_cohort_runtime.py::test_grouped_clip_cache_inverse_keeps_only_owned_transcript_pins[surviving]",
+        "tests/editing_conformance/test_next_command_cohort_runtime.py::test_grouped_inverse_retains_surviving_opaque_transcript_pin[retained0-parent]",
+        "tests/editing_conformance/test_next_command_cohort_runtime.py::test_grouped_inverse_retains_surviving_opaque_transcript_pin[retained1-shot]",
+        "tests/editing_conformance/test_next_command_cohort_runtime.py::test_grouped_inverse_retains_surviving_opaque_transcript_pin[retained2-occurrence]"
+      ],
+      "owner": "review-word-0152.md",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_file_line": "<string>:5",
+      "status": "ERROR"
+    }
+  ],
+  "historical_inputs": {
+    "lossless": true,
+    "original550_rollup": "historical/original550-rollup.tsv",
+    "unexecuted23": "historical/unexecuted-23.tsv"
+  },
+  "identity": {
+    "private_artifacts": [
+      {
+        "bytes": 1554703,
+        "kind": "authentic_junit_xml",
+        "path_hint": "fd86-later102-first-body-0303.xml",
+        "published": false,
+        "sha256": "284160dafc14842a784c577a3b5b80f9a30976dcaf5324982242da5c595ecef4"
+      },
+      {
+        "bytes": 1529660,
+        "kind": "authentic_body_log",
+        "path_hint": "fd86-later102-first-body-0303.body.log",
+        "published": false,
+        "sha256": "d29db01223d04d468e271aafd19edb181ced3470c8504f8a24fb5132a77df15d"
+      }
+    ],
+    "publication": {
+      "auth_body_urls_private_stack_published": false,
+      "generated_or_schema_changes": false,
+      "product_changes": false,
+      "safe_excerpt_policy": "bounded message and source file:line only; use original hashes/private artifacts for full evidence",
+      "source_only": true,
+      "test_changes": false
+    },
+    "request_id": "agent-fd86-later102-first-body-0303-1025030606-11789",
+    "result": {
+      "automatic": "NO-GO",
+      "body_exit": 1,
+      "error": 68,
+      "fail": 24,
+      "pass": 10,
+      "preflight_exit": 0,
+      "retry": false,
+      "skip": 0,
+      "xml_testcases": 102
+    },
+    "runtime_service_tree": "b4a181a97fd07406ccf5f3c3fd675175f77a2ccf",
+    "runtime_tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a",
+    "schema": "timeline.f-d86-11789.outcome-export.v1",
+    "selection": {
+      "cacheprovider": "disabled",
+      "marker_filter": "none",
+      "pytest_options": "-m pytest -q -n 3 -o addopts= -p no:cacheprovider --timeout=45",
+      "selector_count": 102,
+      "selector_sha256": "b2265a32c2c931616a8430d774fbb8ad71a38d5d590dd528079d9e9a9627a5f9",
+      "timeout_seconds": 45
+    },
+    "source_capture": {
+        "all_12_match_expected": true,
+      "current_meaningful_source_delta": false,
+      "newer_head_alone_is_not_a_fix": true
+    },
+    "task": "F-D86-11789",
+    "terminal": "terminal:102XML10PASS24FAIL68ERROR",
+    "tuple": {
+      "agent": "562ee30b6ed567a90a114f5029a96da2ece9789e",
+      "app": "c101477597a765235d7cbbcd48ce588f0df3de73",
+      "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "runtime": "6634a17f3ffd885567ba3c91b6c7a560df7375a4"
+    }
+  },
+  "outcomes": [
+    {
+      "authorization": "NEW_ELIGIBLE_D86_CORE_ELEMENT_LITERAL_ONLY",
+      "exception_type": "",
+      "family": "D86-core-element-reply-literal1",
+      "home_receipt": "a836baa3b11208d66bf8d23d6abfb1c8e59257e2",
+      "node_id": "tests/core/test_timeline_element_publication_runtime.py::test_public_helper_optional_session_rebases_over_disjoint_edit",
+      "ordinal": 1,
+      "owner": "rt-D86-core-element-review-0222.md",
+      "review_status": "PASS_SOURCE_CORE_ELEMENT_REPLY_LITERAL",
+      "safe_message": "",
+      "source_commit": "f643a5e12a88bb533f372248485525793f2368e8",
+      "source_file_line": "",
+      "source_paths": [
+        "tests/core/test_timeline_element_publication_runtime.py"
+      ],
+      "source_reason": "core-element protected source seam: v2 producer sends merge=fields; Runtime emits merged for non-base modern commits while preserving historical rebased receipts and exact retries.",
+      "status": "PASS",
+      "time_seconds": "7.402"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "RuntimeErrorBase",
+      "family": "M1-baseline10",
+      "home_receipt": "9838f7ca34",
+      "node_id": "tests/editing_conformance/test_commit_runtime_m1.py::test_cli_python_outbox_restart_and_guarded_inverse[disjoint-rebase-undo]",
+      "ordinal": 2,
+      "owner": "review-M1-0147.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "candidate.shots['m1-shot-1'].internal_timeline.clips['clip-1'].elementRef: historical text binding requires an unchanged declaration and source",
+      "source_commit": "4f4f26c706c784612a373523722c92b44b082aaf",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "source_paths": [
+        "tests/editing_conformance/test_commit_runtime_m1.py",
+        "runtime_protocol/service.py"
+      ],
+      "source_reason": "10077 ERROR first exception; M1 semantic-step correction 4f4f26c; protected PASS_SOURCE review 0147; normal home 9838f7ca34.",
+      "status": "ERROR",
+      "time_seconds": "1.106"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "RuntimeErrorBase",
+      "family": "M1-baseline10",
+      "home_receipt": "9838f7ca34",
+      "node_id": "tests/editing_conformance/test_commit_runtime_m1.py::test_cli_python_outbox_restart_and_guarded_inverse[touched-basis-conflict]",
+      "ordinal": 3,
+      "owner": "review-M1-0147.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "candidate.shots['m1-shot-1'].internal_timeline.clips['clip-1'].elementRef: historical text binding requires an unchanged declaration and source",
+      "source_commit": "4f4f26c706c784612a373523722c92b44b082aaf",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "source_paths": [
+        "tests/editing_conformance/test_commit_runtime_m1.py",
+        "runtime_protocol/service.py"
+      ],
+      "source_reason": "10077 ERROR first exception; M1 semantic-step correction 4f4f26c; protected PASS_SOURCE review 0147; normal home 9838f7ca34.",
+      "status": "ERROR",
+      "time_seconds": "0.262"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "RuntimeErrorBase",
+      "family": "M1-baseline10",
+      "home_receipt": "9838f7ca34",
+      "node_id": "tests/editing_conformance/test_commit_runtime_m1.py::test_keyed_view_lost_ack_restart_and_fresh_head",
+      "ordinal": 4,
+      "owner": "review-M1-0147.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "candidate.shots['m1-shot-1'].internal_timeline.clips['clip-1'].elementRef: historical text binding requires an unchanged declaration and source",
+      "source_commit": "4f4f26c706c784612a373523722c92b44b082aaf",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "source_paths": [
+        "tests/editing_conformance/test_commit_runtime_m1.py",
+        "runtime_protocol/service.py"
+      ],
+      "source_reason": "10077 ERROR first exception; M1 semantic-step correction 4f4f26c; protected PASS_SOURCE review 0147; normal home 9838f7ca34.",
+      "status": "ERROR",
+      "time_seconds": "0.266"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "RuntimeErrorBase",
+      "family": "M1-baseline10",
+      "home_receipt": "9838f7ca34",
+      "node_id": "tests/editing_conformance/test_commit_runtime_m1.py::test_keyed_view_requires_write_but_inspection_remains_read_only",
+      "ordinal": 5,
+      "owner": "review-M1-0147.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "candidate.shots['m1-shot-1'].internal_timeline.clips['clip-1'].elementRef: historical text binding requires an unchanged declaration and source",
+      "source_commit": "4f4f26c706c784612a373523722c92b44b082aaf",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "source_paths": [
+        "tests/editing_conformance/test_commit_runtime_m1.py",
+        "runtime_protocol/service.py"
+      ],
+      "source_reason": "10077 ERROR first exception; M1 semantic-step correction 4f4f26c; protected PASS_SOURCE review 0147; normal home 9838f7ca34.",
+      "status": "ERROR",
+      "time_seconds": "0.220"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "RuntimeErrorBase",
+      "family": "M1-baseline10",
+      "home_receipt": "9838f7ca34",
+      "node_id": "tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[anchor-image]",
+      "ordinal": 6,
+      "owner": "review-M1-0147.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "candidate.shots['m1-shot-1'].internal_timeline.clips['clip-1'].elementRef: historical text binding requires an unchanged declaration and source",
+      "source_commit": "4f4f26c706c784612a373523722c92b44b082aaf",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "source_paths": [
+        "tests/editing_conformance/test_commit_runtime_m1.py",
+        "runtime_protocol/service.py"
+      ],
+      "source_reason": "10077 ERROR first exception; M1 semantic-step correction 4f4f26c; protected PASS_SOURCE review 0147; normal home 9838f7ca34.",
+      "status": "ERROR",
+      "time_seconds": "0.221"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "RuntimeErrorBase",
+      "family": "M1-baseline10",
+      "home_receipt": "9838f7ca34",
+      "node_id": "tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[anchor-video]",
+      "ordinal": 7,
+      "owner": "review-M1-0147.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "candidate.shots['m1-shot-1'].internal_timeline.clips['clip-1'].elementRef: historical text binding requires an unchanged declaration and source",
+      "source_commit": "4f4f26c706c784612a373523722c92b44b082aaf",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "source_paths": [
+        "tests/editing_conformance/test_commit_runtime_m1.py",
+        "runtime_protocol/service.py"
+      ],
+      "source_reason": "10077 ERROR first exception; M1 semantic-step correction 4f4f26c; protected PASS_SOURCE review 0147; normal home 9838f7ca34.",
+      "status": "ERROR",
+      "time_seconds": "0.265"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "RuntimeErrorBase",
+      "family": "M1-baseline10",
+      "home_receipt": "9838f7ca34",
+      "node_id": "tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[fallback-image]",
+      "ordinal": 8,
+      "owner": "review-M1-0147.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "candidate.shots['m1-shot-1'].internal_timeline.clips['clip-1'].elementRef: historical text binding requires an unchanged declaration and source",
+      "source_commit": "4f4f26c706c784612a373523722c92b44b082aaf",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "source_paths": [
+        "tests/editing_conformance/test_commit_runtime_m1.py",
+        "runtime_protocol/service.py"
+      ],
+      "source_reason": "10077 ERROR first exception; M1 semantic-step correction 4f4f26c; protected PASS_SOURCE review 0147; normal home 9838f7ca34.",
+      "status": "ERROR",
+      "time_seconds": "0.231"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "RuntimeErrorBase",
+      "family": "M1-baseline10",
+      "home_receipt": "9838f7ca34",
+      "node_id": "tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[fallback-video]",
+      "ordinal": 9,
+      "owner": "review-M1-0147.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "candidate.shots['m1-shot-1'].internal_timeline.clips['clip-1'].elementRef: historical text binding requires an unchanged declaration and source",
+      "source_commit": "4f4f26c706c784612a373523722c92b44b082aaf",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "source_paths": [
+        "tests/editing_conformance/test_commit_runtime_m1.py",
+        "runtime_protocol/service.py"
+      ],
+      "source_reason": "10077 ERROR first exception; M1 semantic-step correction 4f4f26c; protected PASS_SOURCE review 0147; normal home 9838f7ca34.",
+      "status": "ERROR",
+      "time_seconds": "0.328"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "RuntimeErrorBase",
+      "family": "M1-baseline10",
+      "home_receipt": "9838f7ca34",
+      "node_id": "tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[shared-image]",
+      "ordinal": 10,
+      "owner": "review-M1-0147.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "candidate.shots['m1-shot-1'].internal_timeline.clips['clip-1'].elementRef: historical text binding requires an unchanged declaration and source",
+      "source_commit": "4f4f26c706c784612a373523722c92b44b082aaf",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "source_paths": [
+        "tests/editing_conformance/test_commit_runtime_m1.py",
+        "runtime_protocol/service.py"
+      ],
+      "source_reason": "10077 ERROR first exception; M1 semantic-step correction 4f4f26c; protected PASS_SOURCE review 0147; normal home 9838f7ca34.",
+      "status": "ERROR",
+      "time_seconds": "1.010"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "RuntimeErrorBase",
+      "family": "M1-baseline10",
+      "home_receipt": "9838f7ca34",
+      "node_id": "tests/editing_conformance/test_commit_runtime_m1.py::test_normal_client_auto_placement_preview_restart_retry_inverse_and_redo[shared-video]",
+      "ordinal": 11,
+      "owner": "review-M1-0147.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "candidate.shots['m1-shot-1'].internal_timeline.clips['clip-1'].elementRef: historical text binding requires an unchanged declaration and source",
+      "source_commit": "4f4f26c706c784612a373523722c92b44b082aaf",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "source_paths": [
+        "tests/editing_conformance/test_commit_runtime_m1.py",
+        "runtime_protocol/service.py"
+      ],
+      "source_reason": "10077 ERROR first exception; M1 semantic-step correction 4f4f26c; protected PASS_SOURCE review 0147; normal home 9838f7ca34.",
+      "status": "ERROR",
+      "time_seconds": "0.281"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_PENDING",
+      "exception_type": "RuntimeErrorBase",
+      "family": "D87-live-frontends6",
+      "home_receipt": "8d93889e017d1984db9ea3594681794c91503212",
+      "node_id": "tests/editing_conformance/test_commit_runtime_native_checkout.py::test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[False]",
+      "ordinal": 12,
+      "owner": "rt-D87-live-review-0202.md",
+      "review_status": "rt-D87-live-review-0202.md",
+      "safe_message": "candidate.shots['m1-shot-1'].internal_timeline.clips['clip-1'].elementRef: historical text binding requires an unchanged declaration and source",
+      "source_commit": "7e0ac7b242cf9492ef4fbdd12676ba9cbe8a7347",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "source_paths": [
+        "tests/editing_conformance/test_commit_runtime_native_frontends.py",
+        "runtime_protocol/service.py"
+      ],
+      "source_reason": "PASS_SOURCE D87 live-frontends six; protected source 7e0ac, normal home 8d938, original six predicates retained",
+      "status": "ERROR",
+      "time_seconds": "0.291"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_PENDING",
+      "exception_type": "RuntimeErrorBase",
+      "family": "D87-live-frontends6",
+      "home_receipt": "8d93889e017d1984db9ea3594681794c91503212",
+      "node_id": "tests/editing_conformance/test_commit_runtime_native_checkout.py::test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[True]",
+      "ordinal": 13,
+      "owner": "rt-D87-live-review-0202.md",
+      "review_status": "rt-D87-live-review-0202.md",
+      "safe_message": "candidate.shots['m1-shot-1'].internal_timeline.clips['clip-1'].elementRef: historical text binding requires an unchanged declaration and source",
+      "source_commit": "7e0ac7b242cf9492ef4fbdd12676ba9cbe8a7347",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "source_paths": [
+        "tests/editing_conformance/test_commit_runtime_native_frontends.py",
+        "runtime_protocol/service.py"
+      ],
+      "source_reason": "PASS_SOURCE D87 live-frontends six; protected source 7e0ac, normal home 8d938, original six predicates retained",
+      "status": "ERROR",
+      "time_seconds": "0.220"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_PENDING",
+      "exception_type": "RuntimeErrorBase",
+      "family": "D87-live-frontends6",
+      "home_receipt": "8d93889e017d1984db9ea3594681794c91503212",
+      "node_id": "tests/editing_conformance/test_commit_runtime_native_checkout.py::test_authenticated_v1_commit_reload_undo_survives_stopped_renderer_and_preview_reports_unavailable",
+      "ordinal": 14,
+      "owner": "rt-D87-live-review-0202.md",
+      "review_status": "rt-D87-live-review-0202.md",
+      "safe_message": "candidate.shots['m1-shot-1'].internal_timeline.clips['clip-1'].elementRef: historical text binding requires an unchanged declaration and source",
+      "source_commit": "7e0ac7b242cf9492ef4fbdd12676ba9cbe8a7347",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "source_paths": [
+        "tests/editing_conformance/test_commit_runtime_native_frontends.py",
+        "runtime_protocol/service.py"
+      ],
+      "source_reason": "PASS_SOURCE D87 live-frontends six; protected source 7e0ac, normal home 8d938, original six predicates retained",
+      "status": "ERROR",
+      "time_seconds": "0.209"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_PENDING",
+      "exception_type": "RuntimeErrorBase",
+      "family": "D87-live-frontends6",
+      "home_receipt": "8d93889e017d1984db9ea3594681794c91503212",
+      "node_id": "tests/editing_conformance/test_commit_runtime_native_frontends.py::test_checkout_first_refuses_sheet_suffix_keeps_draft_and_pending_intent",
+      "ordinal": 15,
+      "owner": "rt-D87-live-review-0202.md",
+      "review_status": "rt-D87-live-review-0202.md",
+      "safe_message": "candidate.shots['m1-shot-1'].internal_timeline.clips['clip-1'].elementRef: historical text binding requires an unchanged declaration and source",
+      "source_commit": "7e0ac7b242cf9492ef4fbdd12676ba9cbe8a7347",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "source_paths": [
+        "tests/editing_conformance/test_commit_runtime_native_frontends.py",
+        "runtime_protocol/service.py"
+      ],
+      "source_reason": "PASS_SOURCE D87 live-frontends six; protected source 7e0ac, normal home 8d938, original six predicates retained",
+      "status": "ERROR",
+      "time_seconds": "0.486"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_PENDING",
+      "exception_type": "RuntimeErrorBase",
+      "family": "D87-live-frontends6",
+      "home_receipt": "8d93889e017d1984db9ea3594681794c91503212",
+      "node_id": "tests/editing_conformance/test_commit_runtime_native_frontends.py::test_sheet_lost_ack_attached_suffix_restart_exact_retry_and_peer_guards[False]",
+      "ordinal": 16,
+      "owner": "rt-D87-live-review-0202.md",
+      "review_status": "rt-D87-live-review-0202.md",
+      "safe_message": "candidate.shots['m1-shot-1'].internal_timeline.clips['clip-1'].elementRef: historical text binding requires an unchanged declaration and source",
+      "source_commit": "7e0ac7b242cf9492ef4fbdd12676ba9cbe8a7347",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "source_paths": [
+        "tests/editing_conformance/test_commit_runtime_native_frontends.py",
+        "runtime_protocol/service.py"
+      ],
+      "source_reason": "PASS_SOURCE D87 live-frontends six; protected source 7e0ac, normal home 8d938, original six predicates retained",
+      "status": "ERROR",
+      "time_seconds": "0.382"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_PENDING",
+      "exception_type": "RuntimeErrorBase",
+      "family": "D87-live-frontends6",
+      "home_receipt": "8d93889e017d1984db9ea3594681794c91503212",
+      "node_id": "tests/editing_conformance/test_commit_runtime_native_frontends.py::test_sheet_lost_ack_attached_suffix_restart_exact_retry_and_peer_guards[True]",
+      "ordinal": 17,
+      "owner": "rt-D87-live-review-0202.md",
+      "review_status": "rt-D87-live-review-0202.md",
+      "safe_message": "candidate.shots['m1-shot-1'].internal_timeline.clips['clip-1'].elementRef: historical text binding requires an unchanged declaration and source",
+      "source_commit": "7e0ac7b242cf9492ef4fbdd12676ba9cbe8a7347",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "source_paths": [
+        "tests/editing_conformance/test_commit_runtime_native_frontends.py",
+        "runtime_protocol/service.py"
+      ],
+      "source_reason": "PASS_SOURCE D87 live-frontends six; protected source 7e0ac, normal home 8d938, original six predicates retained",
+      "status": "ERROR",
+      "time_seconds": "0.357"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "WorkspaceClientError",
+      "family": "current-sheet13",
+      "home_receipt": "3b8f341cf6e8821f9316b5b4e2ac6946f7269be8",
+      "node_id": "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_attached_parent_label_publish_retries_exact_capture_and_inverse",
+      "ordinal": 18,
+      "owner": "review-0203.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "patch references media outside Runtime-verified inputs",
+      "source_commit": "64166f709dd86cf4998d5c66dedf305f1989d867",
+      "source_file_line": "astrid/sdk/workspace_client.py:294",
+      "source_paths": [
+        "tests/editing_conformance/test_native_sheet_current_runtime.py",
+        "astrid/sdk/workspace_client.py"
+      ],
+      "source_reason": "10077 FAIL first exception; current-sheet init/emitter correction 64166f7; protected PASS_SOURCE review 0203; normal home 3b8f341c.",
+      "status": "FAIL",
+      "time_seconds": "1.269"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "WorkspaceClientError",
+      "family": "current-sheet13",
+      "home_receipt": "3b8f341cf6e8821f9316b5b4e2ac6946f7269be8",
+      "node_id": "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_connected_label_clear_is_lossless_across_native_frontends[cli]",
+      "ordinal": 19,
+      "owner": "review-0203.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "patch references media outside Runtime-verified inputs",
+      "source_commit": "64166f709dd86cf4998d5c66dedf305f1989d867",
+      "source_file_line": "astrid/sdk/workspace_client.py:294",
+      "source_paths": [
+        "tests/editing_conformance/test_native_sheet_current_runtime.py",
+        "astrid/sdk/workspace_client.py"
+      ],
+      "source_reason": "10077 FAIL first exception; current-sheet init/emitter correction 64166f7; protected PASS_SOURCE review 0203; normal home 3b8f341c.",
+      "status": "FAIL",
+      "time_seconds": "0.955"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "WorkspaceClientError",
+      "family": "current-sheet13",
+      "home_receipt": "3b8f341cf6e8821f9316b5b4e2ac6946f7269be8",
+      "node_id": "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_connected_label_clear_is_lossless_across_native_frontends[python]",
+      "ordinal": 20,
+      "owner": "review-0203.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "patch references media outside Runtime-verified inputs",
+      "source_commit": "64166f709dd86cf4998d5c66dedf305f1989d867",
+      "source_file_line": "astrid/sdk/workspace_client.py:294",
+      "source_paths": [
+        "tests/editing_conformance/test_native_sheet_current_runtime.py",
+        "astrid/sdk/workspace_client.py"
+      ],
+      "source_reason": "10077 FAIL first exception; current-sheet init/emitter correction 64166f7; protected PASS_SOURCE review 0203; normal home 3b8f341c.",
+      "status": "FAIL",
+      "time_seconds": "1.034"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "WorkspaceClientError",
+      "family": "current-sheet13",
+      "home_receipt": "3b8f341cf6e8821f9316b5b4e2ac6946f7269be8",
+      "node_id": "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_connected_label_clear_is_lossless_across_native_frontends[sheet]",
+      "ordinal": 21,
+      "owner": "review-0203.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "patch references media outside Runtime-verified inputs",
+      "source_commit": "64166f709dd86cf4998d5c66dedf305f1989d867",
+      "source_file_line": "astrid/sdk/workspace_client.py:294",
+      "source_paths": [
+        "tests/editing_conformance/test_native_sheet_current_runtime.py",
+        "astrid/sdk/workspace_client.py"
+      ],
+      "source_reason": "10077 FAIL first exception; current-sheet init/emitter correction 64166f7; protected PASS_SOURCE review 0203; normal home 3b8f341c.",
+      "status": "FAIL",
+      "time_seconds": "0.999"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "DocumentPatchError",
+      "family": "current-sheet13",
+      "home_receipt": "3b8f341cf6e8821f9316b5b4e2ac6946f7269be8",
+      "node_id": "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_connected_occurrence_move_preserves_shared_source_across_native_frontends[cli]",
+      "ordinal": 22,
+      "owner": "review-0203.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "closure membership or provenance changed; use a semantic command",
+      "source_commit": "64166f709dd86cf4998d5c66dedf305f1989d867",
+      "source_file_line": "astrid/sdk/timeline/emitter.py:267",
+      "source_paths": [
+        "tests/editing_conformance/test_native_sheet_current_runtime.py",
+        "astrid/sdk/timeline/emitter.py"
+      ],
+      "source_reason": "10077 FAIL first exception; current-sheet init/emitter correction 64166f7; protected PASS_SOURCE review 0203; normal home 3b8f341c.",
+      "status": "FAIL",
+      "time_seconds": "1.571"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "DocumentPatchError",
+      "family": "current-sheet13",
+      "home_receipt": "3b8f341cf6e8821f9316b5b4e2ac6946f7269be8",
+      "node_id": "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_connected_occurrence_move_preserves_shared_source_across_native_frontends[python]",
+      "ordinal": 23,
+      "owner": "review-0203.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "closure membership or provenance changed; use a semantic command",
+      "source_commit": "64166f709dd86cf4998d5c66dedf305f1989d867",
+      "source_file_line": "astrid/sdk/timeline/emitter.py:267",
+      "source_paths": [
+        "tests/editing_conformance/test_native_sheet_current_runtime.py",
+        "astrid/sdk/timeline/emitter.py"
+      ],
+      "source_reason": "10077 FAIL first exception; current-sheet init/emitter correction 64166f7; protected PASS_SOURCE review 0203; normal home 3b8f341c.",
+      "status": "FAIL",
+      "time_seconds": "1.619"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "DocumentPatchError",
+      "family": "current-sheet13",
+      "home_receipt": "3b8f341cf6e8821f9316b5b4e2ac6946f7269be8",
+      "node_id": "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_connected_occurrence_move_preserves_shared_source_across_native_frontends[sheet]",
+      "ordinal": 24,
+      "owner": "review-0203.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "closure membership or provenance changed; use a semantic command",
+      "source_commit": "64166f709dd86cf4998d5c66dedf305f1989d867",
+      "source_file_line": "astrid/sdk/timeline/emitter.py:267",
+      "source_paths": [
+        "tests/editing_conformance/test_native_sheet_current_runtime.py",
+        "astrid/sdk/timeline/emitter.py"
+      ],
+      "source_reason": "10077 FAIL first exception; current-sheet init/emitter correction 64166f7; protected PASS_SOURCE review 0203; normal home 3b8f341c.",
+      "status": "FAIL",
+      "time_seconds": "1.534"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "WorkspaceClientError",
+      "family": "current-sheet13",
+      "home_receipt": "3b8f341cf6e8821f9316b5b4e2ac6946f7269be8",
+      "node_id": "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_connected_rational_move_is_lossless_across_native_frontends[cli]",
+      "ordinal": 25,
+      "owner": "review-0203.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "patch references media outside Runtime-verified inputs",
+      "source_commit": "64166f709dd86cf4998d5c66dedf305f1989d867",
+      "source_file_line": "astrid/sdk/workspace_client.py:294",
+      "source_paths": [
+        "tests/editing_conformance/test_native_sheet_current_runtime.py",
+        "astrid/sdk/workspace_client.py"
+      ],
+      "source_reason": "10077 FAIL first exception; current-sheet init/emitter correction 64166f7; protected PASS_SOURCE review 0203; normal home 3b8f341c.",
+      "status": "FAIL",
+      "time_seconds": "1.023"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "WorkspaceClientError",
+      "family": "current-sheet13",
+      "home_receipt": "3b8f341cf6e8821f9316b5b4e2ac6946f7269be8",
+      "node_id": "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_connected_rational_move_is_lossless_across_native_frontends[python]",
+      "ordinal": 26,
+      "owner": "review-0203.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "patch references media outside Runtime-verified inputs",
+      "source_commit": "64166f709dd86cf4998d5c66dedf305f1989d867",
+      "source_file_line": "astrid/sdk/workspace_client.py:294",
+      "source_paths": [
+        "tests/editing_conformance/test_native_sheet_current_runtime.py",
+        "astrid/sdk/workspace_client.py"
+      ],
+      "source_reason": "10077 FAIL first exception; current-sheet init/emitter correction 64166f7; protected PASS_SOURCE review 0203; normal home 3b8f341c.",
+      "status": "FAIL",
+      "time_seconds": "0.939"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "WorkspaceClientError",
+      "family": "current-sheet13",
+      "home_receipt": "3b8f341cf6e8821f9316b5b4e2ac6946f7269be8",
+      "node_id": "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_connected_rational_move_is_lossless_across_native_frontends[sheet]",
+      "ordinal": 27,
+      "owner": "review-0203.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "patch references media outside Runtime-verified inputs",
+      "source_commit": "64166f709dd86cf4998d5c66dedf305f1989d867",
+      "source_file_line": "astrid/sdk/workspace_client.py:294",
+      "source_paths": [
+        "tests/editing_conformance/test_native_sheet_current_runtime.py",
+        "astrid/sdk/workspace_client.py"
+      ],
+      "source_reason": "10077 FAIL first exception; current-sheet init/emitter correction 64166f7; protected PASS_SOURCE review 0203; normal home 3b8f341c.",
+      "status": "FAIL",
+      "time_seconds": "1.100"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "WorkspaceClientError",
+      "family": "current-sheet13",
+      "home_receipt": "3b8f341cf6e8821f9316b5b4e2ac6946f7269be8",
+      "node_id": "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_cut_owned_native_sheet_hold_reloads_and_undoes",
+      "ordinal": 28,
+      "owner": "review-0203.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "patch references media outside Runtime-verified inputs",
+      "source_commit": "64166f709dd86cf4998d5c66dedf305f1989d867",
+      "source_file_line": "astrid/sdk/workspace_client.py:294",
+      "source_paths": [
+        "tests/editing_conformance/test_native_sheet_current_runtime.py",
+        "astrid/sdk/workspace_client.py"
+      ],
+      "source_reason": "10077 FAIL first exception; current-sheet init/emitter correction 64166f7; protected PASS_SOURCE review 0203; normal home 3b8f341c.",
+      "status": "FAIL",
+      "time_seconds": "1.025"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "DocumentPatchError",
+      "family": "current-sheet13",
+      "home_receipt": "3b8f341cf6e8821f9316b5b4e2ac6946f7269be8",
+      "node_id": "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_emitter_null_presence_and_track_roundtrip_is_authenticated",
+      "ordinal": 29,
+      "owner": "review-0203.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "closure membership or provenance changed; use a semantic command",
+      "source_commit": "64166f709dd86cf4998d5c66dedf305f1989d867",
+      "source_file_line": "astrid/sdk/timeline/emitter.py:267",
+      "source_paths": [
+        "tests/editing_conformance/test_native_sheet_current_runtime.py",
+        "astrid/sdk/timeline/emitter.py"
+      ],
+      "source_reason": "10077 FAIL first exception; current-sheet init/emitter correction 64166f7; protected PASS_SOURCE review 0203; normal home 3b8f341c.",
+      "status": "FAIL",
+      "time_seconds": "1.787"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "WorkspaceClientError",
+      "family": "current-sheet13",
+      "home_receipt": "3b8f341cf6e8821f9316b5b4e2ac6946f7269be8",
+      "node_id": "tests/editing_conformance/test_native_sheet_current_runtime.py::test_http_original_attached_add_track_publish_retries_exact_capture_and_guarded_inverse",
+      "ordinal": 30,
+      "owner": "review-0203.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "patch references media outside Runtime-verified inputs",
+      "source_commit": "64166f709dd86cf4998d5c66dedf305f1989d867",
+      "source_file_line": "astrid/sdk/workspace_client.py:294",
+      "source_paths": [
+        "tests/editing_conformance/test_native_sheet_current_runtime.py",
+        "astrid/sdk/workspace_client.py"
+      ],
+      "source_reason": "10077 FAIL first exception; current-sheet init/emitter correction 64166f7; protected PASS_SOURCE review 0203; normal home 3b8f341c.",
+      "status": "FAIL",
+      "time_seconds": "0.964"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_equal_text_references_produce_distinct_canonical_revisions",
+      "ordinal": 31,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.893"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_equal_text_restore_recovers_the_selected_publications_binding",
+      "ordinal": 32,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.895"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_first_anchor_inverse_recovers_literal_timing_and_exact_absence",
+      "ordinal": 33,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.940"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_first_use_retains_v1_before_producer_removes_words_and_exact_retry_after_restart",
+      "ordinal": 34,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.897"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_follow_rebases_original_choice_after_source_move_and_reorder[True]",
+      "ordinal": 35,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "1.254"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_half_open_window_and_exact_rational_fps_are_validated_at_acceptance",
+      "ordinal": 36,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.967"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[duplicate-ids-invalid authored word reference]",
+      "ordinal": 37,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.944"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[empty-ids-invalid authored word reference]",
+      "ordinal": 38,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "1.003"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[malformed-id-invalid authored word reference]",
+      "ordinal": 39,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.748"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[missing-clip-source occurrence/clip is missing]",
+      "ordinal": 40,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.887"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[missing-occurrence-source occurrence/clip is missing]",
+      "ordinal": 41,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.902"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[missing-pin-exact transcript pin is missing]",
+      "ordinal": 42,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.907"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[missing-word-stable word is missing]",
+      "ordinal": 43,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.963"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[nonfinite-offset-expected finite JSON]",
+      "ordinal": 44,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "1.346"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[null-reference-invalid authored word reference]",
+      "ordinal": 45,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "1.010"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[offset-precision-exceeds main Moment precision]",
+      "ordinal": 46,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.984"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[outside-window-outside the half-open source window]",
+      "ordinal": 47,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.913"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[unknown-field-invalid authored word anchor fields]",
+      "ordinal": 48,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.926"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[unsupported-owner-word anchors require parent ownership]",
+      "ordinal": 49,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.860"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_invalid_authored_reference_never_falls_back_to_valid_echo[wrong-pin-exact transcript pin is missing]",
+      "ordinal": 50,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.932"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_last_write_clear_undo_restore_and_restore_inverse",
+      "ordinal": 51,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "1.068"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_native_move_refuses_anchor_basis_until_explicit_clear",
+      "ordinal": 52,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.913"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_occurrence_window_is_rechecked_for_source_move_stale_replay_and_inverse",
+      "ordinal": 53,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.858"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_on_until_clear_preserves_other_reference_and_opaque_fields",
+      "ordinal": 54,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "1.112"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_phrase_records_all_consecutive_main_word_ids",
+      "ordinal": 55,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.905"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_raw_canonical_bundle_compiles_in_fresh_process_without_history",
+      "ordinal": 56,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.852"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_reference_is_authoritative_and_kernel_never_searches_echo[\"stop\" #99 +300f]",
+      "ordinal": 57,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.809"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_reference_is_authoritative_and_kernel_never_searches_echo[None]",
+      "ordinal": 58,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "1.188"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_reference_is_authoritative_and_kernel_never_searches_echo[obsolete display label]",
+      "ordinal": 59,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "1.111"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_same_word_in_reused_cas_clips_retains_raw_source_through_undo[True]",
+      "ordinal": 60,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "1.485"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_source_removal_and_changed_media_refuse_atomically",
+      "ordinal": 61,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "1.119"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_stale_anchor_refuses_when_intervening_window_excludes_selected_word",
+      "ordinal": 62,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "1.369"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_stale_choice_and_guarded_inverse_refuse_competing_target_writes",
+      "ordinal": 63,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "1.089"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_typed_second_offset_preserves_main_precision_at_rational_frame_boundary",
+      "ordinal": 64,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.944"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_undo_recovers_before_binding_even_when_text_writes_are_equal[True-False]",
+      "ordinal": 65,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.906"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_undo_recovers_before_binding_even_when_text_writes_are_equal[True-True]",
+      "ordinal": 66,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.872"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_native_word_anchor.py::test_word_ending_at_occurrence_end_preserves_revision_only_restore_and_inverse[retained0]",
+      "ordinal": 67,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "1.082"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_next_command_cohort_runtime.py::test_first_parent_media_then_stable_same_echo_word_choices_reload_inverse_and_retry[False]",
+      "ordinal": 68,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "1.204"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_next_command_cohort_runtime.py::test_first_parent_media_then_stable_same_echo_word_choices_reload_inverse_and_retry[True]",
+      "ordinal": 69,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "1.164"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_next_command_cohort_runtime.py::test_grouped_clip_cache_inverse_keeps_only_owned_transcript_pins[introduced]",
+      "ordinal": 70,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.994"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_next_command_cohort_runtime.py::test_grouped_clip_cache_inverse_keeps_only_owned_transcript_pins[opaque]",
+      "ordinal": 71,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.985"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_next_command_cohort_runtime.py::test_grouped_clip_cache_inverse_keeps_only_owned_transcript_pins[preexisting]",
+      "ordinal": 72,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.895"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_next_command_cohort_runtime.py::test_grouped_clip_cache_inverse_keeps_only_owned_transcript_pins[surviving]",
+      "ordinal": 73,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "1.244"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_next_command_cohort_runtime.py::test_grouped_inverse_retains_surviving_opaque_transcript_pin[retained0-parent]",
+      "ordinal": 74,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.915"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_next_command_cohort_runtime.py::test_grouped_inverse_retains_surviving_opaque_transcript_pin[retained1-shot]",
+      "ordinal": 75,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.949"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D89_CONTINUATION_ONLY",
+      "exception_type": "CommandError",
+      "family": "word-bootstrap46",
+      "home_receipt": "5dc9f0c898ba147a32e89c25ae2a01f4b9af3df9",
+      "node_id": "tests/editing_conformance/test_next_command_cohort_runtime.py::test_grouped_inverse_retains_surviving_opaque_transcript_pin[retained2-occurrence]",
+      "ordinal": 76,
+      "owner": "review-word-0152.md",
+      "review_status": "PROTECTED_SOURCE_REVIEW_OR_SOURCE_EXACT",
+      "safe_message": "clip.add v1 does not support on\\n'",
+      "source_commit": "9e88f5ba09f5c996367859ab990a8ff738378507",
+      "source_file_line": "<string>:5",
+      "source_paths": [
+        "tests/editing_conformance/native_word_anchor_fixture.py",
+        "tests/editing_conformance/test_native_word_anchor.py"
+      ],
+      "source_reason": "10077 ERROR setup seed failure; rational-FPS fixture correction 9e88f5b; protected PASS_SOURCE review 0152; normal home 5dc9f0c898. Native semantic FAIL9 remain held.",
+      "status": "ERROR",
+      "time_seconds": "0.980"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D86_POOL6_CONTINUATION_ONLY",
+      "exception_type": "RuntimeErrorBase",
+      "family": "F-M2-pool6",
+      "home_receipt": "25c1e182614145c54decb07afc384180cc8e7e34",
+      "node_id": "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_exact_capture_replay_inverse_and_redo[add-first]",
+      "ordinal": 77,
+      "owner": "handoff-agt-F-pool6-source-exact.md",
+      "review_status": "SOURCE_EXACT_POOL6_DEPENDENCY",
+      "safe_message": "provider executed a different command",
+      "source_commit": "095177db7903075eaa9cae35308b28492a74a008",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "source_paths": [
+        "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+        "runtime_protocol/service.py"
+      ],
+      "source_reason": "pool6 SOURCE_EXACT: GenuineTimeline.create -> shared _create_fixture; reviewed 095177 helper submits semantic birth, reloads canonical source, then guarded-patches the exact occ-a path.",
+      "status": "ERROR",
+      "time_seconds": "0.845"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D86_POOL6_CONTINUATION_ONLY",
+      "exception_type": "RuntimeErrorBase",
+      "family": "F-M2-pool6",
+      "home_receipt": "25c1e182614145c54decb07afc384180cc8e7e34",
+      "node_id": "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_exact_capture_replay_inverse_and_redo[add-second]",
+      "ordinal": 78,
+      "owner": "handoff-agt-F-pool6-source-exact.md",
+      "review_status": "SOURCE_EXACT_POOL6_DEPENDENCY",
+      "safe_message": "provider executed a different command",
+      "source_commit": "095177db7903075eaa9cae35308b28492a74a008",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "source_paths": [
+        "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+        "runtime_protocol/service.py"
+      ],
+      "source_reason": "pool6 SOURCE_EXACT: GenuineTimeline.create -> shared _create_fixture; reviewed 095177 helper submits semantic birth, reloads canonical source, then guarded-patches the exact occ-a path.",
+      "status": "ERROR",
+      "time_seconds": "0.642"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D86_POOL6_CONTINUATION_ONLY",
+      "exception_type": "RuntimeErrorBase",
+      "family": "F-M2-pool6",
+      "home_receipt": "25c1e182614145c54decb07afc384180cc8e7e34",
+      "node_id": "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_exact_capture_replay_inverse_and_redo[remove-middle]",
+      "ordinal": 79,
+      "owner": "handoff-agt-F-pool6-source-exact.md",
+      "review_status": "SOURCE_EXACT_POOL6_DEPENDENCY",
+      "safe_message": "provider executed a different command",
+      "source_commit": "095177db7903075eaa9cae35308b28492a74a008",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "source_paths": [
+        "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+        "runtime_protocol/service.py"
+      ],
+      "source_reason": "pool6 SOURCE_EXACT: GenuineTimeline.create -> shared _create_fixture; reviewed 095177 helper submits semantic birth, reloads canonical source, then guarded-patches the exact occ-a path.",
+      "status": "ERROR",
+      "time_seconds": "1.014"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D86_POOL6_CONTINUATION_ONLY",
+      "exception_type": "RuntimeErrorBase",
+      "family": "F-M2-pool6",
+      "home_receipt": "25c1e182614145c54decb07afc384180cc8e7e34",
+      "node_id": "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_placing_pooled_media_promotes_it_in_one_batch_that_undoes_as_one[image]",
+      "ordinal": 80,
+      "owner": "handoff-agt-F-pool6-source-exact.md",
+      "review_status": "SOURCE_EXACT_POOL6_DEPENDENCY",
+      "safe_message": "provider executed a different command",
+      "source_commit": "095177db7903075eaa9cae35308b28492a74a008",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "source_paths": [
+        "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+        "runtime_protocol/service.py"
+      ],
+      "source_reason": "pool6 SOURCE_EXACT: GenuineTimeline.create -> shared _create_fixture; reviewed 095177 helper submits semantic birth, reloads canonical source, then guarded-patches the exact occ-a path.",
+      "status": "ERROR",
+      "time_seconds": "2.553"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D86_POOL6_CONTINUATION_ONLY",
+      "exception_type": "RuntimeErrorBase",
+      "family": "F-M2-pool6",
+      "home_receipt": "25c1e182614145c54decb07afc384180cc8e7e34",
+      "node_id": "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_placing_pooled_media_promotes_it_in_one_batch_that_undoes_as_one[video]",
+      "ordinal": 81,
+      "owner": "handoff-agt-F-pool6-source-exact.md",
+      "review_status": "SOURCE_EXACT_POOL6_DEPENDENCY",
+      "safe_message": "provider executed a different command",
+      "source_commit": "095177db7903075eaa9cae35308b28492a74a008",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "source_paths": [
+        "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+        "runtime_protocol/service.py"
+      ],
+      "source_reason": "pool6 SOURCE_EXACT: GenuineTimeline.create -> shared _create_fixture; reviewed 095177 helper submits semantic birth, reloads canonical source, then guarded-patches the exact occ-a path.",
+      "status": "ERROR",
+      "time_seconds": "2.134"
+    },
+    {
+      "authorization": "NEW_ELIGIBLE_D86_POOL6_CONTINUATION_ONLY",
+      "exception_type": "RuntimeErrorBase",
+      "family": "F-M2-pool6",
+      "home_receipt": "25c1e182614145c54decb07afc384180cc8e7e34",
+      "node_id": "tests/editing_conformance/test_recipe_m2_shot_pool.py::test_provider_accepts_add_and_remove_with_exact_undo_and_redo",
+      "ordinal": 82,
+      "owner": "handoff-agt-F-pool6-source-exact.md",
+      "review_status": "SOURCE_EXACT_POOL6_DEPENDENCY",
+      "safe_message": "provider executed a different command",
+      "source_commit": "095177db7903075eaa9cae35308b28492a74a008",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "source_paths": [
+        "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+        "runtime_protocol/service.py"
+      ],
+      "source_reason": "pool6 SOURCE_EXACT: GenuineTimeline.create -> shared _create_fixture; reviewed 095177 helper submits semantic birth, reloads canonical source, then guarded-patches the exact occ-a path.",
+      "status": "ERROR",
+      "time_seconds": "0.441"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_TARGETED_ROUTE_PENDING",
+      "exception_type": "AssertionError",
+      "family": "CLI-document8",
+      "home_receipt": "a0b8a3c0783c34da3e98f18725bdd99b7c874acb",
+      "node_id": "tests/packs/timeline/test_cli_document_commit.py::test_document_commit_changed_body_with_same_key_is_runtime_refusal",
+      "ordinal": 83,
+      "owner": "rt-D86-CLI-review-0022-report.md",
+      "review_status": "rt-D86-CLI-review-0022-report.md",
+      "safe_message": "assert 1 == 0",
+      "source_commit": "27dc8f04cd1fff78debcf07d5f7e14aaf5c76b59",
+      "source_file_line": "tests/packs/timeline/test_cli_document_commit.py:304",
+      "source_paths": [
+        "tests/packs/timeline/test_cli_document_commit.py"
+      ],
+      "source_reason": "actual10077 selected argv had no retained JUnit case under prior -m integration route; first body only through existing targeted route without that filter",
+      "status": "FAIL",
+      "time_seconds": "0.237"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_TARGETED_ROUTE_PENDING",
+      "exception_type": "AssertionError",
+      "family": "CLI-document8",
+      "home_receipt": "a0b8a3c0783c34da3e98f18725bdd99b7c874acb",
+      "node_id": "tests/packs/timeline/test_cli_document_commit.py::test_document_commit_clean_raw_empty_app_is_a_noop",
+      "ordinal": 84,
+      "owner": "rt-D86-CLI-review-0022-report.md",
+      "review_status": "rt-D86-CLI-review-0022-report.md",
+      "safe_message": "assert 1 == 0",
+      "source_commit": "27dc8f04cd1fff78debcf07d5f7e14aaf5c76b59",
+      "source_file_line": "tests/packs/timeline/test_cli_document_commit.py:252",
+      "source_paths": [
+        "tests/packs/timeline/test_cli_document_commit.py"
+      ],
+      "source_reason": "actual10077 selected argv had no retained JUnit case under prior -m integration route; first body only through existing targeted route without that filter",
+      "status": "FAIL",
+      "time_seconds": "0.491"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_TARGETED_ROUTE_PENDING",
+      "exception_type": "AssertionError",
+      "family": "CLI-document8",
+      "home_receipt": "a0b8a3c0783c34da3e98f18725bdd99b7c874acb",
+      "node_id": "tests/packs/timeline/test_cli_document_commit.py::test_document_commit_human_output_keeps_label_and_receipt",
+      "ordinal": 85,
+      "owner": "rt-D86-CLI-review-0022-report.md",
+      "review_status": "rt-D86-CLI-review-0022-report.md",
+      "safe_message": "assert 1 == 0",
+      "source_commit": "27dc8f04cd1fff78debcf07d5f7e14aaf5c76b59",
+      "source_file_line": "tests/packs/timeline/test_cli_document_commit.py:286",
+      "source_paths": [
+        "tests/packs/timeline/test_cli_document_commit.py"
+      ],
+      "source_reason": "actual10077 selected argv had no retained JUnit case under prior -m integration route; first body only through existing targeted route without that filter",
+      "status": "FAIL",
+      "time_seconds": "0.163"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_TARGETED_ROUTE_PENDING",
+      "exception_type": "AssertionError",
+      "family": "CLI-document8",
+      "home_receipt": "a0b8a3c0783c34da3e98f18725bdd99b7c874acb",
+      "node_id": "tests/packs/timeline/test_cli_document_commit.py::test_document_commit_preserves_unknown_parent_app_data",
+      "ordinal": 86,
+      "owner": "rt-D86-CLI-review-0022-report.md",
+      "review_status": "rt-D86-CLI-review-0022-report.md",
+      "safe_message": "assert 1 == 0",
+      "source_commit": "27dc8f04cd1fff78debcf07d5f7e14aaf5c76b59",
+      "source_file_line": "tests/packs/timeline/test_cli_document_commit.py:266",
+      "source_paths": [
+        "tests/packs/timeline/test_cli_document_commit.py"
+      ],
+      "source_reason": "actual10077 selected argv had no retained JUnit case under prior -m integration route; first body only through existing targeted route without that filter",
+      "status": "FAIL",
+      "time_seconds": "0.278"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_TARGETED_ROUTE_PENDING",
+      "exception_type": "AssertionError",
+      "family": "CLI-document8",
+      "home_receipt": "a0b8a3c0783c34da3e98f18725bdd99b7c874acb",
+      "node_id": "tests/packs/timeline/test_cli_document_commit.py::test_document_commit_preview_has_no_accepted_receipt",
+      "ordinal": 87,
+      "owner": "rt-D86-CLI-review-0022-report.md",
+      "review_status": "rt-D86-CLI-review-0022-report.md",
+      "safe_message": "assert 1 == 0",
+      "source_commit": "27dc8f04cd1fff78debcf07d5f7e14aaf5c76b59",
+      "source_file_line": "tests/packs/timeline/test_cli_document_commit.py:323",
+      "source_paths": [
+        "tests/packs/timeline/test_cli_document_commit.py"
+      ],
+      "source_reason": "actual10077 selected argv had no retained JUnit case under prior -m integration route; first body only through existing targeted route without that filter",
+      "status": "FAIL",
+      "time_seconds": "0.366"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_TARGETED_ROUTE_PENDING",
+      "exception_type": "AssertionError",
+      "family": "CLI-document8",
+      "home_receipt": "a0b8a3c0783c34da3e98f18725bdd99b7c874acb",
+      "node_id": "tests/packs/timeline/test_cli_document_commit.py::test_document_commit_retry_does_not_scan_a_long_history_page",
+      "ordinal": 88,
+      "owner": "rt-D86-CLI-review-0022-report.md",
+      "review_status": "rt-D86-CLI-review-0022-report.md",
+      "safe_message": "assert 1 == 0",
+      "source_commit": "27dc8f04cd1fff78debcf07d5f7e14aaf5c76b59",
+      "source_file_line": "tests/packs/timeline/test_cli_document_commit.py:225",
+      "source_paths": [
+        "tests/packs/timeline/test_cli_document_commit.py"
+      ],
+      "source_reason": "actual10077 selected argv had no retained JUnit case under prior -m integration route; first body only through existing targeted route without that filter",
+      "status": "FAIL",
+      "time_seconds": "0.204"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_TARGETED_ROUTE_PENDING",
+      "exception_type": "AssertionError",
+      "family": "CLI-document8",
+      "home_receipt": "a0b8a3c0783c34da3e98f18725bdd99b7c874acb",
+      "node_id": "tests/packs/timeline/test_cli_document_commit.py::test_document_commit_retry_uses_runtime_idempotency_without_history_scan",
+      "ordinal": 89,
+      "owner": "rt-D86-CLI-review-0022-report.md",
+      "review_status": "rt-D86-CLI-review-0022-report.md",
+      "safe_message": "assert 1 == 0",
+      "source_commit": "27dc8f04cd1fff78debcf07d5f7e14aaf5c76b59",
+      "source_file_line": "tests/packs/timeline/test_cli_document_commit.py:204",
+      "source_paths": [
+        "tests/packs/timeline/test_cli_document_commit.py"
+      ],
+      "source_reason": "actual10077 selected argv had no retained JUnit case under prior -m integration route; first body only through existing targeted route without that filter",
+      "status": "FAIL",
+      "time_seconds": "0.439"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_TARGETED_ROUTE_PENDING",
+      "exception_type": "AssertionError",
+      "family": "CLI-document8",
+      "home_receipt": "a0b8a3c0783c34da3e98f18725bdd99b7c874acb",
+      "node_id": "tests/packs/timeline/test_cli_document_commit.py::test_document_commit_uses_the_authenticated_commit_door",
+      "ordinal": 90,
+      "owner": "rt-D86-CLI-review-0022-report.md",
+      "review_status": "rt-D86-CLI-review-0022-report.md",
+      "safe_message": "assert 1 == 0",
+      "source_commit": "27dc8f04cd1fff78debcf07d5f7e14aaf5c76b59",
+      "source_file_line": "tests/packs/timeline/test_cli_document_commit.py:182",
+      "source_paths": [
+        "tests/packs/timeline/test_cli_document_commit.py"
+      ],
+      "source_reason": "actual10077 selected argv had no retained JUnit case under prior -m integration route; first body only through existing targeted route without that filter",
+      "status": "FAIL",
+      "time_seconds": "0.315"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_PENDING",
+      "exception_type": "RuntimeErrorBase",
+      "family": "D86-provider-custody-netzero",
+      "home_receipt": "cef8a5be53f68a7cd3b5403c362171c5633a5ae9",
+      "node_id": "tests/sdk/test_timeline_commit_provider_add_delete_runtime.py::test_native_add_delete_one_publication_inverse_redo_restart_reservations[net-zero]",
+      "ordinal": 91,
+      "owner": "agt-F-netzero-review-0215.md",
+      "review_status": "agt-F-netzero-review-0215.md",
+      "safe_message": "nested inverse mirrors exceed accepted effects",
+      "source_commit": "f32a890e3b949557bd0677cbe6b448d195dce3aa",
+      "source_file_line": "runtime_protocol/service.py:2518",
+      "source_paths": [
+        "tests/sdk/test_timeline_commit_provider_add_delete_runtime.py",
+        "runtime_protocol/service.py"
+      ],
+      "source_reason": "PASS_SOURCE net-zero-only selector; full-row absent/present inverse predicates preserved; replace-existing remains held separately",
+      "status": "FAIL",
+      "time_seconds": "1.932"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_TARGETED_ROUTE_PENDING",
+      "exception_type": "",
+      "family": "WC6-eleven",
+      "home_receipt": "159e11abf5e19973cab462f264c6c51f8267bdd1",
+      "node_id": "tests/sdk/test_wc6_completion_capture.py::test_absent_selected_key_is_explicit[None]",
+      "ordinal": 92,
+      "owner": "agt-F-wc6-review-2328.md",
+      "review_status": "agt-F-wc6-review-2328.md",
+      "safe_message": "",
+      "source_commit": "b9aa2809eb27793af9ac60c8a73d56c6b353626e",
+      "source_file_line": "",
+      "source_paths": [
+        "tests/sdk/test_wc6_completion_capture.py"
+      ],
+      "source_reason": "actual10077 selected argv had no retained JUnit case under prior -m integration route; source-reviewed fixture/home correspondence retained and first body pending",
+      "status": "PASS",
+      "time_seconds": "0.005"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_TARGETED_ROUTE_PENDING",
+      "exception_type": "",
+      "family": "WC6-eleven",
+      "home_receipt": "159e11abf5e19973cab462f264c6c51f8267bdd1",
+      "node_id": "tests/sdk/test_wc6_completion_capture.py::test_absent_selected_key_is_explicit[other]",
+      "ordinal": 93,
+      "owner": "agt-F-wc6-review-2328.md",
+      "review_status": "agt-F-wc6-review-2328.md",
+      "safe_message": "",
+      "source_commit": "b9aa2809eb27793af9ac60c8a73d56c6b353626e",
+      "source_file_line": "",
+      "source_paths": [
+        "tests/sdk/test_wc6_completion_capture.py"
+      ],
+      "source_reason": "actual10077 selected argv had no retained JUnit case under prior -m integration route; source-reviewed fixture/home correspondence retained and first body pending",
+      "status": "PASS",
+      "time_seconds": "0.007"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_TARGETED_ROUTE_PENDING",
+      "exception_type": "",
+      "family": "WC6-eleven",
+      "home_receipt": "159e11abf5e19973cab462f264c6c51f8267bdd1",
+      "node_id": "tests/sdk/test_wc6_completion_capture.py::test_credentials_excluded_and_second_invocation_not_observed",
+      "ordinal": 94,
+      "owner": "agt-F-wc6-review-2328.md",
+      "review_status": "agt-F-wc6-review-2328.md",
+      "safe_message": "",
+      "source_commit": "b9aa2809eb27793af9ac60c8a73d56c6b353626e",
+      "source_file_line": "",
+      "source_paths": [
+        "tests/sdk/test_wc6_completion_capture.py"
+      ],
+      "source_reason": "actual10077 selected argv had no retained JUnit case under prior -m integration route; source-reviewed fixture/home correspondence retained and first body pending",
+      "status": "PASS",
+      "time_seconds": "0.006"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_TARGETED_ROUTE_PENDING",
+      "exception_type": "AssertionError",
+      "family": "WC6-eleven",
+      "home_receipt": "159e11abf5e19973cab462f264c6c51f8267bdd1",
+      "node_id": "tests/sdk/test_wc6_completion_capture.py::test_preserved_original_and_mounted_source_attachment",
+      "ordinal": 95,
+      "owner": "agt-F-wc6-review-2328.md",
+      "review_status": "agt-F-wc6-review-2328.md",
+      "safe_message": "assert '113994232e2c...1f095d9e7ffef' == '62c30a6d9d3a...9a5aa446e10f7'",
+      "source_commit": "b9aa2809eb27793af9ac60c8a73d56c6b353626e",
+      "source_file_line": "tests/sdk/test_wc6_completion_capture.py:234",
+      "source_paths": [
+        "tests/sdk/test_wc6_completion_capture.py"
+      ],
+      "source_reason": "actual10077 selected argv had no retained JUnit case under prior -m integration route; source-reviewed fixture/home correspondence retained and first body pending",
+      "status": "FAIL",
+      "time_seconds": "0.003"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_TARGETED_ROUTE_PENDING",
+      "exception_type": "",
+      "family": "WC6-eleven",
+      "home_receipt": "159e11abf5e19973cab462f264c6c51f8267bdd1",
+      "node_id": "tests/sdk/test_wc6_completion_capture.py::test_real_coordinator_delegates_once_and_preserves_outcome[close-error]",
+      "ordinal": 96,
+      "owner": "agt-F-wc6-review-2328.md",
+      "review_status": "agt-F-wc6-review-2328.md",
+      "safe_message": "",
+      "source_commit": "b9aa2809eb27793af9ac60c8a73d56c6b353626e",
+      "source_file_line": "",
+      "source_paths": [
+        "tests/sdk/test_wc6_completion_capture.py"
+      ],
+      "source_reason": "actual10077 selected argv had no retained JUnit case under prior -m integration route; source-reviewed fixture/home correspondence retained and first body pending",
+      "status": "PASS",
+      "time_seconds": "0.010"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_TARGETED_ROUTE_PENDING",
+      "exception_type": "",
+      "family": "WC6-eleven",
+      "home_receipt": "159e11abf5e19973cab462f264c6c51f8267bdd1",
+      "node_id": "tests/sdk/test_wc6_completion_capture.py::test_real_coordinator_delegates_once_and_preserves_outcome[lookup-masks-error]",
+      "ordinal": 97,
+      "owner": "agt-F-wc6-review-2328.md",
+      "review_status": "agt-F-wc6-review-2328.md",
+      "safe_message": "",
+      "source_commit": "b9aa2809eb27793af9ac60c8a73d56c6b353626e",
+      "source_file_line": "",
+      "source_paths": [
+        "tests/sdk/test_wc6_completion_capture.py"
+      ],
+      "source_reason": "actual10077 selected argv had no retained JUnit case under prior -m integration route; source-reviewed fixture/home correspondence retained and first body pending",
+      "status": "PASS",
+      "time_seconds": "0.010"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_TARGETED_ROUTE_PENDING",
+      "exception_type": "",
+      "family": "WC6-eleven",
+      "home_receipt": "159e11abf5e19973cab462f264c6c51f8267bdd1",
+      "node_id": "tests/sdk/test_wc6_completion_capture.py::test_real_coordinator_delegates_once_and_preserves_outcome[port-construction-error]",
+      "ordinal": 98,
+      "owner": "agt-F-wc6-review-2328.md",
+      "review_status": "agt-F-wc6-review-2328.md",
+      "safe_message": "",
+      "source_commit": "b9aa2809eb27793af9ac60c8a73d56c6b353626e",
+      "source_file_line": "",
+      "source_paths": [
+        "tests/sdk/test_wc6_completion_capture.py"
+      ],
+      "source_reason": "actual10077 selected argv had no retained JUnit case under prior -m integration route; source-reviewed fixture/home correspondence retained and first body pending",
+      "status": "PASS",
+      "time_seconds": "0.009"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_TARGETED_ROUTE_PENDING",
+      "exception_type": "",
+      "family": "WC6-eleven",
+      "home_receipt": "159e11abf5e19973cab462f264c6c51f8267bdd1",
+      "node_id": "tests/sdk/test_wc6_completion_capture.py::test_real_coordinator_delegates_once_and_preserves_outcome[provider-error]",
+      "ordinal": 99,
+      "owner": "agt-F-wc6-review-2328.md",
+      "review_status": "agt-F-wc6-review-2328.md",
+      "safe_message": "",
+      "source_commit": "b9aa2809eb27793af9ac60c8a73d56c6b353626e",
+      "source_file_line": "",
+      "source_paths": [
+        "tests/sdk/test_wc6_completion_capture.py"
+      ],
+      "source_reason": "actual10077 selected argv had no retained JUnit case under prior -m integration route; source-reviewed fixture/home correspondence retained and first body pending",
+      "status": "PASS",
+      "time_seconds": "0.014"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_TARGETED_ROUTE_PENDING",
+      "exception_type": "",
+      "family": "WC6-eleven",
+      "home_receipt": "159e11abf5e19973cab462f264c6c51f8267bdd1",
+      "node_id": "tests/sdk/test_wc6_completion_capture.py::test_real_coordinator_delegates_once_and_preserves_outcome[success]",
+      "ordinal": 100,
+      "owner": "agt-F-wc6-review-2328.md",
+      "review_status": "agt-F-wc6-review-2328.md",
+      "safe_message": "",
+      "source_commit": "b9aa2809eb27793af9ac60c8a73d56c6b353626e",
+      "source_file_line": "",
+      "source_paths": [
+        "tests/sdk/test_wc6_completion_capture.py"
+      ],
+      "source_reason": "actual10077 selected argv had no retained JUnit case under prior -m integration route; source-reviewed fixture/home correspondence retained and first body pending",
+      "status": "PASS",
+      "time_seconds": "0.013"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_TARGETED_ROUTE_PENDING",
+      "exception_type": "AssertionError",
+      "family": "WC6-eleven",
+      "home_receipt": "159e11abf5e19973cab462f264c6c51f8267bdd1",
+      "node_id": "tests/sdk/test_wc6_completion_capture.py::test_session_calls_mounted_service_real_provider_and_port_offline",
+      "ordinal": 101,
+      "owner": "agt-F-wc6-review-2328.md",
+      "review_status": "agt-F-wc6-review-2328.md",
+      "safe_message": "assert 'transport_error' == 'not_ready'",
+      "source_commit": "b9aa2809eb27793af9ac60c8a73d56c6b353626e",
+      "source_file_line": "tests/sdk/test_wc6_completion_capture.py:304",
+      "source_paths": [
+        "tests/sdk/test_wc6_completion_capture.py"
+      ],
+      "source_reason": "actual10077 selected argv had no retained JUnit case under prior -m integration route; source-reviewed fixture/home correspondence retained and first body pending",
+      "status": "FAIL",
+      "time_seconds": "0.038"
+    },
+    {
+      "authorization": "LATER_FIRST_BODY_TARGETED_ROUTE_PENDING",
+      "exception_type": "",
+      "family": "WC6-eleven",
+      "home_receipt": "159e11abf5e19973cab462f264c6c51f8267bdd1",
+      "node_id": "tests/sdk/test_wc6_completion_capture.py::test_sink_failure_preserves_original_exception",
+      "ordinal": 102,
+      "owner": "agt-F-wc6-review-2328.md",
+      "review_status": "agt-F-wc6-review-2328.md",
+      "safe_message": "",
+      "source_commit": "b9aa2809eb27793af9ac60c8a73d56c6b353626e",
+      "source_file_line": "",
+      "source_paths": [
+        "tests/sdk/test_wc6_completion_capture.py"
+      ],
+      "source_reason": "actual10077 selected argv had no retained JUnit case under prior -m integration route; source-reviewed fixture/home correspondence retained and first body pending",
+      "status": "PASS",
+      "time_seconds": "0.008"
+    }
+  ],
+  "publication_safety": {
+    "auth_body_urls_private_stack_published": false,
+    "generated_or_schema_changes": false,
+    "product_changes": false,
+    "safe_excerpt_policy": "bounded message and source file:line only; use original hashes/private artifacts for full evidence",
+    "source_only": true,
+    "test_changes": false
+  },
+  "request_id": "agent-fd86-later102-first-body-0303-1025030606-11789",
+  "schema": "timeline.f-d86-11789.per-id-outcomes.v1",
+  "source_dependency_delta": [
+    {
+      "authorization": "no current-delta repair claim; source-only provenance",
+      "captured_cef8_sha256": "not-bound-to-later-set",
+      "current_normal_sha256": "f8b994ff51c972e1fad821f61713ad9010866505e237c07357f71e8daea5e6fc",
+      "path": "tests/editing_conformance/test_native_sheet_current_runtime.py",
+      "relevant_selected_seam": "already-reviewed source captured before actual trace; exact path retained"
+    },
+    {
+      "authorization": "no current-delta repair claim; source-only provenance",
+      "captured_cef8_sha256": "not-bound-to-later-set",
+      "current_normal_sha256": "aad40f65c3fec32468bbe99f4b328d02a4cd9497e59debdd138265bc0a042545",
+      "path": "tests/editing_conformance/test_commit_runtime_m1.py",
+      "relevant_selected_seam": "already-reviewed source captured before actual trace; exact path retained"
+    },
+    {
+      "authorization": "no current-delta repair claim; source-only provenance",
+      "captured_cef8_sha256": "not-bound-to-later-set",
+      "current_normal_sha256": "3e225883044678e0af68867e2873faf988bf10090d7d17898d6d1092d3a635db",
+      "path": "tests/editing_conformance/native_word_anchor_fixture.py",
+      "relevant_selected_seam": "already-reviewed source captured before actual trace; exact path retained"
+    },
+    {
+      "authorization": "no current-delta repair claim; source-only provenance",
+      "captured_cef8_sha256": "not-bound-to-later-set",
+      "current_normal_sha256": "ab07f5b9cda3a42d0c9273917b46d9486c39b453b979d2ad5d39df5528d4179f",
+      "path": "tests/editing_conformance/test_native_word_anchor.py",
+      "relevant_selected_seam": "already-reviewed source captured before actual trace; exact path retained"
+    },
+    {
+      "authorization": "no current-delta repair claim; source-only provenance",
+      "captured_cef8_sha256": "not-bound-to-later-set",
+      "current_normal_sha256": "d68d83ab729d8e559e1b056263993d1247ef0430fe622add7874b795b8782cc0",
+      "path": "tests/editing_conformance/test_next_command_cohort_runtime.py",
+      "relevant_selected_seam": "already-reviewed source captured before actual trace; exact path retained"
+    },
+    {
+      "authorization": "no current-delta repair claim; source-only provenance",
+      "captured_cef8_sha256": "not-bound-to-later-set",
+      "current_normal_sha256": "06da641ccf0f3bfcda9b12b3940dea3850d79afbc4fa9be96fab551dc530d4e2",
+      "path": "tests/editing_conformance/test_commit_runtime_native_frontends.py",
+      "relevant_selected_seam": "already-reviewed source captured before actual trace; exact path retained"
+    },
+    {
+      "authorization": "no current-delta repair claim; source-only provenance",
+      "captured_cef8_sha256": "not-bound-to-later-set",
+      "current_normal_sha256": "cf0adf68aa3f1509ea82899c85549d4bed3b32ad84f6c552ce2e026138a29461",
+      "path": "tests/editing_conformance/test_commit_runtime_native_checkout.py",
+      "relevant_selected_seam": "already-reviewed source captured before actual trace; exact path retained"
+    },
+    {
+      "authorization": "no current-delta repair claim; source-only provenance",
+      "captured_cef8_sha256": "not-bound-to-later-set",
+      "current_normal_sha256": "b0e8bfb466fd12f1d4ccbd6b065f8cffc78e41c6a33dfe94245119e16b7434e9",
+      "path": "tests/sdk/test_timeline_commit_provider_add_delete_runtime.py",
+      "relevant_selected_seam": "already-reviewed source captured before actual trace; exact path retained"
+    },
+    {
+      "authorization": "no current-delta repair claim; source-only provenance",
+      "captured_cef8_sha256": "not-bound-to-later-set",
+      "current_normal_sha256": "d4888723f78c2e37f5a22c7584decc57d16e81c155c429943a3eed38a5c1d0ec",
+      "path": "tests/sdk/test_wc6_completion_capture.py",
+      "relevant_selected_seam": "already-reviewed source captured before actual trace; exact path retained"
+    },
+    {
+      "authorization": "no current-delta repair claim; source-only provenance",
+      "captured_cef8_sha256": "not-bound-to-later-set",
+      "current_normal_sha256": "a169b1616ed65e0865b2dd06aa962d34c618e57cc87bd0589110c6a05e9dcef4",
+      "path": "tests/packs/timeline/test_cli_document_commit.py",
+      "relevant_selected_seam": "already-reviewed source captured before actual trace; exact path retained"
+    },
+    {
+      "authorization": "no current-delta repair claim; source-only provenance",
+      "captured_cef8_sha256": "not-bound-to-later-set",
+      "current_normal_sha256": "7fbdd2f08dc1c772ce57500705a46a8b4a012d50ccd76918c50f1d45ae020b7e",
+      "path": "tests/editing_conformance/test_recipe_m2_shot_pool.py",
+      "relevant_selected_seam": "already-reviewed source captured before actual trace; exact path retained"
+    },
+    {
+      "authorization": "no current-delta repair claim; source-only provenance",
+      "captured_cef8_sha256": "not-bound-to-later-set",
+      "current_normal_sha256": "f03e19caa0b6505a42d17fc0eaca77a4794fafb863619bdc4876b14bd63b0357",
+      "path": "tests/core/test_timeline_element_publication_runtime.py",
+      "relevant_selected_seam": "already-reviewed source captured before actual trace; exact path retained"
+    }
+  ],
+  "task": "F-D86-11789"
+}
