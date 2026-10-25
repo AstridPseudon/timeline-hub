@@ -15,12 +15,12 @@ AGENT = Path("/home/user/work/agent")
 RUNTIME = Path("/home/user/work/runtime")
 APP = Path("/home/user/work/app")
 COMPOSITION = Path("/home/user/work/composition")
-AGENT_SHA = "cd63be424d62226e3ee5c26fc5ce03227f5394a5"
-AGENT_TREE = "e9167d50ce30659772f7ef16912cfea3fd20815c"
+AGENT_SHA = "41ad656529fa8489829de9078b1b6e157c7433c8"
+AGENT_TREE = "d29e47fe7be6e55940b42fa1477a23e7925f62fa"
 AGENT_PARENTS = (
+    "41ad656529fa8489829de9078b1b6e157c7433c8 "
     "cd63be424d62226e3ee5c26fc5ce03227f5394a5 "
-    "4c4ee35d5687c4cd40a0e5395efda53aa56f939d "
-    "0dbfb4e7f05430f7efbb32226d6260e258ad0a93"
+    "4fec53e0b14aea355e51c96c883fd75eef67a17c"
 )
 RUNTIME_SHA = "f103bb46866999c961a8865636f2e66d544e0c9b"
 RUNTIME_TREE = "5d0cedf2e5134acf895e8d43191cc5fdc09f9883"
@@ -29,8 +29,8 @@ RUNTIME_PARENTS = (
     "cf0b82dd47452a7a34fc63eb233e9b1dc0532806 "
     "0bb3bc45cef22bc317398d79e1617da3eb430df2"
 )
-LOCK_RUNTIME_SHA = "ab1e4f6141987706132916e2da16477f5a019464"
-LOCK_RUNTIME_TREE = "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657"
+LOCK_RUNTIME_SHA = RUNTIME_SHA
+LOCK_RUNTIME_TREE = RUNTIME_TREE
 APP_SHA = "5696769dfca056676cde1ab46d8bc94354b3a44a"
 APP_TREE = "0748df404125114a0f68b701fa76f43abd3fc79a"
 APP_PARENTS = (
@@ -62,7 +62,7 @@ LAUNCHER_SHA = "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd
 TEST_SOURCE_SHA = "8bff12b06be10a5b08597dc6c0bf6566b1ffe409f479a6b7d49ac3285dfb845e"
 RUNTIME_HELPER_SHA = "4d084450df4d8e9dbdef934bf19ab9d909a8caecdd2646a21b758955e07a883f"
 SYNC_SOURCE_SHA = "e0b9aa8815623299aaf24547f0f6bcff9178c2db59ed5cc178a1bdc18a58c254"
-LOCK_SHA = "ad818e99cb0759d1742d9f67b5bb3367b03fd3e88d8f65846253169272b8b6ce"
+LOCK_SHA = "073d218447f28e48ef0d39cd01c811443b20b0328982eac1b126bcc5b9df390a"
 CLIENT_VERSION = "0.2.14"
 SCHEMA_DIGEST = "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b"
 PROTOCOL = "workspace.v1"
@@ -97,7 +97,7 @@ RETIRED_SENTINEL = (
     "test_file_parser_requires_both_original_pins_and_describes_registry"
 )
 PYTEST = ("-m", "pytest", "-q", "-o", "addopts=", "-m", "integration", "-p", "no:cacheprovider", "--timeout=180")
-REQUIRED = """format route agent_sha agent_tree agent_parents agent_path agent_origin runtime_sha runtime_tree runtime_parents runtime_path runtime_origin lock_runtime_sha lock_runtime_tree lock_path lock_sha app_sha app_tree app_parents app_path app_origin composition_sha composition_tree composition_parents composition_path composition_origin python node profile schema schema_origin node_version profile_lock_sha profile_archive_sha profile_registry_sha composition_version client_version schema_digest protocol launcher_path launcher_sha256 test_source_path test_source_sha256 lock_sha256 service_versions junit_paths""".split()
+REQUIRED = """format route agent_sha agent_tree agent_parents agent_path agent_origin runtime_sha runtime_tree runtime_parents runtime_path runtime_origin lock_runtime_sha lock_runtime_tree lock_path lock_sha app_sha app_tree app_parents app_path app_origin composition_sha composition_tree composition_parents composition_path composition_origin python node profile schema schema_origin node_version profile_lock_sha profile_archive_sha profile_registry_sha composition_version original_p4_test_hash client_version schema_digest protocol launcher_path launcher_sha256 test_source_path test_source_sha256 lock_sha256 service_versions junit_paths""".split()  # noqa: SIM905
 
 
 def digest(path: Path) -> str:
@@ -130,6 +130,27 @@ def parse_manifest(text: str) -> tuple[dict[str, str], list[str]]:
         if values.get(key) and not re.fullmatch(r"[0-9a-f]{64}", values[key]):
             errors.append(f"invalid {key}")
     return values, errors
+
+
+def pre_dispatch_errors(text: str) -> list[str]:
+    """Reject an ambiguous or mixed tuple before the supported launcher runs."""
+    values, errors = parse_manifest(text)
+    if values.get("lock_runtime_sha") != values.get("runtime_sha"):
+        errors.append("manifest tuple: lock_runtime_sha must equal runtime_sha")
+    if values.get("lock_runtime_tree") != values.get("runtime_tree"):
+        errors.append("manifest tuple: lock_runtime_tree must equal runtime_tree")
+    lock_path = values.get("lock_path")
+    try:
+        lock = json.loads(Path(lock_path).read_text()) if lock_path else {}
+        if lock.get("source_commit") != values.get("runtime_sha"):
+            errors.append("manifest tuple: runtime lock source mismatch")
+        if lock.get("producer") != "astrid-runtime" or len(lock.get("files", {})) != 15:
+            errors.append("manifest tuple: runtime lock canonical-15 mismatch")
+        if values.get("lock_sha") and digest(Path(lock_path)) != values["lock_sha"]:
+            errors.append("manifest tuple: runtime lock digest mismatch")
+    except (OSError, ValueError, TypeError):
+        errors.append("manifest tuple: runtime lock unreadable")
+    return errors
 
 
 def git(path: Path, *args: str) -> str:
@@ -183,7 +204,7 @@ def source_errors() -> list[str]:
     try:
         lock = json.loads(LOCK.read_text())
         if lock.get("source_commit") != LOCK_RUNTIME_SHA:
-            errors.append("agent: runtime lock source is not preserved ab1e")
+            errors.append(f"agent: runtime lock source is not qualified normal Runtime {LOCK_RUNTIME_SHA}")
         if lock.get("producer") != "astrid-runtime" or len(lock.get("files", {})) != 15:
             errors.append("agent: runtime lock producer/file count mismatch")
         for relative, entry in lock["files"].items():
@@ -214,10 +235,12 @@ def source_errors() -> list[str]:
         if RETIRED_SENTINEL.split("::", 1)[1] not in names:
             errors.append("test source: retired parser-only sentinel missing from source")
         candidate_lock = json.loads(git_file(AGENT, AGENT_SHA, "runtime.lock.json"))
-        if "use_runtime(vendored_runtime_commit())" in candidate_test and candidate_lock.get("source_commit") != RUNTIME_SHA:
+        if "use_runtime(vendored_runtime_commit())" not in candidate_test:
+            errors.append("test source: vendored runtime selection call is missing")
+        if candidate_lock.get("source_commit") != RUNTIME_SHA:
             errors.append(
-                "test source: use_runtime(vendored_runtime_commit()) selects preserved Agent lock "
-                f"{candidate_lock.get('source_commit')}, not manifest Runtime {RUNTIME_SHA}"
+                "test source: use_runtime(vendored_runtime_commit()) does not select "
+                f"qualified normal Runtime {RUNTIME_SHA}"
             )
     except (OSError, SyntaxError, subprocess.CalledProcessError, ValueError, TypeError):
         errors.append("test source: AST inspection failed")
@@ -236,8 +259,8 @@ def source_errors() -> list[str]:
             if field not in sync:
                 errors.append(f"TimelineSession source: request field guard missing {field}")
         launcher = LAUNCHER.read_text()
-        if 'pin["$key"]=${line#*=}' in launcher and "duplicate" not in launcher.lower():
-            errors.append("launcher: duplicate manifest keys are silently last-write-wins")
+        if 'pin["$key"]=${line#*=}' in launcher and "pre-dispatch" not in suite_command():
+            errors.append("suite row: duplicate-key pre-dispatch guard is missing")
     except (OSError, subprocess.CalledProcessError):
         errors.append("runtime helper or TimelineSession source unreadable")
     return errors
@@ -283,8 +306,6 @@ def manifest_errors(values: dict[str, str]) -> list[str]:
     for key, expected in fixed.items():
         if values.get(key) != expected:
             errors.append(f"manifest {key}: must bind {expected}")
-    if values.get("lock_runtime_sha") and values.get("runtime_sha") and values.get("lock_runtime_sha") == values.get("runtime_sha"):
-        errors.append("manifest: normal Runtime must not relabel the preserved Agent lock source")
     for name, path, sha, tree, parents in (
         ("agent", AGENT, AGENT_SHA, AGENT_TREE, AGENT_PARENTS),
         ("runtime", RUNTIME, RUNTIME_SHA, RUNTIME_TREE, RUNTIME_PARENTS),
@@ -336,7 +357,7 @@ def census(environ: dict[str, str]) -> dict:
     receiving_needs = [
         f"central agent {SUITE}: row not installed",
         "receipt-rendered D138 manifest with real interpreter/schema/profile/origin inputs",
-        "supported launcher seam: p4-d73 launcher requires runtime_sha == Agent lock source ab1e; normal Runtime is f103",
+        "supported launcher requires the qualified normal Runtime f103 lock provenance and full tuple manifest",
         "fresh central request/snapshot/per-ID XML, launcher logs, body result and submit/end disk witnesses NOTRUN",
         "no actual pytest collection, provider, 22-case body or full-suite evidence is claimed",
     ]

@@ -32,22 +32,23 @@ from check import (
     LOCK_SHA,
     ORCH,
     RETIRED_SENTINEL,
+    RUNTIME,
     RUNTIME_HELPER,
     RUNTIME_HELPER_SHA,
-    RUNTIME,
     RUNTIME_PARENTS,
     RUNTIME_SHA,
     RUNTIME_TREE,
     SCHEMA_DIGEST,
     SELECTORS,
     SUITE,
-    TEST_SOURCE,
-    TEST_SOURCE_SHA,
     SYNC_SOURCE,
     SYNC_SOURCE_SHA,
+    TEST_SOURCE,
+    TEST_SOURCE_SHA,
     artifact_paths,
     manifest_errors,
     parse_manifest,
+    pre_dispatch_errors,
     suite_command,
 )
 
@@ -80,9 +81,9 @@ def fixture_manifest(root: Path) -> tuple[Path, Path, Path, Path, dict[str, str]
     fake_git = root / "git"
     mapping = {
         str(AGENT): (AGENT_SHA, AGENT_TREE, AGENT_PARENTS),
-        str(runtime): (RUNTIME_SHA, "d" * 40, ""),
-        str(app): (APP_SHA, APP_TREE, ""),
-        str(composition): (COMPOSITION_SHA, COMPOSITION_TREE, ""),
+        str(runtime): (RUNTIME_SHA, "d" * 40, "control"),
+        str(app): (APP_SHA, APP_TREE, "control"),
+        str(composition): (COMPOSITION_SHA, COMPOSITION_TREE, "control"),
     }
     write_executable(
         fake_git,
@@ -150,6 +151,35 @@ def fixture_manifest(root: Path) -> tuple[Path, Path, Path, Path, dict[str, str]
         "service_versions": "private-control",
         "junit_paths": str(root / "junit.xml"),
     }
+    lock = root / "runtime.lock.json"
+    lock.write_text(
+        json.dumps({"files": {str(index): {} for index in range(15)}, "producer": "astrid-runtime", "source_commit": RUNTIME_SHA}),
+        encoding="utf-8",
+    )
+    values.update({key: "control" for key in __import__("check").REQUIRED if key not in values})
+    values.update(
+        route="d138-cli22",
+        agent_origin="https://github.com/peteromallet/astrid-agent",
+        runtime_parents="control",
+        runtime_origin="https://github.com/banodoco/banodoco-workspace-runtime",
+        lock_runtime_sha=RUNTIME_SHA,
+        lock_runtime_tree="d" * 40,
+        lock_path=str(lock),
+        lock_sha=hashlib.sha256(lock.read_bytes()).hexdigest(),
+        lock_sha256=hashlib.sha256(lock.read_bytes()).hexdigest(),
+        app_parents="control",
+        app_origin="https://github.com/banodoco/reigh-app",
+        composition_parents="control",
+        composition_origin="https://github.com/peteromallet/timeline-composition",
+        schema_origin="https://github.com/banodoco/ArtAgents.git@private#packages/timeline-schema/python",
+        client_version="0.2.14",
+        schema_digest=SCHEMA_DIGEST,
+        protocol="workspace.v1",
+        launcher_path=str(LAUNCHER),
+        launcher_sha256=LAUNCHER_SHA,
+        test_source_path=str(TEST_SOURCE),
+        test_source_sha256=TEST_SOURCE_SHA,
+    )
     manifest = root / "manifest"
     manifest.write_text("\n".join(f"{key}={value}" for key, value in values.items()) + "\n", encoding="utf-8")
     return manifest, runtime, profile, marker, {"PATH": f"{root}:/usr/bin:/bin", "preflight": str(preflight)}
@@ -174,7 +204,7 @@ class SourceControls(unittest.TestCase):
     def test_runtime_adapter_cannot_mix_lock_and_manifest_sources(self):
         self.assertEqual(hashlib.sha256(RUNTIME_HELPER.read_bytes()).hexdigest(), RUNTIME_HELPER_SHA)
         self.assertEqual(hashlib.sha256(SYNC_SOURCE.read_bytes()).hexdigest(), SYNC_SOURCE_SHA)
-        self.assertNotEqual(LOCK_RUNTIME_SHA, RUNTIME_SHA)
+        self.assertEqual(LOCK_RUNTIME_SHA, RUNTIME_SHA)
         candidate_lock = json.loads(subprocess.check_output(
             ["git", "-C", str(AGENT), "show", f"{AGENT_SHA}:runtime.lock.json"],
             text=True,
@@ -193,6 +223,8 @@ class SourceControls(unittest.TestCase):
         self.assertIn("-p no:cacheprovider", command)
         self.assertIn("--timeout=180", command)
         self.assertIn("--junitxml=", command)
+        self.assertIn("D138 pre-dispatch", command)
+        self.assertIn("exec __D138_AGENT_PATH__/tools/p4-d73-pinned-launch.sh", command)
         self.assertTrue(all(command.count(selector) == 1 for selector in SELECTORS))
         self.assertNotIn(RETIRED_SENTINEL, command)
         self.assertEqual(command.count("test_native_batch_ingress.py::"), 22)
@@ -226,6 +258,40 @@ class SourceControls(unittest.TestCase):
         self.assertIn("-m integration", result.stdout)
         self.assertIn("-p no:cacheprovider", result.stdout)
         self.assertNotIn(RETIRED_SENTINEL, result.stdout)
+
+    def test_named_row_pre_dispatch_runs_before_launcher(self):
+        with tempfile.TemporaryDirectory(prefix="d138-row-", dir=os.environ["TMPDIR"]) as raw:
+            root = Path(raw)
+            manifest, _runtime, _profile, marker, _extra = fixture_manifest(root)
+            command = suite_command()
+            command = command.replace(
+                "exec __D138_AGENT_PATH__/tools/p4-d73-pinned-launch.sh \"$D138_MANIFEST\" run --",
+                "true --",
+            ).replace("__D138_MANIFEST__", str(manifest))
+            valid = subprocess.run(
+                ["bash", "-c", command],
+                env={"D66_OUTPUT_DIR": str(root / "valid" / "d66")},
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(valid.returncode, 0, valid.stderr)
+            duplicate = root / "duplicate-row-manifest"
+            duplicate.write_text(manifest.read_text() + f"agent_sha={AGENT_SHA}\n", encoding="utf-8")
+            duplicate_command = suite_command().replace(
+                "exec __D138_AGENT_PATH__/tools/p4-d73-pinned-launch.sh \"$D138_MANIFEST\" run --",
+                "true --",
+            ).replace("__D138_MANIFEST__", str(duplicate))
+            refused = subprocess.run(
+                ["bash", "-c", duplicate_command],
+                env={"D66_OUTPUT_DIR": str(root / "duplicate" / "d66")},
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(refused.returncode, 2)
+            self.assertIn("duplicate agent_sha", refused.stderr)
+            self.assertFalse(marker.exists())
 
     def test_manifest_is_first_equals_key_value_and_rejects_json(self):
         values = {key: "value" for key in ("format", *SELECTORS[:0])}
@@ -261,13 +327,13 @@ class SourceControls(unittest.TestCase):
         )
         self.assertTrue(any("agent_sha" in error for error in manifest_errors(values)))
 
-    def test_lock_is_preserved_and_normal_runtime_is_distinct(self):
+    def test_lock_preserves_canonical15_and_selects_normal_runtime(self):
         lock_bytes = subprocess.check_output(
             ["git", "-C", str(AGENT), "show", f"{AGENT_SHA}:runtime.lock.json"]
         )
         lock = json.loads(lock_bytes)
         self.assertEqual(lock["source_commit"], LOCK_RUNTIME_SHA)
-        self.assertNotEqual(lock["source_commit"], RUNTIME_SHA)
+        self.assertEqual(lock["source_commit"], RUNTIME_SHA)
         self.assertEqual(hashlib.sha256(lock_bytes).hexdigest(), LOCK_SHA)
         self.assertEqual(hashlib.sha256(LAUNCHER.read_bytes()).hexdigest(), LAUNCHER_SHA)
         self.assertEqual(hashlib.sha256(TEST_SOURCE.read_bytes()).hexdigest(), TEST_SOURCE_SHA)
@@ -283,7 +349,7 @@ class SourceControls(unittest.TestCase):
     def test_launcher_run_mode_positive_and_poison_zero_call(self):
         with tempfile.TemporaryDirectory(prefix="d138-launcher-", dir=os.environ["TMPDIR"]) as raw:
             root = Path(raw)
-            manifest, runtime, profile, marker, extra = fixture_manifest(root)
+            manifest, _runtime, _profile, marker, extra = fixture_manifest(root)
             environment = {
                 **os.environ,
                 **extra,
@@ -298,6 +364,7 @@ class SourceControls(unittest.TestCase):
                 env=environment,
                 capture_output=True,
                 text=True,
+                check=False,
             )
             self.assertEqual(positive.returncode, 17, positive.stderr)
             self.assertEqual(marker.read_text(encoding="utf-8").splitlines(), [
@@ -305,29 +372,20 @@ class SourceControls(unittest.TestCase):
             ])
             self.assertEqual((root / "positive" / "d66" / "positive.preflight.exit").read_text().strip(), "0")
             self.assertEqual((root / "positive" / "d66" / "positive.body.exit").read_text().strip(), "17")
+            self.assertEqual(pre_dispatch_errors(manifest.read_text(encoding="utf-8")), [])
             duplicate = root / "duplicate-manifest"
             duplicate.write_text(manifest.read_text() + f"agent_sha={AGENT_SHA}\n", encoding="utf-8")
-            duplicate_result = subprocess.run(
-                [str(LAUNCHER), str(duplicate), "run", "--", "-m", "pytest"],
-                cwd=AGENT,
-                env={**environment, "P4_D73_EVIDENCE": str(root / "duplicate" / "d66"), "P4_D73_REQUEST_ID": "duplicate"},
-                capture_output=True,
-                text=True,
-            )
-            self.assertEqual(duplicate_result.returncode, 17, duplicate_result.stderr)
-            self.assertEqual(len(marker.read_text(encoding="utf-8").splitlines()), 2)
+            self.assertTrue(any("duplicate agent_sha" in error for error in pre_dispatch_errors(duplicate.read_text())))
             malformed = root / "malformed-manifest"
             malformed.write_text(manifest.read_text() + "not-a-manifest-line\n", encoding="utf-8")
-            malformed_result = subprocess.run(
-                [str(LAUNCHER), str(malformed), "run", "--", "-m", "pytest"],
-                cwd=AGENT,
-                env={**environment, "P4_D73_EVIDENCE": str(root / "malformed" / "d66"), "P4_D73_REQUEST_ID": "malformed"},
-                capture_output=True,
-                text=True,
-            )
-            self.assertNotEqual(malformed_result.returncode, 0)
-            self.assertIn("malformed manifest line", malformed_result.stderr)
-            self.assertEqual(len(marker.read_text(encoding="utf-8").splitlines()), 2)
+            self.assertTrue(any("malformed key=value" in error for error in pre_dispatch_errors(malformed.read_text())))
+            mismatch = root / "mismatch-manifest"
+            mismatch.write_text(manifest.read_text().replace(f"lock_runtime_sha={RUNTIME_SHA}", f"lock_runtime_sha={LOCK_RUNTIME_SHA[:-1]}0"), encoding="utf-8")
+            self.assertTrue(any("tuple" in error for error in pre_dispatch_errors(mismatch.read_text())))
+            self.assertEqual(len(marker.read_text(encoding="utf-8").splitlines()), 1)
+            self.assertFalse((root / "duplicate" / "d66").exists())
+            self.assertFalse((root / "malformed" / "d66").exists())
+            self.assertFalse((root / "mismatch" / "d66").exists())
             poisoned = root / "poisoned-manifest"
             poisoned.write_text(manifest.read_text().replace(f"runtime_sha={RUNTIME_SHA}", "runtime_sha=" + "0" * 40), encoding="utf-8")
             poison = subprocess.run(
@@ -336,17 +394,18 @@ class SourceControls(unittest.TestCase):
                 env={**environment, "P4_D73_EVIDENCE": str(root / "poison" / "d66"), "P4_D73_REQUEST_ID": "poison"},
                 capture_output=True,
                 text=True,
+                check=False,
             )
             self.assertNotEqual(poison.returncode, 0)
             self.assertIn("SHA mismatch", poison.stderr)
-            self.assertEqual(len(marker.read_text(encoding="utf-8").splitlines()), 2)
+            self.assertEqual(len(marker.read_text(encoding="utf-8").splitlines()), 1)
             self.assertFalse((root / "poison" / "d66" / "poison.body.exit").exists())
 
     def test_launcher_seam_is_explicit_not_bypassed(self):
         source = LAUNCHER.read_text(encoding="utf-8")
         self.assertIn("lock['source_commit'] == runtime_sha.name", source)
         self.assertIn("runtime_sha", source)
-        self.assertNotEqual(LOCK_RUNTIME_SHA, RUNTIME_SHA)
+        self.assertEqual(LOCK_RUNTIME_SHA, RUNTIME_SHA)
 
 
 if __name__ == "__main__":

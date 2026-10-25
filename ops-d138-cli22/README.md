@@ -15,26 +15,27 @@ JUnit path derived from the central request ID. The row is submitted with
 directory. It deliberately excludes the parser-only
 `test_file_parser_requires_both_original_pins_and_describes_registry` case.
 
-The intended source tuple is current Agent `cd63be424d62226e3ee5c26fc5ce03227f5394a5`
-and normal Runtime `f103bb46866999c961a8865636f2e66d544e0c9b`. The Agent
-runtime lock remains the observed `ab1e4f6141987706132916e2da16477f5a019464`;
-it is recorded as lock provenance, not relabelled as normal Runtime adoption.
-App and Composition identities are recorded in the rendered manifest too.
+The qualified source tuple is Agent `41ad656529fa8489829de9078b1b6e157c7433c8`
+and normal Runtime `f103bb46866999c961a8865636f2e66d544e0c9b`. Agent `41ad…`
+has the independently reviewed `4fec…` tree exactly; its only provenance
+change is the lock source moving from `ab1e…` to qualified normal Runtime
+`f103…`. The canonical 15 schema/client/fixture bytes remain exact. App and
+Composition identities are recorded in the rendered manifest too.
 
-The existing launcher is used unchanged, including its preflight. A finite
-receiving seam remains: this launcher directly requires `runtime_sha` to
-equal `runtime.lock.json.source_commit`, so it cannot preflight the intended
-normal Runtime `f103…` while the Agent lock honestly remains `ab1e…`. The
-recipe does not add a launcher or bypass that guard. The source check reports
-this as `NOT_READY`; the private controls still exercise the unmodified
+The existing launcher is used unchanged, including all of its original
+preflight guards. The named row performs a private pre-dispatch check first:
+it requires a complete, unambiguous key=value manifest and verifies that the
+Runtime tuple and canonical-15 lock agree. Duplicate or malformed keys and
+tuple-lock mismatches therefore stop before the launcher can create evidence
+or body artifacts. The private controls still exercise the unmodified
 launcher’s run-mode success (exit 17, one body call) and poisoned-identity
 refusal (zero body calls).
 
-The review is fail-closed on two additional operational facts: the migrated
-fixture’s `use_runtime(vendored_runtime_commit())` follows the preserved Agent
-lock rather than the manifest Runtime, and the unchanged launcher accepts
-duplicate manifest keys last-write-wins. The private controls record both
-findings; they do not retarget the candidate or claim original behavior.
+The private pre-dispatch gate resolves the two prior operational findings: the
+qualified Agent lock now makes `use_runtime(vendored_runtime_commit())` select
+normal Runtime `f103…`, and duplicate keys are refused before the unchanged
+launcher is invoked. The private controls record both attacks and do not
+retarget the candidate or claim original behavior.
 
 No central registry row, manifest, receipt, checkout, dependency, schema
 carrier, install, product test, or 22-case body run is created here.
