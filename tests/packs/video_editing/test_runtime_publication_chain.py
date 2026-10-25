@@ -24,7 +24,11 @@ from astrid.core.execution.generic_host import (
     RuntimeProtocolClient,
     source_checkout_digest,
 )
-from astrid.packs.rendering.actions.assemble_timeline.run import build_authoring_proposal
+from astrid.core.receipts.canonical import canonical_json
+from astrid.packs.rendering.actions.assemble_timeline.run import (
+    build_authoring_proposal,
+    build_native_proposal,
+)
 from astrid.packs.rendering.shared.runtime_stitch import publish_authoring_proposal
 from astrid.sdk.client import AstridClient
 from astrid.sdk.timeline.assembly import read_assembly_proposal
@@ -817,7 +821,9 @@ def _claim_child(service, capability: str, *, key: str) -> dict:
     return {"task_id": claim["task_id"], "attempt_id": row["id"], "lease_id": row["lease_id"], "fence": row["fence"], "runtime_epoch": row["runtime_epoch"]}
 
 
-def _settle_child(service, attempt: dict, *, index: int, value: bytes, digest: str) -> dict:
+def _settle_child(
+    service, attempt: dict, *, index: int, value: bytes, digest: str, project_id: str
+) -> dict:
     service.settle_attempt(
         attempt["attempt_id"],
         {
@@ -828,12 +834,19 @@ def _settle_child(service, attempt: dict, *, index: int, value: bytes, digest: s
             "outputs": [{
                 "digest": digest,
                 "data_base64": base64.b64encode(value).decode(),
+                "kind": "object",
                 "media_type": "video/mp4",
+                "size": len(value),
                 "name": f"child-{index}",
+                "output_port": "video",
+                "group_key": "main",
+                "variant_key": "primary",
+                "ordinal": 0,
                 "role": "primary",
                 "is_primary": True,
                 "duration_seconds": 1.0,
             }],
+            "effect": _media_effect(project_id),
         },
         idempotency_key=f"chain-settle-{index}",
     )
@@ -860,7 +873,9 @@ def _media_effect(project_id: str) -> dict:
 @pytest.mark.integration
 def test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task(tmp_path, real_runtime):
     """Exercise child settlement -> authoring -> fenced publication -> render admission."""
-    daemon = real_runtime()
+    from tests.helpers.runtime import vendored_runtime_commit
+
+    daemon = real_runtime(commit=vendored_runtime_commit(), authoring_profile="astrid")
     service = daemon.service
     try:
         project = service.create_project({"slug": "chain", "name": "Chain"})
@@ -872,67 +887,124 @@ def test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task(tm
             {"executor_id": "chain-worker", "capabilities": [child_cap, author_cap, render_cap], "max_concurrency": 4},
             idempotency_key="chain-register",
         )
-        service.create_timeline_document(
-            project["id"], {"timeline_id": "main", "slug": "main", "name": "Main", "config": {}, "registry": {}},
-            idempotency_key="chain-timeline",
-        )
+        service.create_timeline(project["id"], "main", name="Main", idempotency_key="chain-timeline")
         child_ids = []
         for index in range(2):
             task = service.create_task({
                 "project": project["id"], "capability_id": child_cap, "capability_digest": digests[child_cap],
-                "input_object_ids": [], "spec": {"index": index}, "idempotency_key": f"chain-child-{index}",
+                "input_object_ids": [], "spec": {"index": index},
+                "settlement_effect": _media_effect(project["id"]),
+                "idempotency_key": f"chain-child-{index}",
             })
             child_ids.append(task["task"]["id"])
-        service.create_task({
-            "project": project["id"], "capability_id": author_cap, "capability_digest": digests[author_cap],
-            "input_object_ids": [], "idempotency_key": "chain-author",
-            "spec": {"runtime_dependencies": {"edges": [
-                {"from_task_id": task_id, "to": "self", "requires_event": "task.succeeded", "fence": "runtime_task"}
-                for task_id in child_ids
-            ], "aggregation": {"kind": "ordered_cas_inputs", "order": []}}},
-        })
         outputs = [_digest(b"child-zero"), _digest(b"child-one")]
         claims = [_claim_child(service, child_cap, key=f"chain-claim-child-{index}") for index in range(2)]
         assert {claim["task_id"] for claim in claims} == set(child_ids)
         by_task = {claim["task_id"]: claim for claim in claims}
         # Deliberately settle ordinal 1 before ordinal 0; claim order is
         # runtime-owned and may differ from admission order.
-        _settle_child(service, by_task[child_ids[1]], index=1, value=b"child-one", digest=outputs[1])
-        _settle_child(service, by_task[child_ids[0]], index=0, value=b"child-zero", digest=outputs[0])
-
-        author_claim = service.claim_next(
-            {"executor_id": "chain-worker", "capability_ids": [author_cap], "runtime_epoch": service.health()["runtime_epoch"]},
-            idempotency_key="chain-claim-author",
+        _settle_child(
+            service, by_task[child_ids[1]], index=1, value=b"child-one", digest=outputs[1],
+            project_id=project["id"],
         )
-        author_row = service.store.conn.execute("SELECT * FROM attempts WHERE task_id=?", (author_claim["task_id"],)).fetchone()
-        runtime_attempt = {"attempt_id": author_row["id"], "lease_id": author_row["lease_id"], "fence": author_row["fence"], "runtime_epoch": author_row["runtime_epoch"]}
-        author_task = service.task(author_claim["task_id"])["task"]
-        # Feed the exact Runtime claim envelope into the authoring executor;
-        # no enriched test-only descriptors are inserted here.
-        proposal = build_authoring_proposal({
-            "task_id": author_task["id"],
-            "capability_id": author_task["capability"],
-            "input_object_ids": author_task["spec"]["input_object_ids"],
-            "spec": author_task["spec"],
-        })
+        _settle_child(
+            service, by_task[child_ids[0]], index=0, value=b"child-zero", digest=outputs[0],
+            project_id=project["id"],
+        )
+
         client = AstridClient.open(
             endpoint=daemon.endpoint,
             credential=daemon.credential_path,
             realm_id=service.realm["id"], actor_id="owner", client_name="astrid-chain-test",
             client_version="stage1", protocol_version="workspace.v1",
         )
+        session = TimelineSession.open(
+            project["id"], "main", client=client,
+            outbox_path=tmp_path / "chain-outbox.json",
+        )
+        selectors = []
+        for child_id in child_ids:
+            association = next(
+                row for row in service.managed_outputs(child_id)
+                if row["output_port"] == "video"
+            )
+            selectors.append({
+                "association_id": association["association_id"],
+                "object_id": association["object_id"],
+                "version": association["lifecycle"]["version"],
+            })
+        admission = session.admit_assembly(
+            selectors, replace_clips=[], assembler_digest=digests[author_cap],
+            idempotency_key="chain-author",
+        )
+        author = admission["data"]["task_id"]
+
+        author_claim = service.claim_next(
+            {"executor_id": "chain-worker", "capability_ids": [author_cap], "runtime_epoch": service.health()["runtime_epoch"]},
+            idempotency_key="chain-claim-author",
+        )
+        author_row = service.store.conn.execute("SELECT * FROM attempts WHERE task_id=?", (author_claim["task_id"],)).fetchone()
+        runtime_attempt = {
+            "attempt_id": author_row["id"], "lease_id": author_row["lease_id"],
+            "fence": author_row["fence"], "runtime_epoch": author_row["runtime_epoch"],
+        }
+        author_task = service.task(author_claim["task_id"])["task"]
+        admitted_spec = author_task["spec"]["spec"]
+        capture = admitted_spec["inputs"]["resolved_children"]
+        dependencies = admitted_spec["runtime_dependencies"]
+        payload = {
+            "family": admitted_spec["family"],
+            "continuation_id": author_claim["task_id"],
+            "resolved_children": dependencies["resolved_children"],
+            "edges": dependencies["edges"],
+            "aggregation": dependencies["aggregation"],
+            "capture": capture,
+            "associations": [
+                service.managed_output(child["association"]["association_id"])
+                for child in capture["children"]
+            ],
+            "producer": {
+                "task_id": author_claim["task_id"], "attempt_id": runtime_attempt["attempt_id"],
+                "executor_id": author_row["executor_id"], "fence": runtime_attempt["fence"],
+                "runtime_epoch": runtime_attempt["runtime_epoch"],
+            },
+        }
+        # Reproduce the registered assembler's exact source seam: the claimed
+        # Runtime envelope becomes a native producer proposal before settlement.
+        proposal = build_native_proposal(payload, build_authoring_proposal(payload))
+        raw_proposal = canonical_json(proposal).encode()
+        service.settle_attempt(
+            author_claim["attempt_id"],
+            {
+                "attempt_id": author_claim["attempt_id"], "lease_id": author_claim["lease_id"],
+                "fence": author_claim["fence"], "runtime_epoch": author_claim["runtime_epoch"],
+                "outputs": [{
+                    "digest": _digest(raw_proposal), "data_base64": base64.b64encode(raw_proposal).decode(),
+                    "kind": "object", "size": len(raw_proposal),
+                    "media_type": "application/json", "name": "authoring_proposal",
+                    "output_port": "authoring_proposal", "group_key": "default",
+                    "variant_key": "0", "ordinal": 0, "role": "output",
+                }],
+            },
+            idempotency_key="chain-settle-author",
+        )
+        settled = read_assembly_proposal(session, author, attempt_id=author_claim["attempt_id"])
+        assert settled == proposal
         result = publish_authoring_proposal(
             client, proposal=proposal, timeline_id="main", expected_version=1,
             runtime_attempt=runtime_attempt, render_capability_digest=digests[render_cap],
-            output_name="chain.mp4", idempotency_key="chain-publish",
+            output_name="chain.mp4", requester_session=session, idempotency_key="chain-publish",
         )
-        assert result["timeline_version"] == 2
+        accepted = result["data"]
+        assert accepted["status"] in {"accepted", "merged", "rebased"}
+        assert accepted["accepted_revision_id"]
+        assert accepted["accepted_publication_id"] == result["receipt"]["receipt_id"]
         assert service.store.conn.execute("SELECT COUNT(*) FROM tasks WHERE capability=?", (render_cap,)).fetchone()[0] == 1
         render = service.task(result["render_task_id"])["task"]
-        snapshot_ref = render["spec"]["spec"]["inputs"]["timeline_snapshot_ref"]
-        snapshot = json.loads(service.object(snapshot_ref["digest"])[1])
-        assert snapshot["config"] == proposal["timeline"]
-        assert render["spec"]["spec"]["inputs"]["expected_version"] == 2
+        render_params = render["spec"]["spec"]["params"]
+        assert render_params["timeline_ref"] == "main"
+        assert render_params["canonical_revision"]["revision_id"] == accepted["accepted_revision_id"]
+        assert render_params["canonical_revision"]["publication_id"] == accepted["accepted_publication_id"]
         # The checkpoint admits the ordinary public renderer; the next worker
         # claim therefore sees rendering.render without a stitch-specific task.
         render_claim = service.claim_next(
