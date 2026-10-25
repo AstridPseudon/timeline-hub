@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T04:51:57Z | dispatcher heartbeat 2s | live 2 (sol 0, luna 2, other 0) | busy30 8 | status age 1m -->
-# app board, 2026-10-25T04:51Z
+<!-- app | 2026-10-25T04:55:38Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 1m -->
+# app board, 2026-10-25T04:53Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -208,7 +208,7 @@
 | P2-placement26522-source | Qualify complete canonical projection | Luna; independent | Rereview0443 PASS | merged | app-P2-placement26522-canonical-rereview-0443 | Independent134 controls/types/lint PASS;5 prior mutations rejected. Exact two reviewed blobs equal normal home. Mounted proof still owed. | Home9cb56c2a3f |
 | U4p-D97 | Adopt released verified-history state | Luna normal tools | Runtime0c62 security0420 PASS | merged | app-U4p-D97-adoption-0438 | Normal8 strict,15 vendor,14 mappings,3 artifact controls PASS; protected6 exact. Only lock/installmanifest changed. | Home3199118dce |
 | P2-D97-SWAP | Qualify native SWAP inverse on D97 | Luna; service | Actual2714 terminal | gated:inverse-source | Actual2714; wholepath0450 | Readiness1PASS; original1FAIL76.77s at native Undo503495via902. Eventual backend cause unknown; no unchanged repeat. | 319911/5fae/0c62/635f |
-| P2-D97-ADD | Qualify native ADD inverse on D97 | Luna; service | SWAP2714 terminal | doing | app-P2-D97-held-sequence-0450 | Sole ADD next, then element and parent serially. Same319911/5fae/0c62/635f; actual ID pending genuine plan. | Adopted tuple |
+| P2-D97-ADD | Qualify native ADD inverse on D97 | Luna; service | Preflight21639 PASS | doing | app-P2-D97-held-sequence-0450 | Actual15473 submitted04:51:57; same ID only. Element and parent follow serially. | 319911/5fae/0c62/635f |
 | P2-D97-element-parent | Qualify two remaining original waits | Luna; service | ADD terminal; heavy slot | gated:body-slot | app-P2-D97-held-sequence-0450 | Owner04:45 lifts prior hold; one body at a time. Full tour after eight isolated GO or named open causes. | Adopted tuple |
 | P2-D97-SWAP2714-path | Compare failed and passing native inverse | Luna read only | Actual2714 after D97 fails | doing | app-P2-D97-SWAP2714-wholepath-0450 | Retained current ordinal/phase facts plus whole client-server path against passing single/asset Undo. No body or collector. | Source unchanged |
 Integration: Normal App9cb56c2a3f includes reviewed complete placement closure oracle over D97 adoption319911. Exact two reviewed blobs home; current held originals stay captured319911/5fae/0c62/635f.
@@ -217,10 +217,10 @@ regressions: No newly proven regression. P1 actual31083 and P3 actual15493 retai
 
 Blockers: Final cut — D97 is adopted; latest owner04:45 requires four isolated originals then full P2. Final pinned P1–P5/core and genuine installed render still precede ZIP.
 Blockers: Original proof — D97 adoption319911 is home. Owner04:45 now orders SWAP then ADD, followed element and parent, one heavy body at a time. Full tour after all8 isolated GO or named open causes.
-Next ready: Sole sequence0450 owns ADD,element,parent in order; readonly wholepath0450 owns failedSWAP currentfacts. Reviewed placement9cb56 browser proof waits serial order. Fulltour after8GO or named causes.
+Next ready: Sole sequence0450 owns actual ADD15473,element,parent in order; readonly wholepath0450 owns failedSWAP currentfacts. Reviewed placement9cb56 browser proof waits serial order. Fulltour after8GO or named causes.
 live 2 / cap 6; ready-undispatched 0. Held sequence0450 reserves sole heavy slot; wholepath0450 is read only. No duplicate App or main body.
-Capacity: Current free6.25GB after SWAP terminal. Fresh ended clean nonKEEP scan zero eligible. Every ended nonKEEP local App worktree checked; zero clean eligible trees remain. Earlier35 pins recycled normally with all outputs, branches and reports retained. Old dirty and prior-refused targets untouched.
-Inbox consumed through1907765 bytes. Runtime parent artifact wait cleared by normal hub safe packet0328; unredacted worker log remains private. No repeated cleanup denial, cost0215 or withdrawn D88 route.
+Capacity: Current free5.74GB during ADD15473. Heavy floor5.2GB; source cap6 above5.0GB. Fresh ended clean nonKEEP scan zero eligible. Every ended nonKEEP local App worktree checked; zero clean eligible trees remain. Earlier35 pins recycled normally with all outputs, branches and reports retained. Old dirty and prior-refused targets untouched.
+Inbox consumed through1909101 bytes. Runtime parent artifact wait cleared by normal hub safe packet0328; unredacted worker log remains private. No repeated cleanup denial, cost0215 or withdrawn D88 route.
 
 Later: D79 and E paused until ZIP. F-final fresh Appd11417a59 and Agent08e6 applied-result suites belong to Runtime final coordinator. Gating stays frozen upstream3881. Withdrawn D88 and denied actions stay held; protective D88b6634 adopted normally.
 Evidence: [Bulk GO](../../design/app-P2-bulk21852-GO-return-0339.md), [Placement FAIL](../../design/app-A3-placement12145-review-0335.md), [Asset GO](../../design/app-P2-asset27438-GO-review-0315.md), [Single GO](../../design/app-P2-single5678-GO-resume-0255.md).
