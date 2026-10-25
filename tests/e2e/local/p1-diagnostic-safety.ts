@@ -31,18 +31,26 @@ export const MOUNTED_DIAGNOSTIC_ERROR_CODES = [
   'owner-claim-invalidated', 'owner-recovery-ambiguous', 'owner-history-invalidated',
 ] as const;
 export const MOUNTED_DIAGNOSTIC_ERROR_CLASSES = ['TimelineVersionConflictError', 'Error'] as const;
+const MOUNTED_BOOTSTRAP_DIAGNOSTIC_ERROR_CLASSES = [
+  ...MOUNTED_DIAGNOSTIC_ERROR_CLASSES, 'TypeError', 'ReferenceError', 'SyntaxError', 'RangeError', 'URIError', 'EvalError', 'DOMException',
+] as const;
 
 export const MOUNTED_DIAGNOSTIC_PHASES = [
   'schedule', 'capture-called', 'capture-resolved', 'capture-rejected', 'owner-init', 'owner-closed',
   'basis-operation', 'basis-dependencies-committed', 'owner-retired', 'lifecycle-cancel', 'basis-read', 'basis-ready', 'basis-unavailable', 'basis-error',
   'identity-read', 'session-created', 'session-recovered', 'session-changed', 'adoption-start',
   'adoption-complete', 'adopted-read', 'handoff-ready', 'owner-error',
+  'connection-route', 'page-error',
 ] as const;
 
 const MOUNTED_DIAGNOSTIC_PHASE_SET = new Set<string>(MOUNTED_DIAGNOSTIC_PHASES);
 const MOUNTED_DIAGNOSTIC_ERROR_CODE_SET = new Set<string>(MOUNTED_DIAGNOSTIC_ERROR_CODES);
 const MOUNTED_DIAGNOSTIC_ERROR_CLASS_SET = new Set<string>(MOUNTED_DIAGNOSTIC_ERROR_CLASSES);
 const MOUNTED_DIAGNOSTIC_PRIORITY_PHASE_SET = new Set(['capture-rejected', 'basis-error', 'owner-error']);
+const MOUNTED_BOOTSTRAP_DIAGNOSTIC_PHASE_SET = new Set(['connection-route', 'page-error']);
+const MOUNTED_BOOTSTRAP_DIAGNOSTIC_FIELDS = [
+  'connectionRoute', 'connectionStatus', 'connectionOutcome', 'pageErrorClass', 'pageErrorCategory',
+] as const;
 const MOUNTED_DIAGNOSTIC_FIELDS = [
   'version', 'sequence', 'time', 'phase', 'projectId', 'timelineId', 'clipId', 'ownerAlias', 'generation',
   'sessionPresent', 'closed', 'current', 'identityPresent', 'scopeMatched', 'mountedHead', 'originalHead',
@@ -112,6 +120,26 @@ function mountedErrorClass(value: unknown): string {
   return typeof value === 'string' && MOUNTED_DIAGNOSTIC_ERROR_CLASS_SET.has(value) ? value : UNKNOWN;
 }
 
+function mountedConnectionRoute(value: unknown): string {
+  return value === 'health' || value === 'handshake' || value === 'realm' ? value : UNKNOWN;
+}
+
+function mountedConnectionStatus(value: unknown): number | 'UNKNOWN' {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 100 && value <= 599 ? value : UNKNOWN;
+}
+
+function mountedConnectionOutcome(value: unknown): string {
+  return value === 'ok' || value === 'redirect' || value === 'http-error' || value === 'transport-failure' || value === 'unknown' ? value : UNKNOWN;
+}
+
+function mountedBootstrapErrorClass(value: unknown): string {
+  return typeof value === 'string' && MOUNTED_BOOTSTRAP_DIAGNOSTIC_ERROR_CLASSES.includes(value as typeof MOUNTED_BOOTSTRAP_DIAGNOSTIC_ERROR_CLASSES[number]) ? value : UNKNOWN;
+}
+
+function mountedPageErrorCategory(value: unknown): string {
+  return value === 'runtime' ? value : UNKNOWN;
+}
+
 function mountedHead(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return { revisionId: UNKNOWN, publicationId: UNKNOWN };
   const source = value as object;
@@ -152,7 +180,7 @@ function mountedNumericRecord(value: unknown): Record<string, unknown> {
   return result;
 }
 
-function mountedRecordField(detail: object, key: typeof MOUNTED_DIAGNOSTIC_FIELDS[number], phase: string): unknown {
+function mountedRecordField(detail: object, key: typeof MOUNTED_DIAGNOSTIC_FIELDS[number] | typeof MOUNTED_BOOTSTRAP_DIAGNOSTIC_FIELDS[number], phase: string): unknown {
   const field = mountedOwnData(detail, key);
   if (key === 'version') return 1;
   if (key === 'dependencyBaselinePresent' || key === 'providerChanged' || key === 'timelineChanged' || key === 'headChanged' || key === 'dataRefChanged' || key === 'editSeqRefChanged' || key === 'adoptionChanged' || key === 'ownerChanged' || key === 'resolverChanged' || key === 'localSaveChanged') return mountedSafeBoolean(field.value);
@@ -177,6 +205,11 @@ function mountedRecordField(detail: object, key: typeof MOUNTED_DIAGNOSTIC_FIELD
   if (key === 'errorStage') return field.present ? mountedErrorStage(field.value) : UNKNOWN;
   if (key === 'errorCode') return MOUNTED_DIAGNOSTIC_PRIORITY_PHASE_SET.has(phase) && field.present ? mountedErrorCode(field.value) : UNKNOWN;
   if (key === 'errorClass') return MOUNTED_DIAGNOSTIC_PRIORITY_PHASE_SET.has(phase) && field.present ? mountedErrorClass(field.value) : UNKNOWN;
+  if (key === 'connectionRoute') return field.present ? mountedConnectionRoute(field.value) : UNKNOWN;
+  if (key === 'connectionStatus') return field.present ? mountedConnectionStatus(field.value) : UNKNOWN;
+  if (key === 'connectionOutcome') return field.present ? mountedConnectionOutcome(field.value) : UNKNOWN;
+  if (key === 'pageErrorClass') return field.present ? mountedBootstrapErrorClass(field.value) : UNKNOWN;
+  if (key === 'pageErrorCategory') return field.present ? mountedPageErrorCategory(field.value) : UNKNOWN;
   return field.present ? mountedSafeScalar(field.value) : UNKNOWN;
 }
 
@@ -189,6 +222,9 @@ export function projectMountedDiagnosticDetail(detail: unknown): MountedDiagnost
   }
   const record: Record<string, unknown> = {};
   for (const key of MOUNTED_DIAGNOSTIC_FIELDS) record[key] = mountedRecordField(detail, key, phase.value);
+  if (MOUNTED_BOOTSTRAP_DIAGNOSTIC_PHASE_SET.has(phase.value)) {
+    for (const key of MOUNTED_BOOTSTRAP_DIAGNOSTIC_FIELDS) record[key] = mountedRecordField(detail, key, phase.value);
+  }
   return { accepted: true, record };
 }
 
@@ -203,13 +239,15 @@ export function mountedDiagnosticInitScript(options: { buffer: string; maxRecord
         return descriptor && 'value' in descriptor ? { present: true, value: descriptor.value } : { present: false };
       } catch { return { present: false }; }
     };
-    const phases = new Set(['schedule', 'capture-called', 'capture-resolved', 'capture-rejected', 'owner-init', 'owner-closed', 'basis-operation', 'basis-dependencies-committed', 'owner-retired', 'lifecycle-cancel', 'basis-read', 'basis-ready', 'basis-unavailable', 'basis-error', 'identity-read', 'session-created', 'session-recovered', 'session-changed', 'adoption-start', 'adoption-complete', 'adopted-read', 'handoff-ready', 'owner-error']);
+    const phases = new Set(['schedule', 'capture-called', 'capture-resolved', 'capture-rejected', 'owner-init', 'owner-closed', 'basis-operation', 'basis-dependencies-committed', 'owner-retired', 'lifecycle-cancel', 'basis-read', 'basis-ready', 'basis-unavailable', 'basis-error', 'identity-read', 'session-created', 'session-recovered', 'session-changed', 'adoption-start', 'adoption-complete', 'adopted-read', 'handoff-ready', 'owner-error', 'connection-route', 'page-error']);
+    const bootstrapPhases = new Set(['connection-route', 'page-error']);
     const numericFields = ['from', 'to', 'at', 'hold', 'speed'];
     const states = new Set(['present', 'absent', 'null', 'UNKNOWN']);
     const errorCodes = new Set(['original-head-unavailable', 'capture-source-head-unavailable', 'capture-input-head-unavailable', 'source-parent-unavailable', 'source-parent-mismatch', 'source-clip-identity', 'source-track-identity', 'source-bundle-mismatch', 'original-read-unavailable', 'authored-collection-unavailable', 'authored-binding-ambiguous', 'authored-identity-unavailable', 'display-container-unbound', 'trim-binding-mismatch', 'explicit-clear-unavailable', 'display-value-unbound', 'child-ownership-unavailable', 'local-document-changed', 'parent-mirror-mismatch', 'gesture-basis-mismatch', 'gesture-clips-unavailable', 'gesture-clip-ambiguous', 'gesture-registry-unavailable', 'registry-mirror-mismatch', 'split-time-unavailable', 'move-track-mismatch', 'move-tracks-unavailable', 'move-track-ambiguous', 'move-routing-unavailable', 'trim-operands-unavailable', 'capture-owner-unavailable', 'capture-owner-replaced', 'owner-original-read-invalidated', 'owner-identity-invalidated', 'owner-retirement-invalidated', 'owner-claim-invalidated', 'owner-recovery-ambiguous', 'owner-history-invalidated']);
     const errorClasses = new Set(['TimelineVersionConflictError', 'Error']);
     const priorityPhases = new Set(['capture-rejected', 'basis-error', 'owner-error']);
     const fields = ['version', 'sequence', 'time', 'phase', 'projectId', 'timelineId', 'clipId', 'ownerAlias', 'generation', 'sessionPresent', 'closed', 'current', 'identityPresent', 'scopeMatched', 'mountedHead', 'originalHead', 'basisStatus', 'gestureKind', 'patch', 'mountedClip', 'sourceClip', 'gestureClip', 'originalClip', 'status', 'ownerPresent', 'recoverableOwnerCount', 'intentsPendingCount', 'errorStage', 'errorCode', 'errorClass', 'dependencyBaselinePresent', 'providerChanged', 'timelineChanged', 'headChanged', 'dataRefChanged', 'editSeqRefChanged', 'adoptionChanged', 'ownerChanged', 'resolverChanged', 'localSaveChanged', 'basisReadOrdinal', 'operation', 'operationOrdinal', 'operationState'];
+    const bootstrapFields = ['connectionRoute', 'connectionStatus', 'connectionOutcome', 'pageErrorClass', 'pageErrorCategory'];
     const unknown = 'UNKNOWN';
     const id = (value: unknown) => value === null ? null : typeof value === 'string' && value.length > 0 && value.length <= 160 && /^[a-zA-Z0-9_.:-]+$/.test(value) && !/^[a-z][a-z\d+.-]*:\/\//i.test(value) ? value : unknown;
     const number = (value: unknown, integer = false) => typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= 1_000_000_000 && (!integer || Number.isInteger(value)) ? value : unknown;
@@ -266,6 +304,14 @@ export function mountedDiagnosticInitScript(options: { buffer: string; maxRecord
         else if (key === 'errorCode') result[key] = rejectionPhase && field.present && (value === 'operation-rejected' || (typeof value === 'string' && errorCodes.has(value))) ? value : unknown;
         else if (key === 'errorClass') result[key] = rejectionPhase && field.present && typeof value === 'string' && errorClasses.has(value) ? value : unknown;
         else result[key] = field.present ? scalar(value) : unknown;
+      }
+      if (bootstrapPhases.has(phase.value)) for (const key of bootstrapFields) {
+        const field = own(detail, key); const value = field.value;
+        if (key === 'connectionRoute') result[key] = field.present && (value === 'health' || value === 'handshake' || value === 'realm') ? value : unknown;
+        else if (key === 'connectionStatus') result[key] = field.present && typeof value === 'number' && Number.isInteger(value) && value >= 100 && value <= 599 ? value : unknown;
+        else if (key === 'connectionOutcome') result[key] = field.present && ['ok', 'redirect', 'http-error', 'transport-failure', 'unknown'].includes(value as string) ? value : unknown;
+        else if (key === 'pageErrorClass') result[key] = field.present && ['TimelineVersionConflictError', 'Error', 'TypeError', 'ReferenceError', 'SyntaxError', 'RangeError', 'URIError', 'EvalError', 'DOMException'].includes(value as string) ? value : unknown;
+        else result[key] = field.present && value === 'runtime' ? value : unknown;
       }
       return result;
     };
