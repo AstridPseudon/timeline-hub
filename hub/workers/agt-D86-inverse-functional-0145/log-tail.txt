@@ -1,206 +1,3 @@
-165-BRIEF: Additional explicit main source-only reservation after originalsix returns (D86 permits morefamilies). Base currentnormal Agent or published reviewedsourcebranch. FaithfulD72 genuinecurrentRuntimebootstrap/capture/provider/setup migration preserving EVERY originalinput/assertion/raises/parameters/decorators/branch and actualnative physicalidentity/createdclaims/CAS/retry/undo/ABA/refusal/no-write. Own only listedfiles; product/otherhelpers/tests read-only. No retiredpublisher/alias/syntheticacceptedhistory/SQL/fakecustody or commandmetadata. Exactoutsideproductcause returnsunappliedseam beforewidening. Source/AST/compile/scopedRuff/mypy baselinecandidate/diff only, NOpytest/body/service/build/functionexecution. One protectedreview before Agentnormalmerge, thenONE unionaffectedMAINbatch. Delete nothing; no generated/pins/kit/sharedledger/M5/upstream/credentials/deniedroutes. CommitnamesF-D86; finalreport/exacthashes/canonicalselectors; under50MB durableevidence.
-166-- tests/editing_conformance/test_commit_runtime_numeric_move.py::test_native_move_keeps_exact_numeric_image_and_unchanged_history[0-0-parent]
-167-- tests/editing_conformance/test_commit_runtime_numeric_move.py::test_native_move_keeps_exact_numeric_image_and_unchanged_history[0-0-occurrence]
-168-- tests/editing_conformance/test_commit_runtime_numeric_move.py::test_native_move_keeps_exact_numeric_image_and_unchanged_history[0.0-0-parent]
-169-- tests/editing_conformance/test_commit_runtime_numeric_move.py::test_native_move_keeps_exact_numeric_image_and_unchanged_history[0.0-0-occurrence]
-170-- tests/editing_conformance/test_commit_runtime_numeric_move.py::test_native_move_keeps_exact_numeric_image_and_unchanged_history[0-1-parent]
-171-- tests/editing_conformance/test_commit_runtime_numeric_move.py::test_native_move_keeps_exact_numeric_image_and_unchanged_history[0-1-occurrence]
-172:- tests/editing_conformance/test_commit_runtime_numeric_params.py::test_native_film_param_edit_preserves_exact_image_and_inverse[2-2.0-occurrence:occurrence-1/clip:clip-1]
-173:- tests/editing_conformance/test_commit_runtime_numeric_params.py::test_native_film_param_edit_preserves_exact_image_and_inverse[1-True-occurrence:occurrence-1/clip:clip-1]
-174:- tests/editing_conformance/test_commit_runtime_numeric_params.py::test_native_film_param_edit_preserves_exact_image_and_inverse[True-1-occurrence:occurrence-1/clip:clip-1]
-175-
-176:FAMILY: D86-manifest-inverse8
-177-NODES: 8
-178:FILES: tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py, tests/editing_conformance/test_occurrence_media_manifest_inverse.py
-179-BRIEF: Additional explicit main source-only reservation. Base current normal Agent, genuine Runtime a3cd released. Read actual rehearsal exception and current transitive fixture changes first; if already source-correct return SOURCE_EXACT with exact dependency hashes instead of unnecessary edits. Otherwise faithful D72 genuine bootstrap/registered provider/current commit setup or bounded product cause returned unapplied. Preserve EVERY original input/assertion/raises/parameter/decorator/branch and source/closure/physical identity/ABI/ABA/no-write guard. ONLY listed tests may change; product and other helpers read-only. No synthetic accepted history/SQL/fake custody/retired publisher/aliases/new CLI envelope. Source AST, compile, scoped Ruff/mypy baseline/candidate, diff only; NO pytest/body/service/build/function execution. One protected review before normal own-only remote Agent merge; then ONE main affected-node batch. Full C0 sections1-5 v2 request/replies and production caller uses it. Delete nothing; no schema/generated/pins/shared ledger/kit/upstream/credentials/M5/denied routes. Commit names F-D86; exact hashes/selectors/proposed existing log entry; durable evidence under50MB.
-180:- tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_compiled_popup_inverse_restores_exact_original_document[add]
-181:- tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_compiled_popup_inverse_restores_exact_original_document[swap]
-182:- tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_multiple_target_pin_changes_use_reverse_publication_order[add-create-undo]
-183:- tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_multiple_target_pin_changes_use_reverse_publication_order[add-undo-redo]
-184:- tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_multiple_target_pin_changes_use_reverse_publication_order[swap-create-undo]
-185:- tests/editing_conformance/test_occurrence_media_manifest_inverse.py::test_multiple_target_pin_changes_use_reverse_publication_order[swap-undo-redo]
-186:- tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py::test_real_media_manifest_inverse_retry_restart_and_history[add]
-187:- tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py::test_real_media_manifest_inverse_retry_restart_and_history[swap]
-188-
-189-FAMILY: D86-occurrence-opaque9
-190-NODES: 9
-191-FILES: tests/editing_conformance/test_commit_runtime_occurrence_create.py, tests/editing_conformance/test_commit_runtime_occurrence_fork.py, tests/editing_conformance/test_commit_runtime_opaque_items.py
-192-BRIEF: Additional explicit main source-only reservation. Base current normal Agent, genuine Runtime a3cd released. Read actual rehearsal exception and current transitive fixture changes first; if already source-correct return SOURCE_EXACT with exact dependency hashes instead of unnecessary edits. Otherwise faithful D72 genuine bootstrap/registered provider/current commit setup or bounded product cause returned unapplied. Preserve EVERY original input/assertion/raises/parameter/decorator/branch and source/closure/physical identity/ABI/ABA/no-write guard. ONLY listed tests may change; product and other helpers read-only. No synthetic accepted history/SQL/fake custody/retired publisher/aliases/new CLI envelope. Source AST, compile, scoped Ruff/mypy baseline/candidate, diff only; NO pytest/body/service/build/function execution. One protected review before normal own-only remote Agent merge; then ONE main affected-node batch. Full C0 sections1-5 v2 request/replies and production caller uses it. Delete nothing; no schema/generated/pins/shared ledger/kit/upstream/credentials/M5/denied routes. Commit names F-D86; exact hashes/selectors/proposed existing log entry; durable evidence under50MB.
-193:- tests/editing_conformance/test_commit_runtime_occurrence_create.py::test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[False]
-194:- tests/editing_conformance/test_commit_runtime_occurrence_create.py::test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[True]
-195-- tests/editing_conformance/test_commit_runtime_occurrence_fork.py::test_registered_fork_normal_wire_accept_edit_and_guarded_undo
-196:- tests/editing_conformance/test_commit_runtime_opaque_items.py::test_occurrence_move_preserves_unknown_item_ids_retry_restart_and_inverse[item_id]
-197:- tests/editing_conformance/test_commit_runtime_opaque_items.py::test_occurrence_move_preserves_unknown_item_ids_retry_restart_and_inverse[id]
-198:- tests/editing_conformance/test_commit_runtime_opaque_items.py::test_occurrence_move_preserves_unknown_item_ids_retry_restart_and_inverse[both]
-199:- tests/editing_conformance/test_commit_runtime_opaque_items.py::test_occurrence_inverse_restores_exact_original_closure[item_id]
-200:- tests/editing_conformance/test_commit_runtime_opaque_items.py::test_occurrence_inverse_restores_exact_original_closure[id]
-201:- tests/editing_conformance/test_commit_runtime_opaque_items.py::test_occurrence_inverse_restores_exact_original_closure[both]
-202-
-203-FAMILY: D86-parent-track3
-204-NODES: 3
-205:FILES: tests/editing_conformance/test_commit_runtime_parent_track_batch_inverse.py, tests/editing_conformance/test_commit_runtime_parent_track_label.py
-206-BRIEF: Additional explicit main source-only reservation. Base current normal Agent, genuine Runtime a3cd released. Read actual rehearsal exception and current transitive fixture changes first; if already source-correct return SOURCE_EXACT with exact dependency hashes instead of unnecessary edits. Otherwise faithful D72 genuine bootstrap/registered provider/current commit setup or bounded product cause returned unapplied. Preserve EVERY original input/assertion/raises/parameter/decorator/branch and source/closure/physical identity/ABI/ABA/no-write guard. ONLY listed tests may change; product and other helpers read-only. No synthetic accepted history/SQL/fake custody/retired publisher/aliases/new CLI envelope. Source AST, compile, scoped Ruff/mypy baseline/candidate, diff only; NO pytest/body/service/build/function execution. One protected review before normal own-only remote Agent merge; then ONE main affected-node batch. Full C0 sections1-5 v2 request/replies and production caller uses it. Delete nothing; no schema/generated/pins/shared ledger/kit/upstream/credentials/M5/denied routes. Commit names F-D86; exact hashes/selectors/proposed existing log entry; durable evidence under50MB.
-207:- tests/editing_conformance/test_commit_runtime_parent_track_batch_inverse.py::test_grouped_parent_track_create_move_reload_undo_redo
-208:- tests/editing_conformance/test_commit_runtime_parent_track_label.py::test_move_then_parent_label_reload_inverse_preserves_newer_disjoint_move
-209-- tests/editing_conformance/test_commit_runtime_parent_track_label.py::test_native_label_cli_lost_ack_then_python_suffix_keeps_original_claims
-210-
-211-FAMILY: D86-ordinary-script4
-212-NODES: 4
-213-FILES: tests/editing_conformance/test_next_ordinary_union_runtime.py, tests/editing_conformance/test_s3_reviewed_cohort_runtime.py, tests/sdk/test_timeline_script.py
-214-BRIEF: Additional explicit main source-only reservation. Base current normal Agent, genuine Runtime a3cd released. Read actual rehearsal exception and current transitive fixture changes first; if already source-correct return SOURCE_EXACT with exact dependency hashes instead of unnecessary edits. Otherwise faithful D72 genuine bootstrap/registered provider/current commit setup or bounded product cause returned unapplied. Preserve EVERY original input/assertion/raises/parameter/decorator/branch and source/closure/physical identity/ABI/ABA/no-write guard. ONLY listed tests may change; product and other helpers read-only. No synthetic accepted history/SQL/fake custody/retired publisher/aliases/new CLI envelope. Source AST, compile, scoped Ruff/mypy baseline/candidate, diff only; NO pytest/body/service/build/function execution. One protected review before normal own-only remote Agent merge; then ONE main affected-node batch. Full C0 sections1-5 v2 request/replies and production caller uses it. Delete nothing; no schema/generated/pins/shared ledger/kit/upstream/credentials/M5/denied routes. Commit names F-D86; exact hashes/selectors/proposed existing log entry; durable evidence under50MB.
-215:- tests/editing_conformance/test_s3_reviewed_cohort_runtime.py::test_init_occurrence_media_parent_swap_word_grouped_inverse_reload_restart
-216:- tests/editing_conformance/test_next_ordinary_union_runtime.py::test_born_occurrence_text_order_clear_grouped_inverse_and_redo[]
-217:- tests/editing_conformance/test_next_ordinary_union_runtime.py::test_born_occurrence_text_order_clear_grouped_inverse_and_redo[new occurrence text\r\n]
-218-- tests/sdk/test_timeline_script.py::test_runtime_pin_flow_returns_old_script_after_binding_rebind
-219-
-220-FAMILY: D86-provider-custody4
-221-LOCAL OWNER D89: agt-F-provider-custody4-0100 (Agent source-only; do not dispatch main duplicate).
-222-NODES: 4
-223-FILES: tests/sdk/test_timeline_commit_provider.py, tests/sdk/test_timeline_commit_provider_add_delete_runtime.py, tests/sdk/test_timeline_semantic_reservations.py
-224-BRIEF: Remaining explicit main source-only reservation, to fill source slots after P4 and named protected reviews. Base current normal Agent; Runtime a3cd released. Read actual rehearsal exception and current transitive fixture dependencies first; if source already correct return SOURCE_EXACT with exact source/dependency hashes, no unnecessary edit. Otherwise faithful D72 current genuine bootstrap/registered provider/semantic commit setup; original test inputs/assertions/raises/parameters/decorators/branches and full physical identity/capture/history/undo/ABA/no-write guards retained. Product and other tests/helpers read-only; outside product seam returns exact unapplied finding. Never synthetic acceptance/history/SQL/fake pins/retired writers/aliases/new native envelope. Source AST/compile/scoped Ruff/mypy true baseline/candidate/diff ONLY; NO pytest/body/service/build/function execution. One independent protected review before own-only remote Agent merge, then ONE main affected-node batch. Full C0 sections1-5 request/reply shapes and the production caller uses it. Delete nothing; no generated/schema/pins/shared ledger/kit/M5/upstream/credentials/denied routes. Under50MB durable evidence; commit names F-D86; exact hashes/selectors/proposed existing log entry. Preserve D13/D67/D77 genuine installed-render inputs and D23 scope; never relabel source controls as installed readiness. Core-element two selectors differ from four already-qualified R2; do not repeat those four.
-225-- tests/sdk/test_timeline_commit_provider.py::test_restore_undo_redo_exact_full_closure_and_unknown_fields
-226:- tests/sdk/test_timeline_commit_provider_add_delete_runtime.py::test_native_add_delete_one_publication_inverse_redo_restart_reservations[net-zero]
-227:- tests/sdk/test_timeline_commit_provider_add_delete_runtime.py::test_native_add_delete_one_publication_inverse_redo_restart_reservations[replace-existing]
-228-- tests/sdk/test_timeline_semantic_reservations.py::test_aggregate_children_are_retired_in_their_occurrence_scope
-229-
-230-FAMILY: D86-docpatch5
-231-LOCAL OWNER D89: agt-F-docpatch5-0100 (Agent source-only; do not dispatch main duplicate).
-232-NODES: 5
-233-FILES: tests/editing_conformance/test_doc_patch_atomic_scope_runtime.py, tests/timeline/test_authoring_media.py
-234-BRIEF: Remaining explicit main source-only reservation, to fill source slots after P4 and named protected reviews. Base current normal Agent; Runtime a3cd released. Read actual rehearsal exception and current transitive fixture dependencies first; if source already correct return SOURCE_EXACT with exact source/dependency hashes, no unnecessary edit. Otherwise faithful D72 current genuine bootstrap/registered provider/semantic commit setup; original test inputs/assertions/raises/parameters/decorators/branches and full physical identity/capture/history/undo/ABA/no-write guards retained. Product and other tests/helpers read-only; outside product seam returns exact unapplied finding. Never synthetic acceptance/history/SQL/fake pins/retired writers/aliases/new native envelope. Source AST/compile/scoped Ruff/mypy true baseline/candidate/diff ONLY; NO pytest/body/service/build/function execution. One independent protected review before own-only remote Agent merge, then ONE main affected-node batch. Full C0 sections1-5 request/reply shapes and the production caller uses it. Delete nothing; no generated/schema/pins/shared ledger/kit/M5/upstream/credentials/denied routes. Under50MB durable evidence; commit names F-D86; exact hashes/selectors/proposed existing log entry. Preserve D13/D67/D77 genuine installed-render inputs and D23 scope; never relabel source controls as installed readiness. Core-element two selectors differ from four already-qualified R2; do not repeat those four.
-235-- tests/editing_conformance/test_doc_patch_atomic_scope_runtime.py::test_complete_json_script_commit_authenticates_materialized_atomic_scopes
-236-- tests/timeline/test_authoring_media.py::test_public_document_swap_and_residual_patch_use_original_sequential_closure[True]
-237-- tests/timeline/test_authoring_media.py::test_public_document_swap_and_residual_patch_use_original_sequential_closure[False]
-238:- tests/timeline/test_authoring_media.py::test_public_document_compound_inverse_restores_exact_original
-239-- tests/timeline/test_authoring_media.py::test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba
-240-
-241-FAMILY: D86-owned-move8
-242-LOCAL OWNER D89: agt-F-owned-move8-0100 (Agent source-only; do not dispatch main duplicate).
-243-NODES: 8
-244-FILES: tests/editing_conformance/test_owned_move_publish_runtime.py, tests/editing_conformance/test_prepared_video_birth.py
-245-BRIEF: Remaining explicit main source-only reservation, to fill source slots after P4 and named protected reviews. Base current normal Agent; Runtime a3cd released. Read actual rehearsal exception and current transitive fixture dependencies first; if source already correct return SOURCE_EXACT with exact source/dependency hashes, no unnecessary edit. Otherwise faithful D72 current genuine bootstrap/registered provider/semantic commit setup; original test inputs/assertions/raises/parameters/decorators/branches and full physical identity/capture/history/undo/ABA/no-write guards retained. Product and other tests/helpers read-only; outside product seam returns exact unapplied finding. Never synthetic acceptance/history/SQL/fake pins/retired writers/aliases/new native envelope. Source AST/compile/scoped Ruff/mypy true baseline/candidate/diff ONLY; NO pytest/body/service/build/function execution. One independent protected review before own-only remote Agent merge, then ONE main affected-node batch. Full C0 sections1-5 request/reply shapes and the production caller uses it. Delete nothing; no generated/schema/pins/shared ledger/kit/M5/upstream/credentials/denied routes. Under50MB durable evidence; commit names F-D86; exact hashes/selectors/proposed existing log entry. Preserve D13/D67/D77 genuine installed-render inputs and D23 scope; never relabel source controls as installed readiness. Core-element two selectors differ from four already-qualified R2; do not repeat those four.
-246-- tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_move_publish_disjoint_rebase_reload_undo
-247-- tests/editing_conformance/test_prepared_video_birth.py::test_prepared_video_public_preview_accept_retry_undo_and_no_write
-248-- tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_parent_asset_clear_lost_ack_reload_retry_undo
-249-- tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_parent_transition_clear_lost_ack_reload_retry_undo
-250-- tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_parent_trim_stale_rebase_lost_ack_reload_retry_undo
-251-- tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_parent_split_stale_rebase_lost_ack_reload_retry_undo
-252-- tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_original_sdk_parent_delete_stale_rebase_lost_ack_reload_retry_undo
-253-- tests/editing_conformance/test_owned_move_publish_runtime.py::test_http_ambiguous_owner_and_mixed_edits_keep_original_draft
-254-
-255-FAMILY: D86-cli-trim3
-256-LOCAL OWNER D89: agt-F-cli-trim3-0100 (Agent source-only; do not dispatch main duplicate).
-257-NODES: 3
-258-FILES: tests/editing_conformance/test_cli_trim_runtime.py
-259-BRIEF: Remaining explicit main source-only reservation, to fill source slots after P4 and named protected reviews. Base current normal Agent; Runtime a3cd released. Read actual rehearsal exception and current transitive fixture dependencies first; if source already correct return SOURCE_EXACT with exact source/dependency hashes, no unnecessary edit. Otherwise faithful D72 current genuine bootstrap/registered provider/semantic commit setup; original test inputs/assertions/raises/parameters/decorators/branches and full physical identity/capture/history/undo/ABA/no-write guards retained. Product and other tests/helpers read-only; outside product seam returns exact unapplied finding. Never synthetic acceptance/history/SQL/fake pins/retired writers/aliases/new native envelope. Source AST/compile/scoped Ruff/mypy true baseline/candidate/diff ONLY; NO pytest/body/service/build/function execution. One independent protected review before own-only remote Agent merge, then ONE main affected-node batch. Full C0 sections1-5 request/reply shapes and the production caller uses it. Delete nothing; no generated/schema/pins/shared ledger/kit/M5/upstream/credentials/denied routes. Under50MB durable evidence; commit names F-D86; exact hashes/selectors/proposed existing log entry. Preserve D13/D67/D77 genuine installed-render inputs and D23 scope; never relabel source controls as installed readiness. Core-element two selectors differ from four already-qualified R2; do not repeat those four.
-260-- tests/editing_conformance/test_cli_trim_runtime.py::test_cli_trim_exact_retry_restart_dependent_suffix_and_peer[disjoint-rebase-undo]
-261-- tests/editing_conformance/test_cli_trim_runtime.py::test_cli_trim_exact_retry_restart_dependent_suffix_and_peer[relevant-conflict]
-262-- tests/editing_conformance/test_cli_trim_runtime.py::test_cli_move_exact_retry_restart_and_undo_over_real_http
-263-
-264-FAMILY: D86-occurrence-recipe3
-265-LOCAL OWNER D89: agt-F-occurrence-recipe3-0112 (Agent source-only; do not dispatch main duplicate).
-266-NODES: 3
-267-FILES: tests/editing_conformance/test_recipe_occurrence_media.py
-268-BRIEF: Remaining explicit main source-only reservation, to fill source slots after P4 and named protected reviews. Base current normal Agent; Runtime a3cd released. Read actual rehearsal exception and current transitive fixture dependencies first; if source already correct return SOURCE_EXACT with exact source/dependency hashes, no unnecessary edit. Otherwise faithful D72 current genuine bootstrap/registered provider/semantic commit setup; original test inputs/assertions/raises/parameters/decorators/branches and full physical identity/capture/history/undo/ABA/no-write guards retained. Product and other tests/helpers read-only; outside product seam returns exact unapplied finding. Never synthetic acceptance/history/SQL/fake pins/retired writers/aliases/new native envelope. Source AST/compile/scoped Ruff/mypy true baseline/candidate/diff ONLY; NO pytest/body/service/build/function execution. One independent protected review before own-only remote Agent merge, then ONE main affected-node batch. Full C0 sections1-5 request/reply shapes and the production caller uses it. Delete nothing; no generated/schema/pins/shared ledger/kit/M5/upstream/credentials/denied routes. Under50MB durable evidence; commit names F-D86; exact hashes/selectors/proposed existing log entry. Preserve D13/D67/D77 genuine installed-render inputs and D23 scope; never relabel source controls as installed readiness. Core-element two selectors differ from four already-qualified R2; do not repeat those four.
-269-- tests/editing_conformance/test_recipe_occurrence_media.py::test_same_alias_materialized_whole_payload_read_allows_exact_undo_redo
-270:- tests/editing_conformance/test_recipe_occurrence_media.py::test_provider_exact_reload_inverse_redo_and_retired_asset_reservation[add]
-271:- tests/editing_conformance/test_recipe_occurrence_media.py::test_provider_exact_reload_inverse_redo_and_retired_asset_reservation[swap]
-272-
-273-FAMILY: D86-graph-redo2
-274-LOCAL OWNER D89: agt-F-graph-redo2-0112 (Agent source-only; do not dispatch main duplicate).
-275-NODES: 2
-276-FILES: tests/sdk/test_timeline_commit_graph_roots.py, tests/editing_conformance/test_historical_shared_redo_authority.py
-277-BRIEF: Remaining explicit main source-only reservation, to fill source slots after P4 and named protected reviews. Base current normal Agent; Runtime a3cd released. Read actual rehearsal exception and current transitive fixture dependencies first; if source already correct return SOURCE_EXACT with exact source/dependency hashes, no unnecessary edit. Otherwise faithful D72 current genuine bootstrap/registered provider/semantic commit setup; original test inputs/assertions/raises/parameters/decorators/branches and full physical identity/capture/history/undo/ABA/no-write guards retained. Product and other tests/helpers read-only; outside product seam returns exact unapplied finding. Never synthetic acceptance/history/SQL/fake pins/retired writers/aliases/new native envelope. Source AST/compile/scoped Ruff/mypy true baseline/candidate/diff ONLY; NO pytest/body/service/build/function execution. One independent protected review before own-only remote Agent merge, then ONE main affected-node batch. Full C0 sections1-5 request/reply shapes and the production caller uses it. Delete nothing; no generated/schema/pins/shared ledger/kit/M5/upstream/credentials/denied routes. Under50MB durable evidence; commit names F-D86; exact hashes/selectors/proposed existing log entry. Preserve D13/D67/D77 genuine installed-render inputs and D23 scope; never relabel source controls as installed readiness. Core-element two selectors differ from four already-qualified R2; do not repeat those four.
-278-- tests/editing_conformance/test_historical_shared_redo_authority.py::test_shared_redo_rechecks_source_archive_at_acceptance
-279-- tests/sdk/test_timeline_commit_graph_roots.py::test_typed_roots_are_valid_local_creations_and_retired_roots_are_reserved
-280-
-281-FAMILY: D86-publication1
-282-NODES: 1
-283-FILES: tests/packs/video_editing/test_runtime_publication_chain.py
-284-BRIEF: Remaining explicit main source-only reservation, to fill source slots after P4 and named protected reviews. Base current normal Agent; Runtime a3cd released. Read actual rehearsal exception and current transitive fixture dependencies first; if source already correct return SOURCE_EXACT with exact source/dependency hashes, no unnecessary edit. Otherwise faithful D72 current genuine bootstrap/registered provider/semantic commit setup; original test inputs/assertions/raises/parameters/decorators/branches and full physical identity/capture/history/undo/ABA/no-write guards retained. Product and other tests/helpers read-only; outside product seam returns exact unapplied finding. Never synthetic acceptance/history/SQL/fake pins/retired writers/aliases/new native envelope. Source AST/compile/scoped Ruff/mypy true baseline/candidate/diff ONLY; NO pytest/body/service/build/function execution. One independent protected review before own-only remote Agent merge, then ONE main affected-node batch. Full C0 sections1-5 request/reply shapes and the production caller uses it. Delete nothing; no generated/schema/pins/shared ledger/kit/M5/upstream/credentials/denied routes. Under50MB durable evidence; commit names F-D86; exact hashes/selectors/proposed existing log entry. Preserve D13/D67/D77 genuine installed-render inputs and D23 scope; never relabel source controls as installed readiness. Core-element two selectors differ from four already-qualified R2; do not repeat those four.
-285-- tests/packs/video_editing/test_runtime_publication_chain.py::test_daemon_backed_authoring_proposal_publishes_one_canonical_render_task
-286-
-287-FAMILY: D86-core-element2
-288-NODES: 2
-289-FILES: tests/core/test_timeline_element_publication_runtime.py
-290-BRIEF: Remaining explicit main source-only reservation, to fill source slots after P4 and named protected reviews. Base current normal Agent; Runtime a3cd released. Read actual rehearsal exception and current transitive fixture dependencies first; if source already correct return SOURCE_EXACT with exact source/dependency hashes, no unnecessary edit. Otherwise faithful D72 current genuine bootstrap/registered provider/semantic commit setup; original test inputs/assertions/raises/parameters/decorators/branches and full physical identity/capture/history/undo/ABA/no-write guards retained. Product and other tests/helpers read-only; outside product seam returns exact unapplied finding. Never synthetic acceptance/history/SQL/fake pins/retired writers/aliases/new native envelope. Source AST/compile/scoped Ruff/mypy true baseline/candidate/diff ONLY; NO pytest/body/service/build/function execution. One independent protected review before own-only remote Agent merge, then ONE main affected-node batch. Full C0 sections1-5 request/reply shapes and the production caller uses it. Delete nothing; no generated/schema/pins/shared ledger/kit/M5/upstream/credentials/denied routes. Under50MB durable evidence; commit names F-D86; exact hashes/selectors/proposed existing log entry. Preserve D13/D67/D77 genuine installed-render inputs and D23 scope; never relabel source controls as installed readiness. Core-element two selectors differ from four already-qualified R2; do not repeat those four.
-291-- tests/core/test_timeline_element_publication_runtime.py::test_acknowledged_rebased_lost_ack_restart_pagination_and_typed_intent
-292-- tests/core/test_timeline_element_publication_runtime.py::test_public_helper_optional_session_rebases_over_disjoint_edit
-293-
-294-FAMILY: D87-live-frontends6
-295-NODES: 6
-296-FILES: tests/editing_conformance/test_commit_runtime_native_frontends.py, tests/editing_conformance/test_commit_runtime_native_checkout.py
-297-BRIEF: FIRST RETURN from held tl/agt-F-native-frontends-2355 (95fe9d2e90). D87 retires ONLY the separate captured-native-param CLI case via named replacement ledger; all six below stay LIVE. Preserve genuine current bootstrap/semantic provider fixture migration for these six. Restore that single retired param function to exact original base if prior95fe rewrote it into unsupported commit --file/native-envelope semantics; do not build any replacement envelope or alias, drop a predicate or broaden retirement. Keep all original six input/test/assertion/parameter/raise/decorator/branch behavior and Runtime receipt/CLI ingress/opaque source/ABA/no-write guards. Original six may already be corrected transitively; return SOURCE_EXACT with hashes if so. Scope ONLY listed tests, product and other helpers read-only. Read protected review0000 exact finding and D87 settled decision. Source AST/compile/scoped Ruff/mypy baseline/candidate/diff only, NO pytest/body/service/build/function execution. One fresh protected review before normal own-only remote Agent merge, then ONE main affected-node batch. Full C0 v2 request/replies; production caller uses it. Delete nothing, no schema/pins/generated/shared ledger/M5/upstream/credentials/denied routes. Under50MB evidence, commit names F-D87.
-298-- tests/editing_conformance/test_commit_runtime_native_checkout.py::test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[False]
-299-- tests/editing_conformance/test_commit_runtime_native_checkout.py::test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[True]
-300-- tests/editing_conformance/test_commit_runtime_native_checkout.py::test_authenticated_v1_commit_reload_undo_survives_stopped_renderer_and_preview_reports_unavailable
-301-- tests/editing_conformance/test_commit_runtime_native_frontends.py::test_sheet_lost_ack_attached_suffix_restart_exact_retry_and_peer_guards[False]
-302-- tests/editing_conformance/test_commit_runtime_native_frontends.py::test_sheet_lost_ack_attached_suffix_restart_exact_retry_and_peer_guards[True]
-303-- tests/editing_conformance/test_commit_runtime_native_frontends.py::test_checkout_first_refuses_sheet_suffix_keeps_draft_and_pending_intent
-## PASS_SOURCE — F-D86 protected review
-
-Reviewed author SHA `4a16d562382c3b4235cdc66645dd1382ef01383f` against parent `d49ebd104c`; true pre-migration parent: `5d4ae93c83`.
-
-- Only assigned file changed: [test_commit_runtime_shared_inverse.py](/home/user/work/wt/rt-D86-inverse10-review-0022/tests/editing_conformance/test_commit_runtime_shared_inverse.py).
-- Five test bodies remain AST-identical; 29 assertions and 2 refusal paths preserved.
-- Selectors remain `[3, 1]`, yielding all 10 scenarios.
-- `occurrence.place-shared` is production-registered and records the appended occurrence with exact source shot/revision identity.
-- Runtime provider registration and `edit.commit()` caller path are genuine and preserved.
-- Ruff candidate/baseline: passed.
-- Mypy candidate/baseline: passed.
-- In-memory compile/AST checks: passed.
-- `git diff --check`: passed.
-
-No source, test, fixture, helper, pytest, collection, service, build, browser, or P4 execution was performed. Actual Runtime acceptance, physical persistence, inverse/rebase/ABA behavior remain unverified by design.
-
-Commit message and `DONE` marker written. Recommended next step: return the unchanged author source to Agent’s normal queue for MAIN qualification.
-exec
-/bin/bash -lc "git show 5d4ae93c83:tests/editing_conformance/test_commit_runtime_shared_inverse.py | sed -n '1,120p'; rg -n \"def build_film_fixture|duration_ms|hold\" /home/user/work/runtime/tests/timeline_commit_film_fixture.py /home/user/work/runtime/tests/fixtures -g '*.py' -g '*.json' | head -120" in /home/user/work/wt/agt-D86-inverse-functional-0145
- succeeded in 0ms:
-"""Exact shared-source inverses through the real Runtime commit provider."""
-from __future__ import annotations
-
-import copy
-from types import SimpleNamespace
-
-import pytest
-
-from tests.editing_conformance.test_commit_runtime_identity import occurrence_image
-from tests.helpers.runtime import use_runtime
-
-pytestmark = pytest.mark.integration
-
-
-@pytest.fixture(params=[3, 1], ids=["original-third", "authored-first"])
-def shared_editing(request, tmp_path, monkeypatch):
-    runtime = use_runtime()
-    monkeypatch.syspath_prepend(str(runtime / "tests"))
-    from runtime_protocol.service import RuntimeService
-    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
-    from test_timeline_commit_integration import Editing
-    from timeline_commit_film_fixture import build_film_fixture
-
-    from astrid.sdk.timeline.capture import capture_move
-    from astrid.sdk.timeline.commit import bundle_from_document
-
-    fixture = build_film_fixture(tmp_path)
-    service = RuntimeService(fixture.duplicate_root)
-    edit = Editing(service, SimpleNamespace(fixture=fixture),
-                   SimpleNamespace(move=capture_move, bundle=bundle_from_document))
-    try:
-        original = edit.document()
-        parent = copy.deepcopy(original["parent_revision"]["payload"])
-        index = request.param
-        children = {}
-        if index == 1:
-            _, shot, internal = copy.deepcopy(occurrence_image(original, "occurrence-1"))
-            shot.update(revision_id="authored-shot", internal_timeline_revision_id="authored-internal")
-            shot["payload"].update(unknown={"literal": [None, False, 0, {}, []]}, items=[{
-                "item_id": "shared-source-item", "media_id": fixture.media_ids[0],
-                "metadata": {"literal": "shared-source-item", "keep": [None, False]},
-            }])
-            internal["revision_id"] = "authored-internal"
-            internal["payload"].update(source_window={"start": 4, "end": 9},
                                        unknown={"literal": [None, False, 0, {}, []]})
             internal["payload"]["clips"][0]["extension"] = {"literal": "shared-source-item", "clear": None}
             for image in (shot, internal):
@@ -398,3 +195,206 @@ def test_shared_inverse_preserves_newer_disjoint_parent_edit(shared_editing):
 /home/user/work/runtime/tests/fixtures/timeline_inverse_native_order_1416.json:4028:                      "duration_ms": 12000.0,
 /home/user/work/runtime/tests/fixtures/timeline_inverse_native_order_1416.json:4048:                      "duration_ms": 4000,
 
+codex
+The source audit confirms the shared-placement graph is already the right semantic representation (`occurrence.place-shared`) and must stay unchanged. The authentic shot schema has no `payload["name"]`; its authored label is `payload["metadata"]["title"]`. I’m making only that schema correction. The original-third interval failure is a genuine current Runtime boundary finding, so I will leave the guard and all timing inputs untouched and report it unapplied.
+apply patch
+patch: completed
+/home/user/work/wt/agt-D86-inverse-functional-0145/tests/editing_conformance/test_commit_runtime_shared_inverse.py
+diff --git a/tests/editing_conformance/test_commit_runtime_shared_inverse.py b/tests/editing_conformance/test_commit_runtime_shared_inverse.py
+index 2b32efe849c1423f4d583bca904260a036cab9c3..329411f116afbad8504f6805b66c336e8cfd79a6
+--- a/tests/editing_conformance/test_commit_runtime_shared_inverse.py
++++ b/tests/editing_conformance/test_commit_runtime_shared_inverse.py
+@@ -47,7 +47,7 @@
+             _, source_shot, _ = occurrence_image(original, "occurrence-1")
+             shot_set = capture_shot_set(
+                 original_bundle, "occurrence:occurrence-1/shot",
+-                values={"name": source_shot["payload"]["name"]},
++                values={"name": source_shot["payload"]["metadata"]["title"]},
+             )
+             setup_commands.append(shot_set)
+             staged = document_from_bundle(execute(original_bundle, [shot_set]).bundle)
+
+exec
+/bin/bash -lc "git diff -- tests/editing_conformance/test_commit_runtime_shared_inverse.py && git diff --check && sha256sum tests/editing_conformance/test_commit_runtime_shared_inverse.py && rg -n \"\\[tool\\.ruff|mypy|ruff\" pyproject.toml setup.cfg tox.ini 2>/dev/null | head -80" in /home/user/work/wt/agt-D86-inverse-functional-0145
+ succeeded in 311ms:
+diff --git a/tests/editing_conformance/test_commit_runtime_shared_inverse.py b/tests/editing_conformance/test_commit_runtime_shared_inverse.py
+index 2b32efe849..329411f116 100644
+--- a/tests/editing_conformance/test_commit_runtime_shared_inverse.py
++++ b/tests/editing_conformance/test_commit_runtime_shared_inverse.py
+@@ -47,7 +47,7 @@ def shared_editing(request, tmp_path, monkeypatch):
+             _, source_shot, _ = occurrence_image(original, "occurrence-1")
+             shot_set = capture_shot_set(
+                 original_bundle, "occurrence:occurrence-1/shot",
+-                values={"name": source_shot["payload"]["name"]},
++                values={"name": source_shot["payload"]["metadata"]["title"]},
+             )
+             setup_commands.append(shot_set)
+             staged = document_from_bundle(execute(original_bundle, [shot_set]).bundle)
+b2a44a6c474ff3df5297fc6ba0a83c787952178116487817d069957903b225c9  tests/editing_conformance/test_commit_runtime_shared_inverse.py
+pyproject.toml:53:    "mypy==1.17.0",
+pyproject.toml:71:    "ruff==0.12.0",
+pyproject.toml:196:[tool.ruff]
+pyproject.toml:207:[tool.ruff.lint]
+pyproject.toml:234:[tool.mypy]
+pyproject.toml:236:# The Darwin custody modules raise on every other platform, so mypy would skip their bodies as
+pyproject.toml:237:# unreachable and the exact-count gate (scripts/reshape/baselines/mypy_astrid.json) would differ
+
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/ruff check tests/editing_conformance/test_commit_runtime_shared_inverse.py && /home/user/work/venv-agent/bin/python -m mypy tests/editing_conformance/test_commit_runtime_shared_inverse.py' in /home/user/work/wt/agt-D86-inverse-functional-0145
+ succeeded in 1345ms:
+All checks passed!
+Success: no issues found in 1 source file
+
+exec
+/bin/bash -lc "/home/user/work/venv-agent/bin/python - <<'PY'
+import ast
+import subprocess
+from pathlib import Path
+
+path = Path('tests/editing_conformance/test_commit_runtime_shared_inverse.py')
+candidate = ast.parse(path.read_text())
+base = ast.parse(subprocess.check_output(['git', 'show', f'HEAD:{path}'], text=True))
+
+def fixture(tree):
+    return next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == 'shared_editing')
+
+def tests(tree):
+    return [node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name.startswith('test_')]
+
+assert ast.dump(fixture(candidate), include_attributes=False) "'!= ast.dump(fixture(base), include_attributes=False)
+assert [ast.dump(node, include_attributes=False) for node in tests(candidate)] == [
+    ast.dump(node, include_attributes=False) for node in tests(base)
+]
+params = next(node for node in ast.walk(fixture(candidate))
+               if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+               and node.func.attr == '"'fixture')
+assert ast.literal_eval(params.keywords[0].value) == [3, 1]
+assert ast.literal_eval(params.keywords[1].value) == ['original-third', 'authored-first']
+print('AST conservation: 5 test bodies unchanged; fixture params/selectors [3, 1] / original-third, authored-first')
+compile(path.read_text(), str(path), 'exec')
+print('in-memory compile: passed')
+PY
+
+git diff --check" in /home/user/work/wt/agt-D86-inverse-functional-0145
+ succeeded in 370ms:
+AST conservation: 5 test bodies unchanged; fixture params/selectors [3, 1] / original-third, authored-first
+in-memory compile: passed
+
+codex
+The bounded edit is complete. Static checks pass, and an AST comparison confirms all five test bodies, parameters `[3, 1]`, and the ten requested selectors remain unchanged; only the fixture’s schema path changed. I’m recording hashes and the explicit Runtime interval finding now, without running pytest or any fixture/service code.
+exec
+/bin/bash -lc "git status --short && git diff --stat && git rev-parse HEAD && git rev-parse HEAD:tests/editing_conformance/test_commit_runtime_shared_inverse.py && sha256sum <(git show HEAD:tests/editing_conformance/test_commit_runtime_shared_inverse.py) tests/editing_conformance/test_commit_runtime_shared_inverse.py && rg '"'^def test_'"' tests/editing_conformance/test_commit_runtime_shared_inverse.py" in /home/user/work/wt/agt-D86-inverse-functional-0145
+ succeeded in 767ms:
+ M tests/editing_conformance/test_commit_runtime_shared_inverse.py
+ tests/editing_conformance/test_commit_runtime_shared_inverse.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+27c68177c1f587acec0d2b615d1b8bb95c4a4fde
+2b32efe849c1423f4d583bca904260a036cab9c3
+2657e31b53fa86ab08e793cadc006e57502d8166ca527d9e06a505d8e92ef88c  /dev/fd/63
+b2a44a6c474ff3df5297fc6ba0a83c787952178116487817d069957903b225c9  tests/editing_conformance/test_commit_runtime_shared_inverse.py
+def test_shared_slot_move_inverse_redo_and_rematerialization(shared_editing):
+def test_shared_inverse_preserves_newer_disjoint_parent_edit(shared_editing):
+def test_shared_inverse_preserves_newer_disjoint_sibling_edit(shared_editing):
+def test_shared_inverse_refuses_touching_aba_atomically(shared_editing):
+def test_shared_redo_refuses_intervening_aba_after_exact_undo(shared_editing):
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-inverse-functional-0145/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-inverse-functional-0145/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-inverse-functional-0145/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-inverse-functional-0145/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-inverse-functional-0145/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-inverse-functional-0145/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..5c6fd4cf5ff6f5b3459f5bb423b27508e3f35150
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-inverse-functional-0145/commit-msg
+@@ -0,0 +1,4 @@
++test(timeline): correct shared inverse fixture schema
++
++F-D86 shared inverse reads the authentic shot label from metadata.title while
++preserving the native shared-placement graph and original test coverage.
+diff --git a/tests/editing_conformance/test_commit_runtime_shared_inverse.py b/tests/editing_conformance/test_commit_runtime_shared_inverse.py
+index 2b32efe849c1423f4d583bca904260a036cab9c3..329411f116afbad8504f6805b66c336e8cfd79a6
+--- a/tests/editing_conformance/test_commit_runtime_shared_inverse.py
++++ b/tests/editing_conformance/test_commit_runtime_shared_inverse.py
+@@ -47,7 +47,7 @@
+             _, source_shot, _ = occurrence_image(original, "occurrence-1")
+             shot_set = capture_shot_set(
+                 original_bundle, "occurrence:occurrence-1/shot",
+-                values={"name": source_shot["payload"]["name"]},
++                values={"name": source_shot["payload"]["metadata"]["title"]},
+             )
+             setup_commands.append(shot_set)
+             staged = document_from_bundle(execute(original_bundle, [shot_set]).bundle)
+
+exec
+/bin/bash -lc "git show HEAD:tests/editing_conformance/test_commit_runtime_shared_inverse.py | /home/user/work/venv-agent/bin/ruff check --stdin-filename tests/editing_conformance/test_commit_runtime_shared_inverse.py - && /home/user/work/venv-agent/bin/ruff check tests/editing_conformance/test_commit_runtime_shared_inverse.py && /home/user/work/venv-agent/bin/python -m mypy tests/editing_conformance/test_commit_runtime_shared_inverse.py && git diff --check && test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-inverse-functional-0145/commit-msg && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-inverse-functional-0145/DONE && echo 'markers: passed'" in /home/user/work/wt/agt-D86-inverse-functional-0145
+ succeeded in 474ms:
+All checks passed!
+All checks passed!
+Success: no issues found in 1 source file
+markers: passed
+
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/python -m mypy --shadow-file tests/editing_conformance/test_commit_runtime_shared_inverse.py <(git show HEAD:tests/editing_conformance/test_commit_runtime_shared_inverse.py) tests/editing_conformance/test_commit_runtime_shared_inverse.py' in /home/user/work/wt/agt-D86-inverse-functional-0145
+ succeeded in 281ms:
+Success: no issues found in 1 source file
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- commit-msg ---'; sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-inverse-functional-0145/commit-msg; printf '%s\\n' '--- final status ---'; git status --short; printf '%s\\n' '--- changed files ---'; git diff --name-only" in /home/user/work/wt/agt-D86-inverse-functional-0145
+ succeeded in 914ms:
+--- commit-msg ---
+test(timeline): correct shared inverse fixture schema
+
+F-D86 shared inverse reads the authentic shot label from metadata.title while
+preserving the native shared-placement graph and original test coverage.
+--- final status ---
+ M tests/editing_conformance/test_commit_runtime_shared_inverse.py
+--- changed files ---
+tests/editing_conformance/test_commit_runtime_shared_inverse.py
+
+codex
+## Report
+
+Changed only `tests/editing_conformance/test_commit_runtime_shared_inverse.py`.
+
+- Corrected authentic shot schema access from `payload["name"]` to `payload["metadata"]["title"]`.
+- Preserved native shared-placement setup, all opaque/timing inputs, five test bodies, ABA/no-write guards, and 10 selectors (`original-third`, `authored-first`).
+- Left Runtime’s genuine finite-interval boundary finding unapplied; no clamping or guard weakening.
+
+Validation passed:
+
+- Ruff baseline and candidate
+- Mypy baseline and candidate
+- In-memory compile/AST conservation
+- `git diff --check`
+
+Hashes: baseline `2657e31b...`, candidate `b2a44a6c...`.
+
+No pytest, collection, fixture execution, service, browser, or build runs performed. Commit message written and `DONE` created.
+
+Proposed existing log entry: `design/agt-D86-main-shared-inverse-2333-report.md` — record schema correction and the unapplied original-third Runtime interval finding.
+tokens used
+386,798
+## Report
+
+Changed only `tests/editing_conformance/test_commit_runtime_shared_inverse.py`.
+
+- Corrected authentic shot schema access from `payload["name"]` to `payload["metadata"]["title"]`.
+- Preserved native shared-placement setup, all opaque/timing inputs, five test bodies, ABA/no-write guards, and 10 selectors (`original-third`, `authored-first`).
+- Left Runtime’s genuine finite-interval boundary finding unapplied; no clamping or guard weakening.
+
+Validation passed:
+
+- Ruff baseline and candidate
+- Mypy baseline and candidate
+- In-memory compile/AST conservation
+- `git diff --check`
+
+Hashes: baseline `2657e31b...`, candidate `b2a44a6c...`.
+
+No pytest, collection, fixture execution, service, browser, or build runs performed. Commit message written and `DONE` created.
+
+Proposed existing log entry: `design/agt-D86-main-shared-inverse-2333-report.md` — record schema correction and the unapplied original-third Runtime interval finding.

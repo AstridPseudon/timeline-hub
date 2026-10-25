@@ -1,400 +1,400 @@
-        return present(root)
-    node, key = location(root, ref, path)
-    return ABSENT.copy() if key is None or isinstance(node, dict) and key not in node else present(node[key])
++  `first_selection` and `retained` functions are AST exact. Test predicate
++  inventories and selectors are unchanged.
++
++No pytest, collection, fixture/helper/function execution, Runtime service,
++browser, build, or functional qualification was run. Functional proof remains
++for the central MAIN batch after protected review and merge.
++
++Source hashes used for handoff:
++
++- Runtime HEAD: `6634a17f3ffd885567ba3c91b6c7a560df7375a4`
++- Runtime `service.py`: `5e79c3b9ed3d2ba5efc129d1cc8d7a43075c4ebc9194026fdb641a8eeb7ff19a`
++- Runtime provider ABI: `2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf`
++- Agent `native_initialize.py`: `9ba19ebc1212cca4fbde005728a410e68a128297abb4e39ccf3f2abd2e39df82`
++- Agent `validation.py`: `65524a27d75469422fe0bd7d2759eb2e8cec0a4b861422b670de57a6ec129d8c`
++- Agent `commit.py`: `eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7`
++
++Exact owned selectors conserved:
++
++- `test_native_word_anchor.py`: 29 test selectors; predicate inventory count 133.
++- `test_word_binding_recipe.py`: 19 test selectors; predicate inventory count 94.
+diff --git a/tests/editing_conformance/native_word_anchor_fixture.py b/tests/editing_conformance/native_word_anchor_fixture.py
+index 0af60ab0d9848efc993e75fe6c79e5f17fc4684b..e10a3b2c82d20d5f415d05f09e130e16e12ee9cb
+--- a/tests/editing_conformance/native_word_anchor_fixture.py
++++ b/tests/editing_conformance/native_word_anchor_fixture.py
+@@ -125,12 +125,13 @@
+         "dependency_manifest": bootstrap["dependency_manifest"],
+     }
+     bundle = bundle_from_document(empty)
+-    initialized = execute(bundle, [capture_initialize(
++    initialize = capture_initialize(
+         bundle, name="Voice", slug="film", output={
+-            "resolution": "1280x720", "fps": FPS, "file": "output.mp4",
++            "resolution": "1280x720", "fps": 30, "file": "output.mp4",
+             "background": None, "background_scale": None,
+         },
+-    )]).bundle
++    )
++    initialized = execute(bundle, [initialize]).bundle
+     parent_track = capture_track_create(initialized, "parent", {
+         "id": "picture", "kind": "visual",
+     })
+@@ -152,6 +153,9 @@
+     if reused:
+         voices.append(dict(voices[0], id="other", at=4))
+     after = copy.deepcopy(occurred)
++    # timeline.init accepts only its supported bootstrap fps; retain the exact
++    # authored rational output through the emitter's guarded before/after patch.
++    after["parent"]["config"]["output"]["fps"] = copy.deepcopy(FPS)
+     after["parent"]["config"]["theme_overrides"] = {"visual": {"canvas": {"fps": FPS}}}
+     after["shots"]["shot"]["payload"].update(
+         {"items": [], **(opaque if opaque_pin_scope == "shot" else {})})
+@@ -177,12 +181,7 @@
+         "schema_version": 1, "op": "media.admit", "version": "1", "select": None,
+         "args": {"inputs": [{"pin": {"media_id": media, "content_digest": media}}]},
+     }
+-    submit([capture_initialize(
+-        bundle, name="Voice", slug="film", output={
+-            "resolution": "1280x720", "fps": FPS, "file": "output.mp4",
+-            "background": None, "background_scale": None,
+-        },
+-    ), parent_track, card, occurrence, media_admission, *changes], "initial-commit")
++    submit([initialize, parent_track, card, occurrence, media_admission, *changes], "initial-commit")
+ 
+     service.close()
+     return {'project': project, 'pin': pin, 'source': source}
 
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-functional-0145/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-functional-0145/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-functional-0145/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..85f0120ef896acf865f7c837365373e84f0a95c8
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-functional-0145/commit-msg
+@@ -0,0 +1,4 @@
++test(F-D86): preserve rational FPS in native word fixture
++
++Bootstrap timeline initialization with the supported 30 FPS shape, then apply
++the exact authored rational FPS through the guarded document patch.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-functional-0145/evidence/source-checks.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-functional-0145/evidence/source-checks.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..3503a01776f0f311f70f44748bf85478e073c0d3
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-functional-0145/evidence/source-checks.md
+@@ -0,0 +1,49 @@
++# F-D86 native-word46 / nextcohort9 source-only evidence
++
++Base Agent HEAD: `27c68177c1f587acec0d2b615d1b8bb95c4a4fde`
++
++Changed file SHA-256: `3e225883044678e0af68867e2873faf988bf10090d7d17898d6d1092d3a635db`
++
++Runtime caller/source boundary inspected:
++
++- `runtime_protocol/service.py`: `RuntimeService.commit_timeline` validates the
++  v2 request, authenticates the canonical route, and executes through the
++  registered provider/coordinator.
++- `runtime_protocol/timeline_commit_provider.py`: startup provider ABI is
++  `astrid-v1`, interface version `1`, and the registered provider is the Agent
++  `create_runtime_commit_service` factory.
++- Agent `native_initialize.py` and the current edit-command schema accept only
++  integer output `fps: 30` for `timeline.init`.
++- Agent `validation.py` accepts the exact authored rational object and retains
++  it as a `Fraction`; no float coercion is introduced.
++
++Source-only checks:
++
++- In-memory `compile(...)`: passed for fixture and both owned test files.
++- `py_compile` with private `/tmp/w-8bb524d06a/pycache`: passed.
++- Ruff baseline via `ruff check --no-cache <(git show HEAD:<fixture>)`: passed.
++- Ruff candidate on fixture and both owned tests: passed.
++- Mypy baseline via `mypy <(git show HEAD:<fixture>)`: passed.
++- Mypy candidate on fixture and both owned tests: passed.
++- `git diff --check`: passed.
++- AST conservation: both owned test files are byte/AST exact; fixture
++  `first_selection` and `retained` functions are AST exact. Test predicate
++  inventories and selectors are unchanged.
++
++No pytest, collection, fixture/helper/function execution, Runtime service,
++browser, build, or functional qualification was run. Functional proof remains
++for the central MAIN batch after protected review and merge.
++
++Source hashes used for handoff:
++
++- Runtime HEAD: `6634a17f3ffd885567ba3c91b6c7a560df7375a4`
++- Runtime `service.py`: `5e79c3b9ed3d2ba5efc129d1cc8d7a43075c4ebc9194026fdb641a8eeb7ff19a`
++- Runtime provider ABI: `2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf`
++- Agent `native_initialize.py`: `9ba19ebc1212cca4fbde005728a410e68a128297abb4e39ccf3f2abd2e39df82`
++- Agent `validation.py`: `65524a27d75469422fe0bd7d2759eb2e8cec0a4b861422b670de57a6ec129d8c`
++- Agent `commit.py`: `eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7`
++
++Exact owned selectors conserved:
++
++- `test_native_word_anchor.py`: 29 test selectors; predicate inventory count 133.
++- `test_word_binding_recipe.py`: 19 test selectors; predicate inventory count 94.
+diff --git a/tests/editing_conformance/native_word_anchor_fixture.py b/tests/editing_conformance/native_word_anchor_fixture.py
+index 0af60ab0d9848efc993e75fe6c79e5f17fc4684b..e10a3b2c82d20d5f415d05f09e130e16e12ee9cb
+--- a/tests/editing_conformance/native_word_anchor_fixture.py
++++ b/tests/editing_conformance/native_word_anchor_fixture.py
+@@ -125,12 +125,13 @@
+         "dependency_manifest": bootstrap["dependency_manifest"],
+     }
+     bundle = bundle_from_document(empty)
+-    initialized = execute(bundle, [capture_initialize(
++    initialize = capture_initialize(
+         bundle, name="Voice", slug="film", output={
+-            "resolution": "1280x720", "fps": FPS, "file": "output.mp4",
++            "resolution": "1280x720", "fps": 30, "file": "output.mp4",
+             "background": None, "background_scale": None,
+         },
+-    )]).bundle
++    )
++    initialized = execute(bundle, [initialize]).bundle
+     parent_track = capture_track_create(initialized, "parent", {
+         "id": "picture", "kind": "visual",
+     })
+@@ -152,6 +153,9 @@
+     if reused:
+         voices.append(dict(voices[0], id="other", at=4))
+     after = copy.deepcopy(occurred)
++    # timeline.init accepts only its supported bootstrap fps; retain the exact
++    # authored rational output through the emitter's guarded before/after patch.
++    after["parent"]["config"]["output"]["fps"] = copy.deepcopy(FPS)
+     after["parent"]["config"]["theme_overrides"] = {"visual": {"canvas": {"fps": FPS}}}
+     after["shots"]["shot"]["payload"].update(
+         {"items": [], **(opaque if opaque_pin_scope == "shot" else {})})
+@@ -177,12 +181,7 @@
+         "schema_version": 1, "op": "media.admit", "version": "1", "select": None,
+         "args": {"inputs": [{"pin": {"media_id": media, "content_digest": media}}]},
+     }
+-    submit([capture_initialize(
+-        bundle, name="Voice", slug="film", output={
+-            "resolution": "1280x720", "fps": FPS, "file": "output.mp4",
+-            "background": None, "background_scale": None,
+-        },
+-    ), parent_track, card, occurrence, media_admission, *changes], "initial-commit")
++    submit([initialize, parent_track, card, occurrence, media_admission, *changes], "initial-commit")
+ 
+     service.close()
+     return {'project': project, 'pin': pin, 'source': source}
 
-def replace_at(root, ref, path, replacement):
-    path = storage_path(root, ref, path)
-    if not path:
-        if replacement == ABSENT or not isinstance(replacement['value'], dict):
-            raise CommandError('payload root must remain an object', kind='managed_closure_write', ref=ref)
-        return copy.deepcopy(replacement['value'])
-    node, key = location(root, ref, path)
-    if key is None:
-        raise CommandError('use list.insert for a new item', ref=ref, path=path)
-    if isinstance(node, list):
-        if replacement == ABSENT:
-            raise CommandError('use list.remove for an item', ref=ref, path=path)
-        identity = identity_key(ref, path[:-1])
-        if not isinstance(replacement['value'], dict) or replacement['value'].get(identity) != node[key][identity]:
-            raise CommandError('item identity cannot change', kind='identity_conflict', ref=ref, path=path)
-    if replacement == ABSENT:
-        node.pop(key, None)
-    else:
-        node[key] = copy.deepcopy(replacement['value'])
-    return root
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/DONE
+codex
+Static validation is green, and conservation checks confirm both owned test files are unchanged while the fixture’s selection/retained helpers and exact `FPS` object remain intact. The final source hash is recorded; functional qualification is intentionally deferred to MAIN’s protected-review/merge batch per the task boundary.
+exec
+/bin/bash -lc "printf '%s\\n' '--- final diff ---'; git diff -- tests/editing_conformance/native_word_anchor_fixture.py; printf '%s\\n' '--- status ---'; git status --short --branch; printf '%s\\n' '--- commit message ---'; sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-functional-0145/commit-msg; printf '%s\\n' '--- markers ---'; ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-functional-0145/DONE /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-functional-0145/evidence/source-checks.md" in /home/user/work/wt/agt-D86-word-functional-0145
+ exited 2 in 22ms:
+--- final diff ---
+diff --git a/tests/editing_conformance/native_word_anchor_fixture.py b/tests/editing_conformance/native_word_anchor_fixture.py
+index 0af60ab0d9..e10a3b2c82 100644
+--- a/tests/editing_conformance/native_word_anchor_fixture.py
++++ b/tests/editing_conformance/native_word_anchor_fixture.py
+@@ -125,12 +125,13 @@ def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scop
+         "dependency_manifest": bootstrap["dependency_manifest"],
+     }
+     bundle = bundle_from_document(empty)
+-    initialized = execute(bundle, [capture_initialize(
++    initialize = capture_initialize(
+         bundle, name="Voice", slug="film", output={
+-            "resolution": "1280x720", "fps": FPS, "file": "output.mp4",
++            "resolution": "1280x720", "fps": 30, "file": "output.mp4",
+             "background": None, "background_scale": None,
+         },
+-    )]).bundle
++    )
++    initialized = execute(bundle, [initialize]).bundle
+     parent_track = capture_track_create(initialized, "parent", {
+         "id": "picture", "kind": "visual",
+     })
+@@ -152,6 +153,9 @@ def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scop
+     if reused:
+         voices.append(dict(voices[0], id="other", at=4))
+     after = copy.deepcopy(occurred)
++    # timeline.init accepts only its supported bootstrap fps; retain the exact
++    # authored rational output through the emitter's guarded before/after patch.
++    after["parent"]["config"]["output"]["fps"] = copy.deepcopy(FPS)
+     after["parent"]["config"]["theme_overrides"] = {"visual": {"canvas": {"fps": FPS}}}
+     after["shots"]["shot"]["payload"].update(
+         {"items": [], **(opaque if opaque_pin_scope == "shot" else {})})
+@@ -177,12 +181,7 @@ def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scop
+         "schema_version": 1, "op": "media.admit", "version": "1", "select": None,
+         "args": {"inputs": [{"pin": {"media_id": media, "content_digest": media}}]},
+     }
+-    submit([capture_initialize(
+-        bundle, name="Voice", slug="film", output={
+-            "resolution": "1280x720", "fps": FPS, "file": "output.mp4",
+-            "background": None, "background_scale": None,
+-        },
+-    ), parent_track, card, occurrence, media_admission, *changes], "initial-commit")
++    submit([initialize, parent_track, card, occurrence, media_admission, *changes], "initial-commit")
+ 
+     service.close()
+     return {'project': project, 'pin': pin, 'source': source}
+--- status ---
+## tl/agt-D86-word-functional-0145
+ M tests/editing_conformance/native_word_anchor_fixture.py
+--- commit message ---
+test(F-D86): preserve rational FPS in native word fixture
 
-
-def normalized_path(ref, path):
-    path = list(path)
-    if ref == 'parent' and path[:1] == ['clips']:
-        path.insert(0, 'config')
-    if ref == 'parent' and path[:1] == ['registry']:
-        path.insert(0, 'config')
-    return path
-
-
-class Closure:
-    """Resolve one verified boundary and retain its physical-to-authoring projection."""
-    def __init__(self, bundle, *, source_bundles=(), inverse_records=()):
-        from .commit import document_from_bundle
-
-        self.bundle = bundle
-        self.document = document_from_bundle(
-            bundle, source_bundles=source_bundles, inverse_records=inverse_records)
-        self.images = {'parent': self.document['parent_revision']}
-        self.images.update(('shot-revision:' + image['revision_id'], image)
-                           for image in self.document['shot_revisions'])
-        self.images.update(('internal-revision:' + image['revision_id'], image)
-                           for image in self.document['internal_timeline_revisions'])
-        shots = {row['revision_id']: row for row in self.document['shot_revisions']}
-        placements = {row['occurrence_id']: row for row in bundle['placements']}
-        self.owners = {}
-        for row in self.document['parent_revision']['payload']['occurrences']:
-            shot = shots[row['shot_revision_id']]
-            owner = 'occurrence:' + row['occurrence_id']
-            local = placements[row['occurrence_id']]['shot_id']
-            for ref in ('shot-revision:' + shot['revision_id'],
-                        'internal-revision:' + shot['internal_timeline_revision_id']):
-                self.owners.setdefault(ref, []).append((owner, local))
-
-    def resolve(self, ref):
-        if ref in self.images:
-            return ref
-        kind, _, identity = ref.partition(':')
-        field = {'shot': 'shot_id', 'internal': 'timeline_id'}.get(kind)
-        prefix = {'shot': 'shot-revision:', 'internal': 'internal-revision:'}.get(kind)
-        found = [physical for physical, image in self.images.items()
-                 if field and physical.startswith(prefix) and image[field] == identity]
-        if len(found) != 1:
-            raise CommandError('root alias is ambiguous' if found else 'root is outside the verified closure',
-                               kind='ambiguous_ref' if found else 'outside_closure', ref=ref)
-        return found[0]
-
-    def payload(self, physical):
-        if physical == 'parent':
-            payload = copy.deepcopy(self.bundle['parent'])
-            original = {row['occurrence_id']: row for row in self.images['parent']['payload']['occurrences']}
-            payload['occurrences'] = []
-            for row in self.bundle['placements']:
-                published = original[row['occurrence_id']]
-                payload['occurrences'].append({**copy.deepcopy(row), 'shot_id': published['shot_id'],
-                                               'shot_revision_id': published['shot_revision_id']})
-            return payload
-        owner, local = self.owners[physical][0]
-        shot = self.bundle['shots'][local]
-        if physical.startswith('internal-revision:'):
-            return copy.deepcopy(shot['internal_timeline'])
-        from astrid.core.timeline.authoring_bundle import _remap_known_item_references
-
-        mapping = self.bundle['source_mapping']['shots'].get(local, {}).get('item_id_map', {})
-        return _remap_known_item_references(shot['payload'], {v: k for k, v in mapping.items()})
-
-    def binding(self, submitted, physical, **boundary):
-        image = self.images[physical]
-        result = {'ref': submitted, 'physical_ref': physical,
-                  'revision_id': image['revision_id'], 'content_digest': image['content_digest'],
-                  'boundary': boundary}
-        if physical != 'parent':
-            result['owners'] = [owner + '/shot' for owner, _ in self.owners[physical]]
-astrid/core/timeline/authoring_bundle.py:285:    from .shot_composition import stable_occurrence_deep_link, stable_output_identity
-astrid/core/timeline/authoring_bundle.py:296:    if "output_identity" in placement:
-astrid/core/timeline/authoring_bundle.py:297:        placement["output_identity"] = stable_output_identity(
-astrid/core/timeline/schema/edit-command.schema.json:816:          "description": "Complete literal parent clip row, preserved exactly, including unknown JSON. Preallocated ID; existing active output track. at and hold are seconds without creation-time rounding. Media, source windows and following anchors are unsupported in v1.",
-astrid/core/timeline/schema/edit-command.schema.json:2449:        "output": {
-astrid/core/timeline/schema/edit-command.schema.json:2462:              "const": "output.mp4"
-astrid/core/timeline/schema/edit-command.schema.json:2484:        "output"
-astrid/core/timeline/schema/timeline-config.schema.json:38:              "output",
-astrid/core/timeline/schema/timeline-config.schema.json:41:            "default": "output"
-astrid/core/timeline/schema/timeline-config.schema.json:141:    "output": {
-astrid/core/timeline/schema/timeline-config.schema.json:433:        "derived_output": {
+Bootstrap timeline initialization with the supported 30 FPS shape, then apply
+the exact authored rational FPS through the guarded document patch.
+--- markers ---
+-rw-r--r-- 1 root root 2504 Oct 25 01:48 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-functional-0145/evidence/source-checks.md
+ls: cannot access '/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-functional-0145/DONE': No such file or directory
 
 exec
-/bin/bash -lc "sed -n '260,330p' astrid/sdk/timeline/_doc_patch.py; sed -n '130,190p' astrid/core/timeline/schema/timeline-config.schema.json" in /home/user/work/wt/agt-D86-word-functional-0145
+/bin/bash -lc 'touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-functional-0145/DONE && ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-functional-0145/DONE' in /home/user/work/wt/agt-D86-word-functional-0145
  succeeded in 0ms:
-            if ref.startswith('parent/clip:'):
-                # The next change must observe the recorder's synchronized mirrors.
-                ctx.compile_mirrors()
-            if physical == 'parent' and native_path == ['config'] and value != ABSENT:
-                for mirror in ('clips', 'registry'):
-                    if mirror in self.bundle['parent'] and (mirror in value['value']
-                            or mirror in previous_config.get('value', {})):
-                        ctx.assign('parent', [mirror], present(value['value'][mirror]) if mirror in value['value'] else ABSENT)
+-rw-r--r-- 1 root root 0 Oct 25 01:48 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-functional-0145/DONE
 
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-functional-0145/evidence/source-checks.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-functional-0145/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-functional-0145/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..85f0120ef896acf865f7c837365373e84f0a95c8
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-functional-0145/commit-msg
+@@ -0,0 +1,4 @@
++test(F-D86): preserve rational FPS in native word fixture
++
++Bootstrap timeline initialization with the supported 30 FPS shape, then apply
++the exact authored rational FPS through the guarded document patch.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-functional-0145/evidence/source-checks.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-functional-0145/evidence/source-checks.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..d854d6e2c06f59fe7b467340e8c787bd79090757
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-functional-0145/evidence/source-checks.md
+@@ -0,0 +1,59 @@
++# F-D86 native-word46 / nextcohort9 source-only evidence
++
++Base Agent HEAD: `27c68177c1f587acec0d2b615d1b8bb95c4a4fde`
++
++Changed file SHA-256: `3e225883044678e0af68867e2873faf988bf10090d7d17898d6d1092d3a635db`
++
++Runtime caller/source boundary inspected:
++
++- `runtime_protocol/service.py`: `RuntimeService.commit_timeline` validates the
++  v2 request, authenticates the canonical route, and executes through the
++  registered provider/coordinator.
++- `runtime_protocol/timeline_commit_provider.py`: startup provider ABI is
++  `astrid-v1`, interface version `1`, and the registered provider is the Agent
++  `create_runtime_commit_service` factory.
++- Agent `native_initialize.py` and the current edit-command schema accept only
++  integer output `fps: 30` for `timeline.init`.
++- Agent `validation.py` accepts the exact authored rational object and retains
++  it as a `Fraction`; no float coercion is introduced.
++
++Source-only checks:
++
++- In-memory `compile(...)`: passed for fixture and both owned test files.
++- `py_compile` with private `/tmp/w-8bb524d06a/pycache`: passed.
++- Ruff baseline via `ruff check --no-cache <(git show HEAD:<fixture>)`: passed.
++- Ruff candidate on fixture and both owned tests: passed.
++- Mypy baseline via `mypy <(git show HEAD:<fixture>)`: passed.
++- Mypy candidate on fixture and both owned tests: passed.
++- `git diff --check`: passed.
++- AST conservation: both owned test files are byte/AST exact; fixture
++  `first_selection` and `retained` functions are AST exact. Test predicate
++  inventories and selectors are unchanged.
++
++No pytest, collection, fixture/helper/function execution, Runtime service,
++browser, build, or functional qualification was run. Functional proof remains
++for the central MAIN batch after protected review and merge.
++
++Source hashes used for handoff:
++
++- Runtime HEAD: `6634a17f3ffd885567ba3c91b6c7a560df7375a4`
++- Runtime `service.py`: `5e79c3b9ed3d2ba5efc129d1cc8d7a43075c4ebc9194026fdb641a8eeb7ff19a`
++- Runtime provider ABI: `2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf`
++- Agent `native_initialize.py`: `9ba19ebc1212cca4fbde005728a410e68a128297abb4e39ccf3f2abd2e39df82`
++- Agent `validation.py`: `65524a27d75469422fe0bd7d2759eb2e8cec0a4b861422b670de57a6ec129d8c`
++- Agent `commit.py`: `eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7`
++
++Exact owned selectors conserved:
++
++- `test_native_word_anchor.py`: 29 test selectors; predicate inventory count 133.
++- `test_word_binding_recipe.py`: 19 test selectors; predicate inventory count 94.
++
++The exact selector manifests are the unchanged AST inventories from HEAD:
++
++- Native: `test_native_acceptance_refuses_review_source_counterexamples_before_writes`, `test_first_use_retains_v1_before_producer_removes_words_and_exact_retry_after_restart`, `test_provider_resolves_exact_first_use_pin_and_refuses_unavailable_source`, `test_source_read_revocation_is_atomic_before_first_use_retention`, `test_source_removal_and_changed_media_refuse_atomically`, `test_occurrence_window_is_rechecked_for_source_move_stale_replay_and_inverse`, `test_native_move_refuses_anchor_basis_until_explicit_clear`, `test_first_anchor_inverse_recovers_literal_timing_and_exact_absence`, `test_word_ending_at_occurrence_end_preserves_revision_only_restore_and_inverse`, `test_unrelated_legacy_timing_is_outside_native_anchor_slice`, `test_follow_rebases_original_choice_after_source_move_and_reorder`, `test_phrase_records_all_consecutive_main_word_ids`, `test_same_word_in_reused_cas_clips_retains_raw_source_through_undo`, `test_last_write_clear_undo_restore_and_restore_inverse`, `test_equal_text_references_produce_distinct_canonical_revisions`, `test_equal_text_restore_recovers_the_selected_publications_binding`, `test_invalid_inputs_fail_closed_before_acceptance`, `test_raw_canonical_bundle_compiles_in_fresh_process_without_history`, `test_reference_is_authoritative_and_kernel_never_searches_echo`, `test_legacy_ambiguous_text_refuses_choose_occurrence`, `test_legacy_unique_word_in_reused_cas_is_still_ambiguous_without_raw_clip`, `test_unique_legacy_word_compiles_without_persisting_a_reference`, `test_on_until_clear_preserves_other_reference_and_opaque_fields`, `test_half_open_window_and_exact_rational_fps_are_validated_at_acceptance`, `test_stale_anchor_refuses_when_intervening_window_excludes_selected_word`, `test_invalid_authored_reference_never_falls_back_to_valid_echo`, `test_typed_second_offset_preserves_main_precision_at_rational_frame_boundary`, `test_stale_choice_and_guarded_inverse_refuse_competing_target_writes`, `test_undo_recovers_before_binding_even_when_text_writes_are_equal`.
++- Recipe: `test_follow_rebases_original_choice_after_source_move_and_reorder`, `test_phrase_records_all_consecutive_main_word_ids`, `test_same_word_in_reused_cas_clips_retains_raw_source_through_undo`, `test_last_write_clear_undo_restore_and_restore_inverse`, `test_equal_text_references_produce_distinct_canonical_revisions`, `test_equal_text_restore_recovers_the_selected_publications_binding`, `test_invalid_inputs_fail_closed_before_acceptance`, `test_raw_canonical_bundle_compiles_in_fresh_process_without_history`, `test_reference_is_authoritative_and_kernel_never_searches_echo`, `test_legacy_ambiguous_text_refuses_choose_occurrence`, `test_legacy_unique_word_in_reused_cas_is_still_ambiguous_without_raw_clip`, `test_unique_legacy_word_compiles_without_persisting_a_reference`, `test_on_until_clear_preserves_other_reference_and_opaque_fields`, `test_half_open_window_and_exact_rational_fps_are_validated_at_acceptance`, `test_stale_anchor_refuses_when_intervening_window_excludes_selected_word`, `test_invalid_authored_reference_never_falls_back_to_valid_echo`, `test_typed_second_offset_preserves_main_precision_at_rational_frame_boundary`, `test_stale_choice_and_guarded_inverse_refuse_competing_target_writes`, `test_undo_recovers_before_binding_even_when_text_writes_are_equal`.
++
++Proposed existing log entry: `F-D86 native-word46/nextcohort9 source-only
++fixture correction: timeline.init now uses supported 30 FPS bootstrap, then
++guarded doc.patch preserves exact authored 30000/1001 rational FPS; tests and
++half-open/exact arithmetic unchanged; functional proof deferred to MAIN batch.`
+diff --git a/tests/editing_conformance/native_word_anchor_fixture.py b/tests/editing_conformance/native_word_anchor_fixture.py
+index 0af60ab0d9848efc993e75fe6c79e5f17fc4684b..e10a3b2c82d20d5f415d05f09e130e16e12ee9cb
+--- a/tests/editing_conformance/native_word_anchor_fixture.py
++++ b/tests/editing_conformance/native_word_anchor_fixture.py
+@@ -125,12 +125,13 @@
+         "dependency_manifest": bootstrap["dependency_manifest"],
+     }
+     bundle = bundle_from_document(empty)
+-    initialized = execute(bundle, [capture_initialize(
++    initialize = capture_initialize(
+         bundle, name="Voice", slug="film", output={
+-            "resolution": "1280x720", "fps": FPS, "file": "output.mp4",
++            "resolution": "1280x720", "fps": 30, "file": "output.mp4",
+             "background": None, "background_scale": None,
+         },
+-    )]).bundle
++    )
++    initialized = execute(bundle, [initialize]).bundle
+     parent_track = capture_track_create(initialized, "parent", {
+         "id": "picture", "kind": "visual",
+     })
+@@ -152,6 +153,9 @@
+     if reused:
+         voices.append(dict(voices[0], id="other", at=4))
+     after = copy.deepcopy(occurred)
++    # timeline.init accepts only its supported bootstrap fps; retain the exact
++    # authored rational output through the emitter's guarded before/after patch.
++    after["parent"]["config"]["output"]["fps"] = copy.deepcopy(FPS)
+     after["parent"]["config"]["theme_overrides"] = {"visual": {"canvas": {"fps": FPS}}}
+     after["shots"]["shot"]["payload"].update(
+         {"items": [], **(opaque if opaque_pin_scope == "shot" else {})})
+@@ -177,12 +181,7 @@
+         "schema_version": 1, "op": "media.admit", "version": "1", "select": None,
+         "args": {"inputs": [{"pin": {"media_id": media, "content_digest": media}}]},
+     }
+-    submit([capture_initialize(
+-        bundle, name="Voice", slug="film", output={
+-            "resolution": "1280x720", "fps": FPS, "file": "output.mp4",
+-            "background": None, "background_scale": None,
+-        },
+-    ), parent_track, card, occurrence, media_admission, *changes], "initial-commit")
++    submit([initialize, parent_track, card, occurrence, media_admission, *changes], "initial-commit")
+ 
+     service.close()
+     return {'project': project, 'pin': pin, 'source': source}
 
-def managed_edges(ref, payload):
-    if ref == 'parent':
-        rows = payload.get('occurrences', [])
-        if not isinstance(rows, list):
-            return None
-        return [(row.get('occurrence_id'), row.get('shot_id'), row.get('shot_revision_id'), row.get('revision_id'))
-                if isinstance(row, dict) else None for row in rows]
-    if ref.startswith('shot'):
-        return {key: payload[key] for key in ('internal_timeline_revision_id', 'shot_id', 'revision_id') if key in payload}
-    return {key: payload[key] for key in ('timeline_id', 'revision_id') if key in payload}
+codex
+## Report
 
+- Corrected `native_word_anchor_fixture.py` to bootstrap with supported `fps: 30`, then guarded-patch the exact `{"numerator": 30000, "denominator": 1001}` authored FPS.
+- Preserved all tests, selectors, assertions, and arithmetic behavior. Native/recipe test files are unchanged.
+- Static checks passed: in-memory compile, `py_compile`, Ruff baseline/candidate, mypy baseline/candidate, `git diff --check`, and AST conservation.
+- No pytest, collection, fixture execution, service, browser, build, or functional suite run per task restrictions.
+- Final fixture SHA-256: `3e225883044678e0af68867e2873faf988bf10090d7d17898d6d1092d3a635db`
+- Evidence: `evidence/source-checks.md`
+- Commit message written; `DONE` marker created.
 
-def validate_payload(ref, payload):
-    for path in ((['clips'], ['config', 'clips'], ['config', 'tracks'], ['occurrences'])
-                 if ref == 'parent' else (['clips'], ['tracks']) if ref.startswith('internal') else ()):
-        try:
-            value = value_at(payload, ref, path)
-        except CommandError:
-            continue
-        if value != ABSENT:
-            if (ref == 'parent' and path in (['clips'], ['config', 'clips'])
-                    and value['value'] is None and null_clip_mirror(payload)):
-                continue
-            identities(value['value'], identity_key(ref, path), ref=ref, path=path)
-    if ref == 'parent':
-        config = payload.get('config', {})
-        for key in ('clips', 'registry'):
-            if key in payload and isinstance(config, dict) and key in config and not equal(payload[key], config[key]):
-                if key == 'clips' and null_clip_mirror(payload):
-                    continue
-                raise CommandError('contradictory parent mirrors', kind='identity_conflict', path=[key])
+Functional qualification remains for MAIN after protected review and merge.
+tokens used
+193,131
+## Report
 
+- Corrected `native_word_anchor_fixture.py` to bootstrap with supported `fps: 30`, then guarded-patch the exact `{"numerator": 30000, "denominator": 1001}` authored FPS.
+- Preserved all tests, selectors, assertions, and arithmetic behavior. Native/recipe test files are unchanged.
+- Static checks passed: in-memory compile, `py_compile`, Ruff baseline/candidate, mypy baseline/candidate, `git diff --check`, and AST conservation.
+- No pytest, collection, fixture execution, service, browser, build, or functional suite run per task restrictions.
+- Final fixture SHA-256: `3e225883044678e0af68867e2873faf988bf10090d7d17898d6d1092d3a635db`
+- Evidence: `evidence/source-checks.md`
+- Commit message written; `DONE` marker created.
 
-def allocations(closure, physical, before, after):
-    created = []
-    for path, kind in ((['config', 'tracks'], 'track'), (['clips'], 'clip')) if physical == 'parent' else (
-            ((['tracks'], 'track'), (['clips'], 'clip')) if physical.startswith('internal') else ()):
-        old, new = value_at(before, physical, path), value_at(after, physical, path)
-        if physical == 'parent' and path == ['clips'] and (
-                old == ABSENT and new == ABSENT
-                or null_clip_mirror(before) and before.get('clips') is None):
-            old, new = value_at(before, physical, ['config', 'clips']), value_at(after, physical, ['config', 'clips'])
-        previous = [] if old == ABSENT else identities(old['value'], 'id', ref=physical, path=path)
-        current = [] if new == ABSENT else identities(new['value'], 'id', ref=physical, path=path)
-        owners = ['parent'] if physical == 'parent' else [owner for owner, _ in closure.owners[physical]]
-        created.extend({'ref': owner + '/' + kind + ':' + identity, 'kind': kind, 'owner': owner}
-                       for identity in current if identity not in previous for owner in owners)
-    # Asset keys are identities even though the registry is an object rather than an identity list.
-    if physical == 'parent' or physical.startswith('internal'):
-        registry_path = ['registry']
-        old, new = value_at(before, physical, registry_path), value_at(after, physical, registry_path)
-        old_value, new_value = old.get('value'), new.get('value')
-        old_assets = old_value.get('assets', {}) if isinstance(old_value, dict) else {}
-        new_assets = new_value.get('assets', {}) if isinstance(new_value, dict) else {}
-        if isinstance(old_assets, dict) and isinstance(new_assets, dict):
-            owners = ['parent'] if physical == 'parent' else [owner for owner, _ in closure.owners[physical]]
-            created.extend({'ref': owner + '/asset:' + identity, 'kind': 'asset', 'owner': owner}
-                           for identity in new_assets if identity not in old_assets for owner in owners)
-    return created
-
-
-    "theme_overrides": {
-      "$ref": "#/definitions/ThemeOverrides"
-    },
-    "generation_defaults": {
-      "type": "object",
-      "additionalProperties": {}
-    },
-    "app": {
-      "type": "object",
-      "additionalProperties": {}
-    },
-    "output": {
-      "$ref": "#/definitions/TimelineOutput"
-    }
-  },
-  "required": [
-    "clips",
-    "tracks"
-  ],
-  "additionalProperties": false,
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "definitions": {
-    "MetaNamespaceKey": {
-      "type": "string",
-      "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$",
-      "minLength": 1,
-      "maxLength": 128,
-      "description": "ASCII namespace key for opaque extension metadata."
-    },
-    "MetaValue": {
-      "description": "A finite JSON descendant of an opaque metadata namespace.",
-      "anyOf": [
-        {
-          "type": "object",
-          "additionalProperties": { "$ref": "#/definitions/MetaValue" }
-        },
-        {
-          "type": "array",
-          "items": { "$ref": "#/definitions/MetaValue" }
-        },
-        { "type": "string" },
-        { "type": "number" },
-        { "type": "boolean" },
-        { "type": "null" }
-      ]
-    },
-    "MetaNamespaceValue": {
-      "type": "object",
-      "additionalProperties": { "$ref": "#/definitions/MetaValue" },
-      "description": "Opaque namespace payload; the namespace root is always an object."
-    },
-    "Meta": {
-      "type": "object",
-      "maxProperties": 64,
-      "propertyNames": { "$ref": "#/definitions/MetaNamespaceKey" },
-      "additionalProperties": { "$ref": "#/definitions/MetaNamespaceValue" },
-      "description": "Optional bounded namespace map. Canonical byte and depth limits are provider-enforced."
-    },
-    "TimelineClip": {
-      "type": "object",
-      "properties": {
-
-exec
-/bin/bash -lc "rg -n '\"TimelineOutput\"|fps' astrid/core/timeline/schema/timeline-config.schema.json | sed -n '1,120p'; sed -n '240,300p' astrid/core/timeline/schema/timeline-config.schema.json" in /home/user/work/wt/agt-D86-word-functional-0145
- succeeded in 0ms:
-506:    "TimelineOutput": {
-512:        "fps": {
-533:        "fps",
-565:        "fps": {
-          "type": "number"
-        },
-        "cropLeft": {
-          "type": "number"
-        },
-        "cropRight": {
-          "type": "number"
-        },
-        "opacity": {
-          "type": "number"
-        },
-        "text": {
-          "type": "object",
-          "properties": {
-            "content": {
-              "type": "string"
-            },
-            "fontFamily": {
-              "type": "string"
-            },
-            "fontSize": {
-              "type": "number"
-            },
-            "color": {
-              "type": "string"
-            },
-            "align": {
-              "type": "string",
-              "enum": [
-                "left",
-                "center",
-                "right"
-              ]
-            },
-            "bold": {
-              "type": "boolean"
-            },
-            "italic": {
-              "type": "boolean"
-            }
-          },
-          "additionalProperties": false
-        },
-        "entrance": {
-          "type": "object",
-          "properties": {
-            "type": {
-              "type": "string"
-            },
-            "duration": {
-              "type": "number"
-            },
-            "intensity": {
-              "type": "number"
-            },
-            "params": {
-              "type": "object",
-              "additionalProperties": {}
-            }
-          },
-          "additionalProperties": false
-
-exec
-/bin/bash -lc "sed -n '500,548p' astrid/core/timeline/schema/timeline-config.schema.json; sed -n '550,580p' astrid/core/timeline/schema/timeline-config.schema.json" in /home/user/work/wt/agt-D86-word-functional-0145
- succeeded in 74ms:
-          "type": "object",
-          "additionalProperties": {}
-        }
-      },
-      "additionalProperties": false
-    },
-    "TimelineOutput": {
-      "type": "object",
-      "properties": {
-        "resolution": {
-          "type": "string"
-        },
-        "fps": {
-          "type": "number"
-        },
-        "file": {
-          "type": "string"
-        },
-        "background": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "background_scale": {
-          "type": [
-            "number",
-            "null"
-          ]
-        }
-      },
-      "required": [
-        "resolution",
-        "fps",
-        "file"
-      ],
-      "additionalProperties": false
-    },
-    "AssetEntry": {
-      "type": "object",
-      "properties": {
-        "file": {
-          "type": "string"
-        },
-        "url": {
-          "type": "string"
-        },
-        "etag": {
-          "type": "string"
-        "content_sha256": {
-          "type": "string"
-        },
-        "url_expires_at": {
-          "type": "string"
-        },
-        "type": {
-          "type": "string"
-        },
-        "duration": {
-          "type": "number"
-        },
-        "resolution": {
-          "type": "string"
-        },
-        "fps": {
-          "type": "number"
-        },
-        "generationId": {
-          "type": "string"
-        },
-        "variantId": {
-          "type": "string"
-        },
-        "thumbnailUrl": {
-          "type": "string"
-        },
-        "meta": {
-          "$ref": "#/definitions/Meta"
-        }
-      },
-
+Functional qualification remains for MAIN after protected review and merge.
