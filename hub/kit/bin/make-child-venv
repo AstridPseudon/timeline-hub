@@ -26,6 +26,7 @@ DEPENDENCY_SEED=
 FARM_SCHEMA_SOURCE=
 FARM_REQUIRED=0
 FARM_AUTHORITY=
+DIAGNOSTIC_RETENTION=0
 BOOTSTRAP_ARCHIVE=$O/artifacts/bootstrap-wheel-input-0932-443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548.tgz
 SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
 
@@ -69,6 +70,10 @@ while [ "$#" -gt 0 ]; do
       [ "$#" -ge 2 ] || { echo 'REFUSED: dependency wheelhouse path is missing' >&2; exit 2; }
       DEPENDENCY_SEED=$2; shift 2
       ;;
+    --retain-staging-no-register)
+      [ "$DIAGNOSTIC_RETENTION" = 0 ] || { echo 'REFUSED: duplicate diagnostic retention flag' >&2; exit 2; }
+      DIAGNOSTIC_RETENTION=1; shift
+      ;;
     *)
       echo 'REFUSED: unknown child venv option' >&2
       exit 2
@@ -104,7 +109,7 @@ source_state "$R" "$RUNTIME_SHA" || { echo 'REFUSED: Runtime checkout is dirty';
 
 # Legacy benches have no store deletion authority and retain the exact verifier.
 # This branch performs no creation, registration, adoption or eviction.
-if [ -e "$W/$N" ] || [ -L "$W/$N" ]; then
+if [ "$DIAGNOSTIC_RETENTION" = 0 ] && { [ -e "$W/$N" ] || [ -L "$W/$N" ]; }; then
   SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
   REQUESTER=$SCRIPT_DIR/request-child-venv
   [ -f "$REQUESTER" ] || REQUESTER=$SCRIPT_DIR/request-child-venv.sh
@@ -209,9 +214,10 @@ done)
 
 STORE_HELPER=$O/bin/bench_store.py
 [ -f "$STORE_HELPER" ] && [ ! -L "$STORE_HELPER" ] || { echo 'REFUSED: bench store helper unavailable' >&2; exit 2; }
+export CHILD_VENV_DIAGNOSTIC_RETENTION=$DIAGNOSTIC_RETENTION
 export STORE_CONTEXT="$(declare -p FARM_SCHEMA_SOURCE FARM_REQUIRED FARM_AUTHORITY O A R W PYTHON TIMEOUT_BIN PIP_TIMEOUT_SECONDS LOCAL_TIMEOUT_SECONDS FREEZE_TIMEOUT_SECONDS BUILD_TIMEOUT_SECONDS KILL_AFTER_SECONDS PIP_NETWORK_TIMEOUT_SECONDS PIP_RETRIES REQUIREMENTS_PATH N S BS RT RUNTIME_SHA CLIENT_IDENTITY LOCK_SHA VERIFIER_SHA256 BOOTSTRAP_ARCHIVE DEPENDENCY_SEED SCRIPT_DIR; declare -f failure run_stage progress source_state)"
 python3 -I - "$0" "$STORE_HELPER" "$W/bench-store" "$O/tests" "$N" "$S" "$RUNTIME_SHA" "$CLIENT_IDENTITY" "$A" "$R" "$W" "$PYTHON" "$BS" "$RT" "$REQUIREMENTS_PATH" "$LOCK_SHA" "$DEPENDENCY_SEED" "$VERIFIER_SHA256" "$EXPECTED_PROOF_LOCK_SHA256" "$FARM_SCHEMA_SOURCE" "$FARM_REQUIRED" "$BOOTSTRAP_ARCHIVE" <<'STORE_PY'
-import hashlib, importlib.util, json, os, pathlib, re, shlex, stat, subprocess, sys
+import hashlib, importlib.util, json, os, pathlib, re, shlex, signal, stat, subprocess, sys
 script, helper, root, tests, name, agent, backend, client, checkout, runtime_checkout, work, python, base_suite, remotion, requirements, lock, dependency_seed, verifier_sha, approved_lock, farm_source, farm_required, bootstrap_archive = sys.argv[1:]
 sys.dont_write_bytecode = True
 spec = importlib.util.spec_from_file_location('bench_store', helper)
@@ -369,7 +375,9 @@ def build(stage, final):
 def seal(path):
     subprocess.run(['timeout', '--kill-after=30', os.environ.get('CHILD_VENV_LOCAL_TIMEOUT_SECONDS', '600'),
                     'chmod', '-R', 'a-w', str(path)], check=True)
+verify_invocation = []
 def verify(path):
+    global verify_invocation
     retained = pathlib.Path(path)
     if retained.is_symlink() or not retained.is_dir() or not os.access(retained / 'bin/python', os.X_OK):
         raise RuntimeError('invalid retained child root/interpreter')
@@ -379,9 +387,11 @@ def verify(path):
         farm_args = ['--farm-source', receipt['schema_source']['custody']['root']]
     elif (retained / '.farm-receipt.json').exists() or (retained / '.farm-receipt.json').is_symlink():
         raise RuntimeError('Farm child requires authenticated Store authority')
+    verify_invocation = ['python3', '-I', '-', str(path), client, checkout, agent,
+                         runtime_checkout, backend, work, python, *farm_args, '--staging']
     local_inventory = json.loads(subprocess.check_output(
         ['python3', '-I', '-', str(path), client, checkout, agent,
-         runtime_checkout, backend, work, python, *farm_args], input=verifier, text=True))
+         runtime_checkout, backend, work, python, *farm_args, '--staging'], input=verifier, text=True))
     for marker, expected in (('.astrid-source-commit', agent), ('.astrid-runtime-source-commit', backend), ('.astrid-runtime-client-identity', client)):
         if (retained / marker).read_text().rstrip('\n') != expected:
             raise RuntimeError('retained child source/client marker mismatch: ' + marker)
@@ -421,7 +431,116 @@ def verify(path):
                     str(snapshots[0] / 'runtime'), agent, backend],
                    check=True, timeout=int(os.environ.get('CHILD_VENV_LOCAL_TIMEOUT_SECONDS', '600')))
     verified_reports[str(retained)] = data
-managed_remotion = bool(remotion and store.registered(remotion))
+diagnostic_mode = os.environ.get('CHILD_VENV_DIAGNOSTIC_RETENTION') == '1'
+def diagnostic_cancel(signum, frame):
+    raise KeyboardInterrupt()
+if diagnostic_mode:
+    signal.signal(signal.SIGINT, diagnostic_cancel)
+    signal.signal(signal.SIGTERM, diagnostic_cancel)
+
+def diagnostic_retention():
+    """Build and verify one sealed staging tree without Store publication."""
+    key = module.key_for('child', identity)
+    entry_id = store._entry_id('child', key)
+    final = pathlib.Path(root) / 'entries' / entry_id
+    stage = pathlib.Path(root) / 'staging' / key
+    receipt_path = pathlib.Path(root) / 'staging' / (key + '.diagnostic-retention.json')
+    source_digest = hashlib.sha256(source.encode()).hexdigest()
+    verifier_digest = hashlib.sha256(verifier.encode()).hexdigest()
+    helper_digest = hashlib.sha256(pathlib.Path(helper).read_bytes()).hexdigest()
+    outcome = 'failed-staging'
+    error_detail = None
+    failure_evidence = None
+    seal_error = None
+    entry = None
+    with store.mutex():
+        before = store._load()
+        index_path = pathlib.Path(store.root) / 'index.json'
+        index_before = hashlib.sha256(index_path.read_bytes()).hexdigest()
+        module.check(entry_id not in before['entries'], 'diagnostic target already adopted')
+        module.check(name not in before['registrations'], 'diagnostic registration name already owned')
+        module.check(not final.exists() and not final.is_symlink(), 'diagnostic final child path exists')
+        module.check(not stage.exists() and not stage.is_symlink(), 'diagnostic staging path exists')
+        module.check(not receipt_path.exists() and not receipt_path.is_symlink(), 'diagnostic receipt exists')
+        module.check(module.shutil.disk_usage(store.root).free >= module.Store.RESERVE_BYTES,
+                     'free-space reserve unavailable')
+        lock_path = pathlib.Path(store.root) / 'locks' / entry_id
+        module.check(not lock_path.exists() and not lock_path.is_symlink(), 'diagnostic lock exists')
+        fd = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+        os.close(fd)
+        module.sync_dir(lock_path.parent)
+        stage.mkdir(mode=0o700)
+        entry = {'component': 'child', 'key': key, 'identity': identity,
+                 'path': str(final), 'seq': before['seq'] + 1,
+                 'lock': module.inode(lock_path), 'node': module.inode(stage),
+                 'owner': store.owner['id']}
+        module.atomic(stage / '.bench-owner.json', module.canonical({
+            'owner': store.owner['id'], 'component': 'child', 'key': key, 'identity': identity}))
+        module.sync_dir(stage)
+        try:
+            build(stage, final)
+            verify(stage)
+            outcome = 'verified-staging'
+        except KeyboardInterrupt as error:
+            outcome = 'cancelled-staging'
+            error_detail = type(error).__name__
+            failure_evidence = getattr(build, 'failure_evidence', None)
+        except BaseException as error:
+            outcome = 'failed-staging'
+            error_detail = type(error).__name__ + ': ' + str(error)[:400]
+            failure_evidence = getattr(build, 'failure_evidence', None)
+        try:
+            seal(stage)
+        except BaseException as error:
+            seal_error = type(error).__name__ + ': ' + str(error)[:400]
+        receipt = {
+            'schema': 'timeline.ops.d127a.diagnostic-retention/v1',
+            'status': 'refused' if seal_error else outcome,
+            'name': name,
+            'entry_id': entry_id,
+            'key': key,
+            'identity': identity,
+            'source': {
+                'agent_checkout': checkout, 'agent_sha': agent,
+                'runtime_checkout': runtime_checkout, 'runtime_sha': backend,
+                'requirements_path': requirements, 'requirements_lock_sha256': lock,
+                'client_identity_sha256': hashlib.sha256(client.encode()).hexdigest(),
+            },
+            'authority': {
+                'store_root': str(store.root), 'store_owner': store.owner['id'],
+                'lock': str(lock_path), 'staging': str(stage), 'final': str(final),
+                'index_sha256': index_before, 'index_unchanged':
+                    hashlib.sha256(index_path.read_bytes()).hexdigest() == index_before,
+            },
+            'installed_source': {
+                'maker_sha256': source_digest, 'bench_store_sha256': helper_digest,
+                'embedded_store_verify_sha256': verifier_digest,
+            },
+            'verify_invocation': verify_invocation,
+            'barriers': {
+                'register': False, 'adopt': False, 'reuse': False,
+                'publish': False, 'ready': False, 'test_body': False,
+            },
+            'retention': {
+                'layout': 'bench-store/staging/<child-key>',
+                'permissions': oct(stage.stat().st_mode & 0o777),
+                'cleanup': 'Farm lead only after independent 1516 census; no automatic cleanup',
+            },
+            'failure_evidence': failure_evidence,
+            'error': error_detail,
+            'seal_error': seal_error,
+        }
+        encoded = module.canonical(receipt)
+        module.check(len(encoded.encode('utf-8')) <= 8 * 1024 * 1024,
+                     'diagnostic receipt exceeds bounded output')
+        module.atomic(receipt_path, encoded + '\n')
+    if seal_error:
+        raise RuntimeError('diagnostic retention seal refused: ' + seal_error)
+    if outcome != 'verified-staging':
+        raise RuntimeError('diagnostic retention ' + outcome + (': ' + error_detail if error_detail else ''))
+    return 'retained staging=' + str(stage) + ' receipt=' + str(receipt_path) + ' status=' + outcome
+
+managed_remotion = False if diagnostic_mode else bool(remotion and store.registered(remotion))
 def registration(path, final, reused):
     rows = pathlib.Path(tests, 'suites.conf').read_text().splitlines()
     suite = ''
@@ -441,9 +560,12 @@ def registration(path, final, reused):
     return {'name': name, 'env': '', 'suite': suite, 'requires': [], 'require_names': requires,
             'report': data.decode('utf-8')}
 try:
-    entry = store.ensure('child', identity, registration, build, verify, seal=seal,
-                         failure_name=name)
-    receipt = success_receipt(entry, verified_reports[entry['path']])
+    if diagnostic_mode:
+        receipt = diagnostic_retention()
+    else:
+        entry = store.ensure('child', identity, registration, build, verify, seal=seal,
+                             failure_name=name)
+        receipt = success_receipt(entry, verified_reports[entry['path']])
 except Exception as error:
     if getattr(build, 'failure_recorded', False):
         print('REFUSED: bench store: child build failed; bounded evidence retained', file=sys.stderr)
@@ -1077,3 +1199,4 @@ local_inventory['__root__'] = sorted(root_inventory)
 print(json.dumps(local_inventory))
 # STORE_VERIFY_END
 STORE_VERIFY_BODY
+
