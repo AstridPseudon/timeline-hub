@@ -254,10 +254,25 @@ def test_runtime_pin_flow_returns_old_script_after_binding_rebind(tmp_path):
             def get_object(self, object_id):
                 return {"data": service.cas.path_for(object_id.removeprefix("sha256:")).read_bytes()}
 
-        service.set_project_shot_text_binding(project_id, {
-            "binding_id": pin["binding_id"], "text": "New mutable head.", "expected_head": pin["head"],
-        }, idempotency_key="rebind-script")
-        result = read_composition_script(Timelines(), Transport(), project_id, "main")
+        rebound_raw = b"New mutable head."
+        rebound_stored = service.ingest(project_id, rebound_raw, media_type="text/plain; charset=utf-8",
+                                        idempotency_key="rebind-script-text")
+        rebound = rebound_stored["data"]
+        rebound_text = {key: rebound[key] for key in ("object_id", "digest", "size", "media_type")}
+        rebound_verified = {**rebound_text, "utf8": True}
+        rebound_bundle = bundle_from_document(binding_result["data"]["canonical_document"])
+        rebound_command = capture_text_binding_set(
+            rebound_bundle, "occurrence:" + rebound_occurrence["occurrence_id"],
+            {"kind": "voiceover_script", "slot": None},
+            text=rebound_text, verified_text=[rebound_verified])
+        rebound_result = commit([rebound_command], "rebind-script")
+        assert rebound_result["data"]["accepted_revision_id"]
+        live = next(row for row in service.list_project_shot_text_bindings(
+            project_id, kind="voiceover_script")["items"] if row["shot_id"] == shot["shot_id"])
+        assert live["media_id"] == rebound["object_id"]
+        result = read_composition_script(
+            Timelines(), Transport(), project_id, "main",
+            revision_id=binding_result["data"]["accepted_revision_id"])
         assert result.ok
         canonical = binding_result["data"]["canonical_document"]
         expected_revision = "authoring-parent-revision-" + hashlib.sha256(json.dumps(

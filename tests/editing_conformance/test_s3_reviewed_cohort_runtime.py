@@ -7,6 +7,7 @@ import pytest
 
 from astrid.sdk.media_transcript import build_transcript, transcript_document_id
 from astrid.sdk.timeline import commands
+from astrid.sdk.timeline._clip_commands import capture_clip_add
 from astrid.sdk.timeline.capture import capture_track_create
 from astrid.sdk.timeline.commit import _digest, bundle_from_document
 from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
@@ -65,8 +66,9 @@ def test_init_occurrence_media_parent_swap_word_grouped_inverse_reload_restart(t
                        if row['id'] == 'parent-media')
         assert swapped == {**row, 'asset': case.pins['new']['asset']}
         submit([parent.call('clip.delete', {}, 'parent/clip:parent-media')], 's3-parent-delete')
-        submit([parent.call('clip.add', {'row': {'id': 'caption', 'clipType': 'am-type',
-            'track': 'overlay', 'at': 0, 'hold': .5, 'opaque': [None, False, 0.0]}})], 's3-caption')
+        caption = {'id': 'caption', 'clipType': 'am-type', 'track': 'overlay', 'at': 0,
+                   'hold': .5, 'opaque': [None, False, 0.0]}
+        submit([capture_clip_add(bundle(), 'parent', caption)], 's3-caption')
         content = build_transcript(case.pins['new']['object_id'], 'line', 'again again',
                                    [[0, .25, 'again'], [.5, .75, 'again']])
         identity = transcript_document_id(case.project, content['media_id'], content['source_id'])

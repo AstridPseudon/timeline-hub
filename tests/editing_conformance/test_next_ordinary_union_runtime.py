@@ -35,7 +35,9 @@ def test_born_occurrence_text_order_clear_grouped_inverse_and_redo(tmp_path, mon
             command['intent'] = {'ownership': 'occurrence'}
             return command
 
-        request = parent.body(case, [birth, text('transcript'), text('voiceover_script')])
+        birth_request = parent.body(case, [birth])
+        birth_accepted = parent.commit(case, birth_request, 'union-birth')
+        request = parent.body(case, [text('transcript'), text('voiceover_script')])
         accepted = parent.commit(case, request, 'union-birth-text')
         document = parent.current(case)
         shot = next(row for row in document['shot_revisions'] if row['shot_id'] == 'text-shot')
@@ -46,7 +48,8 @@ def test_born_occurrence_text_order_clear_grouped_inverse_and_redo(tmp_path, mon
         assert parent.current(case) == document
         # Reverse the clear/restore edges too, retaining their authenticated order.
         inverse = parent.body(case, [parent.call('timeline.inverse', {'publications': [
-            item['receipt']['receipt_id'] for item in (initialized, accepted, cleared, restored)]}, None)])
+            item['receipt']['receipt_id'] for item in
+            (initialized, birth_accepted, accepted, cleared, restored)]}, None)])
         undone = parent.commit(case, inverse, 'union-group-undo')
         assert parent.current(case) == original
         redone = parent.undo(case, undone, 'union-group-redo')
@@ -55,6 +58,7 @@ def test_born_occurrence_text_order_clear_grouped_inverse_and_redo(tmp_path, mon
         assert parent.current(case) == document
         with monkeypatch.context() as retry:
             retry.setattr(commands, 'execute', lambda *a, **kw: pytest.fail('retry executed semantics'))
+            assert parent.commit(case, birth_request, 'union-birth') == birth_accepted
             assert parent.commit(case, request, 'union-birth-text') == accepted
             assert parent.commit(case, inverse, 'union-group-undo') == undone
         assert case.service.store.integrity_report()['ok']
