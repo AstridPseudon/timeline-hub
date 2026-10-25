@@ -1,0 +1,75 @@
+{
+  "schema": "timeline.ops.d137.preflight.v1",
+  "worker": "agt-F-D137-shell-child-core-2122",
+  "live_maker": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+    "realpath": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+    "type": "regular file",
+    "mode": "755",
+    "sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+    "expected_sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f"
+  },
+  "cas": {
+    "source_commit": "cf80cfcb918ee9e311a294fb7291ad5e11c48d0b",
+    "source_tree": "363a551a00e9dc081da9760e21a6383296135c06",
+    "candidate_sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+    "preimage_sha256": "4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36",
+    "independent_security": "PASS",
+    "independent_controls": "44/44 plus serialized Store RED/GREEN",
+    "installed_receiving_hash": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f"
+  },
+  "protected_helpers": {
+    "bench_store_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "verify_dependency_seed_sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+  },
+  "frozen_tuple": {
+    "agent": {
+      "commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+      "tree": "60d45288145414ee4702fcce61af7c7810c2a3df",
+      "expected_commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+      "expected_tree": "60d45288145414ee4702fcce61af7c7810c2a3df"
+    },
+    "runtime": {
+      "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+      "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+      "expected_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+      "expected_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f"
+    },
+    "app": {
+      "commit": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7",
+      "tree": "dd2afd6c5c7a1ac73feaac4390cc64d7f31fe7b9",
+      "expected_commit": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7",
+      "expected_tree": "dd2afd6c5c7a1ac73feaac4390cc64d7f31fe7b9"
+    },
+    "composition": {
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "expected_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "expected_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    },
+    "remotion": {
+      "expected_commit": "819acf",
+      "expected_tree": "b01dca9b3b24f54093c20b7c5657316f997725db",
+      "status": "not_bound_before_child_pass"
+    }
+  },
+  "admission": {
+    "free_bytes": 6317805568,
+    "child_reserve": 5905580032,
+    "core_start": 4700000000,
+    "stop": 4000000000
+  },
+  "prior_refusal": {
+    "path": "81b7747ced6d6543ae6e6fc63217edd21367cf5b3493a905f64db4b590e5f4f3",
+    "sha256": "81b7747ced6d6543ae6e6fc63217edd21367cf5b3493a905f64db4b590e5f4f3",
+    "preserved": true
+  },
+  "request": {
+    "name": "venv-agent-child-d137-a4e016",
+    "agent": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+    "runtime": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "route": "ordinary request-child-venv",
+    "same_name_live_artifact": false,
+    "live_queue": false
+  }
+}
