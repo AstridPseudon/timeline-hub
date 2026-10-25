@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T10:54:34Z | dispatcher heartbeat 7s | live 5 (sol 0, luna 5, other 0) | busy30 16 | status age 0m -->
+<!-- agent | 2026-10-25T10:58:21Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 16 | status age 0m -->
 # agent board, 2026-10-25T10:54Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -288,7 +288,7 @@
 | F D108 baseline prep | Bind canonical upstream evidence | Sol / independent Luna | Independent custody PASS | merged | Sol0820; review0830 PASS | Canonical d6ed and23 source pairs qualified;12517 upstream mappings and9268 unchanged joins exact. Baseline remains FAIL. [Review](../../design/handoff-agt-F-D108-baseline-custody-review-0830.md) | Evidence only |
 
 | OPS D108b disk | Retain three historical pins | Luna / light service | Host scope remains incomplete | later | Audit0826; services15709 and27257 | All three KEEP. No active hits, but24 unreadable process and2 namespace fields prevent safe release. [Audit](../../design/handoff-agt-OPS-D108b-pin-audit-0826.md) | No changes |
-| D77 applied staging inputs | Publish exact ordinary staging route | Luna source only | Source inventory complete | merged | agt-D77-applied-staging-input-next | Applied523893 deployment UNPROVIDED. Exact Installer to Backend.stage source route and required artifacts published; no build/install/body. [Route](../../design/handoff-agt-D77-applied-staging-input-next.md) | Evidence only |
+| D77 applied staging inputs | Publish exact ordinary staging route | Luna source only | Source inventory complete | merged | agt-D77-applied-staging-input-next | Applied523893 deployment UNPROVIDED. Ordinary staging route published; no build/install/body. [Route](../../design/handoff-agt-D77-applied-staging-input-next.md) | Evidence only |
 | F D108 category A | Classify184 word and legacy outcomes | Luna read only | Exact current and924 source | merged | Classify a0846 | 141 NEWcore and43 ENV; complete per-ID source and upstream rename checks. [A](../../design/handoff-agt-F-D108-terminal-classify-a-0846.md) | Evidence only |
 | F D108 category B | Classify226 other editing outcomes | Luna read only | Exact current and924 source | merged | Classify b0846 | All226 NEWcore, no upstream counterpart after bounded rename check. Source owner routing is not fault proof. [B](../../design/handoff-agt-D108-terminal-classify-b-0846.md) | Evidence only |
 | F D108 category C | Classify96 SDK and other outcomes | Luna read only | Exact current and924 source | merged | Classify c0846 | 71 NEWcore,16 ENV,8 non-core,1 deferred. D110 added test has missing editing fixture, not product proof. [C](../../design/handoff-agt-F-D108-terminal-classify-c-0846.md) | Evidence only |
@@ -318,7 +318,7 @@
 | D115 identity remainder | Trace created identity and array claims | Luna read only | Concrete correction assigned | merged | identities-source0942 | Sheet8 omits two generated asset claims; parent4 repeats existing asset claim. Claims0951 owns correction; opaque6 held, timing8 uses D116. | Evidence only |
 | D115 sequential remainder | Trace prepared metadata and promotions | Luna read only | Precise producer field comparison | merged | sequential-source0945 | Metadata8710 and corrected legacy case share boundary, zero ID overlap. Prepared mismatching field absent; no guessed fix or auth change. | Evidence only |
 | D69 residual even | Inventory remaining exact predicates | Luna read only | Narrow semantic review | merged | residual-even0945; five-even0951 | Exact66 units across25 functions remain unresolved;31 zero-delta functions retained. Five concrete semantic reviews assigned; no audit PASS. | Read only |
-| D69 residual odd | Preserve exact odd predicate purposes | Luna independent | Narrow57/59 approval search | ready | JOIN1042; next free source slot |64 joined scopes disjoint. Index107 additive repair1055 assigned;57/59 require exact decision or faithful restoration. | Evidence only |
+| D69 residual odd | Preserve exact odd predicate purposes | Luna independent | Narrow57/59 approval search | review | agt-F-D69-residual-review-1059 |64 joined scopes disjoint. Index107 additive repair1055 assigned;57/59 require exact decision or faithful restoration. | Evidence only |
 | D115 archive custody | Consume authentic historical bytes | Runtime Luna / Agent | Corrected input behavior | merged | Runtime0923; Agent0926/0932 | Genuine2915 custody PASS consumed. Readers16 PASS and legacy26 PASS; one sequential metadata failure remains. No new acquisition. | Evidence only |
 
 | D77 D117 source access | Retain genuine installed render gap | Owner / Runtime | Authorized pinned OMP archive | gated:D117 | Runtime0933; HeaderD117 | Normal stage403; GitHub access request auto-classifier refused. No retry or alternate source. Genuine render NOTRUN. | Applied523893 graph |
@@ -354,9 +354,9 @@ Disk: About5.12GB during full30693. Verified gzip742 finished worker/round logs 
 Blockers: Agent D107 — Current equivalent remains held on2154. Source review0715 PASS; core2016 terminal clears the full-run wait. Runtime owns the needed exact candidate proof.
 Blockers: Agent prior core437 and14 bounded regressions — D115 cluster workers own the top locations; current count is measured438 minus one independently qualified D110 setup fix. No whole-cluster closure from source alone.
 Blockers: Agent D69 — Exact129/113/287 membership mapped in two0902 partitions. Predicate purpose and approved replacement receipts remain uncleared; two manifest blob mismatches remain explicit.
-Blockers: Final cut — D59 final tuple gates/core, D69 and genuine installed render remain owed.
+Blockers: Final cut — D59 final tuple gates/core, D69 and genuine installed render remain owed. D117 GitHub auto-classifier refusal stays stopped; no retry or alternate source.
 Next ready: D69 scopes57/59 read-only approval search; D100 duplicate fixture correction; R2 current seed join. Start in freed slots above5.0GB. App host14 priority is exclusive. Product batches require full before adoption.
-live 1 plus 5 queued / cap 6; ready-undispatched 0 within capacity. Terminal exporter1024; D116, U4a369, XML repair and two classifiers1055 queued. Disk5.13GB before starts.
+live 3 plus 1 queued / cap 6; ready-undispatched 0 eligible starts. D116 and two classifiers live; residual protected review1059 queued at5.05GB. U4a369 merge queued; XML source repair done but exposes product failure. Source floor rechecked next start.
 Inbox consumed through1528270 bytes. Updated 2026-10-25T10:28Z. D89a core floor4.7GB consumed; no second full body requested before reviewed source batch.
 Later: U4a D111a — Memo1171212 is WITHDRAWN, never merged. Runtime soleLuna0811 samples whole real element request on1daca/070dfc; no Agent memo adoption or source writer. Any qualified later release uses normal tools.
 Later: MAIN profile input — Resolved by D108b local venue. Runtime confirms MAIN0759 unsubmitted and retained; no duplicate body. Local0811 uses genuine819acf/lockf4fc/registryd609.
@@ -376,7 +376,7 @@ D69 five1032: Readonly odd groups5,11,13,29,31;37,39,47,57,59;69,75,81,85,89;101
 Blockers: Runtime output projection — Agent producer82b6 independent1020 PASS_SOURCE/HOLD; original32 PASS, unchanged mounted regression fails auth2864 when consumed manifest changes without payload change. Exact safe packet1020 supplied.
 Blockers: Full current count — actual30693 terminal FAIL450bad. Two disjoint classifiers1055 bind each outcome to source and upstream; current core count pending, no full PASS.
 
-| U4a D115 adoption | Adopt released ordinal-boundary producer | Luna | Qualified Runtime369 release | doing | agt-U4a-D115-adopt-1055 | Tool-only normal adoption queued after terminal30693;15 canonical mappings must stay exact.83 nodes remain behaviorally open. | Released369ffa7c00 |
+| U4a D115 adoption | Adopt released ordinal-boundary producer | Luna | Normal merge receipt | merging | agt-U4a-D115-adopt-1055 | Normal tools PASS;15 mappings unchanged. Own-only lock delta c78de queued merge. No83 behavioral closure. | c78de166c9 |
 
 D69 review progress1032/1042: all19 residualodd and20 residueeven functions reviewed. Independentjoin checks machinecounts and explicit approvals; index107 two XMLpredicates requirefaithful addition. No globalauditPASS.
 
@@ -386,3 +386,5 @@ D118c priority1048: Three NEW scopes sent to App lead: host14 product regression
 
 Terminal update 2026-10-25T10:54Z: service30693 exit1,8823PASS159FAIL291ERROR173subtests1558.79s.450bad versus506; exact membership and D54a classification assigned1055. Source hold cleared. REG14 stays open pending App host author/proof.
 Inbox consumed through 1548530 bytes. Capacity admission rechecked at each dispatch; no dirty G2 or KEEP/pin/refused path touched. Sweep3 remains running.
+
+D69 XML1055 restores both exact original predicates; targeted test now exposes XML declaration before Task. Independent residual-review1059 covers faithful source plus exact production seam and57/59 decisions. No weakening or wholeauditPASS.
