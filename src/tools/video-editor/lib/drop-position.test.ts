@@ -116,6 +116,65 @@ describe('mixed row drop geometry', () => {
     expect(position.plan?.requestedTrackId).toBe('v1');
   });
 
+  it('retains the rendered pointer owner when collision resolution selects another track', () => {
+    const timelineTracks = [
+      { id: 'V1', label: 'Video 1', kind: 'visual' as const },
+      { id: 'V2', label: 'Video 2', kind: 'visual' as const },
+      { id: 'V3', label: 'Video 3', kind: 'visual' as const },
+    ];
+    const wrapper = document.createElement('div');
+    const edit = document.createElement('div');
+    edit.className = 'timeline-canvas-edit-area';
+    edit.dataset.timelineRowLayout = 'managed';
+    wrapper.append(edit);
+    document.body.append(wrapper);
+    wrapper.getBoundingClientRect = edit.getBoundingClientRect = () => ({
+      x: 0, y: 18, left: 0, top: 18, right: 1000, bottom: 126, width: 1000, height: 108, toJSON() {},
+    });
+    const current = data(timelineTracks);
+    current.rows = current.rows.map(row => row.id === 'V2'
+      ? { ...row, actions: [{ id: 'first', start: 3, end: 6, effectId: 'effect-first' },
+        { id: 'second', start: 6, end: 9, effectId: 'effect-second' }] }
+      : row);
+    const dataRef = { current };
+    const layout = buildTimelineRowLayout({ tracks: timelineTracks, lanes: [], mediaRowHeight: 36 });
+    publishTimelineRowLayout(edit, layout, current);
+
+    const position = computeDropPosition({
+      wrapper,
+      dataRef,
+      clientX: 368,
+      clientY: 54,
+      scale: 5,
+      scaleWidth: 160,
+      startLeft: 144,
+      rowHeight: 36,
+      sourceKind: 'visual',
+      clipDuration: 5,
+    });
+
+    expect(position.pointerTrackId).toBe('V2');
+    expect(position.trackId).toBe('V3');
+    expect(position.time).toBe(4.5);
+
+    const managedPosition = computeDropPosition({
+      wrapper,
+      dataRef,
+      clientX: 368,
+      clientY: 54,
+      scale: 5,
+      scaleWidth: 160,
+      startLeft: 144,
+      rowHeight: 36,
+      sourceKind: 'visual',
+      clipDuration: 5,
+      managedImage: true,
+    });
+    expect(managedPosition.pointerTrackId).toBe('V2');
+    expect(managedPosition.trackId).toBe('V2');
+    expect(managedPosition.time).toBe(9);
+  });
+
   it.each([
     ['missing', (rows: TimelineData['rows']) => rows.filter((row) => row.id !== 'v1')],
     ['unknown', (rows: TimelineData['rows']) => [...rows, { id: 'ghost', actions: [] }]],

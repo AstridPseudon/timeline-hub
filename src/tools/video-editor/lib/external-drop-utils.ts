@@ -329,6 +329,15 @@ export async function handleFileDrop({
       ? null
       : getCompatibleTrackId(dataRef.current.tracks, targetTrackId, kind, selectedTrackId);
     const isImageVideo = isImageFile(file) || isVideoFile(file);
+    const managedImageTrackId = directAssetUploadAllFiles && mediaImportForImageVideo
+      && files.length === 1 && isImageFile(file)
+      ? dropPosition.pointerTrackId
+      : undefined;
+    if (managedImageTrackId) {
+      targetTrackId = managedImageTrackId;
+      compatibleTrackId = managedImageTrackId;
+      forceNewTrack = false;
+    }
 
     // A direct host without Runtime media-import capability must not fall
     // through to browser storage, local materialization, or a legacy
@@ -484,7 +493,11 @@ export async function handleFileDrop({
             removeSkeleton();
             return;
           }
-          if (!dropAsset(preparedAsset.assetKey, compatibleTrackId ?? undefined, clipTime, false, false, preparedAsset, skeletonId)) {
+          const preparedManagedImageTrackId = files.length === 1 && isImageFile(file) && preparedAsset.mediaSelection
+            ? dropPosition.pointerTrackId
+            : undefined;
+          if (!dropAsset(preparedAsset.assetKey, preparedManagedImageTrackId ?? compatibleTrackId ?? undefined, clipTime,
+            false, false, preparedAsset, skeletonId)) {
             removeSkeleton();
           }
           return;
@@ -797,6 +810,7 @@ export function finalizeExternalDrop({
   externalDragFrameRef,
   latestExternalDragRef,
   latestExternalPositionRef,
+  managedImage = false,
 }: {
   event: DragEvent<HTMLDivElement>;
   coordinator: DragCoordinator;
@@ -806,8 +820,10 @@ export function finalizeExternalDrop({
     clientX: number;
     clientY: number;
     sourceKind: TrackKind | null;
+    managedImage?: boolean;
   } | null>;
   latestExternalPositionRef: MutableRefObject<ReturnType<DragCoordinator['update']> | null>;
+  managedImage?: boolean;
 }): TimelineDropPosition {
   event.preventDefault();
   delete event.currentTarget.dataset.dragOver;
@@ -823,6 +839,7 @@ export function finalizeExternalDrop({
       clientX: latestExternalDragRef.current.clientX,
       clientY: latestExternalDragRef.current.clientY,
       sourceKind: latestExternalDragRef.current.sourceKind,
+      managedImage: latestExternalDragRef.current.managedImage,
     });
   }
 
@@ -832,6 +849,7 @@ export function finalizeExternalDrop({
       clientX: event.clientX,
       clientY: event.clientY,
       sourceKind: inferDragKind(event),
+      managedImage,
     });
 
   latestExternalDragRef.current = null;

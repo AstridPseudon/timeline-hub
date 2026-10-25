@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import React from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
@@ -20,7 +21,7 @@ import { TimelineEventBus } from './useTimelineEventBus.ts';
 import { useTimelineCommit } from './useTimelineCommit.ts';
 import { useAssetManagement } from './useAssetManagement.ts';
 import { useExternalDrop } from './useExternalDrop.ts';
-import type { DragCoordinator } from './useDragCoordinator.ts';
+import { useDragCoordinator } from './useDragCoordinator.ts';
 
 const media: MediaSelection = { asset: 'import-image', generation_id: 'generation-image', variant_id: 'variant-image',
   object_id: `sha256:${'a'.repeat(64)}`, catalog_digest: `sha256:${'b'.repeat(64)}` };
@@ -113,31 +114,62 @@ async function environment(child: boolean, delayed = false) {
   const runtime = { provider: mountedProvider, toast: { error: vi.fn() } } as unknown as VideoEditorRuntimeContextValue;
   const wrapper = ({ children }: { children: React.ReactNode }) => <VideoEditorRuntimeProvider value={runtime}>{children}</VideoEditorRuntimeProvider>;
   const trackId = child ? 'V2' : 'V1';
-  const coordinator = { update: () => ({ trackId, time: child ? 4.5 : 5, isNewTrack: false, isNewTrackTop: false }),
-    end: vi.fn(), editAreaRef: { current: null } } as unknown as DragCoordinator;
+  const timelineWrapper = globalThis.document.createElement('div');
+  timelineWrapper.className = 'timeline-wrapper';
+  const editArea = globalThis.document.createElement('div');
+  editArea.className = 'timeline-canvas-edit-area';
+  timelineWrapper.append(editArea);
+  timelineWrapper.getBoundingClientRect = editArea.getBoundingClientRect = () => ({
+    x: 0, y: 18, left: 0, top: 18, right: 1000, bottom: 126, width: 1000, height: 108, toJSON() {},
+  });
+  globalThis.document.body.append(timelineWrapper);
+  cleanups.push(() => timelineWrapper.remove());
   const mounted = renderHook(() => {
     const commit = useTimelineCommit({ initialData: data, eventBus, lastSavedSignatureRef: { current: data.stableSignature } });
+    const drag = useDragCoordinator({ dataRef: commit.dataRef, scale: 5, scaleWidth: 160, startLeft: 144, rowHeight: 36 });
     const assets = useAssetManagement({ dataRef: commit.dataRef, selectedTrackId: trackId, selectedProjectId: document.project_id,
       selectClip: vi.fn(), setSelectedTrackId: commit.setSelectedTrackId, applyEdit: commit.applyEdit,
       patchRegistry: commit.patchRegistry, invalidateAssetRegistry: vi.fn(), resolveAssetUrl: provider.resolveAssetUrl });
     const drop = useExternalDrop({ ...assets, dataRef: commit.dataRef, pendingOpsRef: commit.pendingOpsRef,
-      selectedTrackId: trackId, scale: 1, scaleWidth: 1, applyEdit: commit.applyEdit, invalidateAssetRegistry: vi.fn(),
-      resolveAssetUrl: provider.resolveAssetUrl, coordinator, finalVideoMap: new Map() });
-    return { ...drop, commit, assets };
+      selectedTrackId: trackId, scale: 5, scaleWidth: 160, applyEdit: commit.applyEdit, invalidateAssetRegistry: vi.fn(),
+      resolveAssetUrl: provider.resolveAssetUrl, coordinator: drag.coordinator, finalVideoMap: new Map() });
+    return { ...drop, commit, assets, coordinator: drag.coordinator, indicatorRef: drag.indicatorRef };
   }, { wrapper });
+  mounted.result.current.coordinator.editAreaRef.current = editArea;
   cleanups.push(() => mounted.unmount());
-  return { mounted, outboxes, scope, captures, failures, send, prepareMediaImport, document, handoff, descriptor, releaseImport };
+  return { mounted, outboxes, scope, captures, failures, send, prepareMediaImport, document, handoff, descriptor, releaseImport,
+    coordinator: mounted.result.current.coordinator, indicatorRef: mounted.result.current.indicatorRef };
 }
 
-function fileDropEvent() {
-  return { preventDefault: vi.fn(), stopPropagation: vi.fn(), clientX: 120, clientY: 48,
+function fileDropEvent(child = false) {
+  return { preventDefault: vi.fn(), stopPropagation: vi.fn(), clientX: child ? 368 : 384, clientY: child ? 54 : 30,
     currentTarget: { dataset: {} }, dataTransfer: { types: ['Files'], files: [new File(['image'], 'drop.png', { type: 'image/png' })],
       items: [], getData: () => '' } } as unknown as React.DragEvent<HTMLDivElement>;
 }
 
 it.each([false, true])('routes a mounted file drop into A2 (embedded: %s)', async child => {
   const env = await environment(child);
-  await act(async () => { await env.mounted.result.current.onTimelineDrop(fileDropEvent()); });
+  const indicator = { show: vi.fn(), hide: vi.fn(), showSecondaryGhosts: vi.fn() };
+  env.mounted.result.current.indicatorRef.current = indicator;
+  const preview = env.coordinator.update({ clientX: child ? 368 : 384, clientY: child ? 54 : 30,
+    sourceKind: 'visual', managedImage: true });
+  expect(preview.trackId).toBe(child ? 'V2' : 'V1');
+  expect(preview.time).toBe(child ? 9 : 5);
+  expect(indicator.show).toHaveBeenCalledWith(expect.objectContaining({
+    trackId: child ? 'V2' : 'V1',
+    label: child ? 'V2 · 9.0s' : 'V1 · 5.0s',
+    ghostLabel: child ? '9.0s' : '5.0s',
+    lineLeft: preview.screenCoords.ghostCenter,
+    ghostLeft: preview.screenCoords.clipLeft,
+    ghostWidth: preview.screenCoords.clipWidth,
+    ghostTop: preview.screenCoords.rowTop + 2,
+    ghostHeight: Math.max(0, preview.screenCoords.rowHeight - 4),
+  }));
+  const resolvedDrop = env.coordinator.update({ clientX: child ? 368 : 384, clientY: child ? 54 : 30, sourceKind: null });
+  expect(resolvedDrop.time).toBe(child ? 4.5 : 5);
+  expect(resolvedDrop.pointerTrackId).toBe(child ? 'V2' : 'V1');
+  expect(resolvedDrop.trackId).toBe(child ? undefined : 'V1');
+  await act(async () => { await env.mounted.result.current.onTimelineDrop(fileDropEvent(child)); });
   await Promise.all(env.captures);
   expect(env.prepareMediaImport).toHaveBeenCalledOnce();
   expect(env.captures).toHaveLength(1);
@@ -160,6 +192,7 @@ it.each([false, true])('routes a mounted file drop into A2 (embedded: %s)', asyn
     merge: 'fields', dry_run: false, source: { via: 'app' },
     commands: [{ op: child ? 'occurrence.add-media' : 'clip.add-media', args: { media } }],
     steps: [{ command_ordinals: [0], patch: [] }] });
+  expect(request.commands[0]?.args.row).toMatchObject({ at: preview.time, track: preview.trackId });
   const owner = child ? 'occurrence:occ-0' : 'parent';
   expect(request.commands).toEqual([{ schema_version: 1, op: child ? 'occurrence.add-media' : 'clip.add-media',
     version: '1', select: owner, intent: child ? { ownership: 'occurrence' } : {},
