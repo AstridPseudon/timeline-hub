@@ -73,7 +73,10 @@ class HostTransport {
     if (route === '/acp/models') return response({ providers: [], currentModel: null });
     if (route === '/acp/agents') return response({ defaultAgent: 'astrid', agents: this.agents });
     if (route.includes('/models?sessionId=')) {
-      if (this.modelReadFailure) return response(this.modelReadFailure, 502);
+      // These are deterministic model-endpoint outcomes, not a transient bridge outage; avoid
+      // exercising the transport's retry ladder so the warm-up recovery assertions observe the
+      // setup/generic UI branch directly.
+      if (this.modelReadFailure) return response(this.modelReadFailure, 400);
       const session = [...this.chats.values()].flatMap(chat => chat.sessions).find(session => session.id === decodeURIComponent(route.split('sessionId=')[1]));
       const model = session?.model_id ?? 'openai/model-a';
       return response({ models: { currentModelId: model, availableModels: [{ modelId: model, name: model.endsWith('model-b') ? 'Model B' : 'Model A' }] } });

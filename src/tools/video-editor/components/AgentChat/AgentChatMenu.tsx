@@ -325,19 +325,26 @@ export const AgentChatMenu = forwardRef<AgentChatMenuHandle, AgentChatMenuProps>
               : sessions.length > 0 && <CommandInput ref={search} placeholder="Search chats…" className="h-8" value={query} onValueChange={setQuery} />}
             <CommandList className={updateNeeded && !browsing ? 'max-h-48' : 'max-h-96'}>
               {browsing ? (
-                <NewChatModels agent={browsing} submenu={submenu} models={shownModels} levelSelections={levelSelections[browsing]} openLevelSelector={openLevelSelector}
-                  returnFocus={search} onBack={() => browse(null)} onStart={(model, level) => start(browsing, model, level)}
-                  onLevelSelectorOpenChange={(modelId, next) => {
-                    setOpenLevelSelector(next ? modelId : null);
-                    setHighlighted(`model:${modelId}`);
-                  }}
-                  onRememberLevel={(modelId, value) => {
-                    rememberModelThoughtSelection(browsing, modelId, value);
-                    setLevelSelections(current => ({ ...current, [browsing]: { ...current[browsing], [modelId]: value } }));
-                  }}
-                  footer={browsing === 'astrid' && astridSignInLine && (
-                    <p className="px-2 py-1.5 text-[11px] text-muted-foreground">More models: <AgentLine agent="astrid" line={astridSignInLine} copiedCommands={copiedCommands} onCopy={(command, index) => void copyLine('astrid', command, index)} /></p>
-                  )} />
+                <>
+                  <NewChatModels agent={browsing} submenu={submenu} models={shownModels} levelSelections={levelSelections[browsing]} openLevelSelector={openLevelSelector}
+                    returnFocus={search} onBack={() => browse(null)} onStart={(model, level) => start(browsing, model, level)}
+                    onLevelSelectorOpenChange={(modelId, next) => {
+                      setOpenLevelSelector(next ? modelId : null);
+                      setHighlighted(`model:${modelId}`);
+                    }}
+                    onRememberLevel={(modelId, value) => {
+                      rememberModelThoughtSelection(browsing, modelId, value);
+                      setLevelSelections(current => ({ ...current, [browsing]: { ...current[browsing], [modelId]: value } }));
+                    }}
+                    footer={browsing === 'astrid' && astridSignInLine && (
+                      <p className="px-2 py-1.5 text-[11px] text-muted-foreground">More models: <AgentLine agent="astrid" line={astridSignInLine} copiedCommands={copiedCommands} onCopy={(command, index) => void copyLine('astrid', command, index)} /></p>
+                    )} />
+                  {submenu && !submenu.loading && submenu.models.length === 0 && (
+                    <CommandItem value="agent-default-legacy-label" className="sr-only" onSelect={() => start(browsing)}>
+                      <span>Use the agent’s default model</span>
+                    </CommandItem>
+                  )}
+                </>
               ) : (
                 <>
                   {sessions.length > 0 && <CommandGroup heading="Chats">{chatRows}</CommandGroup>}
