@@ -273,16 +273,14 @@ class _RuntimeAuthoringWriter:
 @pytest.fixture
 def saved_closure(saved_runtime):
     """Public publication with reference order different from canonical sort order."""
-    from astrid.sdk.timeline.native_occurrence_shared import capture_occurrence_place_shared
     from astrid.sdk.timeline_editing import duplicate_authoring_shot, remove_authoring_shot
 
     runtime = saved_runtime
     document = _saved_document(runtime)
     # D100's reviewed physical-membership path (Agent d3b5cfef76b4b3abef5db5f8288abc214a61354f)
-    # is the only current source for the legacy item image.  Admit the empty
-    # published item list through a genuine shared birth plus guarded doc.patch,
-    # then reload the accepted canonical closure before the opaque source graph
-    # is authored below.
+    # admits the empty published item list directly on its original physical
+    # source through a guarded doc.patch, then reloads the accepted canonical
+    # closure before the opaque source graph is authored below.
     source_bundle = bundle_from_document(document)
     source_placement = source_bundle["placements"][0]
     source_shot = source_bundle["shots"][source_placement["shot_id"]]
@@ -293,10 +291,6 @@ def saved_closure(saved_runtime):
         "item_id": "item-1", "media_id": source_media_id,
         "source_frame": None, "metadata": {"opaque_literal": "item-1"},
     }
-    shared_birth = capture_occurrence_place_shared(
-        source_bundle, "occurrence:" + source_placement["occurrence_id"],
-        "repeated-third", on=20,
-    )
     item_patch = {
         "schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
         "args": {"changes": [{
@@ -314,15 +308,12 @@ def saved_closure(saved_runtime):
             "timeline_id": runtime.timeline_id,
             "base_revision_id": head["head_revision_id"],
             "base_publication_id": head["head_publication_id"],
-            "commands": [shared_birth, item_patch],
-            "label": "Sequential shared items",
+            "commands": [item_patch],
+            "label": "Original source items",
             "steps": [
-                {"id": "0", "label": shared_birth["op"],
-                 "intent": "Shared physical edit", "tags": ["integration"],
-                 "command_ordinals": [0], "patch": []},
-                {"id": "1", "label": item_patch["op"],
-                 "intent": "Shared physical edit", "tags": ["integration"],
-                 "command_ordinals": [1], "patch": [item_change]},
+                {"id": "0", "label": item_patch["op"],
+                 "intent": "Original physical edit", "tags": ["integration"],
+                 "command_ordinals": [0], "patch": [item_change]},
             ],
             "merge": "fields",
             "reads": [{"kind": "scope", "ref": "timeline", "path": []}],
