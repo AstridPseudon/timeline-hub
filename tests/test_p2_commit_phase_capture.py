@@ -620,9 +620,8 @@ def test_observer_avoids_line_events_and_unrelated_request_lookups(service):
 
     assert handler.sent_status == 200
     assert json.loads(handler.wfile.getvalue())["data"]["status"] == "accepted"
-    summary = _summary(capture)[0]
-    assert summary["phases"]["receipt"]["status"] == "observed"
-    assert summary["lifecycle"] == "completed"
+    assert _summary(capture)[0]["phases"]["receipt"]["status"] == "observed"
+    assert _summary(capture)[0]["lifecycle"] == "completed"
     assert capture.failures == 0
     assert counts == {"line": 0, "unrelated_lookup": 0}
 
