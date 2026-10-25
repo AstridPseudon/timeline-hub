@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T05:15:20Z | dispatcher heartbeat 3s | live 6 (sol 0, luna 6, other 0) | busy30 17 | status age 0m -->
-# runtime board, 2026-10-25T05:15:26Z
+<!-- main | 2026-10-25T05:19:08Z | dispatcher heartbeat 3s | live 6 (sol 0, luna 6, other 0) | busy30 18 | status age 0m -->
+# runtime board, 2026-10-25T05:19:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -210,9 +210,9 @@
 | D86-sheet17-review | Preserve current sheet originals | Luna | Meaningful corrected subset proof | review | Agent0157; review0203; home3b8f | Exact64166 correction is normal3b8f. Seventeen originals retained; thirteen init/emitter cases eligible later, inverse1 and CLI3 findings stay held. | Agent3b8f341cf6 |
 | P2-main-SWAP-bulk | Retain safe SWAP and bulk facts | Luna source only | App current source and sole9674 | review | Safe0218 consumed; App0235 body9674 | Old29224 503 bounded; bulk21061 intended POST absent. Both packets consumed. App owns meaningful9674; no main SWAP duplicate. | Olda3cd scope |
 | D86-manifest-inverse8 | Preserve manifest inverse scenarios | Luna | Later functional qualification | review | rt-D86-three-families-review-0129 | SOURCEFACTS PASS; source exact. Detached popup guard outside allowed seam remains unqualified. Eight live originals retained. | Agent219b unchanged |
-| D86-occurrence-opaque9 | Preserve occurrence opaque items | Luna / independent | Faithful current6058 source correction | doing | rt-D86-6058-opaque6-0514 | Six step-claim errors have one source owner. Original create2 and fork1 remain separate;no unchanged batch. | Agent current source |
+| D86-occurrence-opaque9 | Preserve occurrence opaque items | Luna / independent | Protected source review | review | Author0514; review0517 | Two exact ordered setup patches;29 of29 assertions conserved. Six original bodies still owed;create2/fork1 separate. | Agent candidate held |
 | D86-parent-track3 | Preserve track inverse and labels | Luna | M1 correction then qualification | review | rt-D86-three-families-review-0129 | SOURCEFACTS PASS; source exact. Genuine session caller; transitive M1 fixture currently failing. Three originals remain live. | Agent219b unchanged |
-| D86-ordinary-script4 | Preserve ordinary script callers | Luna / independent | Faithful current6058 source correction | doing | rt-D86-6058-script4-0514 | Two promotion refusals,one command mismatch,one assertion have bounded source owner. Every original predicate stays. | Agent current source |
+| D86-ordinary-script4 | Preserve ordinary script callers | Luna / independent | Protected source review | review | Author0514; review0518 | Sequential text and native parent swap/delete source returned. Four original predicates conserved; transcript limit stays explicit. | Agent candidate held |
 | R-P4-current-cost | Preserve verified history state reuse | HARD Sol / Luna | Normal release and current original GO | merged | D97author0412; security0420; GO0450 | Exact normal0c62 and267 targets qualified; current original PASS28.101s. Historical failed timings retained. | 0c62dfa63d |
 | F-final-upstream-App | Preserve fresh App packaging tests | Luna | Packaging checklist installed | merged | rt-F-final-D87-docs-0107 | Packaging checklist keeps Appd11417 and WelcomeConnection.test.tsx overlap, plus Agent08e6 installer tests. No gating merge or build. | Upstreamd11417 |
 | D88-digest-chain | Preserve withdrawn digest-chain source | HARD Sol | Owner withdrew D88 | gated:withdrawn | rt-D88-digest-chain-sol-0044 stopped | Unsafe prototype held; automatic safety review stopped reviewer for possible cybersecurity risk. No retry or alternate route. [Report](../../design/rt-D88-digest-chain-sol-0044.md) | Held; do not merge |
@@ -259,7 +259,7 @@
 
 | OPS-old-U1c-trees | Retire superseded upstream draft trees | Manager route | Full host and route audit clear | merged | bin/recycle three named U1c workers | All three ended, clean; zero process, queue, active service or lease users. Superseded by U1d. Branches and every report/output retained. | No source change |
 
-| D86-command68-pairs | Preserve exact command mismatch evidence | Luna / service | Approved replacement D98a | doing | rt-D98a-replacement-three-0514 | Existing pairs EXACTMISSING. Exact D82 field classification required from one active diagnostic; no guessed common cause. | Existing9211 retained |
+| D86-command68-pairs | Preserve exact mismatch evidence | Luna / service | D98a real active observer body | doing | rt-D98a-route-submit-0517 | Existing pairs EXACTMISSING. One replacement diagnostic remains unspent; D82 field classification first. | Existing9211 retained |
 | D86-20-22-safe-export | Publish exact terminal metadata | Luna read only | Safe publication complete | merged | Exact0358; packets0406 | 48 safe flat files published byte-exact. Genuine22 XML has4PASS18ERROR; original packet and actual20 preserved. | Evidence only |
 | OPS-D94a-stale-pins | Release unused main pin worktrees | Manager route | Full live-source and host audit clear | merged | bin/recycle six exact unused pins | Six clean idle pins: no live worker, process, queue, service or lease users. About0.7GB freed; all receipts/reports/branches retained. | No source change |
 | R-P4-private-cost-0215 | Close superseded private cost harness | Sol history | Owner D94a closes this work | gated:superseded | Worker0215 ended; no retry | Cross-process sample and D94a replace private harness. Original credential scope mismatch retained; no invented scopes. | Evidence only |
@@ -281,7 +281,7 @@
 | P4-D97-prep | Qualify sole remaining ten-note original | Luna / service / Luna | Independent GO complete | merged | Actual22560; independent0450 GO | Exact786/0c62/1e34/635f; one original PASS28.101sXML versus45. [GO](../../design/rt-P4-D97-GO-review-0450-report.md) | Runtime0c62 |
 | OPS-stale-four-pins | Release unused main pin worktrees | Manager route | Live and registered route audit clear | merged | bin/recycle four named stale pins | Four clean unused pins released, about0.5GB. Registeredb003 retained. Branches and all outputs/reports/receipts preserved. | No source change |
 
-| D98-observer | Run approved replacement three | Luna / service | D98a startup control passed | doing | rt-D98a-replacement-three-0514 | One replacement allowed. All worker PIDs must prove active observer before body. Old15239 remains3ERROR with inactive observer. | Private harness only |
+| D98-observer | Run approved replacement three | Luna / service | Startup control passed; private row registration | doing | rt-D98a-route-submit-0517 | Prior0514 submitted zero bodies: own suite row absent. Minimal authorized CAS row plus exact active hook now owned0517; budget unspent. | Private harness only |
 | D86-6058-export | Return exact current96 outcomes | Luna read only | Safe export complete | merged | rt-D86-6058-safe-export-0428 | 96 unique:14PASS7FAIL75ERROR. Exact authored safe packet published. [Report](../../design/rt-D86-6058-safe-export-0428-report.md) | Evidence only |
 | D97-consumer-adoption | Adopt released source in both callers | Agent / App Luna | Normal tool receipts complete | merged | Agent0435; App0438 | Agent786 lock7c16 source0c62; App319911 strict8/vendor15/mappings14 PASS. Caller adoption blockers cleared. | Agent49f66 / App319911 |
 | R1-asset-normalization | Preserve lossless asset read union | HARD Sol / Luna | D101 independent security review | review | Author0450; security0514 | Candidate381178 and exact Agent76224 pair held. Author99+23+14 controls PASS; security then protected review and MAINsix required. | Candidate381178 held |
@@ -290,7 +290,7 @@
 
 | D98-startup-control | Fail closed before diagnostic originals | Luna private harness | Actual control PASS | merged | rt-D98-fail-closed-control-0505 | Real binding witness,positive17;missing vars and wrong hook poison1,zero original bodies. Private route only. | Harness only |
 
-| D102-error-diagnostics | Record redacted unexpected commit causes | Luna / independent review | Core and privacy review | review | Author0510; reviewer0514 | Candidate5bcf132:35 focused PASS. Exactly one redacted line; public503 unchanged. Review before merge and one App ADD diagnostic. | Candidate5bcf132 held |
+| D102-error-diagnostics | Record redacted unexpected commit causes | Luna / independent | First privacy correction | doing | rt-D102-redaction-return-0518 | Review0514 FAIL: unsafe metadata and filenames. Public503 equal;35PASS. Same branch first fix; no release or ADD yet. |5bcf132 held |
 
 | D86-19214-export | Publish exact terminal61 outcomes | Luna read only | Existing actual19214 artifacts | doing | rt-D86-19214-safe-export-0514 |13 PASS,21 FAIL,27 ERROR;safe per-ID source packet active. No raw logs or payload export. | Evidence only |
 | F6058-word-D92-input | Return retained inner errors and phases | Luna read only | Next source slot | ready | Manager owns next free slot | Existing6058 inner word exception and three D92 phases only. UNKNOWN if absent;no collector or body. | Existing artifacts |
@@ -298,13 +298,15 @@
 | R2-restore-candidate-proof | Prove reviewed restore-order candidate | Luna / main service | Next main heavy slot | ready | Manager owns after D98a | Exact8aa672 reviewed product and test;oldRED/newGREEN plus originalID5 and three strict controls. Held before behavioral PASS. | Agent8aa672 held |
 | D86-new11-D92-source | Qualify newly corrected sources | Luna / main service | Exact canonical receiving map | ready | Manager owns after critical proofs | Ordinarysheet ccfe and D92 ef6d normally merged;only meaningful newly changed originals,subtract19214 and prior exact sets. | Source only |
 
+| OPS-stale6058-pins | Release unused captured source worktrees | Manager route | Full live path audit clear | merged | bin/recycle dc909 and043631 pins | Both ended clean;zero process,queue,worker,active service,registry or lease users. KEEP removed under D74a;all branches and evidence retained. | No source change |
+
 Runtime producer: RELEASED normal0c62dfa63db9ff608ac9338388431e31a814e080/treee22 equals reviewedfec6. Canonical15/schema867f unchanged. Agent786 and App319911 normally adopted.
 core open: Runtime D101 asset-read correctness and D102 silent mapped exceptions open. CurrentP4 independentlyGO28.101s on786/0c62/1e34/635f. Agent candidate8 remains held6FAIL2ERROR; other Agent originals remain open. D91latest2966 stays5FAIL5ERROR.
 regressions: No newly established Runtime regression. Current96actual6058 remains14PASS7FAIL75ERROR; exact safe per-ID packet published. No unchanged repeat or historical result relabeling.
 Gates: P1/P3 historicalGO; current remainingP4GO independent0450. Three isolatedP2GO retained. App adopted0c62; latest owner04:45 orders four isolated originals before fulltour. D59 finaltuple matrix remains owed.
 
 Blockers: Runtime D101 — Security0514 owns exact paired source381178/Agent76224. Protected review and MAINsix follow PASS before any merge.
-Blockers: Runtime D102 — Core/privacy reviewer0514 owns exact5bcf132. Qualified release precedes App sole ADD diagnostic; current cause UNKNOWN.
+Blockers: Runtime D102 — First review0514 failed unsafe metadata/filenames and new static findings. Luna return0518 owns fix; no release or App ADD.
 Blockers: Agent D100 — Host010d is normal d540. Capture source reviewed; shared-itemSol0458 still owns remaining source. One combined MAINten follows.
 Blockers: Final cut — D59 all-lane core0/regressions0,current finalP1-P5/core,D69 and genuine installed render still required. No tuple or ZIP.
 Safety: Withdrawn D88 denied action/prototype remain stopped. D93 original fixture/session/granted scopes/calls only. D98 private observer is passive and fails closed.
@@ -313,7 +315,7 @@ Venues: Mainheavy one above5.2GB. Source61actual19214 terminal; D98a approved re
 Delivery: Existing-clone candidate0358 held for D59 cut. No final install/build or original rehearsal before final proofs.
 Source ownership: Manager process files only. D101 exact paired author is done/unmerged. D102 source done/unmerged. Opaque6 and script4 have distinct source workers0514.
 Later: No unchanged161/102/20/22/96/61 or passedinverse7/fourR2/P4 repeats. Source and integrated functional credit remain distinct.
-Disk: Measured6.196GB before new workers; sweep3/compact active. Old dirty or previously refused targets remain untouched. Branches,reports and outputs retained.
-live 6 / cap 6; ready-undispatched 4 at capacity. D101security,D102review,D98areplacement,opaque6,script4 and19214export requested0514.
-Dispatcher: Six initial0513 requests had missing relative brief paths and launched zero workers; corrected immediately with absolute paths under0514. No safety refusal.
-INBOX consumed through922990 bytes. Updated 2026-10-25T05:15:26Z. All received cross-lane asks have an owner row or explicit later entry.
+Disk: Main6.11GB before new requests. Verified no live process,worker,queue,service,registry or lease uses two stale6058 pins; removed KEEP then bin/recycle. About0.35GB freed; records retained.
+live 6 / cap 6; ready-undispatched 4 at capacity. Security0514,return0518,D98a0517,opaque review0517,script review0518 and19214export0514 active.
+Dispatcher: D98a0514 has zero originals; sole continuation0517 fixes ordinary missing own row. D102 first privacy FAIL retained and first source return0518 active.
+INBOX consumed through931743 bytes. Updated 2026-10-25T05:19:00Z. All received peer asks have owner rows or explicit later entries.

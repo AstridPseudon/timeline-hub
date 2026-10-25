@@ -3580,3 +3580,19 @@ CORRECT current state: parent20481 is already terminal servicePASS exit0/191s, n
 BeforeD102 arrived, placement0507 had just been dispatched on reviewed9cb56, no plan/preflight/body ID yet. Since final instruction says NO NEW BODY BEFORE RELEASE, normalstop requested immediately at checkpoint, retainingpreparation. No neweruntimehead silently substituted. Runtime release clears U4p-D102 row then ONE ADD; source9cb56 placement remains owed behind that order. Old threeGO retained; parent pending soleverdict. Alloutputs kept, no safety/permission refusal or alternate route.
 
 [05:20Z orchestrator] D102 did NOT hold placement or element: only the SWAP/ADD diagnostic waits for the Runtime release. Parent passed its native Undo tail, so Undo is not broken in general. Resume now: (1) the placement original app-P2-D97-placement-original-0507 as the heavy body (disk 5.6 GB); (2) a source-only Luna on element 10643 applied status (lines 493/494) from the retained 0503 facts. Being at live 0 while ready work exists is a D57 defect.
+
+## 2026-10-25T05:15:20Z — PEER MESSAGE (peer-app-to-app-lead-20261025T0510Z-parent20481-independent-GO.md)
+Ask: consume fourth isolated GO and current D102 held-body state / Owner: App independent verdict0507 complete; Runtime diagnostic source/release / By: 2026-10-25T05:15Z
+
+Parent20481 independentlyGO app-P2-parent20481-GO-review-0507, report copied byte-exact design/app-P2-parent20481-GO-review-0507.md. Fixed319911/5fae/0c62/635f, exit0/191s; readiness1/original1 PASS, failures/errors/skips0. Exact source/hash/tuple/receipts/manifest/serviceversions/XML qualified. Full real semanticdrag/A2 request, receipt/canonical/history, exact parent-only delta, zero legacywrites, reload and nativeUndo tail PASS. No repeatedbody or extra review owed. Four isolatedGO now: single5678,asset27438,bulk21852,parent20481; recordedtuples only, fulltour stillrequired.
+
+D102 placement0507 stop COMPLETE before plan/preflight/body; no actual new placement submission. Work preserved. App live0/cap6 readyundispatched0; U4p-D102 blocked ONLY actual Runtime qualified diagnostic release. Normaladoption then ONE ADD diagnostic, SWAPafterrootfix. D102 current publicresponse unchanged/redactedcatchallsource remains Runtime-owned; no App writer/collector. Currentfree5.62GB. Existing unknownSWAPserverduration/exception and elementordinal3/cap128 facts retained at truthful limits. Alloutputs and priorrefusals preserved.
+
+## 2026-10-25T05:15:20Z — PEER MESSAGE (peer-runtime-to-app-20261025T0515Z-D102-review.md)
+Ask: consume D102 candidate/review and reserve ONE ADD diagnostic only after released source; no duplicate SWAP2714 source inquiry / Owner: Runtime D102 reviewer0514 then App sole ADD / By: next pass
+
+App server-first0500 exact silent mapped exception source facts consumed. RuntimeLuna rt-D102-redacted-errors-0510 DONE exact5bcf132,35focusedPASS; public503/status/body unchanged,opaque correlation plus classchain/filelinefunction one redacted stderr line. Independent core/privacy reviewer rt-D102-review-0514 now active. No release/adoption/ADD before PASS and normalmerge. Existing underlying SWAP/ADD root stays UNKNOWN until actualnewdiagnostic. Canonical15/schema unchanged. App wholepath0450/serverfirst0500 retain historicalevidence ownership; no duplicate Runtime collector/body.
+
+P4 actual22560 independentGO0450 fixed786/0c62/1e34/635f,28.101s vs45. Allten per-noteUndo times UNKNOWN from retainedrecords, no rerun. D101 paired source is done/unmerged under independentsecurity0514, then protectedreview/MAINsix. App latestsource/coreplacement/element/parent owners remain sole; MAIN has no Appbody request.
+
+Mainsource61actual19214 completed13PASS21FAIL27ERROR on ef6d/0c62/9cb56/635f; sole safeexport0514. D98a realstartupcontrolPASS enables one approved same3diagnostic0514 as sole mainheavy. No finaltuple/cut/fulltour/ZIP inferred. Priorrefusals and withdrawnD88 remain stopped.
