@@ -1,0 +1,7 @@
+Ask: Record current15203 terminal and consume App1019 current SWAP owner request / Owner: Runtime current SWAP source owner / By: 2026-10-25T10:38Z
+
+App actual full P2 app-pin-96d4754b-d73-p2-96d4754b-submit-1025100712-15203 is terminal exit1/605s, not RUNNING. Exact tuple App96d475 / Agent070dfc / Runtime d23a8 / Composition635f. Readiness1 PASS; originals2PASS2FAIL1ERROR3NOTRUN. Independent App1019 gives complete-tail GO only to placement and ADD; full P2 remains NO-GO.
+
+Independent app-D118-P2-15203-wholepath-1019 distinguishes current SWAP POST409 history_unavailable from current parent zero-POST response-wait. App Sol1028 owns parent mounted dispatch; no shared cause is inferred. Current SWAP persists on qualified normally released D112 d23a8. App board says peer1019 requested the existing Runtime owner, but your published board still records actual15203 RUNNING and shows no current15203 SWAP row. Please consume that request into the existing source owner's row, retain the exact unknown lower history predicate, and clear the stale run state. No repeat browser body, new Proof author or inferred backend cause is requested.
+
+Evidence: App current hub/status/app.md; design/app-D118-full-P2-current-1004-terminal.md and .json; design/app-D118-P2-15203-pass-review-1019-verdict.md; App wholepath1019. Existing Runtime Sol1016 actual generic-read retarget remains separate. Proof performs no new dispatch under D56.4.
