@@ -1,95 +1,28 @@
-221-            return None
-222-        if row["request_hash"] != context["request_hash"]:
-223:            reject("idempotency_mismatch")
-224-        edge = self.conn.execute("SELECT * FROM timeline_commit_history WHERE publication_id=?", (row["txn_id"],)).fetchone()
-225-        if edge is None or edge["project_id"] != context["request"]["project_id"] or edge["timeline_id"] != context["request"]["timeline_id"]:
-226-            raise ProtocolError("accepted commit history is missing or corrupt")
-    88	
-    89	def refused(reason, message, *, current=None):
-    90	    from .timeline_commit import CommitRejected
-    91	    return CommitRejected({"http_status": 409, "code": "conflict", "message": message,
-    92	                           "details": {"status": "refused", "reason": reason,
-    93	                                       "base": None, "current": current, "conflicts": []}})
-    94	
-    95	
-    96	def public_failure(failure):
-    97	    error = RuntimeErrorBase(failure["message"], details=copy.deepcopy(failure["details"]))
-    98	    error.code = failure["code"]
-    99	    error.status = failure["http_status"]
-   100	    return error
-   101	
-   102	
-   103	class RequestCommitPort:
-  2490	            self._ensure_timeline_commit_baseline(commits, project_id, timeline_id, require_active)
-  2491	            return RequestCommitPort(self, commits, bound_context, require_active)
-  2492	        try:
-  2493	            if provider is None:
-  2494	                replay = commits.lookup(context, authorize=check)
-  2495	                if replay is not None:
-  2496	                    return replay
-  2497	                require_active()
-  2498	                raise CommitUnavailable()
-  2499	            outcome = coordinator.execute(context, provider, port_factory, authorize=check)
-  2500	            if "http_status" in outcome:
-  2501	                raise public_failure(outcome)
-  2502	            return outcome
-  2503	        except CommitRejected as exc:
-  2504	            raise public_failure(exc.failure) from exc
-  2505	        except (AuthorizationError, ForbiddenError, NotFoundError, ValidationError, ConflictError):
-  2506	            raise
-  2507	        except RuntimeErrorBase:
-  2508	            raise
-  2509	        except Exception as exc:
-  2510	            raise CommitUnavailable() from exc
-
-codex
-I found the clean repair seam: keep the real `RuntimeService` call untouched, expose only passive telemetry from the genuine fixture (`calls`, actual history limits, and request bodies), and let `sent` record only newly accepted/previewed Runtime submissions so the original no-duplicate-publication predicates remain valid. The changed-body oracle will be corrected at the same assertion strength from the fabricated top-level code to Runtime’s exact `details["reason"] == "idempotency_mismatch"` (store source: `timeline_commit_store.py:217–223`; public mapping: `timeline_commit_port.py:89–100`).
-apply patch
-patch: completed
-/home/user/work/wt/agt-D86-main-CLI-return-2358/tests/packs/timeline/test_cli_document_commit.py
-diff --git a/tests/packs/timeline/test_cli_document_commit.py b/tests/packs/timeline/test_cli_document_commit.py
-index a95d0df20b469b42fa8ce5c1431bd15e382d84c1..6011079f4506c85a4cf3800e734cc987d23e7506
---- a/tests/packs/timeline/test_cli_document_commit.py
-+++ b/tests/packs/timeline/test_cli_document_commit.py
-@@ -41,6 +41,9 @@
-     class RuntimeRealm:
-         def __init__(self):
-             self.project, self.timeline = project, "film"
-+            self.calls = []
-+            self.history_limits = []
-+            self.requests = []
+-        body = copy.deepcopy(args[1])
+-        fingerprint = json.dumps(body, sort_keys=True, separators=(",", ":"))
+-        calls.append(key)
+-        prior = accepted.get(key)
+-        if prior is not None:
+-            old_fingerprint, result = prior
+-            if old_fingerprint != fingerprint:
+-                return DomainResult.failure(
+-                    ErrorObject("idempotency_conflict", "idempotency key was reused for a different request", {
+-                        "status": "refused", "path": "/idempotency_key",
+-                    }),
+-                    idempotency_key=key,
+-                )
+-            return copy.deepcopy(result)
+-        result = original(operation, project, *args, **kwargs)
+-        if result.ok:
+-            accepted[key] = (fingerprint, copy.deepcopy(result))
+-        return result
+-
+-    monkeypatch.setattr(client.timelines, "_typed", typed)
+-    return calls
  
-         @property
-         def head(self):
-@@ -88,6 +91,7 @@
-             timeline_id = args[0] if args else "film"
-             try:
-                 if operation == "list_timeline_commits":
-+                    realm.history_limits.append(kwargs.get("limit", 50))
-                     result = service.list_timeline_commits(
-                         requested_project, timeline_id,
-                         cursor=kwargs.get("cursor"), limit=kwargs.get("limit", 50),
-@@ -96,7 +100,9 @@
-                     return DomainResult.success(result)
-                 if operation == "commit_timeline":
-                     body = copy.deepcopy(args[1])
--                    sent.append(body)
-+                    realm.calls.append(kwargs["idempotency_key"])
-+                    realm.requests.append(copy.deepcopy(body))
-+                    before = realm.head
-                     result = service.commit_timeline(
-                         requested_project, timeline_id, body,
-                         idempotency_key=kwargs["idempotency_key"],
-@@ -104,6 +110,8 @@
-                         invocation_path=f"/v1/projects/{requested_project}/timelines/{timeline_id}/commit",
-                         authorize=lambda: None,
-                     )
-+                    if body.get("dry_run") or realm.head != before:
-+                        sent.append(body)
-                     from astrid.core.receipts.contract import CommandReceipt
  
-                     receipt = CommandReceipt.from_dict(result["receipt"]) if result["receipt"] else None
-@@ -227,7 +235,7 @@
+ def test_document_commit_uses_the_authenticated_commit_door(public_session, tmp_path, capsys):
+@@ -227,7 +195,7 @@
      public_session, tmp_path, capsys, monkeypatch,
  ):
      _opened, realm, sent, client, _outbox = public_session
@@ -98,7 +31,7 @@ index a95d0df20b469b42fa8ce5c1431bd15e382d84c1..6011079f4506c85a4cf3800e734cc987
      path = _document_file(tmp_path, realm)
      candidate = json.loads(path.read_text(encoding="utf-8"))
      candidate["parent"]["name"] = "Retryable Film"
-@@ -247,8 +255,8 @@
+@@ -247,8 +215,8 @@
      public_session, tmp_path, capsys, monkeypatch,
  ):
      _opened, realm, sent, client, _outbox = public_session
@@ -109,7 +42,7 @@ index a95d0df20b469b42fa8ce5c1431bd15e382d84c1..6011079f4506c85a4cf3800e734cc987
      path = _document_file(tmp_path, realm)
      candidate = json.loads(path.read_text(encoding="utf-8"))
      candidate["parent"]["name"] = "Long history retry"
-@@ -327,7 +335,7 @@
+@@ -327,7 +295,7 @@
      public_session, tmp_path, capsys, monkeypatch,
  ):
      _opened, realm, sent, client, _outbox = public_session
@@ -118,7 +51,7 @@ index a95d0df20b469b42fa8ce5c1431bd15e382d84c1..6011079f4506c85a4cf3800e734cc987
      path = _document_file(tmp_path, realm)
      candidate = json.loads(path.read_text(encoding="utf-8"))
      candidate["parent"]["name"] = "First body"
-@@ -339,7 +347,7 @@
+@@ -339,7 +307,7 @@
      path.write_text(json.dumps(candidate), encoding="utf-8")
      assert _run(client, path, key="same-key") == 1
      output = json.loads(capsys.readouterr().out)
@@ -128,9 +61,149 @@ index a95d0df20b469b42fa8ce5c1431bd15e382d84c1..6011079f4506c85a4cf3800e734cc987
      assert calls == ["same-key", "same-key"]
  
 
+codex
+The final evidence set and conventional commit message are recorded outside the worktree. The corrected finding is documented with Runtime source citations: the store emits `idempotency_mismatch` as the refusal reason, while the public error code remains generic `conflict`; the test now asserts the canonical reason without weakening the equality. I’m marking the worker complete after one final status check.
+exec
+/bin/bash -lc "set -o pipefail
+/home/user/work/venv-agent/bin/python - <<'PY'
+import ast
+from pathlib import Path
+path = Path('tests/packs/timeline/test_cli_document_commit.py')
+ast.parse(path.read_text(encoding='utf-8'))
+assert '_runtime_idempotency' not in path.read_text(encoding='utf-8')
+assert 'idempotency_conflict' not in path.read_text(encoding='utf-8')
+PY
+git diff --check
+printf '%s\\n' '--- status ---'
+git status --short
+printf '%s\\n' '--- commit message ---'
+sed -n '1,20p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/commit-msg
+printf '%s\\n' '--- evidence size ---'
+du -sh /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/evidence" in /home/user/work/wt/agt-D86-main-CLI-return-2358
+ succeeded in 244ms:
+Traceback (most recent call last):
+  File "<stdin>", line 5, in <module>
+AssertionError
+--- status ---
+ M tests/packs/timeline/test_cli_document_commit.py
+--- commit message ---
+test(timeline): F-D86 CLI Runtime idempotency
+
+Remove the fixture-only idempotency replay/refusal shim from the F-D86
+document commit tests. Observe request keys and history limits while
+delegating retries and changed-key payloads to the existing Runtime
+commit/store/provider path, and assert Runtime's canonical mismatch reason.
+--- evidence size ---
+24K	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/evidence
+
 apply patch
 patch: completed
-/home/user/work/wt/agt-D86-main-CLI-return-2358/tests/packs/timeline/test_cli_document_commit.py
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/DONE
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..f772fa428e6661f0622239d6cdf9101a98b67774
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/commit-msg
+@@ -0,0 +1,6 @@
++test(timeline): F-D86 CLI Runtime idempotency
++
++Remove the fixture-only idempotency replay/refusal shim from the F-D86
++document commit tests. Observe request keys and history limits while
++delegating retries and changed-key payloads to the existing Runtime
++commit/store/provider path, and assert Runtime's canonical mismatch reason.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/evidence/ast-conservation.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/evidence/ast-conservation.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..0d90d62b5b8f07fe14585eb66c4c6b4169181f83
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/evidence/ast-conservation.txt
+@@ -0,0 +1,16 @@
++AST conservation: PASS (12 test bodies; args/decorators/assertions preserved; one mapped exact-error literal)
++Assigned selectors: PASS (8 exact retained core nodes)
++- test_document_commit_uses_the_authenticated_commit_door
++- test_document_commit_retry_uses_runtime_idempotency_without_history_scan
++- test_document_commit_retry_does_not_scan_a_long_history_page
++- test_document_commit_clean_raw_empty_app_is_a_noop
++- test_document_commit_preserves_unknown_parent_app_data
++- test_document_commit_human_output_keeps_label_and_receipt
++- test_document_commit_changed_body_with_same_key_is_runtime_refusal
++- test_document_commit_preview_has_no_accepted_receipt
++
++Source correction map:
++- Removed fixture-only _runtime_idempotency helper and all three call sites.
++- Exact retry and changed-key requests now pass through the existing RuntimeService commit_timeline/store/provider path.
++- Existing sent/call predicates remain mapped; passive request telemetry retains every request body/key.
++- Changed-body oracle: old output["error"]["code"] == "idempotency_conflict"; new output["error"]["details"]["reason"] == "idempotency_mismatch".
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/evidence/commands.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/evidence/commands.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..0139b568aab7c13a4f6b48178d6224f8d0d52fe1
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/evidence/commands.txt
+@@ -0,0 +1,19 @@
++Source-only F-D86 CLI return checks
++
++Read-only sources:
++- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/PLAN.md
++- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-F-main-CLI-review-2344.md
++- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-agent-to-runtime-agent-lead-orchestrator-20261024T2348Z-CLI-first-return.md
++- /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/agt-D86-main-families.md
++
++Checks:
++- PYTHONPYCACHEPREFIX=/tmp/w-2b05c97b38/agt-D86-static/pycache /home/user/work/venv-agent/bin/python -m py_compile tests/packs/timeline/test_cli_document_commit.py
++- /home/user/work/venv-agent/bin/ruff check tests/packs/timeline/test_cli_document_commit.py
++- /home/user/work/venv-agent/bin/mypy tests/packs/timeline/test_cli_document_commit.py
++- git diff --check
++- in-memory AST conservation script comparing HEAD^ and the candidate
++- git diff --stat
++- sha256sum tests/packs/timeline/test_cli_document_commit.py
++- git hash-object tests/packs/timeline/test_cli_document_commit.py
++
++Not run by instruction: pytest, test bodies, Runtime/service qualification, original P4, full/localhost/browser suites.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/evidence/corrected-finding.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/evidence/corrected-finding.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..13f552214f148d431c8e27b5ecc041997f4cea97
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/evidence/corrected-finding.txt
+@@ -0,0 +1,10 @@
++Protected finding corrected in the owned test fixture only.
++
++Old fixture behavior: _runtime_idempotency intercepted _typed, replayed cached DomainResult values, fabricated idempotency_conflict, and inflated history rows.
++
++New fixture behavior: Reader._typed records request keys/bodies and delegates every commit_timeline call directly to RuntimeService.commit_timeline. Runtime's existing TimelineCommitStore._lookup rejects changed request hashes with idempotency_mismatch. The public Runtime mapping retains generic code conflict and exposes the exact reason under error.details.reason.
++
++Source citations:
++- Runtime store source_commit 732c48c6f5a9441a65c61b24595d454a1cd3e180, runtime_protocol/timeline_commit_store.py:217-228: request-hash mismatch calls reject("idempotency_mismatch").
++- Runtime public mapping, runtime_protocol/timeline_commit_port.py:89-100: HTTP 409 failure code is conflict and reason is retained in details.
++- Existing Runtime integration assertions use details["reason"] == "idempotency_mismatch" (for example tests/test_timeline_commit_integration.py:785-789).
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/evidence/hashes.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/evidence/hashes.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..03857b887cd233cbe63a9675e106219e6959a206
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/evidence/hashes.txt
+@@ -0,0 +1,4 @@
++a169b1616ed65e0865b2dd06aa962d34c618e57cc87bd0589110c6a05e9dcef4  tests/packs/timeline/test_cli_document_commit.py
++78234fb1f760d0a1dcf146ef8551b342ffbc3e28  git blob tests/packs/timeline/test_cli_document_commit.py
++tests/packs/timeline/test_cli_document_commit.py | 60 ++++++------------------
++1 file changed, 14 insertions(+), 46 deletions(-)
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/evidence/static.log b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/evidence/static.log
+new file mode 100644
+index 0000000000000000000000000000000000000000..eab7b6fa1162c51d5a67127a3bd5711af8e04d4b
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/evidence/static.log
+@@ -0,0 +1,11 @@
++py_compile: exit 0
++ruff candidate: exit 0; All checks passed!
++mypy candidate: exit 0; Success: no issues found in 1 source file
++git diff --check: exit 0
++AST conservation: exit 0; 12 test bodies, args/decorators/assertions preserved, one mapped exact-error literal
++
++Baseline comparison:
++- baseline Ruff: exit 1 with 11 existing F811 diagnostics for the imported public_session fixture
++- baseline mypy: protected review reports success/no issues
++
++The first attempt to log under the prescribed worker tmpdir was blocked because that path is a file; checks were rerun under TMPDIR=/tmp/w-2b05c97b38. No worktree change resulted.
 diff --git a/tests/packs/timeline/test_cli_document_commit.py b/tests/packs/timeline/test_cli_document_commit.py
 index a95d0df20b469b42fa8ce5c1431bd15e382d84c1..78234fb1f760d0a1dcf146ef8551b342ffbc3e28
 --- a/tests/packs/timeline/test_cli_document_commit.py
@@ -260,141 +333,68 @@ index a95d0df20b469b42fa8ce5c1431bd15e382d84c1..78234fb1f760d0a1dcf146ef8551b342
  
 
 exec
-/bin/bash -lc "git diff -- tests/packs/timeline/test_cli_document_commit.py; printf '%s\\n' '--- grep forbidden shim ---'; rg -n \"_runtime_idempotency|idempotency_conflict|accepted = \\{|rows\\].*201|history_limits\" tests/packs/timeline/test_cli_document_commit.py || true; printf '%s\\n' '--- status ---'; git status --short" in /home/user/work/wt/agt-D86-main-CLI-return-2358
- succeeded in 42ms:
-diff --git a/tests/packs/timeline/test_cli_document_commit.py b/tests/packs/timeline/test_cli_document_commit.py
-index a95d0df20b..78234fb1f7 100644
---- a/tests/packs/timeline/test_cli_document_commit.py
-+++ b/tests/packs/timeline/test_cli_document_commit.py
-@@ -41,6 +41,9 @@ def public_session(tmp_path, runtime_abi):  # noqa: F811
-     class RuntimeRealm:
-         def __init__(self):
-             self.project, self.timeline = project, "film"
-+            self.calls = []
-+            self.history_limits = []
-+            self.requests = []
- 
-         @property
-         def head(self):
-@@ -88,6 +91,7 @@ def public_session(tmp_path, runtime_abi):  # noqa: F811
-             timeline_id = args[0] if args else "film"
-             try:
-                 if operation == "list_timeline_commits":
-+                    realm.history_limits.append(kwargs.get("limit", 50))
-                     result = service.list_timeline_commits(
-                         requested_project, timeline_id,
-                         cursor=kwargs.get("cursor"), limit=kwargs.get("limit", 50),
-@@ -96,7 +100,9 @@ def public_session(tmp_path, runtime_abi):  # noqa: F811
-                     return DomainResult.success(result)
-                 if operation == "commit_timeline":
-                     body = copy.deepcopy(args[1])
--                    sent.append(body)
-+                    realm.calls.append(kwargs["idempotency_key"])
-+                    realm.requests.append(copy.deepcopy(body))
-+                    before = realm.head
-                     result = service.commit_timeline(
-                         requested_project, timeline_id, body,
-                         idempotency_key=kwargs["idempotency_key"],
-@@ -104,6 +110,8 @@ def public_session(tmp_path, runtime_abi):  # noqa: F811
-                         invocation_path=f"/v1/projects/{requested_project}/timelines/{timeline_id}/commit",
-                         authorize=lambda: None,
-                     )
-+                    if body.get("dry_run") or realm.head != before:
-+                        sent.append(body)
-                     from astrid.core.receipts.contract import CommandReceipt
- 
-                     receipt = CommandReceipt.from_dict(result["receipt"]) if result["receipt"] else None
-@@ -164,46 +172,6 @@ def _run(client, path, *, message="Rename film", key="document-1", dry_run=False
-     return parsed.handler(parsed)
- 
- 
--def _runtime_idempotency(client, monkeypatch, *, history_limits=None):
--    """Model Runtime's exact-key replay at the existing authenticated port."""
--    original = client.timelines._typed
--    calls = []
--    accepted = {}
--
--    def typed(operation, project, *args, **kwargs):
--        if operation != "commit_timeline":
--            result = original(operation, project, *args, **kwargs)
--            if operation == "list_timeline_commits" and history_limits is not None:
--                history_limits.append(kwargs.get("limit"))
--                if result.ok and isinstance(result.data, dict):
--                    rows = result.data.get("items")
--                    if isinstance(rows, list) and rows:
--                        result.data["items"] = [copy.deepcopy(rows[0]) for _ in range(201)]
--            return result
--        key = kwargs["idempotency_key"]
--        body = copy.deepcopy(args[1])
--        fingerprint = json.dumps(body, sort_keys=True, separators=(",", ":"))
--        calls.append(key)
--        prior = accepted.get(key)
--        if prior is not None:
--            old_fingerprint, result = prior
--            if old_fingerprint != fingerprint:
--                return DomainResult.failure(
--                    ErrorObject("idempotency_conflict", "idempotency key was reused for a different request", {
--                        "status": "refused", "path": "/idempotency_key",
--                    }),
--                    idempotency_key=key,
--                )
--            return copy.deepcopy(result)
--        result = original(operation, project, *args, **kwargs)
--        if result.ok:
--            accepted[key] = (fingerprint, copy.deepcopy(result))
--        return result
--
--    monkeypatch.setattr(client.timelines, "_typed", typed)
--    return calls
--
--
- def test_document_commit_uses_the_authenticated_commit_door(public_session, tmp_path, capsys):
-     _opened, realm, sent, client, _outbox = public_session
-     path = _document_file(tmp_path, realm)
-@@ -227,7 +195,7 @@ def test_document_commit_retry_uses_runtime_idempotency_without_history_scan(
-     public_session, tmp_path, capsys, monkeypatch,
- ):
-     _opened, realm, sent, client, _outbox = public_session
--    calls = _runtime_idempotency(client, monkeypatch)
-+    calls = realm.calls
-     path = _document_file(tmp_path, realm)
-     candidate = json.loads(path.read_text(encoding="utf-8"))
-     candidate["parent"]["name"] = "Retryable Film"
-@@ -247,8 +215,8 @@ def test_document_commit_retry_does_not_scan_a_long_history_page(
-     public_session, tmp_path, capsys, monkeypatch,
- ):
-     _opened, realm, sent, client, _outbox = public_session
--    history_limits = []
--    calls = _runtime_idempotency(client, monkeypatch, history_limits=history_limits)
-+    history_limits = realm.history_limits
-+    calls = realm.calls
-     path = _document_file(tmp_path, realm)
-     candidate = json.loads(path.read_text(encoding="utf-8"))
-     candidate["parent"]["name"] = "Long history retry"
-@@ -327,7 +295,7 @@ def test_document_commit_changed_body_with_same_key_is_runtime_refusal(
-     public_session, tmp_path, capsys, monkeypatch,
- ):
-     _opened, realm, sent, client, _outbox = public_session
--    calls = _runtime_idempotency(client, monkeypatch)
-+    calls = realm.calls
-     path = _document_file(tmp_path, realm)
-     candidate = json.loads(path.read_text(encoding="utf-8"))
-     candidate["parent"]["name"] = "First body"
-@@ -339,7 +307,7 @@ def test_document_commit_changed_body_with_same_key_is_runtime_refusal(
-     path.write_text(json.dumps(candidate), encoding="utf-8")
-     assert _run(client, path, key="same-key") == 1
-     output = json.loads(capsys.readouterr().out)
--    assert output["error"]["code"] == "idempotency_conflict"
-+    assert output["error"]["details"]["reason"] == "idempotency_mismatch"
-     assert len(realm.entries) == 2 and len(sent) == 1
-     assert calls == ["same-key", "same-key"]
- 
---- grep forbidden shim ---
-45:            self.history_limits = []
-94:                    realm.history_limits.append(kwargs.get("limit", 50))
-194:def test_document_commit_retry_uses_runtime_idempotency_without_history_scan(
-218:    history_limits = realm.history_limits
-231:    assert history_limits and 200 not in history_limits
---- status ---
+/bin/bash -lc "set -e
+/home/user/work/venv-agent/bin/python - <<'PY'
+import ast
+from pathlib import Path
+path = Path('tests/packs/timeline/test_cli_document_commit.py')
+tree = ast.parse(path.read_text(encoding='utf-8'))
+assert not any(isinstance(node, ast.FunctionDef) and node.name == '_runtime_idempotency' for node in tree.body)
+assert 'idempotency_conflict' not in path.read_text(encoding='utf-8')
+PY
+git diff --check
+printf '%s\\n' 'final static status: PASS'
+printf '%s\\n' 'worktree:'
+git status --short
+printf '%s\\n' 'DONE:'
+ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/DONE" in /home/user/work/wt/agt-D86-main-CLI-return-2358
+ succeeded in 207ms:
+final static status: PASS
+worktree:
  M tests/packs/timeline/test_cli_document_commit.py
+DONE:
+-rw-r--r-- 1 root root 0 Oct 25 00:00 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-main-CLI-return-2358/DONE
 
+codex
+## Report
+
+Implemented the F-D86 repair in [test_cli_document_commit.py](/home/user/work/wt/agt-D86-main-CLI-return-2358/tests/packs/timeline/test_cli_document_commit.py).
+
+- Deleted `_runtime_idempotency`; retries/refusals now use genuine Runtime store/provider behavior.
+- Corrected the oracle to `error.details["reason"] == "idempotency_mismatch"`, matching Runtime’s store and public error mapping.
+- Preserved all 12 bodies, assertions, parameters, decorators, and 8 assigned selectors.
+- Only the assigned test file changed.
+
+Checks:
+
+- `py_compile`: pass
+- Ruff: pass
+- mypy: pass
+- `git diff --check`: pass
+- AST conservation: pass
+- Baseline Ruff: 11 pre-existing `F811` diagnostics; no candidate diagnostics
+- Pytest/service/full qualification: not run per source-only instructions.
+
+Commit message and evidence are recorded; `DONE` created. Branch is ready for protected review and merge.
+tokens used
+242,884
+## Report
+
+Implemented the F-D86 repair in [test_cli_document_commit.py](/home/user/work/wt/agt-D86-main-CLI-return-2358/tests/packs/timeline/test_cli_document_commit.py).
+
+- Deleted `_runtime_idempotency`; retries/refusals now use genuine Runtime store/provider behavior.
+- Corrected the oracle to `error.details["reason"] == "idempotency_mismatch"`, matching Runtime’s store and public error mapping.
+- Preserved all 12 bodies, assertions, parameters, decorators, and 8 assigned selectors.
+- Only the assigned test file changed.
+
+Checks:
+
+- `py_compile`: pass
+- Ruff: pass
+- mypy: pass
+- `git diff --check`: pass
+- AST conservation: pass
+- Baseline Ruff: 11 pre-existing `F811` diagnostics; no candidate diagnostics
+- Pytest/service/full qualification: not run per source-only instructions.
+
+Commit message and evidence are recorded; `DONE` created. Branch is ready for protected review and merge.
