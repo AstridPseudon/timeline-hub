@@ -205,6 +205,8 @@ describe('RuntimeConnectionPanel', () => {
   });
 
   it('connect pending: tells the person to choose Allow, says where, and draws the install dialog\'s arrow outside the card, aimed top left', () => {
+    // The card where it sits in a 1440 × 900 window (jsdom lays nothing out).
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({ x: 432, y: 354, left: 432, top: 354, right: 1008, bottom: 604, width: 576, height: 250, toJSON: () => ({}) });
     const view = panel(connectionFor({ status: 'needs_permission' }, { isChecking: true }));
 
     expect(screen.getByTestId('runtime-not-connected')).toHaveAttribute('data-state', 'pending');
@@ -220,9 +222,18 @@ describe('RuntimeConnectionPanel', () => {
     expect(arrow).toHaveAttribute('data-corner', 'top-left');
     expect(arrow).toHaveAttribute('data-tone', 'page');
     expect(arrow).toHaveAttribute('aria-hidden', 'true');
-    // The portal spans the viewport and sends the arrowhead to the browser prompt area at its top-left.
+    // The portal spans the viewport. The arrow is a short gesture towards the browser's prompt at the top left, not a
+    // line all the way there: it leaves the card, its head points up and to the left, and it ends nearer the card than the corner.
     expect(arrow.querySelector('text')?.textContent).toBe('UP HERE');
-    expect(arrow.querySelector('path.astrid-toolbar-pointer-line')?.getAttribute('d')).toMatch(/ 16 16$/);
+    const numbers = (selector: string) => (arrow.querySelector(selector)?.getAttribute('d')?.match(/-?\d+(\.\d+)?/g) ?? []).map(Number);
+    const line = numbers('path.astrid-toolbar-pointer-line');
+    const [[startX, startY], [endX, endY]] = [line.slice(0, 2), line.slice(-2)];
+    const [barbX, barbY, tipX, tipY, otherBarbX, otherBarbY] = numbers('path.astrid-toolbar-pointer-head');
+    expect([tipX, tipY]).toEqual([endX, endY]);
+    expect(startY).toBeLessThan(354);
+    expect(tipX).toBeLessThan((barbX + otherBarbX) / 2);
+    expect(tipY).toBeLessThan((barbY + otherBarbY) / 2);
+    expect(Math.hypot(endX - startX, endY - startY)).toBeLessThan(Math.hypot(endX, endY));
     expect(shownText()).not.toContain('just below the address bar');
   });
 
