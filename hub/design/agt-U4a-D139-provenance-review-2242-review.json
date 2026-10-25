@@ -1,0 +1,53 @@
+{
+  "task": "U4a D139",
+  "review_type": "independent receiving review",
+  "verdict": "PASS",
+  "reviewed_commit": "4fec53e0b14aea355e51c96c883fd75eef67a17c",
+  "expected_parent": "cd63be424d62226e3ee5c26fc5ce03227f5394a5",
+  "own_commit_count_over_parent": 1,
+  "changed_paths": ["runtime.lock.json"],
+  "lock_source_commit_before": "ab1e4f6141987706132916e2da16477f5a019464",
+  "lock_source_commit_after": "f103bb46866999c961a8865636f2e66d544e0c9b",
+  "lock_entry_count": 15,
+  "all_15_consumer_blobs_unchanged_from_parent": true,
+  "all_15_consumer_sha256_equal_lock": true,
+  "all_15_consumer_sha256_equal_canonical15": true,
+  "all_15_consumer_git_blobs_equal_f103_sources": true,
+  "all_15_f103_source_blobs_equal_ab1e_sources": true,
+  "canonical15": {
+    "path": "/home/user/timeline-hub/hub/design/rt-U4a-Agent-inverse-adopt-1614-canonical15.json",
+    "sha256": "sha256:179ece5b59dd556dcd2e72c6910238deb28a25a529a36e028cd6c383e7e8146e",
+    "count": 15,
+    "producer_source_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "producer_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "recorded_all_mapping_equal_base": true,
+    "recorded_all_hash_equal_base": true,
+    "recorded_all_hash_equal_producer": true,
+    "recorded_all_consumer_equal_base": true
+  },
+  "producer": {
+    "path": "/home/user/work/runtime",
+    "head": "f103bb46866999c961a8865636f2e66d544e0c9b",
+    "tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883",
+    "status_porcelain_before": "",
+    "status_porcelain_after": "",
+    "unchanged_before_after": true
+  },
+  "independent_receipt": {
+    "path": "/home/user/timeline-hub/hub/design/rt-D139-six-result-review-2219-review.json",
+    "sha256": "sha256:9362a871a17f1b99a93bbf0f3cd123fe2513ae55c9a7745d162e3d1a4a4b8564",
+    "task": "D139",
+    "verdict": "PASS",
+    "central_service_id": "runtime-d139-integration-six-2214-1025221602-9082",
+    "runtime_commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+    "runtime_tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883",
+    "runtime_clean_before_and_after": true,
+    "collected": 1571,
+    "passed": 1571,
+    "failed": 0,
+    "errors": 0,
+    "skipped": 0,
+    "all_six_bodies_equal": true
+  },
+  "scope": "Lock-only normal-tool provenance D56. No product, semantic, security, functional, core, REG, D100, or release claim."
+}

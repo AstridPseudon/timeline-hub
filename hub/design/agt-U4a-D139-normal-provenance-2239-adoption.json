@@ -1,0 +1,34 @@
+{
+  "agent_base": "cd63be424d62226e3ee5c26fc5ce03227f5394a5",
+  "agent_tree": "e9167d50ce30659772f7ef16912cfea3fd20815c",
+  "canonical15": "PASS",
+  "lock_diff": "diff --git a/runtime.lock.json b/runtime.lock.json\nindex 240f4fba3e..01559de717 100644\n--- a/runtime.lock.json\n+++ b/runtime.lock.json\n@@ -64,5 +64,5 @@\n   \"manifest\": \"contract/artifacts.json\",\n   \"producer\": \"astrid-runtime\",\n   \"producer_version\": \"sha256:084f3f2510edff28c18d33aac4a459f8aa6df3cb4fd71cba4fb292274ea8ade5\",\n-  \"source_commit\": \"ab1e4f6141987706132916e2da16477f5a019464\"\n+  \"source_commit\": \"f103bb46866999c961a8865636f2e66d544e0c9b\"\n }\n",
+  "lock_only": true,
+  "lock_source_commit_after": "f103bb46866999c961a8865636f2e66d544e0c9b",
+  "lock_source_commit_before": "ab1e4f6141987706132916e2da16477f5a019464",
+  "outside_lock_entire_tree_equal": true,
+  "outside_lock_git_diff_equal_baseline": true,
+  "outside_lock_status_lines": [],
+  "producer": "/home/user/work/runtime",
+  "producer_clean_after": true,
+  "producer_clean_before": true,
+  "producer_head_after": "f103bb46866999c961a8865636f2e66d544e0c9b",
+  "producer_head_before": "f103bb46866999c961a8865636f2e66d544e0c9b",
+  "producer_tree_after": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883",
+  "task": "U4a / PLAN3 / D139",
+  "tool_commands": [
+    "/home/user/work/venv-agent/bin/python scripts/refresh_runtime_client.py --producer /home/user/work/runtime",
+    "/home/user/work/venv-agent/bin/python scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/runtime",
+    "/home/user/work/venv-agent/bin/python scripts/artifact_manifest.py --check",
+    "git diff --check"
+  ],
+  "tool_results": {
+    "artifact_manifest_check": "PASS",
+    "git_diff_check": "PASS",
+    "refresh_runtime_client": "PASS",
+    "vendor_lock_check": "PASS"
+  },
+  "tracked_diff_names": [
+    "runtime.lock.json"
+  ]
+}
