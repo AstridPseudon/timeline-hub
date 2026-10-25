@@ -29,9 +29,11 @@ def test_born_occurrence_text_order_clear_grouped_inverse_and_redo(tmp_path, mon
                                           name='Text chapter', track='V1', on=0, duration=8)
 
         def text(kind, *, clear=False):
-            return parent.call('text-binding.set', {
+            command = parent.call('text-binding.set', {
                 'binding': {'kind': kind, 'slot': None},
                 **({'clear': True} if clear else {'text': pin})}, 'occurrence:text-occ')
+            command['intent'] = {'ownership': 'occurrence'}
+            return command
 
         request = parent.body(case, [birth, text('transcript'), text('voiceover_script')])
         accepted = parent.commit(case, request, 'union-birth-text')

@@ -10,6 +10,7 @@ from astrid.sdk.timeline import commands
 from astrid.sdk.timeline.capture import capture_track_create
 from astrid.sdk.timeline.commit import _digest, bundle_from_document
 from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_add_media
 from tests.editing_conformance import test_commit_runtime_parent_media as parent
 from tests.editing_conformance.test_next_command_cohort_runtime import reopen
 from tests.editing_conformance.test_pristine_initialize import batch
@@ -47,8 +48,13 @@ def test_init_occurrence_media_parent_swap_word_grouped_inverse_reload_restart(t
         source = {'id': 'voice', 'clipType': 'video', 'track': 'picture',
                   'asset': case.pins['new']['asset'], 'at': 0, 'hold': 4,
                   'from': 0, 'to': 4, 'speed': 1, 'opaque': [None, False, 0.0]}
-        submit([parent.call('occurrence.add-media', {'row': source, 'media': case.pins['new']},
-                            'occurrence:born-occ')], 's3-child-media')
+        raw_media = parent.call('occurrence.add-media', {'row': source, 'media': case.pins['new']},
+                                'occurrence:born-occ')
+        raw_media['intent'] = {'ownership': 'occurrence'}
+        parent.commit(case, parent.body(case, [raw_media], dry_run=True), 's3-child-media-selection')
+        child_media = capture_occurrence_add_media(
+            bundle(), 'occurrence:born-occ', source, case.pins['new'], verified_media=case.selected)
+        submit([child_media], 's3-child-media')
         submit([capture_track_create(bundle(), 'parent', {'id': 'overlay', 'kind': 'visual'})],
                's3-overlay')
         row = parent.row(case, 'parent-media', asset='raw-old-alias', track='overlay')
