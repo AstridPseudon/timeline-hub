@@ -1,0 +1,18 @@
+{
+  "schema": "app-d116-native-topology-final-review-verdict-v1",
+  "overall": "SOURCE_PASS",
+  "source": "PASS",
+  "functional": "NOTRUN",
+  "functional_gate": "blocked by fresh available space below 5GB floor",
+  "base": "9350a674a85b9328e7ac1e8192e66dcc65cfbf77",
+  "author_head": "795608e1b9d8077487b26eea50b65c1e79c3f522",
+  "runtime": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+  "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+  "new_files": [
+    "tests/editing_conformance/native_checkout_current_fixture.py",
+    "tests/editing_conformance/test_native_checkout_current_equivalent.py"
+  ],
+  "collection": {"status": "PASS", "cases": 4},
+  "finding": null,
+  "safe_next_step": "Run exactly the four collected nodes once the fresh light space is at least 5GB; do not run originals or broader suites."
+}

@@ -1,0 +1,20 @@
+{
+  "task": "ordinary lossless completed pre22 Oct App worker log compression",
+  "utc": "2026-10-25T17:11:05.188781+00:00",
+  "free_before_bytes": 5128290304,
+  "free_after_bytes": 5128658944,
+  "count": 1,
+  "logical_saved_bytes": 366590,
+  "all_decompressed_hashes_exact": true,
+  "kept_current_outputs_sessions_credentials_test_outputs_worktrees_branches_reports_refused_targets": true,
+  "files": [
+    {
+      "worker": "app-m3-root-public10-qualify",
+      "path": "workers/app-m3-root-public10-qualify/log.txt",
+      "original_bytes": 488029,
+      "gzip_bytes": 121439,
+      "sha256": "357747818098a884e79f8bdb35639952fa267b3f72f631df98332fcd33550373",
+      "decompressed_sha256": "357747818098a884e79f8bdb35639952fa267b3f72f631df98332fcd33550373"
+    }
+  ]
+}

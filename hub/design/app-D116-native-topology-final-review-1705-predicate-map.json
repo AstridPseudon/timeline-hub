@@ -1,0 +1,106 @@
+{
+  "schema": "app-d116-native-checkout4-final-predicate-map-v1",
+  "overall": "PASS_SOURCE_MAPPING",
+  "entries": [
+    {
+      "ordinal": 1143,
+      "original": "test_commit_runtime_native_checkout.py::test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[False]",
+      "companion": "test_native_checkout_current_equivalent.py::test_current_checkout_move_trim_lost_ack_restart_and_guarded_undo[disjoint-peer]",
+      "inputs": {
+        "current_media": "case.source.content.media_id",
+        "parent_tracks": ["music", "music-other"],
+        "clips": {"music-bed": {"track": "music", "at": 0, "hold": 5.5}, "music-other": {"track": "music-other", "at": 0, "hold": 5.5}},
+        "asset": "music-bed",
+        "opaque": [null, {"keep": true}],
+        "word": "DECLARATION / current picker index 1 / pinned case.pin",
+        "commands": ["music-bed on=1", "music-bed trim(1,4)", "music-other on=2"]
+      },
+      "predicates": [
+        "lost ACK after durable first move",
+        "restart hydration preserves exact flight body and original key",
+        "suffix remains pending and is accepted with a distinct key",
+        "disjoint peer move survives",
+        "reload reads hold=3 and peer at=2",
+        "undo then redo restores exact hold/start values",
+        "later guarded undo conflicts and history head differs"
+      ],
+      "status": "PASS_MAPPING"
+    },
+    {
+      "ordinal": 1147,
+      "original": "test_commit_runtime_native_checkout.py::test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[True]",
+      "companion": "test_native_checkout_current_equivalent.py::test_current_checkout_move_trim_lost_ack_restart_and_guarded_undo[touching-peer-conflict]",
+      "inputs": {
+        "current_media": "case.source.content.media_id",
+        "parent_tracks": ["music", "music-other"],
+        "clips": {"music-bed": {"track": "music", "at": 0, "hold": 5.5}, "music-other": {"track": "music-other", "at": 0, "hold": 5.5}},
+        "asset": "music-bed",
+        "opaque": [null, {"keep": true}],
+        "word": "same current pinned declaration/binding as 1143",
+        "commands": ["music-bed on=1", "music-bed trim(1,4)", "music-other on=2", "music-bed trim(0,5)"]
+      },
+      "predicates": [
+        "same lost-ACK/restart exact-retry journey",
+        "touching peer trim conflicts",
+        "pending suffix remains unchanged after refusal",
+        "conflict path is no-write for pending suffix and retains from=1"
+      ],
+      "status": "PASS_MAPPING"
+    },
+    {
+      "ordinal": 1152,
+      "original": "test_commit_runtime_native_checkout.py::test_attached_param_commands_keep_exact_cli_ingress_and_unchanged_write_history",
+      "companion": "test_native_checkout_current_equivalent.py::test_current_checkout_commands_file_preserves_opaque_unchanged_write_and_undo",
+      "inputs": {
+        "target": "parent/clip:music-bed",
+        "current_media": "case.source.content.media_id",
+        "parent_tracks": ["music", "music-other"],
+        "opaque": [null, false, 0],
+        "word": "same current pinned declaration/binding prepared by helper",
+        "cli": "edit commands-file film <path> --base-revision-id <captured> --base-publication-id <captured> --project <case.project> --json"
+      },
+      "predicates": [
+        "persist exact pending command and submit through build_parser commands-file caller",
+        "accepted commands equal captured pending commands",
+        "unchanged public setter creates a distinct receipt on same accepted revision",
+        "clear removes opaque field",
+        "undo restores exact [null,false,0] value",
+        "guarded undo of earlier receipt conflicts"
+      ],
+      "status": "PASS_MAPPING"
+    },
+    {
+      "ordinal": 1159,
+      "original": "test_commit_runtime_native_checkout.py::test_authenticated_v1_commit_reload_undo_survives_stopped_renderer_and_preview_reports_unavailable",
+      "companion": "test_native_checkout_current_equivalent.py::test_current_checkout_gate3_reload_undo_and_visualize_report_unavailable",
+      "inputs": {
+        "current_media": "case.source.content.media_id",
+        "parent_tracks": ["music", "music-other"],
+        "audio_clips": "same current music-bed/music-other topology as 1143",
+        "gate3": "occurrences=[]; gate3-title at=0, track=picture, clipType=text-card, hold=1, content=Gate3, rendering/effects/text-card",
+        "word": "current source pin is retained by current seed; gate3 removes occurrences without inventing a transcript lineage",
+        "renderer": "subprocess.Popen and subprocess.run tripwire both refuse launch"
+      },
+      "predicates": [
+        "authenticated native move on=1 is accepted while renderer is stopped",
+        "reload sees start=1",
+        "guarded undo is accepted and reload sees start=0",
+        "visualize composed/png returns exact unavailable capability error",
+        "renderer-off tripwire is active during commit/reload/undo/preview"
+      ],
+      "status": "PASS_MAPPING"
+    }
+  ],
+  "common_topology": {
+    "tracks": [{"id": "music", "kind": "audio"}, {"id": "music-other", "kind": "audio"}],
+    "clips": [
+      {"id": "music-bed", "track": "music", "asset": "music-bed", "at": 0, "hold": 5.5, "extension": {"opaque": [null, {"keep": true}]}},
+      {"id": "music-other", "track": "music-other", "asset": "music-bed", "at": 0, "hold": 5.5, "extension": {"opaque": [null, {"keep": true}]}}
+    ],
+    "provider": "case.submit -> registered Runtime provider from agent.create_runtime_commit_service",
+    "source_authority": "current_bundle/current_pick from native_word_anchor_fixture.current_retained",
+    "emitter": "astrid.sdk.timeline.emitter.emit_document_commands",
+    "public_callers": ["Checkout.attach/TimelineSession", "astrid.packs.timeline.cli build_parser commands-file"]
+  },
+  "no_subset_or_shortcut": "All four original selectors and their distinct disjoint/touching, CLI, opaque, restart, no-write, undo, and renderer-off predicates are mapped; no original was edited, skipped, optionalized, or replaced by a subset assertion."
+}

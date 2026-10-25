@@ -1,0 +1,39 @@
+{
+  "status": "source-preserved",
+  "base": "136c8ae6c6159285c066e4347c881dd4e4a39bb2",
+  "fixture": {
+    "path": "tests/editing_conformance/test_recorded_graph_roots.py",
+    "test_bodies": 22,
+    "assertions": 90,
+    "parametrize_decorators": 6,
+    "predicate_change": false,
+    "authored_root_values_change": false
+  },
+  "graph_consumer": {
+    "path": "tests/sdk/test_timeline_commit_graph_roots.py",
+    "test_bodies": 11,
+    "assertions": 33,
+    "parametrize_decorators": 7,
+    "predicate_change": false
+  },
+  "other_consumers_audited": [
+    "tests/sdk/test_timeline_semantic_reservations.py",
+    "tests/sdk/test_timeline_created_root_stage_redo.py",
+    "tests/editing_conformance/test_recorded_graph_roots.py"
+  ],
+  "preservation": {
+    "all_other_authored_inputs": true,
+    "previous_values": true,
+    "ABA": true,
+    "atomic_no_write": true,
+    "C0_graph_assertions": true,
+    "null_or_gain_purpose_assertions": false
+  },
+  "comparison_control": {
+    "registered_operations": ["test.child-write", "test.root-write"],
+    "source": "tests/editing_conformance/test_recorded_graph_roots.py:123-139",
+    "caller": "tests/sdk/test_timeline_commit_graph_roots.py:345-360",
+    "shape": "omitted created claim with recorder-created list empty",
+    "why_comparable": "same registered Operation mechanism and RuntimeRealm commitTimeline route; differs only in whether the handler allocates entities"
+  }
+}

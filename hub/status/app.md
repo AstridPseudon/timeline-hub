@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T17:08:39Z | dispatcher heartbeat 5s | live 2 (sol 1, luna 1, other 0) | busy30 16 | status age 1m -->
-# app board, 2026-10-25T17:05Z
+<!-- app | 2026-10-25T17:13:42Z | dispatcher heartbeat 4s | live 2 (sol 1, luna 1, other 0) | busy30 15 | status age 4m -->
+# app board, 2026-10-25T17:09Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -117,7 +117,7 @@
 
 | D127-App-validator | Strictly validate leaf and lifecycle schema | HARD Sol and protected Luna | Frozen-helper truth table1654 | doing | app-D127-lifecycle-source-sol-1705 | Sol1654 proved4 valid helper outputs rejected by prior review assumptions. Manager clarified own-test scope; actual semantics govern, fixed caps exact. | 5a9e0eb523 held |
 
-| D116-native-topology4 | Build four faithful current checkout companions | Luna and independent Luna | Author1700 fixes both findings | review | app-D116-native-topology-final-review-1705 | Exact795608 restores suffix distinct key and two music tracks. Statics/collection4 PASS; cumulative protected review before own4. | 795608e1b held |
+| D116-native-topology4 | Build four faithful current checkout companions | Luna and independent Luna | Independent1705 SOURCE PASS | gated:light-capacity | Final reviewer1705; exact795608 | All four purposes/topology/inputs mapped and statics/collection4 PASS. New4 NOTRUN at4.876GB; resume after space covers actual5GB plus worktree. | 795608e1b held |
 
 Integration: App d4e5284dfcc20801977cef12253b12f9cc8798fd, tree5efca939546f30b039cb9cacba7a29d7db690f2a. Entire tree equals tested normal adopter1615. Qualified Runtime ab1e tools adopted; vendor17/artifact3/lint PASS, mappings14/protected8 exact. Agent070dfc and recorded tours unchanged. Receipt design/app-U4p-R2-normal-home-1624.json.
 
@@ -129,7 +129,7 @@ Blockers: Agent core — D128 owns local a4e016/5e9ad core. Latest Agent1626 say
 Blockers: Final render — Farm D77 waits Runtime paired exact source publication; no App input owed. Historical denied acquisition route stays stopped.
 Blockers: Final cut — Current full P2, final P1–P5/core/D69 and genuine installed render owed. No ZIP claim.
 Next ready: Consume current native4 review, graph command trace and App implementation. Protected finalApp review then exact helper/App clean imports on PASS. No tour or SWAP qualification.
-live 3 / cap 3; ready-undispatched 0; native4 finalreview1705, source-consistent lifecycleSol1705 and graph records trace1705 running or queued. No heavy body. App1647 plus Sol1650 and independent projection wholepath1650 running or queued. Projection own9, graph trace and App strict validator running. Fresh dispatch5418221568 bytes; source floor4.6GB with no heavy, own-node body5GB, ongoing stop4GB. No heavy body.
+live 2 / cap 3; ready-undispatched 0; App lifecycleSol1705 and graph records trace1705 active. Native4 functional proof waits actual5GB plus worker footprint; current5.004GB is insufficient for new tree. App1647 plus Sol1650 and independent projection wholepath1650 running or queued. Projection own9, graph trace and App strict validator running. Fresh dispatch5418221568 bytes; source floor4.6GB with no heavy, own-node body5GB, ongoing stop4GB. No heavy body.
 INBOX consumed through2304054 bytes, including Agent1643 finite status ask already answered1707 and recordedD132a approval. H6 checked actual hub/status Agent1626, Runtime1624 and Farm1635. Farm core dropped; Agent normal child custody is active owner. All former App source/publication asks consumed. New Agent1619 companion ask is an explicit row and will start first free slot.
 Safety: D130 remains absolute. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakened tests, credentials or refused-route retry. All current inputs/outputs/branches/reports and historical guarded dirty/orphan targets preserved.
 Later: Parent labels2/native checkout originals4/trackbatch1 retain word-source setup errors; new companion work is separate. D79 waits ZIP; E4 dropped. Current17 applicability17 PASS, pair16 historical30693 source equality PASS, neither is current behavior proof.
@@ -156,3 +156,5 @@ Pass17:00: nativeprotected1653 SOURCEFAIL missingoriginalsuffixdistinctkey predi
 Pass17:05: graph1658 cumulativeSOURCEPASS90/33 andschema1to0; own9actual9FAILinvalid_records providerexecuteddifferentcommand/auth337. Readonlywholepath1705 coverscommand->capture->auth beforeanynextfix. Native1700exact795608 bothfindingsfixed, finalprotected1705dispatched. AppSol1654NOEDIT found sourcecontradictsreviewassumptions:12actualhelpercases4false-rejected. ThisisroutineOURtestinterpretation underD120; managerclearedfalseorchestratorwait, fixedbudgetcapsnotfalsephasepresence. SamebranchSol1705implementsactualtruth-table, no helper/productchange or permissionexception. Allthreereadyrowsdispatched atfresh5.310GB, stop4GB.
 
 Pass17:07: Agent1643delayedstatusask consumed; finalprojectioncommit/tree andactual1646 body packetreplied1707, originalNOTRUNcheckpoints preserved. Native4actualauthor/review/return IDs restated, no duplicate allocation. Normalcompact complete:0scratchdirs,2oldlogsgzipped,0finishedtestrundirs; sweep3removed0dirs. Allprotectedoutputs/refusedtargetskept.
+
+Pass17:09: nativefinal1705 SOURCEPASS exact795608, fullfourpurpose/input/topologymap. Ownnew4NOTRUN at4876791808bytes; postrecycle5004316672 leavesnoownworktreeheadroom. Do not dispatchanotherzero-bodyretry; proofresumesaftergraphtraceorAppauthornormalcleanup restoresactualcapacity. Other2workersactive, no source-readyunassignedrow.

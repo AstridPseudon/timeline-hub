@@ -1,0 +1,30 @@
+{
+  "agent": {
+    "worktree": "/home/user/work/wt/app-D132a-graph-records-trace-1705",
+    "commit": "136c8ae6c6159285c066e4347c881dd4e4a39bb2",
+    "tree": "aabbe60c220768dc4beee25146d4342cff98525e",
+    "status": "clean",
+    "files": {
+      "tests/editing_conformance/test_recorded_graph_roots.py": "3fbfa95179561a95ac4930cb745f16f2ac636b8755372963730e5cda7466a895",
+      "tests/sdk/test_timeline_commit_graph_roots.py": "72bf3c60cc006223c857ae5194280793a2be21ee0527ebb565a2a1cf271d9c21",
+      "astrid/sdk/timeline/commands.py": "b89798a439daace286e6702647c670c532a21575719e4df1bda87607b855ee96",
+      "astrid/sdk/timeline/_recording.py": "3940d0296f55bfc2b7cff6f4998adc4a6caf3290c1fcae10ddea813edc50f7e4",
+      "astrid/sdk/timeline/commit.py": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+      "astrid/sdk/timeline/_commit_preview.py": "9380dd2e3eb9c041b8515e20d979e2cce4aa0ca9cbfeed81f40c315357f77c36"
+    }
+  },
+  "runtime": {
+    "worktree": "/home/user/work/wt/rt-pin-5e9ad1c6",
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "status": "clean",
+    "files": {
+      "runtime_protocol/timeline_commit_auth.py": "72d4611def6491ac39872e04551ed7d2f1c4872eb655c4b0a63055bd4b324b2d",
+      "runtime_protocol/timeline_commit_store.py": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+      "runtime_protocol/timeline_commit_port.py": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14",
+      "runtime_protocol/service.py": "7277fc12e502a419ccd9eea9dfd2b3693bc8b2c8963e9fdf7224402d8a03a529",
+      "contract/commit-v2.md": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7"
+    }
+  },
+  "private_prior_artifact": "D132a own9 XML/log consulted only for safe failure classification; raw contents not copied"
+}

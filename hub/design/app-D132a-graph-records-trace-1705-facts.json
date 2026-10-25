@@ -1,0 +1,53 @@
+{
+  "task": "D132a",
+  "base": "136c8ae6c6159285c066e4347c881dd4e4a39bb2",
+  "source_verdict": "SOURCE_PASS",
+  "prior_acceptance": {
+    "requested_nodes": 9,
+    "result": "9 failed",
+    "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "provider_profile": "astrid",
+    "first_reason": "invalid_records",
+    "first_message": "provider executed a different command",
+    "first_validator": "runtime_protocol/timeline_commit_auth.py:337",
+    "raw_command_record_auth": "retained privately; not reproduced here"
+  },
+  "first_differing_safe_field": {
+    "path": "request.commands[0].created vs prepared.records.commands[0].command.created",
+    "submitted_state": "absent; validator effective value is []",
+    "submitted_effective_type": "list",
+    "submitted_effective_length": 0,
+    "recorded_state": "present",
+    "recorded_type": "list[string]",
+    "recorded_length": 2,
+    "hash_algorithm": "sha256 of canonical compact sorted-key JSON; raw values withheld",
+    "submitted_effective_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "recorded_sha256": "4f986cd74a0041f9d8e822bcb07cede6ef934cddc2dfd6d9d48e11af41bdf05c",
+    "values": "not included; raw refs remain private"
+  },
+  "claim_comparison": {
+    "core_keys": ["schema_version", "op", "version", "select", "args"],
+    "core_result": "equal by construction: Recording starts from the submitted command and finish only adds captured claims",
+    "created_result": "different",
+    "inverse_omission_exception": false,
+    "track_creation_omission_exception": false,
+    "validator_outcome": "reject invalid_records"
+  },
+  "cause_classification": {
+    "fixture_caller": "omits an explicit created claim for a command that creates roots",
+    "provider_record_transform": "expected authoritative capture; not the first fault",
+    "serializer_shape": "supported: created is optional in EditCommand input and required in CommandRecord output",
+    "product_source_qualification": "qualified registered astrid provider; no unqualified product source found",
+    "guard_or_auth_suppression": "not used"
+  },
+  "finite_unapplied_delta": {
+    "status": "UNAPPLIED",
+    "owner": "Agent test caller",
+    "file": "tests/editing_conformance/test_recorded_graph_roots.py",
+    "seam": "create_command(roots)",
+    "change": "Declare created as the ordered refs from the same roots list passed to the registered test.create-roots handler.",
+    "preserves": ["all root values", "all 90 fixture assertions", "all 33 graph assertions", "C0 created-ID claim semantics", "previous-value/ABA/no-write predicates"],
+    "does_not_change": ["production provider", "Runtime auth", "schema", "guards", "generated files", "pins"]
+  }
+}

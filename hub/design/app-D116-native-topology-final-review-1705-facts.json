@@ -1,0 +1,39 @@
+{
+  "schema": "app-d116-native-topology-final-review-v1",
+  "task": "D116 independent protected review",
+  "head": "795608e1b9d8077487b26eea50b65c1e79c3f522",
+  "head_parent": "b24d99bd3c286336c09d4d0661e9691d3b160559",
+  "published_normal_base": "9350a674a85b9328e7ac1e8192e66dcc65cfbf77",
+  "published_normal_parent": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "cumulative_changed_files": [
+    "tests/editing_conformance/native_checkout_current_fixture.py",
+    "tests/editing_conformance/test_native_checkout_current_equivalent.py"
+  ],
+  "first_return_delta": {
+    "files": [
+      "tests/editing_conformance/native_checkout_current_fixture.py",
+      "tests/editing_conformance/test_native_checkout_current_equivalent.py"
+    ],
+    "insertions": 13,
+    "deletions": 3,
+    "changes": [
+      "restore distinct post-restart suffix idempotency-key assertion",
+      "add parent music and music-other tracks",
+      "assign music-bed to music and music-other to music-other"
+    ]
+  },
+  "runtime": {
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "worktree_clean": true
+  },
+  "source_status": "PASS",
+  "functional_status": "NOTRUN_BELOW_FLOOR",
+  "collected_new_cases": 4,
+  "fresh_available_bytes": 4876791808,
+  "fresh_floor_bytes": 5000000000,
+  "fresh_shortfall_bytes": 123208192,
+  "originals_read_only": true,
+  "product_runtime_generated_pins_cli_changed": false,
+  "source_edits_by_reviewer": false
+}

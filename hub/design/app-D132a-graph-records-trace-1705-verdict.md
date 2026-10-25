@@ -1,0 +1,11 @@
+# D132a source-trace verdict
+
+Source custody and conservation PASS. Agent base `136c8ae6c` is clean; frozen Runtime `5e9ad1c6`/tree `de2954` is clean. The prior protected nine-node result is retained privately and classified as the same first refusal: `invalid_records`, `provider executed a different command`, at `timeline_commit_auth.py:337`.
+
+The first safe mismatch is exactly `request.commands[0].created` versus `prepared.records.commands[0].command.created`. The submitted graph caller omits the optional command field, so Runtime’s validator evaluates it as `[]`. The registered `test.create-roots` handler calls `ctx.create_entity` for both roots; `Recording.finish(capture=True)` then authoritatively emits a two-item `created` list. Core command fields (`schema_version`, operation identity, version, select, args) remain equal. The Runtime validator has omission exceptions only for authenticated inverse restoration and legacy `track.create`; neither applies to this test operation.
+
+This is a legitimate finite test-only caller/envelope seam, not a provider-record transform, serializer defect, product-source qualification issue, guard suppression, or fabricated authentication. C0 explicitly requires native `created` claims for canonical entity refs. The finite UNAPPLIED delta is to declare `created` in `create_command(roots)` from the same ordered root refs consumed by the handler. This preserves all root values and all 90 fixture/33 graph assertions, including previous-value, ABA, atomic/no-write, inverse, redo, and reservation predicates.
+
+No product/contract owner or existing Runtime task is required by this trace. If the manager applies the test-only delta, it should be reviewed as a caller-envelope correction and then rerun only the already authorized proof; this worker did not apply or rerun it.
+
+The next acceptance boundaries were traced before this conclusion: canonical request/authenticated provider dispatch; Agent command capture and prepared record sealing; Runtime port custody; prepared schema/ordinal/step checks; then `validate_claims` before step reads/writes, binding, materialization, or publication. No claim is made about later boundaries until the first mismatch is corrected.

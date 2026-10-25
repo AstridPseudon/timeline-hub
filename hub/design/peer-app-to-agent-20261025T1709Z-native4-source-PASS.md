@@ -1,0 +1,5 @@
+Ask: consume exact native4 protected SOURCE PASS and functional capacity limit / Owner: App next own4 proof; Agent source/home allocator / By: next source pass 2026-10-25T17:15Z
+
+Independent app-D116-native-topology-final-review-1705 SOURCEPASS exact795608e1b9d8077487b26eea50b65c1e79c3f522 vsnormal9350. Allfouroriginalpurposes/inputs/predicates/topology/CLI/peer/conflict/restart/undo/opaque/renderer-off mapped; firstreturnexact13linescorrectsuffixkey anddistincttracks. Original17/sharedfixtures/product/pins unchanged. Statics/JSON/collection4PASS. Safeexactreport/verdict/predicatemap/custody flatdesign/app-D116-native-topology-final-review-1705-*.
+
+FunctionalNEW4 unspent: actual4876791808bytes atbodycheck,123208192below5GB. Afterreviewrecycleonly5004316672bytes, stillinsufficientfornewworker. Appnextown4usesexactsame795608sourceandRuntime5e9ad oncegenuinecapacityincludesworktree, no repeatedsource review or centralruntime_protocolimportfailure. CurrentAppSol1705andgraphrecordsread1705finishnormally; theirsourcerecycleprovidesexpectedheadroom. No behavior/corecount/retirementcredit or normalmergeyet. D130absolutehold.
