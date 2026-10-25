@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
+import { flushSync } from 'react-dom';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -733,6 +734,39 @@ describe('app entry preference', () => {
 });
 
 describe('prompt', () => {
+  it.each(['focus', 'interval'] as const)('does not probe on %s when permission resets before React renders', async (trigger) => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    const gateway = fakeGateway();
+    gateway.down();
+    const permission = fakePermissions('granted');
+    const view = renderPanelProvider(gateway, permission.permissions);
+    try {
+      await flushReactWork();
+      expect(gateway.calls).toHaveLength(1);
+      gateway.up();
+
+      act(() => {
+        permission.change('prompt');
+        // The previous granted render still owns its focus listener and interval until React commits.
+        if (trigger === 'focus') window.dispatchEvent(new Event('focus'));
+        else vi.advanceTimersByTime(10);
+      });
+      await flushReactWork();
+      expect(gateway.calls).toHaveLength(1);
+      expect(latest.state.status).toBe('needs_permission');
+      expect(screen.getByRole('button', { name: 'Connect' })).toBeInTheDocument();
+
+      await act(async () => { await vi.advanceTimersByTimeAsync(SLOW_PROBE_TIMEOUT_MS); });
+      expect(gateway.calls).toHaveLength(1);
+      fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
+      await flushReactWork();
+      expect(latest.state.status).toBe('connected');
+    } finally {
+      view.unmount();
+      vi.useRealTimers();
+    }
+  });
+
   it('shows the permission screen on a fresh browser without probing or asking permission', async () => {
     const gateway = fakeGateway();
     renderPanelProvider(gateway, fakePermissions('prompt').permissions);
@@ -901,15 +935,19 @@ describe('denied', () => {
     expect(gateway.fetchImpl).not.toHaveBeenCalled();
   });
 
-  it.each(['focus', 'visibilitychange'])('re-queries denied permission on %s without a change event', async (event) => {
+  it.each([
+    ['focus', 'granted'], ['visibilitychange', 'granted'],
+    ['focus', 'prompt'], ['visibilitychange', 'prompt'],
+  ] as const)('re-queries denied permission on %s to %s without a change event', async (event, next) => {
     const gateway = fakeGateway();
     const permission = fakePermissions('denied');
     const view = renderProvider(gateway, permission.permissions, { pollIntervalMs: 600_000 });
     await waitFor(() => expect(status()).toBe('blocked'));
-    permission.status.state = 'granted';
+    permission.status.state = next;
     vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
     await act(async () => { (event === 'focus' ? window : document).dispatchEvent(new Event(event)); });
-    await waitFor(() => expect(status()).toBe('connected'));
+    await waitFor(() => expect(status()).toBe(next === 'granted' ? 'connected' : 'needs_permission'));
+    if (next === 'prompt') expect(gateway.fetchImpl).not.toHaveBeenCalled();
     view.unmount();
     const queries = vi.mocked(permission.permissions.query).mock.calls.length;
     window.dispatchEvent(new Event('focus'));
@@ -1084,6 +1122,57 @@ describe('gate: the panel on its way out', () => {
 });
 
 describe('gate: the landing page already asked to go in', () => {
+  it('consumes entry intent before a denied permission resets during the blocked commit', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    const gateway = fakeGateway();
+    const permission = fakePermissions('prompt');
+    let denied = false;
+    const fetchImpl = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      if (!denied) {
+        denied = true;
+        queueMicrotask(() => flushSync(() => permission.change('denied')));
+        return Promise.reject(new TypeError('Failed to fetch'));
+      }
+      return gateway.fetchImpl(input, init);
+    });
+    const reset = deferred<void>();
+    // Reset at the first blocked commit, before the gate's deferred state update can use up entry intent.
+    const observer = new MutationObserver(async () => {
+      if (!screen.queryByRole('heading', { name: 'Allow Astrid in Chrome' })) return;
+      observer.disconnect();
+      // Drain the failed probe's microtasks without letting React render the deferred entry-flag update.
+      for (let i = 0; i < 50; i += 1) await Promise.resolve();
+      flushSync(() => permission.change('prompt'));
+      reset.resolve();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    const view = render(
+      <RuntimeConnectionProvider gated requireLocalNetworkPermission fetchImpl={fetchImpl} permissions={permission.permissions}>
+        <RuntimeConnectionGate connectOnEntry panel={connection => <RuntimeConnectionPanel connection={connection} />}>
+          <div data-testid="app" />
+        </RuntimeConnectionGate>
+      </RuntimeConnectionProvider>,
+    );
+    try {
+      await reset.promise;
+      await flushReactWork();
+      expect(fetchImpl).toHaveBeenCalledTimes(1);
+      expect(screen.getByRole('button', { name: 'Connect' })).toBeInTheDocument();
+      expect(screen.queryByTestId('app')).toBeNull();
+      await act(async () => { await vi.advanceTimersByTimeAsync(SLOW_PROBE_TIMEOUT_MS); });
+      fireEvent.focus(window);
+      expect(fetchImpl).toHaveBeenCalledTimes(1);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
+      await flushReactWork();
+      expect(screen.getByTestId('app')).toBeInTheDocument();
+    } finally {
+      observer.disconnect();
+      view.unmount();
+      vi.useRealTimers();
+    }
+  });
+
   /** A small panel that exposes whether the gate presented permission or an in-flight browser prompt. */
   const panel = ({ state, isChecking }: RuntimeConnectionValue) => (
     state.status === 'needs_permission' && isChecking
