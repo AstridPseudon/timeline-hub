@@ -1,0 +1,65 @@
+[
+  {
+    "name": "controls",
+    "cmd": "TMPDIR=/tmp/w-60e42c3561 ./ops-d73-exact-nodes/dry-check.sh --controls",
+    "chunk_id": "0d598d",
+    "wall_time_seconds": 1.179269886,
+    "exit_code": 0,
+    "original_token_count": 315,
+    "output": "test_duplicate_malformed_empty_and_bad_tuple_refused_together (__main__.ManifestControls.test_duplicate_malformed_empty_and_bad_tuple_refused_together) ... ok\ntest_key_value_not_json_preserves_equals_and_final_line (__main__.ManifestControls.test_key_value_not_json_preserves_equals_and_final_line) ... ok\ntest_missing_many_paths_and_schema_collected_without_running_them (__main__.ManifestControls.test_missing_many_paths_and_schema_collected_without_running_them) ... ok\ntest_no_manifest_census_lists_every_key_and_receiving_need (__main__.ManifestControls.test_no_manifest_census_lists_every_key_and_receiving_need) ... ok\ntest_wrong_own_node_tuple_is_never_relabelled (__main__.ManifestControls.test_wrong_own_node_tuple_is_never_relabelled) ... ok\ntest_real_named_parser_run_positive17_and_poison_zero (__main__.RunControls.test_real_named_parser_run_positive17_and_poison_zero) ... d73-ab1e-selected4-exact-nodes: run positive exit=17 calls=1; poison exit=1 calls=0\nd73-ab1e-fork-exact-nodes: run positive exit=17 calls=1; poison exit=1 calls=0\nok\ntest_request_node_guard_requires_files (__main__.RunControls.test_request_node_guard_requires_files) ... ok\n\n----------------------------------------------------------------------\nRan 7 tests in 1.025s\n\nOK\n"
+  },
+  {
+    "name": "ruff",
+    "cmd": "/home/user/work/venv-agent/bin/ruff check --no-cache --config /home/user/work/agent/pyproject.toml ops-d73-exact-nodes/check.py ops-d73-exact-nodes/test_recipe.py",
+    "chunk_id": "3c37d4",
+    "wall_time_seconds": 0.000005155,
+    "exit_code": 0,
+    "original_token_count": 5,
+    "output": "All checks passed!\n"
+  },
+  {
+    "name": "format",
+    "cmd": "/home/user/work/venv-agent/bin/ruff format --check --no-cache --config /home/user/work/agent/pyproject.toml ops-d73-exact-nodes/check.py ops-d73-exact-nodes/test_recipe.py",
+    "chunk_id": "da10c3",
+    "wall_time_seconds": 0.000005628,
+    "exit_code": 0,
+    "original_token_count": 7,
+    "output": "2 files already formatted\n"
+  },
+  {
+    "name": "bash",
+    "cmd": "bash -n ops-d73-exact-nodes/dry-check.sh /home/user/work/wt/agt-pin-2eca9a1d/tools/p4-d73-pinned-launch.sh",
+    "chunk_id": "89456d",
+    "wall_time_seconds": 0.000008326,
+    "exit_code": 0,
+    "original_token_count": 0,
+    "output": ""
+  },
+  {
+    "name": "binding",
+    "cmd": "./ops-d73-exact-nodes/dry-check.sh --bind-check /tmp/w-60e42c3561/selected-ID/d66 /tmp/w-60e42c3561/fork-ID/d66",
+    "chunk_id": "6859f5",
+    "wall_time_seconds": 0.000006078,
+    "exit_code": 0,
+    "original_token_count": 18,
+    "output": "binding: PASS (selected-ID -> selected-ID.xml; fork-ID -> fork-ID.xml)\n"
+  },
+  {
+    "name": "source-census",
+    "cmd": "env -u D73_MANIFEST ./ops-d73-exact-nodes/dry-check.sh --source-check",
+    "chunk_id": "4e27b4",
+    "wall_time_seconds": 0.116624894,
+    "exit_code": 1,
+    "original_token_count": 591,
+    "output": "{\n  \"status\": \"NOT_READY\",\n  \"source_errors\": [\n    \"D73_MANIFEST: receipt-rendered key=value manifest missing\",\n    \"manifest missing format\",\n    \"manifest missing agent_sha\",\n    \"manifest missing agent_tree\",\n    \"manifest missing agent_parents\",\n    \"manifest missing agent_path\",\n    \"manifest missing runtime_sha\",\n    \"manifest missing runtime_tree\",\n    \"manifest missing runtime_path\",\n    \"manifest missing app_sha\",\n    \"manifest missing app_tree\",\n    \"manifest missing app_path\",\n    \"manifest missing composition_sha\",\n    \"manifest missing composition_tree\",\n    \"manifest missing composition_path\",\n    \"manifest missing python\",\n    \"manifest missing node\",\n    \"manifest missing profile\",\n    \"manifest missing schema\",\n    \"manifest missing node_version\",\n    \"manifest missing profile_lock_sha\",\n    \"manifest missing profile_archive_sha\",\n    \"manifest missing profile_registry_sha\",\n    \"manifest missing composition_version\",\n    \"manifest missing original_p4_test_hash\",\n    \"manifest missing service_versions\",\n    \"manifest missing junit_paths\",\n    \"manifest agent_path: must bind own-node receipt /home/user/work/wt/agt-pin-2eca9a1d\",\n    \"manifest agent_sha: must bind own-node receipt 2eca9a1da94eb35bb969540e150192ff920ce326\",\n    \"manifest agent_tree: must bind own-node receipt 888c16e3dbbff2d6827e7ffcfea64208b0e2a5e4\",\n    \"manifest runtime_path: must bind own-node receipt /home/user/work/wt/rt-pin-ab1e4f61\",\n    \"manifest runtime_sha: must bind own-node receipt ab1e4f6141987706132916e2da16477f5a019464\",\n    \"manifest runtime_tree: must bind own-node receipt 7d8e77b2f5a4af79305c9212ce5174d3ea9fd657\",\n    \"app: checkout receipt binding missing without manifest identity\",\n    \"composition: checkout receipt binding missing without manifest identity\"\n  ],\n  \"receiving_needs\": [\n    \"central agent d73-ab1e-selected4-exact-nodes: row not installed\",\n    \"central agent d73-ab1e-fork-exact-nodes: row not installed\",\n    \"selected4: fresh central per-ID XML/raw logs/submit and end disk witnesses NOTRUN\",\n    \"fork: fresh central per-ID XML/raw logs/submit and end disk witnesses NOTRUN\",\n    \"manifest interpreter/schema: genuine import/distribution readiness unqualified here; D139 owns dependency recipe, no Main-only schema overlay permitted\"\n  ],\n  \"source_ready\": false,\n  \"body\": \"NOTRUN\",\n  \"preflight\": \"NOTRUN\"\n}\n"
+  },
+  {
+    "name": "diff",
+    "cmd": "git diff --check",
+    "chunk_id": "b545de",
+    "wall_time_seconds": 0.000003291,
+    "exit_code": 0,
+    "original_token_count": 0,
+    "output": ""
+  }
+]

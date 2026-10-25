@@ -1,0 +1,174 @@
+{
+  "schema": "timeline.ops.d139.security-review/v1",
+  "decision": "FAIL",
+  "release_status": "NOT_READY",
+  "scope": {
+    "candidate_commit": "86a1a97617445905694e63ca6bb118879a7ecedd",
+    "candidate_tree": "049e8b5bec9da892b0ea9d1003e2f09f1d361d46",
+    "parent_commit": "cf80cfcb918ee9e311a294fb7291ad5e11c48d0b",
+    "repository": "composition",
+    "review_mode": "source-only; no install, request, Store mutation, child mutation, core/body, or acquisition"
+  },
+  "findings": [
+    {
+      "id": "SRC-001",
+      "category": "source",
+      "severity": "blocker",
+      "result": "FAIL",
+      "title": "Schema source is not authenticated to the pinned D73 tree",
+      "evidence": "make-child-venv:452-467 validates only manifest fields url/commit/subdirectory/source_tree and hashes whatever files are currently under --schema-source; it never verifies a Git commit, tree, archive digest, or expected source bytes.",
+      "impact": "A physical directory with self-asserted matching manifest fields can be installed as banodoco_timeline_schema. The exact D73 names in a manifest are not source authority.",
+      "required": "Supply an owner-authenticated D73 source carrier and compare its authenticated bytes/tree to the manifest before identity and build."
+    },
+    {
+      "id": "SRC-002",
+      "category": "source",
+      "severity": "blocker",
+      "result": "FAIL",
+      "title": "Schema input race between identity and build",
+      "evidence": "The source digest is computed at lines 463-466, while archive-schema/build-schema-input read the live directory at lines 832-845. No schema source or manifest CAS/recheck follows the initial digest; source_state only covers Agent/Runtime at lines 127 and 1076.",
+      "impact": "The Store key can bind digest A while the child receives source B. The manifest is also read again at line 454 without checking the original manifest digest.",
+      "required": "Use an immutable authenticated carrier or descriptor-bound source snapshot and recheck the exact manifest/source digest immediately before archive and install."
+    },
+    {
+      "id": "SRC-003",
+      "category": "source",
+      "severity": "high",
+      "result": "FAIL",
+      "title": "Schema source and manifest shape are not custody-checked",
+      "evidence": "Preflight checks physical paths and required files but no owner, mode, hardlink, closed-manifest, or source-file-set checks. physical_source_files accepts the live tree after it has already been used by the build input route.",
+      "impact": "Writable or changed inputs can influence the package build before the later retained-source verifier runs.",
+      "required": "Apply the same physical ownership/immutability and closed source-carrier checks used for Agent/Runtime inputs before any schema build stage."
+    },
+    {
+      "id": "SRC-004",
+      "category": "source",
+      "severity": "pass-with-limit",
+      "result": "PASS",
+      "title": "Existing Agent/Runtime source and RECORD custody is retained in the candidate verifier",
+      "evidence": "The embedded verifier still checks source/archive or directory provenance, retained bytes, import origins, RECORD hashes and ownership, client identity, markers, metadata and final inventory. The reviewer compiled the seven Python blocks; no live end-to-end credit is assigned.",
+      "impact": "Static preservation is satisfactory, but the changed schema path has not been exercised against a real child."
+    },
+    {
+      "id": "AUTH-001",
+      "category": "authority",
+      "severity": "pass",
+      "result": "PASS",
+      "title": "No alternate fetch, broad old-venv overlay, fake module, or package acquisition was used",
+      "evidence": "Author evidence reports source-only operation; candidate requires --schema-source and --schema-source-manifest and refuses absent paths. No install/request/register/core body occurred in this review."
+    },
+    {
+      "id": "AUTH-002",
+      "category": "authority",
+      "severity": "blocker",
+      "result": "FAIL",
+      "title": "The only available schema evidence is a qualified distribution claim, not an available source carrier",
+      "evidence": "Agent2136 evidence records direct_url VCS origin, 12 RECORD hashes and package hashes for 0.0.2 in /home/user/work/venv-agent. The current path has no portable source carrier; the source manifest says available=false. The 2149 packet is pure static census and supplies no source authority.",
+      "impact": "The required pinned source prerequisite is absent. The existing venv distribution must not be copied, exposed through PYTHONPATH, or treated as a registered child input.",
+      "required": "Obtain the exact owner-supplied authenticated D73 carrier through the authorized route, then independently review it."
+    },
+    {
+      "id": "AUTH-003",
+      "category": "authority",
+      "severity": "high",
+      "result": "FAIL",
+      "title": "Schema identity is only partially propagated",
+      "evidence": "identity['schema_source'] contains manifest/source hashes and therefore contributes to Store key_for, while installed provenance/inventory records only distribution name/version/direct_url/provenance. No manifest digest or authenticated source-tree identity is emitted into the provision report or local inventory.",
+      "impact": "A receipt/inventory consumer cannot independently bind the installed schema to the exact manifest/source identity from the child evidence alone."
+    },
+    {
+      "id": "CAS-001",
+      "category": "authority",
+      "severity": "unverified",
+      "result": "FAIL",
+      "title": "CAS route is internally consistent with the live D137 maker, not the requested f07 parent preimage",
+      "evidence": "Candidate is 7905232e0dc4b77921ecf257f89f2a951614e0dcbc9eea547c08c992062e5792 / 81516 bytes. Parent cf80 helper is f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f / 75541 bytes. install-prep expects live preimage 4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36 / 75503 bytes. The route was not run.",
+      "impact": "No CAS publication is authorized or proven against an f07 target. A manager must reconcile the exact live preimage before any install."
+    },
+    {
+      "id": "CENSUS-001",
+      "category": "census",
+      "severity": "high",
+      "result": "FAIL",
+      "title": "The executable census misclassifies relative imports as distributions",
+      "evidence": "check-child-imports records ImportFrom.module without its relative level and probes names with importlib.import_module. Author missing-distributions evidence includes .sdk, _base, _command_state, _common and _doc_patch as installed_distribution failures; these are package-relative source imports.",
+      "impact": "The reported 602 failures are not 602 missing distributions and can drive unsafe blind-install decisions or obscure the true source closure."
+    },
+    {
+      "id": "CENSUS-002",
+      "category": "census",
+      "severity": "high",
+      "result": "FAIL",
+      "title": "typing_extensions is treated as stdlib",
+      "evidence": "check-child-imports._stdlib explicitly adds typing_extensions, although it is an external distribution.",
+      "impact": "A genuinely missing required typing_extensions distribution can be omitted from the failure set."
+    },
+    {
+      "id": "CENSUS-003",
+      "category": "census",
+      "severity": "pass-with-limit",
+      "result": "PASS",
+      "title": "The 2149 census is useful bounded input, not execution authority",
+      "evidence": "The 2149 packet reports 431 root Python files, 1146 unique import requirements, 1001 reachable source modules, 17 dynamic records, 12 missing categories, no parse errors, and explicitly excludes collection, preflight, child, maker, install and plugin execution. Its D73 preflight identifies banodoco_timeline_schema as missing and Agent/Runtime modules as source-owned.",
+      "impact": "It correctly prevents blind mass-install, but cannot qualify the real child."
+    },
+    {
+      "id": "CENSUS-004",
+      "category": "census",
+      "severity": "medium",
+      "result": "LIMITATION",
+      "title": "Dynamic and guard classification is bounded",
+      "evidence": "The checker documents literal importlib.import_module/__import__ only; computed names are not enumerated. Its guard classifier recognizes broad try/if shapes, not semantic ImportError handling or all platform/plugin paths.",
+      "impact": "Positive census output must not be read as exhaustive runtime execution coverage."
+    },
+    {
+      "id": "EXEC-001",
+      "category": "execution",
+      "severity": "blocker",
+      "result": "FAIL",
+      "title": "No genuine registered child receipt is available",
+      "evidence": "The current /home/user/work/bench-store is absent. Author check-only names /usr/bin/python3.13, but no Store entry, .bench-owner.json, source markers, provision report, or authenticated child key is available now. The reviewer reproduced the same system interpreter with no PYTHONPATH and all six bounded modules were missing.",
+      "impact": "System Python cannot be treated as the registered child. Positive author evidence remains historical bounded evidence only."
+    },
+    {
+      "id": "EXEC-002",
+      "category": "execution",
+      "severity": "blocker",
+      "result": "NOT_RUN",
+      "title": "The positive path does not exercise the real subprocess preflight or make chain",
+      "evidence": "check-child-imports invokes the child with -I -B -P to import names; --launcher is census input and is never executed. Author evidence has no Store.ensure, dependency install, inventory, unchanged verifier, registration, real smoke, or CAS run."
+    },
+    {
+      "id": "EXEC-003",
+      "category": "execution",
+      "severity": "pass-with-limit",
+      "result": "PASS",
+      "title": "Static maker call chain is present and ordered",
+      "evidence": "The candidate serializes STORE_CONTEXT and invokes Store.ensure at line 771; build installs pinned dependencies at lines 815 and 855-858; verify runs the embedded verifier at lines 582-638; registration is supplied to Store.ensure at lines 748-766. This is source inspection only."
+    },
+    {
+      "id": "EVID-001",
+      "category": "evidence",
+      "severity": "high",
+      "result": "FAIL",
+      "title": "No meaningful schema-binding or manifest-tamper tests were added",
+      "evidence": "The candidate test suite has 44 tests, including string/embedded-block assertions, but no test source references schema_source, schema-source-manifest, manifest tamper, source-tree mismatch, source race, schema inventory identity, or check-child-imports CLI behavior. The prepared e2e remains withdrawn/NOTRUN.",
+      "impact": "Baseline custody controls do not prove the new schema authority boundary."
+    },
+    {
+      "id": "EVID-002",
+      "category": "evidence",
+      "severity": "pass",
+      "result": "PASS",
+      "title": "Author evidence is honest about blocked execution",
+      "evidence": "The author report records SOURCE_ONLY, unavailable pinned carrier, expected schema import failure, no live install/request/register/body, and NOTRUN/WITHDRAWN E2E. This review preserves that status and does not relabel it as PASS."
+    }
+  ],
+  "cas": {
+    "attempted": false,
+    "install_attempted": false,
+    "child_request_attempted": false,
+    "source_acquisition_attempted": false,
+    "body_attempted": false
+  }
+}

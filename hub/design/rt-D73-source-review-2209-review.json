@@ -1,0 +1,43 @@
+{
+  "schema": "timeline.rt.d73.exact_node_source_review.v1",
+  "task": "rt-D73-source-review-2209",
+  "candidate": {
+    "repo": "composition",
+    "commit": "afda6c66a11608d8cb012df1a54bf2489d8c20b3",
+    "tree": "67bd2d4ee1d50bd95ebb8b0de55d4d1ed1e3e87f",
+    "scope": "ops-d73-exact-nodes source/protected review only"
+  },
+  "verdict": "PASS",
+  "receiving_status": "NOT_READY",
+  "findings": [
+    {
+      "id": "D73-SOURCE-001",
+      "severity": "INFO",
+      "status": "RESOLVED_AND_VERIFIED",
+      "summary": "Manifest admission uses the real newline key=value format.",
+      "evidence": "check.py parses first '=' without shell evaluation and controls reject JSON, malformed, duplicate, empty, invalid, and missing inputs."
+    },
+    {
+      "id": "D73-SOURCE-002",
+      "severity": "INFO",
+      "status": "RESOLVED_AND_VERIFIED",
+      "summary": "Controls exercise production run -- through the real named-row parser.",
+      "evidence": "Seven controls passed; each named row dispatched the bounded Python stub once with exit 17, while source-SHA poison returned nonzero with zero additional calls and no body artifacts."
+    },
+    {
+      "id": "D73-RECEIVING-001",
+      "severity": "BLOCKING_ADMISSION",
+      "status": "OUTSTANDING_EXPECTED",
+      "summary": "Receiving remains NOT_READY.",
+      "evidence": "No genuine receipt-rendered manifest, central candidate-row installation, full dependency/interpreter/schema qualification, or fresh per-ID XML/raw result witnesses are present; no preflight or functional body ran."
+    }
+  ],
+  "protected_guards": {
+    "agent": "2eca9a1da94eb35bb969540e150192ff920ce326 / 888c16e3dbbff2d6827e7ffcfea64208b0e5a4",
+    "runtime": "ab1e4f6141987706132916e2da16477f5a019464 / 7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "selectors": "selected4=4, fork=1",
+    "pytest": "-m pytest -q -o addopts= -m integration -p no:cacheprovider --timeout=45",
+    "launcher": "run --, pinned source path, four-repo commit/tree/parent/origin, P4 source hash, runtime lock/all 15 hashes, schema/client/profile/node/composition guards",
+    "status_boundary": "source PASS does not imply receiving readiness; no oldvenv overlay, fallback, live install, provider body, or central write"
+  }
+}

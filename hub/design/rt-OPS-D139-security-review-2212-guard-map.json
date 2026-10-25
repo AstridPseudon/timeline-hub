@@ -1,0 +1,28 @@
+{
+  "schema": "timeline.ops.d139.guard-map/v1",
+  "result": "FAIL",
+  "source_chain": [
+    {"stage": "maker-preflight", "lines": "25-31, 78-83", "guard": "physical path and required-file checks for schema source/manifest", "status": "insufficient: no authenticated source tree, owner/mode, or race binding"},
+    {"stage": "identity", "lines": "450-467", "guard": "manifest fields plus manifest/source SHA-256 enter identity", "status": "insufficient: self-asserted fields and live-directory digest"},
+    {"stage": "serialization", "lines": "402-406", "guard": "STORE_CONTEXT carries schema variables into the serialized Store shell", "status": "PASS source inspection"},
+    {"stage": "Store.ensure", "lines": "521, 771-773", "guard": "Store owns build/verify/seal/registration boundary", "status": "NOT_RUN"},
+    {"stage": "dependency-install", "lines": "803-818, 831-858", "guard": "pinned requirements plus schema/Agent/Runtime source archives", "status": "NOT_RUN; live schema input is unauthenticated"},
+    {"stage": "inventory", "lines": "889-951, 1401-1475", "guard": "installed distribution inventory, provenance, RECORD, markers and report", "status": "PASS preservation; schema manifest identity absent from inventory"},
+    {"stage": "embedded-verifier", "lines": "1174-1476", "guard": "source/archive/direct_url/RECORD/import-origin/ownership/hash checks", "status": "PASS source preservation; no real execution"},
+    {"stage": "registration", "lines": "748-766, 771-773", "guard": "verified report projected through Store registration", "status": "NOT_RUN; no registered receipt"}
+  ],
+  "negative_controls": {
+    "schema_manifest_tamper": "absent",
+    "schema_source_tree_mismatch": "absent",
+    "schema_source_race": "absent",
+    "schema_inventory_identity": "absent",
+    "check_only_cli": "external bounded evidence only, not in unittest suite",
+    "multiple_missing_imports": "author/external bounded control PASS, but not launcher execution"
+  },
+  "protected_semantics": {
+    "agent_runtime_source_custody": "preserved by source inspection",
+    "record_hashes": "preserved by source inspection and embedded compile",
+    "D131_controls": "no live qualification; no source/body mutation",
+    "PLAN3F_C0": "unchanged"
+  }
+}

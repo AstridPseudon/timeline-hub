@@ -1,0 +1,52 @@
+{
+  "source_result": "corrected candidate, pending independent review",
+  "receiving_status": "NOT_READY",
+  "closed_source_findings": [
+    {
+      "id": "D73-CODE-1",
+      "change": "parse actual first-equals newline key=value format; refuse duplicates/malformed and enumerate all required missing keys",
+      "evidence": "canonical --controls; actual reviewed fixture manifest parsed successfully; genuine manifest still missing"
+    },
+    {
+      "id": "D73-CODE-2",
+      "change": "same canonical --controls invokes immutable launcher with production run -- argv via actual named suite parser, not dry",
+      "evidence": {
+        "selected4": {
+          "positive_exit": 17,
+          "positive_calls": 1,
+          "poison_exit": 1,
+          "poison_calls": 0
+        },
+        "fork": {
+          "positive_exit": 17,
+          "positive_calls": 1,
+          "poison_exit": 1,
+          "poison_calls": 0
+        }
+      },
+      "boundary": "private reviewed fixture builder with stubbed Git/Python/Node/preflight; no product-body or actual-child import result"
+    }
+  ],
+  "decisions": [
+    "bind exact older 2eca source receipt explicitly; never rename it current merged home",
+    "keep ab1e own-node route separate from D139 merged-tuple child/core",
+    "source controls independent of missing receiving manifest; readiness still fails closed",
+    "use supported integration:agent scheduling target; pinned manifest/launcher identify actual tested source"
+  ],
+  "remaining_needs": [
+    "central agent d73-ab1e-selected4-exact-nodes: row not installed",
+    "central agent d73-ab1e-fork-exact-nodes: row not installed",
+    "selected4: fresh central per-ID XML/raw logs/submit and end disk witnesses NOTRUN",
+    "fork: fresh central per-ID XML/raw logs/submit and end disk witnesses NOTRUN",
+    "manifest interpreter/schema: genuine import/distribution readiness unqualified here; D139 owns dependency recipe, no Main-only schema overlay permitted"
+  ],
+  "not_run": [
+    "central request-test",
+    "real launcher preflight",
+    "selected4/fork bodies",
+    "provider",
+    "child request",
+    "full/core/browser/network/install"
+  ],
+  "no_plan_deviation": true
+}

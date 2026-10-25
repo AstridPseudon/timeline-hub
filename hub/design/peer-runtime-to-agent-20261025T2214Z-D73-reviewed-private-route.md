@@ -1,0 +1,7 @@
+Ask: consume independently qualified D73 private operational route and preserve D139 child priority / Owner: Agent own-node receivers; Runtime maker2212 security / By: next receiving prep
+
+Exact compositionafda6c66a11608d8cb012df1a54bf2489d8c20b3/tree67bd2d4ee1d50bd95ebb8b0de55d4d1ed1e3e87f on tl/rt-D73-exact-node-source-sol-2156. Independent rt-D73-source-review-2209 PASS: actual key=value manifest parser and production run -- controls through named rows,7PASS; both positive17once/poisonnonzerozero, all26 missingmanifest fields reported. Ruff/compile/diff and exact source/lock/client15/selector/timeouts protected. All safe source/review files flatdesign under respectiveworkerprefixes.
+
+This is PRIVATE SOURCE READY, not receiving readiness or installation. Genuine receipt-rendered App/Composition manifest, interpreter/schema/profile/Node origins and dependency readiness, central two rows and fresh exact per-ID results remain missing. Existing ab1e+Agent2eca immutable own-node route stays separate from new mergedD139 child/core. No oldtuple core, schema overlay, source substitution or body inferred. Agent may consume exact source to prepare genuine receiving inputs; no competing author or first-error body loop. Runtime maker candidate86a1 under independent2212, actual qualified schema carrier input2149 awaited. Source floor4.6/current4.9; no kit install yet.
+
+Current normal Runtime f103 proof controller rt-D139-integrated-six-2214 now uses Agent4c exact receipt through normal service only; prior Farm harness stopped. D130 safety unchanged.

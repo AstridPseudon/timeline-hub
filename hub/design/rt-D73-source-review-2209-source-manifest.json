@@ -1,0 +1,68 @@
+{
+  "schema": "timeline.rt.d73.exact_node_source_manifest.v1",
+  "task": "rt-D73-source-review-2209",
+  "candidate": {
+    "repo": "composition",
+    "commit": "afda6c66a11608d8cb012df1a54bf2489d8c20b3",
+    "tree": "67bd2d4ee1d50bd95ebb8b0de55d4d1ed1e3e87f",
+    "files": {
+      "ops-d73-exact-nodes/README.md": "87ef06167eb08d2cc4f7b30b321274950e71d9568eaa1a38ec147ec909ae2474",
+      "ops-d73-exact-nodes/check.py": "b8e63f510ec06e092e10f09215ee404204789629dec10d3c0a3e734d8df5cc24",
+      "ops-d73-exact-nodes/dry-check.sh": "f8aa1b9e96a0fec55e05910927b8bdf1fd623282deeffd0263bbfdc318641f52",
+      "ops-d73-exact-nodes/suites.conf": "ddf8d6d20e9dbadbb4f23716726695b662c053f6d449c8d6e7df3d2d80d2f3c5",
+      "ops-d73-exact-nodes/test_recipe.py": "432621a19b675aac798e9d48477b7be3e4ca1bc711c8903fba469a59650366fc"
+    }
+  },
+  "eligible_source": {
+    "agent": {
+      "path": "/home/user/work/wt/agt-pin-2eca9a1d",
+      "commit": "2eca9a1da94eb35bb969540e150192ff920ce326",
+      "tree": "888c16e3dbbff2d6827e7ffcfea64208b0e2a5e4",
+      "origin": "https://github.com/peteromallet/astrid-agent",
+      "clean": true,
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-2eca9a1da94eb35bb969540e150192ff920ce326"
+    },
+    "runtime": {
+      "path": "/home/user/work/wt/rt-pin-ab1e4f61",
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime",
+      "clean": true,
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-runtime-ab1e4f6141987706132916e2da16477f5a019464"
+    }
+  },
+  "protected_hashes": {
+    "launcher": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+    "selected4_source": "8243f3b9fe71b218b3b6a402c10d099e15c848b91b82770383e91a2dd3a72b86",
+    "fork_source": "3fef15b5862e044942f2d0164b37f6f9281f86d378345d8a0b262c64870af8a4",
+    "focused_control": "0c2c70bd5e26598beebd31f4c7a0a3c1bf48bdc5e9f32ff93c6b54bf15b4b600",
+    "runtime_lock": "ad818e99cb0759d1742d9f67b5bb3367b03fd3e88d8f65846253169272b8b6ce"
+  },
+  "central_readonly_inputs": {
+    "request-test": "f839c0026eaa32eab43369120f6ddadfb6af382be7a9a19fc47e30b477bdf874",
+    "test-run": "0be17b74ad1e324bc84e50e61e50e3e07390b262b7abe17a37ad22b9bd10d0fe",
+    "tests/suites.conf": "fecaa66d22ed4e90401455eceb8983b48178a2037c3ccfc0bbc716428239156f"
+  },
+  "rows": {
+    "selected4": {
+      "suite": "d73-ab1e-selected4-exact-nodes",
+      "selectors": 4
+    },
+    "fork": {
+      "suite": "d73-ab1e-fork-exact-nodes",
+      "selectors": 1
+    },
+    "central_installed": false
+  },
+  "runtime_lock": {
+    "source_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "producer": "astrid-runtime",
+    "file_count": 15,
+    "all_hashes_match": true
+  },
+  "acquisition": "none",
+  "manifest": "not supplied/rendered",
+  "preflight": "NOTRUN",
+  "functional_bodies": "NOTRUN",
+  "per_id_xml": "absent"
+}
