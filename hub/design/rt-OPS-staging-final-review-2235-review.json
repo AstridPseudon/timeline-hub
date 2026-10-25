@@ -1,0 +1,72 @@
+{
+  "review": "rt-OPS-staging-final-review-2235",
+  "status": "FAIL_SOURCE",
+  "source_commit": "9524356e2ca603f444eda451a502438ef9110d3b",
+  "source_tree": "93ba9e7a6f96ea4d2b9bb31460d01832fcb5945a",
+  "parent_return_base": "017bd30c33f88c2e4bed8fb03e910ee1cde6f7db",
+  "scope": "read-only independent review of the OPS staging first return",
+  "original_review": "FAIL",
+  "prior_findings_rechecked": {
+    "ancestor_and_descendant_markers": "fixed in source, but a late descendant marker can still cause partial deletion",
+    "worker_replacement_before_execute": "fixed for replacement observed at execute open",
+    "manifest_no_follow_identity": "fixed for preflight and intermediate verification, but not held through deletion",
+    "symlinked_manager_lease_root": "fixed for the inspected lease tree, but lease state is not rechecked before deletion",
+    "hardlink_listing_identity": "fixed"
+  },
+  "remaining_findings": [
+    {
+      "id": "OPS-STAGING-FR-001",
+      "severity": "HIGH",
+      "summary": "Published archive is not identity- or content-bound through deletion",
+      "source": "ops-drop-staging/drop_staging.py:1093-1105,1260-1289",
+      "reproduction": "/tmp/w-14f7993cf1/drop-staging-final-review-2235.py archive_symlink_race",
+      "observed": "After _write_log, replace staging.tgz with a symlink to an outside fixture. execute returns packed, removes staging, and leaves the symlink; archive_digest still names the old archive.",
+      "impact": "Archive-first no longer guarantees the exact archive exists when source deletion occurs. The outside fixture was not read or deleted by this probe."
+    },
+    {
+      "id": "OPS-STAGING-FR-002",
+      "severity": "HIGH",
+      "summary": "Worker pathname can be renamed/replaced after open and before deletion",
+      "source": "ops-drop-staging/drop_staging.py:1135-1167,1288-1289,1319-1320",
+      "reproduction": "/tmp/w-14f7993cf1/drop-staging-final-review-2235.py worker_rename_race",
+      "observed": "After _write_log, rename the opened worker record to detached-worker and install a replacement at the original name. execute returns packed and deletes the detached worker's staging through the old descriptor.",
+      "impact": "The descriptor identity check only binds the initial open; it does not prove the worker name still names that identity at the destructive boundary."
+    },
+    {
+      "id": "OPS-STAGING-FR-003",
+      "severity": "HIGH",
+      "summary": "A lease added after the last lease check is ignored",
+      "source": "ops-drop-staging/drop_staging.py:1200-1208,1245-1289,1293-1320",
+      "reproduction": "/tmp/w-14f7993cf1/drop-staging-final-review-2235.py late_lease_race",
+      "observed": "Create managers/runtime/notes/runtime.lease after _write_log, which is after the only execute-time lease check. execute returns packed and removes staging while the lease exists.",
+      "impact": "LEASE protection is not held at the archive/fallback deletion boundary."
+    },
+    {
+      "id": "OPS-STAGING-FR-004",
+      "severity": "HIGH",
+      "summary": "Late marker/symlink changes can partially delete the quarantined tree before refusal",
+      "source": "ops-drop-staging/drop_staging.py:956-980,1245-1265,1288-1289,1293-1320",
+      "reproduction": "/tmp/w-14f7993cf1/drop-staging-final-review-2235.py late_marker_fallback_race",
+      "observed": "Add KEEP to quarantine after final listing/evidence validation and force fallback. _unlink_tree_at raises on KEEP after deleting nested/payload, restores the incomplete tree, and leaves no archive.",
+      "impact": "A safety refusal is not non-destructive and the guarded low-disk fallback can lose regenerable bytes after validation."
+    },
+    {
+      "id": "OPS-STAGING-FR-005",
+      "severity": "MEDIUM",
+      "summary": "Evidence identity is not held through the destructive action",
+      "source": "ops-drop-staging/drop_staging.py:1266-1289,1296-1320",
+      "reproduction": "/tmp/w-14f7993cf1/drop-staging-final-review-2235.py evidence_symlink_race",
+      "observed": "After the final _verify_evidence call and before _unlink_tree_at, replace evidence/raw.txt with an outside symlink. execute returns packed, removes staging, and logs evidence_verified=true while the manifest-listed evidence path is now a symlink.",
+      "impact": "The durable record does not describe the evidence state at the action boundary. The outside fixture was not read or deleted by this probe."
+    }
+  ],
+  "controls": {
+    "original_actual_cli_cases": 8,
+    "return_actual_cli_cases": 14,
+    "additional_private_adversarial_cases": 5,
+    "outside_bytes_followed_or_deleted": false,
+    "real_worker_mutated": false,
+    "live_cleanup_or_install": false,
+    "cleanup_authorized": false
+  }
+}

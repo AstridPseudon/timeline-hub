@@ -1,0 +1,14 @@
+{
+  "review": "rt-OPS-staging-final-review-2235",
+  "commit": "9524356e2ca603f444eda451a502438ef9110d3b",
+  "tree": "93ba9e7a6f96ea4d2b9bb31460d01832fcb5945a",
+  "parent": "017bd30c33f88c2e4bed8fb03e910ee1cde6f7db",
+  "scope": "ops-drop-staging source and tests only",
+  "files": [
+    {"path": "ops-drop-staging/drop_staging.py", "sha256": "5d8bba470b847e3c832ce0da17c0e4ac5f2645ca03b96305717206fa28e055de", "mode": "0644"},
+    {"path": "ops-drop-staging/test_drop_staging.py", "sha256": "e08f30cdaf8d5179d09c95ce9c0a1d8dce4d7e2d53e75709e1b4bc461a8fcc9e", "mode": "0755"},
+    {"path": "ops-drop-staging/drop-staging", "sha256": "4ff7ff083dae0e4d20badb6cec69e29f5018e2934a14e0e18eca1882067ee5e7", "mode": "0755"},
+    {"path": "ops-drop-staging/README.md", "sha256": "25b6dcd5f66b6c1123f84a6c17c73c39ef2a2a911a91e782a2c76060acc7f9e2", "mode": "0644"}
+  ],
+  "working_tree_product_changes": false
+}
