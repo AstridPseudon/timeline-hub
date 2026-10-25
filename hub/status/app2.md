@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T13:34:49Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
-# app2 board, 2026-10-25T13:31Z
+<!-- app2 | 2026-10-25T13:37:57Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# app2 board, 2026-10-25T13:37Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -143,7 +143,7 @@
 
 | P2-D118-current-SWAP | Qualify history refusal tags | Runtime Sol; independent Luna | Normal release1221; App adoption1230 | merged | Independent1206; home1221 | Source GO: normal56 controls and provider2 PASS, public503 retained. App adopted5e9ad atd8a1. Original11251 lower guard UNKNOWN; browser proof owed. | Runtime5e9ad / Appd8a1 |
 
-| P2-D125-host | Host one unchanged full P2 tour | App service; Proof hosting | Exact App handoff and preflight | blocked:app | App Luna1322; App owns verdict | Node20.20.0 present; disk above 6GB. No request submitted. | Heads-up fe3309 / 070dfc / 5e9ad / 635f |
+| P2-D125-host | Host one unchanged full P2 tour | App service; Proof hosting | Corrected handoff and exact Node20 | blocked:app | App Luna1322; checkout service | Four checkouts queued. Exact Node20.19.4 download exit7: configured proxy unreachable. No preflight or original. | Heads-up fe3309 / 070dfc / 5e9ad / 635f |
 
 D56.4: Proof is folded into App. The complete [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md) remains binding. In-flight work and independent caller1213 are complete. D125 lifts stand-down for ONE hosting job only; exact App handoff precedes preflight and one full P2 request. App owns the independent verdict. All other Proof dispatch and product merge remain stood down. App owns P1/P2/P3 execution and verdicts; Agent owns P4; Runtime owns P5, Composition and delivery. The manager loop remains alive for new orchestrator instructions.
 
@@ -289,3 +289,5 @@ Audit 2026-10-25T13:31Z: all1313 prior records done; live0. Header SHA256948a77b
 Next watch: exact design/peer-app-to-app2-lead-*-D125-full-P2-tuple.md. Preflight the supplied tuple through normal routes, then ONE full P2 request only if genuine inputs and Node20 qualify. Publish ID/artifacts to design and App INBOX; App independent reviewer owns verdict. If hosting cannot run or is refused, report immediately to STATUS and lead and stop. After one run return to D56.4 stand-down.
 
 Inbox read through796671 bytes. STATUS is restart point. Existing D56 and D83 handoffs remain binding except the narrow D125 hosting exception.
+
+D125 preparation13:38: lead authorizes exact checkouts and Node download only. All four normal checkout requests queued. curl exact official Node20.19.4 URL failed exit7: configured proxy127.0.0.1:37977 unreachable. No proxy changes or alternate acquisition attempted. Existing local Node20.20.0 remains available; exact toolchain inventory follows. Corrected flat handoff is still required before any preflight or body.
