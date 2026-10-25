@@ -1,0 +1,59 @@
+{
+  "review": "D124 protected privacy/harness review",
+  "verdict": "FAIL",
+  "candidate_commit": "480392a1b33f5d0abfe229a45eb9ab9a7fac517f",
+  "runtime_base": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+  "candidate_changed_files": [
+    "tests/helpers/p2_commit_phase_capture.py",
+    "tests/test_p2_commit_phase_capture.py"
+  ],
+  "candidate_helper_sha256": "13883f6f1611b2a9df8dbb5c5c4f4355a0b04864b256e6457bb135017a4b09d6",
+  "production_runtime": {
+    "checkout": "/home/user/work/runtime",
+    "head": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "status": "clean"
+  },
+  "app": {
+    "checkout": "/home/user/work/app",
+    "head": "fe3309dba4520835a685f925468bff1acdc0506f",
+    "status": "clean"
+  },
+  "tests": {
+    "central_targeted": "18 passed in 3.28s",
+    "ruff": "passed",
+    "mypy_follow_imports_skip_shared_test_path": "passed with --ignore-missing-imports",
+    "compile": "passed",
+    "diff_check": "passed",
+    "node20_normal_hook": "passed: sink created by automatic sitecustomize hook; no HTTP request",
+    "d66_offline": "not qualifying: existing offline launcher test reached expected runtime-unavailable startup/native-seed refusals and did not establish D124 helper adoption"
+  },
+  "findings": [
+    {
+      "id": "D124-F1",
+      "severity": "blocker",
+      "file_lines": "tests/helpers/p2_commit_phase_capture.py:876-879",
+      "fact": "arrival is begun from RuntimeHandler._dispatch trace entry, after the HTTP server has already accepted the connection and, for timeline commits, after body prefetch in _dispatch.",
+      "impact": "This is dispatch observation relabeled as arrival; it cannot prove network arrival and violates the required unsupported-network/null boundary rule. request_wall_ms and its sampler denominator inherit this false boundary."
+    },
+    {
+      "id": "D124-F2",
+      "severity": "blocker",
+      "file_lines": "App fe3309 scripts/testing/d66-plain-stack.mjs:267-274, tests/e2e/local/support/harness.ts:123-129",
+      "fact": "D66 configures the helper as path.join(RUNTIME_CHECKOUT, 'tests/helpers/p2_commit_phase_capture.py') and serviceRecipe supplies only ASTRID_RUNTIME_CHECKOUT; it has no explicit reviewed diagnostic helper path/hash route.",
+      "impact": "The candidate helper cannot be attached through the supported normal D66 route while production Runtime remains immutable at 5e9ad. The candidate's offline test manually imports sitecustomize and directly calls _start_capture, so it does not prove the normal D66 attachment recipe."
+    },
+    {
+      "id": "D124-F3",
+      "severity": "major",
+      "file_lines": "tests/helpers/p2_commit_phase_capture.py:326-327,375-392",
+      "fact": "observer_cpu_ms is one capture-wide sampler CPU counter copied into every request summary, with no capture-wide overhead scope.",
+      "impact": "Concurrent or multi-request summaries can attribute the same sampler overhead repeatedly; the exported overhead scope is not truthful per-request accounting."
+    }
+  ],
+  "qualification": {
+    "source_only": true,
+    "element_cause_proven": false,
+    "p2_go": false,
+    "normal_full_body": "blocked until D66 accepts and records the reviewed helper path/hash without changing production Runtime source/manifest"
+  }
+}

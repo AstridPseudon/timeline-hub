@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T13:06:51Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 2m -->
-# app board, 2026-10-25T13:04Z
+<!-- app | 2026-10-25T13:11:22Z | dispatcher heartbeat 4s | live 2 (sol 0, luna 2, other 0) | busy30 13 | status age 0m -->
+# app board, 2026-10-25T13:13Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -42,7 +42,7 @@
 | F-final | Final pinned gates and core suites | Runtime coordinator and services | D59 cut and current core zero | gated:D59-cut | Existing final coordinator | Current full P2, final P1-P5, core, D69 and genuine installed render still owed. No ZIP claim. | Cut pending |
 | D77-D117a | Genuine installed render | Runtime and owner | Authorized exact Git source | blocked:runtime | Existing Runtime stage1158 | D117a authorizes exact Git and supported installer input. Historical archive route stopped; stage peak and genuine render still owed. | Evidence retained |
 | D118a-script-pin1 | Preserve pinned script after rebind | Luna and independent Luna | Normal remote home receipt | merged | Author1124; independent1132; Agentb850 | Exact original1 PASS on42aad;7 predicates/49call ASTs preserved. Reviewed setup home; native binding field gap remains separate. | b8507e946a |
-| D118a-atomic-scope1 | Preserve authenticated atomic scope | Luna and core/privacy review | Independent1144 PASS | merging | Author1137; core1144; host route1148 | Exact original1 and privacy4 PASS; one production line only, all original tests exact. Agent full batch owed before product adoption. | 8a4103dd1 |
+| D118a-atomic-scope1 | Preserve authenticated atomic scope | Luna and core review | Farm core before release | merged | App1137 and Runtime1232 | Agent board confirms exact reviewed private capture line home in b545. Donor original1 and private4 PASS; Farm core still owed. | b545 / 8a4103 |
 
 | D118a-helper-cut1 | Preserve owner-deferred timing purpose | Luna | Existing D23 scope | gated:D23 | app-D118a-helper-cut1-1130 | No source change; exact second word-anchor case is already owner-deferred. Authenticated binding would change input. No new core bug claimed. | Original exact |
 
@@ -77,9 +77,10 @@
 | D118a-captured-redo1 | Preserve exact captured redo closure | Luna and protected review | Independent1251 PASS1 | merging | Author1242; review1251; host route1256 | File-backed SQLite and matchingdb_path only; predicates/inputs exact. Original1 PASS2.38s and statics. Agent normal requested. | c474325862 |
 
 | D124-sampler-prep | Reuse sampler for actual element process | Luna | Source inventory complete | merged | app-D124-actual-element-sampler-prep-1245 | Exact seam: D66 overwrites PYTHONPATH; existing phase helper needs sampler wiring. Source and safe recipe inventoried; no body. | Evidence only |
-| D124-full-P2 | Run tagged tour with actual element timing | Luna and service | Sampler prep and disk5.2GB | blocked:app | Sole App tour controller next | Owner D124 target13:30Z; exact tags5e9ad and current App provenance home. No semantic Runtime fix wait. | Tuple capture pending |
+| D124-full-P2 | Tagged tour and actual element timing | Luna and service | Capture and hook protected PASS | blocked:app | Prepared1306; resume after source | No body submitted. Normal hook cannot attach candidate yet; both source fixes assigned now. | fe3309 /070dfc /5e9ad /635f |
 
-| D124-capture | Correlate and sample existing phase helper | Luna and protected Luna | Author18 controls PASS | review | app-D124-helper-protected-review-1304 | Exact480392 helper/test-only delta; UTC/hash/PID/sampling. Independent privacy and actual normal attach recipe qualification active. | 480392a1b |
+| D124-capture | Correlate and sample existing phase helper | Luna and protected Luna | Review1304 FAIL | doing | app-D124-helper-first-return-1312 | First return fixes dispatch labeling and capture CPU scope. Original18 controls passed; no qualified normal attach or body yet. | 480392 held |
+| D124-hook | Attach reviewed helper through normal D66 | Luna and protected Luna | Protected1304 exact F2 | doing | app-D124-D66-helper-hook-1312 | Explicit diagnostic path plus hash; production Runtime stays exact. App harness only; original specs and waits read only. | Source pending |
 
 | D74-D124-old-pins | Release obsolete completed tuple pins | Manager and host audit | Host1249 and fresh guards | merged | Guarded recycle1254 | Both34d464 and7070 recycled normally;187142144 bytes net. All outputs, reports, branches and current inputs kept. Zero refusal. | No source edits |
 
@@ -93,12 +94,12 @@ D118a claim1124 posted to Agent INBOX before three starts: occurrence2 own-node 
 
 
 Blockers: Runtime current SWAP — Actual11251 returned409 history_unavailable. Tags5e9ad adopted normally at Appd8a1; source wait cleared. Lower guard remains UNKNOWN until a meaningful tagged tour.
-Blockers: App element — Sole App owner under D124. Retained11251 correlation missing; next tagged full tour samples actual process. Existing sampler input requested1243; source workers finish before heavy slot.
+Blockers: App element — Sole App owner. D124 capture1304 FAIL on truthful dispatch, overhead scope and normal helper path. Two immediate harness repairs active; no original body until protected PASS.
 Blockers: Agent host14 — Authentic original14 FAIL at registry discovery. Agent source1201 and independent wholepath1201 own successor; no App duplicate.
 Blockers: Agent batch — Atomic8a joins held product batch; full core required before adoption. Scalar and auto normal receipt consumed; source waits cleared. Bindingf3a6 held after real rebind FAIL.
 Blockers: Final cut — Current full P2 remains NO-GO; final P1-P5/core/D69 and genuine installed render still owed. Existing denied acquisition and cleanup routes remain stopped.
-Next ready: Protected helper review1304 then ONE tagged full tour by13:30Z. Two Agent requests filed by host13:01; product binding held for batch/full. Existing blocked rows checked against Agent12:25 and Runtime12:20 boards; no other answered dependency found.
-live 1 / cap 6; ready-undispatched 0; core open: 2. D89b admits up to3 source/read workers at4.6GB without heavy; cap6 resumes above5.0GB. Current source author owns exact shared helper; no competing writer. Two reviewed Agent branches await host remote filing; not new approval.
-Capacity: Oldpins187MB plus439 oldm2 logs lossless212MB recovery. Free5.651GB after hash verification; no sessions/testoutputs/refusedtargets touched. Fresh heavy admission5.2GB; ongoing stop4.0GB.
+Next ready: Helper first return1312 and App D66 hook1312 active. One protected review for each exact diff, then resume sole fulltour from1306 preparation. No Runtime semantic fix wait. Agent current roots stay with1247.
+live 2 / cap 6; ready-undispatched 0; core open: 2. D124 source repairs are disjoint. No heavy body active. D89b allows up to3 source/read workers at4.6GB; normal cap6 above5.0GB.
+Capacity: Fresh free5.39GB before controller dispatch. Heavy admission rechecks5.2GB; ongoing stop4.0GB. Sweep3 active. Corrected compact script has removed session operations; only its current guarded scope may run. Prior refused and dirty targets untouched.
 INBOX consumed through2190555 bytes; D124 capture, host1249CLEAR and Agent1233 source ownership consumed. Input3 remains readonly; producer82b6 owns that file. Current11251/8974/15203/15712 outputs, reports and tuple inputs retained. No unchanged body queued.
 Later: Nativecheckout4/trackbatch1 share known m1.film missingwordanchor setup; no diff/retirement. D116 reviewedjoin held for Agent raw/config batch. D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees retain guards. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakening, credentials or refused-route retry.
