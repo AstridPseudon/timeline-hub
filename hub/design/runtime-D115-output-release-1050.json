@@ -1,0 +1,138 @@
+{
+  "schema": "timeline.runtime.d115.release.v1",
+  "status": "RELEASED",
+  "published_at": "2026-10-25T10:51:08Z",
+  "task": "rt-D115-output-home-release-1050",
+  "repo": "runtime",
+  "normal_branch": "tl/integration",
+  "actual_normal_head": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+  "actual_normal_tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c",
+  "normal_checkout": "/home/user/work/runtime",
+  "normal_clean": true,
+  "reviewed_author": {
+    "commit": "e65422348314084a1a3cb6687fcdc520c73347e8",
+    "parent": "369ffa7c00bd3d45c610fac7651ff79e7a283a1a",
+    "tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c",
+    "full_tree_exact": true,
+    "verification": "git diff --exit-code e65422348314084a1a3cb6687fcdc520c73347e8 -- . exited 0"
+  },
+  "normal_merge_receipt": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/merge-rt-D115-output-projection-1037",
+    "text": "merged tl/rt-D115-output-projection-1037 into runtime tl/integration -> 42aad0e92",
+    "merge_commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+    "parents": [
+      "369ffa7c00bd3d45c610fac7651ff79e7a283a1a",
+      "e65422348314084a1a3cb6687fcdc520c73347e8"
+    ]
+  },
+  "source": {
+    "changed_files": [
+      {
+        "path": "runtime_protocol/timeline_commit_auth.py",
+        "blob": "66d899edaac201a1700e7ddf9f62091753201bc9",
+        "sha256": "72d4611def6491ac39872e04551ed7d2f1c4872eb655c4b0a63055bd4b324b2d"
+      },
+      {
+        "path": "tests/test_timeline_command_output_manifest_auth.py",
+        "blob": "f8c29e32f8ade76401163c953eb476033343b25d",
+        "sha256": "e516d3280a1ed3606361e41c06add6b0395751b3015f259e57b5333de9590e81"
+      }
+    ],
+    "exact_author_source": true,
+    "auth_test_diff_exit": 0,
+    "source_report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-output-projection-1037/report.md",
+    "source_hashes": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-output-projection-1037/evidence/source-module-hashes.txt"
+  },
+  "independent_review": {
+    "worker": "rt-D115-output-security-1042",
+    "verdict": "PASS",
+    "reviewed_commit": "e65422348314084a1a3cb6687fcdc520c73347e8",
+    "reviewed_parent": "369ffa7c00bd3d45c610fac7651ff79e7a283a1a",
+    "genuine_mounted_agent_regression": {
+      "agent": "82b6d00d7fcca643c6eaf3246028d9a20f96252a",
+      "parent": "RED (exit 1)",
+      "candidate": "GREEN (exit 0)",
+      "evidence": [
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-output-security-1042/evidence/mounted-normal-red.xml",
+        "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-output-security-1042/evidence/mounted-candidate-green.xml"
+      ]
+    },
+    "counts": {
+      "new_manifest_tests": "7 passed",
+      "intermediate_image_tests": "5 passed",
+      "contract_tests": "75 passed",
+      "authentication_sequential_verifier": "180 passed, 1 failed; exact parent-identical failure",
+      "native_provider_smoke": "2 passed",
+      "static_checks": "Ruff, Pyright, py_compile, and git diff --check passed"
+    },
+    "proof_paths": [
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-output-security-1042/report.md",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-output-security-1042/evidence/source-and-module-provenance.txt",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-output-security-1042/evidence/runtime-command-output.xml",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-output-security-1042/evidence/runtime-intermediate-image.xml",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-output-security-1042/evidence/runtime-contract.log",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-output-security-1042/evidence/runtime-auth-verifier.log",
+      "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-output-security-1042/evidence/runtime-native-provider-smoke.xml"
+    ]
+  },
+  "honest_parent_failure": {
+    "test": "test_moved_history_replays_authenticated_original_and_landing",
+    "result": "candidate and exact parent both fail",
+    "cause": "synthetic SimpleNamespace lacks db_path",
+    "attribution": "baseline-identical; not attributed to D115",
+    "evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-output-security-1042/evidence/runtime-auth-verifier.log"
+  },
+  "protected_surfaces": {
+    "d115_intermediate_image": {
+      "verification": "independent intermediate-image review remains 5 passed",
+      "source_parent_sha256": "68e594537c09cc1c49f02ab9657fb8c76166763098b6932fc6c75741b957d9dc"
+    },
+    "d112_store_and_port_unchanged": true,
+    "paths": {
+      "runtime_protocol/timeline_commit_port.py": {
+        "blob": "a204909316060e51cc23d916c95aeba99f2e2f62",
+        "sha256": "e1d9397bc8164af8b4afd7f2b8d3133805c7404bce26b25cad32432d1f17badd"
+      },
+      "runtime_protocol/timeline_commit_store.py": {
+        "blob": "6e29f654710649bd1110d5c5a4be04dbfde198c8",
+        "sha256": "f0867b6bf083aef2ca280c3f1bcbbbc926c7dfc448c519836e286022f5e3d59a"
+      },
+      "tests/test_timeline_history_state.py": "788e1280c61cbee6817595544495ba462365d956d0cd85499923328dedba838b",
+      "tests/test_timeline_render_publication.py": "7de21278fa27582e7b6d4d47a2fac69468c9466931f4f2c44923d8e44977e6a2"
+    }
+  },
+  "canonical15_schema_exact": {
+    "against": "normal parent 369ffa7c00bd3d45c610fac7651ff79e7a283a1a",
+    "count": 15,
+    "all_identical": true,
+    "paths": [
+      "contract/schemas/timeline-commit.json",
+      "runtime_protocol/schemas/timeline-commit-bundle.json",
+      "runtime_protocol/timeline_commit_types.py",
+      "packages/python/astrid_runtime_client/__init__.py",
+      "packages/python/astrid_runtime_client/contract_metadata.py",
+      "packages/python/astrid_runtime_client/generated.py",
+      "packages/python/astrid_runtime_client/timeline_commit_types.py",
+      "packages/typescript/src/contract-metadata.ts",
+      "packages/typescript/src/generated.ts",
+      "packages/typescript/src/index.ts",
+      "packages/typescript/src/timeline-commit-types.ts",
+      "conformance/second-client-core-v1.yaml",
+      "conformance/typescript/generated.ts",
+      "contract/schemas/document.json",
+      "contract/schemas/edit-command.json"
+    ],
+    "verification": "all 15 SHA-256 values match the normal parent; no client/schema delta"
+  },
+  "public_contract_unchanged": true,
+  "publication_scope": {
+    "normal_integration_only": true,
+    "additional_approval_or_review_or_body_stage": false,
+    "tests_run_by_publisher": "N/A; exact qualified tree reused",
+    "upstream_touched": false,
+    "product_or_test_source_changes_by_publisher": false,
+    "deletions": false,
+    "claims_excluded": ["83 closure", "full", "P2", "gate", "core", "final cut", "ZIP"]
+  },
+  "worker_evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D115-output-home-release-1050/evidence/release-verification.txt"
+}
