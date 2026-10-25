@@ -1,0 +1,47 @@
+{
+  "agent": {
+    "clean": true,
+    "commit": "16bbd56dbf016bcddeafa891291129efcfa87196",
+    "path": "/home/user/work/wt/agt-pin-16bbd56d",
+    "status": "",
+    "tree": "70fcd38844e7d93cdf97e4aebaf248d3736a312a"
+  },
+  "app": {
+    "clean": true,
+    "commit": "af5fe0a2748ce6df65fb36ce9cd435fc1df0502a",
+    "path": "/home/user/work/app",
+    "status": "",
+    "tree": "2afa38ba9e8ebfcefb23c81dbc1af3b1b9eabe0c"
+  },
+  "assigned_composition": {
+    "clean": true,
+    "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "path": "/home/user/work/wt/rt-D124-union-original10-1357",
+    "status": "",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "captured_at_utc": "2026-10-25T14:00:12Z",
+  "composition": {
+    "clean": true,
+    "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "path": "/home/user/work/wt/rt-D124-union-original10-1357",
+    "status": "",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "floor_bytes": 5000000000,
+  "floor_pass": false,
+  "free_bytes": 4974526464,
+  "kind": "d124-original10-postflight",
+  "required_agent_commit": "16bbd56dbf016bcddeafa891291129efcfa87196",
+  "required_agent_tree": "70fcd38844e7d93cdf97e4aebaf248d3736a312a",
+  "required_runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+  "required_runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+  "runtime": {
+    "clean": true,
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "path": "/home/user/work/wt/rt-pin-5e9ad1c6",
+    "status": "",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f"
+  },
+  "runtime_lock_source_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344"
+}

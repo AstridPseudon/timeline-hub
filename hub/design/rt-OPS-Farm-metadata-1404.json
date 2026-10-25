@@ -1,0 +1,13 @@
+{
+  "task": "rt-OPS-Farm-metadata-1404",
+  "candidate": "make-child-venv.candidate",
+  "candidate_sha256": "d2da4aecd759999fe1d7c929b82403533746df746c50b9928f97d083605b2a3a",
+  "baseline_sha256": "ff8dbf0ecb615a665e346b36d9d179526a58127d09749748990ea0fa885cf8f8",
+  "inferred_offending_metadata": "<distribution>.dist-info/licenses/LICENSE",
+  "direct_farm_inventory_present": false,
+  "fix": "allow only exact generated licenses/LICENSE whose bytes equal authenticated committed LICENSE",
+  "preserved_refusals": ["modified bytes", "renamed license", "arbitrary metadata", "missing source ownership"],
+  "runtime_packaging_source_changed": false,
+  "install_plan": "independent review PASS; atomic make-child-venv.new plus predecessor backup with hashes recorded; one changed child request",
+  "wire_semantics": "unchanged C0 v2"
+}

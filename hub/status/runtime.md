@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T14:05:03Z | dispatcher heartbeat 11s | live 3 (sol 0, luna 3, other 0) | busy30 10 | status age 6m -->
-# runtime board, 2026-10-25T13:58:30Z
+<!-- main | 2026-10-25T14:09:17Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 3m -->
+# runtime board, 2026-10-25T14:05:49Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
@@ -438,7 +438,7 @@
 | D122-R2-seed | Join reviewed genuine seed | Luna / Luna | Agent genuine raw and config seed | review | Resume1202; protected1208 A PASS | Exact donor7c717 fixture, protected three originals unchanged. Source only; actual seed behavior remains owed by Agent. | Prior evidence | c81b5737 held |
 
 | R2-occurrence-boundaries | Classify guarded live failures | Luna read only | Complete authentic boundary evidence | later | Facts1152; App packet1212 | App finite handback complete. Stage and promotion records EXACTMISSING; no App input wait or Runtime guard writer. | Independent1204 B | Source unchanged |
-| P2-element-current-profile | Support sole App element owner | Luna | App actual process timing | review | Sampler publisher1253 complete | Exact source delivered. Historical native sample is synthetic; request and actual process binding remain App owned. | Source custody1300 active | Source unchanged |
+| P2-element-current-profile | Support sole App element owner | Luna | App hook and actual sampled tour | review | Helper453b; App bootstrap1350 | Runtime helper is normal and exact c363. App hook reviewed; two harness contracts await App1350 return under D126. | Independent1315 PASS | Runtime453b |
 | F-final-D123 | Apply current Agent patch to b742 | Sol / Luna | Final D59 cut and matrix | gated:D59-cut | Return1314; independent1317 PASS | Final5bd01 current source and173 predicates PASS. Patchb0ff4205 conserved normalb545. Wheel and final matrix unverified. | Independent1317 SOURCE_PASS | 5bd01bfd1a held |
 | D122-atomic-join | Carry reviewed private capture caller | Luna | Normal batch qualification | review | Atomic1218; exact join1232 | Reviewed one-line caller is in normal batch b545. Original1 and private4 passed on donor; Farm batch core owed. | Independent1144 | 8d14 / Agentb545 |
 | OPS-four-target-audit | Keep four guarded targets held | Luna / host | Owner12:25 defers host audit | gated:held | rt-OPS-four-target-audit-1212 | Eight references and historical guard refusals. Host audit gains little; no retirement attempt or retry. | Prior evidence | No cleanup |
@@ -461,29 +461,35 @@
 | D124-custody-union | Preserve stopped duplicate source join | Luna | Agent owns earlier join 1318 | gated:duplicate-stopped | rt-D124-custody-union-1330 | Delayed peer revealed earlier Agent join. Stopped immediately; exact imported WIP held. No normal integration or new semantics. | Donor1307 and1311 PASS | WIP retained |
 | D125-tagged-tour | Name current SWAP refusing branch | App / Proof Luna | Normal pinned tour preflight | blocked:app | App and Proof managers | Header permits one tagged full P2 before corrected capture. App owns independent verdict. No Main duplicate. | App owns verdict | Runtime5e9ad |
 
-| D124-host14-revert | Restore upstream host bootstrap behavior | Luna / independent Luna | Host filing and normal receipt | merging | Author1338; review1345 PASS | Exact originals14, source73, schema29 and security12 PASS. Durable XML and origins verified. One existing mypy error; central zero-body failure retained. | Independent1345 PASS | 96df3f5b486 |
+| D124-host14-revert | Restore upstream host behavior | Luna / independent Luna | Normal Agent merge receipt | merging | Author1338; review1345; host filed1352 | Original14,source73,schema29,security12 PASS. No REG closure before normal receipt and next core. | Independent1345 PASS | 96df3f5b486 |
 
 | D124-union-recipe-two | Preserve final tuple nonbody checks | Luna / service | Replaced by actual ten-node receiver | gated:superseded | rt-D124-union-recipe-two-1352 | Source and all four clean receipts PASS. Review and disk were pending; no test-service request or original body. | Independent1339 now PASS | Agent16bb / Runtime5e9ad |
-| OPS-D124-old-proof-pins | Release two unused preparation pins | Luna / host / manager | Full host process-use CLEAR | blocked:host | Audit1348; host peer1355 | Routes and clean source clear. Worker and manager see only three PIDs; full host use remains unknown. No KEEP removal or recycle attempted. | Host scope needed | No source change |
+| OPS-D124-old-proof-pins | Release two superseded source pins | Manager guarded route | Recorded host CLEAR and fresh guards | merged | bin/recycle two exact pins | Clean and idle; active routes, registrations and leases clear. Both recycled; branches and all reports retained. | Host CLEAR; audit1348 | No source change |
 
-| D124-union-original10 | Qualify current shared-root originals | Luna / genuine provider | Exact5e9ad smoke then originals | doing | rt-D124-union-original10-1357 | Final16bb source is normal61fefc and reviewed1339. Own native5 then word2, occurrence2, scalar3 and numeric3 once; actual byte-floor guard retained. | Independent1339 PASS | Agent16bb / home61fefc |
+| D124-union-original10 | Qualify shared-root originals | Luna / independent | Exact source and result review | review | Original1357; result1405; wholepath1405 | Exact16bb/5e9ad: native5 PASS3.73s; original10 six PASS,four FAIL15.46s. No repeats; no core reduction. | Independent1405 active | Agent16bb / home61fefc |
+| OPS-Farm-metadata | Fix exact generated metadata ownership | Luna | Existing Farm refusal evidence | doing | rt-OPS-Farm-metadata-1404 | Source-only private kit candidate. Final registration rejects unowned metadata; no retry or weakened ownership. | Review after return | Installed source unchanged |
+| D124-original10-result | Verify actual original ten evidence | Luna independent | Immutable original1357 outputs | doing | rt-D124-original10-result-review-1405 | Verify exact ten XML, source, origins and exits; publish safe packet. No original or smoke rerun. | Independent worker | Evidence only |
+| D124-four-wholepath | Compare four failures with passing paths | Luna read only | Actual1357 source and outputs | doing | rt-D124-four-failure-wholepath-1405 | Read-only owner finding or exact missing records. Agent remains sole semantic owner; no product edits or body. | Independent worker | Source unchanged |
+| D126-final-notes | Record retired-write contract migration | Luna | App exact reviewed migration and ledger | later | Existing F-final docs owner | Add required ZIP note after App source qualifies. Do not edit upstream test or imply browser proof. | Pending App review | No installed change |
 
-Runtime producer: RELEASED5e9ad1c6f74241d8771d3284fdd2ce7a214fd344 / tree de2954a0ceadb4455903d9abdfec3b773318a50f. Normal56 controls and provider2 PASS; canonical15 and schema exact7070. App normald8a1 has adopted tags.
-core open: Agent30693 independently425 core open,14 regressions,450 bad. Normal ready producer/XML/atomic source is now Agentb545; no functional reduction credited before Farm batch core.
-regressions: Host14 are independently GREEN on Main96df at13:48: exact14/73/29/security12 PASS. Source ready for host filing; normal receipt still owed before count closure. Farm9ea proof remains separate. Pristineb742 check14PASS retained.
-Gates: P1/P3 recorded GO; P4 independent GO28.101s. Current tuple34d464/070dfc/7070/635f has six case GOs across11251 and8974: placement, ADD, parent, single, bulk, asset. SWAP and element open. Full tour remains NO-GO.
-Blockers: Main headroom — host process-use CLEAR needed for two new superseded07ff/42aad pins. Worker and manager see only three PIDs; no cleanup attempted. This is an ordinary host action, not an owner decision.
-Blockers: Element — App owns helper repair and supported hook under D124. Review1304 failed; corrections active. D125 permits tagged SWAP tour first on Proof. No Runtime source input wait.
-Blockers: SWAP — tags5e9ad are normal Appd8a1. Next App full tour names the branch; no adoption wait and no inferred cause from old7070.
-Blockers: Final render — Farm owns full normal installer stage and genuine render underD124.6. Exact source and recipe1253 published; private wrapper independent1257 PASS. Custody1300 PASS for both packets; Farm owns actual stage inputs.
-Blockers: D69 — source XML107 is normal Agentb545, applicability and batch proof pending. Genuine installed render90 remains open. No whole audit PASS.
-Blockers: Final cut — green core, REG0, full current P2, D69, final tuple P1–P5 and genuine installed render required. No build or ZIP.
-Next ready: Host14 candidate96df ready for immediate host filing. Union original10 controller1357 dispatched on reviewed16bb/exact5e9ad. Host CLEAR on superseded pins restores ordinary headroom; no source author needed.
-Ready for host filing: Agent rt-D124-host14-upstream-revert-1338 96df3f5b4862b1c267e3816237bae8a64b5dc31f. Independent1345 PASS actual14/73/29/security12. Exact one-line host source; all original tests unchanged. Flat review and XML handback1349. Please file now; normal home before REG closure. Prior a1 filed13:34.
-Venues: No Main heavy body. Farm has exact core checkouts and awaits keyed normal profile and D73 inputs; host14 and render serialize there. D125 Proof hosts the next tagged full P2; App owns verdict and later sampling.
-Delivery: Private100Python+TS/41 matrix inventory qualified. Current D123 source5bd01 with patchb0ff4205 independently1317 SOURCEPASS onb742 and capturednormalb545.173predicates conserved. Historical47f6/failed41702 retained. Wheelastrid.core fixture gap, full C0/finalmatrix/actualWindows proof remain unverified. Finalcut uses b742.
-Later: R2c81b and D1160643 exact donor seed source PASS, raw/config behavior remains owed. D100 six custody PASS at donor scope only; originalTEN unchanged. Occurrence stage and promotion records EXACTMISSING, no cross-lane input wait.
-Safety: D88/D111 memos withdrawn. D106 ORCH only; no worker hub writes or remote filing. D117a pinned public Git/local input with unchanged integrity only. Four host retirement targets remain held under owner12:25, no attempt or alternative route.
-Disk: Source work continues above4.6GB. Final recipe2 uses existing service5000000000byte floor; oldprivateKiB guard was stricter by unit error. Two superseded pins await fullhost CLEAR. Sweep0; compact1 scratch and13logs lossless.
-live 0 / cap 3; ready-undispatched 0; queued 1. Union original10 controller1357 queued; all prior receiving attempts zero-body. Host14 independently GREEN ready for filing. No new semantic or duplicate source worker.
-INBOX consumed through 1242517 bytes. Updated 2026-10-25T13:58:30Z.
+Runtime producer: RELEASED 5e9ad1c6f74241d8771d3284fdd2ce7a214fd344, tree de2954a0ceadb4455903d9abdfec3b773318a50f. Normal helper453b adds reviewed diagnostic tests only; no semantic release or tour credit inferred.
+core open: 425 on immutable Agent30693; 14 confirmed regressions and450 bad remain. New own-node1357 has six PASS and four FAIL, not yet independently accounted into core. Farm core is still owed.
+regressions: Main96df host revert independently PASS14 plus73/29/12 controls and filed13:52. Normal source receipt and next core still owed before closure. Farm9ea remains separate; pristineb742 PASS14 is comparison only.
+Gates: P1/P3 recorded GO; P4 independent GO28.101s. P2 six of eight case GOs on recorded34d464/070dfc/7070/635f. SWAP and element open; full tour NO-GO.
+Blockers: Farm child — Runtime source worker1404 owns final registration metadata refusal. Existing safe log received. No refused entry retry; corrected reviewed kit and Farm normal re-issue required.
+Blockers: Agent shared roots — original ten on exact16bb/5e9ad produced six PASS,four FAIL. Result review and independent wholepath active. Agent sole source owner receives safe packet; no unchanged repeat.
+Blockers: Host14 — Agent normal merge receipt for independently GREEN96df is owed; host filed13:52. Clear this line on receipt, retain core confirmation requirement.
+Blockers: SWAP — App/Proof owns next tagged full P2 on released5e9ad. Proof exact recipe currently lacks tsx before submit; no actual body or inferred root. App owns supported fallback.
+Blockers: Element — App is sole owner. Runtime453b helper is HOME; App1350 closes two harness contracts under D126 before later sampled tour. No Runtime semantic/source input wait.
+Blockers: Final render — Farm owns ordinary full stage and installed render under D124.6; exact recipe, applied source, pinned public OMP input and reviewed phase guard published. No more Main phases.
+Blockers: D69 — XML107 normal Agentb545 source, applicability and batch proof pending. Installed render90 remains open; no whole audit PASS.
+Blockers: Final cut — green core, REG0, full current P2,D69,final tuple P1–P5 and genuine installed render required. No build or ZIP.
+Next ready: Metadata1404 and original result/wholepath1405 active. Immediate independent review on metadata return, then exact kit installation only after PASS. No small Agent source authors while D124 shared-root pause applies.
+Ready for host filing: Host96df already filed13:52; do not duplicate. Separate a1 producer is superseded by independently reviewed union16bb; do not overlay it.
+Venues: No Main heavy body. Farm frozen0b586/42aad core and9ea/369 host inputs stay immutable; final61fefc union is a later batch. Proof D125 attempts had no browser body; fallback App-owned.
+Delivery: Private100Python+TS/41 matrix inventory qualified; D1235bd01/b0ff current patch independently SOURCE_PASS. D123a final upstream refresh occurs once at D59; rehearsal remainsb742. Wheel, final matrix, Windows and installed render proofs pending.
+Later: R2c81b and D1160643 exact seed SOURCE_PASS; new recipe originals in1357 now executed and await exact per-ID review. Occurrence historical stage/promotion records EXACTMISSING, no App input wait. D126 ZIP note awaits qualified App migration.
+Safety: D88/D111 memos withdrawn. D106 ORCH only; no worker hub writes or remote filing. Prior source/retirement denials stay stopped. Four historical retirement targets remain held under owner12:25.
+Disk: Two superseded07ff/42aad pins recycled after recorded host CLEAR and fresh clean/live-route guards. About0.15GB recovered; branches and evidence preserved. Free about5.14GB before new reviewers. Sweep3/compact running normally; no guard changes.
+live 1 / cap 3; ready-undispatched 0; queued 2. Metadata1404 running; result and wholepath1405 queued. Recheck actual counts next pass.
+INBOX consumed through1244222 bytes. Updated 2026-10-25T14:05:49Z.

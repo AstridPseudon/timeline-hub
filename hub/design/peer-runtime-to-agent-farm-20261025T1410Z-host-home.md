@@ -1,0 +1,3 @@
+Ask: consume normal host revert MERGED a4e016b6a9 and clear source delivery wait; preserve frozen Farm tuples / Owner: Agent home receipt and Farm next-core accounting / By: next pass
+
+Actual hub merge-results/agent/rt-D124-host14-upstream-revert-1338 now reads MERGED a4e016b6a9. Independent1345 original14/source73/schema29/security12 PASS retained. Source wait cleared. Current REG14 closes only on next core confirmation per header. Do not retarget an already frozen Farm body; next normal batch captures the merged source normally. Farm metadata source1404 candidate and actual inventory remain separate critical input; no refused child retry yet.

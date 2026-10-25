@@ -1,0 +1,69 @@
+{
+  "task": "rt-D124-four-failure-wholepath-1405",
+  "disposition": "UNKNOWN_UNAPPLIED",
+  "body_runs": 0,
+  "retained_run": {
+    "worker": "rt-D124-union-original10-1357",
+    "agent_commit": "16bbd56dbf016bcddeafa891291129efcfa87196",
+    "agent_tree": "70fcd38844e7d93cdf97e4aebaf248d3736a312a",
+    "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "native_smoke": "5 passed in 3.73s",
+    "original10": "6 passed, 4 failed in 15.46s"
+  },
+  "failures": [
+    {
+      "case": "test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba[scalar]",
+      "first_boundary": "Runtime timeline_commit_auth.command_output: provider intermediate promotion differs from its sequential allocation",
+      "classification": "intermediate promotion/sequential allocation",
+      "owner": "Agent semantic recorder/materialization path; not proved from retained paired records",
+      "status": "UNKNOWN_UNAPPLIED"
+    },
+    {
+      "case": "test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba[compound]",
+      "first_boundary": "Runtime timeline_commit_auth.command_output: provider intermediate promotion differs from its sequential allocation",
+      "classification": "intermediate promotion/sequential allocation",
+      "owner": "Agent semantic recorder/materialization path; not proved from retained paired records",
+      "status": "UNKNOWN_UNAPPLIED"
+    },
+    {
+      "case": "test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba[separate]",
+      "first_boundary": "Runtime timeline_commit_auth.validate_bindings: provider successor differs from its authenticated physical edges",
+      "classification": "separate authenticated physical edges",
+      "owner": "Agent rebase/materialization binding path; not proved from retained paired records",
+      "status": "UNKNOWN_UNAPPLIED"
+    },
+    {
+      "case": "test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[True]",
+      "first_boundary": "Runtime timeline_commit_auth._inverse_stage_write_site -> site: provider occurrence alias is outside its boundary",
+      "classification": "occurrence[True] alias outside inverse boundary",
+      "owner": "Agent inverse-stage recorder path; not proved from retained paired records",
+      "status": "UNKNOWN_UNAPPLIED"
+    }
+  ],
+  "passing_comparators": [
+    "test_phrase_records_all_consecutive_main_word_ids",
+    "test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[False]",
+    "test_raw_canonical_bundle_compiles_in_fresh_process_without_history",
+    "test_native_film_param_edit_preserves_exact_image_and_inverse[2-2.0-occurrence:occurrence-1/clip:clip-1]",
+    "test_native_film_param_edit_preserves_exact_image_and_inverse[True-1-occurrence:occurrence-1/clip:clip-1]",
+    "test_native_film_param_edit_preserves_exact_image_and_inverse[1-True-occurrence:occurrence-1/clip:clip-1]"
+  ],
+  "required_missing_evidence": {
+    "scalar_compound": "Exact private original/landing sequential command input/output pair plus commit.materialization source/successor/owner/edge_before/edge_after and following commit.input/read binding.",
+    "separate": "Accepted move predecessor materialization binding paired with the scalar replay binding map, including source-to-landing physical refs and authenticated owner edge images.",
+    "occurrence_true": "Inverse-stage native_write_range paired with exact stage-before/stage-after occurrence, shot, internal images and commit.effect physical pins/owners."
+  },
+  "source_hashes": {
+    "agent/astrid/sdk/timeline/commit.py": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+    "agent/astrid/sdk/timeline/_recording.py": "3940d0296f55bfc2b7cff6f4998adc4a6caf3290c1fcae10ddea813edc50f7e4",
+    "agent/astrid/sdk/timeline/_commit_patch.py": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f",
+    "runtime/runtime_protocol/timeline_commit_auth.py": "72d4611def6491ac39872e04551ed7d2f1c4872eb655c4b0a63055bd4b324b2d",
+    "runtime/runtime_protocol/timeline_commit_store.py": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4"
+  },
+  "static_checks": [
+    "AST parse passed for cited Agent and Runtime sources",
+    "retained JSON and XML parse passed",
+    "assigned Composition worktree and exact Agent/Runtime source checkouts were clean"
+  ]
+}

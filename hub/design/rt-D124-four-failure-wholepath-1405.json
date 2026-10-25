@@ -1,0 +1,15 @@
+{
+  "task": "rt-D124-four-failure-wholepath-1405",
+  "disposition": "UNKNOWN_UNAPPLIED",
+  "agent": {"commit": "16bbd56dbf016bcddeafa891291129efcfa87196", "tree": "70fcd38844e7d93cdf97e4aebaf248d3736a312a"},
+  "runtime": {"commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344", "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f"},
+  "retained_results": {"native5": "PASS 5/5, 3.73s", "original10": "PASS 6/10, FAIL 4/10, 15.46s"},
+  "first_stages": {
+    "scalar": "command_output / intermediate promotion differs from sequential allocation",
+    "compound": "command_output / intermediate promotion differs from sequential allocation",
+    "separate": "validate_bindings / successor differs from authenticated physical edges",
+    "occurrence_true": "inverse_stage_write_site -> site / occurrence alias outside boundary"
+  },
+  "owner": "Agent remains sole shared-root semantic owner; no proved source fix is authorized by retained evidence.",
+  "next": "Obtain the exact paired private records named in evidence/wholepath-report.json; do not publish raw payloads, weaken guards, rerun bodies, or reroute the request."
+}

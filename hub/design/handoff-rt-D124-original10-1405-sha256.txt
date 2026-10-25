@@ -1,0 +1,14 @@
+18c071aff66cd39c239c95c5fe6dfca3a4c0e24091721e1ef84bf43e5778c6b0  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D124-original10-1405-native-smoke.xml
+b4be7d21f512866f270e5cc4dc7cd48ddd26f37d6523518eabadb1a6d4172854  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D124-original10-1405-preflight.json
+59a287ddff3c9f6521b46610e70216f5a57399408b4b037a2d03a6c83e1ed4f3  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D124-original10-1405-postflight.json
+0e3427e801fc8545bc5deeaa5c183c97980d94061f9c9b46ac0f0364d9e0d32e  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D124-original10-1405-module-origins.json
+58f1d0407c215cd44a3ec583b80f93fdd9dbfc61ffe180c21625fc38b240c0fb  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D124-original10-1405-source-ast-member-inventory.json
+74a5874e35ea463aba311058486fc4f5ca445a47fa377f220bbca3f96cb1077c  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D124-original10-1405-original10-xml-summary.json
+a1529e73707bea4f6af818550f450f4514db5d077476119ca3bbad6daeb6bfa1  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D124-original10-1405-raw-exit-packet.json
+97ec73abffae5ea6ea302c01c439a2e53a31777b687812fe293fac9b75625883  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D124-original10-1405-original10-command.txt
+6405264a20f2d84edf93ff4bbc911e8a983f4591ca0904ce0389ed7ec09c68d8  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D124-original10-1405-source-manifest.json
+
+# Private source evidence hashes; contents are intentionally not published.
+PRIVATE original10.xml sha256 9a9f0201cd8f6472233b25abf7ce16292b4ed52db6dd8edd0f7c0634491ab130
+PRIVATE native-smoke.log sha256 b8269730b94a3ade144aec4ccb1cac18e3c89a5e47d4dfa6902bb4daadfea35f
+PRIVATE original10.log sha256 bde3285d3277f7cc9809da93dab923a782e662993d171b2a1b39b702ab529969

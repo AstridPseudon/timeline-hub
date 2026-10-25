@@ -1,0 +1,1 @@
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="/home/user/work/wt/agt-pin-16bbd56d:/home/user/work/wt/rt-pin-5e9ad1c6" ASTRID_RUNTIME_CHECKOUT="/home/user/work/wt/rt-pin-5e9ad1c6" /home/user/work/venv-agent/bin/python -m pytest -q -n3 -o addopts= -p no:cacheprovider --timeout=45 --junitxml="$E/original10.xml" [exact 10 selectors; see original10.log]

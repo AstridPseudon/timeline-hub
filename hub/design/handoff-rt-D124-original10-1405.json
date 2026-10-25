@@ -1,0 +1,76 @@
+{
+  "schema": "timeline.d124.original10.result-review.v1",
+  "verdict": "RESULT_REVIEW_PASS_WITH_FAILED_ACCEPTANCE_OUTCOMES",
+  "evidence_custody": "PASS",
+  "whole_product_pass": false,
+  "source_credit": {
+    "normal_agent_commit": "61fefc6983f4413f1d1964b149bbaf5eadb8d2f0",
+    "agent_source_commit": "16bbd56dbf016bcddeafa891291129efcfa87196",
+    "agent_tree": "70fcd38844e7d93cdf97e4aebaf248d3736a312a",
+    "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "composition_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "app_commit": "af5fe0a2748ce6df65fb36ce9cd435fc1df0502a",
+    "app_tree": "2afa38ba9e8ebfcefb23c81dbc1af3b1b9eabe0c",
+    "manifest_targets_match": true,
+    "test_byte_hashes_match": true,
+    "test_ast_hashes_match": true,
+    "independent_security_review": "PASS"
+  },
+  "admission": {
+    "preflight_floor_bytes": 5000000000,
+    "preflight_free_bytes": 5001871360,
+    "preflight_floor_pass": true,
+    "postflight_free_bytes": 4974526464,
+    "postflight_floor_pass": false,
+    "continuous_floor_claim": false,
+    "body_runs": 1,
+    "same_source_case_repeated": false,
+    "no_body_after_postflight_drop": true
+  },
+  "smoke": {
+    "exit": 0,
+    "summary": "5 passed in 3.73s",
+    "selectors": [
+      "tests.sdk.test_timeline_commit_native_boundary_runtime::test_native_child_batch_captures_materialized_input",
+      "tests.sdk.test_timeline_commit_native_boundary_runtime::test_native_child_inverse_uses_authenticated_effect_images",
+      "tests.sdk.test_timeline_commit_native_boundary_runtime::test_native_child_effect_tampering_cannot_write[revision]",
+      "tests.sdk.test_timeline_commit_native_boundary_runtime::test_native_child_effect_tampering_cannot_write[digest]",
+      "tests.sdk.test_timeline_commit_native_boundary_runtime::test_native_child_effect_tampering_cannot_write[physical-ref]"
+    ]
+  },
+  "original10": {
+    "exit": 1,
+    "summary": "6 passed, 4 failed in 15.46s",
+    "tests": 10,
+    "errors": 0,
+    "skipped": 0,
+    "unique_selectors_match_recipe": true,
+    "selectors": [
+      {"id": "test_phrase_records_all_consecutive_main_word_ids", "status": "PASS"},
+      {"id": "test_raw_canonical_bundle_compiles_in_fresh_process_without_history", "status": "PASS"},
+      {"id": "test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[False]", "status": "PASS"},
+      {"id": "test_bootstrap_birth_child_media_exact_history_inverse_redo_retry[True]", "status": "FAIL", "first_unmet": "inverse(created, 'undo-birth') at source line 222", "reason": "provider occurrence alias is outside its boundary", "safe_class": "authenticated inverse physical-closure boundary validation"},
+      {"id": "test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba[scalar]", "status": "FAIL", "first_unmet": "accepted = submit(body, 'app-scalars') at source line 216", "reason": "provider intermediate promotion differs from its sequential allocation", "safe_class": "authenticated provider allocation/materialization validation"},
+      {"id": "test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba[compound]", "status": "FAIL", "first_unmet": "accepted = submit(body, 'app-scalars') at source line 216", "reason": "provider intermediate promotion differs from its sequential allocation", "safe_class": "authenticated provider allocation/materialization validation"},
+      {"id": "test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba[separate]", "status": "FAIL", "first_unmet": "accepted = submit(body, 'app-scalars') at source line 216", "reason": "provider successor differs from its authenticated physical edges", "safe_class": "authenticated provider successor/physical-edge validation"},
+      {"id": "test_native_film_param_edit_preserves_exact_image_and_inverse[2-2.0-occurrence:occurrence-1/clip:clip-1]", "status": "PASS"},
+      {"id": "test_native_film_param_edit_preserves_exact_image_and_inverse[True-1-occurrence:occurrence-1/clip:clip-1]", "status": "PASS"},
+      {"id": "test_native_film_param_edit_preserves_exact_image_and_inverse[1-True-occurrence:occurrence-1/clip:clip-1]", "status": "PASS"}
+    ]
+  },
+  "static_checks": {
+    "json_jq": "PASS",
+    "xml_parse": "PASS",
+    "target_compile": "PASS (5 files, private output)",
+    "ruff": "PASS (5 target test files)",
+    "mypy": "UNAVAILABLE: venv-agent-typecheck-v2/bin/mypy not installed",
+    "git_diff_check": "PASS (pinned Agent and Runtime)"
+  },
+  "limits": [
+    "No full/core/P4 or product-wide PASS.",
+    "No core425 or REG14 count reduction; downstream owner accounting remains required.",
+    "No source, test, generated, pin, profile, registry, hub, M5, or credential changes."
+  ]
+}

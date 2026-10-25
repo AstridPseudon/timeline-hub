@@ -1,0 +1,9 @@
+{
+  "body_runs": 1,
+  "log": "original10.log",
+  "original10_exit": 1,
+  "original10_summary": "6 passed, 4 failed in 15.46s",
+  "same_source_case_repeated": false,
+  "smoke_exit": 0,
+  "xml": "original10.xml"
+}

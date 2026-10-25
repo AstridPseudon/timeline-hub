@@ -1,0 +1,275 @@
+{
+  "agent_commit": "16bbd56dbf016bcddeafa891291129efcfa87196",
+  "agent_tree": "70fcd38844e7d93cdf97e4aebaf248d3736a312a",
+  "targets": [
+    {
+      "ast_sha256": "466a089727f3dd59a40ee31b9f15733327abb868f8868ee8becf9b681184d7ef",
+      "members": [
+        {
+          "end_lineno": 58,
+          "kind": "FunctionDef",
+          "lineno": 22,
+          "name": "native_child"
+        },
+        {
+          "end_lineno": 66,
+          "kind": "FunctionDef",
+          "lineno": 61,
+          "name": "child_tracks"
+        },
+        {
+          "end_lineno": 81,
+          "kind": "FunctionDef",
+          "lineno": 69,
+          "name": "test_native_child_batch_captures_materialized_input"
+        },
+        {
+          "end_lineno": 97,
+          "kind": "FunctionDef",
+          "lineno": 84,
+          "name": "test_native_child_inverse_uses_authenticated_effect_images"
+        },
+        {
+          "end_lineno": 130,
+          "kind": "FunctionDef",
+          "lineno": 101,
+          "name": "test_native_child_effect_tampering_cannot_write"
+        }
+      ],
+      "path": "tests/sdk/test_timeline_commit_native_boundary_runtime.py",
+      "sha256": "d552674aa480eeba1e46368257d5aa92892c5fefa5902f143e088dc9aa23118d"
+    },
+    {
+      "ast_sha256": "7579bdbdb530f943395d7bcc2c03e21bae0eb464a046fb1ec15a54ee2176e4bd",
+      "members": [
+        {
+          "end_lineno": 32,
+          "kind": "FunctionDef",
+          "lineno": 29,
+          "name": "recipe"
+        },
+        {
+          "end_lineno": 41,
+          "kind": "FunctionDef",
+          "lineno": 35,
+          "name": "bundle"
+        },
+        {
+          "end_lineno": 56,
+          "kind": "FunctionDef",
+          "lineno": 44,
+          "name": "pick"
+        },
+        {
+          "end_lineno": 64,
+          "kind": "FunctionDef",
+          "lineno": 59,
+          "name": "history"
+        },
+        {
+          "end_lineno": 69,
+          "kind": "FunctionDef",
+          "lineno": 67,
+          "name": "projected"
+        },
+        {
+          "end_lineno": 74,
+          "kind": "FunctionDef",
+          "lineno": 72,
+          "name": "undo"
+        },
+        {
+          "end_lineno": 80,
+          "kind": "FunctionDef",
+          "lineno": 77,
+          "name": "restore"
+        },
+        {
+          "end_lineno": 109,
+          "kind": "FunctionDef",
+          "lineno": 83,
+          "name": "window_command"
+        },
+        {
+          "end_lineno": 139,
+          "kind": "FunctionDef",
+          "lineno": 114,
+          "name": "test_undo_recovers_before_binding_even_when_text_writes_are_equal"
+        },
+        {
+          "end_lineno": 168,
+          "kind": "FunctionDef",
+          "lineno": 143,
+          "name": "test_follow_rebases_original_choice_after_source_move_and_reorder"
+        },
+        {
+          "end_lineno": 181,
+          "kind": "FunctionDef",
+          "lineno": 171,
+          "name": "test_phrase_records_all_consecutive_main_word_ids"
+        },
+        {
+          "end_lineno": 207,
+          "kind": "FunctionDef",
+          "lineno": 185,
+          "name": "test_same_word_in_reused_cas_clips_retains_raw_source_through_undo"
+        },
+        {
+          "end_lineno": 230,
+          "kind": "FunctionDef",
+          "lineno": 210,
+          "name": "test_last_write_clear_undo_restore_and_restore_inverse"
+        },
+        {
+          "end_lineno": 248,
+          "kind": "FunctionDef",
+          "lineno": 233,
+          "name": "test_equal_text_references_produce_distinct_canonical_revisions"
+        },
+        {
+          "end_lineno": 266,
+          "kind": "FunctionDef",
+          "lineno": 251,
+          "name": "test_equal_text_restore_recovers_the_selected_publications_binding"
+        },
+        {
+          "end_lineno": 294,
+          "kind": "FunctionDef",
+          "lineno": 270,
+          "name": "test_invalid_inputs_fail_closed_before_acceptance"
+        },
+        {
+          "end_lineno": 325,
+          "kind": "FunctionDef",
+          "lineno": 297,
+          "name": "test_raw_canonical_bundle_compiles_in_fresh_process_without_history"
+        },
+        {
+          "end_lineno": 353,
+          "kind": "FunctionDef",
+          "lineno": 329,
+          "name": "test_reference_is_authoritative_and_kernel_never_searches_echo"
+        },
+        {
+          "end_lineno": 363,
+          "kind": "FunctionDef",
+          "lineno": 357,
+          "name": "test_legacy_ambiguous_text_refuses_choose_occurrence"
+        },
+        {
+          "end_lineno": 371,
+          "kind": "FunctionDef",
+          "lineno": 367,
+          "name": "test_legacy_unique_word_in_reused_cas_is_still_ambiguous_without_raw_clip"
+        },
+        {
+          "end_lineno": 382,
+          "kind": "FunctionDef",
+          "lineno": 374,
+          "name": "test_unique_legacy_word_compiles_without_persisting_a_reference"
+        },
+        {
+          "end_lineno": 414,
+          "kind": "FunctionDef",
+          "lineno": 385,
+          "name": "test_on_until_clear_preserves_other_reference_and_opaque_fields"
+        },
+        {
+          "end_lineno": 440,
+          "kind": "FunctionDef",
+          "lineno": 417,
+          "name": "test_half_open_window_and_exact_rational_fps_are_validated_at_acceptance"
+        },
+        {
+          "end_lineno": 456,
+          "kind": "FunctionDef",
+          "lineno": 443,
+          "name": "test_stale_anchor_refuses_when_intervening_window_excludes_selected_word"
+        },
+        {
+          "end_lineno": 516,
+          "kind": "FunctionDef",
+          "lineno": 475,
+          "name": "test_invalid_authored_reference_never_falls_back_to_valid_echo"
+        },
+        {
+          "end_lineno": 528,
+          "kind": "FunctionDef",
+          "lineno": 519,
+          "name": "test_typed_second_offset_preserves_main_precision_at_rational_frame_boundary"
+        },
+        {
+          "end_lineno": 552,
+          "kind": "FunctionDef",
+          "lineno": 531,
+          "name": "test_stale_choice_and_guarded_inverse_refuse_competing_target_writes"
+        }
+      ],
+      "path": "tests/editing_conformance/test_word_binding_recipe.py",
+      "sha256": "0c35eb6bb61f7f1990bd7b83270dc5b4c4ce30bb31a6d3b922750f4c32ff5b04"
+    },
+    {
+      "ast_sha256": "5e50f752afe0fb6b8edb34fd6f710ba51252dea38281c475df361fdea72b8d25",
+      "members": [
+        {
+          "end_lineno": 47,
+          "kind": "FunctionDef",
+          "lineno": 32,
+          "name": "generated_runtime"
+        },
+        {
+          "end_lineno": 70,
+          "kind": "FunctionDef",
+          "lineno": 51,
+          "name": "test_bootstrap_birth_child_media_exact_history_inverse_redo_retry"
+        },
+        {
+          "end_lineno": 262,
+          "kind": "FunctionDef",
+          "lineno": 73,
+          "name": "_prove_birth"
+        }
+      ],
+      "path": "tests/editing_conformance/test_commit_runtime_occurrence_create.py",
+      "sha256": "f1d86c7a95140a3f69a60e3ac348511eedf2eca52d75da135eb04450f9935ca1"
+    },
+    {
+      "ast_sha256": "ebcbf9540797ddfa51ef70db74c7ce47cb58afcbbbec8c0955718e7344b1fc57",
+      "members": [
+        {
+          "end_lineno": 46,
+          "kind": "FunctionDef",
+          "lineno": 34,
+          "name": "_patch"
+        },
+        {
+          "end_lineno": 139,
+          "kind": "FunctionDef",
+          "lineno": 49,
+          "name": "_seed_current_app_document"
+        },
+        {
+          "end_lineno": 244,
+          "kind": "FunctionDef",
+          "lineno": 143,
+          "name": "test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba"
+        }
+      ],
+      "path": "tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py",
+      "sha256": "80b146829f4c493f1381b561c13b3b992bd792a5931747eea0725061822dbc1b"
+    },
+    {
+      "ast_sha256": "9119721a9a08e42ebb5cded6e1091d01e545a4fdaea72311c4befe9fa55c6e9f",
+      "members": [
+        {
+          "end_lineno": 56,
+          "kind": "FunctionDef",
+          "lineno": 23,
+          "name": "test_native_film_param_edit_preserves_exact_image_and_inverse"
+        }
+      ],
+      "path": "tests/editing_conformance/test_commit_runtime_numeric_params.py",
+      "sha256": "1ced4d39f8c2da4972863500b20aa67da1ee458f20ee9f4c86be152fd716b5d6"
+    }
+  ]
+}

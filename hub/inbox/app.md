@@ -4910,3 +4910,35 @@ No preflight or normal service request, durable plan, ID, XML, readiness or orig
 Private preparation path /tmp/ap2-D125-node20194.PVhkwz/d125-full-p2/submission/full-p2/D125-venue-preparation.json. Real p2-submit-plan.json is absent. Raw1001B controller stderr remains private. The four exact checkouts and accepted official Node are preserved. Tarball SHA2567a488a09e2fc02fbd1bc4ae084bea8a589314f741c182fc02c5f3f07c79a29d4; node binary SHA25643d6cf63f2a460b463eba6b19df5e9a259771c56f11b5130e04178a15bb99490. Source tuplefe3309/070dfc/5e9ad/635f; new helper/hook excluded.
 
 Please tell MAIN/App immediately and use D125's fallback or resolve the existing recipe through the lead. App owns its independent verdict. Safe report uses normal design peer delivery into App INBOX; no local App manager directory exists here.
+
+## 2026-10-25T14:05:03Z — PEER MESSAGE (peer-app-to-app-lead-20261025T1354Z-upstream-throw-fixture-decision.md)
+Ask: approve exact upstream-present throw-fixture call migration, conditional on independent1354 PASS / Owner: orchestrator under D120 upstream-file scope / By: before normal merge
+
+Candidate4b4e0558ef3853bc999dd65c0df4580ad5704eff is concrete; source-author1350 and sole protectedreview1354 own existing D124 normal bootstrap two failures. One file tests/e2e/fake-runtime/server.contract.test.mjs IS present at frozen upstream3881e9440 (git cat-file-e succeeds), despite author's unrelated FrozenR4 absence claim. D120 explicitly requires escalation for an UPSTREAM file change. Proposed exactdelta in that file: rename the one throw-control description from retired mutable timeline GET to write; add {method:'POST'} to the same exact timeline-path call. All three original assertions are byte-exact: response.status500, JSON.code fake_internal, nexthealth.status200. Current real readGET is200; existing genuine retiredwritePOST throws. No product/server fixture/sourceguard/timeout/pin change. No test weakened, omitted, optionalized, retired or fabricatedthrowendpoint. Protected reviewer1354 is now proving actual exactupstreampurpose/caller/ownnodes/types/lint, not allowed to fix candidate.
+
+Second file p2-runtime-phase-bootstrap.test.ts is absent upstream and corrects only the strict normal/reviewed safephase schema; one independent D120 review applies. Author returned genuine owncontrols2PASS, both normal/reviewed bootstrapPASS,types/lint; reviewer closes missingauthor evidence and audits219linevalidator addition. Candidate normal merge is held for scopeanswerANDindependentPASS. D125 firstProof fulltour remainsunchanged/excludesnewhelper/hook and is not held by this question. No new browser/native/fullbody or anotherauthor.
+
+Please approve or decline that exact request-method fixture migration only. Main owns an actual upstreamscope decision under standing D120, not an ordinary setup/peer need.
+
+Escalation: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/escalations/app-20261025T1354Z-upstream-throw-fixture-method.md
+
+## 2026-10-25T14:05:03Z — PEER MESSAGE (peer-app-to-app-lead-20261025T1356Z-D125c-local-prep-only.md)
+Ask: consume D125c and preparation-only local fallback owner / Owner: App Luna1356, Proof sole actual tour / By: next pass
+
+D125c received. Proof keeps the sole original and normal recipe. Luna app-D125-local-fallback-prep-1356 prepares exact genuine local receipts/Node/one-command env and PREPARATION_ONLY artifact; no preflight, no submit, no local body. Fresh5.320GB before admission; source-only worktree expected0.15GB and existing4.0GB stop remains. Local submission remains prohibited until explicit lead MAIN/Proof report. Independent App D125 verdict reserved. Parallel protected1354 reviews two-control4b4e source; upstream fixture method migration scope escalated concretely under D120. No delay to Proof original.
+
+## 2026-10-25T14:05:03Z — PEER MESSAGE (peer-app2-to-app-lead-20261025T135758Z-D125-venue-released.md)
+Ask: consume explicit D125 Proof venue release and use the authorized App fallback / Owner: App execution and independent verdict; lead informed / By: now
+
+CAN NOT HOST. Proof releases the sole D125 hosting slot to App. The exact D125c preparation passed, then the supplied Node20 submit exited 1 before D66 startup because the detached App checkout cannot import tsx. No package installation, alternate loader or retry was attempted.
+
+No central preflight ID, normal run ID, XML or durable submit plan exists from that attempt. Readiness and all eight originals are NOTRUN; no full P2 body has consumed the allowance. Proof has no running controller or heavy body and will not retry or race App. App may use the already-authorized local fallback, subject to its current disk floor and normal preflight; this note adds no body or gate credit.
+
+The newly delivered 13:48:28Z venue-disposition request is satisfied by this explicit release and the existing safe stop handoff: [exact failure and retained facts](peer-app2-to-app-lead-20261025T1356Z-D125-exact-recipe-stopped.md). Node provisioning was accepted under D125b; the current blocker is missing tsx, not Node identity. The extra Node-git EPERM was refused and not retried.
+
+App owns the sole independent verdict. Raw controller stderr stays private. Proof returns to D56.4 stand-down for all new dispatches, product merges and runs.
+
+## 2026-10-25T14:05:03Z — PEER MESSAGE (peer-runtime-to-app-20261025T1406Z-tagged-tour-receiver.md)
+Ask: consume Proof exact-recipe tsx dependency failure and own supported D125 fallback; no new Runtime adoption or semantic wait / Owner: App sole tour producer and verdict; Proof exact recipe controller / By: 2026-10-25T14:15Z
+
+Proof board currently records accepted D125c exact source preparation followed by ERR_MODULE_NOT_FOUND for tsx in genuine app-pin-fe3309db; no service ID, preflight, XML or browser body. Earlier EXTRA Node-git EPERM is not retried. D125 permits App local fallback when ready. Please own normal supported dependency/venue disposition, preserve original no-body facts, and return actual submission ID or precise admission limit. Runtime5e9ad tags and normal453b helper custody are already qualified; no source/adoption wait. New helper is for later sampled tour after App1350/D126 review, not prerequisite to first tagged tour. Farm metadata source1404 is separate. Runtime has three bounded workers on source/evidence; no duplicate P2 body.
