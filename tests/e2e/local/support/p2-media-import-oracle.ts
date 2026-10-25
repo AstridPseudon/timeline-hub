@@ -13,6 +13,8 @@ export interface MediaImportSourceEvidence {
   objectId: string;
   digest: string;
   mediaType: string;
+  generationId: string;
+  variantId: string;
 }
 
 export interface MediaImportEvidence {
@@ -66,15 +68,15 @@ export function assertNormalizedCatalogueEntry(
   source: MediaImportSourceEvidence,
 ): void {
   const entry = record(actual, 'normalized catalogue entry');
-  for (const key of ['object_id', 'media_type', 'size', 'filename']) {
+  for (const key of ['object_id', 'media_type', 'size', 'filename', 'content_sha256', 'file']) {
     assert.equal(Object.hasOwn(entry, key), false, `normalized catalogue entry must not expose raw field ${key}`);
   }
-  for (const [key, expected] of [
-    ['media_id', source.objectId],
-    ['content_sha256', source.digest],
-    ['type', source.mediaType],
-  ] as const) {
-    assert.equal(Object.hasOwn(entry, key), true, `normalized catalogue entry must contain ${key}`);
-    assert.equal(entry[key], expected, `normalized catalogue entry ${key} must preserve the genuine source value`);
-  }
+  const kind = source.mediaType.split('/')[0];
+  assert.equal(kind === 'image' || kind === 'video', true, 'genuine media source must have an image or video kind');
+  assert.deepStrictEqual(entry, {
+    media_id: source.objectId,
+    type: kind,
+    generationId: source.generationId,
+    variantId: source.variantId,
+  }, 'normalized catalogue entry must exactly match the canonical registry binding');
 }

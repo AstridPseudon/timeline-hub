@@ -16,6 +16,8 @@ const source = {
   objectId: `sha256:${'a'.repeat(64)}`,
   digest: `sha256:${createHash('sha256').update(Buffer.from(file.bytesBase64, 'base64')).digest('hex')}`,
   mediaType: 'image/png',
+  generationId: 'generation-actual',
+  variantId: 'variant-actual',
 };
 
 test('raw import oracle accepts the actual ABI and refuses the old normalized claim', () => {
@@ -42,18 +44,18 @@ test('raw import oracle accepts the actual ABI and refuses the old normalized cl
 test('normalized catalogue oracle preserves original identity and refuses wrong fields', () => {
   const evidence = mediaImportEvidence(file, source);
   const normalized = {
-    file: `/v1/objects/${encodeURIComponent(evidence.source.objectId)}`,
     media_id: evidence.source.objectId,
-    content_sha256: evidence.source.digest,
-    type: evidence.source.mediaType,
-    generationId: 'generation-actual',
-    variantId: 'variant-actual',
+    type: 'image',
+    generationId: evidence.source.generationId,
+    variantId: evidence.source.variantId,
   };
   assertNormalizedCatalogueEntry(normalized, evidence.source);
   assert.throws(() => assertNormalizedCatalogueEntry(evidence.rawEntry, evidence.source));
   assert.throws(() => assertNormalizedCatalogueEntry({ ...normalized, media_id: 'sha256:wrong-object' }, evidence.source));
-  assert.throws(() => assertNormalizedCatalogueEntry({ ...normalized, content_sha256: 'sha256:wrong-digest' }, evidence.source));
-  assert.throws(() => assertNormalizedCatalogueEntry({ ...normalized, type: 'image/jpeg' }, evidence.source));
-  const { content_sha256: _contentSha256, ...missingDigest } = normalized;
-  assert.throws(() => assertNormalizedCatalogueEntry(missingDigest, evidence.source));
+  assert.throws(() => assertNormalizedCatalogueEntry({ ...normalized, type: 'image/png' }, evidence.source));
+  assert.throws(() => assertNormalizedCatalogueEntry({ ...normalized, generationId: 'generation-wrong' }, evidence.source));
+  assert.throws(() => assertNormalizedCatalogueEntry({ ...normalized, variantId: 'variant-wrong' }, evidence.source));
+  assert.throws(() => assertNormalizedCatalogueEntry({ ...normalized, content_sha256: evidence.source.digest }, evidence.source));
+  const { generationId: _generationId, ...missingGeneration } = normalized;
+  assert.throws(() => assertNormalizedCatalogueEntry(missingGeneration, evidence.source));
 });
