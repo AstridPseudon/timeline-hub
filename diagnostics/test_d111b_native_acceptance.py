@@ -9,7 +9,7 @@ import tempfile
 import time
 from pathlib import Path
 
-WORKER = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D111b-ancestry-return-sol-1036")
+WORKER = Path("/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D111b-joined-native-1057")
 EVIDENCE = WORKER / "evidence"
 BASE_COMMIT = "d23a8e0d2"
 AGENT = Path("/home/user/work/wt/agt-pin-070dfc5e")

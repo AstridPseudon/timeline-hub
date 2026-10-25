@@ -770,8 +770,9 @@ def _reconcile_materialized_owner_images(result, accepted):
             result[ref] = copy.deepcopy(accepted[ref])
 
 
-def step_output(boundary, step, records, accepted, original=None):
+def step_output(boundary, step, records, accepted, original=None, authenticated=None):
     """Project complete authoritative effects solely to authenticate their boundaries."""
+    expected = authenticated if authenticated is not None else accepted
     result = copy.deepcopy(boundary)
     for effect in step["patch"]:
         ref, path = effect["ref"], normalized_path(effect["ref"], effect["path"])
@@ -784,7 +785,8 @@ def step_output(boundary, step, records, accepted, original=None):
                 result.pop(ref, None)
             else:
                 require(effect["op"] == "set", "provider root effect is not an observed value")
-                result[ref] = {**copy.deepcopy(accepted.get(ref, {})), "revision_id": ref.partition(":")[2],
+                result[ref] = {**copy.deepcopy(expected.get(ref, accepted.get(ref, {}))),
+                               "revision_id": ref.partition(":")[2],
                                "content_digest": digest(effect["value"]), "payload": copy.deepcopy(effect["value"])}
                 if ref.startswith("shot-revision:"):
                     result[ref]["internal_timeline_revision_id"] = effect["value"]["internal_timeline_revision_id"]
@@ -811,7 +813,7 @@ def step_output(boundary, step, records, accepted, original=None):
             if mirror in payload and mirror in result[ref]["payload"].get("config", {}):
                 result[ref]["payload"][mirror] = copy.deepcopy(result[ref]["payload"]["config"].get(mirror))
         result[ref]["content_digest"] = digest(result[ref]["payload"])
-    _align_materialized_images(result, accepted)
+    _align_materialized_images(result, expected)
     # Bindings of complete effect images carry the provider's generated revision
     # names. Their payload digest must agree with the projected observations.
     for row in result["parent"]["payload"]["occurrences"]:
@@ -821,7 +823,7 @@ def step_output(boundary, step, records, accepted, original=None):
                 "provider occurrence effect changes physical shot ownership")
         result[ref]["shot_id"] = row["shot_id"]
     for ref, image in list(result.items()):
-        known = accepted.get(ref)
+        known = expected.get(ref)
         if ref == "parent":
             pins = [binding for ordinal in step["command_ordinals"]
                     for binding in records["commands"][ordinal]["bindings"]
@@ -832,13 +834,13 @@ def step_output(boundary, step, records, accepted, original=None):
                 require(len({pin["revision_id"] for pin in pins}) == 1, "provider intermediate parent pins disagree")
                 image["revision_id"] = pins[0]["revision_id"]
             else:
-                reconciled = known is not None and _parent_materialization_reconciles(result, accepted)
+                reconciled = known is not None and _parent_materialization_reconciles(result, expected)
                 require(known is not None and (value_equal(known["payload"], image["payload"])
                                                 or reconciled),
                         "provider intermediate parent lacks an effect image")
                 result[ref] = copy.deepcopy(known)
                 if reconciled:
-                    _reconcile_materialized_owner_images(result, accepted)
+                    _reconcile_materialized_owner_images(result, expected)
         elif known is not None and value_equal(known["payload"], image["payload"]):
             result[ref] = copy.deepcopy(known)
     return result
@@ -2124,9 +2126,32 @@ def _following_read_observes(boundary, following, physical_ref):
     return False
 
 
-def command_output(boundary, record, following, *, accepted=None, identity_scope=None, manifest=None):
+def _command_manifest(manifest, record):
+    """Project only the dependencies consumed by one authenticated command."""
+    result = copy.deepcopy(manifest)
+    for dependency in record.get("dependencies", []):
+        pin = dependency.get("pin", {})
+        if dependency.get("kind") == "media":
+            media_id = pin.get("object_id", pin.get("media_id"))
+            if media_id is not None:
+                media = {row["media_id"]: row for row in result["media"]}
+                media[media_id] = {"media_id": media_id, "content_digest": media_id}
+                result["media"] = sorted(media.values(), key=lambda row: row["media_id"])
+        elif dependency.get("kind") in {"source", "transcript"} and pin not in result["documents"]:
+            result["documents"].append(copy.deepcopy(pin))
+            result["documents"].sort(
+                key=lambda row: (row["document_id"], row["version"], row["content_digest"]))
+    return result
+
+
+def command_output(boundary, record, following, *, accepted=None, identity_scope=None,
+                   manifest=None, previous_manifest=None):
     """Project full recorder observations needed by a subsequent input binding."""
     result = copy.deepcopy(boundary)
+    if previous_manifest is not None:
+        require(manifest is not None and value_equal(
+            manifest, _command_manifest(previous_manifest, record)),
+                "provider command manifest differs from its authenticated dependencies")
     projected_roots = (_project_created_child(result, record, following, accepted, identity_scope)
                        if accepted is not None else set())
     created_roots = {item.get("ref") for item in record.get("created", [])
@@ -2252,6 +2277,18 @@ def command_output(boundary, record, following, *, accepted=None, identity_scope
                                    and pin.get("content_digest") == result["parent"]["content_digest"]
                                    for pin in parent_pins),
                 "provider created parent differs from its sequential allocation")
+        result["parent"]["revision_id"] = expected_parent
+    if (previous_manifest is not None and manifest != previous_manifest
+            and identity_scope is not None
+            and result["parent"]["content_digest"] == boundary["parent"]["content_digest"]):
+        expected_parent = _authoring_parent_identity(result, identity_scope, manifest)
+        parent_pins = [binding for binding in following["bindings"]
+                       if binding.get("physical_ref") == "parent"
+                       and binding.get("boundary", {}).get("phase") == "input"]
+        require(parent_pins and all(pin.get("revision_id") == expected_parent
+                                    and pin.get("content_digest") == result["parent"]["content_digest"]
+                                    for pin in parent_pins),
+                "provider consumed manifest differs from its sequential parent allocation")
         result["parent"]["revision_id"] = expected_parent
     return result
 
@@ -2813,21 +2850,13 @@ def validate(request, prepared, source, base=None, continuations=None, history=N
         command_inputs = {step["command_ordinals"][0]: boundary}
         input_manifest = copy.deepcopy(manifest)
         command_manifests = {}
+        command_input_manifests = {}
         for ordinal in step["command_ordinals"]:
             # Consumed input pins are checked by the request-private port at
             # acceptance. Only earlier commands contribute to this boundary;
             # a following binding cannot allocate a physical identity.
-            for dependency in records["commands"][ordinal]["dependencies"]:
-                pin = dependency.get("pin", {})
-                if dependency.get("kind") == "media":
-                    media_id = pin.get("object_id", pin.get("media_id"))
-                    if media_id is not None:
-                        media = {row["media_id"]: row for row in manifest["media"]}
-                        media[media_id] = {"media_id": media_id, "content_digest": media_id}
-                        manifest["media"] = sorted(media.values(), key=lambda row: row["media_id"])
-                elif dependency.get("kind") in {"source", "transcript"} and pin not in manifest["documents"]:
-                    manifest["documents"].append(copy.deepcopy(pin))
-                    manifest["documents"].sort(key=lambda row: (row["document_id"], row["version"], row["content_digest"]))
+            command_input_manifests[ordinal] = copy.deepcopy(manifest)
+            manifest = _command_manifest(manifest, records["commands"][ordinal])
             command_manifests[ordinal] = copy.deepcopy(manifest)
         # Hydrated documents consumed by the first command can rekey the
         # unchanged effect-before parent. Later commands cannot allocate it.
@@ -2840,7 +2869,8 @@ def validate(request, prepared, source, base=None, continuations=None, history=N
             command_inputs[next_ordinal] = command_output(
                 command_inputs[ordinal], records["commands"][ordinal], records["commands"][next_ordinal],
                 accepted=accepted, identity_scope=(source["project_id"], source["timeline_id"]),
-                manifest=command_manifests[ordinal])
+                manifest=command_manifests[ordinal],
+                previous_manifest=command_input_manifests[ordinal])
         if records["merge_mode"] == "atomic":
             # Resolve aliases only after earlier commands establish their input
             # images; the complete batch union is checked against every step below.
@@ -2864,7 +2894,12 @@ def validate(request, prepared, source, base=None, continuations=None, history=N
                     require(_capture_projection_equal(images(captured["output"]), command_inputs[next_ordinal]),
                             "provider sequential command output differs from its next input projection")
         validate_step(request, records, step, boundary, batch_reads, continuations, command_inputs, sequential)
-        output = step_output(boundary, step, records, accepted, original)
+        authenticated_output = None
+        if sequential is not None:
+            last = sequential["landing"].get(step["command_ordinals"][-1])
+            if last is not None:
+                authenticated_output = images(last["output"])
+        output = step_output(boundary, step, records, accepted, original, authenticated_output)
         if sequential is not None:
             last = sequential["landing"].get(step["command_ordinals"][-1])
             require(last is not None and _capture_projection_equal(images(last["output"]), output),
