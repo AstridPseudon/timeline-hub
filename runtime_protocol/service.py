@@ -2489,10 +2489,10 @@ class RuntimeService:
         from .timeline_commit import CommitRejected
         from .timeline_commit_execution import (
             _emit_redacted_diagnostic,
-            current_public_request_id,
-            _is_history_failure,
             _history_diagnostic_reason,
+            _is_history_failure,
             _new_request_id,
+            current_public_request_id,
         )
         from .timeline_commit_port import (
             CommitUnavailable,

@@ -92,6 +92,12 @@ class RuntimeHandler(BaseHTTPRequestHandler):
     def log_message(self, *_):
         return
 
+    def handle_one_request(self):
+        # BaseHTTPRequestHandler reuses this instance for keep-alive requests;
+        # the public id is stable only for the request currently being parsed.
+        self._runtime_request_id = None
+        return super().handle_one_request()
+
     def _request_id(self):
         current = getattr(self, "_runtime_request_id", None)
         if current:
@@ -301,9 +307,16 @@ class RuntimeHandler(BaseHTTPRequestHandler):
         key = self._commit_idempotency_key()
         commit = getattr(self.runtime, "commit_timeline", None)
         if not callable(commit):
-            from .timeline_commit_execution import _emit_redacted_diagnostic
+            from .timeline_commit_execution import (
+                _emit_redacted_diagnostic,
+                _new_request_id,
+            )
             from .timeline_commit_provider import TimelineCommitUnavailable
-            _emit_redacted_diagnostic(self._request_id(), reason="timeline_commit_unavailable")
+            public_request_id = self._request_id()
+            _emit_redacted_diagnostic(
+                _new_request_id(), reason="timeline_commit_unavailable",
+                public_request_id=public_request_id,
+            )
             raise TimelineCommitUnavailable()
         publisher = identity["actor"]
 

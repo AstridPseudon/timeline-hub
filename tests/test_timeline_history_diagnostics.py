@@ -4,6 +4,7 @@ import ast
 import copy
 import hashlib
 import json
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
@@ -18,7 +19,9 @@ from runtime_protocol.errors import RuntimeErrorBase
 from runtime_protocol.timeline_commit import CommitRejected
 from runtime_protocol.timeline_commit_execution import (
     _HISTORY_SOURCE_TAGS,
+    _emit_redacted_diagnostic,
     _history_diagnostic_reason,
+    current_public_request_id,
     public_request_id_scope,
 )
 from runtime_protocol.timeline_commit_port import digest
@@ -236,3 +239,29 @@ def test_history_mapper_rejects_non_history_and_untrusted_source_tags():
         "message": "history bounds disagree",
         "details": {"reason": "history_unavailable"},
     }) == "port_history_bounds_mismatch"
+
+
+def test_public_request_id_scope_is_nested_and_thread_local(capsys):
+    assert current_public_request_id() is None
+    with public_request_id_scope("outer-request"):
+        assert current_public_request_id() == "outer-request"
+        with public_request_id_scope("inner-request"):
+            assert current_public_request_id() == "inner-request"
+        assert current_public_request_id() == "outer-request"
+    assert current_public_request_id() is None
+
+    public_ids = [f"thread-{index}" for index in range(8)]
+
+    def emit(public_request_id):
+        with public_request_id_scope(public_request_id):
+            _emit_redacted_diagnostic("f" * 32, reason="provider_none")
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        list(executor.map(emit, public_ids))
+
+    diagnostics = [_diagnostic(line) for line in capsys.readouterr().err.splitlines()]
+    assert {item["public_request_id_hash"] for item in diagnostics} == {
+        "sha256:" + hashlib.sha256(value.encode()).hexdigest() for value in public_ids
+    }
+    assert all(item["request_id"] == "f" * 32 for item in diagnostics)
+    assert all(value not in json.dumps(diagnostics) for value in public_ids)
