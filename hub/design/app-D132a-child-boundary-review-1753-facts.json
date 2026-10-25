@@ -1,0 +1,92 @@
+{
+  "task": "D132a/G3/R2",
+  "review_result": "PASS",
+  "classification": "NOT_APPLICABLE",
+  "scope": "Independent read-only whole-path source assessment of the remaining graph child-stage boundary",
+  "reviewed_worker": {
+    "worker": "app-D132a-child-boundary-applicability-1744",
+    "agent_head": "224de4697c36b8958d94c0b85626e0fedaf007cb",
+    "agent_tree": "3db8babbbdaf9a011d2eab9e27884c6c195cd76c",
+    "reported_classification": "NOT_APPLICABLE",
+    "substantive_conclusion": "confirmed"
+  },
+  "independent_findings": [
+    {
+      "id": "F1",
+      "result": "confirmed",
+      "finding": "The first failed seam is Runtime authenticated record validation of the initial child birth, not staging, materialization, inverse, reload, or redo.",
+      "citations": [
+        "Agent tests/sdk/test_timeline_commit_graph_roots.py:297-309 (root-only control)",
+        "Agent tests/sdk/test_timeline_commit_graph_roots.py:312-338 (child path)",
+        "Agent tests/editing_conformance/test_recorded_graph_roots.py:112-123 (created roots, child collection/read/bind/write captures)",
+        "Agent astrid/sdk/timeline/commands.py:231-304 (registered operation execution, record finalization, created claims)",
+        "Runtime frozen5e9ad runtime_protocol/timeline_commit_store.py:1491-1536 (prepared-record validation dispatch)",
+        "Runtime frozen5e9ad runtime_protocol/timeline_commit_auth.py:2831-2902 (pre-output validate_step call)",
+        "Runtime frozen5e9ad runtime_protocol/timeline_commit_auth.py:382-419 (record-read validation)",
+        "Runtime frozen5e9ad runtime_protocol/timeline_commit_auth.py:150-156 (occurrence alias refusal)"
+      ]
+    },
+    {
+      "id": "F2",
+      "result": "confirmed",
+      "finding": "The qualified ab1e4f61 source does not qualify this initial seam. Its changed auth hunks are inverse-only restored-owner handling, complete-step materialization binding, inverse-stage turnover/replay, and validation ordering after inverse boundaries; native_site and the ordinary initial create path are unchanged.",
+      "citations": [
+        "Runtime frozen5e9ad runtime_protocol/timeline_commit_auth.py:213-218 (native_site)",
+        "Runtime qualifiednormalab1e runtime_protocol/timeline_commit_auth.py diff: validate_step inverse branch, validate_bindings bound input, inverse-stage helpers, deferred validate_step",
+        "Runtime source-custody identities: auth blob 66d899edaac201a1700e7ddf9f62091753201bc9 -> 75c290edb73a8f8e39c77a64368bf4b11705f7f0; service/port/store/contract unchanged"
+      ]
+    },
+    {
+      "id": "F3",
+      "result": "wording_correction",
+      "finding": "The reviewed report's producer wording is imprecise on the ordinary create path: Recording.input_state remains None unless capture_input is called (the cited inverse path calls it), so ordinary staged reads enter record.reads from current staged state. finish(capture=True) separately derives public command read guards from command_input. This does not change the failure boundary or owner.",
+      "citations": [
+        "Agent astrid/sdk/timeline/_recording.py:78-99 (input_state default and read capture)",
+        "Agent astrid/sdk/timeline/_recording.py:249-283 (public command guards from command_input)",
+        "Agent astrid/sdk/timeline/inverse.py:1052-1059 (inverse capture_input caller)"
+      ]
+    }
+  ],
+  "path_trace": {
+    "submitted_command": "tests/sdk/test_timeline_commit_graph_roots.py:313-340 constructs the child-stage request through RuntimeRealm.call",
+    "registered_route": "tests/sdk/test_timeline_commit_graph_roots.py:53-65 registers load_timeline_commit_provider('astrid'); :108-142 calls RuntimeService.commit_timeline",
+    "provider_capture": "tests/editing_conformance/test_recorded_graph_roots.py:112-123 creates shot:new-shot and occurrence:new-occ, selects occurrence:new-occ/collection:clip, reads occurrence:new-occ/clip:title, binds it, and writes it; commands.py:231-304 finalizes authoritative records and created refs",
+    "prepared_transport": "astrid/sdk/timeline/_commit_preview.py:7-23 packages records; :25-90 carries prepared records and private sequential capture when applicable",
+    "runtime_dispatch": "runtime_protocol/service.py:2468-2547 validates the canonical commit request and dispatches the registered provider/coordinator; timeline_commit_store.py:1491-1536 validates the prepared closure",
+    "auth_resolution": "timeline_commit_auth.py:382-419 iterates record reads; native_site at :150-156 resolves occurrence aliases against command_boundary and rejects an absent occurrence owner"
+  },
+  "first_failed_boundary": {
+    "stage": "initial child birth / prepared-provider-record validation",
+    "exact_error": "provider occurrence alias is outside its boundary",
+    "exact_site": "Runtime frozen5e9ad runtime_protocol/timeline_commit_auth.py:150-156",
+    "why_first": "For the first command, validate() initializes command_inputs to the source boundary and frozen validate_step runs before step_output/materialization binding and before any inverse-stage boundary work. The child collection and clip aliases are not root-created refs, so the created-ref absent-read exemption at :395-398 does not apply; native_site must find occurrence:new-occ in the pre-command parent occurrence rows and refuses at :156.",
+    "not_reached": ["staging", "materialization", "inverse", "reload", "redo"],
+    "safe_aliases": ["occurrence:new-occ/collection:clip", "occurrence:new-occ/clip:title"],
+    "created_root_order": ["shot:new-shot", "occurrence:new-occ"]
+  },
+  "control_comparison": {
+    "root_only_control": "The root-only test uses the same create_command and created refs and asserts exact closure/reload/inverse/redo at tests/sdk/test_timeline_commit_graph_roots.py:297-309.",
+    "child_delta": "The child fixture adds only occurrence child collection/clip captures and writes at tests/editing_conformance/test_recorded_graph_roots.py:117-123; no authored graph topology, shared consumer, inverse/ABA assertion, or request metadata is changed by this review.",
+    "qualified_pin_match": false
+  },
+  "owner": {
+    "existing_owner": "Runtime authenticated closure validator: runtime_protocol/timeline_commit_auth.py native_site/validate_step boundary handling",
+    "minimal_unapplied_scope": "If same-command child access remains required by the settled contract, Runtime needs a narrowly authenticated rule for aliases and collection captures of a root created earlier in the same command's staged execution, while retaining the pre-command absent guard and exact sequential boundary provenance.",
+    "agent_producer_fault": false,
+    "product_guard_fault_claim": false,
+    "no_body_derived_binding": "No missing body-derived binding was reconstructed or inferred; this review relies on the cited source shapes only."
+  },
+  "conservation": {
+    "graph_values_topology_and_authored_refs": "not changed",
+    "shared_consumers": "not changed",
+    "inverse_aba_atomic_no_write_assertions": "not changed",
+    "runtime_auth_request_metadata": "not changed",
+    "implementation": "none"
+  },
+  "verification": {
+    "python": "PASS python3.11 AST parse and compile, 11 cited Python files",
+    "json": "PASS prior worker facts.json and source-custody.json parse",
+    "git": "PASS diff --check; Agent tree clean at expected base; immutable Runtime pins clean",
+    "forbidden_runs": "No pytest, own1/own9, service body, socket/browser/native/full/family suite, recovery/SWAP inspection, collector, source edit, or test rewrite"
+  }
+}

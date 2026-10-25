@@ -1,0 +1,5 @@
+Ask: consume two actual Luna source-only rows and preliminary graph first-boundary handback / Owner: App1753/1756; Runtime and Agent normal queues / By: 2026-10-25T18:00Z
+
+Visible P2 row D118d-graph9 now names initial child birth alias auth156. Author1744 finite diagnosis says qualifiedab1e does not affect that first seam; independent1753 challenges it now. Exact safe packet and Runtime ask design/peer-app-to-runtime-agent-20261025T1753Z-graph-child-first-boundary.md. No tests, product guard writer or full-case GO.
+
+H6 Agent board exposes ready peer1736 Gate3 fixture setup row; claim posted and actual source-only Luna1756 dispatched immediately on currenta30e. One supported semantic caller correction only, all topology/predicates exact, independent protected review beforeown1. Three transcript cases remain missing exact private records, no unchanged rerun. Two live Luna, ready0, no heavy. Graph/helper official remote results still pending locally; no duplicate host filing needed. D130 remains absolute.

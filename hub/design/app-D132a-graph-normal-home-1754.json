@@ -1,0 +1,19 @@
+{
+  "normal_head": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "normal_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+  "reviewed_donor": "224de4697c36b8958d94c0b85626e0fedaf007cb",
+  "remote_result": "MERGED a30e74e901",
+  "files": {
+    "tests/editing_conformance/test_recorded_graph_roots.py": {
+      "donor_blob": "7309e162c2ef2c1efe95e757c1d8f5c16361cd81",
+      "normal_blob": "7309e162c2ef2c1efe95e757c1d8f5c16361cd81"
+    },
+    "tests/sdk/test_timeline_commit_graph_roots.py": {
+      "donor_blob": "303d076e108132d02133171aa77059b565e93e23",
+      "normal_blob": "303d076e108132d02133171aa77059b565e93e23"
+    }
+  },
+  "proof_scope": "source only; retained exact own9 8 PASS1 FAIL; live child initial birth auth156 remains; no new body",
+  "protected_source_review": "app-D132a-graph-created-review-1720",
+  "first_boundary_review": "app-D132a-child-boundary-review-1753"
+}

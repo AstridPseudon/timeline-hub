@@ -1,0 +1,66 @@
+{
+  "schema": "app-d116-gate3-predicate-map-v1",
+  "selector": "tests/editing_conformance/test_native_checkout_current_equivalent.py::test_current_checkout_gate3_reload_undo_and_visualize_report_unavailable",
+  "fault_corrected": {
+    "old_operation": "emit_document_commands(authored, desired)",
+    "old_membership_change": {
+      "path": ["parent", "occurrences"],
+      "before": "one existing occurrence",
+      "after": []
+    },
+    "refusal": "closure membership and edges require semantic commands"
+  },
+  "semantic_setup": [
+    {
+      "ordinal": 0,
+      "op": "occurrence.delete",
+      "select": "occurrence:occ",
+      "capture_ast_sha256": "5e63cfb4583ec7297c60fcaa6bd138e026ad96f6780a2dbdea2633f4450a6a1f"
+    },
+    {
+      "ordinal": "local-transition",
+      "op": "commands.execute",
+      "input": "authored",
+      "output": "without_occurrence",
+      "capture_ast_sha256": "e8e9362d10f2209558e26e423df5dccbfe98b93181666fdea2fded1f78d8bcf9"
+    },
+    {
+      "ordinal": 1,
+      "op": "clip.add",
+      "select": "parent",
+      "row": {
+        "id": "gate3-title",
+        "at": 0,
+        "track": "picture",
+        "clipType": "text-card",
+        "hold": 1,
+        "params": {"content": "Gate3"},
+        "elementRef": {"packId": "rendering", "kind": "effects", "id": "text-card"}
+      },
+      "capture_ast_sha256": "409085952a154b9563600341bddae7fc397606ce5ea684744eb08ec8a05dafa1"
+    }
+  ],
+  "unchanged_final_predicates": [
+    {
+      "source": "parent['occurrences']",
+      "predicate": "== []",
+      "ast_sha256": "b9cf9a51529f7dd7b469500673e7c44ba7487867f2a607e46f9e63853eeebd3d"
+    },
+    {
+      "source": "parent['clips'][-1]['elementRef']['id']",
+      "predicate": "== 'text-card'",
+      "ast_sha256": "322a9bb15e9c83c56067774eea9aa57366b03de4dc6c3f1586f8c0bfec68047a"
+    }
+  ],
+  "commit_label_and_order": {
+    "label": "native-checkout-current-gate3",
+    "commands": ["occurrence.delete", "clip.add"],
+    "ast_sha256": "6c278d3d2e49afa628119927dcd593e621a1d7b65089efeacc48cb6f45f8129e"
+  },
+  "preserved_inputs": [
+    "current_bundle(case)",
+    "case.source media_id",
+    "Gate3 title row literal values",
+    "all non-Gate3 setup and existing assertions"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "app-d116-gate3-findings-v1",
+  "source_verdict": "PASS",
+  "behavior_verdict": "UNRUN",
+  "fix": "Use existing semantic occurrence.delete followed by clip.add to establish the exact empty-occurrences plus Gate3 text-card topology.",
+  "scope": {
+    "changed_file_only": true,
+    "test_file_changed": false,
+    "original_word_cases_changed": false,
+    "product_or_emitter_changed": false,
+    "deletion": false
+  },
+  "review_gate": {
+    "independent_protected_review": "REQUIRED_BEFORE_GATE3_RUN",
+    "worker_run": false
+  },
+  "blocked": false,
+  "next_step": "Obtain one independent protected PASS, then the orchestrator may decide whether to run exactly the Gate3 node with genuine admission >= 5GB."
+}
