@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T19:49:59Z | dispatcher heartbeat 10s | live 2 (sol 0, luna 2, other 0) | busy30 16 | status age 6m -->
-# runtime board, 2026-10-25T19:41:01Z
+<!-- main | 2026-10-25T19:54:19Z | dispatcher heartbeat 15s | live 2 (sol 0, luna 2, other 0) | busy30 16 | status age 1m -->
+# runtime board, 2026-10-25T19:53:25Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | Prior evidence | 34eac0041; 62c454ac0 |
@@ -455,20 +455,22 @@
 
 | F-final-D133-notes | Include deferred Gate3 paragraph | Luna | Actual installed renderer proof | merged | rt-F-tail-small-notes-1911 | Exact App1853 paragraph installed in both real docs. CAS backups, mode0644, outside bytes and real renderer PASS. No build/ZIP. | D56 author proof | Installed prose |
 
-| D127c-profile | Deterministic element cost capture | App Luna | Protected selection and privacy PASS | review | Author1905; review1909 FAIL; return1921 | Existing helper only. No body, cost author or normal source intake before protected PASS. | App independent review | Held source |
+| D127c-profile | Deterministic element cost capture | App Sol / Luna | Coupled protected review | review | SecondFAIL1929; Sol1935 and App1935 | Existing helper only. No body, cost author or normal source intake before protected PASS. | App independent review | Held source |
 
-| F-D135-builder | Refuse upstream reverts in package builder | Luna | Fresh source slot | doing | rt-F-D135-builder-guard-1938 | Farm1905 applies cleanly but reverts upstream-only work. Guard/private roots/pinned Agent tip required. | Independent review next | Source pending |
-| U1-D135-private-join | Prepare current upstream merge | Luna | Lead fresh upstream and source slot | ready | Runtime owner pending | Private tl branch only, preserve both source/test families. Integration stays frozen for D59. | Security and union proof next | No join yet |
-| F-D135-notes | Name fresh upstream patch base | Luna | Notes worker slot | doing | rt-F-D135-delivery-notes-1940 | Patch base must be current upstream main at cut. No new build or ZIP. | D56 prose checks | Pending |
+| F-D135-builder | Refuse upstream reverts in package builder | Luna | Fresh source slot | review | Author1938; independent1949 live | Farm1905 applies cleanly but reverts upstream-only work. Guard/private roots/pinned Agent tip required. | Independent review next | Source pending |
+| U1-D135-private-join | Prepare current upstream merge | Luna | Fresh dbc confirmed by lead | doing | rt-U1-D135-private-join-1952 queued | Private tl branch only, preserve both source/test families. Integration stays frozen for D59. | Security and union proof next | No join yet |
+| F-D135-notes | Name fresh upstream patch base | Luna | Notes worker slot | merged | Notes1940 installed PASS | Patch base must be current upstream main at cut. No new build or ZIP. | D56 prose checks | Pending |
 
-| F-D135-Agent-retarget | Bind real Agent home source | Luna | Actual a30e home object | doing | rt-F-tail-Agent-retarget-1939 | Old547e proof pin is historical. Recompute actual-home census and active input corrections; no normal merge. | Independent review next | a30e74e901 |
+| F-D135-Agent-retarget | Bind real Agent home source | Luna | Actual a30e home object | merged | Census1939; independent1947 PASS | Actuala30e has41 changed-in-both paths,107 preview hunks; actual7 markers across6paths. No normal merge. | Independent review next | a30e74e901 |
 
-| OPS-canonical-check | Unify fixture author and review checks | Luna | Disk cleanup and source slot | ready | Next sole source return on607535 | Branch-owned exact Ruff/config, unit, compile, scoped diff and negative census. Author and reviewer run identical script. | One independent review next | Source pending |
+| OPS-canonical-check | Unify fixture author and review checks | Luna | Disk cleanup and source slot | review | Author1946; sole review1953 queued | Branch-owned exact Ruff/config, unit, compile, scoped diff and negative census. Author and reviewer run identical script. | One independent review next | Source pending |
+
+| OPS-stale-pins-1948 | Release two unused proof checkouts | Manager route | Host CLEAR and fresh route checks | merged | bin/recycle f7201 and8d2d | Both clean and unused; observed net292MB. Four other referenced targets retained. All source/evidence preserved. | Host1946 CLEAR | No source change |
 
 Runtime producer: Normal e319 helper/tests only; product ab1e step/inverse plus safe diagnostics. Captured core tuple remains a4e016/5e9ad/d8a1/635f.
-core open:425 and REG14 from immutable30693. D134 measurement18455 RUNNING since19:11:28; no newer count or ship credit.
+core open:Prior425/REG14 accounting retained. Actual D13418455 terminal: operator8926PASS190FAIL180ERROR,173subtestsPASS; independent Agent1937 owns exact D54a/core/REG counts. Measurement only, no ship credit.
 Gates: P1/P3/P4/P5 recorded GO. Full P2 NO-GO for element/SWAP. No D59 cut, final build or ZIP.
-Blockers: Agent custody — source1926 PASS607535 retained; new19:46 canonical branch checkscript plus one same-script review now required before Agent E2E. Installer1826 held; reserve unchanged.
+Blockers: Agent custody — canonical1946 PASS64 onb855; sole unchanged-script review1953 queued. Agent18455 terminal; E2E waits finalPASS/check-only/5905580032. Installer1826 held.
 Blockers: SWAP safety — D130 holds WAL recovery and related qualification after classifier refusal1537. No retry, transfer, alternate test or rollback. Existing escalation runtime-20261025T1553Z-D127-safety-refusal.md.
 Blockers: Element — actual32016 FAIL. Retained raw lacks sample chains/counters, independently checked1902. App D127c source return1921 owns last cProfile round; no measured cost author yet.
 Blockers: Final render — genuine E2E/result and installed/receiving maker required before D77 request. Farm core remains dropped.
@@ -481,8 +483,10 @@ Source receipts: D1001914 final42040/testfcd5f follows finite1858 disposition; s
 Safety: D130 and prior D88/D111/retirement refusals held. ORCH-only manager boards/briefs/peers; no manager product/test/pin writes, Git mutations, credentials, upstream push, M5 or permission-file changes.
 Venues: Agent sole genuine E2E venue. Main no heavy or production child. D134 measurement18455 has no ship credit; frozen historical tuples never retargeted. Cancelled control-binding request remains unstarted.
 Later: Shared scalar/compound, Gate3 deferred and graph initial child alias remain visible. No unchanged retry or speculative guard author. D133 installed exact worker paragraph in both docs.
-Disk: Fresh4.629GB before second source review dispatch; cleanup restored admission from4.584GB. Sweep3/compact in progress; no protected or refused target retried. Stop4GB.
-live 3 / cap 3; ready-undispatched 2, canonicalcheck and Runtime private join. Source starts pause for requested guarded disk sweep; target5.2GB, fresh4.71GB.
+Disk: Two host-CLEAR unused pins recycled; observed net292,171,776bytes freed. Four named by open rows retained. Fresh4.908GB; source4.6/stop4GB, cleanup target5.2GB unmet. Sweep3 removed0; compact gzipped1.
+live 3 / cap 3; ready-undispatched 0. Canonicalreview1953, builderreview1949 and Runtimeprivatejoin1952 active/queued. Appreservedportable review withdrawn; no duplicateacceptance.
 INBOX consumed through1463437bytes. Updated 2026-10-25T19:31:53Z.
+
+
 
 

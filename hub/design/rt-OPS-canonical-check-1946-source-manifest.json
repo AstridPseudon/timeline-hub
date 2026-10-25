@@ -1,0 +1,21 @@
+{
+  "schema": "timeline.ops-child-custody.canonical-check.source-manifest.v1",
+  "base_commit": "60753548ebc8e69f3c84fbb28fa2e09b1ca78316",
+  "base_tree": "dd4347a933103bbfc17c3e3237d52ea13ac1f677",
+  "harness_final_commit": "PENDING_HARNESS_COMMIT",
+  "harness_final_tree": "PENDING_HARNESS_TREE",
+  "files": {
+    "ops-child-custody/tests/canonical_check.py": {"mode": "755", "sha256": "d8e47bd0b98990d614ad755f69cd21e74fa72bbe55231c10df020d498e7ed0bc"},
+    "ops-child-custody/tests/e2e_inventory.py": {"mode": "644", "sha256": "1498a1597c058f92176a0d447b372b4791e6af345c479445b9027e0521d75085"},
+    "ops-child-custody/tests/support.py": {"mode": "644", "sha256": "e85b42ac7ffff730166443ed7d081a1a68062b828af3aa5d8e0dd9352afb6581"},
+    "ops-child-custody/e2e-fixtures/tiny/manifest.json": {"mode": "644", "sha256": "cee9435bcd6d522ddb814ef0e0679790b929f73a619dc0dc28be301b55cb68e8"},
+    "ops-child-custody/e2e-fixtures/tiny/makers/parent-0857/make-child-venv": {"mode": "755", "sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39"},
+    "ops-child-custody/e2e-fixtures/tiny/makers/candidate-c3226b/make-child-venv": {"mode": "755", "sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e"}
+  },
+  "runners": {
+    "agent_runner": "/home/user/work/venv-agent/bin/python",
+    "child_python": "/usr/bin/python3.13",
+    "governing_ruff": "/root/.local/bin/ruff 0.16.8",
+    "secondary_ruff": "/home/user/work/venv-agent/bin/ruff 0.12.0"
+  }
+}

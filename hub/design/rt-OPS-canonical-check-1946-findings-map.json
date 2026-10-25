@@ -1,0 +1,25 @@
+{
+  "schema": "timeline.ops-child-custody.canonical-check.findings-map.v1",
+  "historical_records_preserved": true,
+  "author_1908": "source/unit PASS; genuine whole-maker E2E NOTRUN",
+  "independent_1926": "PASS; same source tree; genuine whole-maker E2E NOTRUN",
+  "stopped_duplicate_1933": "preserved as stopped duplicate; not final FAIL",
+  "prior_1903_and_1909": {
+    "1903/new-test-ruff": "fixed and covered by governing Ruff",
+    "1903/malformed-role-early-exception": "fixed; complete census controls pass",
+    "1909/uncaught-wheel-role-shape": "fixed; malformed role controls pass",
+    "1909/uncaught-maker-path-type": "fixed; malformed path controls pass",
+    "1909/missing-required-source-roles": "fixed; required-role controls pass",
+    "1909/ambient-python3-not-censused": "fixed; required-command/interpreter controls pass",
+    "1909/tmpdir-writability-not-censused": "fixed; TMPDIR controls pass"
+  },
+  "historical_maker_eof": [
+    "candidate-c3226b/make-child-venv:1224: new blank line at EOF.",
+    "parent-0857/make-child-venv:1201: new blank line at EOF."
+  ],
+  "remaining": [
+    "harness final SHA/tree pending until worker exit",
+    "independent reviewer must run this exact script unchanged",
+    "genuine Agent-only whole-maker E2E and result review remain NOTRUN"
+  ]
+}

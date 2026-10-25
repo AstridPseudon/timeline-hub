@@ -1,0 +1,3388 @@
+{
+  "automatic_composable_recommendations": [
+    "astrid/installer/service.py",
+    "tests/test_installer_windows_tasks.py",
+    "astrid/packs/rendering/docs/SKILL.md"
+  ],
+  "entries": [
+    {
+      "current_blobs": {
+        "base": "c1e9602b23b1f46ef4b8c089916cff28e3e2a90d",
+        "ours": "8619d6ebdefd8c6f259b53002a6c6a452dc9e3eb",
+        "upstream": "4fef09d77e2655de84f90e5265d6a8bb3cdeb8cf"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -124,6 +124,27 @@"
+        ],
+        "ours": [
+          "@@ -341,0 +342 @@ describe('AcpProcessHost', () => {"
+        ],
+        "upstream": [
+          "@@ -126,0 +127,21 @@ describe('AcpProcessHost', () => {"
+        ]
+      },
+      "historical_classification": {
+        "base_blob": "c1e9602b23b1f46ef4b8c089916cff28e3e2a90d",
+        "merge_tree_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -124,6 +124,27 @@",
+            "reason": "Adds regression coverage for unavailable saved models and new-chat recovery; assertion inputs are behavioral."
+          }
+        ],
+        "ours_blob": "8619d6ebdefd8c6f259b53002a6c6a452dc9e3eb",
+        "ours_hunks": [
+          {
+            "classification": "trivial",
+            "header": "@@ -341,0 +342 @@ describe('AcpProcessHost', () => {",
+            "reason": "One added blank line at EOF only; no code, test predicate, or generated content changed."
+          }
+        ],
+        "path": "astrid/chat/acpProcessHost.test.ts",
+        "upstream_blob": "4fef09d77e2655de84f90e5265d6a8bb3cdeb8cf",
+        "upstream_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -126,0 +127,21 @@ describe('AcpProcessHost', () => {",
+            "reason": "Adds regression coverage for unavailable saved models and new-chat recovery; assertion inputs are behavioral."
+          }
+        ]
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "c1e9602b23b1f46ef4b8c089916cff28e3e2a90d",
+        "ours": "8619d6ebdefd8c6f259b53002a6c6a452dc9e3eb",
+        "upstream": "4fef09d77e2655de84f90e5265d6a8bb3cdeb8cf"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/chat/acpProcessHost.test.ts"
+    },
+    {
+      "current_blobs": {
+        "base": "c410008357d85b695896f0ccb4ae4baeac4b6851",
+        "ours": "971388aa835af637972501e7666a41450b66d1fd",
+        "upstream": "4aa1d7de8c7e123c7b327c4e6201b0a3e842eb2c"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -58,11 +58,15 @@",
+          "@@ -70,6 +74,7 @@",
+          "@@ -78,6 +83,7 @@",
+          "@@ -449,8 +455,12 @@"
+        ],
+        "ours": [
+          "@@ -512,0 +513 @@ export class AcpProcessHost {"
+        ],
+        "upstream": [
+          "@@ -60,0 +61,3 @@ export class AcpProcessHostError extends Error {",
+          "@@ -65,0 +69 @@ export class AcpProcessHostError extends Error {",
+          "@@ -72,0 +77 @@ export class AcpProcessHostError extends Error {",
+          "@@ -80,0 +86 @@ export class AcpProcessHostError extends Error {",
+          "@@ -451,0 +458,4 @@ export class AcpProcessHost {",
+          "@@ -453 +463 @@ export class AcpProcessHost {"
+        ]
+      },
+      "historical_classification": {
+        "base_blob": "c410008357d85b695896f0ccb4ae4baeac4b6851",
+        "merge_tree_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -58,11 +58,15 @@",
+            "reason": "Adds ACP error taxonomy/next-action data and saved-model recovery messaging; callers consume the changed error contract."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -70,6 +74,7 @@",
+            "reason": "Adds ACP error taxonomy/next-action data and saved-model recovery messaging; callers consume the changed error contract."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -78,6 +83,7 @@",
+            "reason": "Adds ACP error taxonomy/next-action data and saved-model recovery messaging; callers consume the changed error contract."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -449,8 +455,12 @@",
+            "reason": "Adds ACP error taxonomy/next-action data and saved-model recovery messaging; callers consume the changed error contract."
+          }
+        ],
+        "ours_blob": "971388aa835af637972501e7666a41450b66d1fd",
+        "ours_hunks": [
+          {
+            "classification": "trivial",
+            "header": "@@ -512,0 +513 @@ export class AcpProcessHost {",
+            "reason": "One added blank line at EOF only; no code, test predicate, or generated content changed."
+          }
+        ],
+        "path": "astrid/chat/acpProcessHost.ts",
+        "upstream_blob": "4aa1d7de8c7e123c7b327c4e6201b0a3e842eb2c",
+        "upstream_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -60,0 +61,3 @@ export class AcpProcessHostError extends Error {",
+            "reason": "Adds ACP error taxonomy/next-action data and saved-model recovery messaging; callers consume the changed error contract."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -65,0 +69 @@ export class AcpProcessHostError extends Error {",
+            "reason": "Adds ACP error taxonomy/next-action data and saved-model recovery messaging; callers consume the changed error contract."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -72,0 +77 @@ export class AcpProcessHostError extends Error {",
+            "reason": "Adds ACP error taxonomy/next-action data and saved-model recovery messaging; callers consume the changed error contract."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -80,0 +86 @@ export class AcpProcessHostError extends Error {",
+            "reason": "Adds ACP error taxonomy/next-action data and saved-model recovery messaging; callers consume the changed error contract."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -451,0 +458,4 @@ export class AcpProcessHost {",
+            "reason": "Adds ACP error taxonomy/next-action data and saved-model recovery messaging; callers consume the changed error contract."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -453 +463 @@ export class AcpProcessHost {",
+            "reason": "Adds ACP error taxonomy/next-action data and saved-model recovery messaging; callers consume the changed error contract."
+          }
+        ]
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "c410008357d85b695896f0ccb4ae4baeac4b6851",
+        "ours": "971388aa835af637972501e7666a41450b66d1fd",
+        "upstream": "4aa1d7de8c7e123c7b327c4e6201b0a3e842eb2c"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/chat/acpProcessHost.ts"
+    },
+    {
+      "current_blobs": {
+        "base": "6b7329a3f6d807305fea46434c68812cbb377cf8",
+        "ours": "90818a91e509a270899dcfff11be7343fee5d06a",
+        "upstream": "455d13f34b4b1c3aa121afbc79066d73163ae3e9"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -7,12 +7,14 @@",
+          "@@ -105,6 +107,7 @@",
+          "@@ -346,7 +349,7 @@",
+          "@@ -380,11 +383,13 @@",
+          "@@ -429,8 +434,11 @@",
+          "@@ -438,7 +446,8 @@",
+          "@@ -450,6 +459,19 @@",
+          "@@ -705,6 +727,8 @@"
+        ],
+        "ours": [
+          "@@ -1032,0 +1033 @@ export function startAcpBridge(config: AstridAcpBridgeConfig): ReturnType<typeof"
+        ],
+        "upstream": [
+          "@@ -9,0 +10 @@ import { getAstridAgentModelCatalog } from './astrid-agent-models.ts';",
+          "@@ -12,0 +14 @@ import { discoverLocalAgents } from './astrid-local-agents.ts';",
+          "@@ -15 +17 @@ import { SharedAcpSessions, sharedSessionModels } from './astrid-shared-acp-sess",
+          "@@ -107,0 +110 @@ type BridgeOptions = {",
+          "@@ -349 +352 @@ function hostError(error: unknown): { status: number; body: JsonRecord } {",
+          "@@ -382,0 +386 @@ export class AstridAcpBridge {",
+          "@@ -387,0 +392 @@ export class AstridAcpBridge {",
+          "@@ -432,2 +437,5 @@ export class AstridAcpBridge {",
+          "@@ -441 +449,2 @@ export class AstridAcpBridge {",
+          "@@ -452,0 +462,13 @@ export class AstridAcpBridge {",
+          "@@ -707,0 +730,2 @@ export class AstridAcpBridge {"
+        ]
+      },
+      "historical_classification": {
+        "base_blob": "6b7329a3f6d807305fea46434c68812cbb377cf8",
+        "merge_tree_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -7,12 +7,14 @@",
+            "reason": "Adds skills/key setup, sign-in/credit/terminal projections, and connection lifecycle behavior; changes HTTP and bridge behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -105,6 +107,7 @@",
+            "reason": "Adds skills/key setup, sign-in/credit/terminal projections, and connection lifecycle behavior; changes HTTP and bridge behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -346,7 +349,7 @@",
+            "reason": "Adds skills/key setup, sign-in/credit/terminal projections, and connection lifecycle behavior; changes HTTP and bridge behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -380,11 +383,13 @@",
+            "reason": "Adds skills/key setup, sign-in/credit/terminal projections, and connection lifecycle behavior; changes HTTP and bridge behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -429,8 +434,11 @@",
+            "reason": "Adds skills/key setup, sign-in/credit/terminal projections, and connection lifecycle behavior; changes HTTP and bridge behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -438,7 +446,8 @@",
+            "reason": "Adds skills/key setup, sign-in/credit/terminal projections, and connection lifecycle behavior; changes HTTP and bridge behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -450,6 +459,19 @@",
+            "reason": "Adds skills/key setup, sign-in/credit/terminal projections, and connection lifecycle behavior; changes HTTP and bridge behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -705,6 +727,8 @@",
+            "reason": "Adds skills/key setup, sign-in/credit/terminal projections, and connection lifecycle behavior; changes HTTP and bridge behavior."
+          }
+        ],
+        "ours_blob": "90818a91e509a270899dcfff11be7343fee5d06a",
+        "ours_hunks": [
+          {
+            "classification": "trivial",
+            "header": "@@ -1032,0 +1033 @@ export function startAcpBridge(config: AstridAcpBridgeConfig): ReturnType<typeof",
+            "reason": "One added blank line at EOF only; no code, test predicate, or generated content changed."
+          }
+        ],
+        "path": "astrid/chat/astrid-acp-bridge.ts",
+        "upstream_blob": "455d13f34b4b1c3aa121afbc79066d73163ae3e9",
+        "upstream_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -9,0 +10 @@ import { getAstridAgentModelCatalog } from './astrid-agent-models.ts';",
+            "reason": "Adds skills/key setup, sign-in/credit/terminal projections, and connection lifecycle behavior; changes HTTP and bridge behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -12,0 +14 @@ import { discoverLocalAgents } from './astrid-local-agents.ts';",
+            "reason": "Adds skills/key setup, sign-in/credit/terminal projections, and connection lifecycle behavior; changes HTTP and bridge behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -15 +17 @@ import { SharedAcpSessions, sharedSessionModels } from './astrid-shared-acp-sess",
+            "reason": "Adds skills/key setup, sign-in/credit/terminal projections, and connection lifecycle behavior; changes HTTP and bridge behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -107,0 +110 @@ type BridgeOptions = {",
+            "reason": "Adds skills/key setup, sign-in/credit/terminal projections, and connection lifecycle behavior; changes HTTP and bridge behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -349 +352 @@ function hostError(error: unknown): { status: number; body: JsonRecord } {",
+            "reason": "Adds skills/key setup, sign-in/credit/terminal projections, and connection lifecycle behavior; changes HTTP and bridge behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -382,0 +386 @@ export class AstridAcpBridge {",
+            "reason": "Adds skills/key setup, sign-in/credit/terminal projections, and connection lifecycle behavior; changes HTTP and bridge behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -387,0 +392 @@ export class AstridAcpBridge {",
+            "reason": "Adds skills/key setup, sign-in/credit/terminal projections, and connection lifecycle behavior; changes HTTP and bridge behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -432,2 +437,5 @@ export class AstridAcpBridge {",
+            "reason": "Adds skills/key setup, sign-in/credit/terminal projections, and connection lifecycle behavior; changes HTTP and bridge behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -441 +449,2 @@ export class AstridAcpBridge {",
+            "reason": "Adds skills/key setup, sign-in/credit/terminal projections, and connection lifecycle behavior; changes HTTP and bridge behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -452,0 +462,13 @@ export class AstridAcpBridge {",
+            "reason": "Adds skills/key setup, sign-in/credit/terminal projections, and connection lifecycle behavior; changes HTTP and bridge behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -707,0 +730,2 @@ export class AstridAcpBridge {",
+            "reason": "Adds skills/key setup, sign-in/credit/terminal projections, and connection lifecycle behavior; changes HTTP and bridge behavior."
+          }
+        ]
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "6b7329a3f6d807305fea46434c68812cbb377cf8",
+        "ours": "90818a91e509a270899dcfff11be7343fee5d06a",
+        "upstream": "455d13f34b4b1c3aa121afbc79066d73163ae3e9"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/chat/astrid-acp-bridge.ts"
+    },
+    {
+      "current_blobs": {
+        "base": "ab398a8f5e6ba1525039b3f93df110f91b6369c0",
+        "ours": "63d5b69eb9b979debac8c371ee2b81e59e59e49b",
+        "upstream": "6bc1c1b8c90ba5bc415e4857159b1df116aaaeca"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -4,7 +4,7 @@",
+          "@@ -126,6 +126,11 @@",
+          "@@ -214,11 +219,14 @@"
+        ],
+        "ours": [
+          "@@ -299,0 +300 @@ test('catalog levels belong only to the model that advertised them and stale sup"
+        ],
+        "upstream": [
+          "@@ -7 +7 @@ import { bridgeTestClient } from './bridge-test-client.ts';",
+          "@@ -128,0 +129,5 @@ test('agents lazily share one bootstrap per ready agent, hide native sessions, a",
+          "@@ -217 +222,4 @@ test('Astrid sign-in preserves keyless model access; unknown auth remains ready'",
+          "@@ -219 +227 @@ test('Astrid sign-in preserves keyless model access; unknown auth remains ready'",
+          "@@ -221 +229 @@ test('Astrid sign-in preserves keyless model access; unknown auth remains ready'"
+        ]
+      },
+      "historical_classification": {
+        "base_blob": "ab398a8f5e6ba1525039b3f93df110f91b6369c0",
+        "merge_tree_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -4,7 +4,7 @@",
+            "reason": "Extends the catalog contract assertions for sign-in, setup steps, credits, terminal metadata, and keyless/unknown states."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -126,6 +126,11 @@",
+            "reason": "Extends the catalog contract assertions for sign-in, setup steps, credits, terminal metadata, and keyless/unknown states."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -214,11 +219,14 @@",
+            "reason": "Extends the catalog contract assertions for sign-in, setup steps, credits, terminal metadata, and keyless/unknown states."
+          }
+        ],
+        "ours_blob": "63d5b69eb9b979debac8c371ee2b81e59e59e49b",
+        "ours_hunks": [
+          {
+            "classification": "trivial",
+            "header": "@@ -299,0 +300 @@ test('catalog levels belong only to the model that advertised them and stale sup",
+            "reason": "One added blank line at EOF only; no code, test predicate, or generated content changed."
+          }
+        ],
+        "path": "astrid/chat/astrid-acp-models.test.ts",
+        "upstream_blob": "6bc1c1b8c90ba5bc415e4857159b1df116aaaeca",
+        "upstream_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -7 +7 @@ import { bridgeTestClient } from './bridge-test-client.ts';",
+            "reason": "Extends the catalog contract assertions for sign-in, setup steps, credits, terminal metadata, and keyless/unknown states."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -128,0 +129,5 @@ test('agents lazily share one bootstrap per ready agent, hide native sessions, a",
+            "reason": "Extends the catalog contract assertions for sign-in, setup steps, credits, terminal metadata, and keyless/unknown states."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -217 +222,4 @@ test('Astrid sign-in preserves keyless model access; unknown auth remains ready'",
+            "reason": "Extends the catalog contract assertions for sign-in, setup steps, credits, terminal metadata, and keyless/unknown states."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -219 +227 @@ test('Astrid sign-in preserves keyless model access; unknown auth remains ready'",
+            "reason": "Extends the catalog contract assertions for sign-in, setup steps, credits, terminal metadata, and keyless/unknown states."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -221 +229 @@ test('Astrid sign-in preserves keyless model access; unknown auth remains ready'",
+            "reason": "Extends the catalog contract assertions for sign-in, setup steps, credits, terminal metadata, and keyless/unknown states."
+          }
+        ]
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "ab398a8f5e6ba1525039b3f93df110f91b6369c0",
+        "ours": "63d5b69eb9b979debac8c371ee2b81e59e59e49b",
+        "upstream": "6bc1c1b8c90ba5bc415e4857159b1df116aaaeca"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/chat/astrid-acp-models.test.ts"
+    },
+    {
+      "current_blobs": {
+        "base": "1599b6c98a1f9df64ba15f5cdafed383a23f0213",
+        "ours": "ec407f3cc8514253042d40632f2be4838de835e7",
+        "upstream": "21fa3c0c168a49d7c5464032c0539063b97ccedf"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -18,6 +18,7 @@",
+          "@@ -26,8 +27,13 @@",
+          "@@ -62,6 +68,17 @@",
+          "@@ -71,9 +88,15 @@",
+          "@@ -144,7 +167,7 @@"
+        ],
+        "ours": [
+          "@@ -288,0 +289 @@ if (args[0] === '--agent-profile-file') {"
+        ],
+        "upstream": [
+          "@@ -20,0 +21 @@ const catalog = {",
+          "@@ -28,0 +30 @@ const catalog = {",
+          "@@ -30,0 +33,4 @@ const catalog = {",
+          "@@ -64,0 +71,11 @@ function readCalls(path: string): unknown[] {",
+          "@@ -73,0 +91 @@ test('agent model catalog maps the CLI response to the safe ACP projection and p",
+          "@@ -76 +94,6 @@ test('agent model catalog maps the CLI response to the safe ACP projection and p",
+          "@@ -147 +170 @@ setInterval(() => {}, 1000);"
+        ]
+      },
+      "historical_classification": {
+        "base_blob": "1599b6c98a1f9df64ba15f5cdafed383a23f0213",
+        "merge_tree_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -18,6 +18,7 @@",
+            "reason": "Changes provider fixture shape, adds slow-start coverage, and changes the timeout predicate; test expectations/goldens must be retained."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -26,8 +27,13 @@",
+            "reason": "Changes provider fixture shape, adds slow-start coverage, and changes the timeout predicate; test expectations/goldens must be retained."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -62,6 +68,17 @@",
+            "reason": "Changes provider fixture shape, adds slow-start coverage, and changes the timeout predicate; test expectations/goldens must be retained."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -71,9 +88,15 @@",
+            "reason": "Changes provider fixture shape, adds slow-start coverage, and changes the timeout predicate; test expectations/goldens must be retained."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -144,7 +167,7 @@",
+            "reason": "Changes provider fixture shape, adds slow-start coverage, and changes the timeout predicate; test expectations/goldens must be retained."
+          }
+        ],
+        "ours_blob": "ec407f3cc8514253042d40632f2be4838de835e7",
+        "ours_hunks": [
+          {
+            "classification": "trivial",
+            "header": "@@ -288,0 +289 @@ if (args[0] === '--agent-profile-file') {",
+            "reason": "One added blank line at EOF only; no code, test predicate, or generated content changed."
+          }
+        ],
+        "path": "astrid/chat/astrid-agent-models.test.ts",
+        "upstream_blob": "21fa3c0c168a49d7c5464032c0539063b97ccedf",
+        "upstream_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -20,0 +21 @@ const catalog = {",
+            "reason": "Changes provider fixture shape, adds slow-start coverage, and changes the timeout predicate; test expectations/goldens must be retained."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -28,0 +30 @@ const catalog = {",
+            "reason": "Changes provider fixture shape, adds slow-start coverage, and changes the timeout predicate; test expectations/goldens must be retained."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -30,0 +33,4 @@ const catalog = {",
+            "reason": "Changes provider fixture shape, adds slow-start coverage, and changes the timeout predicate; test expectations/goldens must be retained."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -64,0 +71,11 @@ function readCalls(path: string): unknown[] {",
+            "reason": "Changes provider fixture shape, adds slow-start coverage, and changes the timeout predicate; test expectations/goldens must be retained."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -73,0 +91 @@ test('agent model catalog maps the CLI response to the safe ACP projection and p",
+            "reason": "Changes provider fixture shape, adds slow-start coverage, and changes the timeout predicate; test expectations/goldens must be retained."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -76 +94,6 @@ test('agent model catalog maps the CLI response to the safe ACP projection and p",
+            "reason": "Changes provider fixture shape, adds slow-start coverage, and changes the timeout predicate; test expectations/goldens must be retained."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -147 +170 @@ setInterval(() => {}, 1000);",
+            "reason": "Changes provider fixture shape, adds slow-start coverage, and changes the timeout predicate; test expectations/goldens must be retained."
+          }
+        ]
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "1599b6c98a1f9df64ba15f5cdafed383a23f0213",
+        "ours": "ec407f3cc8514253042d40632f2be4838de835e7",
+        "upstream": "21fa3c0c168a49d7c5464032c0539063b97ccedf"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/chat/astrid-agent-models.test.ts"
+    },
+    {
+      "current_blobs": {
+        "base": "82ae8f42a1cdeaa26b88285c9bbcb24727b15838",
+        "ours": "3888b90d8fae241f1752f8a833948a25c0fed2c4",
+        "upstream": "6223a477ec1e36750c29034abeefc564ad322fb8"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -12,6 +12,10 @@",
+          "@@ -29,7 +33,8 @@",
+          "@@ -51,6 +56,10 @@"
+        ],
+        "ours": [
+          "@@ -74,0 +75 @@ export async function getAstridAgentModelCatalog(options: AstridModelOptions): P"
+        ],
+        "upstream": [
+          "@@ -14,0 +15,4 @@ type AstridModelSnapshot = {",
+          "@@ -32 +36,2 @@ async function runAstrid(options: AstridModelOptions, args: string[]): Promise<s",
+          "@@ -53,0 +59,4 @@ function modelCatalog(output: string): AcpModelCatalog {"
+        ]
+      },
+      "historical_classification": {
+        "base_blob": "82ae8f42a1cdeaa26b88285c9bbcb24727b15838",
+        "merge_tree_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -12,6 +12,10 @@",
+            "reason": "Expands provider catalog fields and doubles the discovery timeout; changes the model catalog contract and timing behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -29,7 +33,8 @@",
+            "reason": "Expands provider catalog fields and doubles the discovery timeout; changes the model catalog contract and timing behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -51,6 +56,10 @@",
+            "reason": "Expands provider catalog fields and doubles the discovery timeout; changes the model catalog contract and timing behavior."
+          }
+        ],
+        "ours_blob": "3888b90d8fae241f1752f8a833948a25c0fed2c4",
+        "ours_hunks": [
+          {
+            "classification": "trivial",
+            "header": "@@ -74,0 +75 @@ export async function getAstridAgentModelCatalog(options: AstridModelOptions): P",
+            "reason": "One added blank line at EOF only; no code, test predicate, or generated content changed."
+          }
+        ],
+        "path": "astrid/chat/astrid-agent-models.ts",
+        "upstream_blob": "6223a477ec1e36750c29034abeefc564ad322fb8",
+        "upstream_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -14,0 +15,4 @@ type AstridModelSnapshot = {",
+            "reason": "Expands provider catalog fields and doubles the discovery timeout; changes the model catalog contract and timing behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -32 +36,2 @@ async function runAstrid(options: AstridModelOptions, args: string[]): Promise<s",
+            "reason": "Expands provider catalog fields and doubles the discovery timeout; changes the model catalog contract and timing behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -53,0 +59,4 @@ function modelCatalog(output: string): AcpModelCatalog {",
+            "reason": "Expands provider catalog fields and doubles the discovery timeout; changes the model catalog contract and timing behavior."
+          }
+        ]
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "82ae8f42a1cdeaa26b88285c9bbcb24727b15838",
+        "ours": "3888b90d8fae241f1752f8a833948a25c0fed2c4",
+        "upstream": "6223a477ec1e36750c29034abeefc564ad322fb8"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/chat/astrid-agent-models.ts"
+    },
+    {
+      "current_blobs": {
+        "base": "f4258dd781697032459928e1c8b8d732d904d16d",
+        "ours": "e223c10ac00986c5a9a6a3ef58ee23f4ab85cb0f",
+        "upstream": "aa938dd6765c2c752c468d4353858a0f3066a2a0"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -2,7 +2,7 @@",
+          "@@ -101,8 +101,8 @@"
+        ],
+        "ours": [
+          "@@ -121,0 +122 @@ export async function createLocalAgentAcpProcessHost(agent: ExternalAgent, optio"
+        ],
+        "upstream": [
+          "@@ -5 +5 @@ import { ASTRID_ACP_COMMAND, ASTRID_ACP_CONTEXT_SYSTEM_PROMPT, resolveAstridAcpS",
+          "@@ -104,2 +104,2 @@ export async function createLocalAgentAcpProcessHost(agent: ExternalAgent, optio"
+        ]
+      },
+      "historical_classification": {
+        "base_blob": "f4258dd781697032459928e1c8b8d732d904d16d",
+        "merge_tree_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -2,7 +2,7 @@",
+            "reason": "Changes unavailable/sign-in failures to structured ACP errors with recovery commands."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -101,8 +101,8 @@",
+            "reason": "Changes unavailable/sign-in failures to structured ACP errors with recovery commands."
+          }
+        ],
+        "ours_blob": "e223c10ac00986c5a9a6a3ef58ee23f4ab85cb0f",
+        "ours_hunks": [
+          {
+            "classification": "trivial",
+            "header": "@@ -121,0 +122 @@ export async function createLocalAgentAcpProcessHost(agent: ExternalAgent, optio",
+            "reason": "One added blank line at EOF only; no code, test predicate, or generated content changed."
+          }
+        ],
+        "path": "astrid/chat/astrid-local-agent-host.ts",
+        "upstream_blob": "aa938dd6765c2c752c468d4353858a0f3066a2a0",
+        "upstream_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -5 +5 @@ import { ASTRID_ACP_COMMAND, ASTRID_ACP_CONTEXT_SYSTEM_PROMPT, resolveAstridAcpS",
+            "reason": "Changes unavailable/sign-in failures to structured ACP errors with recovery commands."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -104,2 +104,2 @@ export async function createLocalAgentAcpProcessHost(agent: ExternalAgent, optio",
+            "reason": "Changes unavailable/sign-in failures to structured ACP errors with recovery commands."
+          }
+        ]
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "f4258dd781697032459928e1c8b8d732d904d16d",
+        "ours": "e223c10ac00986c5a9a6a3ef58ee23f4ab85cb0f",
+        "upstream": "aa938dd6765c2c752c468d4353858a0f3066a2a0"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/chat/astrid-local-agent-host.ts"
+    },
+    {
+      "current_blobs": {
+        "base": "31c8f3fe305e134b1362c880b58568e632c4f775",
+        "ours": "0fcbe2999d13bf0590644067cbf9fe3aa71b2df1",
+        "upstream": "6e614214b69905a65999f6c0048fc6124d8582e8"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -3,7 +3,7 @@",
+          "@@ -43,7 +43,7 @@",
+          "@@ -53,6 +53,7 @@",
+          "@@ -85,7 +86,7 @@",
+          "@@ -106,12 +107,14 @@",
+          "@@ -131,7 +134,7 @@",
+          "@@ -257,11 +260,13 @@",
+          "@@ -297,11 +302,11 @@",
+          "@@ -310,6 +315,7 @@",
+          "@@ -364,3 +370,62 @@"
+        ],
+        "ours": [
+          "@@ -365,0 +366 @@ test('mixed external-agent authentication states stay associated with their agen"
+        ],
+        "upstream": [
+          "@@ -6 +6 @@ import { join } from 'node:path';",
+          "@@ -46 +46 @@ test('reports Not installed when external CLIs are absent and has no adapter fie",
+          "@@ -55,0 +56 @@ test('reports Not installed when external CLIs are absent and has no adapter fie",
+          "@@ -88 +89 @@ test('Windows discovery finds a user CLI .cmd shim from the registry PATH', asyn",
+          "@@ -109 +110 @@ test('Windows Claude npm shims resolve to the JavaScript entrypoint used by auth",
+          "@@ -114,0 +116,2 @@ test('Windows Claude npm shims resolve to the JavaScript entrypoint used by auth",
+          "@@ -134 +137 @@ test('Windows Codex npm shims run the package entrypoint for auth status and ret",
+          "@@ -259,0 +263 @@ test('reads Claude JSON login status and falls back to text only when JSON is in",
+          "@@ -264,0 +269 @@ test('reads Claude JSON login status and falls back to text only when JSON is in",
+          "@@ -300 +305 @@ if (${JSON.stringify(probe)} === 'claude-text' && args.length === 2) {",
+          "@@ -304 +309 @@ if (${JSON.stringify(probe)} === 'claude-text' && args.length === 2) {",
+          "@@ -312,0 +318 @@ if (${JSON.stringify(probe)} === 'claude-text' && args.length === 2) {",
+          "@@ -365,0 +372,57 @@ test('mixed external-agent authentication states stay associated with their agen"
+        ]
+      },
+      "historical_classification": {
+        "base_blob": "31c8f3fe305e134b1362c880b58568e632c4f775",
+        "merge_tree_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -3,7 +3,7 @@",
+            "reason": "Updates discovery fixtures and adds setup/error/auth-state coverage; predicates are authored behavioral inputs."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -43,7 +43,7 @@",
+            "reason": "Updates discovery fixtures and adds setup/error/auth-state coverage; predicates are authored behavioral inputs."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -53,6 +53,7 @@",
+            "reason": "Updates discovery fixtures and adds setup/error/auth-state coverage; predicates are authored behavioral inputs."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -85,7 +86,7 @@",
+            "reason": "Updates discovery fixtures and adds setup/error/auth-state coverage; predicates are authored behavioral inputs."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -106,12 +107,14 @@",
+            "reason": "Updates discovery fixtures and adds setup/error/auth-state coverage; predicates are authored behavioral inputs."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -131,7 +134,7 @@",
+            "reason": "Updates discovery fixtures and adds setup/error/auth-state coverage; predicates are authored behavioral inputs."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -257,11 +260,13 @@",
+            "reason": "Updates discovery fixtures and adds setup/error/auth-state coverage; predicates are authored behavioral inputs."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -297,11 +302,11 @@",
+            "reason": "Updates discovery fixtures and adds setup/error/auth-state coverage; predicates are authored behavioral inputs."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -310,6 +315,7 @@",
+            "reason": "Updates discovery fixtures and adds setup/error/auth-state coverage; predicates are authored behavioral inputs."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -364,3 +370,62 @@",
+            "reason": "Updates discovery fixtures and adds setup/error/auth-state coverage; predicates are authored behavioral inputs."
+          }
+        ],
+        "ours_blob": "0fcbe2999d13bf0590644067cbf9fe3aa71b2df1",
+        "ours_hunks": [
+          {
+            "classification": "trivial",
+            "header": "@@ -365,0 +366 @@ test('mixed external-agent authentication states stay associated with their agen",
+            "reason": "One added blank line at EOF only; no code, test predicate, or generated content changed."
+          }
+        ],
+        "path": "astrid/chat/astrid-local-agents.test.ts",
+        "upstream_blob": "6e614214b69905a65999f6c0048fc6124d8582e8",
+        "upstream_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -6 +6 @@ import { join } from 'node:path';",
+            "reason": "Updates discovery fixtures and adds setup/error/auth-state coverage; predicates are authored behavioral inputs."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -46 +46 @@ test('reports Not installed when external CLIs are absent and has no adapter fie",
+            "reason": "Updates discovery fixtures and adds setup/error/auth-state coverage; predicates are authored behavioral inputs."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -55,0 +56 @@ test('reports Not installed when external CLIs are absent and has no adapter fie",
+            "reason": "Updates discovery fixtures and adds setup/error/auth-state coverage; predicates are authored behavioral inputs."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -88 +89 @@ test('Windows discovery finds a user CLI .cmd shim from the registry PATH', asyn",
+            "reason": "Updates discovery fixtures and adds setup/error/auth-state coverage; predicates are authored behavioral inputs."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -109 +110 @@ test('Windows Claude npm shims resolve to the JavaScript entrypoint used by auth",
+            "reason": "Updates discovery fixtures and adds setup/error/auth-state coverage; predicates are authored behavioral inputs."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -114,0 +116,2 @@ test('Windows Claude npm shims resolve to the JavaScript entrypoint used by auth",
+            "reason": "Updates discovery fixtures and adds setup/error/auth-state coverage; predicates are authored behavioral inputs."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -134 +137 @@ test('Windows Codex npm shims run the package entrypoint for auth status and ret",
+            "reason": "Updates discovery fixtures and adds setup/error/auth-state coverage; predicates are authored behavioral inputs."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -259,0 +263 @@ test('reads Claude JSON login status and falls back to text only when JSON is in",
+            "reason": "Updates discovery fixtures and adds setup/error/auth-state coverage; predicates are authored behavioral inputs."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -264,0 +269 @@ test('reads Claude JSON login status and falls back to text only when JSON is in",
+            "reason": "Updates discovery fixtures and adds setup/error/auth-state coverage; predicates are authored behavioral inputs."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -300 +305 @@ if (${JSON.stringify(probe)} === 'claude-text' && args.length === 2) {",
+            "reason": "Updates discovery fixtures and adds setup/error/auth-state coverage; predicates are authored behavioral inputs."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -304 +309 @@ if (${JSON.stringify(probe)} === 'claude-text' && args.length === 2) {",
+            "reason": "Updates discovery fixtures and adds setup/error/auth-state coverage; predicates are authored behavioral inputs."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -312,0 +318 @@ if (${JSON.stringify(probe)} === 'claude-text' && args.length === 2) {",
+            "reason": "Updates discovery fixtures and adds setup/error/auth-state coverage; predicates are authored behavioral inputs."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -365,0 +372,57 @@ test('mixed external-agent authentication states stay associated with their agen",
+            "reason": "Updates discovery fixtures and adds setup/error/auth-state coverage; predicates are authored behavioral inputs."
+          }
+        ]
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "31c8f3fe305e134b1362c880b58568e632c4f775",
+        "ours": "0fcbe2999d13bf0590644067cbf9fe3aa71b2df1",
+        "upstream": "6e614214b69905a65999f6c0048fc6124d8582e8"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/chat/astrid-local-agents.test.ts"
+    },
+    {
+      "current_blobs": {
+        "base": "9fe3e410c3d968404a5782f38d38489b889cad3d",
+        "ours": "e7b15de9f5add03f5432efa5737cd918a0e56758",
+        "upstream": "2344c0dafdf56b6baa75b3079aacf92885618d1c"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -3,7 +3,8 @@",
+          "@@ -229,13 +230,13 @@",
+          "@@ -260,7 +261,7 @@",
+          "@@ -285,9 +286,9 @@"
+        ],
+        "ours": [
+          "@@ -297,0 +298 @@ export async function localAgentLaunch(agentId: ExternalAgent, env: NodeJS.Proce"
+        ],
+        "upstream": [
+          "@@ -6 +6,2 @@ import { delimiter, dirname, join, win32 as win32Path } from 'node:path';",
+          "@@ -232 +233 @@ async function claudeStatus(command: string | null, env: NodeJS.ProcessEnv, cwd?",
+          "@@ -238 +239 @@ function choice(id: LocalAgentId, state: LocalAgentChoice['state'], platform: No",
+          "@@ -263 +264 @@ export async function discoverLocalAgents(options: Options = {}): Promise<LocalA",
+          "@@ -288 +289 @@ export async function localAgentLaunch(agentId: ExternalAgent, env: NodeJS.Proce",
+          "@@ -290 +291 @@ export async function localAgentLaunch(agentId: ExternalAgent, env: NodeJS.Proce"
+        ]
+      },
+      "historical_classification": {
+        "base_blob": "9fe3e410c3d968404a5782f38d38489b889cad3d",
+        "merge_tree_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -3,7 +3,8 @@",
+            "reason": "Adds dynamic install/sign-in steps and structured launch errors; changes discovery and launch behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -229,13 +230,13 @@",
+            "reason": "Adds dynamic install/sign-in steps and structured launch errors; changes discovery and launch behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -260,7 +261,7 @@",
+            "reason": "Adds dynamic install/sign-in steps and structured launch errors; changes discovery and launch behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -285,9 +286,9 @@",
+            "reason": "Adds dynamic install/sign-in steps and structured launch errors; changes discovery and launch behavior."
+          }
+        ],
+        "ours_blob": "e7b15de9f5add03f5432efa5737cd918a0e56758",
+        "ours_hunks": [
+          {
+            "classification": "trivial",
+            "header": "@@ -297,0 +298 @@ export async function localAgentLaunch(agentId: ExternalAgent, env: NodeJS.Proce",
+            "reason": "One added blank line at EOF only; no code, test predicate, or generated content changed."
+          }
+        ],
+        "path": "astrid/chat/astrid-local-agents.ts",
+        "upstream_blob": "2344c0dafdf56b6baa75b3079aacf92885618d1c",
+        "upstream_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -6 +6,2 @@ import { delimiter, dirname, join, win32 as win32Path } from 'node:path';",
+            "reason": "Adds dynamic install/sign-in steps and structured launch errors; changes discovery and launch behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -232 +233 @@ async function claudeStatus(command: string | null, env: NodeJS.ProcessEnv, cwd?",
+            "reason": "Adds dynamic install/sign-in steps and structured launch errors; changes discovery and launch behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -238 +239 @@ function choice(id: LocalAgentId, state: LocalAgentChoice['state'], platform: No",
+            "reason": "Adds dynamic install/sign-in steps and structured launch errors; changes discovery and launch behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -263 +264 @@ export async function discoverLocalAgents(options: Options = {}): Promise<LocalA",
+            "reason": "Adds dynamic install/sign-in steps and structured launch errors; changes discovery and launch behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -288 +289 @@ export async function localAgentLaunch(agentId: ExternalAgent, env: NodeJS.Proce",
+            "reason": "Adds dynamic install/sign-in steps and structured launch errors; changes discovery and launch behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -290 +291 @@ export async function localAgentLaunch(agentId: ExternalAgent, env: NodeJS.Proce",
+            "reason": "Adds dynamic install/sign-in steps and structured launch errors; changes discovery and launch behavior."
+          }
+        ]
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "9fe3e410c3d968404a5782f38d38489b889cad3d",
+        "ours": "e7b15de9f5add03f5432efa5737cd918a0e56758",
+        "upstream": "2344c0dafdf56b6baa75b3079aacf92885618d1c"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/chat/astrid-local-agents.ts"
+    },
+    {
+      "current_blobs": {
+        "base": "42c112ac990bc9a65029f84da0f1774012898807",
+        "ours": "e1fe377ff8af99d9de11ec7694c7ea76b1c1d896",
+        "upstream": "f399a7c64eb802f9a1bb118072f2e5039dd3e12c"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -73,6 +73,27 @@"
+        ],
+        "ours": [
+          "@@ -262,0 +263 @@ test('parallel identical drafts survive project version retries without advancin"
+        ],
+        "upstream": [
+          "@@ -75,0 +76,21 @@ test('New assigns Main when the project has no previous Main chat', async () =>"
+        ]
+      },
+      "historical_classification": {
+        "base_blob": "42c112ac990bc9a65029f84da0f1774012898807",
+        "merge_tree_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -73,6 +73,27 @@",
+            "reason": "Adds a failed-create retry predicate for project chat claim cleanup."
+          }
+        ],
+        "ours_blob": "e1fe377ff8af99d9de11ec7694c7ea76b1c1d896",
+        "ours_hunks": [
+          {
+            "classification": "trivial",
+            "header": "@@ -262,0 +263 @@ test('parallel identical drafts survive project version retries without advancin",
+            "reason": "One added blank line at EOF only; no code, test predicate, or generated content changed."
+          }
+        ],
+        "path": "astrid/chat/astrid-project-chat.test.ts",
+        "upstream_blob": "f399a7c64eb802f9a1bb118072f2e5039dd3e12c",
+        "upstream_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -75,0 +76,21 @@ test('New assigns Main when the project has no previous Main chat', async () =>",
+            "reason": "Adds a failed-create retry predicate for project chat claim cleanup."
+          }
+        ]
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "42c112ac990bc9a65029f84da0f1774012898807",
+        "ours": "e1fe377ff8af99d9de11ec7694c7ea76b1c1d896",
+        "upstream": "f399a7c64eb802f9a1bb118072f2e5039dd3e12c"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/chat/astrid-project-chat.test.ts"
+    },
+    {
+      "current_blobs": {
+        "base": "f33578bc20b21df3d356e881b1b149bdb0631ad7",
+        "ours": "13f1b6c0113202ad79242d8d79938f7539069639",
+        "upstream": "c8efeaf87a403c3056b9870a3ac701588c4499ad"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -279,46 +279,53 @@"
+        ],
+        "ours": [
+          "@@ -323,0 +324 @@ export class ProjectChatRegistry {"
+        ],
+        "upstream": [
+          "@@ -282,40 +282,47 @@ export class ProjectChatRegistry {"
+        ]
+      },
+      "historical_classification": {
+        "base_blob": "f33578bc20b21df3d356e881b1b149bdb0631ad7",
+        "merge_tree_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -279,46 +279,53 @@",
+            "reason": "Adds finally-based failed-claim cleanup, including operation ownership; changes session-creation state semantics."
+          }
+        ],
+        "ours_blob": "13f1b6c0113202ad79242d8d79938f7539069639",
+        "ours_hunks": [
+          {
+            "classification": "trivial",
+            "header": "@@ -323,0 +324 @@ export class ProjectChatRegistry {",
+            "reason": "One added blank line at EOF only; no code, test predicate, or generated content changed."
+          }
+        ],
+        "path": "astrid/chat/astrid-project-chat.ts",
+        "upstream_blob": "c8efeaf87a403c3056b9870a3ac701588c4499ad",
+        "upstream_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -282,40 +282,47 @@ export class ProjectChatRegistry {",
+            "reason": "Adds finally-based failed-claim cleanup, including operation ownership; changes session-creation state semantics."
+          }
+        ]
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "f33578bc20b21df3d356e881b1b149bdb0631ad7",
+        "ours": "13f1b6c0113202ad79242d8d79938f7539069639",
+        "upstream": "c8efeaf87a403c3056b9870a3ac701588c4499ad"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/chat/astrid-project-chat.ts"
+    },
+    {
+      "current_blobs": {
+        "base": "fa469335d2bd4636032e1d7b0a643cc358733fa5",
+        "ours": "c3bc7b16d52302212e46470c33adf5219a766001",
+        "upstream": "790c31642a30321273d428d92059aad445e13196"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -175,6 +175,29 @@"
+        ],
+        "ours": [
+          "@@ -345,0 +346 @@ test('queued validation receives metadata accepted by the previous setter', asyn"
+        ],
+        "upstream": [
+          "@@ -175,0 +176,23 @@ test('writer takeover is atomic around turns, retries dedupe, and detach retains"
+        ]
+      },
+      "historical_classification": {
+        "base_blob": "fa469335d2bd4636032e1d7b0a643cc358733fa5",
+        "merge_tree_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -175,6 +175,29 @@",
+            "reason": "Adds rejected-prompt dedupe/retry predicates for same and changed payloads."
+          }
+        ],
+        "ours_blob": "c3bc7b16d52302212e46470c33adf5219a766001",
+        "ours_hunks": [
+          {
+            "classification": "trivial",
+            "header": "@@ -345,0 +346 @@ test('queued validation receives metadata accepted by the previous setter', asyn",
+            "reason": "One added blank line at EOF only; no code, test predicate, or generated content changed."
+          }
+        ],
+        "path": "astrid/chat/astrid-shared-acp-sessions.test.ts",
+        "upstream_blob": "790c31642a30321273d428d92059aad445e13196",
+        "upstream_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -175,0 +176,23 @@ test('writer takeover is atomic around turns, retries dedupe, and detach retains",
+            "reason": "Adds rejected-prompt dedupe/retry predicates for same and changed payloads."
+          }
+        ]
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "fa469335d2bd4636032e1d7b0a643cc358733fa5",
+        "ours": "c3bc7b16d52302212e46470c33adf5219a766001",
+        "upstream": "790c31642a30321273d428d92059aad445e13196"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/chat/astrid-shared-acp-sessions.test.ts"
+    },
+    {
+      "current_blobs": {
+        "base": "aacf7ffe99c4f9ce4f21edbfabc5f67b48be1be2",
+        "ours": "f31f2fc92f7990ad480796316e1f502704c779a1",
+        "upstream": "8e6c944bff0feeff1fb41f0b57904957a233c765"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -326,7 +326,13 @@"
+        ],
+        "ours": [
+          "@@ -427,0 +428 @@ export class SharedAcpSessions {"
+        ],
+        "upstream": [
+          "@@ -329 +329,7 @@ export class SharedAcpSessions {"
+        ]
+      },
+      "historical_classification": {
+        "base_blob": "aacf7ffe99c4f9ce4f21edbfabc5f67b48be1be2",
+        "merge_tree_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -326,7 +326,13 @@",
+            "reason": "Removes failed operations from the dedupe map conditionally; changes retry behavior and ownership of in-flight entries."
+          }
+        ],
+        "ours_blob": "f31f2fc92f7990ad480796316e1f502704c779a1",
+        "ours_hunks": [
+          {
+            "classification": "trivial",
+            "header": "@@ -427,0 +428 @@ export class SharedAcpSessions {",
+            "reason": "One added blank line at EOF only; no code, test predicate, or generated content changed."
+          }
+        ],
+        "path": "astrid/chat/astrid-shared-acp-sessions.ts",
+        "upstream_blob": "8e6c944bff0feeff1fb41f0b57904957a233c765",
+        "upstream_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -329 +329,7 @@ export class SharedAcpSessions {",
+            "reason": "Removes failed operations from the dedupe map conditionally; changes retry behavior and ownership of in-flight entries."
+          }
+        ]
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "aacf7ffe99c4f9ce4f21edbfabc5f67b48be1be2",
+        "ours": "f31f2fc92f7990ad480796316e1f502704c779a1",
+        "upstream": "8e6c944bff0feeff1fb41f0b57904957a233c765"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/chat/astrid-shared-acp-sessions.ts"
+    },
+    {
+      "current_blobs": {
+        "base": "a328096587b3a850011906dcdcb6eb32f37b9eac",
+        "ours": "09ba9f0b007097bae3b5e36fdf4182f508fb2d49",
+        "upstream": "ade24dfe88bc54254fdb8dc581b63229e4dec875"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -2,11 +2,11 @@",
+          "@@ -44,6 +44,10 @@"
+        ],
+        "ours": [
+          "@@ -58,0 +59 @@ export function discoveryProbe(command: string, args: string[], options: ExecFil"
+        ],
+        "upstream": [
+          "@@ -5 +5 @@ import { join } from 'node:path';",
+          "@@ -9 +9 @@ export function discoveryProbe(command: string, args: string[], options: ExecFil",
+          "@@ -46,0 +47,4 @@ export function discoveryProbe(command: string, args: string[], options: ExecFil"
+        ]
+      },
+      "historical_classification": {
+        "base_blob": "a328096587b3a850011906dcdcb6eb32f37b9eac",
+        "merge_tree_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -2,11 +2,11 @@",
+            "reason": "Adds stdin delivery and input-error handling to the process probe API."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -44,6 +44,10 @@",
+            "reason": "Adds stdin delivery and input-error handling to the process probe API."
+          }
+        ],
+        "ours_blob": "09ba9f0b007097bae3b5e36fdf4182f508fb2d49",
+        "ours_hunks": [
+          {
+            "classification": "trivial",
+            "header": "@@ -58,0 +59 @@ export function discoveryProbe(command: string, args: string[], options: ExecFil",
+            "reason": "One added blank line at EOF only; no code, test predicate, or generated content changed."
+          }
+        ],
+        "path": "astrid/chat/discoveryProbe.ts",
+        "upstream_blob": "ade24dfe88bc54254fdb8dc581b63229e4dec875",
+        "upstream_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -5 +5 @@ import { join } from 'node:path';",
+            "reason": "Adds stdin delivery and input-error handling to the process probe API."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -9 +9 @@ export function discoveryProbe(command: string, args: string[], options: ExecFil",
+            "reason": "Adds stdin delivery and input-error handling to the process probe API."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -46,0 +47,4 @@ export function discoveryProbe(command: string, args: string[], options: ExecFil",
+            "reason": "Adds stdin delivery and input-error handling to the process probe API."
+          }
+        ]
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "a328096587b3a850011906dcdcb6eb32f37b9eac",
+        "ours": "09ba9f0b007097bae3b5e36fdf4182f508fb2d49",
+        "upstream": "ade24dfe88bc54254fdb8dc581b63229e4dec875"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/chat/discoveryProbe.ts"
+    },
+    {
+      "current_blobs": {
+        "base": "adc3829fb0332ea5f60f4b2d404170df6d088654",
+        "ours": "5f3dbcb908121958983a3bc3b78d67555246d538",
+        "upstream": "7bd7d4d419d6ce55f8edafe91c214369af781896"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -1,4 +1,5 @@",
+          "@@ -6,7 +7,8 @@",
+          "@@ -15,19 +17,24 @@",
+          "@@ -37,7 +44,7 @@",
+          "@@ -58,6 +65,28 @@",
+          "@@ -80,17 +109,22 @@"
+        ],
+        "ours": [
+          "@@ -114,0 +115 @@ export function isExternalAgentSession(sessionId: string, agent?: typeof EXTERNA"
+        ],
+        "upstream": [
+          "@@ -1,0 +2 @@ import { z } from 'zod';",
+          "@@ -9 +10,2 @@ export const EXTERNAL_AGENT_IDS = LOCAL_AGENT_IDS.filter((id): id is Exclude<Loc",
+          "@@ -18,5 +20,6 @@ export function formatAstridSignInLine(root: string, platform = process.platform",
+          "@@ -24,5 +27,5 @@ function astridSignInLine(): string {",
+          "@@ -30 +33,5 @@ function astridSignInLine(): string {",
+          "@@ -40 +47 @@ export const LOCAL_AGENT_TABLE: Record<LocalAgentId, {",
+          "@@ -60,0 +68,22 @@ export const LOCAL_AGENT_TABLE: Record<LocalAgentId, {",
+          "@@ -83 +112 @@ export const localAgentCatalogSchema = z.object({",
+          "@@ -88,0 +118,5 @@ export const localAgentCatalogSchema = z.object({",
+          "@@ -93 +127 @@ export const localAgentCatalogSchema = z.object({"
+        ]
+      },
+      "historical_classification": {
+        "base_blob": "adc3829fb0332ea5f60f4b2d404170df6d088654",
+        "merge_tree_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -1,4 +1,5 @@",
+            "reason": "Adds install/sign-in steps, dynamic Astrid install-line resolution, and optional catalog contract fields."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -6,7 +7,8 @@",
+            "reason": "Adds install/sign-in steps, dynamic Astrid install-line resolution, and optional catalog contract fields."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -15,19 +17,24 @@",
+            "reason": "Adds install/sign-in steps, dynamic Astrid install-line resolution, and optional catalog contract fields."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -37,7 +44,7 @@",
+            "reason": "Adds install/sign-in steps, dynamic Astrid install-line resolution, and optional catalog contract fields."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -58,6 +65,28 @@",
+            "reason": "Adds install/sign-in steps, dynamic Astrid install-line resolution, and optional catalog contract fields."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -80,17 +109,22 @@",
+            "reason": "Adds install/sign-in steps, dynamic Astrid install-line resolution, and optional catalog contract fields."
+          }
+        ],
+        "ours_blob": "5f3dbcb908121958983a3bc3b78d67555246d538",
+        "ours_hunks": [
+          {
+            "classification": "trivial",
+            "header": "@@ -114,0 +115 @@ export function isExternalAgentSession(sessionId: string, agent?: typeof EXTERNA",
+            "reason": "One added blank line at EOF only; no code, test predicate, or generated content changed."
+          }
+        ],
+        "path": "astrid/chat/localAgents.ts",
+        "upstream_blob": "7bd7d4d419d6ce55f8edafe91c214369af781896",
+        "upstream_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -1,0 +2 @@ import { z } from 'zod';",
+            "reason": "Adds install/sign-in steps, dynamic Astrid install-line resolution, and optional catalog contract fields."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -9 +10,2 @@ export const EXTERNAL_AGENT_IDS = LOCAL_AGENT_IDS.filter((id): id is Exclude<Loc",
+            "reason": "Adds install/sign-in steps, dynamic Astrid install-line resolution, and optional catalog contract fields."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -18,5 +20,6 @@ export function formatAstridSignInLine(root: string, platform = process.platform",
+            "reason": "Adds install/sign-in steps, dynamic Astrid install-line resolution, and optional catalog contract fields."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -24,5 +27,5 @@ function astridSignInLine(): string {",
+            "reason": "Adds install/sign-in steps, dynamic Astrid install-line resolution, and optional catalog contract fields."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -30 +33,5 @@ function astridSignInLine(): string {",
+            "reason": "Adds install/sign-in steps, dynamic Astrid install-line resolution, and optional catalog contract fields."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -40 +47 @@ export const LOCAL_AGENT_TABLE: Record<LocalAgentId, {",
+            "reason": "Adds install/sign-in steps, dynamic Astrid install-line resolution, and optional catalog contract fields."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -60,0 +68,22 @@ export const LOCAL_AGENT_TABLE: Record<LocalAgentId, {",
+            "reason": "Adds install/sign-in steps, dynamic Astrid install-line resolution, and optional catalog contract fields."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -83 +112 @@ export const localAgentCatalogSchema = z.object({",
+            "reason": "Adds install/sign-in steps, dynamic Astrid install-line resolution, and optional catalog contract fields."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -88,0 +118,5 @@ export const localAgentCatalogSchema = z.object({",
+            "reason": "Adds install/sign-in steps, dynamic Astrid install-line resolution, and optional catalog contract fields."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -93 +127 @@ export const localAgentCatalogSchema = z.object({",
+            "reason": "Adds install/sign-in steps, dynamic Astrid install-line resolution, and optional catalog contract fields."
+          }
+        ]
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "adc3829fb0332ea5f60f4b2d404170df6d088654",
+        "ours": "5f3dbcb908121958983a3bc3b78d67555246d538",
+        "upstream": "7bd7d4d419d6ce55f8edafe91c214369af781896"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/chat/localAgents.ts"
+    },
+    {
+      "current_blobs": {
+        "base": "c01412c65eee7ecba641f2ae6f61f22d4b73cc65",
+        "ours": "5de3f13200a72ecbaa5d071af0fc774ac7b09764",
+        "upstream": "7c650c0c4415ceb56387f83f6c149ba8c901eebd"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -12,6 +12,8 @@"
+        ],
+        "ours": [
+          "@@ -20,0 +21 @@ export type AcpModelCatalog = z.infer<typeof modelCatalogSchema>;"
+        ],
+        "upstream": [
+          "@@ -14,0 +15,2 @@ export const modelCatalogSchema = z.strictObject({"
+        ]
+      },
+      "historical_classification": {
+        "base_blob": "c01412c65eee7ecba641f2ae6f61f22d4b73cc65",
+        "merge_tree_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -12,6 +12,8 @@",
+            "reason": "Makes provider usability/login metadata part of the validated model-catalog shape."
+          }
+        ],
+        "ours_blob": "5de3f13200a72ecbaa5d071af0fc774ac7b09764",
+        "ours_hunks": [
+          {
+            "classification": "trivial",
+            "header": "@@ -20,0 +21 @@ export type AcpModelCatalog = z.infer<typeof modelCatalogSchema>;",
+            "reason": "One added blank line at EOF only; no code, test predicate, or generated content changed."
+          }
+        ],
+        "path": "astrid/chat/modelCatalog.ts",
+        "upstream_blob": "7c650c0c4415ceb56387f83f6c149ba8c901eebd",
+        "upstream_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -14,0 +15,2 @@ export const modelCatalogSchema = z.strictObject({",
+            "reason": "Makes provider usability/login metadata part of the validated model-catalog shape."
+          }
+        ]
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "c01412c65eee7ecba641f2ae6f61f22d4b73cc65",
+        "ours": "5de3f13200a72ecbaa5d071af0fc774ac7b09764",
+        "upstream": "7c650c0c4415ceb56387f83f6c149ba8c901eebd"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/chat/modelCatalog.ts"
+    },
+    {
+      "current_blobs": {
+        "base": "c04a5c992684d30378f07c09c977f4af869fe13e",
+        "ours": "945a9bcf8d0dd7ba0237afc0229ac31b3f816f23",
+        "upstream": "011689ea7756036fe71dd725e64de7f0f68a03d9"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -1,4 +1,5 @@",
+          "@@ -7,10 +8,21 @@",
+          "@@ -81,3 +93,50 @@"
+        ],
+        "ours": [
+          "@@ -2 +2 @@",
+          "@@ -4,4 +4,4 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+          "@@ -9 +9 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+          "@@ -14,3 +14,3 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+          "@@ -19 +19 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+          "@@ -22,3 +22,4 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+          "@@ -26 +27,25 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+          "@@ -30,3 +55,3 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+          "@@ -35 +60 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+          "@@ -38 +63 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+          "@@ -40 +65 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+          "@@ -42,7 +67,7 @@ Set the \\`cycles\\` parameter to \\`\"ref\"\\` to resolve cyclical schemas with defs.",
+          "@@ -51 +76 @@ ${c}`;if(/Not logged in|Run `?claude auth login/i.test(a))return\"signed-out\";if(",
+          "@@ -54 +79 @@ ${this.context}",
+          "@@ -56,3 +81,3 @@ ${this.context}"
+        ],
+        "upstream": [
+          "@@ -2 +2 @@",
+          "@@ -4,4 +4,4 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+          "@@ -9 +9 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+          "@@ -14,3 +14,3 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+          "@@ -19 +19 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+          "@@ -22,3 +22,3 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+          "@@ -26 +26 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+          "@@ -30,3 +30,3 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+          "@@ -35 +35 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+          "@@ -38 +38 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+          "@@ -40 +40 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+          "@@ -42,7 +42,7 @@ Set the \\`cycles\\` parameter to \\`\"ref\"\\` to resolve cyclical schemas with defs.",
+          "@@ -51 +51 @@ ${c}`;if(/Not logged in|Run `?claude auth login/i.test(a))return\"signed-out\";if(",
+          "@@ -54 +54 @@ ${this.context}",
+          "@@ -56,3 +56,3 @@ ${this.context}"
+        ]
+      },
+      "historical_classification": {
+        "base_blob": "c04a5c992684d30378f07c09c977f4af869fe13e",
+        "merge_tree_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -1,4 +1,5 @@",
+            "reason": "Generated bundle contains multiple upstream and ours runtime changes; minified hunks cannot be treated as textual resolution."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -7,10 +8,21 @@",
+            "reason": "Generated bundle contains multiple upstream and ours runtime changes; minified hunks cannot be treated as textual resolution."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -81,3 +93,50 @@",
+            "reason": "Generated bundle contains multiple upstream and ours runtime changes; minified hunks cannot be treated as textual resolution."
+          }
+        ],
+        "ours_blob": "945a9bcf8d0dd7ba0237afc0229ac31b3f816f23",
+        "ours_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -2 +2 @@",
+            "reason": "Generated bundle is a semantic artifact; all minified hunks remain lead-owned."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -4,4 +4,4 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "reason": "Generated bundle is a semantic artifact; all minified hunks remain lead-owned."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -9 +9 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "reason": "Generated bundle is a semantic artifact; all minified hunks remain lead-owned."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -14,3 +14,3 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "reason": "Generated bundle is a semantic artifact; all minified hunks remain lead-owned."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -19 +19 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "reason": "Generated bundle is a semantic artifact; all minified hunks remain lead-owned."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -22,3 +22,4 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "reason": "Generated bundle is a semantic artifact; all minified hunks remain lead-owned."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -26 +27,25 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "reason": "Generated bundle is a semantic artifact; all minified hunks remain lead-owned."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -30,3 +55,3 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "reason": "Generated bundle is a semantic artifact; all minified hunks remain lead-owned."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -35 +60 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "reason": "Generated bundle is a semantic artifact; all minified hunks remain lead-owned."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -38 +63 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "reason": "Generated bundle is a semantic artifact; all minified hunks remain lead-owned."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -40 +65 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "reason": "Generated bundle is a semantic artifact; all minified hunks remain lead-owned."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -42,7 +67,7 @@ Set the \\`cycles\\` parameter to \\`\"ref\"\\` to resolve cyclical schemas with defs.",
+            "reason": "Generated bundle is a semantic artifact; all minified hunks remain lead-owned."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -51 +76 @@ ${c}`;if(/Not logged in|Run `?claude auth login/i.test(a))return\"signed-out\";if(",
+            "reason": "Generated bundle is a semantic artifact; all minified hunks remain lead-owned."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -54 +79 @@ ${this.context}",
+            "reason": "Generated bundle is a semantic artifact; all minified hunks remain lead-owned."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -56,3 +81,3 @@ ${this.context}",
+            "reason": "Generated bundle is a semantic artifact; all minified hunks remain lead-owned."
+          }
+        ],
+        "path": "astrid/chat/service.mjs",
+        "upstream_blob": "011689ea7756036fe71dd725e64de7f0f68a03d9",
+        "upstream_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -2 +2 @@",
+            "reason": "Generated bundle contains multiple upstream and ours runtime changes; minified hunks cannot be treated as textual resolution."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -4,4 +4,4 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "reason": "Generated bundle contains multiple upstream and ours runtime changes; minified hunks cannot be treated as textual resolution."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -9 +9 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "reason": "Generated bundle contains multiple upstream and ours runtime changes; minified hunks cannot be treated as textual resolution."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -14,3 +14,3 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "reason": "Generated bundle contains multiple upstream and ours runtime changes; minified hunks cannot be treated as textual resolution."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -19 +19 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "reason": "Generated bundle contains multiple upstream and ours runtime changes; minified hunks cannot be treated as textual resolution."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -22,3 +22,3 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "reason": "Generated bundle contains multiple upstream and ours runtime changes; minified hunks cannot be treated as textual resolution."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -26 +26 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "reason": "Generated bundle contains multiple upstream and ours runtime changes; minified hunks cannot be treated as textual resolution."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -30,3 +30,3 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "reason": "Generated bundle contains multiple upstream and ours runtime changes; minified hunks cannot be treated as textual resolution."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -35 +35 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "reason": "Generated bundle contains multiple upstream and ours runtime changes; minified hunks cannot be treated as textual resolution."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -38 +38 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "reason": "Generated bundle contains multiple upstream and ours runtime changes; minified hunks cannot be treated as textual resolution."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -40 +40 @@ import{randomBytes as ed}from\"crypto\";import{dirname as td,isAbsolute as nd,join",
+            "reason": "Generated bundle contains multiple upstream and ours runtime changes; minified hunks cannot be treated as textual resolution."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -42,7 +42,7 @@ Set the \\`cycles\\` parameter to \\`\"ref\"\\` to resolve cyclical schemas with defs.",
+            "reason": "Generated bundle contains multiple upstream and ours runtime changes; minified hunks cannot be treated as textual resolution."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -51 +51 @@ ${c}`;if(/Not logged in|Run `?claude auth login/i.test(a))return\"signed-out\";if(",
+            "reason": "Generated bundle contains multiple upstream and ours runtime changes; minified hunks cannot be treated as textual resolution."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -54 +54 @@ ${this.context}",
+            "reason": "Generated bundle contains multiple upstream and ours runtime changes; minified hunks cannot be treated as textual resolution."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -56,3 +56,3 @@ ${this.context}",
+            "reason": "Generated bundle contains multiple upstream and ours runtime changes; minified hunks cannot be treated as textual resolution."
+          }
+        ]
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "c04a5c992684d30378f07c09c977f4af869fe13e",
+        "ours": "945a9bcf8d0dd7ba0237afc0229ac31b3f816f23",
+        "upstream": "011689ea7756036fe71dd725e64de7f0f68a03d9"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/chat/service.mjs"
+    },
+    {
+      "current_blobs": {
+        "base": "a498d3e9124331cc00b4e962db82c33462bde225",
+        "ours": "f88e5e44a24981d8ad6a7a4191234b1d8ea15d96",
+        "upstream": "4cc86ad0985733d8776294a6e0c6bc2b45842d1c"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -51,15 +51,16 @@",
+          "@@ -68,6 +69,7 @@"
+        ],
+        "ours": [
+          "@@ -143,0 +144 @@ for (const alreadyEnded of [false, true]) {"
+        ],
+        "upstream": [
+          "@@ -54 +54 @@ for (const bindFails of [false, true]) {",
+          "@@ -55,0 +56 @@ test('chat defaults to an ephemeral port and registers the actual loopback liste",
+          "@@ -62 +63 @@ test('chat defaults to an ephemeral port and registers the actual loopback liste",
+          "@@ -70,0 +72 @@ test('chat defaults to an ephemeral port and registers the actual loopback liste"
+        ]
+      },
+      "historical_classification": {
+        "base_blob": "a498d3e9124331cc00b4e962db82c33462bde225",
+        "merge_tree_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -51,15 +51,16 @@",
+            "reason": "Changes the service startup test to require creation of a missing working directory."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -68,6 +69,7 @@",
+            "reason": "Changes the service startup test to require creation of a missing working directory."
+          }
+        ],
+        "ours_blob": "f88e5e44a24981d8ad6a7a4191234b1d8ea15d96",
+        "ours_hunks": [
+          {
+            "classification": "trivial",
+            "header": "@@ -143,0 +144 @@ for (const alreadyEnded of [false, true]) {",
+            "reason": "One added blank line at EOF only; no code, test predicate, or generated content changed."
+          }
+        ],
+        "path": "astrid/chat/service.test.ts",
+        "upstream_blob": "4cc86ad0985733d8776294a6e0c6bc2b45842d1c",
+        "upstream_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -54 +54 @@ for (const bindFails of [false, true]) {",
+            "reason": "Changes the service startup test to require creation of a missing working directory."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -55,0 +56 @@ test('chat defaults to an ephemeral port and registers the actual loopback liste",
+            "reason": "Changes the service startup test to require creation of a missing working directory."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -62 +63 @@ test('chat defaults to an ephemeral port and registers the actual loopback liste",
+            "reason": "Changes the service startup test to require creation of a missing working directory."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -70,0 +72 @@ test('chat defaults to an ephemeral port and registers the actual loopback liste",
+            "reason": "Changes the service startup test to require creation of a missing working directory."
+          }
+        ]
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "a498d3e9124331cc00b4e962db82c33462bde225",
+        "ours": "f88e5e44a24981d8ad6a7a4191234b1d8ea15d96",
+        "upstream": "4cc86ad0985733d8776294a6e0c6bc2b45842d1c"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/chat/service.test.ts"
+    },
+    {
+      "current_blobs": {
+        "base": "fc30a4eef1dca949e5d09283366bb6a71ac4f651",
+        "ours": "3b6dfa004bcc452d1c55712aa760d81dae85367c",
+        "upstream": "ec6b9ca21483b242fb0c50f55a8309e907644904"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -1,4 +1,5 @@",
+          "@@ -13,6 +14,7 @@"
+        ],
+        "ours": [
+          "@@ -68,0 +69 @@ if (import.meta.main) await runChatService();"
+        ],
+        "upstream": [
+          "@@ -1,0 +2 @@ import { randomBytes } from 'node:crypto';",
+          "@@ -15,0 +17 @@ export async function runChatService(env = process.env, createServer = createAst"
+        ]
+      },
+      "historical_classification": {
+        "base_blob": "fc30a4eef1dca949e5d09283366bb6a71ac4f651",
+        "merge_tree_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -1,4 +1,5 @@",
+            "reason": "Creates the chat working directory before serving; changes startup behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -13,6 +14,7 @@",
+            "reason": "Creates the chat working directory before serving; changes startup behavior."
+          }
+        ],
+        "ours_blob": "3b6dfa004bcc452d1c55712aa760d81dae85367c",
+        "ours_hunks": [
+          {
+            "classification": "trivial",
+            "header": "@@ -68,0 +69 @@ if (import.meta.main) await runChatService();",
+            "reason": "One added blank line at EOF only; no code, test predicate, or generated content changed."
+          }
+        ],
+        "path": "astrid/chat/service.ts",
+        "upstream_blob": "ec6b9ca21483b242fb0c50f55a8309e907644904",
+        "upstream_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -1,0 +2 @@ import { randomBytes } from 'node:crypto';",
+            "reason": "Creates the chat working directory before serving; changes startup behavior."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -15,0 +17 @@ export async function runChatService(env = process.env, createServer = createAst",
+            "reason": "Creates the chat working directory before serving; changes startup behavior."
+          }
+        ]
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "fc30a4eef1dca949e5d09283366bb6a71ac4f651",
+        "ours": "3b6dfa004bcc452d1c55712aa760d81dae85367c",
+        "upstream": "ec6b9ca21483b242fb0c50f55a8309e907644904"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/chat/service.ts"
+    },
+    {
+      "current_blobs": {
+        "base": "faee0ff3e1a1c400e8bdaca212b88fe966ef31cd",
+        "ours": "239587646b1cb0b259d454bc2cc1faa7922b2c7a",
+        "upstream": "402362763963c5858bd1003bce5b26c0cf42fbbd"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -72,6 +72,11 @@",
+          "@@ -551,6 +556,7 @@"
+        ],
+        "ours": [
+          "@@ -189,0 +190,2 @@ def _dispatch_doctor(args: list[str]) -> int:",
+          "@@ -192 +193,0 @@ def _dispatch_doctor(args: list[str]) -> int:"
+        ],
+        "upstream": [
+          "@@ -74,0 +75,5 @@ def _dispatch_media(args: list[str]) -> int:",
+          "@@ -552,0 +558 @@ _TOP_LEVEL_HANDLERS = {"
+        ]
+      },
+      "historical_classification": {
+        "base_blob": "faee0ff3e1a1c400e8bdaca212b88fe966ef31cd",
+        "merge_tree_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -72,6 +72,11 @@",
+            "reason": "Upstream adds the skills route; ours moves RuntimeCLI import outside doctor error handling, changing exception scope."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -551,6 +556,7 @@",
+            "reason": "Upstream adds the skills route; ours moves RuntimeCLI import outside doctor error handling, changing exception scope."
+          }
+        ],
+        "ours_blob": "239587646b1cb0b259d454bc2cc1faa7922b2c7a",
+        "ours_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -189,0 +190,2 @@ def _dispatch_doctor(args: list[str]) -> int:",
+            "reason": "Import relocation changes which failures are handled by the doctor try/except; not whitespace."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -192 +193,0 @@ def _dispatch_doctor(args: list[str]) -> int:",
+            "reason": "Import relocation changes which failures are handled by the doctor try/except; not whitespace."
+          }
+        ],
+        "path": "astrid/core/gateway/dispatch.py",
+        "upstream_blob": "402362763963c5858bd1003bce5b26c0cf42fbbd",
+        "upstream_hunks": [
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -74,0 +75,5 @@ def _dispatch_media(args: list[str]) -> int:",
+            "reason": "Upstream adds the skills route; ours moves RuntimeCLI import outside doctor error handling, changing exception scope."
+          },
+          {
+            "classification": "semantic-intent",
+            "header": "@@ -552,0 +558 @@ _TOP_LEVEL_HANDLERS = {",
+            "reason": "Upstream adds the skills route; ours moves RuntimeCLI import outside doctor error handling, changing exception scope."
+          }
+        ]
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "faee0ff3e1a1c400e8bdaca212b88fe966ef31cd",
+        "ours": "239587646b1cb0b259d454bc2cc1faa7922b2c7a",
+        "upstream": "402362763963c5858bd1003bce5b26c0cf42fbbd"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/core/gateway/dispatch.py"
+    },
+    {
+      "current_blobs": {
+        "base": "da1b528d46e3504e54b3024c16a84a04336986f9",
+        "ours": "f42e84cce1a9dccf50dadd2f53b3c193890b5f4f",
+        "upstream": "9bccdf3fdeb510c687e971930c8f96ec0729f4c3"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -18,6 +18,8 @@",
+          "@@ -104,7 +106,10 @@"
+        ],
+        "ours": [
+          "@@ -279,0 +280 @@ if __name__ == \"__main__\":"
+        ],
+        "upstream": [
+          "@@ -20,0 +21,2 @@ from typing import Any",
+          "@@ -107 +109,4 @@ def _description(pack: str) -> tuple[Path, dict[str, Any]]:"
+        ]
+      },
+      "historical_classification": {
+        "merge_tree": {
+          "category": "S",
+          "hunks": [
+            "@@ -18,6 +18,8 @@",
+            "@@ -104,7 +106,10 @@"
+          ]
+        },
+        "ours": {
+          "T": [
+            "@@ -279,0 +280 @@ if __name__ == \"__main__\":"
+          ]
+        },
+        "path": "astrid/core/generation/gpu_environment.py",
+        "reason": "Upstream makes VibeComfy's revision come from the pinned dependency constant; the live predicate and authored test must be reconciled, not dropped.",
+        "upstream": {
+          "S": [
+            "@@ -20,0 +21,2 @@ from typing import Any",
+            "@@ -107 +109,4 @@ def _description(pack: str) -> tuple[Path, dict[str, Any]]:"
+          ]
+        }
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "da1b528d46e3504e54b3024c16a84a04336986f9",
+        "ours": "f42e84cce1a9dccf50dadd2f53b3c193890b5f4f",
+        "upstream": "9bccdf3fdeb510c687e971930c8f96ec0729f4c3"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/core/generation/gpu_environment.py"
+    },
+    {
+      "current_blobs": {
+        "base": "e28357d09172bce9c09540ae3bf777f6cf280f5a",
+        "ours": "73930778510cb08d5a50f86767ffea0098fc2007",
+        "upstream": "a609940892e8d2507fe77e661a4018f6e9fd5c1e"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -30,6 +30,7 @@",
+          "@@ -510,6 +511,26 @@",
+          "@@ -591,6 +612,7 @@",
+          "@@ -599,6 +621,9 @@",
+          "@@ -640,8 +665,26 @@"
+        ],
+        "ours": [
+          "@@ -171,0 +172,17 @@ class Backend:",
+          "@@ -382,0 +400 @@ class Backend:",
+          "@@ -399,6 +416,0 @@ class Backend:",
+          "@@ -634,0 +647 @@ class Backend:"
+        ],
+        "upstream": [
+          "@@ -32,0 +33 @@ from .core import (",
+          "@@ -500,0 +502,20 @@ class Backend:",
+          "@@ -581,0 +603 @@ class Backend:",
+          "@@ -589,0 +612,3 @@ class Backend:",
+          "@@ -630,0 +656,13 @@ class Backend:",
+          "@@ -634,0 +673,2 @@ class Backend:"
+        ]
+      },
+      "historical_classification": {
+        "merge_tree": {
+          "category": "S",
+          "hunks": [
+            "@@ -30,6 +30,7 @@",
+            "@@ -510,6 +511,26 @@",
+            "@@ -591,6 +612,7 @@",
+            "@@ -599,6 +621,9 @@",
+            "@@ -640,8 +665,26 @@"
+          ]
+        },
+        "ours": {
+          "S": [
+            "@@ -171,0 +172,17 @@ class Backend:",
+            "@@ -382,0 +400 @@ class Backend:",
+            "@@ -399,6 +416,0 @@ class Backend:"
+          ],
+          "T": [
+            "@@ -634,0 +647 @@ class Backend:"
+          ]
+        },
+        "path": "astrid/installer/backend.py",
+        "reason": "Local schema source-pin verification and removal of transitive schema installation must coexist with upstream skill sync and command-shim lifecycle; both alter installer behavior.",
+        "upstream": {
+          "S": [
+            "@@ -32,0 +33 @@ from .core import (",
+            "@@ -500,0 +502,20 @@ class Backend:",
+            "@@ -581,0 +603 @@ class Backend:",
+            "@@ -589,0 +612,3 @@ class Backend:",
+            "@@ -630,0 +656,13 @@ class Backend:",
+            "@@ -634,0 +673,2 @@ class Backend:"
+          ]
+        }
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "e28357d09172bce9c09540ae3bf777f6cf280f5a",
+        "ours": "73930778510cb08d5a50f86767ffea0098fc2007",
+        "upstream": "a609940892e8d2507fe77e661a4018f6e9fd5c1e"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/installer/backend.py"
+    },
+    {
+      "current_blobs": {
+        "base": "2db5d9f8b16f058cd728596e15542653d01c2c10",
+        "ours": "15feb564a12299642b168c3aa6bf9a555bee0716",
+        "upstream": "8b7c68acd64654d46309046c0c3c69d7266d7cf7"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -204,16 +204,16 @@",
+          "@@ -271,6 +271,10 @@",
+          "@@ -300,8 +304,8 @@"
+        ],
+        "ours": [
+          "@@ -309,0 +310 @@ def new_version_id(manifest: dict) -> str:"
+        ],
+        "upstream": [
+          "@@ -207 +206,0 @@ class Installer:",
+          "@@ -208,0 +208 @@ class Installer:",
+          "@@ -215 +214,0 @@ class Installer:",
+          "@@ -216,0 +216 @@ class Installer:",
+          "@@ -273,0 +274,4 @@ class Installer:",
+          "@@ -303 +306,0 @@ class Installer:",
+          "@@ -304,0 +308 @@ class Installer:"
+        ]
+      },
+      "historical_classification": {
+        "merge_tree": {
+          "category": "S",
+          "hunks": [
+            "@@ -204,16 +204,16 @@",
+            "@@ -271,6 +271,10 @@",
+            "@@ -300,8 +304,8 @@"
+          ]
+        },
+        "ours": {
+          "T": [
+            "@@ -309,0 +310 @@ def new_version_id(manifest: dict) -> str:"
+          ]
+        },
+        "path": "astrid/installer/core.py",
+        "reason": "Upstream changes open ordering and best-effort skills synchronization during repair/install/update.",
+        "upstream": {
+          "S": [
+            "@@ -207 +206,0 @@ class Installer:",
+            "@@ -208,0 +208 @@ class Installer:",
+            "@@ -215 +214,0 @@ class Installer:",
+            "@@ -216,0 +216 @@ class Installer:",
+            "@@ -273,0 +274,4 @@ class Installer:",
+            "@@ -303 +306,0 @@ class Installer:",
+            "@@ -304,0 +308 @@ class Installer:"
+          ]
+        }
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "2db5d9f8b16f058cd728596e15542653d01c2c10",
+        "ours": "15feb564a12299642b168c3aa6bf9a555bee0716",
+        "upstream": "8b7c68acd64654d46309046c0c3c69d7266d7cf7"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/installer/core.py"
+    },
+    {
+      "current_blobs": {
+        "base": "c803aadda87f7e9f9b0dd59d6eb020d1993c3d0a",
+        "ours": "2d9b58ea07588c5058b213ee99da9a03926fea5e",
+        "upstream": "6537e27183aee0d09c8c03f10c057b0e307dd415"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -2,11 +2,121 @@"
+        ],
+        "ours": [
+          "@@ -63,0 +64 @@ def install(root: Path) -> tuple[Path, ...]:"
+        ],
+        "upstream": [
+          "@@ -4,0 +5,2 @@ from __future__ import annotations",
+          "@@ -5,0 +8 @@ import os",
+          "@@ -6,0 +10 @@ from pathlib import Path",
+          "@@ -9,0 +14,106 @@ from ..core.util import process as _process"
+        ]
+      },
+      "historical_classification": {
+        "merge_tree": {
+          "category": "S",
+          "hunks": [
+            "@@ -2,11 +2,121 @@"
+          ]
+        },
+        "ours": {
+          "T": [
+            "@@ -63,0 +64 @@ def install(root: Path) -> tuple[Path, ...]:"
+          ]
+        },
+        "path": "astrid/installer/launcher.py",
+        "reason": "The upstream command shim, PATH handling, ownership detection, and removal behavior are executable installer semantics.",
+        "upstream": {
+          "S": [
+            "@@ -4,0 +5,2 @@ from __future__ import annotations",
+            "@@ -5,0 +8 @@ import os",
+            "@@ -6,0 +10 @@ from pathlib import Path",
+            "@@ -9,0 +14,106 @@ from ..core.util import process as _process"
+          ]
+        }
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "c803aadda87f7e9f9b0dd59d6eb020d1993c3d0a",
+        "ours": "2d9b58ea07588c5058b213ee99da9a03926fea5e",
+        "upstream": "6537e27183aee0d09c8c03f10c057b0e307dd415"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/installer/launcher.py"
+    },
+    {
+      "current_blobs": {
+        "base": "3a3c3290ba1fd0a2c68d78b19afab9ab1a8b4359",
+        "ours": "e1ac1cfe00bcad6a40daf1a015b77c4a43548031",
+        "upstream": "0cbf40c60a51b5d62e0db80dfb7030ee6a1e7299"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -1,46 +1,46 @@"
+        ],
+        "ours": [
+          "@@ -49,0 +50 @@"
+        ],
+        "upstream": [
+          "@@ -3 +3 @@",
+          "@@ -5 +5 @@",
+          "@@ -8,3 +8,3 @@",
+          "@@ -17,3 +17,3 @@",
+          "@@ -25,3 +25,3 @@",
+          "@@ -33,3 +33,3 @@",
+          "@@ -41,3 +41,3 @@"
+        ]
+      },
+      "historical_classification": {
+        "merge_tree": {
+          "category": "S",
+          "hunks": [
+            "@@ -1,46 +1,46 @@"
+          ]
+        },
+        "ours": {
+          "T": [
+            "@@ -49,0 +50 @@"
+          ]
+        },
+        "path": "astrid/installer/omp/recipe.json",
+        "reason": "All upstream changes replace the OMP release, lock digest, native URLs, hashes, SRI, and filenames.",
+        "upstream": {
+          "S": [
+            "@@ -3 +3 @@",
+            "@@ -5 +5 @@",
+            "@@ -8,3 +8,3 @@",
+            "@@ -17,3 +17,3 @@",
+            "@@ -25,3 +25,3 @@",
+            "@@ -33,3 +33,3 @@",
+            "@@ -41,3 +41,3 @@"
+          ]
+        }
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "3a3c3290ba1fd0a2c68d78b19afab9ab1a8b4359",
+        "ours": "e1ac1cfe00bcad6a40daf1a015b77c4a43548031",
+        "upstream": "0cbf40c60a51b5d62e0db80dfb7030ee6a1e7299"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/installer/omp/recipe.json"
+    },
+    {
+      "current_blobs": {
+        "base": "2974b81ddc0f7213d1a30a1e3354b5e577dc32b6",
+        "ours": "aaa5c8cb524a385cdb7b9b811d5ab9e5e9d84853",
+        "upstream": "a3aa8e5ba45e98e3f124b909541ce8683a68fd22"
+      },
+      "current_hunks": {
+        "merge_tree": [],
+        "ours": [
+          "@@ -113,2 +113,4 @@ def render(system: str, version: Version, data: Path, log: Path, *, user: str =",
+          "@@ -299,0 +302 @@ class Service:"
+        ],
+        "upstream": [
+          "@@ -113,2 +113,4 @@ def render(system: str, version: Version, data: Path, log: Path, *, user: str ="
+        ]
+      },
+      "current_source_fact": "Current ours body change is byte-identical to current upstream body; ours additionally has one EOF blank-line change. The current merge preview emits no textual conflict hunk for the body.",
+      "historical_classification": {
+        "merge_tree": {
+          "category": "S",
+          "hunks": [
+            "@@ -110,8 +110,10 @@"
+          ]
+        },
+        "ours": {
+          "T": [
+            "@@ -299,0 +300 @@ class Service:"
+          ]
+        },
+        "path": "astrid/installer/service.py",
+        "reason": "Removing the XML encoding declaration changes the Windows Task Scheduler registration payload and its authored predicate.",
+        "upstream": {
+          "S": [
+            "@@ -113,2 +113,4 @@ def render(system: str, version: Version, data: Path, log: Path, *, user: str ="
+          ]
+        }
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": false,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "2974b81ddc0f7213d1a30a1e3354b5e577dc32b6",
+        "ours": "a916575d476a7dc60501151ad824aa778683cb5b",
+        "upstream": "a3aa8e5ba45e98e3f124b909541ce8683a68fd22"
+      },
+      "old_reuse_status": "partial-reuse-upstream-base-only",
+      "path": "astrid/installer/service.py",
+      "recommendation": "automatically composable after preserving the shared upstream body and treating EOF whitespace separately; no new product-intent choice from current bytes."
+    },
+    {
+      "current_blobs": {
+        "base": "868f7179bc673e67484180c76ae065316c2ce051",
+        "ours": "8a456b340050be5eff7678cbd5db9645f79e4fb9",
+        "upstream": "3efcc8dfd64b24eb7e79023ed95886af86466252"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -20,7 +20,7 @@",
+          "@@ -317,7 +317,7 @@",
+          "@@ -388,7 +388,7 @@"
+        ],
+        "ours": [
+          "@@ -517,0 +518 @@ def install_tools(manifest: dict, root: Path, target: str, run) -> dict[str, str"
+        ],
+        "upstream": [
+          "@@ -23 +23 @@ FILTERS = {\"ebur128\", \"silencedetect\", \"astats\", \"signalstats\", \"blackdetect\",",
+          "@@ -320 +320 @@ def load_omp_recipe() -> dict:",
+          "@@ -391 +391 @@ def _install_omp_source(selected: dict, recipe: dict, root: Path, target: str, r"
+        ]
+      },
+      "historical_classification": {
+        "merge_tree": {
+          "category": "S",
+          "hunks": [
+            "@@ -20,7 +20,7 @@",
+            "@@ -317,7 +317,7 @@",
+            "@@ -388,7 +388,7 @@"
+          ]
+        },
+        "ours": {
+          "T": [
+            "@@ -517,0 +518 @@ def install_tools(manifest: dict, root: Path, target: str, run) -> dict[str, str"
+          ]
+        },
+        "path": "astrid/installer/tools.py",
+        "reason": "The default OMP version, recipe acceptance, and native ABI probe change executable install behavior.",
+        "upstream": {
+          "S": [
+            "@@ -23 +23 @@ FILTERS = {\"ebur128\", \"silencedetect\", \"astats\", \"signalstats\", \"blackdetect\",",
+            "@@ -320 +320 @@ def load_omp_recipe() -> dict:",
+            "@@ -391 +391 @@ def _install_omp_source(selected: dict, recipe: dict, root: Path, target: str, r"
+          ]
+        }
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "868f7179bc673e67484180c76ae065316c2ce051",
+        "ours": "8a456b340050be5eff7678cbd5db9645f79e4fb9",
+        "upstream": "3efcc8dfd64b24eb7e79023ed95886af86466252"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/installer/tools.py"
+    },
+    {
+      "current_blobs": {
+        "base": "f5c18de30093a3013dcf8c9951445f25d55e7ef2",
+        "ours": "7dee1d8c84afc9a1f8b15150f55db0642d2be142",
+        "upstream": "715b37ce9b3d10dda3fd0a1c048967e86ffd3249"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -535,8 +535,8 @@"
+        ],
+        "ours": [
+          "@@ -176,27 +176,28 @@ lane.",
+          "@@ -212,2 +213 @@ Use `timelines log <timeline> --project <project> --verify --json` to verify the",
+          "@@ -216,7 +216,16 @@ SDK checkout operations:",
+          "@@ -225,9 +234,47 @@ python3 -m astrid timelines publish <timeline> --project <project> -m \"<what cha",
+          "@@ -287,11 +334,16 @@ Use this loop for every inspection or edit:",
+          "@@ -307,4 +359,6 @@ The short agent preamble is:",
+          "@@ -345,2 +399,2 @@ unregistered top-level `config.structure` is invalid. These maps are retained",
+          "@@ -353,4 +407,4 @@ shared shot metadata.",
+          "@@ -359 +413,3 @@ coordinator-issued target as a detached bundle. The target's",
+          "@@ -361,24 +417,2 @@ assert shown.ok",
+          "@@ -387,6 +421,5 @@ receipt = bound.publish(work, idempotency_key=frozen[\"candidate_digest\"])",
+          "@@ -396,2 +429,2 @@ report = []",
+          "@@ -407,5 +440 @@ for placement in work[\"placements\"]:",
+          "@@ -414,3 +443,3 @@ bound.validate(work)",
+          "@@ -654 +683 @@ that import/runtime capability as unavailable rather than inventing it.",
+          "@@ -657,5 +686,2 @@ Use the same pinned parent composition for direct edits and code-driven batch",
+          "@@ -664,5 +690 @@ supported edits, use ordinary Python against the detached same-schema bundle:",
+          "@@ -670,3 +692,5 @@ from astrid.sdk.authoring_bundle import (",
+          "@@ -674,6 +697,0 @@ candidate = open_authoring_bundle(",
+          "@@ -682,21 +700,21 @@ publication = publish_authoring_candidate(candidate, writer, idempotency_key=run",
+          "@@ -714,5 +732,5 @@ Do not reconstruct or save a legacy whole-document `config`/`registry` payload",
+          "@@ -736,2 +754,6 @@ project-level shot records. They do not rewrite a timeline document or replace",
+          "@@ -764,3 +786,4 @@ Inspect its detached plan and diff before deciding whether to apply it. It does",
+          "@@ -779 +802,2 @@ reconciliation, never substitution of the latest text.",
+          "@@ -786 +810 @@ python3 scripts/timeline_document.py check --file /tmp/edit.json",
+          "@@ -788 +812 @@ python3 -m astrid timelines script <timeline> --project <project> --json",
+          "@@ -791,0 +816,5 @@ python3 -m astrid timelines script <timeline> --project <project> --revision <pa",
+          "@@ -920,4 +949,4 @@ composition without requiring a video render; use `rendering.render` when an"
+        ],
+        "upstream": [
+          "@@ -509,2 +509,2 @@ crop, effects, or appearance in the composition. Use the installed Astrid"
+        ]
+      },
+      "historical_classification": {
+        "merge_tree": {
+          "category": "T",
+          "hunks": [
+            "@@ -535,8 +535,8 @@"
+          ]
+        },
+        "ours": {
+          "S": [
+            "@@ -176,27 +176,28 @@ lane.",
+            "@@ -212,2 +213 @@ Use `timelines log <timeline> --project <project> --verify --json` to verify the",
+            "@@ -216,7 +216,16 @@ SDK checkout operations:",
+            "@@ -225,9 +234,47 @@ python3 -m astrid timelines publish <timeline> --project <project> -m \"<what cha",
+            "@@ -287,11 +334,16 @@ Use this loop for every inspection or edit:",
+            "@@ -307,4 +359,6 @@ The short agent preamble is:",
+            "@@ -345,2 +399,2 @@ unregistered top-level `config.structure` is invalid. These maps are retained",
+            "@@ -353,4 +407,4 @@ shared shot metadata.",
+            "@@ -359 +413,3 @@ coordinator-issued target as a detached bundle. The target's",
+            "@@ -361,24 +417,2 @@ assert shown.ok",
+            "@@ -387,6 +421,5 @@ receipt = bound.publish(work, idempotency_key=frozen[\"candidate_digest\"])",
+            "@@ -396,2 +429,2 @@ report = []",
+            "@@ -407,5 +440 @@ for placement in work[\"placements\"]:",
+            "@@ -414,3 +443,3 @@ bound.validate(work)",
+            "@@ -654 +683 @@ that import/runtime capability as unavailable rather than inventing it.",
+            "@@ -657,5 +686,2 @@ Use the same pinned parent composition for direct edits and code-driven batch",
+            "@@ -664,5 +690 @@ supported edits, use ordinary Python against the detached same-schema bundle:",
+            "@@ -670,3 +692,5 @@ from astrid.sdk.authoring_bundle import (",
+            "@@ -674,6 +697,0 @@ candidate = open_authoring_bundle(",
+            "@@ -682,21 +700,21 @@ publication = publish_authoring_candidate(candidate, writer, idempotency_key=run",
+            "@@ -714,5 +732,5 @@ Do not reconstruct or save a legacy whole-document `config`/`registry` payload",
+            "@@ -736,2 +754,6 @@ project-level shot records. They do not rewrite a timeline document or replace",
+            "@@ -764,3 +786,4 @@ Inspect its detached plan and diff before deciding whether to apply it. It does",
+            "@@ -779 +802,2 @@ reconciliation, never substitution of the latest text.",
+            "@@ -786 +810 @@ python3 scripts/timeline_document.py check --file /tmp/edit.json",
+            "@@ -788 +812 @@ python3 -m astrid timelines script <timeline> --project <project> --json",
+            "@@ -791,0 +816,5 @@ python3 -m astrid timelines script <timeline> --project <project> --revision <pa",
+            "@@ -920,4 +949,4 @@ composition without requiring a video render; use `rendering.render` when an"
+          ]
+        },
+        "path": "astrid/packs/rendering/docs/SKILL.md",
+        "reason": "The upstream wording is a direct documentation-only replacement and is the sole ready trivial resolution. All local timeline-session/outbox guidance is semantic Agent core state and is preserved.",
+        "upstream": {
+          "T": [
+            "@@ -509,2 +509,2 @@ crop, effects, or appearance in the composition. Use the installed Astrid"
+          ]
+        }
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "f5c18de30093a3013dcf8c9951445f25d55e7ef2",
+        "ours": "7dee1d8c84afc9a1f8b15150f55db0642d2be142",
+        "upstream": "715b37ce9b3d10dda3fd0a1c048967e86ffd3249"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/packs/rendering/docs/SKILL.md"
+    },
+    {
+      "current_blobs": {
+        "base": "e553ad26f259f64b9723b7c35551b5dc539ee7b6",
+        "ours": "3242b3bedb504c636b1486943aef7626fe5986c4",
+        "upstream": "1eb15b7c4b5ba5c92a1882953d0f728d8d928880"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -12,8 +12,7 @@"
+        ],
+        "ours": [
+          "@@ -30,0 +31 @@"
+        ],
+        "upstream": [
+          "@@ -15,2 +15 @@"
+        ]
+      },
+      "historical_classification": {
+        "merge_tree": {
+          "category": "S",
+          "hunks": [
+            "@@ -12,8 +12,7 @@"
+          ]
+        },
+        "ours": {
+          "T": [
+            "@@ -30,0 +31 @@"
+          ]
+        },
+        "path": "astrid/packs/vibecomfy/environment.windows-nvidia.json",
+        "reason": "Removing the file revision relies on the runtime dependency constant and changes the live environment predicate.",
+        "upstream": {
+          "S": [
+            "@@ -15,2 +15 @@"
+          ]
+        }
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "e553ad26f259f64b9723b7c35551b5dc539ee7b6",
+        "ours": "3242b3bedb504c636b1486943aef7626fe5986c4",
+        "upstream": "1eb15b7c4b5ba5c92a1882953d0f728d8d928880"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "astrid/packs/vibecomfy/environment.windows-nvidia.json"
+    },
+    {
+      "current_blobs": {
+        "base": "726609bfa437190c051e9023a645160b5fb0310e",
+        "ours": "7e425adf1c8eb666a462d4961927ddd6ce64be68",
+        "upstream": "e4ade615a2b8cd010884248a6acb61ec8eac64d7"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -1,67 +1,161 @@"
+        ],
+        "ours": [
+          "@@ -66,0 +67 @@ The live installer qualification also used this exact producer commit locally. I"
+        ],
+        "upstream": [
+          "@@ -3,3 +3,18 @@",
+          "@@ -9 +24 @@ The fixed commit is `9e282751c0059e37d2f6fbc14ffa0b450710bd23`, based on `9962a4",
+          "@@ -12,3 +27,5 @@ Use a clean clone of `peteromallet/oh-my-pi` that contains base commit `9962a46d",
+          "@@ -17 +34,3 @@ git show -s --format='%H%n%T' 9e282751c0059e37d2f6fbc14ffa0b450710bd23",
+          "@@ -20 +39 @@ The first command must show `9e282751c0059e37d2f6fbc14ffa0b450710bd23 refs/heads",
+          "@@ -23 +42,3 @@ git push origin 9e282751c0059e37d2f6fbc14ffa0b450710bd23:refs/heads/astrid-acp-s",
+          "@@ -27 +48,3 @@ Verify the commit is available from GitHub before changing or deploying the app.",
+          "@@ -30,4 +53,8 @@ Verify the commit is available from GitHub before changing or deploying the app.",
+          "@@ -38 +65,11 @@ Verify the commit is available from GitHub before changing or deploying the app.",
+          "@@ -42 +79,5 @@ Keep the app deployment gate closed until GitHub serves that commit and the app",
+          "@@ -45 +86 @@ Use Bun **1.3.14**. The reviewed fork uses the unchanged frozen Bun lock with SH",
+          "@@ -50 +91,3 @@ sha256sum bun.lock",
+          "@@ -54,2 +97,2 @@ native_scratch=\"$(mktemp -d)\"",
+          "@@ -60 +103,2 @@ rm -rf \"$native_scratch\"",
+          "@@ -64 +108,11 @@ sha256sum bun.lock",
+          "@@ -66 +120,37 @@ The latest run passed **67 tests, 0 failed, 316 assertions across two files in 1"
+        ]
+      },
+      "historical_classification": {
+        "merge_tree": {
+          "category": "S",
+          "hunks": [
+            "@@ -1,67 +1,161 @@"
+          ]
+        },
+        "ours": {
+          "T": [
+            "@@ -66,0 +67 @@ The live installer qualification also used this exact producer commit locally. I"
+          ]
+        },
+        "path": "docs/install/OMP-LANDING.md",
+        "reason": "The release guide changes the fork base/ref/SHA, deployment gate, native qualification, and commit ledger; it is operational contract, not prose-only context.",
+        "upstream": {
+          "S": [
+            "@@ -3,3 +3,18 @@",
+            "@@ -9 +24 @@ The fixed commit is `9e282751c0059e37d2f6fbc14ffa0b450710bd23`, based on `9962a4",
+            "@@ -12,3 +27,5 @@ Use a clean clone of `peteromallet/oh-my-pi` that contains base commit `9962a46d",
+            "@@ -17 +34,3 @@ git show -s --format='%H%n%T' 9e282751c0059e37d2f6fbc14ffa0b450710bd23",
+            "@@ -20 +39 @@ The first command must show `9e282751c0059e37d2f6fbc14ffa0b450710bd23 refs/heads",
+            "@@ -23 +42,3 @@ git push origin 9e282751c0059e37d2f6fbc14ffa0b450710bd23:refs/heads/astrid-acp-s",
+            "@@ -27 +48,3 @@ Verify the commit is available from GitHub before changing or deploying the app.",
+            "@@ -30,4 +53,8 @@ Verify the commit is available from GitHub before changing or deploying the app.",
+            "@@ -38 +65,11 @@ Verify the commit is available from GitHub before changing or deploying the app.",
+            "@@ -42 +79,5 @@ Keep the app deployment gate closed until GitHub serves that commit and the app",
+            "@@ -45 +86 @@ Use Bun **1.3.14**. The reviewed fork uses the unchanged frozen Bun lock with SH",
+            "@@ -50 +91,3 @@ sha256sum bun.lock",
+            "@@ -54,2 +97,2 @@ native_scratch=\"$(mktemp -d)\"",
+            "@@ -60 +103,2 @@ rm -rf \"$native_scratch\"",
+            "@@ -64 +108,11 @@ sha256sum bun.lock",
+            "@@ -66 +120,37 @@ The latest run passed **67 tests, 0 failed, 316 assertions across two files in 1"
+          ]
+        }
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "726609bfa437190c051e9023a645160b5fb0310e",
+        "ours": "7e425adf1c8eb666a462d4961927ddd6ce64be68",
+        "upstream": "e4ade615a2b8cd010884248a6acb61ec8eac64d7"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "docs/install/OMP-LANDING.md"
+    },
+    {
+      "current_blobs": {
+        "base": "99f72358b32f7caad7732714f0a8c6bfabe61381",
+        "ours": "1cd0d382bdc335c17d63a18f1a91a8ab3981e66b",
+        "upstream": "24ebff2bab996fd09401b5cd3bcc0bdfffff7273"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -25,8 +25,10 @@"
+        ],
+        "ours": [
+          "@@ -71,0 +72 @@ The app launcher no longer owns a chat process or its credential."
+        ],
+        "upstream": [
+          "@@ -28,2 +28,4 @@ manifest field. It names either an exact npm package and version or a fork"
+        ]
+      },
+      "historical_classification": {
+        "merge_tree": {
+          "category": "S",
+          "hunks": [
+            "@@ -25,8 +25,10 @@"
+          ]
+        },
+        "ours": {
+          "T": [
+            "@@ -71,0 +72 @@ The app launcher no longer owns a chat process or its credential."
+          ]
+        },
+        "path": "docs/reference/services.md",
+        "reason": "The documented default OMP producer changes from the old published version to 18.12.6 and affects install expectations.",
+        "upstream": {
+          "S": [
+            "@@ -28,2 +28,4 @@ manifest field. It names either an exact npm package and version or a fork"
+          ]
+        }
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "99f72358b32f7caad7732714f0a8c6bfabe61381",
+        "ours": "1cd0d382bdc335c17d63a18f1a91a8ab3981e66b",
+        "upstream": "24ebff2bab996fd09401b5cd3bcc0bdfffff7273"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "docs/reference/services.md"
+    },
+    {
+      "current_blobs": {
+        "base": "c54152de6586cbf60daebb83264a9dfb4d66def8",
+        "ours": "fbcfcddc4c0276b8f3418180ebe4f31e8f693c26",
+        "upstream": "df416ca4ed5f82bf30251191239e26834ce1dd5e"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -396,7 +396,7 @@",
+          "@@ -585,15 +585,18 @@"
+        ],
+        "ours": [
+          "@@ -649,0 +650 @@ These are known. Report what you see, but don't stop testing for them."
+        ],
+        "upstream": [
+          "@@ -399 +399 @@ Record its title and a sentence you can find again.",
+          "@@ -588,9 +588,12 @@ These are known. Report what you see, but don't stop testing for them."
+        ]
+      },
+      "historical_classification": {
+        "merge_tree": {
+          "category": "S",
+          "hunks": [
+            "@@ -396,7 +396,7 @@",
+            "@@ -585,15 +585,18 @@"
+          ]
+        },
+        "ours": {
+          "T": [
+            "@@ -649,0 +650 @@ These are known. Report what you see, but don't stop testing for them."
+          ]
+        },
+        "path": "docs/testing/TESTING.md",
+        "reason": "The tester guide changes the expected OMP fallback, known-gap interpretation, and qualification/deployment claims.",
+        "upstream": {
+          "S": [
+            "@@ -399 +399 @@ Record its title and a sentence you can find again.",
+            "@@ -588,9 +588,12 @@ These are known. Report what you see, but don't stop testing for them."
+          ]
+        }
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "c54152de6586cbf60daebb83264a9dfb4d66def8",
+        "ours": "fbcfcddc4c0276b8f3418180ebe4f31e8f693c26",
+        "upstream": "df416ca4ed5f82bf30251191239e26834ce1dd5e"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "docs/testing/TESTING.md"
+    },
+    {
+      "current_blobs": {
+        "base": "b822d323bfa0f017ad13618e47758e42d1119aeb",
+        "ours": "277031f1d06d5c34a7f8ce65986697e92602e99d",
+        "upstream": "b1d630b5f487f37aa50ff8f8dcd22b8688f45e5d"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -1,38 +1,24 @@",
+          "@@ -45,6 +31,8 @@",
+          "@@ -56,40 +44,19 @@",
+          "@@ -109,10 +76,8 @@"
+        ],
+        "ours": [
+          "@@ -119,0 +120 @@ if __name__ == \"__main__\":"
+        ],
+        "upstream": [
+          "@@ -2 +2 @@",
+          "@@ -5 +5 @@ python scripts/refresh_omp_recipe.py --producer-repo /path/to/oh-my-pi \\",
+          "@@ -7,2 +7,2 @@ python scripts/refresh_omp_recipe.py --producer-repo /path/to/oh-my-pi \\",
+          "@@ -15 +14,0 @@ import base64",
+          "@@ -19 +17,0 @@ import subprocess",
+          "@@ -21 +18,0 @@ import tarfile",
+          "@@ -25,11 +21,0 @@ from pathlib import Path",
+          "@@ -47,0 +34,2 @@ def main() -> None:",
+          "@@ -59,26 +47,5 @@ def main() -> None:",
+          "@@ -87 +54 @@ def main() -> None:",
+          "@@ -90 +57 @@ def main() -> None:",
+          "@@ -92 +59 @@ def main() -> None:",
+          "@@ -112 +78,0 @@ def main() -> None:",
+          "@@ -114,2 +80 @@ def main() -> None:"
+        ]
+      },
+      "historical_classification": {
+        "merge_tree": {
+          "category": "S",
+          "hunks": [
+            "@@ -1,38 +1,24 @@",
+            "@@ -45,6 +31,8 @@",
+            "@@ -56,40 +44,19 @@",
+            "@@ -109,10 +76,8 @@"
+          ]
+        },
+        "ours": {
+          "T": [
+            "@@ -119,0 +120 @@ if __name__ == \"__main__\":"
+          ]
+        },
+        "path": "scripts/refresh_omp_recipe.py",
+        "reason": "The upstream script abandons downstream patch generation and emits a different reviewed build closure; this changes source acquisition and recipe semantics.",
+        "upstream": {
+          "S": [
+            "@@ -2 +2 @@",
+            "@@ -5 +5 @@ python scripts/refresh_omp_recipe.py --producer-repo /path/to/oh-my-pi \\",
+            "@@ -7,2 +7,2 @@ python scripts/refresh_omp_recipe.py --producer-repo /path/to/oh-my-pi \\",
+            "@@ -15 +14,0 @@ import base64",
+            "@@ -19 +17,0 @@ import subprocess",
+            "@@ -21 +18,0 @@ import tarfile",
+            "@@ -25,11 +21,0 @@ from pathlib import Path",
+            "@@ -47,0 +34,2 @@ def main() -> None:",
+            "@@ -59,26 +47,5 @@ def main() -> None:",
+            "@@ -87 +54 @@ def main() -> None:",
+            "@@ -90 +57 @@ def main() -> None:",
+            "@@ -92 +59 @@ def main() -> None:",
+            "@@ -112 +78,0 @@ def main() -> None:",
+            "@@ -114,2 +80 @@ def main() -> None:"
+          ]
+        }
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "b822d323bfa0f017ad13618e47758e42d1119aeb",
+        "ours": "277031f1d06d5c34a7f8ce65986697e92602e99d",
+        "upstream": "b1d630b5f487f37aa50ff8f8dcd22b8688f45e5d"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "scripts/refresh_omp_recipe.py"
+    },
+    {
+      "current_blobs": {
+        "base": "bac871fb2f2f25d7643921dbbed47d5599cdc721",
+        "ours": "f1b0783bb2badb5b094a3ed0bdbc058bd33c5ae9",
+        "upstream": "76f2ec69264eb03b4ad843ddead8d8bf091eed7c"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -52,11 +52,9 @@"
+        ],
+        "ours": [
+          "@@ -289,0 +290 @@ def test_solver_version_must_match_before_environment_creation(tmp_path, monkeyp"
+        ],
+        "upstream": [
+          "@@ -55 +54,0 @@ def test_environment_source_pins_match_existing_admission():",
+          "@@ -59 +57,0 @@ def test_environment_source_pins_match_existing_admission():"
+        ]
+      },
+      "historical_classification": {
+        "merge_tree": {
+          "category": "S",
+          "hunks": [
+            "@@ -52,11 +52,9 @@"
+          ]
+        },
+        "ours": {
+          "T": [
+            "@@ -289,0 +290 @@ def test_solver_version_must_match_before_environment_creation(tmp_path, monkeyp"
+          ]
+        },
+        "path": "tests/core/generation/test_gpu_environment.py",
+        "reason": "Upstream removes a direct VibeComfy pin assertion while production code shifts to a dependency constant; authored live predicates must not be silently weakened.",
+        "upstream": {
+          "S": [
+            "@@ -55 +54,0 @@ def test_environment_source_pins_match_existing_admission():",
+            "@@ -59 +57,0 @@ def test_environment_source_pins_match_existing_admission():"
+          ]
+        }
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "bac871fb2f2f25d7643921dbbed47d5599cdc721",
+        "ours": "f1b0783bb2badb5b094a3ed0bdbc058bd33c5ae9",
+        "upstream": "76f2ec69264eb03b4ad843ddead8d8bf091eed7c"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "tests/core/generation/test_gpu_environment.py"
+    },
+    {
+      "current_blobs": {
+        "base": "ca328ec1ee9f25d35f22ce52a2593a0a6ce04889",
+        "ours": "67bb7505c0f270ad55952360f11bb12962f83806",
+        "upstream": "88dd45748db6677ed9dd9f602c060cb4de68a219"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -128,8 +128,9 @@"
+        ],
+        "ours": [
+          "@@ -217,0 +218 @@ def test_unix_installer_retains_original_per_user_lock(tmp_path, monkeypatch, sy"
+        ],
+        "upstream": [
+          "@@ -131 +131 @@ def test_windows_uninstall_deletes_default_workspace_while_lock_is_held(tmp_path",
+          "@@ -132,0 +133 @@ def test_windows_uninstall_deletes_default_workspace_while_lock_is_held(tmp_path"
+        ]
+      },
+      "historical_classification": {
+        "merge_tree": {
+          "category": "S",
+          "hunks": [
+            "@@ -128,8 +128,9 @@"
+          ]
+        },
+        "ours": {
+          "T": [
+            "@@ -217,0 +218 @@ def test_unix_installer_retains_original_per_user_lock(tmp_path, monkeypatch, sy"
+          ]
+        },
+        "path": "tests/test_installer_acl.py",
+        "reason": "The upstream test adapts the service fixture and mocks Windows PATH mutation for command-shim removal.",
+        "upstream": {
+          "S": [
+            "@@ -131 +131 @@ def test_windows_uninstall_deletes_default_workspace_while_lock_is_held(tmp_path",
+            "@@ -132,0 +133 @@ def test_windows_uninstall_deletes_default_workspace_while_lock_is_held(tmp_path"
+          ]
+        }
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "ca328ec1ee9f25d35f22ce52a2593a0a6ce04889",
+        "ours": "67bb7505c0f270ad55952360f11bb12962f83806",
+        "upstream": "88dd45748db6677ed9dd9f602c060cb4de68a219"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "tests/test_installer_acl.py"
+    },
+    {
+      "current_blobs": {
+        "base": "e5ea5450114e2b96700368a992e2ea1f47f581c3",
+        "ours": "c4381c3140282cce74a94cb9e5d09de04c3cc62b",
+        "upstream": "f030558f1aa47eed8e896116ce7bc296c05e232c"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -25,6 +25,7 @@"
+        ],
+        "ours": [
+          "@@ -307,0 +308 @@ def test_windows_program_cleanup_includes_retained_ownership_marker(tmp_path, mo"
+        ],
+        "upstream": [
+          "@@ -27,0 +28 @@ def installation(tmp_path, monkeypatch, system=None):"
+        ]
+      },
+      "historical_classification": {
+        "merge_tree": {
+          "category": "S",
+          "hunks": [
+            "@@ -25,6 +25,7 @@"
+          ]
+        },
+        "ours": {
+          "T": [
+            "@@ -307,0 +308 @@ def test_windows_program_cleanup_includes_retained_ownership_marker(tmp_path, mo"
+          ]
+        },
+        "path": "tests/test_installer_cleanup.py",
+        "reason": "The upstream fixture mocks Windows PATH mutation required by command-shim cleanup.",
+        "upstream": {
+          "S": [
+            "@@ -27,0 +28 @@ def installation(tmp_path, monkeypatch, system=None):"
+          ]
+        }
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "e5ea5450114e2b96700368a992e2ea1f47f581c3",
+        "ours": "c4381c3140282cce74a94cb9e5d09de04c3cc62b",
+        "upstream": "f030558f1aa47eed8e896116ce7bc296c05e232c"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "tests/test_installer_cleanup.py"
+    },
+    {
+      "current_blobs": {
+        "base": "4c7c2e604b24df9d4d068c070220c2db39c03ad4",
+        "ours": "e77c7d2d29df9970472acc0d99e5f2c9bf2edfe6",
+        "upstream": "6db70490bde7eb33e3b5b8c91d3c882631f3e283"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -39,6 +39,7 @@",
+          "@@ -65,6 +66,16 @@",
+          "@@ -78,6 +89,11 @@",
+          "@@ -98,10 +114,6 @@",
+          "@@ -116,13 +128,81 @@",
+          "@@ -164,7 +244,7 @@"
+        ],
+        "ours": [
+          "@@ -565,0 +566 @@ def test_cli_rejects_removed_repair_flag():"
+        ],
+        "upstream": [
+          "@@ -41,0 +42 @@ class LifecycleBackend:",
+          "@@ -67,0 +69,10 @@ class LifecycleBackend:",
+          "@@ -80,0 +92,5 @@ class LifecycleBackend:",
+          "@@ -101,4 +116,0 @@ class LifecycleBackend:",
+          "@@ -119 +131 @@ def test_reinstall_attaches_kept_realm_without_creating_another(tmp_path):",
+          "@@ -125,0 +138,68 @@ def test_reinstall_attaches_kept_realm_without_creating_another(tmp_path):",
+          "@@ -167 +247 @@ def test_reinstall_ignores_current_pointer_to_removed_interpreter(tmp_path):"
+        ]
+      },
+      "historical_classification": {
+        "merge_tree": {
+          "category": "S",
+          "hunks": [
+            "@@ -39,6 +39,7 @@",
+            "@@ -65,6 +66,16 @@",
+            "@@ -78,6 +89,11 @@",
+            "@@ -98,10 +114,6 @@",
+            "@@ -116,13 +128,81 @@",
+            "@@ -164,7 +244,7 @@"
+          ]
+        },
+        "ours": {
+          "T": [
+            "@@ -565,0 +566 @@ def test_cli_rejects_removed_repair_flag():"
+          ]
+        },
+        "path": "tests/test_installer_lifecycle.py",
+        "reason": "The upstream lifecycle tests add best-effort skills-sync ordering and failure behavior; they are authored behavior tests, not context.",
+        "upstream": {
+          "S": [
+            "@@ -41,0 +42 @@ class LifecycleBackend:",
+            "@@ -67,0 +69,10 @@ class LifecycleBackend:",
+            "@@ -80,0 +92,5 @@ class LifecycleBackend:",
+            "@@ -101,4 +116,0 @@ class LifecycleBackend:",
+            "@@ -119 +131 @@ def test_reinstall_attaches_kept_realm_without_creating_another(tmp_path):",
+            "@@ -125,0 +138,68 @@ def test_reinstall_attaches_kept_realm_without_creating_another(tmp_path):",
+            "@@ -167 +247 @@ def test_reinstall_ignores_current_pointer_to_removed_interpreter(tmp_path):"
+          ]
+        }
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "4c7c2e604b24df9d4d068c070220c2db39c03ad4",
+        "ours": "e77c7d2d29df9970472acc0d99e5f2c9bf2edfe6",
+        "upstream": "6db70490bde7eb33e3b5b8c91d3c882631f3e283"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "tests/test_installer_lifecycle.py"
+    },
+    {
+      "current_blobs": {
+        "base": "f8ff6760732bad2da455680ac35fe4acc9a36a25",
+        "ours": "18b560d48889ca6462778a49282413196b9e6488",
+        "upstream": "3ac8b3a080b2359b5e0654c8262c8a353c8600e4"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -38,11 +38,11 @@",
+          "@@ -90,13 +90,13 @@",
+          "@@ -104,9 +104,9 @@",
+          "@@ -185,7 +185,7 @@",
+          "@@ -199,7 +199,7 @@",
+          "@@ -252,12 +252,12 @@",
+          "@@ -268,7 +268,7 @@",
+          "@@ -384,3 +384,60 @@"
+        ],
+        "ours": [
+          "@@ -385,0 +386 @@ def test_hostile_bun_settings_and_registration_paths_are_build_only(tmp_path, mo"
+        ],
+        "upstream": [
+          "@@ -41 +41 @@ def fixture(tmp_path, monkeypatch):",
+          "@@ -45 +45 @@ def fixture(tmp_path, monkeypatch):",
+          "@@ -93 +93 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -99 +99 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -107 +107 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -109 +109 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+          "@@ -188 +188 @@ def test_bundled_recipe_pins_build_closure_without_selecting_or_patching_source(",
+          "@@ -202 +202 @@ def test_local_fork_uses_selected_commit_and_records_actual_tree(tmp_path, monke",
+          "@@ -255 +255 @@ def test_default_and_comment_select_published_exact_release():",
+          "@@ -259,2 +259,2 @@ def test_default_and_comment_select_published_exact_release():",
+          "@@ -271 +271 @@ def test_invalid_or_unpinned_source_is_refused(value):",
+          "@@ -385,0 +386,55 @@ def test_hostile_bun_settings_and_registration_paths_are_build_only(tmp_path, mo"
+        ]
+      },
+      "historical_classification": {
+        "merge_tree": {
+          "category": "S",
+          "hunks": [
+            "@@ -38,11 +38,11 @@",
+            "@@ -90,13 +90,13 @@",
+            "@@ -104,9 +104,9 @@",
+            "@@ -185,7 +185,7 @@",
+            "@@ -199,7 +199,7 @@",
+            "@@ -252,12 +252,12 @@",
+            "@@ -268,7 +268,7 @@",
+            "@@ -384,3 +384,60 @@"
+          ]
+        },
+        "ours": {
+          "T": [
+            "@@ -385,0 +386 @@ def test_hostile_bun_settings_and_registration_paths_are_build_only(tmp_path, mo"
+          ]
+        },
+        "path": "tests/test_installer_omp_source.py",
+        "reason": "The upstream tests change release/version/ABI expectations and add a recipe-refresh integrity scenario; preserve authored inputs and goldens while deciding the intended pin.",
+        "upstream": {
+          "S": [
+            "@@ -41 +41 @@ def fixture(tmp_path, monkeypatch):",
+            "@@ -45 +45 @@ def fixture(tmp_path, monkeypatch):",
+            "@@ -93 +93 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+            "@@ -99 +99 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+            "@@ -107 +107 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+            "@@ -109 +109 @@ def test_selected_fork_freezes_graph_generates_only_views_and_does_not_patch(tmp",
+            "@@ -188 +188 @@ def test_bundled_recipe_pins_build_closure_without_selecting_or_patching_source(",
+            "@@ -202 +202 @@ def test_local_fork_uses_selected_commit_and_records_actual_tree(tmp_path, monke",
+            "@@ -255 +255 @@ def test_default_and_comment_select_published_exact_release():",
+            "@@ -259,2 +259,2 @@ def test_default_and_comment_select_published_exact_release():",
+            "@@ -271 +271 @@ def test_invalid_or_unpinned_source_is_refused(value):",
+            "@@ -385,0 +386,55 @@ def test_hostile_bun_settings_and_registration_paths_are_build_only(tmp_path, mo"
+          ]
+        }
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "f8ff6760732bad2da455680ac35fe4acc9a36a25",
+        "ours": "18b560d48889ca6462778a49282413196b9e6488",
+        "upstream": "3ac8b3a080b2359b5e0654c8262c8a353c8600e4"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "tests/test_installer_omp_source.py"
+    },
+    {
+      "current_blobs": {
+        "base": "791311144204eec7d33d73fda7b89dc38502c669",
+        "ours": "ac69059c2b31d5e2ce968e697b1df68e5ed40232",
+        "upstream": "94a7e05012357ba4d906cc611716e8f18b38d250"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -137,7 +137,11 @@"
+        ],
+        "ours": [
+          "@@ -136,0 +137,3 @@ def test_windows_task_settings_and_no_console_executable():",
+          "@@ -303,0 +307,10 @@ def test_stage_profile_points_to_candidate_service_declaration(tmp_path, monkeyp",
+          "@@ -305 +317,0 @@ def test_stage_profile_points_to_candidate_service_declaration(tmp_path, monkeyp",
+          "@@ -596,0 +609 @@ def test_chat_declaration_failure_can_retry_without_claiming_fresh_workspace(tmp"
+        ],
+        "upstream": [
+          "@@ -137 +137,4 @@ def test_windows_task_settings_and_no_console_executable():"
+        ]
+      },
+      "current_source_fact": "Current ours adds the same XML assertions as upstream plus independent fixture-source materialization changes and one EOF blank line.",
+      "historical_classification": {
+        "merge_tree": {
+          "category": "S",
+          "hunks": [
+            "@@ -134,7 +134,10 @@"
+          ]
+        },
+        "ours": {
+          "T": [
+            "@@ -596,0 +597 @@ def test_chat_declaration_failure_can_retry_without_claiming_fresh_workspace(tmp"
+          ]
+        },
+        "path": "tests/test_installer_platforms.py",
+        "reason": "The upstream predicate explicitly requires the Task Scheduler XML response to omit the declaration.",
+        "upstream": {
+          "S": [
+            "@@ -137 +137,4 @@ def test_windows_task_settings_and_no_console_executable():"
+          ]
+        }
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": false,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "791311144204eec7d33d73fda7b89dc38502c669",
+        "ours": "55d0bbfd4200756d1a5322ed63e52ada32a44560",
+        "upstream": "94a7e05012357ba4d906cc611716e8f18b38d250"
+      },
+      "old_reuse_status": "partial-reuse-upstream-base-only",
+      "path": "tests/test_installer_platforms.py",
+      "recommendation": "genuine intent seam for fixture-source setup; preserve both current Agent fixture inputs and upstream assertion behavior, then let the Agent owner resolve."
+    },
+    {
+      "current_blobs": {
+        "base": "a21f3238ccb2071c9955b3980272ed51600f94ea",
+        "ours": "cfe1729e4188eecfc14387e07e4abf7a7bb96880",
+        "upstream": "549e079eb4fcbac9cea9ebb7324dc86e20e6f012"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -65,7 +65,7 @@"
+        ],
+        "ours": [
+          "@@ -72,0 +73 @@ print(json.dumps({'module':astrid.services.__file__,'declaration':declaration,"
+        ],
+        "upstream": [
+          "@@ -68 +68 @@ print(json.dumps({'module':astrid.services.__file__,'declaration':declaration,"
+        ]
+      },
+      "historical_classification": {
+        "merge_tree": {
+          "category": "S",
+          "hunks": [
+            "@@ -65,7 +65,7 @@"
+          ]
+        },
+        "ours": {
+          "T": [
+            "@@ -72,0 +73 @@ print(json.dumps({'module':astrid.services.__file__,'declaration':declaration,"
+          ]
+        },
+        "path": "tests/test_installer_wheel.py",
+        "reason": "The wheel-level authored golden changes the embedded OMP recipe version.",
+        "upstream": {
+          "S": [
+            "@@ -68 +68 @@ print(json.dumps({'module':astrid.services.__file__,'declaration':declaration,"
+          ]
+        }
+      },
+      "old_blob_identity": {
+        "base": true,
+        "ours": true,
+        "upstream": true
+      },
+      "old_blobs": {
+        "base": "a21f3238ccb2071c9955b3980272ed51600f94ea",
+        "ours": "cfe1729e4188eecfc14387e07e4abf7a7bb96880",
+        "upstream": "549e079eb4fcbac9cea9ebb7324dc86e20e6f012"
+      },
+      "old_reuse_status": "exact-byte-identity",
+      "path": "tests/test_installer_wheel.py"
+    },
+    {
+      "current_blobs": {
+        "base": "be0dc5e501f2b75f4e1d63596e2b0304a8a997bc",
+        "ours": "6bb12bd7bc02cea5965bd433df9706540912237c",
+        "upstream": "ef1b2ca9d7b95056826baf1323394dbf15f2a913"
+      },
+      "current_hunks": {
+        "merge_tree": [
+          "@@ -1,4 +1,4 @@"
+        ],
+        "ours": [
+          "@@ -4,0 +5 @@ import subprocess",
+          "@@ -7,0 +9,2 @@ import pytest",
+          "@@ -56,0 +60,37 @@ def test_task_cleanup_preserves_powershell_success_and_failure(tmp_path, operati"
+        ],
+        "upstream": [
+          "@@ -1 +1 @@",
+          "@@ -4,0 +5 @@ import subprocess",
+          "@@ -7,0 +9,2 @@ import pytest",
+          "@@ -56,0 +60,37 @@ def test_task_cleanup_preserves_powershell_success_and_failure(tmp_path, operati"
+        ]
+      },
+      "current_source_fact": "New current conflict: ours and upstream share the added Windows Task Scheduler test body; only the module docstring differs.",
+      "old_blob_identity": null,
+      "old_reuse_status": "new-current-conflict",
+      "path": "tests/test_installer_windows_tasks.py",
+      "recommendation": "automatically composable textual seam; retain the upstream behavior and choose/normalize the docstring without changing the test body."
+    }
+  ],
+  "exact_reuse_paths": [
+    "astrid/chat/acpProcessHost.test.ts",
+    "astrid/chat/acpProcessHost.ts",
+    "astrid/chat/astrid-acp-bridge.ts",
+    "astrid/chat/astrid-acp-models.test.ts",
+    "astrid/chat/astrid-agent-models.test.ts",
+    "astrid/chat/astrid-agent-models.ts",
+    "astrid/chat/astrid-local-agent-host.ts",
+    "astrid/chat/astrid-local-agents.test.ts",
+    "astrid/chat/astrid-local-agents.ts",
+    "astrid/chat/astrid-project-chat.test.ts",
+    "astrid/chat/astrid-project-chat.ts",
+    "astrid/chat/astrid-shared-acp-sessions.test.ts",
+    "astrid/chat/astrid-shared-acp-sessions.ts",
+    "astrid/chat/discoveryProbe.ts",
+    "astrid/chat/localAgents.ts",
+    "astrid/chat/modelCatalog.ts",
+    "astrid/chat/service.mjs",
+    "astrid/chat/service.test.ts",
+    "astrid/chat/service.ts",
+    "astrid/core/gateway/dispatch.py",
+    "astrid/core/generation/gpu_environment.py",
+    "astrid/installer/backend.py",
+    "astrid/installer/core.py",
+    "astrid/installer/launcher.py",
+    "astrid/installer/omp/recipe.json",
+    "astrid/installer/tools.py",
+    "astrid/packs/rendering/docs/SKILL.md",
+    "astrid/packs/vibecomfy/environment.windows-nvidia.json",
+    "docs/install/OMP-LANDING.md",
+    "docs/reference/services.md",
+    "docs/testing/TESTING.md",
+    "scripts/refresh_omp_recipe.py",
+    "tests/core/generation/test_gpu_environment.py",
+    "tests/test_installer_acl.py",
+    "tests/test_installer_cleanup.py",
+    "tests/test_installer_lifecycle.py",
+    "tests/test_installer_omp_source.py",
+    "tests/test_installer_wheel.py"
+  ],
+  "exact_split": {
+    "first20_old_scope": [
+      "astrid/chat/acpProcessHost.test.ts",
+      "astrid/chat/acpProcessHost.ts",
+      "astrid/chat/astrid-acp-bridge.ts",
+      "astrid/chat/astrid-acp-models.test.ts",
+      "astrid/chat/astrid-agent-models.test.ts",
+      "astrid/chat/astrid-agent-models.ts",
+      "astrid/chat/astrid-local-agent-host.ts",
+      "astrid/chat/astrid-local-agents.test.ts",
+      "astrid/chat/astrid-local-agents.ts",
+      "astrid/chat/astrid-project-chat.test.ts",
+      "astrid/chat/astrid-project-chat.ts",
+      "astrid/chat/astrid-shared-acp-sessions.test.ts",
+      "astrid/chat/astrid-shared-acp-sessions.ts",
+      "astrid/chat/discoveryProbe.ts",
+      "astrid/chat/localAgents.ts",
+      "astrid/chat/modelCatalog.ts",
+      "astrid/chat/service.mjs",
+      "astrid/chat/service.test.ts",
+      "astrid/chat/service.ts",
+      "astrid/core/gateway/dispatch.py"
+    ],
+    "last20_old_scope": [
+      "astrid/core/generation/gpu_environment.py",
+      "astrid/installer/backend.py",
+      "astrid/installer/core.py",
+      "astrid/installer/launcher.py",
+      "astrid/installer/omp/recipe.json",
+      "astrid/installer/service.py",
+      "astrid/installer/tools.py",
+      "astrid/packs/rendering/docs/SKILL.md",
+      "astrid/packs/vibecomfy/environment.windows-nvidia.json",
+      "docs/install/OMP-LANDING.md",
+      "docs/reference/services.md",
+      "docs/testing/TESTING.md",
+      "scripts/refresh_omp_recipe.py",
+      "tests/core/generation/test_gpu_environment.py",
+      "tests/test_installer_acl.py",
+      "tests/test_installer_cleanup.py",
+      "tests/test_installer_lifecycle.py",
+      "tests/test_installer_omp_source.py",
+      "tests/test_installer_platforms.py",
+      "tests/test_installer_wheel.py"
+    ],
+    "new_current_tail": [
+      "tests/test_installer_windows_tasks.py"
+    ],
+    "scope_rule": "Do not retarget or rewrite old A/B evidence; later private join workers consume these exact path lists."
+  },
+  "genuine_intent_recommendations": [
+    "astrid/chat/acpProcessHost.test.ts",
+    "astrid/chat/acpProcessHost.ts",
+    "astrid/chat/astrid-acp-bridge.ts",
+    "astrid/chat/astrid-acp-models.test.ts",
+    "astrid/chat/astrid-agent-models.test.ts",
+    "astrid/chat/astrid-agent-models.ts",
+    "astrid/chat/astrid-local-agent-host.ts",
+    "astrid/chat/astrid-local-agents.test.ts",
+    "astrid/chat/astrid-local-agents.ts",
+    "astrid/chat/astrid-project-chat.test.ts",
+    "astrid/chat/astrid-project-chat.ts",
+    "astrid/chat/astrid-shared-acp-sessions.test.ts",
+    "astrid/chat/astrid-shared-acp-sessions.ts",
+    "astrid/chat/discoveryProbe.ts",
+    "astrid/chat/localAgents.ts",
+    "astrid/chat/modelCatalog.ts",
+    "astrid/chat/service.mjs",
+    "astrid/chat/service.test.ts",
+    "astrid/chat/service.ts",
+    "astrid/core/gateway/dispatch.py",
+    "astrid/core/generation/gpu_environment.py",
+    "astrid/installer/backend.py",
+    "astrid/installer/core.py",
+    "astrid/installer/launcher.py",
+    "astrid/installer/omp/recipe.json",
+    "astrid/installer/tools.py",
+    "astrid/packs/vibecomfy/environment.windows-nvidia.json",
+    "docs/install/OMP-LANDING.md",
+    "docs/reference/services.md",
+    "docs/testing/TESTING.md",
+    "scripts/refresh_omp_recipe.py",
+    "tests/core/generation/test_gpu_environment.py",
+    "tests/test_installer_acl.py",
+    "tests/test_installer_cleanup.py",
+    "tests/test_installer_lifecycle.py",
+    "tests/test_installer_omp_source.py",
+    "tests/test_installer_platforms.py",
+    "tests/test_installer_wheel.py"
+  ],
+  "historical_inputs": {
+    "first20_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-tail-Agent-A-1928/evidence/conflict-classes.json",
+    "first20_source_sha256": "d24c8d377eed2cc134d1ba8e507e4b84cad2b586b19eef275755d8775be6ae80",
+    "first20_worker": "rt-F-tail-Agent-A-1928",
+    "last20_source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-tail-Agent-B-1935/evidence/conflict-classes.json",
+    "last20_source_sha256": "5ea44a868f3330d0a72df8c0e00357f48237f56d5d11f8e17003bb965ee73024",
+    "last20_worker": "rt-F-tail-Agent-B-1935",
+    "old_census_sha256": "2adbabd4a8e9f93dbc1d60b3c1489f611b527e402dc40629597d49f5502c0e16"
+  },
+  "new_current_paths": [
+    "tests/test_installer_windows_tasks.py"
+  ],
+  "partial_reaudit_paths": [
+    "astrid/installer/service.py",
+    "tests/test_installer_platforms.py"
+  ],
+  "reuse_counts": {
+    "exact_byte_identity": 38,
+    "new_current_conflict": 1,
+    "partial_reaudit": 2
+  },
+  "schema_version": 2,
+  "source_guard": {
+    "actual_agent_home": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "base": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+    "old_local_stale": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+    "upstream": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55"
+  },
+  "task": "rt-F-tail-Agent-retarget-1939"
+}

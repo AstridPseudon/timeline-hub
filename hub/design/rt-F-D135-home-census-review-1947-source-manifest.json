@@ -1,0 +1,177 @@
+{
+  "captured_at_utc": "2026-10-25T19:43:02.373233Z",
+  "commands": {
+    "cherry": "git -C /home/user/peteromallet/astrid-agent cherry -v 886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55 a30e74e901a28b39c28facba3deb00d76f186e23",
+    "diff_check_ours": "git -C /home/user/peteromallet/astrid-agent diff --check 92443771676ef2bbb547d0a103d708fa8bec4c63 a30e74e901a28b39c28facba3deb00d76f186e23",
+    "diff_check_upstream": "git -C /home/user/peteromallet/astrid-agent diff --check 92443771676ef2bbb547d0a103d708fa8bec4c63 886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+    "diff_ours": "git -C /home/user/peteromallet/astrid-agent diff --unified=0 92443771676ef2bbb547d0a103d708fa8bec4c63 a30e74e901a28b39c28facba3deb00d76f186e23 -- <path>",
+    "diff_upstream": "git -C /home/user/peteromallet/astrid-agent diff --unified=0 92443771676ef2bbb547d0a103d708fa8bec4c63 886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55 -- <path>",
+    "merge_tree": {
+      "bytes": 583973,
+      "command": "git -C /home/user/peteromallet/astrid-agent merge-tree --trivial-merge 92443771676ef2bbb547d0a103d708fa8bec4c63 a30e74e901a28b39c28facba3deb00d76f186e23 886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+      "sha256": "641d298edc9a34bd0618b5d0f1e07d7c5fba6ee67a8e2101edc9c593ee888284"
+    },
+    "object_check": "git cat-file -t/-s and git show -s on every recorded source object"
+  },
+  "current_counts": {
+    "all_hunks": {
+      "merge_tree": 107,
+      "ours": 92,
+      "upstream": 190
+    },
+    "conflicting_paths": 41,
+    "new_current_conflicts_not_in_old40": [
+      "tests/test_installer_windows_tasks.py"
+    ],
+    "old40_exact_byte_identity": 38,
+    "old40_partial_reuse": 2,
+    "old_first20_exact": 20,
+    "old_last20_exact": 18,
+    "ours_changed_paths": 928,
+    "upstream_changed_paths": 98
+  },
+  "freshness": {
+    "D59_cut_tuple": "pending",
+    "actual_home_object": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "actual_home_ref_received": true,
+    "sourcefreshness_final_lead_check_still_owed": true
+  },
+  "missing_objects": [],
+  "objects": {
+    "actual_agent_home": {
+      "commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+      "date": "2026-10-25T17:44:28+00:00",
+      "object_type": "commit",
+      "parents": [
+        "78dbcc6fa8d400a3a443f343d64abdd27a27dd2e",
+        "224de4697c36b8958d94c0b85626e0fedaf007cb"
+      ],
+      "subject": "Merge tl/app-D132a-graph-clean-import-1726",
+      "tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0"
+    },
+    "base": {
+      "commit": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+      "date": "2026-10-24T15:31:07+02:00",
+      "object_type": "commit",
+      "parents": [
+        "39dda14913702e572197d511ad483ae0f20bf5b1",
+        "0d5d16af6f83d595144d21ea1cef2b5a468b9836"
+      ],
+      "subject": "Merge origin/main into merge/local-generation",
+      "tree": "a81a8c7f262e4416dcdefc0720fd760e026d766b"
+    },
+    "frozen_r4_candidate": {
+      "commit": "11caf1d9de291d76f491cf69f7942606b7471d7a",
+      "date": "2026-10-19T14:13:38+02:00",
+      "object_type": "commit",
+      "parents": [
+        "a05304e4564136e9ac8986ecf2e191dfbc068560"
+      ],
+      "subject": "Preserve legacy optional track labels in canonical film views",
+      "tree": "f6f4fad77ded050b1e9c2d802cc3da35b459e610"
+    },
+    "named_upstream": {
+      "commit": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+      "date": "2026-10-25T16:51:50+01:00",
+      "object_type": "commit",
+      "parents": [
+        "b565ea8dd8252e41bb802140ed2df3a1a4efd68b"
+      ],
+      "subject": "Fail loudly when the VibeComfy pin cannot be read",
+      "tree": "f53cc8426ccef8760021ef6207303bce7b80e777"
+    },
+    "old_local_integration": {
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "date": "2026-10-25T07:16:53+00:00",
+      "object_type": "commit",
+      "parents": [
+        "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+        "39b9587c0801c23ccb7b8a93a438e1dbb564b710"
+      ],
+      "subject": "Merge tl/agt-D108-runtime-c916-adoption",
+      "tree": "68df11fad2b082fa12d99ca20404e1e40e350cd7"
+    }
+  },
+  "old40_boundary": {
+    "old_census": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-tail-upstream-census-1844/evidence/census.json",
+    "old_census_sha256": "2adbabd4a8e9f93dbc1d60b3c1489f611b527e402dc40629597d49f5502c0e16",
+    "old_local_head": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+    "use": "historical proofpin only; not current source"
+  },
+  "refs": {
+    "actual_home_ref": {
+      "ref": "refs/remotes/hub/timeline/agent/tl/integration",
+      "resolved": "a30e74e901a28b39c28facba3deb00d76f186e23"
+    },
+    "actual_short_home_ref": {
+      "ref": "refs/remotes/hub/tl/integration",
+      "resolved": "a30e74e901a28b39c28facba3deb00d76f186e23"
+    },
+    "frozen_candidate": {
+      "ref": "refs/remotes/origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+      "resolved": "11caf1d9de291d76f491cf69f7942606b7471d7a"
+    },
+    "local_stale_integration": {
+      "ref": "refs/heads/tl/integration",
+      "resolved": "547e10456250c1b5bcf63b44a50c90ff0563ce1e"
+    },
+    "named_upstream": {
+      "ref": "refs/remotes/origin/main",
+      "resolved": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55"
+    }
+  },
+  "repository": "/home/user/peteromallet/astrid-agent",
+  "schema_version": 2,
+  "source_policy": "read-only existing Git object routes; no fetch/network/clone/ref update",
+  "task": "rt-F-tail-Agent-retarget-1939",
+  "tree_relationships": {
+    "actual_home_ref_matches": true,
+    "actual_home_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+    "common_base_tree": "a81a8c7f262e4416dcdefc0720fd760e026d766b",
+    "local_ref_is_stale": true,
+    "named_upstream_tree": "f53cc8426ccef8760021ef6207303bce7b80e777",
+    "old_local_tree": "68df11fad2b082fa12d99ca20404e1e40e350cd7"
+  },
+  "review_derivative": {
+    "reviewer_task": "rt-F-D135-home-census-review-1947",
+    "review_result": "PASS",
+    "source_inputs_retained": true,
+    "input_evidence_sha256": {
+      "census_json": "8755e8ab900cac57fa4961b50b0a80f6ba28478f171bd073cc0a37195ae79d05",
+      "conflicts_md": "dbc77e7419e7bc534da7fb6cf5ac24671361b80911b335657fe045705edd0afe",
+      "source_manifest_json": "3c9ebf6db5187b87cd3d87a8235c9a1446e9e7c993c7e514a95e6768e15f4f2e",
+      "classification_reuse_json": "484806661c3374aef18917a9089af00dfe4587ce3e90f4db310a399f8a81546c",
+      "active_input_corrections_md": "d77acaa709e6c6eef8ecffcac6062d5257f4a3e1203fd9acbe7af9b5523525ed",
+      "validation_md": "42bcd482dc8b6b8639187a605319fd1d925044ef04314c3b8930e761d6aecd8e"
+    },
+    "independent_checks": {
+      "merge_base": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+      "all_41_recorded_blobs_match_git": true,
+      "source_objects_checked": 5,
+      "missing_source_objects": 0,
+      "actual_literal_marker_blocks": 7,
+      "actual_literal_marker_paths": 6,
+      "actual_marker_path_list": [
+        "astrid/chat/astrid-local-agents.test.ts",
+        "astrid/chat/service.mjs",
+        "astrid/installer/backend.py",
+        "docs/install/OMP-LANDING.md",
+        "tests/test_installer_omp_source.py",
+        "tests/test_installer_platforms.py"
+      ],
+      "new_current_tail_marker_blocks": 0,
+      "classification_partition": {
+        "exact_byte_identity": 38,
+        "partial_reaudit": 2,
+        "new_current_conflict": 1,
+        "total": 41
+      }
+    },
+    "derivative_only_corrections": [
+      "Clarifies that 41 changed-in-both paths and 107 merge-tree preview hunk headers are not equivalent to actual conflict-marker hunks.",
+      "Records the actual 7 marker blocks across 6 paths in evidence/actual-conflict-map.json.",
+      "Keeps tests/test_installer_windows_tasks.py as the one new current path, but classifies it as preview-only because it has zero literal marker blocks.",
+      "Keeps D59 final tuple pending; a30e.../ece8... is source authority evidence, not a production F-final/ZIP pin."
+    ]
+  }
+}

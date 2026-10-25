@@ -1,0 +1,735 @@
+{
+  "schema_version": 1,
+  "task": "rt-F-D135-home-census-review-1947",
+  "result": "PASS",
+  "captured_at_utc": "2026-10-25",
+  "scope": "Independent read-only Agent-home census review; Composition private evidence only.",
+  "authority": {
+    "repository": "/home/user/peteromallet/astrid-agent",
+    "base": {
+      "ref": "common-base",
+      "commit": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+      "tree": "a81a8c7f262e4416dcdefc0720fd760e026d766b"
+    },
+    "ours_actual_home": {
+      "ref": "refs/remotes/hub/timeline/agent/tl/integration",
+      "commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+      "tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0"
+    },
+    "upstream": {
+      "ref": "refs/remotes/origin/main",
+      "commit": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+      "tree": "f53cc8426ccef8760021ef6207303bce7b80e777"
+    },
+    "frozen_r4": {
+      "ref": "refs/remotes/origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+      "commit": "11caf1d9de291d76f491cf69f7942606b7471d7a",
+      "tree": "f6f4fad77ded050b1e9c2d802cc3da35b459e610",
+      "historical_only": true
+    },
+    "local_stale": {
+      "ref": "refs/heads/tl/integration",
+      "commit": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+      "tree": "68df11fad2b082fa12d99ca20404e1e40e350cd7",
+      "historical_only": true
+    }
+  },
+  "input_evidence_sha256": {
+    "census.json": "8755e8ab900cac57fa4961b50b0a80f6ba28478f171bd073cc0a37195ae79d05",
+    "conflicts.md": "dbc77e7419e7bc534da7fb6cf5ac24671361b80911b335657fe045705edd0afe",
+    "source-manifest.json": "3c9ebf6db5187b87cd3d87a8235c9a1446e9e7c993c7e514a95e6768e15f4f2e",
+    "classification-reuse.json": "484806661c3374aef18917a9089af00dfe4587ce3e90f4db310a399f8a81546c",
+    "active-input-corrections.md": "d77acaa709e6c6eef8ecffcac6062d5257f4a3e1203fd9acbe7af9b5523525ed",
+    "validation.md": "42bcd482dc8b6b8639187a605319fd1d925044ef04314c3b8930e761d6aecd8e"
+  },
+  "counts": {
+    "ours_changed_paths": 928,
+    "upstream_changed_paths": 98,
+    "changed_in_both_paths": 41,
+    "merge_tree_preview_hunks_on_changed_in_both": 107,
+    "direct_diff_hunks_on_changed_in_both": {
+      "ours": 92,
+      "upstream": 190
+    },
+    "actual_literal_conflict_marker_blocks": 7,
+    "actual_literal_conflict_marker_paths": 6,
+    "new_current_path_not_in_old40": "tests/test_installer_windows_tasks.py",
+    "new_current_path_literal_marker_blocks": 0,
+    "old40_exact_byte_identity": 38,
+    "old40_partial_reaudit": 2,
+    "old_first20_exact": 20,
+    "old_last20_exact": 18,
+    "cherry": {
+      "already_upstream_minus": 0,
+      "not_already_upstream_plus": 725
+    }
+  },
+  "checks": [
+    {
+      "id": "authority-refs",
+      "status": "PASS",
+      "detail": "Hub Agent integration and short hub alias both resolve to a30e74e901a28b39c28facba3deb00d76f186e23; local tl/integration resolves to stale 547e10456250c1b5bcf63b44a50c90ff0563ce1e and is historical-only."
+    },
+    {
+      "id": "object-availability",
+      "status": "PASS",
+      "detail": "All five recorded commits and their trees exist; no missing objects."
+    },
+    {
+      "id": "blob-crosswalk",
+      "status": "PASS",
+      "detail": "All 41 census rows' base, ours, and upstream blob IDs match git rev-parse exactly; 0 mismatches."
+    },
+    {
+      "id": "path-and-hunk-counts",
+      "status": "PASS",
+      "detail": "Direct changed-path and crosswalk hunk counts reproduce 928/98 paths and 92/190 direct hunks; census preview total is 107."
+    },
+    {
+      "id": "literal-conflict-markers",
+      "status": "PASS",
+      "detail": "Readonly merge-tree output has 7 literal marker blocks in 6 paths. The 41 changed-in-both paths and 107 preview hunks are not all true marker conflicts."
+    },
+    {
+      "id": "new-tail",
+      "status": "PASS",
+      "detail": "tests/test_installer_windows_tasks.py is the only current path outside the old 40; it has one preview hunk and zero literal conflict-marker blocks."
+    },
+    {
+      "id": "reuse-boundary",
+      "status": "PASS",
+      "detail": "Exact/partial/new path lists are disjoint and cover all 41 paths (38/2/1); old A/B lists remain historical and unchanged."
+    },
+    {
+      "id": "future-tip-guard",
+      "status": "PASS",
+      "detail": "547e references are labeled historical proof/evidence or stale executable tuple lookup; active correction requires explicit D59 tuple binding and does not fabricate D59."
+    },
+    {
+      "id": "write-boundary",
+      "status": "PASS",
+      "detail": "No source repo checkout, merge, rebase, fetch, ref update, clone, network, product/test/generated/pin change, or implementation test was performed."
+    }
+  ],
+  "pending": [
+    "D59 final tuple remains pending; this review records a30e.../ece8... as source authority only and does not authorize a production F-final/ZIP pin.",
+    "Final lead freshness check remains owed."
+  ],
+  "conflict_path_map": [
+    {
+      "path": "astrid/chat/acpProcessHost.test.ts",
+      "base_blob": "c1e9602b23b1f46ef4b8c089916cff28e3e2a90d",
+      "ours_blob": "8619d6ebdefd8c6f259b53002a6c6a452dc9e3eb",
+      "upstream_blob": "4fef09d77e2655de84f90e5265d6a8bb3cdeb8cf",
+      "base_size": 13345,
+      "ours_size": 13346,
+      "upstream_size": 14424,
+      "current_hunks": {
+        "merge_tree": 1,
+        "ours": 1,
+        "upstream": 1
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/chat/acpProcessHost.ts",
+      "base_blob": "c410008357d85b695896f0ccb4ae4baeac4b6851",
+      "ours_blob": "971388aa835af637972501e7666a41450b66d1fd",
+      "upstream_blob": "4aa1d7de8c7e123c7b327c4e6201b0a3e842eb2c",
+      "base_size": 17131,
+      "ours_size": 17132,
+      "upstream_size": 17607,
+      "current_hunks": {
+        "merge_tree": 4,
+        "ours": 1,
+        "upstream": 6
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/chat/astrid-acp-bridge.ts",
+      "base_blob": "6b7329a3f6d807305fea46434c68812cbb377cf8",
+      "ours_blob": "90818a91e509a270899dcfff11be7343fee5d06a",
+      "upstream_blob": "455d13f34b4b1c3aa121afbc79066d73163ae3e9",
+      "base_size": 54266,
+      "ours_size": 54267,
+      "upstream_size": 56110,
+      "current_hunks": {
+        "merge_tree": 8,
+        "ours": 1,
+        "upstream": 11
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/chat/astrid-acp-models.test.ts",
+      "base_blob": "ab398a8f5e6ba1525039b3f93df110f91b6369c0",
+      "ours_blob": "63d5b69eb9b979debac8c371ee2b81e59e59e49b",
+      "upstream_blob": "6bc1c1b8c90ba5bc415e4857159b1df116aaaeca",
+      "base_size": 20394,
+      "ours_size": 20395,
+      "upstream_size": 21184,
+      "current_hunks": {
+        "merge_tree": 3,
+        "ours": 1,
+        "upstream": 5
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/chat/astrid-agent-models.test.ts",
+      "base_blob": "1599b6c98a1f9df64ba15f5cdafed383a23f0213",
+      "ours_blob": "ec407f3cc8514253042d40632f2be4838de835e7",
+      "upstream_blob": "21fa3c0c168a49d7c5464032c0539063b97ccedf",
+      "base_size": 14990,
+      "ours_size": 14991,
+      "upstream_size": 16440,
+      "current_hunks": {
+        "merge_tree": 5,
+        "ours": 1,
+        "upstream": 7
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/chat/astrid-agent-models.ts",
+      "base_blob": "82ae8f42a1cdeaa26b88285c9bbcb24727b15838",
+      "ours_blob": "3888b90d8fae241f1752f8a833948a25c0fed2c4",
+      "upstream_blob": "6223a477ec1e36750c29034abeefc564ad322fb8",
+      "base_size": 3139,
+      "ours_size": 3140,
+      "upstream_size": 3653,
+      "current_hunks": {
+        "merge_tree": 3,
+        "ours": 1,
+        "upstream": 3
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/chat/astrid-local-agent-host.ts",
+      "base_blob": "f4258dd781697032459928e1c8b8d732d904d16d",
+      "ours_blob": "e223c10ac00986c5a9a6a3ef58ee23f4ab85cb0f",
+      "upstream_blob": "aa938dd6765c2c752c468d4353858a0f3066a2a0",
+      "base_size": 7192,
+      "ours_size": 7193,
+      "upstream_size": 7346,
+      "current_hunks": {
+        "merge_tree": 2,
+        "ours": 1,
+        "upstream": 2
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/chat/astrid-local-agents.test.ts",
+      "base_blob": "31c8f3fe305e134b1362c880b58568e632c4f775",
+      "ours_blob": "0fcbe2999d13bf0590644067cbf9fe3aa71b2df1",
+      "upstream_blob": "6e614214b69905a65999f6c0048fc6124d8582e8",
+      "base_size": 21563,
+      "ours_size": 21564,
+      "upstream_size": 26222,
+      "current_hunks": {
+        "merge_tree": 10,
+        "ours": 1,
+        "upstream": 13
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/chat/astrid-local-agents.ts",
+      "base_blob": "9fe3e410c3d968404a5782f38d38489b889cad3d",
+      "ours_blob": "e7b15de9f5add03f5432efa5737cd918a0e56758",
+      "upstream_blob": "2344c0dafdf56b6baa75b3079aacf92885618d1c",
+      "base_size": 15540,
+      "ours_size": 15541,
+      "upstream_size": 15952,
+      "current_hunks": {
+        "merge_tree": 4,
+        "ours": 1,
+        "upstream": 6
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/chat/astrid-project-chat.test.ts",
+      "base_blob": "42c112ac990bc9a65029f84da0f1774012898807",
+      "ours_blob": "e1fe377ff8af99d9de11ec7694c7ea76b1c1d896",
+      "upstream_blob": "f399a7c64eb802f9a1bb118072f2e5039dd3e12c",
+      "base_size": 12595,
+      "ours_size": 12596,
+      "upstream_size": 13429,
+      "current_hunks": {
+        "merge_tree": 1,
+        "ours": 1,
+        "upstream": 1
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/chat/astrid-project-chat.ts",
+      "base_blob": "f33578bc20b21df3d356e881b1b149bdb0631ad7",
+      "ours_blob": "13f1b6c0113202ad79242d8d79938f7539069639",
+      "upstream_blob": "c8efeaf87a403c3056b9870a3ac701588c4499ad",
+      "base_size": 20684,
+      "ours_size": 20685,
+      "upstream_size": 20955,
+      "current_hunks": {
+        "merge_tree": 1,
+        "ours": 1,
+        "upstream": 1
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/chat/astrid-shared-acp-sessions.test.ts",
+      "base_blob": "fa469335d2bd4636032e1d7b0a643cc358733fa5",
+      "ours_blob": "c3bc7b16d52302212e46470c33adf5219a766001",
+      "upstream_blob": "790c31642a30321273d428d92059aad445e13196",
+      "base_size": 21802,
+      "ours_size": 21803,
+      "upstream_size": 23178,
+      "current_hunks": {
+        "merge_tree": 1,
+        "ours": 1,
+        "upstream": 1
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/chat/astrid-shared-acp-sessions.ts",
+      "base_blob": "aacf7ffe99c4f9ce4f21edbfabc5f67b48be1be2",
+      "ours_blob": "f31f2fc92f7990ad480796316e1f502704c779a1",
+      "upstream_blob": "8e6c944bff0feeff1fb41f0b57904957a233c765",
+      "base_size": 20847,
+      "ours_size": 20848,
+      "upstream_size": 21008,
+      "current_hunks": {
+        "merge_tree": 1,
+        "ours": 1,
+        "upstream": 1
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/chat/discoveryProbe.ts",
+      "base_blob": "a328096587b3a850011906dcdcb6eb32f37b9eac",
+      "ours_blob": "09ba9f0b007097bae3b5e36fdf4182f508fb2d49",
+      "upstream_blob": "ade24dfe88bc54254fdb8dc581b63229e4dec875",
+      "base_size": 2849,
+      "ours_size": 2850,
+      "upstream_size": 3086,
+      "current_hunks": {
+        "merge_tree": 2,
+        "ours": 1,
+        "upstream": 3
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/chat/localAgents.ts",
+      "base_blob": "adc3829fb0332ea5f60f4b2d404170df6d088654",
+      "ours_blob": "5f3dbcb908121958983a3bc3b78d67555246d538",
+      "upstream_blob": "7bd7d4d419d6ce55f8edafe91c214369af781896",
+      "base_size": 4949,
+      "ours_size": 4950,
+      "upstream_size": 7079,
+      "current_hunks": {
+        "merge_tree": 6,
+        "ours": 1,
+        "upstream": 10
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/chat/modelCatalog.ts",
+      "base_blob": "c01412c65eee7ecba641f2ae6f61f22d4b73cc65",
+      "ours_blob": "5de3f13200a72ecbaa5d071af0fc774ac7b09764",
+      "upstream_blob": "7c650c0c4415ceb56387f83f6c149ba8c901eebd",
+      "base_size": 951,
+      "ours_size": 952,
+      "upstream_size": 1154,
+      "current_hunks": {
+        "merge_tree": 1,
+        "ours": 1,
+        "upstream": 1
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/chat/service.mjs",
+      "base_blob": "c04a5c992684d30378f07c09c977f4af869fe13e",
+      "ours_blob": "945a9bcf8d0dd7ba0237afc0229ac31b3f816f23",
+      "upstream_blob": "011689ea7756036fe71dd725e64de7f0f68a03d9",
+      "base_size": 187439,
+      "ours_size": 190447,
+      "upstream_size": 193191,
+      "current_hunks": {
+        "merge_tree": 3,
+        "ours": 15,
+        "upstream": 15
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/chat/service.test.ts",
+      "base_blob": "a498d3e9124331cc00b4e962db82c33462bde225",
+      "ours_blob": "f88e5e44a24981d8ad6a7a4191234b1d8ea15d96",
+      "upstream_blob": "4cc86ad0985733d8776294a6e0c6bc2b45842d1c",
+      "base_size": 6793,
+      "ours_size": 6794,
+      "upstream_size": 6890,
+      "current_hunks": {
+        "merge_tree": 2,
+        "ours": 1,
+        "upstream": 4
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/chat/service.ts",
+      "base_blob": "fc30a4eef1dca949e5d09283366bb6a71ac4f651",
+      "ours_blob": "3b6dfa004bcc452d1c55712aa760d81dae85367c",
+      "upstream_blob": "ec6b9ca21483b242fb0c50f55a8309e907644904",
+      "base_size": 2998,
+      "ours_size": 2999,
+      "upstream_size": 3081,
+      "current_hunks": {
+        "merge_tree": 2,
+        "ours": 1,
+        "upstream": 2
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/core/gateway/dispatch.py",
+      "base_blob": "faee0ff3e1a1c400e8bdaca212b88fe966ef31cd",
+      "ours_blob": "239587646b1cb0b259d454bc2cc1faa7922b2c7a",
+      "upstream_blob": "402362763963c5858bd1003bce5b26c0cf42fbbd",
+      "base_size": 28559,
+      "ours_size": 28556,
+      "upstream_size": 28705,
+      "current_hunks": {
+        "merge_tree": 2,
+        "ours": 2,
+        "upstream": 2
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/core/generation/gpu_environment.py",
+      "base_blob": "da1b528d46e3504e54b3024c16a84a04336986f9",
+      "ours_blob": "f42e84cce1a9dccf50dadd2f53b3c193890b5f4f",
+      "upstream_blob": "9bccdf3fdeb510c687e971930c8f96ec0729f4c3",
+      "base_size": 14825,
+      "ours_size": 14826,
+      "upstream_size": 15046,
+      "current_hunks": {
+        "merge_tree": 2,
+        "ours": 1,
+        "upstream": 2
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/installer/backend.py",
+      "base_blob": "e28357d09172bce9c09540ae3bf777f6cf280f5a",
+      "ours_blob": "73930778510cb08d5a50f86767ffea0098fc2007",
+      "upstream_blob": "a609940892e8d2507fe77e661a4018f6e9fd5c1e",
+      "base_size": 34238,
+      "ours_size": 34911,
+      "upstream_size": 36267,
+      "current_hunks": {
+        "merge_tree": 5,
+        "ours": 4,
+        "upstream": 6
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/installer/core.py",
+      "base_blob": "2db5d9f8b16f058cd728596e15542653d01c2c10",
+      "ours_blob": "15feb564a12299642b168c3aa6bf9a555bee0716",
+      "upstream_blob": "8b7c68acd64654d46309046c0c3c69d7266d7cf7",
+      "base_size": 13814,
+      "ours_size": 13815,
+      "upstream_size": 14057,
+      "current_hunks": {
+        "merge_tree": 3,
+        "ours": 1,
+        "upstream": 7
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/installer/launcher.py",
+      "base_blob": "c803aadda87f7e9f9b0dd59d6eb020d1993c3d0a",
+      "ours_blob": "2d9b58ea07588c5058b213ee99da9a03926fea5e",
+      "upstream_blob": "6537e27183aee0d09c8c03f10c057b0e307dd415",
+      "base_size": 2778,
+      "ours_size": 2779,
+      "upstream_size": 8142,
+      "current_hunks": {
+        "merge_tree": 1,
+        "ours": 1,
+        "upstream": 4
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/installer/omp/recipe.json",
+      "base_blob": "3a3c3290ba1fd0a2c68d78b19afab9ab1a8b4359",
+      "ours_blob": "e1ac1cfe00bcad6a40daf1a015b77c4a43548031",
+      "upstream_blob": "0cbf40c60a51b5d62e0db80dfb7030ee6a1e7299",
+      "base_size": 2263,
+      "ours_size": 2264,
+      "upstream_size": 2269,
+      "current_hunks": {
+        "merge_tree": 1,
+        "ours": 1,
+        "upstream": 7
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/installer/service.py",
+      "base_blob": "2974b81ddc0f7213d1a30a1e3354b5e577dc32b6",
+      "ours_blob": "aaa5c8cb524a385cdb7b9b811d5ab9e5e9d84853",
+      "upstream_blob": "a3aa8e5ba45e98e3f124b909541ce8683a68fd22",
+      "base_size": 16233,
+      "ours_size": 16428,
+      "upstream_size": 16427,
+      "current_hunks": {
+        "merge_tree": 0,
+        "ours": 2,
+        "upstream": 1
+      },
+      "reuse": "partial-reuse-upstream-base-only"
+    },
+    {
+      "path": "astrid/installer/tools.py",
+      "base_blob": "868f7179bc673e67484180c76ae065316c2ce051",
+      "ours_blob": "8a456b340050be5eff7678cbd5db9645f79e4fb9",
+      "upstream_blob": "3efcc8dfd64b24eb7e79023ed95886af86466252",
+      "base_size": 26553,
+      "ours_size": 26554,
+      "upstream_size": 26556,
+      "current_hunks": {
+        "merge_tree": 3,
+        "ours": 1,
+        "upstream": 3
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/packs/rendering/docs/SKILL.md",
+      "base_blob": "f5c18de30093a3013dcf8c9951445f25d55e7ef2",
+      "ours_blob": "7dee1d8c84afc9a1f8b15150f55db0642d2be142",
+      "upstream_blob": "715b37ce9b3d10dda3fd0a1c048967e86ffd3249",
+      "base_size": 53882,
+      "ours_size": 55153,
+      "upstream_size": 53835,
+      "current_hunks": {
+        "merge_tree": 1,
+        "ours": 28,
+        "upstream": 1
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "astrid/packs/vibecomfy/environment.windows-nvidia.json",
+      "base_blob": "e553ad26f259f64b9723b7c35551b5dc539ee7b6",
+      "ours_blob": "3242b3bedb504c636b1486943aef7626fe5986c4",
+      "upstream_blob": "1eb15b7c4b5ba5c92a1882953d0f728d8d928880",
+      "base_size": 944,
+      "ours_size": 945,
+      "upstream_size": 884,
+      "current_hunks": {
+        "merge_tree": 1,
+        "ours": 1,
+        "upstream": 1
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "docs/install/OMP-LANDING.md",
+      "base_blob": "726609bfa437190c051e9023a645160b5fb0310e",
+      "ours_blob": "7e425adf1c8eb666a462d4961927ddd6ce64be68",
+      "upstream_blob": "e4ade615a2b8cd010884248a6acb61ec8eac64d7",
+      "base_size": 4612,
+      "ours_size": 4613,
+      "upstream_size": 8834,
+      "current_hunks": {
+        "merge_tree": 1,
+        "ours": 1,
+        "upstream": 16
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "docs/reference/services.md",
+      "base_blob": "99f72358b32f7caad7732714f0a8c6bfabe61381",
+      "ours_blob": "1cd0d382bdc335c17d63a18f1a91a8ab3981e66b",
+      "upstream_blob": "24ebff2bab996fd09401b5cd3bcc0bdfffff7273",
+      "base_size": 4448,
+      "ours_size": 4449,
+      "upstream_size": 4592,
+      "current_hunks": {
+        "merge_tree": 1,
+        "ours": 1,
+        "upstream": 1
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "docs/testing/TESTING.md",
+      "base_blob": "c54152de6586cbf60daebb83264a9dfb4d66def8",
+      "ours_blob": "fbcfcddc4c0276b8f3418180ebe4f31e8f693c26",
+      "upstream_blob": "df416ca4ed5f82bf30251191239e26834ce1dd5e",
+      "base_size": 30512,
+      "ours_size": 30513,
+      "upstream_size": 30346,
+      "current_hunks": {
+        "merge_tree": 2,
+        "ours": 1,
+        "upstream": 2
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "scripts/refresh_omp_recipe.py",
+      "base_blob": "b822d323bfa0f017ad13618e47758e42d1119aeb",
+      "ours_blob": "277031f1d06d5c34a7f8ce65986697e92602e99d",
+      "upstream_blob": "b1d630b5f487f37aa50ff8f8dcd22b8688f45e5d",
+      "base_size": 6007,
+      "ours_size": 6008,
+      "upstream_size": 4094,
+      "current_hunks": {
+        "merge_tree": 4,
+        "ours": 1,
+        "upstream": 14
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "tests/core/generation/test_gpu_environment.py",
+      "base_blob": "bac871fb2f2f25d7643921dbbed47d5599cdc721",
+      "ours_blob": "f1b0783bb2badb5b094a3ed0bdbc058bd33c5ae9",
+      "upstream_blob": "76f2ec69264eb03b4ad843ddead8d8bf091eed7c",
+      "base_size": 14810,
+      "ours_size": 14811,
+      "upstream_size": 14619,
+      "current_hunks": {
+        "merge_tree": 1,
+        "ours": 1,
+        "upstream": 2
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "tests/test_installer_acl.py",
+      "base_blob": "ca328ec1ee9f25d35f22ce52a2593a0a6ce04889",
+      "ours_blob": "67bb7505c0f270ad55952360f11bb12962f83806",
+      "upstream_blob": "88dd45748db6677ed9dd9f602c060cb4de68a219",
+      "base_size": 9830,
+      "ours_size": 9831,
+      "upstream_size": 9920,
+      "current_hunks": {
+        "merge_tree": 1,
+        "ours": 1,
+        "upstream": 2
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "tests/test_installer_cleanup.py",
+      "base_blob": "e5ea5450114e2b96700368a992e2ea1f47f581c3",
+      "ours_blob": "c4381c3140282cce74a94cb9e5d09de04c3cc62b",
+      "upstream_blob": "f030558f1aa47eed8e896116ce7bc296c05e232c",
+      "base_size": 13054,
+      "ours_size": 13055,
+      "upstream_size": 13137,
+      "current_hunks": {
+        "merge_tree": 1,
+        "ours": 1,
+        "upstream": 1
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "tests/test_installer_lifecycle.py",
+      "base_blob": "4c7c2e604b24df9d4d068c070220c2db39c03ad4",
+      "ours_blob": "e77c7d2d29df9970472acc0d99e5f2c9bf2edfe6",
+      "upstream_blob": "6db70490bde7eb33e3b5b8c91d3c882631f3e283",
+      "base_size": 22868,
+      "ours_size": 22869,
+      "upstream_size": 26288,
+      "current_hunks": {
+        "merge_tree": 6,
+        "ours": 1,
+        "upstream": 7
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "tests/test_installer_omp_source.py",
+      "base_blob": "f8ff6760732bad2da455680ac35fe4acc9a36a25",
+      "ours_blob": "18b560d48889ca6462778a49282413196b9e6488",
+      "upstream_blob": "3ac8b3a080b2359b5e0654c8262c8a353c8600e4",
+      "base_size": 20194,
+      "ours_size": 20195,
+      "upstream_size": 22950,
+      "current_hunks": {
+        "merge_tree": 8,
+        "ours": 1,
+        "upstream": 12
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "tests/test_installer_platforms.py",
+      "base_blob": "791311144204eec7d33d73fda7b89dc38502c669",
+      "ours_blob": "ac69059c2b31d5e2ce968e697b1df68e5ed40232",
+      "upstream_blob": "94a7e05012357ba4d906cc611716e8f18b38d250",
+      "base_size": 31940,
+      "ours_size": 32478,
+      "upstream_size": 32020,
+      "current_hunks": {
+        "merge_tree": 1,
+        "ours": 4,
+        "upstream": 1
+      },
+      "reuse": "partial-reuse-upstream-base-only"
+    },
+    {
+      "path": "tests/test_installer_wheel.py",
+      "base_blob": "a21f3238ccb2071c9955b3980272ed51600f94ea",
+      "ours_blob": "cfe1729e4188eecfc14387e07e4abf7a7bb96880",
+      "upstream_blob": "549e079eb4fcbac9cea9ebb7324dc86e20e6f012",
+      "base_size": 3506,
+      "ours_size": 3507,
+      "upstream_size": 3507,
+      "current_hunks": {
+        "merge_tree": 1,
+        "ours": 1,
+        "upstream": 1
+      },
+      "reuse": "exact-byte-identity"
+    },
+    {
+      "path": "tests/test_installer_windows_tasks.py",
+      "base_blob": "be0dc5e501f2b75f4e1d63596e2b0304a8a997bc",
+      "ours_blob": "6bb12bd7bc02cea5965bd433df9706540912237c",
+      "upstream_blob": "ef1b2ca9d7b95056826baf1323394dbf15f2a913",
+      "base_size": 2648,
+      "ours_size": 4499,
+      "upstream_size": 4513,
+      "current_hunks": {
+        "merge_tree": 1,
+        "ours": 3,
+        "upstream": 4
+      },
+      "reuse": "new-current-conflict"
+    }
+  ]
+}
