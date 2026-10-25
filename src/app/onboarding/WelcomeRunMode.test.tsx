@@ -67,7 +67,7 @@ describe('run-mode choice', () => {
   it('keeps the local option description short and links here to the editor repository', () => {
     mount(() => undefined, 'local');
 
-    const localLabel = screen.getByRole('radio', { name: 'Run everything on your computer' }).closest('label');
+    const localLabel = screen.getByRole('radio', { name: 'Run app on your computer' }).closest('label');
     expect(localLabel?.textContent).toContain('The editor runs on your machine too: no browser permission, works offline, and you can change Astrid itself. GitHub here.');
 
     const link = screen.getByRole('link', { name: 'here' });
@@ -75,6 +75,35 @@ describe('run-mode choice', () => {
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveAttribute('rel', 'noreferrer');
     expect(link).toHaveClass('underline', 'underline-offset-4', 'hover:text-foreground');
+  });
+
+  it('pictures each option with its own decorative mink, moving only for the chosen option', () => {
+    const { container, rerender } = mount(() => undefined, 'hosted');
+    const beach = () => container.querySelector('[data-scene="beach"]');
+    const desk = () => container.querySelector('[data-scene="desk"]');
+
+    expect(screen.getByRole('radio', { name: 'Use it at astrid.haus' }).closest('label')).toContainElement(beach() as HTMLElement);
+    expect(screen.getByRole('radio', { name: 'Run app on your computer' }).closest('label')).toContainElement(desk() as HTMLElement);
+    expect(beach()).toHaveAttribute('aria-hidden', 'true');
+    expect(desk()).toHaveAttribute('aria-hidden', 'true');
+    expect(beach()).toHaveAttribute('data-motion', 'play');
+    expect(desk()).toHaveAttribute('data-motion', 'still');
+
+    rerender(<WelcomeRunMode windowMode="app-window" setWindowMode={vi.fn()} onContinue={() => undefined} runMode="local" setRunMode={vi.fn()} />);
+    expect(beach()).toHaveAttribute('data-motion', 'still');
+    expect(desk()).toHaveAttribute('data-motion', 'play');
+  });
+
+  it('holds both minks on a still frame when reduced motion is asked for', () => {
+    const matchMedia = window.matchMedia;
+    window.matchMedia = (query: string) => ({ ...matchMedia(query), matches: query === '(prefers-reduced-motion: reduce)' });
+    try {
+      const { container } = mount(() => undefined, 'local');
+      expect(container.querySelector('[data-scene="beach"]')).toHaveAttribute('data-motion', 'still');
+      expect(container.querySelector('[data-scene="desk"]')).toHaveAttribute('data-motion', 'still');
+    } finally {
+      window.matchMedia = matchMedia;
+    }
   });
 
   it('Safari explains the browser requirement and copies the page link for Chrome or Edge', async () => {
@@ -109,7 +138,7 @@ describe('run-mode choice', () => {
     expect(screen.queryByRole('radiogroup', { name: 'How to open Astrid' })).not.toBeInTheDocument();
     expect(screen.getByText('Needs Chrome or Edge to reach your computer.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy link for Chrome or Edge' })).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: 'Run everything on your computer' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Run app on your computer' })).toBeInTheDocument();
   });
 
   it('mobile Continue enters the connection phase', () => {
@@ -196,7 +225,7 @@ describe('run-mode choice', () => {
     const onContinue = vi.fn();
     const setRunMode = vi.fn();
     const { rerender } = render(<WelcomeRunMode windowMode="app-window" setWindowMode={vi.fn()} onContinue={onContinue} runMode="hosted" setRunMode={setRunMode} />);
-    fireEvent.click(screen.getByRole('radio', { name: 'Run everything on your computer' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Run app on your computer' }));
     expect(setRunMode).toHaveBeenCalledWith('local');
     rerender(<WelcomeRunMode windowMode="app-window" setWindowMode={vi.fn()} onContinue={onContinue} runMode="local" setRunMode={setRunMode} />);
     expect(screen.queryByRole('radiogroup', { name: 'How to open Astrid' })).not.toBeInTheDocument();
