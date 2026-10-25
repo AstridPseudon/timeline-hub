@@ -5,13 +5,14 @@ import fcntl
 import hashlib
 import json
 import os
-from pathlib import Path
 import re
 import shutil
 import stat
 import subprocess
 import sys
 import uuid
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 
 class Refused(RuntimeError):
@@ -120,7 +121,18 @@ def optional(path):
 def inode(path):
     s = path.lstat()
     check(not path.is_symlink() and s.st_uid == os.getuid(), 'unsafe owned path')
+    check(stat.S_ISDIR(s.st_mode) or s.st_nlink == 1, 'hardlink is not owned')
     return [s.st_dev, s.st_ino]
+
+
+def timestamp(value, field):
+    check(isinstance(value, str) and value.endswith('Z'), field + ' timestamp required')
+    try:
+        result = datetime.fromisoformat(value[:-1] + '+00:00')
+    except ValueError as exc:
+        raise Refused(field + ' timestamp invalid') from exc
+    check(result.tzinfo is not None and result.utcoffset() == timedelta(0), field + ' timestamp timezone')
+    return result
 
 
 class Store:
@@ -142,7 +154,7 @@ class Store:
                  'root': str(root), 'tests': str(tests_dir), 'mutex': inode(root / 'mutex'),
                  'directories': {str(p): inode(p) for p in (root, tests_dir, root / 'entries', root / 'locks', root / 'staging')}}
         atomic(root / 'owner.json', canonical(owner))
-        atomic(root / 'index.json', canonical({'version': 1, 'seq': 0, 'entries': {}, 'registrations': {}, 'retired': [], 'retired_suites': []}))
+        atomic(root / 'index.json', canonical({'version': 1, 'seq': 0, 'entries': {}, 'registrations': {}, 'retired': [], 'retired_suites': [], 'retired_entries': []}))
         return cls(root, tests_dir)
 
     def __init__(self, root, tests_dir):
@@ -163,7 +175,9 @@ class Store:
             check(inode(physical(path)) == node, 'store directory replaced')
         fd = os.open(self.root / 'mutex', os.O_RDWR | os.O_NOFOLLOW)
         try:
-            check(inode(self.root / 'mutex') == self.owner['mutex'] and list((os.fstat(fd).st_dev, os.fstat(fd).st_ino)) == self.owner['mutex'], 'mutex inode changed')
+            check(inode(self.root / 'mutex') == self.owner['mutex']
+                  and [os.fstat(fd).st_dev, os.fstat(fd).st_ino] == self.owner['mutex'],
+                  'mutex inode changed')
             fcntl.flock(fd, fcntl.LOCK_EX)
             check(inode(self.root / 'mutex') == self.owner['mutex'], 'mutex replaced')
             check(recovery or not self.journal.exists(), 'pending transaction: explicit recover required')
@@ -195,7 +209,8 @@ class Store:
         return index
 
     def _validate_index(self, index, live):
-        check(set(index) == {'version', 'seq', 'entries', 'registrations', 'retired', 'retired_suites'} and index['version'] == 1, 'index schema')
+        fields = {'version', 'seq', 'entries', 'registrations', 'retired', 'retired_suites'}
+        check(set(index) in (fields, fields | {'retired_entries'}) and index['version'] == 1, 'index schema')
         check(isinstance(index['seq'], int) and isinstance(index['entries'], dict) and isinstance(index['registrations'], dict) and isinstance(index['retired'], list), 'index types')
         for eid, entry in index['entries'].items():
             self._validate_entry(eid, entry, live)
@@ -212,6 +227,15 @@ class Store:
         for name in index['retired']:
             self._name(name)
         check(isinstance(index['retired_suites'], list) and all(isinstance(pair, list) and len(pair) == 2 and all(isinstance(v, str) and v and not any(c.isspace() for c in v) for v in pair) for pair in index['retired_suites']), 'retired suite schema')
+        for receipt in index.get('retired_entries', []):
+            check(set(receipt) == {'entry', 'component', 'key', 'identity', 'path', 'node', 'lock',
+                                   'seq', 'owner', 'registrations', 'suites'}, 'retired entry receipt schema')
+            check(receipt['entry'] == self._entry_id(receipt['component'], receipt['key'])
+                  and receipt['key'] == key_for(receipt['component'], receipt['identity'])
+                  and receipt['owner'] == self.owner['id'], 'retired entry receipt identity')
+            check(isinstance(receipt['registrations'], list) and isinstance(receipt['suites'], list),
+                  'retired entry receipt projections')
+        check(isinstance(index.get('retired_entries', []), list), 'retired entry receipt list')
 
     def _name(self, name):
         check(isinstance(name, str) and re.fullmatch('[A-Za-z0-9][A-Za-z0-9_-]*', name), 'registration name required')
@@ -424,7 +448,7 @@ class Store:
         finally:
             os.close(fd)
 
-    def _delete_owned(self, path, entry):
+    def _delete_owned(self, path, entry, strict=False):
         if not path.exists() and not path.is_symlink():
             return
         self._validate_entry(self._entry_id(entry['component'], entry['key']), entry, False)
@@ -444,6 +468,10 @@ class Store:
                 for name in os.listdir(directory_fd):
                     info = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
                     check(info.st_dev == root_info.st_dev and info.st_uid == os.getuid(), 'foreign mounted/owned content')
+                    if strict:
+                        check(not stat.S_ISLNK(info.st_mode)
+                              and (stat.S_ISDIR(info.st_mode) or info.st_nlink == 1),
+                              'retirement tree inode')
                     if stat.S_ISDIR(info.st_mode):
                         child_fd = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=directory_fd)
                         try:
@@ -467,6 +495,10 @@ class Store:
                         continue
                     info = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
                     check(info.st_dev == root_info.st_dev and info.st_uid == os.getuid(), 'foreign mounted/owned content')
+                    if strict:
+                        check(not stat.S_ISLNK(info.st_mode)
+                              and (stat.S_ISDIR(info.st_mode) or info.st_nlink == 1),
+                              'retirement tree inode')
                     if stat.S_ISDIR(info.st_mode):
                         child_fd = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=directory_fd)
                         try:
@@ -477,7 +509,7 @@ class Store:
                             current = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
                             check((current.st_dev, current.st_ino) == (opened.st_dev, opened.st_ino) and opened.st_uid == os.getuid(), 'child directory replaced/foreign')
                             os.fchmod(child_fd, opened.st_mode | stat.S_IWUSR)
-                            delete_children(child_fd)
+                            delete_children(child_fd, strict=strict)
                             current = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
                             check((current.st_dev, current.st_ino) == (opened.st_dev, opened.st_ino), 'child directory replaced')
                         finally:
@@ -497,6 +529,183 @@ class Store:
             self._checkpoint('eviction:directory')
         finally:
             os.close(root_fd)
+
+    def _process_references(self, path):
+        """Return live process references to an entry without trusting a caller."""
+        references = []
+        proc = Path('/proc')
+        if not proc.is_dir():
+            raise Refused('process audit unavailable')
+        target = str(path)
+
+        def under(value):
+            return value == target or value.startswith(target + '/')
+
+        for item in proc.iterdir():
+            if not item.name.isdigit() or int(item.name) == os.getpid():
+                continue
+            pid = item.name
+            try:
+                cwd = os.readlink(item / 'cwd')
+                if under(cwd):
+                    references.append(pid + ':cwd')
+                try:
+                    descriptors = (item / 'fd').iterdir()
+                    for fd in descriptors:
+                        try:
+                            if under(os.readlink(fd)):
+                                references.append(pid + ':fd:' + fd.name)
+                        except FileNotFoundError:
+                            continue
+                        except PermissionError as exc:
+                            raise Refused('process fd audit unreadable') from exc
+                except FileNotFoundError:
+                    continue
+                except PermissionError as exc:
+                    raise Refused('process fd audit unreadable') from exc
+                try:
+                    command = (item / 'cmdline').read_bytes().replace(b'\0', b' ').decode(errors='replace')
+                except FileNotFoundError:
+                    continue
+                except PermissionError as exc:
+                    raise Refused('process command audit unreadable') from exc
+                if target in command:
+                    references.append(pid + ':cmdline')
+            except FileNotFoundError:
+                continue
+            except PermissionError as exc:
+                raise Refused('process cwd audit unreadable') from exc
+            except OSError as exc:
+                raise Refused('process audit unreadable') from exc
+        return references
+
+    def _validate_owned_tree(self, path):
+        root = path.lstat()
+        check(stat.S_ISDIR(root.st_mode) and not stat.S_ISLNK(root.st_mode)
+              and root.st_uid == os.getuid(), 'retirement root inode')
+        device = root.st_dev
+        pending = [path]
+        while pending:
+            directory = pending.pop()
+            try:
+                children = list(os.scandir(directory))
+            except OSError as exc:
+                raise Refused('retirement tree unreadable') from exc
+            for child in children:
+                info = child.stat(follow_symlinks=False)
+                check(info.st_dev == device and info.st_uid == os.getuid(),
+                      'retirement tree foreign inode')
+                check(not stat.S_ISLNK(info.st_mode), 'retirement tree symlink')
+                check(stat.S_ISDIR(info.st_mode) or info.st_nlink == 1,
+                      'retirement tree hardlink')
+                if stat.S_ISDIR(info.st_mode):
+                    pending.append(Path(child.path))
+
+    def _retirement_authorization(self, eid, entry, authorization, now):
+        fields = {
+            'owner', 'entry', 'component', 'key', 'identity', 'path', 'node', 'lock',
+            'registered_at', 'not_before', 'keep', 'active', 'processes', 'cwd_refs',
+            'fd_refs', 'cmdline_refs', 'registration_refs', 'suite_refs', 'worker_refs',
+            'queue_refs',
+        }
+        check(isinstance(authorization, dict) and set(authorization) == fields,
+              'retirement authorization schema')
+        check(authorization['owner'] == self.owner['id'] and authorization['entry'] == eid,
+              'retirement authorization owner/entry mismatch')
+        check(authorization['component'] == entry['component'] and authorization['key'] == entry['key'],
+              'retirement authorization identity mismatch')
+        check(authorization['identity'] == entry['identity'], 'retirement authorization metadata mismatch')
+        check(authorization['path'] == entry['path'] and authorization['node'] == entry['node']
+              and authorization['lock'] == entry['lock'], 'retirement authorization inode mismatch')
+        registered_at = timestamp(authorization['registered_at'], 'registered_at')
+        not_before = timestamp(authorization['not_before'], 'not_before')
+        check(not_before >= registered_at + timedelta(hours=1), 'retirement minimum age missing')
+        check(now >= registered_at + timedelta(hours=1) and now >= not_before,
+              'retirement not-before guard')
+        check(authorization['keep'] is False and authorization['active'] is False,
+              'KEEP/ACTIVE guard')
+        for field in ('processes', 'cwd_refs', 'fd_refs', 'cmdline_refs', 'registration_refs',
+                      'suite_refs', 'worker_refs', 'queue_refs'):
+            check(isinstance(authorization[field], list), 'retirement reference schema: ' + field)
+            check(not authorization[field], 'retirement reference guard: ' + field)
+
+    def _retirement_markers(self, path, eid):
+        markers = (path / 'KEEP', path / '.KEEP', path / 'ACTIVE', path / '.ACTIVE',
+                   self.root / 'KEEP', self.root / '.KEEP', self.root / 'ACTIVE', self.root / '.ACTIVE',
+                   self.root / 'entries' / (eid + '.KEEP'), self.root / 'entries' / (eid + '.ACTIVE'))
+        return [str(marker) for marker in markers if marker.exists() or marker.is_symlink()]
+
+    def retire_entry(self, eid, authorization, *, now=None):
+        """Retire one explicitly authorized entry through the normal transaction route.
+
+        This is intentionally not part of ``ensure`` or its fixed-two policy.  The
+        caller supplies an owner-bound, point-in-time audit; Store rechecks every
+        filesystem, registration, process and lease guard before journaling one
+        victim.  No force or age-only override exists.
+        """
+        check(isinstance(eid, str) and re.fullmatch(r'(?:child|runtime)-[0-9a-f]{64}', eid),
+              'entry id required')
+        if now is None:
+            now = datetime.now(timezone.utc)
+        elif isinstance(now, datetime):
+            check(now.tzinfo is not None and now.utcoffset() == timedelta(0), 'now timestamp timezone')
+        else:
+            now = timestamp(now, 'now')
+        with self.mutex():
+            before = self._load()
+            self._verify_projection(before)
+            check(eid in before['entries'], 'entry absent')
+            entry = before['entries'][eid]
+            self._retirement_authorization(eid, entry, authorization, now)
+            path = Path(entry['path'])
+            check(not self._retirement_markers(path, eid), 'KEEP/ACTIVE marker')
+            self._owned_dir(path, entry)
+            self._validate_owned_tree(path)
+            process_refs = self._process_references(path)
+            check(not process_refs, 'active process reference')
+
+            held = []
+            try:
+                try:
+                    held.append(self._lock(eid, entry, True))
+                except BlockingIOError as exc:
+                    raise Refused('entry lease held') from exc
+                check(not self._retirement_markers(path, eid), 'KEEP/ACTIVE marker')
+                self._validate_owned_tree(path)
+                check(not self._process_references(path), 'active process reference')
+                after = json.loads(canonical(before))
+                retired_registrations = [name for name, reg in before['registrations'].items()
+                                         if eid in reg['requires']]
+                retired_suites = []
+                for name in retired_registrations:
+                    reg = after['registrations'].pop(name)
+                    if name not in after['retired']:
+                        after['retired'].append(name)
+                    if reg['suite']:
+                        pair = reg['suite'].split(None, 2)[:2]
+                        if pair not in after['retired_suites']:
+                            after['retired_suites'].append(pair)
+                            retired_suites.append(pair)
+                del after['entries'][eid]
+                after.setdefault('retired_entries', []).append({
+                    'entry': eid, 'component': entry['component'], 'key': entry['key'],
+                    'identity': entry['identity'], 'path': entry['path'], 'node': entry['node'],
+                    'lock': entry['lock'], 'seq': entry['seq'], 'owner': entry['owner'],
+                    'registrations': retired_registrations, 'suites': retired_suites,
+                })
+                journal = {'version': 1, 'owner': self.owner['id'], 'kind': 'retirement',
+                           'before': before, 'after': after,
+                           'projections': self._projections(before, after),
+                           'victims': [eid], 'new': None}
+                self._validate_transition(journal)
+                self._save_journal(journal)
+                self._checkpoint('retirement:journal')
+                self._roll(journal, True)
+                return {'status': 'retired', 'entry': eid,
+                        'registrations': retired_registrations, 'suites': retired_suites}
+            finally:
+                for fd in held:
+                    os.close(fd)
 
     def _evict(self, before, component, incoming, current):
         candidates = sorted(((eid, e) for eid, e in before['entries'].items() if e['component'] == component), key=lambda pair: pair[1]['seq'], reverse=True)
@@ -540,10 +749,10 @@ class Store:
         self._apply_projection(journal['projections'], forward)
         atomic(self.root / 'index.json', canonical(journal['after'] if forward else journal['before']))
         self._checkpoint('index')
-        if journal['kind'] == 'eviction':
+        if journal['kind'] in ('eviction', 'retirement'):
             for eid in journal['victims']:
                 entry = journal['before']['entries'][eid]
-                self._delete_owned(Path(entry['path']), entry)
+                self._delete_owned(Path(entry['path']), entry, journal['kind'] == 'retirement')
         elif journal['new']:
             entry = journal['new']
             for path in (Path(entry['path']), self.root / 'staging' / entry['key']):
@@ -556,7 +765,16 @@ class Store:
             check(before['entries'][eid] == after['entries'][eid], 'journal rewrites owned entry')
         for name in set(before['registrations']) & set(after['registrations']):
             check(before['registrations'][name] == after['registrations'][name], 'journal rewrites registration')
-        if journal['kind'] == 'eviction':
+        before_receipts = before.get('retired_entries', [])
+        after_receipts = after.get('retired_entries', [])
+        if journal['kind'] == 'retirement':
+            check(len(after_receipts) == len(before_receipts) + 1
+                  and after_receipts[:-1] == before_receipts
+                  and after_receipts[-1]['entry'] == journal['victims'][0],
+                  'retirement receipt authority')
+        else:
+            check(after_receipts == before_receipts, 'journal rewrites retirement receipts')
+        if journal['kind'] in ('eviction', 'retirement'):
             check(set(after['entries']) <= set(before['entries']), 'eviction cannot create')
             expected = {name: reg for name, reg in before['registrations'].items()
                         if not set(reg['requires']) & set(journal['victims'])}
@@ -595,14 +813,16 @@ class Store:
                 return
             journal = json.loads(read(self.journal))
             check(set(journal) == {'version', 'owner', 'kind', 'before', 'after', 'projections', 'victims', 'new'} and journal['version'] == 1 and journal['owner'] == self.owner['id'], 'journal ownership/schema')
-            check(journal['kind'] in ('eviction', 'creation'), 'journal kind')
+            check(journal['kind'] in ('eviction', 'retirement', 'creation'), 'journal kind')
             self._validate_index(journal['before'], False)
             self._validate_index(journal['after'], False)
             self._validate_transition(journal)
             current = json.loads(read(self.root / 'index.json'))
             check(current in (journal['before'], journal['after']), 'pending index changed')
-            if journal['kind'] == 'eviction':
+            if journal['kind'] in ('eviction', 'retirement'):
                 check(journal['new'] is None and set(journal['victims']) == set(journal['before']['entries']) - set(journal['after']['entries']), 'journal eviction authority')
+                if journal['kind'] == 'retirement':
+                    check(len(journal['victims']) == 1, 'retirement must have one victim')
             else:
                 check(not journal['victims'], 'creation cannot evict')
                 if journal['new']:
@@ -612,13 +832,13 @@ class Store:
                     check(new_id not in journal['before']['entries'] and journal['after']['entries'].get(new_id, e) == e, 'creation deletion authority')
             held = []
             try:
-                if journal['kind'] == 'eviction':
+                if journal['kind'] in ('eviction', 'retirement'):
                     for eid in journal['victims']:
                         held.append(self._lock(eid, journal['before']['entries'][eid], True))
                 elif journal['new']:
                     e = journal['new']
                     held.append(self._lock(self._entry_id(e['component'], e['key']), e, True))
-                self._roll(journal, journal['kind'] == 'eviction')
+                self._roll(journal, journal['kind'] in ('eviction', 'retirement'))
             finally:
                 for fd in held:
                     os.close(fd)
@@ -805,6 +1025,10 @@ def main():
     run = commands.add_parser('run')
     run.add_argument('--name', action='append', required=True)
     run.add_argument('command', nargs=argparse.REMAINDER)
+    retire = commands.add_parser('retire-entry')
+    retire.add_argument('entry')
+    retire.add_argument('--authorization', required=True)
+    retire.add_argument('--now')
     args = parser.parse_args()
     try:
         if args.action == 'key':
@@ -813,6 +1037,11 @@ def main():
         store = Store(args.root, args.tests_dir)
         if args.action == 'recover':
             store.recover()
+            return 0
+        if args.action == 'retire-entry':
+            authorization = json.loads(read(Path(args.authorization)))
+            receipt = store.retire_entry(args.entry, authorization, now=args.now)
+            print(canonical(receipt))
             return 0
         argv = args.command[1:] if args.command[:1] == ['--'] else args.command
         check(bool(argv), 'command required')
