@@ -56,9 +56,51 @@ def _claim(service: RuntimeService, key: str):
     }, idempotency_key=key)
 
 
+def test_expected_film_size_and_default_reserve_control_admission(tmp_path, monkeypatch):
+    monkeypatch.delenv("ASTRID_RUNTIME_FREE_DISK_FLOOR_BYTES", raising=False)
+    RealmStore.initialize(tmp_path / "realm").close()
+    service = RuntimeService(tmp_path / "realm")
+    try:
+        _register_render(service, scratch_bytes=0, output_bytes=0)
+        estimate = service.store._derive_managed_render_storage_estimate(
+            {"clips": [{"at": 0, "hold": 5879 / 30}]}, {"assets": {}}, [],
+        )
+        required = sum(estimate.values())
+        free = {"bytes": required + 1024**3}
+        monkeypatch.setattr("runtime_protocol.store.shutil.disk_usage", lambda _: SimpleNamespace(free=free["bytes"]))
+        admitted = service.create_task(_admission(key="film-fits", storage_estimate=estimate))
+        assert admitted["task"].get("waiting_reason") is None
+        free["bytes"] -= 1
+        with pytest.raises(ConflictError) as refused:
+            service.create_task(_admission(key="film-does-not-fit", storage_estimate=estimate))
+        assert refused.value.message == (
+            f"task admission refused: needs {required / 1e9:.2f} GB "
+            f"plus {1024**3 / 1e9:.2f} GB free-space reserve; "
+            f"{free['bytes'] / 1e9:.2f} GB free. Free disk space and try again."
+        )
+        assert refused.value.details["floor_bytes"] == 1024**3
+        assert "compact" not in refused.value.message
+        assert "reclaim_command" not in refused.value.details
+        assert service.store.conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0] == 1
+    finally:
+        service.close()
+
+
+@pytest.mark.parametrize("floor", ["invalid", "-1"])
+def test_disk_reserve_configuration_is_validated(tmp_path, monkeypatch, floor):
+    monkeypatch.setenv("ASTRID_RUNTIME_FREE_DISK_FLOOR_BYTES", floor)
+    RealmStore.initialize(tmp_path / "realm").close()
+    service = RuntimeService(tmp_path / "realm")
+    try:
+        with pytest.raises(ValidationError, match="ASTRID_RUNTIME_FREE_DISK_FLOOR_BYTES"):
+            service.store.storage_preflight("render.storage")
+    finally:
+        service.close()
+
+
 def test_task_estimate_overrides_capability_fallback_at_admission_and_claim(tmp_path, monkeypatch):
     # Pin the free-space floor to zero so this test exercises estimate
-    # precedence alone, not the 4 GiB default floor.
+    # precedence alone, not the 1 GiB default floor.
     monkeypatch.setenv("ASTRID_RUNTIME_FREE_DISK_FLOOR_BYTES", "0")
     RealmStore.initialize(tmp_path / "realm").close()
     service = RuntimeService(tmp_path / "realm")
