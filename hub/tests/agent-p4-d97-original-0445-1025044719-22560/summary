@@ -1,0 +1,6 @@
+test agent-p4-d97-original-0445-1025044719-22560: pass exit=0 in 30s — p4-d97-original-0445 on integration:agent (agent tree 2082bb633865cd504193efa58017b6eb17e555c1)
+cmd: env -i HOME=/root LANG=C.UTF-8 LC_ALL=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 P4_LAUNCHER=/home/user/work/wt/rt-P4-D97-original-0445/tools/p4-d73-pinned-launch.sh P4_D73_MANIFEST=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P4-D97-original-0445/evidence/route/ten-note.manifest P4_D73_EVIDENCE=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P4-D97-original-0445/evidence/body P4_D73_REQUEST_ID=d97-original-body-0445 /bin/bash --noprofile --norc -c 'set -eu; exec /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P4-D97-original-0445/evidence/route/ten-note.sh'
+counts: 1 passed in 28.11s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-p4-d97-original-0445-1025044719-22560/log.txt ---
+.                                                                        [100%]
+1 passed in 28.11s
