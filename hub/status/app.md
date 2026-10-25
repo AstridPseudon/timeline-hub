@@ -1,4 +1,4 @@
-<!-- app | 2026-10-25T01:12:15Z | dispatcher heartbeat 14s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 3m -->
+<!-- app | 2026-10-25T01:15:34Z | dispatcher heartbeat 14s | live 3 (sol 1, luna 2, other 0) | busy30 11 | status age 1m -->
 # app board, 2026-10-25T01:09Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -145,13 +145,19 @@
 | P2-import-ABI | Assert raw and normalized media exactly | Luna; independent | Actual20057 | merged | Author0038; independent0048 | Independent25 Node and7 semantic controls, all three types/lint PASS. Three source blobs match normal home; original proof owed. | Home913686448c |
 | P2-ADD-5211 | Use exact projected clip identity | Luna; independent | Actual 5211 and mounted source | merged | Author0038; review submit0042 | Independent selector review merged exact source. Preflight28266 PASS; actual ADD6954 submitted00:50:11 on c9d71b/0d142/a3cd/635f. Same ID only; result pending. | Home c9d71b651d |
 
-| P2-ADD-6954 | Read popup selection from its actual owner | Luna; independent | Actual6954 selected label874 | review | Author0056; review submit0106 | Product owner-selection fix:11 mounted and62 neighbors plus3 oracle/types/lint PASS. Six original specs exact; no browser credit. | Two source blobs in review |
+| P2-ADD-6954 | Read popup selection from its actual owner | Luna; independent | Independent0106 PASS | merged | Author0056; review0106 | Independent11 mounted/62 neighbors/oracle, three types/lint PASS. Protected six exact. Two reviewed blobs home; browser proof owed. | Home18de74bd43 |
 | P2-asset-import-current | Qualify exact import and catalogue ABI | Luna; service | Actual32587 terminal | gated:strict-oracle | Launcher0055; registry author0064 | Readiness1 PASS; original FAIL36s at missing config.registry527. Raw import, semantic request, acceptance and canonical readback advance. Later tail NOTRUN. | App913686448c |
 
-| P2-placement-import-current | Qualify embedded geometry and exact ABI | Luna; service | Preflight2470 PASS | doing | Actual16952; launcher0062 | Sole App placement body submitted01:05:28 on fixed913686/0d142/a3cd/635f. Source plan authentic; body result pending. | App913686448c |
+| P2-placement-import-current | Qualify embedded geometry and exact ABI | Luna; service | Preflight2470 PASS | doing | Actual16952; launcher0062 | Sole App placement body submitted01:05:28 on fixed913686/0d142/a3cd/635f. Original NO-GO213s at semantic row580; exactexpectedV2/9 versus actualV3/4.5. Source proposal0112 assigned. | App913686448c |
 | P2-asset-registry | Prove canonical registry boundary | Luna | Actual32587 registry527 | doing | app-P2-asset-32587-registry-oracle-0064 | Retained accepted before/after and authoritative source first; preserve every asset/identity/isolation/tail predicate. No new body. | Source pending |
 
-Integration: App913686448c now includes import merge over independently reviewed Undo5f4ce933ec and popup selectorsc9d71b. Import reviewer0048 PASS25+7/types/lint; exact three blobs home, no browser credit. Exact reviewed Undo source blobs match home. ADD6954 terminal NO-GO at selected label874; later history/Undo remain unqualified.
+| P2-placement-16952 | Prove actual embedded drop geometry | HARD Sol proposal | Actual16952 wrong semantic row | doing | app-P2-placement-16952-geometry-sol-0112 | Readiness1 PASS; expectedV2/9, actualV3/4.5 at580. Retained mounted coordinates first; spec owner0064 stays exclusive. | Readonly proposal |
+| P2-SWAP-11089 | Assert exact conditional created claim | Luna | Actual11089 strict equality | doing | app-P2-SWAP-11089-created-oracle-0112 | Main original30.41s fails unexpected created field. Guard fix reached expectation; exact C0/source-derived full command required. | Source pending |
+| P2-bulk-21061 | Attribute original response timeout | Runtime facts; App source later | Existing main finite packet | blocked:runtime | Runtime producer0039 facts requested0112 | Readiness PASS; original responsewait90s. POST/provider/outcome UNKNOWN; no unchanged repeat or inferred Runtime cost. | Appfd2f / Runtimea3cd |
+
+| P2-ADD-selection-current | Qualify mounted selection repair | Luna; service | Reviewed home18de | doing | app-P2-selection-ADD-submit-0114 | Placement/asset terminal. Historical status-only main imports are not live App requests; genuine local body slot clear. | Fixed18de/0d142/a3cd/635f |
+
+Integration: App18de74bd43 merges independently reviewed mounted popup selection-owner fix over Undo5f/import913686 and exact occurrence selectors. All three prior source reviews are logged in the existing ledger. No original or final-cut credit inferred.
 
 core open: Zero of eight isolated gestures PASS. Element8897 fails five seconds. ADD6954 passes projected clip/canvas then selected label874 fails; product fix in review. Asset32587 accepts and passes canonical readback, then registry527 fails. All later tails remain unqualified.
 regressions: No browser closure from source controls. D69 complete at its recorded source. P1 actual31083 and P3 actual15493 retain GO only on their recorded tuples.
@@ -165,6 +171,8 @@ live 2 / cap 6; ready-undispatched 0. Dispatcher header01:04:28 reports2; placem
 Capacity: Source authors and completed reviewers auto-recycle; no idle worker holds a body wait. Every remaining ended nonKEEP App worktree scan is empty. Historical refused dirty U3 and cleanup targets remain untouched; all actual run output retained.
 Disk: 6.239GB at01:08 during one placement body. Guarded c9 and50cf stale pins recycled; all outputs kept, no refusal. D89: six source above5.5GB; one body above5.2GB; no new below4.5GB; stop newest nongate4.0GB.
 Safety: No new safety or permission refusal. No direct product, test or pin edits by manager. All source and review work assigned to Codex workers.
-Inbox consumed through1844191 bytes. D89 new floors and up-to-five disjoint diff reviews consumed immediately. New upstreamAppd114 remains F-final-only; no gating upstream merge.
+Inbox consumed through1846963 bytes. Runtime0059 SWAP11089 and bulk21061 asks become rows this pass; D88 capture input remains Runtime-owned, no App action requested. D89 new floors and up-to-five disjoint diff reviews consumed immediately. New upstreamAppd114 remains F-final-only; no gating upstream merge.
 Later: F-final App upstream d11417a59 refresh and applied-result full suite are Runtime final coordinator-owned, gated on D59 cut. Gating App keeps frozen upstream3881.
 Evidence: [ADD review and submission](../../workers/app-P2-ADD-selector-review-submit-0042/report.md), [Undo author](../../workers/app-A2-Undo-reads-current-sol-0033/report.md), [import author](../../workers/app-P2-assets-import-ABI-0038/report.md), [element facts](../../design/app-P2-element-8897-safe-facts-0019.md).
+
+Later: App bulk21061 source attribution waits existing main producer finite POST/provider packet, requested0112; no new collector or original. Runtime D88 source/capture is owned there and not a new App prerequisite.
