@@ -245,8 +245,8 @@ def test_prepared_video_public_preview_accept_retry_undo_and_no_write(tmp_path, 
     """One new managed-video body, using the exact reviewed Runtime tree."""
     from tests.helpers.runtime import use_runtime, vendored_runtime_commit
 
-    expected_runtime_source = '369ffa7c00bd3d45c610fac7651ff79e7a283a1a'
-    expected_runtime_tree = '9bf331d68df8c966e8927a3f083ba03687803c99'
+    expected_runtime_source = 'ab1e4f6141987706132916e2da16477f5a019464'
+    expected_runtime_tree = '7d8e77b2f5a4af79305c9212ce5174d3ea9fd657'
     runtime_pin = vendored_runtime_commit()
     assert runtime_pin == expected_runtime_source
     root = use_runtime(commit=runtime_pin)

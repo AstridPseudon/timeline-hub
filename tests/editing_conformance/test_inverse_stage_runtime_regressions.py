@@ -30,10 +30,10 @@ from tests.helpers.runtime import use_runtime
 pytestmark = pytest.mark.integration
 
 RUNTIME_COMMIT = "6634a17f3ffd885567ba3c91b6c7a560df7375a4"
-AGENT_COMMIT = "bd3c95b1cebe3bf27c4a82919e5839efb37519db"
+AGENT_COMMIT = "a30e74e901a28b39c28facba3deb00d76f186e23"
 AGENT_COMMIT_FILE_HASHES = {
-    "astrid/sdk/timeline/commit.py": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7",
-    "astrid/sdk/timeline/inverse.py": "06bd41f404a40c17a1ec06b49c8443e0e755f622134822ede55fb3ca79234cee",
+    "astrid/sdk/timeline/commit.py": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+    "astrid/sdk/timeline/inverse.py": "6c794734cb763c21cec386f764bc63b94f3a74b4dd9f8464136a285c628d0423",
 }
 RUNTIME_FILE_HASHES = {
     "runtime_protocol/timeline_commit_auth.py": "4ac2b8792fe0389afb6eb710a348c35fa196131a13cab175bd3646f7d2cc0aeb",

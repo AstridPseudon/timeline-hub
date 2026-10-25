@@ -30,7 +30,7 @@ from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurre
 from astrid.sdk.timeline.native_parent_media_commands import capture_clip_add_media
 from astrid.sdk.timeline.sync import TimelineSession
 from astrid.sdk.timeline_sheet import NativeSheet
-from tests.helpers.runtime import new_runtime_daemon, runtime_checkout, use_runtime
+from tests.helpers.runtime import new_runtime_daemon, use_runtime
 
 pytestmark = pytest.mark.integration
 
@@ -38,8 +38,8 @@ PROJECT = "fresh-word-anchor"
 TIMELINE = "film"
 TARGET = "parent/clip:target"
 SOURCE = "occurrence:source-occurrence/clip:source"
-NORMAL_RUNTIME = "95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c"
-ORDINARY_SCHEMA = "6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d"
+NORMAL_RUNTIME = "ab1e4f6141987706132916e2da16477f5a019464"
+ORDINARY_SCHEMA = "d106dfe8212500709b4072d7bc0486f83c27d5d8de33d215cb52b9ea7d46357d"
 
 
 class MemorySocket:
@@ -68,8 +68,8 @@ def fresh_realm(tmp_path, monkeypatch):
             == ORDINARY_SCHEMA)
     assert "clip.anchor" in operations()
     assert json.loads(Path("runtime.lock.json").read_text())["source_commit"] == NORMAL_RUNTIME
-    use_runtime()
-    monkeypatch.syspath_prepend(str(runtime_checkout() / "tests"))
+    runtime_root = use_runtime(commit=NORMAL_RUNTIME)
+    monkeypatch.syspath_prepend(str(runtime_root / "tests"))
     from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
     from test_generation_publish_v1_settlement import _effect, _fixture, _output, _settle
 
