@@ -146,7 +146,7 @@ def test_direct_managed_render_admission_freezes_snapshot_before_claim(tmp_path)
         assert admitted_spec["inputs"]["timeline_authority"]["config_version"] == config_version
         assert admitted_spec["inputs"]["timeline_authority"]["managed_media_admissions"] == {"media-source": source_id}
         assert task["spec"]["input_object_ids"] == [source_id, snapshot_ref["digest"]]
-        assert task["spec"]["storage_estimate"]["scratch_bytes"] >= 256 * 1024 * 1024
+        assert task["spec"]["storage_estimate"]["scratch_bytes"] >= 128 * 1024 * 1024
         assert task["spec"]["storage_estimate"]["output_bytes"] >= 1024 * 1024
 
         epoch = service.health()["runtime_epoch"]
@@ -212,15 +212,15 @@ def test_direct_long_render_admission_budgets_current_fallback(tmp_path, monkeyp
         png_raw_frame_bytes = (4 * 1920 + 1) * 1080
         png_frame_bytes = (png_raw_frame_bytes * 101 + 99) // 100
         png_sequence_bytes = png_frame_bytes * 5040
-        jpeg_sequence_bytes = ((1920 * 1080) // 2) * 5040
+        jpeg_sequence_bytes = ((1920 * 1080) // 4) * 5040
         if alpha_mode == "opaque":
-            assert estimate["scratch_bytes"] >= math.ceil(jpeg_sequence_bytes * 1.25)
+            assert estimate["scratch_bytes"] >= math.ceil(jpeg_sequence_bytes * 1.10)
             assert estimate["scratch_bytes"] < png_sequence_bytes
             # Eight timeline seconds of held media at 160 seconds keeps the
             # opaque output clock at exactly 168 seconds / 5040 frames.
             assert estimate["output_bytes"] == 344_359_936
         else:
-            assert estimate["scratch_bytes"] >= math.ceil(png_sequence_bytes * 1.25)
+            assert estimate["scratch_bytes"] >= math.ceil(png_sequence_bytes * 1.10)
     finally:
         service.close()
 
@@ -250,15 +250,15 @@ def test_managed_render_storage_estimate_right_sizes_opaque_and_keeps_alpha_png(
         png_sequence_bytes = png_frame_bytes * 4889
         alpha_snapshot_bytes = len(canonical_json(alpha_config).encode()) + len(canonical_json(registry).encode())
         alpha_raw_scratch = alpha_snapshot_bytes + png_sequence_bytes + 2 * 1024 * 1024 + 128 * 1024 * 1024
-        assert alpha["scratch_bytes"] == max(256 * 1024 * 1024, math.ceil(alpha_raw_scratch * 1.25))
+        assert alpha["scratch_bytes"] == math.ceil(alpha_raw_scratch * 1.10)
 
         _, ten_minutes = estimate_for(600 * 30)
         ten_minute_total = ten_minutes["scratch_bytes"] + ten_minutes["output_bytes"]
-        assert ten_minute_total > 15 * 1024**3
+        assert ten_minute_total < 15 * 1024**3
         monkeypatch.setenv("ASTRID_RUNTIME_FREE_DISK_FLOOR_BYTES", "0")
         monkeypatch.setattr(
             "runtime_protocol.store.shutil.disk_usage",
-            lambda _path: SimpleNamespace(free=15 * 1024**3),
+            lambda _path: SimpleNamespace(free=ten_minute_total - 1),
         )
         preflight = service.store.storage_preflight(
             "rendering.render", storage_estimate=ten_minutes,

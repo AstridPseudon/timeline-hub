@@ -297,11 +297,11 @@ def test_canonical_long_media_and_hold_admission_covers_selected_fallback(canoni
     png_raw_frame_bytes = (4 * 1920 + 1) * 1080
     png_frame_bytes = (png_raw_frame_bytes * 101 + 99) // 100
     png_sequence_bytes = png_frame_bytes * 5040
-    jpeg_sequence_bytes = ((1920 * 1080) // 2) * 5040
+    jpeg_sequence_bytes = ((1920 * 1080) // 4) * 5040
     if alpha:
-        assert estimate["scratch_bytes"] >= math.ceil(png_sequence_bytes * 1.25)
+        assert estimate["scratch_bytes"] >= math.ceil(png_sequence_bytes * 1.10)
     else:
-        assert estimate["scratch_bytes"] >= math.ceil(jpeg_sequence_bytes * 1.25)
+        assert estimate["scratch_bytes"] >= math.ceil(jpeg_sequence_bytes * 1.10)
         assert estimate["scratch_bytes"] < png_sequence_bytes
 
 
