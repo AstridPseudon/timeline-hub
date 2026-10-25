@@ -257,7 +257,8 @@ class TimelineCommitStore:
         self._acceptance_transaction = False
         value = os.stat(self.store.db_path)
         self._database_identity = (value.st_dev, value.st_ino)
-        self._wal_identity = None
+        files, _ = self._physical_version()
+        self._wal_identity = None if files[1] is None else files[1][:2]
         self.clear_replay_memo()
 
     def clear_replay_memo(self):
@@ -286,7 +287,7 @@ class TimelineCommitStore:
         return tuple(files), package_owner
 
     def _replacement_connection_is_current(self, connection):
-        """Check that an externally supplied handle names this realm DB."""
+        """Check that an externally supplied handle names this physical DB."""
         try:
             database = connection.execute("PRAGMA database_list").fetchone()
             journal_mode = connection.execute("PRAGMA journal_mode").fetchone()
@@ -303,6 +304,14 @@ class TimelineCommitStore:
             raise ProtocolError("accepted commit connection replacement is not the realm database")
         if journal_mode is None or str(journal_mode[0]).lower() != "wal":
             raise ProtocolError("realm storage requires SQLite WAL journal mode")
+
+    def _physical_identity_changed(self, files):
+        """Return whether the canonical DB/WAL was replaced since this store's baseline."""
+        if files[0] is None or files[0][:2] != self._database_identity:
+            return True
+        if self._wal_identity is None:
+            return files[1] is not None
+        return files[1] is None or files[1][:2] != self._wal_identity
 
     def _reestablish_connection(self):
         """Replace stale storage handles before any authenticated read.
@@ -324,8 +333,15 @@ class TimelineCommitStore:
             files, _ = self._physical_version()
             if files[0] is None:
                 raise ProtocolError("accepted commit database is missing; reopen required")
+            physical_identity_changed = self._physical_identity_changed(files)
 
-            if current is not self._connection:
+            # A replacement handle is safe to adopt only while the canonical
+            # DB and WAL identities still match the tracked baseline.  A
+            # quiescent handle can retain an unlinked inode after a path swap;
+            # its database_list path and journal mode would otherwise look
+            # valid while its authenticated reads remain stale.
+            reopen = current is self._connection or physical_identity_changed
+            if not reopen:
                 self._replacement_connection_is_current(current)
                 current.row_factory = sqlite3.Row
                 current.execute("PRAGMA foreign_keys=ON")
@@ -336,14 +352,26 @@ class TimelineCommitStore:
                 if getattr(self._connection, "in_transaction", False):
                     cast(sqlite3.Connection, self._connection).close()
             else:
-                # Closing the old handle is essential: SQLite may otherwise
-                # continue serving the disconnected inode after DB/WAL swap.
-                current.close()
+                # Closing the old handle is essential when it is mounted: a
+                # SQLite connection may otherwise continue serving the
+                # disconnected inode after a DB/WAL swap.  An untracked
+                # replacement handle is caller-owned, so it is left closed or
+                # unwound by that owner; it is never used for authenticated IO.
+                if current is self._connection:
+                    current.close()
+                elif getattr(self._connection, "in_transaction", False):
+                    cast(sqlite3.Connection, self._connection).close()
                 self.store.conn = None
                 try:
                     self.store._open(fresh=False)
                 except FileNotFoundError as exc:
                     raise ProtocolError("accepted commit database is missing; reopen required") from exc
+
+                reopened_files, _ = self._physical_version()
+                if reopened_files[0] is None or reopened_files[0][:2] != files[0][:2]:
+                    cast(sqlite3.Connection, self.store.conn).close()
+                    self.store.conn = None
+                    raise ProtocolError("accepted commit storage identity changed during reopen")
 
             self._connection = self.store.conn
             files, _ = self._physical_version()
@@ -360,7 +388,7 @@ class TimelineCommitStore:
         files, package_owner = self._physical_version()
         connection_changed = self.store.conn is not self._connection
         database_changed = files[0] is None or files[0][:2] != self._database_identity
-        wal_changed = self._wal_identity is not None and (files[1] is None or files[1][:2] != self._wal_identity)
+        wal_changed = self._physical_identity_changed(files)
         if connection_changed or database_changed or wal_changed:
             self._reestablish_connection()
             files, package_owner = self._physical_version()

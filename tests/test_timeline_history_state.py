@@ -324,6 +324,92 @@ def test_replacing_connection_invalidates_stale_transaction_before_replay(servic
 
 
 @pytest.mark.parametrize("component", ["database", "wal"])
+def test_untracked_connection_recovers_to_valid_swapped_database(service, monkeypatch, tmp_path, component):
+    commits, publication, expected, calls = warm(service, monkeypatch)
+    stale = sqlite3.connect(service.store.db_path, isolation_level=None)
+    target = service.store.db_path if component == "database" else Path(str(service.store.db_path) + "-wal")
+    replacement = tmp_path / f"replacement-{component}"
+    shutil.copyfile(target, replacement)
+    replacement.replace(target)
+    service.store.conn = stale
+    try:
+        assert commits.history_entry(service.test_project, "main", publication) == expected
+        assert calls == {publication: 2}
+        assert commits._connection is service.store.conn
+        assert commits._connection is not stale
+    finally:
+        stale.close()
+
+
+def test_untracked_stale_connection_cannot_authorize_tampered_swapped_database(
+        service, monkeypatch, tmp_path):
+    commits, publication, _, _ = warm(service, monkeypatch)
+    service.store.conn.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchall()
+    stale = sqlite3.connect(service.store.db_path, isolation_level=None)
+    replacement = tmp_path / "tampered.sqlite3"
+    shutil.copyfile(service.store.db_path, replacement)
+    replacement.replace(service.store.db_path)
+    with closing(sqlite3.connect(service.store.db_path, isolation_level=None)) as tampered:
+        tampered.execute("UPDATE command_idempotency SET event_ids_json='[]' WHERE txn_id=?", (publication,))
+    with closing(sqlite3.connect(service.store.db_path, isolation_level=None)) as current:
+        assert current.execute("SELECT event_ids_json FROM command_idempotency WHERE txn_id=?",
+                               (publication,)).fetchone()[0] == "[]"
+        tampered_rows = {
+            table: [tuple(row) for row in current.execute(f"SELECT * FROM {table}")]
+            for table in ("parent_composition_heads", "parent_composition_revisions", "timeline_commit_history",
+                          "command_idempotency", "timeline_events", "project_sequences",
+                          "timeline_document_input_contents", "timeline_document_input_bindings",
+                          "timeline_document_input_links")
+        }
+    service.store.conn = stale
+    try:
+        with pytest.raises(RuntimeErrorBase):
+            commits.history_entry(service.test_project, "main", publication)
+        assert rows(service) == tampered_rows
+        assert not any(commits._history_state.values())
+        assert commits._connection is not stale
+    finally:
+        stale.close()
+
+
+def test_untracked_connection_swap_race_fails_closed(service, monkeypatch, tmp_path):
+    commits, publication, _, _ = warm(service, monkeypatch)
+    stale = sqlite3.connect(service.store.db_path, isolation_level=None)
+    first = tmp_path / "first.sqlite3"
+    second = tmp_path / "second.sqlite3"
+    shutil.copyfile(service.store.db_path, first)
+    shutil.copyfile(service.store.db_path, second)
+    first.replace(service.store.db_path)
+    service.store.conn = stale
+    original_open = service.store._open
+
+    def racing_open(*, fresh=False):
+        original_open(fresh=fresh)
+        second.replace(service.store.db_path)
+
+    monkeypatch.setattr(service.store, "_open", racing_open)
+    try:
+        with pytest.raises(ProtocolError, match="identity changed during reopen"):
+            commits.history_entry(service.test_project, "main", publication)
+        assert not any(commits._history_state.values())
+    finally:
+        stale.close()
+
+
+def test_foreign_replacement_connection_refuses_before_authenticated_reads(service, monkeypatch, tmp_path):
+    commits, publication, _, _ = warm(service, monkeypatch)
+    foreign = sqlite3.connect(tmp_path / "foreign.sqlite3", isolation_level=None)
+    service.store.conn = foreign
+    try:
+        with pytest.raises(ProtocolError, match="not the realm database"):
+            commits.history_entry(service.test_project, "main", publication)
+        assert not any(commits._history_state.values())
+    finally:
+        service.store.conn = commits._connection
+        foreign.close()
+
+
+@pytest.mark.parametrize("component", ["database", "wal"])
 def test_replacing_current_transaction_refuses_before_reopen(service, monkeypatch, tmp_path, component):
     commits, publication, _, _ = warm(service, monkeypatch)
     target = service.store.db_path if component == "database" else service.store.db_path.with_name("realm.sqlite3-wal")
