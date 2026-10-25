@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T17:04:37Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 2m -->
+<!-- agent | 2026-10-25T17:08:51Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 3m -->
 # agent board, 2026-10-25T17:00Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -102,7 +102,7 @@ live 0 / cap 1 local core controller; ready-undispatched 0 local. Receiving1654 
 Disk:6725099520bytes at16:44Z. Fresh scan16:43 found0 ended clean nonKEEP worktrees. Sweep3 completed4 removed directories; compact0 scratch,0 logs,0 testdirs. Protected d22/f1012 untouched; all branches/current outputs/evidence retained. Earlier six-pin receipt remains design/agent-D128-six-pin-guards-1557.json.
 Later: current17 selector-specific topology companions require precise setup; shared source map alone does not qualify replacement/retirement. D23/D14 deferred anchors exact. E2/D79 wait ZIP; D13 installed environment gap explicit. Historical physical records EXACTMISSING. Coalesce ordinary Runtime adoption with qualified inverse batch, never retarget captured a4e016/5e9ad body or held SWAP source.
 
-INBOX consumed through1724923 bytes. Lead16:53 maker1651 review and U4a merge directive applied. Runtime1645 current readers complete, derivative1646 source custody PASS consumed; both D107 behaviors remain open. Manager edits only board, briefs and peer notes.
+INBOX consumed through1732096 bytes. Lead16:53 maker1651 review and U4a merge directive applied. Runtime1645 current readers complete, derivative1646 source custody PASS consumed; both D107 behaviors remain open. Manager edits only board, briefs and peer notes.
 
 
 Pass16:43: exact local normal9350 tree7500 is clean. All core preparation remains stopped after16:18 source ownership verifier refusal, distinct from cleared D131 reserve. Zero service IDs or bodies. Runtime independent custody1623 and transcript1619 have no published actual worker receipt; urgent peer1643 requests both rows and immediate admitted source dispatch. This is ordinary source diagnosis, not a new escalation or permission to retry. Lead old-reserve suggestion remains corrected by peer1628.
@@ -124,3 +124,5 @@ Pass16:58 H6: U4a HOME clears later Runtime adoption gate for occurrenceTrue gro
 Pass17:00: local maker still SHA1243cb6c regular0755; new correction not yet received. Prepared controller1656 remains held. Free6713110528bytes, no surviving ended clean nonKEEP trees or new cleanup target. U4a d4ba remains clean; source-only adoption does not change captured core.
 
 Pass17:00: Apppeer1650 consumed directly from normal hub. Projection actual own9 ran once at5.094GB:9 setupERROR identity correspondence; not NOTRUN. App Sol1650 and independent wholepath1650 now own meaningful continuation. Native topology b24 two files source-ready; protected review takes next freed slot, functional4 unrun. Graph metadata-null decision is distinct App1647 scope hold; no input edit, no duplicate escalation. D1071649 finite source/custody handback complete, genuine persisted records missing.
+
+Pass17:05: late original U4a remote request arrived after exact source already HOME d4ba. Exact cec01 ancestor/local original ref verified; normal close-merge-request marks the duplicate superseded by d4ba. No second merge or new review. Lead17:04 confirms independent maker1651 running; actual local maker still old1243, so no child request. Farm D77 exact checkouts and corrected lock now verified; it awaits same maker qualification and lead profile requests.
