@@ -5,6 +5,7 @@ import hashlib
 from .dirfd import filesystem as os
 from . import platform
 from . import cancellation
+from . import process_control
 import shutil
 import sys
 import threading
@@ -235,6 +236,10 @@ class RuntimeDaemon:
 
     def _start(self, *, rotate_credentials=False):
         cancellation.check()
+        # Fix signalling policy from Runtime support before anything is spawned.
+        process_control.configure_from(self.support_root)
+        self.process_signalling = platform.process_control_probe()
+        process_control.announce(self.process_signalling)
         epoch_floor = self._read_epoch_floor()
         self.service = RuntimeService(self.root, display_name=self.display_name, realm_id=self.realm_id, support_root=self.support_root, export_root=self.export_root, reboot_executor=self.reboot_executor, reboot_allowlist=self.reboot_allowlist, runtime_epoch_floor=epoch_floor, admission_timeout=self.admission_timeout, _admission_fd=self._replacement_admission_fd)
         cancellation.check()

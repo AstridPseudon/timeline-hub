@@ -68,7 +68,7 @@ class ProcessGroups:
             if not _still_ours(pgid, members):
                 continue
             try:
-                os.killpg(pgid, signal.SIGTERM)
+                _signal_group(pgid, signal.SIGTERM)
             except (ProcessLookupError, PermissionError):
                 continue
             for process in members:
@@ -83,11 +83,21 @@ class ProcessGroups:
                 time.sleep(0.02)
             if _group_alive(pgid):
                 try:
-                    os.killpg(pgid, signal.SIGKILL)
+                    _signal_group(pgid, signal.SIGKILL)
                 except (ProcessLookupError, PermissionError):
                     pass
         if cleanup_errors:
             raise cleanup_errors[0]
+
+
+def _signal_group(pgid: int, signum) -> None:
+    try:
+        os.killpg(pgid, signum)
+    except PermissionError:
+        # --process-control=sandbox under a seccomp profile: the same member walk Runtime uses.
+        if runtime_platform.process_control() != "sandbox":
+            raise
+        runtime_platform.signal_observed_group(pgid, signum)
 
 
 def _group_alive(pgid: int) -> bool:

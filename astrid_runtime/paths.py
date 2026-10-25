@@ -59,6 +59,7 @@ class RuntimePaths:
     source_profiles_dir: Path
     instance_lock_path: Path
     bootstrap_lock_path: Path
+    process_control_path: Path
 
     @classmethod
     def current(
@@ -91,6 +92,7 @@ class RuntimePaths:
             source_profiles_dir=runtime / "source-profiles",
             instance_lock_path=runtime / "instance.lock",
             bootstrap_lock_path=runtime / "bootstrap.lock",
+            process_control_path=runtime / "process-control.json",
         )
 
     @classmethod

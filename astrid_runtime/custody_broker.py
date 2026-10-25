@@ -18,6 +18,7 @@ import json
 import math
 from runtime_protocol.dirfd import filesystem as os
 from runtime_protocol import platform
+from runtime_protocol import process_control
 from pathlib import Path
 import shutil
 import socket
@@ -1468,6 +1469,7 @@ def load_sealed_capability(
         raise CustodyError("Runtime custody capability path must be absolute")
     sidecar_raw, _ = _read_owner_file(sidecar_path)
     support_root = sidecar_path.parent.resolve(strict=True)
+    process_control.configure_from(support_root)
     reference = json.loads(sidecar_raw)
     required_reference = {
         "version", "role", "ledger_path", "ledger_sha256", "journal_path", "journal_sha256",
@@ -1677,6 +1679,9 @@ class NativeProcessCustody:
     def signal(self, signum, *, validate=None):
         if signum not in (platform.TERM, platform.KILL):
             raise CustodyError("native Runtime signal is outside the admitted set")
+        # This may run in a separate controller process; it follows the
+        # setting in the same Runtime support folder.
+        process_control.configure_from(self.path.parent)
         with platform.file_lock(self.lock):
             record = self._read()
             actor = default_process_identity(os.getpid())

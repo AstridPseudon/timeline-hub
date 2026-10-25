@@ -52,6 +52,27 @@ transfers descriptor ownership to its caller; the sender leaves it open.
 Callers must check process identity after opening the pidfd and before
 signaling. `signal_process` owns the combined pin, identity-check and signal
 sequence. The syscall fallback accepts only `None` for siginfo.
+
+**Sandbox process control.** All of the above is the default, `strict`. An
+install made with `--sandbox` writes `process_control: "sandbox"` to
+`<data-root>/runtime/process-control.json` (through `astrid_runtime workspace
+create|attach --process-control`). Every signalling process reads it at
+startup. Sandbox mode is for seccomp sandboxes such as NVIDIA OpenShell, which
+deny `pidfd_open` (ENOSYS) and negative-PID `kill` (EPERM), and it relaxes
+exactly those two cases on Linux:
+
+- When `pidfd_open` answers ENOSYS, `signal_process` re-reads the start time
+  from `/proc`, compares it with the expected birth and only then calls
+  `kill(pid)`. It refuses if the start time can't be read or doesn't match.
+  Other errors still fail closed.
+- When `killpg` answers EPERM, the group is signalled member by member,
+  birth-checked, rescanning until no unsignalled member is left, leader last.
+  The unreaped leader keeps the group ID from being reused meanwhile.
+
+Each fallback logs once. `platform.process_control_probe()` reports what works
+(`astrid-runtime doctor` shows it as `process_signalling`). CI runs the suite in
+this mode under `tests/seccomp/openshell-like.json`. macOS and Windows accept the
+setting but have nothing to relax yet.
 Windows uses process creation FILETIMEs and SID-derived numeric user identity,
 identity-checked process handles, and kill-on-close Job Objects. Children start
 suspended until assigned to their Job. A detached owner inherits the Job handle

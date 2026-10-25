@@ -8,6 +8,9 @@ Linux's public ``pidfd_open(pid, flags=0)`` and
 ``pidfd_send_signal(fd, signum, siginfo=None, flags=0)`` prefer each stdlib
 wrapper independently, with a verified syscall fallback when it is absent.
 Callers using these low-level helpers own identity checks and fd closure.
+
+Process control is ``strict`` unless Runtime support says ``sandbox``
+(``runtime_protocol.process_control``); see ``configure_process_control``.
 """
 from __future__ import annotations
 
@@ -967,7 +970,15 @@ def _signal_linux_group(process, signum):
         os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
     except ChildProcessError as exc:
         raise ProcessLookupError("process-group custody lost: child is no longer waitable") from exc
-    os.killpg(process.pid, signum)
+    try:
+        os.killpg(process.pid, signum)
+    except PermissionError:
+        if not _sandbox_process_control():
+            raise
+        # The unreaped leader still holds the PGID, so the group cannot be
+        # reused while we walk it.
+        leader = process_identity(process.pid)
+        signal_observed_group(process.pid, signum, leader=leader)
 
 
 def _linux_pidfd_syscall(operation, *arguments):
@@ -1045,8 +1056,192 @@ def pidfd_send_signal(fd: int, signum: int, siginfo=None, flags: int = 0) -> Non
         _linux_pidfd_syscall("pidfd_send_signal", fd, signum, None, flags)
 
 
+# --- process control: strict (default) or sandbox ---------------------------
+#
+# Fixed once per process from Runtime support (runtime_protocol.process_control)
+# before anything is spawned. Strict keeps every rule below as written. Sandbox
+# relaxes exactly two Linux primitives that seccomp sandboxes such as OpenShell
+# deny: pidfd_open (ENOSYS) and process-group kill (EPERM).
+
+PROCESS_CONTROL_MODES = ("strict", "sandbox")
+_process_control: str | None = None
+_process_control_lock = threading.Lock()
+_fallbacks_noted: set[str] = set()
+
+
+def configure_process_control(mode: str) -> None:
+    """Fix this process's process-control mode; it cannot change afterwards."""
+    global _process_control
+    if mode not in PROCESS_CONTROL_MODES:
+        raise ValueError(f"process control must be one of {', '.join(PROCESS_CONTROL_MODES)}")
+    with _process_control_lock:
+        if _process_control is not None and _process_control != mode:
+            raise RuntimeError(f"process control is already {_process_control}; refusing to change it to {mode}")
+        _process_control = mode
+
+
+def process_control() -> str:
+    return _process_control or "strict"
+
+
+def _sandbox_process_control() -> bool:
+    return sys.platform == "linux" and _process_control == "sandbox"
+
+
+def _note_fallback(kind: str, detail: str) -> None:
+    with _process_control_lock:
+        if kind in _fallbacks_noted:
+            return
+        _fallbacks_noted.add(kind)
+    print(f"Runtime sandbox process control: {detail}", file=sys.stderr, flush=True)
+
+
+def process_control_probe(mode: str | None = None) -> dict:
+    """What signalling actually works in this process, checked live.
+
+    ``mode`` evaluates the result for a given setting (doctor reads the
+    setting without fixing its own process); default: this process's mode.
+
+    ``ok`` is False when Runtime cannot stop what it starts: then tasks that
+    spawn processes must be refused (in strict mode, the reason points at
+    sandbox mode). The probe sends no signal to anything but signal 0 to
+    this process's own group.
+    """
+    mode = mode or process_control()
+    if mode not in PROCESS_CONTROL_MODES:
+        raise ValueError(f"process control must be one of {', '.join(PROCESS_CONTROL_MODES)}")
+    report: dict = {"process_control": mode, "platform": sys.platform}
+    if sys.platform != "linux":
+        report.update(signalling="native", group_signalling="native", ok=True)
+        if mode == "sandbox":
+            report["note"] = "sandbox mode is on; nothing to relax on this platform yet"
+        return report
+    try:
+        os.close(pidfd_open(os.getpid()))
+        pidfd = "available"
+    except OSError as exc:
+        pidfd = "enosys" if exc.errno == errno.ENOSYS else f"error:{errno.errorcode.get(exc.errno, exc.errno)}"
+    except NotImplementedError:
+        pidfd = "unsupported"
+    try:
+        os.killpg(os.getpgrp(), 0)
+        group = "allowed"
+    except PermissionError:
+        group = "denied"
+    except OSError as exc:
+        group = f"error:{errno.errorcode.get(exc.errno, exc.errno)}"
+    if pidfd == "available":
+        signalling = "pidfd"
+    elif pidfd == "enosys" and mode == "sandbox":
+        signalling = "pid-with-start-time-check"
+    else:
+        signalling = "unavailable"
+    if group == "allowed":
+        group_signalling = "killpg"
+    elif group == "denied" and mode == "sandbox" and signalling != "unavailable":
+        group_signalling = "member-walk"
+    else:
+        group_signalling = "unavailable"
+    report.update(pidfd=pidfd, process_group_kill=group, signalling=signalling,
+                  group_signalling=group_signalling,
+                  ok=signalling != "unavailable" and group_signalling != "unavailable")
+    if not report["ok"]:
+        report["reason"] = (
+            "Runtime cannot stop processes safely here (pidfd: %s, process-group kill: %s)%s"
+            % (pidfd, group, "; if this is a seccomp sandbox such as OpenShell, install with --sandbox"
+               if mode == "strict" else ""))
+    return report
+
+
+def _signal_checked_pid(expected, signum) -> None:
+    """Sandbox process control only, after pidfd_open answered ENOSYS.
+
+    Re-read the start time from /proc, compare it with the expected birth,
+    then kill(pid). Refuse if it cannot be read or does not match. For an
+    unreaped child, kill(pid) is as safe as a pidfd; otherwise the window is
+    the microseconds between the check and the signal.
+    """
+    _note_fallback("pidfd", "pidfd_open is unavailable (ENOSYS); signalling by PID after a /proc start-time check")
+    pid = int(expected["pid"])
+    observed = process_identity(pid)
+    if observed is None or any(observed.get(k) != expected.get(k) for k in ("pid", "uid", "birth_id")):
+        raise OSError("process incarnation changed")
+    os.kill(pid, signum)
+
+
+def _linux_group_members(pgid: int) -> list[dict]:
+    members = []
+    for entry in os.scandir("/proc"):
+        if not entry.name.isdigit():
+            continue
+        try:
+            identity = process_identity(int(entry.name))
+        except OSError:
+            continue  # changing or unreadable right now; the next pass sees it again
+        if identity is not None and identity.get("process_group") == pgid:
+            members.append(identity)
+    return members
+
+
+_GROUP_WALK_PASSES = 10
+
+
+def signal_observed_group(pgid: int, signum, *, leader=None) -> None:
+    """Signal a process group member by member, leader last (sandbox mode).
+
+    Used when process-group kill is denied, and by callers recovering a
+    group whose leader was already reaped. Each member is signalled once,
+    through signal_process (birth-checked), and the group is rescanned until
+    no unsignalled member remains, so children forked during the walk are
+    caught too. ``leader`` is the leader's expected identity (default: the
+    live process whose PID is ``pgid``, if any); it is signalled last.
+    Raises ProcessLookupError if nothing in the group could be signalled.
+    """
+    if sys.platform != "linux":
+        raise NotImplementedError("member-by-member group signalling is Linux-only")
+    if pgid <= 1 or pgid == os.getpgrp():
+        raise PermissionError(errno.EPERM, "refusing to walk this process group")
+    if _sandbox_process_control():
+        _note_fallback("group", "process-group kill is denied; signalling the group member by member, leader last")
+    if leader is None:
+        candidate = process_identity(pgid)
+        leader = candidate if candidate is not None and candidate.get("process_group") == pgid else None
+    leader_pid = int(leader["pid"]) if leader else pgid
+    done: set[tuple[int, str]] = set()
+    signalled = False
+    for attempt in range(_GROUP_WALK_PASSES + 1):
+        pending = [m for m in _linux_group_members(pgid)
+                   if m["pid"] != leader_pid and (m["pid"], m["birth_id"]) not in done]
+        if not pending:
+            break
+        if attempt == _GROUP_WALK_PASSES:
+            raise OSError(errno.EAGAIN, "process group kept gaining members while being signalled")
+        for member in pending:
+            done.add((member["pid"], member["birth_id"]))
+            try:
+                signal_process(member, signum)
+                signalled = True
+            except ProcessLookupError:
+                pass
+            except OSError as exc:
+                if str(exc) != "process incarnation changed":
+                    raise  # (a changed incarnation means it exited and its PID was reused: skip it)
+    if leader is not None:
+        try:
+            signal_process(leader, signum)
+            signalled = True
+        except ProcessLookupError:
+            pass
+    if not signalled:
+        raise ProcessLookupError(errno.ESRCH, "no process in the group could be signalled")
+
+
 def signal_process(expected, signum):
-    """Signal one incarnation via pidfd / retained Windows handle, never a bare PID."""
+    """Signal one incarnation via pidfd / retained Windows handle, never a bare PID.
+
+    The one exception is sandbox process control on Linux when pidfd_open is
+    unavailable (ENOSYS); see _signal_checked_pid.
+    """
     if not expected:
         raise ProcessLookupError("missing process identity")
     pid = int(expected["pid"])
@@ -1095,7 +1290,13 @@ def signal_process(expected, signum):
         finally:
             kernel.CloseHandle(handle)
         return
-    fd = pidfd_open(pid)
+    try:
+        fd = pidfd_open(pid)
+    except OSError as exc:
+        if exc.errno != errno.ENOSYS or not _sandbox_process_control():
+            raise
+        _signal_checked_pid(expected, signum)
+        return
     try:
         observed = process_identity(pid)
         if observed is None or any(observed.get(k) != expected.get(k) for k in ("pid", "uid", "birth_id")):
