@@ -24,23 +24,14 @@ def film(tmp_path, monkeypatch):
     # Keep the committed film as an immutable source closure, but put the live
     # case on a new bootstrap-created target through the real provider.
     monkeypatch.syspath_prepend(str(runtime / "tests"))
-    from precut_realm_fixture import load_precut_realm_fixture
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
-    from timeline_commit_film_fixture import FilmFixture
+    from timeline_commit_film_fixture import build_film_fixture
 
     from astrid.sdk.timeline.commit import bundle_from_document
     from astrid.sdk.timeline.emitter import emit_document_commands
 
-    captured = load_precut_realm_fixture(tmp_path, variant="anchor")
-    pins = captured.pins
-    source_fixture = FilmFixture(
-        source_root=captured.copy_roots[0], duplicate_root=captured.copy_roots[1],
-        project_id=pins["project_id"], timeline_id=pins["timeline_id"],
-        parent_revision_id=pins["parent_revision_id"], media_ids=pins["media_ids"],
-        transcript_document_id=pins["transcript_document_id"],
-        text_binding_id=pins["text_binding_id"],
-    )
+    source_fixture = build_film_fixture(tmp_path)
     service = RuntimeService(source_fixture.duplicate_root)
     try:
         service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
