@@ -89,3 +89,63 @@ def test_ancestry_view_rechecks_authorization_and_live_history(service):
     service.test_provider.action = execute
     with pytest.raises(AuthorizationError, match="end tamper control"):
         commit(service, auth.body(service), key="live-history", authorize=authorize)
+
+
+def test_ancestry_reuses_only_request_snapshot_reachability(service, monkeypatch):
+    auth.provider(service)
+    publications = []
+    for number in range(4):
+        submitted = auth.body(service)
+        change = submitted["commands"][0]["args"]["changes"][0]
+        if number:
+            change["before"] = {"state": "present", "value": {"org.example.timeline": {"note": str(number - 1)}}}
+        change["value"] = {"org.example.timeline": {"note": str(number)}}
+        submitted["steps"][0]["patch"] = [copy.deepcopy(change)]
+        accepted = commit(service, submitted, key=f"ancestry-{number}")
+        publications.append(accepted["receipt"]["receipt_id"])
+    commits, _ = service._timeline_commits()
+    original = commits._history_entry_view
+    calls = []
+
+    def counted(*args, **kwargs):
+        calls.append(args[2])
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(commits, "_history_entry_view", counted)
+
+    def execute(context, port):
+        calls.clear()
+        expected = port.history_entry(publications[0])
+        assert len(calls) >= 4, "another request retained ancestry authority"
+        calls.clear()
+        actual = port.history_entry(publications[0])
+        assert actual == expected
+        assert calls == [publications[0]], "authenticated ancestry was walked again"
+        actual["records"]["steps"].clear()
+        assert port.history_entry(publications[0]) == expected
+
+        # Even a rolled-back write invalidates reachability before the next
+        # read. The target must be reached again from authenticated roots.
+        service.store.conn.execute("SAVEPOINT ancestry_change")
+        service.store.conn.execute(
+            "UPDATE timeline_commit_history SET metadata_json=metadata_json WHERE publication_id=?", (publications[-1],))
+        service.store.conn.execute("ROLLBACK TO ancestry_change")
+        service.store.conn.execute("RELEASE ancestry_change")
+        calls.clear()
+        assert port.history_entry(publications[0]) == expected
+        assert len(calls) >= 4
+
+        service.store.conn.execute("SAVEPOINT ancestry_tamper")
+        service.store.conn.execute(
+            "UPDATE timeline_commit_history SET records_json='{}' WHERE publication_id=?", (publications[2],))
+        with pytest.raises(RuntimeErrorBase):
+            port.history_entry(publications[0])
+        service.store.conn.execute("ROLLBACK TO ancestry_tamper")
+        service.store.conn.execute("RELEASE ancestry_tamper")
+        assert port.history_entry(publications[0]) == expected
+        raise AuthorizationError("end ancestry control")
+
+    service.test_provider.action = execute
+    for number in range(2):
+        with pytest.raises(AuthorizationError, match="end ancestry control"):
+            commit(service, auth.body(service), key=f"ancestry-read-{number}")

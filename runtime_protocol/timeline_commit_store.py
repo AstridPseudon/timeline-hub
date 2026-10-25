@@ -529,6 +529,11 @@ class TimelineCommitStore:
             current["inputs"] = previous
 
     @property
+    def _history_read_identity(self):
+        assert self._history_inputs is not None
+        return self._replay_generation, self._replay_store_version
+
+    @property
     def _history_inputs(self):
         current = getattr(self._verification, "current", None)
         traversal = current["traversal"] if current else None
