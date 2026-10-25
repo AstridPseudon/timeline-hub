@@ -1,0 +1,13 @@
+{
+  "task": "U4p D111b normal home",
+  "home": "34d4644589970274a5252c0f7c68b6288eb0b0b4",
+  "tree": "48d71e1a0c18a13668e1d1e086def9dd6210affe",
+  "author": "a385cc76bf",
+  "author_tree": "48d71e1a0c18a13668e1d1e086def9dd6210affe",
+  "entire_tree_equals_tested_author": true,
+  "merge_receipt": "merged tl/app-U4p-D111b-release-adoption-1139 into app tl/integration -> 34d4644589\n",
+  "runtime": "7070f1378d1917fcce69857ebd33cd2b3015568b",
+  "agent": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+  "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+  "free_before_body_admission_bytes": 5588877312
+}

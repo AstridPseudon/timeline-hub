@@ -1,0 +1,60 @@
+{
+  "task": "U4p D111b qualified release adoption",
+  "app": {
+    "base_commit": "96af9c08b0d80e0bdebda998662ff9773eab6caf",
+    "base_tree": "a6190929019538bca9d76552ce6b915501193f73",
+    "changed_files": ["runtime.lock.json", "public/install-manifest.json"],
+    "runtime_lock_sha256": "197d25593cfbeca7b1ce79b083e7bc4b71bc6dc8094d9b8f613451ae9175df94",
+    "install_manifest_sha256": "d613e93e76a74e790963cd55675030c4e936ca4ce6087adaf0378819bf20f0f1"
+  },
+  "runtime": {
+    "checkout": "/home/user/work/runtime",
+    "commit": "7070f1378d1917fcce69857ebd33cd2b3015568b",
+    "tree": "cd68015cb9fe85a6ecd2d15dd7e2eac69f67e2b1",
+    "reviewed_commit": "f0c4d6d2b66bb84e935b9008853fcb628746fe88",
+    "reviewed_tree": "cd68015cb9fe85a6ecd2d15dd7e2eac69f67e2b1",
+    "tree_exact_against_reviewed": true,
+    "working_tree_clean": true,
+    "producer_version": "sha256:084f3f2510edff28c18d33aac4a459f8aa6df3cb4fd71cba4fb292274ea8ade5",
+    "source_hashes_sha256": {
+      "runtime_protocol/timeline_commit_port.py": "5d6b7a0948ce52147b79eb2413503b770465128a86ed8f6ffb48edea9791a37a",
+      "runtime_protocol/timeline_commit_store.py": "f5b1b60d1da19ca54b73c8af5a784c21bbc9b9b1c07875c99de1a2966502a554",
+      "runtime_protocol/timeline_commit_auth.py": "72d4611def6491ac39872e04551ed7d2f1c4872eb655c4b0a63055bd4b324b2d",
+      "tests/test_timeline_commit_ancestry_reads.py": "316f7ca5ff1874c3f0206296ed2ef18341c8ac5a35ba1de8db803219325cd42a",
+      "tests/test_timeline_commit_closure_growth.py": "e64b9b587eb3540bfe58adde45191d491b40017c0cf4b2dfbbbd0ceb3ca4ae1f"
+    }
+  },
+  "agent": {
+    "checkout": "/home/user/work/wt/agt-pin-070dfc5e",
+    "commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+    "working_tree_clean": true,
+    "checkout_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2"
+  },
+  "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+  "adoption": {
+    "runtime_source_commit": "7070f1378d1917fcce69857ebd33cd2b3015568b",
+    "agent_sha_preserved": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "schema_digest_preserved": true
+  },
+  "checks": [
+    {"command": "node scripts/vendor-lock.mjs check runtime.lock.json --producer /home/user/work/runtime", "result": "PASS"},
+    {"command": "node --test scripts/installer/update-manifest.test.mjs", "result": "PASS 2/2"},
+    {"command": "node --test scripts/installer/manifest.test.mjs", "result": "PASS 2/2"},
+    {"command": "node --test scripts/runtime-schema-guard.test.mjs", "result": "PASS 2/2"},
+    {"command": "vitest installManifestSkew.test.ts vendorLock.test.ts", "result": "PASS 17/17"},
+    {"command": "Runtime generators/generate.py --check", "result": "PASS"},
+    {"command": "Runtime scripts/artifact_manifest.py --check", "result": "PASS"},
+    {"command": "Runtime tests/test_artifact_manifest.py", "result": "PASS 3/3"},
+    {"command": "canonical Runtime files against normal parent", "result": "PASS 15/15"},
+    {"command": "exact producer mappings", "result": "PASS 14/14"},
+    {"command": "protected App files unchanged", "result": "PASS 8/8"},
+    {"command": "Node 20 syntax checks", "result": "PASS 3/3"},
+    {"command": "JSON parse", "result": "PASS 2/2"},
+    {"command": "scoped ESLint", "result": "PASS"},
+    {"command": "git diff --check", "result": "PASS"}
+  ],
+  "release_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-runtime-to-app-20261025T1130Z-D111b-RELEASE.md",
+  "known_limit": "No full suite, browser/live-socket, P2, native, service, collector, or body proof was run; the release receipt explicitly defers those proofs.",
+  "not_adopted": ["held tags 1124", "wire/schema changes"]
+}

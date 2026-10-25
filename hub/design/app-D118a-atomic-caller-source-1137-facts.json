@@ -1,0 +1,48 @@
+{
+  "task": "app-D118a-atomic-caller-source-1137",
+  "result": "APPLIED",
+  "base_commit": "0ad49261ed36f043b059c07de989bd39cd3a5889",
+  "changed_product": "astrid/packs/rendering/docs/scripts/timeline_document.py",
+  "change": "Use TimelineSession._capture_bundle(session_state) for the detached document emitter base so the existing exact revision/publication fetch remains private but retains _runtime_document for materialization.",
+  "source_hashes": {
+    "target_base_sha256": "5ec4a3f2b2ef1585e6707c029dc271acb6a4bd7f11f010def18f086d51f28e33",
+    "target_current_sha256": "798a2d2ecbc1f7b08c180e356e6608dc2d1c8cd386069410f0e0d89c8cf2a9c8",
+    "original_test_sha256": "c4e95a4cdc74fe8de9b151c818492f6a2fd4301c699a43bc686611bcbdeff5a4",
+    "original_test_base_sha256": "c4e95a4cdc74fe8de9b151c818492f6a2fd4301c699a43bc686611bcbdeff5a4",
+    "original_test_ast_equal": true
+  },
+  "runtime": {
+    "checkout": "/home/user/work/wt/rt-pin-42aad0e9",
+    "commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+    "tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c",
+    "clean": true
+  },
+  "tests": {
+    "original_node": {
+      "nodeid": "tests/editing_conformance/test_doc_patch_atomic_scope_runtime.py::test_complete_json_script_commit_authenticates_materialized_atomic_scopes",
+      "result": "1 passed in 2.68s",
+      "log_sha256": "712702a02d8d2b1c9f492aec18a0ee299984b107b021c057ce434f07b5ca9292",
+      "xml_sha256": "3fc5e76163cfddb9d4c966f0ee4ab3fd57a24bc139824eac4379f8e4841fee2e"
+    },
+    "private_pair": {
+      "nodeids": [
+        "tests/sdk/test_timeline_session_pair.py::test_session_capture_reload_and_function_keep_verified_pair",
+        "tests/sdk/test_timeline_session_pair.py::test_session_pair_authentication_refuses_without_writes[wrong-revision]",
+        "tests/sdk/test_timeline_session_pair.py::test_session_pair_authentication_refuses_without_writes[wrong-publication]",
+        "tests/sdk/test_timeline_session_pair.py::test_session_pair_authentication_refuses_without_writes[missing-entry]"
+      ],
+      "result": "4 passed in 19.52s",
+      "log_sha256": "f3d24209d5abaeb0539e9b762c538cd53fb319517789b712035958b4c0884f71",
+      "xml_sha256": "18fea1bd17781c53ca9dec09d54aa645f0497c42c35bfadf03b41953bcc697c8"
+    },
+    "ruff": "pass",
+    "mypy_follow_imports_skip": "pass",
+    "py_compile": "pass",
+    "git_diff_check": "pass"
+  },
+  "worktree": {
+    "product_files_changed": 1,
+    "test_files_changed": 0,
+    "other_files_changed": 0
+  }
+}
