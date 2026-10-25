@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T02:53:26Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 11 | status age 0m -->
-# agent board, 2026-10-25T02:50:30Z
+<!-- agent | 2026-10-25T02:56:24Z | dispatcher heartbeat 4s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 2m -->
+# agent board, 2026-10-25T02:54:31Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -179,7 +179,7 @@
 | D86 parent track3 | Preserve parent track inverse and labels | MAIN Luna | Corrected M1 helper and MAIN proof | merging | Author0121; source facts review0129 PASS | Source unchanged; all three original predicates retained. Current M1 helper source joined; behavior proof remains owed. | Existing source |
 | D86 ordinary script4 | Preserve union and script behavior | Main Luna | MAIN meaningful successor proof | merging | Return0145; review0147 PASS | Exact96dbc cumulative source PASS peer0152; normalhomef67b source exact. Canonical identity preserves all4 predicates. | f67bc19086 |
 | D86-provider-custody4 | Preserve remaining provider behavior | Sol / Luna / Runtime | Exact later named proofs | merging | D90 actual36; netzerocef8 | Two redo originals qualified by D90; netzero oracle source joined and needs MAIN. Replace-existing remains live Runtime seam. No extra diagnosis. | Homebd3c / cef8 |
-| D86-docpatch5 / D92 | Preserve genuine unused managed pin state | Luna | Normal merge then MAIN three | merging | Author0242; protected0243 PASS; join0250 | Clean 57ad7 has exact reviewed file. Genuine A/B transcript proves setup reachability; full helper unexecuted. Atomic and ABA separate. | 57ad7d2987 |
+| D86-docpatch5 / D92 | Preserve genuine unused managed pin state | Luna | Exact MAIN three-case proof | merging | Author0242; protected0243 PASS; join0250 | Normal 562ee has exact reviewed file. Genuine A/B proves setup reachability; full helper unexecuted. Original assertions intact; atomic and ABA separate. | 562ee30b6e |
 | D86-owned-move8 | Preserve owned move and video birth | Local Luna | Later MAIN functional qualification | merging | Sol0131; batchD0135 PASS; home6386 | Exact canonical placements/delete setup reviewed and normal joined. All8 scenarios and complete opaque topology retained. | 6386c700ee |
 | D86-cli-trim3 | Preserve current CLI trim behavior | Luna / Luna | Later MAIN functional proof | merging | Correction0122; batchC0127 PASS | Normalhomec6c has explicit guarded fps30 and all3 original scenarios. Source/static PASS only; MAIN behavior owed. | c6c3158d33 |
 | D86-occurrence-recipe3 | Preserve occurrence recipe behavior | Local Luna | MAIN incremental proof | merging | Author0112; batchB0122 PASS; home2050 | Three original scenarios source-reviewed and normal joined. Exact hash1f3d retained; functional MAIN proof owed. | Home2050221347 |
@@ -211,18 +211,18 @@
 | F D72 current receipts | Publish approved migration log entries | Luna | Existing independent PASS | merged | Review-log0239 | Exact D91 and core-element D83 entries appended with original byte prefix and hash preserved. MAIN proof remains pending. | Existing ledger only |
 | F current supplement | Publish exact new proof inputs | Luna | Current source receipts and lossless IDs | doing | Return agt-F-supplement-return-0252 | Original 24-selector set static PASS. Stale receipt notes and held count returned once; adds current inverse seven and genuine compound three when home. | Current caff |
 
-Integration: Normal a836 includes occurrence095177 via25c1, D91b003 via9f697, core-elementf643 viaa836 over bd3c D90. Exact reviewed blobs match home. Exact28969 D90 passed36; final tuple remains separate.
+Integration: Current Agent 562ee30b6e includes five reviewed source joins: occurrence48, D91 host window, core-element literal, inverse7 source hashes, genuine D92 fixture. Every imported file matches its reviewed blob. D90 remains qualified by actual28969 PASS36; final tuple remains separate.
 core open: P4 service14151 FAIL45.448s versus45 on d407/6634. Owner now authorizes ONE cross-process sample through the existing original route; MAIN host requested. Four R2 retain qualified historical scope.
 Gates: P1 and P3 historical GO. D59 final pinned P1-P5/core, D69 and genuine installed render still owed. No full PASS, core0, final tuple or ZIP claim. E2/D79 after ZIP.
 Rehearsal categories: PRE16 / KNOWN37 / ENV73 / NEWcore424 / NEWnoncore0 / REG0 =550. Eighteen ENV contrasts later passed; every identity and scope limit retained.
 Families: Exact161 packet0200 plus69 packet0209 yields230 corrected selectors. MAIN existing161 prep0218 owns qualification route. Newly merged occurrence48, pending D91/core-element and netzero need exact successor mapping. All23 no-case remain unqualified first bodies.
-Admission: D92 genuine A/B route yielded authenticated unused manifest pin; protected0243PASS, cleanjoin0250 queued. Three originals await actual MAINbehavior; no legacy retirement. Atomic/ABA separate.
+Admission: D92 genuine A/B route preserved unused manifest pin. Protected review0243 PASS and exact clean normal562ee complete. Three compound originals await MAIN. Atomic and ABA stay separate. No legacy retirement.
 Safety: Old D88 denial/prototype stay stopped. D93 classifies private401 as product-fixture scope mismatch; only the exact original credential/session/calls are allowed. Runtime0228 resumes under D93; no invented scopes. Sample remains one existing-route body.
 Disk: Amended02:42 source/review6 above5.0GB, heavy1 above5.2GB, nothing new4.5GB. Free6.047GB before cleanjoin request; reclaimed completed trees safely. Sweep3 removed0; compact0. No ended nonKEEP unrecycled tree; old dirty/KEEP/refused paths untouched.
 Blockers: Runtime — Existing MAIN media20/auto14 source reservations need actual named dispatches; all exact inputs supplied. P4 sample actual0233 assigned; no duplicate.
 Blockers: MAIN proof — Exact230 corrected input and new reviewed fixture joins need meaningful existing-runner qualification; all23 no-case/livefrontend6/netzero1 remain visibly unqualified.
 Blockers: Final cut — D59 pinned P1-P5/core, D69 and genuine installed render required.
-Next ready: D92 protectedreview0243, successorpacket0243 and inverse7cleanjoin0245 live/requested. MAINsample and corrected-node proof have exclusive requests; no local duplicate.
-live 1 / cap 6; ready-undispatched 0 eligible local starts. Inverse7 review and D72/D83 log done; Metadata return0252 active; D92 normal merge queued; inverse7 normal caff. MAIN sample0233 exclusive, no duplicate.
+Next ready: Metadata return0252 corrects existing supplement and source-review inventory; MAIN already owns actual sample0233, current161 and D91 proofs. Exact inverse7 and D92 three-case proofs join meaningful new input; no unchanged repeat.
+live 1 / cap 6; ready-undispatched 0 eligible local starts. All returned protected diffs reviewed and exact source merged. Metadata correction0252 active; MAIN sample0233 exclusive.
 
-Inbox consumed through1306699 bytes. Updated 2026-10-25T02:45:32Z: amended5.0GB floor applied; genuine D92 candidate in protected review; inverse7 PASS cleanjoin queued; D72 log complete; packet/inventory active. No manager product/test/pin edits or bodies.
+Inbox consumed through1309019 bytes. Updated 2026-10-25T02:54:31Z: exact normal562ee verifies all reviewed joins; D72 log complete; D92 original assertions retained, helper proof owed; metadata packet correction active. No manager product/test/pin edits or bodies.
