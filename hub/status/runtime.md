@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T10:13:16Z | dispatcher heartbeat 3s | live 2 (sol 0, luna 2, other 0) | busy30 20 | status age 1m -->
-# runtime board, 2026-10-25T10:12:03Z
+<!-- main | 2026-10-25T10:17:07Z | dispatcher heartbeat 9s | live 2 (sol 1, luna 1, other 0) | busy30 18 | status age 0m -->
+# runtime board, 2026-10-25T10:16:50Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -81,7 +81,7 @@
 | R-P4-history-cost | Preserve finite walk snapshots | Luna / Sol | Actual integrated receipt passed | merged | Review1910; home1919 PASS | Exact e89eb: 173 focused plus12 historical PASS; source exact f51e. Three pairs gain5.69% wall. Original45s gate stays open. | e89eb8c7d / f51e29658 |
 | R-P2-popup-422 | Project genuine fork-created shot roots | Luna | App current P2 proof | merged | Security1658; integrated1704 PASS | Actualb318:4 PASS0.16s, exact reviewedsource; forgedowner/sibling/source refused. App original stillpending. [Proof](../../design/rt-P2-popup-integrated-1704.md) | b318a8ec4 /88b9cf6 |
 | R-P2-popup-observation | Attribute popup physical observation refusal | Luna | Source finding complete | merged | rt-P2-popup-observation-1638 | Runtime created-child projection lacks fork-created shot roots.2Runtime+8Agent comparators PASS; source cause only. | Source unchanged |
-| R-P2-element-docpatch-hang | Measure whole element request cost | Luna | D111b source correction | doing | rt-D111b-first-return-0923 | Original sample identified _read at68%wall. First fix reviewFAIL and native nonflat; narrow correction assigned. | 7d433 held |
+| R-P2-element-docpatch-hang | Reduce actual element request reads | HARD Sol / Luna | D118 measured read-time gate | doing | rt-D111b-actual-read-sol-1016 | Previous source label was positional; actualdoc.patch generic read cost remains. Source-only snapshots held; exact-path retarget assigned. | Normald23a base |
 | U1-D69-marker-scope | Preserve mixed-route live catalog predicates | Luna | Actual integrated proof passed | merged | Citations1702; integrated1708 PASS | Actual2c1:9 PASS9s; exact approvedledgerappendix published once, outsidebytes intact. [Proof](../../design/rt-U1-D69-phase-integrated-1708.md) | ea3bca10d /925a7dd |
 | U1-D69-restore-guard | Restore two skip guard originals | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 |
 | U1-D69-skip-policy | Restore upstream skip enforcement | Luna | Exact integrated29 PASS | merged | Review1639; integrated1644 PASS | Actual5c1:29PASS12.67s,0skip/error. Policy source exactreviewedbb022;7restored+3checker originals exact upstream. | 5c1a03f13 /bb022 |
@@ -381,11 +381,11 @@
 | D112-security | Review full-verification recovery authority | Luna independent | Native acceptance before release | review | rt-D112-security-review-0827 PASS | 344 source controls PASS; two authorizer failures reproduced on parent. Existing Pyright diagnostics disclosed. Native proof remains separate. | be828d92c held |
 | D112-native | Prove SWAP and identity recovery | Sol / Luna | D112a accepted criterion | merged | Native0850; comparison0907; review0945 | Identical lifecycle counters; existing warm53 PASS. Actual source is byte-exact reviewed normal d23a8. | d23a8e0d2 |
 
-| D111b-read-snapshot | Reduce repeated authenticated reads | Sol / Luna | Native read-time reduction and review | review | Sol0930; security0958; native0958 | Source310, socket8 and realprovider2 PASS; source held until native curve cuts source-document wall. | Sol0930 held |
+| D111b-read-snapshot | Preserve held source snapshot trial | Sol / Luna | Actual element-path retarget | gated:retargeted | Source0930; security0958 PASS | Source310/53/2 PASS; actualnative no gain and zero source calls. Candidate staysunmerged; generic-read author1016 supersedes it. | 02b244 held |
 
 | D108-legacy-archive-input | Return retained authentic archive | Luna / independent | Independent safe handback | review | Author0912; review0923 | Existing26543byte archive matches2915 hash and normalreceipt. Original43ENV remain until corrected-input proof. | Evidence only |
 
-| D111b-cost-wholepath | Isolate remaining read cost | Luna read only | Retained native16269 | merged | rt-D111b-cost-wholepath-0923 | Source-document reads consume 97.2% of measured time. Repeated finite JSON work unchanged. No new body. | Evidence only |
+| D111b-cost-wholepath | Correct earlier read attribution | Luna read only | Independent1010 source path | merged | Old0923; corrected1010 | Earlier97.2percent source label was positional generic_read grouping. Directsource hooks0; originalartifact retained. | Corrected evidence |
 | D112-curve-criterion | Apply owner flatness criterion | Orchestrator | D112a09:25 | merged | Header D112a | Same-lifecycle counters equal meets criterion. Existing D94 warm forward/read test is sole remaining release check. | Decision only |
 | D108-archive-handback | Verify and publish existing archive | Luna independent | Verified original2915 | merged | rt-D108-archive-review-0923 PASS | Original safe bytes and receipt published; Agent handback complete. Existing43ENV remain until corrected-input proof. | Evidence only |
 
@@ -395,31 +395,33 @@
 
 | D118-upstream23 | Isolate pristine upstream failures | Luna / independent | Agent regression ownership | merged | Source0951; review1001; corrected1005 | Exact23 accounting corrected: REG14 NEW8 UNKN1. Genuine16-node upstream result15PASS1FAIL retained. | Evidence only |
 
-| D115-effect83 | Authenticate unchanged intermediate images | Luna / security | Genuine RED and strict boundaries | doing | Wholepath0958; author1002 | Auth773-844 compares intermediate unchanged image to final candidate. Narrow auth fix assigned; no effect ordinal invented. | Source held |
+| D115-effect83 | Authenticate unchanged intermediate images | Luna / security | Independent review and native smoke | review | Author1002; security1014 | Genuine parentRED;5regression+79auth+66verifier PASS,1excluded baseline check owed. Exact auth projection fix held. | 274bbf7d7 held |
 | D111b-security | Review cumulative request snapshots | Luna independent | Native timing remains separate | merged | rt-D111b-security-0958 PASS_SOURCE | Target310, warm53, provider2 PASS; integration39PASS1parent-identicalFAIL. Statics zero-new; source held on native gate. | 02b244732 held |
 | D111b-native | Measure source-document read reduction | Luna / service | Faithful source-bearing measurement | review | Native0958 FAIL; wholepath1010 | Native read18.255s versus17.353s; source calls0, deepcopies2058. Receipt/isolation PASS; current curve unqualified. | Candidate held |
 | D112-release | Publish qualified normal source | Luna | Independent32c and warm53 | merged | rt-D112a-release-publish-0952 | Packet published; full normal tree exact6283. App full P2 proceeds now perD118. | d23a8e0d2 |
 
-| F-final-current-core-prep | Refresh released final-core inventory | Luna source only | Current released d23a8 | doing | rt-F-final-current-core-prep-1008 | Preserve92 plus TS and D59 matrix; add missing released tests only. No install/body/render or final tuple. | Private candidate |
+| F-final-current-core-prep | Refresh released final-core inventory | Luna source only | Finite independent review | review | Source1008; review1018 | Private96Python+TS;92 preserved,four released targets added. Compile/statics,D73stubs,236collection PASS; no install/body. | Private candidate |
 | D106-evidence-publication | Restore immutable authored outputs | Luna | Exact source blobs | merged | rt-evidence-publication-1003 PASS | Four source artifacts and five attachments byte-verified to ORCH; proof branches remain unmerged. | Evidence only |
-| D111b-wholepath | Reconcile native source-read coverage | Luna read only | Retained0958 and16269 results | doing | rt-D111b-curve-wholepath-1010 | Zero source calls and unchanged deepcopies differ from earlier dominant-read profile. No duplicate body. | Source unchanged |
+| D111b-wholepath | Reconcile native source-read coverage | Luna read only | Actual generic-read retarget | merged | rt-D111b-curve-wholepath-1010 | Doc.patch reaches ordinary head/history/closure reads; source snapshot unused. Sol1016 retargets actual path, no unrelated command benchmark. | Source unchanged |
+
+| D111b-actual-read | Reduce actual generic request read cost | HARD Sol | Corrected1010 path evidence | doing | rt-D111b-actual-read-sol-1016 | Actualdoc.patch has no sourcehydration. Plain callable timers then smallest request-private reuse; no cross-request cache/trust change. | Normald23a base |
 
 Runtime producer: RELEASED d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e, tree6283b5 EXACT independent32c. Packet design/runtime-D112a-release-0952.json;15 canonical mappings unchanged. App normal8b389 adoption acknowledged; current full P2 is READY underD118 without D111b wait.
-core open: Runtime D111b measured source-document read cost remains open; cumulative source310PASS/socket8PASS/native smoke2PASS, exact source under independent security0958 and native acceptance0958. Agent437; full2016 remains8763PASS159FAIL347ERROR,173subtests. D54a upstream23 actual16:15PASS1FAIL;7absent. Independent1001:REG14/NEW8/UNKN1.
+core open: Runtime D111b actual generic head/history/closure read cost remains open. Positional source-document attribution corrected1010; source snapshots02b are unused by measured doc.patch and remain held. Sol1016 retargets normald23a. Agent437; full2016 remains8763PASS159FAIL347ERROR,173subtests. D54a upstream23 actual16:15PASS1FAIL;7absent. Independent1001:REG14/NEW8/UNKN1.
 regressions: D118 independent1001 establishes14 host-bootstrap identical-body regressions in bounded23 scope; PRE0/REG14/NEW8/UNKN1. Prior REG0 is superseded. Agent allocator notified; no P2 credit.
 Gates: P1/P3 recorded GO; P4 independentGO28.101s. Final tuple/core/currentP2/render remain required.
-Blockers: D111b — Source security0958 PASS but native0958 FAIL/no improvement and zero source calls. Wholepath1010 reconciles exact coverage before retargeting sole author. No cross-request cache or trust change.
-Blockers: D115 effect83 — Independent0958 confirms intermediate boundary seam; auth-only Luna1002 owns genuine RED/GREEN and strict controls. Agent exact source packet requested; no producer writer.
+Blockers: D111b — Held02b sourcePASS but nativeFAIL no improvement. Independent1010 proves prior source attribution positional; sole Sol1016 measures and fixes actual generic_read path on normald23a. No cross-request cache or trust change.
+Blockers: D115 effect83 — Source274bbf genuine parentRED/current5PASS; independent security1014 checks authenticated per-step boundary, full strict neighbors and real-provider seed before merge.
 Blockers: Final render — D117 GitHub scope/classifier refusal remains stopped; no retry/alternate source. Footprint source0947 independently reviewed0958; actual stage produced no profile/carrier/render.
 Blockers: D69 — Runtime113-function JOIN72assert/8raises and snapshot20PASS qualified. Agent129/113/287 recovered membership needs exact purpose mappings; App finite mappingPASS. No full audit closure.
 Blockers: D54a — Agent owns fourteen identical-body host-bootstrap regressions newly proved on pristine upstream; peer sent with exact independent map. No unchanged retry.
 Blockers: R2 held candidate — Independent1006 proves obsolete fixture occurrence token. Agent already reviewed normal correction; exact held successor requested, no unchanged three retry.
 Blockers: Final cut — D69, green current core, final pinned P1-P5 and genuine installed render owed. No final tuple or ZIP.
-Next ready: D111b sole author retargets after wholepath1010; auth1002 independent review on return. App fullP2 authorized now byD118 on releasedD112. No unchanged full/P4/family repeats.
+Next ready: D111b sole Sol1016 retarget assigned; auth source1002 independent security1014 active. Finite final-inventory review now ready. App fullP2 authorized now byD118 on releasedD112. No unchanged full/P4/family repeats.
 Venues: Main upstream23, R2three and D111b native0958 terminal. No main heavy body active; next faithful D111b measurement owns priority. No local duplicate bodies.
 Delivery: Applied rehearsal trees and durable patches retained; later D07/Windows final application and platform checks owed. Footprint complete peak unknown.
 Later: D107 held2154; D100 candidate20PASS6FAIL at duplicatechapter seed remains held; originalTEN distinct. Fixturepurpose27 complete: no pin-loss bug,17 not retired. Three Remotion copies await owner disposition.
 Safety: Withdrawn D88/D111memo stopped. D106 ORCH outputs only; denied hub target never retried. Manager edits no product/test/generated/pin files.
 Disk: About5.9GB available. Fresh audit found no ended clean unreferenced Runtime worktree. Sweep3 removed0. Five dirty v1 trees/prohibited Codex session paths untouched; compact-scratch touches those paths and is not run.
-live 3 / cap 6; ready-undispatched 0. Auth1002, wholepath1010 and final inventory1008 assigned. No Sol source author or heavy body active.
-INBOX consumed through1105557 bytes. Updated 2026-10-25T10:12:03Z.
+live 3 / cap 6; ready-undispatched 0. Security1014, sole HARD Sol1016 and finite final-inventory/accounting reviewer1018 assigned.
+INBOX consumed through1106999 bytes. Updated 2026-10-25T10:16:50Z.
