@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T22:27:57Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 0m -->
-# app board, 2026-10-25T22:27Z
+<!-- app | 2026-10-25T22:32:41Z | dispatcher heartbeat 9s | live 1 (sol 1, luna 0, other 0) | busy30 6 | status age 1m -->
+# app board, 2026-10-25T22:31Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -115,6 +115,8 @@
 
 | D139-original9-union | Retain prepared merged-base source union | Luna and independent Luna | Complete boundary list and qualified repair | gated:App-boundaries | Agent union2151 and independent2202 | Five donors and outside union qualified. Actual2136 failure stays visible; no next9 or normal D100 release. | Agent d133a14838 held |
 
+| D136b | Classify observation producer consistency | HARD Sol and independent Luna | Owner D136b and final2220 PASS | doing | app-D136b-observation-producer-sol-2231 | Static B022 and B023 to B036 producer, reachability and skipped-step classification. No source edits or body. Independent check follows. | Source unchanged |
+
 Integration: App 5696769dfca056676cde1ab46d8bc94354b3a44a/tree0748df404125114a0f68b701fa76f43abd3fc79a. Entire tree equals reviewed/tested79699 no-measurement route;30Node20 controls/types/lint PASS. Predecessor b5c9 retained for historical15200 only. U3 sourcehome2f362/tree687e4c equals reviewedeba8;127 affected and warmup2/types/lint PASS. Qualified bootstrap59a4 normalHOME atop U3. Existing manifest Runtimeab1e/Agent070dfc/Composition635f. D139 requested U3 join already HOME; fresh ancestor36e1 check PASS. Latest lead150a19 deferred to small live-tip cut merge-forward. Producer-first final cut pins/proofs still owed.
 
 Current P2 NO-GO. Historical six complete tails qualified on recorded tuples; full original tour/final tuple still owed. Actual2136 finalFPS20db+D10042040+f53b original9 failed9setupERROR at intermediate authenticated physical observation. Independent2144 custody/source/counts PASS and actualNO_GO; no next9 until owner all-boundary inventory and meaningful qualified repair.
@@ -125,9 +127,9 @@ Blockers: Element cost — D127e census2153 and independent2202 complete: D112 p
 Blockers: Graph child birth — Runtime1814/final1821 C0 sequential operands defined. Authentic intermediate physical bindings/stages absent; causalownerUNKNOWN. No invented guardwriter or unchangedrerun.
 Blockers: Agent core and render — Runtime D139 recipe2153 and Agent input census2149/reviewer2210 own missing child imports. No ship core started. Farm step0 remains held for complete final merged tuple inputs; no App duplicate.
 Blockers: Final cut — ship-grade core, REG0, full P2, final P1-P5/D69, installed render, platform and ZIP remain owed. No final gate or ZIP claim.
-Next ready: Runtime finite source disposition of complete boundary list. App original9 stays gated on authentic causal evidence and independently qualified repair; element verification stays gated on recorded D130 disposition and qualified fix. Cut refresh waits cut.
-live 0 / cap 6; ready-undispatched 0. Final Luna2220 PASS complete and handed back; no ready App source/body. App verify route source HOME569; no candidate body/profiling.
-INBOX consumed through2500039 bytes. H6 Runtime22:02, Agent22:10 and Farm22:00 boards plus D139/H72 and D127e header consumed. All cross-lane asks have existing rows or later entries.
+Next ready: D136b sole Sol2231 producer trace, then independent Luna check. Original9 stays gated on final classification and independently qualified repair; element stays D130 held. Cut refresh waits cut.
+live 0 / cap 6; ready-undispatched 0; queued1 D136b Sol2231. HARD owner-approved cross-provider/auth classification; sole Sol justified. No body/profiling.
+INBOX consumed through2505185 bytes. H6 Runtime22:02, Agent22:10 and Farm22:00 boards plus D139/H72 and D127e header consumed. All cross-lane asks have existing rows or later entries.
 
 Safety: Manager edits only ORCH briefs/board/peers and byte-publishes authored SAFE artifacts. No manager product/test/generated/pin changes, direct Git writes, upstream push, M5, credentials or refused-route retry. Dirty U3/orphan guards and exact1.107GB orphan graph remain untouched.
 Later: D133 correctedB Gate3 DEFERRED, existing worker1853 paragraph installed Runtime1911; no optionA author/review/body. Word/native originals and originalTrue/graph require authentic records; no unchangedrerun. D79 ZIP-held; E4 dropped; helpercut D23; D14 retained. Agent shared105 sole2055 propagation waits D100/FPS qualification; managed30 source exact/restored. Agent CLI22 proof waits Runtime2104 route, no Appduplicate. D127e waiter census belongs Runtime/Agent owner; App only verification.
@@ -157,3 +159,7 @@ Pass22:21: Sol2211 finished exit0, all9 safe artifacts bytepublished; receipt de
 H6 pass22:24: Runtime22:09, Agent22:12, Farm22:00 consumed. Every blocked owner rechecked: child/core recipe Runtime2153 still active, Farm inputs not released, Agent original9 gate waits our final2220, current element D127e/D130 holds. No newly ready App source/body. Cleanup receipt design/app-disk-maintenance-2224.json; free5410246656bytes. No extra sweep/compact or refused cleanup.
 
 Pass2026-10-25T22:27Z: final independent2220 PASS zero findings on complete static inventory. Five SAFE review files bytepublished; final receipt2227. Separate normal peer notes to Runtime, Agent and App lead deliver full controlling list and all dynamic limits. Evidence-quality blocker cleared same pass. Original9 remains gated missing records, actualNO_GO; no source merge required for evidence-only artifacts. Delayed2204/2213 union asks reconciled to later no-body owner instruction. All8 rawtestKEEP and private2136 workerKEEP unchanged.
+
+Later22:29: spare admitted App venue offered Runtime for its existing critical child-recipe final review or normal six-file targeted controller if Main remains below floor. No new worker/body started, exact final source/command and sole-owner transfer required to avoid duplicate. Offer peer-app-to-runtime-20261025T2229Z-spare-admitted-venue.md excludes every held/refused path.
+
+Pass2026-10-25T22:31Z: received recorded D136b read-only INTERNAL CONSISTENCY instruction and dispatched sole HARD Sol2231 immediately from exact prior source lineage. B022 producer/attachment, genuine-flow reachability and skipped real-step mapping, plus all later B023-B036 where statically decidable; per-case PRODUCT GAP/SETUP/UNKNOWN with evidence. One independent check next. No pristine/body, product/guard/fixture edit, release or retry. Delayed Agent2205/2207 correctly retain existing no-next9 and supporting union custody; oldb5host-use2208 is already closed by guarded2211 receipt.
