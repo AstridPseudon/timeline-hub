@@ -60,7 +60,7 @@ function presentEditorSaveFailure(error: unknown): void {
   normalizeAndPresentError(error, { context: 'shot-timeline-preview:test-editor-save' });
 }
 const popupChrome = vi.hoisted(() => ({
-  saveStatus: 'saved' as const,
+  saveStatus: 'saved' as 'saved' | 'saving' | 'dirty' | 'retrying' | 'error',
   isConflictExhausted: false,
   recoveryDraft: null as { updatedAt: string; baseVersion: number } | null,
   reloadFromServer: vi.fn(),
@@ -70,7 +70,10 @@ const popupChrome = vi.hoisted(() => ({
   timelineLoadGate: null as Promise<void> | null,
   onTimelineLoadStarted: vi.fn(),
 }));
-const previewProps = vi.hoisted(() => ({currentTime: undefined as number | undefined}));
+const previewProps = vi.hoisted(() => ({
+  currentTime: undefined as number | undefined,
+  previewRevision: undefined as unknown,
+}));
 
 vi.mock('@/tools/video-editor/hooks/timelineStore.ts', async () => {
   const ReactModule = await import('react');
@@ -166,8 +169,9 @@ vi.mock('@/tools/video-editor/contexts/VideoEditorProvider.tsx', async () => {
 });
 
 vi.mock('@/tools/video-editor/components/PreviewPanel/RemotionPreview.tsx', () => ({
-  RemotionPreview: (props: {currentTime?: number}) => {
+  RemotionPreview: (props: {currentTime?: number; previewRevision?: unknown}) => {
     previewProps.currentTime = props.currentTime;
+    previewProps.previewRevision = props.previewRevision;
     return React.createElement('div', { 'data-testid': 'preview' });
   },
 }));
@@ -208,10 +212,12 @@ describe('shot timeline popup persistence', () => {
     // inherits another test's unsaved draft.
     await clearTimelineDraft(shotTimelineRecoveryId('document-primary', 'occ-1'));
     popupChrome.isConflictExhausted = false;
+    popupChrome.saveStatus = 'saved';
     popupChrome.recoveryDraft = null;
     popupChrome.timelineLoadGate = null;
     vi.clearAllMocks();
     previewProps.currentTime = undefined;
+    previewProps.previewRevision = undefined;
     popupChrome.reloadFromServer.mockResolvedValue(undefined);
   });
 
@@ -222,6 +228,49 @@ describe('shot timeline popup persistence', () => {
 
     await waitFor(() => expect(screen.getByTestId('preview')).toBeTruthy());
     expect(previewProps.currentTime).toBeUndefined();
+  });
+
+  it('labels the embedded preview from the authoritative canonical head', async () => {
+    const composition = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() }).prepare(fixture);
+
+    render(React.createElement(ShotTimelinePreview, { composition, occurrenceId: 'occ-1' }));
+
+    await waitFor(() => expect(screen.getByTestId('preview')).toBeTruthy());
+    expect(previewProps.previewRevision).toEqual({
+      kind: 'committed',
+      revisionId: composition.headRevisionId,
+    });
+  });
+
+  it.each([
+    ['saving', false],
+    ['dirty', false],
+    ['retrying', false],
+    ['error', false],
+    ['saved', true],
+  ] as const)('keeps the embedded preview honest while the mounted save is %s', async (status, committed) => {
+    popupChrome.saveStatus = status === 'saved' ? 'saved' : status;
+    const composition = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() }).prepare(fixture);
+
+    render(React.createElement(ShotTimelinePreview, { composition, occurrenceId: 'occ-1' }));
+
+    await waitFor(() => expect(screen.getByTestId('preview')).toBeTruthy());
+    expect(previewProps.previewRevision).toEqual(committed
+      ? { kind: 'committed', revisionId: composition.headRevisionId }
+      : { kind: 'local', baseRevisionId: composition.headRevisionId });
+  });
+
+  it('keeps a conflicted embedded preview local instead of claiming the canonical head', async () => {
+    popupChrome.isConflictExhausted = true;
+    const composition = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() }).prepare(fixture);
+
+    render(React.createElement(ShotTimelinePreview, { composition, occurrenceId: 'occ-1' }));
+
+    await waitFor(() => expect(screen.getByTestId('preview')).toBeTruthy());
+    expect(previewProps.previewRevision).toEqual({
+      kind: 'local',
+      baseRevisionId: composition.headRevisionId,
+    });
   });
 
   it('renders recovery controls in the mounted popup surface', async () => {
