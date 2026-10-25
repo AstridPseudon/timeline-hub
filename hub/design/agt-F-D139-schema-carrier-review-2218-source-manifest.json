@@ -1,0 +1,74 @@
+{
+  "schema": "timeline.d139.schema-carrier-review-source-manifest/v1",
+  "status": "FAIL_EXACT_PORTABLE_SOURCE_MISSING",
+  "expected": {
+    "repository": "ArtAgents",
+    "revision": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+    "tree": "75a5a697f630affee40632e500b3f5b704a9b834",
+    "subdirectory": "packages/timeline-schema/python",
+    "package": "banodoco-timeline-schema==0.0.2"
+  },
+  "physical_source": {
+    "directory_present": false,
+    "revision_object_present_in_known_repos": false,
+    "authorized_archive_present": false,
+    "portable_carrier_present": false
+  },
+  "installed_distribution": {
+    "root": "/home/user/work/venv-agent/lib/python3.13/site-packages",
+    "package": "banodoco_timeline_schema",
+    "record": {
+      "path": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema-0.0.2.dist-info/RECORD",
+      "rows": 18,
+      "hashed_rows": 12,
+      "sha256": "50be781bec3546ca9995ce2f0aaa1284fa68198735866c0f00a601bb3ce9c3a1",
+      "all_hashed_files_match": true,
+      "all_record_files_regular_mode_0644": true
+    },
+    "direct_url": {
+      "path": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema-0.0.2.dist-info/direct_url.json",
+      "sha256": "b7a0a4f90218d54bc1fb118609d40a381f5762650f8e5863ec39098ec269165e",
+      "url": "https://github.com/banodoco/ArtAgents.git",
+      "revision": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+      "subdirectory": "packages/timeline-schema/python"
+    },
+    "package_hashes": {
+      "banodoco_timeline_schema/__init__.py": "0760fca0b4ea29ca384932eb2291044acc6b9b62e12153b7480d2e354cef845c",
+      "banodoco_timeline_schema/timeline.schema.json": "5592a6bb4376b9b9b84d66897b17f058eed5f0176d3c9ead262e19283fc86f25"
+    }
+  },
+  "candidate_sources": {
+    "runtime_2153": "not located in /home/user/work/runtime HEAD f103bb46866999c961a8865636f2e66d544e0c9b; only schema provenance metadata was found",
+    "d137_narrow_runner": {
+      "repository": "/home/user/work/agent",
+      "commit": "cd63be424d62226e3ee5c26fc5ce03227f5394a5",
+      "path": "tools/run-discovery-original-0603.py",
+      "git_blob": "0f14d14940f261d279e50b4ca9dd57acc4730dee",
+      "sha256": "546e6152ac04aaa46c8fa7fda4f36215923691223cba6920f40453094c371888",
+      "scope": "narrow explicit installed-site-packages candidate only"
+    },
+    "frozen_r4_sdk": {
+      "repository": "/home/user/peteromallet/astrid-agent",
+      "ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+      "commit": "11caf1d9de291d76f491cf69f7942606b7471d7a",
+      "paths": [
+        {
+          "path": "astrid/core/execution/generic_host.py",
+          "git_blob": "ee1f1a0c785851d60efcf7c291d389f47c977ccf",
+          "sha256": "4a1f05e384cba1b9c6b133d59bd8e2c9f3eca4cd1aa6703137b76e8c516d6d8b"
+        },
+        {
+          "path": "astrid/sdk/host_bootstrap.py",
+          "git_blob": "1f1b79fc7a6a4b5faf26994a38ba3c44925dc2e5",
+          "sha256": "98de94528de223f49d49bfbb749f3a97c26009f8c06b576886fc06f0e6a282f2"
+        }
+      ],
+      "scope": "selected-project-node_modules schema root; not proof for installed venv input"
+    }
+  },
+  "carrier": {
+    "path": null,
+    "created": false,
+    "reason": "The exact source tree and authorized archive are absent; installed files are not repackaged as source."
+  }
+}
