@@ -15,10 +15,10 @@ from .timeline_commit_validation import digest, validate_commit_value
 from .util import canonical_json
 
 
-def require(condition, message):
+def require(condition, message, *, safe_details=None):
     if not condition:
         from .timeline_commit_store import reject
-        reject("invalid_records", message, status=422)
+        reject("invalid_records", message, status=422, safe_details=safe_details)
 
 
 def images(document):
@@ -2168,6 +2168,64 @@ def _following_read_observes(boundary, following, physical_ref):
     return False
 
 
+_UNKNOWN = "UNKNOWN"
+_SAFE_OBSERVATION_DETAIL_KEYS = (
+    "verification_phase", "step_ordinal", "command_ordinal",
+    "captured_ref_present", "captured_path_present", "native_site_present",
+    "physical_digest_present", "physical_digest_hash",
+    "creation_exemption", "creation_exemption_outcome",
+    "ownership_state", "binding_state", "continuation_state",
+)
+
+
+def _bounded_ordinal(value):
+    return value if type(value) is int and 0 <= value <= 1_000_000 else _UNKNOWN
+
+
+def _safe_digest_hash(value):
+    if not isinstance(value, str) or not re.fullmatch(r"sha256:[0-9a-f]{64}", value):
+        return _UNKNOWN
+    return "sha256:" + hashlib.sha256(value.encode("ascii")).hexdigest()
+
+
+def _safe_observation_diagnostic(capture, result, ref, path, following, *,
+                                 step_ordinal=None, command_ordinal=None,
+                                 creation_exemption_applied=False):
+    """Return the closed, non-authoritative detail for the 2209 refusal.
+
+    This deliberately receives only the local observation state around the
+    existing guard. It never serializes an identifier, path token, payload or
+    image. The result is evidence for diagnosis, not an input to authorization.
+    """
+    bindings = [binding for binding in following.get("bindings", [])
+                if isinstance(binding, dict) and binding.get("physical_ref") == ref]
+    owned = any(
+        isinstance(binding.get("owner"), str) or
+        isinstance(binding.get("owners"), list) and bool(binding["owners"])
+        for binding in bindings
+    )
+    continued = any(isinstance(binding.get("successor"), str) for binding in bindings)
+    image = result.get(ref)
+    physical_digest = image.get("content_digest") if isinstance(image, dict) else None
+    detail = {
+        "verification_phase": "command_output",
+        "step_ordinal": _bounded_ordinal(step_ordinal),
+        "command_ordinal": _bounded_ordinal(command_ordinal),
+        "captured_ref_present": isinstance(capture, dict) and isinstance(capture.get("ref"), str),
+        "captured_path_present": isinstance(capture, dict) and isinstance(capture.get("path"), list),
+        "native_site_present": isinstance(ref, str) and isinstance(path, list),
+        "physical_digest_present": isinstance(physical_digest, str),
+        "physical_digest_hash": _safe_digest_hash(physical_digest),
+        "creation_exemption": "created_root_or_projected_site",
+        "creation_exemption_outcome": "APPLIED" if creation_exemption_applied else "NOT_APPLIED",
+        "ownership_state": "PRESENT" if owned else ("ABSENT" if bindings else _UNKNOWN),
+        "binding_state": "PRESENT" if bindings else "ABSENT",
+        "continuation_state": "PRESENT" if continued else ("ABSENT" if bindings else _UNKNOWN),
+    }
+    assert tuple(detail) == _SAFE_OBSERVATION_DETAIL_KEYS
+    return detail
+
+
 def _command_manifest(manifest, record):
     """Project only the dependencies consumed by one authenticated command."""
     result = copy.deepcopy(manifest)
@@ -2187,7 +2245,8 @@ def _command_manifest(manifest, record):
 
 
 def command_output(boundary, record, following, *, accepted=None, identity_scope=None,
-                   manifest=None, previous_manifest=None):
+                   manifest=None, previous_manifest=None, step_ordinal=None,
+                   command_ordinal=None):
     """Project full recorder observations needed by a subsequent input binding."""
     result = copy.deepcopy(boundary)
     if previous_manifest is not None:
@@ -2206,7 +2265,19 @@ def command_output(boundary, record, following, *, accepted=None, identity_scope
             # physical closure images; it has no direct Runtime image site.
             continue
         ref, path = native_site(result, capture["ref"], capture["path"])
-        require(ref in result, "provider intermediate command lacks an authenticated physical observation")
+        capture_site = capture.get("ref", "") + "/" + "/".join(capture.get("path", []))
+        creation_exemption_applied = (
+            capture.get("ref") in created_roots & projected_roots and not capture.get("path")
+        ) or capture_site in projected_roots
+        require(
+            ref in result,
+            "provider intermediate command lacks an authenticated physical observation",
+            safe_details=_safe_observation_diagnostic(
+                capture, result, ref, path, following,
+                step_ordinal=step_ordinal, command_ordinal=command_ordinal,
+                creation_exemption_applied=creation_exemption_applied,
+            ),
+        )
         payload = result[ref]["payload"]
         path = stored_path(payload, ref, path)
         before_payload = boundary.get(ref, result[ref])["payload"] if "cause" in capture else payload
@@ -2888,7 +2959,7 @@ def validate(request, prepared, source, base=None, continuations=None, history=N
     accepted = images(prepared["canonical_document"])
     touched = set()
     manifest = copy.deepcopy(source["dependency_manifest"])
-    for step in records["steps"]:
+    for step_ordinal, step in enumerate(records["steps"]):
         command_inputs = {step["command_ordinals"][0]: boundary}
         input_manifest = copy.deepcopy(manifest)
         command_manifests = {}
@@ -2912,7 +2983,8 @@ def validate(request, prepared, source, base=None, continuations=None, history=N
                 command_inputs[ordinal], records["commands"][ordinal], records["commands"][next_ordinal],
                 accepted=accepted, identity_scope=(source["project_id"], source["timeline_id"]),
                 manifest=command_manifests[ordinal],
-                previous_manifest=command_input_manifests[ordinal])
+                previous_manifest=command_input_manifests[ordinal],
+                step_ordinal=step_ordinal, command_ordinal=ordinal)
         if records["merge_mode"] == "atomic":
             # Resolve aliases only after earlier commands establish their input
             # images; the complete batch union is checked against every step below.

@@ -33,13 +33,16 @@ _TEXT_BINDING_REF = re.compile(r"occurrence:([^/]+)/text-binding:(prompt|voiceov
 _LOGGER = logging.getLogger(__name__)
 
 
-def reject(reason, message=None, *, status=409, diagnostic_reason=None):
+def reject(reason, message=None, *, status=409, diagnostic_reason=None, safe_details=None):
     from .timeline_commit import CommitRejected
 
+    details = {"status": "refused", "reason": reason,
+               "base": None, "current": None, "conflicts": []}
+    if safe_details is not None:
+        details["safe_diagnostic"] = safe_details
     failure = cast(CommitFailure, {
         "http_status": status, "code": "conflict" if status == 409 else "validation_error",
-        "message": message or reason, "details": {"status": "refused", "reason": reason,
-        "base": None, "current": None, "conflicts": []}
+        "message": message or reason, "details": details
     })
     error = CommitRejected(failure)
     if diagnostic_reason is not None:
