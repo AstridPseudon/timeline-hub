@@ -1,0 +1,285 @@
+{
+  "task": "app-P2-D97-element10643-facts-0503",
+  "scope": "finite same-ID safe evidence handoff; no source change, rerun, or causal diagnosis",
+  "run": {
+    "id": "app-pin-3199118d-p2-d97-element-0450-1025045630-10643",
+    "suite": "p2-element",
+    "terminal": "NO-GO",
+    "started_at": "2026-10-25T04:56:46.583Z",
+    "finished_at": "2026-10-25T04:59:30.988Z",
+    "service_summary_seconds": 170,
+    "manifest_wall_seconds": 164.405,
+    "source_heads": {
+      "app": "3199118dce058a570c71380917f76aa413114d91",
+      "agent": "5faeec5bbced687f040751ded739e1b9c8c41757",
+      "runtime": "0c62dfa63db9ff608ac9338388431e31a814e080",
+      "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+    },
+    "source_trees": {
+      "app": "49ec172fb7dd45ac0a1ac50b5df748394a8f6de2",
+      "agent": "455b16e8b6384abde89b4e1187e7e7317fe8cab7",
+      "runtime": "e22cdd54b668acea9fe593e6724b34d1a56f7530",
+      "composition": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    },
+    "source_checkout_clean": true,
+    "test_sha256_before_after_equal": true,
+    "test_sha256": {
+      "element_spec": "0ae315bab74429ac6530b619430f20521002e3e755c840788b0e8fb607718ad0",
+      "readiness_spec": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593"
+    }
+  },
+  "results": {
+    "readiness": {
+      "tests": 1,
+      "failures": 0,
+      "suite_seconds": 24.668331,
+      "testcase_seconds": 8.239,
+      "exit": 0
+    },
+    "original": {
+      "tests": 1,
+      "failures": 1,
+      "suite_seconds": 47.37604,
+      "testcase_seconds": 10.806,
+      "exit": 1,
+      "failure": "applied-status assertion timed out; retained follow-on response watcher failed after page close",
+      "failure_locations": [
+        "three-products.p2-elements-assets.spec.ts:859",
+        "commitFromGesture:493:32 and 494:3, called at 852"
+      ]
+    },
+    "eventual_element_outcome": "UNKNOWN"
+  },
+  "production_caller": "mounted catalog Apply -> A2 persisted outbox -> normal Runtime/provider -> authoritative reply",
+  "runtime_phase_capture": {
+    "schema_version": 1,
+    "jsonl_records": 128,
+    "phase_event_records": 128,
+    "summary_records": 0,
+    "event_budget": {
+      "max_requests": 8,
+      "max_events": 128,
+      "max_bytes": 65536,
+      "saturated": true,
+      "truncation": "record count equals max_events; no summary record was retained"
+    },
+    "request_ordinals": [
+      {
+        "ordinal": 1,
+        "records": 46,
+        "phase_counts": {
+          "dispatch_queue": 1,
+          "handler_entry": 1,
+          "authorization": 14,
+          "coordinator_admission": 1,
+          "coordinator_lock": 1,
+          "provider": 1,
+          "accept": 1,
+          "receipt": 1,
+          "http_response": 2
+        },
+        "first_at_ms": 1889.102,
+        "last_at_ms": 3717.910,
+        "last_phase": "http_response",
+        "http_statuses": [200, 200],
+        "observed_spans_ms": {
+          "dispatch_queue": 0.948,
+          "handler_entry": 1826.927,
+          "authorization": 1353.028,
+          "coordinator_admission": 1735.958,
+          "coordinator_lock": 1735.603,
+          "provider": 1321.293,
+          "accept": 418.134,
+          "receipt": 407.483,
+          "http_response": 1.280
+        }
+      },
+      {
+        "ordinal": 2,
+        "records": 64,
+        "phase_counts": {
+          "dispatch_queue": 1,
+          "handler_entry": 1,
+          "authorization": 23,
+          "coordinator_admission": 1,
+          "coordinator_lock": 1,
+          "provider": 1,
+          "accept": 1,
+          "receipt": 1,
+          "http_response": 2
+        },
+        "first_at_ms": 11326.239,
+        "last_at_ms": 28642.871,
+        "last_phase": "http_response",
+        "http_statuses": [200, 200],
+        "observed_spans_ms": {
+          "dispatch_queue": 1.107,
+          "handler_entry": 17310.842,
+          "authorization": 11076.271,
+          "coordinator_admission": 16767.385,
+          "coordinator_lock": 16766.232,
+          "provider": 10619.579,
+          "accept": 5589.514,
+          "receipt": 5460.098,
+          "http_response": 5.554
+        }
+      },
+      {
+        "ordinal": 3,
+        "records": 18,
+        "phase_counts": {
+          "dispatch_queue": 1,
+          "handler_entry": 1,
+          "authorization": 6,
+          "coordinator_admission": 1,
+          "coordinator_lock": 1,
+          "provider": 1,
+          "accept": 0,
+          "receipt": 0,
+          "http_response": 0
+        },
+        "first_at_ms": 34115.159,
+        "last_at_ms": 34465.789,
+        "last_phase": "authorization",
+        "last_authorization_count": 6,
+        "observed_capture_span_ms": 350.630,
+        "started_without_end": [
+          "handler_entry",
+          "coordinator_admission",
+          "coordinator_lock",
+          "provider"
+        ],
+        "terminal_runtime_phases": "accept, receipt, and HTTP response UNKNOWN"
+      }
+    ]
+  },
+  "element_correlation": {
+    "correlated_request_ordinal": 3,
+    "basis": "the retained element apply lifecycle is the incomplete scoped-commit ordinal after two completed seed/control ordinals",
+    "correlation": "apply-1",
+    "request_start_elapsed_ms": 24994,
+    "test_outcome_elapsed_ms": 29667,
+    "teardown_start_elapsed_ms": 29725,
+    "page_close_elapsed_ms": 29745,
+    "response_status": "UNKNOWN",
+    "response_body": "not retained",
+    "terminal": "pending",
+    "page_closed": true
+  },
+  "pending_window": {
+    "request_to_test_outcome_ms": 4673,
+    "request_to_page_close_ms": 4751,
+    "test_outcome_to_page_close_ms": 78,
+    "ui_assertion_budget_ms": 5000,
+    "late_outcome_limit": "No post-close outcome is retained; any later response or receipt is UNKNOWN."
+  },
+  "watchdog_and_private_stack": {
+    "watchdog_seconds": 2,
+    "capture_cap_from_pinned_helper_default": 2,
+    "retained_dump_sections": 2,
+    "stack_request_ordinal": "UNKNOWN; the private faulthandler dump has no request ordinal",
+    "temporal_relation": "both dump sections are consistent with the only retained incomplete provider-path ordinal, 3, but this is not an ordinal-bearing witness",
+    "phase_jsonl": {
+      "bytes": 12863,
+      "mode": "0600",
+      "sha256": "f267c2efe30c6d3e24a4aab87f65e66d2f9e6aa3c00c60e4775fd9d041ac38a2"
+    },
+    "stack_dump": {
+      "bytes": 12005,
+      "mode": "0600",
+      "sha256": "ac7464ea08761565f006408b4e63c9986de453dabc3edaa0be789fb45f552b59",
+      "thread_sections": 12,
+      "file_frames": 126,
+      "invalid_frames": 3,
+      "no_python_frames": 1
+    },
+    "safe_frames": [
+      {
+        "category": "watchdog capture",
+        "function": "P2CommitPhaseCapture._watchdog_fire",
+        "file": "tests/helpers/p2_commit_phase_capture.py",
+        "line": 235,
+        "count": 2
+      },
+      {
+        "category": "provider command validation",
+        "function": "validate_command",
+        "file": "astrid/sdk/timeline/commands.py",
+        "line": 137,
+        "count": 1
+      },
+      {
+        "category": "historical finite-JSON validation",
+        "function": "finite_json",
+        "file": "runtime_protocol/timeline_commit_validation.py",
+        "line": 45,
+        "count": 1
+      }
+    ],
+    "raw_stack_export": "not copied or printed; retained privately at mode 0600"
+  },
+  "retained_artifacts": {
+    "manifest": {
+      "bytes": 6399,
+      "mode": "0644",
+      "sha256": "14751dc7b8e18ca8fa3ee639d09c234cbaf9940ee135b9a7e45f9bf51b044b27"
+    },
+    "readiness_xml": {
+      "bytes": 1681,
+      "mode": "0644",
+      "sha256": "431d010fd6a654e56454d754598b0e158e41b2861dfd65783de3ac010d976e9c"
+    },
+    "original_xml": {
+      "bytes": 5539,
+      "mode": "0644",
+      "sha256": "f5f53201e8fd85d4bb7b2f2b61e4ecd5a2e9801322cf428876d4a3657a3eb1bc"
+    },
+    "element_diagnostic": {
+      "bytes": 2344,
+      "mode": "0600",
+      "sha256": "9ee6137b8ffac718400869c381629098599eedeff46b7bd6f8a78e15704cfbef"
+    },
+    "trace_zip": {
+      "bytes": 2418508,
+      "mode": "0644",
+      "sha256": "a46d20f03c892deacf911bd461fd6e89c270802882423ff9498ded671d50029d"
+    },
+    "runtime_stdout": {
+      "bytes": 513,
+      "mode": "0600",
+      "sha256": "fc84f3ec0ee0481124e06b0a6f056e1a4bdefa11b7d64a8b70ee686c79f73c2b"
+    },
+    "runtime_stderr": {
+      "bytes": 0,
+      "mode": "0600",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "comparisons": {
+    "8897_runtime_a3cd": "Published packet has one 2-second cap-1 dump and attributes it to its incomplete ordinal 3; current 10643 has two retained dump sections and no ordinal in the raw stack, so direct dump ownership is UNKNOWN here.",
+    "7131_runtime_732": "Published packet reports the same applied-status boundary with no observed accept, receipt, or HTTP response; current 10643 differs in retained phase budget saturation and two dump sections. Boundary difference only.",
+    "11589_runtime_bc04": "Published packet reports ordinal 3 at provider validation and pending windows of 4558 ms to outcome and 4626 ms to page close; current 10643 is 4673 ms and 4751 ms. Boundary difference only.",
+    "nonclaims": "No common-cause, deadlock, timeout-cause, or permanent-failure inference is made."
+  },
+  "contract_check": {
+    "runtime_contract_sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "design_contract_sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "copies_equal": true,
+    "json_blocks_parsed": 20,
+    "required_headings": 7,
+    "shapes_read": [
+      "request: api_version, scope/base pairs, commands, label, steps, merge, reads, source/rationale/group_id, dry_run, Idempotency-Key",
+      "commands: schema_version/op/version/select/args; steps: id/label/intent/tags/command_ordinals/patch/reads",
+      "accepted and merged: data plus receipt with canonical_document/digest, id_map, authoritative commands/steps/dependencies/effects, base/previous/accepted pairs, versions, publisher, history and guarded undo fields",
+      "preview: would_status/evaluated_head and receipt null",
+      "conflict: reason/current head and structured conflicts",
+      "invalid: code/path/hint/suggested_command",
+      "history: labels, steps, authoritative publisher and records"
+    ]
+  },
+  "nonclaims": [
+    "No source, test, generated file, pin, collector, browser run, reproduction, debugger, endpoint, body, auth, key, or raw stack was added or exported.",
+    "No production fix or independent whole-path NO-GO review is assigned by this handoff.",
+    "Runtime/provider cause remains UNKNOWN from the retained evidence."
+  ]
+}
