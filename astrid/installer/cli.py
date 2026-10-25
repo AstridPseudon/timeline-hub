@@ -23,6 +23,16 @@ from .support import FAILURE_MESSAGE, default_doctor_bundle
 from .tools import download, validate_manifest
 
 
+def _pinokio_claim_is_live(recorded: dict) -> bool:
+    if recorded.get("managed_by") != "pinokio":
+        return False
+    program_root = recorded.get("program_root")
+    if not isinstance(program_root, str) or not program_root:
+        return False
+    marker = read_json(absolute(program_root) / "install.json")
+    return marker.get("owner") == LABEL and marker.get("managed_by") == "pinokio"
+
+
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(prog="astrid install", description="Install or restart Astrid for astrid.haus.")
     mode = result.add_mutually_exclusive_group()
@@ -66,14 +76,15 @@ def main(argv: list[str] | None = None) -> int:
                     # mutations are checked below, after obtaining the lock.
                     prior = read_json(root / "install.json")
                     recorded = backend.service.recorded()
-                    if not args.root and (recorded.get("managed_by") == "pinokio"
+                    pinokio_live = _pinokio_claim_is_live(recorded)
+                    if not args.root and (pinokio_live
                                           or prior.get("managed_by") == "pinokio"):
                         raise ValueError("Astrid on this computer was installed with Pinokio. Use Pinokio to update or uninstall it.") from None
                     if (args.managed_by == "pinokio" or prior.get("managed_by") == "pinokio"
-                            or (args.root and recorded.get("managed_by") == "pinokio"
+                            or (args.root and pinokio_live
                                 and recorded.get("program_root") == str(root))):
                         raise ValueError("Astrid is still running. Stop it in Pinokio, then try again.") from None
-                    if recorded.get("managed_by") == "pinokio":
+                    if pinokio_live:
                         raise ValueError("Astrid on this computer was installed with Pinokio. Use Pinokio to update or uninstall it.") from None
                     raise
                 locked = True
@@ -81,6 +92,16 @@ def main(argv: list[str] | None = None) -> int:
                 # The single per-user selection is also the Pinokio pointer.
                 # Inspect it under the installer lock before claiming any root.
                 recorded = backend.service.recorded()
+                if recorded.get("managed_by") == "pinokio" and not _pinokio_claim_is_live(recorded):
+                    # Reset or deleting the Pinokio app can remove its program
+                    # files without letting the installer clear its per-user
+                    # selection. Keep the workspace receipt, but release the
+                    # stale manager claim while holding the installer lock.
+                    recorded = {**recorded, "uninstalled": True}
+                    recorded.pop("managed_by", None)
+                    recorded.pop("program_root", None)
+                    if mode != "doctor":
+                        write_json(backend.service.selection, recorded)
                 if mode == "doctor" and not args.root and recorded.get("managed_by") == "pinokio":
                     root = absolute(recorded["program_root"])
                     backend = Backend(root, log, uv)

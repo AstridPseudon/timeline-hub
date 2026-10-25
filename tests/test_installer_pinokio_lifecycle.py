@@ -282,6 +282,9 @@ def test_pinokio_cli_rejects_unknown_manager_and_relative_root(argv):
 def test_ordinary_cli_refuses_active_pinokio_pointer(tmp_path, monkeypatch, capsys, mode):
     home = _cli_home(tmp_path, monkeypatch)
     root = tmp_path / "pinokio-app"
+    write_json(root / "install.json", {
+        "owner": LABEL, "managed_by": "pinokio", "data_root": str(tmp_path / "workspace"),
+    })
     write_json(install_selection(home, sys.platform), {
         "owner": LABEL, "managed_by": "pinokio", "program_root": str(root),
         "data_root": str(tmp_path / "workspace"),
@@ -289,6 +292,96 @@ def test_ordinary_cli_refuses_active_pinokio_pointer(tmp_path, monkeypatch, caps
 
     assert cli.main(mode) == 1
     assert "Astrid on this computer was installed with Pinokio. Use Pinokio to update or uninstall it." in capsys.readouterr().out
+
+
+def test_second_pinokio_root_is_refused_while_first_install_record_exists(tmp_path, monkeypatch, capsys):
+    home = _cli_home(tmp_path, monkeypatch)
+    first_root = tmp_path / "first-pinokio-app"
+    write_json(first_root / "install.json", {
+        "owner": LABEL, "managed_by": "pinokio", "data_root": str(tmp_path / "workspace"),
+    })
+    write_json(install_selection(home, sys.platform), {
+        "owner": LABEL, "managed_by": "pinokio", "program_root": str(first_root),
+        "data_root": str(tmp_path / "workspace"),
+    })
+
+    assert cli.main(["--managed-by", "pinokio", "--root", str(tmp_path / "second-pinokio-app")]) == 1
+    assert f"Astrid is already installed in Pinokio at {first_root}." in capsys.readouterr().out
+
+
+def _stub_cli_install(tmp_path, monkeypatch, home):
+    selection = install_selection(home, sys.platform)
+    python = tmp_path / "python"
+    python.write_text("placeholder", encoding="utf-8")
+    captured = {}
+
+    class BackendStub:
+        def __init__(self, *_args, **_kwargs):
+            self.managed_by = None
+            self.service = SimpleNamespace(
+                selection=selection,
+                recorded=lambda: read_json(selection),
+                login_service_exists=lambda: False,
+            )
+
+        def existing(self, _data):
+            return None
+
+    class InstallerStub:
+        def __init__(self, _root, data, _backend, **kwargs):
+            captured["data"] = data
+            captured["managed_by"] = kwargs.get("managed_by")
+
+        def run(self, mode, *_args, **_kwargs):
+            captured["mode"] = mode
+
+    monkeypatch.setattr(cli, "Backend", BackendStub)
+    monkeypatch.setattr(cli, "Installer", InstallerStub)
+    monkeypatch.setattr(cli, "current", lambda _root: SimpleNamespace(python=python))
+    return selection, captured
+
+
+def test_reset_removed_pinokio_root_releases_pointer_for_terminal_install(tmp_path, monkeypatch):
+    home = _cli_home(tmp_path, monkeypatch)
+    old_root = tmp_path / "deleted-pinokio-app"
+    selection, captured = _stub_cli_install(tmp_path, monkeypatch, home)
+    data = tmp_path / "workspace"
+    write_json(selection, {
+        "owner": LABEL, "managed_by": "pinokio", "program_root": str(old_root),
+        "data_root": str(data), "realm_id": "kept-workspace",
+    })
+
+    assert not old_root.exists()  # Reset removed the program directory.
+    assert cli.main([]) == 0
+
+    released = read_json(selection)
+    assert captured == {"data": data, "managed_by": None, "mode": "install"}
+    assert released["owner"] == LABEL
+    assert released["data_root"] == str(data)
+    assert released["realm_id"] == "kept-workspace"
+    assert released["uninstalled"] is True
+    assert "managed_by" not in released
+    assert "program_root" not in released
+
+
+def test_second_pinokio_root_is_allowed_after_first_root_is_deleted(tmp_path, monkeypatch):
+    home = _cli_home(tmp_path, monkeypatch)
+    old_root = tmp_path / "deleted-pinokio-app"
+    second_root = tmp_path / "second-pinokio-app"
+    selection, captured = _stub_cli_install(tmp_path, monkeypatch, home)
+    data = tmp_path / "workspace"
+    write_json(selection, {
+        "owner": LABEL, "managed_by": "pinokio", "program_root": str(old_root),
+        "data_root": str(data),
+    })
+
+    assert not old_root.exists()
+    assert cli.main(["--managed-by", "pinokio", "--root", str(second_root)]) == 0
+
+    assert captured == {"data": data, "managed_by": "pinokio", "mode": "install"}
+    recorded = read_json(selection)
+    assert recorded["managed_by"] == "pinokio"
+    assert recorded["program_root"] == str(second_root)
 
 
 def test_pinokio_install_refuses_existing_login_install(tmp_path, monkeypatch, capsys):
