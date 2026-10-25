@@ -1,0 +1,15 @@
+{
+  "schema": "timeline.ops-child-custody.portable-final-source-receipt.v1",
+  "reviewed_commit": "60753548ebc8e69f3c84fbb28fa2e09b1ca78316",
+  "reviewed_tree": "dd4347a933103bbfc17c3e3237d52ea13ac1f677",
+  "python_runner_sha256": "1498a1597c058f92176a0d447b372b4791e6af345c479445b9027e0521d75085",
+  "support_sha256": "e85b42ac7ffff730166443ed7d081a1a68062b828af3aa5d8e0dd9352afb6581",
+  "tiny_manifest_sha256": "cee9435bcd6d522ddb814ef0e0679790b929f73a619dc0dc28be301b55cb68e8",
+  "candidate_maker_sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+  "parent_maker_sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+  "store_helper_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+  "dependency_helper_sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+  "bootstrap_artifact_sha256": "443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548",
+  "normal_reserve_bytes": 5905580032,
+  "stop_line_bytes": 4000000000
+}
