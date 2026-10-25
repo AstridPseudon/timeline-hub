@@ -1,4 +1,6 @@
+import contextlib
 import copy
+import io
 import json
 import os
 import subprocess
@@ -219,6 +221,91 @@ class RetirementTests(unittest.TestCase):
         with self.assertRaises(bench_store.Refused):
             store.retire_entry(eid, self.authorization(store, eid, entry))
         self.assertEqual((store.root / 'index.json').read_bytes(), before)
+
+    def test_receipt_cross_associations_refuse_after_journal_is_finished(self):
+        store, eid, entry = self.make_entry()
+        identity = dict(entry['identity'], agent_sha='d' * 40)
+        value = {'name': 'other-fixture', 'env': '',
+                 'suite': 'agent other-fixture true\n', 'requires': []}
+        with mock.patch.object(bench_store.shutil, 'disk_usage', return_value=mock.Mock(free=CHILD_RESERVE)):
+            store._fixture_clock = lambda: bench_store.timestamp(REGISTERED, 'fixture')
+            other = store.ensure('child', identity, value,
+                                 lambda stage, final: None, lambda path: None)
+        store._fixture_clock = lambda: bench_store.timestamp(NOW, 'fixture')
+        store.retire_entry(eid, self.authorization(store, eid, entry))
+        other_id = 'child-' + other['key']
+        store.retire_entry(other_id, self.authorization(store, other_id, other))
+        index_path = store.root / 'index.json'
+        valid = index_path.read_bytes()
+        original = json.loads(valid)
+        store._load()
+        for field, value in (
+                ('node', other['node']), ('path', other['path']), ('seq', other['seq']),
+                ('lock', other['lock']), ('owner', 'f' * 32),
+                ('registrations', ['other-fixture']), ('suites', [['agent', 'other-fixture']])):
+            with self.subTest(field=field):
+                index = copy.deepcopy(original)
+                index['retired_entries'][0][field] = value
+                index_path.write_text(json.dumps(index), encoding='utf-8')
+                with self.assertRaises(bench_store.Refused):
+                    store._load()
+                index_path.write_bytes(valid)
+        index = copy.deepcopy(original)
+        index['retired_entries'][0].pop('source', None)
+        index_path.write_text(json.dumps(index), encoding='utf-8')
+        with self.assertRaises(bench_store.Refused):
+            store._load()
+
+    def test_recovery_binds_receipt_source_to_exact_before_index(self):
+        store, eid, entry = self.make_entry()
+
+        def interrupt(point):
+            if point == 'retirement:journal':
+                raise bench_store.Refused('fixture interruption')
+
+        store._checkpoint = interrupt
+        with self.assertRaises(bench_store.Refused):
+            store.retire_entry(eid, self.authorization(store, eid, entry))
+        journal = json.loads(store.journal.read_bytes())
+        receipt = journal['after']['retired_entries'][-1]
+        receipt['node'] = [entry['node'][0], entry['node'][1] + 1]
+        receipt['source']['entries'][eid]['node'] = receipt['node']
+        store.journal.write_text(json.dumps(journal), encoding='utf-8')
+        before = (store.root / 'index.json').read_bytes()
+        with self.assertRaisesRegex(bench_store.Refused, 'retirement receipt authority'):
+            store.recover()
+        self.assertEqual((store.root / 'index.json').read_bytes(), before)
+        self.assertTrue(Path(journal['quarantine']).exists())
+        self.assertTrue(store.journal.exists())
+
+    def test_retirement_deletes_nested_private_payload(self):
+        store, eid, entry = self.make_entry()
+        nested = Path(entry['path']) / 'nested' / 'deeper'
+        nested.mkdir(parents=True)
+        (nested / 'payload').write_text('fixture', encoding='utf-8')
+        receipt = store.retire_entry(eid, self.authorization(store, eid, entry))
+        self.assertEqual(receipt['status'], 'retired')
+        self.assertFalse(Path(entry['path']).exists())
+        self.assertFalse(store.journal.exists())
+
+    def test_manager_wrapper_uses_guarded_retirement(self):
+        from retire_entry import main
+
+        store, eid, entry = self.make_entry()
+        auth_path = store.root.parent / 'authorization.json'
+        auth_path.write_text(json.dumps(self.authorization(store, eid, entry)), encoding='utf-8')
+        argv = ['retire_entry.py', '--root', str(store.root), '--tests-dir', str(store.tests),
+                '--entry', eid, '--authorization', str(auth_path)]
+        before = (store.root / 'index.json').read_bytes()
+        with mock.patch.object(sys, 'argv', argv), mock.patch.object(bench_store, 'Store', return_value=store):
+            with store.acquire(['retire-fixture']), contextlib.redirect_stderr(io.StringIO()) as error:
+                self.assertEqual(main(), 2)
+                self.assertIn('entry lease held', error.getvalue())
+            self.assertEqual((store.root / 'index.json').read_bytes(), before)
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(main(), 0)
+                self.assertEqual(json.loads(output.getvalue())['status'], 'retired')
+        self.assertFalse(Path(entry['path']).exists())
 
     def test_symlink_and_hardlink_payloads_refuse_unchanged(self):
         store, eid, entry = self.make_entry()

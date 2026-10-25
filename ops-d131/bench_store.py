@@ -252,10 +252,11 @@ class Store:
     def _validate_index(self, index, live):
         fields = {'version', 'seq', 'entries', 'registrations', 'retired', 'retired_suites'}
         check(set(index) in (fields, fields | {'retired_entries'}) and index['version'] == 1, 'index schema')
-        check(type(index['seq']) is int and isinstance(index['entries'], dict)
+        check(type(index['seq']) is int and index['seq'] >= 0 and isinstance(index['entries'], dict)
               and isinstance(index['registrations'], dict) and isinstance(index['retired'], list), 'index types')
         for eid, entry in index['entries'].items():
             self._validate_entry(eid, entry, live)
+            check(entry['seq'] <= index['seq'], 'entry sequence exceeds index')
         for name, reg in index['registrations'].items():
             self._name(name)
             check(set(reg) in ({'env', 'suite', 'requires', 'anchor', 'hash', 'registered_at', 'not_before'},
@@ -290,14 +291,32 @@ class Store:
         receipts = index.get('retired_entries', [])
         check(isinstance(receipts, list), 'retired entry receipt list')
         seen = set()
+        sequences_seen = set()
+        registrations_seen, suites_seen = set(), set()
         for receipt in receipts:
             check(set(receipt) == {'entry', 'component', 'key', 'identity', 'path', 'node', 'lock',
-                                   'seq', 'owner', 'registrations', 'suites'}, 'retired entry receipt schema')
+                                   'seq', 'owner', 'registrations', 'suites', 'source'}, 'retired entry receipt schema')
+            source = receipt['source']
+            check(isinstance(source, dict) and set(source) == {'seq', 'entries', 'registrations'},
+                  'retired entry receipt source schema')
+            self._validate_index(dict(source, version=1, retired=[], retired_suites=[]), False)
+            check(source['seq'] <= index['seq'] and receipt['entry'] in source['entries'],
+                  'retired entry receipt source index')
+            check(all(receipt['entry'] in reg['requires'] for reg in source['registrations'].values())
+                  and set(source['entries']) == {receipt['entry']} | {
+                      eid for reg in source['registrations'].values() for eid in reg['requires']},
+                  'retired entry receipt source associations')
+            expected = self._retirement_receipt(source, receipt['entry'])
+            check(receipt == expected, 'retired entry receipt source mismatch')
             check(receipt['entry'] == self._entry_id(receipt['component'], receipt['key'])
                   and receipt['key'] == key_for(receipt['component'], receipt['identity'])
                   and receipt['owner'] == self.owner['id'], 'retired entry receipt identity')
             check(receipt['entry'] not in seen, 'retired entry receipt duplicate')
             seen.add(receipt['entry'])
+            check(receipt['seq'] not in sequences_seen
+                  and all(entry['seq'] != receipt['seq'] for entry in index['entries'].values()),
+                  'retired entry receipt sequence ownership')
+            sequences_seen.add(receipt['seq'])
             check(receipt['path'] == str(self.root / 'entries' / receipt['entry']),
                   'retired entry receipt path')
             _pair(receipt['node'], 'retired entry receipt node')
@@ -319,6 +338,25 @@ class Store:
                   and len({tuple(pair) for pair in receipt['suites']}) == len(receipt['suites'])
                   and all(pair in index['retired_suites'] for pair in receipt['suites']),
                   'retired entry receipt suites')
+            names, pairs = set(receipt['registrations']), {tuple(pair) for pair in receipt['suites']}
+            check(not names & (registrations_seen | set(index['registrations']))
+                  and not pairs & suites_seen, 'retired entry receipt ownership overlap')
+            registrations_seen.update(names)
+            suites_seen.update(pairs)
+
+    def _retirement_receipt(self, index, eid):
+        entry = index['entries'][eid]
+        registrations = {name: reg for name, reg in index['registrations'].items()
+                         if eid in reg['requires']}
+        refs = {eid} | {ref for reg in registrations.values() for ref in reg['requires']}
+        source = {'seq': index['seq'], 'entries': {ref: index['entries'][ref] for ref in refs},
+                  'registrations': registrations}
+        suites = sorted({tuple(reg['suite'].split(None, 2)[:2])
+                         for reg in registrations.values() if reg['suite']})
+        return dict({key: entry[key] for key in (
+            'component', 'key', 'identity', 'path', 'node', 'lock', 'seq', 'owner')},
+            entry=eid, registrations=sorted(registrations), suites=[list(pair) for pair in suites],
+            source=json.loads(canonical(source)))
 
     def _name(self, name):
         check(isinstance(name, str) and re.fullmatch('[A-Za-z0-9][A-Za-z0-9_-]*', name), 'registration name required')
@@ -597,7 +635,7 @@ class Store:
                             current = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
                             check((current.st_dev, current.st_ino) == (opened.st_dev, opened.st_ino) and opened.st_uid == os.getuid(), 'child directory replaced/foreign')
                             os.fchmod(child_fd, opened.st_mode | stat.S_IWUSR)
-                            delete_children(child_fd, strict=strict)
+                            delete_children(child_fd)
                             current = os.stat(name, dir_fd=directory_fd, follow_symlinks=False)
                             check((current.st_dev, current.st_ino) == (opened.st_dev, opened.st_ino), 'child directory replaced')
                         finally:
@@ -764,9 +802,9 @@ class Store:
         """Retire one explicitly authorized entry through the normal transaction route.
 
         This is intentionally not part of ``ensure`` or its fixed-two policy.  The
-        caller supplies only an owner-bound target receipt; Store derives and
-        rechecks every persisted, filesystem, activity, process and lease guard
-        before journaling one victim.  No force, age-only or clock override exists.
+        caller supplies only an owner-bound target receipt.  Activity and process
+        scans remain observations, not exclusive admission (D139-F1/F2/F3).
+        This private candidate is not qualified for installation or live cleanup.
         """
         check(isinstance(eid, str) and re.fullmatch(r'(?:child|runtime)-[0-9a-f]{64}', eid),
               'entry id required')
@@ -807,12 +845,7 @@ class Store:
                             after['retired_suites'].append(pair)
                             retired_suites.append(pair)
                 del after['entries'][eid]
-                after.setdefault('retired_entries', []).append({
-                    'entry': eid, 'component': entry['component'], 'key': entry['key'],
-                    'identity': entry['identity'], 'path': entry['path'], 'node': entry['node'],
-                    'lock': entry['lock'], 'seq': entry['seq'], 'owner': entry['owner'],
-                    'registrations': retired_registrations, 'suites': retired_suites,
-                })
+                after.setdefault('retired_entries', []).append(self._retirement_receipt(before, eid))
                 journal = {'version': 1, 'owner': self.owner['id'], 'kind': 'retirement',
                            'before': before, 'after': after,
                            'projections': self._projections(before, after),
@@ -895,7 +928,8 @@ class Store:
         if journal['kind'] == 'retirement':
             check(len(after_receipts) == len(before_receipts) + 1
                   and after_receipts[:-1] == before_receipts
-                  and after_receipts[-1]['entry'] == journal['victims'][0],
+                  and len(journal['victims']) == 1
+                  and after_receipts[-1] == self._retirement_receipt(before, journal['victims'][0]),
                   'retirement receipt authority')
         else:
             check(after_receipts == before_receipts, 'journal rewrites retirement receipts')
