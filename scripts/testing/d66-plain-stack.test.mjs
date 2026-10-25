@@ -4,7 +4,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { appCheckoutTarget, buildSubmitPlan, captureSubmitPins, exactCheckoutPath, playwrightLaunchEnv, preflightSources, receiptCheckout, registerSubmitRecipes, selectPinnedSources, serviceRecipe, suites, submit, validatePinnedSource, validatePinnedSources, validateSelectedSource, waitForSubmitReceipts } from './d66-plain-stack.mjs';
+import { appCheckoutTarget, buildSubmitPlan, captureSubmitPins, configureRuntimeLogEnv, exactCheckoutPath, playwrightLaunchEnv, preflightSources, receiptCheckout, registerSubmitRecipes, selectPinnedSources, serviceRecipe, suites, submit, validatePinnedSource, validatePinnedSources, validateSelectedSource, waitForSubmitReceipts } from './d66-plain-stack.mjs';
 
 const state = (overrides = {}) => ({
   root: '/snapshot/agent', head: 'a'.repeat(40), tree: 'b'.repeat(40), branch: null, dirty: false, ...overrides,
@@ -23,6 +23,23 @@ test('D66 full P2 launch retains bounded Runtime phase logs while other suites s
   assert.equal(launch('p1').D66_RUNTIME_LOG_DIR, undefined);
   assert.equal(launch('p3').D66_RUNTIME_LOG_DIR, undefined);
   assert.notEqual(launch('p2').D66_RUNTIME_LOG_DIR, launch('p2-element').D66_RUNTIME_LOG_DIR);
+});
+
+test('D102 configures the existing Runtime sink before native seed and preserves stage isolation', () => {
+  const output = '/tmp/d66-native-seed-launch';
+  const inherited = { NODE_ENV: 'test', D66_RUNTIME_LOG_DIR: '/tmp/inherited-observer-must-not-leak' };
+  const nativeSeedEnv = configureRuntimeLogEnv({ suite: suites.p2, output, env: { ...inherited } });
+
+  assert.equal(nativeSeedEnv.D66_RUNTIME_LOG_DIR, path.join(output, 'runtime-private'));
+  assert.equal(playwrightLaunchEnv({ suite: suites.p2, suiteName: 'p2', output,
+    junit: { readiness: '/tmp/readiness.xml', original: '/tmp/original.xml' }, stage: 'p2', baseEnv: inherited }).D66_RUNTIME_LOG_DIR,
+  nativeSeedEnv.D66_RUNTIME_LOG_DIR);
+  assert.equal(playwrightLaunchEnv({ suite: suites.p2, suiteName: 'p2', output,
+    junit: { readiness: '/tmp/readiness.xml', original: '/tmp/original.xml' }, stage: 'readiness', baseEnv: inherited }).D66_RUNTIME_LOG_DIR,
+  undefined);
+
+  const disabledEnv = configureRuntimeLogEnv({ suite: suites.p1, output, env: { ...inherited } });
+  assert.equal(disabledEnv.D66_RUNTIME_LOG_DIR, undefined);
 });
 
 test('D83 focused P2 descriptors select one exact original test each and retain the full eight-test tour', () => {
