@@ -1,1 +1,1 @@
-2026-10-25T13:44:37Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 15G free; D124: host14 9ea runtime reused OK, child-venv REFUSED 13:37Z (unowned local distribution metadata, Runtime 369) - reported to MAIN, holding; core 0b586e4b held for MAIN answer
+2026-10-25T14:18:21Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 15G free; D124 bodies HELD: child-venv fix for 'unowned local distribution metadata' (Runtime 369) not yet published (Runtime 14:10Z: host14 reverted upstream a4e016b6a9, no refused child retry yet)
