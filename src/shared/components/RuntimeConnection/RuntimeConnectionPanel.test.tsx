@@ -65,12 +65,26 @@ describe('RuntimeConnectionPanel', () => {
     expect(screen.queryByText(COPY.waiting)).not.toBeInTheDocument();
   });
 
-  it('offers Pinokio install and download links in the install disclosure for desktop Chromium', () => {
+  it('offers a quiet Pinokio install link after the install command for desktop Chromium', () => {
+    vi.spyOn(navigator, 'platform', 'get').mockReturnValue('MacIntel');
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Macintosh; Intel Mac OS X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36');
     panel(connectionFor({ status: 'needs_permission' }));
+    const disclosure = screen.getByRole('button', { name: "Don't have Astrid yet?" });
+    fireEvent.click(disclosure);
+    const pinokioLink = screen.getByRole('link', { name: 'Or install with Pinokio' });
+    expect(pinokioLink).toHaveAttribute('href', PINOKIO_INSTALL_COPY.installUrl);
+    expect(pinokioLink).toHaveClass('underline', 'underline-offset-4', 'hover:text-foreground');
+    expect(pinokioLink.parentElement).toHaveClass('text-sm', 'text-muted-foreground');
+    expect(pinokioLink.compareDocumentPosition(screen.getByRole('code')) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+    expect(screen.queryByRole('link', { name: 'Get Pinokio' })).not.toBeInTheDocument();
+  });
+
+  it('keeps the install disclosure Pinokio link off unsupported browsers', () => {
+    vi.spyOn(navigator, 'platform', 'get').mockReturnValue('MacIntel');
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Macintosh) Firefox/131.0');
+    panel(connectionFor({ status: 'needs_permission' }));
     fireEvent.click(screen.getByRole('button', { name: "Don't have Astrid yet?" }));
-    expect(screen.getByRole('link', { name: PINOKIO_INSTALL_COPY.label })).toHaveAttribute('href', PINOKIO_INSTALL_COPY.installUrl);
-    expect(screen.getByRole('link', { name: PINOKIO_INSTALL_COPY.getPinokio })).toHaveAttribute('href', PINOKIO_INSTALL_COPY.downloadUrl);
+    expect(screen.queryByRole('link', { name: 'Or install with Pinokio' })).not.toBeInTheDocument();
   });
 
   it('places an optional onboarding Back action in the card corner only for its caller', () => {

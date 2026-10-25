@@ -5,7 +5,7 @@ import { SegmentedControl, SegmentedControlItem } from '@/shared/components/ui/s
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip.tsx';
 import { runInstallPrompt, useInstallPromptSignals, useStandaloneStatus } from '@/shared/hooks/platformInstall/signals.ts';
 import { detectInstallScenario } from '@/pages/Home/installScenario.ts';
-import { LOCAL_SETUP, PINOKIO_INSTALL_COPY, type WindowMode } from '@/shared/components/RuntimeConnection/copy.ts';
+import { LOCAL_SETUP, type WindowMode } from '@/shared/components/RuntimeConnection/copy.ts';
 import { EditorCard } from '@/shared/components/RuntimeConnection/EditorCard.tsx';
 import { EditorCardLayer } from '@/shared/components/RuntimeConnection/EditorCardLayer.tsx';
 import { CopyFallback, useCopyAction } from '@/shared/components/RuntimeConnection/CopyInstallCommand.tsx';
@@ -118,7 +118,6 @@ export function WelcomeRunMode({ onContinue, windowMode, setWindowMode, runMode,
                 <RunModeMink scene="desk" active={runMode === 'local'} className={OPTION_MINK} />
                 <span className={OPTION_DESCRIPTION}><span className="relative block pl-3.5"><span aria-hidden="true" className="absolute left-0">•</span>Everything runs on your machine</span><span className="relative block pl-3.5"><span aria-hidden="true" className="absolute left-0">•</span>No permissions and works offline. GitHub <a className="underline underline-offset-4 hover:text-foreground" href={LOCAL_SETUP.repoUrl} target="_blank" rel="noreferrer">here</a>.</span></span>
               </label>
-              {runMode === 'local' && scenario === 'chromium' && <p className="px-3.5 pb-3.5 pl-[43px] text-[13px] text-muted-foreground"><a className="underline underline-offset-4 hover:text-foreground" href={PINOKIO_INSTALL_COPY.installUrl} target="_blank" rel="noreferrer">{PINOKIO_INSTALL_COPY.runMode}</a> · <a className="underline underline-offset-4 hover:text-foreground" href={PINOKIO_INSTALL_COPY.downloadUrl} target="_blank" rel="noreferrer">{PINOKIO_INSTALL_COPY.getPinokio}</a></p>}
             </div>
           </RadioGroup>
           <Button type="button" className="h-11 w-full rounded-xl" onClick={() => {

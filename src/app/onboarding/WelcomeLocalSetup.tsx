@@ -2,7 +2,8 @@ import { ChevronLeft, Check, Copy } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { EditorCard, EditorCardFoot } from '@/shared/components/RuntimeConnection/EditorCard.tsx';
 import { EditorCardLayer } from '@/shared/components/RuntimeConnection/EditorCardLayer.tsx';
-import { LOCAL_SETUP, RUNTIME_CONNECTION_COPY, localSetupInstructions, localSetupSteps } from '@/shared/components/RuntimeConnection/copy.ts';
+import { detectInstallScenario } from '@/pages/Home/installScenario.ts';
+import { LOCAL_SETUP, PINOKIO_INSTALL_COPY, RUNTIME_CONNECTION_COPY, localSetupInstructions, localSetupSteps } from '@/shared/components/RuntimeConnection/copy.ts';
 import { CopyCommandRow, CopyFallback, useCopyAction } from '@/shared/components/RuntimeConnection/CopyInstallCommand.tsx';
 
 export function WelcomeLocalSetup({ onBack }: { readonly onBack: () => void }) {
@@ -43,6 +44,7 @@ export function WelcomeLocalSetup({ onBack }: { readonly onBack: () => void }) {
               </div>}
             </li>)}
           </ol>
+          {detectInstallScenario() === 'chromium' && <p className="text-[13px] leading-5 text-muted-foreground"><a className="underline underline-offset-4 hover:text-foreground" href={PINOKIO_INSTALL_COPY.installUrl} target="_blank" rel="noreferrer">{PINOKIO_INSTALL_COPY.label}</a></p>}
           <p className="text-[13px] leading-5 text-muted-foreground">Ctrl+C stops it. To start again, run npm run dev:local in the astrid-app folder.</p>
         </section>
         <a href="http://127.0.0.1:5180" target="_blank" rel="noreferrer" className="block text-center text-[13px] text-muted-foreground underline underline-offset-4 hover:text-foreground">Open my local editor</a>

@@ -103,21 +103,6 @@ describe('run-mode choice', () => {
     expect(link).toHaveClass('underline', 'underline-offset-4', 'hover:text-foreground');
   });
 
-  it('offers Pinokio for fully local setup on supported desktop browsers', () => {
-    mount(() => undefined, 'local');
-    expect(screen.getByRole('link', { name: 'Easiest: Install fully local in Pinokio' })).toHaveAttribute('href', 'https://pinokio.co/item?uri=https://github.com/banodoco/astrid-pinokio');
-    expect(screen.getByRole('link', { name: 'Get Pinokio' })).toHaveAttribute('href', 'https://desktop.pinokio.co/download.html');
-  });
-
-  it('does not offer local install help on phones or unsupported browsers', () => {
-    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 Firefox/131.0');
-    mount(() => undefined, 'local');
-    expect(screen.queryByRole('link', { name: 'Easiest: Install fully local in Pinokio' })).not.toBeInTheDocument();
-    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15');
-    mount(() => undefined, 'local');
-    expect(screen.queryByRole('link', { name: 'Easiest: Install fully local in Pinokio' })).not.toBeInTheDocument();
-  });
-
   it('shows no Astrid icon on the run-mode card', () => {
     const { container } = mount(() => undefined, 'hosted');
 

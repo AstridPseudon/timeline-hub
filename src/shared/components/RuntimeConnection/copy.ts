@@ -59,11 +59,8 @@ export const LOCAL_SETUP = {
 
 /** Optional Pinokio route for installing the fully local app. */
 export const PINOKIO_INSTALL_COPY = {
-  label: 'Use Pinokio? Install Astrid in Pinokio',
-  getPinokio: 'Get Pinokio',
+  label: 'Or install with Pinokio',
   installUrl: 'https://pinokio.co/item?uri=https://github.com/banodoco/astrid-pinokio',
-  downloadUrl: 'https://desktop.pinokio.co/download.html',
-  runMode: 'Easiest: Install fully local in Pinokio',
 } as const;
 
 export interface LocalSetupStep {

@@ -11,8 +11,7 @@ import { CopyFallback, CopyInstallCommand, useCopyAction } from './CopyInstallCo
 import { CardDisclosure, EditorCard, EditorCardFoot } from './EditorCard.tsx';
 import { EditorCardLayer } from './EditorCardLayer.tsx';
 import { CopyRefusedInstructions } from './CopyRefusedInstructions.tsx';
-import { RUNTIME_CONNECTION_COPY as COPY, withBrowser, withOrigin } from './copy.ts';
-import { PINOKIO_INSTALL_COPY } from './copy.ts';
+import { PINOKIO_INSTALL_COPY, RUNTIME_CONNECTION_COPY as COPY, withBrowser, withOrigin } from './copy.ts';
 import { detectInstallScenario } from '@/pages/Home/installScenario.ts';
 
 export interface RuntimeConnectionPanelProps {
@@ -284,7 +283,7 @@ function PermissionCard({ connection, onBack }: { connection: RuntimeConnectionV
 }
 
 function PinokioInstallHelp() {
-  return <p className="mt-3 text-sm text-muted-foreground"><a className="underline underline-offset-4 hover:text-foreground" href={PINOKIO_INSTALL_COPY.installUrl} target="_blank" rel="noreferrer">{PINOKIO_INSTALL_COPY.label}</a> · <a className="underline underline-offset-4 hover:text-foreground" href={PINOKIO_INSTALL_COPY.downloadUrl} target="_blank" rel="noreferrer">{PINOKIO_INSTALL_COPY.getPinokio}</a></p>;
+  return <p className="mt-3 text-sm text-muted-foreground"><a className="underline underline-offset-4 hover:text-foreground" href={PINOKIO_INSTALL_COPY.installUrl} target="_blank" rel="noreferrer">{PINOKIO_INSTALL_COPY.label}</a></p>;
 }
 
 /** Permission `denied`: the browser stopped the request, so the fix is in its site settings. */
