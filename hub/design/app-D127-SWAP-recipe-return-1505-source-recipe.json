@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "task": "D127 finite READ ONLY source recipe handback",
+  "authentic_replay": false,
+  "execution": "not_run",
+  "app": {
+    "commit": "fe3309dba4520835a685f925468bff1acdc0506f",
+    "tree": "e55f0d65dca0c9f2ba3013df4cab999f314308b9",
+    "popup_source_sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "popup_source_blob": "d7da4c234fb921c448bc18e9ac174b1a11dbc4a6"
+  },
+  "fixture": {
+    "constructor": {"path": "tests/e2e/local/support/harness.ts", "function": "DirectHarness.seedThreeProducts", "lines": "1233-1290", "blob": "3fcfb5ad571a0cadc1f50232fa6eb91b60fa4df2"},
+    "inputs": {"reference_at": 15, "transitions": "native-none", "occurrence_host_window": 12},
+    "ids": {"source_occurrence": "f2-occurrence", "shared_occurrence": "f2-occurrence-copy", "target_clip": "f2-agent-clip", "shot": "f2-shot", "marker_asset_key": "f2-marker"},
+    "old_media": {"source": "harness.seed.image.objectId bytes", "filename": "p2-popup-old.png", "route": "/v1/projects/{project}/media-imports"},
+    "new_media": {"generator": "makePng", "args": [65, 49], "filename": "p2-popup-new.png", "mime": "image/png"}
+  },
+  "setup_order": [
+    {"function": "preparePopupSeed", "path": "tests/e2e/local/three-products.p2-popup.spec.ts", "lines": "254-313", "action": "seed closure, import old media, place shared occurrence, doc.patch old target asset and registry"},
+    {"function": "commitFixtureCommand", "path": "tests/e2e/local/three-products.p2-popup.spec.ts", "lines": "220-252", "action": "atomic source fixture commits"}
+  ],
+  "swap_order": [
+    {"path": "tests/e2e/local/three-products.p2-popup.spec.ts", "lines": "920-938", "action": "capture immutable before head/raw/canonical"},
+    {"path": "tests/e2e/local/three-products.p2-popup.spec.ts", "lines": "949-954", "action": "select shared occurrence target, click SWAP, choose new PNG"},
+    {"function": "sharedPopupMediaCommands", "path": "src/tools/travel-between-images/components/shotTimelineDataProvider.ts", "lines": "750-871", "action": "verify closure; resolve media selections; emit occurrence.fork then occurrence.swap-media"}
+  ],
+  "production_handoff": [
+    {"path": "src/tools/travel-between-images/components/ShotTimelineMediaControls.tsx", "lines": "157-276", "action": "mounted gesture, upload, selection snapshot, addClip replaceClipId"},
+    {"path": "src/tools/video-editor/commands/localSaveSession.ts", "lines": "158-201", "action": "persisted outbox dispatch retains original commands and advances only base"},
+    {"path": "src/integrations/runtime/dataProvider.ts", "lines": "751-765", "action": "registered provider commitTimeline"},
+    {"path": "src/integrations/runtime/client.ts", "lines": "735-742", "action": "WorkspaceClient commitTimeline"},
+    {"path": "src/integrations/runtime/generated.ts", "lines": "202-204", "action": "canonical Runtime POST"}
+  ],
+  "retained_safe_result": {"normal_id": "app-pin-fe3309db-d73-p2-fe3309db-submit-1025140943-3250", "status": "FAIL", "swap_public_tag": "history_unavailable", "swap_private_binding": "UNKNOWN", "raw_private_data_published": false}
+}
