@@ -1,0 +1,147 @@
+{
+  "task": "D107",
+  "derivative": "custody-final-review",
+  "review_scope": "independent read-only final review of the corrected custody derivative against independent1640",
+  "verdict": "PASS_EVIDENCE_ONLY",
+  "behavior": "FAIL_BEHAVIOR_PENDING",
+  "functional_go": false,
+  "correction_review": {
+    "source": "workers/rt-D107-custody-correction-1644/evidence/correction.json",
+    "validation": "workers/rt-D107-custody-correction-1644/evidence/validation.md",
+    "packet_verdict": "PASS_CORRECTED_DERIVATIVE_ONLY",
+    "historical_packet_status": "FAIL_NONCLEAN",
+    "historical_value": "23451aa80279f47d126e5e5699f51272a6418402ba559617c243bcd6b15041",
+    "historical_value_length": 62,
+    "corrected_value": "23451aa80279f47d126e5e5699f51272b8a6418402ba559617c243bcd6b15041",
+    "historical_packet_rewritten": false,
+    "historical_packet_pass_claim": false
+  },
+  "protected_identity": {
+    "file": "tests/editing_conformance/test_commit_runtime_m1.py",
+    "expected_sha256": "23451aa80279f47d126e5e5699f51272b8a6418402ba559617c243bcd6b15041",
+    "expected_sha256_length": 64,
+    "checks": [
+      {
+        "label": "Agent20177 source bytes",
+        "command": "git show 20177e66564f9f91735ed1a11bac821682d60edf:tests/editing_conformance/test_commit_runtime_m1.py | sha256sum",
+        "sha256": "23451aa80279f47d126e5e5699f51272b8a6418402ba559617c243bcd6b15041",
+        "result": "PASS"
+      },
+      {
+        "label": "Agent b4b380 source bytes",
+        "command": "git show b4b3805da5e8611490401122f986e203f67f21b4:tests/editing_conformance/test_commit_runtime_m1.py | sha256sum",
+        "sha256": "23451aa80279f47d126e5e5699f51272b8a6418402ba559617c243bcd6b15041",
+        "result": "PASS"
+      },
+      {
+        "label": "approved referenced source bytes",
+        "command": "git show 2e3331ee2f035e302f5ca52488832cd0e22bb3aa:tests/editing_conformance/test_commit_runtime_m1.py | sha256sum",
+        "sha256": "23451aa80279f47d126e5e5699f51272b8a6418402ba559617c243bcd6b15041",
+        "result": "PASS"
+      },
+      {
+        "label": "genuine original file bytes",
+        "command": "sha256sum tests/editing_conformance/test_commit_runtime_m1.py",
+        "sha256": "23451aa80279f47d126e5e5699f51272b8a6418402ba559617c243bcd6b15041",
+        "result": "PASS"
+      }
+    ],
+    "identity_result": "The protected original is byte-identical at Agent20177, Agent b4b380, the approved referenced source, and this worktree's genuine file bytes."
+  },
+  "preserved_original_evidence": [
+    {
+      "path": "workers/rt-D107-purpose-review-1550/evidence/purpose-map.json",
+      "sha256": "50cf454bb5d182cfba7c5890c99954b2d08bece3e0206a9c65ea5edcf09c4153"
+    },
+    {
+      "path": "workers/rt-D107-purpose-review-1550/evidence/review.md",
+      "sha256": "70b54a232cd215507641b57c96426b62c96912e7569bd4e6eac9490824192b98"
+    },
+    {
+      "path": "workers/rt-D107-purpose-review-1550/evidence/validation.json",
+      "sha256": "e01d3a4009d78548c0b91458f79612efce1fcfc06fa0ccb76c4f0d81ef8f121e"
+    },
+    {
+      "path": "workers/rt-D107-pin-source-review-1640/evidence/review.json",
+      "sha256": "d3f455fac47c7d1752e040fd39dfe425392a08da68708e5c286763cd26dc28cc"
+    },
+    {
+      "path": "workers/rt-D107-pin-source-review-1640/evidence/validation.md",
+      "sha256": "ac8c5be2cbdc46d941baead8bd2c54346716eb5903729751d4068022c072192e"
+    }
+  ],
+  "source_and_path": {
+    "agent_head": "b4b3805da5e8611490401122f986e203f67f21b4",
+    "runtime_ref": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "source_review": "PASS",
+    "whole_path": "FAIL_BEHAVIOR_PENDING",
+    "source_cause": "UNKNOWN",
+    "owner": "UNKNOWN",
+    "persisted_record_status": "EXACTMISSING",
+    "production_path": [
+      "current seed/provider",
+      "accepted canonical dependency_manifest.documents",
+      "Runtime persisted parent_composition_revisions.commit_manifest_json plus immutable input content/binding/link rows",
+      "restart/revision_closure",
+      "Agent _hydrate -> pinned_documents",
+      "native_word_anchor.binding exact-pin guard"
+    ],
+    "source_map_hashes": {
+      "astrid/sdk/timeline/commit.py": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+      "astrid/sdk/timeline/_commit_patch.py": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f",
+      "astrid/sdk/timeline/native_word_anchor.py": "771d833188de33556a1853e95e84703e7ce5b36e2a6b2d2c55cb975f93f36744",
+      "tests/editing_conformance/native_word_anchor_fixture.py": "7da0e3db8ad190251f0266918a6d01771b235c748d00027c6e70a7d370f321e8",
+      "runtime_protocol/timeline_commit_port.py": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14",
+      "runtime_protocol/timeline_commit_inputs.py": "bf04dc5d26fd6e6283ae11c7d0fa55fa5730c45f19e1c55bda529062cab696e4",
+      "runtime_protocol/timeline_commit_store.py": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4"
+    },
+    "source_map_recomputation": "PASS"
+  },
+  "candidate_invariance": {
+    "diff_command": "git diff --name-status 20177e66564f9f91735ed1a11bac821682d60edf b4b3805da5e8611490401122f986e203f67f21b4",
+    "changed_paths": ["tests/editing_conformance/test_m1_current_equivalent.py"],
+    "authorized_delta": "history baseline assertion 5 -> 8 plus explanatory comment",
+    "product_source_delta": "none",
+    "protected_test_delta": "none for tests/editing_conformance/test_commit_runtime_m1.py",
+    "pin_fixture_delta": "none",
+    "diff_check": "PASS"
+  },
+  "behavior_evidence": {
+    "artifact": "workers/rt-D107-current-baseline-1530/evidence/current-equivalents.xml",
+    "cases": ["disjoint-rebase-undo", "touched-basis-conflict"],
+    "failure_location": "tests/editing_conformance/test_m1_current_equivalent.py:317",
+    "observed_error": "exact transcript pin is missing or revoked or ambiguous",
+    "result": "both authorized cases remain failing",
+    "private_record": "not retained",
+    "record_reconstruction": false,
+    "provider_or_behavior_rerun": false
+  },
+  "c0v2_shape": {
+    "request": {
+      "top_level": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps", "merge", "reads", "dry_run", "source", "rationale", "group_id"],
+      "command_fields": ["schema_version", "op", "version", "select", "args"],
+      "step_fields": ["id", "label", "intent", "tags", "command_ordinals", "patch", "reads"],
+      "merge_values": ["fields", "atomic"],
+      "idempotency": "Idempotency-Key"
+    },
+    "replies": {
+      "success_fields": ["accepted", "merged", "canonical", "base", "landing", "receipt", "records", "bindings", "effects", "dependencies", "history", "undo_steps"],
+      "conflict_fields": ["reason", "head"],
+      "invalid_fields": ["code", "path", "hint", "suggested_command"],
+      "preview": ["would_status", "receipt=null"]
+    },
+    "status": "Shape retained; no reply widening or behavior pass is claimed."
+  },
+  "scope": {
+    "read_only_source_review": true,
+    "tests_run": false,
+    "compiler_guard_fix": false,
+    "new_collector": false,
+    "private_record_reconstruction": false,
+    "provider_body_or_originals_changed": false,
+    "profile_or_build_changed": false,
+    "hub_or_git_mutation": false,
+    "credentials_or_upstream_touched": false,
+    "m5_work": false
+  }
+}

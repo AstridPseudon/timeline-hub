@@ -1,0 +1,112 @@
+{
+  "task": "D107",
+  "derivative": "custody-correction",
+  "verdict": "PASS_CORRECTED_DERIVATIVE_ONLY",
+  "behavior": "FAIL_BEHAVIOR_PENDING",
+  "functional_go": false,
+  "scope": {
+    "change": "Correct the protected-file SHA-256 in a new derivative custody record only.",
+    "product_or_behavior_work": false,
+    "historical_receipts_rewritten": false,
+    "historical_artifacts_rewritten": false,
+    "source_or_callgraph_changed": false,
+    "new_investigation_or_rerun": false
+  },
+  "historical_defect": {
+    "affected_artifacts": [
+      "workers/rt-D107-purpose-review-1550/evidence/validation.json protected_identity.base_sha256",
+      "workers/rt-D107-purpose-review-1550/evidence/review.md"
+    ],
+    "recorded_value": "23451aa80279f47d126e5e5699f51272a6418402ba559617c243bcd6b15041",
+    "recorded_value_length": 62,
+    "defect": "The historical protected-file hash was malformed/truncated and omitted b8.",
+    "corrected_value": "23451aa80279f47d126e5e5699f51272b8a6418402ba559617c243bcd6b15041",
+    "impact": "The original custody packet remains non-clean; this derivative records the correction without rewriting or relabeling the historical packet."
+  },
+  "protected_identity": {
+    "file": "tests/editing_conformance/test_commit_runtime_m1.py",
+    "expected_sha256": "23451aa80279f47d126e5e5699f51272b8a6418402ba559617c243bcd6b15041",
+    "checks": [
+      {
+        "label": "Agent20177 base",
+        "ref": "20177e66564f9f91735ed1a11bac821682d60edf",
+        "command": "git show 20177e66564f9f91735ed1a11bac821682d60edf:tests/editing_conformance/test_commit_runtime_m1.py | sha256sum",
+        "sha256": "23451aa80279f47d126e5e5699f51272b8a6418402ba559617c243bcd6b15041",
+        "result": "PASS"
+      },
+      {
+        "label": "Agent b4b380 candidate",
+        "ref": "b4b3805da5e8611490401122f986e203f67f21b4",
+        "command": "git show b4b3805da5e8611490401122f986e203f67f21b4:tests/editing_conformance/test_commit_runtime_m1.py | sha256sum",
+        "sha256": "23451aa80279f47d126e5e5699f51272b8a6418402ba559617c243bcd6b15041",
+        "result": "PASS"
+      },
+      {
+        "label": "approved referenced source",
+        "ref": "2e3331ee2f035e302f5ca52488832cd0e22bb3aa",
+        "command": "git show 2e3331ee2f035e302f5ca52488832cd0e22bb3aa:tests/editing_conformance/test_commit_runtime_m1.py | sha256sum",
+        "sha256": "23451aa80279f47d126e5e5699f51272b8a6418402ba559617c243bcd6b15041",
+        "result": "PASS"
+      }
+    ],
+    "identity_result": "The protected file is byte-identical by SHA-256 at Agent20177, Agent b4b380, and the approved referenced source."
+  },
+  "continued_review_facts": {
+    "agent_head": "b4b3805da5e8611490401122f986e203f67f21b4",
+    "runtime_ref": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "source_review": "PASS",
+    "source_cause": "UNKNOWN",
+    "owner": "UNKNOWN",
+    "persisted_record_status": "EXACTMISSING",
+    "whole_path": "FAIL_BEHAVIOR_PENDING",
+    "failed_journeys": [
+      "disjoint-rebase-undo",
+      "touched-basis-conflict"
+    ],
+    "failure_location": "tests/editing_conformance/test_m1_current_equivalent.py:317",
+    "observed_error": "exact transcript pin is missing or revoked or ambiguous",
+    "production_path": [
+      "current seed/provider",
+      "accepted canonical dependency_manifest.documents",
+      "Runtime persisted parent_composition_revisions.commit_manifest_json plus immutable input content/binding/link rows",
+      "restart/revision_closure",
+      "Agent _hydrate -> pinned_documents",
+      "native_word_anchor.binding exact-pin guard"
+    ],
+    "no_behavior_claim": "This correction is evidence custody only and does not convert the two failures into a behavior pass."
+  },
+  "preserved_original_evidence": [
+    {
+      "path": "workers/rt-D107-purpose-review-1550/evidence/purpose-map.json",
+      "sha256": "50cf454bb5d182cfba7c5890c99954b2d08bece3e0206a9c65ea5edcf09c4153"
+    },
+    {
+      "path": "workers/rt-D107-purpose-review-1550/evidence/review.md",
+      "sha256": "70b54a232cd215507641b57c96426b62c96912e7569bd4e6eac9490824192b98"
+    },
+    {
+      "path": "workers/rt-D107-purpose-review-1550/evidence/validation.json",
+      "sha256": "e01d3a4009d78548c0b91458f79612efce1fcfc06fa0ccb76c4f0d81ef8f121e"
+    },
+    {
+      "path": "workers/rt-D107-pin-source-review-1640/evidence/review.json",
+      "sha256": "d3f455fac47c7d1752e040fd39dfe425392a08da68708e5c286763cd26dc28cc"
+    },
+    {
+      "path": "workers/rt-D107-pin-source-review-1640/evidence/validation.md",
+      "sha256": "ac8c5be2cbdc46d941baead8bd2c54346716eb5903729751d4068022c072192e"
+    }
+  ],
+  "source_custody_carried_forward": {
+    "source_map_status": "PASS",
+    "product_source_delta": "none",
+    "candidate_delta": {
+      "command": "git diff --name-status 20177e66564f9f91735ed1a11bac821682d60edf b4b3805da5e8611490401122f986e203f67f21b4",
+      "result": [
+        "M\ttests/editing_conformance/test_m1_current_equivalent.py"
+      ],
+      "outside_product_test_pin_fixture_invariant": "PASS; no product, pin, or fixture path changed; the sole candidate delta is the authorized current-equivalent history assertion."
+    },
+    "runtime_source_hashes": "Carried forward from the independent 1640 source review; no Runtime worktree or provider rerun was performed."
+  }
+}

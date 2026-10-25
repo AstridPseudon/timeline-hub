@@ -1,0 +1,91 @@
+{
+  "agent": {
+    "head": "b4b3805da5e8611490401122f986e203f67f21b4",
+    "files": [
+      {
+        "path": "astrid/sdk/timeline/commit.py",
+        "sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+        "functions": {
+          "document_from_bundle": [302, 420],
+          "_hydrate": [442, 525]
+        },
+        "edges": [
+          "_hydrate -> port.transcript_source(pin)",
+          "_hydrate -> bundle.source_mapping.pinned_documents",
+          "provider commit -> document_from_bundle(plan.bundle)"
+        ]
+      },
+      {
+        "path": "astrid/sdk/timeline/_commit_patch.py",
+        "sha256": "040508b63de95febe6926593c0b212f5f78e7d713a3914845ad753aa9193c21f",
+        "functions": {
+          "CommitPatch.after": [459, 512]
+        },
+        "edges": [
+          "record dependency kind transcript -> copy_manifest.documents pin"
+        ]
+      },
+      {
+        "path": "astrid/sdk/timeline/native_word_anchor.py",
+        "sha256": "771d833188de33556a1853e95e84703e7ce5b36e2a6b2d2c55cb975f93f36744",
+        "functions": {
+          "binding": [57, 133]
+        },
+        "edges": [
+          "binding -> exact matching pinned_documents capture",
+          "missing or non-unique capture -> TimingCompileError"
+        ]
+      },
+      {
+        "path": "tests/editing_conformance/native_word_anchor_fixture.py",
+        "sha256": "7da0e3db8ad190251f0266918a6d01771b235c748d00027c6e70a7d370f321e8",
+        "functions": {
+          "seed": [84, 306],
+          "_retained_case": [309, 427]
+        },
+        "edges": [
+          "current_form seed -> initial-word-anchor",
+          "registered provider -> service.commit_timeline",
+          "restart helper -> new RuntimeService(root)"
+        ]
+      }
+    ]
+  },
+  "runtime": {
+    "ref": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "files": [
+      {
+        "path": "runtime_protocol/timeline_commit_port.py",
+        "sha256": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14",
+        "edges": [
+          "RequestCommitPort._document -> capture_document_input",
+          "transcript_source -> _document(pin, transcript=True)",
+          "RequestCommitPort.persist -> persist_document_input_links"
+        ]
+      },
+      {
+        "path": "runtime_protocol/timeline_commit_inputs.py",
+        "sha256": "bf04dc5d26fd6e6283ae11c7d0fa55fa5730c45f19e1c55bda529062cab696e4",
+        "edges": [
+          "persist_document_input_links -> contents/bindings/links tables",
+          "revision closure retention -> reachable exact pin validation"
+        ]
+      },
+      {
+        "path": "runtime_protocol/timeline_commit_store.py",
+        "sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4",
+        "edges": [
+          "accept -> _persist_closure -> _publish -> inputs.persist",
+          "revision_closure -> commit_manifest_json and _verify_inputs"
+        ]
+      }
+    ]
+  },
+  "source_delta": {
+    "agent_worktree_changed_paths_from_20177": [
+      "tests/editing_conformance/test_m1_current_equivalent.py"
+    ],
+    "product_source_delta": "none",
+    "relevant_agent_hydration_change_provenance": "f078d02297 fix(timeline): port authenticated transcript capture"
+  }
+}

@@ -1,0 +1,5 @@
+Ask: consume immediate exact-WIP Sol resume and independent custody finding; retain no-build admission limit / Owner: Runtime rt-OPS-child-custody-resume-sol-1643 / By: next critical source return
+
+Sol capacity failure1633 is not retried fresh. Exact WIPad120ae (tests preserved) resumed1643 on samebranch ancestry at16:43, sole active correction author; one Sol retry per16:41. Independent1637 source finding complete and flat-published. Exact Agent a4e016 checkout now normally exists on Main; Runtime5e9ad present. Current free5.09GB; no real diagnostic build under separate8GiB retention gate. No new policy/trust override. Guarded sweep3 completedzero; compact losslesslygzipped12 oldlogs, zeroeligible scratch/testdirs. Five historicaldirtytrees and allrefusedtargets stayheld.
+
+U4a cec01 independent1634 PASS24 and15exactmappings remains readyforhostfiling. D107 source home9350 consumed, intake cleared; both behaviorfailures persist. D77 portable refs and correctedlock18d/guard1257 exact handoff1624 published. No SWAP activity underD130. Ready source work all assigned.

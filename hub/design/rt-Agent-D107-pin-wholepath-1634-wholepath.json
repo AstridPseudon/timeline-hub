@@ -1,0 +1,76 @@
+{
+  "task": "D107",
+  "repo": "agent",
+  "agent_head": "b4b3805da5e8611490401122f986e203f67f21b4",
+  "runtime_ref": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+  "verdict": "behavior_pending",
+  "protected_purpose": "PASS",
+  "whole_path": "FAIL at tests/editing_conformance/test_m1_current_equivalent.py:317 in both approved parameter cases",
+  "observed_error": "exact transcript pin is missing or revoked or ambiguous",
+  "source_cause": "UNKNOWN",
+  "persisted_record_status": "EXACTMISSING",
+  "record_not_available": [
+    "No retained SQLite realm/database from the authorized D107 run was present.",
+    "The retained XML contains only the failure traceback and no canonical manifest, parent row, input binding, input link, or private hydration capture dump."
+  ],
+  "minimal_record_to_inspect": {
+    "canonical_manifest": "parent_composition_revisions.commit_manifest_json for the pre-restart accepted head revision",
+    "immutable_input": "timeline_document_input_contents keyed by the exact transcript content_digest",
+    "binding": "timeline_document_input_bindings keyed by project_id/document_id/document_version/content_digest",
+    "accepted_link": "timeline_document_input_links keyed by project_id/timeline_id/publication_id/revision_id/ordinal",
+    "hydrated_capture": "the restarted provider's private pinned_documents capture for the same exact DocumentPin"
+  },
+  "production_path": [
+    {
+      "stage": "current seed and first-use anchor",
+      "owner": "Agent test fixture plus registered provider",
+      "source": "tests/editing_conformance/native_word_anchor_fixture.py:253-264",
+      "fact": "The genuine transcript pin is supplied to capture_anchor, then submitted through the registered provider as initial-word-anchor."
+    },
+    {
+      "stage": "request hydration",
+      "owner": "Agent provider",
+      "source": "astrid/sdk/timeline/commit.py:442-485",
+      "fact": "_hydrate starts from dependency_manifest.documents, adds an exact clip.anchor choice pin, and calls the authenticated port.transcript_source(pin)."
+    },
+    {
+      "stage": "canonical manifest construction",
+      "owner": "Agent provider",
+      "source": "astrid/sdk/timeline/commit.py:366-378; astrid/sdk/timeline/_commit_patch.py:459-471",
+      "fact": "document_from_bundle takes the authenticated copy manifest; consuming transcript dependencies append their exact pin to that manifest."
+    },
+    {
+      "stage": "Runtime persistence",
+      "owner": "Runtime",
+      "source": "runtime_protocol/timeline_commit_store.py:1894-1914,2008-2056; runtime_protocol/timeline_commit_port.py:646-655",
+      "fact": "Runtime persists the canonical commit manifest and then atomically persists immutable input content, binding metadata, and the accepted publication link."
+    },
+    {
+      "stage": "daemon restart and closure hydration",
+      "owner": "Runtime then Agent provider",
+      "source": "runtime_protocol/timeline_commit_store.py:1149-1227; astrid/sdk/timeline/commit.py:432-485,519",
+      "fact": "A restarted Runtime reconstructs the closure from commit_manifest_json; Agent _load/_hydrate must then recover the same exact transcript capture into pinned_documents."
+    },
+    {
+      "stage": "word-anchor use",
+      "owner": "Agent compiler",
+      "source": "astrid/sdk/timeline/native_word_anchor.py:89-100",
+      "fact": "The compiler requires exactly one capture matching the authored DocumentPin; the guard is a consumer, not proof of the writer fault."
+    }
+  ],
+  "passing_comparison": {
+    "source": "tests/editing_conformance/test_commit_document_input_capture.py:43-63",
+    "fact": "The source-only in-process route proves the pin is added at the consuming command boundary and remains out of the preceding input boundary."
+  },
+  "shape_check": {
+    "request": "The current D107 request builders statically include the C0 v2 base pair, commands, label, steps, merge, reads, dry_run, source, rationale, and group_id; Idempotency-Key is supplied at the Runtime call boundary.",
+    "replies": "No reply shape was widened or edited by this worker; the authorized XML stops before the first CLI acceptance response."
+  },
+  "scope": {
+    "product_source_changed": false,
+    "test_source_changed_by_worker": false,
+    "prohibited_rerun_performed": false,
+    "new_body_or_fixture_authored": false,
+    "runtime_or_agent_owner_assigned": false
+  }
+}

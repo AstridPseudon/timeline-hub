@@ -209,6 +209,7 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
     2. The review confirms no assertion in the file checks null-gain handling or preservation; if one does, stop and return it.
     3. All 33 predicates and every other input stay byte-exact.
     4. One independent protected review, then own-9.
+- D132a (16:50Z): graph9 shot_revisions[1].payload.metadata None to {} APPROVED under D104 (own fixture, setup-only), on condition that a whole-document static validation against frozen 5e9ad lists every invalid authored value first and all are fixed in ONE pass; STOP if any is predicate-relevant (LOOPS #89).
 - **D131, bench-store free-space reserve sized by build kind (16:12Z):** `bench_store.py:130` has `RESERVE_BYTES = 8 GiB` flat for every build. That blocks a child-venv build on Agent at 6.1–6.4 GB, even though a child venv is about 0.5–0.75 GB (measured on main: 495/740/739 MB). It is a disk-safety parameter, not a security or ownership guard.
   - **Kit change (one Runtime Luna, reviewed):** child-venv builds require free space of at least the 4.0 GB stop line plus 2× the largest measured child venv, about 5.5 GiB. Runtime/Remotion profile builds keep the 8 GiB reserve. Ownership, hash and registration checks are untouched. Add a test for each kind. Review, then publish the kit; Agent then builds the a4e016 child and runs agent-core-full under D89a.
   - The farm stays as a fallback (it has 15 GB, which clears 8 GiB), but the ownership-refusal cycles are NOT resumed unless D131 fails review.

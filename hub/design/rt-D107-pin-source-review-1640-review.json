@@ -1,0 +1,66 @@
+{
+  "task": "D107",
+  "verdict": "FAIL",
+  "review_scope": "independent read-only source/result review",
+  "source_review": "PASS",
+  "behavior": "FAIL_BEHAVIOR_PENDING",
+  "functional_go": false,
+  "agent_head": "b4b3805da5e8611490401122f986e203f67f21b4",
+  "runtime_ref": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+  "source_cause": "UNKNOWN",
+  "owner": "UNKNOWN",
+  "persisted_record_status": "EXACTMISSING",
+  "observed_behavior": {
+    "cases": ["disjoint-rebase-undo", "touched-basis-conflict"],
+    "artifact": "workers/rt-D107-current-baseline-1530/evidence/current-equivalents.xml",
+    "failure_location": "tests/editing_conformance/test_m1_current_equivalent.py:317",
+    "error": "exact transcript pin is missing or revoked or ambiguous",
+    "setup_or_timeout_error": false
+  },
+  "source_path": [
+    "current seed/provider",
+    "accepted canonical dependency_manifest.documents",
+    "Runtime persisted parent_composition_revisions.commit_manifest_json plus immutable input content/binding/link rows",
+    "restart/revision_closure",
+    "Agent _hydrate -> pinned_documents",
+    "native_word_anchor.binding exact-pin guard"
+  ],
+  "source_custody": {
+    "source_map_hashes": "PASS; all 7 listed Agent/Runtime blobs recomputed exactly",
+    "candidate_diff": "PASS; only tests/editing_conformance/test_m1_current_equivalent.py changed from 20177e66564f9f91735ed1a11bac821682d60edf",
+    "protected_original": "PASS; tests/editing_conformance/test_commit_runtime_m1.py is byte-identical at base/candidate/approved refs",
+    "protected_product": "PASS; cited commit.py, _commit_patch.py, native_word_anchor.py are byte-identical at base/candidate refs",
+    "protected_pin_fixture": "PASS; native_word_anchor_fixture.py, current_word_baseline_fixture.py, native_word_anchor.json, and pristine_initialize.json are byte-identical at base/candidate refs",
+    "intentional_test_delta": "PASS; current-equivalent test differs only in the requested 5 -> 8 baseline assertion and explanatory comment"
+  },
+  "exact_custody_defects": [
+    {
+      "artifact": "workers/rt-D107-purpose-review-1550/evidence/validation.json protected_identity.base_sha256 (also evidence/review.md)",
+      "defect": "recorded value is malformed/truncated at 62 hex characters",
+      "recorded": "23451aa80279f47d126e5e5699f51272a6418402ba559617c243bcd6b15041",
+      "recomputed": "23451aa80279f47d126e5e5699f51272b8a6418402ba559617c243bcd6b15041",
+      "impact": "custody packet is not clean; independent base/candidate/approved recomputation still proves the protected original file is unchanged"
+    }
+  ],
+  "finite_artifact_boundary": {
+    "retained_xml_bytes": 2421,
+    "retained_evidence_files": [
+      "source-map.json",
+      "wholepath.json",
+      "validation.md",
+      "current-equivalents.xml",
+      "purpose-map.json",
+      "review.md",
+      "validation.json"
+    ],
+    "manifest_db_private_capture_present": false,
+    "record_status_basis": "No retained SQLite/database, commit_manifest_json dump, input content/binding/link rows, or restarted private pinned_documents capture exists in the inspected worker artifacts; do not reconstruct it."
+  },
+  "passing_comparator": {
+    "artifact_source": "tests/editing_conformance/test_commit_document_input_capture.py:43-63",
+    "finding": "in-process Sources.transcript_source plus _hydrate proves consuming-command capture and manifest addition only; it does not prove restarted daemon persistence/hydration"
+  },
+  "reply_shape": "No reply shape was widened; accepted/merged/refusal/preview success behavior remains unverified by the retained failing XML.",
+  "tests": "N/A by scope; no provider, test, full, collector, or rerun was performed.",
+  "new_evidence_helper_static_checks": "N/A; no helper authored"
+}
