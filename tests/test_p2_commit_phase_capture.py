@@ -6,6 +6,7 @@ import importlib.util
 import io
 import json
 import os
+import pstats
 import sys
 import threading
 import time
@@ -390,6 +391,476 @@ def test_observer_failure_does_not_replace_original_exception():
         capture.stop()
     assert caught.value is marker
     assert "original exception text" not in json.dumps(capture.events)
+
+
+def _element_request_body(project="project-element", *, dry_run=False):
+    # ElementsLibraryPanel -> element-adapter -> timelineLocalSaveHandoff ->
+    # documentPatchIntent -> localSaveSession's persisted outbox request.
+    row = {"id": "inserted-clip", "at": 0, "track": "visual", "clipType": "effect",
+           "hold": 2, "elementRef": {"id": "effect", "kind": "effect",
+                                     "revision": "r1", "packId": "catalog"}}
+    changes = [{"op": "list.insert", "ref": "parent", "path": ["clips"],
+                "id": row["id"], "before": {"state": "absent"}, "value": row,
+                "order_before": ["clip-1"], "after_id": "clip-1"}]
+    reads = [{"kind": "collection", "ref": "parent", "path": ["clips"],
+              "members": ["clip-1"], "order": ["clip-1"]}]
+    selected = {"id": "clip-1", "clipType": "video", "hold": 2, "track": "visual", "at": 0}
+    for field in ("id", "clipType", "hold", "from", "to", "speed", "track", "at"):
+        reads.append({"kind": "field", "ref": "parent", "path": ["clips", "id:clip-1", field],
+                      "state": {"state": "present", "value": selected[field]}
+                      if field in selected else {"state": "absent"}})
+    reads.append({"kind": "field", "ref": "parent", "path": ["config", "tracks"],
+                  "state": {"state": "present", "value": [{"id": "visual", "kind": "visual"}]}})
+    body = {
+        "api_version": 1,
+        "project_id": project,
+        "timeline_id": "timeline-element",
+        "base_revision_id": "revision-1",
+        "base_publication_id": "publication-1",
+        "commands": [{
+            "schema_version": 1,
+            "op": "doc.patch",
+            "version": "1",
+            "select": None,
+            "created": [f"parent/clip:{row['id']}"],
+            "args": {"changes": changes},
+        }],
+        "label": "Edit timeline",
+        "steps": [{"id": "apply-step", "label": "Edit timeline",
+                   "intent": "timeline.apply_element", "tags": [],
+                   "command_ordinals": [0], "patch": changes, "reads": reads}],
+        "merge": "atomic", "reads": reads, "dry_run": dry_run, "source": {"via": "app"},
+    }
+    if dry_run:
+        body["dry_run"] = True
+    return body
+
+
+def test_actual_element_doc_patch_insertion_is_selected_structurally():
+    body = _element_request_body()
+    handler = _handler(object(), body)
+    handler._prefetched_body = json.dumps(body).encode()
+    assert P2CommitPhaseCapture._is_element_request(handler)
+    # Identities are operands, never a catalog/fixture allowlist.
+    command = body["commands"][0]
+    change = command["args"]["changes"][0]
+    change["id"] = change["value"]["id"] = "another-clip"
+    change["value"]["elementRef"]["id"] = change["value"]["clipType"] = "another-effect"
+    change["value"]["elementRef"]["packId"] = "another-pack"
+    command["created"] = ["parent/clip:another-clip"]
+    handler._prefetched_body = json.dumps(body).encode()
+    assert P2CommitPhaseCapture._is_element_request(handler)
+
+
+def test_direct_handler_with_forged_prefetch_cannot_arm_or_consume_selection():
+    class Runtime:
+        def commit_timeline(self, *_args, **_kwargs):
+            return {"data": {"status": "accepted"}, "receipt": None}
+
+    body = _element_request_body()
+    handler = _handler(Runtime(), body)
+    handler._prefetched_body = json.dumps(body).encode()
+    capture = P2CommitPhaseCapture(enabled=True)
+    capture.start()
+    try:
+        handler._timeline_commit(body["project_id"], body["timeline_id"], "commit")
+        assert not capture._profile_selection_closed
+        assert all(not state["profile_eligible"] for state in capture._requests.values())
+        _handler(Runtime(), body)._dispatch()
+    finally:
+        capture.stop()
+    assert "cprofile" not in _summary(capture)[0]
+    assert _summary(capture)[1]["cprofile"]["status"] == "captured"
+    assert sys.getprofile() is None
+
+
+@pytest.mark.parametrize(("path", "value"), [
+    (("source",), {"via": "python"}),
+    (("dry_run",), True),
+    (("commands", 0, "op"), "clip.set-element"),
+    (("commands", 0, "select"), "parent/clip:clip-1"),
+    (("commands", 0, "schema_version"), 2),
+    (("commands", 0, "version"), "2"),
+    (("commands", 0, "created"), []),
+    (("commands", 0, "args", "changes", 0, "op"), "set"),
+    (("commands", 0, "args", "changes", 0, "ref"), "internal:child"),
+    (("commands", 0, "args", "changes", 0, "path"), ["config", "clips"]),
+    (("commands", 0, "args", "changes", 0, "path"), ["tracks"]),
+    (("commands", 0, "args", "changes", 0, "before"), {"state": "present", "value": None}),
+    (("commands", 0, "args", "changes", 0, "after_id"), None),
+    (("commands", 0, "args", "changes", 0, "order_before"), ["inserted-clip"]),
+    (("commands", 0, "args", "changes", 0, "value", "id"), "wrong-clip"),
+    (("commands", 0, "args", "changes", 0, "value", "clipType"), "video"),
+    (("commands", 0, "args", "changes", 0, "value", "elementRef"), None),
+    (("commands", 0, "args", "changes", 0, "value", "elementRef", "kind"), "animation"),
+    (("commands", 0, "args", "changes", 0, "value", "elementRef", "revision"), ""),
+    (("commands", 0, "args", "changes", 0, "value", "elementRef", "packId"), ""),
+    (("steps", 0, "intent"), "timeline.update_element"),
+    (("steps", 0, "command_ordinals"), [0, 1]),
+    (("steps", 0, "patch"), []),
+])
+def test_actual_element_selection_rejects_other_structures(path, value):
+    body = _element_request_body()
+    target = body
+    for key in path[:-1]:
+        target = target[key]
+    target[path[-1]] = value
+    handler = _handler(object(), body)
+    handler._prefetched_body = json.dumps(body).encode()
+    assert not P2CommitPhaseCapture._is_element_request(handler)
+
+
+def test_mounted_params_undo_and_setup_do_not_consume_first_element_selection():
+    sent = []
+
+    class Runtime:
+        def commit_timeline(self, _project, _timeline, body, **kwargs):
+            sent.append((body, kwargs["idempotency_key"]))
+            return {"data": {"status": "accepted"}, "receipt": None}
+
+    params = _element_request_body()
+    params["commands"][0]["created"] = []
+    params["commands"][0]["args"]["changes"] = [{
+        "op": "set", "ref": "parent", "path": ["clips", "id:clip-1", "params"],
+        "before": {"state": "absent"}, "value": {"bob": 12},
+    }]
+    params["steps"][0].update(intent="timeline.update_element",
+                               patch=params["commands"][0]["args"]["changes"])
+    undo = _element_request_body()
+    undo["commands"] = [{"schema_version": 1, "op": "timeline.inverse", "version": "1",
+                         "select": None, "args": {"publications": ["publication-1"]}}]
+    setup = _element_request_body()
+    setup["commands"][0]["args"]["changes"][0]["value"].pop("elementRef")
+    bodies = [params, undo, setup, _element_request_body()]
+    capture = P2CommitPhaseCapture(enabled=True)
+    capture.start()
+    try:
+        for index, body in enumerate(bodies):
+            _handler(Runtime(), body, key=f"key-{index}")._dispatch()
+    finally:
+        capture.stop()
+    assert all("cprofile" not in summary for summary in _summary(capture)[:3])
+    summary = _summary(capture)[3]
+    assert summary["cprofile"]["status"] == "captured"
+    assert summary["idempotency_key_sha256"] == hashlib.sha256(b"key-3").hexdigest()
+    assert sent == [(body, f"key-{index}") for index, body in enumerate(bodies)]
+
+
+@pytest.mark.parametrize("refusal", ["dry_run", "mixed_changes", "mixed_commands"])
+def test_first_element_attempt_consumes_selection_before_retry(refusal):
+    class Runtime:
+        def commit_timeline(self, *_args, **_kwargs):
+            return {"data": {"status": "accepted"}, "receipt": None}
+
+    body = _element_request_body()
+    if refusal == "dry_run":
+        body["dry_run"] = True
+    elif refusal == "mixed_changes":
+        body["commands"][0]["args"]["changes"].append({
+            "op": "set", "ref": "parent", "path": ["name"],
+            "before": {"state": "present", "value": "before"}, "value": "after",
+        })
+    else:
+        body["commands"].append({"schema_version": 1, "op": "timeline.inverse", "version": "1",
+                                 "select": None, "args": {"publications": ["publication-1"]}})
+    capture = P2CommitPhaseCapture(enabled=True)
+    capture.start()
+    try:
+        _handler(Runtime(), body)._dispatch()
+        _handler(Runtime(), _element_request_body())._dispatch()
+    finally:
+        capture.stop()
+    assert capture._profile_selection_closed
+    assert len(_summary(capture)) == 2
+    assert all("cprofile" not in summary for summary in _summary(capture))
+
+
+def test_dispatch_without_real_prefetch_does_not_arm_profile():
+    class Runtime:
+        def commit_timeline(self, *_args, **_kwargs):
+            return {"data": {"status": "accepted"}, "receipt": None}
+
+    body = _element_request_body()
+    handler = _handler(Runtime(), body)
+    handler._prefetch_body = lambda _limit: setattr(handler, "_prefetched_body", json.dumps(body).encode())
+    capture = P2CommitPhaseCapture(enabled=True)
+    capture.start()
+    try:
+        handler._dispatch()
+        assert not capture._profile_selection_closed
+        _handler(Runtime(), body)._dispatch()
+    finally:
+        capture.stop()
+    assert "cprofile" not in _summary(capture)[0]
+    assert _summary(capture)[1]["cprofile"]["status"] == "captured"
+
+
+def test_mounted_element_handler_profiles_only_the_selected_request(tmp_path):
+    class Runtime:
+        def commit_timeline(self, *_args, **_kwargs):
+            return {"data": {"status": "accepted"}, "receipt": None}
+
+    body = _element_request_body()
+    raw_sink = tmp_path / "element.prof"
+    capture = P2CommitPhaseCapture(
+        tmp_path / "element.jsonl", enabled=True, raw_pstats_sink=raw_sink)
+    handler = _handler(Runtime(), body, key="element-profile")
+    capture.start()
+    try:
+        handler._dispatch()
+    finally:
+        capture.stop()
+
+    assert handler.sent_status == 200
+    summary = _summary(capture)[0]
+    profile = summary["cprofile"]
+    assert profile["status"] == "captured"
+    assert profile["scope"] == "RuntimeHandler._timeline_commit"
+    assert len(profile["functions"]) <= 40
+    assert len(profile["edges"]) <= 1600
+    assert profile["rank_meaning"].startswith("functions sorted descending cumtime")
+    assert "original budget" in profile["timing_note"]
+    assert all(set(row) == {
+        "rank", "file", "line", "function", "ncalls", "primitive_calls", "tottime", "cumtime"
+    } for row in profile["functions"])
+    assert all(set(edge) == {"caller", "callee", "ncalls"} for edge in profile["edges"])
+    assert all(not name.startswith("/") for row in profile["functions"] for name in (row["file"],))
+    serialized = json.dumps(capture.events)
+    assert body["project_id"] not in serialized
+    assert "element-profile" not in serialized
+    assert raw_sink.exists()
+    assert os.stat(raw_sink).st_mode & 0o777 == 0o600
+    assert os.stat(tmp_path).st_mode & 0o777 == 0o700
+    assert sys.getprofile() is None
+
+
+def test_element_profile_predicate_refuses_non_element_and_dry_run_requests():
+    class Runtime:
+        def commit_timeline(self, *_args, **_kwargs):
+            return {"data": {"status": "accepted"}, "receipt": None}
+
+    bodies = [
+        {
+            "api_version": 1,
+            "project_id": "project-move",
+            "timeline_id": "timeline-element",
+            "base_revision_id": "revision-1",
+            "base_publication_id": "publication-1",
+            "commands": [{"schema_version": 1, "op": "clip.move", "version": "1",
+                          "select": "parent/clip:clip-1", "args": {"on": 2}}],
+        },
+        _element_request_body("project-preview", dry_run=True),
+    ]
+    capture = P2CommitPhaseCapture(enabled=True)
+    capture.start()
+    try:
+        for body in bodies:
+            _handler(Runtime(), body)._dispatch()
+    finally:
+        capture.stop()
+
+    summaries = _summary(capture)
+    assert len(summaries) == 2
+    assert all("cprofile" not in summary for summary in summaries)
+    assert sys.getprofile() is None
+
+
+def test_element_profile_disables_on_handler_exception_without_exporting_exception_text():
+    marker = RuntimeError("element profile exception must remain private")
+
+    class Runtime:
+        def commit_timeline(self, *_args, **_kwargs):
+            raise marker
+
+    body = _element_request_body("project-exception")
+    handler = _handler(Runtime(), body, key="element-exception")
+
+    def raise_from_error(_exc):
+        raise marker
+
+    handler._error = raise_from_error
+    capture = P2CommitPhaseCapture(enabled=True)
+    capture.start()
+    try:
+        with pytest.raises(RuntimeError) as caught:
+            handler._dispatch()
+    finally:
+        capture.stop()
+
+    assert caught.value is marker
+    assert sys.getprofile() is None
+    serialized = json.dumps(capture.events)
+    assert "element profile exception must remain private" not in serialized
+    assert _summary(capture)[0]["cprofile"]["status"] == "captured"
+
+
+def test_element_profile_selects_one_exact_element_post_and_rejects_mixed_or_retry(tmp_path):
+    class Runtime:
+        def commit_timeline(self, *_args, **_kwargs):
+            return {"data": {"status": "accepted"}, "receipt": None}
+
+    mixed = _element_request_body("project-mixed")
+    mixed["commands"].append({
+        "schema_version": 1,
+        "op": "clip.move",
+        "version": "1",
+        "select": "parent/clip:clip-1",
+        "args": {"on": 2},
+    })
+    capture = P2CommitPhaseCapture(enabled=True)
+    capture.start()
+    try:
+        _handler(Runtime(), mixed)._dispatch()
+        _handler(Runtime(), _element_request_body("project-element-1"))._dispatch()
+        _handler(Runtime(), _element_request_body("project-element-2"))._dispatch()
+    finally:
+        capture.stop()
+
+    summaries = _summary(capture)
+    assert len(summaries) == 3
+    assert all("cprofile" not in summary for summary in summaries)
+    assert capture._profile_selection_closed
+
+    capture = P2CommitPhaseCapture(tmp_path / "one.jsonl", enabled=True)
+    capture.start()
+    try:
+        _handler(Runtime(), _element_request_body("project-first"))._dispatch()
+        _handler(Runtime(), _element_request_body("project-retry"))._dispatch()
+    finally:
+        capture.stop()
+    summaries = _summary(capture)
+    assert len(summaries) == 2
+    assert sum("cprofile" in summary for summary in summaries) == 1
+    assert sys.getprofile() is None
+
+
+def test_element_profile_rejects_wrong_request_path_method_and_unselected_handler():
+    body = _element_request_body()
+    capture = P2CommitPhaseCapture(enabled=True)
+    capture.start()
+    try:
+        cases = []
+        for command, path in (("GET", None), ("POST", "/v1/projects/p/timelines/t/commit?x=1"),
+                              ("POST", "/v1/projects/p/timelines/t/not-commit")):
+            handler = _handler(object(), body)
+            handler.command = command
+            if path is not None:
+                handler.path = path
+            handler._prefetched_body = json.dumps(body, separators=(",", ":")).encode()
+            cases.append(handler)
+        unselected = SimpleNamespace(command="POST", path=body["project_id"],
+                                     _prefetched_body=json.dumps(body).encode())
+        cases.append(unselected)
+        for handler in cases:
+            request = capture._new_request(handler=handler)
+            assert request is not None
+            capture._start_profile(capture._requests[request], handler)
+    finally:
+        capture.stop()
+    assert all(not request["profile_eligible"] for request in capture._requests.values())
+    assert sys.getprofile() is None
+
+
+def test_partial_profile_enable_disables_and_restores_previous_binding():
+    previous = sys.getprofile()
+
+    class PartialProfile:
+        def __init__(self):
+            self.disabled = False
+
+        def __call__(self, *_args):
+            return None
+
+        def enable(self):
+            sys.setprofile(self)
+            raise RuntimeError("private enable failure")
+
+        def disable(self):
+            self.disabled = True
+            sys.setprofile(None)
+
+    profile = PartialProfile()
+    capture = P2CommitPhaseCapture(enabled=True, profile_factory=lambda: profile)
+
+    class Runtime:
+        def commit_timeline(self, *_args, **_kwargs):
+            return {"data": {"status": "accepted"}, "receipt": None}
+
+    handler = _handler(Runtime(), _element_request_body())
+    capture.start()
+    try:
+        handler._dispatch()
+    finally:
+        capture.stop()
+    request = next(iter(capture._requests), None)
+    assert request is not None
+    capture._start_profile(capture._requests[request], handler)
+    assert profile.disabled
+    assert capture._requests[request]["profile_failed"]
+    assert capture._requests[request]["profile_stopped"]
+    assert sys.getprofile() is previous
+
+
+def test_profile_projection_bounds_rows_and_preserves_caller_edge_counts(monkeypatch):
+    outer = ("/checkout/runtime_protocol/outer.py", 10, "outer")
+    inner = ("/checkout/runtime_protocol/inner.py", 20, "inner")
+    third = ("/checkout/runtime_protocol/third.py", 30, "third")
+    values = {
+        outer: (1, 1, 0.3, 0.3, {}),
+        inner: (2, 2, 0.2, 0.2, {outer: (2, 2, 0.0, 0.0)}),
+        third: (1, 1, 0.1, 0.1, {outer: (1, 1, 0.0, 0.0)}),
+    }
+
+    class FakeStats:
+        def __init__(self, _profile):
+            self.stats = values
+
+    monkeypatch.setattr(pstats, "Stats", FakeStats)
+    capture = P2CommitPhaseCapture(enabled=True, profile_top_functions=2, profile_max_edges=1)
+    request = capture._new_request()
+    assert request is not None
+    request_state = capture._requests[request]
+    request_state["profile"] = object()
+    projection = capture._profile_projection(request_state)
+    assert projection["status"] == "captured"
+    assert len(projection["functions"]) == 2
+    assert projection["limits"]["dropped_rows"] == 1
+    assert len(projection["edges"]) == 1
+    assert projection["edges"][0]["caller"]["function"] == "outer"
+    assert projection["edges"][0]["callee"]["function"] == "inner"
+    assert projection["edges"][0]["ncalls"] == 2
+
+
+def test_raw_profile_path_rejects_symlink_overwrite_shared_and_unprivate_parents(tmp_path):
+    private = tmp_path / "private"
+    private.mkdir()
+    os.chmod(private, 0o700)
+    capture = P2CommitPhaseCapture(enabled=True, raw_pstats_sink=private / "raw.prof")
+    assert capture._raw_profile_path(1) == private / "raw.prof"
+    assert os.stat(private / "raw.prof").st_mode & 0o777 == 0o600
+
+    existing = private / "existing.prof"
+    existing.write_bytes(b"existing")
+    capture.raw_pstats_sink = existing
+    assert capture._raw_profile_path(1) is None
+
+    target = tmp_path / "target"
+    target.mkdir()
+    os.chmod(target, 0o700)
+    linked = tmp_path / "linked"
+    linked.symlink_to(target, target_is_directory=True)
+    capture.raw_pstats_sink = linked / "raw.prof"
+    assert capture._raw_profile_path(1) is None
+
+    shared = tmp_path / "shared"
+    shared.mkdir()
+    os.chmod(shared, 0o755)
+    capture.raw_pstats_sink = shared / "raw.prof"
+    assert capture._raw_profile_path(1) is None
+    assert os.stat(shared).st_mode & 0o777 == 0o755
+
+    capture.raw_pstats_sink = Path(os.environ.get("TMPDIR", "/tmp")) / "shared.prof"
+    assert capture._raw_profile_path(1) is None
 
 
 def test_concurrent_requests_keep_local_ordinals_and_phase_state_isolated():
