@@ -21,6 +21,7 @@ mkdir -p "$DURABLE_EVIDENCE"
 export ASTRID_CHECKOUT
 export PYTHONDONTWRITEBYTECODE=1
 export PYTHONPATH="$RUNTIME_CHECKOUT:$RUNTIME_CHECKOUT/packages/python:$RUNTIME_CHECKOUT/tests:$ASTRID_CHECKOUT"
+export PYTEST_ADDOPTS=
 
 # This is the only prerequisite gate. It imports the seven actual modules in
 # independent child interpreters, and reports every failure before returning
@@ -60,9 +61,45 @@ import sys
 import xml.etree.ElementTree as ET
 
 xml_path, output_path = sys.argv[1:]
-root = ET.parse(xml_path).getroot()
-counts = {name: int(root.attrib.get(name, "0")) for name in ("tests", "failures", "errors", "skipped")}
+try:
+    root = ET.parse(xml_path).getroot()
+except (OSError, ET.ParseError) as exc:
+    payload = {"status": "FAIL", "error": f"{type(exc).__name__}: {exc}"}
+    with open(output_path, "w", encoding="utf-8") as stream:
+        json.dump(payload, stream, indent=2, sort_keys=True)
+        stream.write("\n")
+    raise SystemExit(payload["error"])
+
+if root.tag not in {"testsuite", "testsuites"}:
+    payload = {"status": "FAIL", "error": f"unexpected JUnit root {root.tag!r}"}
+    with open(output_path, "w", encoding="utf-8") as stream:
+        json.dump(payload, stream, indent=2, sort_keys=True)
+        stream.write("\n")
+    raise SystemExit(payload["error"])
+
+names = ("tests", "failures", "errors", "skipped")
+children = list(root.findall("testsuite")) if root.tag == "testsuites" else []
+counts = {}
+try:
+    for name in names:
+        if name in root.attrib:
+            counts[name] = int(root.attrib[name])
+        elif root.tag == "testsuites":
+            counts[name] = sum(int(child.attrib.get(name, "0")) for child in children)
+        else:
+            counts[name] = 0
+        if counts[name] < 0:
+            raise ValueError(f"negative {name} count")
+except (TypeError, ValueError) as exc:
+    payload = {"status": "FAIL", "error": f"invalid JUnit count: {exc}"}
+    with open(output_path, "w", encoding="utf-8") as stream:
+        json.dump(payload, stream, indent=2, sort_keys=True)
+        stream.write("\n")
+    raise SystemExit(payload["error"])
+
+counts["status"] = "PASS"
 counts["suite_name"] = root.attrib.get("name")
+counts["child_suites"] = len(children)
 with open(output_path, "w", encoding="utf-8") as stream:
     json.dump(counts, stream, indent=2, sort_keys=True)
     stream.write("\n")
@@ -72,6 +109,14 @@ exit "$actual_exit"
 
 The preflight writes `preflight.json`, `all-missing.json`, `import.log`, and
 `readiness.json` to the durable output directory even when the census refuses.
+`all-missing.json` accumulates source identity, interpreter, path, package
+version/importability, AST, entry-module, transitive-helper-origin, and import
+failures before returning nonzero. The source identity check reads each
+checkout's actual `HEAD` and `HEAD^{tree}` and requires the exact Runtime and
+Agent tuple recorded in `source-manifest.json`; listed-file hashes do not
+replace that check. The interpreter must be the fixed
+`/home/user/work/venv-agent/bin/python`, CPython 3.13. The package checks use
+the declared requirement strings in the manifest and do not acquire anything.
 The receiver must preserve those files together with `targeted.xml`,
 `pytest.log`, `actual-exit.txt`, and `collection.json`. A refusal must retain
 the exact missing distribution/module names and all seven module results.

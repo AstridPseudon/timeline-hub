@@ -8,6 +8,11 @@
     "agent_commit": "32dde0c035f59029064fe782d5147d4e68e75835",
     "agent_tree": "81ad4d2d674df3bd096943eb542c949ff011469c"
   },
+  "interpreter": {
+    "path": "/home/user/work/venv-agent/bin/python",
+    "implementation": "CPython",
+    "python": "3.13"
+  },
   "pythonpath_order": [
     "$RUNTIME_CHECKOUT",
     "$RUNTIME_CHECKOUT/packages/python",
@@ -15,11 +20,27 @@
     "$ASTRID_CHECKOUT"
   ],
   "required_distributions": [
-    {"distribution": "pytest", "import": "pytest", "minimum": ">=8"},
-    {"distribution": "pytest-timeout", "import": "pytest_timeout", "minimum": ">=2.4"},
-    {"distribution": "PyYAML", "import": "yaml", "minimum": ">=6"},
-    {"distribution": "jsonschema", "import": "jsonschema", "minimum": ">=4"},
-    {"distribution": "referencing", "import": "referencing", "minimum": ">=0.30"}
+    {"distribution": "pytest", "import": "pytest", "minimum": ">=8", "requirement": "pytest>=8", "declared_in": "runtime:pyproject.toml [project.optional-dependencies].test"},
+    {"distribution": "pytest-timeout", "import": "pytest_timeout", "minimum": ">=2.4", "requirement": "pytest-timeout>=2.4", "declared_in": "runtime:pyproject.toml [project.optional-dependencies].test"},
+    {"distribution": "PyYAML", "import": "yaml", "minimum": ">=6", "requirement": "PyYAML>=6", "declared_in": "runtime:pyproject.toml [project.optional-dependencies].test"},
+    {"distribution": "jsonschema", "import": "jsonschema", "minimum": ">=4", "requirement": "jsonschema>=4", "declared_in": "runtime:pyproject.toml [project.optional-dependencies].test"},
+    {"distribution": "referencing", "import": "referencing", "minimum": ">=0.30", "requirement": "referencing>=0.30", "declared_in": "runtime:pyproject.toml [project.dependencies]"}
+  ],
+  "local_origin_roots": [
+    {"module_prefix": "tests", "owner": "runtime", "root": "tests"},
+    {"module_prefix": "runtime_protocol", "owner": "runtime", "root": "."},
+    {"module_prefix": "astrid_runtime", "owner": "runtime", "root": "."},
+    {"module_prefix": "astrid_runtime_client", "owner": "runtime", "root": "packages/python"},
+    {"module_prefix": "generators", "owner": "runtime", "root": "generators"},
+    {"module_prefix": "baseline_fixture", "owner": "runtime", "root": "tests"},
+    {"module_prefix": "restore_history_fixture", "owner": "runtime", "root": "tests"},
+    {"module_prefix": "precut_realm_fixture", "owner": "runtime", "root": "tests"},
+    {"module_prefix": "test_shot_composition_runtime", "owner": "runtime", "root": "tests"},
+    {"module_prefix": "test_timeline_projection_occupancy", "owner": "runtime", "root": "tests"},
+    {"module_prefix": "test_timeline_commit_acceptance", "owner": "runtime", "root": "tests"},
+    {"module_prefix": "test_timeline_commit_integration", "owner": "runtime", "root": "tests"},
+    {"module_prefix": "timeline_commit_film_fixture", "owner": "runtime", "root": "tests"},
+    {"module_prefix": "astrid", "owner": "agent", "root": "."}
   ],
   "actual_modules": [
     {
