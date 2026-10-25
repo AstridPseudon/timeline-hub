@@ -117,6 +117,12 @@ class RuntimeRealm:
             'base_revision_id': base['revision_id'],
             'base_publication_id': base['publication_id'],
             'commands': copy.deepcopy(calls), 'dry_run': dry_run,
+            'label': 'Graph roots',
+            'steps': [{
+                'id': 'graph-roots', 'label': 'Graph roots', 'intent': 'test intent',
+                'tags': [], 'command_ordinals': list(range(len(calls))), 'patch': [],
+            }],
+            'merge': 'fields', 'reads': [],
             'source': {'via': 'python'}, 'rationale': 'test intent',
         }
         try:
