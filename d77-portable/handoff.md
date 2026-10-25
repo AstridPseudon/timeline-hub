@@ -12,7 +12,8 @@ the truthful live heads published at
 (`1daca2a33f6d7b10053e07c539a54843e3984e19`). This handoff uses the normal
 `tl` branch/hub route: the lead performs normal fetch/code publication, with
 no integration merge; a worker does not write a remote helper or the hub.
-Rendering-child qualification remains **UNKNOWN**.
+Guard qualification is **PASS** through the independent Luna1257 receipt below;
+rendering-child qualification remains **UNKNOWN**.
 
 Sol1243 is the author of the guard; independent Luna1257 recorded PASS for 18
 flat controls in `design/handoff-rt-D77-guard-review-1257.md` (SHA-256
@@ -26,12 +27,13 @@ retry, or Farm-core cycle. Any new D77 source request requires the lead's
 actual disposition through the ordinary guarded path; this handoff invents no
 seven-key, profile, or manifest values.
 
-Status: source-only preparation from Composition `tl/integration`; no phase ran on Main, and this worker did not fetch, duplicate an archive, materialize a checkout, install, stage, render, or create a collector. The copyable shell recipe is [farm-stage-render-recipe.sh](../workers/rt-D124-Farm-render-handoff-1253/evidence/farm-stage-render-recipe.sh). It is deliberately gated on an independently recorded Sol1243 PASS and Farm's own storage admission.
+Status: source-only preparation from Composition `tl/integration`; no phase ran on Main, and this worker did not fetch, duplicate an archive, materialize a checkout, install, stage, render, or create a collector. The copyable shell recipe is [rt-D77-portable-1630-recipe.sh](rt-D77-portable-1630-recipe.sh). It is deliberately gated on an independently recorded guard PASS and Farm's own storage admission.
 
 ## Farm lead brief
 
 ```text
-Run this on Farm only, after independently recording Sol1243 guard PASS and
+Run this on Farm only, after independently verifying the supplied Luna1257
+guard receipt (PASS for 18 controls) and
 strict fresh-heavy admission free > 5,200,000,000 bytes. Run stage, then
 preflight, then genuine render, and retain durable private results. Do not run
 any phase on Main. Do not use profile819acf, old f4ed/0013 carriers, or the
@@ -65,7 +67,7 @@ env -u RUNTIME_AGENT_CHECKOUT -u RUNTIME_RUNTIME_CHECKOUT \
 # After exact receipts and an authenticated manifest are present, use the
 # normal installed astrid/run-astrid launcher.  This is not a direct CLI file
 # or Backend call.  Then use the recipe's actual profile/custody values.
-./evidence/farm-stage-render-recipe.sh
+./rt-D77-portable-1630-recipe.sh
 ```
 
 The recipe is the authoritative argv/env shape. Farm must set its required
@@ -105,8 +107,8 @@ package `17.4.0`, Bun `1.3.14`. The permitted source input was public Git with
 The exact Remotion lock SHA-256 is
 `f4fc0a32a8822e956dfa21ff35d19c0c83d147c754cdb3546f91c84e330be18d`.
 
-Retained source/rehearsal hashes are recorded in
-[source-hashes.txt](../workers/rt-D124-Farm-render-handoff-1253/evidence/source-hashes.txt).
+Retained source/rehearsal hashes and publication bindings are recorded in the
+flat [Farm publication record](handoff-rt-D124-Farm-render-1253-publication.json).
 The D108 source manifest SHA-256 is
 `37e559e6e176f4d9b4c20db27cdf6de8b4f5ef532b5abedf35533caffb2a4504`; its
 phase is `SOURCEONLY` and `build_render_zip` remains `PENDING`.
@@ -175,9 +177,9 @@ Remotion/npm peak behavior was not fully measured, so no stage-fit claim is
 made. No reserve reduction, shared dependency credit, or reserve hack is
 permitted.
 
-Sol1243's retained report records its private guard helper and 18 passing
-finite controls, but Farm must independently verify the PASS and retain the
-receipt before any new phase. The current D77 stage artifacts stopped before
+The independent Luna1257 receipt records PASS for 18 finite controls over
+Sol1243's private guard helper, but Farm must independently verify the supplied
+receipt and retain it before any new phase. The current D77 stage artifacts stopped before
 the ordinary installer and provide no installed profile, service argv, schema,
 origins, or seven-key carrier. This handoff does not turn those unknowns into
 claims.
@@ -199,7 +201,6 @@ nothing. No contract or production-behavior change is proposed.
 The following are deliberately unresolved and must be supplied by Farm's
 normal control plane before stage/render:
 
-- independent Sol1243 PASS receipt/path;
 - Farm free-space admission and a complete finite peak bound;
 - exact request-checkout, request-runtime, and request-child-venv receipts;
 - authenticated installer manifest and ordinary installer receipt;
