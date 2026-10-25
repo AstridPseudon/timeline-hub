@@ -11,3 +11,5 @@ Four genuine exact dispatcher checkouts read back clean and detached. Appfe3309 
 One central preflight then one normal original through existing --submit. New helper/hook excluded. App owns independent verdict.
 
 Terminal hosting status2026-10-25T13:49Z: STOPPED before preflight/submit. Node extra checkout verification throws spawnSync git EPERM, exit1; no plan generated, no IDs, readiness/original8 NOTRUN. No auto-review or sourceguard outcome. No retry or alternate route.
+
+D125c exact recipe attempt 2026-10-25T13:55Z: supplied venue preparation PASS/ac14c39bd5149b454485653d45fc0a9b1adf28207be0a6c116b958e034202747. Exact submit exits1 ERR_MODULE_NOT_FOUND: tsx missing in exact App checkout. No central preflight/normal ID or durable plan. All8originals/readiness NOTRUN. Rawstderr retained private; no install, substitution or retry. Prior extra Node-git check not retried.

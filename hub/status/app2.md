@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T13:54:04Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# app2 board, 2026-10-25T13:54Z
+<!-- app2 | 2026-10-25T13:56:55Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# app2 board, 2026-10-25T13:55Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -143,7 +143,7 @@
 
 | P2-D118-current-SWAP | Qualify history refusal tags | Runtime Sol; independent Luna | Normal release1221; App adoption1230 | merged | Independent1206; home1221 | Source GO: normal56 controls and provider2 PASS, public503 retained. App adopted5e9ad atd8a1. Original11251 lower guard UNKNOWN; browser proof owed. | Runtime5e9ad / Appd8a1 |
 
-| P2-D125-host | Host one unchanged full P2 tour | App service; Proof hosting | D125c exact recipe only | doing | Proof normal D66 controller | D125c lifts hold for supplied recipe only. Prior extra check refused and never retried. No IDs yet. | Heads-up fe3309 / 070dfc / 5e9ad / 635f |
+| P2-D125-host | Host one unchanged full P2 tour | App service; Proof hosting | Exact submit lacks tsx | gated:host-stopped | Proof stopped; lead/App fallback | Exact recipe prep PASS; submit exit1 ERR_MODULE_NOT_FOUND tsx. No central ID or original. Lead notified. | Heads-up fe3309 / 070dfc / 5e9ad / 635f |
 
 D56.4: Proof is folded into App. D125 is a ONE-job hosting exception only. App owns the independent verdict; Proof hosts one full P2 without the new capture/helper/hook. Other Proof dispatch and product merges remain stood down.
 
@@ -165,7 +165,7 @@ Corrected handoff and recipe now read from normal hub. Preparation plan SHA256cd
 Controller private root: /tmp/ap2-D125-node20194.PVhkwz. Durable plan: /tmp/ap2-D125-node20194.PVhkwz/d125-full-p2/submission/full-p2/p2-submit-plan.json. Inspect this on restart; never create a new plan to retry. Normal one-command --submit handles central preflight then one full body. Wait same IDs on124. Stop/report any refusal or ambiguity. No run ID yet.
 
 Blockers: Final cut — owner lanes still owe current fullP2, Agent core/regressions, D69, final pinned gates and genuine installed render. D125 host cannot proceed: Node subprocess verification EPERM before any central request; lead owns fallback under D125.
-Next ready: Exact supplied D66 recipe only under D125c. Stop on any refusal. Publish one actual ID immediately; App owns verdict.
+Next ready: None for Proof; exact controller cannot load tsx. Lead/App fallback owns next body; no install, loader change or retry authorized.
 
 Disk: 6305521664 bytes free at 2026-10-25T13:47Z; above recipe6.0GB and latest lead heavy5.2GB floors. No reclaim, retire-venv or deletion. Prior safety/permission refusals remain stopped.
 
@@ -182,3 +182,11 @@ D125 communication: this venue has only managers/app2; direct managers/app/INBOX
 Audit 2026-10-25T13:50Z: all1313 prior Proof records done; live0; ready-undispatched0. D125 host stop remains; no preflight/normal plan or ID, source edit, retry or cleanup. INBOX still803975bytes. Free6301749248bytes.
 
 D125c received13:53:30Z: recipe-only hold lifted by MAIN. EPERM on an extra Node-git step I added; refused, not retried. Do not reproduce, wrap or substitute that extra check. Exact original handoff preparation and one normal --submit may now run; tuple checks belong to genuine receipts/preflight. Any sandbox refusal in normal preflight/submit stops immediately and App hosts locally. No extra check or added subprocess is authorized. Same original private output/plan path retained. No plan or original ID existed before D125c.
+
+D125c EXACT RECIPE TERMINAL 2026-10-25T13:55Z: original source preparation, copied without the prior extra Node-git check, PASSED and wrote D125-venue-preparation.json SHA256ac14c39bd5149b454485653d45fc0a9b1adf28207be0a6c116b958e034202747. The exact supplied command `node --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs p2 --submit` then exited1 at module loading, before D66 starts. Exact first message: `Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'tsx' imported from /home/user/work/wt/app-pin-fe3309db/`. Nodev20.19.4. No sandbox or sourceguard verdict is claimed for this missing-dependency error. No loader substitution, package installation, changed source, extra check or retry attempted.
+
+Durable real p2-submit-plan.json remains absent. No central preflight or normal ID, XML, original assertions or browser body. Readiness and all8 originals NOTRUN; full-body allowance unused. Private controller log is1001bytes, SHA256888655eeb960f6f0c8456a58a7601ed1fbb46953339ab0b4abe34ec86426defc; raw stderr retained privately. Controller exit file is1. Accepted Node archive and binary hashes remain in existing run receipt. Prior extra Node-git EPERM was not retried. Four exact checkouts remain unchanged. Free bytes6294560768.
+
+Blockers: D125 exact controller — App dependency tsx is absent from genuine detached checkout. Exact supplied submit fails before service requests; host stopped and lead informed. App fallback/owner resolution required; no Proof workaround.
+
+Inbox read through805249bytes; D125c was the authority for this exact single controller attempt. Proof remains stood down for all other work and does not self-GO.
