@@ -1,0 +1,50 @@
+{
+  "schema": "timeline.agent.d73.review_source_manifest.v1",
+  "candidate": {
+    "commit": "c068b6a5e1",
+    "base": "afda6c66a11608d8cb012df1a54bf2489d8c20b3",
+    "changed_files": [
+      "ops-d73-exact-nodes/README.md",
+      "ops-d73-exact-nodes/check.py",
+      "ops-d73-exact-nodes/suites.conf",
+      "ops-d73-exact-nodes/test_recipe.py"
+    ],
+    "dry_check_unchanged_from_parent": true
+  },
+  "current": {
+    "agent": {
+      "path": "/home/user/work/agent",
+      "commit": "41ad656529fa8489829de9078b1b6e157c7433c8",
+      "tree": "d29e47fe7be6e55940b42fa1477a23e7925f62fa",
+      "parents": "41ad656529fa8489829de9078b1b6e157c7433c8 cd63be424d62226e3ee5c26fc5ce03227f5394a5 4fec53e0b14aea355e51c96c883fd75eef67a17c",
+      "origin": "https://github.com/peteromallet/astrid-agent",
+      "clean": true,
+      "receipt": false
+    },
+    "runtime": {
+      "path": "/home/user/work/runtime",
+      "commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+      "tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883",
+      "parents": "f103bb46866999c961a8865636f2e66d544e0c9b cf0b82dd47452a7a34fc63eb233e9b1dc0532806 0bb3bc45cef22bc317398d79e1617da3eb430df2",
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime",
+      "clean": true,
+      "receipt": false
+    }
+  },
+  "historical": {
+    "agent": {"commit": "2eca9a1da94eb35bb969540e150192ff920ce326", "tree": "888c16e3dbbff2d6827e7ffcfea64208b0e5a4"},
+    "runtime": {"commit": "ab1e4f6141987706132916e2da16477f5a019464", "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657"},
+    "retargeted": false
+  },
+  "hashes": {
+    "tools/p4-d73-pinned-launch.sh": {"current": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd", "old": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd"},
+    "tests/sdk/test_timeline_selected_schema_runtime.py": {"current": "8243f3b9fe71b218b3b6a402c10d099e15c848b91b82770383e91a2dd3a72b86", "old": "8243f3b9fe71b218b3b6a402c10d099e15c848b91b82770383e91a2dd3a72b86"},
+    "tests/editing_conformance/test_occurrence_fork_source_baseline.py": {"current": "3fef15b5862e044942f2d0164b37f6f9281f86d378345d8a0b262c64870af8a4", "old": "3fef15b5862e044942f2d0164b37f6f9281f86d378345d8a0b262c64870af8a4"},
+    "tests/sdk/test_p4_d73_pinned_launcher.py": {"current": "0c2c70bd5e26598beebd31f4c7a0a3c1bf48bdc5e9f32ff93c6b54bf15b4b600", "old": "0c2c70bd5e26598beebd31f4c7a0a3c1bf48bdc5e9f32ff93c6b54bf15b4b600"},
+    "tests/helpers/runtime.py": {"current": "4d084450df4d8e9dbdef934bf19ab9d909a8caecdd2646a21b758955e07a883f", "old": "4d084450df4d8e9dbdef934bf19ab9d909a8caecdd2646a21b758955e07a883f"},
+    "runtime.lock.json": {"current": "073d218447f28e48ef0d39cd01c811443b20b0328982eac1b126bcc5b9df390a", "old": "ad818e99cb0759d1742d9f67b5bb3367b03fd3e88d8f65846253169272b8b6ce"}
+  },
+  "runtime_lock": {"source_commit": "f103bb46866999c961a8865636f2e66d544e0c9b", "producer": "astrid-runtime", "file_count": 15, "canonical_hashes_match": true},
+  "selectors": {"selected4": 4, "fork1": 1, "suites": ["d73-f103-selected4-exact-nodes", "d73-f103-fork-exact-nodes"]},
+  "receiving": {"status": "NOT_READY", "central_rows_installed": false, "manifest": false, "fresh_results": false}
+}

@@ -1,0 +1,84 @@
+{
+  "schema": "timeline.agent.d73.merged_ownnode_review.v1",
+  "task": "D73/D139",
+  "candidate": {
+    "repo": "composition",
+    "branch": "tl/agt-OPS-D73-merged-ownnode-source-2259",
+    "commit": "c068b6a5e1",
+    "scope": "ops-d73-exact-nodes only"
+  },
+  "verdict": "FAIL",
+  "receiving_status": "NOT_READY",
+  "findings": [
+    {
+      "id": "D73-REVIEW-001",
+      "severity": "BLOCKING",
+      "status": "OPEN",
+      "summary": "The production named rows do not validate duplicate/malformed manifest keys or tuple/lock mismatches before launcher execution.",
+      "evidence": [
+        "ops-d73-exact-nodes/suites.conf invokes the unchanged tools/p4-d73-pinned-launch.sh directly; it does not invoke check.py or another pre-dispatch validator.",
+        "scratch adversarial control: appending a duplicate format key to a valid manifest made the launcher return 0 and create duplicate.manifest, duplicate.request-id, duplicate.runmanifest, duplicate.preflight.log, duplicate.preflight.exit, duplicate.command, duplicate.body.log, and duplicate.body.exit.",
+        "scratch adversarial control: forcing preflight to exit 9 still created preflight-fail.manifest, preflight-fail.request-id, preflight-fail.runmanifest, preflight-fail.preflight.log, and preflight-fail.preflight.exit.",
+        "The launcher parser overwrites duplicate keys at line 19 and creates evidence at lines 60-73 before preflight at lines 75-141."
+      ],
+      "required_fix": "Add a production row/pre-launch guard that rejects duplicate and malformed keys plus tuple/lock mismatches before invoking the unchanged launcher and before any artifact directory is created; extend controls to execute every refusal through that row path and assert zero calls and zero artifacts."
+    },
+    {
+      "id": "D73-REVIEW-002",
+      "severity": "BLOCKING",
+      "status": "OPEN",
+      "summary": "The seven private controls do not test production refusal behavior for duplicate, malformed, or wrong-lock manifests.",
+      "evidence": [
+        "test_recipe.py lines 248-260 only parse invalid manifests and assert an output path was never created; no launcher or row is invoked for those cases.",
+        "Only the separate source-SHA poison case invokes the parsed launcher command."
+      ],
+      "required_fix": "Route duplicate, malformed, wrong-source, and wrong-lock cases through the actual rendered named row and record zero launch calls and zero artifacts for each refusal."
+    }
+  ],
+  "source_checks": {
+    "agent": {
+      "path": "/home/user/work/agent",
+      "commit": "41ad656529fa8489829de9078b1b6e157c7433c8",
+      "tree": "d29e47fe7be6e55940b42fa1477a23e7925f62fa",
+      "parents": "41ad656529fa8489829de9078b1b6e157c7433c8 cd63be424d62226e3ee5c26fc5ce03227f5394a5 4fec53e0b14aea355e51c96c883fd75eef67a17c",
+      "origin": "https://github.com/peteromallet/astrid-agent",
+      "receipt": "NOT_SUPPLIED"
+    },
+    "runtime": {
+      "path": "/home/user/work/runtime",
+      "commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+      "tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883",
+      "parents": "f103bb46866999c961a8865636f2e66d544e0c9b cf0b82dd47452a7a34fc63eb233e9b1dc0532806 0bb3bc45cef22bc317398d79e1617da3eb430df2",
+      "origin": "https://github.com/banodoco/banodoco-workspace-runtime",
+      "receipt": "NOT_SUPPLIED"
+    },
+    "runtime_lock": {
+      "source_commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+      "producer": "astrid-runtime",
+      "file_count": 15,
+      "all_canonical_hashes_match": true
+    },
+    "historical": {
+      "agent_commit": "2eca9a1da94eb35bb969540e150192ff920ce326",
+      "agent_tree": "888c16e3dbbff2d6827e7ffcfea64208b0e2a5e4",
+      "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "runtime_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "historical_evidence": "preserved; not retargeted"
+    },
+    "protected_hash_comparison": {
+      "launcher_byte_identical": true,
+      "selected4_byte_identical": true,
+      "fork1_byte_identical": true,
+      "focused_control_byte_identical": true,
+      "runtime_helper_byte_identical": true,
+      "runtime_lock_only_difference": "source_commit ab1e4f6141987706132916e2da16477f5a019464 -> f103bb46866999c961a8865636f2e66d544e0c9b"
+    }
+  },
+  "selectors": {
+    "selected4": 4,
+    "fork1": 1,
+    "marker": "d73-f103-selected4-exact-nodes / d73-f103-fork-exact-nodes",
+    "argv": "run -- -m pytest -q -o addopts= -m integration -p no:cacheprovider --timeout=45 with per-ID junitxml"
+  },
+  "c0_shape": "README conserves the required request/reply fields; no product or DTO change was made or claimed."
+}

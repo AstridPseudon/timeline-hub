@@ -1,0 +1,28 @@
+{
+  "schema": "timeline.d139.corrected-source-manifest/v2",
+  "task": "D139/D139a",
+  "status": "SOURCE_PACKET_QUALIFIED",
+  "actual_request": "NOT_READY",
+  "reviewed_author_packet": {
+    "worker": "agt-F-D139-merged-controller-prep-2254",
+    "review_worker": "agt-F-D139-controller-prep-review-2300",
+    "base_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "base_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "source_tuple": {
+    "agent": {"path": "/home/user/work/agent", "commit": "41ad656529fa8489829de9078b1b6e157c7433c8", "tree": "d29e47fe7be6e55940b42fa1477a23e7925f62fa", "origin": "https://github.com/peteromallet/astrid-agent", "clean": true},
+    "runtime": {"path": "/home/user/work/runtime", "commit": "f103bb46866999c961a8865636f2e66d544e0c9b", "tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883", "origin": "https://github.com/banodoco/banodoco-workspace-runtime", "clean": true},
+    "app": {"path": "/home/user/work/app", "commit": "5696769dca056676cde1ab46d8bc94354b3a44a", "tree": "0748df404125114a0f68b701fa76f43abd3fc79a", "origin": "https://github.com/banodoco/reigh-app", "clean": true},
+    "composition": {"path": "/home/user/work/composition", "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "origin": "https://github.com/peteromallet/timeline-composition", "clean": true}
+  },
+  "source_carriers": {
+    "requester": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-child-venv", "sha256": "bddaee9c457fd3cb8fa55e452abbf9886512a08697d593ca5983e43dfa955e94", "owner": "normal requester", "terminal_semantics": "queue admission only; wait same key"},
+    "maker": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv", "sha256": "UNBOUND", "owner": "Runtime normal maker/Store route"},
+    "launcher_service_input": {"path": "/home/user/work/agent/tools/p4-d73-pinned-launch.sh", "sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd", "git_blob": "f1bde17ea107a8b669cb6924fbdbd2f3979da9883", "manual_execution": false},
+    "core_service": {"path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test", "sha256": "UNBOUND", "suite": "agent-core-full", "manual_count": 1}
+  },
+  "schema_input": {"distribution": "banodoco-timeline-schema", "version": "0.0.2", "direct_url": "https://github.com/banodoco/ArtAgents.git", "revision": "242f9c4306bf3b501222cb041a9eb246ef47bc85", "subdirectory": "packages/timeline-schema/python", "record_rows": 18, "hashed_rows": 12, "named_unhashed_rows": 6, "record_sha256": "50be781bec3546ca9995ce2f0aaa1284fa68198735866c0f00a601bb3ce9c3a1", "direct_url_sha256": "b7a0a4f90218d54bc1fb118609d40a381f5762650f8e5863ec39098ec269165e", "physical_carrier": "EXACTMISSING", "installed_input_only": true},
+  "census": {"selectors": 22, "python_files": 431, "source_rows": 1001, "graph_edges": 17604, "reconciled_exclusions": 38, "import_occurrences": 17642, "missing_total": 17, "mandatory_missing": 0, "root_selectors": ["tests/editing_conformance", "tests/sdk", "tests/timeline", "tests/core/timeline", "tests/core/test_timeline_element_orphan_cleanup.py", "tests/core/test_timeline_element_publication.py", "tests/core/test_timeline_element_publication_runtime.py", "tests/core/rendering/test_timeline_visualize_cli_grammar.py", "tests/core/rendering/test_local_schema.py", "tests/packs/timeline", "tests/packs/rendering/test_composition_package.py", "tests/packs/rendering/test_live_scene_composition.py", "tests/packs/rendering/test_render_export_task_adapter.py", "tests/packs/rendering/test_timeline_filmstrip_cards.py", "tests/packs/rendering/test_timeline_filmstrip_execution.py", "tests/packs/video_editing/test_runtime_publication_chain.py", "tests/stage1/test_cold_launch_autobootstrap.py", "tests/test_installer_schema.py", "tests/test_installer_sources.py", "tests/test_installer_bootstrap_schema.py", "tests/test_timeline_clip_replacement.py", "tests/v10/test_timelines_create.py"]},
+  "future_source_guards": ["actual four-checkout HEAD/tree/parents/origin/clean comparison", "API identity", "received mode regular nonsymlink 0755 and actual hash", "CAS", "independent review", "protected helper", "inventory", "seal", "source registration", "child registration", "Runtime client identity", "installed module origins for all four tuple members", "prooflock", "dependency receipt", "input receipt", "check-only identity", "fresh normal manifest", "durable raw XML/runner/same-ID/start-stop/KEEP custody"],
+  "prohibited": ["controller execution", "child request", "import", "preflight", "Store", "registry", "launcher body", "manual second core", "live install", "acquisition", "403 retry", "overlay", "new recipe", "new approval gate", "Git mutation", "hub write", "credentials", "product/test/pin change"]
+}

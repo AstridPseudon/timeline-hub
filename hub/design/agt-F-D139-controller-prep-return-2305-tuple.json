@@ -1,0 +1,29 @@
+{
+  "schema": "timeline.d139.corrected-source-tuple/v2",
+  "task": "D139/D139a",
+  "status": "NOT_READY",
+  "source_packet_verdict": "SOURCE_PACKET_QUALIFIED",
+  "mode": "SOURCE_ONLY_INERT_REFERENCE",
+  "actual_request": "NOT_READY",
+  "intended_tuple": {
+    "agent": {"commit": "41ad656529fa8489829de9078b1b6e157c7433c8", "tree": "d29e47fe7be6e55940b42fa1477a23e7925f62fa", "parents": ["cd63be424d62226e3ee5c26fc5ce03227f5394a5", "4fec53e0b14aea355e51c96c883fd75eef67a17c"], "checkout": "/home/user/work/agent", "origin": "https://github.com/peteromallet/astrid-agent", "physical": true, "clean": true},
+    "runtime": {"commit": "f103bb46866999c961a8865636f2e66d544e0c9b", "tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883", "parents": ["cf0b82dd47452a7a34fc63eb233e9b1dc0532806", "0bb3bc45cef22bc317398d79e1617da3eb430df2"], "checkout": "/home/user/work/runtime", "origin": "https://github.com/banodoco/banodoco-workspace-runtime", "physical": true, "clean": true},
+    "app": {"commit": "5696769dca056676cde1ab46d8bc94354b3a44a", "tree": "0748df404125114a0f68b701fa76f43abd3fc79a", "parents": ["b5c9eadfa1950f46feac50d7d6a89c47f27f4881", "79699d23f0cabef17eaa68463618132556c47902"], "checkout": "/home/user/work/app", "origin": "https://github.com/banodoco/reigh-app", "physical": true, "clean": true},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "parents": ["7a95a40b07ea0d273e17afb69dbc3456b603f2bc", "c05fdb171fe37c1d5817a060ecb716a329ee821a"], "checkout": "/home/user/work/composition", "origin": "https://github.com/peteromallet/timeline-composition", "physical": true, "clean": true}
+  },
+  "frozen_r4_reference_commits": {"agent": "11caf1d9de291d76f491cf69f7942606b7471d7a", "runtime": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd", "app": "8f0c2484463e9b666d184a744d52e252984e551a", "composition": "c82eb7c459d0a41263954bf007071a6a0e8e0a6a", "policy": "reference only; never bind current tuple"},
+  "schema": {"distribution": "banodoco-timeline-schema", "version": "0.0.2", "revision": "242f9c4306bf3b501222cb041a9eb246ef47bc85", "subdirectory": "packages/timeline-schema/python", "record_rows": 18, "hashed_rows": 12, "named_unhashed_rows": 6, "record_sha256": "50be781bec3546ca9995ce2f0aaa1284fa68198735866c0f00a601bb3ce9c3a1", "direct_url_sha256": "b7a0a4f90218d54bc1fb118609d40a381f5762650f8e5863ec39098ec269165e", "physical_carrier": "UNAVAILABLE", "installed_input_only": true},
+  "admission": {"child_bytes": 5905580032, "source_floor_bytes": 4600000000, "core_start_bytes": 4700000000, "stop_bytes": 4000000000, "one_child_request": true, "one_core_service": true, "no_other_heavy": true, "child_floor_recheck_after_own_prep": false, "core_start_once": true},
+  "future_bindings": {
+    "maker": "UNBOUND", "requester": "UNBOUND", "helper": "UNBOUND", "checker": "UNBOUND", "cas": "UNBOUND", "independent_review": "UNBOUND", "received_kit": "UNBOUND", "registered_child": "UNBOUND", "fresh_guards": "UNBOUND", "manifest": "UNBOUND", "service_id": "UNBOUND", "request_terminal_receipt": "UNBOUND", "provision_report": "UNBOUND", "durable_evidence": "UNBOUND"
+  },
+  "terminal_paths": {"pending": "UNBOUND", "done": "UNBOUND", "refused": "UNBOUND", "provision_report": "UNBOUND", "provision_failure": "UNBOUND", "stage_stderr": "UNBOUND", "request_stdout": "UNBOUND", "request_stderr": "UNBOUND", "request_hash": "UNBOUND"},
+  "pending_field_owners": {"pending": "request-child-venv queue writer", "done": "normal dispatcher/maker terminal projection", "refused": "normal dispatcher/maker terminal projection", "provision_report": "Runtime make-child-venv/Store child", "provision_failure": "Runtime make-child-venv/Store child", "stage_stderr": "Runtime maker stage custody", "request_stdout": "request-child-venv caller custody", "request_stderr": "request-child-venv caller custody", "request_hash": "request-child-venv caller custody", "installed_module_origins_entire_merged_tuple": "genuine child checker and final source review"},
+  "core_route": {"request_test_call": "UNBOUND", "suite": "agent-core-full", "count": 1, "launcher_manual_call": false, "launcher_owner": "normal agent-core-full service", "argv": ["-m", "pytest", "-q", "-n", "3", "-o", "addopts=", "-p", "no:cacheprovider", "--timeout=45"], "required_module": "pytest", "forbidden_argv_flags": ["-k", "--skip", "--xfail", "-x"]},
+  "c0": {
+    "request": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands", "label", "steps", "merge", "reads", "idempotency", "dry_run", "source", "rationale", "group_id"],
+    "command": ["schema_version", "op", "version", "select", "args"],
+    "step": ["id", "label", "intent", "tags", "command_ordinals", "patch", "reads"],
+    "replies": {"accepted_merged": ["accepted", "merged", "canonical", "base", "landing", "receipt", "records", "bindings", "effects", "dependencies", "history", "undo_steps"], "conflict": ["conflict", "reason", "head"], "invalid": ["invalid", "code", "path", "hint", "suggested_command"], "preview": ["would_status", "receipt", "writes"], "preview_values": {"receipt": null, "writes": null}}
+  }
+}
