@@ -342,6 +342,21 @@ describe('AgentChat', () => {
       expect(screen.queryByRole('alert')).toBeNull();
       expect(screen.queryByText(/Agent error\. Try again/)).toBeNull();
     });
+    it('opens setup for an unready agent chosen from the new chat menu', async () => {
+      const { state, localAgents } = setupState();
+      localAgents.data.agents[2] = { ...localAgents.data.agents[2], state: 'not-installed', line: 'Install with `hermes install`.' };
+      const view = renderSetupChat();
+      await getInput();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Choose the agent and model for new chats' }));
+      fireEvent.click(screen.getByRole('option', { name: /Hermes/ }));
+
+      const card = screen.getByRole('region', { name: 'How do you want Astrid to think?' });
+      expect(within(card).getByRole('heading', { name: 'Hermes' })).toBeInTheDocument();
+      expect(within(card).getByText('hermes install')).toBeInTheDocument();
+      expect(screen.queryByRole('dialog', { name: 'New chat' })).toBeNull();
+      expect(state.createSession.mutateAsync).not.toHaveBeenCalled();
+    });
     it.each(['broken', 'setup-error', 'both'] as const)('shows one muted host line for a follower with %s', async kind => {
       const { state, localAgents } = setupState();
       const view = renderSetupChat();

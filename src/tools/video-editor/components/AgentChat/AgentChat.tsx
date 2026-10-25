@@ -1082,6 +1082,7 @@ function AvailableAgentChatPanel({
             newChatDisabled={createNewSession.isPending}
             onBrowseAgent={setBrowseAgent}
             agentModels={newChatModels}
+            onSetupAgent={agent => { setSetupDone(null); setSetupRequest({ agent, sessionId: activeSessionId }); }}
             onNewChat={(agent, model, thoughtLevel) => { setSetupRequest(null); setSetupDone(null); void startChatWith(agent, model, thoughtLevel); }}
             onOpenChange={(open) => {
               if (open) void localAgents.refetch();

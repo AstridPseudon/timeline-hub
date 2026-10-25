@@ -42,6 +42,8 @@ interface NewChatMenuProps {
   newChatDisabled?: boolean;
   /** Start a chat: no model uses that agent's default. */
   onNewChat: (agent?: LocalAgentId, model?: string, thoughtLevel?: string) => void;
+  /** Opens setup for an agent that is not ready. */
+  onSetupAgent?: (agent: LocalAgentId) => void;
   /** Tells the host which agent's service catalog to show (null when the model list closes). */
   onBrowseAgent?: (agent: LocalAgentId | null) => void;
   agentModels?: NewChatAgentModels | null;
@@ -54,7 +56,7 @@ interface NewChatMenuProps {
  */
 export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(function NewChatMenu({
   current = null, defaultAgent, agents, agentModelNames, agentCanBrowse, agentsLoading = false, agentsError = null,
-  disabled = false, newChatDisabled = false, onNewChat, onBrowseAgent, agentModels = null, onOpenChange,
+  disabled = false, newChatDisabled = false, onNewChat, onSetupAgent, onBrowseAgent, agentModels = null, onOpenChange,
 }, ref) {
   const [open, setOpen] = useState(false);
   const [browsing, setBrowsing] = useState<LocalAgentId | null>(null);
@@ -193,7 +195,7 @@ export const NewChatMenu = forwardRef<NewChatMenuHandle, NewChatMenuProps>(funct
     const model = state.usable ? agentModelNames?.[id] : null;
     return (
       <CommandItem key={id} value={`agent:${id}`} disabled={newChatDisabled}
-        className="items-start gap-2 pr-1 [@media(pointer:coarse)]:min-h-[44px]" onSelect={() => { if (canBrowse(id)) { startedFromRow.current = true; browse(id); } else if (state.usable) choose(id); }}>
+        className="items-start gap-2 pr-1 [@media(pointer:coarse)]:min-h-[44px]" onSelect={() => { if (canBrowse(id)) { startedFromRow.current = true; browse(id); } else if (state.usable) choose(id); else { changeOpen(false); onSetupAgent?.(id); } }}>
         <Check className={cn('mt-[3px] h-3.5 w-3.5 shrink-0', effective.agent === id ? 'opacity-100' : 'opacity-0')} aria-hidden="true" />
         <AgentIcon agent={id} className={cn('mt-[3px] h-3.5 w-3.5 shrink-0', state.usable ? 'text-foreground/80' : 'text-muted-foreground/60')} />
         <span className="flex min-w-0 flex-1 flex-col">
