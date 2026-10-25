@@ -1,0 +1,67 @@
+{
+  "schema": "timeline.app.d136a.independent-boundary-review.v1",
+  "task": "D136a-all-boundaries-review-2155",
+  "verdict": "FAIL_ALL_FINDINGS_ONCE",
+  "qualification": "NO_GO",
+  "source_change": "none",
+  "review_basis": {
+    "table_input": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-all-boundaries-return-2150/evidence/table.json",
+    "row_count_checked": 45,
+    "final_predicates_checked": 9,
+    "static_scope": "source citation and condition coverage only; no dynamic run",
+    "dynamic_evidence": "reused exact final20db original9 result"
+  },
+  "findings": [
+    {
+      "id": "F-D136A-001",
+      "subject": "45-row inventory cardinality and selector mapping",
+      "status": "PASS",
+      "basis": "The input has 45 unique row IDs, four path groups, and nine distinct final rows. The six parametrized change values plus the three non-parametrized projection predicates are represented.",
+      "limitation": "PASS means structural mapping only; it is not dynamic predicate proof."
+    },
+    {
+      "id": "F-D136A-002",
+      "subject": "source citation completeness",
+      "status": "FAIL",
+      "basis": "The rows cover the main call sites, but several statically traversed helper guards and observation resolvers are not cited. The bounded missing list is in coverage.json and findings.md.",
+      "impact": "The supplied 45 rows are not a complete source-citation/AST-condition inventory at the claimed granularity, even though the row count is complete."
+    },
+    {
+      "id": "F-D136A-003",
+      "subject": "B022 classification as product regression",
+      "status": "FAIL",
+      "basis": "The Runtime guard at timeline_commit_auth.py:2209 and its refusal message are proven, but a valid fail-closed refusal alone does not prove a regression. No pristine behavior or source-equivalence evidence establishes that the missing observation was validly produced or that ab1e differs behaviorally.",
+      "correct_classification": "observed current Runtime refusal; regression UNKNOWN; causal producer/adapter owner UNKNOWN; setup failure not proven; D54a upstream REG not proven",
+      "prohibited_inference": "Do not relax the guard or attribute a product regression from this refusal alone."
+    },
+    {
+      "id": "F-D136A-004",
+      "subject": "downstream rows and final predicates",
+      "status": "PASS_WITH_UNKNOWN_OUTCOMES",
+      "basis": "Rows B023 through B036 and B-FINAL-001 through B-FINAL-009 are correctly treated as statically downstream and dynamically unreached/UNKNOWN; no downstream pass, failure, or setup failure is fabricated."
+    },
+    {
+      "id": "F-D136A-005",
+      "subject": "D54a and pristine comparison separation",
+      "status": "PASS",
+      "basis": "The retained D54a paired-cause material qualifies no current upstream REG for this path, and pristine 886a source absence is not behavioral evidence."
+    }
+  ],
+  "dynamic_evidence": {
+    "selectors": 9,
+    "setup_errors": 9,
+    "failures": 0,
+    "passes": 0,
+    "skips": 0,
+    "exit_code": 1,
+    "first_common_seam": "runtime_protocol/timeline_commit_auth.py:2209",
+    "message": "provider intermediate command lacks an authenticated physical observation",
+    "later_selector_bodies_reached": false,
+    "evidence_mode": "reused; no run repeated"
+  },
+  "release": {
+    "held": true,
+    "next_evidence": "Obtain the exact safe record/ref/ordinal or source-equivalence/pristine behavior evidence, then re-qualify the original9 on a qualified source.",
+    "not_authorized": ["guard relaxation", "fixture conversion", "retry", "release", "product regression attribution"]
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "task": "D127d",
+  "predicates": [
+    {
+      "name": "default_route_unchanged",
+      "route": "p2-element",
+      "asserts": ["same source file", "same grep", "count 1", "retainRuntimeLogs true", "no verification env"]
+    },
+    {
+      "name": "supported_verification_route",
+      "route": "p2-element-verify",
+      "asserts": ["same original element selector", "explicit verificationOnly descriptor", "normal launch env only", "private stream log directory"]
+    },
+    {
+      "name": "invalid_route_refused",
+      "asserts": ["verification descriptor cannot be used with another suite name", "main requires explicit verification route/arm agreement"]
+    },
+    {
+      "name": "runtime_child_has_no_measurement_activation",
+      "asserts": [
+        "capture activation absent",
+        "capture sink absent",
+        "helper path/hash absent",
+        "watchdog absent",
+        "phase ordinal/log directory absent",
+        "verification selector absent",
+        "scripts/testing bootstrap absent from PYTHONPATH"
+      ]
+    },
+    {
+      "name": "ordinary_private_streams_retained",
+      "asserts": ["stdout log exists", "stderr log exists", "directory mode 0700", "stream mode 0600", "stderr bytes retained"]
+    },
+    {
+      "name": "source_guards_preserved",
+      "asserts": ["p2-runtime-phase-bootstrap.test.ts unchanged", "original element spec unchanged", "helper/hash/path poison tests unchanged"]
+    }
+  ],
+  "coverage": {
+    "offline_launcher_control": "D127d verification arm test",
+    "suite_descriptor_controls": "D66/D83 controls",
+    "recipe_controls": "D78 control",
+    "full_targeted_file": "30 passed"
+  }
+}

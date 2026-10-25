@@ -1,0 +1,49 @@
+{
+  "task": "D127d",
+  "verdict": "PASS_SOURCE_PREPARATION",
+  "acceptance": "NOTRUN",
+  "candidate_status": "PENDING_RUNTIME_COST_CANDIDATE",
+  "findings": [
+    {
+      "id": "D127d-F001",
+      "severity": "resolved",
+      "summary": "The supported verification-only p2-element route now retains ordinary private Runtime streams without passing a phase-capture sink or measurement activation to the Runtime child.",
+      "source": [
+        "scripts/testing/d66-plain-stack.mjs",
+        "scripts/testing/d66-plain-stack.test.mjs",
+        "tests/e2e/local/support/harness.ts"
+      ]
+    },
+    {
+      "id": "D127d-F002",
+      "severity": "guard",
+      "summary": "The verification arm is explicitly limited to p2-element-verify; invalid suite/arm combinations are refused.",
+      "source": [
+        "scripts/testing/d66-plain-stack.mjs:playwrightLaunchEnv",
+        "scripts/testing/d66-plain-stack.mjs:main"
+      ]
+    },
+    {
+      "id": "D127d-F003",
+      "severity": "held",
+      "summary": "Runtime COST-CANDIDATE qualification and the later normal element body remain pending and were not claimed by this source author.",
+      "source": ["D127d independent review and settled task brief"]
+    }
+  ],
+  "preserved": {
+    "default_positive_route": true,
+    "helper_hash_path_poison_negatives": true,
+    "original_element_body": true,
+    "original_five_second_assertion": true,
+    "canonical_history_reload_guarded_undo": true,
+    "zero_legacy_route_assertions": true,
+    "production_caller": "unchanged existing App save/outbox to Runtime commit route"
+  },
+  "privacy": {
+    "raw_payloads": false,
+    "idempotency_keys": false,
+    "credentials": false,
+    "private_urls": false,
+    "stacks": false
+  }
+}

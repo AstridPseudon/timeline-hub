@@ -1,0 +1,62 @@
+{
+  "task": "D127d",
+  "status": "SOURCE_PREPARED",
+  "acceptance": "NOTRUN",
+  "candidate_status": "PENDING_RUNTIME_COST_CANDIDATE",
+  "app_base": {
+    "head": "b5c9eadfa1950f46feac50d7d6a89c47f27f4881",
+    "tree": "8e10af0976b012205f27a18a432c750a27de0725",
+    "worktree": "/home/user/work/wt/app-D127d-no-measurement-route-2150"
+  },
+  "modified_sources": [
+    {
+      "path": "scripts/testing/d66-plain-stack.mjs",
+      "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+      "git_blob_sha1": "59b65214bc74c1ca118b097bc3b13c0ffe480a93"
+    },
+    {
+      "path": "scripts/testing/d66-plain-stack.test.mjs",
+      "sha256": "78e73d8716d47ef5a4a02da2bef0dd92dc6be642e5c9348bbea9fade80ab654d",
+      "git_blob_sha1": "c078c2a2ca900eaacce3a8ed877d79a590d79c71"
+    },
+    {
+      "path": "tests/e2e/local/support/harness.ts",
+      "sha256": "f2d3a3b198fe4b4972cd816694ced5466e9f854e9c3ba508b8b87c1f0e181403",
+      "git_blob_sha1": "c2b79328f1d441359883b43c33ac5f34ab1bf216"
+    }
+  ],
+  "preserved_sources": [
+    {
+      "path": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+      "sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+      "git_blob_sha1": "b6a0ebb2597177c9719f0b23fbc3d135ecdcc019"
+    },
+    {
+      "path": "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts",
+      "sha256": "59a4d116683f88d415024b6d9236e578cf03c11e2c913b56278f9d57448b40ef",
+      "git_blob_sha1": "dea8cda5c28fb4cfe9142c046e9771398274aac9"
+    }
+  ],
+  "scope": {
+    "changed_files": [
+      "scripts/testing/d66-plain-stack.mjs",
+      "scripts/testing/d66-plain-stack.test.mjs",
+      "tests/e2e/local/support/harness.ts"
+    ],
+    "outside_scope": false,
+    "original_element_body_diff": false,
+    "phase_source_guard_diff": false
+  },
+  "runtime": {
+    "child_pythonpath": "runtime checkout plus Agent checkout only",
+    "verification_child_measurement_env": "omitted even when inherited",
+    "ordinary_stream_retention": "private stdout/stderr files retained by existing teardown"
+  },
+  "privacy": {
+    "raw_payloads": false,
+    "credentials": false,
+    "private_urls": false,
+    "stacks": false,
+    "profiling_output": false
+  }
+}

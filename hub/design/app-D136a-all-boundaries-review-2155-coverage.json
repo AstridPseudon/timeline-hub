@@ -1,0 +1,119 @@
+{
+  "schema": "timeline.app.d136a.boundary-coverage-review.v1",
+  "task": "D136a-all-boundaries-review-2155",
+  "input_table": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D136a-all-boundaries-return-2150/evidence/table.json",
+  "table_completeness": {
+    "status": "FAIL",
+    "row_count": 45,
+    "unique_ids": true,
+    "path_groups": ["P1", "P2", "P3", "P4"],
+    "final_row_count": 9,
+    "final_rows": ["B-FINAL-001", "B-FINAL-002", "B-FINAL-003", "B-FINAL-004", "B-FINAL-005", "B-FINAL-006", "B-FINAL-007", "B-FINAL-008", "B-FINAL-009"],
+    "reason": "The finite row set and final selector mapping pass, but cited source ranges omit helper guards that are statically traversed by the cited call sites."
+  },
+  "row_review": [
+    {"id":"B001","status":"PASS","classification":"setup prerequisite; not observed cause"},
+    {"id":"B002","status":"PASS","classification":"setup boundary passed"},
+    {"id":"B003","status":"PASS","classification":"setup boundary passed"},
+    {"id":"B004","status":"PASS","classification":"setup boundary passed"},
+    {"id":"B005","status":"PASS_WITH_CITATION_GAP","classification":"observed compile path; helper conditions need citations"},
+    {"id":"B006","status":"PASS_WITH_CITATION_GAP","classification":"branch outcome UNKNOWN; helper conditions need citations"},
+    {"id":"B007","status":"PASS_WITH_CITATION_GAP","classification":"observed compile path; helper conditions need citations"},
+    {"id":"B008","status":"PASS_WITH_CITATION_GAP","classification":"request path; duplicate/fork helper conditions need citations"},
+    {"id":"B009","status":"PASS","classification":"caller entered; response refusal downstream"},
+    {"id":"B010","status":"PASS","classification":"service guards passed for observed input"},
+    {"id":"B011","status":"PASS","classification":"provider ABI guard passed"},
+    {"id":"B012","status":"PASS","classification":"coordinator reached before refusal"},
+    {"id":"B013","status":"PASS_WITH_CITATION_GAP","classification":"downstream UNKNOWN; port helper/auth conditions need full citations"},
+    {"id":"B014","status":"PASS_WITH_CITATION_GAP","classification":"downstream/internal UNKNOWN; cited range stops at line 1205"},
+    {"id":"B015","status":"PASS_WITH_CITATION_GAP","classification":"downstream UNKNOWN; called validation helpers need citations"},
+    {"id":"B016","status":"PASS_WITH_CITATION_GAP","classification":"downstream UNKNOWN; proof helper call conditions need citations"},
+    {"id":"B017","status":"PASS","classification":"downstream UNKNOWN"},
+    {"id":"B018","status":"PASS_WITH_CITATION_GAP","classification":"downstream UNKNOWN; store helper conditions need citations"},
+    {"id":"B019","status":"PASS_WITH_CITATION_GAP","classification":"downstream UNKNOWN; store closure/helper conditions need citations"},
+    {"id":"B020","status":"PASS_WITH_CITATION_GAP","classification":"downstream UNKNOWN; capture helper definitions need citations"},
+    {"id":"B021","status":"PASS_WITH_CITATION_GAP","classification":"pre-refusal path; native_site/site observation guards need citations"},
+    {"id":"B022","status":"PASS_AS_OBSERVED_REFUSAL_ONLY","classification":"current Runtime fail-closed refusal; regression UNKNOWN"},
+    {"id":"B023","status":"PASS_UNKNOWN","classification":"downstream UNKNOWN"},
+    {"id":"B024","status":"PASS_WITH_CITATION_GAP","classification":"downstream UNKNOWN; promotion helper conditions need citations"},
+    {"id":"B025","status":"PASS_WITH_CITATION_GAP","classification":"downstream UNKNOWN; child/manifest helper conditions need citations"},
+    {"id":"B026","status":"PASS_WITH_CITATION_GAP","classification":"downstream UNKNOWN; capture-image helper conditions need citations"},
+    {"id":"B027","status":"PASS_WITH_CITATION_GAP","classification":"downstream UNKNOWN; binding identity helper conditions need citations"},
+    {"id":"B028","status":"PASS_WITH_CITATION_GAP","classification":"downstream UNKNOWN; source-chain/owner helper conditions need citations"},
+    {"id":"B029","status":"PASS_WITH_CITATION_GAP","classification":"downstream UNKNOWN; validate_read/native_site helper conditions need citations"},
+    {"id":"B030","status":"PASS_WITH_CITATION_GAP","classification":"downstream UNKNOWN; project_observation/materialization helpers need citations"},
+    {"id":"B031","status":"PASS_WITH_CITATION_GAP","classification":"downstream UNKNOWN; validate_step helper calls need citations"},
+    {"id":"B032","status":"PASS_WITH_CITATION_GAP","classification":"downstream UNKNOWN; site/native_site helper calls need citations"},
+    {"id":"B033","status":"PASS","classification":"downstream UNKNOWN; final closure equality not reached"},
+    {"id":"B034","status":"PASS_WITH_CITATION_GAP","classification":"downstream UNKNOWN; store/coordinator helper conditions need citations"},
+    {"id":"B035","status":"PASS","classification":"downstream UNKNOWN"},
+    {"id":"B036","status":"PASS","classification":"downstream fixture UNKNOWN; not setup failure"},
+    {"id":"B-FINAL-001","status":"PASS_UNKNOWN","classification":"assertion UNKNOWN; body unreached"},
+    {"id":"B-FINAL-002","status":"PASS_UNKNOWN","classification":"assertion UNKNOWN; body unreached"},
+    {"id":"B-FINAL-003","status":"PASS_UNKNOWN","classification":"assertion UNKNOWN; body unreached"},
+    {"id":"B-FINAL-004","status":"PASS_UNKNOWN","classification":"assertion UNKNOWN; parent body unreached"},
+    {"id":"B-FINAL-005","status":"PASS_UNKNOWN","classification":"assertion UNKNOWN; child body unreached"},
+    {"id":"B-FINAL-006","status":"PASS_UNKNOWN","classification":"assertion UNKNOWN; new_shot body unreached"},
+    {"id":"B-FINAL-007","status":"PASS_UNKNOWN","classification":"assertion UNKNOWN; duplicate body unreached"},
+    {"id":"B-FINAL-008","status":"PASS_UNKNOWN","classification":"assertion UNKNOWN; remove body unreached"},
+    {"id":"B-FINAL-009","status":"PASS_UNKNOWN","classification":"assertion UNKNOWN; sdk_bundle body unreached"}
+  ],
+  "selector_mapping": {
+    "status": "PASS",
+    "nonparametrized": ["B-FINAL-001", "B-FINAL-002", "B-FINAL-003"],
+    "parametrized_values": ["parent", "child", "new_shot", "duplicate", "remove", "sdk_bundle"],
+    "dynamic_selector_count": 9
+  },
+  "missing_guard_observation_citations": [
+    {
+      "id": "MGC-01",
+      "rows": ["B005", "B006", "B007"],
+      "source": "astrid/core/timeline/authoring_bundle.py:185-233, 679-772, 775-820, 837-888, 948-997",
+      "conditions": "mapping/string/meta/timeline payload validation; shot item identity/media; internal clip identity/media and registry; placement capability; copied-shot source scope, owner and binding checks",
+      "why_missing": "compile_authoring_candidate cites its call-site spans but not the helper definitions containing the refusal branches"
+    },
+    {
+      "id": "MGC-02",
+      "rows": ["B008"],
+      "source": "astrid/sdk/timeline/authoring_commit.py:190-261, 264-335",
+      "conditions": "duplicate reservation shape/command/source/baseline/placement/parent checks and shared-alias fork provenance checks",
+      "why_missing": "authoring_commit.py:24-187 stops before _materialize_duplicates and _fork_shared_aliases, although authoring_commit_request calls both"
+    },
+    {
+      "id": "MGC-03",
+      "rows": ["B014", "B015"],
+      "source": "astrid/sdk/timeline/commit.py:1206-1398",
+      "conditions": "media selection refusal; restore/history/undo ordering; closure capture; head/rebase/replay selection; stale-head retries; plan and inverse checks",
+      "why_missing": "B014 cites only commit.py:1160-1205 and B015 resumes at 1399"
+    },
+    {
+      "id": "MGC-04",
+      "rows": ["B021", "B022", "B023", "B024", "B025", "B029", "B032"],
+      "source": "runtime_protocol/timeline_commit_auth.py:18-264, 608-778, 1833-2186",
+      "conditions": "require primitive; text-binding aliases; site/native_site alias resolution; location/stored paths; read membership/order; observation projection; child creation; command manifest and owner/read observation",
+      "why_missing": "the command_output call and line 2209 are cited, but the resolver and observation helpers that can refuse before/around that call are not cited"
+    },
+    {
+      "id": "MGC-05",
+      "rows": ["B020", "B026", "B027", "B028"],
+      "source": "runtime_protocol/timeline_commit_auth.py:2338-2560",
+      "conditions": "document-image shape/digest; projection equality; binding identity; replay source chain; capture head/records; binding image/owners; step lookup",
+      "why_missing": "validate_sequential_capture cites its body at 2563-2629 and later ranges, but its called helper definitions are outside those citations"
+    },
+    {
+      "id": "MGC-06",
+      "rows": ["B018", "B019", "B034"],
+      "source": "runtime_protocol/timeline_commit_store.py:1491-1565, 1576-1788, 1810-1905",
+      "conditions": "closure/schema/head/history/event/materialization/destination/reference-projection checks",
+      "why_missing": "the table cites the principal store entry points but does not enumerate the helper and destination branches reached from them"
+    }
+  ],
+  "classification_correction": {
+    "status": "FAIL_INPUT_CLASSIFICATION",
+    "row": "B022",
+    "proven": "Runtime fail-closed refusal at immutable pin ab1e4f6141987706132916e2da16477f5a019464, line 2209",
+    "not_proven": ["product regression", "upstream regression", "Agent producer fault", "Runtime adapter causal fault", "setup failure"],
+    "required_evidence_for_reg": "pristine behavior/source-equivalence comparison tied to the exact physical observation record/ref/ordinal",
+    "guard_action": "no guard relaxation or product fix authorization from this refusal alone"
+  }
+}
