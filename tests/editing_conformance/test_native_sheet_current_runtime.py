@@ -374,13 +374,14 @@ def seed_shared_occurrence_parent(runtime, *, prepare=None, identity_scope=None)
     )
 
     current, _head = _public_document(runtime.service(), project, 'film')
-    # Parent authored fields must be committed after the semantic placements,
-    # without reopening the shared closure through authoring compilation.  The
-    # derived occurrence rows stay at their authenticated semantic identities.
+    # Emit only authored parent changes against the full Runtime parent, keeping
+    # its exact occurrence edges and the authenticated shared child closure.
     before_bundle = bundle_from_document(current)
+    before_bundle['parent'] = copy.deepcopy(current['parent_revision']['payload'])
     authored_bundle = copy.deepcopy(before_bundle)
-    authored_bundle['parent'] = copy.deepcopy(parent['payload'])
-    authored_bundle['parent'].pop('occurrences')
+    for field, value in parent['payload'].items():
+        if field != 'occurrences':
+            authored_bundle['parent'][field] = copy.deepcopy(value)
     authored_commands = emit_document_commands(before_bundle, authored_bundle)
     publication = destination.commit_many(
         authored_commands, idempotency_key=(
