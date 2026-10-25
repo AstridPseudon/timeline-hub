@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T13:36:59Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 10 | status age 3m -->
-# app board, 2026-10-25T13:32Z
+<!-- app | 2026-10-25T13:41:12Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 2m -->
+# app board, 2026-10-25T13:38Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -81,7 +81,8 @@
 
 | D124-capture | Truthful dispatch and sampler capture | Luna and protected Luna | Final1315 SOURCE PASS | merging | Clean1321; host filed13:27 | Exact two reviewed helper blobs in one own commit.19 controls and statics PASS; ordinary Runtime result pending. No browser credit. | c36395000d |
 | D124-hook | Attach reviewed helper through normal D66 | Luna and protected Luna | Protected1320 SOURCE PASS | merged | Author1312; review1320 | Whole normal tree equals reviewed4c56.29 D66 and2 route, types/lint PASS; actual sampler attachment qualified only in later tour. | af5fe0a274 |
-| D125-full-P2 | Proof hosts tagged full tour now | HARD Sol and Proof | Exact venue handoff | doing | app-D125-exact-handoff-sol-1332 | Pins and official Node checksum verified. Two Luna output/recipe failures; Sol corrects finite command handoff. No local body. | fe3309 /070dfc /5e9ad /635f |
+| D124-bootstrap | Qualify existing normal bootstrap controls | Luna read only | Hook1320 source PASS | doing | app-D124-normal-bootstrap-controls-1337 | Only three prior environment-failed controls; genuine Runtime Python and exact helper identity. No product/spec/body changes. | af5fe0 source |
+| D125-full-P2 | Proof hosts tagged full tour now | HARD Sol and Proof | Venue Node prerequisite | blocked:app2 | Exact handoff1332 published | Complete flat tuple and exact recipe delivered. Proof needs hardcoded Node20 path; normal provision or explicit decline opens local fallback. | fe3309 /070dfc /5e9ad /635f |
 
 | D74-D124-old-pins | Release obsolete completed tuple pins | Manager and host audit | Host1249 and fresh guards | merged | Guarded recycle1254 | Both34d464 and7070 recycled normally;187142144 bytes net. All outputs, reports, branches and current inputs kept. Zero refusal. | No source edits |
 
@@ -99,8 +100,8 @@ Blockers: App element — Sole owner. Helper final1315 SOURCE PASS; App normal p
 Blockers: Agent host14 — Authentic original14 FAIL at registry discovery. Agent source1201 and independent wholepath1201 own successor; no App duplicate.
 Blockers: Farm batch — Atomic and native binding are normal Agent source; downstream product adoption waits unfiltered Farm core. Captured-redo test setup is home. No App author or review wait remains.
 Blockers: Final cut — Current full P2 remains NO-GO; final P1-P5/core/D69 and genuine installed render still owed. Existing denied acquisition and cleanup routes remain stopped.
-Next ready: Sol1332 publishes corrected complete D125 handoff now. Lead can forward verified pin/Node facts for Proof preparation immediately. Runtime helper remote result pending; next sampled tour follows D125 without retarget.
-live 2 / cap 6; ready-undispatched 0; core open: 2. D125 source-only Sol handoff and Luna publication return finishing own separate output paths. No local heavy body; ready source hook already merged.
+Next ready: Proof resolves normal Node prerequisite or explicitly returns cannot host; local D125 fallback brief prepared and source pins ready. App1337 closes only three prior bootstrap controls. No racing venue or extra original.
+live 1 / cap 6; ready-undispatched 0; core open: 2. Read-only normal bootstrap qualification1337 active. First D125 tour venue is pending Proof, with explicit fallback prepared. No local heavy body.
 Capacity: Corrected compact ran within current scope:0 scratch dirs,17 old logs gzipped,4 finished test dirs packed losslessly. Free5.364GB at13:14. Ended clean nonKEEP scan0. Heavy5.2GB and stop4.0GB; prior refused and dirty targets untouched.
 INBOX consumed through2216799 bytes; D124 capture, host1249CLEAR and Agent1233 source ownership consumed. Input3 remains readonly; producer82b6 owns that file. Current11251/8974/15203/15712 outputs, reports and tuple inputs retained. No unchanged body queued.
 Later: Nativecheckout4/trackbatch1 share known m1.film missingwordanchor setup; no diff/retirement. D116 reviewedjoin held for Agent raw/config batch. D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees retain guards. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakening, credentials or refused-route retry.
