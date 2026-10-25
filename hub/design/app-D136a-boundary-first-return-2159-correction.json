@@ -1,0 +1,50 @@
+{
+  "b022": {
+    "causal_owner": "UNKNOWN",
+    "d54a_reg": "NOT_PROVED",
+    "message": "provider intermediate command lacks an authenticated physical observation",
+    "missing": "exact physical record/ref/path/ordinal or valid pristine behavior/source-equivalence comparison",
+    "regression": "UNKNOWN",
+    "setup_failure": "NOT_PROVED",
+    "source": "runtime_protocol/timeline_commit_auth.py:2209",
+    "status": "observed current Runtime fail-closed refusal"
+  },
+  "corrections": [
+    {
+      "id": "F-D136A-001",
+      "result": "45 unique rows and nine final predicates preserved.",
+      "status": "PASS"
+    },
+    {
+      "id": "F-D136A-002",
+      "result": "All six exact MGC groups include helpers, conditions, callers, AST spans, reachability, and before/after refusal status.",
+      "status": "PASS_CORRECTED"
+    },
+    {
+      "id": "F-D136A-003",
+      "result": "B022 is observed current Runtime fail-closed refusal; regression/causal owner UNKNOWN; setup failure and D54a REG NOT PROVED.",
+      "status": "PASS_CORRECTED"
+    },
+    {
+      "id": "F-D136A-004",
+      "result": "B023-B036 and B-FINAL-001..009 remain unreached/UNKNOWN.",
+      "status": "PASS_WITH_UNKNOWN"
+    },
+    {
+      "id": "F-D136A-005",
+      "result": "20db/D100/42040/f53b/immutable ab1e retained; 886a absence is not behavior.",
+      "status": "PASS"
+    }
+  ],
+  "inventory": {
+    "ast_inventory_entries": 31,
+    "condition_maps": 30,
+    "final_predicates": 9,
+    "helper_groups": 6,
+    "rows": 45
+  },
+  "schema": "timeline.app.d136a.correction.v1",
+  "status": "PASS_ONE_RETURN",
+  "task": "D136a-boundary-first-return-2159"
+}
+

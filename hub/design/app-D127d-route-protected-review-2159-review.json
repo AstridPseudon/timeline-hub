@@ -1,0 +1,53 @@
+{
+  "task": "D127d",
+  "verdict": "PASS_SOURCE_REVIEW",
+  "acceptance": "NOTRUN",
+  "candidate_status": "PENDING_RUNTIME_COST_CANDIDATE",
+  "author_commit": "79699d23f0cabef17eaa68463618132556c47902",
+  "normal_base": "b5c9eadfa1950f46feac50d7d6a89c47f27f4881",
+  "scope": {
+    "changed_files": [
+      "scripts/testing/d66-plain-stack.mjs",
+      "scripts/testing/d66-plain-stack.test.mjs",
+      "tests/e2e/local/support/harness.ts"
+    ],
+    "foreign_changed_files": false,
+    "author_parent_is_normal_base": true,
+    "diff_insertions": 129,
+    "diff_deletions": 28
+  },
+  "findings": [
+    {
+      "id": "D127d-R001",
+      "severity": "guard-confirmed",
+      "summary": "The verification selector is fail-closed: the CLI rejects p2-element-verify unless D66_ELEMENT_VERIFICATION_ONLY=1; registered D73 preflight and normal recipes explicitly set that selector."
+    },
+    {
+      "id": "D127d-R002",
+      "severity": "resolved",
+      "summary": "The verification child environment scrubs inherited measurement activation, sink, helper/hash, watchdog, phase/log variables and bootstrap path while retaining private ordinary stdout/stderr capture."
+    },
+    {
+      "id": "D127d-R003",
+      "severity": "held",
+      "summary": "No Runtime candidate, source preflight, service, browser, body, profile or live candidate verification was run; this source review does not qualify the later element body."
+    }
+  ],
+  "preserved": {
+    "descriptor_file_count_grep": true,
+    "original_element_body": true,
+    "original_element_body_sha256": "6a50f8c23c126402236b1fe64e383526092745275518a3077ebc718012bda134",
+    "historical_bootstrap_guard": true,
+    "source_poison_guards": true,
+    "private_stream_retention": true,
+    "production_caller": "unchanged existing App save/outbox to registered Runtime commit service",
+    "c0_app_boundary": "static shape/caller review only; Runtime authority remains unqualified"
+  },
+  "privacy": {
+    "raw_payloads": false,
+    "credentials": false,
+    "idempotency_keys": false,
+    "private_urls": false,
+    "stacks": false
+  }
+}

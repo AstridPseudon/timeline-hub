@@ -1,0 +1,68 @@
+{
+  "dynamic_evidence": {
+    "first_message": "provider intermediate command lacks an authenticated physical observation",
+    "first_seam": "runtime_protocol/timeline_commit_auth.py:2209",
+    "private_artifacts": {
+      "log_sha256": "1cca4d88094de9022219b0be0a9e4e432a2a1bcaef6cec0519c6b08d8b675351",
+      "metadata_sha256": "3efd96b9217532e6ccfc50a2ee14979c3e7bfd0c48172f417252168b05898b56",
+      "mode": "0600",
+      "publication": "hashes and safe source paths only; raw XML/log/private payload withheld",
+      "xml_sha256": "bf6b273e5747804ad2d5675704b2395661f488fcdfbae00750fc386687695fdc"
+    },
+    "result": "9 collected; 9 setup errors; 0 failures, 0 passes, 0 skips; exit 1",
+    "run": "final20db original9 exact harness run, retained from prior D136a review"
+  },
+  "findings": [
+    {
+      "id": "F-D136A-001",
+      "result": "45 unique rows and nine final predicates preserved.",
+      "status": "PASS"
+    },
+    {
+      "id": "F-D136A-002",
+      "result": "All six exact MGC groups include helpers, conditions, callers, AST spans, reachability, and before/after refusal status.",
+      "status": "PASS_CORRECTED"
+    },
+    {
+      "id": "F-D136A-003",
+      "result": "B022 is observed current Runtime fail-closed refusal; regression/causal owner UNKNOWN; setup failure and D54a REG NOT PROVED.",
+      "status": "PASS_CORRECTED"
+    },
+    {
+      "id": "F-D136A-004",
+      "result": "B023-B036 and B-FINAL-001..009 remain unreached/UNKNOWN.",
+      "status": "PASS_WITH_UNKNOWN"
+    },
+    {
+      "id": "F-D136A-005",
+      "result": "20db/D100/42040/f53b/immutable ab1e retained; 886a absence is not behavior.",
+      "status": "PASS"
+    }
+  ],
+  "qualification": "STATIC_FINITE_INVENTORY_COMPLETE; DYNAMIC_NO_GO",
+  "release": {
+    "held": true,
+    "next": "One final independent check; if still failing escalate to Sol evidence completion, not source-guard writer.",
+    "no_product_action_authorized": [
+      "guard relaxation",
+      "product fix",
+      "fixture conversion",
+      "retry",
+      "release",
+      "source execution"
+    ]
+  },
+  "schema": "timeline.app.d136a.independent-boundary-review.v2",
+  "source_change": "none",
+  "static_scope": {
+    "ast_inventory_entries": 31,
+    "condition_maps": 30,
+    "dynamic_exhaustiveness": false,
+    "final_predicates": 9,
+    "helper_groups": 6,
+    "rows": 45
+  },
+  "task": "D136a-boundary-first-return-2159",
+  "verdict": "PASS_ALL_FINDINGS_CORRECTED"
+}
+

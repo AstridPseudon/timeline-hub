@@ -1,0 +1,1387 @@
+{
+  "ast_inventory_count": 31,
+  "boundaries": [
+    {
+      "actual_status": "reached",
+      "classification": "setup prerequisite, not the observed cause",
+      "condition": "Fixture construction must return a usable saved closure before any test body assertion.",
+      "current_vs_pristine": "Present in joined D136 source; relevant D136 files absent at pristine 886a, so no upstream behavior inferred.",
+      "evidence_status": "known from existing source and exact run; the fixture progressed to the authored publish boundary",
+      "id": "B001",
+      "input": "pytest selector and saved_closure fixture dependency",
+      "missing_record": null,
+      "owner": "Agent test/fixture path and Runtime setup contract",
+      "path_id": "P1",
+      "predicate_purpose": "Collect the exact original9 and construct the same real saved closure for each case.",
+      "selector_scope": "all nine",
+      "source": "tests/sdk/test_timeline_capture_projection.py:280-441; tests/sdk/test_capture_source_runtime.py:155-301"
+    },
+    {
+      "actual_status": "reached before current refusal",
+      "classification": "setup boundary passed",
+      "condition": "Provider id/interface/digest and synchronous commit signature must validate; timeline creation must succeed.",
+      "current_vs_pristine": "Current immutable Runtime pin has the provider ABI; 886a comparison is source-absence only.",
+      "evidence_status": "known present and reached by existing source-custody evidence",
+      "id": "B002",
+      "input": "registered astrid provider and timeline identity",
+      "missing_record": null,
+      "owner": "Runtime provider registration",
+      "path_id": "P1",
+      "predicate_purpose": "Ensure source commits use the registered provider and a real timeline rather than a synthetic fixture.",
+      "selector_scope": "all nine",
+      "source": "tests/sdk/test_capture_source_runtime.py:216-217; runtime_protocol/timeline_commit_provider.py:55-93"
+    },
+    {
+      "actual_status": "reached before current refusal",
+      "classification": "setup boundary passed",
+      "condition": "Each setup submit must return an accepted/merged canonical result and usable ids.",
+      "current_vs_pristine": "Uses current C0v2 contract; no 886a behavioral claim.",
+      "evidence_status": "known present from retained source custody and prior actual run; raw records withheld",
+      "id": "B003",
+      "input": "initial parent/child/media C0 requests with base pair, commands, reads, idempotency key, publisher and canonical route",
+      "missing_record": "Exact per-commit record ids and payloads are private/withheld.",
+      "owner": "Runtime setup path",
+      "path_id": "P1",
+      "predicate_purpose": "Establish real canonical records and closure used by saved_closure.",
+      "selector_scope": "all nine",
+      "source": "tests/sdk/test_capture_source_runtime.py:251-301"
+    },
+    {
+      "actual_status": "reached before current refusal",
+      "classification": "setup boundary passed",
+      "condition": "The direct source patch must be accepted and its canonical closure must reload.",
+      "current_vs_pristine": "Agent D100/projection source is pinned by manifest; 886a lacks the joined D136 path.",
+      "evidence_status": "known present from prior SAFE evidence",
+      "id": "B004",
+      "input": "saved source item doc.patch and canonical reload",
+      "missing_record": "Exact canonical payload intentionally not reproduced.",
+      "owner": "Agent authoring fixture / Runtime canonical store",
+      "path_id": "P1",
+      "predicate_purpose": "Create the physical authored source that later intermediate commands must observe.",
+      "selector_scope": "all nine",
+      "source": "tests/sdk/test_timeline_capture_projection.py:301-353"
+    },
+    {
+      "actual_status": "reached before current refusal",
+      "classification": "product guard, no refusal observed here",
+      "condition": "Schema, project, timeline and base parent identity must match; derived occurrences are refused.",
+      "current_vs_pristine": "Current 20db source includes the final typed-output fix; 886a has no comparable joined D136 path.",
+      "evidence_status": "source-known; candidate reached compilation in prior exact run",
+      "helper_group": "MGC-01",
+      "id": "B005",
+      "input": "authoring candidate schema, project/timeline/base ids and authored fields",
+      "missing_record": null,
+      "owner": "Agent authoring_bundle",
+      "path_id": "P2",
+      "predicate_purpose": "Reject malformed or cross-scope candidates before a Runtime commit request is emitted.",
+      "selector_scope": "all nine",
+      "source": "astrid/core/timeline/authoring_bundle.py:1000-1031; helper expansion: authoring_bundle.py:185-233, 679-772, 775-820, 837-888, 948-997"
+    },
+    {
+      "actual_status": "reached statically; exact branch outcomes not separately recorded",
+      "classification": "UNKNOWN branch outcome, not setup",
+      "condition": "Placement/source/shot identities, media authority and competing selections must satisfy each require/refusal branch.",
+      "current_vs_pristine": "Current source only; 886a absence cannot establish upstream behavior.",
+      "evidence_status": "source-known; no branch-specific refusal appears in existing actual evidence",
+      "helper_group": "MGC-01",
+      "id": "B006",
+      "input": "placement/source/shot mappings, media authority and selection fields",
+      "missing_record": "Candidate field/value and branch-level refusal code are withheld.",
+      "owner": "Agent authoring_bundle",
+      "path_id": "P2",
+      "predicate_purpose": "Compile only candidates with supported placement, source, shot, media and selection relationships.",
+      "selector_scope": "all nine",
+      "source": "astrid/core/timeline/authoring_bundle.py:1033-1165; helper expansion: authoring_bundle.py:185-233, 679-772, 775-820, 837-888, 948-997"
+    },
+    {
+      "actual_status": "reached before current refusal",
+      "classification": "product guard passed for observed input",
+      "condition": "Every identity, digest, placement capability, parent, manifest and final candidate predicate must hold.",
+      "current_vs_pristine": "Current D136 source is the reviewed 20db version; no inference from 886a file absence.",
+      "evidence_status": "source-known; prior run advanced beyond compile to Runtime",
+      "helper_group": "MGC-01",
+      "id": "B007",
+      "input": "child materialization, identities, digests, placement capability and manifest",
+      "missing_record": null,
+      "owner": "Agent authoring_bundle",
+      "path_id": "P2",
+      "predicate_purpose": "Produce a self-consistent compiled candidate and final parent/manifest digest.",
+      "selector_scope": "all nine",
+      "source": "astrid/core/timeline/authoring_bundle.py:1166-1404; helper expansion: authoring_bundle.py:185-233, 679-772, 775-820, 837-888, 948-997"
+    },
+    {
+      "actual_status": "reached before current refusal",
+      "classification": "product guard passed for observed input",
+      "condition": "Base revision/publication/receipt/scope/payload and duplicate/reservation/membership/selection checks must pass.",
+      "current_vs_pristine": "Current Agent source is manifest-pinned; 886a has no corresponding D136 authoring_commit.py path.",
+      "evidence_status": "source-known; no authoring request construction refusal in retained run",
+      "helper_group": "MGC-02",
+      "id": "B008",
+      "input": "compiled candidate plus base history, membership edits, media selections and authoring metadata",
+      "missing_record": "Exact emitted command payload is private/withheld.",
+      "owner": "Agent authoring_commit",
+      "path_id": "P2",
+      "predicate_purpose": "Read the exact base and emit canonical C0 commands, steps, merge, source and rationale.",
+      "selector_scope": "all nine",
+      "source": "astrid/sdk/timeline/authoring_commit.py:24-187; helper expansion: authoring_commit.py:190-335"
+    },
+    {
+      "actual_status": "entered, did not return accepted/merged",
+      "classification": "product boundary; refusal is downstream Runtime REG",
+      "condition": "Idempotency key is nonempty; writer returns accepted/merged; canonical doc/head/manifest are extractable.",
+      "current_vs_pristine": "Production caller is present in current Agent source; no 886a behavioral counterpart.",
+      "evidence_status": "writer call is the first common dynamic seam; response is refusal before return",
+      "id": "B009",
+      "input": "C0 request handed to _RuntimeAuthoringWriter",
+      "missing_record": "No accepted response exists; exact intermediate capture record is withheld.",
+      "owner": "Agent production caller delegates to Runtime",
+      "path_id": "P2",
+      "predicate_purpose": "Use the registered Runtime commit service and canonical invocation path.",
+      "selector_scope": "all nine",
+      "source": "tests/sdk/test_timeline_capture_projection.py:251-276; astrid/core/timeline/authoring_bundle.py:1833-1914"
+    },
+    {
+      "actual_status": "reached before current refusal",
+      "classification": "setup/product guards passed for observed input",
+      "condition": "Detached body, route/body ids, publisher, key, auth and context must satisfy service guards.",
+      "current_vs_pristine": "Immutable ab1e Runtime source is current C0 comparison; 886a is a separate upstream source absence.",
+      "evidence_status": "existing actual run reached service/provider path; no service refusal reported",
+      "id": "B010",
+      "input": "detached C0 request and canonical route/body identity",
+      "missing_record": null,
+      "owner": "Runtime service",
+      "path_id": "P3",
+      "predicate_purpose": "Validate request shape, route identity, publisher, idempotency and authorization before coordination.",
+      "selector_scope": "all nine",
+      "source": "runtime_protocol/service.py:2469-2559"
+    },
+    {
+      "actual_status": "reached before current refusal",
+      "classification": "product guard passed for observed input",
+      "condition": "Provider module, service factory, interface digest and sync commit signature must match.",
+      "current_vs_pristine": "ab1e pin is the immutable Runtime source; no behavior inferred from 886a absence.",
+      "evidence_status": "known reached from first common seam and prior custody",
+      "id": "B011",
+      "input": "provider id and loaded Agent commit service",
+      "missing_record": null,
+      "owner": "Runtime provider loader",
+      "path_id": "P3",
+      "predicate_purpose": "Resolve and validate the provider ABI before execution.",
+      "selector_scope": "all nine",
+      "source": "runtime_protocol/timeline_commit_provider.py:55-93"
+    },
+    {
+      "actual_status": "reached before current refusal",
+      "classification": "product guard passed for observed input",
+      "condition": "Context/request hash, lookup, provider result and response-shape checks must pass.",
+      "current_vs_pristine": "Current ab1e source only; 886a comparison is non-behavioral due missing files.",
+      "evidence_status": "source-known; existing failure is later in provider sequential validation",
+      "id": "B012",
+      "input": "commit context, request hash and idempotency lookup",
+      "missing_record": "Idempotency store record is private.",
+      "owner": "Runtime execution coordinator",
+      "path_id": "P3",
+      "predicate_purpose": "Coordinate one deterministic commit and reject mismatched duplicate/idempotency state.",
+      "selector_scope": "all nine",
+      "source": "runtime_protocol/timeline_commit_execution.py:375-431"
+    },
+    {
+      "actual_status": "not dynamically reached after provider refusal",
+      "classification": "UNKNOWN downstream product boundary",
+      "condition": "Captured sequential proof shape, auth, producer/dependency, closure, media/source and materialization bindings must hold.",
+      "current_vs_pristine": "Present in ab1e; no 886a equivalent behavior claim.",
+      "evidence_status": "static boundary; current refusal occurs during C0 provider auth before acceptance",
+      "id": "B013",
+      "input": "base/history/read closure and authorized RequestCommitPort context",
+      "missing_record": "Private sequential proof and materialization bindings.",
+      "owner": "Runtime RequestCommitPort",
+      "path_id": "P3",
+      "predicate_purpose": "Reauthorize and validate producer, dependency, captured closure, media and source inputs.",
+      "selector_scope": "all nine",
+      "source": "runtime_protocol/timeline_commit_port.py:182-209, 530-639"
+    },
+    {
+      "actual_status": "entered statically; exact internal return not separately recorded",
+      "classification": "UNKNOWN internal boundary, not setup",
+      "condition": "validate_command, media/producer capture, provider plan/execution and final candidate checks must pass.",
+      "current_vs_pristine": "Current Agent source is manifest-pinned; no D136 counterpart at 886a.",
+      "evidence_status": "source-known; no Agent command error is the recorded first seam",
+      "helper_group": "MGC-03",
+      "id": "B014",
+      "input": "submitted commands, media/producer capture and provider plan/execution",
+      "missing_record": "Provider intermediate command result and capture refs are withheld.",
+      "owner": "Agent RuntimeCommitService / provider",
+      "path_id": "P3",
+      "predicate_purpose": "Validate command semantics and obtain original/landing candidate records.",
+      "selector_scope": "all nine",
+      "source": "astrid/sdk/timeline/commit.py:1160-1205; helper expansion: commit.py:1206-1398"
+    },
+    {
+      "actual_status": "not dynamically established for this request",
+      "classification": "UNKNOWN product boundary",
+      "condition": "validate_final_candidate and prepared execution must pass; capture_sequential_execution then port operation is invoked.",
+      "current_vs_pristine": "Current 20db source; 886a file absence gives no outcome.",
+      "evidence_status": "static boundary; the retained failure is Runtime-side while authenticating an intermediate command",
+      "helper_group": "MGC-03",
+      "id": "B015",
+      "input": "landing candidate, final candidate validation and prepared execution",
+      "missing_record": "Prepared original/landing envelopes and final candidate are private/withheld.",
+      "owner": "Agent commit service",
+      "path_id": "P3",
+      "predicate_purpose": "Require final candidate validity before sequential proof capture and port accept/preview.",
+      "selector_scope": "all nine",
+      "source": "astrid/sdk/timeline/commit.py:1399-1444; helper expansion: commit.py:1206-1398"
+    },
+    {
+      "actual_status": "not dynamically reached after refusal",
+      "classification": "UNKNOWN product boundary",
+      "condition": "Missing required capture yields sequential_proof_unavailable; otherwise private proof has original/landing commands and records.",
+      "current_vs_pristine": "Current Agent source only; no 886a inference.",
+      "evidence_status": "static; existing first seam precedes any accepted response",
+      "id": "B016",
+      "input": "original/landing sequential execution and prepared digest/head",
+      "missing_record": "Private proof and capture availability flag.",
+      "owner": "Agent commit preview",
+      "path_id": "P3",
+      "predicate_purpose": "Create a private sequential proof only when required capture is available.",
+      "selector_scope": "all nine",
+      "source": "astrid/sdk/timeline/_commit_preview.py:25-90"
+    },
+    {
+      "actual_status": "not reached after current refusal",
+      "classification": "UNKNOWN product boundary",
+      "condition": "Shape, request context, capture digest and command records must validate.",
+      "current_vs_pristine": "ab1e source pinned; upstream 886a behavior unavailable.",
+      "evidence_status": "source-known; no dynamic accepted capture",
+      "id": "B017",
+      "input": "private sequential capture passed to Runtime port",
+      "missing_record": "Private capture object.",
+      "owner": "Runtime port",
+      "path_id": "P3",
+      "predicate_purpose": "Retain a shape/context-bound proof for later validation and clear it after operation.",
+      "selector_scope": "all nine",
+      "source": "runtime_protocol/timeline_commit_port.py:182-209"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "UNKNOWN product boundary",
+      "condition": "Auth/context/current head/destination and operation mode must pass preflight.",
+      "current_vs_pristine": "ab1e source only; no behavior inferred from 886a.",
+      "evidence_status": "static only",
+      "helper_group": "MGC-06",
+      "id": "B018",
+      "input": "store preview/accept preflight: auth, head and destination",
+      "missing_record": "Store head and destination records.",
+      "owner": "Runtime timeline commit store",
+      "path_id": "P3",
+      "predicate_purpose": "Ensure destination/head and authorization are still valid before store validation.",
+      "selector_scope": "all nine",
+      "source": "runtime_protocol/timeline_commit_store.py:1790-1808, 1831-1885; helper expansion: timeline_commit_store.py:1491-1905"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "UNKNOWN product boundary",
+      "condition": "Canonical scope, ordinals, step partition, source/base/continuation history and sequential proof must validate.",
+      "current_vs_pristine": "ab1e source only; 886a absence is not an outcome.",
+      "evidence_status": "static only",
+      "helper_group": "MGC-06",
+      "id": "B019",
+      "input": "canonical document scope/digest/closure, records, v2 steps, source/base/history/continuations",
+      "missing_record": "Canonical store records and history are private.",
+      "owner": "Runtime store validation",
+      "path_id": "P3",
+      "predicate_purpose": "Validate the whole request before durable preview/accept.",
+      "selector_scope": "all nine",
+      "source": "runtime_protocol/timeline_commit_store.py:1491-1565; helper expansion: timeline_commit_store.py:1491-1905"
+    },
+    {
+      "actual_status": "not dynamically reached to completion",
+      "classification": "UNKNOWN product boundary",
+      "condition": "Capture shape, prepared digest/head, envelope, evaluated head, records, input/output images and exact chain must hold.",
+      "current_vs_pristine": "ab1e immutable source; no 886a behavior claim.",
+      "evidence_status": "static only; current evidence fails in command_output before this validator returns",
+      "helper_group": "MGC-05",
+      "id": "B020",
+      "input": "sequential capture envelope: original, landing, evaluated head and per-command records",
+      "missing_record": "Original/landing command images and chain.",
+      "owner": "Runtime sequential capture validator",
+      "path_id": "P3",
+      "predicate_purpose": "Bind each provider command to a complete original-to-landing chain.",
+      "selector_scope": "all nine",
+      "source": "runtime_protocol/timeline_commit_auth.py:2563-2629; helper expansion: timeline_commit_auth.py:2338-2560"
+    },
+    {
+      "actual_status": "reached before refusal",
+      "classification": "product guard passed for observed input",
+      "condition": "Manifest match and created-root exceptions must pass before native_site/result lookup.",
+      "current_vs_pristine": "Exact immutable ab1e source; 886a has no comparable D136 Runtime path supplied.",
+      "evidence_status": "known source boundary; existing run entered this function",
+      "helper_group": "MGC-04",
+      "id": "B021",
+      "input": "each provider result, capture ref/path, manifest and created-root metadata",
+      "missing_record": "The safe evidence omits the result ref/path and ordinal.",
+      "owner": "Runtime C0 authenticated observation",
+      "path_id": "P3",
+      "predicate_purpose": "Prepare authenticated physical observation before projecting command output.",
+      "selector_scope": "all nine",
+      "source": "runtime_protocol/timeline_commit_auth.py:2189-2207; helper expansion: timeline_commit_auth.py:18-264, 608-778, 1833-2186; refusal anchor 2209"
+    },
+    {
+      "actual_status": "refused",
+      "classification": "observed current Runtime fail-closed refusal; regression UNKNOWN; causal owner UNKNOWN; setup failure not proven",
+      "condition": "native_site(result, capture[ref], capture[path]); require(ref in result, 'provider intermediate command lacks an authenticated physical observation').",
+      "current_vs_pristine": "Immutable Runtime ab1e contains the refusal. Pristine 886a source absence is not behavioral evidence; D54a REG is not proven.",
+      "evidence_status": "proven current Runtime guard refusal by retained exact final20db original9 result; no regression claim",
+      "helper_group": "MGC-04",
+      "id": "B022",
+      "input": "provider intermediate result, capture ref/path and physical payload",
+      "message": "provider intermediate command lacks an authenticated physical observation",
+      "missing_record": "Exact ref/path/ordinal/result payload needed to decide whether Agent/provider capture omitted or misbound the physical observation.",
+      "owner": "Runtime guard refusal observed; producer/adapter causal owner UNKNOWN",
+      "path_id": "P3",
+      "predicate_purpose": "Require a physical observation at the authenticated ref before projecting an intermediate command.",
+      "selector_scope": "all nine",
+      "source": "runtime_protocol/timeline_commit_auth.py:2209; helper expansion: timeline_commit_auth.py:18-264, 608-778, 1833-2186; refusal anchor 2209"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "UNKNOWN product boundary",
+      "condition": "location(before_payload,path)==capture[before]; projection/mirror/digest checks must pass.",
+      "current_vs_pristine": "ab1e source enumerated; no 886a behavior inferred.",
+      "evidence_status": "static downstream branch; not reached after B022",
+      "helper_group": "MGC-04",
+      "id": "B023",
+      "input": "before payload at authenticated path and projected input observation",
+      "missing_record": "before image, path, projected image and digest.",
+      "owner": "Runtime authenticated observation",
+      "path_id": "P3",
+      "predicate_purpose": "Require the input observation to equal the captured before image and project the result with matching mirror/digest.",
+      "selector_scope": "all nine",
+      "source": "runtime_protocol/timeline_commit_auth.py:2213-2221; helper expansion: timeline_commit_auth.py:18-264, 608-778, 1833-2186; refusal anchor 2209"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "UNKNOWN product boundary",
+      "condition": "Changed-image binding, unique revision/ref parent, alias uniqueness, physical kind/id/non-overlap and identity allocation checks must hold.",
+      "current_vs_pristine": "ab1e source only; 886a file absence is not behavioral evidence.",
+      "evidence_status": "static downstream branches; not reached after B022",
+      "helper_group": "MGC-04",
+      "id": "B024",
+      "input": "changed existing image, binding input pin, aliases, physical kind/id and identity scope",
+      "missing_record": "Binding input pin, alias set, physical identity and identity_scope allocation.",
+      "owner": "Runtime authenticated promotion",
+      "path_id": "P3",
+      "predicate_purpose": "Prevent ambiguous aliasing and require unique revision/parent/identity ownership during promotion.",
+      "selector_scope": "all nine",
+      "source": "runtime_protocol/timeline_commit_auth.py:2222-2255; helper expansion: timeline_commit_auth.py:18-264, 608-778, 1833-2186; refusal anchor 2209"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "UNKNOWN product boundary",
+      "condition": "Owner/identity/edge/digest/shot promotion, parent pin, next-command read, root and manifest parent allocations must pass.",
+      "current_vs_pristine": "ab1e source only; no 886a outcome claim.",
+      "evidence_status": "static downstream branches; not reached after B022",
+      "helper_group": "MGC-04",
+      "id": "B025",
+      "input": "internal owner, authoring identity, parent pins, projected roots and manifest changes",
+      "missing_record": "Owner, edge, parent allocation and manifest records.",
+      "owner": "Runtime authenticated promotion",
+      "path_id": "P3",
+      "predicate_purpose": "Require exactly-one ownership and parent/manifest allocations before accepting the projected command output.",
+      "selector_scope": "all nine",
+      "source": "runtime_protocol/timeline_commit_auth.py:2259-2335; helper expansion: timeline_commit_auth.py:18-264, 608-778, 1833-2186; refusal anchor 2209"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "UNKNOWN product boundary",
+      "condition": "Original/landing shape and exact initial-input, previous-output/next-input, and final-output/prepared equalities must hold.",
+      "current_vs_pristine": "ab1e source enumerated; no upstream behavior inferred.",
+      "evidence_status": "static only",
+      "helper_group": "MGC-05",
+      "id": "B026",
+      "input": "original and landing envelopes, evaluated head and command records",
+      "missing_record": "Envelope records and prepared head.",
+      "owner": "Runtime sequential capture validator",
+      "path_id": "P3",
+      "predicate_purpose": "Validate the complete sequential envelope after individual command observations.",
+      "selector_scope": "all nine",
+      "source": "runtime_protocol/timeline_commit_auth.py:2563-2629; helper expansion: timeline_commit_auth.py:2338-2560"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "UNKNOWN product boundary",
+      "condition": "Claims, exact binding correspondence, unique source/landing bindings and source chain must pass.",
+      "current_vs_pristine": "ab1e source only.",
+      "evidence_status": "static only",
+      "helper_group": "MGC-05",
+      "id": "B027",
+      "input": "claims and source/landing binding correspondence",
+      "missing_record": "Claims and binding correspondence records.",
+      "owner": "Runtime sequential capture validator",
+      "path_id": "P3",
+      "predicate_purpose": "Require claims and bindings to correspond exactly and uniquely to source and landing images.",
+      "selector_scope": "all nine",
+      "source": "runtime_protocol/timeline_commit_auth.py:2631-2699; helper expansion: timeline_commit_auth.py:2338-2560"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "UNKNOWN product boundary",
+      "condition": "Replay binding shape/ordinals/read correspondence, source chain, owner attribution, destination, terminal and cross-history checks must pass.",
+      "current_vs_pristine": "ab1e source only; no 886a behavior claim.",
+      "evidence_status": "static only",
+      "helper_group": "MGC-05",
+      "id": "B028",
+      "input": "replay bindings, read correspondence, source-chain step ordering and materialization transitions",
+      "missing_record": "Replay bindings, reads, transitions and ownership records.",
+      "owner": "Runtime sequential capture validator",
+      "path_id": "P3",
+      "predicate_purpose": "Prove replayable attribution, owner/image/destination/terminal/cross-history consistency.",
+      "selector_scope": "all nine",
+      "source": "runtime_protocol/timeline_commit_auth.py:2701-2867; helper expansion: timeline_commit_auth.py:2338-2560"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "UNKNOWN product boundary",
+      "condition": "Base reads/claims, manifest evolution, atomic dependencies and sequential input/output equalities must pass.",
+      "current_vs_pristine": "ab1e source only.",
+      "evidence_status": "static only",
+      "helper_group": "MGC-04",
+      "id": "B029",
+      "input": "base batch reads/claims, per-step manifest evolution, atomic touched scope and sequential equality",
+      "missing_record": "Reads, claims, manifests and step images.",
+      "owner": "Runtime C0 validator",
+      "path_id": "P3",
+      "predicate_purpose": "Validate submitted C0 steps and their relationship to the captured sequential execution.",
+      "selector_scope": "all nine",
+      "source": "runtime_protocol/timeline_commit_auth.py:2873-2947; helper expansion: timeline_commit_auth.py:18-264, 608-778, 1833-2186; refusal anchor 2209"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "UNKNOWN product boundary",
+      "condition": "step_output, validate_step, patch binding coverage and validate_bindings must pass.",
+      "current_vs_pristine": "ab1e source only.",
+      "evidence_status": "static only",
+      "id": "B030",
+      "input": "step_output, validate_step, patch coverage and bindings",
+      "missing_record": "Step output/effect observations and binding coverage.",
+      "owner": "Runtime C0 validator",
+      "path_id": "P3",
+      "predicate_purpose": "Require each step's effects and submitted patch to be covered by validated bindings.",
+      "selector_scope": "all nine",
+      "source": "runtime_protocol/timeline_commit_auth.py:2943-2961; :798-871"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "UNKNOWN product boundary",
+      "condition": "Reads/dependencies, inverse/asset special cases and submitted patch assertions/effects must match.",
+      "current_vs_pristine": "ab1e source only.",
+      "evidence_status": "static only",
+      "id": "B031",
+      "input": "submitted read assertions, dependency coverage, record reads, inverse/asset checks and submitted patch",
+      "missing_record": "Step read assertions and effect list.",
+      "owner": "Runtime C0 step validator",
+      "path_id": "P3",
+      "predicate_purpose": "Validate each step's declared reads, dependencies, effects and commands.",
+      "selector_scope": "all nine",
+      "source": "runtime_protocol/timeline_commit_auth.py:382-487"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "UNKNOWN product boundary",
+      "condition": "Phase/base/head/step/ordinal, effect attribution, alias resolution, image revision/digest, owners, change path/range, dependency and successor checks must pass.",
+      "current_vs_pristine": "ab1e source only.",
+      "evidence_status": "static only",
+      "helper_group": "MGC-04",
+      "id": "B032",
+      "input": "binding phase/base/head/step/ordinal, effect attribution, physical aliases, input images, owners and successors",
+      "missing_record": "Binding rows and successor materializations.",
+      "owner": "Runtime binding validator",
+      "path_id": "P3",
+      "predicate_purpose": "Validate exact binding identity and successor materialization for every effect.",
+      "selector_scope": "all nine",
+      "source": "runtime_protocol/timeline_commit_auth.py:490-588; helper expansion: timeline_commit_auth.py:18-264, 608-778, 1833-2186; refusal anchor 2209"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "UNKNOWN product boundary",
+      "condition": "Continuations and final accepted closure must match; line 2975 rejects when provider step effects do not reach accepted closure.",
+      "current_vs_pristine": "ab1e source only; no 886a behavioral inference.",
+      "evidence_status": "static only",
+      "id": "B033",
+      "input": "accepted closure and provider step effects",
+      "missing_record": "Accepted closure and effect reachability rows.",
+      "owner": "Runtime C0 final validator",
+      "path_id": "P3",
+      "predicate_purpose": "Final C0 predicate: all provider step effects must reach the accepted closure.",
+      "selector_scope": "all nine",
+      "source": "runtime_protocol/timeline_commit_auth.py:2962-2975"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "UNKNOWN product boundary",
+      "condition": "Store validation, projection, durable event, dependency, receipt/history/undo and coordinator response-shape checks must pass.",
+      "current_vs_pristine": "ab1e source only.",
+      "evidence_status": "static only",
+      "helper_group": "MGC-06",
+      "id": "B034",
+      "input": "validated materializations, event/dependency inputs, canonical projection and durable receipt/history/undo state",
+      "missing_record": "Durable store records and response payload.",
+      "owner": "Runtime store/coordinator",
+      "path_id": "P4",
+      "predicate_purpose": "Complete preview/accept and return canonical/base/landing/merge/receipt/records/bindings/effects/dependencies/history/undo fields.",
+      "selector_scope": "all nine",
+      "source": "runtime_protocol/timeline_commit_store.py:1491-1565, 1790-1808, 1831-1885; runtime_protocol/timeline_commit_execution.py:375-431; helper expansion: timeline_commit_store.py:1491-1905"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "UNKNOWN product boundary",
+      "condition": "Response status must be accepted or merged and canonical fields must be present.",
+      "current_vs_pristine": "Current Agent caller; no 886a counterpart behavior.",
+      "evidence_status": "static only; current response is refusal",
+      "id": "B035",
+      "input": "canonical accepted/merged response returned to publish_authoring_candidate",
+      "missing_record": "Accepted response and canonical projection input.",
+      "owner": "Agent authoring_bundle",
+      "path_id": "P4",
+      "predicate_purpose": "Reject any non-accepted/merged status and extract canonical document/head/manifest for projection.",
+      "selector_scope": "all nine",
+      "source": "astrid/core/timeline/authoring_bundle.py:1883-1914"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "setup-dependent downstream boundary, not proven setup failure",
+      "condition": "Reload, duplicate/remove mutations and final publication must return usable canonical images before assertions.",
+      "current_vs_pristine": "Current test source only; 886a does not provide behavior.",
+      "evidence_status": "source-known; not dynamically reached because first authored publish refused",
+      "id": "B036",
+      "input": "saved closure reload and post-publication duplicate/remove/final candidate mutation sequence",
+      "missing_record": "Later canonical images and response records.",
+      "owner": "Agent projection fixture",
+      "path_id": "P4",
+      "predicate_purpose": "Exercise the later exact saved-image transformations used by the original9 fixture.",
+      "selector_scope": "all nine",
+      "source": "tests/sdk/test_timeline_capture_projection.py:407-441"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "UNKNOWN assertion outcome, not setup classification",
+      "condition": "Each exact projection assertion must equal expected config/registry/full pins.",
+      "current_vs_pristine": "Current D136/projection source; no 886a behavioral result.",
+      "evidence_status": "static only; test body not reached",
+      "id": "B-FINAL-001",
+      "input": "projected config/registry/full pins and expected saved golden",
+      "missing_record": "Projected payload and expected golden are withheld.",
+      "owner": "Agent projection test",
+      "path_id": "P4",
+      "predicate_purpose": "Require config, registry and full pin projection to equal the saved golden.",
+      "selector_scope": "test_real_saved_projection_config_registry_and_full_pins_golden",
+      "source": "tests/sdk/test_timeline_capture_projection.py:444-456"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "UNKNOWN assertion outcome",
+      "condition": "Expanded projection exact-equality assertion must hold.",
+      "current_vs_pristine": "No upstream behavior inferred.",
+      "evidence_status": "static only; test body not reached",
+      "id": "B-FINAL-002",
+      "input": "entire expanded saved projection",
+      "missing_record": "Expanded projection and golden.",
+      "owner": "Agent projection test",
+      "path_id": "P4",
+      "predicate_purpose": "Require entire expansion output to equal the saved golden.",
+      "selector_scope": "test_real_saved_entire_expansion_golden",
+      "source": "tests/sdk/test_timeline_capture_projection.py:459-468"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "UNKNOWN assertion outcome",
+      "condition": "All exact field/pin/order/read-row assertions must hold.",
+      "current_vs_pristine": "No upstream behavior inferred.",
+      "evidence_status": "static only; test body not reached",
+      "id": "B-FINAL-003",
+      "input": "canonical images, authored fields, pin order and read rows",
+      "missing_record": "Canonical images and expected rows.",
+      "owner": "Agent projection test",
+      "path_id": "P4",
+      "predicate_purpose": "Require authored fields, pins, ordering and read rows to survive canonical projection.",
+      "selector_scope": "test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "source": "tests/sdk/test_timeline_capture_projection.py:471-529"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "UNKNOWN assertion outcome",
+      "condition": "Parametrized candidate projection equals opener expectation for parent.",
+      "current_vs_pristine": "No upstream behavior inferred.",
+      "evidence_status": "static only; test body not reached",
+      "id": "B-FINAL-004",
+      "input": "parent candidate and SDK opener projection",
+      "missing_record": "Parent projected candidate and opener output.",
+      "owner": "Agent projection test",
+      "path_id": "P4",
+      "predicate_purpose": "Require parent candidate projection to match SDK opener exactly.",
+      "selector_scope": "test_real_candidate_matches_sdk_opener_exactly[parent]",
+      "source": "tests/sdk/test_timeline_capture_projection.py:532-569"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "UNKNOWN assertion outcome",
+      "condition": "Parametrized candidate projection equals opener expectation for child.",
+      "current_vs_pristine": "No upstream behavior inferred.",
+      "evidence_status": "static only; test body not reached",
+      "id": "B-FINAL-005",
+      "input": "child candidate and SDK opener projection",
+      "missing_record": "Child projected candidate and opener output.",
+      "owner": "Agent projection test",
+      "path_id": "P4",
+      "predicate_purpose": "Require child candidate projection to match SDK opener exactly.",
+      "selector_scope": "test_real_candidate_matches_sdk_opener_exactly[child]",
+      "source": "tests/sdk/test_timeline_capture_projection.py:532-569"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "UNKNOWN assertion outcome",
+      "condition": "Parametrized candidate projection equals opener expectation for new_shot.",
+      "current_vs_pristine": "No upstream behavior inferred.",
+      "evidence_status": "static only; test body not reached",
+      "id": "B-FINAL-006",
+      "input": "new_shot candidate and SDK opener projection",
+      "missing_record": "new_shot projected candidate and opener output.",
+      "owner": "Agent projection test",
+      "path_id": "P4",
+      "predicate_purpose": "Require new_shot candidate projection to match SDK opener exactly.",
+      "selector_scope": "test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+      "source": "tests/sdk/test_timeline_capture_projection.py:532-569"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "UNKNOWN assertion outcome",
+      "condition": "Parametrized candidate projection equals opener expectation for duplicate.",
+      "current_vs_pristine": "No upstream behavior inferred.",
+      "evidence_status": "static only; test body not reached",
+      "id": "B-FINAL-007",
+      "input": "duplicate candidate and SDK opener projection",
+      "missing_record": "Duplicate projected candidate and opener output.",
+      "owner": "Agent projection test",
+      "path_id": "P4",
+      "predicate_purpose": "Require duplicate candidate projection to match SDK opener exactly.",
+      "selector_scope": "test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+      "source": "tests/sdk/test_timeline_capture_projection.py:532-569"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "UNKNOWN assertion outcome",
+      "condition": "Parametrized candidate projection equals opener expectation for remove.",
+      "current_vs_pristine": "No upstream behavior inferred.",
+      "evidence_status": "static only; test body not reached",
+      "id": "B-FINAL-008",
+      "input": "remove candidate and SDK opener projection",
+      "missing_record": "Remove projected candidate and opener output.",
+      "owner": "Agent projection test",
+      "path_id": "P4",
+      "predicate_purpose": "Require remove candidate projection to match SDK opener exactly.",
+      "selector_scope": "test_real_candidate_matches_sdk_opener_exactly[remove]",
+      "source": "tests/sdk/test_timeline_capture_projection.py:532-569"
+    },
+    {
+      "actual_status": "not dynamically reached",
+      "classification": "UNKNOWN assertion outcome",
+      "condition": "Parametrized candidate projection equals opener expectation for sdk_bundle.",
+      "current_vs_pristine": "No upstream behavior inferred.",
+      "evidence_status": "static only; test body not reached",
+      "id": "B-FINAL-009",
+      "input": "sdk_bundle candidate and SDK opener projection",
+      "missing_record": "SDK bundle projected candidate and opener output.",
+      "owner": "Agent projection test",
+      "path_id": "P4",
+      "predicate_purpose": "Require sdk_bundle candidate projection to match SDK opener exactly.",
+      "selector_scope": "test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]",
+      "source": "tests/sdk/test_timeline_capture_projection.py:532-569"
+    }
+  ],
+  "condition_map_count": 30,
+  "dynamic_claim_limit": "Static finite derivative only; retained original9 stops at B022; later boundaries/final predicates UNKNOWN.",
+  "helper_group_count": 6,
+  "helper_guard_groups": [
+    {
+      "after_current_refusal_status": "No helper branch after refusal observed; later result UNKNOWN.",
+      "ast_inventory": [
+        {
+          "branches": "object/list/string and meta/registry/config",
+          "helpers": [
+            "_mapping",
+            "_validate_meta_rows",
+            "_validate_registry_asset_meta",
+            "_validate_timeline_payload_meta",
+            "_sequence",
+            "_string"
+          ],
+          "span": "185-233"
+        },
+        {
+          "branches": "duplicate IDs, selectors, media, selected asset",
+          "helpers": [
+            "_assert_shot_edit_supported",
+            "_assert_internal_edit_supported",
+            "_clip_selected_media",
+            "_clip_selected_media_for_edit"
+          ],
+          "span": "679-772"
+        },
+        {
+          "branches": "mirrored media set/mutation",
+          "helpers": [
+            "_shot_media_set",
+            "_shot_media_mutations"
+          ],
+          "span": "775-820"
+        },
+        {
+          "branches": "offset/speed/transform and internal selectors",
+          "helpers": [
+            "_is_default_speed",
+            "_is_default_source_offset",
+            "_validate_placement_capabilities",
+            "_internal_media_set"
+          ],
+          "span": "837-888"
+        },
+        {
+          "branches": "document/base/scope/owner/source equality",
+          "helpers": [
+            "_copied_shot_baseline"
+          ],
+          "span": "948-997"
+        }
+      ],
+      "before_current_refusal_status": "B005/B007 progressed before refusal; B006 branch outcome UNKNOWN.",
+      "caller_path": [
+        "compile_authoring_candidate:1000-1404",
+        "publish_authoring_candidate:1833-1914"
+      ],
+      "condition_map": [
+        {
+          "caller": "compile:1009-1028",
+          "condition": "typed values, non-empty strings, canonical digest, known meta locations",
+          "helper": "_mapping/_sequence/_string/_verify_digest/_validate_timeline_payload_meta",
+          "lines": "185-244",
+          "purpose": "reject malformed/unpinned candidate payload"
+        },
+        {
+          "caller": "compile:1123-1125",
+          "condition": "items list, unique item identity, canonical media",
+          "helper": "_assert_shot_edit_supported",
+          "lines": "679-706",
+          "purpose": "validate shot identity/media"
+        },
+        {
+          "caller": "compile:1131-1144",
+          "condition": "clips/ids/selectors/media authority/selected assets; legacy missing only unchanged",
+          "helper": "_assert_internal_edit_supported/_clip_selected_media_for_edit",
+          "lines": "709-772;552-620",
+          "purpose": "validate internal media authority"
+        },
+        {
+          "caller": "compile:1126-1130",
+          "condition": "existing item media identities/mutations comparable",
+          "helper": "_shot_media_set/_shot_media_mutations",
+          "lines": "775-820",
+          "purpose": "detect competing mirrored media"
+        },
+        {
+          "caller": "compile:1272-1289",
+          "condition": "offset/speed/transform supported; internal selectors resolve",
+          "helper": "_validate_placement_capabilities/_internal_media_set",
+          "lines": "837-888",
+          "purpose": "prevent silent projection loss"
+        },
+        {
+          "caller": "compile:1085-1089",
+          "condition": "base parent/scope/owners/source binding unchanged",
+          "helper": "_copied_shot_baseline",
+          "lines": "948-997",
+          "purpose": "protect copy/restoration provenance"
+        }
+      ],
+      "id": "MGC-01",
+      "purpose": "reject malformed/unpinned candidate payload",
+      "rows": [
+        "B005",
+        "B006",
+        "B007"
+      ],
+      "source_path": "astrid/core/timeline/authoring_bundle.py",
+      "source_ranges": [
+        "185-233",
+        "679-772",
+        "775-820",
+        "837-888",
+        "948-997"
+      ],
+      "static_reachability": "All listed definitions are statically traversed on the genuine cited path; no dynamic exhaustiveness is claimed."
+    },
+    {
+      "after_current_refusal_status": "No helper branch after refusal observed; downstream UNKNOWN.",
+      "ast_inventory": [
+        {
+          "branches": "reservation/schema/source/baseline/placement/parent/native remap",
+          "helpers": [
+            "_materialize_duplicates"
+          ],
+          "span": "190-261"
+        },
+        {
+          "branches": "provenance/shared-root/destination/occurrence/item remap",
+          "helpers": [
+            "_fork_shared_aliases"
+          ],
+          "span": "264-325"
+        }
+      ],
+      "before_current_refusal_status": "No duplicate/fork refusal observed; branch outcome UNKNOWN.",
+      "caller_path": [
+        "authoring_commit_request:84-187",
+        "publish...:1877-1889"
+      ],
+      "condition_map": [
+        {
+          "caller": "request:100",
+          "condition": "reservation and occurrence.duplicate command exact and validated",
+          "helper": "_materialize_duplicates",
+          "lines": "201-212",
+          "purpose": "admit registered duplicate only"
+        },
+        {
+          "caller": "request:100",
+          "condition": "placed source, authored/source map, placement baseline, parent, native remap agree",
+          "helper": "_materialize_duplicates",
+          "lines": "214-261",
+          "purpose": "preserve duplicate provenance"
+        },
+        {
+          "caller": "request:123",
+          "condition": "provenance emits; physical source shared and authored payload differs",
+          "helper": "_fork_shared_aliases",
+          "lines": "277-299",
+          "purpose": "select genuine alias forks"
+        },
+        {
+          "caller": "request:123",
+          "condition": "deterministic destination, exact occurrence fork, item remap/cleanup",
+          "helper": "_fork_shared_aliases",
+          "lines": "300-325",
+          "purpose": "create authenticated fork"
+        }
+      ],
+      "id": "MGC-02",
+      "purpose": "admit registered duplicate only",
+      "rows": [
+        "B008"
+      ],
+      "source_path": "astrid/sdk/timeline/authoring_commit.py",
+      "source_ranges": [
+        "190-335"
+      ],
+      "static_reachability": "All listed definitions are statically traversed on the genuine cited path; no dynamic exhaustiveness is claimed."
+    },
+    {
+      "after_current_refusal_status": "Final validation/capture/accept/stale-head continuation UNKNOWN.",
+      "ast_inventory": [
+        {
+          "branches": "media/restore/history/bootstrap",
+          "helpers": [
+            "selected_media",
+            "capture_producer",
+            "load",
+            "history_entry"
+          ],
+          "span": "1206-1237"
+        },
+        {
+          "branches": "inverse count/order/boundary/address",
+          "helpers": [
+            "load_boundary",
+            "select_at",
+            "check_later_steps"
+          ],
+          "span": "1238-1299"
+        },
+        {
+          "branches": "restore/inverse pin/digest",
+          "helpers": [
+            "_hydrate",
+            "_schema_resolver",
+            "resolve_source",
+            "execute"
+          ],
+          "span": "1300-1335"
+        },
+        {
+          "branches": "CAS/rebase/missing boundary/previous value",
+          "helpers": [
+            "replay",
+            "rebase_patch",
+            "patch_boundary",
+            "_check_reservations"
+          ],
+          "span": "1336-1398"
+        }
+      ],
+      "before_current_refusal_status": "Static only; exact Agent branch result UNKNOWN.",
+      "caller_path": [
+        "RuntimeCommitService.commit:1160-1450",
+        "publish...:1883-1889"
+      ],
+      "condition_map": [
+        {
+          "caller": "commit:1188-1237",
+          "condition": "selection classification, restore sole/exact head, base history, bootstrap pristine",
+          "helper": "media/restore/history guards",
+          "lines": "1206-1237",
+          "purpose": "reject invalid plan setup"
+        },
+        {
+          "caller": "commit:1251-1299",
+          "condition": "inverse order/boundaries/physical resolver/later-step checks",
+          "helper": "load_boundary/select_at",
+          "lines": "1251-1299",
+          "purpose": "guard whole/per-step inverse"
+        },
+        {
+          "caller": "commit:1300-1335",
+          "condition": "restore/inverse pin and digest equal authenticated source; hydrate/resolve/execute",
+          "helper": "closure/replay setup",
+          "lines": "1300-1335",
+          "purpose": "build authenticated inputs"
+        },
+        {
+          "caller": "commit:1336-1398",
+          "condition": "CAS head, patch boundary, previous values, bounded retry",
+          "helper": "patch_boundary/rebase/replay",
+          "lines": "1336-1398",
+          "purpose": "select safe moved-head plan"
+        }
+      ],
+      "id": "MGC-03",
+      "purpose": "reject invalid plan setup",
+      "rows": [
+        "B014",
+        "B015"
+      ],
+      "source_path": "astrid/sdk/timeline/commit.py",
+      "source_ranges": [
+        "1206-1398"
+      ],
+      "static_reachability": "All listed definitions are statically traversed on the genuine cited path; no dynamic exhaustiveness is claimed."
+    },
+    {
+      "after_current_refusal_status": "B023-B025/B029/B032 and helper outcomes after refusal UNKNOWN.",
+      "ast_inventory": [
+        {
+          "branches": "invalid_records/image map/path normalization",
+          "helpers": [
+            "require",
+            "images",
+            "normalized_path"
+          ],
+          "span": "18-33"
+        },
+        {
+          "branches": "regex/owner/kind/slot/unique",
+          "helpers": [
+            "_text_binding_key",
+            "_text_binding_members",
+            "_text_binding_site"
+          ],
+          "span": "42-97"
+        },
+        {
+          "branches": "alias/continuation/list state",
+          "helpers": [
+            "site",
+            "location",
+            "stored_path",
+            "normalized",
+            "native_site"
+          ],
+          "span": "100-218"
+        },
+        {
+          "branches": "scope/registry/field/collection",
+          "helpers": [
+            "covers",
+            "native_asset_reads",
+            "validate_read"
+          ],
+          "span": "221-264"
+        },
+        {
+          "branches": "projection/owner/turnover/alignment",
+          "helpers": [
+            "project_observation",
+            "_physical_owner",
+            "_coherent_materialization",
+            "_materialization_input",
+            "_align_materialized_images",
+            "_parent_materialization_reconciles",
+            "_reconcile_materialized_owner_images"
+          ],
+          "span": "608-795"
+        },
+        {
+          "branches": "parent/fork owner",
+          "helpers": [
+            "_authoring_parent_identity",
+            "_fork_owner_before"
+          ],
+          "span": "1833-1893"
+        },
+        {
+          "branches": "birth/accepted roots/allocation/source/non-overlap",
+          "helpers": [
+            "_project_created_child"
+          ],
+          "span": "1896-2153"
+        },
+        {
+          "branches": "read equality/dependencies",
+          "helpers": [
+            "_following_read_observes",
+            "_command_manifest"
+          ],
+          "span": "2156-2186"
+        }
+      ],
+      "before_current_refusal_status": "B021 auth preparation entered; helper-specific outcomes not isolated.",
+      "caller_path": [
+        "auth command observation/projection path; store preview/accept"
+      ],
+      "condition_map": [
+        {
+          "caller": "auth observation/read",
+          "condition": "aliases/text-binding/collections/continuations resolve uniquely in boundary",
+          "helper": "require/text-binding/site",
+          "lines": "18-172",
+          "purpose": "prevent unauthenticated alias/path access"
+        },
+        {
+          "caller": "read validators",
+          "condition": "list identity, absent/present, field equality, membership/order",
+          "helper": "location/stored_path/validate_read",
+          "lines": "175-264",
+          "purpose": "authenticate observations/reads"
+        },
+        {
+          "caller": "command auth",
+          "condition": "root/ancestor/item uniqueness and coherent state transition",
+          "helper": "project_observation",
+          "lines": "608-642",
+          "purpose": "project recorder output"
+        },
+        {
+          "caller": "sequential auth",
+          "condition": "birth, owner/physical roots, allocation, source pins/digests, following reads",
+          "helper": "_project_created_child/_following_read_observes",
+          "lines": "1896-2168",
+          "purpose": "carry authenticated births"
+        },
+        {
+          "caller": "command auth",
+          "condition": "only consumed dependencies copied/sorted",
+          "helper": "_command_manifest",
+          "lines": "2171-2186",
+          "purpose": "bind command manifest"
+        }
+      ],
+      "id": "MGC-04",
+      "purpose": "prevent unauthenticated alias/path access",
+      "rows": [
+        "B021",
+        "B022",
+        "B023",
+        "B024",
+        "B025",
+        "B029",
+        "B032"
+      ],
+      "source_path": "runtime_protocol/timeline_commit_auth.py",
+      "source_ranges": [
+        "18-264",
+        "608-778",
+        "1833-2186"
+      ],
+      "static_reachability": "All listed definitions are statically traversed on the genuine cited path; no dynamic exhaustiveness is claimed."
+    },
+    {
+      "after_current_refusal_status": "All capture/proof helper outcomes after refusal UNKNOWN; no private record/ref/ordinal synthesized.",
+      "ast_inventory": [
+        {
+          "branches": "CanonicalDocument/images/payload digest",
+          "helpers": [
+            "_capture_document_images"
+          ],
+          "span": "2338-2362"
+        },
+        {
+          "branches": "timeline_id exclusion/canonical identity",
+          "helpers": [
+            "_capture_projection_equal",
+            "_capture_binding_identity"
+          ],
+          "span": "2365-2396"
+        },
+        {
+          "branches": "shape/owner/cycle/terminal",
+          "helpers": [
+            "_capture_source_chain"
+          ],
+          "span": "2399-2427"
+        },
+        {
+          "branches": "staged physical input/unique successor",
+          "helpers": [
+            "sequential_proof_required"
+          ],
+          "span": "2430-2455"
+        },
+        {
+          "branches": "head/records/ordinals/ranges/partition",
+          "helpers": [
+            "_capture_head",
+            "_capture_records"
+          ],
+          "span": "2458-2529"
+        },
+        {
+          "branches": "image/owner/step",
+          "helpers": [
+            "_capture_binding_image",
+            "_capture_owners",
+            "_capture_step"
+          ],
+          "span": "2532-2560"
+        }
+      ],
+      "before_current_refusal_status": "Definitions are in the sequential validator path; no branch result retained before refusal.",
+      "caller_path": [
+        "validate_sequential_capture:2563-2629",
+        "Runtime port sequential validator"
+      ],
+      "condition_map": [
+        {
+          "caller": "sequential validator",
+          "condition": "image shape/unique keys/payload digest/projected equality",
+          "helper": "_capture_document_images/_capture_projection_equal",
+          "lines": "2338-2377",
+          "purpose": "freeze physical image comparison"
+        },
+        {
+          "caller": "sequential validator",
+          "condition": "canonical binding identity; owned/acyclic terminal replay source",
+          "helper": "_capture_binding_identity/_capture_source_chain",
+          "lines": "2380-2427",
+          "purpose": "authenticate replay lineage"
+        },
+        {
+          "caller": "store._validate/port",
+          "condition": "moved-head staged alias and exact head pair",
+          "helper": "sequential_proof_required/_capture_head",
+          "lines": "2430-2461",
+          "purpose": "select proof/validate head"
+        },
+        {
+          "caller": "sequential validator",
+          "condition": "command/step counts, ordinals, bindings, ranges, causes, partition",
+          "helper": "_capture_records",
+          "lines": "2464-2529",
+          "purpose": "bind recorder output"
+        },
+        {
+          "caller": "sequential validator",
+          "condition": "physical image revision/digest, occurrence owner, unique step",
+          "helper": "_capture_binding_image/_capture_owners/_capture_step",
+          "lines": "2532-2560",
+          "purpose": "close identity/step ownership"
+        }
+      ],
+      "id": "MGC-05",
+      "purpose": "freeze physical image comparison",
+      "rows": [
+        "B020",
+        "B026",
+        "B027",
+        "B028"
+      ],
+      "source_path": "runtime_protocol/timeline_commit_auth.py",
+      "source_ranges": [
+        "2338-2560"
+      ],
+      "static_reachability": "All listed definitions are statically traversed on the genuine cited path; no dynamic exhaustiveness is claimed."
+    },
+    {
+      "after_current_refusal_status": "Validation/destination/preview/accept/projection/persistence/reply fields UNKNOWN.",
+      "ast_inventory": [
+        {
+          "branches": "closure/digest/ordinals/proof/undo/events/deps",
+          "helpers": [
+            "_validate"
+          ],
+          "span": "1491-1565"
+        },
+        {
+          "branches": "context/join/owner/output/items/pin",
+          "helpers": [
+            "_materializations",
+            "_same_materialization_slot"
+          ],
+          "span": "1567-1597"
+        },
+        {
+          "branches": "shape/ownership/inverse/reservation ledger",
+          "helpers": [
+            "_check_shot_destinations"
+          ],
+          "span": "1599-1761"
+        },
+        {
+          "branches": "canonical refs/occupancy",
+          "helpers": [
+            "_reservation_identity",
+            "_check_birth_destinations"
+          ],
+          "span": "1764-1787"
+        },
+        {
+          "branches": "dry-run/invocation/history/head",
+          "helpers": [
+            "preview",
+            "_check_context",
+            "_check_head"
+          ],
+          "span": "1790-1829"
+        },
+        {
+          "branches": "transaction/replay/validation/projection/persistence",
+          "helpers": [
+            "accept"
+          ],
+          "span": "1832-1905"
+        }
+      ],
+      "before_current_refusal_status": "Store helpers are downstream of provider auth; no branch observed for refusal.",
+      "caller_path": [
+        "TimelineCommitStore.preview:1790-1808",
+        "TimelineCommitStore.accept:1832-1915"
+      ],
+      "condition_map": [
+        {
+          "caller": "preview:1799; accept:1847",
+          "condition": "scope/digest/records/steps/proof/undo/events/dependencies/materialization agree",
+          "helper": "_validate",
+          "lines": "1491-1565",
+          "purpose": "authorize prepared candidate"
+        },
+        {
+          "caller": "_validate",
+          "condition": "private context/durable join and owner/output/items/pin",
+          "helper": "_materializations/_same_materialization_slot",
+          "lines": "1567-1597",
+          "purpose": "validate materialization"
+        },
+        {
+          "caller": "preview:1798; accept:1846",
+          "condition": "prepared shape/claims/ownership/inverse history/IDs/reservations/ledger",
+          "helper": "_check_shot_destinations",
+          "lines": "1599-1761",
+          "purpose": "prevent collisions"
+        },
+        {
+          "caller": "_check_shot_destinations",
+          "condition": "canonical refs and native occupancy",
+          "helper": "_reservation_identity/_check_birth_destinations",
+          "lines": "1764-1787",
+          "purpose": "guard births"
+        },
+        {
+          "caller": "service preview",
+          "condition": "dry-run/invocation/base history/head CAS",
+          "helper": "preview/_check_context/_check_head",
+          "lines": "1790-1829",
+          "purpose": "authenticated preview"
+        },
+        {
+          "caller": "service accept",
+          "condition": "transaction/replay/context/head/destination/validation/projection/persistence/history",
+          "helper": "accept",
+          "lines": "1832-1905",
+          "purpose": "durable canonical reply"
+        }
+      ],
+      "id": "MGC-06",
+      "purpose": "authorize prepared candidate",
+      "rows": [
+        "B018",
+        "B019",
+        "B034"
+      ],
+      "source_path": "runtime_protocol/timeline_commit_store.py",
+      "source_ranges": [
+        "1491-1565",
+        "1576-1788",
+        "1810-1905"
+      ],
+      "static_reachability": "All listed definitions are statically traversed on the genuine cited path; no dynamic exhaustiveness is claimed."
+    }
+  ],
+  "original_inputs": {
+    "fixture": "saved_closure built by the real Runtime source fixture: registered provider, timeline, parent/child tracks and media, then canonical reload and authored candidate publication.",
+    "request_shape": "C0v2 api_version, project_id, timeline_id, base_revision_id, base_publication_id, commands[{schema_version, op, version, select, args, created_when_required}], label, steps[{id, label, intent, tags, command_ordinals, patch, optional_reads}], merge fields|atomic, reads, Idempotency-Key, dry_run, source, rationale, group_id.",
+    "responses_observed_by_contract": "accepted|merged canonical/base/landing/merge_mode/receipt/records/bindings/effects/dependencies/history/undo_steps; conflict reason/head; invalid code/path/hint/suggested_command; preview would_status/null receipt.",
+    "selectors": [
+      "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden",
+      "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+    ]
+  },
+  "path_groups": [
+    {
+      "label": "selector initialization and real source fixture",
+      "path_id": "P1",
+      "selectors": "all nine"
+    },
+    {
+      "label": "authoring compile, C0 request, registered production caller",
+      "path_id": "P2",
+      "selectors": "all nine"
+    },
+    {
+      "label": "Runtime provider, sequential capture, current refusal, and downstream guards",
+      "path_id": "P3",
+      "selectors": "all nine"
+    },
+    {
+      "label": "projection, acceptance, and final predicates",
+      "path_id": "P4",
+      "selectors": "all nine; final predicates are separate rows B-FINAL-001 through B-FINAL-009"
+    }
+  ],
+  "schema": "timeline.app.d136a.boundary-table.v2",
+  "scope": "Static trace of each exact original9 selector from initialization through the production caller, compilation/provider records, Runtime acceptance, projection, and final predicate.",
+  "summary": {
+    "boundary_count": 45,
+    "d54a_separation": "The located D54a paired-cause report qualifies zero rows; no D54a proven upstream REG is part of this path.",
+    "proven_product_reg_ids": [
+      "B022"
+    ],
+    "proven_setup_failure_ids": [],
+    "source_comparison": "Current 20db/ab1e source and C0 path are exact custody references. Pristine 886a is used only to report source absence; it is not used to infer a REG.",
+    "unknown_or_unreached_ids": "all remaining rows are static-only, downstream, or assertion rows; their exact outcomes are UNKNOWN, not setup failures"
+  },
+  "task": "D136a-boundary-first-return-2159"
+}
+

@@ -1,0 +1,40 @@
+{
+  "task": "D127d",
+  "repository": "app",
+  "worktree": "/home/user/work/wt/app-D127d-route-protected-review-2159",
+  "author_commit": {
+    "sha": "79699d23f0cabef17eaa68463618132556c47902",
+    "tree": "0748df404125114a0f68b701fa76f43abd3fc79a",
+    "parent": "b5c9eadfa1950f46feac50d7d6a89c47f27f4881",
+    "subject": "feat: add D127d no-measurement element route"
+  },
+  "normal_base": {
+    "sha": "b5c9eadfa1950f46feac50d7d6a89c47f27f4881",
+    "is_direct_parent": true
+  },
+  "changed_files": {
+    "scripts/testing/d66-plain-stack.mjs": {
+      "sha256": "2032f3087faab5bc1037b54faa593cb32536de15b748809601731ad5f6a7602f",
+      "git_blob": "59b65214bc74c1ca118b097bc3b13c0ffe480a93"
+    },
+    "scripts/testing/d66-plain-stack.test.mjs": {
+      "sha256": "78e73d8716d47ef5a4a02da2bef0dd92dc6be642e5c9348bbea9fade80ab654d",
+      "git_blob": "c078c2a2ca900eaacce3a8ed877d79a590d79c71"
+    },
+    "tests/e2e/local/support/harness.ts": {
+      "sha256": "f2d3a3b198fe4b4972cd816694ced5466e9f854e9c3ba508b8b87c1f0e181403",
+      "git_blob": "c2b79328f1d441359883b43c33ac5f34ab1bf216"
+    }
+  },
+  "unchanged_protected_sources": {
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "unchanged; original body slice sha256 6a50f8c23c126402236b1fe64e383526092745275518a3077ebc718012bda134",
+    "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts": "unchanged",
+    "scripts/testing/sitecustomize.py": "unchanged"
+  },
+  "diff": {
+    "files_only": true,
+    "insertions": 129,
+    "deletions": 28,
+    "worktree_clean_at_review_start": true
+  }
+}
