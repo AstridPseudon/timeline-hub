@@ -52,10 +52,44 @@ class _ComfyHandler(BaseHTTPRequestHandler):
 
 class _PinokioHandler(BaseHTTPRequestHandler):
     payload: dict[str, object]
+    started: threading.Event | None = None
+    release: threading.Event | None = None
+    stream_until_release = False
+    default_requests_seen = 0
 
     def do_GET(self) -> None:
         assert self.path == "/pinokio/info"
+        type(self).default_requests_seen = len(_ComfyHandler.requested)
+        if self.started is not None:
+            self.started.set()
+        if self.stream_until_release and self.release is not None:
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", "10000")
+            self.end_headers()
+            self.wfile.write(b'{"home":')
+            self.wfile.flush()
+            while not self.release.wait(timeout=0.05):
+                self.wfile.write(b" ")
+                self.wfile.flush()
+            return
         body = json.dumps(self.payload).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, _format: str, *_args: object) -> None:
+        return
+
+
+class _NonComfyHandler(BaseHTTPRequestHandler):
+    requested: list[str] = []
+
+    def do_GET(self) -> None:
+        self.requested.append(self.path)
+        body = json.dumps({"status": "another local app"}).encode()
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
@@ -81,9 +115,24 @@ def _server(tmp_path: Path) -> tuple[ThreadingHTTPServer, threading.Thread]:
 
 def _pinokio_server(
     payload: dict[str, object],
+    *,
+    started: threading.Event | None = None,
+    release: threading.Event | None = None,
+    stream_until_release: bool = False,
 ) -> tuple[ThreadingHTTPServer, threading.Thread]:
     _PinokioHandler.payload = payload
+    _PinokioHandler.started = started
+    _PinokioHandler.release = release
+    _PinokioHandler.stream_until_release = stream_until_release
+    _PinokioHandler.default_requests_seen = 0
     server = ThreadingHTTPServer(("127.0.0.1", 0), _PinokioHandler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    return server, thread
+
+
+def _non_comfy_server() -> tuple[ThreadingHTTPServer, threading.Thread]:
+    server = ThreadingHTTPServer(("127.0.0.1", 0), _NonComfyHandler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     return server, thread
@@ -209,6 +258,130 @@ def test_scan_continues_when_pinokio_is_absent() -> None:
         "errors": [],
         "pinokio": {"available": False, "home": None},
     }
+
+
+def test_scan_probes_default_ports_before_a_stalled_pinokio_control_plane(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    comfy, comfy_thread = _server(tmp_path / "app")
+    started = threading.Event()
+    release = threading.Event()
+    pinokio, pinokio_thread = _pinokio_server(
+        {"home": str(tmp_path / "pinokio"), "scripts": []},
+        started=started,
+        release=release,
+        stream_until_release=True,
+    )
+    monkeypatch.setattr(
+        local_scan,
+        "_PINOKIO_INFO_URL",
+        f"http://127.0.0.1:{pinokio.server_address[1]}/pinokio/info",
+    )
+    outcome: dict[str, object] = {}
+    done = threading.Event()
+
+    def run_scan() -> None:
+        outcome["result"] = scan([comfy.server_address[1]])
+        done.set()
+
+    scan_thread = threading.Thread(target=run_scan, daemon=True)
+    scan_thread.start()
+    try:
+        assert started.wait()
+        assert _PinokioHandler.default_requests_seen == 3
+        assert done.wait()
+        assert not release.is_set()
+        result = outcome["result"]
+        assert isinstance(result, dict)
+        assert len(result["servers"]) == 1
+    finally:
+        release.set()
+        scan_thread.join()
+        comfy.shutdown()
+        comfy.server_close()
+        comfy_thread.join()
+        pinokio.shutdown()
+        pinokio.server_close()
+        pinokio_thread.join()
+        assert local_scan._PINOKIO_SCAN_LOCK.acquire()
+        local_scan._PINOKIO_SCAN_LOCK.release()
+
+
+def test_scan_caps_extra_pinokio_candidates(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _NonComfyHandler.requested = []
+    unrelated = [_non_comfy_server() for _ in range(local_scan._PINOKIO_MAX_EXTRA_PORTS)]
+    comfy, comfy_thread = _server(tmp_path / "comfy")
+    scripts = [
+        {
+            "app": f"unrelated-{index}.git",
+            "local": {
+                "url": f"http://127.0.0.1:{server.server_address[1]}",
+                "details": {"url": f"http://127.0.0.1:{comfy.server_address[1]}"}
+                if index == 0 else {},
+            },
+        }
+        for index, (server, _) in enumerate(unrelated)
+    ]
+    scripts.append({
+        "app": "comfy.git",
+        "local": {"url": f"http://127.0.0.1:{comfy.server_address[1]}"},
+    })
+    pinokio, pinokio_thread = _pinokio_server(
+        {"home": str(tmp_path / "pinokio"), "scripts": scripts}
+    )
+    monkeypatch.setattr(
+        local_scan,
+        "_PINOKIO_INFO_URL",
+        f"http://127.0.0.1:{pinokio.server_address[1]}/pinokio/info",
+    )
+    try:
+        result = scan([])
+    finally:
+        for server, thread in unrelated:
+            server.shutdown()
+            server.server_close()
+            thread.join()
+        comfy.shutdown()
+        comfy.server_close()
+        comfy_thread.join()
+        pinokio.shutdown()
+        pinokio.server_close()
+        pinokio_thread.join()
+
+    assert len(_NonComfyHandler.requested) == local_scan._PINOKIO_MAX_EXTRA_PORTS
+    assert _ComfyHandler.requested == []
+    assert result["servers"] == []
+
+
+def test_scan_omits_non_comfyui_pinokio_responder(monkeypatch: pytest.MonkeyPatch) -> None:
+    _NonComfyHandler.requested = []
+    other, other_thread = _non_comfy_server()
+    pinokio, pinokio_thread = _pinokio_server({
+        "home": "/fake/pinokio",
+        "scripts": [{
+            "app": "other.git",
+            "local": {"url": f"http://localhost:{other.server_address[1]}"},
+        }],
+    })
+    monkeypatch.setattr(
+        local_scan,
+        "_PINOKIO_INFO_URL",
+        f"http://127.0.0.1:{pinokio.server_address[1]}/pinokio/info",
+    )
+    try:
+        result = scan([])
+    finally:
+        other.shutdown()
+        other.server_close()
+        other_thread.join()
+        pinokio.shutdown()
+        pinokio.server_close()
+        pinokio_thread.join()
+
+    assert _NonComfyHandler.requested == ["/system_stats"]
+    assert result["servers"] == []
 
 
 def test_pack_images_round_trips_through_manifest_and_run_staging(tmp_path: Path) -> None:

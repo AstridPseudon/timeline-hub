@@ -6,6 +6,8 @@ import argparse
 import ipaddress
 import io
 import json
+import threading
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -17,7 +19,12 @@ from astrid.core.contracts.errors import AstridError, AstridValueError, render_a
 from astrid.packs.vibecomfy.asset_manifest import build_asset_manifest
 
 _PINOKIO_INFO_URL = "http://127.0.0.1:42000/pinokio/info"
-_PINOKIO_TIMEOUT_SECONDS = 0.25
+_PINOKIO_SCAN_BUDGET_SECONDS = 0.5
+_PINOKIO_REQUEST_TIMEOUT_SECONDS = 0.2
+_PINOKIO_EXTRA_PROBE_TIMEOUT_SECONDS = 0.1
+_PINOKIO_MAX_EXTRA_PORTS = 8
+# Keep a stalled optional request from accumulating workers across rescans.
+_PINOKIO_SCAN_LOCK = threading.Lock()
 
 
 def _get_json(url: str, timeout: float = 2) -> Any:
@@ -98,16 +105,6 @@ def _loopback_http_port(value: str) -> int | None:
         return None
 
 
-def _local_urls(value: Any) -> list[str]:
-    if isinstance(value, str):
-        return [value]
-    if isinstance(value, dict):
-        return [url for item in value.values() for url in _local_urls(item)]
-    if isinstance(value, list):
-        return [url for item in value for url in _local_urls(item)]
-    return []
-
-
 def _pinokio_scripts(info: Any) -> list[dict[str, Any]]:
     if not isinstance(info, dict):
         return []
@@ -138,95 +135,219 @@ def _script_app(script: dict[str, Any]) -> str | None:
     return None
 
 
-def _pinokio_snapshot() -> tuple[dict[str, Any] | None, dict[int, list[str]]]:
-    """Read Pinokio's optional local control plane without affecting discovery."""
-    try:
-        info = _get_json(_PINOKIO_INFO_URL, timeout=_PINOKIO_TIMEOUT_SECONDS)
-    except Exception:
-        return None, {}
-    if not isinstance(info, dict):
-        return None, {}
-
+def _pinokio_candidates(
+    info: dict[str, Any], already_probed: set[int]
+) -> tuple[list[int], dict[int, list[str]]]:
+    candidates: list[int] = []
     apps_by_port: dict[int, list[str]] = {}
     for script in _pinokio_scripts(info):
         if script.get("running") is False:
             continue
         if str(script.get("status", "")).casefold() in {"stopped", "finished", "failed"}:
             continue
-        app = _script_app(script)
-        for url in _local_urls(script.get("local")):
-            port = _loopback_http_port(url)
-            if port is None:
+        local = script.get("local")
+        url = local.get("url") if isinstance(local, dict) else None
+        if not isinstance(url, str):
+            continue
+        port = _loopback_http_port(url)
+        if port is None:
+            continue
+        if port not in already_probed and port not in candidates:
+            if len(candidates) >= _PINOKIO_MAX_EXTRA_PORTS:
                 continue
-            apps = apps_by_port.setdefault(port, [])
-            if app and app not in apps:
-                apps.append(app)
-    return info, apps_by_port
+            candidates.append(port)
+        app = _script_app(script)
+        apps = apps_by_port.setdefault(port, [])
+        if app and app not in apps:
+            apps.append(app)
+    return candidates, apps_by_port
+
+
+def _probe_server(
+    port: int,
+    *,
+    timeout: float = 2,
+    require_comfyui_shape: bool = False,
+    deadline: float | None = None,
+) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
+    url = f"http://127.0.0.1:{port}"
+    errors: list[dict[str, Any]] = []
+
+    def get_json(endpoint: str) -> Any:
+        request_timeout = timeout
+        if deadline is not None:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError("Pinokio scan budget expired")
+            request_timeout = min(timeout, remaining)
+        return _get_json(url + endpoint, timeout=request_timeout)
+
+    try:
+        stats = get_json("/system_stats")
+    except (OSError, urllib.error.URLError, TimeoutError, ValueError) as exc:
+        if not require_comfyui_shape:
+            errors.append(_error(port, "/system_stats", exc))
+        return None, errors
+
+    if require_comfyui_shape and not (
+        isinstance(stats, dict)
+        and isinstance(stats.get("system"), dict)
+        and isinstance(stats.get("devices"), list)
+    ):
+        return None, errors
+
+    system = stats.get("system", {}) if isinstance(stats, dict) else {}
+    if not isinstance(system, dict):
+        system = {}
+    argv_value = system.get("argv", [])
+    argv = [str(value) for value in argv_value] if isinstance(argv_value, list) else []
+    embedded = bool(system.get("embedded_python", False))
+    server: dict[str, Any] = {
+        "url": url,
+        "comfyui_version": system.get("comfyui_version"),
+        "python_version": system.get("python_version"),
+        "embedded_python": embedded,
+        "argv": argv,
+        "folder_paths": None,
+        "base_dir": None,
+        "output_dir": None,
+        "workflows": None,
+        "manager_present": False,
+        "python": None,
+    }
+    try:
+        folders = get_json("/internal/folder_paths")
+        server["folder_paths"] = folders
+        custom_nodes = _first_custom_nodes(folders)
+        base_dir = Path(custom_nodes).parent if custom_nodes else None
+        server["base_dir"] = str(base_dir) if base_dir else None
+        server["output_dir"] = _output_directory(argv, base_dir)
+        server["manager_present"] = _manager_present(base_dir)
+        server["python"] = _python_guess(base_dir, embedded)
+    except (OSError, urllib.error.URLError, TimeoutError, ValueError) as exc:
+        errors.append(_error(port, "/internal/folder_paths", exc))
+    try:
+        query = urllib.parse.urlencode({"dir": "workflows"})
+        workflows = get_json("/userdata?" + query)
+    except (OSError, urllib.error.URLError, TimeoutError, ValueError) as exc:
+        errors.append(_error(port, "/userdata?dir=workflows", exc))
+    else:
+        if isinstance(workflows, list):
+            server["workflows"] = workflows
+        else:
+            errors.append({
+                "port": port,
+                "endpoint": "/userdata?dir=workflows",
+                "error": "workflow listing was not a JSON list",
+            })
+    return server, errors
+
+
+def _pinokio_discovery(
+    already_probed: set[int], deadline: float
+) -> tuple[
+    dict[str, Any] | None,
+    dict[int, list[str]],
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+]:
+    try:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            info = None
+        else:
+            try:
+                info = _get_json(
+                    _PINOKIO_INFO_URL,
+                    timeout=min(_PINOKIO_REQUEST_TIMEOUT_SECONDS, remaining),
+                )
+            except Exception:
+                info = None
+        if not isinstance(info, dict):
+            return None, {}, [], []
+
+        candidates, apps_by_port = _pinokio_candidates(info, already_probed)
+        servers: list[dict[str, Any]] = []
+        errors: list[dict[str, Any]] = []
+        for port in candidates:
+            if time.monotonic() >= deadline:
+                break
+            server, probe_errors = _probe_server(
+                port,
+                timeout=_PINOKIO_EXTRA_PROBE_TIMEOUT_SECONDS,
+                require_comfyui_shape=True,
+                deadline=deadline,
+            )
+            if server is not None:
+                servers.append(server)
+                errors.extend(probe_errors)
+        return info, apps_by_port, servers, errors
+    except Exception:
+        return None, {}, [], []
+
+
+def _bounded_pinokio_discovery(
+    already_probed: set[int],
+) -> tuple[
+    dict[str, Any] | None,
+    dict[int, list[str]],
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+]:
+    """Run the optional Pinokio lookup and probes within one wall-clock budget."""
+    empty = (None, {}, [], [])
+    if not _PINOKIO_SCAN_LOCK.acquire(blocking=False):
+        return empty
+
+    deadline = time.monotonic() + _PINOKIO_SCAN_BUDGET_SECONDS
+    result: list[tuple[Any, float]] = []
+
+    def run() -> None:
+        try:
+            result.append((_pinokio_discovery(already_probed, deadline), time.monotonic()))
+        finally:
+            _PINOKIO_SCAN_LOCK.release()
+
+    worker = threading.Thread(target=run, daemon=True)
+    try:
+        worker.start()
+    except Exception:
+        _PINOKIO_SCAN_LOCK.release()
+        return empty
+    # urllib's timeout is an inactivity limit, so bound the whole optional phase here.
+    worker.join(timeout=max(0, deadline - time.monotonic()))
+    if worker.is_alive() or not result or result[0][1] > deadline:
+        return empty
+    return result[0][0]
 
 
 def scan(ports: list[int]) -> dict[str, Any]:
     """Probe loopback ComfyUI servers and report endpoint errors as data."""
     servers: list[dict[str, Any]] = []
     errors: list[dict[str, Any]] = []
-    pinokio_info, pinokio_apps = _pinokio_snapshot()
+    base_ports = list(dict.fromkeys(ports))
+    for port in base_ports:
+        server, port_errors = _probe_server(port)
+        errors.extend(port_errors)
+        if server is not None:
+            servers.append(server)
+
+    pinokio_info, pinokio_apps, extra_servers, extra_errors = _bounded_pinokio_discovery(
+        set(base_ports)
+    )
     pinokio_home = pinokio_info.get("home") if pinokio_info else None
     if not isinstance(pinokio_home, str):
         pinokio_home = None
-    probe_ports = list(dict.fromkeys([*ports, *pinokio_apps]))
-    for port in probe_ports:
-        url = f"http://127.0.0.1:{port}"
-        try:
-            stats = _get_json(url + "/system_stats")
-        except (OSError, urllib.error.URLError, TimeoutError, ValueError) as exc:
-            errors.append(_error(port, "/system_stats", exc))
-            continue
-        system = stats.get("system", {}) if isinstance(stats, dict) else {}
-        if not isinstance(system, dict):
-            system = {}
-        argv_value = system.get("argv", [])
-        argv = [str(value) for value in argv_value] if isinstance(argv_value, list) else []
-        embedded = bool(system.get("embedded_python", False))
-        server: dict[str, Any] = {
-            "url": url,
-            "comfyui_version": system.get("comfyui_version"),
-            "python_version": system.get("python_version"),
-            "embedded_python": embedded,
-            "argv": argv,
-            "folder_paths": None,
-            "base_dir": None,
-            "output_dir": None,
-            "workflows": None,
-            "manager_present": False,
-            "python": None,
-        }
-        if pinokio_apps.get(port):
+    for server in servers:
+        port = urllib.parse.urlsplit(server["url"]).port
+        if port is not None and pinokio_apps.get(port):
             server["pinokio_apps"] = pinokio_apps[port]
-        try:
-            folders = _get_json(url + "/internal/folder_paths")
-            server["folder_paths"] = folders
-            custom_nodes = _first_custom_nodes(folders)
-            base_dir = Path(custom_nodes).parent if custom_nodes else None
-            server["base_dir"] = str(base_dir) if base_dir else None
-            server["output_dir"] = _output_directory(argv, base_dir)
-            server["manager_present"] = _manager_present(base_dir)
-            server["python"] = _python_guess(base_dir, embedded)
-        except (OSError, urllib.error.URLError, TimeoutError, ValueError) as exc:
-            errors.append(_error(port, "/internal/folder_paths", exc))
-        try:
-            query = urllib.parse.urlencode({"dir": "workflows"})
-            workflows = _get_json(url + "/userdata?" + query)
-        except (OSError, urllib.error.URLError, TimeoutError, ValueError) as exc:
-            errors.append(_error(port, "/userdata?dir=workflows", exc))
-        else:
-            if isinstance(workflows, list):
-                server["workflows"] = workflows
-            else:
-                errors.append({
-                    "port": port,
-                    "endpoint": "/userdata?dir=workflows",
-                    "error": "workflow listing was not a JSON list",
-                })
-        servers.append(server)
+    for server in extra_servers:
+        port = urllib.parse.urlsplit(server["url"]).port
+        if port is not None and pinokio_apps.get(port):
+            server["pinokio_apps"] = pinokio_apps[port]
+    servers.extend(extra_servers)
+    errors.extend(extra_errors)
     return {
         "servers": servers,
         "errors": errors,
