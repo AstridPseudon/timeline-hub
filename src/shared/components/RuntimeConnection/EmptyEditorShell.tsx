@@ -53,7 +53,7 @@ function Header() {
 
 function Preview() {
   return (
-    <div className="relative min-h-0" style={{ gridColumn: 1, gridRow: 1 }}>
+    <div className="relative min-h-0 max-sm:aspect-[4/3]" style={{ gridColumn: 1, gridRow: 1 }}>
       <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-card/95">
         {/* The player letterboxes the 16:9 frame in the card, with the transport over its foot. */}
         <div className="relative flex min-h-0 flex-1 items-center justify-center [container-type:size]" style={VIDEO_EDITOR_THEME_VARS}>
@@ -81,7 +81,7 @@ function Preview() {
 
 function Toolbar() {
   return (
-    <div className="min-w-0" style={{ ...WORK_AREA_STYLE, gridRow: 2 }}>
+    <div className="min-w-0 max-sm:!col-span-1 max-sm:!me-0" style={{ ...WORK_AREA_STYLE, gridRow: 2 }}>
       <div className="relative flex h-7 items-center justify-between gap-2 rounded-lg border border-border/70 bg-card/95 px-2 text-muted-foreground">
         <div className="flex items-center gap-1">
           {/* Where the save badge sits once a timeline is open. */}
@@ -112,7 +112,7 @@ function Track({ label, icon, selected = false }: { label: string; icon: ReactNo
 
 function Timeline() {
   return (
-    <div className="relative min-h-0 min-w-0 overflow-hidden" style={{ ...WORK_AREA_STYLE, gridRow: 3 }}>
+    <div className="relative min-h-0 min-w-0 overflow-hidden max-sm:!col-span-1 max-sm:!me-0" style={{ ...WORK_AREA_STYLE, gridRow: 3 }}>
       <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card/95">
         <div className="flex h-full min-h-0 flex-col bg-background/70">
           <div className="relative h-[30px] shrink-0 overflow-hidden border-b border-border bg-card/80">
@@ -142,7 +142,7 @@ function Timeline() {
 
 function Dock() {
   return (
-    <section className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card/95" style={{ gridColumn: 2, gridRow: '1 / -1', marginInlineStart: 12 }}>
+    <section className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card/95 max-sm:hidden" style={{ gridColumn: 2, gridRow: '1 / -1', marginInlineStart: 12 }}>
       <div className="flex shrink-0 items-center gap-1 border-b border-border/70 px-2 py-1.5">
         <div className="flex min-w-0 flex-1 gap-1">
           <span className="flex min-h-8 items-center rounded-md bg-muted px-2.5 text-xs text-foreground">Inspector</span>
@@ -203,7 +203,8 @@ export function EmptyEditorShell() {
       <AppSkyBackground />
       <div className="relative flex h-full flex-col md:mr-[300px]">
         <Header />
-        <main className="grid min-h-0 flex-1 gap-3 p-3" style={GRID_STYLE}>
+        {/* A phone stacks it as the editor does there: the preview across the top, the timeline under it, no dock. */}
+        <main className="grid min-h-0 flex-1 gap-3 p-3 max-sm:![grid-template-columns:minmax(0,1fr)] max-sm:![grid-template-rows:auto_auto_minmax(0,1fr)]" style={GRID_STYLE}>
           <Preview />
           <Toolbar />
           <Timeline />

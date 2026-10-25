@@ -4,6 +4,7 @@ import { TourCard } from './TourCard';
 import { TOUR_CARD_ENTRANCE_MS } from './useTourCardEntrance';
 import { TOUR_FINALE_ENTRANCE_MS } from './TourStrip';
 import { EDITOR_TOUR_SCRIPT as SCRIPT } from '../tourScript';
+import { EDITOR_TOUR_MEDIA } from '../tourMedia';
 import { DISCORD_URL } from '@/pages/Home/publicAstridLinks';
 import {
   exitEditorTour,
@@ -94,8 +95,9 @@ describe('TourCard', () => {
     expect(screen.getByText(body)).toBeInTheDocument();
     for (const label of labels) expect(screen.getAllByText(label).length).toBeGreaterThan(0);
     for (const step of SCRIPT.strip) expect(screen.getAllByText(step).length).toBeGreaterThan(0);
-    // The strip fills act by act; the video keeps a still underneath until decoded.
-    expect(container.querySelectorAll('ol img, ol video')).toHaveLength(tourAct + (tourAct === 3 ? 1 : 0));
+    // The strip fills act by act; at rest the video step shows where the flight ends, as a still.
+    expect(container.querySelectorAll('ol img, ol video')).toHaveLength(tourAct);
+    if (tourAct === 3) expect(container.querySelectorAll('ol img')[2]).toHaveAttribute('src', EDITOR_TOUR_MEDIA.stills[3].url);
 
     expect(container.querySelector('.editor-tour-card-playing')).not.toBeNull();
     advance(TOUR_CARD_ENTRANCE_MS - 1);

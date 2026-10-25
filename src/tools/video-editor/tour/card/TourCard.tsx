@@ -5,7 +5,7 @@ import { TOUR_FINALE_ENTRANCE_MS, TourStrip } from './TourStrip';
 import { TourVisual } from './TourVisual';
 import { TOUR_CARD_ENTRANCE_MS, useTourCardEntrance } from './useTourCardEntrance';
 import { useEditorTour, type EditorTourAct, type EditorTourBeat } from '@/shared/state/editorTourStore';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Send } from 'lucide-react';
 import { DiscordMark } from '@/pages/Home/PublicAstridSocialLinks';
 import { DISCORD_URL } from '@/pages/Home/publicAstridLinks';
 import { Button } from '@/shared/components/ui/button.tsx';
@@ -71,7 +71,7 @@ export function TourCard({ act, beat, onPrimary, onBack, onSkip, device = 'deskt
           'editor-tour-rise max-w-[calc(100vw-24px)] max-h-[calc(100dvh-24px)] overflow-y-auto overscroll-contain rounded-xl border border-border bg-card text-card-foreground shadow-xl',
           phone ? cn('w-[calc(100vw-24px)] rounded-2xl', explains ? 'p-5' : 'px-5 py-4') : tablet ? cn(
             beat === 'welcome' && 'w-[460px] p-7',
-            beat === 'land' && 'w-[520px] p-6',
+            beat === 'land' && 'w-[580px] p-6',
             beat === 'finale' && 'w-[540px] p-7',
             beat === 'feedback' && 'w-[500px] p-7',
             !explains && 'w-[400px] px-5 py-4',
@@ -94,49 +94,66 @@ export function TourCard({ act, beat, onPrimary, onBack, onSkip, device = 'deskt
   );
 }
 
-/** The top row of the Hint and the Explainer: "N of 3", Back right beside it, Skip on the right. */
+/**
+ * The top row of the Hint and the Explainer: "N of 3", Back right beside it, Skip on the right. On touch, Back moves to
+ * the card's foot (`NavRow`), so every card keeps its controls in the same two places.
+ */
 function CounterRow({ act, onBack, onSkip, fit }: { act: EditorTourAct; fit: Fit } & Pick<TourCardProps, 'onBack' | 'onSkip'>) {
   return (
     <div className="flex items-center justify-between leading-none text-muted-foreground">
-      <div className={cn('flex items-center', fit.touch ? 'gap-4' : 'gap-3')}>
+      <div className="flex items-center gap-3">
         <span className="text-xs tabular-nums">{act} of {ACT_COUNT}</span>
-        <BackControl onBack={onBack} touch={fit.touch} />
+        {!fit.touch && <BackControl onBack={onBack} touch={false} />}
       </div>
       <SkipControl onSkip={onSkip} fit={fit} />
     </div>
   );
 }
 
+/** Touch cards' foot: the way back (or out) on the left, the one thing to do next on the right, under the thumb. */
+function NavRow({ secondary, children, className }: { secondary?: ReactNode; children: ReactNode; className?: string }) {
+  return (
+    <div className={cn('mt-5 flex items-center justify-between gap-3', className)}>
+      {secondary ?? <span />}
+      {children}
+    </div>
+  );
+}
+
+/** One heading style for every card's title on touch (Astrid's own cards keep the larger mink title). */
+const TOUCH_HEADING = 'text-pretty font-serif font-theme-heading text-xl leading-tight text-foreground';
+
 function Explainer({ act, playing, onPrimary, onBack, onSkip, fit }: { act: EditorTourAct; playing: boolean; fit: Fit } & Omit<TourCardProps, 'act' | 'beat'>) {
   const { title, body, visual, labels } = SCRIPT.acts[act].card;
-  // The spotlit preview above a touch card already shows this act's picture, full size.
-  const pictured = !fit.touch;
-  return (
-    <>
-      <CounterRow act={act} onBack={onBack} onSkip={onSkip} fit={fit} />
-      {pictured && (
+  const next = <PrimaryButton label={SCRIPT.controls.next} onPrimary={onPrimary} fit={fit} />;
+  if (!fit.touch) {
+    return (
+      <>
+        <CounterRow act={act} onBack={onBack} onSkip={onSkip} fit={fit} />
         <div className="mt-3">
           <TourVisual visual={visual} labels={labels} playing={playing} />
         </div>
-      )}
-      <h2 className={cn('text-pretty font-serif font-theme-heading leading-tight text-foreground', pictured ? 'mt-4 text-lg' : 'mt-3 text-xl')}>{title}</h2>
-      <p className={cn('mt-1.5 text-pretty leading-6 text-muted-foreground', fit.device === 'tablet' ? 'text-[15px]' : 'text-sm')}>{body}</p>
-      {fit.device === 'tablet' ? (
-        // A tablet has the width for the larger strip and Next side by side, which keeps the card short enough to sit beside its targets.
-        <div className="mt-5 flex items-end gap-6">
-          <div className="min-w-0 flex-1"><TourStrip filled={act} labels={SCRIPT.strip} size="medium" /></div>
-          <PrimaryButton label={SCRIPT.controls.next} onPrimary={onPrimary} fit={fit} />
+        <h2 className="mt-4 text-pretty font-serif font-theme-heading text-lg leading-tight text-foreground">{title}</h2>
+        <p className="mt-1.5 text-pretty text-sm leading-6 text-muted-foreground">{body}</p>
+        <div className="mt-4">
+          <TourStrip filled={act} labels={SCRIPT.strip} />
         </div>
-      ) : (
-        <>
-          <div className="mt-4">
-            <TourStrip filled={act} labels={SCRIPT.strip} />
-          </div>
-          <div className={cn('flex justify-end', fit.touch ? 'mt-4' : 'mt-5')}>
-            <PrimaryButton label={SCRIPT.controls.next} onPrimary={onPrimary} fit={fit} />
-          </div>
-        </>
-      )}
+        <div className="mt-5 flex justify-end">{next}</div>
+      </>
+    );
+  }
+  // On touch the spotlit preview above shows this act's picture, full size. A tablet keeps the chain as a pager between
+  // Back and Next; a phone keeps only what it needs, so the sheet leaves the preview and its new row in view.
+  const tablet = fit.device === 'tablet';
+  return (
+    <>
+      <CounterRow act={act} onBack={onBack} onSkip={onSkip} fit={fit} />
+      <h2 className={cn('mt-3', TOUCH_HEADING)}>{title}</h2>
+      <p className={cn('mt-1.5 text-pretty text-muted-foreground', tablet ? 'text-[15px] leading-6' : 'text-sm leading-[1.4rem]')}>{body}</p>
+      <NavRow secondary={<BackControl onBack={onBack} touch />} className={tablet ? 'items-end gap-5' : undefined}>
+        {tablet && <div className="min-w-0 flex-1"><TourStrip filled={act} labels={SCRIPT.strip} size="medium" /></div>}
+        {next}
+      </NavRow>
     </>
   );
 }
@@ -169,7 +186,7 @@ function Finale({ playing, onPrimary, onBack, fit }: { playing: boolean; onPrima
     <>
       <MinkTitle>{SCRIPT.finale.title}</MinkTitle>
       <div className="mt-6">
-        <TourStrip filled={3} labels={SCRIPT.finale.recap} size="large" playing={playing} />
+        <TourStrip filled={3} labels={SCRIPT.finale.recap} size="large" playing={playing} wrapLabels={fit.device === 'phone'} />
       </div>
       <div className="mt-7 flex items-center justify-between gap-3">
         <BackControl onBack={onBack} touch={fit.touch} />
@@ -185,7 +202,7 @@ function Feedback({ onPrimary, onBack, fit }: { onPrimary: () => void; onBack?: 
   return (
     <>
       <MinkTitle>{SCRIPT.feedback.title}</MinkTitle>
-      <p className="mt-3 text-pretty text-[15px] leading-6 text-muted-foreground">{SCRIPT.feedback.body}</p>
+      <p className="mt-3 text-pretty text-[15px] leading-6 text-muted-foreground">{fit.device === 'phone' ? SCRIPT.feedback.shortBody : SCRIPT.feedback.body}</p>
       <Button asChild variant="outline" className={cn('mt-4 gap-2', fit.touch && 'h-11')}>
         <a href={DISCORD_URL} target="_blank" rel="noopener noreferrer">
           <DiscordMark />
@@ -200,28 +217,46 @@ function Feedback({ onPrimary, onBack, fit }: { onPrimary: () => void; onBack?: 
   );
 }
 
-/** Compose: send the prompt (the chat's Send, or Enter). Respond (act 1 only): the reply's Next. */
+/**
+ * Compose: send the prompt (the chat's Send, or Enter). Respond (act 1 only): the reply's Next. On touch the card carries
+ * its own Send as the primary action, the same press as the chat's.
+ */
 function Hint({ act, beat, onPrimary, onBack, onSkip, fit }: TourCardProps & { fit: Fit }) {
   const compose = beat === 'compose';
   const header = compose ? SCRIPT.acts[act].composeHeader : undefined;
+  if (fit.touch) {
+    return (
+      <>
+        <CounterRow act={act} onBack={onBack} onSkip={onSkip} fit={fit} />
+        <h2 className={cn('mt-3', TOUCH_HEADING)}>{compose ? header ?? SCRIPT.hints.composeTouch : SCRIPT.hints.respond}</h2>
+        {compose && header && <p className={cn('mt-1.5 text-muted-foreground', fit.device === 'tablet' ? 'text-[15px]' : 'text-sm')}>{SCRIPT.hints.composeTouch}</p>}
+        <NavRow secondary={<BackControl onBack={onBack} touch />}>
+          {compose
+            ? <PrimaryButton label={SCRIPT.controls.send} icon={<Send className="h-4 w-4" aria-hidden />} onPrimary={onPrimary} fit={fit} />
+            : <PrimaryButton label={SCRIPT.controls.next} onPrimary={onPrimary} fit={fit} />}
+        </NavRow>
+      </>
+    );
+  }
   return (
     <>
       <CounterRow act={act} onBack={onBack} onSkip={onSkip} fit={fit} />
       {header && (
         <h2 className="mt-3 text-pretty font-serif font-theme-heading text-lg leading-tight text-foreground">{header}</h2>
       )}
-      <div className={cn('mt-2 flex items-center justify-between gap-3', fit.touch ? 'min-h-11' : 'min-h-9')}>
-        <p className="text-sm text-foreground">{compose ? (fit.touch ? SCRIPT.hints.composeTouch : SCRIPT.hints.compose) : SCRIPT.hints.respond}</p>
+      <div className="mt-2 flex min-h-9 items-center justify-between gap-3">
+        <p className="text-sm text-foreground">{compose ? SCRIPT.hints.compose : SCRIPT.hints.respond}</p>
         {compose ? fit.showKeyboardHints && <Kbd>↵</Kbd> : <PrimaryButton label={SCRIPT.controls.next} onPrimary={onPrimary} fit={fit} />}
       </div>
     </>
   );
 }
 
-function PrimaryButton({ label, onPrimary, size = 'sm', fit }: { label: string; onPrimary: () => void; size?: 'sm' | 'default'; fit: Fit }) {
+function PrimaryButton({ label, icon, onPrimary, size = 'sm', fit }: { label: string; icon?: ReactNode; onPrimary: () => void; size?: 'sm' | 'default'; fit: Fit }) {
   return (
-    <Button type="button" size={fit.touch ? 'lg' : size} className={cn('gap-2', fit.touch ? 'min-w-24 px-6 text-[15px]' : 'pr-2.5')} onClick={onPrimary}>
+    <Button type="button" size={fit.touch ? 'lg' : size} className={cn('shrink-0 gap-2', fit.touch ? 'min-w-24 px-6 text-[15px]' : 'pr-2.5')} onClick={onPrimary}>
       {label}
+      {icon}
       {fit.showKeyboardHints && <Kbd onPrimary>↵</Kbd>}
     </Button>
   );

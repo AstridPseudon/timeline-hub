@@ -22,7 +22,8 @@ export function EditorCardLayer({ leaving = false, cardKey, children, className,
   // Over the app's own panes (the chat pane sits at z 100016) while the app mounts beneath it.
   return <section {...props} className={cn('fixed inset-0 z-[100100] overflow-y-auto text-foreground', leaving && 'pointer-events-none', className)}>
     <EditorBackdrop leaving={leaving} />
-    <div className="relative flex min-h-full items-center justify-center p-4">
+    {/* A phone's card rests along the bottom, under the thumb, as the tour's cards do. */}
+    <div className="relative flex min-h-full items-center justify-center p-4 max-sm:items-end max-sm:p-3 max-sm:pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       <div key={cardKey} className={cn('w-full max-w-[576px] transition-[opacity,transform] duration-300 ease-out animate-in fade-in-0 motion-reduce:transition-none motion-reduce:animate-none', leaving && '-translate-y-1 opacity-0')}>
         {children}
       </div>

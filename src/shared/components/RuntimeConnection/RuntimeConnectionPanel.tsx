@@ -215,7 +215,8 @@ function PhoneCard({ onBack }: { readonly onBack?: () => void }) {
       sentence={phone.sentence}
       onBack={onBack}
       action={<div className="space-y-2">
-        <Button type="button" className="h-11 w-full justify-between rounded-xl px-4" onClick={() => void send()}>
+        {/* Full width under a phone's thumb; on a tablet's wider card it keeps to its content. */}
+        <Button type="button" className="h-11 w-full justify-between gap-6 rounded-xl px-4 sm:mx-auto sm:flex sm:w-auto" onClick={() => void send()}>
           <span>{copied ? phone.copied : phone.button}</span>
           {copied ? <Check aria-hidden="true" className="h-4 w-4" /> : <Link2 aria-hidden="true" className="h-4 w-4" />}
         </Button>

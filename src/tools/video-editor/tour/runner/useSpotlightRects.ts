@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { CLIP_BODY_SELECTOR } from '../../lib/timeline-dom';
-import { EDITOR_TOUR_TRACK_ATTRIBUTE } from '../anchors';
+import { EDITOR_TOUR_ANCHOR_ATTRIBUTE, EDITOR_TOUR_ANCHORS, EDITOR_TOUR_TRACK_ATTRIBUTE } from '../anchors';
 
 export interface SpotlightRect {
   x: number;
@@ -11,10 +11,21 @@ export interface SpotlightRect {
 
 const PADDING = 6;
 
-/** The part of an element its scrolling or clipping ancestors actually show (a timeline row is wider than the timeline). */
-function visibleBox(element: Element): { left: number; top: number; right: number; bottom: number } {
+interface Box { left: number; top: number; right: number; bottom: number }
+
+/**
+ * The part of an element its scrolling or clipping ancestors actually show (a timeline row is wider than the timeline),
+ * and where its spotlight's padding may reach (`bounds`): the viewport, and a scrolling panel's own edges, so the
+ * transcript's light never spills into the chat header.
+ */
+function visibleBox(element: Element): { visible: Box; bounds: Box } {
   const box = element.getBoundingClientRect();
   const visible = { left: box.left, top: box.top, right: box.right, bottom: box.bottom };
+  const own = getComputedStyle(element);
+  const scrolls = /auto|scroll/.test(`${own.overflowX} ${own.overflowY}`);
+  const bounds = scrolls
+    ? { left: Math.max(0, box.left), top: Math.max(0, box.top), right: Math.min(window.innerWidth, box.right), bottom: Math.min(window.innerHeight, box.bottom) }
+    : { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight };
   for (let parent = element.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
     const { overflowX, overflowY } = getComputedStyle(parent);
     if (overflowX === 'visible' && overflowY === 'visible') continue;
@@ -28,18 +39,27 @@ function visibleBox(element: Element): { left: number; top: number; right: numbe
       visible.bottom = Math.min(visible.bottom, clip.bottom);
     }
   }
-  return visible;
+  return { visible, bounds };
 }
 
+const TRANSCRIPT_PADDING = 12;
+
 /**
- * A track row runs the timeline's whole width; its spotlight ends with its last clip, so the empty rest of the row stays
+ * Where an element's content ends, when it is shorter than the element: a track row runs the timeline's whole width but
+ * its spotlight ends with its last clip, and the chat transcript's ends below its last message. The empty rest stays
  * dimmed and free for the card.
  */
-function trackContentRight(element: Element): number {
-  const right = element.getBoundingClientRect().right;
-  if (!element.hasAttribute(EDITOR_TOUR_TRACK_ATTRIBUTE)) return right;
-  const clips = Array.from(element.querySelectorAll(CLIP_BODY_SELECTOR), (clip) => clip.getBoundingClientRect().right);
-  return clips.length ? Math.min(right, Math.max(...clips)) : right;
+function contentExtent(element: Element, box: Box): Box {
+  if (element.hasAttribute(EDITOR_TOUR_TRACK_ATTRIBUTE)) {
+    const clips = Array.from(element.querySelectorAll(CLIP_BODY_SELECTOR), (clip) => clip.getBoundingClientRect().right);
+    return clips.length ? { ...box, right: Math.min(box.right, Math.max(...clips)) } : box;
+  }
+  if (element.getAttribute(EDITOR_TOUR_ANCHOR_ATTRIBUTE) === EDITOR_TOUR_ANCHORS.chatTranscript) {
+    const children = Array.from(element.children, (child) => child.getBoundingClientRect()).filter((rect) => rect.height > 0);
+    const end = Math.max(...children.map((rect) => rect.bottom)) + TRANSCRIPT_PADDING;
+    return children.length ? { ...box, bottom: Math.max(box.top + 2 * TRANSCRIPT_PADDING, Math.min(box.bottom, end)) } : box;
+  }
+  return box;
 }
 
 function measure(selectors: readonly string[]): SpotlightRect[] {
@@ -47,12 +67,16 @@ function measure(selectors: readonly string[]): SpotlightRect[] {
   for (const selector of selectors) {
     const element = document.querySelector(selector);
     if (!element) continue;
-    const box = visibleBox(element);
-    box.right = Math.min(box.right, trackContentRight(element));
-    const width = box.right - box.left;
-    const height = box.bottom - box.top;
-    if (width <= 0 || height <= 0) continue;
-    rects.push({ x: box.left - PADDING, y: box.top - PADDING, width: width + 2 * PADDING, height: height + 2 * PADDING });
+    const { visible, bounds } = visibleBox(element);
+    const box = contentExtent(element, visible);
+    if (box.right - box.left <= 0 || box.bottom - box.top <= 0) continue;
+    const padded = {
+      left: Math.max(bounds.left, box.left - PADDING),
+      top: Math.max(bounds.top, box.top - PADDING),
+      right: Math.min(bounds.right, box.right + PADDING),
+      bottom: Math.min(bounds.bottom, box.bottom + PADDING),
+    };
+    rects.push({ x: padded.left, y: padded.top, width: padded.right - padded.left, height: padded.bottom - padded.top });
   }
   return rects;
 }
