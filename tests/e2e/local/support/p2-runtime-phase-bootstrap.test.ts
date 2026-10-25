@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, readFileSync, statSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { test } from 'node:test';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -248,22 +249,56 @@ function assertReviewedNewLifecycle(
   const lifecycle = event.lifecycle as string;
   const dispatch = record(phases.dispatch_queue, 'dispatch_queue phase');
   const response = record(phases.http_response, 'http_response phase');
-  assertInteger(dispatch.count, 'dispatch_queue.count', { minimum: 1, maximum: MAX_PHASE_COUNT });
+  const handler = record(phases.handler_entry, 'handler_entry phase');
+  const duration = (start: unknown, end: unknown): number | null =>
+    typeof start === 'number' && typeof end === 'number' ? Math.round((end - start) * 1000) / 1000 : null;
+  const equalDuration = (actual: unknown, expected: number | null, label: string): void => {
+    if (expected === null) assert.equal(actual, null, label);
+    else {
+      assert.equal(typeof actual, 'number', label);
+      assert.ok(Math.abs((actual as number) - expected) < 1e-9, label);
+    }
+  };
+  // Frozen 231ddb: queue end is handler entry, not dispatch completion.
+  assert.equal(event.dispatch_start_ms, dispatch.start_ms);
+  equalDuration(durations.dispatch_queue_ms, duration(dispatch.start_ms, handler.start_ms), 'dispatch queue boundaries');
+  for (const [phase, key] of [['provider', 'provider_wall_ms'], ['http_response', 'response_write_wall_ms']]) {
+    const state = record(phases[phase], phase);
+    equalDuration(durations[key], duration(state.start_ms, state.end_ms), `${phase} boundaries`);
+  }
+  assert.equal(durations.execution_lock_wait_ms, null);
+  assert.equal(durations.caller_receipt_ms, null);
+  assert.equal(durations.dispatch_to_completion_wall_ms, durations.dispatch_total_ms);
+  // Completion is not exported as a timestamp. Infer it only from an observed
+  // duration; missing starts and an error at dispatch return leave it unknown.
+  const completion = typeof durations.dispatch_total_ms === 'number' && typeof dispatch.start_ms === 'number'
+    ? dispatch.start_ms + durations.dispatch_total_ms
+    : typeof durations.handler_ms === 'number' && typeof handler.start_ms === 'number'
+      ? handler.start_ms + durations.handler_ms : null;
+  equalDuration(durations.dispatch_total_ms, duration(dispatch.start_ms, completion), 'dispatch completion boundaries');
+  equalDuration(durations.handler_ms, duration(handler.start_ms, completion), 'handler completion boundaries');
+  if (dispatch.status === 'raised') assert.equal(completion, null, 'dispatch error leaves completion unknown');
+  if (dispatch.count && handler.count) assert.notEqual(dispatch.end_ms, null, 'handler entry closes the queue');
+  if (lifecycle !== 'pending_at_stop' && dispatch.count) {
+    assert.notEqual(dispatch.end_ms, null, 'finished dispatch closes an open queue');
+  }
   if (lifecycle === 'completed') {
+    // Response count wins over dispatch_raised; caught errors can leave all
+    // completion durations null even though the lifecycle is completed.
     assert.ok((response.count as number) > 0, 'completed requires an observed response');
-    assert.notEqual(durations.dispatch_total_ms, null, 'completed requires an ended dispatch');
-    assert.notEqual(durations.dispatch_to_completion_wall_ms, null, 'completed requires a completion wall duration');
   } else if (lifecycle === 'returned_without_response') {
     assert.equal(response.count, 0, 'returned_without_response forbids an observed response');
-    assert.notEqual(durations.dispatch_total_ms, null, 'returned_without_response requires an ended dispatch');
-    assert.notEqual(durations.dispatch_to_completion_wall_ms, null, 'returned_without_response requires a completion wall duration');
+    if (dispatch.count) {
+      assert.equal(dispatch.status, 'observed');
+      assert.notEqual(durations.dispatch_total_ms, null, 'observed dispatch return has a completion boundary');
+    }
   } else if (lifecycle === 'raised') {
-    assert.equal(dispatch.status, 'raised', 'raised requires a raised dispatch phase');
-    assert.equal(response.count, 0, 'raised forbids an observed response');
-  } else {
-    assert.equal(durations.dispatch_total_ms, null, 'pending_at_stop cannot have an ended dispatch');
-    assert.equal(durations.dispatch_to_completion_wall_ms, null, 'pending_at_stop cannot have a completion wall duration');
+    assert.equal(response.count, 0, 'response completion takes priority over raised');
+    assert.equal(completion, null, 'raised dispatch has no completion timestamp');
+    if (dispatch.count && !handler.count) assert.equal(dispatch.status, 'raised');
   }
+  // pending_at_stop can include a return callback that has set its end time
+  // but has not yet acquired the lock to set dispatch_finished.
 }
 
 function assertCaptureEvent(event: Record<string, unknown>, arm: CaptureValidatorArm): void {
@@ -297,13 +332,6 @@ function assertCaptureEvent(event: Record<string, unknown>, arm: CaptureValidato
     if (reviewed) assert.equal(durations.dispatch_to_completion_wall_ms, durations.dispatch_total_ms);
     assert.equal(typeof event.truncated, 'boolean');
     if (newSchema) {
-      const lifecycle = event.lifecycle as string;
-      if (lifecycle === 'raised' || lifecycle === 'pending_at_stop') {
-        assert.equal(durations.handler_ms, null);
-        assert.equal(durations.dispatch_total_ms, null);
-        assert.equal(durations.dispatch_to_completion_wall_ms, null);
-      }
-      assert.equal(durations.dispatch_to_completion_wall_ms, durations.dispatch_total_ms);
       assertReviewedNewLifecycle(event, event.phases as Record<string, unknown>, durations);
     }
     assertRetention(event.retention, newSchema);
@@ -459,7 +487,7 @@ function newValidatorSummaryFixture(): Record<string, unknown> {
     method: 'POST',
     route_template: '/v1/projects/{project_id}/timelines/{timeline_id}/commit',
     idempotency_key_sha256: 'a'.repeat(64),
-    dispatch_start_ms: null,
+    dispatch_start_ms: 0,
     sampling,
     unknown_boundaries: {
       client_request_to_server_receive: 'unsupported: no earlier socket/server-accept hook',
@@ -514,18 +542,22 @@ test('D127 reviewed-new validator rejects field, lifecycle, phase, truncation, a
   rejects('leaf row lost_samples must match the sample summary', (event) => { event.sampling.top_leaf_frames[0].lost_samples = 0; });
   rejects('leaf count cannot exceed sample total', (event) => { event.sampling.top_leaf_frames[0].sample_count = 3; });
   rejects('leaf frame identity remains safe', (event) => { event.sampling.top_leaf_frames[0].function = 'private token'; });
-  rejects('pending lifecycle cannot claim a dispatch duration', (event) => {
-    event.durations_ms.dispatch_total_ms = 1;
-    event.durations_ms.dispatch_to_completion_wall_ms = 1;
+  rejects('completion duration cannot omit a known handler boundary', (event) => {
+    event.phases.handler_entry = { status: 'observed', count: 1, start_ms: 1, end_ms: null };
+    event.phases.dispatch_queue.end_ms = 1;
+    event.durations_ms.dispatch_queue_ms = 1;
+    event.durations_ms.dispatch_total_ms = 2;
+    event.durations_ms.dispatch_to_completion_wall_ms = 2;
   });
-  rejects('completed lifecycle requires response and ended dispatch state', (event) => { event.lifecycle = 'completed'; });
+  rejects('completed lifecycle requires an observed response', (event) => { event.lifecycle = 'completed'; });
   rejects('returned lifecycle requires no response and ended dispatch state', (event) => {
     event.lifecycle = 'returned_without_response';
     event.durations_ms.dispatch_total_ms = 1;
     event.durations_ms.dispatch_to_completion_wall_ms = 1;
-    event.phases.http_response.count = 1;
+    event.phases.http_response = { status: 'observed', count: 1, start_ms: 0, end_ms: 0 };
+    event.durations_ms.response_write_wall_ms = 0;
   });
-  rejects('raised lifecycle requires a raised dispatch phase', (event) => { event.lifecycle = 'raised'; });
+  rejects('raised before handler entry requires a closed raised queue', (event) => { event.lifecycle = 'raised'; });
   rejects('dispatch denominator cannot contradict unknown duration', (event) => {
     event.sampling.dispatch_wall_denominator_ms = 20;
   });
@@ -535,6 +567,213 @@ test('D127 reviewed-new validator rejects field, lifecycle, phase, truncation, a
   rejects('retention outcome uses the new lifecycle enum', (event) => { event.retention.final_request.outcome = 'pending'; });
   rejects('summary and final retention lifecycle must agree', (event) => { event.retention.final_request.outcome = 'returned_without_response'; });
   rejects('buffer completeness must agree with complete', (event) => { event.retention.final_request.buffer_complete = false; });
+  rejects('unknown summary fields are refused', (event) => { event.extra = null; });
+  rejects('raw request content stays private', (event) => { event.body = 'fixture'; });
+  rejects('request cap remains eight', (event) => { event.request = 9; });
+  rejects('phase count cap remains thirty-two', (event) => { event.phases.dispatch_queue.count = 33; });
+  rejects('rolling capacity remains 128', (event) => { event.retention.rolling.capacity_events = 129; });
+  rejects('output byte cap remains 65536', (event) => { event.retention.output.bytes = 65537; });
+  rejects('sampling interval remains 20 ms', (event) => { event.sampling.sampling_interval_ms = 21; });
+  rejects('retention accounting is exact', (event) => { event.retention.rolling.events_retained = 0; });
+});
+
+test('D127 frozen helper lifecycle matrix accepts observed projections and rejects boundary contradictions', () => {
+  const source = spawnSync('git', ['-C', runtimeCheckout, 'show', '231ddb5a6605b535d26172d34439ebe7b90804de:tests/helpers/p2_commit_phase_capture.py'], { encoding: 'utf8' });
+  assert.equal(source.status, 0, source.stderr);
+  assert.equal(createHash('sha256').update(source.stdout).digest('hex'), REVIEWED_NEW_HELPER_SHA256);
+  // Only stdlib helper callbacks and in-memory summaries; no trace installation,
+  // Runtime bodies, timers, sockets, output sinks, or helper normalization.
+  const probe = spawnSync(python, ['-c', `
+import itertools, json, sys
+from types import SimpleNamespace
+scope = {}
+exec(compile(sys.stdin.read(), "p2_commit_phase_capture.py", "exec"), scope)
+Capture = scope["P2CommitPhaseCapture"]
+
+def capture():
+    ticks = itertools.count(1_000_000, 1_000_000)
+    value = Capture(clock_ns=lambda: next(ticks))
+    value._utc_anchor = value._utc_text()
+    return value
+
+def handler():
+    return SimpleNamespace(command="POST", path="/v1/projects/p/timelines/t/commit",
+                           headers={"Idempotency-Key": "fixture"})
+
+def frame(name, owner):
+    return SimpleNamespace(f_globals={"__name__": "runtime_protocol.server"},
+                           f_code=SimpleNamespace(co_qualname="RuntimeHandler." + name),
+                           f_locals={"self": owner, "status": 200}, f_back=None)
+
+def summary(value):
+    for request in value._requests.values():
+        value._summary(request)
+    value._finalize_snapshot()
+    return value._summary_events[-1]
+
+cases = []
+# Exercise the actual call/exception/return callback, including lifecycle priority.
+recipes = [
+    ("pending_before_handler", True, False, False, False, False),
+    ("pending_after_handler", True, True, False, False, False),
+    ("pending_with_response", True, True, True, False, False),
+    ("completed", True, True, True, True, False),
+    ("completed_without_handler_boundary", True, False, True, True, False),
+    ("returned_without_response", True, True, False, True, False),
+    ("raised_before_handler", True, False, False, True, True),
+    ("raised_after_handler", True, True, False, True, True),
+    ("completed_after_error_before_handler", True, False, True, True, True),
+    ("completed_after_error_inside_handler", True, True, True, True, True),
+    ("pending_missing_dispatch", False, True, False, False, False),
+    ("pending_response_missing_dispatch", False, True, True, False, False),
+    ("returned_before_handler", True, False, False, True, False),
+]
+for name, dispatch, entered, responded, finished, error in recipes:
+    value, owner = capture(), handler()
+    dispatch_frame, handler_frame, response_frame = [frame(n, owner) for n in ("_dispatch", "_timeline_commit", "_send")]
+    if dispatch:
+        value._trace_inner(dispatch_frame, "call", None)
+    if entered:
+        value._trace_inner(handler_frame, "call", None)
+    if error:
+        if entered:
+            value._trace_inner(handler_frame, "exception", None)
+        value._trace_inner(dispatch_frame, "exception", None)
+    if responded:
+        value._trace_inner(response_frame, "call", None)
+        value._trace_inner(response_frame, "return", None)
+    if entered and finished:
+        value._trace_inner(handler_frame, "return", None)
+    if dispatch and finished:
+        value._trace_inner(dispatch_frame, "return", None)
+    cases.append({"name": name, "summary": summary(value)})
+
+flags = []
+for finished, returned, raised, response in itertools.product((False, True), repeat=4):
+    value = capture()
+    ordinal = value._new_request(handler=handler())
+    request = value._requests[ordinal]
+    request.update(dispatch_finished=finished, dispatch_returned=returned, dispatch_raised=raised)
+    if response:
+        value._begin(ordinal, "http_response", status=200)
+    flags.append({"finished": finished, "returned": returned, "raised": raised,
+                  "response": response, "outcome": value._request_outcome(request)})
+
+# Closed boundary matrix: present/missing starts, response presence, return/error
+# flags, and the stop interleaving before dispatch_finished. Missing dispatch is
+# also covered by the frozen Runtime unit test's explicitly unknown boundary.
+for dispatch, entered, responded, state in itertools.product((False, True), (False, True), (False, True), ("pending", "returning", "error_returning", "finished", "error_finished")):
+    value = capture()
+    ordinal = value._new_request(handler=handler())
+    request = value._requests[ordinal]
+    if dispatch:
+        value._begin(ordinal, "dispatch_queue")
+    if entered:
+        if dispatch:
+            value._end(ordinal, "dispatch_queue")
+        value._begin(ordinal, "handler_entry")
+    if responded:
+        value._begin(ordinal, "http_response", status=200)
+        value._end(ordinal, "http_response", status=200)
+    if state != "pending":
+        error = state.startswith("error_")
+        request["dispatch_returned"] = True
+        request["dispatch_raised"] = error
+        if not error:
+            request["dispatch_end_ms"] = value._at_ms()
+        if dispatch and not entered:
+            value._end(ordinal, "dispatch_queue", error=error)
+        request["dispatch_finished"] = state.endswith("finished")
+    cases.append({"name": f"matrix-{dispatch}-{entered}-{responded}-{state}", "summary": summary(value)})
+retention = []
+for outcomes in itertools.product(("pending_at_stop", "completed", "raised", "returned_without_response"), repeat=2):
+    value = capture()
+    for outcome in outcomes:
+        ordinal = value._new_request(handler=handler())
+        value._begin(ordinal, "dispatch_queue")
+        request = value._requests[ordinal]
+        if outcome == "completed":
+            value._begin(ordinal, "http_response", status=200)
+            value._end(ordinal, "http_response", status=200)
+        if outcome != "pending_at_stop":
+            error = outcome == "raised"
+            request.update(dispatch_finished=True, dispatch_returned=True, dispatch_raised=error)
+            if not error:
+                request["dispatch_end_ms"] = value._at_ms()
+            value._end(ordinal, "dispatch_queue", error=error)
+    summary(value)
+    retention.append({"outcomes": outcomes, "summaries": value._summary_events})
+print(json.dumps({"flags": flags, "cases": cases, "retention": retention}))
+`], { input: source.stdout, encoding: 'utf8', env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' } });
+  assert.equal(probe.status, 0, `${probe.stdout}\n${probe.stderr}`);
+  const result = JSON.parse(probe.stdout) as {
+    flags: { finished: boolean; returned: boolean; raised: boolean; response: boolean; outcome: string }[];
+    cases: { name: string; summary: Record<string, any> }[];
+    retention: { outcomes: string[]; summaries: Record<string, any>[] }[];
+  };
+  assert.equal(result.flags.length, 16);
+  for (const row of result.flags) {
+    assert.equal(row.outcome, !row.finished ? 'pending_at_stop'
+      : row.returned && row.response ? 'completed' : row.raised ? 'raised' : 'returned_without_response');
+  }
+  assert.equal(result.retention.length, 16);
+  for (const { outcomes, summaries } of result.retention) {
+    const target = outcomes.findLastIndex((outcome) => outcome !== 'completed');
+    for (const summary of summaries) {
+      assert.doesNotThrow(() => assertCaptureEvent(summary, 'reviewed-new'));
+      const final = summary.retention.final_request;
+      if (target === -1) assert.equal(final, null);
+      else {
+        assert.equal(final.request, target + 1);
+        assert.equal(final.outcome, outcomes[target]);
+        assert.equal(final.buffer_complete, true);
+        assert.equal(final.complete, true);
+      }
+    }
+  }
+  assert.equal(result.cases.length, 53);
+  for (const { name, summary } of result.cases) {
+    assert.doesNotThrow(() => assertCaptureEvent(summary, 'reviewed-new'), name);
+    const rejects = (label: string, mutate: (event: Record<string, any>) => void): void => {
+      const changed = JSON.parse(JSON.stringify(summary)) as Record<string, any>;
+      mutate(changed);
+      assert.throws(() => assertCaptureEvent(changed, 'reviewed-new'), undefined, `${name}: ${label}`);
+    };
+    rejects('queue duration follows its two starts', (event) => {
+      event.durations_ms.dispatch_queue_ms = event.durations_ms.dispatch_queue_ms === null ? 1 : event.durations_ms.dispatch_queue_ms + 1;
+      if (event.durations_ms.dispatch_total_ms !== null && event.durations_ms.handler_ms !== null) {
+        event.durations_ms.handler_ms -= 1;
+      }
+    });
+    rejects('provider duration follows observed boundaries', (event) => { event.durations_ms.provider_wall_ms = 1; });
+    rejects('response duration follows observed boundaries', (event) => {
+      event.durations_ms.response_write_wall_ms = event.durations_ms.response_write_wall_ms === null ? 1 : event.durations_ms.response_write_wall_ms + 1;
+    });
+    rejects('unsupported lock duration stays unknown', (event) => { event.durations_ms.execution_lock_wait_ms = 1; });
+    rejects('unsupported caller receipt stays unknown', (event) => { event.durations_ms.caller_receipt_ms = 1; });
+    rejects('dispatch start identity', (event) => { event.dispatch_start_ms = event.dispatch_start_ms === null ? 0 : null; });
+    rejects('sampling denominator follows completion duration', (event) => {
+      event.sampling.dispatch_wall_denominator_ms = event.sampling.dispatch_wall_denominator_ms === null ? 1 : null;
+    });
+    if (summary.phases.dispatch_queue.status === 'raised') {
+      rejects('dispatch error cannot invent a completion timestamp', (event) => {
+        const completion = 100;
+        const total = completion - event.phases.dispatch_queue.start_ms;
+        event.durations_ms.dispatch_total_ms = total;
+        event.durations_ms.dispatch_to_completion_wall_ms = total;
+        event.durations_ms.handler_ms = event.phases.handler_entry.start_ms === null ? null : completion - event.phases.handler_entry.start_ms;
+        event.sampling.dispatch_wall_denominator_ms = total;
+      });
+    }
+    if (!summary.phases.http_response.count) {
+      rejects('completion needs a response', (event) => { event.lifecycle = 'completed'; event.retention.final_request = null; });
+    }
+    if (summary.lifecycle === 'completed') {
+      for (const lifecycle of ['raised', 'returned_without_response']) {
+        rejects('observed response takes completion priority', (event) => { event.lifecycle = lifecycle; });
+      }
+    }
+  }
 });
 
 function readBootstrappedWatchdog(root: string, seconds?: string): { seconds: number; stack_sink: string } {
