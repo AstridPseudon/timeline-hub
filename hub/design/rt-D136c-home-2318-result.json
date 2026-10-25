@@ -1,0 +1,52 @@
+{
+  "task": "D136c",
+  "status": "PASS",
+  "runtime_commit": "0ca306dfd3cf4e21976271cc4b2e779b10e025b0",
+  "runtime_tree": "37cfcd4f6108c1fdda401e563e3674503bc328ef",
+  "agent_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+  "agent_tree": "d50fd98f7d1bc6860de810f38e8a0b3a55ca224e",
+  "review_candidate": "2f1fbb1fc2954dc54eda7f29656de8f15e38683a",
+  "review_candidate_tree": "37cfcd4f6108c1fdda401e563e3674503bc328ef",
+  "source_match": "three reviewed source blobs equal before, after, and security candidate",
+  "test": {
+    "cwd": "/home/user/work/wt/rt-D136c-home-2318",
+    "command": "ASTRID_CHECKOUT=/home/user/work/wt/agt-pin-4c4ee35d ASTRID_RUNTIME_CHECKOUT=$PWD PYTHONPATH=$PWD:$PWD/packages/python:/home/user/work/wt/agt-pin-4c4ee35d PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-runtime/bin/python -m pytest -q -o addopts= -p no:cacheprovider --junitxml=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D136c-home-2318/evidence/home.xml tests/test_timeline_missing_observation_diagnostics.py 'tests/test_timeline_commit_authentication.py::test_native_record_assertions_and_additional_effects_on_a_real_film[False-False]'",
+    "return_code": 0,
+    "summary": "4 passed in 1.42s",
+    "cases": [
+      {
+        "id": "tests.test_timeline_missing_observation_diagnostics::test_missing_observation_uses_production_refusal_serializer_and_no_write",
+        "status": "PASS"
+      },
+      {
+        "id": "tests.test_timeline_missing_observation_diagnostics::test_missing_observation_diagnostic_is_closed_and_marks_unknowns",
+        "status": "PASS"
+      },
+      {
+        "id": "tests.test_timeline_missing_observation_diagnostics::test_physical_digest_detail_is_one_way_when_a_digest_is_available",
+        "status": "PASS"
+      },
+      {
+        "id": "tests.test_timeline_commit_authentication::test_native_record_assertions_and_additional_effects_on_a_real_film[False-False]",
+        "status": "PASS"
+      }
+    ]
+  },
+  "artifacts": {
+    "xml": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D136c-home-2318/evidence/home.xml",
+      "sha256": "8a9ce803297c6e0de66c0014203aad75f80c8b235e727df58cfbf8488a8bd397",
+      "bytes": 897
+    },
+    "raw_output": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D136c-home-2318/evidence/home.log",
+      "sha256": "d8a663a81cc181eb028d17573d86a44e87e9eb4782bc7ccdebd61962aeaf7d77",
+      "bytes": 98
+    }
+  },
+  "scope_limits": [
+    "No source, generated, pin, kit, or global-config edits.",
+    "No full suite, original9, Store, child, provider benchmark, profile, browser, or D130 run.",
+    "Original App9 remains the sole independent body and is not qualified here."
+  ]
+}

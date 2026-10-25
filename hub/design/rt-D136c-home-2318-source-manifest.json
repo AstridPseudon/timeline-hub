@@ -1,0 +1,68 @@
+{
+  "task": "D136c",
+  "qualification": "PASS",
+  "runtime_authority": {
+    "checkout": "/home/user/work/wt/rt-D136c-home-2318",
+    "branch": "tl/rt-D136c-home-2318",
+    "commit_before": "0ca306dfd3cf4e21976271cc4b2e779b10e025b0",
+    "commit_after": "0ca306dfd3cf4e21976271cc4b2e779b10e025b0",
+    "tree_before": "37cfcd4f6108c1fdda401e563e3674503bc328ef",
+    "tree_after": "37cfcd4f6108c1fdda401e563e3674503bc328ef",
+    "candidate_commit": "2f1fbb1fc2954dc54eda7f29656de8f15e38683a",
+    "candidate_tree": "37cfcd4f6108c1fdda401e563e3674503bc328ef",
+    "entire_tree_equal_to_candidate": true
+  },
+  "review_authority": {
+    "task": "rt-D136c-security-review-2312",
+    "status": "PASS",
+    "candidate_commit": "2f1fbb1fc2954dc54eda7f29656de8f15e38683a",
+    "candidate_tree": "37cfcd4f6108c1fdda401e563e3674503bc328ef"
+  },
+  "reviewed_source_blobs": [
+    {
+      "path": "runtime_protocol/timeline_commit_auth.py",
+      "before_blob": "b2b238a716b55276e63d23d2886ef8542a382faa",
+      "after_blob": "b2b238a716b55276e63d23d2886ef8542a382faa",
+      "review_blob": "b2b238a716b55276e63d23d2886ef8542a382faa",
+      "equal": true
+    },
+    {
+      "path": "runtime_protocol/timeline_commit_store.py",
+      "before_blob": "3388fa923c7aaeec2980a8981280146eaa30cbc7",
+      "after_blob": "3388fa923c7aaeec2980a8981280146eaa30cbc7",
+      "review_blob": "3388fa923c7aaeec2980a8981280146eaa30cbc7",
+      "equal": true
+    },
+    {
+      "path": "tests/test_timeline_missing_observation_diagnostics.py",
+      "before_blob": "15c35c662480d98443b66210a823e3f00967d6db",
+      "after_blob": "15c35c662480d98443b66210a823e3f00967d6db",
+      "review_blob": "15c35c662480d98443b66210a823e3f00967d6db",
+      "equal": true
+    }
+  ],
+  "agent_authority": {
+    "checkout": "/home/user/work/wt/agt-pin-4c4ee35d",
+    "commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+    "tree": "d50fd98f7d1bc6860de810f38e8a0b3a55ca224e",
+    "worktree_before": "clean",
+    "worktree_after": "clean",
+    "source_imports": {
+      "astrid": "/home/user/work/wt/agt-pin-4c4ee35d/astrid/__init__.py",
+      "astrid.core.execution.generic_host": "/home/user/work/wt/agt-pin-4c4ee35d/astrid/core/execution/generic_host.py",
+      "astrid.sdk.timeline.commands": "/home/user/work/wt/agt-pin-4c4ee35d/astrid/sdk/timeline/commands.py",
+      "astrid.sdk.timeline.commit": "/home/user/work/wt/agt-pin-4c4ee35d/astrid/sdk/timeline/commit.py",
+      "runtime_protocol.timeline_commit_auth": "/home/user/work/wt/rt-D136c-home-2318/runtime_protocol/timeline_commit_auth.py",
+      "runtime_protocol.timeline_commit_store": "/home/user/work/wt/rt-D136c-home-2318/runtime_protocol/timeline_commit_store.py"
+    }
+  },
+  "origins_head": {
+    "runtime_local_tracking_ref_before": null,
+    "runtime_local_tracking_ref_after": null,
+    "agent_local_tracking_ref_before": null,
+    "agent_local_tracking_ref_after": null,
+    "runtime_remote_head_observed_after": "refs/heads/main fa9cd5464a8b37b02f971de375e56be846cd69e2",
+    "agent_remote_head_observed_after": "refs/heads/main 8b6ed2116fd1803d24b2be5bc08bd9490407fe4a"
+  },
+  "merge_authority": "queue/done/merge-rt-D136c-safe-observation-diagnostics-2305: merged tl/rt-D136c-safe-observation-diagnostics-2305 into runtime tl/integration -> 0ca306dfd3"
+}

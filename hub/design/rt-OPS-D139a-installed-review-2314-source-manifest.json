@@ -1,0 +1,67 @@
+{
+  "schema": "timeline.d139a.installed-custody-source-manifest/v1",
+  "task": "rt-OPS-D139a-installed-review-2314",
+  "observed_utc": "2026-10-25T23:17:26Z",
+  "source": {
+    "repository": "composition",
+    "commit": "0921ec1c8eb7cab668203963c5a5eeb0e4616c00",
+    "tree": "577a3cca4e23c94d051e839eb47d7b1bd7a1c9c3",
+    "clean": true,
+    "paths": {
+      "ops-child-custody/make-child-venv": {"sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5", "bytes": 111171, "mode": "0755"},
+      "ops-child-custody/request-child-venv": {"sha256": "60d2238a748cb21789db5f35174a5186609fc511496701e1327e946fa0412504", "bytes": 18066, "mode": "0755"},
+      "ops-child-custody/check-child-imports": {"sha256": "8215f5d9d5134eb1e5d143748c4ef9facc8b7e2946c426341e7dd6ccea272d7c", "bytes": 14033, "mode": "0755"},
+      "ops-child-custody/install-prep/install_atomic.py": {"sha256": "81eb0818809cccf52c95fb4a536f2c86f29ad47e8395a8d5a725b8c3fb560ef9", "bytes": 3673, "mode": "0644"}
+    }
+  },
+  "installed": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv": {"sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5", "bytes": 111171, "mode": "0755", "owner_uid": 0, "regular_single_link": true},
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-child-venv": {"sha256": "60d2238a748cb21789db5f35174a5186609fc511496701e1327e946fa0412504", "bytes": 18066, "mode": "0755", "owner_uid": 0, "regular_single_link": true},
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/check-child-imports": {"sha256": "8215f5d9d5134eb1e5d143748c4ef9facc8b7e2946c426341e7dd6ccea272d7c", "bytes": 14033, "mode": "0755", "owner_uid": 0, "regular_single_link": true, "initial_target": "ABSENT_RECEIPT_SUPPORTED"}
+  },
+  "backups": {
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/backups/make-child-venv.20261025T231036Z.bak": {"sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f", "bytes": 75541, "mode": "0755", "matches_preimage": true},
+    "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/backups/request-child-venv.20261025T231055Z.bak": {"sha256": "bddaee9c457fd3cb8fa55e452abbf9886512a08697d593ca5983e43dfa955e94", "bytes": 15435, "mode": "0755", "matches_preimage": true}
+  },
+  "protected": {
+    "bench_store.py": {"sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2", "unchanged": true},
+    "verify_dependency_seed.py": {"sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2", "unchanged": true},
+    "previous_backups": "unchanged_against_prior_receipts"
+  },
+  "review_inputs": {
+    "joined_source_review": "PASS_SOURCE; 63/63 prior controls; real child NOTRUN",
+    "request_carrier_review": "PASS_SOURCE; 5+33+6 prior controls; real child NOTRUN",
+    "combined_install_receipt": "PASS_INSTALL_COMBINED_WITH_ACCEPTANCE_LIMITS",
+    "d137_decision": {"authorization": "D137", "fixture_e2e_gate": "WITHDRAWN", "e2e_result": "NOTRUN", "e2e_pass": false, "install_route": "CAS_MANAGER_ONLY", "production_install": false}
+  },
+  "schema_input": {
+    "package": "banodoco-timeline-schema",
+    "version": "0.0.2",
+    "url": "https://github.com/banodoco/ArtAgents.git",
+    "commit": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+    "subdirectory": "packages/timeline-schema/python",
+    "source_tree": "75a5a697f630affee40632e500b3f5b704a9b834",
+    "record_rows": 18,
+    "hashed_rows": 12,
+    "tree_tie": "UNAVAILABLE",
+    "acquisition": false
+  },
+  "publication": {
+    "normal_hub_record_found": false,
+    "published_hashes": [],
+    "published_commit": null,
+    "pending_hashes": ["fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5", "60d2238a748cb21789db5f35174a5186609fc511496701e1327e946fa0412504", "8215f5d9d5134eb1e5d143748c4ef9facc8b7e2946c426341e7dd6ccea272d7c"],
+    "source_hash_is_remote_receipt": false,
+    "worker_published": false
+  },
+  "live_actions": {
+    "source_edit": false,
+    "installation": false,
+    "real_request": false,
+    "store_or_registry": false,
+    "child_or_venv": false,
+    "acquisition": false,
+    "farm_receiving": false,
+    "publication": false
+  }
+}

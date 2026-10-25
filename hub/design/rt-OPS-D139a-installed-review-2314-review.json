@@ -1,0 +1,99 @@
+{
+  "schema": "timeline.d139a.installed-custody-review/v1",
+  "task": "rt-OPS-D139a-installed-review-2314",
+  "observed_utc": "2026-10-25T23:17:26Z",
+  "verdict": "PASS_INSTALLED_CUSTODY",
+  "source_identity": {
+    "repository": "composition",
+    "commit": "0921ec1c8eb7cab668203963c5a5eeb0e4616c00",
+    "tree": "577a3cca4e23c94d051e839eb47d7b1bd7a1c9c3",
+    "worktree_clean": true,
+    "fake_uncommitted_identity": false
+  },
+  "installed_targets": {
+    "maker": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+      "sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5",
+      "bytes": 111171,
+      "mode": "0755",
+      "owner_uid": 0,
+      "regular_single_link_no_symlink": true,
+      "source_path": "ops-child-custody/make-child-venv"
+    },
+    "wrapper": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-child-venv",
+      "sha256": "60d2238a748cb21789db5f35174a5186609fc511496701e1327e946fa0412504",
+      "bytes": 18066,
+      "mode": "0755",
+      "owner_uid": 0,
+      "regular_single_link_no_symlink": true,
+      "source_path": "ops-child-custody/request-child-venv"
+    },
+    "checker": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/check-child-imports",
+      "sha256": "8215f5d9d5134eb1e5d143748c4ef9facc8b7e2946c426341e7dd6ccea272d7c",
+      "bytes": 14033,
+      "mode": "0755",
+      "owner_uid": 0,
+      "regular_single_link_no_symlink": true,
+      "source_path": "ops-child-custody/check-child-imports",
+      "historical_initial_target": "ABSENT_RECEIPT_SUPPORTED",
+      "historical_absence_reobservation": "NOT_POSSIBLE_AFTER_INSTALL"
+    }
+  },
+  "backups": {
+    "maker": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/backups/make-child-venv.20261025T231036Z.bak",
+      "sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+      "bytes": 75541,
+      "mode": "0755",
+      "regular_single_link_no_symlink": true,
+      "matches_authorized_preimage": true
+    },
+    "wrapper": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/backups/request-child-venv.20261025T231055Z.bak",
+      "sha256": "bddaee9c457fd3cb8fa55e452abbf9886512a08697d593ca5983e43dfa955e94",
+      "bytes": 15435,
+      "mode": "0755",
+      "regular_single_link_no_symlink": true,
+      "matches_authorized_preimage": true
+    }
+  },
+  "protected_helpers": {
+    "bench_store.py": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "verify_dependency_seed.py": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+    "unchanged": true
+  },
+  "receiving_controls": {
+    "decision_verifier": "PASS",
+    "private_wrong_preimage": "PASS",
+    "private_symlink_destination": "PASS",
+    "private_existing_backup_no_clobber": "PASS",
+    "descriptor_cas_source": "install_atomic.py exact reviewed bytes; O_NOFOLLOW/O_EXCL and identity CAS present",
+    "locks_after_readback": "ABSENT",
+    "previous_backups": "CURRENT_HASHES_MATCH_PRIOR_RECEIPTS"
+  },
+  "bounded_installed_tests": {
+    "bash_syntax": "PASS",
+    "embedded_python_compile": "PASS 7/7",
+    "serialized_shell_smoke": "PASS nonzero=17, timeout=124, private stderr mode 0600, bounded public marker",
+    "wrapper_private_queue_controls": "PASS 5/5",
+    "installed_schema_readonly_admission": "PASS RECORD=18, hashed=12, tree_tie=UNAVAILABLE",
+    "canonical_checker": "PASS expected exit 1, rows=1146, missing_canonical_names=12, failures=12, missing_installed_distributions=0",
+    "full_source_or_review_suites": "NOT_RERUN; prior joined source review 63/63 and carrier 5+33+6 retained"
+  },
+  "authorization_and_limits": {
+    "authorization": "D139a combined install through manager-only CAS route",
+    "fixture_gate": "WITHDRAWN",
+    "fixture_e2e": "NOTRUN",
+    "e2e_pass": false,
+    "production_install_claim": false,
+    "real_request": false,
+    "store_or_registry": false,
+    "real_child_or_venv": false,
+    "farm_receiving_or_child_acceptance": false,
+    "publication": "PENDING_OR_NOT_FOUND_IN_HUB",
+    "source_hash_is_remote_receipt": false
+  },
+  "findings": []
+}

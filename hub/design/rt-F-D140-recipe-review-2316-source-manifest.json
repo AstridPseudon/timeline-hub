@@ -1,0 +1,60 @@
+{
+  "schema": "timeline.d140.farm-source-manifest/v1",
+  "scope": "portable receiving bindings and read-only source observations; not a Farm execution receipt",
+  "source_tuple": {
+    "agent": {"commit": "41ad656529fa8489829de9078b1b6e157c7433c8", "tree": "d29e47fe7be6e55940b42fa1477a23e7925f62fa", "origin": "https://github.com/peteromallet/astrid-agent", "object_store": "/home/user/work/agent", "checkout_binding": "Farm receipt required"},
+    "runtime": {"commit": "f103bb46866999c961a8865636f2e66d544e0c9b", "tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883", "origin": "https://github.com/banodoco/banodoco-workspace-runtime", "checkout_binding": "/home/user/work/runtime"},
+    "app": {"commit": "5696769dfca056676cde1ab46d8bc94354b3a44a", "tree": "0748df404125114a0f68b701fa76f43abd3fc79a", "origin": "https://github.com/banodoco/reigh-app", "checkout_binding": "/home/user/work/app"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148", "origin": "https://github.com/peteromallet/timeline-composition", "checkout_binding": "/home/user/work/composition"}
+  },
+  "source_files": {
+    "agent:runtime.lock.json": {"blob": "01559de71798c40ba6da1e12c7fba0643902d3e2", "sha256": "073d218447f28e48ef0d39cd01c811443b20b0328982eac1b126bcc5b9df390a", "runtime_source_commit": "f103bb46866999c961a8865636f2e66d544e0c9b", "locked_file_count": 15},
+    "agent:astrid_runtime_client/generated.py": {"blob": "b8dd84cf35db2420ba23bb560abcbd5d6115a77b", "sha256": "952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b"},
+    "agent:astrid_runtime_client/timeline_commit_types.py": {"blob": "92bf7890a84c69e009e4b471ed4ef45049b95fe8", "sha256": "6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417"},
+    "agent:astrid/core/timeline/banodoco_schema.py": {"blob": "1b3f12da05da3bb89fa76881184eefdf8232e076", "sha256": "572845f1102cefd2c8c9cae1f889393e3ba1b7b2b8d681f3f1f0bd96c63321ce"},
+    "runtime:runtime_protocol/canonical_schema.py": {"blob": "a97f1b31e27a6c27373799a84ec839b49188acdc", "sha256": "ad3a316aa60d2fd475327a2156373f77384f327bc96cccea1ee939bac7049d7f"},
+    "runtime:contract/schemas/timeline-commit.json": {"blob": "d94415a7d57e7d113223a425c076af7b1a8a4248", "sha256": "3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815"},
+    "agent:tools/p4-d73-pinned-launch.sh": {"blob": "f1bde17ea107a8b669cb6924fbdbd2f3979da988", "sha256": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd", "mode": "0755"},
+    "agent:tests/suites.conf.candidate.request.md": {"blob": "fbde96168dca681a76cff1526c23b8d0b74001eb", "sha256": "782fb81cea67ce71b785dd5dbf891bb1d32df74c136425d83d53e938bdf8b51c"}
+  },
+  "d139a_operational_sources": {
+    "maker": {"path": "ops-child-custody/make-child-venv", "sha256": "fd83c9e2017f75fb0d76a2d633d4a63aed090df37c4d7417b03152e7a4fc22b5", "bytes": 111171, "mode": "0755"},
+    "wrapper": {"path": "ops-child-custody/request-child-venv", "sha256": "60d2238a748cb21789db5f35174a5186609fc511496701e1327e946fa0412504", "bytes": 18066, "mode": "0755"},
+    "checker": {"path": "ops-child-custody/check-child-imports", "sha256": "8215f5d9d5134eb1e5d143748c4ef9facc8b7e2946c426341e7dd6ccea272d7c", "bytes": 14033, "mode": "0755"},
+    "received_maker": {"required_mode": "0755", "status": "MISSING_FARM_RECEIPT"}
+  },
+  "schema_input": {
+    "route": "--schema-installed-distribution plus --schema-source-manifest",
+    "package": "banodoco-timeline-schema",
+    "version": "0.0.2",
+    "url": "https://github.com/banodoco/ArtAgents.git",
+    "commit": "242f9c4306bf3b501222cb041a9eb246ef47bc85",
+    "subdirectory": "packages/timeline-schema/python",
+    "source_tree": "75a5a697f630affee40632e500b3f5b704a9b834",
+    "record_rows": 18,
+    "hashed_rows": 12,
+    "unhashed_rows": ["banodoco_timeline_schema-0.0.2.dist-info/RECORD", "banodoco_timeline_schema/__pycache__/__init__.cpython-313.pyc", "banodoco_timeline_schema/__pycache__/generated.cpython-313.pyc", "banodoco_timeline_schema/__pycache__/materialize.cpython-313.pyc", "banodoco_timeline_schema/__pycache__/theme.cpython-313.pyc", "banodoco_timeline_schema/__pycache__/validate.cpython-313.pyc"],
+    "record_sha256": "844b2a2e1ee19d7a1656d57cb49c2bc8febf67295e653f93ff8f96217a0c7220",
+    "direct_url_sha256": "b7a0a4f90218d54bc1fb118609d40a381f5762650f8e5863ec39098ec269165e",
+    "tree_tie": "UNAVAILABLE",
+    "farm_availability": "UNKNOWN_UNTIL_CHECKED",
+    "acquisition": false
+  },
+  "canonical_supporting_census": {"path": "design/agt-F-D139-import-input-census-2149-input-census.json", "sha256": "be9e8bc9c6d2411809da2d99126a9b3eef72678de2066bb6ad196d5d16ebcd30", "rows": 1146, "agent_commit": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d", "runtime_commit": "ab1e4f6141987706132916e2da16477f5a019464", "applicability_to_current_tuple": "NOT_CLAIMED"},
+  "receipts": {"d139a_source_join": "PASS_SOURCE_JOIN in existing composition evidence; not Farm installation/child acceptance", "d73_current_tuple": "MISSING", "farm_current_tuple": "MISSING", "later_changed_heads": "require a named new actual receipt; no mutable recapture"},
+  "live_actions": {"install": false, "request": false, "child": false, "imports": false, "core": false, "store": false, "queue": false, "provider": false, "collection": false, "acquisition": false},
+  "independent_review": {
+    "task": "rt-F-D140-recipe-review-2316",
+    "verdict": "FAIL_SOURCE",
+    "reviewed_author_commit": "eafe241ab",
+    "current_checkout_observation": {
+      "agent": {"head": "547e10456250c1b5bcf63b44a50c90ff0563ce1e", "expected": "41ad656529fa8489829de9078b1b6e157c7433c8"},
+      "runtime": {"head": "0ca306dfd3cf4e21976271cc4b2e779b10e025b0", "expected": "f103bb46866999c961a8865636f2e66d544e0c9b"},
+      "app": {"head": "5696769dfca056676cde1ab46d8bc94354b3a44a", "expected": "5696769dfca056676cde1ab46d8bc94354b3a44a"},
+      "composition": {"head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "expected": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"}
+    },
+    "check_only": {"status": "NOT_READY", "exit": 1, "checks": 94, "pass": 27, "mismatch": 2, "missing": 65, "side_effects_false": true},
+    "custody_limit": "Committed Git evidence and the permanent author worker directory were recovered; author-relative paths are not Farm receipts.",
+    "findings_file": "evidence/findings.md"
+  }
+}
