@@ -125,6 +125,8 @@ class RequestCommitPort:
         self.__project = self.__request["project_id"]
         self.__timeline = self.__request["timeline_id"]
         self.__observed = {}
+        self.__ancestry = {}
+        self.__ancestry_identity = None
         self.__declared = list(objects(self.__request["commands"]))
         adapter = self.__context["invocation"]["operation"] == "restoreProjectParentCompositionRevision"
         if adapter or self.__request["commands"][0].get("op") == "timeline.restore":
@@ -206,14 +208,25 @@ class RequestCommitPort:
     def close(self):
         self.__closed = True
         self.__sequential_capture = None
+        self.__ancestry.clear()
+        self.__ancestry_identity = None
 
     def _read(self, call):
         if self.__closed:
             raise AuthorizationError("timeline commit port is closed")
-        with self.__service.store._mutex:
-            self.__authorize()
-            with self.__store.history_read_scope():
-                return copy.deepcopy(call())
+        try:
+            with self.__service.store._mutex:
+                self.__authorize()
+                with self.__store.history_read_scope():
+                    identity = self.__store._history_read_identity
+                    if identity != self.__ancestry_identity:
+                        self.__ancestry.clear()
+                        self.__ancestry_identity = identity
+                    return copy.deepcopy(call())
+        except BaseException:
+            self.__ancestry.clear()
+            self.__ancestry_identity = None
+            raise
 
     def head(self):
         def read():
@@ -223,22 +236,28 @@ class RequestCommitPort:
         return self._read(read)
 
     def _ancestor(self, publication_id):
-        roots = list(self.__observed.values()) + [{
+        # Retain only reachability, never caller-owned entries. Every lookup
+        # still authenticates its target inside the live history read scope.
+        roots = []
+        if publication_id in self.__ancestry:
+            roots.append({"publication_id": publication_id, "revision_id": self.__ancestry[publication_id]})
+        roots += list(self.__observed.values()) + [{
             "revision_id": self.__request["base_revision_id"],
             "publication_id": self.__request["base_publication_id"],
         }]
         for root in roots:
-            current, seen = root, set()
+            current, seen = root, {}
             while current and current["publication_id"] not in seen:
-                seen.add(current["publication_id"])
-                entry = self.__store.history_entry(self.__project, self.__timeline, current["publication_id"])
+                entry = self.__store._history_entry_view(self.__project, self.__timeline, current["publication_id"])
                 if entry["revision_id"] != current["revision_id"]:
                     raise refused("history_unavailable", "publication/revision pins disagree")
+                seen[current["publication_id"]] = current["revision_id"]
                 if current["publication_id"] == publication_id:
                     from .timeline_commit_inputs import reachable_document_input_pins
                     pins = reachable_document_input_pins(self.__store.conn, self.__project, self.__timeline,
                                                          publication_ids=[publication_id])
                     self.__history_pins.extend(pin for pin in pins if pin not in self.__history_pins)
+                    self.__ancestry.update(seen)
                     return entry
                 current = entry["previous"]
         raise refused("history_unavailable", "publication is outside request ancestry")
@@ -250,7 +269,7 @@ class RequestCommitPort:
         def read():
             if self._ancestor(through["publication_id"])["revision_id"] != through["revision_id"]:
                 raise refused("history_unavailable", "history bounds disagree")
-            return self.__store.history(self.__project, self.__timeline, through,
+            return self.__store._history_view(self.__project, self.__timeline, through,
                                         after_publication_id=after_publication_id, cursor=cursor, limit=limit)
         return self._read(read)
 
@@ -263,8 +282,17 @@ class RequestCommitPort:
                 return self.__closures[revision_id]
             allowed = {self.__request["base_revision_id"]}
             allowed.update(pin["revision_id"] for pin in self.__observed.values())
-            allowed.update(item["revision_id"] for item in self.__declared
-                           if "revision_id" in item and "content_digest" in item)
+            # Reachability belongs to this live read identity. Reauthenticate
+            # its exact target rather than walking every ancestor again for
+            # each historical closure in a provider's history page.
+            publication = next((publication for publication, revision in self.__ancestry.items()
+                                if revision == revision_id), None)
+            if publication is not None:
+                self._ancestor(publication)
+                allowed.add(revision_id)
+            if revision_id not in allowed:
+                allowed.update(item["revision_id"] for item in self.__declared
+                               if "revision_id" in item and "content_digest" in item)
             if revision_id not in allowed:
                 current = self.head()
                 cursor = current
