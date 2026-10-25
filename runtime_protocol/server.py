@@ -4,6 +4,7 @@ import json
 import re
 import socket
 import sys
+import traceback
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import unquote, urlsplit, parse_qs
@@ -258,7 +259,12 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             payload["request_id"] = self._request_id()
             self._send(exc.status, error=payload)
         else:
-            self._send(500, error={"code": "internal_error", "message": "internal runtime error", "request_id": self._request_id()})
+            request_id = self._request_id()
+            # The client sees only the request id; the log keeps the cause.
+            route = urlsplit(getattr(self, "path", "")).path
+            print(f"Runtime internal error (request {request_id}, {getattr(self, 'command', '?')} {route}):\n"
+                  + "".join(traceback.format_exception(exc)), file=sys.stderr, flush=True)
+            self._send(500, error={"code": "internal_error", "message": "internal runtime error", "request_id": request_id})
 
     def _is_owner_identity_probe(self):
         """Select a read-only snapshot; route authentication is unchanged."""
