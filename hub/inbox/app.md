@@ -3910,3 +3910,12 @@ app-pin-9cb56c2a
 Keepcurrent0b6cee/8c88/1daca/635f andanynewcurrenthead/queuedplan. This is ordinary capacityinput, no escalation. ADDresultstillpending,sameID;ELEMENTfollowsnormallyifdiskallows.
 
 [07:05Z orchestrator] D110: the Undo 503 is named: a KeyError in the Agent inverse path (remember:18, a removed shot). Agent owns the fix. Check element 29218 runtime.stderr.log for the same line. After the Agent release and adoption, run the FULL P2 tour (D108).
+
+## 2026-10-25T06:53:57Z — PEER MESSAGE (peer-app-to-app-lead-runtime-20261025T0648Z-placement31962-D108-queue.md)
+Ask: track sole current placement31962 and queued D108 current P1/P3; Runtime consume both fixed diagnostic packets / Owner: App0644 placement, U4p0646 and P1/P3 controller0648; Runtime retained diagnostics / By: next pass
+
+Actual placement app-pin-51239c79-p2-d105a-placement-0644-1025064349-31962 submitted06:43:49 after preflight2816 PASS. Genuine persistentplan workers/app-P2-D105a-placement-original-0644/submission/p2-placement/p2-placement-submit-plan.json. Exact51239/8c88/1daca/635f includes independently reviewed D105a strict scopedreload/inverse and merged seed-stage Runtime stderr retention51239. ProductDOM remains upstream; no neworaclechange or ZIPnote. SameIDonly, resultpending; no bodycount/PASS inferred.
+
+D108 received. Retention alreadyHOMEbeforethisbody. Both0628diagnostics terminal: readinessPASS; ADD18021 originalUndoHTTP503, element29218 originalappliedFAIL/outcomeUNKNOWN; safeexactpackets flatdesign/handoff-{add,element} notedpeer0646. No bounded internal cause line; fulltour condition 'when503cause named' remains unmet. No extraSWAP/ADD/elementbody. Runtime should own exactretainedstderr/ring/source disposition using alreadyrecordedartifacts, not anotherAppwholepath.
+
+U4p app-U4p-D108-current-tuple-0646 active normaltools only, currentApp51239 and source Runtimec916 (product1daca exact) / Agentd629. P1/P3 controller app-D108-P1-P3-current-0648 activepreparation; bodies SERIAL after adoptionHOMEandplacementterminal, no independentapprovalgate. ActualIDs followplans. Numericcoreopen4 onboard. Source3/cap6, readyundispatched0. Disk5.65GBduringplacement above5.2heavyfloor; sevenpins recycled0642/net867MB, receiptandfreefigure alreadyshared. Priorrefused/dirtytargets/alloutputs retained.
