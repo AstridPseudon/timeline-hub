@@ -1,0 +1,49 @@
+{
+  "schema": "timeline.agent.f_d134_root_review.v1",
+  "review_id": "F-D134-root-review-2029",
+  "verdict": "PASS",
+  "scope": "Independent read-only review of finished2022 root clusters against the retained 18455 log and frozen Agent/Runtime sources.",
+  "source": {
+    "service_id": "agent-agent-core-full-1025191128-18455",
+    "keep_marker": "tests/agent-agent-core-full-1025191128-18455/KEEP",
+    "log_sha256": "65def166348d4ffde949d530bff1a7bcba820ad674ca85b8ccc3e708c781ae8e",
+    "agent_commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+    "agent_tree": "60d45288145414ee4702fcce61af7c7810c2a3df",
+    "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f"
+  },
+  "checks": {
+    "raw_log_sha256": "PASS",
+    "raw_status_counts": {"failed": 190, "error": 180, "total": 370},
+    "per_id_membership": {"rows": 370, "unique": 370, "raw_ids": 370, "missing": 0, "extra": 0},
+    "prior_1937_id_membership": {"rows": 370, "unique": 370, "same_ids": true},
+    "first_fixture_frame": {"checked": 370, "mismatch": 0},
+    "first_agent_production_frame": {"checked": 370, "mismatch": 0, "namespace": "astrid/sdk"},
+    "first_runtime_production_frame": {"checked": 370, "mismatch": 0, "namespace": "runtime_protocol"},
+    "exception_type_presence": {"checked": 368, "mismatch": 0, "exact_missing": 2},
+    "root_groups": {"groups": 52, "members": 370, "duplicate_ids": 0, "missing_ids": 0, "extra_ids": 0, "field_consistency_errors": 0},
+    "source_input_sha256": {"checked": 10, "mismatch": 0},
+    "frozen_tree_refs": {"agent": "PASS", "runtime": "PASS"},
+    "source_blobs": {"unique": 64, "missing_from_frozen_agent_tree": 0, "test_file_mismatches": 0},
+    "classification": {
+      "finite": {"TEST_SETUP_OR_EXPECTATION_PROVED": 132, "PRODUCT_FAULT_PROVED": 0, "UNKNOWN": 212, "UNVERIFIED_CURRENT_REG": 14, "PRIOR_UNKNOWN": 12, "sum": 370},
+      "ours_new_file": {"total": 344, "proved_setup": 132, "proved_product": 0, "unknown": 212},
+      "remaining": {"unverified_current_reg": 14, "prior_unknown": 12}
+    },
+    "missing_artifacts_preserved": {
+      "xml": true,
+      "raw_runner_receipt": true,
+      "start_stop_disk_witness": true,
+      "accepted_records_and_legitimate_caller_trace": true,
+      "final_core_and_reg_counts": true
+    },
+    "private_material_not_published": true,
+    "product_fault_or_ship_credit": false
+  },
+  "decisions": {
+    "causal_root_inference": "not performed",
+    "source_hash_mismatch_or_api_invalid_timing_as_causal_family": "not inferred from vague exception text",
+    "current_app_mapping": "not performed",
+    "source_author_or_guard_relaxation": "not suggested"
+  }
+}

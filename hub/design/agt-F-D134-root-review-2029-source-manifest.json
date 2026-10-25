@@ -1,0 +1,41 @@
+{
+  "schema": "timeline.agent.f_d134_root_review_sources.v1",
+  "review_id": "F-D134-root-review-2029",
+  "service": {
+    "id": "agent-agent-core-full-1025191128-18455",
+    "keep_marker": "tests/agent-agent-core-full-1025191128-18455/KEEP",
+    "retained_log_path": "tests/agent-agent-core-full-1025191128-18455/log.txt",
+    "log_sha256": "65def166348d4ffde949d530bff1a7bcba820ad674ca85b8ccc3e708c781ae8e",
+    "xml": "EXACTMISSING",
+    "raw_runner_receipt": "EXACTMISSING",
+    "start_stop_disk_witness": "EXACTMISSING",
+    "accepted_records_and_legitimate_caller_trace": "EXACTMISSING"
+  },
+  "frozen_tuple": {
+    "agent_commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+    "agent_tree": "60d45288145414ee4702fcce61af7c7810c2a3df",
+    "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "named_upstream": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+    "terminal_reference": "92443771676ef2bbb547d0a103d708fa8bec4c63"
+  },
+  "packet": {
+    "root_clusters": "design/agt-F-D134-root-clusters-2022-root-clusters.json",
+    "per_id": "design/agt-F-D134-root-clusters-2022-per-id.tsv",
+    "source_manifest": "design/agt-F-D134-root-clusters-2022-source-manifest.json",
+    "findings": "design/agt-F-D134-root-clusters-2022-findings.md",
+    "validation": "design/agt-F-D134-root-clusters-2022-validation.md",
+    "rows": 370,
+    "unique_ids": 370,
+    "groups": 52,
+    "unique_current_source_blobs": 64
+  },
+  "interpretation": {
+    "raw_messages_and_payloads_private": true,
+    "normalized_families_only": true,
+    "causal_root_inference": false,
+    "product_fault_proved": false,
+    "ship_credit": false,
+    "core_or_reg0_closure": false
+  }
+}

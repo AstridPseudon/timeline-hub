@@ -1,0 +1,61 @@
+{
+  "source_conservation": {
+    "manifest_assertions_base": 23,
+    "manifest_assertions_candidate": 23,
+    "manifest_assertions_ast_equal": true,
+    "manifest_function_names_equal": true,
+    "manifest_decorators_equal": true,
+    "parent_file_blob_equal": true,
+    "parent_assertions": 62
+  },
+  "preserved_authored_inputs": [
+    "operation='swap'",
+    "media_owner='parent'",
+    "existing image source-byte factory and generated old/new bytes",
+    "old and new media selections and source pins",
+    "shot/occurrence topology and grouping",
+    "text binding descriptor, media_id, content_hash, byte_size, mime_type, and retained CAS bytes",
+    "opaque values and authored registry/clip fields",
+    "manifest dependency predicates",
+    "inverse, dry-run, retry, restart, idempotency, history, and no-write assertions"
+  ],
+  "changed_control": {
+    "new_import": "source_bytes from test_commit_runtime_parent_media_swap",
+    "call": "native_parent_media_fixture.__wrapped__(SimpleNamespace(param='image'), tmp_path, monkeypatch, 'swap', 'parent', source_bytes.__wrapped__(tmp_path))",
+    "semantic_effect": "Removes only the missing-required-arguments TypeError; it does not change the authored test body or predicates."
+  },
+  "remaining_boundary": {
+    "file": "tests/editing_conformance/test_commit_runtime_occurrence_media.py",
+    "line": 93,
+    "write": "generic doc.patch replacement of shot:chapter-shot",
+    "runtime_error": "CommandError: replacement changes provider-managed edges",
+    "owner": "media48/shared occurrence-media worker",
+    "closure": false
+  },
+  "d100_applicability": {
+    "held_source": "9486cbb06e",
+    "held_scope": "minimal first physical item birth and custody/correspondence checks",
+    "current_base_ancestor": false,
+    "disposition": "limited applicability only; not a ready fix for this exact shot-root/text-binding setup and not evidence of a new API requirement"
+  },
+  "c0_request": {
+    "required_contract_fields": [
+      "api_version",
+      "project_id",
+      "timeline_id",
+      "base_revision_id",
+      "base_publication_id",
+      "commands",
+      "label",
+      "steps",
+      "merge",
+      "reads",
+      "idempotency header",
+      "dry_run",
+      "source",
+      "rationale",
+      "group_id"
+    ],
+    "review_note": "The existing manifest body() was not changed; this source-only review does not claim C0 closure for its pre-existing minimal request shape."
+  }
+}

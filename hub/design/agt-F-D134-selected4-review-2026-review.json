@@ -1,0 +1,87 @@
+{
+  "schema": "timeline.agent.f_d134_selected4_review.v1",
+  "review_id": "agt-F-D134-selected4-review-2026",
+  "verdict": "FAIL_SOURCE_CONTROL_DRIFT",
+  "scope": "Independent review of the four selected-schema source changes only; seven UNKNOWN cases remain unchanged and uncredited.",
+  "source": {
+    "repo": "agent",
+    "base_commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "review_commit": "d67a83086cdfb165a1b8e229b5cd1f3307004d09",
+    "base_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+    "review_tree": "3a89b9799784e319c93996606c6582635cfc400f",
+    "changed_paths": ["tests/sdk/test_timeline_selected_schema_runtime.py"],
+    "diff_stat": {"insertions": 29, "deletions": 11},
+    "current_file_sha256": "c0f2fb03c793f5b44491f63b1b64a7dd22a22dd90e0b8114758151468014c6b2",
+    "base_file_sha256": "6d7ba7623cb59931d76d3eeefc564200f4a0336199cc64331fea0fc976939b9a",
+    "runtime_commit": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9"
+  },
+  "c0": {
+    "contract_path": "/home/user/work/runtime/contract/commit-v2.md",
+    "contract_sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7",
+    "relevant_rules": [
+      "api_version 1 remains the existing ABI version",
+      "omitted label and steps remain compatible with existing ABI-1 callers",
+      "new v2 landings use merged while historical rebased receipts replay unchanged",
+      "request identity includes label, steps, reads and merge"
+    ]
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "blocking",
+      "kind": "authored_request_control_changed",
+      "locations": [
+        "tests/sdk/test_timeline_selected_schema_runtime.py:174-178",
+        "tests/sdk/test_timeline_selected_schema_runtime.py:415-417",
+        "tests/sdk/test_timeline_selected_schema_runtime.py:757",
+        "tests/sdk/test_timeline_selected_schema_runtime.py:997"
+      ],
+      "detail": "The original stale-base bodies are API v1 native clip.set-params requests produced by case.request with no label, steps, merge, or reads. v2_request adds label, merge=fields, and reads=[]; this is a request-body and request-class change, not a correction of an assertion. C0 explicitly preserves omitted-control ABI-1 compatibility.",
+      "required_first_return": "Restore the original case.request bodies and assertions unless an approved D50/D120 rule identifies these exact authored controls as an authorized C0 correction. Do not force the old requests into v2."
+    },
+    {
+      "id": "F2",
+      "severity": "blocking",
+      "kind": "status_reclassification_not_proven",
+      "locations": [
+        "tests/sdk/test_timeline_selected_schema_runtime.py:768",
+        "tests/sdk/test_timeline_selected_schema_runtime.py:1001"
+      ],
+      "nodes": [
+        "tests/sdk/test_timeline_selected_schema_runtime.py::test_native_rebase_after_v2_and_selection_removal_uses_original_object",
+        "tests/sdk/test_timeline_selected_schema_runtime.py::test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive[pin]",
+        "tests/sdk/test_timeline_selected_schema_runtime.py::test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_survive[element]"
+      ],
+      "detail": "The three merged expectations pass only after F1 changes the submitted bodies. The original source does not establish new v2 landings; it establishes ABI-1 native semantic requests. Therefore the change cannot distinguish genuine new-v2 merged receipts from historical ABI-1 rebased behavior.",
+      "required_first_return": "Keep genuine new-v2 merged coverage separate. Restore these original node inputs and retain rebased unless a source-approved migration changes the caller itself and preserves the original behavior purpose."
+    },
+    {
+      "id": "F3",
+      "severity": "unqualified",
+      "kind": "http_behavior_unverified",
+      "locations": [
+        "tests/sdk/test_timeline_selected_schema_runtime.py:228-321"
+      ],
+      "detail": "The guarded registered-provider doc.patch setup deep-copies the current empty parent payload and asserts payload equality, which is source-consistent with the old empty topology. It does not by itself prove source capture, original pin retention, dynamic-base behavior, real HTTP lost-ACK, restart, or undo. The central HTTP route failed before collection, so no body credit is assigned.",
+      "required_first_return": "After resolving F1/F2, run the exact HTTP node through the qualified central route with the required immutable Runtime/provider prerequisites; do not use a fixture workaround or a second body."
+    },
+    {
+      "id": "F4",
+      "severity": "blocking",
+      "kind": "setup_payload_not_exactly_equivalent",
+      "locations": [
+        "tests/sdk/test_timeline_selected_schema_runtime.py:243-261",
+        "tests/sdk/test_timeline_selected_schema_runtime.py:241-248 (base)",
+        "frozen R4 Runtime service.py:_complete_parent_payload"
+      ],
+      "detail": "The retired setup authored config={tracks: []}, registry={}, clips=[], occurrences=[]; the current bootstrap baseline is config={clips: [], tracks: []}, registry={}, clips=[], occurrences=[]. Frozen R4 _complete_parent_payload defaults config to {} and does not synthesize config.clips. The replacement therefore changes the parent payload topology by adding config.clips, even though its self-equality assertion proves only equality to the changed baseline.",
+      "reference": {"frozen_runtime_commit": "31c7ac3a00f7a205f507bf5bd4d4625628d429bd", "service_py_sha256": "6a2a9447cb6bb598834b08bfbf3b4ee406363c97be961c2b1a7edf1a0b7ab364"},
+      "required_first_return": "Construct the replacement from an existing registered commitTimeline/provider caller while preserving the old authored parent payload exactly, including omission of config.clips, or obtain explicit approval for that authored topology change."
+    }
+  ],
+  "body_verdict": {
+    "status": "NOT_RUN",
+    "reason": "Source verdict failed; task explicitly prohibits body execution after source failure. Author's three direct passes are not credited because they used altered v2 request bodies.",
+    "http_lost_ack": "UNVERIFIED_AFTER_CENTRAL_PRECOLLECTION_ERROR"
+  }
+}

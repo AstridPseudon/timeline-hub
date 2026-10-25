@@ -1,0 +1,8 @@
+{
+  "status": "fail_source_control_drift",
+  "selected_scope": {"four_reviewed_nodes_or_setup": 4, "unknown_nodeids_preserved": 7},
+  "source": {"static_validation": "pass_except_known_mypy_stub_baseline", "body_allowed": false},
+  "author_direct_v2_nodes": {"passed": 3, "credited": 0, "reason": "body controls were changed from original ABI-1 requests"},
+  "http_lost_ack": {"executed": false, "status": "unverified", "reason": "central precollection error"},
+  "recommended_first_return": "Restore original ABI-1 request bodies and rebased expectations, preserve the retired setup payload shape including omitted config.clips, or obtain explicit approved D50/D120 authorization for each exact authored-input change; then independently rerun only the qualified four-node scope."
+}

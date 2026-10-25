@@ -1,0 +1,62 @@
+{
+  "task": "agt-F-D134-parent26-review-2026",
+  "verdict": "PASS_SOURCE_ONLY_FINITE_UNAPPLIED",
+  "repository": "agent",
+  "candidate_ref": "tl/agt-F-D134-parent24-manifest2-2016",
+  "base_ref": "tl/integration",
+  "base_revision": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "candidate_revision": "96c1f58c0c4e02a3c344e662d243796d0755fd14",
+  "candidate_parent": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "source_scope": {
+    "changed_paths": [
+      "tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py"
+    ],
+    "unchanged_assigned_path": "tests/editing_conformance/test_commit_runtime_parent_media_swap.py",
+    "production_changes": false,
+    "shared_fixture_changes": false,
+    "authored_input_changes": false,
+    "predicate_or_assertion_changes": false,
+    "control_flow_changes": false,
+    "new_api_requirement": false
+  },
+  "source_findings": [
+    {
+      "id": "manifest2-forwarding",
+      "status": "pass",
+      "finding": "The candidate imports the existing source_bytes fixture and forwards the parent fixture's genuine required inputs: operation='swap', media_owner='parent', and source_bytes.__wrapped__(tmp_path)."
+    },
+    {
+      "id": "conservation",
+      "status": "pass",
+      "finding": "The parent fixture file is byte-identical; the manifest test retains all 23 assertions, function names, decorators, media/provenance/text-binding/history/retry/restart/inverse/no-write predicates, and authored topology."
+    },
+    {
+      "id": "behavioral-closure",
+      "status": "open",
+      "finding": "The author's exact targeted run reports parent 0/24 passed with 24 errors and manifest 0/2 passed with 2 errors at readonly occurrence_media.py:93: CommandError: replacement changes provider-managed edges. No behavior closure is credited."
+    },
+    {
+      "id": "shared-boundary",
+      "status": "blocked",
+      "finding": "The remaining first setup write is in the shared occurrence-media helper, outside the assigned files and owned by media48. No file-local faithful replacement exists without changing authored item identity/topology or source authority."
+    },
+    {
+      "id": "media48-and-d100",
+      "status": "limited-applicability",
+      "finding": "media48 remains UNAPPLIED. Held D100 source 9486cbb06e demonstrates a separate minimal first physical-item birth but is not an ancestor of current base a30e74e901 and does not prove this exact shot-root/text-binding setup. It is not a ready parent-helper fix and does not establish a new API need."
+    },
+    {
+      "id": "c0-shape",
+      "status": "unchanged",
+      "finding": "The manifest helper's existing body() request shape was not changed by this patch. C0 fields beyond the minimal existing request remain unqualified by this source-only review; this is not a regression introduced by parent24."
+    }
+  ],
+  "behavioral_result": {
+    "status": "not_closed",
+    "prior_boundary": "tests/editing_conformance/test_commit_runtime_occurrence_media.py:93",
+    "error": "CommandError: replacement changes provider-managed edges",
+    "rerun": false,
+    "reason": "The review brief forbids a redundant rerun of unchanged failing nodes and shared-writer work."
+  },
+  "next_step": "The occurrence-media owner must establish an exact registered semantic setup preserving the original shot/item correspondence, source pins, text binding, topology, and no-write/history predicates; then rerun the exact 24 parent and 2 manifest nodes."
+}

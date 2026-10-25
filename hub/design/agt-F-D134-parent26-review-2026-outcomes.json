@@ -1,0 +1,30 @@
+{
+  "verdict": "PASS_SOURCE_ONLY_FINITE_UNAPPLIED",
+  "source_conservation": true,
+  "missing_argument_boundary_repaired": true,
+  "behavior_closure": false,
+  "parent24": {
+    "cases": 24,
+    "passed": 0,
+    "errors": 24,
+    "boundary": "tests/editing_conformance/test_commit_runtime_occurrence_media.py:93"
+  },
+  "manifest2": {
+    "cases": 2,
+    "passed": 0,
+    "errors": 2,
+    "boundary": "tests/editing_conformance/test_commit_runtime_occurrence_media.py:93"
+  },
+  "non_cohort_parent_checker": {
+    "passed": 1,
+    "description": "legacy composition writer checker"
+  },
+  "d100": {
+    "held_source": "9486cbb06e",
+    "current_base_ancestor": false,
+    "applicability": "limited; not closure"
+  },
+  "next_owner": "shared occurrence-media helper owner/media48",
+  "next_action": "Preserve exact authored correspondence and use the existing registered semantic caller, then rerun the exact 24 parent and 2 manifest nodes.",
+  "tests_run_by_reviewer": false
+}

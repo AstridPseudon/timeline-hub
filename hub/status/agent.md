@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T20:32:03Z | dispatcher heartbeat 14s | live 3 (sol 0, luna 3, other 0) | busy30 18 | status age 0m -->
-# agent board, 2026-10-25T20:31Z
+<!-- agent | 2026-10-25T20:36:13Z | dispatcher heartbeat 5s | live 3 (sol 0, luna 3, other 0) | busy30 17 | status age 0m -->
+# agent board, 2026-10-25T20:33Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -110,13 +110,13 @@
 
 | D134 partition return | Correct nine projection classifications | Luna | Independent2020 PASS | merged | Author2016; final review2020 | Classification PASS only: exact9 category changes,344 IDs and outside fields conserved.132 setup,0 proved product,212 unknown. | Evidence only |
 | D134 managed media48 | Preserve occurrence media setup | Luna | Qualified D100 source and setup | blocked:app | Author2016; independent2024 PASS | UNAPPLIED source unchanged. Existing9486 addresses item-birth seam; mutable author Runtime and missing XML unqualified. No new API decision. | Evidence only |
-| D134 parent24 manifest2 | Preserve parent and manifest setup | Luna | Protected2026 | review | Author2016; review2026 | Wrapper missing args repaired; parent24 and manifest2 still hit shared managed-edge guard. No behavior closure. | Pending |
+| D134 parent24 manifest2 | Preserve parent and manifest setup | Luna | Clean receiving2034 | doing | Protected2026 PASS; import2034 | Sole wrapper delta approved;23 assertions conserved. Parent24 and manifest2 behavior remains blocked at shared media setup. | Donor96c1f58 |
 
 | D134 managed30 | Preserve remaining managed fixture purposes | Luna hosted | App admitted source slot | blocked:app | Peer2018 asks first slot owner | Six disjoint files; exact30 source guidance. No shared fixture or product writer. | Pending |
 
-| D134 selected4 | Preserve selected schema caller and labels | Luna | Protected2026 | review | Author2019; review2026 | Three direct nodes PASS; HTTP own1 unverified. Reviewer challenges request-control purpose and all seven unknown cases. | Pending |
+| D134 selected4 | Preserve selected schema caller and labels | Luna | First return2034 | doing | Review2026 FAIL; return2034 | Restore original ABI1 controls and parent shape. Author3 passes uncredited; all seven unknown cases remain protected. | Held |
 
-| D134 root clusters | Publish first product frame groups | Luna read only | Independent2029 | review | Author2022; review2029 | Exact370 IDs and all source hashes conserved. First production frame groups under source review; no fault promotion. | Evidence only |
+| D134 root clusters | Publish first product frame groups | Luna read only | Independent2029 PASS | merged | Author2022; independent2029 | All370 IDs, statuses, first frames, groups and10 source hashes qualified. Missing records and final counts remain unknown. | Evidence only |
 
 | D134 mirror7 | Preserve word fixture mirror inputs | Luna | Protected source conservation | doing | agt-F-D134-mirror7-2032 | Exact7 only; no anchor removal, normalization or other unknown case changes. | Pending |
 | D134 preflight5 | Preserve genuine sheet and fork plumbing | Luna | Proven existing caller input | doing | agt-F-D134-preflight5-2032 | Four detached checks and one missing client; no fabricated clip, source history or authority. | Pending |
@@ -161,3 +161,7 @@ Pass 2026-10-25T20:26Z: parent26 andselected4 finished; immediate independent Lu
 Pass20:29: Rootclusters2022 finished; immediate independent2029 queued. Media48 independent2024 finitePASS corrects noAPI claim: existingD1009486 applicability owns nextmeaningfulsource. Peer2029 informs App/Runtime; no newauthor orbody. Source unchanged48 remainsblocked:app. Parentwrapper andselected4 independent2026 stilllive.
 
 Pass 2026-10-25T20:31Z: mirror7 andpreflight5 Luna sourceauthorsdispatched oncurrenthome; allindependentreadylocalcohortsassigned. Remainingexpectation12requestedRuntimebehindcriticalkit, exactfourfilesreservedinpeer2032; Appmanaged30awaitsactualsourceowner. Local5/cap6source, ready-undispatched0local; noheavy/fixture/bodyrequest. Allprotectedmissingauthority cases remainlater ratherthaninventingsemanticfixes.
+
+Pass 2026-10-25T20:33Z: selected4 protectedFAIL for originalABI1request conversion and addedconfig.clips; samebranchLuna firstreturn2034 dispatchedimmediately. ParentwrapperprotectedPASS_SOURCE_ONLY_FINITE_UNAPPLIED; cleanimport2034 ensures oneexactownfile/currentpreimage and D134commitID before normalmerge. Candidate c3226b is NOT expectedfinalmakerhash: Runtime2018 successorretentiondelta mustbe reviewed/installed; receipt controls finalexpectedhash. Local5/cap6source,0readyundispatchedlocal; no heavy or realrequest. Inbox1845255.
+
+Pass20:36: root-review2029 independentPASS finiteall370 IDs/frames/groups and132+0+212+14+12. No causalpromotion or productfault. Historical G2open worktree inspected readonly: dirtysync.py, noendedmarker; noteligiblecleanrecycle. Existing0816KEEP honored; oldrtm2dirs lack workerrecords and are untouched. No protected/refused cleanup target retried. Sourcejobsfinish/recycle throughnormalharness. D137still0857 sourcehold.
