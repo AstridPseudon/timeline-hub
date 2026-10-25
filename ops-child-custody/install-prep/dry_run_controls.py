@@ -1,8 +1,8 @@
 """Private offline controls for the reviewed maker installation route.
 
-Every target, backup, helper, and source path is created below a fresh TMPDIR
-replica. This module never reads or writes ORCH/bin and never invokes the maker,
-Store, package manager, network, or a source checkout mutation.
+Every target, backup, helper, source, lock, and temporary path is created below
+a fresh TMPDIR replica. This module never reads or writes a live ORCH tree and
+never invokes the maker, Store, package manager, network, or source mutation.
 """
 
 from __future__ import annotations
@@ -10,12 +10,16 @@ from __future__ import annotations
 import hashlib
 import os
 from pathlib import Path
-import shutil
 import stat
+import sys
 import tempfile
 
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from install_atomic import copy_reserved, rename_if_same  # noqa: E402
+
+
 SOURCE_COMMIT = "09ed4999741b822fba7e8b3033ca28db6bcf8fa1"
 PARENT_COMMIT = "9428f515fcd8dccaef26193438b3ac89f903f5aa"
 SOURCE_REL = "ops-child-custody/make-child-venv"
@@ -23,6 +27,7 @@ CANDIDATE_SHA256 = "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7
 CANDIDATE_BYTES = 69516
 PREIMAGE_SHA256 = "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39"
 PREIMAGE_BYTES = 68351
+UID = os.getuid()
 
 
 def digest(path: Path) -> str:
@@ -34,7 +39,7 @@ def regular_owned(path: Path, mode: int = 0o755) -> None:
     assert stat.S_ISREG(info.st_mode), f"not a regular file: {path}"
     assert not stat.S_ISLNK(info.st_mode), f"symlink: {path}"
     assert info.st_nlink == 1, f"hardlink: {path}"
-    assert info.st_uid == os.getuid(), f"owner mismatch: {path}"
+    assert info.st_uid == UID, f"owner mismatch: {path}"
     assert stat.S_IMODE(info.st_mode) == mode, f"mode mismatch: {path}"
 
 
@@ -53,7 +58,7 @@ def write_extracted(path: Path, data: bytes) -> None:
 
 
 def cas_install(target: Path, candidate: Path, backup: Path) -> None:
-    """Offline equivalent of the reviewed CAS/backup/atomic replacement."""
+    """Offline equivalent of the lock/CAS/backup/atomic replacement route."""
 
     regular_owned(target)
     assert digest(target) == PREIMAGE_SHA256
@@ -62,31 +67,35 @@ def cas_install(target: Path, candidate: Path, backup: Path) -> None:
     assert digest(candidate) == CANDIDATE_SHA256
     assert candidate.stat().st_size == CANDIDATE_BYTES
     assert not backup.exists() and not backup.is_symlink(), "backup clobber"
-
-    # O_EXCL makes the no-clobber backup reservation atomic. It is a private
-    # replica, so the only permission operation here is on the replica copy.
-    fd = os.open(backup, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o755)
-    with os.fdopen(fd, "wb") as stream:
-        stream.write(target.read_bytes())
-    backup.chmod(0o755)
-    regular_owned(backup)
-    assert digest(backup) == PREIMAGE_SHA256
-
-    replacement = target.with_name(f".{target.name}.replacement")
-    assert not replacement.exists() and not replacement.is_symlink()
-    shutil.copyfile(candidate, replacement)
-    replacement.chmod(0o755)
-    regular_owned(replacement)
-    assert digest(replacement) == CANDIDATE_SHA256
-    os.replace(replacement, target)
-
+    lock = target.parent / ".make-child-venv.install.lock"
+    lock.mkdir()
+    try:
+        target_info = target.stat()
+        copy_reserved(target, backup, UID, 0o755)
+        regular_owned(backup)
+        assert digest(backup) == PREIMAGE_SHA256
+        replacement = target.with_name(f".{target.name}.replacement")
+        copy_reserved(candidate, replacement, UID, 0o755)
+        regular_owned(replacement)
+        assert digest(replacement) == CANDIDATE_SHA256
+        rename_if_same(
+            target.parent,
+            target.name,
+            replacement.name,
+            target_info.st_dev,
+            target_info.st_ino,
+            UID,
+            0o755,
+        )
+    finally:
+        lock.rmdir()
     regular_owned(target)
     assert digest(target) == CANDIDATE_SHA256
     assert target.stat().st_size == CANDIDATE_BYTES
 
 
 def fresh_replica() -> tuple[Path, Path, Path, Path, Path]:
-    temp_root = Path(os.environ.get("TMPDIR", tempfile.gettempdir())).resolve()
+    temp_root = private_tmp_parent()
     root = Path(tempfile.mkdtemp(prefix="ops-install-prep-", dir=temp_root)).resolve()
     assert root.is_relative_to(temp_root)
     target = root / "orch/bin/make-child-venv"
@@ -154,6 +163,61 @@ def no_clobber_backup_refusal() -> None:
     assert (digest(helper), digest(dependency)) == before_helpers
 
 
+def descriptor_reservation_guards() -> None:
+    root, target, backup, helper, dependency = fresh_replica()
+    outside = root / "outside-sentinel"
+    outside.write_bytes(b"must remain unchanged\n")
+    outside.chmod(0o755)
+    for destination in (
+        root / "orch/backups/backup-reservation",
+        root / "orch/bin/replacement-reservation",
+    ):
+        destination.symlink_to(outside)
+        try:
+            copy_reserved(target, destination, UID, 0o755)
+        except FileExistsError:
+            pass
+        else:
+            raise AssertionError("symlink reservation was accepted")
+        assert outside.read_bytes() == b"must remain unchanged\n"
+
+
+def identity_cas_refusal() -> None:
+    root, target, backup, helper, dependency = fresh_replica()
+    replacement = target.with_name(".replacement")
+    copy_reserved(root / "private-source/ops-child-custody/make-child-venv", replacement, UID, 0o755)
+    original = target.stat()
+    changed = target.with_name(".changed-target")
+    write_extracted(changed, b"changed target")
+    os.replace(changed, target)
+    try:
+        rename_if_same(
+            target.parent,
+            target.name,
+            replacement.name,
+            original.st_dev,
+            original.st_ino,
+            UID,
+            0o755,
+        )
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError("changed target identity was accepted")
+    assert replacement.exists()
+    assert target.read_bytes() == b"changed target"
+
+
+def private_tmp_parent() -> Path:
+    temp_root = Path(os.environ.get("TMPDIR", tempfile.gettempdir())).resolve()
+    info = temp_root.lstat()
+    assert stat.S_ISDIR(info.st_mode), "TMPDIR is not a directory"
+    assert not stat.S_ISLNK(info.st_mode), "TMPDIR is a symlink"
+    assert info.st_uid == UID, "TMPDIR owner mismatch"
+    assert stat.S_IMODE(info.st_mode) & 0o022 == 0, "TMPDIR is broadly writable"
+    return temp_root
+
+
 def protected_shape_refusals() -> None:
     root, target, backup, helper, dependency = fresh_replica()
     candidate = root / "private-source/ops-child-custody/make-child-venv"
@@ -178,11 +242,14 @@ def protected_shape_refusals() -> None:
 
 
 def main() -> None:
+    private_tmp_parent()
     positive_candidate_match()
     wrong_preimage_refusal()
     no_clobber_backup_refusal()
+    descriptor_reservation_guards()
+    identity_cas_refusal()
     protected_shape_refusals()
-    print("PASS: private candidate match, wrong-preimage refusal, no-clobber backup, helper invariance, and shape guards")
+    print("PASS: private candidate, preimage, no-clobber, descriptor race, identity CAS, helper, symlink, and hardlink controls")
 
 
 if __name__ == "__main__":
