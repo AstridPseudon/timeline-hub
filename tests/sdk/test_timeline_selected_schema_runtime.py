@@ -230,23 +230,42 @@ def http_retained_pack(configured_project_pack, selected_runtime_env, tmp_path, 
     use_runtime()
     from runtime_protocol.service import RuntimeService
     from runtime_protocol.store import RealmStore
+    from runtime_protocol.timeline_commit_port import route_path
 
     from tests.editing_conformance.test_commit_runtime_m1 import open_client
 
     root = tmp_path / 'realm'
     RealmStore.initialize(root, realm_id='realm').close()
     service = RuntimeService(root)
+    service.register_timeline_commit_provider(commit.create_runtime_commit_service())
     project = service.create_project({'slug': 'selected-schema-http', 'name': 'Selected schema HTTP'})['id']
     service.create_timeline(project, 'film', idempotency_key='create-film-http')
-    service.publish_parent_composition(
+    resource = service.get_project_timeline(project, 'film')
+    base = {'revision_id': resource['head_revision_id'],
+            'publication_id': resource['head_publication_id']}
+    baseline = service._timeline_commits()[0].revision_closure(
+        project, 'film', base['revision_id'])['parent_revision']['payload']
+    original_parent = {
+        'config': {'tracks': []}, 'registry': {}, 'clips': [], 'occurrences': [],
+    }
+    changes = [
+        {'op': 'set', 'ref': 'parent', 'path': [],
+         'before': {'state': 'present', 'value': copy.deepcopy(baseline)},
+         'value': copy.deepcopy(original_parent)},
+        {'op': 'set', 'ref': 'parent', 'path': ['clips'],
+         'before': {'state': 'absent'}, 'value': []},
+    ]
+    seeded = service.commit_timeline(
         project, 'film', {
-            'project_id': project, 'timeline_id': 'film', 'expected_head': None,
-            'parent_revision_id': 'selected-http-baseline',
-            'parent_composition': {
-                'config': {'tracks': []}, 'registry': {}, 'clips': [], 'occurrences': [],
-            },
-        }, idempotency_key='selected-http-baseline',
+            'api_version': 1, 'project_id': project, 'timeline_id': 'film',
+            'base_revision_id': base['revision_id'],
+            'base_publication_id': base['publication_id'],
+            'commands': [{'schema_version': 1, 'op': 'doc.patch', 'version': '1',
+                          'select': None, 'args': {'changes': changes}}],
+        }, idempotency_key='selected-http-baseline', publisher='author',
+        invocation_path=route_path(project, 'film'), authorize=lambda: None,
     )
+    assert seeded['data']['canonical_document']['parent_revision']['payload'] == original_parent
     service.close()
     daemon = real_runtime(root, support_root=tmp_path / 'support', authoring_profile='astrid')
     client = open_client(daemon)
@@ -747,7 +766,7 @@ def test_native_rebase_after_v2_and_selection_removal_uses_original_object(multi
                                                values={'label': 'After V2'})]), 'after-v2')
     case.object_reads.clear()
     accepted = case.submit(body, 'rebase-after-v2')
-    assert accepted['data']['status'] == 'rebased'
+    assert accepted['data']['status'] == 'merged'
     assert case.object_reads == [(case.pin, case.object_id)] * 2
     case.object_reads.clear()
     undone = case.submit(case.request([inverse(accepted['receipt']['receipt_id'])]), 'undo-after-v2')
@@ -980,7 +999,7 @@ def test_native_reselection_conflicts_while_disjoint_peer_and_exact_retry_surviv
     case.submit(case.request([capture_track_set(case.bundle(), 'parent/track:picture',
                                                values={'label': 'Peer'})]), 'authority-peer')
     accepted = case.submit(body, 'authority-retry')
-    assert accepted['data']['status'] == 'rebased'
+    assert accepted['data']['status'] == 'merged'
     manifest = yaml.safe_load((case.source_root / 'pack.yaml').read_text())
     test_project_packs.add_second_element(case.source_root, case.path.parent, manifest)
     packs.admit_project_pack('realm', case.project)
