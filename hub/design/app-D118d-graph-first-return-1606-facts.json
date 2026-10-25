@@ -1,0 +1,51 @@
+{
+  "task": "D118d FIRST RETURN",
+  "repository": "agent",
+  "worktree": "/home/user/work/wt/app-D118d-graph-first-return-1606",
+  "candidate_head": "94ac9347b64e0aaf5fb71443cc500fd57e80aa72",
+  "result": "NO_ADDITIONAL_DIFF",
+  "allowed_file": "tests/sdk/test_timeline_commit_graph_roots.py",
+  "current_file_sha256": "72bf3c60cc006223c857ae5194280793a2be21ee0527ebb565a2a1cf271d9c21",
+  "normal_parent": {
+    "commit": "20177e66564f9f91735ed1a11bac821682d60edf",
+    "file_sha256": "823b9de3b9aa23fb150ce86ef170bbffbe4c1830f677d4542a1843afd055da2a",
+    "diff_numstat": "6 0"
+  },
+  "conservation": {
+    "assertion_count_parent": 33,
+    "assertion_count_current": 33,
+    "assertion_ast_equal": true,
+    "test_function_count_parent": 11,
+    "test_function_count_current": 11,
+    "parametrize_decorator_count_parent": 7,
+    "parametrize_decorator_count_current": 7,
+    "test_decorator_ast_equal": true,
+    "test_input_assertion_ast_equal": true,
+    "test_body_ast_sha256": "184491f3ba395936d22f41a44caa17df592ce586a960b31e77edccb93e25fce5",
+    "runtime_realm_setup_ast_equal": true,
+    "runtime_realm_setup_sha256": "b026375f8f18441f7fbaf6d696af5d2022a5c5b622b167b21e538e99f4ffa45c",
+    "current_equals_committed_94ac": true
+  },
+  "authored_null": {
+    "source": "tests/editing_conformance/test_recorded_graph_roots.py:46-51",
+    "path": "root_values()[1].value.gain",
+    "value": null,
+    "classification": "authored fixture input, not derived setup"
+  },
+  "live_owner_seam": {
+    "caller": "tests/sdk/test_timeline_commit_graph_roots.py:60,65,129-133",
+    "route": "RuntimeService.commit_timeline",
+    "provider": "load_timeline_commit_provider('astrid')",
+    "guard": "Runtime PreparedCommit validation",
+    "failure_path": "parent_revision.payload.occurrences[2].gain",
+    "failure": "None is not of type 'number'",
+    "owner": "Runtime/Agent schema-and-producer contract boundary; no source-only correction is valid"
+  },
+  "policy": {
+    "D104": "not applicable: it permits setup/caller-validity migration only; this is an authored null",
+    "D120": "applicable only to bounded source/static checks; it does not authorize changing the authored null or loosening validation",
+    "behavior_go": false,
+    "retirement": false,
+    "own9": "not rerun: source-only brief forbids pytest/body/replay; prior protected run recorded all nine failing before original assertions"
+  }
+}

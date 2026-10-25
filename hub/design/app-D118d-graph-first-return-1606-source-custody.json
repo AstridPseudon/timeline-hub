@@ -1,0 +1,38 @@
+{
+  "candidate": {
+    "head": "94ac9347b64e0aaf5fb71443cc500fd57e80aa72",
+    "parent": "20177e66564f9f91735ed1a11bac821682d60edf",
+    "worktree_status": "clean",
+    "additional_source_diff": false
+  },
+  "prior_source_change": {
+    "file": "tests/sdk/test_timeline_commit_graph_roots.py",
+    "insertions": 6,
+    "deletions": 0,
+    "purpose": "v2 label/steps/merge/reads envelope only"
+  },
+  "runtime_pin": {
+    "path": "/home/user/work/wt/rt-pin-5e9ad1c6",
+    "commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "status": "clean",
+    "schema_location": "runtime_protocol/schemas/timeline-commit-bundle.json:3383-3385",
+    "schema": "Occurrence.gain.type = number"
+  },
+  "caller_custody": {
+    "provider_registration": "tests/sdk/test_timeline_commit_graph_roots.py:60,65",
+    "commit_route": "tests/sdk/test_timeline_commit_graph_roots.py:129-133",
+    "agent_factory": "astrid/sdk/timeline/commit.py:1472-1476",
+    "runtime_guard": "runtime_protocol/service.py:_timeline_commits -> validate_commit_value(value, 'PreparedCommit')"
+  },
+  "upstream_reference": {
+    "ref": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+    "target_file": "tests/sdk/test_timeline_commit_graph_roots.py",
+    "status": "absent"
+  },
+  "prior_independent_verdict": {
+    "source_semantics": "PASS",
+    "own9": "FAIL before original assertions at gain null",
+    "source_edits_by_review": false
+  }
+}
