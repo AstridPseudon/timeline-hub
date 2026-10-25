@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T00:55:45Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 2 | status age 0m -->
-# agent board, 2026-10-25T00:55:08Z
+<!-- agent | 2026-10-25T00:58:38Z | dispatcher heartbeat 13s | live 1 (sol 0, luna 1, other 0) | busy30 2 | status age 1m -->
+# agent board, 2026-10-25T00:56:54Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -172,8 +172,8 @@
 | U4a provider release | Adopt qualified Runtime provenance | Luna | Normal tools passed | merged | agt-U4a-provider-adopt-0010 | Lock only; 15 mappings and schema unchanged. Finalized branch merge receipt verified. | Home df9194ff51 |
 | F scalar fixtures11 | Preserve scalar provider scenarios | Main Luna requested | First protected review FAIL | blocked:runtime | First return requested0042 | Seed calls value_at with wrong arity. Correct genuine closure/ref/path API, all eleven original cases retained. | f2def held |
 | F word inputs11 | Preserve retained text and word inputs | Main Luna requested | First protected review FAIL | blocked:runtime | Product first return requested0036 | Verified transcript pin dropped with existing manifest. Bounded commit.py correction requested; Runtime refusal stays strict. | Held7d0e6c07a6 |
-| D86 main swap12 | Preserve parent-media swap scenarios | Main Luna / Local Luna | Normal merge queued | merging | Review0053 PASS_SOURCE | Exact12 and six bodies conserved; source/static review complete. Mypy NumPy stub environment limit retained; no body. | 2f935f6d4d |
-| D86 main numeric9 | Preserve numeric move and parameter cases | Main Luna / Local Luna | Normal merge queued | merging | Review0053 PASS_SOURCE | Nine original scenarios and numeric types conserved. Probe uncredited; static environment limit retained. Functional incremental proof owed. | ec76fa69e6 |
+| D86 main swap12 | Preserve parent-media swap scenarios | Main Luna / Local Luna | Incremental main body | merging | Review0053 PASS; home756f | Exact reviewed swap hash685f now home. Original12 and six bodies conserved; mypy NumPy environment limit retained. No functional proof yet. | 756f911847 |
+| D86 main numeric9 | Preserve numeric move and parameter cases | Main Luna / Local Luna | Incremental main body | merging | Review0053 PASS; home0ae1 | Exact reviewed numeric hash134a now home. Nine scenarios and numeric types conserved; probe uncredited. Functional proof pending. | 0ae146e1b0 |
 | D86 manifest inverse8 | Preserve media manifest inverse scenarios | Main Luna requested | Main source slot | blocked:runtime | Main list0021 | Eight exact live IDs, two disjoint test files. Genuine source only; preserve all original predicates. | Source unchanged |
 | D86 occurrence opaque9 | Preserve occurrence and opaque items | Main Luna requested | Main source slot | blocked:runtime | Main list0021 | Nine exact IDs, three disjoint test files. Inspect current fixture dependencies before editing. | Source unchanged |
 | D86 parent track3 | Preserve parent track inverse and labels | Main Luna requested | Main source slot | blocked:runtime | Main list0021 | Three exact IDs, two disjoint files. All assertions kept; source only. | Source unchanged |
@@ -191,7 +191,7 @@
 | D87 ZIP prose | Hand back reviewed migration notes | Runtime Luna | Docs owner capacity | blocked:runtime | Coverage0033 PASS; exact text published | Runtime board names final docs ready. Agent appendix published byte-exact; no extra review or product changes. | Evidence only |
 | F affected incremental batch | Qualify already merged families now | Luna / Main service | Existing main runner and eligible inputs | doing | agt-F-incremental-inputs-0055 | Owner00:50 lifts full-union wait. Exact eligible source/membership worker running; then immediate main body. Later new merges follow. No D59 credit. | Home2cde / Runtimea3cd |
 
-Integration: Actual Agent2cde6002b9 includes normal a3cd adoption, reviewed CLI8/inverse10 and sheet17. These family source merges still await ONE main affected-node proof. Product7c48 plus normal provenance remains qualified only at recorded scopes.
+Integration: Actual Agent0ae146e1b0 includes reviewed swap12/numeric9 plus normal a3cd adoption, reviewed CLI8/inverse10 and sheet17. These family source merges still await ONE main affected-node proof. Product7c48 plus normal provenance remains qualified only at recorded scopes.
 core open: Main P4 original3362 FAIL45.244s versus45s on a3cd. Runtime D88 digest-chain Sol0044 owns measured follow-through; no Agent diagnosis or unchanged repeat. Four R2 originals remain closed at7c48/732 scope until final matrix. Historical rehearsal424 is classified core, not current qualified proof.
 Gates: Latest main3362 NO-GO. D73 receipts/preflight reported; installed agent-remotion-0013 profile differs from unavailable historical profile and stays explicit. No final tuple or D59 credit. Genuine installed render remains cut-blocking. E2 and D79 paused until ZIP.
 Rehearsal categories: PRE16 / KNOWN37 / ENV73 / NEWcore424 / NEWnoncore0 / REG0 =550. Eighteen ENV contrasts later passed. D87 exact24 plus separate1 reviewed and ledgered; six frontend cases remain live. No blanket core0 claim.
@@ -203,6 +203,7 @@ Blockers: Main qualification — ORCH00:50 releases incremental batch NOW on alr
 Blockers: Final cut — Final P1–P5/core on one tuple and genuine installed render remain D59 gated. No current core0 or full-suite PASS claimed.
 Next ready: MAIN incremental batch now under ORCH00:50; normal merges on protected PASS. Main scalar/word and reserved families dispatch under capacity. P4 only after meaningful qualified successor.
 live 1 / cap 0 new source after post-dispatch floor check; ready-undispatched 0 locally eligible. Incremental inputs0055 running. Other source rows exclusively reserved on main.
-Inbox consumed through1231188 bytes. Updated 2026-10-25T00:49:47Z: actual Runtime00:40 board and flat P4/sheet/D87 results consumed. Sheet original merge2cde verified. D87 exact worker appendix published. Local review0053 assigned; peer0056 published. No manager product edits or test bodies.
+Inbox consumed through1232794 bytes. Updated 2026-10-25T00:49:47Z: actual Runtime00:40 board and flat P4/sheet/D87 results consumed. Sheet original merge2cde verified. D87 exact worker appendix published. Local review0053 assigned; peer0056 published. No manager product edits or test bodies.
 Owner00:50 incremental qualification applied 2026-10-25T00:50:33Z; main peer0051 requests immediate existing-runner submission on already reviewed home2cde. No wait for full union.
 Pass 2026-10-25T00:55:08Z: protected source0053 PASS bothbranches; originalauthors normalmergequeued. Incremental0055 dispatched at6555860992bytes. D88criticalowner0044 and videosecondFAIL consumed; exactpeer0055 published.
+Pass 2026-10-25T00:56:54Z: normal swap756f and numeric0ae1 merges verified; both actual home file SHA256 equal exact review. Worker0055 active on0ae1; post-dispatchfree6423920640bytes. Mainpeer0046 confirms incremental nextheavy.
