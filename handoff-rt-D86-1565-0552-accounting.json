@@ -1,0 +1,59 @@
+{
+  "ERROR": 57,
+  "FAIL": 3,
+  "PASS": 0,
+  "SKIP": 0,
+  "central_id": "rt-D86-new-source-body-0537-fd86-new-source-body-0537-1025054041-1565",
+  "controls": {
+    "cache": "off",
+    "marker_mode": "parsed controls retained; raw commands private",
+    "parallelism": 3,
+    "poison_exit": 1,
+    "poison_invocations": "exactly zero",
+    "positive_exit": 17,
+    "positive_invocations": "exactly one",
+    "timeout_seconds": 45
+  },
+  "executed_unique": 60,
+  "held_excluded": {
+    "opaqueSIX": 6,
+    "ordinaryscriptFOUR": 4,
+    "reason": "normal receipts remained pending; held selectors were not silently appended",
+    "total": 10
+  },
+  "historical_boundaries": {
+    "original550": {
+      "rows": 550,
+      "sha256": "abea44dbd2294e2e8ed1a8634618a6bb0fa85590619487002a1e933e45bb88e2",
+      "treatment": "preserved separately; not reclassified or added to 60"
+    },
+    "prior_actuals": "actual19214, actual6058, actual161, actual102, actual20, and actual22 remain immutable and are not re-counted",
+    "unexecuted23": {
+      "rows": 23,
+      "sha256": "7f70512cfdf3d6db36c5c59106805beae7a73391803eb5d161683d8d4f98dfca",
+      "treatment": "preserved separately; excluded from actual accounting"
+    }
+  },
+  "membership_matches_source": true,
+  "no_absent_case_pass": true,
+  "no_inferred_cause": true,
+  "no_reconstructed_missing_records": true,
+  "no_repeat_scopes": [
+    "same central ID/body was not re-submitted",
+    "held10 stayed excluded",
+    "prior actual sets and original550/unexecuted23 were not rerun or reclassified"
+  ],
+  "packet": "fd86-new-source-body-0537",
+  "per_id_source_rows": 60,
+  "producer_xml_testcase_count": 60,
+  "proof": "finite same-ID60 handback",
+  "selected_unique": 60,
+  "source_only_export": true,
+  "source_scope": {
+    "D92THREE": 3,
+    "ordinarysheet11": 11,
+    "word46": 46
+  },
+  "task": "F-D86-1565-safe-export-0552"
+}
+
