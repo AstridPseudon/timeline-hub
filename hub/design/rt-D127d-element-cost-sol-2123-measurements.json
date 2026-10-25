@@ -1,0 +1,622 @@
+{
+  "status": "UNAPPLIED",
+  "production_changed": false,
+  "limits": [
+    "No mounted/provider/Store execution or accepted-history growth replay",
+    "Synthetic shapes/repetition counts are not measured element lifecycle sizes",
+    "First retained call includes cold imports/setup; synthetic calls are warmed",
+    "cProfile overhead is excluded from unprofiled timings",
+    "No before/after product speedup or live dominant-cost claim"
+  ],
+  "capture_sha256": "51e353be23b2ebf80e454f2b5cd165a904ab0478c41a6065ed310535d55976cd",
+  "retained_fixture_file_bytes": 200611,
+  "retained_canonical_bytes": 200610,
+  "retained_commands": 2,
+  "retained_validation_calls": {
+    "Recorder": 2,
+    "CanonicalDocument": 54
+  },
+  "retained": {
+    "first_seconds": 0.1759976340108551,
+    "warm_seconds": [
+      0.12050451899995096,
+      0.12343653201241978,
+      0.13802806299645454
+    ],
+    "warm_median_seconds": 0.12343653201241978,
+    "profile": {
+      "total_seconds": 0.38818237400000005,
+      "top_self": [
+        {
+          "file": "validators.py",
+          "line": 396,
+          "function": "descend",
+          "primitive_calls": 56,
+          "calls": 22248,
+          "self_seconds": 0.054174589,
+          "cumulative_seconds": 0.29697787800000003
+        },
+        {
+          "file": "timeline_commit_validation.py",
+          "line": 116,
+          "function": "reuse",
+          "primitive_calls": 21240,
+          "calls": 21240,
+          "self_seconds": 0.028598737000000003,
+          "cumulative_seconds": 0.056302007
+        },
+        {
+          "file": "_types.py",
+          "line": 94,
+          "function": "is_type",
+          "primitive_calls": 28380,
+          "calls": 28380,
+          "self_seconds": 0.020172253,
+          "cumulative_seconds": 0.034410313000000005
+        },
+        {
+          "file": "<builtin>",
+          "line": 0,
+          "function": "<method 'get' of 'dict' objects>",
+          "primitive_calls": 100053,
+          "calls": 100053,
+          "self_seconds": 0.019399933,
+          "cumulative_seconds": 0.019399933
+        },
+        {
+          "file": "_keywords.py",
+          "line": 282,
+          "function": "type",
+          "primitive_calls": 11448,
+          "calls": 11448,
+          "self_seconds": 0.017002149,
+          "cumulative_seconds": 0.06213256
+        },
+        {
+          "file": "timeline_commit_validation.py",
+          "line": 18,
+          "function": "finite_json",
+          "primitive_calls": 56,
+          "calls": 56,
+          "self_seconds": 0.016394984,
+          "cumulative_seconds": 0.029439195
+        },
+        {
+          "file": "<builtin>",
+          "line": 0,
+          "function": "<built-in method builtins.id>",
+          "primitive_calls": 96315,
+          "calls": 96315,
+          "self_seconds": 0.011851841,
+          "cumulative_seconds": 0.011851841
+        },
+        {
+          "file": "copy.py",
+          "line": 119,
+          "function": "deepcopy",
+          "primitive_calls": 1310,
+          "calls": 10713,
+          "self_seconds": 0.011133335000000001,
+          "cumulative_seconds": 0.023839373
+        },
+        {
+          "file": "validators.py",
+          "line": 452,
+          "function": "is_type",
+          "primitive_calls": 28380,
+          "calls": 28380,
+          "self_seconds": 0.010273097,
+          "cumulative_seconds": 0.04468341
+        },
+        {
+          "file": "<builtin>",
+          "line": 0,
+          "function": "<built-in method builtins.isinstance>",
+          "primitive_calls": 64723,
+          "calls": 64723,
+          "self_seconds": 0.010162559,
+          "cumulative_seconds": 0.011351981
+        },
+        {
+          "file": "_core.py",
+          "line": 165,
+          "function": "create_resource",
+          "primitive_calls": 12864,
+          "calls": 12864,
+          "self_seconds": 0.00851516,
+          "cumulative_seconds": 0.015197116
+        },
+        {
+          "file": "encoder.py",
+          "line": 207,
+          "function": "iterencode",
+          "primitive_calls": 417,
+          "calls": 417,
+          "self_seconds": 0.007860804,
+          "cumulative_seconds": 0.007860804
+        },
+        {
+          "file": "<builtin>",
+          "line": 0,
+          "function": "<built-in method builtins.any>",
+          "primitive_calls": 14797,
+          "calls": 14797,
+          "self_seconds": 0.007667475000000001,
+          "cumulative_seconds": 0.040102229
+        },
+        {
+          "file": "_keywords.py",
+          "line": 285,
+          "function": "<genexpr>",
+          "primitive_calls": 25562,
+          "calls": 25562,
+          "self_seconds": 0.007530258000000001,
+          "cumulative_seconds": 0.031191642000000002
+        },
+        {
+          "file": "timeline_commit_producer.py",
+          "line": 60,
+          "function": "value_equal",
+          "primitive_calls": 284,
+          "calls": 5730,
+          "self_seconds": 0.007176572000000001,
+          "cumulative_seconds": 0.013808218
+        },
+        {
+          "file": "<attrs generated methods referencing._core.Resource>",
+          "line": 29,
+          "function": "__init__",
+          "primitive_calls": 12864,
+          "calls": 12864,
+          "self_seconds": 0.006681956,
+          "cumulative_seconds": 0.006681956
+        },
+        {
+          "file": "jsonschema.py",
+          "line": 47,
+          "function": "_dollar_id",
+          "primitive_calls": 12864,
+          "calls": 12864,
+          "self_seconds": 0.0065716540000000006,
+          "cumulative_seconds": 0.011095885000000002
+        },
+        {
+          "file": "_keywords.py",
+          "line": 36,
+          "function": "additionalProperties",
+          "primitive_calls": 2582,
+          "calls": 3154,
+          "self_seconds": 0.006264545000000001,
+          "cumulative_seconds": 0.10664169600000001
+        },
+        {
+          "file": "_keywords.py",
+          "line": 290,
+          "function": "properties",
+          "primitive_calls": 56,
+          "calls": 2544,
+          "self_seconds": 0.006259261,
+          "cumulative_seconds": 0.295239587
+        },
+        {
+          "file": "_keywords.py",
+          "line": 274,
+          "function": "ref",
+          "primitive_calls": 56,
+          "calls": 8190,
+          "self_seconds": 0.005901582000000001,
+          "cumulative_seconds": 0.297233444
+        }
+      ],
+      "top_cumulative": [
+        {
+          "file": "benchmark_timeline_commit_cost.py",
+          "line": 148,
+          "function": "<lambda>",
+          "primitive_calls": 1,
+          "calls": 1,
+          "self_seconds": 8.602e-06,
+          "cumulative_seconds": 0.38648157400000005
+        },
+        {
+          "file": "benchmark_timeline_commit_cost.py",
+          "line": 94,
+          "function": "verify_retained",
+          "primitive_calls": 1,
+          "calls": 1,
+          "self_seconds": 9.399e-05,
+          "cumulative_seconds": 0.386472972
+        },
+        {
+          "file": "timeline_commit_auth.py",
+          "line": 2563,
+          "function": "validate_sequential_capture",
+          "primitive_calls": 1,
+          "calls": 1,
+          "self_seconds": 0.00128717,
+          "cumulative_seconds": 0.37210850900000003
+        },
+        {
+          "file": "timeline_commit_validation.py",
+          "line": 162,
+          "function": "validate_commit_value",
+          "primitive_calls": 56,
+          "calls": 56,
+          "self_seconds": 0.000518815,
+          "cumulative_seconds": 0.327619891
+        },
+        {
+          "file": "validators.py",
+          "line": 448,
+          "function": "validate",
+          "primitive_calls": 56,
+          "calls": 56,
+          "self_seconds": 0.000113739,
+          "cumulative_seconds": 0.29752938300000004
+        },
+        {
+          "file": "validators.py",
+          "line": 349,
+          "function": "iter_errors",
+          "primitive_calls": 56,
+          "calls": 428,
+          "self_seconds": 0.000596094,
+          "cumulative_seconds": 0.29741564400000003
+        },
+        {
+          "file": "_keywords.py",
+          "line": 274,
+          "function": "ref",
+          "primitive_calls": 56,
+          "calls": 8190,
+          "self_seconds": 0.005901582000000001,
+          "cumulative_seconds": 0.297233444
+        },
+        {
+          "file": "validators.py",
+          "line": 396,
+          "function": "descend",
+          "primitive_calls": 56,
+          "calls": 22248,
+          "self_seconds": 0.054174589,
+          "cumulative_seconds": 0.29697787800000003
+        },
+        {
+          "file": "_keywords.py",
+          "line": 290,
+          "function": "properties",
+          "primitive_calls": 56,
+          "calls": 2544,
+          "self_seconds": 0.006259261,
+          "cumulative_seconds": 0.295239587
+        },
+        {
+          "file": "_keywords.py",
+          "line": 59,
+          "function": "items",
+          "primitive_calls": 492,
+          "calls": 1556,
+          "self_seconds": 0.003682195,
+          "cumulative_seconds": 0.27332214800000004
+        },
+        {
+          "file": "timeline_commit_auth.py",
+          "line": 2338,
+          "function": "_capture_document_images",
+          "primitive_calls": 54,
+          "calls": 54,
+          "self_seconds": 0.000877541,
+          "cumulative_seconds": 0.18785654000000002
+        },
+        {
+          "file": "timeline_commit_auth.py",
+          "line": 2464,
+          "function": "_capture_records",
+          "primitive_calls": 2,
+          "calls": 2,
+          "self_seconds": 0.000290213,
+          "cumulative_seconds": 0.149816669
+        },
+        {
+          "file": "_keywords.py",
+          "line": 36,
+          "function": "additionalProperties",
+          "primitive_calls": 2582,
+          "calls": 3154,
+          "self_seconds": 0.006264545000000001,
+          "cumulative_seconds": 0.10664169600000001
+        },
+        {
+          "file": "_keywords.py",
+          "line": 337,
+          "function": "anyOf",
+          "primitive_calls": 374,
+          "calls": 1568,
+          "self_seconds": 0.002820939,
+          "cumulative_seconds": 0.081290398
+        },
+        {
+          "file": "_keywords.py",
+          "line": 282,
+          "function": "type",
+          "primitive_calls": 11448,
+          "calls": 11448,
+          "self_seconds": 0.017002149,
+          "cumulative_seconds": 0.06213256
+        },
+        {
+          "file": "_keywords.py",
+          "line": 351,
+          "function": "oneOf",
+          "primitive_calls": 76,
+          "calls": 106,
+          "self_seconds": 0.00044443700000000005,
+          "cumulative_seconds": 0.058854406000000005
+        },
+        {
+          "file": "timeline_commit_validation.py",
+          "line": 116,
+          "function": "reuse",
+          "primitive_calls": 21240,
+          "calls": 21240,
+          "self_seconds": 0.028598737000000003,
+          "cumulative_seconds": 0.056302007
+        },
+        {
+          "file": "validators.py",
+          "line": 452,
+          "function": "is_type",
+          "primitive_calls": 28380,
+          "calls": 28380,
+          "self_seconds": 0.010273097,
+          "cumulative_seconds": 0.04468341
+        },
+        {
+          "file": "<builtin>",
+          "line": 0,
+          "function": "<built-in method builtins.any>",
+          "primitive_calls": 14797,
+          "calls": 14797,
+          "self_seconds": 0.007667475000000001,
+          "cumulative_seconds": 0.040102229
+        },
+        {
+          "file": "_types.py",
+          "line": 94,
+          "function": "is_type",
+          "primitive_calls": 28380,
+          "calls": 28380,
+          "self_seconds": 0.020172253,
+          "cumulative_seconds": 0.034410313000000005
+        }
+      ]
+    }
+  },
+  "synthetic": [
+    {
+      "scale": 1,
+      "synthetic_boundaries": 1,
+      "canonical_bytes": 5279,
+      "parent_clips": 2,
+      "child_clips": 3,
+      "validation_and_digests": {
+        "first_seconds": 0.0017829540011007339,
+        "warm_seconds": [
+          0.0009964689961634576,
+          0.0009024349856190383,
+          0.0008871020108927041
+        ],
+        "warm_median_seconds": 0.0009024349856190383
+      },
+      "detached": {
+        "first_seconds": 0.00026062800316140056,
+        "warm_seconds": [
+          0.000209807010833174,
+          0.00019980198703706264,
+          0.00020272599067538977
+        ],
+        "warm_median_seconds": 0.00020272599067538977
+      }
+    },
+    {
+      "scale": 1,
+      "synthetic_boundaries": 8,
+      "canonical_bytes": 5279,
+      "parent_clips": 2,
+      "child_clips": 3,
+      "validation_and_digests": {
+        "first_seconds": 0.00661529999342747,
+        "warm_seconds": [
+          0.007542807987192646,
+          0.006652574025793001,
+          0.006784258992411196
+        ],
+        "warm_median_seconds": 0.006784258992411196
+      },
+      "detached": {
+        "first_seconds": 0.0017026519926730543,
+        "warm_seconds": [
+          0.001647410012083128,
+          0.0015673010202590376,
+          0.0016761769948061556
+        ],
+        "warm_median_seconds": 0.001647410012083128
+      }
+    },
+    {
+      "scale": 1,
+      "synthetic_boundaries": 54,
+      "canonical_bytes": 5279,
+      "parent_clips": 2,
+      "child_clips": 3,
+      "validation_and_digests": {
+        "first_seconds": 0.04801433900138363,
+        "warm_seconds": [
+          0.04481765002128668,
+          0.0509480030159466,
+          0.056097683002008125
+        ],
+        "warm_median_seconds": 0.0509480030159466
+      },
+      "detached": {
+        "first_seconds": 0.013724319986067712,
+        "warm_seconds": [
+          0.013152753992471844,
+          0.0121930819877889,
+          0.012491779983974993
+        ],
+        "warm_median_seconds": 0.012491779983974993
+      }
+    },
+    {
+      "scale": 4,
+      "synthetic_boundaries": 1,
+      "canonical_bytes": 15086,
+      "parent_clips": 8,
+      "child_clips": 12,
+      "validation_and_digests": {
+        "first_seconds": 0.001939261012012139,
+        "warm_seconds": [
+          0.0018036779947578907,
+          0.0016798980068415403,
+          0.0016571110172662884
+        ],
+        "warm_median_seconds": 0.0016798980068415403
+      },
+      "detached": {
+        "first_seconds": 0.0005629030056297779,
+        "warm_seconds": [
+          0.0006736229988746345,
+          0.000586226989980787,
+          0.000567392009543255
+        ],
+        "warm_median_seconds": 0.000586226989980787
+      }
+    },
+    {
+      "scale": 4,
+      "synthetic_boundaries": 8,
+      "canonical_bytes": 15086,
+      "parent_clips": 8,
+      "child_clips": 12,
+      "validation_and_digests": {
+        "first_seconds": 0.014303856994956732,
+        "warm_seconds": [
+          0.012806307000573725,
+          0.0128809490124695,
+          0.01345836598193273
+        ],
+        "warm_median_seconds": 0.0128809490124695
+      },
+      "detached": {
+        "first_seconds": 0.00445057702017948,
+        "warm_seconds": [
+          0.004698206001194194,
+          0.004679113015299663,
+          0.004388069995911792
+        ],
+        "warm_median_seconds": 0.004679113015299663
+      }
+    },
+    {
+      "scale": 4,
+      "synthetic_boundaries": 54,
+      "canonical_bytes": 15086,
+      "parent_clips": 8,
+      "child_clips": 12,
+      "validation_and_digests": {
+        "first_seconds": 0.10375832801219076,
+        "warm_seconds": [
+          0.097019551001722,
+          0.10057881101965904,
+          0.10519693099195138
+        ],
+        "warm_median_seconds": 0.10057881101965904
+      },
+      "detached": {
+        "first_seconds": 0.039356598019367084,
+        "warm_seconds": [
+          0.039416143990820274,
+          0.036391820991411805,
+          0.026582622987916693
+        ],
+        "warm_median_seconds": 0.036391820991411805
+      }
+    },
+    {
+      "scale": 16,
+      "synthetic_boundaries": 1,
+      "canonical_bytes": 54643,
+      "parent_clips": 32,
+      "child_clips": 48,
+      "validation_and_digests": {
+        "first_seconds": 0.004962342994986102,
+        "warm_seconds": [
+          0.004870152013609186,
+          0.004816730011953041,
+          0.00469023801269941
+        ],
+        "warm_median_seconds": 0.004816730011953041
+      },
+      "detached": {
+        "first_seconds": 0.0018820429977495223,
+        "warm_seconds": [
+          0.0016345210024155676,
+          0.0016916599997784942,
+          0.0017461060197092593
+        ],
+        "warm_median_seconds": 0.0016916599997784942
+      }
+    },
+    {
+      "scale": 16,
+      "synthetic_boundaries": 8,
+      "canonical_bytes": 54643,
+      "parent_clips": 32,
+      "child_clips": 48,
+      "validation_and_digests": {
+        "first_seconds": 0.037163758010137826,
+        "warm_seconds": [
+          0.03700170901720412,
+          0.03755598099087365,
+          0.037594100984279066
+        ],
+        "warm_median_seconds": 0.03755598099087365
+      },
+      "detached": {
+        "first_seconds": 0.012991446012165397,
+        "warm_seconds": [
+          0.013574871991295367,
+          0.013563246000558138,
+          0.012899764988105744
+        ],
+        "warm_median_seconds": 0.013563246000558138
+      }
+    },
+    {
+      "scale": 16,
+      "synthetic_boundaries": 54,
+      "canonical_bytes": 54643,
+      "parent_clips": 32,
+      "child_clips": 48,
+      "validation_and_digests": {
+        "first_seconds": 0.22091760599869303,
+        "warm_seconds": [
+          0.26715982099995017,
+          0.26893696302431636,
+          0.2586176629993133
+        ],
+        "warm_median_seconds": 0.26715982099995017
+      },
+      "detached": {
+        "first_seconds": 0.08609754400094971,
+        "warm_seconds": [
+          0.09016446099849418,
+          0.10224452501279302,
+          0.10872428200673312
+        ],
+        "warm_median_seconds": 0.10224452501279302
+      }
+    }
+  ]
+}

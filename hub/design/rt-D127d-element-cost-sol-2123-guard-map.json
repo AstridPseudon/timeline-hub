@@ -1,0 +1,57 @@
+{
+  "status": "PRODUCTION_UNCHANGED",
+  "contract": "contract/commit-v2.md sections 1-7",
+  "tests_command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. /home/user/work/venv-runtime/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 --basetemp=/tmp/w-4fa5bdeb1b/pytest-d127d-final tests/test_timeline_offline_cost.py tests/test_timeline_validation_cost.py tests/test_timeline_validation_walk.py tests/test_timeline_schema_resolution.py",
+  "guards": [
+    {
+      "guard": "finite JSON/schema/dynamic resolver identity and mutation/thread revalidation",
+      "basis": "54 targeted pure offline tests PASS; no validation count changes",
+      "files": [
+        "runtime_protocol/timeline_commit_validation.py",
+        "tests/test_timeline_validation_cost.py",
+        "tests/test_timeline_validation_walk.py",
+        "tests/test_timeline_schema_resolution.py"
+      ]
+    },
+    {
+      "guard": "document schema/image hash/uniqueness and copy custody",
+      "basis": "8 additive probe guard tests PASS; not Store/media completeness",
+      "files": [
+        "tests/test_timeline_offline_cost.py",
+        "runtime_protocol/timeline_commit_auth.py"
+      ]
+    },
+    {
+      "guard": "authorization/privacy/request bytes/publisher and invocation binding/idempotent lookup",
+      "basis": "source unchanged only; no HTTP/provider smoke",
+      "files": [
+        "runtime_protocol/server.py",
+        "runtime_protocol/service.py",
+        "runtime_protocol/timeline_commit_execution.py"
+      ]
+    },
+    {
+      "guard": "previous values/reads/steps/bindings/ABA/undo/lifecycle/CAS/lock/thread invalidation/no-write/digest fences",
+      "basis": "source unchanged only; no full/Store/provider behavioral qualification",
+      "files": [
+        "runtime_protocol/timeline_commit_store.py",
+        "runtime_protocol/timeline_commit_port.py",
+        "runtime_protocol/timeline_commit_auth.py",
+        "/home/user/work/agent/astrid/sdk/timeline/commit.py"
+      ]
+    },
+    {
+      "guard": "full v2 request/reply/history/preview canonical bytes",
+      "basis": "no product, schema, client or pin edits; all seven contract sections unchanged; no byte rewrite or transport qualification",
+      "files": [
+        "contract/commit-v2.md",
+        "runtime_protocol/schemas/timeline-commit-bundle.json"
+      ]
+    }
+  ],
+  "review": {
+    "agent": "/root/independent_review",
+    "mode": "static read-only independent review",
+    "verdict": "UNAPPLIED supported; no new blocking findings"
+  }
+}

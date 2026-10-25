@@ -1,0 +1,13 @@
+Ruff: /root/.local/bin/ruff 0.16.8; config=/home/user/banodoco/banodoco-workspace-runtime/pyproject.toml
+All checks passed!
+JSON: PASS
+COMPILE: PASS
+DIFF: PASS
+SOURCE_HASHES=21/21 AST_MANIFESTS=7/7
+{"all_missing_count": 38, "body_authorized": false, "exact_six_file_argv": ["-m", "pytest", "-q", "-o", "addopts=", "-p", "no:cacheprovider", "--timeout=45", "--junitxml=$DURABLE_EVIDENCE/targeted.xml", "tests/test_process_control.py", "tests/test_platform_signaling.py", "tests/test_door_routes.py", "tests/test_managed_output_public_api.py", "tests/test_timeline_commit_contract.py", "tests/test_timeline_legacy_authority.py"], "status": "REFUSED", "task": "rt-U1-D135-farm-preflight-2116", "test_body_run": false, "venue": "Farm"}
+VENV_NEGATIVE_EXIT=1 ALL_MISSING=38 IMPORTS=7 FAILED_IMPORTS=4 IDENTITY=identity_mismatch,identity_mismatch BODY=False
+{"all_missing_count": 40, "body_authorized": false, "exact_six_file_argv": ["-m", "pytest", "-q", "-o", "addopts=", "-p", "no:cacheprovider", "--timeout=45", "--junitxml=$DURABLE_EVIDENCE/targeted.xml", "tests/test_process_control.py", "tests/test_platform_signaling.py", "tests/test_door_routes.py", "tests/test_managed_output_public_api.py", "tests/test_timeline_commit_contract.py", "tests/test_timeline_legacy_authority.py"], "status": "REFUSED", "task": "rt-U1-D135-farm-preflight-2116", "test_body_run": false, "venue": "Farm"}
+SYSTEM_NEGATIVE_EXIT=1 ALL_MISSING=40 MISSING_DISTS=pytest-timeout INTERPRETER=False
+ParseError: no element found: line 1, column 12
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/w-5c2637dc9d/d135-xml-final2-kwq5_2bf/x.xml'
+XML_SINGLE=2 XML_MULTIPLE=5 XML_MALFORMED_EXIT=1 XML_MISSING_EXIT=1

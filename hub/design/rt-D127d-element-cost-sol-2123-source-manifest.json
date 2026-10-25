@@ -1,0 +1,111 @@
+{
+  "task": "D127d",
+  "status": "UNAPPLIED",
+  "runtime_head": "cf0b82dd47452a7a34fc63eb233e9b1dc0532806",
+  "runtime_tree": "8d5683702f36034f27ee7f49737665d66dbc2b75",
+  "production_changed": false,
+  "files": [
+    {
+      "path": "/home/user/work/wt/rt-D127d-element-cost-sol-2123/runtime_protocol/server.py",
+      "bytes": 77673,
+      "sha256": "672ebcb59a923b96d3189980c197315a09fd31d44444d502ea5d3750e7bb52fc"
+    },
+    {
+      "path": "/home/user/work/wt/rt-D127d-element-cost-sol-2123/runtime_protocol/door.py",
+      "bytes": 34216,
+      "sha256": "568cc0c372978b1249b12c430d56bc373d93419481e88590669b1abc71e02278"
+    },
+    {
+      "path": "/home/user/work/wt/rt-D127d-element-cost-sol-2123/runtime_protocol/service.py",
+      "bytes": 520340,
+      "sha256": "13587d2c3b58ecb6838525e69cbaa38a045b2491a34170275e1d5e55354bf51b"
+    },
+    {
+      "path": "/home/user/work/wt/rt-D127d-element-cost-sol-2123/runtime_protocol/timeline_commit_provider.py",
+      "bytes": 3566,
+      "sha256": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf"
+    },
+    {
+      "path": "/home/user/work/wt/rt-D127d-element-cost-sol-2123/runtime_protocol/timeline_commit_execution.py",
+      "bytes": 17901,
+      "sha256": "5956b4850e11d517a6bcc9aa8ae7f0074b45810e26faa8ffe391b907e764c257"
+    },
+    {
+      "path": "/home/user/work/wt/rt-D127d-element-cost-sol-2123/runtime_protocol/timeline_commit_port.py",
+      "bytes": 71136,
+      "sha256": "dc749055ca1532c23865a4fcde438c7b6abce40dc278f19d24ed313c9af43c14"
+    },
+    {
+      "path": "/home/user/work/wt/rt-D127d-element-cost-sol-2123/runtime_protocol/timeline_commit_store.py",
+      "bytes": 142549,
+      "sha256": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4"
+    },
+    {
+      "path": "/home/user/work/wt/rt-D127d-element-cost-sol-2123/runtime_protocol/timeline_commit_validation.py",
+      "bytes": 6081,
+      "sha256": "aaf7fe7b057e5792f85493fff631e2ed0538d1a0acfec9580837fc5489c9a5bd"
+    },
+    {
+      "path": "/home/user/work/wt/rt-D127d-element-cost-sol-2123/runtime_protocol/timeline_commit_auth.py",
+      "bytes": 185041,
+      "sha256": "76da11711a653e3ab10a64cb838cacc8003fdead8850cfcfa02d01f7fe5f1e47"
+    },
+    {
+      "path": "/home/user/work/wt/rt-D127d-element-cost-sol-2123/runtime_protocol/schemas/timeline-commit-bundle.json",
+      "bytes": 181484,
+      "sha256": "e4da5c0edc728869a7e78b5820b36f0a0756e1891af64a4f8c0fc37d705196e1"
+    },
+    {
+      "path": "/home/user/work/wt/rt-D127d-element-cost-sol-2123/tests/fixtures/timeline_sequential_capture.json",
+      "bytes": 200611,
+      "sha256": "51e353be23b2ebf80e454f2b5cd165a904ab0478c41a6065ed310535d55976cd"
+    },
+    {
+      "path": "/home/user/work/wt/rt-D127d-element-cost-sol-2123/tools/benchmark_timeline_commit_cost.py",
+      "bytes": 9849,
+      "sha256": "3d74f54130b7e0b6f9420cf00720b706d84fee6eceb0238a2ee041482202bca1"
+    },
+    {
+      "path": "/home/user/work/wt/rt-D127d-element-cost-sol-2123/tests/test_timeline_offline_cost.py",
+      "bytes": 2324,
+      "sha256": "74cf1a632a921fbeef64ea896c240c5215d4e2322603165677989b2305d9a730"
+    },
+    {
+      "path": "/home/user/work/wt/rt-D127d-element-cost-sol-2123/contract/commit-v2.md",
+      "bytes": 210581,
+      "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7"
+    }
+  ],
+  "references": [
+    {
+      "path": "/home/user/work/agent/astrid/sdk/timeline/commit.py",
+      "bytes": 89194,
+      "sha256": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7"
+    },
+    {
+      "path": "/home/user/work/app/tests/e2e/local/support/harness.ts",
+      "bytes": 92789,
+      "sha256": "b868c6bf8b47b63c3165466461a61fbfeb7a282a39f48bc5ae80860cec3e011e"
+    },
+    {
+      "path": "/home/user/work/app/tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+      "bytes": 78876,
+      "sha256": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637"
+    }
+  ],
+  "interpreter": "/home/user/work/venv-runtime/bin/python",
+  "python_version": "3.13.16 (main, Oct  1 2026, 15:40:24) [GCC 13.3.0]",
+  "runtime_import": "/home/user/work/wt/rt-D127d-element-cost-sol-2123/runtime_protocol/__init__.py",
+  "disk_available_bytes": 4801744896,
+  "working_changes": "?? tests/test_timeline_offline_cost.py\n?? tools/benchmark_timeline_commit_cost.py",
+  "registered_path": [
+    "server.RuntimeHandler._timeline_commit",
+    "service.RuntimeService.commit_timeline",
+    "service.RuntimeService._execute_timeline_commit",
+    "timeline_commit_execution.CommitExecutionCoordinator.execute/_execute",
+    "timeline_commit_provider.PROVIDER_FACTORY=astrid.sdk.timeline.commit.create_runtime_commit_service",
+    "Agent RuntimeCommitService.commit",
+    "timeline_commit_port.RequestCommitPort.capture_sequential_execution/preview/accept",
+    "timeline_commit_store.TimelineCommitStore.preview/accept -> _validate -> timeline_commit_auth.validate/validate_sequential_capture"
+  ]
+}

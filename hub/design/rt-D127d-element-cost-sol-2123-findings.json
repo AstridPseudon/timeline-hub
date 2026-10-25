@@ -1,0 +1,56 @@
+{
+  "task": "D127d",
+  "result": "UNAPPLIED",
+  "production_changed": false,
+  "fix_proved": false,
+  "root_cause_proved": false,
+  "live_gap_reproduced": false,
+  "before_after": null,
+  "review": "Independent static review agrees with finite UNAPPLIED",
+  "measured_facts": {
+    "retained_commands": 2,
+    "validation_calls": {
+      "Recorder": 2,
+      "CanonicalDocument": 54
+    },
+    "retained_warm_median_seconds": 0.12343653201241978,
+    "synthetic_max_canonical_bytes": 54643,
+    "synthetic_max_checks": 54,
+    "targeted_tests": "54 passed"
+  },
+  "observations": [
+    "Whole-document traversal cost grows with document rows and independent check count in bounded synthetic helper probes",
+    "Repeated _capture_document_images callers exist, but are outside authorized mutation seams and retain mutation revalidation guards",
+    "No controlled replay of mounted provider/history/store lifecycle; inclusive wrappers and a distinct 1.75s replay cannot identify a dominant operation"
+  ],
+  "missing": [
+    "Permitted safe mounted element document/capture/history dimensions and equivalent offline lifecycle state",
+    "Controlled reproduction of the live gap and measured source cause"
+  ],
+  "exclusive_seam_if_scope_is_later_widened": {
+    "file": "runtime_protocol/timeline_commit_auth.py",
+    "functions": [
+      "_capture_document_images",
+      "_capture_records",
+      "_capture_binding_image",
+      "_capture_owners",
+      "validate_sequential_capture"
+    ],
+    "warning": "Repeated traversal is observed, not a proven defect or permission to remove validation"
+  },
+  "release": "HELD; no production optimization candidate",
+  "real_provider_smoke": "NOTRUN below5GB; Runtime central venue with exact provider required for eventual candidate",
+  "next_steps": [
+    "Owner may supply already-retained safe structural dimensions through ordinary sync for a matched offline reproducer; do not invent accepted history or start another profiling body",
+    "Do not merge or qualify a guessed optimization from this helper benchmark",
+    "Runtime owns future independently reviewed fix/native smoke; App sole later element body only VERIFY"
+  ],
+  "evidence_files": [
+    "source-manifest.json",
+    "measurements.json",
+    "benchmark.md",
+    "validation.md",
+    "guard-map.json",
+    "findings.json"
+  ]
+}

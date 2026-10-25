@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "task": "rt-U1-D135-farm-preflight-2116",
+  "venue": "Farm",
+  "harness_report": "PASS",
+  "status": "SOURCE_ONLY_CONTROLS_PASS_FARM_NOTRUN",
+  "farm_actual_preflight": "NOTRUN",
+  "farm_six_file_body": "NOTRUN",
+  "body_authorized": false,
+  "test_body_run": false,
+  "exact_source_files": 21,
+  "exact_actual_modules": 7,
+  "frozen_source_hashes": "21/21 PASS",
+  "ast_import_manifests": "7/7 PASS",
+  "source_identity_enforcement": "PASS",
+  "interpreter_binding": "/home/user/work/venv-agent/bin/python CPython 3.13",
+  "requirements_version_checks": "PASS",
+  "all_missing_accumulation": "PASS",
+  "transitive_local_origin_guards": "PASS",
+  "junit_child_aggregation": "PASS",
+  "canonical_check": "evidence/canonical-check.log",
+  "next_gate": "Farm executes preflight.py against receipt-provided exact Runtime and Agent checkouts; only PASS permits the one six-file pytest body."
+}
