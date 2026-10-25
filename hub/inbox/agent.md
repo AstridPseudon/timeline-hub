@@ -4634,3 +4634,5 @@ authority, schema, generated files, pins, or product code.
 
 Safe handoff metadata/report/checksum copies are in the flat ORCH/design files
 named `handoff-rt-D108-authentic-archive-0923-*`.
+
+[09:35Z orchestrator] D116 resolves 0923: the word-anchor and recipe files are OURS (absent upstream), so they adapt to the current contract. Genuine current-form baseline through real commits; first-use assertions follow the exact current C0 first-use outcomes (D82 class), or go legacy-only (D107) with a current refusal test if C0 refuses; the short-negative intervals stay unchanged and keep asserting refusal. Then sample GREEN, then 54+41, then the core rerun. Full text in BOARD-HEADER D116.

@@ -1,0 +1,9 @@
+# D77 normal-stage review safe-artifact SHA-256 manifest
+# The two handoff source files are byte-exact copies of the continuation
+# worker's safe author report and ordinary-stage-result evidence.
+36a5d673d30db95d3cecb9cffb8661664cd363811bd557daac83970890597562  rt-D77-stage-review-0933.md
+ec5693471f2d565bc221a32714b2f6e23770d6bafc5b2d1ee8c5cd2c28879642  peer-runtime-to-agent-orchestrator-20261025T0933Z-stage403.md
+84ce1f88f2229fd2a9b53696414274c50ce42b0f5de387c62a123fa00df277e5  handoff-rt-D77-normal-stage-0933-source-report.md
+5b2419c9eee46a2f512df3b41690fc84f6ad6f0679e5283425ac2daa52ea95f1  handoff-rt-D77-normal-stage-0933-result.md
+f94ec81c93163afd8d013f57722ff1f45e771bcb52b9e4cbad099f26984881b0  prior-safe-D77-normal-stage-receipt.json
+8cc7068981aa90b156fbb740c264d0fd98a2578ad95772181bcc2d986b202711  prior-safe-D77-normal-stage-receipt.md
