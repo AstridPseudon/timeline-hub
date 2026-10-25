@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T04:13:44Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 18 | status age 7m -->
+<!-- agent | 2026-10-25T04:16:51Z | dispatcher heartbeat 5s | live 3 (sol 0, luna 3, other 0) | busy30 20 | status age 0m -->
 # agent board, 2026-10-25T03:46:38Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -162,7 +162,7 @@
 | F next cohort11 | Preserve next-command scenarios | Luna | MAIN meaningful successor proof | merging | Word9e88; normal5dc9; inputs0200 | Exact2 historical PASS retained;9 prior setup errors now eligible via reviewed shared word fps correction. Actual behavior owed. | 5dc9f0c898 |
 | D86 main media20 | Preserve parent-media scenarios | MAIN Luna | MAIN meaningful proof | merging | Author0240; protected0245 PASS | Exact claims correction now normal7f4e; target blob equals reviewed98c254. All20 remain behaviorally unqualified. | 7f4ea9ce7d |
 | D86 main auto14 | Preserve parent auto-completion | MAIN Luna | MAIN corrected two plus separate guard six | merging | Author0241; protected0254 PASS | Two exact field-error literals now normal7e237. Six guarded-address originals owned by Agent source0314. No behavioral closure. | 7e23790248 |
-| F current sheet17 | Preserve original media and emitter inputs | Luna | Faithful first return after protected FAIL | doing | Author0348; FAIL0354; return0405 | Wrong media roles and unchanged emitter call rejected. Same branch preserves all17 predicates; product readonly. | f29b held |
+| F current sheet17 | Preserve original media and emitter inputs | Owner / Luna | Original MIME sharing scope decision | blocked:orchestrator | FAIL0354; return0405 no change | Original OLD serves image/png and video/mp4. Scope0415 asks faithful normalization; all17 assertions and guards retained. | f29b held |
 | F main batch recipe | Hand back exact affected-node inputs | Luna | Main recipe2337 and source joins | merging | agt-F-main-batch-prep-2342 | Exact251 source-only snapshot exported. Extra37 assigned cases join later; remaining live core stays visible. No registry install or body. | Private bundle only |
 | F M2 placement20 | Preserve placement recipe scenarios | Luna / MAIN evidence | Existing exact command mismatch | blocked:runtime | Source0325; safe pair requested | Actual9211 4PASS16ERROR. Strict command equality remains; exact mismatch unknown. All20 original scenarios stay visible. | Actualcef8 /6634 |
 | F inverse stage7 | Preserve authenticated inverse regressions | Luna / MAIN proof | Actual exact7 proof passed | merged | Protected0239; actual20 proof0313 | Seven originals PASS in authentic first20 on562ee/6634. D91ten ERROR and D92three FAIL separate; no full or final tuple credit. | Normalcaff in562ee |
@@ -183,7 +183,7 @@
 | D86-owned-move8 | Preserve owned move and video birth | Luna source | Exact historical-source findings | doing | Shared source0329 | Actual9211 6ERROR2FAIL. Full original text/source/topology preserved; exact correction scope pending. | Actualcef8 /6634 |
 | D86-cli-trim3 | Preserve current CLI trim behavior | Luna | Meaningful MAIN3 proof | merging | Author0329; review0333 PASS | Normal5687 exact original2.5s declaration through guarded patch after birth. All timing and predicates retained; no bodies. | 5687f58dbd |
 | D86-occurrence-recipe3 | Preserve occurrence recipe behavior | Luna / MAIN evidence | Existing exact command mismatch | blocked:runtime | Source0325; safe pair requested | Actual9211 ERROR3. Current source trace cannot prove differing field; existing private comparison requested, no body. | Actualcef8 /6634 |
-| D86-graph-redo2 | Preserve authenticated graph roots | Luna | Exact clean import then MAIN1 | doing | Protected0354 PASS; import0403 | Finalblob9215 reviewed; authentic Runtime acceptance. Earlier synthetic setup held; no behavioral claim. | 7b10 source held |
+| D86-graph-redo2 | Preserve authenticated graph roots | Luna | Exact MAIN failing original | merging | Review0354 PASS; cleanimport0403 | Normalcbc0 exact reviewed blob9215. Actual Runtime acceptance replaces synthetic setup; sibling PASS not repeated. | cbc0b6947e |
 | D86-publication1 | Preserve remaining live behavior | Main Luna requested | Later MAIN functional qualification | merging | Main0127; review0133 PASS; home258d | Genuine publication/render-task source path reviewed and normal joined. Original one remains behaviorally unqualified until MAIN proof. | 258d2cccdf |
 | D86-core-element2 | Preserve remaining live element behavior | Luna | MAIN corrected literal proof | merging | Author0218; independent0222 PASS | Normal a836 has exact reviewed merged literal; lost-ACK metadata refusal remains open. Original two predicates retained. | a836baa3b1 |
 | D87 live frontends6 | Preserve six current frontend scenarios | Main Luna | MAIN meaningful proof | merging | Return0148; review0202 PASS | Exact7e0ac full stack now home8d938; six original live cases and separate retirement intact. No body. | 8d93889e01 |
@@ -204,7 +204,7 @@
 | F later source delta | Publish later setup corrections | Luna | Existing MAIN targeted runner | merging | Inputs 0209 PASS | Exact 69 extra: sheet 13, M1 10, word 46; combined 230. Flat packet published; all original dispositions kept. | Captured 3b8f |
 | R2 net-zero oracle | Bind exact native recorder expectation | Luna | MAIN exact net-zero proof | merging | Author 0210; review 0215 PASS | Seven-line test-only correction now home cef8. All original predicates preserved. Matching NumPy mypy limit; functional proof still owed. | cef8a5be53 |
 
-| D91 inverse window | Make five original-third hosts valid | Luna | Protected PASS then exact MAIN proof | merging | Author0218; independent0223 PASS | Approved host1.8 to2.0s only. Normal 9f697 has exact source; other timing and predicates exact. MAIN proof and D72 log owed. | 9f697afcf0 |
+| D91 inverse window | Preserve valid original shared host | Luna | Clean source import then MAIN10 | doing | MAIN39fcc PASS0354; import0415 | Exact reviewed blob19ad preserves all timings and placement provenance. Actual18575 ERROR10 stays historical. | 39fcc held |
 
 | P4 cross-process sample | Measure actual ten-note process costs | MAIN Luna | Complete corrected measurement | merged | Corrected0242; actual25257 | All432 samples captured, one process, zero Python CLI children. Main42.63 CPU/46.32 wall; Runtime digest121 and cursor106 samples. | d407 /6634 /4b984 /635f |
 
@@ -219,7 +219,7 @@
 | F inverse source six | Bind inverse failures to exact owner | Luna read only | Exact source disposition complete | merged | Source0314 complete | Two exact D14 positives remain deferred. Four live auth seams handed to Runtime with conditional Agent producer follow-up. No body. | Current7e237 |
 | F next exact input | Join new source receipts to later delta | Luna / MAIN receiver | Existing next10 extends to32 | merging | Inputs0314; receiving Runtime0306 | Exact32 published; four source hashes match7e237, zero161 overlap. Receiver subtracts later102 and coalesces inverse7/D92. Behavior owed. | Current7e237 |
 
-| R2 inverse auth four | Preserve exact inverse source ordering | HARD Sol | Contract-derived producer correction | doing | Runtime0333 facts; AgentSol0403 | Only ordinary inverse_stages emission. Three other discrepancies unproved; Runtime verifier and store unchanged. | Current6634 auth |
+| R2 inverse auth four | Preserve exact inverse source ordering | HARD Sol / Luna | Protected review and real MAIN candidate proof | review | Author0403; review0415; control0415 | Held72a ordinary restore only. Three other discrepancies unproved; no Runtime guard or store changes. | 72a5e533 held |
 
 | F word oracle two | Match exact current operation and C0 | Luna | Meaningful MAIN two originals | merging | Author0317; review0320 PASS | Normal657 contains exact reviewed oracle source. Protected original bodies still owed. | 657bc |
 
@@ -230,7 +230,7 @@
 
 
 | R1 legacy source basis | Preserve existing legacy baseline | Luna / HARD Sol facts | Actual MAIN23 source applicability | merging | Author0355; review0400 PASS; homebc3d | Genuine accepted legacy film restores true original input. All23 consumer predicates preserved; validator unchanged. | bc3d53695f |
-| F word legacy bound two | Apply D95 current binding disposition | Luna | C0 source trace then migration or coverage | doing | agt-F-D95-bound-word2-0400 | D95 decides scope. Exact two assertions stay until protected disposition; no guard change. | Actual9211 IDs99,101 |
+| F word legacy bound two | Apply approved D95 legacy-only scope | Luna | Protected retirement and replacement coverage | doing | agt-F-D95-ledger-coverage-0415 | Current immutable references differ from legacy row binding. Exact two retirements plus NEW bound-refusal/no-write coverage; other word cases live. | D95 source0405 |
 
 | F current source delta | Bind exact newly eligible source inputs | Luna read only | Existing MAIN receiving proof | merging | Input0400 READY76 published | Exact76;20 existing MAIN overlaps,10 held plus2 timing held. Current word/D92 home receipts bound; no body. | f518 immutable source |
 
@@ -250,6 +250,7 @@ Disk: D89 source/review6 above5.0GB; heavy1 above5.2GB; nothing new below4.5GB. 
 Blockers: Runtime source — D94 requires final independent review and normal release/adoption before one meaningful P4 original.
 Blockers: Orchestrator diagnostic scope — Runtime0342 EXACTMISSING command pairs. Escalation0407 proposes at most3 representatives; no collector or body authorized yet.
 Blockers: MAIN proof — Ready22 and candidate13 existing receivers own proof; reviewed new sources need exact disjoint successor mapping. No duplicate body.
+Blockers: Orchestrator sheet input — Scope0415 asks faithful image/video MIME sharing normalization. No guard change or body.
 Blockers: Final cut — D59 pinned P1-P5/core, D69 and genuine installed render required.
 Next ready: D95 source0400 and M1 review0400/input update0400 assigned. Graph/sheet protected0354; common M1fixture0355; input0351 and remainder0352 active. Word/D92 normalf518 proof input ready. Every eligible start dispatched; next source waits floor after latest start.
 live 4 / cap6; ready-undispatched0 eligible source starts. Pending review inventory24 was scopes, not24 unresolved diffs; new protected reviews now assigned as separate verdicts in one worker.
