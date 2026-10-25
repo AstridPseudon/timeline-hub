@@ -201,6 +201,14 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - **Order:** Runtime first (producer), then D39 client regeneration if the contract changed, then Agent and App in parallel. P2/P3 and the core suites then run on the refreshed heads.
   - At delivery, F-final applies the squashed patches to these same tips. A new upstream move after this point triggers another refresh only if the owner asks.
   - **Test-file conflicts (13:40Z): keep BOTH.** Upstream's new and changed tests are taken as they are, and every one of our live test cases is re-applied on top: adapted to upstream's structure, never dropped. Taking 'incoming' and discarding our cases is weakening, so it's refused. The independent review maps every pre-merge live predicate to its post-merge location. Product-code conflicts follow the default: upstream behaviour, with ours adapted.
+- **D89, disk floors re-based now the swings are fixed (01:02Z).** The 0.5–3 GB swings came from git repacks and auto-gc, fixed by LOOPS #76. With those gone, the old margins over-throttle every lane: Agent has 29 reviews pending at local cap 0, and main sits at 6.0 GB.
+  - **New rule on EVERY machine:**
+    - SOURCE-ONLY authors and reviewers (~0.2 GB each, no build): up to 6 at once while free disk is above **5.5 GB**.
+    - HEAVY/service bodies: one at a time while free disk is above **5.2 GB**.
+    - NOTHING new below **4.5 GB**.
+    - Stop the newest non-gate run first at 4.0 GB.
+  - This supersedes the D74/D74a/D85 thresholds.
+  - **Batch the reviews:** one independent Luna may review several small DISJOINT family diffs (up to 5) in one pass, with a separate verdict and evidence per diff. This clears Agent's 29-review backlog in about 6 workers, not 29.
 - **D88, stop REPLAY-verifying accepted history on every request: reads trust Runtime's own accept-time verification, guarded by the digest chain (00:50Z).**
   - **The evidence:** three cost fixes (bc04, D84a, a3cd) left P4 ten-note at 45.3 / 45.3 / 45.24 s. Its ~68 requests each re-verify the WHOLE accepted history by REPLAYING recorders and captures: O(N) per request, so O(N²) per session. Request-scoped dedup cannot remove that. App's slow reads are the same cost seen from the outside: one revision GET takes 5 ms alone, but about 10 s behind expensive writes, because requests serialize.
   - **The decision:** Runtime is the SOLE writer, and it fully verifies each commit at ACCEPT. Re-deriving that by replay on every later read is defence-in-depth against storage tampering, and its cost has become what blocks the gates. So:

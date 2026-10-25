@@ -1,0 +1,400 @@
+mkdir: cannot create directory ‘/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/tmpdir’: Not a directory
+
+exec
+/bin/bash -lc "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -c 'from pathlib import Path; [compile(Path(path).read_text(), path, \"exec\") for path in (\"astrid/sdk/timeline/commit.py\", \"tests/editing_conformance/test_timing_retained_inputs.py\")]'" in /home/user/work/wt/agt-D86-word-product-return-0051
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/mypy --cache-dir /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/tmpdir/mypy-cache astrid/sdk/timeline/commit.py tests/editing_conformance/test_timing_retained_inputs.py' in /home/user/work/wt/agt-D86-word-product-return-0051
+exec
+/bin/bash -lc 'RUFF_CACHE_DIR=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/tmpdir/ruff-cache /home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/commit.py tests/editing_conformance/test_timing_retained_inputs.py' in /home/user/work/wt/agt-D86-word-product-return-0051
+exec
+/bin/bash -lc 'git diff --check' in /home/user/work/wt/agt-D86-word-product-return-0051
+exec
+/bin/bash -lc "/home/user/work/venv-agent/bin/python -c 'import ast, subprocess; path=\"tests/editing_conformance/test_timing_retained_inputs.py\"; current=ast.parse(open(path).read()); parent=ast.parse(subprocess.check_output([\"git\",\"show\",\"HEAD:\"+path], text=True)); assert ast.dump(current, include_attributes=False)==ast.dump(parent, include_attributes=False); print(\"timing test AST unchanged from HEAD\")'" in /home/user/work/wt/agt-D86-word-product-return-0051
+ succeeded in 58ms:
+ succeeded in 85ms:
+timing test AST unchanged from HEAD
+
+ succeeded in 283ms:
+ exited 2 in 286ms:
+error: Failed to initialize cache at /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/tmpdir/ruff-cache: Not a directory (os error 20)
+
+Stack backtrace:
+   0: <unknown>
+   1: <unknown>
+   2: <unknown>
+   3: <unknown>
+   4: <unknown>
+   5: <unknown>
+   6: <unknown>
+   7: <unknown>
+   8: <unknown>
+   9: <unknown>
+  10: __libc_start_call_main
+             at ./csu/../sysdeps/nptl/libc_start_call_main.h:58:16
+  11: __libc_start_main_impl
+             at ./csu/../csu/libc-start.c:360:3
+  12: <unknown>
+warning: Failed to open cache file `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/tmpdir/ruff-cache/0.12.0/10996746809179007115`: Not a directory (os error 20)
+warning: Failed to open cache file `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/tmpdir/ruff-cache/0.12.0/13624129655870644201`: Not a directory (os error 20)
+ruff failed
+  Cause: Failed to create temporary file
+  Cause: Not a directory (os error 20) at path "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/tmpdir/ruff-cache/0.12.0/.tmpIvOzEn"
+
+ succeeded in 1512ms:
+Success: no issues found in 2 source files
+
+codex
+The one-line fix is in place. In-memory compilation, mypy, diff-check, and test AST conservation pass; Ruff initially hit an environment-only issue because the harness’s `tmpdir` path is a file rather than a directory, so I’m rerunning Ruff with a private `/tmp` cache and then recording source-level provenance/conservation evidence.
+exec
+/bin/bash -lc 'ls -ld /tmp/agt-D86-word-product-return-0051 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/tmpdir /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/evidence 2>&1 || true' in /home/user/work/wt/agt-D86-word-product-return-0051
+ succeeded in 0ms:
+ls: cannot access '/tmp/agt-D86-word-product-return-0051': No such file or directory
+drwxr-xr-x 3 root root 4096 Oct 25 00:59 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/evidence
+-rw-r--r-- 1 root root   18 Oct 25 00:58 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/tmpdir
+
+exec
+/bin/bash -lc 'mkdir -p /tmp/agt-D86-word-product-return-0051/ruff-cache && RUFF_CACHE_DIR=/tmp/agt-D86-word-product-return-0051/ruff-cache /home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/commit.py tests/editing_conformance/test_timing_retained_inputs.py' in /home/user/work/wt/agt-D86-word-product-return-0051
+ succeeded in 0ms:
+All checks passed!
+
+exec
+/bin/bash -lc "printf '%s\\n' '--- caller trace ---'; rg -n \"register_timeline_commit_provider|create_runtime_commit_service|_hydrate\\(|document_from_bundle\\(\" astrid/sdk/timeline/commit.py tests/editing_conformance/test_timing_retained_inputs.py; printf '%s\\n' '--- Runtime refusal guard (read-only) ---'; nl -ba /home/user/work/runtime/runtime_protocol/timeline_commit_port.py | sed -n '545,575p' 2>/dev/null || true; printf '%s\\n' '--- source provenance ---'; git rev-parse HEAD; git rev-parse HEAD"'^{tree}; git rev-parse HEAD:astrid/sdk/timeline/commit.py; git rev-parse HEAD:tests/editing_conformance/test_timing_retained_inputs.py; printf '"'%s\\n' '--- changed paths ---'; git diff --name-status; git diff --stat" in /home/user/work/wt/agt-D86-word-product-return-0051
+ succeeded in 472ms:
+--- caller trace ---
+tests/editing_conformance/test_timing_retained_inputs.py:115:    case.service.register_timeline_commit_provider(agent.create_runtime_commit_service())
+tests/editing_conformance/test_timing_retained_inputs.py:151:        case.service.register_timeline_commit_provider(provider or agent.create_runtime_commit_service())
+tests/editing_conformance/test_timing_retained_inputs.py:200:    service.register_timeline_commit_provider(agent.create_runtime_commit_service())
+tests/editing_conformance/test_timing_retained_inputs.py:341:        contract_digest = agent.create_runtime_commit_service().contract_digest
+astrid/sdk/timeline/commit.py:230:        replayed = document_from_bundle(state.bundle, source_bundles=(after,))
+astrid/sdk/timeline/commit.py:302:def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inverse_records=()):
+astrid/sdk/timeline/commit.py:442:def _hydrate(port, bundle, calls=(), *, inverse_records=(), inverse_sources=()):
+astrid/sdk/timeline/commit.py:1323:                schema_inputs.extend(_hydrate(port, source))
+astrid/sdk/timeline/commit.py:1325:                schema_inputs = _hydrate(port, bundle, calls, inverse_records=inverse_records,
+astrid/sdk/timeline/commit.py:1356:                        schema_inputs = _hydrate(port, head_bundle, calls, inverse_records=inverse_records,
+astrid/sdk/timeline/commit.py:1407:                    validation_bundle = bundle_from_document(document_from_bundle(plan.bundle))
+astrid/sdk/timeline/commit.py:1419:                document = document_from_bundle(plan.bundle, source_bundles=inverse_sources,
+astrid/sdk/timeline/commit.py:1472:def create_runtime_commit_service():
+--- Runtime refusal guard (read-only) ---
+   545	                      for item in closure["dependency_manifest"]["media"]}
+   546	        media_pins.update(canonical_json(item) for closure in self.__source_closures.values()
+   547	                          for item in closure["dependency_manifest"]["media"])
+   548	        media_pins.update(canonical_json(item) for closure in self.__shots.values() for item in closure["media"])
+   549	        for captures in (self.__media, self.__raw_media, self.__texts):
+   550	            media_pins.update(canonical_json(pin) for pin, _ in captures.values())
+   551	        for record in prepared["records"]["commands"]:
+   552	            for dependency in record["dependencies"]:
+   553	                pin, kind = dependency["pin"], dependency["kind"]
+   554	                if kind == "media":
+   555	                    media_id = pin.get("object_id", pin.get("media_id"))
+   556	                    if (canonical_json(pin) not in media_pins
+   557	                            or canonical_json({"media_id": media_id, "content_digest": media_id}) not in raw_manifest):
+   558	                        raise refused("dependency_unavailable", "recorded media pin was not captured in the candidate manifest")
+   559	                elif kind in {"source", "transcript"}:
+   560	                    capture = self.__documents.get(canonical_json(pin))
+   561	                    if capture is None or pin not in manifest["documents"]:
+   562	                        raise refused("dependency_unavailable", "recorded document pin was not captured in the candidate manifest")
+   563	                    expected = "transcript" if capture.document["kind"] == "media.transcript" else "source"
+   564	                    if kind != expected:
+   565	                        raise refused("dependency_unavailable", "recorded document kind differs from its capture")
+   566	        pins = manifest["documents"]
+   567	        if sorted(map(canonical_json, pins)) != sorted(self.__documents):
+   568	            raise refused("dependency_unavailable", "candidate document pins differ from captured inputs")
+   569	        recorded = [dep["pin"] for record in prepared["records"]["commands"]
+   570	                    for dep in record["dependencies"] if dep["kind"] in {"transcript", "source"}
+   571	                    and {"document_id", "version", "content_digest"} <= dep["pin"].keys()]
+   572	        if any(pin not in recorded for pin in pins):
+   573	            raise refused("dependency_unavailable", "document input lacks a recorded dependency")
+   574	        validate_captured_document_inputs(self.__service.store.conn, self.__documents.values())
+   575	        for descriptor, data, identity in self.__document_objects.values():
+--- source provenance ---
+7d0e6c07a6a7811e229a4e3a23be0773e7493829
+bc219c3bff0a97bd4938431ef21ecdbcadda183f
+48480bd2bd005593e2e0cf54176460b495fa7b50
+6ea60c464413c25fbefb3a94c161f6f61ee32677
+--- changed paths ---
+M	astrid/sdk/timeline/commit.py
+ astrid/sdk/timeline/commit.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+exec
+/bin/bash -lc "nl -ba astrid/sdk/timeline/commit.py | sed -n '1460,1505p'; printf '%s\\n' '--- exact test definitions in current file ---'; rg -n '"'^def test_|''^@pytest.mark.parametrize'"' tests/editing_conformance/test_timing_retained_inputs.py; printf '%s\\n' '--- source predicate surrounding fix ---'; git diff --unified=8 -- astrid/sdk/timeline/commit.py" in /home/user/work/wt/agt-D86-word-product-return-0051
+ succeeded in 0ms:
+  1460	                                         "unsupported_version"}:
+  1461	                path = ["commands"]
+  1462	            conflicts = ([exc.to_json()] if exc.kind in {
+  1463	                "value_conflict", "identity_conflict", "identity_collision", "inverse_conflict",
+  1464	                "dependency_changed", "inverse_dependency_changed",
+  1465	                "intervening_write", "selection_changed", "surviving_dependents",
+  1466	                "atomic_scope_changed", "binding_changed", "ambiguous_ref"} else None)
+  1467	            raise CommitRejected(_failure(exc.kind, str(exc), base, current,
+  1468	                                          conflicts=conflicts, path=path,
+  1469	                                          invalid=None)) from exc
+  1470	
+  1471	
+  1472	def create_runtime_commit_service():
+  1473	    """Load Runtime compatibility only when the fixed provider is selected."""
+  1474	    from runtime_protocol.contract_metadata import SCHEMA_DIGEST
+  1475	
+  1476	    return RuntimeCommitService(SCHEMA_DIGEST)
+--- exact test definitions in current file ---
+166:def test_exact_retained_v1_compiles_after_cas_v2_restart_and_cache_corruption(retained):
+244:def test_accepted_rebase_has_exact_document_but_no_reconstructible_word_choice(retained):
+273:@pytest.mark.parametrize("retained", [True], indirect=True)
+274:def test_reselecting_ordinal_after_real_rebase_silently_changes_raw_source_clip(retained):
+306:@pytest.mark.parametrize("damage", ["unavailable", "missing-pin", "foreign"])
+307:def test_source_authority_refuses_without_latest_fallback(retained, damage):
+365:@pytest.mark.parametrize("version", [1, 2])
+366:@pytest.mark.parametrize("retained", [True], indirect=True)
+367:def test_retained_v1_and_explicit_v2_keep_window_and_raw_source_identity(retained, version):
+--- source predicate surrounding fix ---
+diff --git a/astrid/sdk/timeline/commit.py b/astrid/sdk/timeline/commit.py
+index 48480bd2bd..0ab8cb1676 100644
+--- a/astrid/sdk/timeline/commit.py
++++ b/astrid/sdk/timeline/commit.py
+@@ -364,17 +364,17 @@ def document_from_bundle(bundle, *, document_pins=None, source_bundles=(), inver
+     internals = sorted((internal_index[key] for key in internal_ids),
+                        key=lambda row: (row["timeline_id"], row["revision_id"]))
+     copy_manifest = bundle["source_mapping"].get("_copy_manifest", {})
+     documents = (copy_manifest.get("documents", source["dependency_manifest"]["documents"])
+                  if document_pins is None else document_pins)
+     if document_pins is None:
+         documents = copy.deepcopy(documents)
+         for capture in bundle['source_mapping'].get('pinned_documents', []):
+-            if not copy_manifest and capture['pin'] not in documents:
++            if capture['pin'] not in documents:
+                 documents.append(copy.deepcopy(capture['pin']))
+         for pin in copy_manifest.get("documents", []):
+             if pin not in documents:
+                 documents.append(copy.deepcopy(pin))
+         removals = _inverse_clip_transcripts(inverse_records, bundle)
+         documents = [pin for pin in documents if pin not in removals]
+     # Retained inputs may include media consumed through a transcript or other
+     # immutable binding rather than a selected clip. Keep those existing pins.
+
+exec
+/bin/bash -lc 'RUFF_CACHE_DIR=/tmp/agt-D86-word-product-return-0051/ruff-cache /home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/commit.py tests/editing_conformance/test_timing_retained_inputs.py' in /home/user/work/wt/agt-D86-word-product-return-0051
+ succeeded in 0ms:
+All checks passed!
+
+exec
+/bin/bash -lc 'git show HEAD:astrid/sdk/timeline/commit.py | RUFF_CACHE_DIR=/tmp/agt-D86-word-product-return-0051/ruff-cache /home/user/work/venv-agent/bin/ruff check --stdin-filename astrid/sdk/timeline/commit.py -' in /home/user/work/wt/agt-D86-word-product-return-0051
+ succeeded in 0ms:
+All checks passed!
+
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/mypy --cache-dir /tmp/agt-D86-word-product-return-0051/mypy-cache astrid/sdk/timeline/commit.py tests/editing_conformance/test_timing_retained_inputs.py' in /home/user/work/wt/agt-D86-word-product-return-0051
+exec
+/bin/bash -lc "/home/user/work/venv-agent/bin/python -c 'from pathlib import Path; [compile(Path(path).read_text(), path, \"exec\") for path in (\"astrid/sdk/timeline/commit.py\", \"tests/editing_conformance/test_timing_retained_inputs.py\")]'" in /home/user/work/wt/agt-D86-word-product-return-0051
+ succeeded in 0ms:
+ succeeded in 1468ms:
+Success: no issues found in 2 source files
+
+exec
+/bin/bash -lc "git status --short --branch; git diff --check; git diff --numstat; git diff --name-only; printf '%s\\n' '--- source hash ---'; sha256sum astrid/sdk/timeline/commit.py tests/editing_conformance/test_timing_retained_inputs.py; printf '%s\\n' '--- source blob hashes ---'; git hash-object astrid/sdk/timeline/commit.py tests/editing_conformance/test_timing_retained_inputs.py; printf '%s\\n' '--- exact current production predicate ---'; sed -n '364,379p' astrid/sdk/timeline/commit.py" in /home/user/work/wt/agt-D86-word-product-return-0051
+ succeeded in 962ms:
+## tl/agt-D86-word-product-return-0051...hub/timeline/agent/tl/agt-F-word-inputs-0005
+ M astrid/sdk/timeline/commit.py
+1	1	astrid/sdk/timeline/commit.py
+astrid/sdk/timeline/commit.py
+--- source hash ---
+eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7  astrid/sdk/timeline/commit.py
+058d82106471efe8d586007f78784775622d962ce551e882fb65d95a62f4b60c  tests/editing_conformance/test_timing_retained_inputs.py
+--- source blob hashes ---
+0ab8cb16761c9ce6a971fae3e8600f35f391760e
+6ea60c464413c25fbefb3a94c161f6f61ee32677
+--- exact current production predicate ---
+    internals = sorted((internal_index[key] for key in internal_ids),
+                       key=lambda row: (row["timeline_id"], row["revision_id"]))
+    copy_manifest = bundle["source_mapping"].get("_copy_manifest", {})
+    documents = (copy_manifest.get("documents", source["dependency_manifest"]["documents"])
+                 if document_pins is None else document_pins)
+    if document_pins is None:
+        documents = copy.deepcopy(documents)
+        for capture in bundle['source_mapping'].get('pinned_documents', []):
+            if capture['pin'] not in documents:
+                documents.append(copy.deepcopy(capture['pin']))
+        for pin in copy_manifest.get("documents", []):
+            if pin not in documents:
+                documents.append(copy.deepcopy(pin))
+        removals = _inverse_clip_transcripts(inverse_records, bundle)
+        documents = [pin for pin in documents if pin not in removals]
+    # Retained inputs may include media consumed through a transcript or other
+
+codex
+Ruff now passes for both allowed files with a private cache; baseline Ruff also passes, candidate mypy passes, in-memory compilation passes, and the timing test AST is unchanged. The only worktree change remains the single production predicate; I’m documenting that source-only evidence and preparing the required commit message/DONE markers.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/evidence/provenance.md
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/evidence/source-checks.md
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/evidence/provenance.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/evidence/provenance.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..0ae06a24d688c6dcb5a30f37fa0a9bbb0323b796
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/evidence/provenance.md
+@@ -0,0 +1,10 @@
++# F-D86 provenance
++
++- Starting author commit: `7d0e6c07a6a7811e229a4e3a23be0773e7493829`.
++- Starting tree: `bc219c3bff0a97bd4938431ef21ecdbcadda183f`.
++- Starting `astrid/sdk/timeline/commit.py` blob: `48480bd2bd005593e2e0cf54176460b495fa7b50`.
++- Starting `tests/editing_conformance/test_timing_retained_inputs.py` blob: `6ea60c464413c25fbefb3a94c161f6f61ee32677`.
++- Candidate `astrid/sdk/timeline/commit.py` blob: `0ab8cb16761c9ce6a971fae3e8600f35f391760e`.
++- Candidate `tests/editing_conformance/test_timing_retained_inputs.py` blob: `6ea60c464413c25fbefb3a94c161f6f61ee32677`.
++- Worktree diff: one insertion/one deletion in the production file only.
++- Runtime guard was inspected read-only at `runtime_protocol/timeline_commit_port.py:559-573`; it still requires captured source/transcript pins in the candidate manifest and recorded dependencies.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/evidence/source-checks.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/evidence/source-checks.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..6d9649682341a942471d3c899541298b8998adfa
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/evidence/source-checks.md
+@@ -0,0 +1,20 @@
++# F-D86 source-only evidence
++
++Candidate worktree: `/home/user/work/wt/agt-D86-word-product-return-0051`
++
++Production change: `astrid/sdk/timeline/commit.py`, `document_from_bundle()` now
++deduplicates every hydrated `source_mapping.pinned_documents` pin into the
++copied document manifest before the existing inverse-removal filter. No test
++file was changed.
++
++Commands and results:
++
++- `/home/user/work/venv-agent/bin/python -c 'from pathlib import Path; [compile(Path(path).read_text(), path, "exec") for path in ("astrid/sdk/timeline/commit.py", "tests/editing_conformance/test_timing_retained_inputs.py")]'` — exit 0.
++- `RUFF_CACHE_DIR=/tmp/agt-D86-word-product-return-0051/ruff-cache /home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/commit.py tests/editing_conformance/test_timing_retained_inputs.py` — exit 0, all checks passed.
++- `git show HEAD:astrid/sdk/timeline/commit.py | RUFF_CACHE_DIR=/tmp/agt-D86-word-product-return-0051/ruff-cache /home/user/work/venv-agent/bin/ruff check --stdin-filename astrid/sdk/timeline/commit.py -` — exit 0, baseline all checks passed.
++- `/home/user/work/venv-agent/bin/mypy --cache-dir /tmp/agt-D86-word-product-return-0051/mypy-cache astrid/sdk/timeline/commit.py tests/editing_conformance/test_timing_retained_inputs.py` — exit 0, no issues in 2 files.
++- `git diff --check` — exit 0.
++- AST comparison of `tests/editing_conformance/test_timing_retained_inputs.py` against `HEAD` — unchanged.
++
++Not run by instruction: pytest, collection, test/helper/fixture function
++execution, Runtime service, build, browser, or full suite.
+diff --git a/astrid/sdk/timeline/commit.py b/astrid/sdk/timeline/commit.py
+index 48480bd2bd005593e2e0cf54176460b495fa7b50..0ab8cb16761c9ce6a971fae3e8600f35f391760e
+--- a/astrid/sdk/timeline/commit.py
++++ b/astrid/sdk/timeline/commit.py
+@@ -369,7 +369,7 @@
+     if document_pins is None:
+         documents = copy.deepcopy(documents)
+         for capture in bundle['source_mapping'].get('pinned_documents', []):
+-            if not copy_manifest and capture['pin'] not in documents:
++            if capture['pin'] not in documents:
+                 documents.append(copy.deepcopy(capture['pin']))
+         for pin in copy_manifest.get("documents", []):
+             if pin not in documents:
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/DONE
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/DONE b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/DONE
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..89d598fa903b5de953c69a9a6d157f6a63c7742c
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/commit-msg
+@@ -0,0 +1,4 @@
++fix(timeline): retain hydrated word-input pins
++
++Preserve verified transcript pins when composing a candidate from a non-empty
++copy manifest, while retaining existing inverse-removal and Runtime guards.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/evidence/provenance.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/evidence/provenance.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..0ae06a24d688c6dcb5a30f37fa0a9bbb0323b796
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/evidence/provenance.md
+@@ -0,0 +1,10 @@
++# F-D86 provenance
++
++- Starting author commit: `7d0e6c07a6a7811e229a4e3a23be0773e7493829`.
++- Starting tree: `bc219c3bff0a97bd4938431ef21ecdbcadda183f`.
++- Starting `astrid/sdk/timeline/commit.py` blob: `48480bd2bd005593e2e0cf54176460b495fa7b50`.
++- Starting `tests/editing_conformance/test_timing_retained_inputs.py` blob: `6ea60c464413c25fbefb3a94c161f6f61ee32677`.
++- Candidate `astrid/sdk/timeline/commit.py` blob: `0ab8cb16761c9ce6a971fae3e8600f35f391760e`.
++- Candidate `tests/editing_conformance/test_timing_retained_inputs.py` blob: `6ea60c464413c25fbefb3a94c161f6f61ee32677`.
++- Worktree diff: one insertion/one deletion in the production file only.
++- Runtime guard was inspected read-only at `runtime_protocol/timeline_commit_port.py:559-573`; it still requires captured source/transcript pins in the candidate manifest and recorded dependencies.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/evidence/source-checks.md b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/evidence/source-checks.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..6d9649682341a942471d3c899541298b8998adfa
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/evidence/source-checks.md
+@@ -0,0 +1,20 @@
++# F-D86 source-only evidence
++
++Candidate worktree: `/home/user/work/wt/agt-D86-word-product-return-0051`
++
++Production change: `astrid/sdk/timeline/commit.py`, `document_from_bundle()` now
++deduplicates every hydrated `source_mapping.pinned_documents` pin into the
++copied document manifest before the existing inverse-removal filter. No test
++file was changed.
++
++Commands and results:
++
++- `/home/user/work/venv-agent/bin/python -c 'from pathlib import Path; [compile(Path(path).read_text(), path, "exec") for path in ("astrid/sdk/timeline/commit.py", "tests/editing_conformance/test_timing_retained_inputs.py")]'` — exit 0.
++- `RUFF_CACHE_DIR=/tmp/agt-D86-word-product-return-0051/ruff-cache /home/user/work/venv-agent/bin/ruff check astrid/sdk/timeline/commit.py tests/editing_conformance/test_timing_retained_inputs.py` — exit 0, all checks passed.
++- `git show HEAD:astrid/sdk/timeline/commit.py | RUFF_CACHE_DIR=/tmp/agt-D86-word-product-return-0051/ruff-cache /home/user/work/venv-agent/bin/ruff check --stdin-filename astrid/sdk/timeline/commit.py -` — exit 0, baseline all checks passed.
++- `/home/user/work/venv-agent/bin/mypy --cache-dir /tmp/agt-D86-word-product-return-0051/mypy-cache astrid/sdk/timeline/commit.py tests/editing_conformance/test_timing_retained_inputs.py` — exit 0, no issues in 2 files.
++- `git diff --check` — exit 0.
++- AST comparison of `tests/editing_conformance/test_timing_retained_inputs.py` against `HEAD` — unchanged.
++
++Not run by instruction: pytest, collection, test/helper/fixture function
++execution, Runtime service, build, browser, or full suite.
+diff --git a/astrid/sdk/timeline/commit.py b/astrid/sdk/timeline/commit.py
+index 48480bd2bd005593e2e0cf54176460b495fa7b50..0ab8cb16761c9ce6a971fae3e8600f35f391760e
+--- a/astrid/sdk/timeline/commit.py
++++ b/astrid/sdk/timeline/commit.py
+@@ -369,7 +369,7 @@
+     if document_pins is None:
+         documents = copy.deepcopy(documents)
+         for capture in bundle['source_mapping'].get('pinned_documents', []):
+-            if not copy_manifest and capture['pin'] not in documents:
++            if capture['pin'] not in documents:
+                 documents.append(copy.deepcopy(capture['pin']))
+         for pin in copy_manifest.get("documents", []):
+             if pin not in documents:
+
+exec
+/bin/bash -lc 'test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/commit-msg && echo commit-msg-present; test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/DONE && echo DONE-empty; git status --short; du -sh /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/evidence' in /home/user/work/wt/agt-D86-word-product-return-0051
+ succeeded in 190ms:
+commit-msg-present
+DONE-empty
+ M astrid/sdk/timeline/commit.py
+16K	/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-word-product-return-0051/evidence
+
+codex
+PASS_SOURCE
+
+Implemented the demonstrated D86 fix in `astrid/sdk/timeline/commit.py`: verified hydrated pins are now retained even with a non-empty `_copy_manifest`; inverse removals and Runtime guards remain unchanged. No tests were modified.
+
+Checks:
+
+- In-memory compile: pass
+- Ruff baseline/candidate: pass
+- Mypy candidate: pass
+- `git diff --check`: pass
+- Timing test AST unchanged
+- Pytest/service/full suites not run per SOURCEONLY requirements
+
+Evidence: worker `evidence/`; commit message written; `DONE` created.
+
+Next step: independent protected review, then normal Agent merge. Functional behavior remains unverified here.
+tokens used
+170,040
+PASS_SOURCE
+
+Implemented the demonstrated D86 fix in `astrid/sdk/timeline/commit.py`: verified hydrated pins are now retained even with a non-empty `_copy_manifest`; inverse removals and Runtime guards remain unchanged. No tests were modified.
+
+Checks:
+
+- In-memory compile: pass
+- Ruff baseline/candidate: pass
+- Mypy candidate: pass
+- `git diff --check`: pass
+- Timing test AST unchanged
+- Pytest/service/full suites not run per SOURCEONLY requirements
+
+Evidence: worker `evidence/`; commit message written; `DONE` created.
+
+Next step: independent protected review, then normal Agent merge. Functional behavior remains unverified here.

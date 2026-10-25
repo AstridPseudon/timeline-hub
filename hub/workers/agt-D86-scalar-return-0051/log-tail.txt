@@ -1,0 +1,400 @@
+from pathlib import Path
+
+path = Path('tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py')
+candidate_source = path.read_text()
+baseline_source = subprocess.check_output(
+    ['git', 'show', 'HEAD:tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py'],
+    text=True,
+)
+candidate = ast.parse(candidate_source, str(path))
+baseline = ast.parse(baseline_source, 'baseline')
+
+class NormalizeValueAt(ast.NodeTransformer):
+    def visit_Call(self, node):
+        node = self.generic_visit(node)
+        if isinstance(node.func, ast.Name) and node.func.id == 'value_at' and len(node.args) == 3:
+            node.args = [node.args[0], node.args[2]]
+        return node
+
+normalized_candidate = ast.dump(NormalizeValueAt().visit(ast.parse(candidate_source)), include_attributes=False)
+normalized_baseline = ast.dump(ast.parse(baseline_source), include_attributes=False)
+print('AST conservation after normalizing intended value_at arity change:', normalized_candidate == normalized_baseline)
+
+
+def find_function(tree, name):
+    return next(node for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == name)
+
+for name in ('_patch', '_seed_current_app_document', 'test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba'):
+    old = find_function(baseline, name)
+    new = find_function(candidate, name)
+    print(f'{name}: params={ast.dump(old.args, include_attributes=False) == ast.dump(new.args, include_attributes=False)}, '
+          f'decorators={ast.dump(old.decorator_list, include_attributes=False) == ast.dump(new.decorator_list, include_attributes=False)}')
+
+for label, tree in (('baseline', baseline), ('candidate', candidate)):
+    calls = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Name):
+                name = node.func.id
+            elif isinstance(node.func, ast.Attribute):
+                name = node.func.attr
+            else:
+                continue
+            if name in {'value_at', '_patch', 'capture_occurrence_create',
+                        'capture_occurrence_place_shared', 'capture_track_create',
+                        'execute', 'commit_timeline', 'create_runtime_commit_service'}:
+                calls.append((name, len(node.args), sorted(keyword.arg for keyword in node.keywords if keyword.arg)))
+    print(label, 'relevant calls:', sorted(calls))
+
+for label, tree in (('baseline', baseline), ('candidate', candidate)):
+    print(label, 'asserts=', sum(isinstance(n, ast.Assert) for n in ast.walk(tree)),
+          'pytest.raises=', sum(isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)
+                                  and n.func.attr == 'raises' for n in ast.walk(tree)),
+          'branches=', sum(isinstance(n, (ast.If, ast.IfExp)) for n in ast.walk(tree)),
+          'loops=', sum(isinstance(n, (ast.For, ast.AsyncFor, ast.While)) for n in ast.walk(tree)),
+          'try=', sum(isinstance(n, ast.Try) for n in ast.walk(tree)))
+
+# Static API arity check for the repaired call and its real helper definition.
+doc_patch = ast.parse(Path('astrid/sdk/timeline/_doc_patch.py').read_text())
+value_def = find_function(doc_patch, 'value_at')
+required = len(value_def.args.posonlyargs) + len(value_def.args.args) - len(value_def.args.defaults)
+patch_fn = find_function(candidate, '_patch')
+value_calls = [n for n in ast.walk(patch_fn) if isinstance(n, ast.Call)
+               and isinstance(n.func, ast.Name) and n.func.id == 'value_at']
+print('value_at required positional args:', required)
+print('repaired _patch value_at positional args:', [len(n.args) for n in value_calls])
+assert normalized_candidate == normalized_baseline
+assert required == 3 and [len(n.args) for n in value_calls] == [3]
+PY
+
+git diff --check" in /home/user/work/wt/agt-D86-scalar-return-0051
+ succeeded in 17ms:
+AST conservation after normalizing intended value_at arity change: True
+Traceback (most recent call last):
+  File "<stdin>", line 33, in <module>
+  File "/usr/lib/python3.13/ast.py", line 191, in dump
+    raise TypeError('expected AST, got %r' % node.__class__.__name__)
+TypeError: expected AST, got 'list'
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import ast
+import subprocess
+from pathlib import Path
+
+path = Path('tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py')
+candidate_source = path.read_text()
+baseline_source = subprocess.check_output(
+    ['git', 'show', 'HEAD:tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py'],
+    text=True,
+)
+candidate = ast.parse(candidate_source, str(path))
+baseline = ast.parse(baseline_source, 'baseline')
+
+class NormalizeValueAt(ast.NodeTransformer):
+    def visit_Call(self, node):
+        node = self.generic_visit(node)
+        if isinstance(node.func, ast.Name) and node.func.id == 'value_at' and len(node.args) == 3:
+            node.args = [node.args[0], node.args[2]]
+        return node
+
+normalized_candidate = ast.dump(NormalizeValueAt().visit(ast.parse(candidate_source)), include_attributes=False)
+normalized_baseline = ast.dump(ast.parse(baseline_source), include_attributes=False)
+print('AST conservation after normalizing intended value_at arity change:', normalized_candidate == normalized_baseline)
+
+
+def find_function(tree, name):
+    return next(node for node in ast.walk(tree) if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == name)
+
+for name in ('_patch', '_seed_current_app_document', 'test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba'):
+    old = find_function(baseline, name)
+    new = find_function(candidate, name)
+    old_args = ast.dump(old.args, include_attributes=False)
+    new_args = ast.dump(new.args, include_attributes=False)
+    old_decorators = ast.dump(ast.Module(body=old.decorator_list, type_ignores=[]), include_attributes=False)
+    new_decorators = ast.dump(ast.Module(body=new.decorator_list, type_ignores=[]), include_attributes=False)
+    print(f'{name}: params={old_args == new_args}, decorators={old_decorators == new_decorators}')
+
+for label, tree in (('baseline', baseline), ('candidate', candidate)):
+    calls = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Name):
+                name = node.func.id
+            elif isinstance(node.func, ast.Attribute):
+                name = node.func.attr
+            else:
+                continue
+            if name in {'value_at', '_patch', 'capture_occurrence_create',
+                        'capture_occurrence_place_shared', 'capture_track_create',
+                        'execute', 'commit_timeline', 'create_runtime_commit_service'}:
+                calls.append((name, len(node.args), sorted(keyword.arg for keyword in node.keywords if keyword.arg)))
+    print(label, 'relevant calls:', sorted(calls))
+
+for label, tree in (('baseline', baseline), ('candidate', candidate)):
+    print(label, 'asserts=', sum(isinstance(n, ast.Assert) for n in ast.walk(tree)),
+          'pytest.raises=', sum(isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)
+                                  and n.func.attr == 'raises' for n in ast.walk(tree)),
+          'branches=', sum(isinstance(n, (ast.If, ast.IfExp)) for n in ast.walk(tree)),
+          'loops=', sum(isinstance(n, (ast.For, ast.AsyncFor, ast.While)) for n in ast.walk(tree)),
+          'try=', sum(isinstance(n, ast.Try) for n in ast.walk(tree)))
+
+doc_patch = ast.parse(Path('astrid/sdk/timeline/_doc_patch.py').read_text())
+value_def = find_function(doc_patch, 'value_at')
+required = len(value_def.args.posonlyargs) + len(value_def.args.args) - len(value_def.args.defaults)
+patch_fn = find_function(candidate, '_patch')
+value_calls = [n for n in ast.walk(patch_fn) if isinstance(n, ast.Call)
+               and isinstance(n.func, ast.Name) and n.func.id == 'value_at']
+print('value_at required positional args:', required)
+print('repaired _patch value_at positional args:', [len(n.args) for n in value_calls])
+assert normalized_candidate == normalized_baseline
+assert required == 3 and [len(n.args) for n in value_calls] == [3]
+PY
+
+git diff --check" in /home/user/work/wt/agt-D86-scalar-return-0051
+ succeeded in 45ms:
+AST conservation after normalizing intended value_at arity change: True
+_patch: params=True, decorators=True
+_seed_current_app_document: params=True, decorators=True
+test_app_hold_asset_transition_commit_reload_inverse_redo_and_aba: params=True, decorators=True
+baseline relevant calls: [('_patch', 4, []), ('_patch', 4, []), ('_patch', 4, []), ('_patch', 4, []), ('_patch', 4, []), ('_patch', 4, []), ('_patch', 4, []), ('capture_occurrence_create', 3, ['duration', 'name', 'on', 'track']), ('capture_occurrence_place_shared', 3, ['on']), ('capture_track_create', 3, []), ('commit_timeline', 3, ['authorize', 'idempotency_key', 'invocation_path', 'publisher']), ('commit_timeline', 3, ['authorize', 'idempotency_key', 'invocation_path', 'publisher']), ('create_runtime_commit_service', 0, []), ('create_runtime_commit_service', 0, []), ('execute', 2, []), ('execute', 2, []), ('execute', 2, []), ('value_at', 2, [])]
+candidate relevant calls: [('_patch', 4, []), ('_patch', 4, []), ('_patch', 4, []), ('_patch', 4, []), ('_patch', 4, []), ('_patch', 4, []), ('_patch', 4, []), ('capture_occurrence_create', 3, ['duration', 'name', 'on', 'track']), ('capture_occurrence_place_shared', 3, ['on']), ('capture_track_create', 3, []), ('commit_timeline', 3, ['authorize', 'idempotency_key', 'invocation_path', 'publisher']), ('commit_timeline', 3, ['authorize', 'idempotency_key', 'invocation_path', 'publisher']), ('create_runtime_commit_service', 0, []), ('create_runtime_commit_service', 0, []), ('execute', 2, []), ('execute', 2, []), ('execute', 2, []), ('value_at', 3, [])]
+baseline asserts= 14 pytest.raises= 1 branches= 5 loops= 5 try= 1
+candidate asserts= 14 pytest.raises= 1 branches= 5 loops= 5 try= 1
+value_at required positional args: 3
+repaired _patch value_at positional args: [3]
+
+codex
+Static checks now pass for the repaired candidate and the unchanged baseline: in-memory compile, Ruff, mypy, and whitespace validation. AST comparison shows only the intentional `value_at` arity insertion; parameters, decorators, 14 assertions, one `pytest.raises`, five branches, five loops, and the `try` block are unchanged. I’m doing one final API-signature/conservation check, then I’ll record compact evidence and finalize the handoff metadata.
+exec
+/bin/bash -lc "python3 - <<'PY'
+import ast
+from pathlib import Path
+
+
+def funcs(path):
+    tree = ast.parse(Path(path).read_text(), str(path))
+    return {node.name: node for node in ast.walk(tree)
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))}
+
+api = {}
+for path in (
+    'astrid/sdk/timeline/_doc_patch.py',
+    'astrid/sdk/timeline/commands.py',
+    'astrid/sdk/timeline/capture.py',
+    'astrid/sdk/timeline/native_occurrence_create.py',
+    'astrid/sdk/timeline/native_occurrence_shared.py',
+):
+    api.update(funcs(path))
+
+source = Path('tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py')
+tree = ast.parse(source.read_text(), str(source))
+expected = {
+    'value_at': (3, set()),
+    'execute': (2, set()),
+    'capture_track_create': (3, set()),
+    'capture_occurrence_create': (3, {'name', 'track', 'on', 'duration'}),
+    'capture_occurrence_place_shared': (3, {'on'}),
+}
+seen = []
+for node in ast.walk(tree):
+    if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name):
+        continue
+    name = node.func.id
+    if name not in expected:
+        continue
+    positional, keywords = expected[name]
+    actual_keywords = {keyword.arg for keyword in node.keywords if keyword.arg is not None}
+    assert len(node.args) == positional, (name, len(node.args), positional)
+    assert actual_keywords <= keywords, (name, actual_keywords, keywords)
+    definition = api[name]
+    positional_def = definition.args.posonlyargs + definition.args.args
+    required_def = len(positional_def) - len(definition.args.defaults)
+    keyword_only_def = {arg.arg for arg in definition.args.kwonlyargs}
+    assert len(node.args) >= required_def, (name, len(node.args), required_def)
+    assert actual_keywords <= keyword_only_def, (name, actual_keywords, keyword_only_def)
+    seen.append(name)
+print('registered API call shapes:', ', '.join(seen))
+print('all repaired seed calls match static definitions: PASS')
+PY
+
+printf '%s\\n' '--- source identity ---'
+git rev-parse HEAD HEAD"'^{tree}
+printf '"'%s\\n' '--- changed blob and sha256 ---'
+git hash-object tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+sha256sum tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+printf '%s\\n' '--- final diff ---'
+git diff --check
+git diff --stat
+git status --short" in /home/user/work/wt/agt-D86-scalar-return-0051
+ succeeded in 118ms:
+registered API call shapes: value_at, capture_occurrence_create, capture_occurrence_place_shared, execute, execute, capture_track_create, execute
+all repaired seed calls match static definitions: PASS
+--- source identity ---
+f2def38890237646943fdad185d0b21d1d7f9938
+fac4790db9ef9a9ff22c95f23614af969865d1f9
+--- changed blob and sha256 ---
+5294f8218d229cc9e016e797d8cd8679afff07c5
+3ff8e7792e2f9ba3e4b052f431bbea28cbea8d4bd3daf2250a87ea4e3ec707ee  tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+--- final diff ---
+ tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+ M tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+
+exec
+/bin/bash -lc "ls -la /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-scalar-return-0051 && test -d /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-scalar-return-0051/evidence; printf 'evidence_dir:%s\\n' \""'$?"' in /home/user/work/wt/agt-D86-scalar-return-0051
+ succeeded in 0ms:
+total 400
+drwxr-xr-x    2 root root   4096 Oct 25 00:58 .
+drwxr-xr-x 2693 root root 139264 Oct 25 00:58 ..
+-rw-r--r--    1 root root   2787 Oct 25 00:58 brief.md
+-rw-r--r--    1 root root 243663 Oct 25 00:59 log.txt
+-rw-r--r--    1 root root    253 Oct 25 00:58 meta
+-rw-r--r--    1 root root      0 Oct 25 00:58 running
+-rw-r--r--    1 root root     18 Oct 25 00:58 tmpdir
+-rw-r--r--    1 root root     52 Oct 25 00:58 wrapper.log
+evidence_dir:1
+
+exec
+/bin/bash -lc 'mkdir -p /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-scalar-return-0051/evidence' in /home/user/work/wt/agt-D86-scalar-return-0051
+ succeeded in 0ms:
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-scalar-return-0051/evidence/static-source-check.txt
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-scalar-return-0051/evidence/static-source-check.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-scalar-return-0051/evidence/static-source-check.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..ae7686d55165e9e4266aace1cedd3df80ffa58df
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-scalar-return-0051/evidence/static-source-check.txt
+@@ -0,0 +1,23 @@
++F-D86 scalar11 first-return repair
++
++Source change:
++  tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py:36
++  value_at(Closure(bundle).payload(physical), physical, path)
++
++Static evidence:
++  in-memory compile: PASS
++  candidate Ruff: PASS
++  baseline Ruff via stdin: PASS
++  candidate mypy: PASS
++  baseline mypy via --shadow-file: PASS
++  git diff --check: PASS
++  AST conservation after normalizing the intended arity change: PASS
++  parameters/decorators/asserts/raises/branches/loops/try conservation: PASS
++  static registered-API call-shape check: PASS
++
++No pytest, collection, helper/fixture/function execution, service, browser, build,
++or full-suite run was performed.
++
++Base HEAD: f2def38890237646943fdad185d0b21d1d7f9938
++Changed blob: 5294f8218d229cc9e016e797d8cd8679afff07c5
++Changed sha256: 3ff8e7792e2f9ba3e4b052f431bbea28cbea8d4bd3daf2250a87ea4e3ec707ee
+diff --git a/tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py b/tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+index 851949c2bfa9df355e38d055f674bbba1e113331..5294f8218d229cc9e016e797d8cd8679afff07c5
+--- a/tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
++++ b/tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+@@ -33,7 +33,7 @@
+ 
+ def _patch(bundle, ref, path, value):
+     physical = Closure(bundle).resolve(ref)
+-    before = value_at(Closure(bundle).payload(physical), path)
++    before = value_at(Closure(bundle).payload(physical), physical, path)
+     return execute(bundle, [{
+         'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
+         'args': {'changes': [{'op': 'set', 'ref': ref, 'path': list(path),
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-scalar-return-0051/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-scalar-return-0051/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-scalar-return-0051/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..588ed5f5da4f2f3390b7158ae74bd87a36b540eb
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-scalar-return-0051/commit-msg
+@@ -0,0 +1,4 @@
++test(timeline): fix F-D86 scalar fixture first return
++
++Pass the resolved physical closure reference to value_at when capturing
++doc.patch before-values, preserving the existing scalar fixture scenarios.
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-scalar-return-0051/evidence/static-source-check.txt b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-scalar-return-0051/evidence/static-source-check.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..ae7686d55165e9e4266aace1cedd3df80ffa58df
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-scalar-return-0051/evidence/static-source-check.txt
+@@ -0,0 +1,23 @@
++F-D86 scalar11 first-return repair
++
++Source change:
++  tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py:36
++  value_at(Closure(bundle).payload(physical), physical, path)
++
++Static evidence:
++  in-memory compile: PASS
++  candidate Ruff: PASS
++  baseline Ruff via stdin: PASS
++  candidate mypy: PASS
++  baseline mypy via --shadow-file: PASS
++  git diff --check: PASS
++  AST conservation after normalizing the intended arity change: PASS
++  parameters/decorators/asserts/raises/branches/loops/try conservation: PASS
++  static registered-API call-shape check: PASS
++
++No pytest, collection, helper/fixture/function execution, service, browser, build,
++or full-suite run was performed.
++
++Base HEAD: f2def38890237646943fdad185d0b21d1d7f9938
++Changed blob: 5294f8218d229cc9e016e797d8cd8679afff07c5
++Changed sha256: 3ff8e7792e2f9ba3e4b052f431bbea28cbea8d4bd3daf2250a87ea4e3ec707ee
+diff --git a/tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py b/tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+index 851949c2bfa9df355e38d055f674bbba1e113331..5294f8218d229cc9e016e797d8cd8679afff07c5
+--- a/tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
++++ b/tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+@@ -33,7 +33,7 @@
+ 
+ def _patch(bundle, ref, path, value):
+     physical = Closure(bundle).resolve(ref)
+-    before = value_at(Closure(bundle).payload(physical), path)
++    before = value_at(Closure(bundle).payload(physical), physical, path)
+     return execute(bundle, [{
+         'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
+         'args': {'changes': [{'op': 'set', 'ref': ref, 'path': list(path),
+
+codex
+The final static API check passes: the repaired `value_at` call matches the three-argument definition, and every new seed call shape matches the registered definitions. The worktree contains exactly the one permitted test-file edit; compact evidence and the conventional commit message are recorded in the assigned worker area. I’m marking completion now without running any prohibited behavioral or full-suite command.
+exec
+/bin/bash -lc 'git diff --name-only && git status --short && test "$(git diff --name-only | wc -l)" -eq 1 && test "$(git diff --name-only)" = tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py && test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-scalar-return-0051/commit-msg && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-scalar-return-0051/evidence/static-source-check.txt && touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-scalar-return-0051/DONE && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-scalar-return-0051/DONE && test ! -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-scalar-return-0051/DONE && echo '"'completion markers: PASS'" in /home/user/work/wt/agt-D86-scalar-return-0051
+ succeeded in 42ms:
+tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+ M tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+completion markers: PASS
+
+codex
+Implemented F-D86 scalar first-return fix in [test_commit_runtime_clip_scalar_fields.py](/home/user/work/wt/agt-D86-scalar-return-0051/tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py:36), passing the resolved physical ref to `value_at`.
+
+Checks passed:
+
+- In-memory compile
+- Candidate/baseline Ruff
+- Candidate/baseline mypy
+- AST/API conservation
+- `git diff --check`
+
+No pytest, service, browser, build, or full-suite execution was performed. Behavioral acceptance remains unverified.
+
+Commit message and `DONE` marker created.
+tokens used
+66,877
+Implemented F-D86 scalar first-return fix in [test_commit_runtime_clip_scalar_fields.py](/home/user/work/wt/agt-D86-scalar-return-0051/tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py:36), passing the resolved physical ref to `value_at`.
+
+Checks passed:
+
+- In-memory compile
+- Candidate/baseline Ruff
+- Candidate/baseline mypy
+- AST/API conservation
+- `git diff --check`
+
+No pytest, service, browser, build, or full-suite execution was performed. Behavioral acceptance remains unverified.
+
+Commit message and `DONE` marker created.

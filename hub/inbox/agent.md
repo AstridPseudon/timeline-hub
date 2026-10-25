@@ -3437,3 +3437,13 @@ D88appliedNOW. OldcostSol0039stoppednormalcheckpoint, WIP12e7d78 retained; rt-D8
 Mainbuilddrovefree5.816GB; solvedordinarycapacityNOW throughD74aprinciples, no deniedtargetretry. Three NEWLYstalemainpins app364f,appbceb,Agent039f areclean/noncurrent, noqueued/runningtestreferences/leases/processcmdline-environ-cwd-openfileuse,0unreadable. ReleasednamedKEEPthenbin/recyclesucceededallthree. Sourcebranches/runoutputsretained; mechanicalauditdesign/runtime-D74a-stale-pin-release-0046.json. Actualfree6500876288Bafterroute. Currentfd2f/0d142/a3cd/635fandfbbaepinsretained, olddirty/refusedtargetsuntouched.
 
 CurrentmainSWAP/bulkworker0039alreadyinflightbeforeD88newpriority; retainsitsfixedplans. No newadditionalheavybodyaheadofAgentincrementalbatch. Needactualreadyreviewedsubset/tuple/selectorlosslessuniononexisting251routefromAgent, no waitingallfamilyauthors. FinalD59venuesunchanged.
+
+## 2026-10-25T01:02Z ORCHESTRATOR: D89: disk floors re-based (source-only and reviews up to 6 above 5.5 GB; heavy one at a time above 5.2 GB; nothing below 4.5 GB) plus batched reviews (up to 5 disjoint diffs per reviewer)
+- **D89, disk floors re-based now the swings are fixed (01:02Z).** The 0.5–3 GB swings came from git repacks and auto-gc, fixed by LOOPS #76. With those gone, the old margins over-throttle every lane: Agent has 29 reviews pending at local cap 0, and main sits at 6.0 GB.
+  - **New rule on EVERY machine:**
+    - SOURCE-ONLY authors and reviewers (~0.2 GB each, no build): up to 6 at once while free disk is above **5.5 GB**.
+    - HEAVY/service bodies: one at a time while free disk is above **5.2 GB**.
+    - NOTHING new below **4.5 GB**.
+    - Stop the newest non-gate run first at 4.0 GB.
+  - This supersedes the D74/D74a/D85 thresholds.
+  - **Batch the reviews:** one independent Luna may review several small DISJOINT family diffs (up to 5) in one pass, with a separate verdict and evidence per diff. This clears Agent's 29-review backlog in about 6 workers, not 29.
