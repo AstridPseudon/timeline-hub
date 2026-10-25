@@ -1,4 +1,4 @@
-<!-- app2 | 2026-10-25T03:34:11Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
+<!-- app2 | 2026-10-25T03:36:22Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
 # app2 board, 2026-10-25T03:31Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -10,7 +10,7 @@
 | P1-case2 | Refusal, message and canonical rollback | App service; independent Luna | Same original run | merged | App18792; Proof0040 | Passed in20.4 seconds: Agent edit,409,message,canonical rollback,history and zero legacy traffic. | Same pinned tuple |
 | P1-corpus | Real document roundtrip and merge | Luna | Complete | merged | Corpus1348 | 49 passed with15 fixtures and11 inputs. Direct provider scope; mounted proof is separate. | e6 and9729 |
 | P4 | CLI, Python, sheet, ten notes and rerun | Sol; Luna; service | Complete on recorded tuple | merged | 17739;28012;11615 | Ten notes in one commit, per-step undo/redo, restart, show/history and200-409-200 conflict rerun passed. | Agent543d andf6cda / Runtimea5d |
-| P4-current | Qualify original ten-note timing | Runtime Sol; Luna; service | D94 source, security PASS, original | gated:D56.4-transfer | Sample0242; sole costfixSol0301 | Corrected25257 FAIL45.557s;432samples/0errors. D94 verified-history state reuse approved03:22. Runtime owns source, one security review and original. No Proof dispatch. | Runtime6634 baseline |
+| P4-current | Qualify original ten-note timing | Runtime Sol; Luna; service | D94 source, security PASS, original | gated:D56.4-transfer | Sample0242; D94 author0320 | Corrected25257 FAIL45.557s;432samples/0errors. D94 author0320 active; exact security0320 after final candidate, then original. No Proof dispatch. | Runtime6634 baseline |
 | readiness-after-bootstrap | Qualify mounted readiness | App service; Proof review | D45 and current leaves passed | merged | D45; current23809 and9310 | D45 readiness passed. Current producer reports P2 readiness19.5 seconds and P3 readiness41.4 seconds; downstream failures remain. | App663 / Agent079 / Runtime37eb |
 | P2 | Eight original core gestures | App and Main services | Six isolated originals then full tour | doing | Single5678 GO; asset27438 GO; placement12145 | Independently GO2/8 on captured tuples. Placement12145 submitted03:21:48 on5337/6386/6634/635f. ADD label source reviewed and home; bulk original follows body order. | Captured tuples |
 | P2-preflight26414 | Qualify same-ID source guard failure | Independent Luna | Independent1136 complete | merged | Verdict1136; validation return1144 | Gate NO-GO;source PASS;preflightFAIL;all8 NOTRUN. Direct remote run/snapshot/provider custody UNKNOWN. Finite runner return1144 passed7+10 controls. | Actual26414 |
@@ -98,15 +98,15 @@ D56.4: Proof is folded into App. The complete [Proof handoff](../../design/peer-
 
 live 0 / cap 6 source; ready-undispatched 0 for Proof under D56.4. Actual dispatcher confirms all1313 records done. D89 permits6 source above5.0GB and one service body above5.2GB. No new dispatch below4.5GB. No Proof assignment.
 
-core open: 2 transferred gate groups, P2 and P4. Header03:24 and App independent verdicts agree isolated2/8: single5678 and asset27438 GO. Six isolated originals and full tour remain open. P1 current31083 and P3 original15493 retain captured GO tuples. P4 corrected25257 NO-GO45.557s; Runtime owns D94 source. Final D59 matrix remains required.
+core open: 2 transferred gate groups, P2 and P4. Header03:24 and App independent verdicts agree isolated2/8: single5678 and asset27438 GO. Six isolated originals and full tour remain open. P1 current31083 and P3 original15493 retain captured GO tuples. P4 corrected25257 NO-GO45.557s; Runtime0320 owns D94 source. Final D59 matrix remains required.
 
 regressions: 1 presumed cut-blocking installed-render regression under D77a. Consumerdfea is normally HOME; D76/D77 receipts MERGED831df and34 adversarial+2positive PASS retained. Final genuine installed render remains owed. No confirmed open Proof-authored source regression.
 
-Blockers: Runtime P4 qualification — corrected25257 failed45.557s. D94 approved verified-history state reuse; sole costfixSol0301, one independent security review and meaningful original own closure. No Proof body.
+Blockers: Runtime P4 qualification — corrected25257 failed45.557s. D94 approved verified-history state reuse; sole author0320, exact independent security review after final candidate and meaningful original own closure. No Proof body.
 
 Blockers: App P2 qualification — six isolated originals and full tour remain open. Single5678 and asset27438 independent GO. Placement12145 first, then repaired bulk and ADD. ADD source0317 independent PASS and normal home; no browser credit.
 
-Next ready: None for Proof under D56.4. App owns same placement12145, bulk2d25 original, meaningful ADD after label0317, and parent retained-facts followthrough. Runtime owns D94 costfixSol0301, D91 ten0302 and later102 receiver0303.
+Next ready: None for Proof under D56.4. App owns same placement12145, bulk2d25 original, meaningful ADD after label0317, and parent retained-facts followthrough. Runtime owns D94 source0320, security0320 and corrected D91/D92 followthrough; inverse7 passed7 originals.
 
 Current gate evidence:
 - P3 latest15493: independent2024 GO, exit0/248s; readiness1 and original1 PASS, XML zero failures/errors. Exact Appc184bd0bec5d10292647600272329534e058d474 / Agent22d00393f7d944f1d01505637ca00b1995c3e158 / Runtime44917baf5976d6a655d582fafc63fde7b6cb242d / Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40. Genuine same-tree snapshot4863f39c, spec93c2 and five other protected hashes qualified. Both mounts, exact5/3, merged B, history, restart, canonical closure and guarded undo pass. [Independent GO](../../design/app-P3-15493-GO-verdict-2024.md). No renderer or final-cut full credit; historical14240 remains NO-GO.
@@ -152,10 +152,10 @@ Safety: D88 automatic safety review stopped its reviewer for possible cybersecur
 
 Disk: 7644454912 bytes free at 2026-10-25T03:31Z. Read-only metadata audit confirms all21 local trees have worker-record KEEP markers; eligible finished non-KEEP targets0. Prior cleanup, pin-release and compact refusals stay stopped.
 
-Pass 2026-10-25T03:31Z: Inbox unchanged791665 bytes; all1313 Proof dispatcher records done. Header7b52069510b8 records isolated P2 GO2/8 at03:24 and D94 at03:22; D56.4 and D89 remain binding. App03:24, Runtime03:04 content with03:25 heartbeat, and Agent03:12 content with03:24 heartbeat checked. ADD0317 independent PASS154controls/oldRED-newGREEN/4oracle/three types/lint; exact source now home, original still owed. App placement12145 is the meaningful corrected original on5337/6386/6634/635f, submitted03:21:48; prior32150 stayed pre-test failure. Bulk2d25 source acceptance complete with explicit types0302, browser follows body order. Runtime soleSol0301 owns D94 source; no release or security PASS yet recorded. No Proof dispatch, body, peer ask, escalation, Git mutation or stopped cleanup retry.
+Pass 2026-10-25T03:31Z: Inbox unchanged791665 bytes; all1313 Proof dispatcher records done. Header7b52069510b8 records isolated P2 GO2/8 at03:24 and D94 at03:22; D56.4 and D89 remain binding. App03:24, Runtime03:04 content with03:25 heartbeat, and Agent03:12 content with03:24 heartbeat checked. ADD0317 independent PASS154controls/oldRED-newGREEN/4oracle/three types/lint; exact source now home, original still owed. App placement12145 is the meaningful corrected original on5337/6386/6634/635f, submitted03:21:48; prior32150 stayed pre-test failure. Bulk2d25 source acceptance complete with explicit types0302, browser follows body order. Runtime03:29 successor board: earlier0301/0310 retained no source; sole D94Sol0320 active, initial security0320 had no candidate/verdict. Actual D91ten ERROR and D92three FAIL need correction; inverse7 PASS7. No release or security PASS yet recorded. No Proof dispatch, body, peer ask, escalation, Git mutation or stopped cleanup retry.
 
 Evidence: [Asset27438 independent GO](/home/user/timeline-hub/hub/design/app-P2-asset27438-GO-review-0315.md), [Single5678 independent GO](../../design/app-P2-single5678-GO-resume-0255.md), [corrected P4 sample](../../design/agt-P4-crossprocess-sample-0242-report.md), [App current owners](/home/user/timeline-hub/hub/status/app.md), [Runtime current owners](/home/user/timeline-hub/hub/status/runtime.md), [Agent current owners](/home/user/timeline-hub/hub/status/agent.md).
 
-Next watch: approximately03:42Z. Check placement12145, subsequent bulk and ADD originals, Runtime D94 source/security, D91ten and9211/102 family followthrough. D56.4 remains binding.
+Next watch: approximately03:42Z. Check placement12145, subsequent bulk and ADD originals, Runtime D94 author0320/security, D91ten/D92three source and next32 receiving followthrough. D56.4 remains binding.
 
 Inbox read through791665 bytes. STATUS is restart point; [D83 handoff](../../design/peer-app2-to-app-agent-20261024T2058Z-D83-ready-handoff.md), [Proof handoff](../../design/peer-app2-to-app-20261024T1220Z-D56-proof-handoff.md), [D84a release](../../design/runtime-D84a-release-2205.md) remain binding.
