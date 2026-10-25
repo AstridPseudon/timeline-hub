@@ -113,7 +113,8 @@ function RunningTour() {
       <div
         ref={cardRef}
         data-editor-tour-card-host
-        className="fixed left-0 top-0"
+        // On a phone the bottom-docked card clears the home indicator of a full-screen web app.
+        className={device === 'phone' ? 'fixed left-0 top-0 pb-[env(safe-area-inset-bottom)]' : 'fixed left-0 top-0'}
         style={{
           zIndex: UI_Z_LAYERS.EDITOR_TOUR_CARD,
           transform: `translate3d(${position.left}px, ${position.top}px, 0)`,
