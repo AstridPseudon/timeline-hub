@@ -1,0 +1,198 @@
+{
+  "utc": "2026-10-25T05:29:33.310915+00:00",
+  "heads": {
+    "app": "9cb56c2a3f408b21a7610823b6c3b02a5b2e4f07",
+    "agent": "6aefd11766c019f8deff0ca5a1bfe18e9e730822",
+    "runtime": "0c62dfa63db9ff608ac9338388431e31a814e080",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "pins": [
+    {
+      "worker": "agt-pin-562ee30b",
+      "repo": "agent",
+      "sha": "562ee30b6ed567a90a114f5029a96da2ece9789e",
+      "worktree": "/home/user/work/wt/agt-pin-562ee30b",
+      "clean": true,
+      "current_head": false,
+      "protected": false,
+      "references": [],
+      "host_clear": "design/app-pin-host-process-use-0535.md",
+      "eligible": true
+    },
+    {
+      "worker": "agt-pin-5faeec5b",
+      "repo": "agent",
+      "sha": "5faeec5bbced687f040751ded739e1b9c8c41757",
+      "worktree": "/home/user/work/wt/agt-pin-5faeec5b",
+      "clean": true,
+      "current_head": false,
+      "protected": true,
+      "references": [],
+      "host_clear": "design/app-pin-host-process-use-0535.md",
+      "eligible": false
+    },
+    {
+      "worker": "agt-pin-6386c700",
+      "repo": "agent",
+      "sha": "6386c700ee56264aebe12da4558ac74dda0d60ca",
+      "worktree": "/home/user/work/wt/agt-pin-6386c700",
+      "clean": true,
+      "current_head": false,
+      "protected": false,
+      "references": [],
+      "host_clear": "design/app-pin-host-process-use-0535.md",
+      "eligible": true
+    },
+    {
+      "worker": "agt-pin-a836baa3",
+      "repo": "agent",
+      "sha": "a836baa3b11208d66bf8d23d6abfb1c8e59257e2",
+      "worktree": "/home/user/work/wt/agt-pin-a836baa3",
+      "clean": true,
+      "current_head": false,
+      "protected": false,
+      "references": [],
+      "host_clear": "design/app-pin-host-process-use-0535.md",
+      "eligible": true
+    },
+    {
+      "worker": "app-pin-043631db",
+      "repo": "app",
+      "sha": "043631dbabfed566cfe037709c7fe861d6435b52",
+      "worktree": "/home/user/work/wt/app-pin-043631db",
+      "clean": true,
+      "current_head": false,
+      "protected": false,
+      "references": [],
+      "host_clear": "design/app-pin-host-process-use-0535.md",
+      "eligible": true
+    },
+    {
+      "worker": "app-pin-06014e45",
+      "repo": "app",
+      "sha": "06014e459734d281c96b838b1c41261c246acc41",
+      "worktree": "/home/user/work/wt/app-pin-06014e45",
+      "clean": true,
+      "current_head": false,
+      "protected": false,
+      "references": [],
+      "host_clear": "design/app-pin-host-process-use-0535.md",
+      "eligible": true
+    },
+    {
+      "worker": "app-pin-1e34f8ea",
+      "repo": "app",
+      "sha": "1e34f8eac5e3d5a54dbba12d538a7f3bf8509b66",
+      "worktree": "/home/user/work/wt/app-pin-1e34f8ea",
+      "clean": true,
+      "current_head": false,
+      "protected": false,
+      "references": [],
+      "host_clear": "design/app-pin-host-process-use-0535.md",
+      "eligible": true
+    },
+    {
+      "worker": "app-pin-24865fa2",
+      "repo": "app",
+      "sha": "24865fa212148e9bc149a1285936372656037e55",
+      "worktree": "/home/user/work/wt/app-pin-24865fa2",
+      "clean": true,
+      "current_head": false,
+      "protected": false,
+      "references": [
+        "tests/agent-p4-current-becfe-http-3legs-1025020538-14151/ext"
+      ],
+      "host_clear": "design/app-pin-host-process-use-0535.md",
+      "eligible": false
+    },
+    {
+      "worker": "app-pin-2d25dc46",
+      "repo": "app",
+      "sha": "2d25dc460c1741c80b60bc8022cd30321fcbfd91",
+      "worktree": "/home/user/work/wt/app-pin-2d25dc46",
+      "clean": true,
+      "current_head": false,
+      "protected": false,
+      "references": [],
+      "host_clear": "design/app-pin-host-process-use-0535.md",
+      "eligible": true
+    },
+    {
+      "worker": "app-pin-3199118d",
+      "repo": "app",
+      "sha": "3199118dce058a570c71380917f76aa413114d91",
+      "worktree": "/home/user/work/wt/app-pin-3199118d",
+      "clean": true,
+      "current_head": false,
+      "protected": false,
+      "references": [],
+      "host_clear": "design/app-pin-host-process-use-0535.md",
+      "eligible": true
+    },
+    {
+      "worker": "app-pin-5337b439",
+      "repo": "app",
+      "sha": "5337b439b9dfa937dd987f372763582614bdd465",
+      "worktree": "/home/user/work/wt/app-pin-5337b439",
+      "clean": true,
+      "current_head": false,
+      "protected": false,
+      "references": [],
+      "host_clear": "design/app-pin-host-process-use-0535.md",
+      "eligible": true
+    },
+    {
+      "worker": "app-pin-9cb56c2a",
+      "repo": "app",
+      "sha": "9cb56c2a3f408b21a7610823b6c3b02a5b2e4f07",
+      "worktree": "/home/user/work/wt/app-pin-9cb56c2a",
+      "clean": true,
+      "current_head": true,
+      "protected": true,
+      "references": [],
+      "host_clear": "design/app-pin-host-process-use-0535.md",
+      "eligible": false
+    },
+    {
+      "worker": "rt-pin-0c62dfa6",
+      "repo": "runtime",
+      "sha": "0c62dfa63db9ff608ac9338388431e31a814e080",
+      "worktree": "/home/user/work/wt/rt-pin-0c62dfa6",
+      "clean": true,
+      "current_head": true,
+      "protected": true,
+      "references": [],
+      "host_clear": "design/app-pin-host-process-use-0535.md",
+      "eligible": false
+    },
+    {
+      "worker": "rt-pin-6634a17f",
+      "repo": "runtime",
+      "sha": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+      "worktree": "/home/user/work/wt/rt-pin-6634a17f",
+      "clean": true,
+      "current_head": false,
+      "protected": false,
+      "references": [
+        "tests/agent-p4-current-becfe-http-3legs-1025020538-14151/ext"
+      ],
+      "host_clear": "design/app-pin-host-process-use-0535.md",
+      "eligible": false
+    },
+    {
+      "worker": "vw-pin-635f4de0",
+      "repo": "composition",
+      "sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "worktree": "/home/user/work/wt/vw-pin-635f4de0",
+      "clean": true,
+      "current_head": true,
+      "protected": true,
+      "references": [
+        "tests/agent-p4-current-becfe-http-3legs-1025020538-14151/ext",
+        "tests/app-pin-5f4ce933-p2-parent-single-0107-single-1025011709-11446/ext"
+      ],
+      "host_clear": "design/app-pin-host-process-use-0535.md",
+      "eligible": false
+    }
+  ]
+}
