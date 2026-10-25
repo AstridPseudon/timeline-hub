@@ -116,3 +116,4 @@ Escalate a contract change, a need from another lane, a scope question, or a saf
 - D89b (12:35Z): every lane may start up to 3 source-only or read-only workers at 4.6 GB or more while no heavy body runs; the stop line stays at 4.0 GB.
 - D125b: a step marked HOLD or awaiting a decision never runs early; managers act only on recorded decisions.
 - D89c: heavy-body disk admission is checked once at controller dispatch; its own prep does not re-trigger the floor; the 4.0 GB stop line holds.
+- tests/<run>/KEEP is honoured by compact-scratch (19:30Z 25 Oct, kit 1f6926c6). Mark KEEP on any test-run dir whose raw data an open row or review names; remove it when the row closes.

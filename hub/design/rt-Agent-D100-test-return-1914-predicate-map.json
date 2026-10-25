@@ -1,0 +1,75 @@
+{
+  "task": "D100/R1 faithful additive custody tests",
+  "changed_file": "tests/sdk/test_d100_item_birth_boundary.py",
+  "predicates": {
+    "test_first_physical_item_preserves_custody_and_opaque_fields": [
+      {
+        "assertion": "source_mapping.shots == before.source_mapping.shots",
+        "purpose": "exact physical source IDs, revisions, digests, item_id_map and opaque source payload custody"
+      },
+      {
+        "assertion": "source_mapping.placements == before.source_mapping.placements",
+        "purpose": "exact placement custody and no alias allocation"
+      },
+      {
+        "assertion": "source_mapping._runtime_document == before.source_mapping._runtime_document",
+        "purpose": "exact authenticated Runtime closure, including immutable shot/internal payloads"
+      },
+      {
+        "assertion": "set(source_mapping) == set(before.source_mapping) | {'_doc_patch_images'}",
+        "purpose": "strictly permits only the documented private compiler projection cache"
+      },
+      {
+        "assertion": "_doc_patch_images['occurrence:occ-a'] exact expected record",
+        "purpose": "independently authenticates owner, physical source IDs/revisions, authored payload and internal timeline"
+      },
+      {
+        "assertion": "source_mapping.shots['chapter-shot']['item_id_map'] == {}",
+        "purpose": "physical first birth does not allocate copied correspondence"
+      },
+      {
+        "assertion": "canonical payload/internal revisions/original bundle unchanged",
+        "purpose": "preserve existing authored projection and no-write invariants"
+      }
+    ],
+    "test_registered_shared_owner_uses_the_same_physical_custody_without_alias_birth": [
+      {
+        "assertion": "source_mapping.shots/placements/_runtime_document exact before values",
+        "purpose": "shared physical custody remains authoritative and unchanged"
+      },
+      {
+        "assertion": "only extra key is _doc_patch_images",
+        "purpose": "no arbitrary source-mapping expansion"
+      },
+      {
+        "assertion": "_doc_patch_images exact records for occurrence:occ-a and occurrence:shared",
+        "purpose": "both actual owners point to the same physical shot/internal IDs and revisions with the authored projection"
+      },
+      {
+        "assertion": "source_offset == 0 before execute and parent content_digest recomputed with _digest",
+        "purpose": "admitted default-source fixture; does not broaden non-default trim support"
+      },
+      {
+        "assertion": "canonical result has one shot and original bundle is unchanged",
+        "purpose": "preserve existing shared item-birth and no-alias assertions"
+      }
+    ],
+    "unchanged_existing_predicates": [
+      "item_id_map",
+      "canonical payload",
+      "internal revision equality",
+      "original bundle immutability",
+      "no-write refusal",
+      "wrong physical pair refusal",
+      "authenticated digest refusal",
+      "unique and non-empty item ID refusal"
+    ]
+  },
+  "source_justification": {
+    "cache_owner_and_fields": "astrid/sdk/timeline/_doc_patch_materialize.py:13-27",
+    "cache_is_projection_only": "astrid/sdk/timeline/_doc_patch_materialize.py:37-45",
+    "cache_invocation": "astrid/sdk/timeline/_doc_patch.py:527-531",
+    "custody_guard": "astrid/sdk/timeline/_command_state.py:316-393",
+    "default_source_guard": "astrid/core/timeline/authoring_bundle.py:829-849"
+  }
+}

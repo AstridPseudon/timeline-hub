@@ -1,0 +1,35 @@
+{
+  "worker": "rt-Agent-D100-test-review-1919",
+  "status": "FAIL_EXACT_EVIDENCE_MANIFEST_HASH",
+  "base": {
+    "commit": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+    "tree": "0919e511bd28b3d3af76bb18155efda12c3e94f6"
+  },
+  "final": {
+    "commit": "42040a9c05ae7105cf88459cad5f0b8b9bf56fd1",
+    "tree": "66c0215955332af8ed32ae7d4c17d4f71ccb17d4"
+  },
+  "changed_paths": ["tests/sdk/test_d100_item_birth_boundary.py"],
+  "changed_test": {
+    "sha256": "fcd5f187e185faa2222fb23c69827bd6d8bcbb710fdad131f649973f95e6de37",
+    "git_blob_sha1": "39ed571d5f3e49d2545fc31e1f868ee7c58dbc8a",
+    "mode": "100644"
+  },
+  "protected_product": {
+    "path": "astrid/sdk/timeline/_command_state.py",
+    "sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+    "git_blob_sha1": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+    "unchanged_from_base": true
+  },
+  "source1914_manifest_defect": {
+    "fields": ["agent.protected_product.sha256", "agent.protected_product.required_exact_blob"],
+    "observed": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a",
+    "required": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3"
+  },
+  "read_only_reference_hashes_verified": 7,
+  "runtime_reference": {
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "status": "read-only retained input"
+  }
+}
