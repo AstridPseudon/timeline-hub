@@ -1,0 +1,73 @@
+{
+  "verdict": "PASS_SOURCE",
+  "scope": "protected independent source rereview only; no behavior qualification",
+  "original_commit": "d0ecf1d69a7b37f86034bc52004f73f6c6231603",
+  "previous_author_commit": "f764ad5fd80bcf919f2214d532df00690a465c98",
+  "author_commit": "3e31a0bc58314a457d228eb1c065d8ed2b6de083",
+  "file": "tests/editing_conformance/test_commit_runtime_parent_media_swap.py",
+  "original_blob_sha1": "ff5493dc43b563832f4ea2a15e544e3b3d080afe",
+  "candidate_blob_sha1": "76f584b0b323f47a564f0763f0ae670ac759443a",
+  "original_blob_sha256": "685f6168fa378b9269a2e605e5bec4643a413b856e2782a786bbe4e7dfbd9fcf",
+  "candidate_blob_sha256": "e733226964bb5df253d3a3b4bb887e6fe573eda9090623c91725aa3f2c6f1ec9",
+  "candidate_tree": "e74f2f64d69cda3caf4ea0a56d59aed2708fcdea",
+  "cumulative_diff_sha256": "5354fe88b48ff3628b707956268c38f64351b5fcf0cc8af210712ccc545b8b93",
+  "own_only_diff_sha256": "d9eca0af22954852f3d76e1fad92868f28e339c11ec10a1357357d91e4feaa1e",
+  "diff": {
+    "changed_paths": ["tests/editing_conformance/test_commit_runtime_parent_media_swap.py"],
+    "insertions": 3,
+    "deletions": 3,
+    "changes": [
+      {"line": 78, "from": "source_bytes.__wrapped__(tmp_path)", "to": "source_bytes"},
+      {"line": 105, "from": "http_editing(request, tmp_path, monkeypatch)", "to": "http_editing(request, tmp_path, monkeypatch, source_bytes)"},
+      {"line": 113, "from": "source_bytes.__wrapped__(tmp_path)", "to": "source_bytes"}
+    ]
+  },
+  "conservation": {
+    "collected_node_count": 25,
+    "collector_sha256": "b418d2e70dd35b3678cc1a9fa17183d94e28afc880614e6c2a31e41d26af1834",
+    "nodeids_sha256": "6503d1b5c0b5aca70466598645d0b1812d1b9571908c26e7a3e3c840961becc4",
+    "normalized_ast_sha256": "be462fccace6309092cc864debe0754244f0719ddf152f6cd62ef8d7775c2de9",
+    "normalized_ast_equal": true,
+    "normalized_node_counts": {"Assert": 62, "Compare": 67, "BoolOp": 6, "Call": 180, "FunctionDef": 21, "For": 1, "With": 5, "Try": 2, "Raise": 1, "If": 6},
+    "predicate_count": 135,
+    "test_function_count": 6,
+    "test_bodies_unchanged_after_normalization": true,
+    "assertions_containing_source_bytes": [],
+    "candidate_wrapped_source_occurrences": 0,
+    "raw_call_count_original_candidate": [182, 180]
+  },
+  "defect_clearance": {
+    "http_fixture_args": ["request", "tmp_path", "monkeypatch", "source_bytes"],
+    "http_materialized_source_call_count": 1,
+    "status": "cleared: pytest injects the genuine source_bytes callable"
+  },
+  "d104": {
+    "clip_intervals": ["[1,3)", "[5,7)"],
+    "video_source_window": "[2,6)",
+    "video_output_window": "[1,5)",
+    "occurrence_ends_ms": ["8000 + 10000 = 18000", "10000 + 10000 = 20000"],
+    "shared_seed_callers": ["editing fixture for image/video", "http_editing fixture for parent/occurrence"],
+    "assertion_dependency_on_callable_representation": false
+  },
+  "static_checks": {
+    "ruff": "FAIL exit 1: retained baseline F811 at line 226; original blob has identical diagnostic",
+    "mypy": "PASS",
+    "py_compile": "PASS",
+    "git_diff_check": "PASS cumulative d0ec..3e31"
+  },
+  "retained_behavior": {
+    "author_result": "1 passed, 24 errors",
+    "runtime": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+    "error_boundary": "Runtime popup-birth intermediate-parent/effect-image rejection",
+    "behavior_rerun_by_rereview": false,
+    "behavior_pass_claimed": false,
+    "author_log_sha256": "37762bf9bb4712e2227b4d890adef0637ff25861f4b6174771e7c349a1fb7abc"
+  },
+  "production_trace": {
+    "remote": "astrid/sdk/remote.py:1338-1375",
+    "capture": "astrid/sdk/timeline_media_replacement.py:156-255",
+    "provider": "tests/editing_conformance/test_commit_runtime_occurrence_media.py:225 and :394 register load_timeline_commit_provider('astrid')",
+    "route": "replace_parent_media -> replace_selected_media -> capture_parent_swap_media/capture_occurrence_swap_media -> TimelineSession.commit"
+  },
+  "proposed_existing_d72_entry": "Agent WC3 SOURCE-QUALIFIED / BEHAVIOR-PENDING; retain explicit branch lifecycle and caller cuts pending for behavior. No ledger update made."
+}
