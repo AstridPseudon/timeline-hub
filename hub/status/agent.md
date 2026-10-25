@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T10:58:21Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 16 | status age 0m -->
+<!-- agent | 2026-10-25T11:01:57Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 13 | status age 2m -->
 # agent board, 2026-10-25T10:54Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -245,8 +245,8 @@
 
 | U4a D97 adoption | Adopt released permission-gated Runtime | Luna | Normal tools and receipt verified | merged | agt-U4a-D97-adopt-0435 | Lock-only source6634 to0c62; refresh, vendor, artifact and diff checks pass. All15 mappings unchanged; actual home readback matches. | 49f66cf62c; now786385 |
 
-| G3 D100 exact time | Use exact local-time arithmetic | Luna / independent Luna | Correct duplicate seed then needed26 | gated:fixture-join | Exactdd2fc; result0945 | New26 actual20 PASS6 FAIL before producer; fixture creates existingchapter-1. No Runtime fault or product merge; first narrow fixture correction next slot. | 7f6e9db held |
-| R1 D100 shared items | Preserve sequential shared-item provenance | HARD Sol / independent Luna | Correct duplicate seed then needed26 | gated:fixture-join | Exactdd2fc; result0945 | Twenty PASS; six setup failures need faithful registered_seed correction. OriginalTEN remains excluded and productheld. | fb9a47 held |
+| G3 D100 exact time | Use exact local-time arithmetic | Luna / independent Luna | Faithful duplicate seed fix then needed six | doing | Duplicate fixture Luna1100 | New26 actual20 PASS6 FAIL before producer; fixture creates existingchapter-1. No Runtime fault or product merge; first narrow fixture correction next slot. | 7f6e9db held |
+| R1 D100 shared items | Preserve sequential shared-item provenance | HARD Sol / independent Luna | Faithful duplicate seed fix then needed six | doing | Duplicate fixture Luna1100 | Twenty PASS; six setup failures need faithful registered_seed correction. OriginalTEN remains excluded and productheld. | fb9a47 held |
 | F6058 word bootstrap46 | Preserve exact original word inputs | Luna / independent Luna | Meaningful MAIN46 new-source proof | merging | Author0502; review0507 PASS; home6aefd | Child now reuses parent-selected current Runtime instead of80973. Original46 inputs conserved; actual6058 inner cause UNKNOWN. | Home6aefd11766 |
 | F6058 opaque6 | Preserve exact step patch claims | MAIN Luna / independent Luna | Meaningful MAIN six proof | merging | Author0514; protected0517 PASS; homefd3c | Both setup steps copy exact ordered doc.patch changes. All six IDs and 29 assertions retained. Source merged; no functional claim. | Homefd3cbf2b1a |
 | F6058 script4 | Preserve script promotion and command claims | MAIN Luna / independent Luna | Meaningful MAIN four proof | merging | Author0514; protected0518 PASS; homebde5 | Authenticated sequential captures preserve four original selectors and every assertion. Transcript authority remains separate. Source home exact. | bde578505c |
@@ -261,7 +261,7 @@
 | F graph clean import | Import exact reviewed graph setup | Luna | Meaningful MAIN two proof | merging | Import0610; normal8c88 | Exact reviewed6cb631 file now normal; true pre-bde source plus one genuine chapter-1 registration. Functional proof still owed. | 8c88ea8f06 |
 | F new source inputs | Bind media sheet and graph proof inputs | Luna read only | Existing Runtime MAIN receiver | merged | agt-F-new-source-inputs-0612 PASS | Exact21:18historical media,2CLI semanticbatch,1graph. Source hashes, AST and historical outcomes retained; metadata only. | Normal8c88 capture |
 | F native word mirrors | Preserve genuine seed and exact inputs | Luna / independent Luna | Changed-source original proof | merging | Source0617; review0620 PASS; home5554 | Exact raw/config mirror correction normal. Original inputs and guards conserved; ledger0622 active. No ID5 or60 functional credit. | 5554fe792b |
-| D100 current clean join | Bind exact reviewed four files | Luna / Runtime proof | Correct duplicate seed then needed26 | gated:fixture-join | Joindd2fc; actualnew26 | Actual20 PASS6 FAIL, duplicatechapter-1 beforeproducer; no unchanged26/originalten retry until source correction. | dd2fc40d94 held |
+| D100 current clean join | Bind exact reviewed four files | Luna / Runtime proof | Faithful duplicate seed fix then needed six | doing | Duplicate fixture Luna1100 | Actual20 PASS6 FAIL, duplicatechapter-1 beforeproducer; no unchanged26/originalten retry until source correction. | dd2fc40d94 held |
 | R2 V2 current join | Bind restore and exact word choices | Luna / Runtime proof | Genuine reviewed seed successor | gated:D116 | Old44cf; actualthree1006 | Actual0 PASS3 setupERROR; pathoccurrence:occ requires occurrence_id:occ. Reviewed normal correction exists; meaningful joined source required. | 44cf held |
 | F mirror source log | Publish reviewed setup receipt | Luna | Canonical entry verified | merged | agt-F-word-mirror-ledger-0622 PASS | One mirror entry present exactly once; current prefix retained. Earlier missing D106 entries tracked separately in recovery0629. No behavior claim. | Ledger169973 bytes |
 | U4a D102c adoption | Adopt qualified strict-context producer | Luna | Normal tools and merge complete | merged | Author0625; normald629 | Lock-only provenance to Runtime1daca. Refresh, vendor, artifacts and15 exact mappings pass; product and test bytes unchanged. | d629484328 |
@@ -376,7 +376,7 @@ D69 five1032: Readonly odd groups5,11,13,29,31;37,39,47,57,59;69,75,81,85,89;101
 Blockers: Runtime output projection — Agent producer82b6 independent1020 PASS_SOURCE/HOLD; original32 PASS, unchanged mounted regression fails auth2864 when consumed manifest changes without payload change. Exact safe packet1020 supplied.
 Blockers: Full current count — actual30693 terminal FAIL450bad. Two disjoint classifiers1055 bind each outcome to source and upstream; current core count pending, no full PASS.
 
-| U4a D115 adoption | Adopt released ordinal-boundary producer | Luna | Normal merge receipt | merging | agt-U4a-D115-adopt-1055 | Normal tools PASS;15 mappings unchanged. Own-only lock delta c78de queued merge. No83 behavioral closure. | c78de166c9 |
+| U4a D115 adoption | Adopt released ordinal-boundary producer | Luna | Next full tuple proof | merged | agt-U4a-D115-adopt-1055 | Normal tools PASS;15 mappings unchanged. Own-only lock delta c78de normally merged; receipt verified. No83 behavioral closure. | c78de166c9 |
 
 D69 review progress1032/1042: all19 residualodd and20 residueeven functions reviewed. Independentjoin checks machinecounts and explicit approvals; index107 two XMLpredicates requirefaithful addition. No globalauditPASS.
 
@@ -388,3 +388,5 @@ Terminal update 2026-10-25T10:54Z: service30693 exit1,8823PASS159FAIL291ERROR173
 Inbox consumed through 1548530 bytes. Capacity admission rechecked at each dispatch; no dirty G2 or KEEP/pin/refused path touched. Sweep3 remains running.
 
 D69 XML1055 restores both exact original predicates; targeted test now exposes XML declaration before Task. Independent residual-review1059 covers faithful source plus exact production seam and57/59 decisions. No weakening or wholeauditPASS.
+
+D1001100: exact dd2fc duplicate-seed correction dispatched at5.05GB, only one owned fixturefile. Prior20PASS retained; six formerly blocked controls only, originalTEN excluded. Product still held.

@@ -1,0 +1,21 @@
+{
+  "schema": "timeline.agent.d118.terminal-classification.handoff.v1",
+  "task": "agt-F-D118-30693-classify-a-1055",
+  "part": "A",
+  "read_only": true,
+  "terminal_xml_sha256": "483e5c13c3443147488da436acc49d0c0f322f7e4d3f020fbd656a548459139c",
+  "run_id": "agent-agent-core-full-1025102421-30693",
+  "terminal": {"testcase_elements": 9273, "declared_tests": 9446, "passed": 8823, "failed": 159, "errors": 291, "bad_nodes": 450},
+  "partition": {"part_a": 365, "part_b": 85, "union": 450, "disjoint": true, "exact_ids": true},
+  "classification": {"NEW-OURS core": 364, "UNKNOWN": 1, "core_scope": 365, "core_open": 365, "regressions": 0, "2016_exact_reuse": 14},
+  "source": {"agent_commit": "120d71202a9ebafa99011aec417cfca6d67fafc2", "agent_tree": "9a65a32e4462464825df6cfe4d913408694ad4c5", "runtime_commit": "1daca2a33f6d7b10053e07c539a54843e3984e19"},
+  "evidence": [
+    "workers/agt-F-D118-30693-classify-a-1055/evidence/d118-part-a-classification.json",
+    "workers/agt-F-D118-30693-classify-a-1055/evidence/d118-bad-partition.json"
+  ],
+  "limits": [
+    "No behavior rerun, body inspection, collection/import probe, observer, or source-cause claim was made.",
+    "The one former 2016 ENV node is UNKNOWN because current source/exception/location are not exact.",
+    "The 23-node D54a replacement scope is outside Part A and was not reclassified here."
+  ]
+}
