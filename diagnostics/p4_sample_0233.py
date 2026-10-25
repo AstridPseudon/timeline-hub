@@ -4,6 +4,7 @@ import faulthandler
 import hashlib
 import json
 import os
+import selectors
 from pathlib import Path
 import subprocess
 import sys
@@ -11,26 +12,29 @@ import threading
 import time
 
 
-os.umask(0o077)
-OUT = Path(os.environ['P4_SAMPLE_OUTPUT'])
-OUT.mkdir(parents=True, exist_ok=True)
+OUT = None
+EVENTS = None
+DUMPS = None
 START = time.monotonic()
 MAIN = threading.get_ident()
 HZ = os.sysconf('SC_CLK_TCK')
-EVENTS = (OUT / 'events.jsonl').open('w', buffering=1)
-DUMPS = (OUT / 'faulthandler.txt').open('w', buffering=1)
 LOCK = threading.RLock()
 CHILDREN = {}
 STOP = threading.Event()
 TEST_START = None
 COUNTS = collections.Counter()
 SAMPLES = []
+ERRORS = []
+ORIGINAL_POLLS = {}
 
 
 def event(kind, **data):
     with LOCK:
-        EVENTS.write(json.dumps(dict(kind=kind, elapsed=time.monotonic() - START,
-                                     pid=os.getpid(), **data)) + '\n')
+        row = dict(data)
+        row.setdefault('elapsed', time.monotonic() - START)
+        row.update(kind=kind, pid=os.getpid())
+        EVENTS.write(json.dumps(row) + '\n')
+        EVENTS.flush()
 
 
 def stat(pid, tid=None):
@@ -72,14 +76,14 @@ def observed_init(self, *args, **kwargs):
     before = time.monotonic()
     ORIGINAL_INIT(self, *args, **kwargs)
     argv = args[0] if args else kwargs.get('args')
-    entry = dict(process=self, argv=argv, start=before, last=stat(self.pid), ended=False)
+    entry = dict(process=self, executable=Path(str(argv[0])).name if isinstance(argv, (list, tuple)) else 'UNKNOWN',
+                 start=before, last=stat(self.pid), ended=False)
     with LOCK:
         CHILDREN[self.pid] = entry
-    event('spawn', child=self.pid, argv=argv, spawn_wall=time.monotonic() - before,
+    event('spawn', child=self.pid, executable=entry['executable'], spawn_wall=time.monotonic() - before,
           process_stat=entry['last'])
 
 
-subprocess.Popen.__init__ = observed_init
 ORIGINAL_SLEEP = time.sleep
 
 
@@ -94,7 +98,36 @@ def observed_sleep(seconds):
               tid=threading.get_native_id(), caller=where)
 
 
-time.sleep = observed_sleep
+
+
+ORIGINAL_WAIT = subprocess.Popen.wait
+
+
+def observed_wait(self, *args, **kwargs):
+    before = time.monotonic()
+    try:
+        return ORIGINAL_WAIT(self, *args, **kwargs)
+    finally:
+        entry = CHILDREN.get(self.pid)
+        if entry is not None and self.returncode is not None and not entry['ended']:
+            entry['ended'] = True
+            event('child_exit_observed', child=self.pid, code=self.returncode,
+                  lifespan_upper_bound=time.monotonic() - entry['start'],
+                  wait_wall=time.monotonic() - before, last_process_stat=entry['last'],
+                  cpu_limit='last observed proc stat; final CPU UNKNOWN after reap')
+
+
+def observed_poll(original):
+    def poll(self, timeout=None):
+        before = time.monotonic()
+        caller = sys._getframe(1)
+        try:
+            return original(self, timeout)
+        finally:
+            event('poll', timeout=timeout, wall=time.monotonic() - before,
+                  caller=[caller.f_code.co_filename, caller.f_code.co_name, caller.f_lineno],
+                  tid=threading.get_native_id())
+    return poll
 
 
 def child_snapshot():
@@ -107,7 +140,7 @@ def child_snapshot():
             entry['last'] = current
         code = entry['process'].poll()
         if code is None:
-            live.append(dict(pid=pid, process_stat=current, main_cpu=stat(pid, pid)))
+            live.append(dict(pid=pid, executable=entry['executable'], process_stat=current, main_cpu=stat(pid, pid)))
         elif not entry['ended']:
             entry['ended'] = True
             event('child_exit_observed', child=pid, code=code,
@@ -132,7 +165,7 @@ def child_snapshot():
     return live
 
 
-def sample_loop():
+def collect_samples():
     next_dump = 0
     previous_phase = None
     sampler_cpu = 0.0
@@ -153,18 +186,30 @@ def sample_loop():
             event('phase', **current_phase)
             previous_phase = current_phase
         event('sample', **row)
-        if TEST_START is not None and next_dump < 3 and now - TEST_START >= (10, 25, 40)[next_dump]:
+        while TEST_START is not None and next_dump < 3 and now - TEST_START >= (10, 25, 40)[next_dump]:
             target = (10, 25, 40)[next_dump]
             DUMPS.write(f'\nTARGET {target} ACTUAL {now - TEST_START:.6f} PID {os.getpid()} MAIN_IDENT {MAIN}\n')
             DUMPS.flush()
             faulthandler.dump_traceback(file=DUMPS, all_threads=True)
+            DUMPS.flush()
+            os.fsync(DUMPS.fileno())
             event('checkpoint', target=target, test_elapsed=now - TEST_START,
                   process=stat(os.getpid()), main_cpu=stat(os.getpid(), os.getpid()),
                   threads=[dict(ident=ident, stack=stack(frame)) for ident, frame in frames.items()],
                   children=row['children'])
+            os.fsync(EVENTS.fileno())
             next_dump += 1
         sampler_cpu += time.thread_time() - cpu_before
     event('sampler_end', cpu=sampler_cpu)
+
+
+def sample_loop():
+    try:
+        collect_samples()
+    except BaseException as error:
+        ERRORS.append(type(error).__name__)
+        event('sampler_error', error_type=type(error).__name__)
+        os.fsync(EVENTS.fileno())
 
 
 def origins():
@@ -182,6 +227,35 @@ class Diagnostic:
     def pytest_collection_finish(self, session):
         event('collection_finished', items=[item.nodeid for item in session.items],
               modules=len(sys.modules), process=stat(os.getpid()))
+        module = sys.modules.get('tests.editing_conformance.test_p4_ten_note_v2_runtime')
+        if module is not None:
+            original = module._run_cli
+
+            def inline_cli(*args, **kwargs):
+                before = time.monotonic()
+                event('inline_cli_start')
+                try:
+                    return original(*args, **kwargs)
+                finally:
+                    event('inline_cli_end', wall=time.monotonic() - before)
+
+            module._run_cli = inline_cli
+        sync = sys.modules.get('astrid.sdk.timeline.sync')
+        if sync is not None:
+            original_undo = sync.TimelineSession.undo
+
+            def inverse(*args, **kwargs):
+                before = time.monotonic()
+                cpu = time.thread_time()
+                position = phase(sys._getframe(1))
+                event('inverse_start', **position)
+                try:
+                    return original_undo(*args, **kwargs)
+                finally:
+                    event('inverse_end', wall=time.monotonic() - before,
+                          cpu=time.thread_time() - cpu, **position)
+
+            sync.TimelineSession.undo = inverse
 
     def pytest_runtest_logstart(self, nodeid, location):
         global TEST_START
@@ -194,21 +268,47 @@ class Diagnostic:
               process=stat(os.getpid()), main_cpu=stat(os.getpid(), os.getpid()))
 
 
-event('bootstrap', argv=sys.argv, executable=sys.executable, process=stat(os.getpid()),
-      main_cpu=stat(os.getpid(), os.getpid()), modules=len(sys.modules))
-sampler = threading.Thread(target=sample_loop, name='p4-private-sampler', daemon=True)
-sampler.start()
-try:
-    import pytest
-    event('pytest_imported', modules=len(sys.modules), process=stat(os.getpid()))
-    result = pytest.main(sys.argv[1:], plugins=[Diagnostic()])
-finally:
-    STOP.set()
-    sampler.join(timeout=2)
-    child_snapshot()
-    origins()
-    event('diagnostic_end', process=stat(os.getpid()), main_cpu=stat(os.getpid(), os.getpid()),
-          samples=len(SAMPLES), observed_children=len(CHILDREN))
-    EVENTS.close()
-    DUMPS.close()
-raise SystemExit(result)
+def main():
+    global OUT, EVENTS, DUMPS, START
+    os.umask(0o077)
+    OUT = Path(os.environ['P4_SAMPLE_OUTPUT'])
+    OUT.mkdir(parents=True, exist_ok=True)
+    EVENTS = (OUT / 'events.jsonl').open('w', buffering=1)
+    DUMPS = (OUT / 'faulthandler.txt').open('w', buffering=1)
+    START = time.monotonic()
+    subprocess.Popen.__init__ = observed_init
+    subprocess.Popen.wait = observed_wait
+    time.sleep = observed_sleep
+    for cls in {selectors.SelectSelector, selectors.PollSelector, selectors.EpollSelector}:
+        ORIGINAL_POLLS[cls] = cls.select
+        cls.select = observed_poll(cls.select)
+    event('bootstrap', executable=sys.executable, process=stat(os.getpid()),
+          main_cpu=stat(os.getpid(), os.getpid()), modules=len(sys.modules))
+    sampler = threading.Thread(target=sample_loop, name='p4-private-sampler', daemon=True)
+    sampler.start()
+    try:
+        import pytest
+        event('pytest_imported', modules=len(sys.modules), process=stat(os.getpid()))
+        result = pytest.main(sys.argv[1:], plugins=[Diagnostic()])
+    finally:
+        STOP.set()
+        sampler.join(timeout=2)
+        if sampler.is_alive():
+            ERRORS.append('sampler_join_timeout')
+        child_snapshot()
+        origins()
+        event('diagnostic_end', process=stat(os.getpid()), main_cpu=stat(os.getpid(), os.getpid()),
+              samples=len(SAMPLES), observed_children=len(CHILDREN), sampler_errors=ERRORS)
+        os.fsync(EVENTS.fileno())
+        subprocess.Popen.__init__ = ORIGINAL_INIT
+        subprocess.Popen.wait = ORIGINAL_WAIT
+        time.sleep = ORIGINAL_SLEEP
+        for cls, original in ORIGINAL_POLLS.items():
+            cls.select = original
+        EVENTS.close()
+        DUMPS.close()
+    return 3 if ERRORS else result
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

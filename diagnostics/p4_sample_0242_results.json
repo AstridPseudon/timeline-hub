@@ -1,0 +1,2440 @@
+{
+  "service_id": "agent-p4-current-becfe-http-3legs-1025025625-25257",
+  "service_status": "fail",
+  "exit_code": 1,
+  "diagnostic_validity": "complete 10/25/40 scheduler/eventwriter/stack capture; no sampler error",
+  "tuple": {
+    "agent": "d407b8777d5df8c827702030c5cd2331666ab119",
+    "runtime": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+    "app": "4b98436552bf30f5fb28bbb958b1817430b12e34",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "original_test_file_hash": "c0132e0dac31be278eaa850a8cc5d96d535550e461685be263c3372b46f6d0a0",
+  "original_path_sensitive_hash": "7580dbbc7fd82d746873b4370763b27753ceb9997a88a4f4deef43a854a9c847",
+  "profile": "/home/user/work/runtimes/agent-remotion-0013",
+  "profile_hashes": {
+    "profile_lock_sha": "c4d7030bd5418d35f2246269b5aba7952d0ed69ccd0084815a0043dfbb7a4e24",
+    "profile_archive_sha": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738",
+    "profile_registry_sha": "b0de93a936fa0f406cc4e6901dfdc558f55c633f7e349ae5d5704492dacb0f1d"
+  },
+  "tests": [
+    {
+      "classname": "tests.editing_conformance.test_p4_ten_note_v2_runtime",
+      "name": "test_http_ten_note_commit_per_step_inverse_and_redo",
+      "time": "45.557"
+    }
+  ],
+  "sample_count": 432,
+  "checkpoints": [
+    {
+      "target": 10,
+      "test_elapsed": 10.04961413401179,
+      "main_cpu": {
+        "state": "R",
+        "ppid": 13307,
+        "user": 8.8,
+        "system": 0.82,
+        "birth_ticks": 12788683
+      },
+      "process": {
+        "state": "R",
+        "ppid": 13307,
+        "user": 8.99,
+        "system": 0.89,
+        "birth_ticks": 12788683
+      },
+      "phase": {
+        "stage": "undo",
+        "line": 431,
+        "note": 1
+      },
+      "top": {
+        "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_validation.py",
+        "function": "digest",
+        "line": 55,
+        "origin": "Runtime",
+        "module": "runtime_protocol.timeline_commit_validation"
+      },
+      "nearest_product": {
+        "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_validation.py",
+        "function": "digest",
+        "line": 55,
+        "origin": "Runtime",
+        "module": "runtime_protocol.timeline_commit_validation"
+      },
+      "children": [],
+      "all_thread_count": 3,
+      "main_thread_ident": 140124428689536,
+      "main_cpu_since_test_start": 8.430000000000001,
+      "note_1_based": 2
+    },
+    {
+      "target": 25,
+      "test_elapsed": 25.08697472899803,
+      "main_cpu": {
+        "state": "R",
+        "ppid": 13307,
+        "user": 22.23,
+        "system": 1.58,
+        "birth_ticks": 12788683
+      },
+      "process": {
+        "state": "R",
+        "ppid": 13307,
+        "user": 22.85,
+        "system": 1.71,
+        "birth_ticks": 12788683
+      },
+      "phase": {
+        "stage": "undo",
+        "line": 431,
+        "note": 2
+      },
+      "top": {
+        "file": "/usr/lib/python3.13/json/decoder.py",
+        "function": "decode",
+        "line": 349,
+        "origin": "stdlib_or_framework",
+        "module": "stdlib_or_framework"
+      },
+      "nearest_product": {
+        "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+        "function": "history_entry",
+        "line": 743,
+        "origin": "Runtime",
+        "module": "runtime_protocol.timeline_commit_store"
+      },
+      "children": [],
+      "all_thread_count": 3,
+      "main_thread_ident": 140124428689536,
+      "main_cpu_since_test_start": 22.620000000000005,
+      "note_1_based": 3
+    },
+    {
+      "target": 40,
+      "test_elapsed": 40.00222705899796,
+      "main_cpu": {
+        "state": "R",
+        "ppid": 13307,
+        "user": 35.53,
+        "system": 2.3,
+        "birth_ticks": 12788683
+      },
+      "process": {
+        "state": "R",
+        "ppid": 13307,
+        "user": 36.59,
+        "system": 2.48,
+        "birth_ticks": 12788683
+      },
+      "phase": {
+        "stage": "undo",
+        "line": 431,
+        "note": 3
+      },
+      "top": {
+        "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_validation.py",
+        "function": "digest",
+        "line": 55,
+        "origin": "Runtime",
+        "module": "runtime_protocol.timeline_commit_validation"
+      },
+      "nearest_product": {
+        "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_validation.py",
+        "function": "digest",
+        "line": 55,
+        "origin": "Runtime",
+        "module": "runtime_protocol.timeline_commit_validation"
+      },
+      "children": [],
+      "all_thread_count": 3,
+      "main_thread_ident": 140124428689536,
+      "main_cpu_since_test_start": 36.64,
+      "note_1_based": 4
+    }
+  ],
+  "process": {
+    "pid": 13309,
+    "roles": [
+      "pytest original",
+      "Agent SDK and provider",
+      "Runtime real HTTP handler and service"
+    ],
+    "same_pid_basis": "unchanged fixture invokes real RuntimeHandler using MemorySocket in caller; observed loaded origins and stacks",
+    "test_start_main_cpu": {
+      "state": "R",
+      "ppid": 13307,
+      "user": 1.11,
+      "system": 0.08,
+      "birth_ticks": 12788683
+    },
+    "call_report_main_cpu": {
+      "state": "R",
+      "ppid": 13307,
+      "user": 41.2,
+      "system": 2.62,
+      "birth_ticks": 12788683
+    },
+    "cpu_interval": 42.63,
+    "wall_interval": 46.322902781990706
+  },
+  "top_exclusive_frames": [
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_validation.py",
+      "function": "digest",
+      "line": 55,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_validation",
+      "samples": 121
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "__init__",
+      "line": 173,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_store",
+      "samples": 106
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "_read",
+      "line": 176,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_store",
+      "samples": 53
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "check",
+      "line": 212,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_store",
+      "samples": 39
+    },
+    {
+      "file": "/usr/lib/python3.13/json/decoder.py",
+      "function": "decode",
+      "line": 346,
+      "origin": "stdlib_or_framework",
+      "module": "not_in_loaded_origin_filter",
+      "samples": 18
+    },
+    {
+      "file": "/usr/lib/python3.13/threading.py",
+      "function": "wait",
+      "line": 359,
+      "origin": "stdlib_or_framework",
+      "module": "not_in_loaded_origin_filter",
+      "samples": 16
+    },
+    {
+      "file": "<frozen posixpath>",
+      "function": "realpath",
+      "line": 451,
+      "origin": "stdlib_or_framework",
+      "module": "not_in_loaded_origin_filter",
+      "samples": 11
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "history_entry",
+      "line": 743,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_store",
+      "samples": 6
+    },
+    {
+      "file": "/usr/lib/python3.13/pathlib/_local.py",
+      "function": "open",
+      "line": 537,
+      "origin": "stdlib_or_framework",
+      "module": "not_in_loaded_origin_filter",
+      "samples": 5
+    },
+    {
+      "file": "<frozen importlib._bootstrap_external>",
+      "function": "_path_stat",
+      "line": 152,
+      "origin": "stdlib_or_framework",
+      "module": "not_in_loaded_origin_filter",
+      "samples": 4
+    },
+    {
+      "file": "<frozen importlib._bootstrap_external>",
+      "function": "get_data",
+      "line": 1218,
+      "origin": "stdlib_or_framework",
+      "module": "not_in_loaded_origin_filter",
+      "samples": 3
+    },
+    {
+      "file": "<frozen importlib._bootstrap>",
+      "function": "_call_with_frames_removed",
+      "line": 488,
+      "origin": "stdlib_or_framework",
+      "module": "not_in_loaded_origin_filter",
+      "samples": 3
+    },
+    {
+      "file": "/usr/lib/python3.13/json/encoder.py",
+      "function": "iterencode",
+      "line": 263,
+      "origin": "stdlib_or_framework",
+      "module": "not_in_loaded_origin_filter",
+      "samples": 3
+    },
+    {
+      "file": "/usr/lib/python3.13/pathlib/_abc.py",
+      "function": "read_text",
+      "line": 633,
+      "origin": "stdlib_or_framework",
+      "module": "not_in_loaded_origin_filter",
+      "samples": 2
+    },
+    {
+      "file": "<frozen importlib._bootstrap_external>",
+      "function": "get_data",
+      "line": 1219,
+      "origin": "stdlib_or_framework",
+      "module": "not_in_loaded_origin_filter",
+      "samples": 2
+    }
+  ],
+  "nearest_product_frames": [
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_validation.py",
+      "function": "digest",
+      "line": 55,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_validation",
+      "samples": 121
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "__init__",
+      "line": 173,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_store",
+      "samples": 106
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "_read",
+      "line": 176,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_store",
+      "samples": 53
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "check",
+      "line": 212,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_store",
+      "samples": 39
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/daemon.py",
+      "function": "_shutdown_http",
+      "line": 200,
+      "origin": "Runtime",
+      "module": "runtime_protocol.daemon",
+      "samples": 16
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "history_entry",
+      "line": 768,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_store",
+      "samples": 13
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/cas.py",
+      "function": "__init__",
+      "line": 43,
+      "origin": "Runtime",
+      "module": "runtime_protocol.cas",
+      "samples": 9
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "history_entry",
+      "line": 743,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_store",
+      "samples": 6
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/auth.py",
+      "function": "_read_bytes",
+      "line": 69,
+      "origin": "Runtime",
+      "module": "runtime_protocol.auth",
+      "samples": 4
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "_verify_accepted_record",
+      "line": 461,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_store",
+      "samples": 4
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_validation.py",
+      "function": "validate_commit_value",
+      "line": 173,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_validation",
+      "samples": 3
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/auth.py",
+      "function": "load",
+      "line": 227,
+      "origin": "Runtime",
+      "module": "runtime_protocol.auth",
+      "samples": 3
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/util.py",
+      "function": "canonical_json",
+      "line": 25,
+      "origin": "Runtime",
+      "module": "runtime_protocol.util",
+      "samples": 3
+    },
+    {
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/core/timeline/authoring_bundle.py",
+      "function": "_digest",
+      "line": 177,
+      "origin": "Agent",
+      "module": "astrid.core.timeline.authoring_bundle",
+      "samples": 2
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_validation.py",
+      "function": "reuse",
+      "line": 125,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_validation",
+      "samples": 2
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/dirfd.py",
+      "function": "open_directory_chain",
+      "line": 672,
+      "origin": "Runtime",
+      "module": "runtime_protocol.dirfd",
+      "samples": 2
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/auth.py",
+      "function": "_safe_file",
+      "line": 55,
+      "origin": "Runtime",
+      "module": "runtime_protocol.auth",
+      "samples": 2
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/dirfd.py",
+      "function": "open_directory_chain",
+      "line": 668,
+      "origin": "Runtime",
+      "module": "runtime_protocol.dirfd",
+      "samples": 2
+    },
+    {
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/core/pack/canonical.py",
+      "function": "<module>",
+      "line": 20,
+      "origin": "Agent",
+      "module": "astrid.core.pack.canonical",
+      "samples": 1
+    },
+    {
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/core/pack/canonical.py",
+      "function": "<module>",
+      "line": 21,
+      "origin": "Agent",
+      "module": "astrid.core.pack.canonical",
+      "samples": 1
+    }
+  ],
+  "inclusive_product_frames": [
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/service.py",
+      "function": "wrapped",
+      "line": 438,
+      "origin": "Runtime",
+      "module": "runtime_protocol.service",
+      "samples": 381
+    },
+    {
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid_runtime_client/generated.py",
+      "function": "_request",
+      "line": 656,
+      "origin": "Agent",
+      "module": "astrid_runtime_client.generated",
+      "samples": 381
+    },
+    {
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/workspace_client.py",
+      "function": "_call_generated",
+      "line": 290,
+      "origin": "Agent",
+      "module": "astrid.sdk.workspace_client",
+      "samples": 381
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/server.py",
+      "function": "_timeline_commit",
+      "line": 311,
+      "origin": "Runtime",
+      "module": "runtime_protocol.server",
+      "samples": 378
+    },
+    {
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/sync.py",
+      "function": "_flush",
+      "line": 556,
+      "origin": "Agent",
+      "module": "astrid.sdk.timeline.sync",
+      "samples": 378
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/service.py",
+      "function": "_execute_timeline_commit",
+      "line": 2513,
+      "origin": "Runtime",
+      "module": "runtime_protocol.service",
+      "samples": 378
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/server.py",
+      "function": "do_POST",
+      "line": 1241,
+      "origin": "Runtime",
+      "module": "runtime_protocol.server",
+      "samples": 378
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/server.py",
+      "function": "_route",
+      "line": 526,
+      "origin": "Runtime",
+      "module": "runtime_protocol.server",
+      "samples": 378
+    },
+    {
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/remote.py",
+      "function": "_typed",
+      "line": 356,
+      "origin": "Agent",
+      "module": "astrid.sdk.remote",
+      "samples": 378
+    },
+    {
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/workspace_client.py",
+      "function": "commit_timeline",
+      "line": 494,
+      "origin": "Agent",
+      "module": "astrid.sdk.workspace_client",
+      "samples": 378
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/service.py",
+      "function": "commit_timeline",
+      "line": 2457,
+      "origin": "Runtime",
+      "module": "runtime_protocol.service",
+      "samples": 378
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/server.py",
+      "function": "_dispatch",
+      "line": 1206,
+      "origin": "Runtime",
+      "module": "runtime_protocol.server",
+      "samples": 378
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_execution.py",
+      "function": "execute",
+      "line": 71,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_execution",
+      "samples": 378
+    },
+    {
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid_runtime_client/generated.py",
+      "function": "commit_timeline",
+      "line": 965,
+      "origin": "Agent",
+      "module": "astrid_runtime_client.generated",
+      "samples": 378
+    },
+    {
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/_remote_timeline.py",
+      "function": "commit",
+      "line": 248,
+      "origin": "Agent",
+      "module": "astrid.sdk._remote_timeline",
+      "samples": 378
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_execution.py",
+      "function": "_execute",
+      "line": 91,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_execution",
+      "samples": 373
+    },
+    {
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/sync.py",
+      "function": "undo",
+      "line": 462,
+      "origin": "Agent",
+      "module": "astrid.sdk.timeline.sync",
+      "samples": 373
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "evaluate",
+      "line": 161,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_store",
+      "samples": 360
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_port.py",
+      "function": "_read",
+      "line": 216,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_port",
+      "samples": 340
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "history_entry",
+      "line": 760,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_store",
+      "samples": 323
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_port.py",
+      "function": "_ancestor",
+      "line": 234,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_port",
+      "samples": 286
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "_verify_accepted",
+      "line": 410,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_store",
+      "samples": 278
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "_verify_accepted_record",
+      "line": 548,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_store",
+      "samples": 166
+    },
+    {
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/commit.py",
+      "function": "select_at",
+      "line": 1291,
+      "origin": "Agent",
+      "module": "astrid.sdk.timeline.commit",
+      "samples": 155
+    },
+    {
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/commit.py",
+      "function": "commit",
+      "line": 1299,
+      "origin": "Agent",
+      "module": "astrid.sdk.timeline.commit",
+      "samples": 155
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_port.py",
+      "function": "history_entry",
+      "line": 247,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_port",
+      "samples": 126
+    },
+    {
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/commit.py",
+      "function": "_load",
+      "line": 433,
+      "origin": "Agent",
+      "module": "astrid.sdk.timeline.commit",
+      "samples": 125
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_port.py",
+      "function": "revision_closure",
+      "line": 286,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_port",
+      "samples": 125
+    },
+    {
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_validation.py",
+      "function": "digest",
+      "line": 55,
+      "origin": "Runtime",
+      "module": "runtime_protocol.timeline_commit_validation",
+      "samples": 124
+    },
+    {
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/_commit_patch.py",
+      "function": "inverse_address_resolver",
+      "line": 1139,
+      "origin": "Agent",
+      "module": "astrid.sdk.timeline._commit_patch",
+      "samples": 121
+    }
+  ],
+  "children": [
+    {
+      "pid": 13795,
+      "executable": "git",
+      "birth_elapsed": 1.2091915769997286,
+      "spawn_wall": 0.000469644000986591,
+      "initial_stat": {
+        "state": "R",
+        "ppid": 13309,
+        "user": 0.0,
+        "system": 0.0,
+        "birth_ticks": 12788808
+      },
+      "exit": {
+        "child": 13795,
+        "code": 0,
+        "lifespan_upper_bound": 0.0026964040007442236,
+        "wait_wall": 3.0183990020304918e-05,
+        "last_process_stat": {
+          "state": "R",
+          "ppid": 13309,
+          "user": 0.0,
+          "system": 0.0,
+          "birth_ticks": 12788808
+        },
+        "cpu_limit": "last observed proc stat; final CPU UNKNOWN after reap",
+        "elapsed": 1.2114191729924642,
+        "kind": "child_exit_observed",
+        "pid": 13309
+      }
+    },
+    {
+      "pid": 13797,
+      "executable": "git",
+      "birth_elapsed": 1.2119225439964794,
+      "spawn_wall": 0.0004444920050445944,
+      "initial_stat": {
+        "state": "R",
+        "ppid": 13309,
+        "user": 0.0,
+        "system": 0.0,
+        "birth_ticks": 12788808
+      },
+      "exit": {
+        "child": 13797,
+        "code": 0,
+        "lifespan_upper_bound": 0.10485154099296778,
+        "wait_wall": 3.92809888580814e-05,
+        "last_process_stat": {
+          "state": "S",
+          "ppid": 13309,
+          "user": 0.02,
+          "system": 0.0,
+          "birth_ticks": 12788808
+        },
+        "cpu_limit": "last observed proc stat; final CPU UNKNOWN after reap",
+        "elapsed": 1.316331612993963,
+        "kind": "child_exit_observed",
+        "pid": 13309
+      }
+    },
+    {
+      "pid": 1264,
+      "executable": "ps",
+      "birth_elapsed": 48.03621205399395,
+      "spawn_wall": 0.0008964080043369904,
+      "initial_stat": {
+        "state": "R",
+        "ppid": 13309,
+        "user": 0.0,
+        "system": 0.0,
+        "birth_ticks": 12793490
+      },
+      "exit": {
+        "child": 1264,
+        "code": 0,
+        "lifespan_upper_bound": 0.013405332996626385,
+        "wait_wall": 0.00019669100583996624,
+        "last_process_stat": {
+          "state": "R",
+          "ppid": 13309,
+          "user": 0.0,
+          "system": 0.0,
+          "birth_ticks": 12793490
+        },
+        "cpu_limit": "last observed proc stat; final CPU UNKNOWN after reap",
+        "elapsed": 48.048721992992796,
+        "kind": "child_exit_observed",
+        "pid": 13309
+      }
+    }
+  ],
+  "python_cli_spawns": 0,
+  "cli_spawn_count": 0,
+  "inline_cli_calls": 2,
+  "inline_cli_wall": 0.20238511099887546,
+  "inverse_intervals": [
+    {
+      "note": 1,
+      "operation": "undo",
+      "start": 5.898615750993486,
+      "end": 7.324375252996106,
+      "wall": 1.4257910110027296,
+      "main_cpu": 1.3539749529999998,
+      "outcome": "accepted",
+      "observed_caller_line": 431,
+      "durable_acceptance": true,
+      "samples": 13,
+      "top_frames": [
+        {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_validation.py",
+          "function": "digest",
+          "line": 55,
+          "origin": "Runtime",
+          "module": "runtime_protocol.timeline_commit_validation",
+          "samples": 5
+        },
+        {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+          "function": "__init__",
+          "line": 173,
+          "origin": "Runtime",
+          "module": "runtime_protocol.timeline_commit_store",
+          "samples": 4
+        },
+        {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+          "function": "check",
+          "line": 212,
+          "origin": "Runtime",
+          "module": "runtime_protocol.timeline_commit_store",
+          "samples": 1
+        }
+      ]
+    },
+    {
+      "note": 1,
+      "operation": "redo",
+      "start": 7.326878003994352,
+      "end": 9.841307586990297,
+      "wall": 2.514462745995843,
+      "main_cpu": 2.3894123249999994,
+      "outcome": "accepted",
+      "observed_caller_line": 448,
+      "durable_acceptance": true,
+      "samples": 23,
+      "top_frames": [
+        {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+          "function": "__init__",
+          "line": 173,
+          "origin": "Runtime",
+          "module": "runtime_protocol.timeline_commit_store",
+          "samples": 9
+        },
+        {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+          "function": "check",
+          "line": 212,
+          "origin": "Runtime",
+          "module": "runtime_protocol.timeline_commit_store",
+          "samples": 4
+        },
+        {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_validation.py",
+          "function": "digest",
+          "line": 55,
+          "origin": "Runtime",
+          "module": "runtime_protocol.timeline_commit_validation",
+          "samples": 2
+        }
+      ]
+    },
+    {
+      "note": 2,
+      "operation": "undo",
+      "start": 9.843594272999326,
+      "end": 14.846614802998374,
+      "wall": 5.003039315997739,
+      "main_cpu": 4.710937612999999,
+      "outcome": "accepted",
+      "observed_caller_line": 431,
+      "durable_acceptance": true,
+      "samples": 46,
+      "top_frames": [
+        {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+          "function": "_read",
+          "line": 176,
+          "origin": "Runtime",
+          "module": "runtime_protocol.timeline_commit_store",
+          "samples": 11
+        },
+        {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_validation.py",
+          "function": "digest",
+          "line": 55,
+          "origin": "Runtime",
+          "module": "runtime_protocol.timeline_commit_validation",
+          "samples": 10
+        },
+        {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+          "function": "__init__",
+          "line": 173,
+          "origin": "Runtime",
+          "module": "runtime_protocol.timeline_commit_store",
+          "samples": 9
+        }
+      ]
+    },
+    {
+      "note": 2,
+      "operation": "redo",
+      "start": 14.850384808989475,
+      "end": 18.71970249399601,
+      "wall": 3.869332262009266,
+      "main_cpu": 3.6412549509999987,
+      "outcome": "accepted",
+      "observed_caller_line": 448,
+      "durable_acceptance": true,
+      "samples": 36,
+      "top_frames": [
+        {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_validation.py",
+          "function": "digest",
+          "line": 55,
+          "origin": "Runtime",
+          "module": "runtime_protocol.timeline_commit_validation",
+          "samples": 13
+        },
+        {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+          "function": "__init__",
+          "line": 173,
+          "origin": "Runtime",
+          "module": "runtime_protocol.timeline_commit_store",
+          "samples": 8
+        },
+        {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+          "function": "_read",
+          "line": 176,
+          "origin": "Runtime",
+          "module": "runtime_protocol.timeline_commit_store",
+          "samples": 7
+        }
+      ]
+    },
+    {
+      "note": 3,
+      "operation": "undo",
+      "start": 18.723185949987965,
+      "end": 29.009364329991513,
+      "wall": 10.286223025992513,
+      "main_cpu": 9.762879629,
+      "outcome": "accepted",
+      "observed_caller_line": 431,
+      "durable_acceptance": true,
+      "samples": 95,
+      "top_frames": [
+        {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_validation.py",
+          "function": "digest",
+          "line": 55,
+          "origin": "Runtime",
+          "module": "runtime_protocol.timeline_commit_validation",
+          "samples": 33
+        },
+        {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+          "function": "__init__",
+          "line": 173,
+          "origin": "Runtime",
+          "module": "runtime_protocol.timeline_commit_store",
+          "samples": 32
+        },
+        {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+          "function": "check",
+          "line": 212,
+          "origin": "Runtime",
+          "module": "runtime_protocol.timeline_commit_store",
+          "samples": 10
+        }
+      ]
+    },
+    {
+      "note": 3,
+      "operation": "redo",
+      "start": 29.011766537994845,
+      "end": 33.85038128399174,
+      "wall": 4.83864314800303,
+      "main_cpu": 4.466239257000002,
+      "outcome": "accepted",
+      "observed_caller_line": 448,
+      "durable_acceptance": true,
+      "samples": 45,
+      "top_frames": [
+        {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_validation.py",
+          "function": "digest",
+          "line": 55,
+          "origin": "Runtime",
+          "module": "runtime_protocol.timeline_commit_validation",
+          "samples": 19
+        },
+        {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+          "function": "__init__",
+          "line": 173,
+          "origin": "Runtime",
+          "module": "runtime_protocol.timeline_commit_store",
+          "samples": 10
+        },
+        {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+          "function": "_read",
+          "line": 176,
+          "origin": "Runtime",
+          "module": "runtime_protocol.timeline_commit_store",
+          "samples": 7
+        }
+      ]
+    },
+    {
+      "note": 4,
+      "operation": "undo",
+      "start": 33.853028578989324,
+      "end": 46.24599394098914,
+      "wall": 12.39299500999914,
+      "main_cpu": 11.723320789999999,
+      "outcome": "timeout unwind; partial operation",
+      "observed_caller_line": 431,
+      "durable_acceptance": false,
+      "samples": 115,
+      "top_frames": [
+        {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_validation.py",
+          "function": "digest",
+          "line": 55,
+          "origin": "Runtime",
+          "module": "runtime_protocol.timeline_commit_validation",
+          "samples": 38
+        },
+        {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+          "function": "__init__",
+          "line": 173,
+          "origin": "Runtime",
+          "module": "runtime_protocol.timeline_commit_store",
+          "samples": 34
+        },
+        {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+          "function": "_read",
+          "line": 176,
+          "origin": "Runtime",
+          "module": "runtime_protocol.timeline_commit_store",
+          "samples": 16
+        }
+      ]
+    }
+  ],
+  "phase_sample_counts": [
+    {
+      "stage": "fixture_or_framework",
+      "note": null,
+      "samples": 37
+    },
+    {
+      "stage": "setup",
+      "note": null,
+      "samples": 7
+    },
+    {
+      "stage": "author",
+      "note": 1,
+      "samples": 1
+    },
+    {
+      "stage": "author",
+      "note": 8,
+      "samples": 1
+    },
+    {
+      "stage": "author",
+      "note": 10,
+      "samples": 5
+    },
+    {
+      "stage": "commit_readback",
+      "note": 10,
+      "samples": 3
+    },
+    {
+      "stage": "restart_open",
+      "note": 10,
+      "samples": 5
+    },
+    {
+      "stage": "undo",
+      "note": 1,
+      "samples": 36
+    },
+    {
+      "stage": "undo",
+      "note": 2,
+      "samples": 82
+    },
+    {
+      "stage": "undo",
+      "note": 3,
+      "samples": 140
+    },
+    {
+      "stage": "undo",
+      "note": 4,
+      "samples": 115
+    }
+  ],
+  "polls": {
+    "/usr/lib/python3.13/subprocess.py:_communicate:2155": {
+      "calls": 791,
+      "wall": 0.0812305960280355,
+      "timeouts": {
+        "None": 791
+      }
+    },
+    "/usr/lib/python3.13/socketserver.py:serve_forever:235": {
+      "calls": 90,
+      "wall": 45.467536179945455,
+      "timeouts": {
+        "0.5": 90
+      }
+    }
+  },
+  "explicit_sleeps": [],
+  "import_startup_events": [
+    {
+      "executable": "/home/user/work/venv-agent/bin/python",
+      "process": {
+        "state": "R",
+        "ppid": 13307,
+        "user": 0.02,
+        "system": 0.0,
+        "birth_ticks": 12788683
+      },
+      "main_cpu": {
+        "state": "R",
+        "ppid": 13307,
+        "user": 0.02,
+        "system": 0.0,
+        "birth_ticks": 12788683
+      },
+      "modules": 85,
+      "elapsed": 0.0002265779912704602,
+      "kind": "bootstrap",
+      "pid": 13309
+    },
+    {
+      "modules": 271,
+      "process": {
+        "state": "R",
+        "ppid": 13307,
+        "user": 0.1,
+        "system": 0.03,
+        "birth_ticks": 12788683
+      },
+      "elapsed": 0.10112417399068363,
+      "kind": "pytest_imported",
+      "pid": 13309
+    },
+    {
+      "items": [
+        "tests/editing_conformance/test_p4_ten_note_v2_runtime.py::test_http_ten_note_commit_per_step_inverse_and_redo"
+      ],
+      "modules": 578,
+      "process": {
+        "state": "R",
+        "ppid": 13307,
+        "user": 1.12,
+        "system": 0.09,
+        "birth_ticks": 12788683
+      },
+      "elapsed": 1.1992481039924314,
+      "kind": "collection_finished",
+      "pid": 13309
+    }
+  ],
+  "import_top_self": [
+    {
+      "self_us": 93013,
+      "cumulative_us": 236504,
+      "module": "runtime_protocol.service"
+    },
+    {
+      "self_us": 54568,
+      "cumulative_us": 75557,
+      "module": "runtime_protocol.store"
+    },
+    {
+      "self_us": 48819,
+      "cumulative_us": 62470,
+      "module": "astrid.sdk.remote"
+    },
+    {
+      "self_us": 40124,
+      "cumulative_us": 61006,
+      "module": "astrid.packs.timeline.cli"
+    },
+    {
+      "self_us": 31247,
+      "cumulative_us": 31247,
+      "module": "runtime_protocol.timeline_commit_auth"
+    },
+    {
+      "self_us": 21238,
+      "cumulative_us": 21864,
+      "module": "astrid.core.timeline.clip_fields"
+    },
+    {
+      "self_us": 21194,
+      "cumulative_us": 271499,
+      "module": "runtime_protocol.server"
+    },
+    {
+      "self_us": 18980,
+      "cumulative_us": 21807,
+      "module": "runtime_protocol.timeline_commit_store"
+    },
+    {
+      "self_us": 17318,
+      "cumulative_us": 20341,
+      "module": "astrid.packs.rendering.actions.timeline_visualize.inspection_contract"
+    },
+    {
+      "self_us": 15582,
+      "cumulative_us": 49756,
+      "module": "astrid.core.element.project_packs"
+    }
+  ],
+  "import_top_cumulative": [
+    {
+      "self_us": 21194,
+      "cumulative_us": 271499,
+      "module": "runtime_protocol.server"
+    },
+    {
+      "self_us": 93013,
+      "cumulative_us": 236504,
+      "module": "runtime_protocol.service"
+    },
+    {
+      "self_us": 3054,
+      "cumulative_us": 147946,
+      "module": "astrid.sdk.timeline.commit_session"
+    },
+    {
+      "self_us": 8839,
+      "cumulative_us": 144893,
+      "module": "astrid.sdk.timeline.checkout"
+    },
+    {
+      "self_us": 516,
+      "cumulative_us": 100226,
+      "module": "pytest"
+    },
+    {
+      "self_us": 54568,
+      "cumulative_us": 75557,
+      "module": "runtime_protocol.store"
+    },
+    {
+      "self_us": 48819,
+      "cumulative_us": 62470,
+      "module": "astrid.sdk.remote"
+    },
+    {
+      "self_us": 14076,
+      "cumulative_us": 61512,
+      "module": "astrid.sdk.timeline.check"
+    },
+    {
+      "self_us": 40124,
+      "cumulative_us": 61006,
+      "module": "astrid.packs.timeline.cli"
+    },
+    {
+      "self_us": 15582,
+      "cumulative_us": 49756,
+      "module": "astrid.core.element.project_packs"
+    }
+  ],
+  "overhead": {
+    "sampler_cpu": 1.3654926419999975,
+    "sampling_interval": 0.1,
+    "attribution": "CPU is sampler-thread only; main-thread wrapper logging, GIL perturbation, fsync wall, and -X importtime overhead not isolated; no unsampled repeat"
+  },
+  "loaded_origins_verified": 232,
+  "observer_sha256": "61572d4a0f83101030ab97188c72c8c7a365bf3b656c5b046d901e5d69297196",
+  "preflight": {
+    "positive_exit": 17,
+    "positive_calls": 1,
+    "poison_exit": 1,
+    "poison_calls": 0
+  },
+  "limitations": [
+    "Sampling is stack occupancy, not exclusive CPU measurement; repeated frames are not operation counts.",
+    "Exited native children have bounded lifespan from observed wait return; final CPU is UNKNOWN if reaped before a proc sample.",
+    "No separate Agent provider, Python CLI, or Runtime request worker PID was observed; roles share test main thread.",
+    "No function-level fix or new authority/scope/call was introduced. Original contract guards were unchanged.",
+    "Inherited phase helper labels caller line448 as undo; raw caller line is retained. Report maps 431=undo,448=redo against unchanged test source; no post-run observer edits."
+  ],
+  "acceptance_curve": [
+    {
+      "operation": "ten_note_commit",
+      "note": null,
+      "accepted_at": "2026-10-25T02:56:37.733+00:00",
+      "seconds_since_ten_note_commit": 0.0,
+      "seconds_since_previous_acceptance": 0.0
+    },
+    {
+      "operation": "undo",
+      "note": 1,
+      "accepted_at": "2026-10-25T02:56:40.561+00:00",
+      "seconds_since_ten_note_commit": 2.828,
+      "seconds_since_previous_acceptance": 2.828
+    },
+    {
+      "operation": "redo",
+      "note": 1,
+      "accepted_at": "2026-10-25T02:56:43.081+00:00",
+      "seconds_since_ten_note_commit": 5.348,
+      "seconds_since_previous_acceptance": 2.52
+    },
+    {
+      "operation": "undo",
+      "note": 2,
+      "accepted_at": "2026-10-25T02:56:48.089+00:00",
+      "seconds_since_ten_note_commit": 10.356,
+      "seconds_since_previous_acceptance": 5.008
+    },
+    {
+      "operation": "redo",
+      "note": 2,
+      "accepted_at": "2026-10-25T02:56:51.924+00:00",
+      "seconds_since_ten_note_commit": 14.191,
+      "seconds_since_previous_acceptance": 3.835
+    },
+    {
+      "operation": "undo",
+      "note": 3,
+      "accepted_at": "2026-10-25T02:57:02.243+00:00",
+      "seconds_since_ten_note_commit": 24.51,
+      "seconds_since_previous_acceptance": 10.319
+    },
+    {
+      "operation": "redo",
+      "note": 3,
+      "accepted_at": "2026-10-25T02:57:06.994+00:00",
+      "seconds_since_ten_note_commit": 29.261,
+      "seconds_since_previous_acceptance": 4.751
+    }
+  ],
+  "pending_operation": {
+    "operation": "undo",
+    "note": 4
+  },
+  "nearest_product_layer_counts": {
+    "Agent": 11,
+    "Runtime": 402
+  },
+  "inclusive_function_counts": [
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/server.py",
+      "function": "_route",
+      "samples": 381
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/remote.py",
+      "function": "_typed",
+      "samples": 381
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/workspace_client.py",
+      "function": "_call_generated",
+      "samples": 381
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/server.py",
+      "function": "_dispatch",
+      "samples": 381
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/service.py",
+      "function": "wrapped",
+      "samples": 381
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_execution.py",
+      "function": "execute",
+      "samples": 378
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/workspace_client.py",
+      "function": "commit_timeline",
+      "samples": 378
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/service.py",
+      "function": "_execute_timeline_commit",
+      "samples": 378
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/server.py",
+      "function": "do_POST",
+      "samples": 378
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/_remote_timeline.py",
+      "function": "commit",
+      "samples": 378
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/sync.py",
+      "function": "_flush",
+      "samples": 378
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_execution.py",
+      "function": "_execute",
+      "samples": 378
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/service.py",
+      "function": "commit_timeline",
+      "samples": 378
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/server.py",
+      "function": "_timeline_commit",
+      "samples": 378
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/commit.py",
+      "function": "commit",
+      "samples": 373
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/sync.py",
+      "function": "undo",
+      "samples": 373
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "evaluate",
+      "samples": 360
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_port.py",
+      "function": "_read",
+      "samples": 359
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "history_entry",
+      "samples": 351
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "_verify_accepted",
+      "samples": 330
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/commit.py",
+      "function": "load_boundary",
+      "samples": 293
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_port.py",
+      "function": "_ancestor",
+      "samples": 287
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "_verify_accepted_record",
+      "samples": 278
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_port.py",
+      "function": "read",
+      "samples": 226
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "_accepted_replay",
+      "samples": 166
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/commit.py",
+      "function": "select_at",
+      "samples": 155
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/_commit_patch.py",
+      "function": "inverse_address_resolver",
+      "samples": 155
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_port.py",
+      "function": "history_entry",
+      "samples": 126
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_port.py",
+      "function": "revision_closure",
+      "samples": 125
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/commit.py",
+      "function": "_load",
+      "samples": 125
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_validation.py",
+      "function": "digest",
+      "samples": 124
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_port.py",
+      "function": "<lambda>",
+      "samples": 114
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/commit.py",
+      "function": "_history",
+      "samples": 107
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_port.py",
+      "function": "history",
+      "samples": 107
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "__init__",
+      "samples": 106
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "execute",
+      "samples": 106
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/commands.py",
+      "function": "execute",
+      "samples": 96
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "revision_closure",
+      "samples": 80
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/commit.py",
+      "function": "document_from_bundle",
+      "samples": 66
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/commit.py",
+      "function": "_inverse_media_removals",
+      "samples": 64
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/_doc_patch.py",
+      "function": "__init__",
+      "samples": 54
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "check",
+      "samples": 53
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "_read",
+      "samples": 53
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/_commit_patch.py",
+      "function": "inverse_closure",
+      "samples": 52
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "history",
+      "samples": 45
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/_step_undo.py",
+      "function": "validate_nested_history",
+      "samples": 37
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "_membership",
+      "samples": 34
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/inverse.py",
+      "function": "apply_inverse",
+      "samples": 33
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "_history_chain",
+      "samples": 32
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "_validate_closure",
+      "samples": 32
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "fetchone",
+      "samples": 30
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/_commit_patch.py",
+      "function": "finish",
+      "samples": 28
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/_commit_patch.py",
+      "function": "after",
+      "samples": 25
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "fetchall",
+      "samples": 23
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "_history_page",
+      "samples": 21
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "_inverse_stage_history",
+      "samples": 21
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/daemon.py",
+      "function": "_shutdown_http",
+      "samples": 16
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/daemon.py",
+      "function": "stop",
+      "samples": 16
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "_head_entry",
+      "samples": 16
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/inverse.py",
+      "function": "_validate_materializations",
+      "samples": 13
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "head",
+      "samples": 13
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_port.py",
+      "function": "accept",
+      "samples": 12
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "accept",
+      "samples": 11
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "history_read_scope",
+      "samples": 11
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/cas.py",
+      "function": "__init__",
+      "samples": 10
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_port.py",
+      "function": "head",
+      "samples": 9
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/server.py",
+      "function": "authorize",
+      "samples": 9
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/server.py",
+      "function": "_identity",
+      "samples": 9
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/auth.py",
+      "function": "load",
+      "samples": 9
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/server.py",
+      "function": "_authorize_timeline_commit",
+      "samples": 9
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/auth.py",
+      "function": "require",
+      "samples": 9
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/service.py",
+      "function": "check",
+      "samples": 9
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/service.py",
+      "function": "require_active",
+      "samples": 9
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/native_occurrence_shared.py",
+      "function": "resolve",
+      "samples": 9
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/native_occurrence_shared.py",
+      "function": "_historical_sources",
+      "samples": 9
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "_verify_parent_rows",
+      "samples": 9
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/cas.py",
+      "function": "read",
+      "samples": 7
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/_root_inverse.py",
+      "function": "restore_root_baselines",
+      "samples": 7
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/cas.py",
+      "function": "open",
+      "samples": 6
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/auth.py",
+      "function": "_read_actor",
+      "samples": 6
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/commit_session.py",
+      "function": "commit",
+      "samples": 5
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/sync.py",
+      "function": "submit",
+      "samples": 5
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_validation.py",
+      "function": "validate_commit_value",
+      "samples": 5
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "_validate",
+      "samples": 5
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "_verify_accepted_replay",
+      "samples": 5
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "lookup",
+      "samples": 5
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "_lookup",
+      "samples": 5
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_execution.py",
+      "function": "_lookup",
+      "samples": 5
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "_check_head",
+      "samples": 5
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/dirfd.py",
+      "function": "open_directory_chain",
+      "samples": 5
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "_historical_sequential",
+      "samples": 4
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/auth.py",
+      "function": "_read_bytes",
+      "samples": 4
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/daemon.py",
+      "function": "_start",
+      "samples": 3
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/daemon.py",
+      "function": "start",
+      "samples": 3
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/store.py",
+      "function": "_integrity_report",
+      "samples": 3
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/store.py",
+      "function": "__init__",
+      "samples": 3
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/service.py",
+      "function": "__init__",
+      "samples": 3
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/store.py",
+      "function": "integrity_report",
+      "samples": 3
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/store.py",
+      "function": "inspect_realm",
+      "samples": 3
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/service.py",
+      "function": "list_timeline_commits",
+      "samples": 3
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/_remote_timeline.py",
+      "function": "history",
+      "samples": 3
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/server.py",
+      "function": "do_GET",
+      "samples": 3
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "_read_history",
+      "samples": 3
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/workspace_client.py",
+      "function": "list_timeline_commits",
+      "samples": 3
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "_read_history_object",
+      "samples": 3
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/util.py",
+      "function": "canonical_json",
+      "samples": 3
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/core/pack/canonical.py",
+      "function": "<module>",
+      "samples": 2
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/core/pack/__init__.py",
+      "function": "<module>",
+      "samples": 2
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/server.py",
+      "function": "<module>",
+      "samples": 2
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/service.py",
+      "function": "<module>",
+      "samples": 2
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/commit_session.py",
+      "function": "command",
+      "samples": 2
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_auth.py",
+      "function": "_capture_records",
+      "samples": 2
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_auth.py",
+      "function": "validate_sequential_capture",
+      "samples": 2
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/core/timeline/authoring_bundle.py",
+      "function": "compile_authoring_candidate",
+      "samples": 2
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/core/timeline/authoring_bundle.py",
+      "function": "_digest",
+      "samples": 2
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "integrity_errors",
+      "samples": 2
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_validation.py",
+      "function": "reuse",
+      "samples": 2
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/commit_session.py",
+      "function": "open",
+      "samples": 2
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/sync.py",
+      "function": "open",
+      "samples": 2
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/auth.py",
+      "function": "_safe_file",
+      "samples": 2
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/core/timeline/__init__.py",
+      "function": "<module>",
+      "samples": 1
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/commit.py",
+      "function": "<module>",
+      "samples": 1
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/core/timeline/shot_composition.py",
+      "function": "<module>",
+      "samples": 1
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/workspace_client.py",
+      "function": "<module>",
+      "samples": 1
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/sync.py",
+      "function": "<module>",
+      "samples": 1
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/cas.py",
+      "function": "<module>",
+      "samples": 1
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/store.py",
+      "function": "close",
+      "samples": 1
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/checkout.py",
+      "function": "<module>",
+      "samples": 1
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/commit_session.py",
+      "function": "<module>",
+      "samples": 1
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/__init__.py",
+      "function": "__getattr__",
+      "samples": 1
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/catalog.py",
+      "function": "__del__",
+      "samples": 1
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/core/contracts/__init__.py",
+      "function": "<module>",
+      "samples": 1
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/core/contracts/schema.py",
+      "function": "<module>",
+      "samples": 1
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/exceptions.py",
+      "function": "<module>",
+      "samples": 1
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/client.py",
+      "function": "open",
+      "samples": 1
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/commands.py",
+      "function": "operations",
+      "samples": 1
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/commit_session.py",
+      "function": "_append",
+      "samples": 1
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/commands.py",
+      "function": "validate_command",
+      "samples": 1
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/outbox.py",
+      "function": "locked",
+      "samples": 1
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/commit.py",
+      "function": "_schema_resolver",
+      "samples": 1
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_port.py",
+      "function": "_prepared",
+      "samples": 1
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_validation.py",
+      "function": "finite_json",
+      "samples": 1
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_validation.py",
+      "function": "detached",
+      "samples": 1
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_port.py",
+      "function": "_validate_sequential_execution",
+      "samples": 1
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/core/cli/registration.py",
+      "function": "register_commands",
+      "samples": 1
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/packs/timeline/cli.py",
+      "function": "_configure_inspect",
+      "samples": 1
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/packs/timeline/cli.py",
+      "function": "build_parser",
+      "samples": 1
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/core/cli/registration.py",
+      "function": "configure",
+      "samples": 1
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/core/cli/registration.py",
+      "function": "register_product_commands",
+      "samples": 1
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_auth.py",
+      "function": "validate",
+      "samples": 1
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_auth.py",
+      "function": "_capture_projection_equal",
+      "samples": 1
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_producer.py",
+      "function": "<genexpr>",
+      "samples": 1
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_producer.py",
+      "function": "value_equal",
+      "samples": 1
+    },
+    {
+      "origin": "Agent",
+      "file": "/home/user/work/wt/agt-pin-d407b877/astrid/sdk/timeline/_commit_patch.py",
+      "function": "<genexpr>",
+      "samples": 1
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_port.py",
+      "function": "validate",
+      "samples": 1
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_store.py",
+      "function": "_envelope",
+      "samples": 1
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/idempotency.py",
+      "function": "command_result",
+      "samples": 1
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/store.py",
+      "function": "_transaction",
+      "samples": 1
+    },
+    {
+      "origin": "Runtime",
+      "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/timeline_commit_inputs.py",
+      "function": "reachable_document_input_pins",
+      "samples": 1
+    }
+  ],
+  "observed_cli_spawn_wall": 0.0,
+  "all_spawn_construction_wall": 0.0018105440103681758,
+  "private_hashes": {
+    "p4-allprocess-0242.body.exit": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "positive-0242.preflight.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "p4-allprocess-0242.request-id": "ac3b5c408055d075ef997bdc671e7dfe316b895bd227739d338928169f3451f9",
+    "suites.conf.pre-20261025T025619.656034Z.bak": "a42da904024dc883901bec82e791a6164c983f7eebaabafb3bd3bce790889aa0",
+    "positive-0242.body.exit": "54183f4323f377b737433a1e98229ead0fdc686f93bab057ecb612daa94002b5",
+    "p4-allprocess-0242.runmanifest": "8d77934d2612bcd9b9fae32e99d23e680986d817110b8157b326448d1ec82a5b",
+    "service-request.stderr": "e66fe814e1850591943a99e8270eb38771d011b70380d694f9a46efdc514e70b",
+    "registry-restore.json": "27970d29216d6aa36995d53890ef5cf17f1557a090e0004193bcc3a2eb28a05d",
+    "parsed-preflight.json": "3130d4cabe5f62141b3f3939e5f58a180dc5e0d587a80851674f2d078fc6d2b3",
+    "positive-0242.request-id": "b28617ca104410ab5ad30ef7cd7cad6fde7015f527abe5ae7e75422f0283c717",
+    "p4-allprocess-0242.command": "6c74808875afc6a4ea495c99aaafbae60dc187bfa22d2d54853943f9d342d0e7",
+    "retained-acceptance-curve.json": "96ed809283c8fb9c4321d4ee3ed8c0a5104fb55cb9f15bdbd55e04b426443392",
+    "four-checkout-receipts.json": "5ffcfdb7fa8641f0249eb14fb1a3c95605cafd530b6a23b5c8b36687f0e58fc2",
+    "p4-allprocess-0242.manifest": "306c1534c508536d3b27aa5198023e6023612a13b80ba049c45325619daa2733",
+    "registry-cas.json": "bb6f67e17e1285780a81f2044ee939860ec7d8ccb155b095adcb38670c059023",
+    "p4-profile.xml": "69b7574385711a5d042847dd06f40510094865094b5509a0d43570e8c0b1af22",
+    "positive-0242.body.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "wait-test-private.log": "8c3477649369bb5076786785df1d4ec68489c25a656a98494223dcd5e634edba",
+    "stub-count": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "p4-allprocess-0242.body.log": "8ab032725a13609dd18e45661e1a2be1914ef58e0e871a4bb5fb0a140979261e",
+    "observer-sha256": "d824bdf9b41bc33be9ef298c0b544c8d219380a2a9267266d650d94509a390dd",
+    "registered-row.txt": "2c274f96f6744b59a313f54acc46ab89e45d292bd013ce3c03ef4bf6f078d5e9",
+    "actual-argv.json": "d38d43c8c010ebe9e3c60cde07695c1c34b5672335c4ca1ef8c5e191bdb1a2d5",
+    "service-id.txt": "ca7ecf515dc6dabb1f34eca38f9abfa2faa0ffd8d9160e9f034f4485a916c3ca",
+    "positive.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "positive-0242.manifest": "306c1534c508536d3b27aa5198023e6023612a13b80ba049c45325619daa2733",
+    "poison-input.manifest": "5fac14b51c8e011c9975cedd45e5547452fb300a952f082aa26a42276a653d91",
+    "positive-0242.runmanifest": "8d77934d2612bcd9b9fae32e99d23e680986d817110b8157b326448d1ec82a5b",
+    "poison.log": "bc85d8762dfb2215099766272d96b8934c29188224dbfb80b14f5cdd0f4395ae",
+    "p4-allprocess-0242.preflight.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "prior-regression.log": "698ba98cd4002d483481b3f6628499c3dc1ca6d70ae5a7b0acbefe5480828517",
+    "positive-0242.command": "6f2302b3a56ec04d4a52fde57b4c342d7f8a58fe216dad3db50d4dfae0c77e56",
+    "input.manifest": "306c1534c508536d3b27aa5198023e6023612a13b80ba049c45325619daa2733",
+    "p4-allprocess-0242.preflight.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "service-request.stdout": "ff56d3d309a0ebdc5088efdf6e0ce43588a367028c1c13e0efaf4860ccfe6252",
+    "positive-0242.preflight.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "prebody-admission.json": "543d9a1113f82dc6f3bc210847c8f15dc503d882b297cea043ae75edb160bb6e",
+    "raw-private/events.jsonl": "c5520728fb6af0b9731efacd3639149ac9d284209b181332ed0c2442d417a0c8",
+    "raw-private/loaded-origins.json": "aa4a872b978289198fe5cbbd0b6744ae0011a0c89f8cd76ef5a0db5ae7fab763",
+    "raw-private/faulthandler.txt": "c3ede240a7f4a191328277f02dcebd081cca9bda55e982c86b291470edf616c8"
+  },
+  "agent_rules_or_duplicate_named_frames_samples": 0,
+  "runtime_accepted_replay_inclusive_samples": 166,
+  "validation": {
+    "private_controls": {
+      "command": "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python diagnostics/test_p4_observer.py",
+      "exit": 0,
+      "tests": 4,
+      "seconds": 0.055
+    },
+    "prior_writer_regression": {
+      "command": "PRIOR_OBSERVER=$TMPDIR/prior-event-observer.py /home/user/work/venv-agent/bin/python -c <private unittest runner>",
+      "exit": 1,
+      "reason": "expected TypeError duplicated elapsed; previous writer fails timestamp regression"
+    },
+    "ruff": {
+      "command": "PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m ruff check --no-cache diagnostics/p4_sample_0233.py diagnostics/test_p4_observer.py",
+      "exit": 0,
+      "result": "All checks passed!"
+    },
+    "diff": {
+      "command": "git diff --check",
+      "exit": 0
+    },
+    "central": {
+      "request": "request-test integration:agent p4-current-becfe-http-3legs --no-cache",
+      "wait": "wait-test agent-p4-current-becfe-http-3legs-1025025625-25257 1",
+      "exit": 1,
+      "one_original_body": true,
+      "full_suite_requested": false
+    },
+    "registry_restored": {
+      "owned_row_restored": true,
+      "outside_bytes_identical": true,
+      "outside_sha256": "6ad907a0b58ef0adac43128f85ffd04eaae4bdf941105e3040c6f236160cf94b"
+    },
+    "prebody": {
+      "utc": "2026-10-25T02:56:25Z",
+      "free_bytes": 6041432064,
+      "active": []
+    },
+    "observer_unchanged_after_submission": true
+  },
+  "previous_sample_facts_retained": {
+    "id": "agent-p4-current-becfe-http-3legs-1025024042-30057",
+    "junit_seconds": 45.478,
+    "main_cpu_seconds": 43.9,
+    "wall_interval_seconds": 46.14,
+    "python_cli_spawns": 0,
+    "dominant_function": "UNKNOWN; previous sampler failed"
+  },
+  "limits_and_interpretation": {
+    "sample_frequency": "nominal 0.1 s, actual intervals include scheduling, collection, serialization and fsync",
+    "leaf_samples_runtime_digest": 121,
+    "leaf_samples_runtime_SQL_execute_fetch_recheck": 198,
+    "all_samples": 432,
+    "interpretation": "Runtime history verification/replay key and repeated SQL are dominant sampled locations. Agent callers on inclusive stacks do not establish Agent exclusive work. No exact function CPU attribution, SQL query counts, digest bytes, or cache-hit rates inferred.",
+    "native_children_stacks": "git children exited before 10s; cleanup ps born after 40s; no native stack capture",
+    "polling": "90 background serve_forever polls at fixed 0.5s totaled 45.468 overlapping wall seconds; not additive main-thread delay; subprocess pipe polls 791 calls totaling 0.081s",
+    "guard_scope": "Original fixture/session/granted scopes/calls and 45s guard unchanged. Provider/Runtime/import hashes verified. Fresh guard suites were not rerun."
+  }
+}
