@@ -1,0 +1,132 @@
+{
+  "task": "D118d",
+  "worker": "app-D118d-projection-setup-sol-1606",
+  "own_nodes": {
+    "nodes": [
+      "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden",
+      "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+    ],
+    "selection_source": "first-return-1551 own_nodes.nodes",
+    "dispatch_free_bytes": 4987809792,
+    "required_free_bytes": 5000000000,
+    "ongoing_stop_bytes": 4000000000,
+    "command_argv": [
+      "/home/user/work/venv-agent/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-o",
+      "addopts=",
+      "-p",
+      "no:cacheprovider",
+      "--timeout=45",
+      "--junitxml=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/app-D118d-projection-setup-sol-1606/evidence/own9.xml",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden",
+      "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+      "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]"
+    ],
+    "environment": {
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONPATH": "/home/user/work/wt/app-D118d-projection-setup-sol-1606:/home/user/work/wt/rt-pin-5e9ad1c6",
+      "ASTRID_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-5e9ad1c6"
+    },
+    "outcome": "NOTRUN",
+    "shortfall_bytes": 12190208,
+    "reason": "fresh disk gate below required 5 GB; no bypass"
+  },
+  "status": "SETUP_CORRECTION_STATIC_PASS_OWN9_NOTRUN",
+  "source": {
+    "base_commit": "e02180cedafa581bc8105d77341456b8b1c50b5b",
+    "original_commit": "20177e66564f9f91735ed1a11bac821682d60edf",
+    "original_sha256": "90c4625a7481fdcd570ec8b85bbe95325f4d3c57f0a3a26017dd405b8269b638",
+    "base_sha256": "8747fa62ef628a9c25455fe30876a008ebf54b3b22d575c697c2f6893ca276da",
+    "after_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+    "after_git_blob": "16954294f9f70018e4bbd1012083f51594f6cb19",
+    "changed_paths": [
+      "tests/sdk/test_timeline_capture_projection.py"
+    ],
+    "original_assertions": 43,
+    "current_assertions": 44,
+    "original_assertion_asts_preserved": true,
+    "test_function_asts_equal": true,
+    "test_function_count": 11,
+    "original_fixture_statements_preserved_in_order": true,
+    "all_other_source_unchanged": true,
+    "upstream_9244377_target_absent": true,
+    "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "runtime_clean": true,
+    "canonical_reader_field_tuples_equal": true,
+    "canonical_reader_field_tuples": [
+      [
+        "revision_id",
+        "content_digest",
+        "payload"
+      ],
+      [
+        "shot_id",
+        "revision_id",
+        "internal_timeline_revision_id",
+        "content_digest",
+        "payload"
+      ],
+      [
+        "timeline_id",
+        "revision_id",
+        "content_digest",
+        "payload"
+      ]
+    ]
+  },
+  "delta_from_e02180c": {
+    "added": 17,
+    "removed": 1
+  },
+  "static_checks": {
+    "ruff": "PASS",
+    "mypy": "PASS",
+    "py_compile": "PASS",
+    "git_diff_check": "PASS",
+    "source_hash_ast_no_change_checks": "PASS",
+    "canonical_reader_field_tuples": "PASS"
+  },
+  "corrections": [
+    {
+      "path": "tests/sdk/test_timeline_capture_projection.py:293",
+      "change": "Resolve the physical revision from source_mapping.shots at the actual authoring shot key; keep media selection from the shot internal registry."
+    },
+    {
+      "path": "tests/sdk/test_timeline_capture_projection.py:392",
+      "change": "Publish the already-authored opaque source via publish_authoring_candidate and the registered Runtime commit provider; reload its exact accepted closure before the original duplication baseline assignments and duplicate/remove sequence."
+    }
+  ],
+  "trace": [
+    "open_source_runtime: Runtime generation settlement/media custody -> register load_timeline_commit_provider(astrid) -> timeline.init/track.create/occurrence.create/occurrence.add-media through service.commit_timeline.",
+    "_saved_document projects public read envelopes to canonical image fields matching read_document; bundle_from_document verifies digests/closure/manifest then open_authoring_bundle separates editable shot roots from pinned source_mapping.",
+    "The source item uses a reachable shot-revision ref from that genuine source mapping, exact before present [], the original item/media/metadata values, matching step patch, real base revision/publication pair and the existing publisher/authorization callback.",
+    "Service commit_timeline validates scope/path/request -> CommitExecutionCoordinator invokes registered provider.commit -> doc.patch validates previous value, source media custody and physical binding -> store verifies/persists canonical closure and durable receipt.",
+    "publish_authoring_candidate compiles and calls authoring_commit_request; _read_base validates history receipt, original revision/publication and exact public reads; emitter creates guarded payload patches, then writer uses the same service commit_timeline route.",
+    "_materialize_duplicates derives its expected source baseline from _read_base and rejects changed local baselines. Publishing and rereading the already-authored source gives the original duplicate helpers real accepted baselines, with no injected records, authority, or source mapping.",
+    "The original duplicate shot-z/shot-a, remove-source and final publication statements remain. Final pure project_capture and exact-parent reader/openers retain the original config/registry/full expansion/opaque payload/read-row/pin/order assertions and six candidate variants."
+  ],
+  "limits": [
+    "The source trace supports the correction; no post-change behavioral outcome is claimed.",
+    "Own9 not dispatched because the fresh required 5 GB disk gate failed. No XML/log exists because no pytest process was started.",
+    "No production defect is established; no product patch or private authority injection is proposed.",
+    "No full/family/service/browser/native/acquisition/held SWAP test was run."
+  ],
+  "next_owner": "D118d orchestrator/protected reviewer: retain source held; run exact nine nodes once against the clean exact Runtime pin after the 5 GB gate, then perform independent protected review."
+}

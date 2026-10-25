@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T16:11:48Z | dispatcher heartbeat 14s | live 3 (sol 1, luna 2, other 0) | busy30 15 | status age 0m -->
-# app board, 2026-10-25T16:07Z
+<!-- app | 2026-10-25T16:17:06Z | dispatcher heartbeat 9s | live 3 (sol 0, luna 3, other 0) | busy30 15 | status age 0m -->
+# app board, 2026-10-25T16:15Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -107,11 +107,13 @@
 
 | D116-current17 | Map shared current word setup | Luna and independent | Agent peer1526; normal20177 | merged | Author1540; independent1548 | Source applicability17/17 PASS; scalar suppliedhash malformed65chars, exact64 reviewerhash published. All selector-specific topology still missing. No behavior credit. | Source unchanged |
 | D118d-pair16 | Preserve current pair-reader purposes | Luna and independent | Historical30693 exact16 | merged | Author1540; independent1552 | Current file byte-exact captured120d; all16 PASS in30693. Existing7d858 setupfix home; no diff, rerun or current5e9ad behavior credit. | Agent20177 unchanged |
-| D118d-projection9 | Preserve real capture projection purposes | HARD Sol and independent Luna | Second review1558 FAIL | doing | app-D118d-projection-setup-sol-1606 | Nine setupERROR at revision_id lookup before registered command. Forty-three assertions/goldens exact. HARD Sol continues same branch. | e02180ced held |
+| D118d-projection9 | Preserve real capture projection purposes | HARD Sol and independent Luna | Sol1606 source complete | review | app-D118d-projection-Sol-protected-review-1616 | Genuine source mapping and accepted provenance setup; statics and43 original ASTs PASS. Own9 NOTRUN for12.2MB lightfloor shortfall. | d05975c7d6 held |
 
 | D118d-graph9 | Preserve typed root and tamper purposes | Luna and independent | First return1606 no diff | review | app-D118d-graph-null-wholepath-1610 | Original authored gain:null cannot be normalized. Independent source challenge names schema or producer boundary; original9 not rerun. | 94ac9347b held |
 
-| D127-leaf-retention | Retain safe leaf and lifecycle evidence | Luna and protected review | Trace1600 complete | doing | app-D127-leaf-retention-author-1606 | Only inclusive top10 routing frames retained. Bounded helper-only leaf/lifecycle revision active; no cost author or activation. | Source unchanged |
+| D127-leaf-retention | Retain safe leaf and lifecycle evidence | Luna and protected review | Author1606 source complete | review | app-D127-leaf-protected-review-1613 | Offline21 PASS. Two socket controls pending same central request; independent privacy, bounds, lifecycle and App-validator review active. | b81c0ab26d held |
+
+| U4p-R2-diagnostic | Adopt qualified inverse redo and diagnostics | Luna | Released ab1e and genuine checkout | doing | app-U4p-R2-diagnostic-adoption-1615 | Normal tool-only adoption active. Agent070dfc, originals and all historical tuples preserved; D130 held recovery excluded. | App84857 base |
 
 Integration: App84857c45347539c7820bb054b69e2e5ad4079081/tree7feb5b12a1ad9629f096700c40c393d5b3998217 equals independently reviewed1414 full tree. Only exact D126 and strict bootstrap test blobs imported; normal2/mutations/types/lint PASS. [Receipt](../../design/app-D126-normal-home-1437.json). Runtime product for actual10721 stays5e9ad; reviewed external6c9 helper through normal hook. No result retarget.
 
@@ -125,9 +127,15 @@ Blockers: Agent core — D128 assigns full core to Agent local service on a4e016
 Blockers: Final render — Farm owns only D77 genuine installed stage/render. Prior denied acquisition stays stopped; no Farm core/census dependency.
 Blockers: Final cut — Current full P2, final P1–P5/core/D69 and genuine installed render owed. No ZIP claim.
 Next ready: Consume projection Sol1606, graph source1606 and helper author1606; dispatch one independent protected review for each supported corrected candidate, then normal merge route. No new tour or SWAP qualification.
-live 3 / cap 3; ready-undispatched 0; core open: 2. Three source continuations queued at fresh5161381888 bytes; no heavy body. Source floor4.6GB with noheavy, own-node proof5GB, ongoing stop4GB. All prior outputs/current tuple pins/refused targets preserved.
+live 4 / cap 6; ready-undispatched 0; core open: 2. Three source continuations queued at fresh5161381888 bytes; no heavy body. Source floor4.6GB with noheavy, own-node proof5GB, ongoing stop4GB. All prior outputs/current tuple pins/refused targets preserved.
 INBOX consumed through2289162 bytes, including Runtime1553 safety hold and D128 local-core disposition. H6 checked Runtime/Agent/Farm boards; cleared stale Farm core ownership and no stale App evidence wait. Agent current17 request is completed author1540/independent1548, source applicability17/17 only; peer1606 asks owner clear stale pending row.
 Current pass: projection1558 secondFAIL exact identity lookup -> HARD Sol on same e021 branch. Graph1601 SOURCE PASS, own9 FAIL gain:null schema -> first source-only causal trace, no authored-null normalization. Leaf1600 read-only trace4controls PASS -> bounded existing-helper author, same privacy/budgets/sampler. Exact15 safe outputs byte-published, raw XML/logs private. No ready candidate is currently merge-qualified.
 Later: Nativecheckout4/trackbatch1 and parentlabels share known word-anchor setup; no small-file duplicate authors. Pair16 byte-exact source matches historical30693 PASS16, no current5e9ad proof. D79 waits ZIP; E4 dropped; old orphan/dirty/refused cleanup targets remain guarded. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakening, credentials or refused-route retry.
 
 Later U4p: qualified Runtime ab1e4f6141987706132916e2da16477f5a019464 inverse/redo and00ede diagnostics coalesce through normal tools after current source slots. Preserve Agent070dfc and all recorded tours; D130 held recovery excluded. Independent graph wholepath1610 fills first freed slot; no speculative null change.
+
+Pass16:13: helper author1606 done; source-only candidate independent1613. Exact service request [('app-D127-leaf-retention-author-1606-targeted-1025160952-28551', 'queued')] retained, no duplicate. Graph independent1610 and projection Sol1606 continue. Qualified ab1e checkout receipt DONE for later coalesced tool-only U4p; no gate tuple retarget or held recovery claim.
+
+Pass16:15: Sol1606 source candidate d05975c7d6 published safe exact outputs; own9 NOTRUN. Independent review prepared next slot; adopter1615 immediately fills freed third source slot. Helper1613 and graph1610 reviews active; lightproof admission remains5GB, no new heavybody.
+
+Pass16:16: fresh4926431232 bytes allowed fourth source reviewer under D89 cap6 above5GB; exact Sol cumulative d059 protected reviewer1616 dispatched immediately. Own9stillrequires actual lightfloor; three other reviews/adopterprogress, ongoingstop4GB. No duplicate body.

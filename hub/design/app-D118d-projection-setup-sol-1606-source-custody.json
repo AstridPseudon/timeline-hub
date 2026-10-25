@@ -1,0 +1,61 @@
+{
+  "base_commit": "e02180cedafa581bc8105d77341456b8b1c50b5b",
+  "original_commit": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "original_sha256": "90c4625a7481fdcd570ec8b85bbe95325f4d3c57f0a3a26017dd405b8269b638",
+  "base_sha256": "8747fa62ef628a9c25455fe30876a008ebf54b3b22d575c697c2f6893ca276da",
+  "after_sha256": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+  "after_git_blob": "16954294f9f70018e4bbd1012083f51594f6cb19",
+  "changed_paths": [
+    "tests/sdk/test_timeline_capture_projection.py"
+  ],
+  "original_assertions": 43,
+  "current_assertions": 44,
+  "original_assertion_asts_preserved": true,
+  "test_function_asts_equal": true,
+  "test_function_count": 11,
+  "original_fixture_statements_preserved_in_order": true,
+  "all_other_source_unchanged": true,
+  "upstream_9244377_target_absent": true,
+  "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+  "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+  "runtime_clean": true,
+  "source_hashes": {
+    "/home/user/work/wt/app-D118d-projection-setup-sol-1606/tests/sdk/test_timeline_capture_projection.py": "6e41a5bba04666275b9e252d7aeb30247a145207da3f9ed14f06b338563a1436",
+    "/home/user/work/wt/app-D118d-projection-setup-sol-1606/tests/sdk/test_capture_source_runtime.py": "3cb21a6a3033ee81bb22305ec8c48dad6fc510fc202e509175738f9fe82f5c48",
+    "/home/user/work/wt/app-D118d-projection-setup-sol-1606/astrid/sdk/timeline/commit.py": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+    "/home/user/work/wt/app-D118d-projection-setup-sol-1606/astrid/core/timeline/authoring_bundle.py": "0611d655f3386f9b06888fa87fa9c38c0ee2d8f89411e944715daa80fa819a4d",
+    "/home/user/work/wt/app-D118d-projection-setup-sol-1606/astrid/sdk/timeline/authoring_commit.py": "6a03a0030a02c58fefe99e6f07f620f401a7a673259920c4086a3dab6615feac",
+    "/home/user/work/wt/app-D118d-projection-setup-sol-1606/astrid/sdk/timeline/emitter.py": "c399e4d9522f9c43c10f23d039c0211d5f3dd11f9bb7edffb06da07151c1e48a",
+    "/home/user/work/wt/app-D118d-projection-setup-sol-1606/astrid/sdk/timeline/_doc_patch.py": "15cc750407eb3b057900befd95cd2bd30c28f41acda9bb2f31e5c2f48f5ad00f",
+    "/home/user/work/wt/app-D118d-projection-setup-sol-1606/astrid/sdk/timeline/_doc_patch_materialize.py": "fa63d5dc7e3c5645d0225d0146a8b7b820cf3295e6fc87ff02b0aff918aeb252",
+    "/home/user/work/wt/app-D118d-projection-setup-sol-1606/astrid/sdk/timeline/native_occurrence_duplicate.py": "f2936a59859e2069169b6371669e2faf2cdc6def3a2c067a8bf08fa452986f86",
+    "/home/user/work/wt/app-D118d-projection-setup-sol-1606/astrid/sdk/timeline_editing.py": "b4f37a14388e2817259ae656799204a8001666240a118f2e7c96b32e8e9ee931",
+    "/home/user/work/wt/app-D118d-projection-setup-sol-1606/astrid/sdk/timeline_filmstrip.py": "3429ec14eb6cc268b74caf0242d45e8fcadbe797cb2faa0c27a7b914204534b0",
+    "/home/user/work/wt/app-D118d-projection-setup-sol-1606/astrid/packs/rendering/actions/render/managed_timeline.py": "fde15d771bf2ad51a74416fbeedc05a7679fdc82659a83232f92d337d5225494",
+    "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/timeline_commit_provider.py": "2dff389a11475420395a812d036888ad91c01e16df1170bb77917cc3cf128faf",
+    "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/service.py": "7277fc12e502a419ccd9eea9dfd2b3693bc8b2c8963e9fdf7224402d8a03a529",
+    "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/timeline_commit_execution.py": "75b8c8a214e4c54482046a59e7d051646bce22ed3ebcc2b62726e53f5a59d744",
+    "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/timeline_commit_store.py": "7d307566170a426d759eb1f827f4380c175ddac0bd8d22baf9c736f12de7dbe4"
+  },
+  "canonical_reader_field_tuples_equal": true,
+  "canonical_reader_field_tuples": [
+    [
+      "revision_id",
+      "content_digest",
+      "payload"
+    ],
+    [
+      "shot_id",
+      "revision_id",
+      "internal_timeline_revision_id",
+      "content_digest",
+      "payload"
+    ],
+    [
+      "timeline_id",
+      "revision_id",
+      "content_digest",
+      "payload"
+    ]
+  ]
+}

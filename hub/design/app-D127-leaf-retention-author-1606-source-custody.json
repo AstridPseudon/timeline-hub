@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "runtime_base_commit": "453b3e6f92045980219ec4948419ee5ad25c817d",
+  "authorized_sources": {
+    "tests/helpers/p2_commit_phase_capture.py": {
+      "sha256_after": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+      "sha256_before": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760",
+      "roles": ["20ms sampler", "safe inclusive projection", "nearest-safe leaf projection", "bounded retention", "lifecycle summary"]
+    },
+    "tests/test_p2_commit_phase_capture.py": {
+      "sha256_after": "fe3842291d1271e8291ce121e57343d35f84bc70a8bbb12b5464fe81d0a6f9ef",
+      "roles": ["existing assertions", "safe leaf adversarial controls", "bounded output controls", "lifecycle teardown controls"]
+    }
+  },
+  "caller_custody_read_only": {
+    "browser_funnel": "app/src/tools/video-editor/commands/commitOutbox.ts",
+    "session_transport": "app/src/tools/video-editor/commands/commitSession.ts",
+    "registered_runtime_provider": "app/src/integrations/runtime/dataProvider.ts",
+    "canonical_generated_post": "app/src/integrations/runtime/generated.ts",
+    "mounted_diagnostic_route": "App harness D66_RUNTIME_LOG_DIR -> private sink -> sitecustomize -> existing helper",
+    "runtime_boundaries": "RuntimeHandler._dispatch/_timeline_commit -> authorization -> coordinator/provider -> accept/receipt -> response"
+  },
+  "retention_custody": {
+    "mode": "rolling_plus_final_request",
+    "max_requests": 8,
+    "max_events": 128,
+    "max_bytes": 65536,
+    "final_request_priority": true,
+    "safe_frame_allowlist": "unchanged _safe_frame",
+    "output": "private bounded sink only; 0600 exclusive creation",
+    "raw_payloads": false,
+    "raw_keys": false,
+    "credentials": false,
+    "private_urls": false,
+    "new_raw_stack_persistence": false
+  },
+  "source_review": {
+    "protected_independent_review": "pending",
+    "normal_remote_route": "not performed by this worker"
+  }
+}

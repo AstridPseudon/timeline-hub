@@ -1,0 +1,54 @@
+{
+  "base": {
+    "commit": "94ac9347b64e0aaf5fb71443cc500fd57e80aa72",
+    "branch": "tl/app-D118d-graph-null-wholepath-1610",
+    "worktree_status": "clean",
+    "candidate_test_sha256": "72bf3c60cc006223c857ae5194280793a2be21ee0527ebb565a2a1cf271d9c21",
+    "parent_normal_test_sha256": "823b9de3b9aa23fb150ce86ef170bbffbe4c1830f677d4542a1843afd055da2a"
+  },
+  "candidate_diff": {
+    "file": "tests/sdk/test_timeline_commit_graph_roots.py",
+    "parent_to_candidate_insertions": 6,
+    "parent_to_candidate_deletions": 0,
+    "changed_content": "label, steps, merge, and reads request-envelope fields only"
+  },
+  "test_shape_comparison": {
+    "candidate": {
+      "test_functions": 11,
+      "assertions": 33,
+      "parametrize_decorators": 7,
+      "normalized_test_ast_sha256": "6e376b91193a60f1f15f4e0796e426b49018e830f3d4a262ea7942ea03833230",
+      "normalized_runtime_realm_init_ast_sha256": "07611b7919e3f62ed6ccfbc8f9cf517d253e2c91a72b4c94f1d50e8371c447a9"
+    },
+    "parent_and_normal": {
+      "test_functions": 11,
+      "assertions": 33,
+      "parametrize_decorators": 7,
+      "normalized_test_ast_sha256": "6e376b91193a60f1f15f4e0796e426b49018e830f3d4a262ea7942ea03833230",
+      "normalized_runtime_realm_init_ast_sha256": "07611b7919e3f62ed6ccfbc8f9cf517d253e2c91a72b4c94f1d50e8371c447a9"
+    }
+  },
+  "source_citations": [
+    "tests/editing_conformance/test_recorded_graph_roots.py:46-51 — authored occurrence has gain: None.",
+    "tests/editing_conformance/test_recorded_graph_roots.py:286-390,484+ — compile/no-write, invalid root envelope, unrecorded/orphan, net-zero/inverse/redo, and authored-fact coverage.",
+    "tests/sdk/test_timeline_commit_graph_roots.py:56-65 — RuntimeService registers the real astrid commit provider.",
+    "tests/sdk/test_timeline_commit_graph_roots.py:108-142 — full request is sent through service.commit_timeline.",
+    "astrid/core/timeline/authoring_bundle.py:1000-1007,1249-1305,1312-1315 — complete working-copy compilation copies placement data without gain normalization.",
+    "runtime_protocol/timeline_commit_provider.py:70-93 — provider loader imports the Agent commit service and validates ABI/digest.",
+    "runtime_protocol/timeline_commit_execution.py:395-401 — registered provider commit execution.",
+    "runtime_protocol/timeline_commit_store.py:1599-1605 — prepared candidate validation before acceptance.",
+    "runtime_protocol/timeline_commit_validation.py:162-175 — JSON schema validation raises without rewriting the JSON.",
+    "runtime_protocol/schemas/timeline-commit-bundle.json:3376-3385 — Occurrence.gain type is number.",
+    "runtime_protocol/service.py:2818-2888 — adjacent occurrence normalizer rejects non-numeric gain and does not default explicit null.",
+    "tests/editing_conformance/test_commit_runtime_video_unplace.py:73-85 — passing same-property source case uses gain: 1.",
+    "astrid/sdk/timeline/native_occurrence_create.py:46-50 — native producer hardcodes gain: 1.",
+    "runtime contract/commit-v2.md:455-481 — explicit null is distinct and schema-gated; unspecified fields are not default-filled.",
+    "prior D12/D12a design reports — unchanged-invalid retention is scoped to unchanged targets, not newly written invalid targets."
+  ],
+  "interpretation": {
+    "observed_behavior": "Schema refusal of explicit null at prepared candidate validation.",
+    "candidate_regression": "No source evidence.",
+    "intended_null_semantics": "Not established; requires owner decision.",
+    "functional_go": "Not claimed."
+  }
+}

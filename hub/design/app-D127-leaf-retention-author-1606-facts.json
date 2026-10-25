@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "task": "D127 bounded existing diagnostic helper continuation",
+  "decision": "HELPER_ONLY_SAFE_LEAF_AND_TRUTHFUL_LIFECYCLE",
+  "base": {
+    "runtime_commit": "453b3e6f92045980219ec4948419ee5ad25c817d",
+    "source_helper_sha256_before": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760"
+  },
+  "changes": {
+    "authorized_files_only": true,
+    "safe_projection": "nearest safe frame per sample is counted in bounded top_leaf_frames; top_inclusive_frames is retained",
+    "lifecycle_labels": ["completed", "raised", "returned_without_response", "pending_at_stop"],
+    "buffer_completeness": "buffer_complete is explicit and remains distinct from lifecycle outcome; legacy complete is retained as the same buffer-completeness boolean",
+    "durations": "raised and pending requests do not receive inferred handler or request-wall durations",
+    "budgets": {
+      "max_requests": 8,
+      "max_events": 128,
+      "max_bytes": 65536,
+      "sampling_interval_ms": 20,
+      "sink_mode": "0600",
+      "watchdog_behavior": "unchanged"
+    },
+    "privacy": "current safe-frame allowlist, hashes, PID birth, UTC and request matching preserved; no request bodies, headers, credentials, private URLs, raw frame dumps, hooks or collectors added"
+  },
+  "actual_10721_history_unchanged": {
+    "request": 3,
+    "sample_total": 352,
+    "lost_samples": 3,
+    "last_observed_phase": "authorization",
+    "outcome": "PENDING",
+    "provider_leaf": "NOT_RETAINED_BY_PRIOR_TOP10_PROJECTION",
+    "response": "UNKNOWN",
+    "request_wall_denominator": "UNKNOWN",
+    "final_duration": "UNKNOWN"
+  },
+  "old_assertion_ast_mapping": {
+    "old_test_functions": 19,
+    "old_assertion_count": 169,
+    "old_test_functions_retained": 19,
+    "new_adversarial_tests": [
+      "test_nearest_safe_leaf_is_projected_separately_from_routing_frames",
+      "test_leaf_projection_counter_and_output_remain_bounded",
+      "test_return_without_response_is_not_buffer_completion_or_request_completion",
+      "test_raised_dispatch_is_labeled_without_inventing_a_duration"
+    ],
+    "old_tests_not_deleted_or_skipped": true,
+    "old_socket_tests": [
+      "test_mounted_http_commit_route_and_provider_are_observed",
+      "test_live_watchdog_uses_real_handler_and_private_faulthandler_output"
+    ]
+  },
+  "review": {
+    "independent_protected_review": "pending outside this worker",
+    "activation": "not performed",
+    "full_suite": "not requested"
+  }
+}

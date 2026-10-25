@@ -1,0 +1,45 @@
+{
+  "read_only": true,
+  "agent": {
+    "worktree": "/home/user/work/wt/app-D118d-graph-null-wholepath-1610",
+    "commit": "94ac9347b64e0aaf5fb71443cc500fd57e80aa72",
+    "key_files": [
+      "tests/sdk/test_timeline_commit_graph_roots.py",
+      "tests/editing_conformance/test_recorded_graph_roots.py",
+      "astrid/core/timeline/authoring_bundle.py",
+      "astrid/sdk/timeline/commit.py"
+    ],
+    "verified_hashes": {
+      "tests/sdk/test_timeline_commit_graph_roots.py": "72bf3c60cc006223c857ae5194280793a2be21ee0527ebb565a2a1cf271d9c21",
+      "tests/sdk/test_timeline_commit_graph_roots.py_parent_normal": "823b9de3b9aa23fb150ce86ef170bbffbe4c1830f677d4542a1843afd055da2a"
+    }
+  },
+  "runtime": {
+    "worktree": "/home/user/work/runtime",
+    "branch": "tl/integration",
+    "commit": "ab1e4f6",
+    "key_files": {
+      "runtime_protocol/timeline_commit_provider.py": "2dff389a",
+      "runtime_protocol/timeline_commit_execution.py": "5956b485",
+      "runtime_protocol/timeline_commit_store.py": "7d307566",
+      "runtime_protocol/schemas/timeline-commit-bundle.json": "e4da5c0e",
+      "runtime_protocol/service.py": "13587d2c"
+    }
+  },
+  "contract": {
+    "file": "/home/user/work/runtime/contract/commit-v2.md",
+    "relevant_lines": "455-481",
+    "use": "C0 explicit-null and no-default/no-unspecified-clear semantics"
+  },
+  "frozen_references": {
+    "sdk": "origin/codex/handover-timeline-r4-20261019-candidate-sdk",
+    "runtime": "origin/codex/handover-timeline-r4-20261019-candidate-runtime",
+    "app": "origin/codex/handover-timeline-r4-20261019-candidate-app-qualified",
+    "composition": "origin/codex/handover-timeline-r4-20261019-candidate-composition",
+    "scope_note": "Frozen candidate runtime did not contain the current integration schema path, and frozen candidate SDK did not contain the graph test path; current integration sources were therefore used for the live schema/provider seam. No frozen ref was checked out or modified."
+  },
+  "history": {
+    "authored_gain_null": "git blame identifies the fixture's authored null in the original pre-candidate history, not the six-line v2-envelope candidate diff.",
+    "candidate_change": "git diff shows no fixture, compiler, schema, provider, or assertion change."
+  }
+}

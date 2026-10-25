@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "task": "D118d independent READ-ONLY graph-null whole-path review",
+  "base_commit": "94ac9347b64e0aaf5fb71443cc500fd57e80aa72",
+  "verdict": "PASS",
+  "source_finding": "PASS",
+  "candidate_functional_go": false,
+  "product_change": false,
+  "classification": {
+    "product_regression": false,
+    "deliberate_schema_refusal": true,
+    "intended_null_support": "unknowable from current sources; not assumed"
+  },
+  "finding": "The first-return no-diff conclusion survives an independent whole-path review. The original authored occurrence still carries gain:null, the authoring compiler copies that field without normalization, the graph test uses the genuine registered commitTimeline provider, and the current public/runtime schema rejects null because Occurrence.gain is a required number. The observed failure is therefore an existing schema/producer compatibility seam, not a candidate graph-test change.",
+  "responsible_existing_seam": {
+    "authored_input": "tests/editing_conformance/test_recorded_graph_roots.py:46-51 creates occurrence:new-occ with gain: None.",
+    "producer": "astrid/core/timeline/authoring_bundle.py:1249-1305 copies each placement and appends it without defaulting or normalizing gain; :1312-1315 installs the compiled occurrences into the parent document.",
+    "real_caller": "tests/sdk/test_timeline_commit_graph_roots.py:56-65 registers load_timeline_commit_provider('astrid') on RuntimeService; :108-142 constructs the v2 request and calls service.commit_timeline at :129.",
+    "provider_and_validation": "RuntimeService delegates through runtime_protocol/timeline_commit_execution.py:395-401 to the registered provider. runtime_protocol/timeline_commit_store.py:1599-1605 validates the prepared candidate before acceptance, and runtime_protocol/timeline_commit_validation.py:162-175 applies JSON schema validation without changing the value.",
+    "public_schema": "runtime_protocol/schemas/timeline-commit-bundle.json, the Occurrence.gain property at lines 3376-3385, declares type number and does not permit null.",
+    "adjacent_normalizer": "runtime_protocol/service.py:2818-2888, especially :2863 and :2880, treats gain as a finite number and writes the validated number; explicit None is rejected rather than normalized to 1. This is not evidence that the commit path should accept null."
+  },
+  "passing_same_property_comparison": "tests/editing_conformance/test_commit_runtime_video_unplace.py:73-85 explicitly sets every input occurrence gain to 1 before using the registered provider; astrid/sdk/timeline/native_occurrence_create.py:46-50 also produces gain: 1. The passing source case is numeric and does not demonstrate gain:null support.",
+  "c0_and_d12": "C0 commit-v2.md:455-481 distinguishes missing from explicit null, permits set-to-null only where the schema allows it, and forbids unspecified keys from being cleared/default-filled. The D12/D12a unchanged-invalid untouched-field retention rule does not apply to this newly created/written occurrence target; it cannot excuse a newly introduced invalid gain value.",
+  "preserved_purposes": "The original 33 assertions and typed-root, tamper, no-write, unrecorded/orphan, inverse/redo, and authored-fact coverage remain unchanged. The candidate test diff is only the six-line v2 request-envelope addition.",
+  "minimal_unapplied_owner_handback": "Hand back to the existing Agent/Runtime C0 schema-producer owner for an explicit compatibility decision: either make the authored producer emit a schema-valid numeric gain or deliberately extend the contract/schema and all validators for explicit null. No repair, normalization, test weakening, or behavior GO is authorized by this review.",
+  "unverified": [
+    "No pytest, own9, live/socket/native/browser/full/family/P2/P4/acquisition/collector run was made, per task scope.",
+    "Current source establishes the refusal and seam, but does not establish the intended product semantics of gain:null."
+  ]
+}
