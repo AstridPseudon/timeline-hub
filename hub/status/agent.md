@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T03:21:11Z | dispatcher heartbeat 14s | live 2 (sol 1, luna 1, other 0) | busy30 16 | status age 1m -->
+<!-- agent | 2026-10-25T03:24:21Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 17 | status age 1m -->
 # agent board, 2026-10-25T03:12:03Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -213,21 +213,21 @@
 
 | F held thirteen | Route exact word and sheet inputs | Luna read only | Named owner follow-through | merged | Source disposition0301 complete | Zero eligible unchanged retries. Ten live seams and three retired CLI setup routes mapped. Five receiving source/input workers0314 assigned. | 562ee source facts |
 
-| F parent guard six | Fix asset collection guard projection | HARD Sol | Exact source finding0314 | doing | agt-R1-asset-guard-sol-0317 | Collection asset read becomes whole-parent scope. Narrow R1 correction; all real dependencies preserved. Review and MAIN proof before merge. | Current7e237 |
-| F sheet CLI three | Migrate current-sheet retired CLI setup | Luna | Independent protected source review | merging | Author0314; independent0317 PASS | Candidatefadd preserves every original predicate through ordinary commit/sheet/outbox. Normal merge queued; functional proof owed. | faddacda1b |
-| F word source four | Preserve exact choice and current C0 tests | Luna | Exact source disposition0314 | doing | Choice0317; oracle0317 | Exact binding lost to legacy validation in two cases. Two stale registry/status literals separately owned. All originals conserved. | Current7e237 |
+| F parent guard six | Fix asset collection guard projection | HARD Sol | Exact source finding0314 | review | AuthorSol0317; review0323 | Exact registry.assets tagged field projection static PASS. Candidate held for independent source review and MAIN six before merge. | Source0317 held |
+| F sheet CLI three | Migrate current-sheet retired CLI setup | Luna | Independent protected source review | merging | Author0314; independent0317 PASS | Normalac9a has exact reviewed691c blob; all three original scenarios need meaningful MAIN proof. | ac9a00f18e |
+| F word source four | Preserve exact choice and current C0 tests | Luna | Exact source disposition0314 | review | Choice0317; review0321; oracle0320 | Candidate exact-choice preservation has static PASS. Independent source review and meaningful originals remain owed. | Choice0317 held |
 | F inverse source six | Bind inverse failures to exact owner | Luna read only | Exact source disposition complete | merged | Source0314 complete | Two exact D14 positives remain deferred. Four live auth seams handed to Runtime with conditional Agent producer follow-up. No body. | Current7e237 |
 | F next exact input | Join new source receipts to later delta | Luna / MAIN receiver | Existing next10 extends to32 | merging | Inputs0314; receiving Runtime0306 | Exact32 published; four source hashes match7e237, zero161 overlap. Receiver subtracts later102 and coalesces inverse7/D92. Behavior owed. | Current7e237 |
 
 | R2 inverse auth four | Preserve retained inverse scenarios | Runtime / Agent source | Exact producer and auth follow-through | blocked:runtime | Agent0314 complete; peer sent | Four historical10077 inverse range/boundary/coverage failures remain live. No present-source failure or cure inferred. | Current7e237 /6634 |
 
-| F word oracle two | Match current operation and C0 invalid | Luna | Independent protected source review | review | Author0317; review0320 | Only two exact assertions changed. Other word predicates and D14 cases unchanged; no bodies. | Author0317 |
+| F word oracle two | Match current operation and C0 invalid | Luna | Independent protected source review | merging | Author0317; review0320 PASS | Two exact assertions independently qualify source. Normal merge queued; original bodies still owed. | d1b1d10191 |
 
-Integration: Agent7e23790248 normally includes media0240 and auto0241 reviewed corrections; both exact target blobs match independent reviews. D90 remains qualified by actual28969 PASS36; final tuple separate.
+Integration: Agentac9a00f18e includes media0240, auto0241 and protected current-sheet CLI3 migration. All target blobs match independent reviews. D90 remains qualified by actual28969 PASS36; final tuple separate.
 core open: P4 historical14151 FAIL45.448s; corrected diagnostic25257 FAIL45.557s. All requested timed stacks captured. One Runtime cost0301 owns evidence-directed repair; no Agent diagnosis or duplicate original.
 Gates: P1 and P3 historical GO. D59 final pinned P1-P5/core, D69 and genuine installed render still owed. No full PASS, core0, final tuple or ZIP claim. E2/D79 after ZIP.
 Rehearsal categories: PRE16 / KNOWN37 / ENV73 / NEWcore424 / NEWnoncore0 / REG0 =550. Eighteen ENV contrasts later passed; every exact scope limit retained.
-Families: First1619211 terminal6PASS43FAIL112ERROR. Later10211789 terminal10PASS24FAIL68ERROR. Mechanical exports0303/0310 pending; D91 firstten follows. Existing later102 plus Agent34 supplement and new media20/auto two require exact disjoint mapping by0314. No unchanged268 retry.
+Families: First1619211 terminal6PASS43FAIL112ERROR. Later10211789 terminal10PASS24FAIL68ERROR. Mechanical exports0303/0310 pending; D91 receiving path still zero-body; immutable20 controller0313 combines D91ten plus inverse7/D92three. All20 first bodies. Existing later102 plus Agent34 supplement and new media20/auto two require exact disjoint mapping by0314. No unchanged268 retry.
 Admission: D92 genuine A/B retains unused manifest pin; normal562ee exactly reviewed. Three compound originals await MAIN. Atomic and ABA separate. No legacy retirement.
 Safety: Old D88 denial/prototype remain stopped. D93 permits only original fixture credentials/session/granted scopes/calls. Corrected sample complete; no further sample queued.
 Disk: D89 amended source/review6 above5.0GB; heavy1 above5.2GB; nothing new below4.5GB. Five source jobs started at5.566GB; post-start free4.917GB holds new source starts. Approved sweep3 and compact running; historical dirty/KEEP/refused paths untouched.
@@ -237,4 +237,4 @@ Blockers: Final cut — D59 pinned P1-P5/core, D69 and genuine installed render 
 Next ready: Assigned parent guardSol, word choiceLuna, word oracleLuna and protected sheet review0317. Source findings need one review; exact MAIN bodies stay serialized.
 live 2 plus queued1 / cap6; ready-undispatched0 eligible source starts. Current pending review inventory is24 scopes, not24 unresolved diffs.
 
-Inbox consumed through1325154 bytes. Updated 2026-10-25T03:17:50Z. Exact media/auto source joins verified; held13 disposition and original artifacts byte-published. No manager product/test/generated/pin edits or bodies.
+Inbox consumed through1326922 bytes. Updated 2026-10-25T03:17:50Z. Exact media/auto source joins verified; held13 disposition and original artifacts byte-published. No manager product/test/generated/pin edits or bodies.
