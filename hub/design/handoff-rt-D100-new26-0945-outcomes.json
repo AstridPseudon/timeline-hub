@@ -1,0 +1,61 @@
+{
+  "task": "rt-D100-outcome-wholepath-0945",
+  "scope": {
+    "selectors": 26,
+    "groups": {"exact_time": 4, "shared_item": 22},
+    "oldred": {"agent": "6aefd11766c019f8deff0ca5a1bfe18e9e730822", "runtime": "0c62dfa63db9ff608ac9338388431e31a814e080", "pass": 16, "fail": 10, "error": 0},
+    "candidate": {"agent": "dd2fc40d94e35f93b3428210b58e8d58b3156a4a", "runtime": "1daca2a33f6d7b10053e07c539a54843e3984e19", "pass": 20, "fail": 6, "error": 0},
+    "app": "7841a946197b5312d79b594ffec0e5f7a937b6c0",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "verification": {
+    "oldred_xml_sha256": "520969f28385cef6d03df0011a2615c7f35beb251d3e2952d77705cca0e02077",
+    "candidate_xml_sha256": "c0303deaf837b5c98f237f2eb290f8287e546a9556268515c13795a42e0c6cf6",
+    "selector_map_members": 26,
+    "selector_argv_members": 26,
+    "candidate_preflight_exit": 0,
+    "positive_sentinel_exit": 17,
+    "poison_sentinel_exit": 1,
+    "registry_restore_sha256": "c4486fce0646293dd3bf16094dc6c08a56cb749753ca96f7382c79df92ec4235",
+    "route_bash_n": "PASS",
+    "candidate_ast": "PASS",
+    "runtime_worktree_diff_check": "PASS"
+  },
+  "outcomes": [
+    {"id":"test_capture_execute_exact_fit_keeps_local_time_and_interval[at]","group":"exact_time","oldred":"FAIL","candidate":"PASS","oldred_detail":"Fraction timing drift","candidate_boundary":"Agent local command path","owner":null},
+    {"id":"test_capture_execute_exact_fit_keeps_local_time_and_interval[at_ms]","group":"exact_time","oldred":"FAIL","candidate":"PASS","oldred_detail":"Fraction timing drift","candidate_boundary":"Agent local command path","owner":null},
+    {"id":"test_capture_execute_exact_fit_keeps_local_time_and_interval[both]","group":"exact_time","oldred":"FAIL","candidate":"PASS","oldred_detail":"Fraction timing drift","candidate_boundary":"Agent local command path","owner":null},
+    {"id":"test_capture_move_refuses_real_out_of_bounds_interval","group":"exact_time","oldred":"PASS","candidate":"PASS","oldred_detail":null,"candidate_boundary":"Agent guard/refusal","owner":null},
+    {"id":"test_registered_shared_birth_reads_original_physical_item_map[False]","group":"shared_item","oldred":"FAIL","candidate":"PASS","oldred_detail":"missing or ambiguous identity repeated-third","candidate_boundary":"Agent local command path","owner":null},
+    {"id":"test_shared_input_birth_then_consumer_keeps_all_original_owners","group":"shared_item","oldred":"FAIL","candidate":"PASS","oldred_detail":"missing or ambiguous identity repeated-third","candidate_boundary":"Agent local command path","owner":null},
+    {"id":"test_registered_shared_birth_reads_original_physical_item_map[True]","group":"shared_item","oldred":"FAIL","candidate":"PASS","oldred_detail":"missing or ambiguous identity repeated-third","candidate_boundary":"Agent local command path","owner":null},
+    {"id":"test_sequential_physical_item_correspondence_still_refuses_without_writes[unknown-item]","group":"shared_item","oldred":"PASS","candidate":"PASS","oldred_detail":null,"candidate_boundary":"Agent guard/refusal","owner":null},
+    {"id":"test_sequential_physical_item_correspondence_still_refuses_without_writes[ambiguous-owner]","group":"shared_item","oldred":"PASS","candidate":"PASS","oldred_detail":null,"candidate_boundary":"Agent guard/refusal","owner":null},
+    {"id":"test_sequential_physical_item_correspondence_still_refuses_without_writes[map]","group":"shared_item","oldred":"PASS","candidate":"PASS","oldred_detail":null,"candidate_boundary":"Agent guard/refusal","owner":null},
+    {"id":"test_existing_alias_correspondence_remains_strict[wrong-owner]","group":"shared_item","oldred":"PASS","candidate":"PASS","oldred_detail":null,"candidate_boundary":"Agent guard/refusal","owner":null},
+    {"id":"test_existing_alias_correspondence_remains_strict[missing-id]","group":"shared_item","oldred":"PASS","candidate":"PASS","oldred_detail":null,"candidate_boundary":"Agent guard/refusal","owner":null},
+    {"id":"test_existing_alias_correspondence_remains_strict[duplicate-id]","group":"shared_item","oldred":"PASS","candidate":"PASS","oldred_detail":null,"candidate_boundary":"Agent guard/refusal","owner":null},
+    {"id":"test_registered_runtime_shared_birth_and_consumer_keep_one_physical_image[False]","group":"shared_item","oldred":"FAIL","candidate":"FAIL","oldred_detail":"missing or ambiguous identity repeated-third","candidate_boundary":"Runtime fixture setup: create_timeline -> adopt_empty_shell -> store history guard","owner":"Agent test fixture registered_seed duplicate create (8d43cc7c6c2)"},
+    {"id":"test_registered_birth_then_item_consumer_in_one_batch[False]","group":"shared_item","oldred":"FAIL","candidate":"PASS","oldred_detail":"missing or ambiguous identity repeated-third","candidate_boundary":"Agent local command path","owner":null},
+    {"id":"test_sequential_physical_item_correspondence_still_refuses_without_writes[pin]","group":"shared_item","oldred":"PASS","candidate":"PASS","oldred_detail":null,"candidate_boundary":"Agent guard/refusal","owner":null},
+    {"id":"test_sequential_physical_item_correspondence_still_refuses_without_writes[malformed-source]","group":"shared_item","oldred":"PASS","candidate":"PASS","oldred_detail":null,"candidate_boundary":"Agent guard/refusal","owner":null},
+    {"id":"test_sequential_physical_item_correspondence_still_refuses_without_writes[missing-source]","group":"shared_item","oldred":"PASS","candidate":"PASS","oldred_detail":null,"candidate_boundary":"Agent guard/refusal","owner":null},
+    {"id":"test_existing_owner_cannot_retarget_another_genuinely_created_physical_image","group":"shared_item","oldred":"PASS","candidate":"PASS","oldred_detail":null,"candidate_boundary":"Agent guard/refusal","owner":null},
+    {"id":"test_existing_alias_correspondence_remains_strict[ambiguous-map]","group":"shared_item","oldred":"PASS","candidate":"PASS","oldred_detail":null,"candidate_boundary":"Agent guard/refusal","owner":null},
+    {"id":"test_registered_birth_then_item_consumer_in_one_batch[True]","group":"shared_item","oldred":"FAIL","candidate":"PASS","oldred_detail":"missing or ambiguous identity repeated-third","candidate_boundary":"Agent local command path","owner":null},
+    {"id":"test_registered_runtime_shared_birth_and_consumer_keep_one_physical_image[True]","group":"shared_item","oldred":"FAIL","candidate":"FAIL","oldred_detail":"missing or ambiguous identity repeated-third","candidate_boundary":"Runtime fixture setup: create_timeline -> adopt_empty_shell -> store history guard","owner":"Agent test fixture registered_seed duplicate create (8d43cc7c6c2)"},
+    {"id":"test_registered_runtime_failed_consumer_rolls_back_shared_birth[before]","group":"shared_item","oldred":"PASS","candidate":"FAIL","oldred_detail":null,"candidate_boundary":"Runtime fixture setup: create_timeline -> adopt_empty_shell -> store history guard","owner":"Agent test fixture registered_seed duplicate create (8d43cc7c6c2)"},
+    {"id":"test_registered_runtime_failed_consumer_rolls_back_shared_birth[unknown-ref]","group":"shared_item","oldred":"PASS","candidate":"FAIL","oldred_detail":null,"candidate_boundary":"Runtime fixture setup: create_timeline -> adopt_empty_shell -> store history guard","owner":"Agent test fixture registered_seed duplicate create (8d43cc7c6c2)"},
+    {"id":"test_registered_runtime_failed_consumer_rolls_back_shared_birth[duplicate-item]","group":"shared_item","oldred":"PASS","candidate":"FAIL","oldred_detail":null,"candidate_boundary":"Runtime fixture setup: create_timeline -> adopt_empty_shell -> store history guard","owner":"Agent test fixture registered_seed duplicate create (8d43cc7c6c2)"},
+    {"id":"test_registered_runtime_failed_consumer_rolls_back_shared_birth[missing-item-id]","group":"shared_item","oldred":"PASS","candidate":"FAIL","oldred_detail":null,"candidate_boundary":"Runtime fixture setup: create_timeline -> adopt_empty_shell -> store history guard","owner":"Agent test fixture registered_seed duplicate create (8d43cc7c6c2)"}
+  ],
+  "candidate_failure_group": {
+    "count": 6,
+    "public_error": "runtime_protocol.errors.ConflictError: timeline already exists",
+    "internal_cause": "runtime_protocol.timeline_commit.CommitRejected: history_unavailable",
+    "first_boundary": "tests/sdk/test_sequential_shared_item_provenance.py:64 -> RuntimeService.create_timeline -> service.py:1727/1769-1771 -> timeline_commit_store.py:2027-2032",
+    "not_reached": ["runtime_commit", "commitTimeline", "registered Agent producer", "document acceptance/store CAS"],
+    "classification": "deterministic duplicate setup; Runtime guard is a correct refusal, not a genuine production CAS conflict",
+    "confound": "old-red used Runtime 0c62 and stopped earlier on Agent identity errors; candidate used Runtime 1daca. Relevant create/adopt source regions are byte-identical by region hash, so isolated Agent causality is not claimed."
+  }
+}

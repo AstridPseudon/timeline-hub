@@ -717,6 +717,7 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - The ZIP README lists it as a post-install check, with the exact env vars to set.
   - Agent's core-open target is therefore 6 (4 fork + 2 forward), all on D62 / forward-created auth.
   - This is not a permission-refusal case, so no owner action is needed.
+- **H60 (09:55Z):** ETA ~04:00Z 26 Oct (23:00Z 25 Oct to 14:00Z 26 Oct; Opus the same). P1/P3 GO on current heads; P4/P5 GO; P2 4/8 on the current tuple. Agent core open 438 (all ours, 0 regressions proven; about 7 root locations). D117 GitHub access is an owner decision. 20 merges/3 h.
 - **H57 (06:50Z):** ETA ~01:00Z 26 Oct (20:00Z 25 Oct to 12:00Z 26 Oct; Opus 03:00Z). P1/P3/P5 GO on recorded tuples; P4 GO (28.1 s); P2 4/8. Agent: 160 merged, 47 proof owed, so D108 runs one full core suite. F-final rehearsal un-gated. 46 merges/3 h; regressions vs upstream 0.
 - **H54 (03:55Z):** ETA ~20:00Z 25 Oct (15Z 25 Oct to 10Z 26 Oct). P1 and P3 GO; P2 isolated 2/8; P4 waits on D94/D94a. Regressions 0.
 - **RELEASE Runtime 0c62dfa63 (04:25Z): D94/D94a/D97 shipped.** Independent final security review 0420 PASSES on candidate fec6ca4f (263/267 passed); the cost curve is flat. Next: adopt it, then ONE P4 ten-note original (Agent), and the held P2 gestures element/parent/SWAP/ADD (App). Privileged real chown is unverified; the different-owner case is covered by controlled stat witnesses.

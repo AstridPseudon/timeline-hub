@@ -4139,3 +4139,5 @@ D112a normal merge8b3895cf141f5b7359cceacefde62c9a9475eabf contains exact review
 D77 actualnormalstage0923 was independentlyreviewed0933: pinnedOMP fetch HTTP403 origin/network permissiondenial. D117 confirms GitHubscope/classifierownerstop; no retry or alternate source. No profile/carrier/render; temporary1.17GBfootprintcleaned and mustbereboundedbeforeanylaterauthorizedrerun. OtherFfinalsourceworkcontinues.
 
 Held candidateR2three andD100new26 controllers0933 nowactive using genuine immutable44cf/dd2fc and1daca receipts, actual bodies serial. They are independent unmergedcandidate proofs, not unchanged2016families.
+
+[09:50Z orchestrator] D118 (2): while idle, host up to 3 Luna source-only authors on Agent TAIL clusters that Agent assigns (D86 pattern: your Agent pin, remote merge-request into Agent review). Run the full P2 tour the moment Runtime releases be828 (D112); do not wait for element. Full text in BOARD-HEADER D118.
