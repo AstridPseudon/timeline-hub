@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T14:01:48Z | dispatcher heartbeat 15s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 3m -->
-# app board, 2026-10-25T13:58Z
+<!-- app | 2026-10-25T14:06:00Z | dispatcher heartbeat 10s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 1m -->
+# app board, 2026-10-25T14:04Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -82,11 +82,12 @@
 | D124-capture | Truthful dispatch and sampler capture | Luna and protected Luna | Final1315 SOURCE PASS | merged | Clean1321; Runtime normal453b | Exact helperSHA and normal remote receipt verified;19 controls/statics PASS at donor. Browser qualification still owed. | Runtime453b3e6f92 |
 | D124-hook | Attach reviewed helper through normal D66 | Luna and protected Luna | Protected1320 SOURCE PASS | merged | Author1312; review1320 | Whole normal tree equals reviewed4c56.29 D66 and2 route, types/lint PASS; actual sampler attachment qualified only in later tour. | af5fe0a274 |
 | D124-bootstrap | Qualify existing normal bootstrap controls | Luna read only | Own three existing controls | review | app-D124-normal-bootstrap-controls-1337 | D78 PASS; throw-fixture500 and event-key schema FAIL. D66 exact helper identity2 PASS. [Report](../../design/app-D124-normal-bootstrap-controls-1337-report.md). | af5fe0 source |
-| D125-full-P2 | Proof hosts tagged full tour now | Proof producer; App Luna verdict | D125a and D125b accepted Node | doing | Proof sole controller; App verdict reserved | Owner accepted exact Node20.19.4 tree; Proof owns ordinary preflight and one submit. No App original or local fallback. | fe3309 /070dfc /5e9ad /635f |
-| D124-bootstrap-return | Repair two current harness contracts | Luna and protected Luna | D126 APPROVED; sole review1354 | review | Author1350; independent1354 active | Exact upstream POST migration approved. Three old assertions must stay exact. Normal and reviewed helper controls pass at author; review pending. | 4b4e0558ef |
-| D126-notes | Record upstream change and ZIP note | Luna | D126 approved exact delta | doing | app-D126-ledger-zip-note-1359 | Worker authors exact ledger paragraph and one ZIP line; publication follows protected PASS. No product or test edits. | Documentation only |
+| D125-full-P2 | Preserve Proof zero body handback | Proof; App receipt | D127 venue transfer | gated:venue-returned | Proof stood down; no service ID | Exact recipe stopped at missing tsx before central preflight. All eight NOTRUN. Owner transferred to App D127, no Proof duplicate. | Frozen fe3309 tuple |
+| D127-full-P2 | Run local tagged original tour now | Luna and independent Luna | D127 GO and fresh heavy floor | doing | app-D127-tagged-full-P2-local-1404 | Controller setup active. Body floor short by 63.19MB; author1402 normal release expected to clear it. No actual ID yet. | fe3309 /070dfc /5e9ad /635f |
+| D124-bootstrap-return | Repair two current harness contracts | Luna and protected Luna | D126 approved; review1354 FAIL | doing | Same branch first return1402 | Independent rejects loose bounds, phase contradictions, overshare and privacy values. Exact fake POST delta stays. No candidate merge or original credit. | Base4b4e0558ef |
+| D126-notes | Record upstream change and ZIP note | Luna | Corrected source protected PASS | gated:source-review | app-D126-ledger-zip-note-1359 | Required paragraphs were in recycled ignored paths. Facts only branch retained and never merged; final reviewer must publish exact notes. | Evidence only |
 
-| D125-local-prep | Prepare authorized fallback without submission | Luna read only | D125c Proof keeps first venue | doing | app-D125-local-fallback-prep-1356 | Local exact receipt and command preparation only. No preflight or original until explicit venue handback. | Frozen fe3309 tuple |
+| D125-local-prep | Prepare exact local fallback | Luna read only | Exact four local receipts | merged | app-D125-local-fallback-prep-1356 | Source/API/Node and source hashes PASS; no body. Dependency omission is explicit and assigned to D127 controller. | Frozen fe3309 tuple |
 
 | D74-D124-old-pins | Release obsolete completed tuple pins | Manager and host audit | Host1249 and fresh guards | merged | Guarded recycle1254 | Both34d464 and7070 recycled normally;187142144 bytes net. All outputs, reports, branches and current inputs kept. Zero refusal. | No source edits |
 
@@ -104,9 +105,9 @@ Blockers: App element — Sole App owner. Helper is normal Runtime453b and App h
 Blockers: Agent host14 — Authentic original14 FAIL at registry discovery. Agent source1201 and independent wholepath1201 own successor; no App duplicate.
 Blockers: Farm batch — Atomic and native binding are normal Agent source; downstream product adoption waits unfiltered Farm core. Captured-redo test setup is home. No App author or review wait remains.
 Blockers: Final cut — Current full P2 remains NO-GO; final P1-P5/core/D69 and genuine installed render still owed. Existing denied acquisition and cleanup routes remain stopped.
-Next ready: Proof exact recipe under D125c; same ID terminal gets App independent verdict. Review1354 runs; D126 upstream scope APPROVED; notes1359 active. Local fallback prep1356 submits nothing.
-live 3 / cap 3; ready-undispatched 0; core open: 2. Protected1354, read only fallback1356 and D126 notes1359. D89b source cap3 below5GB; no App heavy. Proof sole D125 venue under D125c.
+Next ready: D127 local one-command submit after normal dependencies and fresh5.2GB floor. Bounds author1402 then one independent review. D127 terminal gets reserved App verdict; Proof is stood down.
+live 2 / cap 3; ready-undispatched 0; core open: 2. Bounds author1402 and D127 controller. Only one heavy body authorized; no new source starts below admission floor while it runs.
 Capacity: Sweep3 removed0; corrected compact packed0 scratch/test dirs and gzipped6 old logs. Free about5.33GB at13:49. Ended nonKEEP unrecycled tree scan0. Heavy5.2GB and stop4.0GB; protected targets untouched.
-INBOX consumed through2233362 bytes, including D125a/D125b accepted Node custody and sole Proof venue. Retained11251/8974/15203/15712 outputs and all prior refused/dirty targets remain protected.
+INBOX consumed through2236117 bytes including D126 and D127 GO. Proof returned zero service IDs; App now sole venue. Retained original outputs and guarded targets remain protected.
 Later: Nativecheckout4/trackbatch1 share known m1.film missingwordanchor setup; no diff/retirement. D116 reviewedjoin held for Agent raw/config batch. D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees retain guards. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakening, credentials or refused-route retry.
 
