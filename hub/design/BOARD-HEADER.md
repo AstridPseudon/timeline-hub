@@ -229,7 +229,7 @@ MERGE-ONLY lanes: none   (lifted 10:47Z 23 Oct after the keep-awake was allowed.
   - The separate net-zero native recorder expectation correction goes under the D82/D83 standing rule once its full record facts are known.
 - **D89, disk floors re-based now the swings are fixed (01:02Z).** The 0.5–3 GB swings came from git repacks and auto-gc, fixed by LOOPS #76. With those gone, the old margins over-throttle every lane: Agent has 29 reviews pending at local cap 0, and main sits at 6.0 GB.
   - **New rule on EVERY machine:**
-    - SOURCE-ONLY authors and reviewers (~0.2 GB each, no build): up to 6 at once while free disk is above **5.5 GB**.
+    - SOURCE-ONLY authors and reviewers (~0.2 GB each, no build): up to 6 at once while free disk is above **5.0 GB** (lowered from 5.5 GB at 02:45Z, because 24 Agent reviews were stuck at 5.2 GB; the 4.5 GB stop protects the floor).
     - HEAVY/service bodies: one at a time while free disk is above **5.2 GB**.
     - NOTHING new below **4.5 GB**.
     - Stop the newest non-gate run first at 4.0 GB.

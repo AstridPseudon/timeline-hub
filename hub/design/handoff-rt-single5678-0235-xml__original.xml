@@ -1,0 +1,6 @@
+<testsuites id="" name="" tests="1" failures="0" skipped="0" errors="0" time="51.86565">
+<testsuite name="three-products.p2-tour.spec.ts" timestamp="2026-10-25T02:28:37.592Z" hostname="" tests="1" failures="0" skipped="0" time="24.286" errors="0">
+<testcase name="P2 mounted transition None single: raw clear preserves opaque data/order and guarded Undo" classname="three-products.p2-tour.spec.ts" time="24.286">
+</testcase>
+</testsuite>
+</testsuites>

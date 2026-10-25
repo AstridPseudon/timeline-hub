@@ -1,0 +1,400 @@
+        if after['state'] == 'absent':
+            for end in range(1, len(path)):
+                ancestor = self.state.get(ref, path[:end])
+                if ancestor == ABSENT or ancestor == present(None):
+                    # A missing leaf must not erase its ancestor's tagged presence.
+                    self.read(ref, path[:end])
+                    break
+        before = self.state.get(ref, path)
+        self.record['writes'].append({"ref": ref, "path": list(path),
+                                       "before": before, "after": copy.deepcopy(after)})
+        self.state.set(ref, path, after)
+        if ref == 'parent' and list(path) == ['config']:
+            parent = self.state.bundle['parent']
+            config = parent.get('config')
+            self.mirrored_clips = (isinstance(parent.get('clips'), list)
+                                   and isinstance(config, dict) and isinstance(config.get('clips'), list)
+                                   and equal(parent['clips'], config['clips']))
+
+    def write(self, ref, path, value):
+        self.assign(ref, path, present(value))
+
+    def clear(self, ref, path):
+        self.assign(ref, path, ABSENT)
+
+    def object(self, ref, path):
+        value = self.state.get(ref, path)
+        if value['state'] == 'present' and isinstance(value['value'], dict):
+            return
+        self.read(ref, path)
+        if value['state'] == 'present' and value['value'] is not None:
+            raise CommandError("intent container must be object or null", ref=ref, path=path)
+        self.write(ref, path, {})
+
+    def create(self, owner, kind, row, *, restoring=False, after=None):
+
+codex
+The authentic 10077 packet matches this worktree exactly (`test_commit_runtime_parent_media.py` SHA-256 `deafe397…`), and its 18 errors all stop during the historical fixture’s dry-run `occurrence.add-media` command. The current caller submits that raw command without `created`; the real provider recorder creates the occurrence asset and clip claims, so Runtime’s exact command/claim predicate rejects it before the intended parent-media cases run. I’m applying only those demonstrated setup claims, preserving all authored rows and assertions.
+apply patch
+patch: completed
+/home/user/work/wt/agt-D86-parent-media-actual-0240/tests/editing_conformance/test_commit_runtime_parent_media.py
+diff --git a/tests/editing_conformance/test_commit_runtime_parent_media.py b/tests/editing_conformance/test_commit_runtime_parent_media.py
+index 31005dfdc55d8df023ed42bb15679e5755e58d0e..98c25406a5c12cbb3285d820b32128e08b28c58b
+--- a/tests/editing_conformance/test_commit_runtime_parent_media.py
++++ b/tests/editing_conformance/test_commit_runtime_parent_media.py
+@@ -177,6 +177,9 @@
+             child_preview = call('occurrence.add-media', {
+                 'row': child, 'media': music_pin}, 'occurrence:occurrence-2')
+             child_preview['intent'] = {'ownership': 'occurrence'}
++            child_preview['created'] = [
++                'occurrence:occurrence-2/asset:' + child['asset'],
++                'occurrence:occurrence-2/clip:' + child['id']]
+             commit(editing, body(editing, [child_preview], dry_run=True), 'occurrence-2-selection')
+             child_command = capture_occurrence_add_media(
+                 bundle_from_document(current(editing)), 'occurrence:occurrence-2', child,
+
+exec
+/bin/bash -lc "command -v ruff || true; command -v mypy || true; ls -l /home/user/work/venv-agent/bin/ruff /home/user/work/venv-agent/bin/mypy 2>/dev/null || true; rg -n 'ruff|mypy|compare_ruff_baseline|compare_mypy' Makefile pyproject.toml setup.cfg tox.ini scripts 2>/dev/null | sed -n '1,220p'" in /home/user/work/wt/agt-D86-parent-media-actual-0240
+exec
+/bin/bash -lc 'git diff -- tests/editing_conformance/test_commit_runtime_parent_media.py; git diff --check; sha256sum tests/editing_conformance/test_commit_runtime_parent_media.py; git status --short' in /home/user/work/wt/agt-D86-parent-media-actual-0240
+ succeeded in 21ms:
+/root/.local/bin/ruff
+/root/.local/bin/mypy
+-rwxr-xr-x 1 root root      199 Oct 19 17:55 /home/user/work/venv-agent/bin/mypy
+-rwxr-xr-x 1 root root 31351280 Oct 19 17:54 /home/user/work/venv-agent/bin/ruff
+Makefile:11:.PHONY: help test check ci preflight structure doc-refs doctor ruff mypy cycles remotion-install remotion-typecheck renderer-parity wheel editable lock-build lock-runtime lock-proof lock-validate toolchain-record
+Makefile:14:	@echo "make check   - blocking gates: structure, doc-refs, doctor, ruff, mypy, cycles, Remotion, renderer parity"
+Makefile:18:	@echo "make <gate>  - run one gate: structure | doctor | ruff | mypy | cycles | remotion-install | remotion-typecheck | renderer-parity | wheel | editable"
+Makefile:22:check: preflight structure doc-refs doctor ruff mypy cycles remotion-typecheck renderer-parity
+Makefile:26:	@$(PY) -c "import importlib.util, sys; required=('pytest','pytest_cov','pytest_timeout','mypy','ruff','build','banodoco_timeline_schema'); missing=[name for name in required if importlib.util.find_spec(name) is None]; problems=[]; sys.version_info < (3,11) and problems.append('Python >=3.11 is required (found %s)' % sys.version.split()[0]); missing and problems.append('missing Python modules: %s (run %s -m pip install -e \'.[dev]\')' % (', '.join(missing), sys.executable)); problems and sys.exit('PREFLIGHT FAILED: ' + '; '.join(problems))"
+Makefile:51:ruff:
+Makefile:52:	@$(PY) -m scripts.reshape.compare_ruff_baseline
+Makefile:53:	@echo "✓ ruff baseline (no lint regression)"
+Makefile:55:mypy:
+Makefile:56:	@$(PY) -m scripts.reshape.compare_mypy_baseline
+Makefile:57:	@echo "✓ mypy baseline (no type regression)"
+pyproject.toml:53:    "mypy==1.17.0",
+pyproject.toml:71:    "ruff==0.12.0",
+pyproject.toml:196:[tool.ruff]
+pyproject.toml:207:[tool.ruff.lint]
+pyproject.toml:234:[tool.mypy]
+pyproject.toml:236:# The Darwin custody modules raise on every other platform, so mypy would skip their bodies as
+pyproject.toml:237:# unreachable and the exact-count gate (scripts/reshape/baselines/mypy_astrid.json) would differ
+scripts/reshape/installed_artifact.py:484:        ".mypy_cache",
+scripts/reshape/installed_artifact.py:485:        ".ruff_cache",
+scripts/reshape/compare_ruff_baseline.py:12:BASELINE_PATH = Path("scripts/reshape/baselines/ruff_astrid.json")
+scripts/reshape/compare_ruff_baseline.py:16:    "ruff",
+scripts/reshape/compare_ruff_baseline.py:28:        raise RuntimeError(f"ruff failed to execute: {exc}") from exc
+scripts/reshape/compare_ruff_baseline.py:31:        raise RuntimeError(f"ruff failed to execute (exit {proc.returncode}): {detail}")
+scripts/reshape/compare_ruff_baseline.py:36:        raise RuntimeError(f"ruff failed to execute: {detail}") from exc
+scripts/reshape/compare_ruff_baseline.py:38:        raise RuntimeError("ruff failed to execute: expected a JSON findings list")
+scripts/reshape/compare_ruff_baseline.py:41:        raise RuntimeError(f"ruff failed to execute (exit 1): {detail}")
+scripts/reshape/compare_ruff_baseline.py:43:        "tool": "ruff",
+scripts/reshape/compare_ruff_baseline.py:44:        "scope": ["pyproject.toml [tool.ruff].include"],
+scripts/reshape/compare_mypy_baseline.py:12:BASELINE_PATH = Path("scripts/reshape/baselines/mypy_astrid.json")
+scripts/reshape/compare_mypy_baseline.py:16:    "mypy",
+scripts/reshape/compare_mypy_baseline.py:31:        raise RuntimeError(f"mypy failed to execute: {exc}") from exc
+scripts/reshape/compare_mypy_baseline.py:48:        raise RuntimeError(f"mypy failed to execute (exit {proc.returncode}): {detail}")
+scripts/reshape/compare_mypy_baseline.py:50:        "tool": "mypy",
+scripts/reshape/baselines/mypy_astrid.json:2:  "tool": "mypy",
+scripts/reshape/baselines/mypy_astrid.json:10:    "mypy",
+scripts/reshape/baselines/ruff_astrid.json:2:  "tool": "ruff",
+scripts/reshape/baselines/ruff_astrid.json:4:    "pyproject.toml [tool.ruff].include"
+scripts/reshape/baselines/ruff_astrid.json:9:    "ruff",
+scripts/reshape/baselines/README.md:1:Blocking lint/type baselines for the `make ruff` / `make mypy` gates (run by `.github/workflows/ci.yml` and `make check`).
+scripts/reshape/baselines/README.md:4:- `ruff_astrid.json` and `mypy_astrid.json` record the accepted finding counts for the whole tree (Ruff: `pyproject.toml` `[tool.ruff]`; mypy: `astrid` and `scripts/reshape`).
+scripts/reshape/baselines/README.md:12:python -m scripts.reshape.compare_ruff_baseline --write-baseline
+scripts/reshape/baselines/README.md:13:python -m scripts.reshape.compare_mypy_baseline --write-baseline
+scripts/reshape/count_baseline.py:1:"""Shared exact-count gate for the Ruff and mypy baselines (testing plan, Owned debt).
+scripts/gen_remotion_types.py:6:# ruff: noqa: E402
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import ast
+from pathlib import Path
+path = Path('tests/editing_conformance/test_commit_runtime_parent_media.py')
+source = path.read_text()
+tree = ast.parse(source, filename=str(path))
+compile(tree, str(path), 'exec')
+print(f'AST parse/compile PASS: {len(tree.body)} top-level statements')
+PY" in /home/user/work/wt/agt-D86-parent-media-actual-0240
+ succeeded in 29ms:
+AST parse/compile PASS: 42 top-level statements
+
+ succeeded in 308ms:
+diff --git a/tests/editing_conformance/test_commit_runtime_parent_media.py b/tests/editing_conformance/test_commit_runtime_parent_media.py
+index 31005dfdc5..98c25406a5 100644
+--- a/tests/editing_conformance/test_commit_runtime_parent_media.py
++++ b/tests/editing_conformance/test_commit_runtime_parent_media.py
+@@ -177,6 +177,9 @@ def media_realm(tmp_path, monkeypatch, kind, *, historical, pristine=False):
+             child_preview = call('occurrence.add-media', {
+                 'row': child, 'media': music_pin}, 'occurrence:occurrence-2')
+             child_preview['intent'] = {'ownership': 'occurrence'}
++            child_preview['created'] = [
++                'occurrence:occurrence-2/asset:' + child['asset'],
++                'occurrence:occurrence-2/clip:' + child['id']]
+             commit(editing, body(editing, [child_preview], dry_run=True), 'occurrence-2-selection')
+             child_command = capture_occurrence_add_media(
+                 bundle_from_document(current(editing)), 'occurrence:occurrence-2', child,
+6f68086f887b8c984597b5a7940261ae6fd18564f1da4dccff96351c03afdf76  tests/editing_conformance/test_commit_runtime_parent_media.py
+ M tests/editing_conformance/test_commit_runtime_parent_media.py
+
+codex
+The patch is now limited to three setup lines: exact occurrence asset and clip claim refs derived from the already-authored `child` row. I’m doing the mandated source-only checks next: AST compile, Ruff/mypy diagnostics compared with the pre-change source, and whitespace/diff validation. No pytest or fixture execution will be run.
+exec
+/bin/bash -lc 'git show HEAD:tests/editing_conformance/test_commit_runtime_parent_media.py | RUFF_CACHE_DIR=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/tmpdir/ruff-baseline /root/.local/bin/ruff check --stdin-filename tests/editing_conformance/test_commit_runtime_parent_media.py - --output-format json' in /home/user/work/wt/agt-D86-parent-media-actual-0240
+ succeeded in 0ms:
+[]
+exec
+/bin/bash -lc 'RUFF_CACHE_DIR=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/tmpdir/ruff-current /root/.local/bin/ruff check tests/editing_conformance/test_commit_runtime_parent_media.py --output-format json' in /home/user/work/wt/agt-D86-parent-media-actual-0240
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/mypy tests/editing_conformance/test_commit_runtime_parent_media.py --no-incremental --cache-dir=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/tmpdir/mypy-current --show-error-codes' in /home/user/work/wt/agt-D86-parent-media-actual-0240
+exec
+/bin/bash -lc 'git show HEAD:tests/editing_conformance/test_commit_runtime_parent_media.py | /home/user/work/venv-agent/bin/mypy - --no-incremental --cache-dir=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/tmpdir/mypy-baseline --show-error-codes' in /home/user/work/wt/agt-D86-parent-media-actual-0240
+ exited 2 in 53ms:
+error: Failed to initialize cache at /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/tmpdir/ruff-current: Not a directory (os error 20)
+
+Stack backtrace:
+   0: <unknown>
+   1: <unknown>
+   2: <unknown>
+   3: <unknown>
+   4: <unknown>
+   5: <unknown>
+   6: <unknown>
+   7: __libc_start_call_main
+             at ./csu/../sysdeps/nptl/libc_start_call_main.h:58:16
+   8: __libc_start_main_impl
+             at ./csu/../csu/libc-start.c:360:3
+   9: <unknown>
+warning: Failed to open cache file `/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/tmpdir/ruff-current/0.16.8/5310655720610979119`: Not a directory (os error 20)
+ruff failed
+  Cause: Failed to create temporary file
+  Cause: Not a directory (os error 20) at path "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/tmpdir/ruff-current/0.16.8/.tmpcZpIpN"
+
+ exited 2 in 103ms:
+mypy: can't read file '-': No such file or directory
+
+ succeeded in 1402ms:
+Success: no issues found in 1 source file
+
+codex
+The first diagnostic attempt exposed only tooling invocation issues: Ruff’s cache parent was absent, and mypy does not accept stdin in this installed version. The current-file mypy check itself passed. I’m rerunning with private cache directories and a read-only baseline snapshot in the permitted scratch area; this does not touch the worktree or dependencies.
+exec
+/bin/bash -lc "mkdir -p /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/tmpdir/ruff-baseline /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/tmpdir/ruff-current /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/tmpdir/mypy-baseline/tests/editing_conformance && git show HEAD:tests/editing_conformance/test_commit_runtime_parent_media.py > /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/tmpdir/mypy-baseline/tests/editing_conformance/test_commit_runtime_parent_media.py && echo 'scratch baseline prepared'" in /home/user/work/wt/agt-D86-parent-media-actual-0240
+ exited 1 in 0ms:
+mkdir: cannot create directory ‘/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/tmpdir’: Not a directory
+mkdir: cannot create directory ‘/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/tmpdir’: Not a directory
+mkdir: cannot create directory ‘/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/tmpdir’: Not a directory
+
+exec
+/bin/bash -lc 'ls -ld /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/tmpdir; file /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/tmpdir; stat /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/tmpdir' in /home/user/work/wt/agt-D86-parent-media-actual-0240
+ succeeded in 0ms:
+drwxr-xr-x 2 root root 4096 Oct 25 02:40 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240
+-rw-r--r-- 1 root root   18 Oct 25 02:40 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/tmpdir
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/tmpdir: ASCII text
+  File: /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/tmpdir
+  Size: 18        	Blocks: 8          IO Block: 4096   regular file
+Device: 254,0	Inode: 2425069     Links: 1
+Access: (0644/-rw-r--r--)  Uid: (    0/    root)   Gid: (    0/    root)
+Access: 2026-10-25 02:40:32.981956328 +0000
+Modify: 2026-10-25 02:40:20.449955583 +0000
+Change: 2026-10-25 02:40:20.449955583 +0000
+ Birth: 2026-10-25 02:40:20.449955583 +0000
+
+codex
+The harness-provided `tmpdir` path is unexpectedly a small marker file, so it cannot hold caches. I will use a private `/tmp/agt-D86-parent-media-actual-0240` scratch directory instead; this is within the allowed temporary area and avoids altering the harness marker.
+exec
+/bin/bash -lc "mkdir -p /tmp/agt-D86-parent-media-actual-0240/ruff-baseline /tmp/agt-D86-parent-media-actual-0240/ruff-current /tmp/agt-D86-parent-media-actual-0240/mypy-baseline/tests/editing_conformance && git show HEAD:tests/editing_conformance/test_commit_runtime_parent_media.py > /tmp/agt-D86-parent-media-actual-0240/mypy-baseline/tests/editing_conformance/test_commit_runtime_parent_media.py && echo 'scratch baseline prepared'" in /home/user/work/wt/agt-D86-parent-media-actual-0240
+ succeeded in 0ms:
+scratch baseline prepared
+
+exec
+/bin/bash -lc 'RUFF_CACHE_DIR=/tmp/agt-D86-parent-media-actual-0240/ruff-current /root/.local/bin/ruff check tests/editing_conformance/test_commit_runtime_parent_media.py --output-format json' in /home/user/work/wt/agt-D86-parent-media-actual-0240
+ succeeded in 0ms:
+[]
+exec
+/bin/bash -lc 'git show HEAD:tests/editing_conformance/test_commit_runtime_parent_media.py | RUFF_CACHE_DIR=/tmp/agt-D86-parent-media-actual-0240/ruff-baseline /root/.local/bin/ruff check --stdin-filename tests/editing_conformance/test_commit_runtime_parent_media.py - --output-format json' in /home/user/work/wt/agt-D86-parent-media-actual-0240
+ succeeded in 0ms:
+[]
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/mypy /tmp/agt-D86-parent-media-actual-0240/mypy-baseline/tests/editing_conformance/test_commit_runtime_parent_media.py --no-incremental --cache-dir=/tmp/agt-D86-parent-media-actual-0240/mypy-baseline-cache --show-error-codes' in /home/user/work/wt/agt-D86-parent-media-actual-0240
+exec
+/bin/bash -lc '/home/user/work/venv-agent/bin/mypy tests/editing_conformance/test_commit_runtime_parent_media.py --no-incremental --cache-dir=/tmp/agt-D86-parent-media-actual-0240/mypy-current-cache --show-error-codes' in /home/user/work/wt/agt-D86-parent-media-actual-0240
+ succeeded in 1338ms:
+Success: no issues found in 1 source file
+
+ succeeded in 1372ms:
+Success: no issues found in 1 source file
+
+exec
+/bin/bash -lc "awk -F '\\t' '"'$1 ~ /test_commit_runtime_parent_media.py/ {print $1 "'"\\t\" "'$4 "'"\\t\" "'$5 "'"\\t\" "'$6}'"' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-successor-0200-actual10077-outcomes.tsv" in /home/user/work/wt/agt-D86-parent-media-actual-0240
+ succeeded in 0ms:
+tests/editing_conformance/test_commit_runtime_parent_media.py::test_fresh_film_first_media_birth_and_exact_inverse[image]	76	PASS	
+tests/editing_conformance/test_commit_runtime_parent_media.py::test_fresh_film_first_media_birth_and_exact_inverse[video]	77	PASS	
+tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[image-False]	78	ERROR	"failed on setup with ""runtime_protocol.errors.RuntimeErrorBase: provider executed a different command"""
+tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[image-True]	79	ERROR	"failed on setup with ""runtime_protocol.errors.RuntimeErrorBase: provider executed a different command"""
+tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[video-False]	80	ERROR	"failed on setup with ""runtime_protocol.errors.RuntimeErrorBase: provider executed a different command"""
+tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry[video-True]	82	ERROR	"failed on setup with ""runtime_protocol.errors.RuntimeErrorBase: provider executed a different command"""
+tests/editing_conformance/test_commit_runtime_parent_media.py::test_stale_explicit_replacement_membership_refuses_before_accept_and_writes[image]	83	ERROR	"failed on setup with ""runtime_protocol.errors.RuntimeErrorBase: provider executed a different command"""
+tests/editing_conformance/test_commit_runtime_parent_media.py::test_stale_explicit_replacement_membership_refuses_before_accept_and_writes[video]	84	ERROR	"failed on setup with ""runtime_protocol.errors.RuntimeErrorBase: provider executed a different command"""
+tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-dependent-False]	85	ERROR	"failed on setup with ""runtime_protocol.errors.RuntimeErrorBase: provider executed a different command"""
+tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-dependent-True]	86	ERROR	"failed on setup with ""runtime_protocol.errors.RuntimeErrorBase: provider executed a different command"""
+tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-ABA-False]	87	ERROR	"failed on setup with ""runtime_protocol.errors.RuntimeErrorBase: provider executed a different command"""
+tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[image-ABA-True]	88	ERROR	"failed on setup with ""runtime_protocol.errors.RuntimeErrorBase: provider executed a different command"""
+tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-dependent-False]	89	ERROR	"failed on setup with ""runtime_protocol.errors.RuntimeErrorBase: provider executed a different command"""
+tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-dependent-True]	91	ERROR	"failed on setup with ""runtime_protocol.errors.RuntimeErrorBase: provider executed a different command"""
+tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-ABA-False]	92	ERROR	"failed on setup with ""runtime_protocol.errors.RuntimeErrorBase: provider executed a different command"""
+tests/editing_conformance/test_commit_runtime_parent_media.py::test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes[video-ABA-True]	94	ERROR	"failed on setup with ""runtime_protocol.errors.RuntimeErrorBase: provider executed a different command"""
+tests/editing_conformance/test_commit_runtime_parent_media.py::test_exact_old_source_tuple_survives_new_primary_variant_and_replacement_inverse[image]	95	ERROR	"failed on setup with ""runtime_protocol.errors.RuntimeErrorBase: provider executed a different command"""
+tests/editing_conformance/test_commit_runtime_parent_media.py::test_exact_old_source_tuple_survives_new_primary_variant_and_replacement_inverse[video]	96	ERROR	"failed on setup with ""runtime_protocol.errors.RuntimeErrorBase: provider executed a different command"""
+tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordered_replacement_preserves_unrelated_historical_transition[image]	97	ERROR	"failed on setup with ""runtime_protocol.errors.RuntimeErrorBase: provider executed a different command"""
+tests/editing_conformance/test_commit_runtime_parent_media.py::test_ordered_replacement_preserves_unrelated_historical_transition[video]	98	ERROR	"failed on setup with ""runtime_protocol.errors.RuntimeErrorBase: provider executed a different command"""
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import ast
+from pathlib import Path
+path = Path('tests/editing_conformance/test_commit_runtime_parent_media.py')
+source = path.read_text()
+tree = ast.parse(source)
+for node in tree.body:
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        decorators = [ast.unparse(d) for d in node.decorator_list]
+        args = [arg.arg for arg in node.args.args]
+        print(f'{node.name}: args={args}; decorators={decorators}')
+PY" in /home/user/work/wt/agt-D86-parent-media-actual-0240
+ succeeded in 0ms:
+call: args=['op', 'args', 'select']; decorators=[]
+body: args=['editing', 'calls']; decorators=[]
+commit: args=['editing', 'request', 'key']; decorators=[]
+current: args=['editing']; decorators=[]
+rows: args=['editing']; decorators=[]
+row: args=['editing', 'identity']; decorators=[]
+birth: args=['editing', 'value', 'pin']; decorators=[]
+undo: args=['editing', 'result', 'key']; decorators=[]
+clip_ids: args=['document']; decorators=[]
+literal_replacement: args=['editing']; decorators=[]
+media_realm: args=['tmp_path', 'monkeypatch', 'kind']; decorators=[]
+custody: args=['request', 'tmp_path', 'monkeypatch']; decorators=["pytest.fixture(params=['image', 'video'])"]
+editing: args=['request', 'tmp_path', 'monkeypatch']; decorators=["pytest.fixture(params=['image', 'video'])"]
+test_fresh_film_first_media_birth_and_exact_inverse: args=['custody', 'monkeypatch']; decorators=[]
+test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry: args=['editing', 'monkeypatch', 'replace']; decorators=["pytest.mark.parametrize('replace', [False, True])"]
+ordinary_roundtrip: args=['editing', 'monkeypatch']; decorators=[]
+foreign_pin: args=['editing']; decorators=[]
+test_foreign_pin_refreshes_stale_registered_executor: args=['editing']; decorators=[]
+test_invalid_media_or_reserved_identity_refuses_before_accept_and_writes: args=['editing', 'damage']; decorators=["pytest.mark.parametrize('damage', ['foreign', 'binding', 'fingerprint', 'stale', 'occupied-row', 'occupied-alias'])"]
+test_fresh_foreign_media_refuses_before_container_creation_and_accept: args=['custody']; decorators=[]
+invalid_media_refuses: args=['editing', 'damage']; decorators=[]
+test_runtime_rejects_obsolete_scalar_shape_before_reads_and_writes: args=['editing']; decorators=[]
+test_stale_explicit_replacement_membership_refuses_before_accept_and_writes: args=['editing']; decorators=[]
+test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes: args=['editing', 'replace', 'interference']; decorators=["pytest.mark.parametrize('replace', [False, True])", "pytest.mark.parametrize('interference', ['dependent', 'ABA'])"]
+promote_latest_variant: args=['editing']; decorators=[]
+test_exact_old_source_tuple_survives_new_primary_variant_and_replacement_inverse: args=['editing']; decorators=[]
+test_ordered_replacement_preserves_unrelated_historical_transition: args=['editing']; decorators=[]
+
+exec
+/bin/bash -lc 'git diff --numstat; git diff --check; git status --short; sha256sum tests/editing_conformance/test_commit_runtime_parent_media.py /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-successor-0209-actual10077.xml' in /home/user/work/wt/agt-D86-parent-media-actual-0240
+ succeeded in 473ms:
+3	0	tests/editing_conformance/test_commit_runtime_parent_media.py
+ M tests/editing_conformance/test_commit_runtime_parent_media.py
+6f68086f887b8c984597b5a7940261ae6fd18564f1da4dccff96351c03afdf76  tests/editing_conformance/test_commit_runtime_parent_media.py
+7d41234f24b5378b548472ae1d07e1d9bc66bb9138a5443e725e03c140c8c3e0  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-successor-0209-actual10077.xml
+
+codex
+The corrected source-only checks are clean: Ruff baseline/current both report `[]`, mypy baseline/current both report no issues, AST parse/compile passes, and `git diff --check` passes. The diff is exactly 3 inserted lines in the historical setup; no selector, parameter, assertion, branch, row, opaque value, or physical identity was changed. I’m collecting the final provenance hashes and writing the harness commit message/DONE marker now.
+exec
+/bin/bash -lc "python3 - <<'PY'
+import ast
+import subprocess
+from pathlib import Path
+path = 'tests/editing_conformance/test_commit_runtime_parent_media.py'
+old = subprocess.check_output(['git', 'show', 'HEAD:' + path], text=True)
+new = Path(path).read_text()
+old_tree, new_tree = ast.parse(old), ast.parse(new)
+old_defs = [node.name for node in old_tree.body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))]
+new_defs = [node.name for node in new_tree.body if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))]
+assert old_defs == new_defs
+old_tests = [node.name for node in old_tree.body if isinstance(node, ast.FunctionDef) and node.name.startswith('test_')]
+new_tests = [node.name for node in new_tree.body if isinstance(node, ast.FunctionDef) and node.name.startswith('test_')]
+assert old_tests == new_tests
+print('AST ABI map PASS: function/test definitions unchanged')
+print('test definitions:', ', '.join(new_tests))
+PY" in /home/user/work/wt/agt-D86-parent-media-actual-0240
+ succeeded in 0ms:
+AST ABI map PASS: function/test definitions unchanged
+test definitions: test_fresh_film_first_media_birth_and_exact_inverse, test_ordinary_birth_or_ordered_replacement_accept_reload_inverse_redo_retry, test_foreign_pin_refreshes_stale_registered_executor, test_invalid_media_or_reserved_identity_refuses_before_accept_and_writes, test_fresh_foreign_media_refuses_before_container_creation_and_accept, test_runtime_rejects_obsolete_scalar_shape_before_reads_and_writes, test_stale_explicit_replacement_membership_refuses_before_accept_and_writes, test_actual_accepted_dependents_and_aba_refuse_inverse_before_writes, test_exact_old_source_tuple_survives_new_primary_variant_and_replacement_inverse, test_ordered_replacement_preserves_unrelated_historical_transition
+
+exec
+/bin/bash -lc "sha256sum tests/editing_conformance/test_commit_runtime_parent_media.py astrid/sdk/timeline/native_occurrence_media_commands.py astrid/sdk/timeline/_recording.py astrid/sdk/timeline/commands.py /home/user/work/wt/rt-pin-a3cd1a32/runtime_protocol/timeline_commit_auth.py /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-successor-0209-actual10077-outcomes.tsv; printf '\\n--- selectors ---\\n'; nl -ba tests/editing_conformance/test_commit_runtime_parent_media.py | sed -n '168,190p'; printf '\\n--- diff stats ---\\n'; git diff --stat; git diff --check" in /home/user/work/wt/agt-D86-parent-media-actual-0240
+ succeeded in 231ms:
+6f68086f887b8c984597b5a7940261ae6fd18564f1da4dccff96351c03afdf76  tests/editing_conformance/test_commit_runtime_parent_media.py
+419149d2092e271e8a2f82754843f381e1e70b5a892b9f8fe13820f04effac4c  astrid/sdk/timeline/native_occurrence_media_commands.py
+85aefe0328a7c9787a18c2b7e19eb8b3e4220a1c53627d1e16102b42b29c8b43  astrid/sdk/timeline/_recording.py
+b89798a439daace286e6702647c670c532a21575719e4df1bda87607b855ee96  astrid/sdk/timeline/commands.py
+4ac2b8792fe0389afb6eb710a348c35fa196131a13cab175bd3646f7d2cc0aeb  /home/user/work/wt/rt-pin-a3cd1a32/runtime_protocol/timeline_commit_auth.py
+57b417b61029fd3934b696d9200b5f51cd88c05d166f9e29558d5c934dc9d98f  /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-successor-0209-actual10077-outcomes.tsv
+
+--- selectors ---
+   168	                bundle_from_document(current(editing)), 'occurrence-2', 'shot-2',
+   169	                name='Transition', track='visual', on=0, duration=8)
+   170	            commit(editing, body(editing, [occurrence]), 'occurrence-2')
+   171	            child_track = capture_track_create(bundle_from_document(current(editing)),
+   172	                                                'occurrence:occurrence-2', {
+   173	                                                    'id': 'visual', 'kind': 'visual', 'role': 'output',
+   174	                                                    'opaque': [None, False]})
+   175	            commit(editing, body(editing, [child_track]), 'occurrence-2-track')
+   176	            child = row(editing, 'clip-2', asset='music-bed')
+   177	            child_preview = call('occurrence.add-media', {
+   178	                'row': child, 'media': music_pin}, 'occurrence:occurrence-2')
+   179	            child_preview['intent'] = {'ownership': 'occurrence'}
+   180	            child_preview['created'] = [
+   181	                'occurrence:occurrence-2/asset:' + child['asset'],
+   182	                'occurrence:occurrence-2/clip:' + child['id']]
+   183	            commit(editing, body(editing, [child_preview], dry_run=True), 'occurrence-2-selection')
+   184	            child_command = capture_occurrence_add_media(
+   185	                bundle_from_document(current(editing)), 'occurrence:occurrence-2', child,
+   186	                music_pin, verified_media=editing.selected)
+   187	            commit(editing, body(editing, [child_command]), 'occurrence-2-clip')
+   188	            transition = capture_clip_set(
+   189	                bundle_from_document(current(editing)), 'occurrence:occurrence-2/clip:clip-2',
+   190	                values={'transition': {'type': 'crossfade', 'duration': 0.5}})
+
+--- diff stats ---
+ tests/editing_conformance/test_commit_runtime_parent_media.py | 3 +++
+ 1 file changed, 3 insertions(+)
+
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..4d6cf3622b559c8f0ab286d495e19c2f9551dd6a
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/commit-msg
+@@ -0,0 +1,4 @@
++test(timeline): F-D86 parent-media setup claims
++
++Authenticate the historical occurrence media dry-run with the exact asset
++and clip identities the current provider recorder creates.
+diff --git a/tests/editing_conformance/test_commit_runtime_parent_media.py b/tests/editing_conformance/test_commit_runtime_parent_media.py
+index 31005dfdc55d8df023ed42bb15679e5755e58d0e..98c25406a5c12cbb3285d820b32128e08b28c58b
+--- a/tests/editing_conformance/test_commit_runtime_parent_media.py
++++ b/tests/editing_conformance/test_commit_runtime_parent_media.py
+@@ -177,6 +177,9 @@
+             child_preview = call('occurrence.add-media', {
+                 'row': child, 'media': music_pin}, 'occurrence:occurrence-2')
+             child_preview['intent'] = {'ownership': 'occurrence'}
++            child_preview['created'] = [
++                'occurrence:occurrence-2/asset:' + child['asset'],
++                'occurrence:occurrence-2/clip:' + child['id']]
+             commit(editing, body(editing, [child_preview], dry_run=True), 'occurrence-2-selection')
+             child_command = capture_occurrence_add_media(
+                 bundle_from_document(current(editing)), 'occurrence:occurrence-2', child,
+
+exec
+/bin/bash -lc "touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/DONE && test -f /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/DONE && test -s /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D86-parent-media-actual-0240/commit-msg && printf 'DONE marker present; commit message present\\n' && git status --short && git diff --check" in /home/user/work/wt/agt-D86-parent-media-actual-0240
+ succeeded in 260ms:
+DONE marker present; commit message present
+ M tests/editing_conformance/test_commit_runtime_parent_media.py
+

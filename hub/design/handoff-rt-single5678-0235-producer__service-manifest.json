@@ -1,0 +1,174 @@
+{
+  "suite": "p2-transition-none-single",
+  "started_at": "2026-10-25T02:27:00.787Z",
+  "repo_heads": {
+    "app": "24865fa212148e9bc149a1285936372656037e55",
+    "agent": "6386c700ee56264aebe12da4558ac74dda0d60ca",
+    "runtime": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "repo_trees": {
+    "app": "741333cebfb2b6505a080507bb6c9789df494d43",
+    "agent": "4f157f4445968ca625017a7e20bd7ca317fa0d5d",
+    "runtime": "47b376717ce7a919a697c62133de3e74dc9f6d3a",
+    "composition": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+  },
+  "source_checkouts": {
+    "app": {
+      "checkout": "/home/user/work/wt/app-pin-24865fa2",
+      "head": "24865fa212148e9bc149a1285936372656037e55",
+      "tree": "741333cebfb2b6505a080507bb6c9789df494d43",
+      "normal_home": "/home/user/work/wt/rt-P2-native-reply-resume-0217",
+      "state": {
+        "root": "/home/user/work/wt/app-pin-24865fa2",
+        "head": "24865fa212148e9bc149a1285936372656037e55",
+        "tree": "741333cebfb2b6505a080507bb6c9789df494d43",
+        "parents": [
+          "4b98436552bf30f5fb28bbb958b1817430b12e34",
+          "c8e689fd5d7725c6d2fd3ed7e6cac83d2ab7326e"
+        ],
+        "branch": null,
+        "dirty": false
+      }
+    },
+    "agent": {
+      "checkout": "/home/user/work/wt/agt-pin-6386c700",
+      "head": "6386c700ee56264aebe12da4558ac74dda0d60ca",
+      "tree": "4f157f4445968ca625017a7e20bd7ca317fa0d5d",
+      "normal_home": "/home/user/work/agent",
+      "state": {
+        "root": "/home/user/work/wt/agt-pin-6386c700",
+        "head": "6386c700ee56264aebe12da4558ac74dda0d60ca",
+        "tree": "4f157f4445968ca625017a7e20bd7ca317fa0d5d",
+        "parents": [
+          "1793b8e900b5c84a405fb93d44f1cd252fdb8080",
+          "73998ac446ea2e4bceed1e0df2c5e2c68c558e82"
+        ],
+        "branch": null,
+        "dirty": false
+      }
+    },
+    "runtime": {
+      "checkout": "/home/user/work/wt/rt-pin-6634a17f",
+      "head": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+      "tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a",
+      "normal_home": "/home/user/work/runtime",
+      "state": {
+        "root": "/home/user/work/wt/rt-pin-6634a17f",
+        "head": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+        "tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a",
+        "parents": [
+          "766fd6700c3128ea9fc833086a517de2acb535e2",
+          "b69a9f2cb43a6826efc43bb8c6f38d94fee47fc0"
+        ],
+        "branch": null,
+        "dirty": false
+      }
+    },
+    "composition": {
+      "checkout": "/home/user/work/wt/vw-pin-635f4de0",
+      "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+      "normal_home": "/home/user/work/composition",
+      "state": {
+        "root": "/home/user/work/wt/vw-pin-635f4de0",
+        "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+        "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+        "parents": [
+          "7a95a40b07ea0d273e17afb69dbc3456b603f2bc",
+          "c05fdb171fe37c1d5817a060ecb716a329ee821a"
+        ],
+        "branch": null,
+        "dirty": false
+      }
+    }
+  },
+  "service_source": {
+    "root": "/home/user/work/wt/app-pin-24865fa2",
+    "head": "24865fa212148e9bc149a1285936372656037e55",
+    "tree": "741333cebfb2b6505a080507bb6c9789df494d43",
+    "parents": [
+      "4b98436552bf30f5fb28bbb958b1817430b12e34",
+      "c8e689fd5d7725c6d2fd3ed7e6cac83d2ab7326e"
+    ],
+    "branch": null,
+    "dirty": false
+  },
+  "service_target": "app-pin-24865fa2",
+  "test_sha256_before": {
+    "tests/e2e/local/three-products.p2-tour.spec.ts": "54ea18f3f3fa8fef2eb31cc0a05809ede76099f9f3bee9bf0511824e652a85f7",
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593"
+  },
+  "service_versions": {
+    "imports": {
+      "runtime": {
+        "astrid": {
+          "file": "/home/user/work/wt/agt-pin-6386c700/astrid/__init__.py",
+          "version": "0.1.0"
+        },
+        "astrid_runtime": {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/astrid_runtime/__init__.py",
+          "version": "0.1.0"
+        },
+        "astrid_runtime_client": {
+          "file": "/home/user/work/wt/agt-pin-6386c700/astrid_runtime_client/__init__.py",
+          "version": null
+        },
+        "runtime_protocol": {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/__init__.py",
+          "version": null
+        }
+      },
+      "agent": {
+        "astrid": {
+          "file": "/home/user/work/wt/agt-pin-6386c700/astrid/__init__.py",
+          "version": "0.1.0"
+        },
+        "astrid_runtime": {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/astrid_runtime/__init__.py",
+          "version": "0.1.0"
+        },
+        "astrid_runtime_client": {
+          "file": "/home/user/work/wt/agt-pin-6386c700/astrid_runtime_client/__init__.py",
+          "version": null
+        },
+        "runtime_protocol": {
+          "file": "/home/user/work/wt/rt-pin-6634a17f/runtime_protocol/__init__.py",
+          "version": null
+        }
+      }
+    },
+    "node": "v20.19.4",
+    "npm": "10.8.2",
+    "runtime_server": "AstridRuntime/0.1 Python/3.13.16",
+    "protocol": "workspace.v1",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "agent_head": "6386c700ee56264aebe12da4558ac74dda0d60ca",
+    "agent_schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "provider": "astrid-v1",
+    "compiler": "authoring-bundle-1"
+  },
+  "junit": {
+    "readiness": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P2-native-reply-resume-0217/evidence/p2-transition-none-single/service/readiness.xml",
+    "original": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P2-native-reply-resume-0217/evidence/p2-transition-none-single/service/p2-transition-none-single.xml"
+  },
+  "composition_profile": {
+    "archive": "/home/user/work/wt/app-pin-24865fa2/vendor/artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz",
+    "archive_bytes": 73451,
+    "archive_sha256": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234",
+    "package_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-P2-native-reply-resume-0217/evidence/p2-transition-none-single/service/composition-pinned-0.0.14/package",
+    "package_name": "@banodoco/timeline-composition",
+    "package_version": "0.0.14",
+    "package_file_count": 80,
+    "package_bytes": 292690,
+    "package_sha256": "6bbab9766c13dd450c08f3975e8f690bb718e2ba73f6d929ebd13ee4acb767cf",
+    "animations_generated_sha256": "578b89e8afbe37994949b02a64295f044fd439d3d1c4ec805e3a24b33b0f9043"
+  },
+  "readiness_exit": 0,
+  "original_exit": 0,
+  "test_sha256_after": {
+    "tests/e2e/local/three-products.p2-tour.spec.ts": "54ea18f3f3fa8fef2eb31cc0a05809ede76099f9f3bee9bf0511824e652a85f7",
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593"
+  },
+  "finished_at": "2026-10-25T02:29:29.396Z"
+}

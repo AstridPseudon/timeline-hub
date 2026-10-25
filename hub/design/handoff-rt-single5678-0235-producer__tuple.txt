@@ -1,0 +1,12 @@
+app_sha=24865fa212148e9bc149a1285936372656037e55
+app_tree=741333cebfb2b6505a080507bb6c9789df494d43
+app_checkout=/home/user/work/wt/app-pin-24865fa2
+agent_sha=6386c700ee56264aebe12da4558ac74dda0d60ca
+agent_tree=4f157f4445968ca625017a7e20bd7ca317fa0d5d
+agent_checkout=/home/user/work/wt/agt-pin-6386c700
+runtime_sha=6634a17f3ffd885567ba3c91b6c7a560df7375a4
+runtime_tree=47b376717ce7a919a697c62133de3e74dc9f6d3a
+runtime_checkout=/home/user/work/wt/rt-pin-6634a17f
+composition_sha=635f4de06fda22a85fc2e4cfc764d0153a4c9f40
+composition_tree=5ab5191a296980a0a6bcd1178ab6902d6478a148
+composition_checkout=/home/user/work/wt/vw-pin-635f4de0

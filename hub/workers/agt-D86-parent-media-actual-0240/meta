@@ -1,0 +1,9 @@
+name=agt-D86-parent-media-actual-0240
+repo=agent
+base=tl/integration
+base_sha=a836baa3b1
+model=gpt-5.6-luna
+effort=high
+heavy=0
+worktree=/home/user/work/wt/agt-D86-parent-media-actual-0240
+started=2026-10-25T02:40:20Z
