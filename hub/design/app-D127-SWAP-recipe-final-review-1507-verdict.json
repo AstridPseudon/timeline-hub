@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "task": "D127 bounded final continuation: SWAP source recipe review",
+  "verdict": "PASS",
+  "scope": "read-only F1 correction, source-facts custody, and App SHA checks; no product tests or new investigation",
+  "base": {
+    "app_commit": "fe3309dba4520835a685f925468bff1acdc0506f",
+    "app_tree": "e55f0d65dca0c9f2ba3013df4cab999f314308b9",
+    "popup_source_sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "popup_source_blob": "d7da4c234fb921c448bc18e9ac174b1a11dbc4a6"
+  },
+  "f1": {
+    "status": "PASS",
+    "location": "source-recipe.md:43",
+    "old_sha256": "62503a6fa96b7ebe15410ff72017b7c14994132bd40b3fd671945e8a7e391e0c",
+    "new_sha256": "9fa32d440a428bdbe05cf3a543ccf78853790b4f8b5a998fdb4e270c82c8e401",
+    "changed_lines": 1,
+    "correction": "Retained terminal3250 evidence independently records HTTP 409 with history_unavailable; three-products.p2-popup.spec.ts:495 is only the failed expected-HTTP-200 assertion; lower private binding/cause remains UNKNOWN."
+  },
+  "unchanged_against_original1452": {
+    "source-recipe.json": "00f43ce5b3b7640b62b327198f424c01f59c0868eed949e9d10b74d30e579307",
+    "facts.json": "e44a5d36a32ddcc5d58b06a5cc176ab9bdab1001195d0e6a51de8d53f7906b1c",
+    "missing-components.md": "4572f87ebf38d3ff189019c0969cf06c3c28f0136b847060b50fd3b21ef2b1f8"
+  },
+  "checks": {
+    "json_valid": true,
+    "worktree_clean": true,
+    "diff_check": true,
+    "tests_types_lint": "not run per task scope"
+  }
+}

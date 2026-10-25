@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T15:08:04Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 1m -->
-# app board, 2026-10-25T15:07Z
+<!-- app | 2026-10-25T15:12:49Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 2m -->
+# app board, 2026-10-25T15:11Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -95,7 +95,7 @@
 | D74-fe3309-pin | Release completed tagged tuple pin | Manager and host audit | Host1446 and fresh static guards | merged | Guarded recycle1448 | Only oldfe3309 recycled; zero refusal. Current84857 tuple and all3250 outputs, branches and reports kept. [Receipt](../../design/app-pin-guarded-release-1448.json). | No source edits |
 | D127-Runtime-inputs | Hand retained tagged tour source facts | Existing producer and review | Runtime1426 peer ask | merged | Controller1407; independent D125 verdict | Safe facts and source sequence published. No standalone native package or lower private binding in handback; UNKNOWN stays explicit. | Source unchanged |
 
-| D127-SWAP-recipe | Hand exact source fixture sequence | Luna and independent Luna | Runtime1441 finite source ask | review | First return1505; final review1507 | All source facts verified; one observed409 evidence citation corrected. Final review checks exact one-line delta; private pairing absent. No replay. | Source unchanged |
+| D127-SWAP-recipe | Hand exact source fixture sequence | Luna and independent Luna | Runtime1441 finite source ask | merged | Return1505; final review1507 | PASS source recipe and custody. Corrected one evidence citation; full construction and caller facts exact. Private historical pairing absent; no replay. | Evidence only |
 
 | D125-local-prep | Prepare exact local fallback | Luna read only | Exact four local receipts | merged | app-D125-local-fallback-prep-1356 | Source/API/Node and source hashes PASS; no body. Dependency omission is explicit and assigned to D127 controller. | Frozen fe3309 tuple |
 
@@ -103,7 +103,7 @@
 
 | D124-10721-review | Qualify full tails and actual timing | Luna independent | Actual10721 terminal packet | merged | app-D124-10721-independent-review-1455 | Exact custody and five complete tails GO. Timing UNKNOWN: browser key hash absent; candidate only. No dominant cost attribution. | Evidence only |
 
-| D127b-stacks | Publish retained safe sampler frames | Luna read only | D127b and independent1455 | doing | app-D127b-10721-safe-stacks-1503 | Existing per-launch frames, hashes and counts only; exact request binding or honest UNKNOWN. Preserve10721 outputs; no new body. | Source unchanged |
+| D127b-stacks | Publish retained safe sampler frames | Luna read only | D127b and independent1455 | doing | Original1503; persistent return1510 | Three safe stack files recovered from exact worker commit. Correct one custody typo and missing handoff; final independent privacy review next. | Evidence branch only |
 
 Integration: App84857c45347539c7820bb054b69e2e5ad4079081/tree7feb5b12a1ad9629f096700c40c393d5b3998217 equals the entire independently1414 reviewed candidate tree. Only exact two D126 and strict bootstrap test blobs imported. Targeted normal2, mutations, types and lint PASS. [Normal receipt](../../design/app-D126-normal-home-1437.json). Actual3250 remains frozenfe3309/070dfc/5e9ad/635f and excludes new helper/hook. No result retarget.
 
@@ -119,9 +119,9 @@ Blockers: App element — Actual10721 independently FAIL at applied status; exac
 Blockers: Farm host14 and batch — Agent upstream fallback is normal a4e016 and original14 independently PASS. REG closure awaits core; Farm child metadata refusal remains stopped with Runtime1404 correction owner.
 Blockers: Farm batch — Atomic and native binding are normal Agent source; downstream product adoption waits unfiltered Farm core. Captured-redo test setup is home. No App author or review wait remains.
 Blockers: Final cut — Current full P2 remains NO-GO; final P1-P5/core/D69 and genuine installed render still owed. Existing denied acquisition and cleanup routes remain stopped.
-Next ready: Safe stack publisher1503 and recipe reviewer1501 active. Independent1455 handback sent to Runtime immediately: exact binding UNKNOWN. D127b forbids new tour until owner fixes ship.
-live 2 / cap 3; queued 1; ready-undispatched 0; core open: 2. Recipe return1505 finishes; final review1507 and safe stack packet1503. No heavy body, new small Agent author or speculative source fix.
+Next ready: Persistent stack return1510, then one independent privacy and custody review. Final SWAP source recipe PASS sent to Runtime; no App input wait. D127b holds new tours until fixes ship.
+live 0 / cap 3; queued 1; ready-undispatched 0; core open: 2. Safe stack return1510 ready and queued; recipe PASS published. No heavy body or new original. No heavy body, new small Agent author or speculative source fix.
 Capacity: Free5.058GB at14:57Z after body ended. Sweep3 removed0; compact packed0 scratch dirs, gzipped1 old log and packed0 test dirs. Prior guarded oldfe3309 recycle remains scoped. D89c original5331136512byte admission carried;4.0GB ongoing stop. Only old completed pin recycled; current inputs and all original outputs retained.
-INBOX consumed through2270098 bytes, including Runtime1448, D127b and delayed old pin note1444. Pin release already complete; no repeated action. Host1446 CLEAR consumed; oldpin release complete. Runtime1426 input ask has an existing-worker evidence row. Sampled10721 independent NO-GO; timing UNKNOWN. Safe stack packet active. No source/adoption wait.
+INBOX consumed through2272227 bytes, including Runtime1448, D127b and delayed old pin note1444. Pin release already complete; no repeated action. Host1446 CLEAR consumed; oldpin release complete. Runtime1426 input ask has an existing-worker evidence row. Sampled10721 independent NO-GO; timing UNKNOWN. Safe stack packet active. No source/adoption wait.
 Later: Nativecheckout4/trackbatch1 share known m1.film missingwordanchor setup; no diff/retirement. D116 reviewedjoin held for Agent raw/config batch. D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees retain guards. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakening, credentials or refused-route retry.
 
