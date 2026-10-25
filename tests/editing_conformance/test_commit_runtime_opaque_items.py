@@ -33,7 +33,8 @@ def opaque_film(request, tmp_path, monkeypatch):
     from timeline_commit_film_fixture import build_film_fixture
 
     from astrid.sdk.timeline.capture import capture_move
-    from astrid.sdk.timeline.commit import bundle_from_document
+    from astrid.sdk.timeline.commit import _digest, _manifest, bundle_from_document
+    from astrid.sdk.timeline.emitter import emit_document_commands
 
     fixture = build_film_fixture(tmp_path)
     service = RuntimeService(fixture.duplicate_root)
@@ -41,14 +42,9 @@ def opaque_film(request, tmp_path, monkeypatch):
                    SimpleNamespace(move=capture_move, bundle=bundle_from_document))
     try:
         original = edit.document()
-        parent = copy.deepcopy(original["parent_revision"]["payload"])
-        _, source_shot, source_internal = occurrence_image(original, "occurrence-1")
-        shot = {key: copy.deepcopy(source_shot[key]) for key in (
-            "shot_id", "revision_id", "internal_timeline_revision_id", "payload")}
-        internal = {key: copy.deepcopy(source_internal[key]) for key in (
-            "timeline_id", "revision_id", "payload")}
-        shot.update(revision_id="opaque-shot", internal_timeline_revision_id="opaque-internal")
-        internal["revision_id"] = "opaque-internal"
+        target = copy.deepcopy(original)
+        parent = target["parent_revision"]["payload"]
+        _, shot, internal = occurrence_image(target, "occurrence-1")
         internal["payload"]["clips"][0]["hold"] = 0.25
         media = shot["payload"]["provenance"]["source_media"]
         shot["payload"]["items"] = [{
@@ -66,15 +62,19 @@ def opaque_film(request, tmp_path, monkeypatch):
                     internal["payload"]["tracks"][0], internal["payload"]["clips"][0]):
             row.update(data=opaque(), app=opaque(), opaque=opaque())
         for occurrence in parent["occurrences"][:2]:
-            occurrence.update(shot_id=shot["shot_id"], shot_revision_id=shot["revision_id"],
-                              data=opaque(), app=opaque(), opaque=opaque())
-        service.publish_parent_composition(edit.project, edit.timeline, {
-            "project_id": edit.project, "timeline_id": edit.timeline,
-            "expected_head": fixture.parent_revision_id, "parent_revision_id": "opaque-baseline",
-            "parent_composition": parent, "shot_revisions": [shot],
-            "internal_timeline_revisions": [internal],
-        }, idempotency_key="opaque-baseline")
+            occurrence.update(data=opaque(), app=opaque(), opaque=opaque())
+        target["parent_revision"]["content_digest"] = _digest(parent)
+        for image in target["shot_revisions"]:
+            image["content_digest"] = _digest(image["payload"])
+        for image in target["internal_timeline_revisions"]:
+            image["content_digest"] = _digest(image["payload"])
+        target["dependency_manifest"] = _manifest(
+            target["shot_revisions"], target["internal_timeline_revisions"],
+            target["dependency_manifest"]["media"], target["dependency_manifest"]["documents"],
+        )
         service.register_timeline_commit_provider(load_timeline_commit_provider("astrid"))
+        setup = emit_document_commands(bundle_from_document(original), bundle_from_document(target))
+        edit.commit(edit.body(setup), "opaque-baseline")
         yield edit, load_timeline_commit_provider
     finally:
         edit.service.close()
