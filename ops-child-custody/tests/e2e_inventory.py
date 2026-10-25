@@ -15,23 +15,32 @@ import os
 from pathlib import Path
 import re
 import shutil
+import stat
 import subprocess
 import sys
 
-from support import MAKER, block
+from support import MAKER, PORTABLE_PARENT, block
 
 PARENT_COMMIT = '9428f515fcd8dccaef26193438b3ac89f903f5aa'
 PARENT_SHA256 = '0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39'
 HELPER_SHA256 = '123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2'
 MAKER_SHA256 = 'c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e'
+PARENT_MAKER_SHA256 = '0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39'
 RESERVE = 5905580032
+STOP_LINE = 4000000000
 FIXTURE_ROOT = Path(__file__).resolve().parents[1] / 'e2e-fixtures/tiny'
 FIXTURE_MANIFEST = FIXTURE_ROOT / 'manifest.json'
+DEFAULT_RUNNER_PYTHON = Path('/home/user/work/venv-agent/bin/python')
+DEFAULT_CHILD_PYTHON = Path('/usr/bin/python3.13')
+DEFAULT_BOOTSTRAP_ARTIFACT = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/artifacts/bootstrap-wheel-input-0932-443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548.tgz')
+BOOTSTRAP_ARTIFACT_SHA256 = '443977b004381bf3dd23cdcc7558335913256dc438198ed6478259d2f98cb548'
 BOOTSTRAP_WHEELS = {
     'pip-26.2.1-py3-none-any.whl': '71138adf1f4ca900cdb7d289c21b7494329f2332b6d85f0e1c42108c0384ed3e',
     'setuptools-80.9.0-py3-none-any.whl': '062d34222ad13e0cc312a4c02d73f059e86a4acbfbdea8f8f76b28c99f306922',
     'wheel-0.46.3-py3-none-any.whl': '4b399d56c9d9338230118d705d9737a2a468ccca63d5e813e2a4fc7815d8bc4d',
 }
+REQUIRED_COMMANDS = ('bash', 'git', 'tar', 'mktemp', 'sha256sum', 'cut', 'grep',
+                     'sed', 'find', 'chmod', 'mv', 'df', 'awk', 'timeout', 'readlink')
 
 
 def fixture_sources():
@@ -49,6 +58,22 @@ def fixture_sources():
                     'tiny fixture source hash mismatch: ' + role + '/' + name)
             files[name] = data.decode('utf-8')
         result[role] = files
+    return result
+
+
+def fixture_makers():
+    manifest = json.loads(FIXTURE_MANIFEST.read_text())
+    result = {}
+    for role, entry in manifest['makers'].items():
+        path = FIXTURE_ROOT / entry['path']
+        require(path.is_file() and not path.is_symlink(), 'missing tiny maker: ' + role)
+        data = path.read_bytes()
+        require(hashlib.sha256(data).hexdigest() == entry['sha256'],
+                'tiny maker hash mismatch: ' + role)
+        require(stat.S_IMODE(path.stat().st_mode) == int(entry['mode'], 8),
+                'tiny maker mode mismatch: ' + role)
+        result[role] = {'path': path, 'bytes': data, 'sha256': entry['sha256'],
+                        'commit': entry['commit']}
     return result
 
 
@@ -72,6 +97,209 @@ def command(argv, **kwargs):
 def require(condition, reason):
     if not condition:
         raise RuntimeError(reason)
+
+
+def parse_df_available(text):
+    """Parse exactly one POSIX ``df -Pk`` data row without accepting headers."""
+    rows = [line.split() for line in text.splitlines() if line.strip()]
+    require(len(rows) == 2 and 'Available' in rows[0],
+            'df output must contain one header and one data row')
+    require(len(rows[1]) >= 4 and re.fullmatch(r'[0-9]+', rows[1][3]),
+            'df Available field must be a non-negative integer')
+    return int(rows[1][3]) * 1024
+
+
+def df_free_bytes(path):
+    result = command(['/usr/bin/df', '-Pk', str(path)])
+    require(result.returncode == 0, 'df failed for fixture target')
+    return parse_df_available(result.stdout)
+
+
+def python_facts(path, need_build):
+    code = (
+        'import importlib, importlib.metadata, json, sys, venv, ensurepip, fcntl, unittest.mock\n'
+        'facts = {"version": sys.version, "executable": sys.executable}\n'
+        'for name in ("setuptools", "wheel"):\n'
+        '    facts[name] = importlib.metadata.version(name)\n'
+        'if NEED_BUILD:\n'
+        '    facts["build"] = importlib.metadata.version("build")\n'
+        'print(json.dumps(facts, sort_keys=True))\n'
+    ).replace('NEED_BUILD', repr(need_build))
+    try:
+        result = command([str(path), '-I', '-c', code])
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if result.returncode:
+        return None
+    try:
+        return json.loads(result.stdout)
+    except (TypeError, ValueError):
+        return None
+
+
+def check_only(args):
+    """Enumerate every target prerequisite without Git/Store/maker mutation."""
+    missing = []
+    checked = []
+
+    def check(label, condition):
+        checked.append(label)
+        if not condition:
+            missing.append(label)
+
+    scratch_value = os.environ.get('TMPDIR', '')
+    scratch = Path(scratch_value)
+    check('TMPDIR is an existing physical absolute directory',
+          scratch.is_absolute() and scratch == scratch.resolve() and scratch.is_dir())
+    check('fixture manifest is a regular non-symlink file',
+          FIXTURE_MANIFEST.is_file() and not FIXTURE_MANIFEST.is_symlink())
+    manifest = None
+    try:
+        manifest = json.loads(FIXTURE_MANIFEST.read_text())
+    except (OSError, ValueError):
+        pass
+    check('fixture manifest is valid JSON with expected schema',
+          isinstance(manifest, dict) and manifest.get('schema') == 'timeline.ops-child-custody.tiny-source.v1')
+
+    if isinstance(manifest, dict):
+        for role, entry in manifest.get('roles', {}).items():
+            for name, expected in entry.get('files', {}).items():
+                path = FIXTURE_ROOT / role / name
+                try:
+                    matches = (path.is_file() and not path.is_symlink()
+                               and hashlib.sha256(path.read_bytes()).hexdigest() == expected
+                               and stat.S_IMODE(path.stat().st_mode) == 0o644)
+                except OSError:
+                    matches = False
+                check('fixture source ' + role + '/' + name, matches)
+        for role, entry in manifest.get('makers', {}).items():
+            path = FIXTURE_ROOT / entry.get('path', '')
+            try:
+                matches = (path.is_file() and not path.is_symlink()
+                           and hashlib.sha256(path.read_bytes()).hexdigest() == entry.get('sha256')
+                           and stat.S_IMODE(path.stat().st_mode) == int(entry.get('mode', '0'), 8))
+            except (OSError, ValueError):
+                matches = False
+            check('packaged ' + role + ' maker bytes and mode', matches)
+    else:
+        check('all fixture source and maker manifest entries are readable', False)
+
+    for label, path in (('protected Store helper', args.helper),
+                        ('private wheelhouse', args.wheelhouse),
+                        ('Agent source carrier checkout', args.agent),
+                        ('Runtime source carrier checkout', args.runtime)):
+        candidate = Path(path) if path else Path('')
+        check(label + ' is supplied as an absolute physical path',
+              bool(path) and candidate.is_absolute() and candidate == candidate.resolve()
+              and candidate.exists() and not candidate.is_symlink())
+    if args.helper:
+        helper = Path(args.helper)
+        try:
+            helper_matches = helper.is_file() and hashlib.sha256(helper.read_bytes()).hexdigest() == HELPER_SHA256
+        except OSError:
+            helper_matches = False
+        check('protected Store helper hash', helper_matches)
+    if args.wheelhouse:
+        wheelhouse = Path(args.wheelhouse)
+        try:
+            pins = fixture_wheel_pins()
+        except (OSError, KeyError, TypeError, ValueError, RuntimeError):
+            pins = {}
+            check('all local wheel pins are valid', False)
+        for name, expected in pins.items():
+            wheel = wheelhouse / name
+            try:
+                matches = wheel.is_file() and not wheel.is_symlink() and hashlib.sha256(wheel.read_bytes()).hexdigest() == expected
+            except OSError:
+                matches = False
+            check('local wheel ' + name, matches)
+    artifact = Path(args.bootstrap_artifact) if args.bootstrap_artifact else Path('')
+    try:
+        artifact_matches = (artifact.is_file() and not artifact.is_symlink()
+                            and hashlib.sha256(artifact.read_bytes()).hexdigest() == BOOTSTRAP_ARTIFACT_SHA256)
+    except OSError:
+        artifact_matches = False
+    check('local bootstrap artifact hash', artifact_matches)
+
+    for label, path, needs_build in (('runner Agent Python', args.runner_python, True),
+                                     ('offline build Python', args.build_python, True),
+                                     ('child Python', args.python, False)):
+        candidate = Path(path) if path else Path('')
+        check(label + ' exists and is executable', bool(path) and candidate.is_file()
+              and not candidate.is_symlink() and os.access(candidate, os.X_OK))
+        facts = python_facts(candidate, needs_build) if candidate.is_file() else None
+        check(label + ' reports Python 3.13 with required imports',
+              facts is not None and facts.get('version', '').startswith('3.13.'))
+        if needs_build:
+            check(label + ' provides build, setuptools, and wheel',
+                  facts is not None and facts.get('build') == '1.4.0'
+                  and facts.get('setuptools') == '80.9.0' and facts.get('wheel') == '0.46.3')
+
+    for name in REQUIRED_COMMANDS:
+        check('required command ' + name, shutil.which(name) is not None)
+    try:
+        available = df_free_bytes(scratch if scratch.is_dir() else Path.cwd())
+        check('free space is above unchanged start reserve', available >= RESERVE)
+        check('free space is above unchanged 4GB stop line', available >= STOP_LINE)
+    except (OSError, RuntimeError, ValueError):
+        check('df output has one numeric Available field', False)
+
+    for label, path in (('orchestration root', args.orch_root),
+                        ('parent work root', args.parent_work),
+                        ('candidate work root', args.candidate_work)):
+        candidate = Path(path) if path else Path('')
+        check(label + ' is a fresh path inside TMPDIR', bool(path) and candidate.is_absolute()
+              and candidate == candidate.resolve() and candidate.is_relative_to(scratch)
+              and not candidate.exists())
+
+    for label, path in (('Agent source carrier checkout', args.agent),
+                        ('Runtime source carrier checkout', args.runtime)):
+        candidate = Path(path) if path else Path('')
+        if candidate.is_dir():
+            expected = fixture_sources().get('agent' if label.startswith('Agent') else 'runtime', {})
+            head = command(['git', '-C', str(candidate), 'rev-parse', '--verify', 'HEAD^{commit}'])
+            status = command(['git', '-C', str(candidate), 'status', '--porcelain', '--untracked-files=all'])
+            names = command(['git', '-C', str(candidate), 'ls-tree', '-r', '--name-only', 'HEAD'])
+            modes = command(['git', '-C', str(candidate), 'ls-tree', '-r', 'HEAD'])
+            mode_map = {line.split('\t', 1)[1]: line.split()[0]
+                        for line in modes.stdout.splitlines() if '\t' in line}
+            check(label + ' has a clean receiving-service Git commit', head.returncode == 0 and status.returncode == 0
+                  and status.stdout == '' and names.returncode == 0 and modes.returncode == 0
+                  and set(names.stdout.splitlines()) == set(expected)
+                  and all(mode_map.get(name) == '100644' for name in expected))
+        else:
+            check(label + ' Git history and exact committed source are readable', False)
+
+    try:
+        helper_text = Path(args.helper).read_text() if args.helper and Path(args.helper).is_file() else ''
+    except OSError:
+        helper_text = ''
+    for label, needle in (('Store API initialize', 'Store.initialize'),
+                          ('Store API ensure', 'def ensure'),
+                          ('Store API registration', 'register')):
+        check(label + ' is present in the protected helper', needle in helper_text)
+    check('candidate and parent maker verifier blocks are byte-identical',
+          PORTABLE_PARENT.is_file() and MAKER.is_file()
+          and block(PORTABLE_PARENT.read_text(), 'STORE_VERIFY') == block(MAKER.read_text(), 'STORE_VERIFY'))
+
+    if args.result:
+        output = Path(args.result)
+        check('check-only result path is inside TMPDIR', output.is_absolute() and output == output.resolve()
+              and output.parent.is_relative_to(scratch) and output.parent.is_dir()
+              and not output.exists())
+    result = {'schema': 'timeline.ops-child-custody.check-only.v1', 'mode': 'check-only',
+              'ok': not missing, 'checked': checked, 'missing': missing,
+              'mutating_setup_started': False, 'maker_started': False,
+              'store_initialized': False, 'git_mutated': False}
+    if args.result and Path(args.result).parent.is_relative_to(scratch) and Path(args.result).parent.is_dir():
+        Path(args.result).write_text(json.dumps(result, indent=2) + '\n')
+    print(json.dumps(result, indent=2))
+    if missing:
+        for item in missing:
+            print('MISSING: ' + item, file=sys.stderr)
+        return 2
+    print('check-only PASS')
+    return 0
 
 
 def physical(value):
@@ -171,7 +399,14 @@ def prepare_venue(args):
     runtime_sha = committed_fixture(runtime, sources['runtime'])
     wheelhouse = physical(args.wheelhouse)
     wheel_hashes = verify_wheelhouse(wheelhouse)
+    bootstrap_artifact = physical(args.bootstrap_artifact)
+    require(hashlib.sha256(bootstrap_artifact.read_bytes()).hexdigest() == BOOTSTRAP_ARTIFACT_SHA256,
+            'bootstrap artifact hash mismatch')
     python = physical(args.python)
+    require(hashlib.sha256(PORTABLE_PARENT.read_bytes()).hexdigest() == PARENT_MAKER_SHA256,
+            'packaged parent maker mismatch')
+    require(hashlib.sha256(MAKER.read_bytes()).hexdigest() == MAKER_SHA256,
+            'packaged candidate maker mismatch')
     parent_work = private_path(args.parent_work, scratch, 'parent fixture work root')
     candidate_work = private_path(args.candidate_work, scratch, 'candidate fixture work root')
     require(parent_work != candidate_work, 'parent and candidate fixture work roots must differ')
@@ -180,6 +415,12 @@ def prepare_venue(args):
     orch.mkdir(parents=True)
     (orch / 'bin').mkdir()
     (orch / 'tests').mkdir()
+    (orch / 'artifacts').mkdir()
+    # Store.ensure verifies the receiving projection before invoking any maker
+    # body.  This empty baseline is part of the private fixture venue, not a
+    # production suite or admission change.
+    (orch / 'tests' / 'suites.conf').write_text('')
+    shutil.copyfile(bootstrap_artifact, orch / 'artifacts' / bootstrap_artifact.name)
     shutil.copyfile(helper, orch / 'bin/bench_store.py')
     (orch / 'bin/bench_store.py').chmod(0o755)
     parent_work.mkdir()
@@ -201,8 +442,11 @@ def prepare_venue(args):
         'parent_work': str(parent_work),
         'candidate_work': str(candidate_work),
         'helper_sha256': HELPER_SHA256,
+        'parent_maker_sha256': PARENT_MAKER_SHA256,
         'maker_sha256': MAKER_SHA256,
         'wheel_hashes': wheel_hashes,
+        'bootstrap_artifact_name': bootstrap_artifact.name,
+        'bootstrap_artifact_sha256': BOOTSTRAP_ARTIFACT_SHA256,
         'stores_initialized_by_worker': True,
     }
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
@@ -226,8 +470,17 @@ def run_venue(manifest, output):
             'protected Store helper mismatch')
     require(hashlib.sha256(MAKER.read_bytes()).hexdigest() == venue['maker_sha256'] == MAKER_SHA256,
             'candidate maker source mismatch')
+    require(hashlib.sha256(PORTABLE_PARENT.read_bytes()).hexdigest() == venue['parent_maker_sha256'] == PARENT_MAKER_SHA256,
+            'parent maker source mismatch')
+    require((orch / 'tests' / 'suites.conf').is_file()
+            and (orch / 'tests' / 'suites.conf').read_bytes() == b'',
+            'fixture Store projection baseline missing')
     python = physical(venue['python'])
     wheelhouse = physical(venue['wheelhouse'])
+    bootstrap_artifact = orch / 'artifacts' / Path(venue.get('bootstrap_artifact_name', DEFAULT_BOOTSTRAP_ARTIFACT.name))
+    require(bootstrap_artifact.is_file()
+            and hashlib.sha256(bootstrap_artifact.read_bytes()).hexdigest() == venue['bootstrap_artifact_sha256'] == BOOTSTRAP_ARTIFACT_SHA256,
+            'bootstrap artifact mismatch')
     require(venue['wheel_hashes'] == verify_wheelhouse(wheelhouse),
             'venue wheel pins differ from the actual local wheelhouse')
     agent = physical(venue['agent'])
@@ -238,13 +491,14 @@ def run_venue(manifest, output):
             'venue source commit differs from its prepared manifest')
     client = 'packages/python/astrid_runtime_client/__init__.py=' + hashlib.sha256(
         fixture_sources()['runtime']['packages/python/astrid_runtime_client/__init__.py'].encode()).hexdigest()
-    parent = command(['git', 'show', PARENT_COMMIT + ':ops-child-custody/make-child-venv'], cwd=MAKER.parents[1])
-    require(parent.returncode == 0 and hashlib.sha256(parent.stdout.encode()).hexdigest() == PARENT_SHA256,
+    parent = PORTABLE_PARENT.read_bytes()
+    require(hashlib.sha256(parent).hexdigest() == PARENT_SHA256,
             'exact installed0857 parent unavailable')
     parent_path = scratch / 'inventory-parent-0857'
     require(not parent_path.exists(), 'parent fixture script already exists; no overwrite')
-    parent_path.write_text(parent.stdout)
-    require(block(parent.stdout, 'STORE_VERIFY') == block(MAKER.read_text(), 'STORE_VERIFY'), 'verifier changed')
+    parent_path.write_bytes(parent)
+    parent_path.chmod(0o755)
+    require(block(parent.decode(), 'STORE_VERIFY') == block(MAKER.read_text(), 'STORE_VERIFY'), 'verifier changed')
     env = {**os.environ, 'PYTHONDONTWRITEBYTECODE': '1', 'PIP_NO_INDEX': '1',
            'PIP_FIND_LINKS': str(wheelhouse), 'PIP_CONFIG_FILE': os.devnull,
            'CHILD_VENV_ORCH_ROOT': str(orch), 'CHILD_VENV_PYTHON': str(python),
@@ -257,7 +511,7 @@ def run_venue(manifest, output):
         work = physical(venue[label + '_work'])
         require(work.is_relative_to(scratch), 'fixture work root must be in this TMPDIR')
         require((work / 'bench-store/owner.json').is_file(), 'preinitialized approved fixture Store missing')
-        require(shutil.disk_usage(work).free >= max(RESERVE, 5000000000), 'unchanged production reserve unavailable')
+        require(df_free_bytes(work) >= max(RESERVE, 5000000000), 'unchanged production reserve unavailable')
         # Only an empty, single-use fixture Store is suitable; no adoption/reuse.
         store = store_module(helper).Store(work / 'bench-store', orch / 'tests')
         index = store._load()
@@ -268,7 +522,7 @@ def run_venue(manifest, output):
         output['commands'].append({'label': label, 'argv': argv, 'exit_code': result.returncode})
         # Persist stage names only, never stderr/private bodies or arbitrary URLs.
         output[label + '_stages'] = re.findall(r'child-venv stage=([a-z0-9-]+) (start|complete)', result.stdout)
-        require(shutil.disk_usage(work).free >= 4000000000, '4GB stop line reached')
+        require(df_free_bytes(work) >= STOP_LINE, '4GB stop line reached')
         if label == 'parent':
             require(result.returncode != 0 and 'maker provision report differs from authenticated installed inventory' in result.stderr,
                     'parent did not reach the expected inventory refusal')
@@ -333,11 +587,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--write-inputs', type=Path)
     parser.add_argument('--build-wheels', type=Path)
-    parser.add_argument('--build-python', type=Path)
+    parser.add_argument('--build-python', type=Path, default=DEFAULT_RUNNER_PYTHON)
+    parser.add_argument('--runner-python', type=Path, default=DEFAULT_RUNNER_PYTHON)
+    parser.add_argument('--bootstrap-artifact', type=Path, default=DEFAULT_BOOTSTRAP_ARTIFACT)
+    parser.add_argument('--check-only', action='store_true')
     parser.add_argument('--prepare-venue', type=Path)
     parser.add_argument('--helper', type=Path)
     parser.add_argument('--orch-root', type=Path)
-    parser.add_argument('--python', type=Path)
+    parser.add_argument('--python', type=Path, default=DEFAULT_CHILD_PYTHON)
     parser.add_argument('--wheelhouse', type=Path)
     parser.add_argument('--agent', type=Path)
     parser.add_argument('--runtime', type=Path)
@@ -346,6 +603,8 @@ def main():
     parser.add_argument('--venue-manifest', type=Path)
     parser.add_argument('--result', type=Path)
     args = parser.parse_args()
+    if args.check_only:
+        return check_only(args)
     if args.write_inputs:
         require(args.write_inputs.resolve().is_relative_to(Path(os.environ['TMPDIR']).resolve()), 'fixture inputs must be in TMPDIR')
         args.write_inputs.mkdir(parents=True)

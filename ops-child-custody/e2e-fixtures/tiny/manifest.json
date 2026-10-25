@@ -1,5 +1,20 @@
 {
   "schema": "timeline.ops-child-custody.tiny-source.v1",
+  "source_commit": "f6b9d4d52802d3cc5cd6bf9be070cd4c40d1e2fe",
+  "makers": {
+    "parent": {
+      "path": "makers/parent-0857/make-child-venv",
+      "commit": "9428f515fcd8dccaef26193438b3ac89f903f5aa",
+      "sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+      "mode": "755"
+    },
+    "candidate": {
+      "path": "makers/candidate-c3226b/make-child-venv",
+      "commit": "09ed4999741b822fba7e8b3033ca28db6bcf8fa1",
+      "sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+      "mode": "755"
+    }
+  },
   "roles": {
     "agent": {
       "files": {

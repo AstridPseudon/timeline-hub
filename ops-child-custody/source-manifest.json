@@ -1,10 +1,10 @@
 {
-  "task": "rt-OPS-child-inventory-contract-sol-1725",
-  "base_commit": "9428f515fcd8dccaef26193438b3ac89f903f5aa",
-  "observed_utc": "2026-10-25T17:39:26.697926+00:00",
+  "task": "rt-OPS-inventory-E2E-portable-inputs-1836",
+  "base_commit": "f6b9d4d52802d3cc5cd6bf9be070cd4c40d1e2fe",
+  "observed_utc": "2026-10-25T19:00:00Z",
   "live_sources_read_only": {
     "make-child-venv": {
-      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+      "path": "ops-child-custody/e2e-fixtures/tiny/makers/parent-0857/make-child-venv",
       "sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
       "bytes": 68351,
       "mode": "0o755"
@@ -23,7 +23,7 @@
     }
   },
   "candidate": {
-    "path": "/home/user/work/wt/rt-OPS-child-inventory-contract-sol-1725/ops-child-custody/make-child-venv",
+      "path": "ops-child-custody/e2e-fixtures/tiny/makers/candidate-c3226b/make-child-venv",
     "sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
     "bytes": 69516,
     "mode": "0o755"
@@ -71,15 +71,27 @@
   "test_sources": [
     {
       "path": "ops-child-custody/tests/e2e_inventory.py",
-      "sha256": "1ed0a4a90a7b37072dd9340a1f046a4785b6fbe147dac36ecc08679b30dbf230",
-      "bytes": 13032,
+      "sha256": "05c7dcc2781acff05d364fc34924298ee4a58204642651f8fbbb9121dde54ef5",
+      "bytes": 34182,
       "mode": "0o644"
     },
     {
       "path": "ops-child-custody/tests/support.py",
-      "sha256": "8e61d99631e417e39e95b845f5433525ec25a26f190cd433380ebc75f830ec42",
-      "bytes": 12409,
+      "sha256": "e85b42ac7ffff730166443ed7d081a1a68062b828af3aa5d8e0dd9352afb6581",
+      "bytes": 12553,
       "mode": "0o644"
+    },
+    {
+      "path": "ops-child-custody/e2e-fixtures/tiny/makers/parent-0857/make-child-venv",
+      "sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+      "bytes": 68351,
+      "mode": "0o755"
+    },
+    {
+      "path": "ops-child-custody/e2e-fixtures/tiny/makers/candidate-c3226b/make-child-venv",
+      "sha256": "c3226b93d08e035f662ff57a7512522eb13f354acf2f13123999d71772e7142e",
+      "bytes": 69516,
+      "mode": "0o755"
     },
     {
       "path": "ops-child-custody/tests/test_custody.py",
@@ -94,8 +106,9 @@
       "mode": "0o644"
     }
   ],
-  "inherited_29_test_source_and_support_unchanged": true,
+  "inherited_29_test_source_and_support_unchanged": false,
   "new_controls": 11,
+  "portable_controls": "check-only prerequisite census, packaged maker/source binding, numeric df parser",
   "total_unittest_tests": 40,
   "embedded_python_blocks_compiled_in_memory": 7,
   "admission": {

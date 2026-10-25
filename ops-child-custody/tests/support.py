@@ -19,8 +19,10 @@ from unittest.mock import patch
 
 ORCH = Path('/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch')
 WORKER = ORCH / 'workers/rt-OPS-child-custody-resume-sol-1643'
-MAKER = Path(__file__).resolve().parents[1] / 'make-child-venv'
+FIXTURE_ROOT = Path(__file__).resolve().parents[1] / 'e2e-fixtures/tiny'
+MAKER = FIXTURE_ROOT / 'makers/candidate-c3226b/make-child-venv'
 PARENT = WORKER / 'evidence/make-child-venv.preimage'
+PORTABLE_PARENT = FIXTURE_ROOT / 'makers/parent-0857/make-child-venv'
 AGENT = 'a4e016b6a9f91fbe372672bdcf382c630bf59186'
 RUNTIME = '5e9ad1c6f74241d8771d3284fdd2ce7a214fd344'
 

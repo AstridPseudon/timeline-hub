@@ -3,9 +3,40 @@
 This directory is the durable, source-only input for
 `tests/e2e_inventory.py`. The four roles are intentionally private and tiny:
 the Agent and Runtime source carriers, plus the two differently-spelled
-dependency distributions. `tiny/manifest.json` pins every source byte and the
-two locally-built dependency wheel hashes. It contains no product data or
-caller privileges.
+dependency distributions. The `makers/` files are the exact parent `0857a5…`
+and candidate `c3226b…` shell inputs, including their executable modes;
+`tiny/manifest.json` pins every source and maker byte and the two locally-built
+dependency wheel hashes. It contains no product data or caller privileges.
+
+The receiving service must commit the emitted Agent and Runtime carriers in
+dedicated fixture Git repositories through its normal receiving path. The
+runner uses those committed checkouts for the maker's authenticated archive
+and never expects the source archive itself to contain `.git`. The packaged
+maker files and the protected Store/helper hashes are checked before any
+Store or maker body starts.
+
+Before `--write-inputs`, wheel building, venue preparation, or a run, the
+receiving target can enumerate all prerequisites without mutation:
+
+```sh
+python ops-child-custody/tests/e2e_inventory.py --check-only \
+  --helper "$TMPDIR/bench_store.py" \
+  --bootstrap-artifact "$TMPDIR/bootstrap-wheel-input.tgz" \
+  --wheelhouse "$TMPDIR/tiny-wheelhouse" \
+  --agent "$TINY_AGENT_CHECKOUT" --runtime "$TINY_RUNTIME_CHECKOUT" \
+  --orch-root "$TMPDIR/tiny-orch" \
+  --parent-work "$TMPDIR/tiny-parent-work" \
+  --candidate-work "$TMPDIR/tiny-candidate-work" \
+  --result "$TMPDIR/check-only.json"
+```
+
+This mode checks the real Agent Python (`/home/user/work/venv-agent/bin/python`)
+for Python/build/setuptools/wheel, the child `/usr/bin/python3.13`, required
+commands, local wheel hashes, source Git heads/tree/modes, the numeric `df`
+reserve and Store projection contract. It lists every missing item and exits
+non-zero before Git mutation, Store initialization, maker execution, or body
+setup. `--prepare-venue` then creates the empty `tests/suites.conf` projection
+baseline before normal `Store.initialize`; this is private fixture state.
 
 The commands below are lead/harness commands. The worker does not initialize a
 Git repository or create a commit. The harness must materialize two clean,
