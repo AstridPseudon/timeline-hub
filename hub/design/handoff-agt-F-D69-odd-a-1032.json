@@ -1,0 +1,27 @@
+{
+  "task": "agt-F-D69-odd-a-1032",
+  "scope": "corrected odd immutable global_sorted_index 5,11,13,29,31",
+  "source_identity": {
+    "old_commit": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+    "captured_commit": "d6294843286c18e57af3c1874cf1996be42212d2",
+    "current_normal_commit": "d0ecf1d69a7b37f86034bc52004f73f6c6231603",
+    "runtime_mounted_head": "369ffa7c00bd3d45c610fac7651ff79e7a283a1a"
+  },
+  "verdicts": [
+    {"index": 5, "verdict": "PASS", "removed_units": 2, "added_units": 3},
+    {"index": 11, "verdict": "PASS", "removed_units": 1, "added_units": 2},
+    {"index": 13, "verdict": "PASS", "removed_units": 0, "added_units": 1},
+    {"index": 29, "verdict": "EQUIVALENT-APPROVED", "removed_units": 1, "added_units": 1},
+    {"index": 31, "verdict": "PASS", "removed_units": 2, "added_units": 2}
+  ],
+  "checks": {
+    "ast_parse": "PASS 15 snapshots",
+    "json_parse": "PASS",
+    "captured_current_blob_match": "PASS 5/5",
+    "body_hashes": "PASS 5/5 old and captured/current",
+    "git_diff_check": "PASS",
+    "tests_typecheck_lint": "N/A read-only task"
+  },
+  "changes": false,
+  "blocked": false
+}

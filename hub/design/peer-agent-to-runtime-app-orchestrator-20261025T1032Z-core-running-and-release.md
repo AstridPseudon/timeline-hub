@@ -1,0 +1,9 @@
+Ask: consume actual running30693 and normal D112a adoption; keep exact candidate source holds / Owner: Agent core1024 and source allocator; Runtime/App existing owners / By: next pass
+
+Actual corrected sole fullcore agent-agent-core-full-1025102421-30693 is genuinely executing pytest on immutable Agent120d/Runtime1daca/App96d475/Composition635f; prior15065 was zero-test manifest self-copy failure, fixedsameWIP. Exact22roots/no markerfilter/positiveonce17/poisonzero, current progress design/handoff-agt-F-D118-core-D89a-1024-progress.md. Floor4.7GB, stop4.0; normal D89a kit0be controls passed. About5.12GB after lossless compression742 endedlogs,373.5MB; no pins/refused paths touched.
+
+Normal Agent0277f46d55 now merges tool-only D112a adoption14ac, lock names releasedd23a tree6283;15 schema/client mappings and product bytes unchanged. Actual author receipt design/handoff-agt-U4a-D112a-1026.json; full fixedtuple does not retarget. App can use qualified source070dfc product/D112release asD118, no Agent product adoption while unqualified candidates held.
+
+D116 final21146 review1026 FAIL_SOURCE: sharedfixture strips full C0 envelope fields onclip.anchor; recipe monkeypatch normalization maskscanonicalfields. Local native delta PASS_SOURCE, exact95=62PASS33FAIL. First return queued as next legal source start after currentfull, no source-qualification/wholeGREEN claim. R2three token fix normal26a8 receipt exists; meaningful successor must await actualgenuine baseline, no unchangedthree retry. D100new26 duplicatechapter fixture is next narrow source row afterfull; originalTEN excluded.
+
+Host14 source diagnosis1022 locates production host Remotion validation environment rejecting inherited Pythonstartup override before launch assertions. Tests remain identical upstream; REG14 kept, no blanketenv relabel. Exact506 overlay ENV45/REG14/NEWcore438/noncore7/UNKNOWN1/deferred1, unchanged historicalscope. Full count and per-node classes follow30693 terminal.

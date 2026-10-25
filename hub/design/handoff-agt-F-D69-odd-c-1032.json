@@ -1,0 +1,122 @@
+{
+  "task": "agt-F-D69-odd-c-1032",
+  "scope": "exact corrected odd immutable indexes 69,75,81,85,89",
+  "review_status": "complete",
+  "source_change": false,
+  "source_identity": {
+    "old_commit": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+    "old_tree": "2694ae8d2709526b40fa037bda8b159cf412769d",
+    "captured_commit": "d6294843286c18e57af3c1874cf1996be42212d2",
+    "captured_tree": "6aeae30f0892a424104a4348bca6fd74ba1315d6",
+    "current_normal_commit": "d0ecf1d69a7b37f86034bc52004f73f6c6231603",
+    "current_normal_tree": "e9845f8cf5a6ba80210336d0e2452f80a0918762",
+    "captured_current_target_blobs_equal": true
+  },
+  "verdict_summary": {
+    "functions": 5,
+    "pass": 1,
+    "equivalent_approved": 4,
+    "fail": 0,
+    "unresolved": 0,
+    "removed_units": 8,
+    "added_units": 13
+  },
+  "functions": [
+    {
+      "index": 69,
+      "function_key": "tests/sdk/test_timeline_checkout_facade.py:test_checkout_keeps_its_members_and_mixins",
+      "old_line": 116,
+      "new_line": 151,
+      "current_line": 151,
+      "old_source_blob": "a0d13168596c0b8c91fcd6c6cf2341074edc0ad3",
+      "new_current_source_blob": "eb50a950fb7152d078bd3c97820479d5f074fe85",
+      "old_body_sha256": "008406e2a3d098f312e60ac2514af534b0751e9456614a9532bf4e799193899e",
+      "new_current_body_sha256": "cdcbe5afb1a1830d803fdddcbf8275c86d3e140ac0ea53b11a55358bb07cbf8c",
+      "verdict": "PASS",
+      "units": [{"side": "added", "line": 160, "assertion": "assert getattr(Checkout, name) is getattr(_CheckMixin, name)", "verdict": "PASS", "rationale": "Stronger identity predicate conserves the old facade member/mixin purpose.", "caller": "astrid/sdk/timeline/checkout.py:16-33; astrid/sdk/timeline/check.py:69"}]
+    },
+    {
+      "index": 75,
+      "function_key": "tests/sdk/test_timeline_reflow_golden.py:test_a_picture_gap_blocks_publishing_and_says_what_is_left_on_screen",
+      "old_line": 230,
+      "new_line": 230,
+      "current_line": 230,
+      "old_source_blob": "3c185d03fa2ad7de110e20ac4ed484a624f4fe54",
+      "new_current_source_blob": "eb676c0ee52d56a69fbb8597aef6c6b9ab05c5cb",
+      "old_body_sha256": "130d8e1eb43203ab9834e5d6aceecd29134b9f324621c9daceb32644ff41328a",
+      "new_current_body_sha256": "caf5487b7cd10a7d7ca097279f3ac1454d1ff6cf2e748f2d45eb7f6797d9e192",
+      "verdict": "equivalent-approved",
+      "decision": "ecbd20a344068a277b5fbf249217cf3fa069b209",
+      "units": [
+        {"side": "removed", "line": 238, "assertion": "assert any(line.startswith(\"picture\") for line in tl.check().blocking)", "verdict": "equivalent-approved", "rationale": "Superseded by approved advisory-scene policy."},
+        {"side": "added", "line": 239, "assertion": "assert any(line.startswith(\"picture\") for line in report.problems) and not report.blocking", "verdict": "equivalent-approved", "rationale": "Retains picture report and exactly asserts non-blocking scene diagnostics.", "caller": "astrid/sdk/timeline/check.py:232-237,653-675; astrid/sdk/timeline/publish.py:125-145"}
+      ]
+    },
+    {
+      "index": 81,
+      "function_key": "tests/sdk/test_timeline_script.py:test_runtime_pin_flow_returns_old_script_after_binding_rebind",
+      "old_line": 149,
+      "new_line": 157,
+      "current_line": 157,
+      "old_source_blob": "a7e4c0f311c7b677087ad72d0ff2e18004e7b20f",
+      "new_current_source_blob": "729445cd499dd2f975b7374cce95ed8a44b97e5d",
+      "old_body_sha256": "fe4fe378aa738301b410bd11c0d19349f861aa639c76200b54b3a5a4868675f8",
+      "new_current_body_sha256": "3a9416cb130bcc0ab28eadcb0e98eb56f8cb1aea57e966868cf8213dae433372",
+      "verdict": "equivalent-approved",
+      "units": [
+        {"side": "removed", "line": 202, "assertion": "assert result.data[\"revision_id\"] == \"parent-2\"", "verdict": "equivalent-approved", "rationale": "Retired publication route replaced by explicit registered-commit revision selector."},
+        {"side": "added", "line": 245, "assertion": "assert binding_result[\"data\"][\"accepted_revision_id\"]", "verdict": "PASS"},
+        {"side": "added", "line": 269, "assertion": "assert rebound_result[\"data\"][\"accepted_revision_id\"]", "verdict": "PASS"},
+        {"side": "added", "line": 272, "assertion": "assert live[\"media_id\"] == rebound[\"object_id\"]", "verdict": "PASS"},
+        {"side": "added", "line": 283, "assertion": "assert result.data[\"revision_id\"] == expected_revision", "verdict": "equivalent-approved", "rationale": "Exact canonical authoring-parent revision identity preserves historical pinning."}
+      ],
+      "caller": "astrid/sdk/timeline_script.py:10-89; registered provider setup at test lines 168,206-209"
+    },
+    {
+      "index": 85,
+      "function_key": "tests/sdk/test_timeline_structure.py:test_joined_music_updates_source_and_literal_duration_for_publication",
+      "old_line": 82,
+      "new_line": 225,
+      "current_line": 225,
+      "old_source_blob": "e46f126a8473df406886724f295ce95ee7f72e21",
+      "new_current_source_blob": "129a8137c73374c259cbfc45269e500cbb8ac9cd",
+      "old_body_sha256": "f4a04367eb20e3c84873d0c301b91fa311950d6635a27cda9ba585228cbe7cc0",
+      "new_current_body_sha256": "36cba9b4a9b6e853580842a373d818b74d534c09d153f4fceee0db08d61e8927",
+      "verdict": "equivalent-approved",
+      "units": [
+        {"side": "removed", "line": 106, "assertion": "assert publication[\"expected_head\"] == \"rev-0\"", "verdict": "equivalent-approved", "rationale": "Replaced by v2 base revision and publication selectors."},
+        {"side": "removed", "line": 111, "assertion": "assert result[\"publication\"][\"data\"][\"new_head\"] == publication[\"parent_revision_id\"]", "verdict": "equivalent-approved", "rationale": "Replaced by accepted_revision_id authority."},
+        {"side": "added", "line": 252, "assertion": "assert publication[\"base_revision_id\"] == \"parent-1\"", "verdict": "PASS"},
+        {"side": "added", "line": 253, "assertion": "assert publication[\"base_publication_id\"] == \"publication-1\"", "verdict": "PASS"},
+        {"side": "added", "line": 254, "assertion": "assert publication[\"api_version\"] == 1", "verdict": "PASS"},
+        {"side": "added", "line": 259, "assertion": "assert result[\"publication\"][\"data\"][\"new_head\"] == result[\"publication\"][\"data\"][\"accepted_revision_id\"]", "verdict": "PASS"}
+      ],
+      "caller": "astrid/core/timeline/authoring_bundle.py:44-54,1833-1897; astrid/sdk/timeline/publish.py:188-203"
+    },
+    {
+      "index": 89,
+      "function_key": "tests/stage1/test_cold_launch_autobootstrap.py:test_source_profile_provisions_explicit_render_runtime",
+      "old_line": 71,
+      "new_line": 71,
+      "current_line": 71,
+      "old_source_blob": "49025b7a022c64c88260060b9db57bcc10f31be7",
+      "new_current_source_blob": "3b0078ef9812177cf5f4e095e717ff924d3a6809",
+      "old_body_sha256": "1d434ff1b5efaec5884e85acde721d04f8b61130324e7ff296b180260cc69782",
+      "new_current_body_sha256": "c2d079d3d1482f02c43ca6f8463071e7c35c2d59f996fd11ff108e7bc44af8df",
+      "verdict": "equivalent-approved",
+      "units": [
+        {"side": "removed", "line": 98, "assertion": "assert child_env[\"ASTRID_TIMELINE_SCHEMA_PYTHONPATH\"] == str(schema.parent.resolve())", "verdict": "equivalent-approved", "rationale": "Obsolete external schema subtree retired."},
+        {"side": "added", "line": 97, "assertion": "assert child_env[\"ASTRID_TIMELINE_SCHEMA_PYTHONPATH\"] == str(schema.resolve())", "verdict": "equivalent-approved", "rationale": "Exact canonical Runtime-pinned schema file path."}
+      ],
+      "caller": "astrid/sdk/host_bootstrap.py:461-493; astrid/core/rendering/_local_schema.py:12,23-51"
+    }
+  ],
+  "checks": {
+    "source_blob_identity": "pass",
+    "json_membership": "pass",
+    "ast_parse_15_target_blobs": "pass",
+    "composition_git_diff_check": "pass",
+    "tests_typecheck_lint": "not run; N/A for read-only review"
+  },
+  "evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D69-odd-c-1032/evidence/assigned-rows.json"
+}
