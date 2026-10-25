@@ -1,0 +1,153 @@
+{
+  "schema": "timeline.agent.d108.baseline-review.v1",
+  "task": "agt-F-D108-baseline-review-0758",
+  "decision": "FAIL",
+  "prep_actual_files": {
+    "markdown": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-D108-baseline-prep-0756.md",
+      "exists": true
+    },
+    "json": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-F-D108-baseline-prep-0756.json",
+      "exists": true,
+      "sha256": "5e55118b0cc67c3f5d7db61f865825d890cc17dec7c17bff050595c3755513a0"
+    }
+  },
+  "required_non_f_paths": {
+    "markdown": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-D108-baseline-prep-0756.md",
+      "status": "EXACTMISSING"
+    },
+    "json": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-agt-D108-baseline-prep-0756.json",
+      "status": "EXACTMISSING"
+    }
+  },
+  "authentic_xml": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D60-snapshot-return-1342/evidence/upstream-full-9244377.xml",
+    "sha256": "2941565205663912985f766210bfead7db42264976fabee7dc899d03d4f4657f",
+    "root": "testsuites",
+    "suite_total": 13083,
+    "testcase_nodes": 12517,
+    "subtest_elements": 0,
+    "outcomes": {
+      "passed": 12396,
+      "failed": 91,
+      "errors": 14,
+      "skipped": 16,
+      "subtests": 566
+    },
+    "terminal_status": "FAIL",
+    "was_read": true,
+    "full_node_index_retained": false,
+    "runtime_isolation": "UNCERTAIN_FULL_RUN_PER_D54_CUSTODY_CORRECTION"
+  },
+  "comparison_276": {
+    "index_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-baseline-prep-0756/evidence/d108-upstream924-node-index.tsv",
+    "index_sha256": "72534d6e122d282310f9275952f9711abd73c4a3ff8194e6eb5d56b6867cf917",
+    "rows": 276,
+    "unique_current_ids": 276,
+    "orders_1_to_276": true,
+    "upstream_exact": 75,
+    "upstream_outcomes": {
+      "PASSED": 9,
+      "FAILED": 66,
+      "ERROR": 0,
+      "SKIPPED": 0,
+      "UNKNOWN": 201
+    },
+    "current_inventory_membership": {
+      "present": 175,
+      "absent": 101,
+      "core": 159,
+      "non_core": 117
+    },
+    "exact_xml_ordinals_verified": 75,
+    "exact_xml_blob_hashes_verified": 75,
+    "exact_failure_text_hashes_verified": 66,
+    "rename_checks": {
+      "attempted": 201,
+      "exact_match": 2,
+      "no_match": 199,
+      "ambiguous": 0
+    }
+  },
+  "known_boundaries": {
+    "D13": {
+      "order": 162,
+      "node_id": "tests/packs/video_editing/test_runtime_publication_chain.py::test_d13_installed_native_preflight",
+      "upstream": "UNKNOWN"
+    },
+    "D23": [
+      {
+        "order": 170,
+        "node_id": "tests/sdk/test_timeline_helper_capture.py::test_cut_nudge_restart_merges_other_cut[\"second\"]",
+        "upstream": "UNKNOWN"
+      },
+      {
+        "order": 213,
+        "node_id": "tests/sdk/test_timeline_persistence.py::test_publish_after_a_restart_merges_other_clips_onto_the_moved_head",
+        "upstream": "PASSED"
+      }
+    ],
+    "approved_dead_scope_assignments": 0
+  },
+  "rename_verification": [
+    {
+      "order": 129,
+      "current_node_id": "tests/packs/rendering/test_remotion_render_contract.py::TextCardVisibleMarkupTest::test_text_card_renders_visible_markup",
+      "upstream_node_id": "tests.packs.rendering.test_remotion_render_contract.TextCardVisibleMarkupTest::test_text_card_renders_visible_markup",
+      "basis": "same_function_name",
+      "normalized_body_equal": false,
+      "upstream": "PASSED",
+      "decision": "D63 counterpart observation only; no regression closure"
+    },
+    {
+      "order": 181,
+      "current_node_id": "tests/test_env_vars_conformance.py::TestNoBareStringAccess::test_no_catalogued_bare_strings_in_core",
+      "upstream_node_id": "tests.test_env_vars_conformance.TestNoBareStringAccess::test_no_catalogued_bare_strings_in_core",
+      "basis": "same_function_name_and_body_text",
+      "normalized_body_equal": true,
+      "upstream": "PASSED",
+      "decision": "D63 counterpart_pending_current_proof; no current PASS or regression closure",
+      "prep_row_source_evidence_refs": []
+    }
+  ],
+  "current_scope": {
+    "inventory_nodes": 9268,
+    "inventory_files": 409,
+    "inventory_aggregate_sha256": "7ac5cdd0bfa2b811f9a0a4fb719d9a28ef6080d2bb879ed29fe54fc1a6882b69",
+    "current_numeric_core_claim": false,
+    "current_failure_classification": "WITHHELD_UNTIL_D108_TERMINAL",
+    "upstream_terminal_is_pass": false
+  },
+  "omissions": [
+    {
+      "id": "D108-FULL-INDEX",
+      "severity": "blocking",
+      "finding": "Only the historical 276-row comparison is indexed; no full upstream924 XML-derived index is retained for the 12517 testcase nodes / 13083 suite total.",
+      "smallest_repair": "Derive an evidence-only full index from the retained XML, including raw node ID, outcome, failure identity/location, XML ordinal, and canonical testcase blob hash; do not rerun."
+    },
+    {
+      "id": "D108-NAME",
+      "severity": "blocking",
+      "finding": "The exact non-F prep handoff paths are absent; only handoff-agt-F-D108-baseline-prep-0756.md/.json exist.",
+      "smallest_repair": "Republish the validated prep content under the exact non-F filenames."
+    },
+    {
+      "id": "D108-TRACE",
+      "severity": "nonblocking",
+      "finding": "Order 181 has an empty per-row source_evidence_refs field; D63 decision identity is only externally authenticated by its custody artifact.",
+      "smallest_repair": "Add the D63 rename-correction reference while preserving UNKNOWN exact-selector status and pending-current-proof decision."
+    }
+  ],
+  "validation": {
+    "json_parse": true,
+    "source_custody_hashes": "11/11 match",
+    "unique_id_set_arithmetic": true,
+    "in_memory_ast_comparison": true,
+    "git_diff_check": true,
+    "product_tests": "not applicable; not run",
+    "tsc_lint": "not applicable; not run"
+  }
+}
