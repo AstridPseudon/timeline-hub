@@ -1,0 +1,48 @@
+{
+  "schema": "app-d116-native-topology4-protected-review-v1",
+  "task": "D116 independent protected review",
+  "base_requested": "b24d99bd3c286336c09d4d0661e9691d3b160559",
+  "head": "b24d99bd3c286336c09d4d0661e9691d3b160559",
+  "published_agent_base": "9350a674a85b9328e7ac1e8192e66dcc65cfbf77",
+  "published_agent_parent": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "published_agent_is_normal_successor": true,
+  "runtime_pin": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+  "runtime_parent": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+  "runtime_clean": true,
+  "allowed_files": [
+    "tests/editing_conformance/native_checkout_current_fixture.py",
+    "tests/editing_conformance/test_native_checkout_current_equivalent.py"
+  ],
+  "new_files_only": true,
+  "collected_new_cases": 4,
+  "fresh_available_bytes_at_review": 5041258496,
+  "functional_status": "NOTRUN_SOURCE_FAIL",
+  "source_status": "FAIL",
+  "findings": [
+    {
+      "id": "D116-PREDICATE-001",
+      "severity": "blocking",
+      "file": "tests/editing_conformance/test_native_checkout_current_equivalent.py",
+      "node": "test_current_checkout_move_trim_lost_ack_restart_and_guarded_undo[disjoint-peer|touching-peer-conflict]",
+      "frame": "after retry response assertions and before accepted = editing.flush()",
+      "finding": "The original 1143/1147 function asserts observed[-1][key] != flight[key] after the queued suffix is accepted. The companion has no equivalent assertion.",
+      "impact": "The distinct-key guard for the post-restart suffix request is not preserved; source cannot qualify under the all-predicates rule.",
+      "original": "tests/editing_conformance/test_commit_runtime_native_checkout.py:test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo, assertion observed[-1]['key'] != flight['key']",
+      "source_change_allowed": false
+    },
+    {
+      "id": "D116-TOPOLOGY-002",
+      "severity": "blocking",
+      "file": "tests/editing_conformance/native_checkout_current_fixture.py",
+      "node": "prepare",
+      "frame": "desired parent topology construction, lines 42-51",
+      "finding": "Both current music-bed and music-other clips are assigned to track music-other, and no parent music track is constructed. The original native-checkout topology has music-bed on parent track music and music-other on a distinct music-other track.",
+      "impact": "The current fixture is not a faithful music-bed/music-other parent topology; card/voice provenance is genuine but the target topology is not exact.",
+      "original": "Runtime precut parent music-bed track music; m1 baseline adds track music-other and clip music-other on that distinct track",
+      "source_change_allowed": false
+    }
+  ],
+  "inherited_input_note": "The completed current17 independent review recorded a malformed 65-character scalar-file hash in its supplied map; the live scalar hash is 691046ff5ac691974c221ab992cb362b5153a8099f441c5d8dd57661351c9618. This review did not change that external artifact.",
+  "no_source_fix": true,
+  "no_functional_run": true
+}

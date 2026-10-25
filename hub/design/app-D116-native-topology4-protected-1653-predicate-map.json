@@ -1,0 +1,43 @@
+{
+  "schema": "app-d116-native-checkout4-predicate-map-protected-v1",
+  "overall": "FAIL",
+  "entries": [
+    {
+      "ordinal": 1143,
+      "original": "test_commit_runtime_native_checkout.py::test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[False]",
+      "companion": "test_native_checkout_current_equivalent.py::test_current_checkout_move_trim_lost_ack_restart_and_guarded_undo[disjoint-peer]",
+      "mapping": "parameterized move/trim/lost-ACK/restart/disjoint/undo",
+      "preserved": ["move on=1", "trim 1,4 -> hold 3", "exact flight body and lost-ACK retry", "music-other on=2", "reload", "guarded undo/redo"],
+      "missing": ["distinct post-retry suffix idempotency-key assertion"],
+      "status": "FAIL"
+    },
+    {
+      "ordinal": 1147,
+      "original": "test_commit_runtime_native_checkout.py::test_attached_move_trim_lost_ack_restart_original_suffix_and_guarded_undo[True]",
+      "companion": "test_native_checkout_current_equivalent.py::test_current_checkout_move_trim_lost_ack_restart_and_guarded_undo[touching-peer-conflict]",
+      "mapping": "parameterized move/trim/lost-ACK/restart/touching-peer conflict",
+      "preserved": ["peer music-bed trim 0,5", "pending suffix no-write", "from=1 conflict state"],
+      "missing": ["distinct post-retry suffix idempotency-key assertion", "exact current music/music-other track topology"],
+      "status": "FAIL"
+    },
+    {
+      "ordinal": 1152,
+      "original": "test_commit_runtime_native_checkout.py::test_attached_param_commands_keep_exact_cli_ingress_and_unchanged_write_history",
+      "companion": "test_native_checkout_current_equivalent.py::test_current_checkout_commands_file_preserves_opaque_unchanged_write_and_undo",
+      "mapping": "commands-file CLI, opaque literal, unchanged write, clear, undo, guarded conflict",
+      "preserved": ["CLI command and base flags", "opaque [null,false,0]", "same accepted revision/different receipt", "clear/undo/conflict"],
+      "missing": [],
+      "status": "PASS_MAPPING"
+    },
+    {
+      "ordinal": 1159,
+      "original": "test_commit_runtime_native_checkout.py::test_authenticated_v1_commit_reload_undo_survives_stopped_renderer_and_preview_reports_unavailable",
+      "companion": "test_native_checkout_current_equivalent.py::test_current_checkout_gate3_reload_undo_and_visualize_report_unavailable",
+      "mapping": "occurrence-free text-card Gate3, renderer-off, reload/undo, unavailable visualize",
+      "preserved": ["occurrences=[]", "Gate3 title fields", "renderer process tripwire", "move/reload/undo", "exact unavailable capability reply"],
+      "missing": [],
+      "status": "PASS_MAPPING"
+    }
+  ],
+  "common_topology_finding": "The helper assigns both music clips to music-other; original current target topology requires music-bed on music and music-other on music-other."
+}

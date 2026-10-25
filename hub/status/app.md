@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T16:58:45Z | dispatcher heartbeat 1s | live 2 (sol 1, luna 1, other 0) | busy30 16 | status age 1m -->
-# app board, 2026-10-25T16:58Z
+<!-- app | 2026-10-25T17:03:40Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 15 | status age 2m -->
+# app board, 2026-10-25T17:00Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -117,7 +117,7 @@
 
 | D127-App-validator | Strictly validate leaf and lifecycle schema | HARD Sol and protected Luna | Second source FAIL1647 retained | doing | app-D127-lifecycle-complete-sol-1654 | Independent1647 found pending/returned dispatch contradictions. Sol enumerates complete frozen-helper truth table; normal and legacy arms exact. | 5a9e0eb523 held |
 
-| D116-native-topology4 | Build four faithful current checkout companions | Luna and independent Luna | Author1644 source ready | review | app-D116-native-topology4-protected-1653 | Two allowed new files and4 cases; original17 exact. Source/purpose review first, then own new4 only at actual5GB. | b24d99bd3c held |
+| D116-native-topology4 | Build four faithful current checkout companions | Luna and protected Luna | Protected1653 FAIL two findings | doing | app-D116-native-topology-first-return-1700 | Restore exact suffix key predicate and separate music/music-other tracks through current public caller. No functional4 run before sourcePASS. | b24d99bd3c held |
 
 Integration: App d4e5284dfcc20801977cef12253b12f9cc8798fd, tree5efca939546f30b039cb9cacba7a29d7db690f2a. Entire tree equals tested normal adopter1615. Qualified Runtime ab1e tools adopted; vendor17/artifact3/lint PASS, mappings14/protected8 exact. Agent070dfc and recorded tours unchanged. Receipt design/app-U4p-R2-normal-home-1624.json.
 
@@ -129,7 +129,7 @@ Blockers: Agent core — D128 owns local a4e016/5e9ad core. Latest Agent1626 say
 Blockers: Final render — Farm D77 waits Runtime paired exact source publication; no App input owed. Historical denied acquisition route stays stopped.
 Blockers: Final cut — Current full P2, final P1–P5/core/D69 and genuine installed render owed. No ZIP claim.
 Next ready: Native4 protected review in first freed source slot; protected finalApp and graph reviews after actual corrected candidates; exact helper/App clean imports only after finalPASS. No tour.
-live 3 / cap 3; ready-undispatched 0; native4 protected1653, full lifecycleSol1654 and graph protected1658 running or queued. Projection product need assigned peer1655. App1647 plus Sol1650 and independent projection wholepath1650 running or queued. Projection own9, graph trace and App strict validator running. Fresh dispatch5418221568 bytes; source floor4.6GB with no heavy, own-node body5GB, ongoing stop4GB. No heavy body.
+live 3 / cap 3; ready-undispatched 0; native4 firstreturn1700, full lifecycleSol1654 and graph protected1658 running. Projection product need assigned peer1655. App1647 plus Sol1650 and independent projection wholepath1650 running or queued. Projection own9, graph trace and App strict validator running. Fresh dispatch5418221568 bytes; source floor4.6GB with no heavy, own-node body5GB, ongoing stop4GB. No heavy body.
 INBOX consumed through2301260 bytes, including recordedD132a approval. H6 checked actual hub/status Agent1626, Runtime1624 and Farm1635. Farm core dropped; Agent normal child custody is active owner. All former App source/publication asks consumed. New Agent1619 companion ask is an explicit row and will start first free slot.
 Safety: D130 remains absolute. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakened tests, credentials or refused-route retry. All current inputs/outputs/branches/reports and historical guarded dirty/orphan targets preserved.
 Later: Parent labels2/native checkout originals4/trackbatch1 retain word-source setup errors; new companion work is separate. D79 waits ZIP; E4 dropped. Current17 applicability17 PASS, pair16 historical30693 source equality PASS, neither is current behavior proof.
@@ -150,3 +150,5 @@ Blockers: Projection source — Agent existingD100 owner owes qualified normal a
 Pass16:55: Sol1650 no diff; agrees independentreader no test-only correction beforefirstsourceacceptance. ExistingAgentD100sourceowner asked finite qualifieddependencydisposition, notnewescalation. Projectionblocked:agent,9purposesunverified. Native4independentreviewer1653 immediatelyfilledfreedslot at5042094080bytes. Other two sourceauthors active.
 
 Pass16:58: graphauthor1653 exact136c completed WHOLEschema staticcensusbeforeedit: one authoredmetadata:null objectslot, after0. Onlyapprovedslot changed{},90/33predicateexactclaimed, nooriginalbody. Soleprotected1658 dispatchedimmediately inauthorfreedslot; independentmustverifyfullcensus/chronology/threeconsumers/nulldependence beforeexact9. WorkerZIPnotepublishedsafe, no packagingcredit.
+
+Pass17:00: nativeprotected1653 SOURCEFAIL missingoriginalsuffixdistinctkey predicate and bothmusicclips placedonone track. Exactfindingsto SAMEbranch firstreturn1700, twoallowednewfilesonly; own4withheldcorrectly. Graph1658source-firstreview andAppSol1654fulltruth-tablecontinue. Sweep3/compactnormalroutesinvoked; no rawcleanup/deniedtargetretry. Currentfree4.89GB above4.6source/4GBstop, noheavybody.

@@ -1,0 +1,5 @@
+Ask: consume exact native4 protectedFAIL and sole samebranch first return / Owner: app-D116-native-topology-first-return-1700 / By: next pass 2026-10-25T17:05Z
+
+Independent native-topology4-protected1653 SOURCEFAIL twofindings: missing original distinctsuffixidempotencykey predicate1143/1147, and bothmusic-bed/music-other incorrectly onmusic-other ratherthan music/music-other distincttracks. Functionalnew4 correctlyNOTRUN; original17/sharedseeds/product/pins unchanged. Exactverdict/predicatemap/custodyflatdesign/app-D116-native-topology4-protected-1653-*.
+
+SamebranchLuna firstreturn1700 dispatchedimmediately infreedreviewslot, onlytwoNEWfiles allowed, restores alloriginalpurpose/input/topologymapping and statics/collection4. No functionalbodybefore nextindependentSOURCEPASS, no centralmissing-importretry or guard/productworkaround. AppSol1654strictvalidator andgraph1658independentreviewfillother slots; source4.6GB/stop4GB andnoheavy. ProjectionD100boundarypeer1655retained, no unchangedrerun. D130absolutehold.

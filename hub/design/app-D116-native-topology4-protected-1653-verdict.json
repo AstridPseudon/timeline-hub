@@ -1,0 +1,17 @@
+{
+  "schema": "app-d116-native-topology4-protected-verdict-v1",
+  "overall": "SOURCE_FAIL",
+  "source": "FAIL",
+  "functional": "NOTRUN",
+  "functional_gate": "not authorized after source failure",
+  "base": "b24d99bd3c286336c09d4d0661e9691d3b160559",
+  "published_base": "9350a674a85b9328e7ac1e8192e66dcc65cfbf77",
+  "runtime": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+  "new_files": [
+    "tests/editing_conformance/native_checkout_current_fixture.py",
+    "tests/editing_conformance/test_native_checkout_current_equivalent.py"
+  ],
+  "collection": {"status": "PASS", "cases": 4},
+  "findings": ["D116-PREDICATE-001", "D116-TOPOLOGY-002"],
+  "safe_next_step": "Return exact findings for source-author correction and re-review; do not run NEW4 until the source review passes."
+}
