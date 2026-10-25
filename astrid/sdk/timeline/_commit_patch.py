@@ -103,6 +103,9 @@ def canonical_site(closure, ref, path):
         return closure.resolve(ref), path
     if '/collection:' in ref:
         owner, kind = ref.rsplit('/collection:', 1)
+        if kind == 'asset':
+            return canonical_site(closure, owner + ('/source' if owner != 'parent' else ''),
+                                  ['registry', 'assets'])
         if kind not in ('clip', 'track', 'occurrence'):
             return canonical_site(closure, owner + ('/source' if owner != 'parent' else ''), [])
         path = (['config', kind + 's'] if owner == 'parent' and kind != 'occurrence' else [kind + 's'])
@@ -522,7 +525,18 @@ class CommitPatch:
                     if read['ref'] in created_refs and read['state'] == ABSENT:
                         continue  # Allocation history guards absence; this is not a closure read.
                     ref, path = canonical_site(closure, read['ref'], read['path'])
-                    if '/collection:' in read['ref']:
+                    if read['ref'].endswith('/collection:asset'):
+                        # Asset maps are exact fields, not identity arrays. If a
+                        # container is missing, guard its absence at this input.
+                        while path:
+                            try:
+                                value = value_at(closure.payload(ref), ref, path)
+                                break
+                            except (CommandError, KeyError):
+                                path = path[:-1]
+                        item = ({'kind': 'field', 'ref': ref, 'path': path, 'state': copy.deepcopy(value)}
+                                if path else {'kind': 'scope', 'ref': ref, 'path': []})
+                    elif '/collection:' in read['ref']:
                         try:
                             value = value_at(closure.payload(ref), ref, path)
                             ids = identities(value.get('value'), identity_key(ref, path), ref=ref, path=path)
