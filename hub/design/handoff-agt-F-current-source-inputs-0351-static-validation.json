@@ -1,0 +1,10 @@
+{
+  "repository_files_changed": false,
+  "ready_count": 27,
+  "unique_ready_ids": 27,
+  "target_raw_count": 57,
+  "main_overlap_count": 20,
+  "held_count": 10,
+  "pending_count": 49,
+  "source_checks": "see README; no pytest/collection/helper execution"
+}

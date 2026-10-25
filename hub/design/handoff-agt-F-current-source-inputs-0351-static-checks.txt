@@ -1,0 +1,15 @@
+F-D86 source-only static checks
+
+Base: 68404b8484749d1d8ec2bdaef34faa004ad87dbe
+
+In-memory AST parse/compile (12 changed/dependency files): PASS
+/home/user/work/venv-agent/bin/python -m ruff check --no-cache tests/editing_conformance/test_commit_runtime_video_unplace.py tests/editing_conformance/test_native_sheet_ordinary_runtime.py tests/sdk/test_timeline_capture_projection.py tests/editing_conformance/test_commit_runtime_numeric_move.py tests/editing_conformance/test_cli_trim_runtime.py tests/editing_conformance/test_commit_runtime_opaque_items.py tests/editing_conformance/test_s3_reviewed_cohort_runtime.py tests/editing_conformance/test_next_ordinary_union_runtime.py tests/sdk/test_timeline_script.py
+Result: All checks passed!
+/home/user/work/venv-agent/bin/python -m mypy --no-incremental tests/editing_conformance/test_commit_runtime_video_unplace.py tests/editing_conformance/test_native_sheet_ordinary_runtime.py tests/sdk/test_timeline_capture_projection.py tests/editing_conformance/test_commit_runtime_numeric_move.py tests/editing_conformance/test_cli_trim_runtime.py tests/editing_conformance/test_commit_runtime_opaque_items.py tests/editing_conformance/test_s3_reviewed_cohort_runtime.py tests/editing_conformance/test_next_ordinary_union_runtime.py tests/sdk/test_timeline_script.py
+Result: Success: no issues found in 9 source files
+git diff --check
+Result: PASS
+git status --short
+Result: clean
+
+No pytest, collection, helper/fixture/function execution, probe, service, browser, render, package install, or full suite was run.

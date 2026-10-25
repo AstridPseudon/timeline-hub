@@ -1,0 +1,12 @@
+family	raw_9211	ready_delta	main_overlap	held	pending	accounting
+video12	12	8	0	4	0	raw exact outcomes minus exact MAIN IDs and explicit live seams
+ordinarysheet11	11	0	11	0	0	raw exact outcomes minus exact MAIN IDs and explicit live seams
+projection9	9	0	9	0	0	raw exact outcomes minus exact MAIN IDs and explicit live seams
+numeric9	9	6	0	3	0	raw exact outcomes minus exact MAIN IDs and explicit live seams
+CLItrim3	3	3	0	0	0	raw exact outcomes minus exact MAIN IDs and explicit live seams
+opaque9	9	6	0	3	0	raw exact outcomes minus exact MAIN IDs and explicit live seams
+ordinaryscript4	4	4	0	0	0	raw exact outcomes minus exact MAIN IDs and explicit live seams
+UNION	57	27	20	10	49	27 ready; no duplicate IDs; pending=word46+D92x3
+PRESERVED_SCOPE	550 originals	not expanded	not expanded	not expanded	not expanded	original550 rollup sha256=abea44dbd2294e2e8ed1a8634618a6bb0fa85590619487002a1e933e45bb88e2
+PRESERVED_SCOPE	23 no-case rows	not expanded	not expanded	not expanded	not expanded	unexecuted-23 sha256=7f70512cfdf3d6db36c5c59106805beae7a73391803eb5d161683d8d4f98dfca
+EXCLUDED_MAIN_CONTROLLERS	exact22 media20+auto2	not duplicated	controller0333/0336	heldcandidate13	0	no retarget or input mutation
