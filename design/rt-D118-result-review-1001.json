@@ -1,0 +1,868 @@
+{
+  "schema": "timeline.runtime.d118.result-review.v1",
+  "task": "rt-D118-result-review-1001",
+  "review_scope": "D54a exact 23-node upstream replacement scope only",
+  "verdict": "FAIL",
+  "counts": {
+    "requested": 23,
+    "upstream_runnable": 16,
+    "upstream_pass": 15,
+    "upstream_fail": 1,
+    "upstream_error": 0,
+    "upstream_absent": 7,
+    "PRE": 0,
+    "REG": 14,
+    "NEW-OURS": 8,
+    "UNKN": 1
+  },
+  "corrective_finding": "The author README incorrectly labels all 15 upstream-PASS/current-FAIL rows NEW-OURS. Fourteen have identical function bodies and the same scenario; they are REG. Only the changed-body bootstrap row is NEW-OURS on approved current12/Remotion case-purpose grounds. The render row remains UNKN.",
+  "scope_inputs": {
+    "current_agent_head": "547e104562",
+    "current_runtime_head": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e",
+    "pristine_agent_head": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+    "pristine_agent_tree": "2694ae8d2709526b40fa037bda8b159cf412769d",
+    "pristine_runtime_head": "d4f496ec4fbcae7a1f3a51d47ed5147c561117ad",
+    "pristine_runtime_tree": "1d3e06f4d59ed6d459646d24ab185c36eb5be075",
+    "central_test_id": "rt-D118-upstream23-0951-d118-upstream23-targeted-1025095559-19404",
+    "central_exit": 1,
+    "central_result": "15 passed, 1 failed, 0 errors",
+    "xml_sha256": "84fcd41802112834d34164636d7ea5e59632826ae5e9e43bca45ac40a957ad12",
+    "first_run_xml_sha256": "b7c68509b300bb94b3188d2b5cf3e0a0041a93f4a9adf07059d66cefae51d1a2"
+  },
+  "provenance_conclusion": "Recorded parent and child imported-module/find_spec origins resolve only to pristine Agent/Runtime roots. The shared-venv probe identifies current integration modules as available but the upstream child did not admit them. The first-run runtime_protocol import failure is retained separately and is not used as the final classification.",
+  "historical_924": "UNCERTAIN and outside this exact replacement scope; no broad 924 claim.",
+  "rows": [
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_bootstrap_passes_inventory_identity_and_restarts_on_change",
+      "classification": "NEW-OURS",
+      "basis": "Current body differs: approved current12/Remotion registry-context inventory-read expectation, added by 6f688c4782305683456c5f25499dd3fb37109b9b; this is not the upstream one-read case.",
+      "approved_replacement": {
+        "commit": "6f688c4782305683456c5f25499dd3fb37109b9b",
+        "description": "Current test expects a second inventory read when ASTRID_REMOTION_PROJECT_DIR is set; upstream body expects one read."
+      },
+      "current": {
+        "outcome": "failed",
+        "failure_kind": "failure",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:223",
+        "function": "test_bootstrap_passes_inventory_identity_and_restarts_on_change",
+        "function_line": 123,
+        "source_file_sha256": "08dfa8dcafeb80c347923630864a29d58dea97e257428e204fc316567795161b",
+        "body_sha256": "626bf235f9857f15ec708980b252f6ad5284612adacc41f8d3fbdb7e4bc53770",
+        "source_root": "/home/user/work/agent",
+        "exception_evidence": "Current D54a handoff retained no exception class/detail; no body rerun permitted."
+      },
+      "upstream": {
+        "outcome": "PASS",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:218",
+        "function": "test_bootstrap_passes_inventory_identity_and_restarts_on_change",
+        "function_line": 121,
+        "source_file_sha256": "8143c3741b1024612c6cb8017d17ee83bd69d5fb64db31fff2d25b3bf0b05362",
+        "body_sha256": "3a870feeedb948c8d4c42e14ffc35a76510d8cf814237e97cf57e126e16e5d4c",
+        "source_root": "/home/user/work/wt/agt-pin-08e6b905",
+        "run_detail": null
+      },
+      "source_relation": {
+        "file_present_upstream": true,
+        "body_hash_equal": false,
+        "run_status": "RUN",
+        "disposition_in_author_artifact": "UPSTREAM-COUNTERPART",
+        "author_classification": "NEW-OURS"
+      }
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_bootstrap_stops_on_correlated_terminal_registration_failure",
+      "classification": "REG",
+      "basis": "Exact function/body correspondence; current outcome failed while pristine upstream counterpart passed. No approved replacement or changed case purpose is established.",
+      "approved_replacement": null,
+      "current": {
+        "outcome": "failed",
+        "failure_kind": "failure",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:363",
+        "function": "test_bootstrap_stops_on_correlated_terminal_registration_failure",
+        "function_line": 273,
+        "source_file_sha256": "08dfa8dcafeb80c347923630864a29d58dea97e257428e204fc316567795161b",
+        "body_sha256": "caa9ecdf6ce41fbb524aa2b4d45053b79f6986c62f3eb039bcadc00ef076e800",
+        "source_root": "/home/user/work/agent",
+        "exception_evidence": "Current D54a handoff retained no exception class/detail; no body rerun permitted."
+      },
+      "upstream": {
+        "outcome": "PASS",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:348",
+        "function": "test_bootstrap_stops_on_correlated_terminal_registration_failure",
+        "function_line": 258,
+        "source_file_sha256": "8143c3741b1024612c6cb8017d17ee83bd69d5fb64db31fff2d25b3bf0b05362",
+        "body_sha256": "caa9ecdf6ce41fbb524aa2b4d45053b79f6986c62f3eb039bcadc00ef076e800",
+        "source_root": "/home/user/work/wt/agt-pin-08e6b905",
+        "run_detail": null
+      },
+      "source_relation": {
+        "file_present_upstream": true,
+        "body_hash_equal": true,
+        "run_status": "RUN",
+        "disposition_in_author_artifact": "UPSTREAM-COUNTERPART",
+        "author_classification": "NEW-OURS"
+      }
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-25-ready-True-25-None]",
+      "classification": "REG",
+      "basis": "Exact function/body correspondence; current outcome failed while pristine upstream counterpart passed. No approved replacement or changed case purpose is established.",
+      "approved_replacement": null,
+      "current": {
+        "outcome": "failed",
+        "failure_kind": "failure",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:727",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 654,
+        "source_file_sha256": "08dfa8dcafeb80c347923630864a29d58dea97e257428e204fc316567795161b",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/agent",
+        "exception_evidence": "Current D54a handoff retained no exception class/detail; no body rerun permitted."
+      },
+      "upstream": {
+        "outcome": "PASS",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:636",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 563,
+        "source_file_sha256": "8143c3741b1024612c6cb8017d17ee83bd69d5fb64db31fff2d25b3bf0b05362",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/wt/agt-pin-08e6b905",
+        "run_detail": null
+      },
+      "source_relation": {
+        "file_present_upstream": true,
+        "body_hash_equal": true,
+        "run_status": "RUN",
+        "disposition_in_author_artifact": "UPSTREAM-COUNTERPART",
+        "author_classification": "NEW-OURS"
+      }
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[None-None-ready-False-300.0-None]",
+      "classification": "REG",
+      "basis": "Exact function/body correspondence; current outcome failed while pristine upstream counterpart passed. No approved replacement or changed case purpose is established.",
+      "approved_replacement": null,
+      "current": {
+        "outcome": "failed",
+        "failure_kind": "failure",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 654,
+        "source_file_sha256": "08dfa8dcafeb80c347923630864a29d58dea97e257428e204fc316567795161b",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/agent",
+        "exception_evidence": "Current D54a handoff retained no exception class/detail; no body rerun permitted."
+      },
+      "upstream": {
+        "outcome": "PASS",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:640",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 563,
+        "source_file_sha256": "8143c3741b1024612c6cb8017d17ee83bd69d5fb64db31fff2d25b3bf0b05362",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/wt/agt-pin-08e6b905",
+        "run_detail": null
+      },
+      "source_relation": {
+        "file_present_upstream": true,
+        "body_hash_equal": true,
+        "run_status": "RUN",
+        "disposition_in_author_artifact": "UPSTREAM-COUNTERPART",
+        "author_classification": "NEW-OURS"
+      }
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-25-ready-True-25-None]",
+      "classification": "REG",
+      "basis": "Exact function/body correspondence; current outcome failed while pristine upstream counterpart passed. No approved replacement or changed case purpose is established.",
+      "approved_replacement": null,
+      "current": {
+        "outcome": "failed",
+        "failure_kind": "failure",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:727",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 654,
+        "source_file_sha256": "08dfa8dcafeb80c347923630864a29d58dea97e257428e204fc316567795161b",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/agent",
+        "exception_evidence": "Current D54a handoff retained no exception class/detail; no body rerun permitted."
+      },
+      "upstream": {
+        "outcome": "PASS",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:636",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 563,
+        "source_file_sha256": "8143c3741b1024612c6cb8017d17ee83bd69d5fb64db31fff2d25b3bf0b05362",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/wt/agt-pin-08e6b905",
+        "run_detail": null
+      },
+      "source_relation": {
+        "file_present_upstream": true,
+        "body_hash_equal": true,
+        "run_status": "RUN",
+        "disposition_in_author_artifact": "UPSTREAM-COUNTERPART",
+        "author_classification": "NEW-OURS"
+      }
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-120-None]",
+      "classification": "REG",
+      "basis": "Exact function/body correspondence; current outcome failed while pristine upstream counterpart passed. No approved replacement or changed case purpose is established.",
+      "approved_replacement": null,
+      "current": {
+        "outcome": "failed",
+        "failure_kind": "failure",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 654,
+        "source_file_sha256": "08dfa8dcafeb80c347923630864a29d58dea97e257428e204fc316567795161b",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/agent",
+        "exception_evidence": "Current D54a handoff retained no exception class/detail; no body rerun permitted."
+      },
+      "upstream": {
+        "outcome": "PASS",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:640",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 563,
+        "source_file_sha256": "8143c3741b1024612c6cb8017d17ee83bd69d5fb64db31fff2d25b3bf0b05362",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/wt/agt-pin-08e6b905",
+        "run_detail": null
+      },
+      "source_relation": {
+        "file_present_upstream": true,
+        "body_hash_equal": true,
+        "run_status": "RUN",
+        "disposition_in_author_artifact": "UPSTREAM-COUNTERPART",
+        "author_classification": "NEW-OURS"
+      }
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-terminal-False-1-None]",
+      "classification": "REG",
+      "basis": "Exact function/body correspondence; current outcome failed while pristine upstream counterpart passed. No approved replacement or changed case purpose is established.",
+      "approved_replacement": null,
+      "current": {
+        "outcome": "failed",
+        "failure_kind": "failure",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 654,
+        "source_file_sha256": "08dfa8dcafeb80c347923630864a29d58dea97e257428e204fc316567795161b",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/agent",
+        "exception_evidence": "Current D54a handoff retained no exception class/detail; no body rerun permitted."
+      },
+      "upstream": {
+        "outcome": "PASS",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:640",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 563,
+        "source_file_sha256": "8143c3741b1024612c6cb8017d17ee83bd69d5fb64db31fff2d25b3bf0b05362",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/wt/agt-pin-08e6b905",
+        "run_detail": null
+      },
+      "source_relation": {
+        "file_present_upstream": true,
+        "body_hash_equal": true,
+        "run_status": "RUN",
+        "disposition_in_author_artifact": "UPSTREAM-COUNTERPART",
+        "author_classification": "NEW-OURS"
+      }
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_pid-False-1-None]",
+      "classification": "REG",
+      "basis": "Exact function/body correspondence; current outcome failed while pristine upstream counterpart passed. No approved replacement or changed case purpose is established.",
+      "approved_replacement": null,
+      "current": {
+        "outcome": "failed",
+        "failure_kind": "failure",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 654,
+        "source_file_sha256": "08dfa8dcafeb80c347923630864a29d58dea97e257428e204fc316567795161b",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/agent",
+        "exception_evidence": "Current D54a handoff retained no exception class/detail; no body rerun permitted."
+      },
+      "upstream": {
+        "outcome": "PASS",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:640",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 563,
+        "source_file_sha256": "8143c3741b1024612c6cb8017d17ee83bd69d5fb64db31fff2d25b3bf0b05362",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/wt/agt-pin-08e6b905",
+        "run_detail": null
+      },
+      "source_relation": {
+        "file_present_upstream": true,
+        "body_hash_equal": true,
+        "run_status": "RUN",
+        "disposition_in_author_artifact": "UPSTREAM-COUNTERPART",
+        "author_classification": "NEW-OURS"
+      }
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_birth-False-1-None]",
+      "classification": "REG",
+      "basis": "Exact function/body correspondence; current outcome failed while pristine upstream counterpart passed. No approved replacement or changed case purpose is established.",
+      "approved_replacement": null,
+      "current": {
+        "outcome": "failed",
+        "failure_kind": "failure",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 654,
+        "source_file_sha256": "08dfa8dcafeb80c347923630864a29d58dea97e257428e204fc316567795161b",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/agent",
+        "exception_evidence": "Current D54a handoff retained no exception class/detail; no body rerun permitted."
+      },
+      "upstream": {
+        "outcome": "PASS",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:640",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 563,
+        "source_file_sha256": "8143c3741b1024612c6cb8017d17ee83bd69d5fb64db31fff2d25b3bf0b05362",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/wt/agt-pin-08e6b905",
+        "run_detail": null
+      },
+      "source_relation": {
+        "file_present_upstream": true,
+        "body_hash_equal": true,
+        "run_status": "RUN",
+        "disposition_in_author_artifact": "UPSTREAM-COUNTERPART",
+        "author_classification": "NEW-OURS"
+      }
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_instance-False-1-None]",
+      "classification": "REG",
+      "basis": "Exact function/body correspondence; current outcome failed while pristine upstream counterpart passed. No approved replacement or changed case purpose is established.",
+      "approved_replacement": null,
+      "current": {
+        "outcome": "failed",
+        "failure_kind": "failure",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 654,
+        "source_file_sha256": "08dfa8dcafeb80c347923630864a29d58dea97e257428e204fc316567795161b",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/agent",
+        "exception_evidence": "Current D54a handoff retained no exception class/detail; no body rerun permitted."
+      },
+      "upstream": {
+        "outcome": "PASS",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:640",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 563,
+        "source_file_sha256": "8143c3741b1024612c6cb8017d17ee83bd69d5fb64db31fff2d25b3bf0b05362",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/wt/agt-pin-08e6b905",
+        "run_detail": null
+      },
+      "source_relation": {
+        "file_present_upstream": true,
+        "body_hash_equal": true,
+        "run_status": "RUN",
+        "disposition_in_author_artifact": "UPSTREAM-COUNTERPART",
+        "author_classification": "NEW-OURS"
+      }
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-1-foreign_source-False-1-None]",
+      "classification": "REG",
+      "basis": "Exact function/body correspondence; current outcome failed while pristine upstream counterpart passed. No approved replacement or changed case purpose is established.",
+      "approved_replacement": null,
+      "current": {
+        "outcome": "failed",
+        "failure_kind": "failure",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 654,
+        "source_file_sha256": "08dfa8dcafeb80c347923630864a29d58dea97e257428e204fc316567795161b",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/agent",
+        "exception_evidence": "Current D54a handoff retained no exception class/detail; no body rerun permitted."
+      },
+      "upstream": {
+        "outcome": "PASS",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:640",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 563,
+        "source_file_sha256": "8143c3741b1024612c6cb8017d17ee83bd69d5fb64db31fff2d25b3bf0b05362",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/wt/agt-pin-08e6b905",
+        "run_detail": null
+      },
+      "source_relation": {
+        "file_present_upstream": true,
+        "body_hash_equal": true,
+        "run_status": "RUN",
+        "disposition_in_author_artifact": "UPSTREAM-COUNTERPART",
+        "author_classification": "NEW-OURS"
+      }
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-None]",
+      "classification": "REG",
+      "basis": "Exact function/body correspondence; current outcome failed while pristine upstream counterpart passed. No approved replacement or changed case purpose is established.",
+      "approved_replacement": null,
+      "current": {
+        "outcome": "failed",
+        "failure_kind": "failure",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 654,
+        "source_file_sha256": "08dfa8dcafeb80c347923630864a29d58dea97e257428e204fc316567795161b",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/agent",
+        "exception_evidence": "Current D54a handoff retained no exception class/detail; no body rerun permitted."
+      },
+      "upstream": {
+        "outcome": "PASS",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:640",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 563,
+        "source_file_sha256": "8143c3741b1024612c6cb8017d17ee83bd69d5fb64db31fff2d25b3bf0b05362",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/wt/agt-pin-08e6b905",
+        "run_detail": null
+      },
+      "source_relation": {
+        "file_present_upstream": true,
+        "body_hash_equal": true,
+        "run_status": "RUN",
+        "disposition_in_author_artifact": "UPSTREAM-COUNTERPART",
+        "author_classification": "NEW-OURS"
+      }
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-400-ready-True-400-400]",
+      "classification": "REG",
+      "basis": "Exact function/body correspondence; current outcome failed while pristine upstream counterpart passed. No approved replacement or changed case purpose is established.",
+      "approved_replacement": null,
+      "current": {
+        "outcome": "failed",
+        "failure_kind": "failure",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:727",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 654,
+        "source_file_sha256": "08dfa8dcafeb80c347923630864a29d58dea97e257428e204fc316567795161b",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/agent",
+        "exception_evidence": "Current D54a handoff retained no exception class/detail; no body rerun permitted."
+      },
+      "upstream": {
+        "outcome": "PASS",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:636",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 563,
+        "source_file_sha256": "8143c3741b1024612c6cb8017d17ee83bd69d5fb64db31fff2d25b3bf0b05362",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/wt/agt-pin-08e6b905",
+        "run_detail": null
+      },
+      "source_relation": {
+        "file_present_upstream": true,
+        "body_hash_equal": true,
+        "run_status": "RUN",
+        "disposition_in_author_artifact": "UPSTREAM-COUNTERPART",
+        "author_classification": "NEW-OURS"
+      }
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-ready-False-150.3-30]",
+      "classification": "REG",
+      "basis": "Exact function/body correspondence; current outcome failed while pristine upstream counterpart passed. No approved replacement or changed case purpose is established.",
+      "approved_replacement": null,
+      "current": {
+        "outcome": "failed",
+        "failure_kind": "failure",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 654,
+        "source_file_sha256": "08dfa8dcafeb80c347923630864a29d58dea97e257428e204fc316567795161b",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/agent",
+        "exception_evidence": "Current D54a handoff retained no exception class/detail; no body rerun permitted."
+      },
+      "upstream": {
+        "outcome": "PASS",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:640",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 563,
+        "source_file_sha256": "8143c3741b1024612c6cb8017d17ee83bd69d5fb64db31fff2d25b3bf0b05362",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/wt/agt-pin-08e6b905",
+        "run_detail": null
+      },
+      "source_relation": {
+        "file_present_upstream": true,
+        "body_hash_equal": true,
+        "run_status": "RUN",
+        "disposition_in_author_artifact": "UPSTREAM-COUNTERPART",
+        "author_classification": "NEW-OURS"
+      }
+    },
+    {
+      "nodeid": "tests/sdk/test_host_bootstrap_source_identity.py::test_startup_budget_polling_preserves_identity_and_original_cleanup[120-None-exit-False-1-30]",
+      "classification": "REG",
+      "basis": "Exact function/body correspondence; current outcome failed while pristine upstream counterpart passed. No approved replacement or changed case purpose is established.",
+      "approved_replacement": null,
+      "current": {
+        "outcome": "failed",
+        "failure_kind": "failure",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:731",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 654,
+        "source_file_sha256": "08dfa8dcafeb80c347923630864a29d58dea97e257428e204fc316567795161b",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/agent",
+        "exception_evidence": "Current D54a handoff retained no exception class/detail; no body rerun permitted."
+      },
+      "upstream": {
+        "outcome": "PASS",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_host_bootstrap_source_identity.py:640",
+        "function": "test_startup_budget_polling_preserves_identity_and_original_cleanup",
+        "function_line": 563,
+        "source_file_sha256": "8143c3741b1024612c6cb8017d17ee83bd69d5fb64db31fff2d25b3bf0b05362",
+        "body_sha256": "186173e6c8d37445d2f575c9016861f1347e0b96155117f9ba2099ee0eff85e3",
+        "source_root": "/home/user/work/wt/agt-pin-08e6b905",
+        "run_detail": null
+      },
+      "source_relation": {
+        "file_present_upstream": true,
+        "body_hash_equal": true,
+        "run_status": "RUN",
+        "disposition_in_author_artifact": "UPSTREAM-COUNTERPART",
+        "author_classification": "NEW-OURS"
+      }
+    },
+    {
+      "nodeid": "tests/sdk/test_timeline_script.py::test_runtime_pin_flow_returns_old_script_after_binding_rebind",
+      "classification": "NEW-OURS",
+      "basis": "No exact upstream function/body counterpart after bounded name/body check; same-file proximity is not scenario equivalence.",
+      "approved_replacement": null,
+      "current": {
+        "outcome": "failed",
+        "failure_kind": "failure",
+        "exception_class": null,
+        "failure_location": "tests/sdk/test_timeline_script.py:276",
+        "function": "test_runtime_pin_flow_returns_old_script_after_binding_rebind",
+        "function_line": 157,
+        "source_file_sha256": "c2cabefe8a55cd2d98aeb22ab2d37095bd7139cba9af516d26797c0e0c8c2fc5",
+        "body_sha256": "b5d457b30dbf01f110aa9b95d42feb245ce1610a8b1ec93f9c6fbd1d103512de",
+        "source_root": "/home/user/work/agent",
+        "exception_evidence": "Current D54a handoff retained no exception class/detail; no body rerun permitted."
+      },
+      "upstream": {
+        "outcome": "ABSENT",
+        "exception_class": null,
+        "failure_location": null,
+        "function": "test_runtime_pin_flow_returns_old_script_after_binding_rebind",
+        "function_line": 149,
+        "source_file_sha256": "f7fb2c684435e8ccf73266afd9303b2ee8161b39c4d157638c72c06b1105cbd9",
+        "body_sha256": "c9e550248c40ec17feb4e37d459e7cff3649f6c62acf166058422f9447cf9509",
+        "source_root": "/home/user/work/wt/agt-pin-08e6b905",
+        "run_detail": null
+      },
+      "source_relation": {
+        "file_present_upstream": true,
+        "body_hash_equal": false,
+        "run_status": "ABSENT",
+        "disposition_in_author_artifact": "NEW-OURS",
+        "author_classification": "NEW-OURS"
+      }
+    },
+    {
+      "nodeid": "tests/timeline/test_authoring_media.py::test_public_document_swap_and_residual_patch_use_original_sequential_closure[True]",
+      "classification": "NEW-OURS",
+      "basis": "No exact upstream function/body counterpart after bounded name/body check; same-file proximity is not scenario equivalence.",
+      "approved_replacement": null,
+      "current": {
+        "outcome": "failed",
+        "failure_kind": "failure",
+        "exception_class": null,
+        "failure_location": "../rt-pin-1daca2a3/runtime_protocol/service.py:2524",
+        "function": "test_public_document_swap_and_residual_patch_use_original_sequential_closure",
+        "function_line": 728,
+        "source_file_sha256": "c437733944997fd1622bc25eb8860479e76f5b181dd4ba66bb3b7952f250c174",
+        "body_sha256": "6c123cb5d33695cd27c07616035f916062769970adb61b40867555e2b3ce2abb",
+        "source_root": "/home/user/work/agent",
+        "exception_evidence": "Current D54a handoff retained no exception class/detail; no body rerun permitted."
+      },
+      "upstream": {
+        "outcome": "ABSENT",
+        "exception_class": null,
+        "failure_location": null,
+        "function": null,
+        "function_line": null,
+        "source_file_sha256": "fc9a3ef45721451c4487baf9586e8c9c389a956a739988a27856430e9a3ed7b0",
+        "body_sha256": null,
+        "source_root": "/home/user/work/wt/agt-pin-08e6b905",
+        "run_detail": null
+      },
+      "source_relation": {
+        "file_present_upstream": true,
+        "body_hash_equal": false,
+        "run_status": "ABSENT",
+        "disposition_in_author_artifact": "NEW-OURS",
+        "author_classification": "NEW-OURS"
+      }
+    },
+    {
+      "nodeid": "tests/timeline/test_authoring_media.py::test_public_document_swap_and_residual_patch_use_original_sequential_closure[False]",
+      "classification": "NEW-OURS",
+      "basis": "No exact upstream function/body counterpart after bounded name/body check; same-file proximity is not scenario equivalence.",
+      "approved_replacement": null,
+      "current": {
+        "outcome": "failed",
+        "failure_kind": "failure",
+        "exception_class": null,
+        "failure_location": "../rt-pin-1daca2a3/runtime_protocol/service.py:2524",
+        "function": "test_public_document_swap_and_residual_patch_use_original_sequential_closure",
+        "function_line": 728,
+        "source_file_sha256": "c437733944997fd1622bc25eb8860479e76f5b181dd4ba66bb3b7952f250c174",
+        "body_sha256": "6c123cb5d33695cd27c07616035f916062769970adb61b40867555e2b3ce2abb",
+        "source_root": "/home/user/work/agent",
+        "exception_evidence": "Current D54a handoff retained no exception class/detail; no body rerun permitted."
+      },
+      "upstream": {
+        "outcome": "ABSENT",
+        "exception_class": null,
+        "failure_location": null,
+        "function": null,
+        "function_line": null,
+        "source_file_sha256": "fc9a3ef45721451c4487baf9586e8c9c389a956a739988a27856430e9a3ed7b0",
+        "body_sha256": null,
+        "source_root": "/home/user/work/wt/agt-pin-08e6b905",
+        "run_detail": null
+      },
+      "source_relation": {
+        "file_present_upstream": true,
+        "body_hash_equal": false,
+        "run_status": "ABSENT",
+        "disposition_in_author_artifact": "NEW-OURS",
+        "author_classification": "NEW-OURS"
+      }
+    },
+    {
+      "nodeid": "tests/timeline/test_authoring_media.py::test_public_document_compound_inverse_restores_exact_original",
+      "classification": "NEW-OURS",
+      "basis": "No exact upstream function/body counterpart after bounded name/body check; same-file proximity is not scenario equivalence.",
+      "approved_replacement": null,
+      "current": {
+        "outcome": "failed",
+        "failure_kind": "failure",
+        "exception_class": null,
+        "failure_location": "../rt-pin-1daca2a3/runtime_protocol/service.py:2524",
+        "function": "test_public_document_compound_inverse_restores_exact_original",
+        "function_line": 733,
+        "source_file_sha256": "c437733944997fd1622bc25eb8860479e76f5b181dd4ba66bb3b7952f250c174",
+        "body_sha256": "1015411827593281a9ef24df18fe03549f67eeb4459c5f480858c8e3e6aefe90",
+        "source_root": "/home/user/work/agent",
+        "exception_evidence": "Current D54a handoff retained no exception class/detail; no body rerun permitted."
+      },
+      "upstream": {
+        "outcome": "ABSENT",
+        "exception_class": null,
+        "failure_location": null,
+        "function": null,
+        "function_line": null,
+        "source_file_sha256": "fc9a3ef45721451c4487baf9586e8c9c389a956a739988a27856430e9a3ed7b0",
+        "body_sha256": null,
+        "source_root": "/home/user/work/wt/agt-pin-08e6b905",
+        "run_detail": null
+      },
+      "source_relation": {
+        "file_present_upstream": true,
+        "body_hash_equal": false,
+        "run_status": "ABSENT",
+        "disposition_in_author_artifact": "NEW-OURS",
+        "author_classification": "NEW-OURS"
+      }
+    },
+    {
+      "nodeid": "tests/timeline/test_authoring_media.py::test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba",
+      "classification": "NEW-OURS",
+      "basis": "No exact upstream function/body counterpart after bounded name/body check; same-file proximity is not scenario equivalence.",
+      "approved_replacement": null,
+      "current": {
+        "outcome": "failed",
+        "failure_kind": "failure",
+        "exception_class": null,
+        "failure_location": null,
+        "function": "test_real_runtime_document_script_same_alias_rebind_reload_undo_retry_and_aba",
+        "function_line": 897,
+        "source_file_sha256": "c437733944997fd1622bc25eb8860479e76f5b181dd4ba66bb3b7952f250c174",
+        "body_sha256": "c9bda74badeb44ed13d983eeaa6bc26c4f2e47c01acfbcc93f93d955df3cf947",
+        "source_root": "/home/user/work/agent",
+        "exception_evidence": "Current D54a handoff retained no exception class/detail; no body rerun permitted."
+      },
+      "upstream": {
+        "outcome": "ABSENT",
+        "exception_class": null,
+        "failure_location": null,
+        "function": null,
+        "function_line": null,
+        "source_file_sha256": "fc9a3ef45721451c4487baf9586e8c9c389a956a739988a27856430e9a3ed7b0",
+        "body_sha256": null,
+        "source_root": "/home/user/work/wt/agt-pin-08e6b905",
+        "run_detail": null
+      },
+      "source_relation": {
+        "file_present_upstream": true,
+        "body_hash_equal": false,
+        "run_status": "ABSENT",
+        "disposition_in_author_artifact": "NEW-OURS",
+        "author_classification": "NEW-OURS"
+      }
+    },
+    {
+      "nodeid": "tests/packs/rendering/test_render_export_task_adapter.py::test_render_export_adapter_writes_real_mp4_and_is_callable",
+      "classification": "UNKN",
+      "basis": "Function/body correspond, but upstream failure is RenderExportRefused at test line 109 with renderer-command status 1, while retained current failure is at current test line 134 and has no retained exception class/detail. Failure location/detail do not match.",
+      "approved_replacement": null,
+      "current": {
+        "outcome": "failed",
+        "failure_kind": "failure",
+        "exception_class": null,
+        "failure_location": "tests/packs/rendering/test_render_export_task_adapter.py:134",
+        "function": "test_render_export_adapter_writes_real_mp4_and_is_callable",
+        "function_line": 131,
+        "source_file_sha256": "5b7a4c3a80daf2a2ceb0830dfca3d1ddc16b24cf66e496f11c3ae0b16bd381ce",
+        "body_sha256": "17924fbbc3f11114aee6d43583769484a9d4988689c2d76e2fdb953db8f94f1f",
+        "source_root": "/home/user/work/agent",
+        "exception_evidence": "Current D54a handoff retained no exception class/detail; no body rerun permitted."
+      },
+      "upstream": {
+        "outcome": "FAIL",
+        "exception_class": "astrid.packs.rendering.actions.render.task_adapter.RenderExportRefused",
+        "failure_location": "tests/packs/rendering/test_render_export_task_adapter.py:109",
+        "function": "test_render_export_adapter_writes_real_mp4_and_is_callable",
+        "function_line": 106,
+        "source_file_sha256": "0c56e06911e8c994978fb721f07a11f50dd67af90b33112f4ffb5a7b5d033b89",
+        "body_sha256": "17924fbbc3f11114aee6d43583769484a9d4988689c2d76e2fdb953db8f94f1f",
+        "source_root": "/home/user/work/wt/agt-pin-08e6b905",
+        "run_detail": "astrid.packs.rendering.actions.render.task_adapter.RenderExportRefused: render_export executor failed: executor exited with returncode 1"
+      },
+      "source_relation": {
+        "file_present_upstream": true,
+        "body_hash_equal": true,
+        "run_status": "RUN",
+        "disposition_in_author_artifact": "UPSTREAM-COUNTERPART",
+        "author_classification": "UNKN"
+      }
+    },
+    {
+      "nodeid": "tests/packs/rendering/test_render_export_task_adapter.py::test_forced_caption_uses_server_owned_executable_routing_and_isolation",
+      "classification": "NEW-OURS",
+      "basis": "No exact upstream function/body counterpart after bounded name/body check; same-file proximity is not scenario equivalence.",
+      "approved_replacement": null,
+      "current": {
+        "outcome": "failed",
+        "failure_kind": "failure",
+        "exception_class": null,
+        "failure_location": "tests/packs/rendering/test_render_export_task_adapter.py:360",
+        "function": "test_forced_caption_uses_server_owned_executable_routing_and_isolation",
+        "function_line": 348,
+        "source_file_sha256": "5b7a4c3a80daf2a2ceb0830dfca3d1ddc16b24cf66e496f11c3ae0b16bd381ce",
+        "body_sha256": "5cd27d0a807edc35fd2f68917e60500bb12e458aa9c228a7af760c19fcc1611f",
+        "source_root": "/home/user/work/agent",
+        "exception_evidence": "Current D54a handoff retained no exception class/detail; no body rerun permitted."
+      },
+      "upstream": {
+        "outcome": "ABSENT",
+        "exception_class": null,
+        "failure_location": null,
+        "function": "test_forced_caption_uses_server_owned_executable_routing_and_isolation",
+        "function_line": 250,
+        "source_file_sha256": "0c56e06911e8c994978fb721f07a11f50dd67af90b33112f4ffb5a7b5d033b89",
+        "body_sha256": "d1f1f40abae61efb944f2a306124cc93c2596e4e897f9d402c978e9931c65803",
+        "source_root": "/home/user/work/wt/agt-pin-08e6b905",
+        "run_detail": null
+      },
+      "source_relation": {
+        "file_present_upstream": true,
+        "body_hash_equal": false,
+        "run_status": "ABSENT",
+        "disposition_in_author_artifact": "NEW-OURS",
+        "author_classification": "NEW-OURS"
+      }
+    },
+    {
+      "nodeid": "tests/packs/video_editing/test_runtime_publication_chain.py::test_d13_installed_native_preflight",
+      "classification": "NEW-OURS",
+      "basis": "No exact upstream function/body counterpart after bounded name/body check; same-file proximity is not scenario equivalence.",
+      "approved_replacement": null,
+      "current": {
+        "outcome": "failed",
+        "failure_kind": "failure",
+        "exception_class": null,
+        "failure_location": "tests/packs/video_editing/test_runtime_publication_chain.py:676",
+        "function": "test_d13_installed_native_preflight",
+        "function_line": 673,
+        "source_file_sha256": "efeb3dc4d02dc133831283e2c1e60b258da85e2dfe8f716a1627cd9d6260e361",
+        "body_sha256": "369ca3591b4d11ab47339d6d14c3b713519c7a03009996f8e78f747ee8459eea",
+        "source_root": "/home/user/work/agent",
+        "exception_evidence": "Current D54a handoff retained no exception class/detail; no body rerun permitted."
+      },
+      "upstream": {
+        "outcome": "ABSENT",
+        "exception_class": null,
+        "failure_location": null,
+        "function": null,
+        "function_line": null,
+        "source_file_sha256": "35a6831cee04c43d9963993436e6383644e41785612487d1866c2a7961afcbd1",
+        "body_sha256": null,
+        "source_root": "/home/user/work/wt/agt-pin-08e6b905",
+        "run_detail": null
+      },
+      "source_relation": {
+        "file_present_upstream": true,
+        "body_hash_equal": false,
+        "run_status": "ABSENT",
+        "disposition_in_author_artifact": "NEW-OURS",
+        "author_classification": "NEW-OURS"
+      }
+    }
+  ]
+}
+
