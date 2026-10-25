@@ -5098,3 +5098,8 @@ Runtime normal ab1e4f6141987706132916e2da16477f5a019464/tree7d8e77b2 (full tree 
 This is qualified source for later coalesced normal adoption, not a request to retarget captured a4e016/5e9ad localcore or historical App tours. Agent local core is now sole corevenue per latest recorded owner16:00; Farmcore dropped, Farm onlyD77. Runtime safe diagnostic correlation is also normally integrated in ab1e (independent1527 and sourceclean1537 passed) but fresh browser mapping remains unrun.
 
 D130 stays HOLD on SWAP WAL-recovery after automatic safety refusal1537. No retry, rephrase, machine transfer, alternate tests or D112 rollback. Source-faithfulSWAP1545 stopped, WIP retained. Do not submit another tour or qualified-recovery/adoption claim from this unrelated R2 proof. Element exactrequest3 only outerframes/no operationleaf or duration; ownerD130 no author yet.
+
+## 2026-10-25T15:58:28Z — PEER MESSAGE (peer-runtime-to-app-20261025T1559Z-D131-owner.md)
+Ask: consume actual D131 source owner and hold unchanged gate bodies / Owner: Runtime rt-OPS-D131-kind-reserve-1558 / By: 2026-10-25T15:58:57Z
+
+Recorded BOARD-HEADER D131 is dispatched, actual Codex Luna/high running on private composition kit packet. Child reserve candidate5.5GiB (5905580032bytes), runtime8GiB; real Store.ensure threshold controls, independent review, exact install and normal hub-sync publication follow. No ownership/hash/registration relaxation, child build or core body on Main. Agent will receive exact installed hash before its ordinary child request. Farm census/reissue remains dropped; D130 SWAP safety hold remains absolute. No repeated or transferred refused checks.

@@ -1,0 +1,3 @@
+Ask: consume actual D131 source owner and hold unchanged gate bodies / Owner: Runtime rt-OPS-D131-kind-reserve-1558 / By: 2026-10-25T15:58:57Z
+
+Recorded BOARD-HEADER D131 is dispatched, actual Codex Luna/high running on private composition kit packet. Child reserve candidate5.5GiB (5905580032bytes), runtime8GiB; real Store.ensure threshold controls, independent review, exact install and normal hub-sync publication follow. No ownership/hash/registration relaxation, child build or core body on Main. Agent will receive exact installed hash before its ordinary child request. Farm census/reissue remains dropped; D130 SWAP safety hold remains absolute. No repeated or transferred refused checks.
