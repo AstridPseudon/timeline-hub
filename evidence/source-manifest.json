@@ -1,6 +1,6 @@
 {
   "schema": "timeline.agent.d134.source-manifest.v1",
-  "status": "SOURCE_STATIC_READY_PREFLIGHT_BINDINGS_MISSING",
+  "status": "SOURCE_STATIC_READY_DRY_MANIFEST_GENERATED",
   "tuple": {
     "Agent": {
       "path": "/home/user/work/wt/agt-pin-a4e016b6",
@@ -59,7 +59,7 @@
   "python": {
     "path": "/home/user/work/venv-agent/bin/python",
     "version_from_pyvenv_cfg": "3.13.16",
-    "execution": "not run; existing venv requires ordinary preflight acceptance",
+    "execution": "ordinary D73 dry preflight invoked with the generated manifest; see preflight.json",
     "expected_origins": {
       "astrid": "/home/user/work/wt/agt-pin-a4e016b6/astrid/__init__.py",
       "runtime_protocol": "/home/user/work/wt/rt-pin-5e9ad1c6/runtime_protocol/__init__.py",
@@ -67,7 +67,7 @@
       "timeline_schema": "/home/user/work/wt/agt-pin-a4e016b6/astrid/core/timeline/banodoco_schema.py",
       "shared_schema": "/home/user/work/venv-agent/lib/python3.13/site-packages/banodoco_timeline_schema/__init__.py"
     },
-    "origin_runtime_verified": false
+    "origin_runtime_verified": true
   },
   "node": {
     "path": "/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node",
@@ -76,10 +76,11 @@
   },
   "d73": {
     "required": true,
-    "exact_tuple_manifest": "EXACTMISSING",
-    "available_manifest": "/home/user/timeline-hub/hub/design/handoff-agt-P4-D73-16328-p4-current-becfe-http-3legs.manifest",
-    "available_manifest_sha256": "be8760dfdf3574b3079e53e8b65998ef02c1175e1af02d2054898cba40c101ca",
-    "available_manifest_tuple": "Agent f4d6c72ce336da66813fc39828187bccbaf80a5b / Runtime 327da207ed30880fe2ae0cd0b116722bb2c6f7a6 / App 255f9f1218765f9a407354cf230aab9a452c8073 / Composition 635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
-    "disposition": "do not use stale manifest or substitute normal heads"
+    "exact_tuple_manifest": "evidence/positive.manifest",
+    "exact_tuple_manifest_sha256": "b539c6bda83fcef7222a3be667a74465317fe05b8de359dc6e7784db5d9b676d",
+    "poison_manifest": "evidence/poison.manifest",
+    "poison_manifest_sha256": "f41fef0062e6c1c3ceb766ca9fdb144d649d1408221a0ac35d4163f6525e6dad",
+    "poison_diff": "only agent_sha differs; see manifest-diff.json",
+    "old_manifest_disposition": "070dfc/f4d6 manifest artifacts rejected; no normal-head substitution"
   }
 }

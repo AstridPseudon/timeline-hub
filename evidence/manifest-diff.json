@@ -1,0 +1,21 @@
+{
+  "schema": "timeline.agent.d134.manifest-diff.v1",
+  "positive": {
+    "path": "evidence/positive.manifest",
+    "sha256": "b539c6bda83fcef7222a3be667a74465317fe05b8de359dc6e7784db5d9b676d"
+  },
+  "poison": {
+    "path": "evidence/poison.manifest",
+    "sha256": "f41fef0062e6c1c3ceb766ca9fdb144d649d1408221a0ac35d4163f6525e6dad"
+  },
+  "comparison": {
+    "line_count_positive": 36,
+    "line_count_poison": 36,
+    "changed_line_count": 1,
+    "changed_field": "agent_sha",
+    "positive_value": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+    "poison_value": "0000000000000000000000000000000000000000",
+    "all_other_lines_identical": true,
+    "approved_change_only": true
+  }
+}

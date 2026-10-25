@@ -1,23 +1,16 @@
 # F/D134 progress
 
-- Prepared the conditional measurement and preflight recipes without invoking
-  a suite preflight body, request-test, collection, provider, control, or test
-  body.
-- Verified the required frozen tuple read-only: Agent `a4e016b6`, Runtime
-  `5e9ad1c6`, App `d8a1cd40`, Composition `635f4de0`; all four paths are clean
-  and have the expected origins, trees, and parents.
-- Verified static Runtime lock binding, schema-copy equality, pinned profile
-  hashes/version, and Node `v20.19.4`. Free space observed was `6669877248`
-  bytes, above the `4700000000` start floor and above the `4000000000` stop
-  floor; this is not body admission or ship credit.
-- Recorded module origins as expected-but-unverified because the existing
-  venv may only be used after MAIN's ordinary preflight accepts it.
-- Recorded `EXACTMISSING` for the exact-tuple D73 manifest/evidence and all four
-  genuine MAIN positive/poison control bindings. The available D73 manifest is
-  stale and was not reused.
-- Preserved D128's terminal ordinary child-maker refusal and the unchanged
-  production suite row. Existing `30693` remains reference-only with no
-  deduction or ship credit.
-- At 20:00Z, only a MAIN-gated existing-environment run with custody E2E
-  `NOT_GREEN` may proceed. Any green custody verdict, missing binding, or real
-  safety/classifier/permission/preflight refusal stops the action.
+- Reviewed the settled plan, source-preparation evidence, original core-command
+  design, and actual 0811/2234 control provenance before execution.
+- Confirmed the frozen tuple and source conservation for Agent `a4e016b6`,
+  Runtime `5e9ad1c6`, App `d8a1cd40`, and Composition `635f4de0`.
+- Used the supported normal D73 maker recipe to generate a fresh positive
+  manifest from the verified source/profile/environment bindings. Created its
+  poison copy with only `agent_sha=000...000`.
+- Independently verified the existing positive stub full hash and ran only the
+  two authorized DRY controls with fresh counters.
+- Positive: launcher preflight 0, stub exit 17, exactly one call.
+- Poison: deliberate Agent SHA guard exit 1, zero calls.
+- No full body, collection, request-test, package acquisition, child build,
+  profile build, guard bypass, alternate environment, production Store, or
+  suite-row mutation was performed. This remains preflight evidence only.

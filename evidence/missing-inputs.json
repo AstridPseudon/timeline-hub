@@ -1,6 +1,6 @@
 {
   "schema": "timeline.agent.d134.missing-inputs.v1",
-  "status": "EXACTMISSING",
+  "status": "DRY_COMPLETE_FULL_BODY_BLOCKED",
   "measurement_is_blocked_until": [
     {
       "id": "custody-e2e-at-20z",
@@ -10,40 +10,47 @@
       "refusal_if_green": "no measurement; no alternate route"
     },
     {
+      "id": "d128-genuine-fixture",
+      "required": "D128 genuine fixture and accepted custody path",
+      "current": "EXACTMISSING; existing child-maker refusal preserved",
+      "refusal_if_missing": "no full body or alternate route"
+    },
+    {
       "id": "p4-d73-manifest",
       "required": "existing P4_D73_MANIFEST binding the exact frozen Agent/Runtime/App/Composition tuple",
-      "current": "EXACTMISSING",
+      "current": "RECORDED evidence/positive.manifest",
+      "sha256": "b539c6bda83fcef7222a3be667a74465317fe05b8de359dc6e7784db5d9b676d",
       "available_but_rejected": "stale manifest binds f4d6c72c/327da207/255f9f12/635f4de0"
     },
     {
       "id": "p4-d73-evidence",
       "required": "existing P4_D73_EVIDENCE directory paired with that exact manifest",
-      "current": "EXACTMISSING"
+      "current": "RECORDED private dry evidence paired with positive.manifest"
     },
     {
       "id": "main-positive-control",
       "required": "existing genuine parsed-row positive control entrypoint plus bytes/hash",
-      "current": "EXACTMISSING"
+      "current": "RECORDED existing 2234 stub; full hash in source-review.json"
     },
     {
       "id": "main-positive-counter",
       "required": "fresh MAIN_POSITIVE_COUNTER path bound by MAIN",
-      "current": "EXACTMISSING"
+      "current": "RECORDED fresh private counter; published positive-counter.txt"
     },
     {
       "id": "main-poison-control",
       "required": "existing genuine parsed-row poison control entrypoint plus bytes/hash",
-      "current": "EXACTMISSING"
+      "current": "RECORDED same existing 2234 stub with poison manifest"
     },
     {
       "id": "main-poison-counter",
       "required": "fresh MAIN_POISON_COUNTER path bound by MAIN",
-      "current": "EXACTMISSING"
+      "current": "RECORDED fresh private counter; published poison-counter.txt"
     },
     {
       "id": "ordinary-preflight-acceptance",
       "required": "MAIN-run ordinary D73 preflight: positive exits 17 with one counter line; poison nonzero with zero counter lines; module origins and all guards pass",
-      "current": "NOT_RUN_BY_DESIGN"
+      "current": "DRY_CONTROLS_PASS; full body remains unrun"
     }
   ],
   "preserved_refusal": {

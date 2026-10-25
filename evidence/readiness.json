@@ -1,10 +1,10 @@
 {
   "task": "F/D134",
-  "status": "PREPARED_NOT_AUTHORIZED",
+  "status": "DRY_CONTROLS_COMPLETE_BODY_NOT_RUN",
   "measurement_condition": {
     "decision_time": "20:00Z",
     "required_custody_e2e_at_decision": "NOT_GREEN",
-    "current_worker_clock_gate": "not_passed",
+    "current_worker_clock_gate": "dry-preflight-authorized; body clock gate not passed",
     "ship_credit": false,
     "existing_environment_only": true,
     "no_body_run_here": true
@@ -16,7 +16,7 @@
     "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
   },
   "source_audit": "PASS_STATIC",
-  "ordinary_preflight": "NOT_RUN_BY_DESIGN",
+  "ordinary_preflight": "DRY_CONTROLS_PASS",
   "measurement_body": "NOT_RUN_BY_DESIGN",
   "request_test": "NOT_RUN_BY_DESIGN",
   "first_guard_disposition": {
