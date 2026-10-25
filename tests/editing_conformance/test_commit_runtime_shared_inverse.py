@@ -31,6 +31,7 @@ def shared_editing(request, tmp_path, monkeypatch):
         document_from_bundle,
     )
     from astrid.sdk.timeline.emitter import emit_document_commands
+    from astrid.sdk.timeline.native_occurrence_shared import capture_occurrence_place_shared
 
     fixture = build_film_fixture(tmp_path)
     service = RuntimeService(fixture.duplicate_root)
@@ -50,6 +51,13 @@ def shared_editing(request, tmp_path, monkeypatch):
             )
             setup_commands.append(shot_set)
             staged = document_from_bundle(execute(original_bundle, [shot_set]).bundle)
+        staged_bundle = bundle_from_document(staged)
+        shared = capture_occurrence_place_shared(
+            staged_bundle, f"occurrence:occurrence-{index}", "repeated-third",
+            on=13 if index == 1 else 6,
+        )
+        setup_commands.append(shared)
+        staged = document_from_bundle(execute(staged_bundle, [shared]).bundle)
         target = copy.deepcopy(staged)
         parent = copy.deepcopy(staged["parent_revision"]["payload"])
         if index == 1:
@@ -71,11 +79,6 @@ def shared_editing(request, tmp_path, monkeypatch):
             for ordinal, occurrence in enumerate(parent["occurrences"][1:]):
                 occurrence["placement"]["start_ms"] = 8000 + ordinal * 2000
             parent["unknown"] = {"literal": [None, False, 0, {}, []]}
-        repeated = copy.deepcopy(parent["occurrences"][index - 1])
-        repeated.update(occurrence_id="repeated-third",
-                        placement={"start_ms": 13000 if index == 1 else 6000, "track": "picture"})
-        parent["occurrences"].append(repeated)
-
         target["parent_revision"]["payload"] = parent
         target["parent_revision"]["content_digest"] = _digest(parent)
         for image in target["shot_revisions"]:
