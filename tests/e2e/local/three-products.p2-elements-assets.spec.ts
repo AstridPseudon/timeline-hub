@@ -3,7 +3,12 @@ import { sha256Hex, THREE_PRODUCTS_REFERENCE_AT, type DirectHarness, type ThreeP
 import { ASTRID_PYTHON } from './support/astrid.ts';
 import { dropFileOnTimeline, openEmbeddedCanonicalShot, test as appTest, timelineFileDropClientX } from './support/app.ts';
 import { assertSemanticAddMediaRequest, expectedImageDropRow } from './support/p2-semantic-oracle.ts';
-import { assertNormalizedCatalogueEntry, assertRawMediaImportEntry, mediaImportEvidence } from './support/p2-media-import-oracle.ts';
+import {
+  assertMediaImportSelectionIdentity,
+  assertNormalizedCatalogueEntry,
+  assertRawMediaImportEntry,
+  mediaImportEvidenceFromProducer,
+} from './support/p2-media-import-oracle.ts';
 import type {
   CanonicalDocument,
   CommitAcceptedMutation,
@@ -352,6 +357,21 @@ async function seedImageFile(harness: DirectHarness): Promise<{ name: string; ty
   return { name: 'p2-mounted-image.png', type: harness.seed.image.mediaType, bytesBase64: Buffer.from(bytes).toString('base64') };
 }
 
+function assertMediaManifestIdentity(
+  before: CanonicalDocument,
+  after: CanonicalDocument,
+  source: { objectId: string; digest: string },
+): void {
+  const beforeManifest = object(before.dependency_manifest, 'original dependency manifest');
+  const afterManifest = object(after.dependency_manifest, 'updated dependency manifest');
+  const beforeMedia = beforeManifest.media as Array<JsonObject>;
+  expect(afterManifest.media).toEqual(beforeMedia);
+  expect((afterManifest.media as Array<JsonObject>)).toContainEqual({
+    media_id: source.objectId,
+    content_digest: source.digest,
+  });
+}
+
 async function dropFileIn(scope: Locator, file: { name: string; type: string; bytesBase64: string }, occurrenceId: string, clipId: string, referenceId: string, from: number, referenceAt: number, time: number): Promise<void> {
   const clipLocator = scope.locator(`.clip-action[data-clip-id="${occurrenceId}:${clipId}"]`).first();
   const referenceLocator = scope.locator(`.clip-action[data-clip-id="${occurrenceId}:${referenceId}"]`).first();
@@ -493,16 +513,17 @@ test('P2 mounted registerAsset save: real file drop, exact media/registry fields
   const before = await history(harness, seed3);
   const original = await canonicalAt(harness, seed3, before.head.revision_id);
   const file = await seedImageFile(harness);
-  const mediaEvidence = mediaImportEvidence(file, {
-    objectId: harness.seed.image.objectId,
-    digest: harness.seed.image.digest,
-    mediaType: harness.seed.image.mediaType,
-  });
   const importResponse = page.waitForResponse((response) => response.request().method() === 'POST' && /\/media-imports$/.test(new URL(response.url()).pathname), CEILING);
   const selectionResponse = page.waitForResponse((response) => response.request().method() === 'GET' && /\/media-selection\?/.test(new URL(response.url()).pathname + new URL(response.url()).search), CEILING);
   const post = await commitFromGesture(page, wire, () => dropFileOnTimeline(page, file, seed3.appClipId, seed3.transitionClipId, 0, THREE_PRODUCTS_REFERENCE_AT, 5));
   const imported = object((await (await importResponse).json()).data, 'registered media import');
+  const mediaEvidence = mediaImportEvidenceFromProducer(file, {
+    objectId: harness.seed.image.objectId,
+    digest: harness.seed.image.digest,
+    mediaType: harness.seed.image.mediaType,
+  }, imported);
   const selected = await selectionResponse.then((response) => response.json()) as JsonObject;
+  assertMediaImportSelectionIdentity(selected, imported, mediaEvidence.source);
   const expectedRow = await expectedImageDropRow(original, 'parent', String(selected.asset), 'V1', 5);
   assertSemanticAddMediaRequest(post, before.head, original, {
     op: 'clip.add-media', owner: 'parent', select: 'parent', label: 'Add media', row: expectedRow, media: selected,
@@ -521,16 +542,22 @@ test('P2 mounted registerAsset save: real file drop, exact media/registry fields
   const result = assertAcceptedReply(post, before.head);
   const after = result.data.canonical_document;
   assertCanonicalResult(result, await canonicalAt(harness, seed3, result.data.accepted_revision_id), harness, seed3);
-  assertParentListIsolation(original, after, row.id as string, undefined, undefined, ['registry']);
+  assertParentListIsolation(original, after, row.id as string);
   const afterParent = after.parent_revision.payload as unknown as JsonObject;
   const beforeParent = original.parent_revision.payload as unknown as JsonObject;
-  const beforeAssets = object(object(beforeParent.config, 'original config').registry, 'original registry').assets as JsonObject;
+  const beforeConfig = object(beforeParent.config, 'original config');
   const afterConfig = object(afterParent.config, 'updated config');
-  const afterAssets = object(object(afterConfig.registry, 'updated registry').assets, 'updated assets');
+  expect(Object.hasOwn(beforeConfig, 'registry')).toBe(false);
+  expect(Object.hasOwn(afterConfig, 'registry')).toBe(false);
+  const beforeRegistry = object(beforeParent.registry, 'original parent registry');
+  const afterRegistry = object(afterParent.registry, 'updated parent registry');
+  const beforeAssets = object(beforeRegistry.assets, 'original assets');
+  const afterAssets = object(afterRegistry.assets, 'updated assets');
   expect(Object.keys(afterAssets).filter((key) => !Object.hasOwn(beforeAssets, key))).toEqual([row.asset]);
   assertNormalizedCatalogueEntry(afterAssets[row.asset as string], mediaEvidence.source);
   expect(Object.fromEntries(Object.entries(afterAssets).filter(([key]) => Object.hasOwn(beforeAssets, key)))).toEqual(beforeAssets);
-  expect(object(afterParent.registry, 'updated parent registry').assets).toEqual(afterAssets);
+  expect(afterRegistry).toEqual({ ...beforeRegistry, assets: afterAssets });
+  assertMediaManifestIdentity(original, after, mediaEvidence.source);
   const committed = await history(harness, seed3);
   assertHistoryEntry(committed, post, result);
   assertNoLegacy(wire);
@@ -565,17 +592,18 @@ test('P2 mounted automatic child placement: embedded shot file gesture, occurren
   const before = await history(harness, seed3);
   const original = await canonicalAt(harness, seed3, before.head.revision_id);
   const file = await seedImageFile(harness);
-  const mediaEvidence = mediaImportEvidence(file, {
-    objectId: harness.seed.image.objectId,
-    digest: harness.seed.image.digest,
-    mediaType: harness.seed.image.mediaType,
-  });
   const dialog = await openEmbeddedCanonicalShot(page, seed3.occurrenceId, 'F2 agent shot');
   const importResponse = page.waitForResponse((response) => response.request().method() === 'POST' && /\/media-imports$/.test(new URL(response.url()).pathname), CEILING);
   const selectionResponse = page.waitForResponse((response) => response.request().method() === 'GET' && /\/media-selection\?/.test(new URL(response.url()).pathname + new URL(response.url()).search), CEILING);
   const post = await commitFromGesture(page, wire, () => dropFileIn(dialog, file, seed3.occurrenceId, seed3.agentClipId, seed3.agentClearClipId, 3, 6, 4.5));
   const imported = object((await (await importResponse).json()).data, 'child media import');
+  const mediaEvidence = mediaImportEvidenceFromProducer(file, {
+    objectId: harness.seed.image.objectId,
+    digest: harness.seed.image.digest,
+    mediaType: harness.seed.image.mediaType,
+  }, imported);
   const selected = await selectionResponse.then((response) => response.json()) as JsonObject;
+  assertMediaImportSelectionIdentity(selected, imported, mediaEvidence.source);
   const expectedRow = await expectedImageDropRow(original, `occurrence:${seed3.occurrenceId}`, String(selected.asset), 'V2', 4.5);
   assertSemanticAddMediaRequest(post, before.head, original, {
     op: 'occurrence.add-media', owner: `occurrence:${seed3.occurrenceId}`, select: `occurrence:${seed3.occurrenceId}`,
@@ -603,10 +631,15 @@ test('P2 mounted automatic child placement: embedded shot file gesture, occurren
   expect(afterRows.map((candidate) => candidate.id)).toEqual([...beforeRows.map((candidate) => candidate.id), row.id]);
   expect(after.parent_revision.payload).toEqual(original.parent_revision.payload);
   expect(after.shot_revisions).toEqual(original.shot_revisions);
-  const beforeChildAssets = object(object(beforeInternal.registry, 'original child registry').assets, 'original child assets');
-  const childRegistry = object(object(afterInternal.registry, 'child registry').assets, 'child assets');
+  const beforeChildRegistry = object(beforeInternal.registry, 'original child registry');
+  const afterChildRegistry = object(afterInternal.registry, 'child registry');
+  const beforeChildAssets = object(beforeChildRegistry.assets, 'original child assets');
+  const childRegistry = object(afterChildRegistry.assets, 'child assets');
+  expect(Object.keys(childRegistry).filter((key) => !Object.hasOwn(beforeChildAssets, key))).toEqual([row.asset]);
   expect(Object.fromEntries(Object.entries(childRegistry).filter(([key]) => Object.hasOwn(beforeChildAssets, key)))).toEqual(beforeChildAssets);
   assertNormalizedCatalogueEntry(childRegistry[row.asset as string], mediaEvidence.source);
+  expect(afterChildRegistry).toEqual({ ...beforeChildRegistry, assets: childRegistry });
+  assertMediaManifestIdentity(original, after, mediaEvidence.source);
   assertHistoryEntry(await history(harness, seed3), post, result);
   assertNoLegacy(wire);
   await assertReload(page, harness, seed3, result.data.accepted_revision_id, after, async () => {
