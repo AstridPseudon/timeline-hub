@@ -44,6 +44,13 @@ export const localAgentStepSchema = z.object({
 });
 export type LocalAgentStep = z.infer<typeof localAgentStepSchema>;
 
+export const localAgentTerminalSchema = z.object({
+  command: z.string().min(1),
+  skillSynced: z.boolean(),
+  detail: z.string().optional(),
+});
+export type LocalAgentTerminal = z.infer<typeof localAgentTerminalSchema>;
+
 export const localAgentCatalogSchema = z.object({
   agents: z.array(z.object({
     id: localAgentIdSchema,
@@ -57,6 +64,8 @@ export const localAgentCatalogSchema = z.object({
     steps: z.array(localAgentStepSchema).optional(),
     creditLine: z.string().optional(),
     creditUrl: z.string().optional(),
+    /** What the terminal nudge shows: the command that talks to this agent, and whether Astrid's skill reached it. */
+    terminal: localAgentTerminalSchema.optional(),
   })),
   defaultAgent: localAgentIdSchema,
 });

@@ -406,6 +406,87 @@ describe('AgentChat', () => {
       expect(screen.queryByRole('region', { name: 'How do you want Astrid to think?' })).toBeNull();
       expect(screen.getByRole('textbox')).toBeEnabled();
     });
+    describe('terminal nudge', () => {
+      const NUDGE_KEY = 'astrid.setting.device.agentTerminalNudgeSeen';
+      const nudge = () => screen.queryByRole('region', { name: 'You can also talk to Astrid from your terminal' });
+      beforeEach(() => { localStorage.removeItem(NUDGE_KEY); });
+      async function setUpCodex(terminal: LocalAgentChoice['terminal'], projectName: string | null = 'My first project') {
+        const { state, localAgents } = setupState();
+        localAgents.data.agents = localAgents.data.agents.map(row => ({ ...row, terminal: row.id === 'codex' ? terminal : { command: row.id, skillSynced: true } }));
+        mocks.useAgentChatBridge.mockImplementation(() => ({
+          timelineId: state.timelineId,
+          editorContext: { tool: 'video-editor', projectId: 'project-1', projectSlug: 'project-one', projectName, timelineId: state.timelineId, timelineName: null },
+        }));
+        const view = renderSetupChat();
+        await getInput();
+        state.createSession.error = new BridgeRouteError('Create', 502, { error: 'agent_sign_in_required', detail: 'Create needs sign-in', next_action: 'codex login' });
+        view.refresh();
+        await screen.findByText('Create needs sign-in');
+        localAgents.data.agents = localAgents.data.agents.map(row => row.id === 'codex' ? { ...row, steps: [] } : row);
+        view.refresh();
+        await screen.findByText('✓ Codex is set up.');
+        return { state, localAgents, view };
+      }
+      function reply(state: ReturnType<typeof createState>, view: { refresh: () => void }) {
+        state.activeSessionData.turns = [createUserTurn('hi', 1_000), { role: 'assistant', content: "Hi! I'm ready.", timestamp: iso(2_000) }];
+        view.refresh();
+      }
+
+      it('shows once, after the first reply, with the agent command and the open project', async () => {
+        const { state, view } = await setUpCodex({ command: 'codex', skillSynced: true });
+        expect(nudge()).toBeNull();
+        reply(state, view);
+        const region = await waitFor(() => { const found = nudge(); expect(found).not.toBeNull(); return found!; });
+        expect(within(region).getByText('codex')).toBeInTheDocument();
+        expect(within(region).getByText('make the intro two seconds shorter')).toBeInTheDocument();
+        expect(within(region).getByText('Updated "My first project"')).toBeInTheDocument();
+        expect(within(region).getByText('Edits, tasks and generations show up right here.')).toBeInTheDocument();
+        expect(within(region).queryByText('Uses the same OpenRouter key and model as here.')).toBeNull();
+        expect(localStorage.getItem(NUDGE_KEY)).toBe('true');
+      });
+
+      it('copies the agent command', async () => {
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
+        const { state, view } = await setUpCodex({ command: 'codex', skillSynced: true });
+        reply(state, view);
+        fireEvent.click(await screen.findByRole('button', { name: 'Copy terminal command' }));
+        await waitFor(() => expect(writeText).toHaveBeenCalledWith('codex'));
+      });
+
+      it('closes, and reopens from the chat menu as Use from your terminal', async () => {
+        const { state, view } = await setUpCodex({ command: 'codex', skillSynced: true });
+        reply(state, view);
+        await waitFor(() => expect(nudge()).not.toBeNull());
+        fireEvent.click(within(nudge()!).getByRole('button', { name: 'Close' }));
+        expect(nudge()).toBeNull();
+        view.refresh();
+        expect(nudge()).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: /^Chat:/ }));
+        fireEvent.click(await screen.findByRole('button', { name: 'Use from your terminal' }));
+        await waitFor(() => expect(nudge()).not.toBeNull());
+        expect(nudge()).toHaveFocus();
+      });
+
+      it('does not show by itself again once it has been shown in this browser', async () => {
+        localStorage.setItem(NUDGE_KEY, 'true');
+        const { state, view } = await setUpCodex({ command: 'codex', skillSynced: true });
+        reply(state, view);
+        await screen.findByText("Hi! I'm ready.");
+        expect(nudge()).toBeNull();
+      });
+
+      it('stays hidden, with no menu entry, when the skill did not sync', async () => {
+        const { state, view } = await setUpCodex({ command: 'codex', skillSynced: false });
+        reply(state, view);
+        await screen.findByText("Hi! I'm ready.");
+        expect(nudge()).toBeNull();
+        expect(localStorage.getItem(NUDGE_KEY)).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: /^Chat:/ }));
+        await screen.findByRole('button', { name: /Attach an existing chat/ });
+        expect(screen.queryByRole('button', { name: 'Use from your terminal' })).toBeNull();
+      });
+    });
     it('ignores a start error that arrives after switching chats', async () => {
       const { state } = setupState();
       let reject!: (error: Error) => void;

@@ -278,18 +278,19 @@ export default function VideoEditorPage() {
   const agentChatRegistry = useOptionalAgentChatRegistry();
   const chatProjectId = selectedProject?.project_id ?? null;
   const chatProjectSlug = selectedProject?.slug ?? null;
+  const chatProjectName = selectedProject?.name ?? null;
   useEffect(() => {
     if (!agentChatRegistry) return;
     agentChatRegistry.registerProject({
       timelineId: null,
       editorContext: chatProjectId ? {
-        tool: "video-editor", projectId: chatProjectId, projectSlug: chatProjectSlug,
+        tool: "video-editor", projectId: chatProjectId, projectSlug: chatProjectSlug, projectName: chatProjectName,
         timelineId: null, timelineName: null,
         deepLink: typeof globalThis.location?.href === "string" ? globalThis.location.href : null,
       } : null,
     });
     return agentChatRegistry.unregisterProject;
-  }, [agentChatRegistry, chatProjectId, chatProjectSlug]);
+  }, [agentChatRegistry, chatProjectId, chatProjectName, chatProjectSlug]);
 
   const [mountedSaveStatus, setMountedSaveStatus] =
     useState<SaveStatus>("saved");

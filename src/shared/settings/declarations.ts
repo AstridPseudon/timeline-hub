@@ -80,6 +80,13 @@ export function modelThoughtSelections(agent: string) {
   return declaration;
 }
 
+/** The chat's "talk to Astrid from your terminal" note shows by itself once per browser; the chat menu reopens it. */
+export const terminalNudgeSeen = defineSetting({
+  id: 'device.agentTerminalNudgeSeen',
+  default: false,
+  scope: 'device',
+});
+
 /** The time of day the app is painted for; `null` follows the sky. Mirrored to `theme-hour` for the boot script. */
 export const themeHour = defineSetting<number | null>({
   id: 'preferences.themeHour',
