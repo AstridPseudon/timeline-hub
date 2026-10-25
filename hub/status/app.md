@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T09:28:03Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 3m -->
-# app board, 2026-10-25T09:21Z
+<!-- app | 2026-10-25T09:31:58Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 2m -->
+# app board, 2026-10-25T09:30Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -15,7 +15,7 @@
 | A4-D52 | Proven dormant deletion | Luna; review | Caller census | merged | Authors1118/1210; reviews1121/1232 | Parent/track and exclusive transcript pairs removed; live session retained. | 2e3c8f/cca3deb |
 | D69 | Restore and audit upstream behavior | Luna; placement Sol | Frozen upstream3881 | merged | Final1704; reviews1633/1636/1657 | 1403 cleared, 67 cited, four restored, zero remaining. 41 placement plus113 controls/types PASS. | c3d79ef88a |
 | P1 | Current plain original control | Service; Luna | App1540 tuple | merged | Actual26312; verdict1616 | Exit0/237s, readiness1 and original2 PASS. Recorded tuple only. | App1540b3f12e |
-| P2 | Eight original core gestures | Service; Luna | Qualified current source | doing | Early19078; independent0807; path0810 | Early full tour: four case GO on one tuple. Prior asset GO retained. SWAP409,element status and placement Undo noPOST remain; Runtime source disposition active. | Recorded tuples |
+| P2 | Eight original core gestures | Service; Luna | Runtime D111b and D112 release | blocked:runtime | Runtime source owners; App next full tour | Early full tour: four case GO on one tuple. Prior asset GO retained. SWAP409,element status and placement Undo noPOST remain; Runtime source disposition active. | Recorded tuples |
 | P2-parent-reads | Exact declared history reads | Luna; review | Contract C0 | merged | Author1625; review1636; integrated1643 | 13 Node and7 semantic controls, four types/lint PASS. | a2a6e4abbd |
 | P2-popup-runtime | Fork-created physical observation | Runtime Luna; security | Actual422 | merged | Author1643; security1658; home1704 | b318 tree equals reviewed88b9; 228 auth,18 Agent,13 RequestPort PASS. | Runtime b318a8ec4 |
 | P2-element-observer | Actual CLI safe phase capture | Luna | Runtime helper2c1 | merged | Author1715; return1722 | Real normal CLI accepted HTTP commit proves provider,receipt,response; focused controls/types/lint PASS. | 255f9f1218 |
@@ -288,13 +288,13 @@ core open: 4 — SWAP, element, placement and current asset lack GO. ADD, parent
 regressions: D102 context and D110 inverse KeyError source repairs released. Current SWAP initial409 is Runtime D112; placement error is a protected original modal sequence, not a demonstrated product defect.
 
 Decision: D113 conditions satisfied and source merged normally: upstream modal exact, real Close, meaningful dialog-gone assertion, all pre-existing bytes preserved, independent139/types/lint PASS and existing ledger paragraph. No isolated placement body; next proof full P2.
-Blockers: Runtime D111b — owner accepted port_read boundary; sole author0858 implements per-call timers and request reuse. Qualified review and release remain owed; withdrawn memo stays stopped.
-Blockers: Runtime D112 — initial SWAP409 store-identity fallback source correction, security review and qualified release precede adoption and next full tour.
+Blockers: Runtime D111b — author7d433 has124 focused and2 real-provider PASS. Independent core/native0905 qualification and normal release remain owed; withdrawn memo stays stopped.
+Blockers: Runtime D112 — security and native recovery controls PASS; currentcurve nonflat. Sol0907 and independent wholepath0907 own qualification before normal release.
 Blockers: Final cut — complete current P2, final pinned P1-P5/core and genuine installed render remain owed. No ZIP or final-cut claim.
 Next ready: Runtime D111b/D112 qualified releases, normal adoption then FULL P2. D115 source HOME7841 and ledger complete. No isolated successor. D111b/D112 qualified releases then normal adoption/fullP2; no isolated placement.
 live 0 / cap 6; ready-undispatched 0; core open: 4. Dispatcher09:20 confirms zero App workers. No App heavy body live; ready work awaits qualified Runtime releases.
 Capacity: Free5.95GB after normal recycle of recreated old04be pin. Fresh static guards and host0921 CLEAR; zero refusals. All15712 and historical outputs/branches/reports retained. Current inputs and old dirty/refused targets untouched.
-Inbox consumed through2043440 bytes. D114 asset15712 terminal FAIL236s after preflight9872 and readiness PASS on explicit04be/070dfc/1daca/635f; exact native reply equality source0904 assigned. Delayed selfpeer0837 superseded by normalD113HOMEdc8c. Runtime D112 current-curve investigation and D111b core/native qualification remain unqualified. No refusal.
+Inbox consumed through2046656 bytes. D114 asset15712 terminal FAIL236s after preflight9872 and readiness PASS on explicit04be/070dfc/1daca/635f; exact native reply equality source0904 assigned. Delayed selfpeer0837 superseded by normalD113HOMEdc8c. Runtime D112 curve and D111b core/native qualification remain unqualified on owner board09:13. No ready release to adopt. No refusal.
 Later: D79 and E paused until ZIP. F-final fresh Appd11417a59/Agent08e6 applied-result suites and genuine installed render belong to Runtime final coordinator. Gating upstream3881 remains frozen. Current P1/P3 GO do not constitute final-cut proofs. Withdrawn D88 and denied cleanup routes remain stopped.
 Evidence: [Modal finding](../../design/app-A2-placement19078-undo-sol-0819-facts.md), [Exact proposal](../../design/app-A2-placement19078-undo-sol-0819-proposal.patch), [Four case GO](../../design/app-D108-P2-19078-pass-review-0807-verdict.md), [Current P1 GO](../../design/app-D108-P1-15075-GO-review-0657.md), [Current P3 GO](../../design/app-D108-P3-31792-GO-review-0706.md), [Asset GO](../../design/app-P2-asset27438-GO-review-0315.md).
 Retained run: app-pin-04beedcd-p2-d114-asset-0855-1025085739-15712. Preserve every output through D55 disposition; no compact, sweep or raw cleanup of this run.
