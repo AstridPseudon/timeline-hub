@@ -1,0 +1,11 @@
+{
+  "source_fingerprint": "b545b616a41388e24d6f2a59b7b45c26cb057d2c",
+  "authenticated_assertion": "assert 'Hidden' not in service.render('win32', version, data, log)",
+  "candidate_assertion": "assert 'Hidden' not in service.render('win32', version, data, log)",
+  "checkpoint_assertion": "assert 'Hidden' not in xml",
+  "declared": 173,
+  "retained": 173,
+  "missing": 0,
+  "weakened": 0,
+  "status": "PASS"
+}

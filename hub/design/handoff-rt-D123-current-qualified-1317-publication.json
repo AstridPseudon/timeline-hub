@@ -1,0 +1,68 @@
+[
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D123-predicate-return-1314/evidence/input-identity.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D123-current-qualified-1317-input-identity.json",
+    "bytes": 1550,
+    "sha256": "df2d342de5c3a6f145845512458128c8d5026d84043ce4be2e1185046b501a4d"
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D123-predicate-return-1314/evidence/protected-predicate-map.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D123-current-qualified-1317-protected-predicate-map.json",
+    "bytes": 242960,
+    "sha256": "b8c192d0f4c9ec044541ee8563359f6fb39313c46db5873a5c09f205327062a9"
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D123-predicate-return-1314/evidence/patch-identity.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D123-current-qualified-1317-patch-identity.json",
+    "bytes": 404,
+    "sha256": "29f7403f2e0f262f8dc505413dcda84cfd7ca308dd28e8cd0af34cc732da695d"
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D123-predicate-return-1314/evidence/predicate-conservation.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D123-current-qualified-1317-predicate-conservation.json",
+    "bytes": 412,
+    "sha256": "c9be8338d3a2fc8fbbfc5a8c3ebe698083556e5f3efcfbf4095f389f4ca180af"
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D123-predicate-return-1314/evidence/upstream-overlap-map.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D123-current-qualified-1317-upstream-overlap-map.json",
+    "bytes": 29692,
+    "sha256": "099dc50965af48afd9aeb039cd62c9885b0a65259580c0326d7bb25cc72b9bce"
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D123-predicate-return-1314/evidence/source-identity.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D123-current-qualified-1317-source-identity.json",
+    "bytes": 519669,
+    "sha256": "6f88545416cc0c4a7a6d964444637d302a8027f83824a9106582c83e6824720b"
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D123-predicate-return-1314/evidence/static-checks.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D123-current-qualified-1317-static-checks.json",
+    "bytes": 2109,
+    "sha256": "e4279a1970482a443b525a271756763005b37543e436fbbae7f28e7efe77eb0b"
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D123-predicate-return-1314/evidence/contract-and-chat-identity.json",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D123-current-qualified-1317-contract-and-chat-identity.json",
+    "bytes": 3962,
+    "sha256": "e65b7c24071694831f89cad8c26537def9b94f73659b70ca9068c937094ada29"
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D123-predicate-return-1314/evidence/b742-current-agent.patch",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D123-current-qualified-1317-b742-current-agent.patch",
+    "bytes": 12072718,
+    "sha256": "b0ff420595441fccb3d0a37b70715e5b2bff373cecd9d2e51c82be51cbe58f6b"
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D123-predicate-return-1314/report.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D123-current-qualified-1317-author-report.md",
+    "bytes": 846,
+    "sha256": "5063d8aa1cb89b130247e46c062aa534d8268d38289835e8687fc4ffaac475d2"
+  },
+  {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D123-predicate-review-1317/report.md",
+    "published": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/handoff-rt-D123-current-qualified-1317-independent-review.md",
+    "bytes": 1157,
+    "sha256": "befab002fcfc28ac29656177ac3df293c509e8ec10e8a9f794d54bc75433f6de"
+  }
+]

@@ -1,0 +1,25 @@
+{
+  "targeted_installer_xml_predicate": {
+    "command": "env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=\"$PWD:/home/user/work/runtime\" /home/user/work/venv-agent/bin/python -m pytest -q -p no:cacheprovider --basetemp=/tmp/w-rt-F-D123-predicate-return-1314-pytest tests/test_installer_platforms.py::test_windows_task_settings_and_no_console_executable",
+    "result": "PASS: 1 passed in 0.57s"
+  },
+  "mypy": {
+    "command": "/home/user/work/venv-agent/bin/python -m mypy --cache-dir=/tmp/rt-F-D123-predicate-return-1314-mypy --follow-imports=skip astrid/installer/service.py astrid/packs/rendering/docs/scripts/timeline_document.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/inverse.py tests/editing_conformance/test_commit_document_input_capture.py tests/test_installer_platforms.py tests/test_installer_schema.py",
+    "result": "PASS: no issues found in 7 source files"
+  },
+  "compile": {
+    "command": "env PYTHONPYCACHEPREFIX=/tmp/rt-F-D123-predicate-return-1314-pycache /home/user/work/venv-agent/bin/python -m py_compile astrid/installer/backend.py astrid/installer/tools.py astrid/installer/service.py astrid/packs/rendering/docs/scripts/timeline_document.py astrid/sdk/timeline/commit.py astrid/sdk/timeline/inverse.py tests/test_installer_schema.py tests/test_installer_platforms.py tests/editing_conformance/test_commit_document_input_capture.py",
+    "result": "PASS"
+  },
+  "ruff": {
+    "command": "/home/user/work/venv-agent/bin/python -m ruff check astrid/installer/backend.py astrid/installer/tools.py tests/test_installer_schema.py tests/test_installer_platforms.py astrid/installer/service.py astrid/sdk/timeline/commit.py astrid/packs/rendering/docs/scripts/timeline_document.py tests/editing_conformance/test_commit_document_input_capture.py",
+    "result": "EXIT 1: inherited upstream I001 and BLE001 only in astrid/installer/backend.py"
+  },
+  "diff_check": {
+    "command": "git diff --check",
+    "result": "PASS"
+  },
+  "source_identity": {
+    "result": "PASS: b545 exact six-path current-normal identity; source tree and full-index patch identities in companion maps"
+  }
+}

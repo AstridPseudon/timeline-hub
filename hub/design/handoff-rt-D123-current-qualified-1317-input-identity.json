@@ -1,0 +1,32 @@
+{
+  "base": "b742893426a46a99a2f30583a54faeebe2bd98b7",
+  "base_tree": "ccb2f286eae9419b95a3f54b11208f68c57b27cf",
+  "historical_candidate": "47f6c72acb62da4f62c3eb8a4e140c6ec806af41",
+  "checkpoint_commit": "80d185d3fb72f90c1bb47cab0bb300dde3a43d4b",
+  "checkpoint_tree": "43bcbc8afbcdca3ca929ecaada61ab4aded84ccf",
+  "checkpoint_normal": "3ab324c891d3121c46d4aff0a339468a9339e0f2",
+  "current_normal_capture": "b545b616a41388e24d6f2a59b7b45c26cb057d2c",
+  "normal_tree": "977649c62950e5650637734b494caee791e35d50",
+  "local_frozen_gating_head": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+  "current_normal_capture_policy": "b545 exact authenticated source; no later normal recapture",
+  "later_normal_paths": [
+    "astrid/installer/service.py",
+    "astrid/packs/rendering/docs/scripts/timeline_document.py",
+    "astrid/sdk/timeline/commit.py",
+    "tests/editing_conformance/test_commit_document_input_capture.py",
+    "tests/fixtures/installer/task.xml",
+    "tests/test_installer_platforms.py"
+  ],
+  "source_checkpoint": "80d185d3fb72f90c1bb47cab0bb300dde3a43d4b and historical 47f6c72acb62da4f62c3eb8a4e140c6ec806af41 remain distinct",
+  "excluded": [
+    "host deltas bae5/ef4c/21b",
+    "nativebinding f3a6",
+    "D100 3aaf"
+  ],
+  "included_newly_normal": [
+    "producer 82b6",
+    "XML adcb/e2da/04b7",
+    "atomic 8a410"
+  ],
+  "note": "Installer service/XML fixture are upstream-equivalent; platform test is now byte-identical to b545 on the authenticated current-normal predicate and carries only the normal staging setup delta."
+}
