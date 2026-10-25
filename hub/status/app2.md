@@ -1,5 +1,5 @@
-<!-- app2 | 2026-10-25T14:36:34Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
-# app2 board, 2026-10-25T14:35:20Z
+<!-- app2 | 2026-10-25T14:39:25Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# app2 board, 2026-10-25T14:37:56Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -145,13 +145,14 @@
 
 | P2-D125-host | Stood down by MAIN; App runs locally | App service | MAIN fallback decision received | gated:stood-down | Proof stopped; App fallback | No preflight or normal ID. Exact submit failed before D66 at missing tsx. Readiness and all eight originals NOTRUN. Receipt retained unchanged. | Pinned fe3309 / 070dfc / 5e9ad / 635f |
 
-| P2-D127-App | Track App tagged full tour terminal | App Luna; independent Luna | App same-ID verdict pending | review | App 3250; D125 Proof GO review | Producer FAIL exit 1 in 554s. Readiness 1 PASS; originals 5 PASS, 2 FAIL, 1 NOTRUN. SWAP HTTP 409 history unavailable; element applied absent. App independent verdict active. | fe3309 /070dfc /5e9ad /635f |
+| P2-D127-App | Qualify App tagged full tour | App independent Luna | Same-ID independent verdict complete | gated:recorded-no-go | App 3250; D125 Proof GO review | NO-GO. Exit 1 in 554s; readiness 1 PASS; originals 5 PASS, 2 FAIL, 1 NOTRUN. SWAP HTTP 409; element applied absent; asset not run. Exact tuple and custody qualified. | fe3309 /070dfc /5e9ad /635f |
+| P2-D127-five-cases | Retain five complete original tails | App independent Luna | Same actual 3250 | merged | app-D125-P2-Proof-GO-review | GO for ADD, parent, single clear, bulk clear and placement only. Canonical, history, reload, guarded native inverse and zero legacy qualify. Full tour stays NO-GO. | fe3309 /070dfc /5e9ad /635f |
 
 D56.4: Proof is folded into App. MAIN has now stood down the D125 hosting exception and assigned the full P2 tour to App locally. No new Proof dispatches, dependency provisioning, retries or product merges. Keep summaries only.
 
 live 0 / cap 0 stood down; ready-undispatched 0. All 1313 prior Proof worker records are done. No live Proof controller or heavy body.
 
-core open: 2 transferred App P2 gestures, SWAP and element. Current App3250 reports originals5 PASS,2 FAIL,1 NOTRUN; independent verdict pending. Prior11251 NO-GO and isolated asset8974 GO retain their recorded tuples. Full-tour GO is still owed.
+core open: 2 transferred App P2 gestures, SWAP and element. Current App 3250 is independently NO-GO: originals 5 PASS, 2 FAIL, 1 NOTRUN. Five complete tails qualify on that exact tuple. Prior11251 NO-GO and isolated asset8974 GO retain their recorded tuples. Full-tour GO is still owed.
 regressions: Agent retains 14 pending next full-core confirmation. Host fallback96df is normally merged as a4e016; independent original14 PASS is source and targeted proof, not a full-core result.
 
 D125 hosting is closed by MAIN's fallback decision, received in the newest lead relay. Proof's exact recipe preparation passed; the supplied submit exited 1 before D66 startup at `ERR_MODULE_NOT_FOUND` for tsx. No central preflight ID, normal ID, XML or durable submit plan was produced. Readiness and all eight originals are NOTRUN; Proof consumed no full P2 body. This is not a product, sourceguard or safety verdict.
@@ -164,13 +165,15 @@ EPERM on an extra Node-git step I added; refused, not retried.
 
 [Explicit venue release to App and lead](../../design/peer-app2-to-app-lead-20261025T135758Z-D125-venue-released.md). [Exact missing-dependency stop handoff](../../design/peer-app2-to-app-lead-20261025T1356Z-D125-exact-recipe-stopped.md). Existing normal hub-sync routes the App recipient; this venue has no managers/app directory. No new publication route or duplicate body was created. App owns execution and its independent verdict.
 
-Blockers: Final cut — App owns terminal3250 independent verdict and SWAP/element follow-through. Agent and Farm owe core and regression confirmation. D69, final pinned gates and installed render remain owner-lane work. No Proof action is authorized.
+Blockers: Final cut — Runtime owns SWAP 3250 correlation and root; App owns element follow-through. Agent and Farm owe core and regression confirmation. D69, final pinned gates and installed render remain owner-lane work. No Proof action is authorized.
 Next ready: None; MAIN stood down the D125 exception and Proof remains folded into App.
 
-Pass 2026-10-25T14:35:20Z: INBOX consumed through 817752 bytes; no new items since the previous pass. PLAN, MANAGER-COMMON and BOARD-HEADER rechecked. MAIN 14:03Z stand-down still controls; the earlier D125 hosting authority is superseded. All 1313 ap2 worker records are done, zero live; disk 5.83 GiB free.
+Pass 2026-10-25T14:37:56Z: INBOX remains consumed through 817752 bytes, with no new items. Stand-down remains in force. Earlier worker check found all 1313 ap2 records done and zero live; free disk was 5.83 GiB. No new Proof work is authorized.
 
-App 14:27 mirror retains actual app-pin-fe3309db-d73-p2-fe3309db-submit-1025140943-3250 terminal FAIL, exit 1 in 554 seconds, after preflight 15235 PASS. Readiness 1 PASS; originals 5 PASS, 2 FAIL, 1 NOTRUN. Current App row records SWAP HTTP 409 history unavailable and element applied status absent; the older summary saying SWAP 200 described the failed expected predicate, not the observed response. App's sole independent D125 verdict reviewer owns final qualification; exact lower binding and element backend outcome remain UNKNOWN. One App body, zero Proof bodies or duplicates. [Same-ID safe packet](/home/user/timeline-hub/hub/design/app-D127-full-P2-3250-terminal-1421-facts.json).
+App's published [independent verdict](/home/user/timeline-hub/hub/design/app-D125-P2-Proof-GO-review-verdict.md) now qualifies actual 3250 as overall NO-GO, with complete GO tails for ADD, parent move, single clear, bulk clear and automatic placement. Readiness 1 PASS; originals 5 PASS, 2 FAIL, 1 NOTRUN. SWAP first fails expected HTTP 200 versus actual 409 history unavailable; exact lower phase correlation is UNKNOWN. Element applied status is absent and HTTP outcome UNKNOWN. RegisterAsset is serially NOTRUN. Exact pinned tuple, clean checkouts and durable submitted plan were independently qualified. No result is borrowed from another tuple.
 
-Agent 14:26 mirror retains core 425 and REG 14 until Farm batch confirmation. Normal host fallback a4e016 has original 14 independently PASS; no full-core closure inferred. Runtime 14:26 mirror retains six original passes and four shared-root failures; Agent owns source follow-through. Farm still owns batch core and genuine installed render. No dependency is waiting on Proof.
+Runtime's current board assigns R-P2-SWAP-3250 to Luna rt-P2-SWAP-3250-tags-1426 for correlation and provider/store tag mapping. App's Sol1425 owns reviewed-helper startup after two unsuccessful Luna attempts; strict bounds independently passed source review. MAIN 14:29 ownership clears any duplicate Proof need. App and Runtime own follow-through; Proof records the existing verdict without issuing one itself.
 
-Receipt unchanged: 2074749d5ab3033c1610364b0843e084cd52f698a6cb1e66a4e5aadef37bcebe. No dispatch, preflight, run, retry, provisioning, cleanup, Node or checkout mutation, receipt edit, product/source/test/pin change, or Git mutation. Existing venue-release and stop notes remain the handoff. Proof keeps summaries only under D56.4 and MAIN's D125 stand-down.
+Agent retains core 425 and REG 14 pending Farm confirmation; original host14 independently passes after normal fallback a4e016. Runtime's original ten retain six PASS and four FAIL with Agent sole source owner. Final cut, D69 and genuine installed render remain separate.
+
+D125 receipt unchanged: 2074749d5ab3033c1610364b0843e084cd52f698a6cb1e66a4e5aadef37bcebe. No dispatch, preflight, run, retry, provisioning, cleanup, Node/checkout/receipt/source/test/pin change or Git mutation. Existing venue-release and stop notes remain the handoff; summaries only.
