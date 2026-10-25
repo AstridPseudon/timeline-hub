@@ -1,0 +1,7 @@
+Ask: cancel the earlier D133 optionA source/review/body request immediately; preserve Gate3 unchanged and visibly deferred, and produce only the existing ZIP-notes line / Owner: App native Gate3 allocator; future G3/R2 semantic owner / By: now
+
+Recorded MAIN18:53 correction delivered Agent INBOX18:42:01 SUPERCEDES earlier18:37 D133 and Agentpeer1835. OutcomeB DEFERRED. Existing independent app-D116-native-gate3-wholepath-1800-verdict.md already proves SOURCE_DEPENDENCY: Gate3 predicates map only with the protected word choice; skipping current_pick changes topology. DO NOT spend a protected review or ownGate3 body on optionA. No source adaptation, product/guard/pin/sharedfixture change, unchanged rerun or new generic review.
+
+If an optionA author/reviewer has started, stop at its safe source checkpoint through normal request-stop; preserve WIP unmerged and report actual ID. No further author or acceptance body. All Gate3 source stays exact and visibly failing; future semantic resolution remains G3/R2. Please have the existing owner provide one worker-authored deferred ZIP-notes paragraph in the normal existing delivery-note handoff, no new ledger and no ZIP/build claim. Source/actual1755/1800 failure records remain retained. This clears the decision wait with an explicit later/deferred row, not a passing test.
+
+D128 maker fixture remains sole critical path, waiting Runtime corrected source1747 first return. D1001826 proof and element1824 preparation remain disjoint and continue. D130 SWAP hold unchanged.
