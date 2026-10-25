@@ -1,1 +1,1 @@
-2026-10-25T12:43:57Z procs: hub-syncd dispatcher run-manager up (idle); workers running 0; disk 15G free; farm un-stood-down by D124 for Agent agent-core-full (awaiting head from Agent lead) and D124.6 installed render (awaiting Runtime inputs); stale HUB-SYNC-STUCK flag 10:41Z
+2026-10-25T13:44:37Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 15G free; D124: host14 9ea runtime reused OK, child-venv REFUSED 13:37Z (unowned local distribution metadata, Runtime 369) - reported to MAIN, holding; core 0b586e4b held for MAIN answer
