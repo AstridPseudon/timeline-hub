@@ -227,7 +227,7 @@ Claude-Session: https://claude.ai/code/session_01NCfFG4UM2PAWDGuSNXfJtu"
 # merge instead; orchestrator-owned files resolve to main's copy (ours on main, theirs elsewhere); any other conflict
 # aborts the merge and writes HUB-SYNC-STUCK, which ensure-daemons surfaces. Nothing is force-pushed or dropped.
 sync_push() {
-  git pull -q --rebase origin main 2>/dev/null && { git push -q origin HEAD:main; return; }
+  git pull -q --rebase origin main 2>/dev/null && { git push -q origin HEAD:main && rm -f $ORCH/HUB-SYNC-STUCK; return; }  # 13:05Z: clear a stale flag on the normal path too
   git rebase --abort 2>/dev/null
   git pull -q --no-rebase --no-edit origin main 2>/dev/null || {
     side=--theirs; [ "$M" = main ] && side=--ours; left=0
