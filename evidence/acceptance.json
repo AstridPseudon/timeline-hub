@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "task": "U2/D139",
+  "head": "4c4ee35d5687c4cd40a0e5395efda53aa56f939d",
+  "tree": "d50fd98f7d1bc6860de810f38e8a0b3a55ca224e",
+  "runtime_source_used_by_python_test": "cf0b82dd47452a7a34fc63eb233e9b1dc0532806",
+  "commands": [
+    {
+      "name": "targeted pytest",
+      "command": "PYTHONPATH=/home/user/work/wt/agt-U2-D139-integrated-acceptance-2146:/home/user/work/runtime PYTHONDONTWRITEBYTECODE=1 /home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 tests/sdk/test_host_bootstrap_source_identity.py tests/test_installer_omp_source.py tests/core/generation/test_gpu_environment.py tests/test_installer_platforms.py --junitxml=/tmp/agt-U2-D139-integrated-acceptance-2146/targeted.xml",
+      "exit": 0,
+      "result": "244 passed in 3.16s",
+      "run_count": 1,
+      "private_artifacts": ["/tmp/agt-U2-D139-integrated-acceptance-2146/targeted.xml", "/tmp/agt-U2-D139-integrated-acceptance-2146/targeted.log"]
+    },
+    {
+      "name": "chat bundle freshness",
+      "command": "temporary symlink to /home/user/work/runtimes/agent-remotion-current/node_modules; bun run check:chat-bundle; remove named symlink",
+      "exit": 0,
+      "result": "bundle is fresh",
+      "run_count": 1
+    },
+    {
+      "name": "chat tests",
+      "command": "temporary symlink to /home/user/work/runtimes/agent-remotion-current/node_modules; bun test ./astrid/chat; remove named symlink",
+      "exit": 0,
+      "result": "195 passed, 0 failed, 428 expect() calls, 23 files, 108.03s",
+      "run_count": 1,
+      "private_artifacts": ["/tmp/agt-U2-D139-integrated-acceptance-2146/chat-test.log"]
+    }
+  ],
+  "static_checks": {
+    "bash_n_tools_p4_d73_pinned_launch_sh": true,
+    "git_diff_check": true,
+    "ast_composition": true,
+    "generated_bundle_byteexact": true,
+    "ruff": "reused prior 76 inherited findings; all diagnostic blobs unchanged",
+    "mypy": "reused prior 74 inherited errors; all diagnostic blobs unchanged"
+  },
+  "not_run": ["full suite", "core/P1-P5/gates", "browser/live integration", "acquisition/install/build/render", "ZIP/delivery verification"]
+}

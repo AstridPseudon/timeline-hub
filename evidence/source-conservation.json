@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "task": "U2/D139",
+  "result": "PASS",
+  "ancestry": {
+    "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55": true,
+    "708ba3fbc1b802d45e766d9c3e6899835a15ca78": true,
+    "32dde0c035f59029064fe782d5147d4e68e75835": true
+  },
+  "index_and_markers": {
+    "unmerged_index_entries": 0,
+    "conflict_marker_hits": [],
+    "git_diff_check": true
+  },
+  "prior_candidate_upstream_only": {
+    "merge_base": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+    "upstream_parent": "886a3183bd4a4a44f0a2c08fabec4e8edcbf7b55",
+    "count": 56,
+    "current_head_blob_mismatches": []
+  },
+  "later_parent1_owned": {
+    "parent1": "708ba3fbc1b802d45e766d9c3e6899835a15ca78",
+    "disjoint_path_count": 14,
+    "current_head_blob_mismatches": []
+  },
+  "protected_source_mapping": {
+    "fps_paths": {
+      "astrid/sdk/timeline/validation.py": {"head_equals_parent1": true, "blob": "edda2e123a5907ddf1671c705e17fd3aee0cabe6"},
+      "tests/sdk/test_d136_fps_upstream_compat.py": {"head_equals_parent1": true, "blob": "b80b771236ab181d9e84bb96187a5b17e329a4f3"}
+    },
+    "historical_source_paths": {
+      "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py": {"head_equals_parent1": true, "blob": "33ffb59d7e66469784f97a3542e9475b27d11888"},
+      "tests/editing_conformance/test_inverse_stage_runtime_regressions.py": {"head_equals_parent1": true, "blob": "55e7cec5da3463360a4f862986bc28e6a1e39345"},
+      "tests/editing_conformance/test_prepared_video_birth.py": {"head_equals_parent1": true, "blob": "72783d84e1edfac23f3508ee21aad824e425e6b8"}
+    },
+    "cli_source_latest": {
+      "tests/editing_conformance/test_native_batch_ingress.py": {"head_equals_parent1": true, "blob": "b002de2e7315e578123169ba1ac340cb79171fac"}
+    }
+  },
+  "generated_bundle": {
+    "service_ts_sha256": "e6ca2f298d2785fac2d850fddd34f81c827c1c640f461bb63316fa3ee5ba4899",
+    "service_mjs_sha256": "525e6dff9d4f2084c1167e6c3355e3bcea6a730ee876f99aea04d7d127206019",
+    "byteexact_to_prior_review": true
+  },
+  "production_wiring_static": {
+    "authoring_bundle_writer_commit_timeline_calls": 1,
+    "workspace_generated_commit_timeline_calls": 1,
+    "create_runtime_commit_service_calls": 1,
+    "composed_python_ast_failures": [],
+    "c0_wire_shape_checks": {
+      "request_and_command_fields": true,
+      "steps_and_patch_fields": true,
+      "accepted_merged_canonical_fields": true,
+      "receipt_and_preview_null_receipt": true,
+      "records_bindings_effects_dependencies_history_undo": true,
+      "conflict_reason_and_head": true,
+      "invalid_code_path_hint_command": true
+    }
+  },
+  "worker_mutation": "none; source, generated, pin, client, schema, fixture, and dependency trees were not edited"
+}
