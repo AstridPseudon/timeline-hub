@@ -76,7 +76,9 @@ def shared_editing(request, tmp_path, monkeypatch):
             authored_internal["payload"]["clips"][0]["extension"] = {
                 "literal": "shared-source-item", "clear": None,
             }
-            for ordinal, occurrence in enumerate(parent["occurrences"][1:]):
+            for ordinal, occurrence in enumerate(
+                    occurrence for occurrence in parent["occurrences"][1:]
+                    if occurrence["occurrence_id"] != "repeated-third"):
                 occurrence["placement"]["start_ms"] = 8000 + ordinal * 2000
             parent["unknown"] = {"literal": [None, False, 0, {}, []]}
         target["parent_revision"]["payload"] = parent
