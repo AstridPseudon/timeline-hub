@@ -40,7 +40,7 @@ export const VIDEO_EDITOR_THEME_VARS = {
   '--video-editor-stage-control-bg-strong': 'rgb(0 0 0 / 0.7)',
   '--video-editor-stage-control-bg-hover': 'rgb(0 0 0 / 0.6)',
   '--video-editor-stage-control-bg-hover-strong': 'rgb(0 0 0 / 0.9)',
-  '--video-editor-stage-control-border': 'rgb(255 255 255 / 0.2)',
+  '--video-editor-stage-glyph-hover': 'rgb(255 255 255 / 0.14)',
   '--video-editor-stage-ghost-border': 'rgb(255 255 255 / 0.35)',
   '--video-editor-stage-ghost-bg': 'rgb(255 255 255 / 0.05)',
   '--video-editor-stage-hover-border': 'rgb(255 255 255 / 0.4)',

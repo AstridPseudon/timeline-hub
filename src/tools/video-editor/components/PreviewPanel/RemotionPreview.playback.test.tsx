@@ -18,7 +18,6 @@ type PlayerPropsRecord = {
   initialVolume: number;
   initiallyMuted: boolean;
   playbackRate: number;
-  loop: boolean;
   inputProps: { config: ResolvedTimelineConfig; preparing: boolean; settling: boolean };
 };
 
@@ -47,7 +46,6 @@ vi.mock('@remotion/player', async () => {
         initialVolume: number;
         initiallyMuted: boolean;
         playbackRate: number;
-        loop: boolean;
       },
       ref: React.Ref<unknown>,
     ) {
@@ -55,7 +53,6 @@ vi.mock('@remotion/player', async () => {
         initialVolume: props.initialVolume,
         initiallyMuted: props.initiallyMuted,
         playbackRate: props.playbackRate,
-        loop: props.loop,
         inputProps: props.inputProps,
       });
       React.useImperativeHandle(ref, () => {
@@ -111,10 +108,14 @@ function renderPreview({
   config = makeConfig('playback'),
   transportOutlet,
   playerControls,
+  compact,
+  touchChrome,
 }: {
   config?: ResolvedTimelineConfig;
   transportOutlet?: HTMLElement;
   playerControls?: boolean;
+  compact?: boolean;
+  touchChrome?: boolean;
 } = {}) {
   const playerContainerRef = createRef<HTMLDivElement>();
   const view = render(
@@ -124,6 +125,8 @@ function renderPreview({
       playerContainerRef={playerContainerRef}
       transportOutlet={transportOutlet}
       playerControls={playerControls}
+      compact={compact}
+      touchChrome={touchChrome}
     />,
   );
   return { ...view, playerContainerRef, previewContainer: playerContainerRef.current! };
@@ -190,15 +193,63 @@ describe('RemotionPreview playback controls', () => {
     expect(config.clips[1]?.volume).toBe(0.4);
   });
 
-  it('forwards playback speed and loop to the Player and exposes the loop state', () => {
+  it('forwards playback speed to the Player without a loop control', () => {
     renderPreview();
 
     fireEvent.change(screen.getByRole('combobox', { name: 'Playback speed' }), { target: { value: '1.5' } });
     expect(playerPropsHistory.at(-1)!.playbackRate).toBe(1.5);
+    expect(screen.queryByRole('button', { name: 'Loop playback' })).not.toBeInTheDocument();
+  });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Loop playback' }));
-    expect(playerPropsHistory.at(-1)!.loop).toBe(true);
-    expect(screen.getByRole('button', { name: 'Loop playback' })).toHaveAttribute('aria-pressed', 'true');
+  it('does not show the output resolution in the transport', () => {
+    renderPreview();
+
+    expect(screen.getByRole('button', { name: 'Play' }).closest('[data-preview-transport]')).not.toHaveTextContent('1280x720');
+  });
+
+  it('keeps compact controls simple until entering fullscreen', () => {
+    overrideProperty(document, 'fullscreenEnabled', { value: false });
+    renderPreview({ compact: true });
+
+    expect(screen.queryByRole('button', { name: 'Mute preview' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'Playback speed' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Jump to beginning' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Full screen' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Full screen' }));
+
+    expect(screen.getByRole('button', { name: 'Mute preview' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Playback speed' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Jump to beginning' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /full screen/i })).toBeInTheDocument();
+  });
+
+  it('shows the selected speed as text only when it differs from 1x', () => {
+    renderPreview();
+    const speedSelect = screen.getByRole('combobox', { name: 'Playback speed' });
+    const speedControl = speedSelect.closest('label')!;
+
+    expect(speedControl.querySelector('span')).toBeNull();
+    act(() => setPreviewPlaybackPreferences({ rate: 1.5 }));
+
+    expect(speedControl.querySelector('span')).toHaveTextContent('1.5×');
+    act(() => setPreviewPlaybackPreferences({ rate: 1 }));
+    expect(speedControl.querySelector('span')).toBeNull();
+  });
+
+  it('reveals mouse controls on hover and keeps touch controls visible', () => {
+    const { unmount } = renderPreview();
+    expect(screen.getByRole('button', { name: 'Play' })).not.toHaveClass('opacity-0');
+    expect(screen.getByRole('button', { name: 'Jump to beginning' })).toHaveClass('opacity-0', 'group-hover/preview:opacity-100');
+    unmount();
+
+    renderPreview({ touchChrome: true });
+    expect(screen.getByRole('button', { name: 'Play' })).not.toHaveClass('opacity-0');
+    const jump = screen.getByRole('button', { name: 'Jump to beginning' });
+    expect(jump).not.toHaveClass('opacity-0');
+    expect(jump).not.toHaveClass('group-hover/preview:opacity-100');
   });
 
   it('keeps only jump and play controls when playerControls is false', () => {
@@ -206,7 +257,6 @@ describe('RemotionPreview playback controls', () => {
 
     expect(screen.queryByRole('button', { name: 'Mute preview' })).not.toBeInTheDocument();
     expect(screen.queryByRole('combobox', { name: 'Playback speed' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Loop playback' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Full screen' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Jump to beginning' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();

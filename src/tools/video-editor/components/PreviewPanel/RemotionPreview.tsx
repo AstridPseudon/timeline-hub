@@ -127,7 +127,7 @@ interface RemotionPreviewProps {
   currentTime?: number;
   /** Optional host-owned outlet for transport controls (e.g. public shells). */
   transportOutlet?: HTMLElement | null;
-  /** Volume, speed, loop and fullscreen beside the transport (default). A staged shell that
+  /** Volume, speed and fullscreen beside the transport (default). A staged shell that
    *  sizes the transport itself leaves them out. */
   playerControls?: boolean;
 }
@@ -595,10 +595,11 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
       durationInFrames={metadata.durationInFrames}
       isPlaying={isPlaying}
       canPlay={hasPlayableOutput}
-      resolution={config.output.resolution}
       compact={compact}
       touchChrome={touchChrome}
       playerControls={playerControls}
+      // A mouse in the editor brings the bar up over the preview; touch and a host's outlet keep it in view.
+      revealOnHover={!touchChrome && !transportOutlet}
       fullscreen={fullscreen}
       idle={chromeIdle}
       onTogglePlay={togglePlayPause}
@@ -616,7 +617,7 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
       // The phone sizes its preview to the film, which can be shorter than the
       // desktop floor; there the floor would push the transport out of view.
       className={cn(
-        'relative flex h-full w-full items-center justify-center overflow-hidden rounded-xl bg-transparent outline-none',
+        'group/preview relative flex h-full w-full items-center justify-center overflow-hidden rounded-xl bg-transparent outline-none',
         compact && touchChrome ? 'min-h-0' : 'min-h-[220px]',
         fullscreen && 'rounded-none bg-[var(--video-editor-stage-bg)]',
         // Where the browser cannot fullscreen an element (iPhone), the picture covers the window.
@@ -658,7 +659,6 @@ const RemotionPreviewComponent = forwardRef<PreviewHandle, RemotionPreviewProps>
           initialVolume={initialAudio.volume}
           initiallyMuted={initialAudio.muted}
           playbackRate={playback.rate}
-          loop={playback.loop}
         />
       </div>
       {fullscreen && (
