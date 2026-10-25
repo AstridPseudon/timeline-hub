@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T07:23:20Z | dispatcher heartbeat 12s | live 1 (sol 0, luna 1, other 0) | busy30 10 | status age 7m -->
-# runtime board, 2026-10-25T07:16:03Z
+<!-- main | 2026-10-25T07:26:54Z | dispatcher heartbeat 15s | live 2 (sol 0, luna 2, other 0) | busy30 11 | status age 1m -->
+# runtime board, 2026-10-25T07:25:31Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -344,7 +344,7 @@
 
 | R2-choice-three-prep | Prepare remaining inverse and word originals | Luna source only | Full core first under D108 | gated:D108-core | Prep0638 complete; rebound44cf | Exact three source recipe prepared with reviewed blobs and normal 1daca lock. No actual originals run; prior four PASS controls excluded. | Held candidate |
 
-| D108-Agent-core | Measure current Agent core outcomes | Luna / service | D110 released; source capture | doing | rt-D108-full-core-0711 | Authoritative23 roots and47 scopes received. Pre-fix9268 collection retained; actual current tuple/count captured by sole new controller. | Agent070dfc ready |
+| D108-Agent-core | Measure current Agent core outcomes | Luna / service | Canonical D89 floor update | doing | Resume0726 from0711 | Final547e/c916/f720/635f captured once; strict preflight0. No body yet. Add missing promised scene root; canonical8G margin being corrected. | Exact manifest retained |
 | D108-reverse-audit | Preserve upstream and live predicates | Luna independent | Exact applied trees | review | rt-F-D108-reverse-audit-0645 | Source identities checked. Final initial audit: Agent96 cited and8 unresolved; Runtime10 unresolved. Citation crosswalk and TS audit assigned. | Source only |
 
 | D111-validation-memo | Avoid repeated successful schema validation | Luna / independent review | Actual element-path measurement | doing | Author0653; curve return0706 | Author79 PASS and smoke2 PASS. Native N=1 wall2754/2755ms proves no gain; missing finite N gate returned once, source stays held. | 1171212ce held |
@@ -354,7 +354,11 @@
 
 | D108-Agent-source-gaps | Preserve D07 and installer predicates | Agent source owner | Existing exact scope and source | blocked:agent | Peer0715; Runtime reviewer0715 | Three D07 purposes and Windows/D18 census need exact replacement or restoration. D107 current-combination gap stays separately owned. | No source change |
 | D108-App-source-gaps | Preserve revision and label predicates | App source owner | Existing exact scope and source | blocked:app | Peer0715; Runtime reviewer0715 | D01 project history/restore/CAS and three label/signature predicates need exact approval or faithful source repair. No weakening authorized. | No source change |
-| D108-route-prep | Prepare the sole full-core route | Luna / independent Luna | Full controller0711 | review | Prep0707; reviewer0715 | Private23-root row, positive17 and poisonzero PASS; live registry exact. No core body or provider proof claimed by prep. | Private candidate |
+| D108-route-prep | Prepare the sole full-core route | Luna / independent Luna | Exact23-root argv correction | review | Prep0707; review0715; resume0726 | Private controls PASS, but argv22 versus promised23 roots FAIL. Missing live-scene-composition root restored by existing controller before body. | Private candidate |
+
+| OPS-D89-service-floor | Align central heavy admission with D89 | Luna / independent review | Exact owner5.2GB policy | doing | rt-OPS-D89-service-floor-0725 | Canonical test-run still demands8G. Private candidate and boundary tests assigned; no bypass or live edit before review. | Source pending |
+
+| OPS-stale-d629-v1-log | Restore safe MAIN run headroom | Manager route | Fresh route and process audit | merged | Recycle d629; remove named v1 archive | Unreferenced clean pin and one121.8MB v1 log archive removed. Four registered old pins retained. Branches and current proof outputs preserved. | No source change |
 
 Runtime producer: RELEASED 1daca2a33, reviewed product tree a522. Normal c916 adds the required genuine-provider release check only. Agent d629 and App0b6cee fixed-producer adoption are complete.
 core open: 1 known Runtime P2 performance issue, D111. Agent current core count UNKNOWN until D108. Agent D110 independently owns the named inverse KeyError; no guessed shared cause.
@@ -365,12 +369,13 @@ Blockers: Agent D107 — Current combined word sequence failed protected review;
 Blockers: Runtime D111 — Genuine element-path profile, bounded positive validation memo if confirmed, strict controls, flat curve, real-provider smoke and review before release.
 Blockers: Agent D69 — Three D07 predicate gaps and exact Windows/D18 census discrepancy need Agent source disposition; peer0715 sent.
 Blockers: App D69 — D01 project revision and three label/signature predicates need exact approved mapping or faithful repair; peer0715 sent.
+Blockers: KIT CHANGE — bin/test-run pending reviewed SHA; implement owner D89 heavy5.2GB rule. Canonical8G margin blocks current full-core. No bypass.
 Blockers: Final cut — D69 source qualification, all-lane core, final P1-P5 and genuine installed render remain owed. No final tuple or ZIP.
 Safety: Withdrawn D88 stays stopped. D106 ORCH-only publication rule applies; nobody retries denied hub writes. Every brief names exact own ORCH output paths.
 Next ready: D108 full-core0711 dispatched immediately on D110 release. Private route prep0707 and two source audits active. D111 finite-curve first return0706 active; family bodies paused.
 Venues: D1080711 owns next sole MAIN heavy body, exact current source capture and real central ID pending. App exclusively owns current P1/P3 and future full P2; no duplicate browser body.
 Delivery: D108 source apply complete with durable receipts. Audit has unresolved predicate signals. D77 genuine installed render follows core and source qualification; no ZIP publication.
 Later: No unchanged family repeats, original ten D100, four passed restore controls or P4 repeats. New26 and three-original candidates remain held under D108.
-Disk: About6.30GB free. Sweep3 and compact attempted through approved routes; sweep emitted broken-pipe warnings. No claimed new space from this pass. Referenced sources and all branches retained.
-live 3 / cap 6; ready-undispatched 0 eligible local starts. Full-core0711, D111 curve return0706 and independent audit-result reviewer0715. Source audits and private route preparation returned.
+Disk: About5.31GB free after unused d629 pin recycling and one stale v1 log archive removal. Fresh audit receipts retained. Compact gzipped3 old logs; registered pins and active evidence retained.
+live 3 / cap 6; ready-undispatched 0 eligible local starts. D111 finite-curve return, D89 private kit author and full-core continuation0726. Audit-result reviewer0715 finished finite FAIL.
 INBOX consumed through 1037115 bytes. Updated 2026-10-25T07:16:03Z. Latest D110/D111 decisions consumed; D109 ADD replay cancelled, element measurement belongs to D111.
