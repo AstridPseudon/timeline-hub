@@ -6,6 +6,7 @@ import importlib.util
 import io
 import json
 import os
+import pstats
 import sys
 import threading
 import time
@@ -505,6 +506,166 @@ def test_element_profile_disables_on_handler_exception_without_exporting_excepti
     serialized = json.dumps(capture.events)
     assert "element profile exception must remain private" not in serialized
     assert _summary(capture)[0]["cprofile"]["status"] == "captured"
+
+
+def test_element_profile_selects_one_exact_element_post_and_rejects_mixed_or_retry(tmp_path):
+    class Runtime:
+        def commit_timeline(self, *_args, **_kwargs):
+            return {"data": {"status": "accepted"}, "receipt": None}
+
+    mixed = _element_request_body("project-mixed")
+    mixed["commands"].append({
+        "schema_version": 1,
+        "op": "clip.move",
+        "version": "1",
+        "select": "parent/clip:clip-1",
+        "args": {"on": 2},
+    })
+    capture = P2CommitPhaseCapture(enabled=True)
+    capture.start()
+    try:
+        _handler(Runtime(), mixed)._dispatch()
+        _handler(Runtime(), _element_request_body("project-element-1"))._dispatch()
+        _handler(Runtime(), _element_request_body("project-element-2"))._dispatch()
+    finally:
+        capture.stop()
+
+    summaries = _summary(capture)
+    assert len(summaries) == 3
+    assert all("cprofile" not in summary for summary in summaries)
+    assert capture._profile_selection_closed
+
+    capture = P2CommitPhaseCapture(tmp_path / "one.jsonl", enabled=True)
+    capture.start()
+    try:
+        _handler(Runtime(), _element_request_body("project-first"))._dispatch()
+        _handler(Runtime(), _element_request_body("project-retry"))._dispatch()
+    finally:
+        capture.stop()
+    summaries = _summary(capture)
+    assert len(summaries) == 2
+    assert sum("cprofile" in summary for summary in summaries) == 1
+    assert sys.getprofile() is None
+
+
+def test_element_profile_rejects_wrong_request_path_method_and_unselected_handler():
+    body = _element_request_body()
+    capture = P2CommitPhaseCapture(enabled=True)
+    capture.start()
+    try:
+        cases = []
+        for command, path in (("GET", None), ("POST", "/v1/projects/p/timelines/t/commit?x=1"),
+                              ("POST", "/v1/projects/p/timelines/t/not-commit")):
+            handler = _handler(object(), body)
+            handler.command = command
+            if path is not None:
+                handler.path = path
+            handler._prefetched_body = json.dumps(body, separators=(",", ":")).encode()
+            cases.append(handler)
+        unselected = SimpleNamespace(command="POST", path=body["project_id"],
+                                     _prefetched_body=json.dumps(body).encode())
+        cases.append(unselected)
+        for handler in cases:
+            request = capture._new_request(handler=handler)
+            assert request is not None
+            capture._start_profile(capture._requests[request], handler)
+    finally:
+        capture.stop()
+    assert all(not request["profile_eligible"] for request in capture._requests.values())
+    assert sys.getprofile() is None
+
+
+def test_partial_profile_enable_disables_and_restores_previous_binding():
+    previous = sys.getprofile()
+
+    class PartialProfile:
+        def __init__(self):
+            self.disabled = False
+
+        def __call__(self, *_args):
+            return None
+
+        def enable(self):
+            sys.setprofile(self)
+            raise RuntimeError("private enable failure")
+
+        def disable(self):
+            self.disabled = True
+            sys.setprofile(None)
+
+    profile = PartialProfile()
+    capture = P2CommitPhaseCapture(enabled=True, profile_factory=lambda: profile)
+    handler = _handler(object(), _element_request_body())
+    handler._prefetched_body = json.dumps(_element_request_body(), separators=(",", ":")).encode()
+    request = capture._new_request(handler=handler)
+    assert request is not None
+    capture._start_profile(capture._requests[request], handler)
+    assert profile.disabled
+    assert capture._requests[request]["profile_failed"]
+    assert capture._requests[request]["profile_stopped"]
+    assert sys.getprofile() is previous
+
+
+def test_profile_projection_bounds_rows_and_preserves_caller_edge_counts(monkeypatch):
+    outer = ("/checkout/runtime_protocol/outer.py", 10, "outer")
+    inner = ("/checkout/runtime_protocol/inner.py", 20, "inner")
+    third = ("/checkout/runtime_protocol/third.py", 30, "third")
+    values = {
+        outer: (1, 1, 0.3, 0.3, {}),
+        inner: (2, 2, 0.2, 0.2, {outer: (2, 2, 0.0, 0.0)}),
+        third: (1, 1, 0.1, 0.1, {outer: (1, 1, 0.0, 0.0)}),
+    }
+
+    class FakeStats:
+        def __init__(self, _profile):
+            self.stats = values
+
+    monkeypatch.setattr(pstats, "Stats", FakeStats)
+    capture = P2CommitPhaseCapture(enabled=True, profile_top_functions=2, profile_max_edges=1)
+    request = capture._new_request()
+    assert request is not None
+    request_state = capture._requests[request]
+    request_state["profile"] = object()
+    projection = capture._profile_projection(request_state)
+    assert projection["status"] == "captured"
+    assert len(projection["functions"]) == 2
+    assert projection["limits"]["dropped_rows"] == 1
+    assert len(projection["edges"]) == 1
+    assert projection["edges"][0]["caller"]["function"] == "outer"
+    assert projection["edges"][0]["callee"]["function"] == "inner"
+    assert projection["edges"][0]["ncalls"] == 2
+
+
+def test_raw_profile_path_rejects_symlink_overwrite_shared_and_unprivate_parents(tmp_path):
+    private = tmp_path / "private"
+    private.mkdir()
+    os.chmod(private, 0o700)
+    capture = P2CommitPhaseCapture(enabled=True, raw_pstats_sink=private / "raw.prof")
+    assert capture._raw_profile_path(1) == private / "raw.prof"
+    assert os.stat(private / "raw.prof").st_mode & 0o777 == 0o600
+
+    existing = private / "existing.prof"
+    existing.write_bytes(b"existing")
+    capture.raw_pstats_sink = existing
+    assert capture._raw_profile_path(1) is None
+
+    target = tmp_path / "target"
+    target.mkdir()
+    os.chmod(target, 0o700)
+    linked = tmp_path / "linked"
+    linked.symlink_to(target, target_is_directory=True)
+    capture.raw_pstats_sink = linked / "raw.prof"
+    assert capture._raw_profile_path(1) is None
+
+    shared = tmp_path / "shared"
+    shared.mkdir()
+    os.chmod(shared, 0o755)
+    capture.raw_pstats_sink = shared / "raw.prof"
+    assert capture._raw_profile_path(1) is None
+    assert os.stat(shared).st_mode & 0o777 == 0o755
+
+    capture.raw_pstats_sink = Path(os.environ.get("TMPDIR", "/tmp")) / "shared.prof"
+    assert capture._raw_profile_path(1) is None
 
 
 def test_concurrent_requests_keep_local_ordinals_and_phase_state_isolated():

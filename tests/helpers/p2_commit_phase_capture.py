@@ -51,7 +51,7 @@ from collections import deque
 from datetime import UTC, datetime
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Self
+from typing import Any, Self, cast
 
 PHASES = (
     "arrival",
@@ -176,6 +176,7 @@ class P2CommitPhaseCapture:
         self.raw_pstats_sink = (Path(raw_pstats_sink).absolute()
                                 if raw_pstats_sink is not None else None)
         self._profile_raw_written: set[int] = set()
+        self._profile_selection_closed = False
         self.pid = os.getpid()
         self.birth_ticks = _process_birth_ticks()
         self.namespace = (f"pid-{self.pid}-birth-{self.birth_ticks or 'unknown'}-"
@@ -445,7 +446,43 @@ class P2CommitPhaseCapture:
                 self.failures += 1
 
     @staticmethod
-    def _is_element_request(handler: Any) -> bool:
+    def _profile_body(handler: Any) -> dict[str, Any] | None:
+        handler_type = type(handler)
+        if (handler_type.__module__ != "runtime_protocol.server"
+                or handler_type.__qualname__ != "RuntimeHandler"):
+            return None
+        path = getattr(handler, "path", None)
+        if (getattr(handler, "command", None) != "POST"
+                or not isinstance(path, str) or "?" in path
+                or _safe_route_template(path)
+                != "/v1/projects/{project_id}/timelines/{timeline_id}/commit"):
+            return None
+        raw = getattr(handler, "_prefetched_body", None)
+        if not isinstance(raw, (bytes, bytearray, memoryview)):
+            return None
+        try:
+            body = json.loads(bytes(raw))
+        except (TypeError, ValueError, UnicodeDecodeError):
+            return None
+        if (not isinstance(body, dict) or body.get("api_version") != 1
+                or body.get("dry_run") is True):
+            return None
+        commands = body.get("commands")
+        if not isinstance(commands, list):
+            return None
+        return body
+
+    @classmethod
+    def _has_element_command(cls, handler: Any) -> bool:
+        body = cls._profile_body(handler)
+        commands = body.get("commands") if body is not None else None
+        return (isinstance(commands, list)
+                and any(isinstance(command, dict)
+                        and command.get("op") == PROFILE_COMMAND
+                        for command in commands))
+
+    @classmethod
+    def _is_element_request(cls, handler: Any) -> bool:
         """Recognize only the mounted App element commit at the handler seam.
 
         ``_dispatch`` has already prefetched the bounded timeline body before
@@ -454,43 +491,52 @@ class P2CommitPhaseCapture:
         the mounted prefetch are intentionally not profiled: they cannot
         prove the real request-selection predicate.
         """
-        path = getattr(handler, "path", None)
-        if (getattr(handler, "command", None) != "POST"
-                or not isinstance(path, str) or "?" in path
-                or _safe_route_template(path)
-                != "/v1/projects/{project_id}/timelines/{timeline_id}/commit"):
-            return False
-        raw = getattr(handler, "_prefetched_body", None)
-        if not isinstance(raw, (bytes, bytearray, memoryview)):
-            return False
-        try:
-            body = json.loads(bytes(raw))
-        except (TypeError, ValueError, UnicodeDecodeError):
-            return False
-        if not isinstance(body, dict) or body.get("dry_run") is True:
-            return False
-        commands = body.get("commands")
-        return (isinstance(commands, list)
-                and any(isinstance(command, dict)
-                        and command.get("op") == PROFILE_COMMAND
-                        for command in commands))
+        body = cls._profile_body(handler)
+        commands = body.get("commands") if body is not None else None
+        return (isinstance(commands, list) and len(commands) == 1
+                and isinstance(commands[0], dict)
+                and commands[0].get("op") == PROFILE_COMMAND)
 
     def _start_profile(self, request: dict[str, Any], handler: Any) -> None:
+        # Setup/native commits are allowed before the selected element edit.
+        # Once an element-shaped POST is seen, consume the one-shot selection,
+        # including a mixed-command or dry-run refusal, so retries cannot move
+        # profiling to a different request.
+        if not self._has_element_command(handler):
+            return
+        with self._lock:
+            if self._profile_selection_closed:
+                return
+            self._profile_selection_closed = True
         if not self._is_element_request(handler):
             return
         request["profile_eligible"] = True
+        previous = sys.getprofile()
+        request["profile_previous"] = previous
         try:
             profile = self._profile_factory()
             enable = getattr(profile, "enable", None)
             if not callable(enable):
                 raise TypeError
             request["profile"] = profile
-            request["profile_previous"] = sys.getprofile()
             enable()
             request["profile_started"] = True
         except Exception:  # noqa: BLE001 - diagnostics never affect the request
-            request["profile"] = None
             request["profile_failed"] = True
+        finally:
+            if not request["profile_started"]:
+                profile = request.get("profile")
+                disable = getattr(profile, "disable", None)
+                if callable(disable):
+                    try:
+                        disable()
+                    except Exception:  # noqa: BLE001 - diagnostics never affect the request
+                        request["profile_failed"] = True
+                try:
+                    sys.setprofile(previous)
+                except Exception:  # noqa: BLE001 - diagnostics never affect the request
+                    request["profile_failed"] = True
+                request["profile_stopped"] = True
 
     @staticmethod
     def _stop_profile(request: dict[str, Any]) -> None:
@@ -568,15 +614,29 @@ class P2CommitPhaseCapture:
         if ordinal > 1:
             base = base.with_name(f"{base.stem}.request-{ordinal}{base.suffix}")
         temporary = Path(os.environ.get("TMPDIR", "/tmp")).resolve()
-        parent = base.parent.resolve()
-        if not parent.is_relative_to(temporary) or base.is_symlink() or base.exists():
+        parent = base.parent
+        if (parent == temporary or not parent.is_relative_to(temporary)
+                or base.is_symlink() or base.exists() or parent.is_symlink()
+                or not parent.is_dir()):
             return None
         try:
-            parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-            os.chmod(parent, 0o700)
-            fd = os.open(base, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-            os.close(fd)
-            os.chmod(base, 0o600)
+            parent_stat = parent.stat()
+            if (parent_stat.st_uid != os.getuid()
+                    or parent_stat.st_mode & 0o777 != 0o700):
+                return None
+            current = temporary
+            for component in parent.relative_to(temporary).parts:
+                current /= component
+                if current.is_symlink() or not current.is_dir():
+                    return None
+            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+            if hasattr(os, "O_NOFOLLOW"):
+                flags |= os.O_NOFOLLOW
+            fd = os.open(base, flags, 0o600)
+            try:
+                os.fchmod(fd, 0o600)
+            finally:
+                os.close(fd)
         except OSError:
             return None
         return base
@@ -601,9 +661,13 @@ class P2CommitPhaseCapture:
         try:
             profile = request["profile"]
             stats = pstats.Stats(profile)
+            stats_data = cast(
+                dict[tuple[str, int, str], tuple[Any, ...]],
+                getattr(stats, "stats", {}),
+            )
             safe_rows: list[dict[str, Any]] = []
             unsafe_rows = 0
-            for key, values in stats.stats.items():
+            for key, values in stats_data.items():
                 safe_key = self._safe_profile_key(key)
                 if safe_key is None or not isinstance(values, tuple) or len(values) < 4:
                     unsafe_rows += 1
@@ -637,7 +701,7 @@ class P2CommitPhaseCapture:
 
             candidate_edges: list[tuple[int, int, int, dict[str, Any]]] = []
             for callee_key, callee in top_keys.items():
-                values = stats.stats.get(callee_key)
+                values = stats_data.get(callee_key)
                 callers = values[4] if isinstance(values, tuple) and len(values) >= 5 else {}
                 if not isinstance(callers, dict):
                     continue
