@@ -453,6 +453,9 @@ describe('TasksPane', () => {
       pathname: '/tools/video-editor',
       search: '?project=runtime-project&timeline=timeline-1',
     });
+    useOptionalAgentChatBridgeMock.mockReturnValue({
+      editorContext: { projectId: 'runtime-project', timelineId: 'timeline-1' },
+    });
     useTasksPaneControllerMock.mockReturnValue({
       ...legacyControllerState,
       isRuntimeMode: true,
@@ -528,6 +531,9 @@ describe('TasksPane', () => {
       pathname: '/tools/video-editor',
       search: '?project=runtime-project&timeline=timeline-1',
     });
+    useOptionalAgentChatBridgeMock.mockReturnValue({
+      editorContext: { projectId: 'runtime-project', timelineId: 'timeline-1' },
+    });
     useTasksPaneControllerMock.mockReturnValue({
       ...legacyControllerState,
       isRuntimeMode: true,
@@ -558,6 +564,9 @@ describe('TasksPane', () => {
     useLocationMock.mockReturnValue({
       pathname: '/tools/video-editor',
       search: '?project=runtime-project&timeline=timeline-1',
+    });
+    useOptionalAgentChatBridgeMock.mockReturnValue({
+      editorContext: { projectId: 'runtime-project', timelineId: 'timeline-1' },
     });
     useTasksPaneControllerMock.mockReturnValue({
       ...legacyControllerState,
@@ -649,6 +658,9 @@ describe('TasksPane', () => {
         pathname: '/tools/video-editor',
         search: '?project=runtime-project&timeline=timeline-1',
       });
+      useOptionalAgentChatBridgeMock.mockReturnValue({
+        editorContext: { projectId: 'runtime-project', timelineId: 'timeline-1' },
+      });
       useTasksPaneControllerMock.mockReturnValue({
         ...legacyControllerState,
         isRuntimeMode: true,
@@ -730,7 +742,7 @@ describe('TasksPane', () => {
     expect(fake.record('ui.panes').content?.['tasks.expandedHalf']).toBe('split');
   });
 
-  it('routes the explicit Runtime editor identity to the Runtime task list', () => {
+  it('does not pass an unverified route project to Runtime task discovery', () => {
     useLocationMock.mockReturnValue({
       pathname: '/tools/video-editor',
       search: '?project=runtime-project&timeline=timeline-1',
@@ -748,17 +760,17 @@ describe('TasksPane', () => {
     renderTasksPane();
 
     expect(useTasksPaneControllerMock).toHaveBeenCalledWith(expect.objectContaining({
-      runtimeProjectId: 'runtime-project',
+      runtimeProjectId: null,
     }));
-    fireEvent.click(screen.getByRole('button', { name: 'Keep tasks open' }));
-    expect(screen.getByTestId('runtime-task-list')).toHaveAttribute('data-runtime-task-id', 'runtime-task-1');
-    expect(screen.queryByTestId('task-list')).not.toBeInTheDocument();
   });
 
   it('opens Runtime history on the newest completed task status', () => {
     useLocationMock.mockReturnValue({
       pathname: '/tools/video-editor',
       search: '?project=runtime-project&timeline=timeline-1',
+    });
+    useOptionalAgentChatBridgeMock.mockReturnValue({
+      editorContext: { projectId: 'runtime-project', timelineId: 'timeline-1' },
     });
     useTasksPaneControllerMock.mockReturnValue({
       ...legacyControllerState,

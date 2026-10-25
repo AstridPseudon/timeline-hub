@@ -64,7 +64,7 @@ export async function prepareStarterProject({
     const selected = existingProject(projects, preferredProjectId)!;
     const timelines = await readTimelines(client, selected.project_id);
     signal?.throwIfAborted();
-    // Existing work is read-only here, including an existing project with no timeline yet.
+    // Existing projects are kept; the editor creates a first timeline when one is missing.
     return { projectId: selected.project_id, timelineId: chooseRuntimeTimeline(selected, timelines)?.timeline_id ?? null };
   }
   if (!project) {

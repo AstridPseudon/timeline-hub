@@ -53,15 +53,9 @@ const TasksPaneComponent: React.FC = () => {
   useRenderBudget('TasksPane', 5);
   const { pathname, search } = useLocation();
   const paneControlsHosted = usePaneControlsHosted();
-  const runtimeParams = useMemo(() => new URLSearchParams(search), [search]);
   const selectedEditor = useOptionalAgentChatBridge()?.editorContext;
-  const routeRuntimeProjectId = pathname === '/tools/video-editor'
-    ? runtimeParams.get('project')?.trim() || null
-    : null;
-  const runtimeProjectId = selectedEditor?.projectId ?? routeRuntimeProjectId;
-  const runtimeTimelineId = selectedEditor?.projectId
-    ? selectedEditor.timelineId
-    : routeRuntimeProjectId ? runtimeParams.get('timeline')?.trim() || null : null;
+  const runtimeProjectId = selectedEditor?.projectId ?? null;
+  const runtimeTimelineId = selectedEditor?.projectId ? selectedEditor.timelineId : null;
   const {
     isTasksPaneLocked,
     setIsTasksPaneLocked,

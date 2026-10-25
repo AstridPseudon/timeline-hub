@@ -54,6 +54,7 @@ import {
   ProjectTimelinePicker,
 } from "@/shared/components/ProjectTimelineSelectors.tsx";
 import { ProjectHeaderControls } from "@/shared/components/ProjectHeaderControls.tsx";
+import { ProjectHeaderActions } from "@/shared/components/ProjectHeaderActions.tsx";
 import {
   AstridRuntimeClient,
   RuntimeUnavailableError,
@@ -252,7 +253,7 @@ export default function VideoEditorPage() {
   const canSelectRuntimeProject = !!selectedProject && !discoveryError;
 
   useEffect(() => {
-    if (projectId || timelineId || !projects || runtimeDiscovery.projectsQuery.error) return;
+    if (projectId || !projects || runtimeDiscovery.projectsQuery.error) return;
     let previous: string | null = null;
     try { previous = window.localStorage.getItem(LAST_OPENED_PROJECT_STORAGE_KEY); } catch { /* Storage is optional. */ }
     const project = projects.find(p => p.project_id === previous)
@@ -265,7 +266,7 @@ export default function VideoEditorPage() {
       next.set("project", project.project_id!);
       return next;
     }, { replace: true });
-  }, [projectId, timelineId, projects, runtimeDiscovery.projectsQuery.error, setSearchParams]);
+  }, [projectId, projects, runtimeDiscovery.projectsQuery.error, setSearchParams]);
 
   useEffect(() => {
     if (!selectedProject) return;
@@ -275,7 +276,7 @@ export default function VideoEditorPage() {
   // Chat, the gallery and the editor all use the same canonical project,
   // including projects which have not created their first timeline yet.
   const agentChatRegistry = useOptionalAgentChatRegistry();
-  const chatProjectId = projectId;
+  const chatProjectId = selectedProject?.project_id ?? null;
   const chatProjectSlug = selectedProject?.slug ?? null;
   useEffect(() => {
     if (!agentChatRegistry) return;
@@ -356,10 +357,12 @@ export default function VideoEditorPage() {
     const timeout = window.setTimeout(() => {
       if (lastSelectedRuntimeProject.current === projectId) return;
       lastSelectedRuntimeProject.current = projectId;
-      void new AstridRuntimeClient().selectProject(projectId, "workspace").catch(() => undefined);
+      void new AstridRuntimeClient().selectProject(projectId, "workspace").catch(() => {
+        if (lastSelectedRuntimeProject.current === projectId) lastSelectedRuntimeProject.current = null;
+      });
     }, 500);
     return () => window.clearTimeout(timeout);
-  }, [projectId, canSelectRuntimeProject, tourSelection]);
+  }, [projectId, canSelectRuntimeProject, selectorsOpen, tourSelection]);
   // Register explicit replays; first-run welcome already finished before this editor opens.
   useEditorTourHost();
   const providerSelection = tourSelection ?? userProviderSelection;
@@ -493,7 +496,7 @@ export default function VideoEditorPage() {
       next.set("project", id);
       next.delete("timeline");
       return next;
-    }, { replace: true });
+    });
   }, [projectId, projects, confirmEditorRemount, setSearchParams]);
   const handleSelectTimeline = useCallback((id: string) => {
     if (id === timelineId || !timelines?.some(t => t.timeline_id === id) || !confirmEditorRemount()) return;
@@ -502,7 +505,7 @@ export default function VideoEditorPage() {
       const next = new URLSearchParams(current);
       next.set("timeline", id);
       return next;
-    }, { replace: true });
+    });
   }, [timelineId, timelines, projectId, confirmEditorRemount, setSearchParams]);
 
   const handleCreateFirstTimeline = useCallback(async () => {
@@ -896,7 +899,7 @@ export default function VideoEditorPage() {
                       ? `“${projectId}” is not available in this workspace. Choose an existing project or create one.`
                       : timelineMissing ? "The selected timeline is not available in this project. Choose another timeline."
                       : discoveryError ? hosted ? RUNTIME_CONNECTION_COPY.loadFailed.sentence : discoveryError.message
-                      : !projectId ? "Create a project with New project above, or choose an existing project."
+                      : !projectId ? "Create a project, or choose an existing project."
                       : "Create a blank timeline for this project to open it in the editor."}</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -904,7 +907,15 @@ export default function VideoEditorPage() {
                       onRefresh={() => void runtimeDiscovery.projectsQuery.refetch()}
                       confirmedEmpty={runtimeDiscovery.projectsQuery.isSuccess && !discoveryError}
                     />}
-                    {selectedProject && !timelineId && !discoveryError && <Button
+                    {!projectId && projects?.length === 0 && <div data-testid="empty-workspace-project-action">
+                      <ProjectHeaderActions
+                        selectedProject={null}
+                        onProjectCreated={() => void runtimeDiscovery.projectsQuery.refetch()}
+                        disabled={runtimeDiscovery.projectsQuery.isLoading || !!tourHeader?.disabled}
+                        confirmNavigation={() => confirmRemountRef.current()}
+                      />
+                    </div>}
+                    {selectedProject && !discoveryError && (!timelineId || (timelineMissing && timelines?.every(t => t.is_shot))) && <Button
                       onClick={() => void handleCreateFirstTimeline()}
                       disabled={creatingFirstTimeline}
                     >{creatingFirstTimeline ? "Creating timeline…" : "Create first timeline"}</Button>}
