@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "review_base": "e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9",
+  "candidate_commit": "22692b24932f8bba38b8af2299765bc5c50f1c9b",
+  "candidate_tree": "ab24aa8057e900adef8c1d0585e448d1102d499a",
+  "candidate_files": [
+    {
+      "path": "tests/helpers/p2_commit_phase_capture.py",
+      "sha256": "3bc97277d7b33cc37ca32e361f0bc75fc4211e79c251a915bf0dad44faa091b5",
+      "parent_blob": "6984ac1da77f1b499703cfac45d27149eddcbdae"
+    },
+    {
+      "path": "tests/test_p2_commit_phase_capture.py",
+      "sha256": "8d728ffdbe016b80bf843eceacbe28180d7bd85ec35ba2b890cfdc96e82a2a42",
+      "parent_blob": "dea47f4753a471efdbde7bbbd1dc8fb19f6fb3e4"
+    }
+  ],
+  "product_files_modified": false,
+  "profile_library": "stdlib cProfile and pstats",
+  "profile_scope_claimed": "RuntimeHandler._timeline_commit",
+  "author_manifest_hashes_match_checkout": true
+}

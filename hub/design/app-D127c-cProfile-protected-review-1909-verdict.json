@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "task": "app-D127c-cProfile-protected-review-1909",
+  "result": "FAIL",
+  "review_scope": "Source-only protected review of the final D127c candidate against parent e319fdbcd512bd5fc9bc5b2c43abfa4d749c34d9, the author evidence, PLAN A2/A3/P2, and C0 sections 1-5 and 7.",
+  "candidate_commit": "22692b24932f8bba38b8af2299765bc5c50f1c9b",
+  "changed_files": [
+    "tests/helpers/p2_commit_phase_capture.py",
+    "tests/test_p2_commit_phase_capture.py"
+  ],
+  "findings": [
+    {
+      "id": "D127C-F1",
+      "severity": "blocker",
+      "file": "tests/helpers/p2_commit_phase_capture.py",
+      "lines": "448-476,478-482,1207-1209",
+      "summary": "The selector profiles every matching element request and accepts mixed command arrays; it does not enforce one element-only first POST or a deterministic first/retry choice."
+    },
+    {
+      "id": "D127C-F2",
+      "severity": "blocker",
+      "file": "tests/helpers/p2_commit_phase_capture.py",
+      "lines": "564-582",
+      "summary": "The optional raw-pstats path accepts an existing or symlinked parent after resolution and chmods that parent, so it does not guarantee a private dedicated 0700 parent or reject unsafe parent paths."
+    },
+    {
+      "id": "D127C-F3",
+      "severity": "blocker",
+      "file": "tests/helpers/p2_commit_phase_capture.py",
+      "lines": "478-510",
+      "summary": "A profile factory enable failure has no finally cleanup; a partial enable can leave the profile binding installed while the request is marked unavailable."
+    },
+    {
+      "id": "D127C-F4",
+      "severity": "major",
+      "file": "tests/test_p2_commit_phase_capture.py",
+      "lines": "415-507",
+      "summary": "The added tests do not cover the required wrong-suite/request/path/method and unselected-handler controls, symlink/overwrite rejection, projection byte bounds, or exact caller-edge call counts."
+    },
+    {
+      "id": "D127C-F5",
+      "severity": "major",
+      "file": "tests/helpers/p2_commit_phase_capture.py",
+      "lines": "606,639",
+      "summary": "The scoped Pyright and mypy runs report new Stats.stats attribute errors; the author validation did not qualify the requested type checks."
+    }
+  ],
+  "product_changes": false,
+  "source_changes_by_reviewer": false,
+  "full_suite": "NOTRUN"
+}

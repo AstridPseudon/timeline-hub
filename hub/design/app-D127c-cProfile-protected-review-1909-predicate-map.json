@@ -1,0 +1,31 @@
+{
+  "format_version": 1,
+  "source_guards": {
+    "route": "POST /v1/projects/{project_id}/timelines/{timeline_id}/commit with no query string",
+    "body_source": "existing handler._prefetched_body",
+    "operation_test": "any command object whose op equals clip.set-element",
+    "dry_run": "rejected only when dry_run is exactly true",
+    "direct_call_without_prefetch": "not eligible"
+  },
+  "lifecycle": {
+    "enable": "RuntimeHandler._timeline_commit trace call",
+    "normal_return_disable": true,
+    "handler_exception_disable": true,
+    "capture_stop_fallback": "calls profile.disable from stop owner; no same-thread finally proof",
+    "partial_enable_failure_restore": false
+  },
+  "projection": {
+    "functions_max": 40,
+    "edges_max": 1600,
+    "ranking": "descending cumtime then file/line/function",
+    "paths": "module-relative runtime/agent/stdlib/package allowlist",
+    "raw_pstats": "optional O_EXCL 0600 file under resolved TMPDIR parent",
+    "private_parent_guarantee": false
+  },
+  "selection_review": {
+    "one_element_only": false,
+    "first_post_only": false,
+    "deterministic_retry_rule": false,
+    "other_requests_profiled": true
+  }
+}
