@@ -1,0 +1,31 @@
+{
+  "task": "app-D118a-native-binding-first-return-1236",
+  "verdict": "PASS_PENDING_INDEPENDENT_REVIEW",
+  "base": "f3a6a3884d6b7c3190d83b70c76afee55ff8d592",
+  "runtime": {
+    "checkout": "/home/user/work/wt/rt-pin-42aad0e9",
+    "commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+    "tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c",
+    "clean": true
+  },
+  "changed_paths": [
+    "astrid/sdk/timeline/native_text_binding.py",
+    "tests/sdk/test_native_text_binding_authority_fields.py"
+  ],
+  "sha256": {
+    "astrid/sdk/timeline/native_text_binding.py": "3ef9a6b49cb1624ac5a5fe6a163c89c13a50f73fea591f6c19745bd0616d3782",
+    "tests/sdk/test_native_text_binding_authority_fields.py": "369e921f759c315e5bf200296ab7ad80e24791d3f30a4108542b67ca8aa361f6"
+  },
+  "results": {
+    "candidate_genuine_rebind": "1 passed in 1.96s",
+    "parent_genuine_rebind": "1 passed in 1.93s",
+    "focused_units": "56 passed, 2 deselected in 4.15s",
+    "ruff": "pass",
+    "mypy_follow_imports_skip": "pass",
+    "py_compile": "pass",
+    "git_diff_check": "pass",
+    "scope_conservation": "pass",
+    "privacy_source_containment": "pass"
+  },
+  "repair": "Same-pin captures retain complete Runtime authority; changed-pin captures omit binding_id, head, and event_stream_id so the registered Runtime provider derives fresh authority."
+}

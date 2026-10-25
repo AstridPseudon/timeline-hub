@@ -1,0 +1,197 @@
+{
+  "task": "A2 current element11251 outcome propagation",
+  "base_app": "34d4644589970274a5252c0f7c68b6288eb0b0b4",
+  "retained_tuple": {
+    "runtime": "7070f1378d1917fcce69857ebd33cd2b3015568b",
+    "agent": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "disposition": {
+    "production_defect_proved": false,
+    "production_patch": false,
+    "actual_server_outcome": "UNKNOWN",
+    "actual_gate": "still unproved; no GO",
+    "result": "Missing original scoped HTTP response; mounted in-process caller propagates supplied authoritative outcomes."
+  },
+  "retained_witness": {
+    "trace_and_diagnostic_read_locally": true,
+    "artifact_hashes_sha256": {
+      "trace.zip": "9e4338be3235e38cb1377bad8f2994785238e7ab5f8ca2ef2d5c6f0cc75cb668",
+      "p2-element-apply-diagnostic.json": "3ebfb19267ac21080a387bd2a0464d503be26152bb254c075932ee544d402821"
+    },
+    "scoped_commit_posts": 1,
+    "scoped_commit_trace_response_status": -1,
+    "scoped_commit_trace_response_content_size": -1,
+    "diagnostic_response_events": 0,
+    "diagnostic_terminal": "pending",
+    "diagnostic_response_status": "UNKNOWN",
+    "diagnostic_final_preclose_ui": {
+      "connection": "connected",
+      "dialog": "present",
+      "status": "pending",
+      "applyButton": "applying"
+    },
+    "original_button_relation": "readElementApplyUiState uses the original clicked button reference and requires its closest dialog to equal the current document dialog. The retained applying classification therefore ties the original button to the current dialog and disabled state. This is DOM identity evidence, not a retained React fiber or adapter instance ID.",
+    "timing_extraction_repeated": false,
+    "backend_inference": false
+  },
+  "source_witnesses": [
+    {
+      "source": "components/TimelineEditorShellCore.tsx:1157",
+      "meaning": "Panel mounts while isElementsOpen; no status reset effect exists inside the panel."
+    },
+    {
+      "source": "contexts/VideoEditorProvider.tsx:310-379",
+      "meaning": "Real provider registers an owned adapter using the mounted elementTimelineRoutes and current head ref; catalog changes update adapter context."
+    },
+    {
+      "source": "components/ElementsLibraryPanel.tsx:67-105,154",
+      "meaning": "Clear message and set busy, capture adapter, await execute, await scoped query invalidation, then set applied; rejection sets failure and clears busy. Status node requires message."
+    },
+    {
+      "source": "runtime/element-adapter.ts:389-497",
+      "meaning": "Captured generation/head checked, actual document read and mutation authored, routes.save awaited before returning acknowledged result."
+    },
+    {
+      "source": "hooks/useTimelineSave.ts:743-801",
+      "meaning": "Mounted owner capture persists intent, adopts preview with save:false, awaits handoff.flush, returns current adopted document."
+    },
+    {
+      "source": "hooks/timelineLocalSaveHandoff.ts:575-627",
+      "meaning": "Element capture is atomic doc.patch; flush awaits session, validates adopted head, then awaits history load."
+    },
+    {
+      "source": "commands/localSaveSession.ts:128-208,315-321",
+      "meaning": "Pump awaits persisted outbox dispatch/options.send; accepted closure prepared/adopted before saved. Rejection rolls back and retains intent; flush rejects unsaved state."
+    },
+    {
+      "source": "commands/commitOutbox.ts:464-529",
+      "meaning": "Pending exact request durable before transmit; accepted result stored and intent removed only after transmit resolves."
+    },
+    {
+      "source": "src/integrations/runtime/dataProvider.ts:751-768,807-851; src/integrations/runtime/generated.ts:78-96,202-205",
+      "meaning": "Provider awaits scoped generated client request; transport awaits HTTP response and bytes before decoding and returning acceptance or rejecting."
+    },
+    {
+      "source": "tests/e2e/local/support/p2-element-diagnostic.ts:184-225",
+      "meaning": "Click handler retains original DOM button reference; retained diagnostic checks its relation to current dialog and disabled state."
+    }
+  ],
+  "new_controls": {
+    "file": "src/tools/video-editor/hooks/useTimelineSave.currentContract.test.tsx",
+    "count": 5,
+    "real_path": [
+      "ElementsLibraryPanel",
+      "AgentChatProvider/VideoEditorProvider registration",
+      "AstridElementOperationAdapter.captureForTurn/execute",
+      "useTimelineSave.elementTimelineRoutes",
+      "timelineLocalSaveHandoff",
+      "localSaveSession",
+      "commitOutbox",
+      "RuntimeDataProvider",
+      "generated WorkspaceClient"
+    ],
+    "test_boundaries": [
+      "in-process Transport supplies held response bytes; no Runtime process",
+      "fake IndexedDB and exclusive-lock stub",
+      "existing TimelineRenderer invalidation mock"
+    ],
+    "assertions": [
+      "Held ACK: no status and same captured execute promise unsettled; exact request/key persisted before release.",
+      "Selection/context rerender retains same dialog DOM and single panel mount.",
+      "Accepted and merged wire envelopes resolve the actual captured promise, adopt canonical closure, empty durable intents, and show applied on the same panel. Merged reply includes another field change that wins.",
+      "409 conflict rejects that promise, displays unacknowledged failure, rolls preview back, retains rejected intent.",
+      "Panel close/reopen replaces local status state, while accepted canonical/outbox state survives.",
+      "Editor dispose before lost acknowledgement rejects the original invocation; remount replays identical request bytes/key and adopts accepted closure without setting success on the new panel.",
+      "Legacy save route never called."
+    ],
+    "passing_mounted_comparison": "Original mounted split test unchanged and passes through the same outbox/provider acknowledgement/canonical closure path."
+  },
+  "scope": {
+    "changed_files": [
+      "src/tools/video-editor/hooks/useTimelineSave.currentContract.test.tsx"
+    ],
+    "production_and_protected_sources_unchanged": true,
+    "original_split_predicates_byte_identical": true,
+    "full_or_browser_runs": 0,
+    "new_collectors": 0,
+    "timeouts_or_sleeps_added": 0,
+    "package_changes": 0,
+    "product_red_green": "Not applicable: no demonstrated product defect; no speculative source fix."
+  },
+  "exact_missing": [
+    "A correlated original scoped commit HTTP response (headers/complete body or terminal transport rejection), not present in retained trace.",
+    "Corresponding Runtime receive/provider/commit outcome for that same request, including whether a response was lost.",
+    "Actual original adapter/send promise resolution and durable outbox completion after browser teardown; controlled outcomes do not reconstruct these missing facts."
+  ],
+  "checks": {
+    "local_node": "v20.20.0",
+    "local_vitest": {
+      "command": "env PATH=/opt/node20/bin:$PATH ./node_modules/.bin/vitest run --config config/testing/vitest.config.ts --configLoader=runner --no-cache --maxWorkers=1 src/tools/video-editor/components/ElementsLibraryPanel.test.tsx src/tools/video-editor/hooks/useTimelineSave.currentContract.test.tsx",
+      "exit": 1,
+      "result": "Startup ReferenceError: __dirname is not defined; 0 tests collected. Authorized existing normal central targeted route used; no config/package change."
+    },
+    "targeted": {
+      "request": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/request-test app-A2-element11251-outcome-sol-1222 targeted --files \"src/tools/video-editor/hooks/useTimelineSave.currentContract.test.tsx src/tools/video-editor/components/ElementsLibraryPanel.test.tsx src/tools/video-editor/runtime/element-adapter.test.ts src/tools/video-editor/hooks/timelineLocalSaveHandoff.test.ts src/tools/video-editor/commands/localSaveSession.v2.test.ts src/tools/video-editor/commands/localSaveSession.lifecycle.test.ts\"",
+      "wait": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/wait-test app-A2-element11251-outcome-sol-1222-targeted-1025123228-6804",
+      "actual_command": "npx vitest run --config config/testing/vitest.config.ts --maxWorkers=2 src/tools/video-editor/hooks/useTimelineSave.currentContract.test.tsx src/tools/video-editor/components/ElementsLibraryPanel.test.tsx src/tools/video-editor/runtime/element-adapter.test.ts src/tools/video-editor/hooks/timelineLocalSaveHandoff.test.ts src/tools/video-editor/commands/localSaveSession.v2.test.ts src/tools/video-editor/commands/localSaveSession.lifecycle.test.ts",
+      "run": "app-A2-element11251-outcome-sol-1222-targeted-1025123228-6804",
+      "tree": "5d1247b07c3db77afca0c8369639f945b0005411",
+      "exit": 0,
+      "test_files_passed": 6,
+      "tests_passed": 105,
+      "skipped": 0
+    },
+    "typecheck": {
+      "command": "env PATH=/opt/node20/bin:$PATH flock -w 600 /home/user/work/.app-tsc.lock env NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/tsc --noEmit -p tsconfig.app.json --pretty false",
+      "exit": 0,
+      "diagnostics": 0
+    },
+    "eslint": {
+      "command": "env PATH=/opt/node20/bin:$PATH ./node_modules/.bin/eslint src/tools/video-editor/hooks/useTimelineSave.currentContract.test.tsx",
+      "exit": 0
+    },
+    "diff_check": {
+      "command": "git diff --check",
+      "exit": 0
+    },
+    "earlier_control_debugging": [
+      {
+        "run": "1025122904-15774",
+        "passed": 100,
+        "failed": 5,
+        "cause": "New test counted handshake calls as commit calls."
+      },
+      {
+        "run": "1025123019-7541",
+        "passed": 100,
+        "failed": 5,
+        "cause": "New fixture used nested rather than flat generated error envelope; accepted expected object still contained optional undefined keys."
+      },
+      {
+        "run": "1025123108-1691",
+        "passed": 101,
+        "failed": 4,
+        "cause": "New expected JSON comparison used strict outbox converter on editor optional undefined fields; changed to compare actual serialized wire JSON."
+      }
+    ],
+    "warnings": "Existing mounted catalog reports duplicate effect:text-card keys; retained in full targeted log, not suppressed or changed. AM Burst controls pass."
+  },
+  "source_hashes_sha256": {
+    "src/tools/video-editor/components/ElementsLibraryPanel.tsx": "2f0c716bd77a5efb7fe18436bfdc1e46b8a85f16d0f562b3986cf67bb30e3f4c",
+    "src/tools/video-editor/runtime/element-adapter.ts": "4f6e7621bcd8795c150a2282d5d41aa8a003ab0570bc1238e88f64d4328344b9",
+    "src/tools/video-editor/hooks/useTimelineSave.ts": "33e0ff6b26689e8af62b099557e8455f6ba87ad2b9bbbcbc69e42ac84918638a",
+    "src/tools/video-editor/hooks/timelineLocalSaveHandoff.ts": "fb64362cb44a83eb3554dac77158072ad91423b3d72927ae4fa8c4d20154312c",
+    "src/tools/video-editor/commands/localSaveSession.ts": "def2c8c040daea9cff212c40f4f01062d2a6e7bfe6f76a4928cd53eabbf59230",
+    "src/tools/video-editor/commands/commitOutbox.ts": "dc497f0676b72abee0736abe19f0c33848a059776440db507375847a12160b21",
+    "src/integrations/runtime/client.ts": "8e3fdb4919ad993ba7e038f5eeab6a4d79e12d8dffb05e4003443e44d58e1d61",
+    "src/integrations/runtime/generated.ts": "7be7f351d485fdb24a7ebb0329fea7c65037675b11a96c581d33e60a14a581a4",
+    "src/integrations/runtime/dataProvider.ts": "9213ed6694cef931fe84fa3c83fda0b06ed02532c1b9b6271ef48c32d38f8988",
+    "src/tools/video-editor/contexts/VideoEditorProvider.tsx": "2fe46627544cca23a5102846fa6a6bc37afd752ab6a03fde7f6cec51b346a687",
+    "src/tools/video-editor/components/TimelineEditorShellCore.tsx": "72a1b6bfdeb2c89a613b5acf7caa26523b43947ac2d085c7e94aa02590c8908d",
+    "tests/e2e/local/support/p2-element-diagnostic.ts": "d91eea281af85c8b61e74ba810441059e038ebebce7a8c9eeb366c3cd9fc6c59",
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+    "src/tools/video-editor/hooks/useTimelineSave.currentContract.test.tsx": "9a170105ca2c5cd01cbf2648aa2024cb65e86232553b663e08a6c2b4e5093e92"
+  },
+  "next_steps": "Owner should resolve the finite original HTTP/Runtime correlation gap. No caller fix or broadened outbox scope is proposed; no full tour or automatic GO. Normal independent review/merge applies to these additive controls."
+}

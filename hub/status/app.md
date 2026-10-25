@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T12:37:16Z | dispatcher heartbeat 5s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 0m -->
-# app board, 2026-10-25T12:37Z
+<!-- app | 2026-10-25T12:41:16Z | dispatcher heartbeat 1s | live 2 (sol 0, luna 2, other 0) | busy30 13 | status age 0m -->
+# app board, 2026-10-25T12:40Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -60,18 +60,18 @@
 | D118a-parent-label2 | Preserve parent track labels | Luna | Exact own2 current check | blocked:agent | app-D118a-parent-label2-1206 | No diff; two setupERROR at shared m1.film missing legacy word anchor. Existing genuine seed owner asked1211. | Source unchanged |
 | D118a-document-input3 | Preserve document input capture | Luna | Exact own3 current check | blocked:runtime | app-D118a-document-input3-1206 | No diff; original3 FAIL before commands. commit.py369 hydration changes manifest/pair; existing Agent batch owner asked1214. | Source unchanged |
 
-| D118a-native-binding | Preserve Runtime binding authority | Luna and independent core | Independent1221 FAIL | doing | app-D118a-native-binding-first-return-1236 | Same-branch first return dispatched after adopter ended; genuine changed-text regression must clear with strict authority/privacy. | f3a6 held |
+| D118a-native-binding | Preserve Runtime binding authority | Luna and independent core | First return74e196 | review | app-D118a-binding-return-core-review-1239 | Author genuine rebind and parent both PASS; unchanged authority and strict privacy requalification active. Product held. | 74e1961ab |
 
 | D118a-inverse-packet | Pair existing inverse guard evidence | Luna read only | Agent1155 and Runtime1208 | merged | app-D118a-inverse-boundary-packet-1212 | Safe source and observed guards paired; actual stage/promotion/digests EXACTMISSING. Handback1225 clears App input wait. | Evidence only |
 
 | D118a-native-checkout4 | Preserve native checkout behavior | Luna | Exact own4 current check | blocked:agent | app-D118a-native-checkout4-1215 | No diff; four setupERROR at same shared m1.film missing legacy word anchor. Actual checkout behavior unverified. | Source unchanged |
 | D118a-track-batch1 | Preserve parent track batch inverse | Luna | Exact own1 current check | blocked:agent | app-D118a-track-batch1-1215 | No diff; one setupERROR at shared m1.film missing legacy word anchor. Grouping and all original predicates exact. | Source unchanged |
 
-| A2-current-element | Prove outcome reaches actual panel | HARD Sol | Owner1210 and fresh5.347GB | doing | app-A2-element11251-outcome-sol-1222 | Actual caller, promise and status render; no timing change or guessed server outcome. Independent wholepath already retained. | Source pending |
+| A2-current-element | Prove outcome reaches actual panel | HARD Sol and Luna | Author67dc61 controls105 PASS | review | app-A2-element-outcome-controls-review-1239 | No production defect proved; five mounted controls added. Original HTTP response UNKNOWN; independent source review active. | 67dc61b693 |
 | D118a-binding-review | Challenge native binding repair | Luna independent core | Sourcef3a6 | merged | app-D118a-native-binding-core-review-1221 | FAIL genuine rebind at native69 dependency_changed; parent PASS. Four additive and52 unit controls PASS; no candidate release. | Evidence only |
 | D120-current-asset | Qualify asset on corrected tuple | Luna independent | Actual8974 terminal | merged | app-D120-asset8974-GO-review-1226 | GO readiness1 and original1; exact tuple and full protected tail. Six of eight across current-tuple runs; overall NO-GO. | Source unchanged |
 
-| D121-element-timestamps | Join retained browser App Runtime clocks | Luna read only | D121 retained11251 | doing | app-D121-element11251-timestamps-1230 | Exact correlation and clock witness required; no new body or guessed phase assignment. | Source unchanged |
+| D121-element-timestamps | Join retained browser App Runtime clocks | Luna read only | Retained11251 | merged | app-D121-element11251-timestamps-1230 | FINITE MISSING SEAM: browser send known; App receive, shared correlation and Runtime UTC anchor absent. No delay attribution. | Evidence only |
 | U4p-D121-tags | Adopt qualified history reason tags | Luna | Released5e9ad | merged | Adopter1230; normal receipt1237 | Entire normal tree equals tested author331a583. Node20 vendor17/artifact3/lint PASS; protected8 and mapped14 exact. | d8a1cd40b8 |
 
 Integration: Appd8a1cd40b866c49c0ab415682391f0ec87a7a8e7/treedd2afd6c5c7a1ac73feaac4390cc64d7f31fe7b9; ENTIRE tree equals tested author331a58363d. Runtime5e9ad/tree de2954 adopted through normal tools; Agent070dfc and Composition635f retained. D119/D115/D113 exact. [Home receipt](../../design/app-U4p-D121-normal-home-1237.json).
@@ -84,12 +84,12 @@ D118a claim1124 posted to Agent INBOX before three starts: occurrence2 own-node 
 
 
 Blockers: Runtime current SWAP — Actual11251 returned409 history_unavailable. Tags5e9ad adopted normally at Appd8a1; source wait cleared. Lower guard remains UNKNOWN until a meaningful tagged tour.
-Blockers: Current element — Actual11251 applied5s wait fails before teardown with POST pending. Sol1222 owns promise/status source; Luna1230 joins retained clocks. Runtime native profile separate.
+Blockers: Current element — Actual11251 applied5s wait fails before teardown with POST pending. Sol1222 no defect proved; independent controls review1239 active. D121 clocks/correlation missing; finite handback1240 sent. Runtime native scope separate.
 Blockers: Agent host14 — Authentic original14 FAIL at registry discovery. Agent source1201 and independent wholepath1201 own successor; no App duplicate.
 Blockers: Agent batch — Atomic8a joins held product batch; full core required before adoption. Scalar and auto now normal3ab324; source waits cleared. Bindingf3a6 held after real rebind FAIL.
 Blockers: Final cut — Current full P2 remains NO-GO; final P1-P5/core/D69 and genuine installed render still owed. Existing denied acquisition and cleanup routes remain stopped.
-Next ready: All prepared source rows dispatched; tags normal home complete. Existing blocked rows checked against Agent12:25 and Runtime12:20 boards; no other answered dependency found.
-live 3 / cap 3; ready-undispatched 0; core open: 2. D89b admits up to3 source/read workers at4.6GB without heavy; cap6 resumes above5.0GB. Binding same-branch return1236 fills freed adopter slot.
+Next ready: Two independent reviews active; next unowned Agent tail scope being selected under D118a. Tags normal home complete. Existing blocked rows checked against Agent12:25 and Runtime12:20 boards; no other answered dependency found.
+live 2 / cap 6; ready-undispatched 0; core open: 2. D89b admits up to3 source/read workers at4.6GB without heavy; cap6 resumes above5.0GB. Two author completions immediately entered independent review; source cap rechecks before each start.
 Capacity: Fresh5.168GB before timestamp start,5.002GB before adopter, fresh4.993GB before binding return; no heavy body. Ongoing stop4.0GB. Prior refused cleanup and session paths remain untouched.
 INBOX consumed through2170831 bytes; Runtime1224 release/profile limits consumed. Current11251/8974/15203/15712 outputs, reports and tuple inputs retained. No unchanged body queued.
 Later: Nativecheckout4/trackbatch1 share known m1.film missingwordanchor setup; no diff/retirement. D116 reviewedjoin held for Agent raw/config batch. D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees retain guards. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakening, credentials or refused-route retry.

@@ -1,0 +1,122 @@
+{
+  "task": "D121 retained element11251 timestamp join",
+  "result": "FINITE_MISSING_SEAM",
+  "scope": "readonly retained cross-layer timestamp alignment",
+  "pinned_tuple": {
+    "app": {
+      "commit": "34d4644589970274a5252c0f7c68b6288eb0b0b4",
+      "tree": "48d71e1a0c18a13668e1d1e086def9dd6210affe"
+    },
+    "agent": {
+      "commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+      "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"
+    },
+    "runtime": {
+      "commit": "7070f1378d1917fcce69857ebd33cd2b3015568b",
+      "tree": "cd68015cb9fe85a6ecd2d15dd7e2eac69f67e2b1"
+    },
+    "composition": {
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    },
+    "base_app": "34d464"
+  },
+  "safe_correlation": {
+    "local_apply_correlation_sha256": "27c3dee90504dfd34fde46ae85f53978f25c59dc4411b3f53fd587d62f8d317a",
+    "target_method": "POST",
+    "idempotency_key_sha256": "f17e68a249137b34f788ec02db1b571575b94fc374b91dcfb1c680e30d41a0ce",
+    "raw_request_body_exported": false,
+    "raw_url_exported": false,
+    "raw_auth_or_private_id_exported": false
+  },
+  "browser_post": {
+    "request_start_utc": "2026-10-25T11:50:14.905Z",
+    "browser_monotonic_ms": 43726.858,
+    "response_status": "UNKNOWN",
+    "response_observed": false,
+    "browser_trace_member": "0-trace.network"
+  },
+  "appservice_proxyhop": {
+    "receive_timestamp_utc": null,
+    "receive_timestamp_browser_monotonic_ms": null,
+    "status": "UNKNOWN",
+    "retained_safe_hop_record": false,
+    "within_five_seconds": "UNKNOWN",
+    "note": "The retained browser trace records request start but no linked Appservice/proxy receive or response for this POST."
+  },
+  "runtime_unassigned_capture": {
+    "assignment": "UNASSIGNED",
+    "namespace_count": 6,
+    "phase_capture_artifact_sha256": "4791f9ae12f9ab0597147bda846ec4434616d432faeae945e81c6b9aa400d86a",
+    "dispatch_observation_start_ms": 51097.132,
+    "handler_entry_start_ms": 51098.035,
+    "dispatch_queue_ms": 0.903,
+    "network_arrival_ms": null,
+    "handler_ms": 20991.871,
+    "execution_lock_wait_ms": null,
+    "http_response_status": 200,
+    "phase_clock": "monotonic milliseconds relative to P2 observer start",
+    "phase_clock_utc_anchor": null,
+    "source_defined_unknown_boundaries": [
+      "client request to server receive is outside the Runtime process",
+      "execution lock wait has no exact threading.Lock.acquire boundary",
+      "caller receipt is outside the Runtime process"
+    ],
+    "namespace_assignment_basis": "No shared request correlation or Runtime observer-start UTC witness was retained; repeated namespaces and phase ordinals were not assigned by timing guess."
+  },
+  "clock_basis": {
+    "browser_utc_monotonic_pair": {
+      "utc": "2026-10-25T11:50:14.905Z",
+      "browser_monotonic_ms": 43726.858,
+      "utc_epoch_ms": 1792929014905,
+      "affine_offset_ms": 1792928971178.142
+    },
+    "browser_clock": "HAR/network snapshot supplies the retained UTC and browser monotonic pair.",
+    "runtime_clock": "p2_commit_phase_capture.py computes at_ms from time.monotonic_ns() minus a private observer-start value.",
+    "cross_clock_calibrated": false,
+    "missing_calibration": "A retained shared UTC/monotonic witness or safe request correlation from the browser/App hop into the Runtime observer namespace."
+  },
+  "separate_owner_qualification": {
+    "runtime_current_7070_exact_element_replay": {
+      "duration": "1.75s",
+      "http_status": 200,
+      "scope": "source qualification only",
+      "used_for_browser_assignment": false
+    }
+  },
+  "finite_missing_seam": [
+    "Safe Appservice/proxy receive timestamp for the target POST.",
+    "A shared safe correlation witness linking the target POST to one Runtime phase namespace.",
+    "A retained UTC anchor for the Runtime observer-relative phase clock.",
+    "Exact Runtime network arrival and exact execution-lock acquisition wait for this request."
+  ],
+  "retained_artifact_hashes_sha256": {
+    "manifest": "892c089c4a03c04c7ca12f487766116e39595be7970bd1a733418e65356588ca",
+    "element_trace_zip": "9e4338be3235e38cb1377bad8f2994785238e7ab5f8ca2ef2d5c6f0cc75cb668",
+    "element_diagnostic_json": "3ebfb19267ac21080a387bd2a0464d503be26152bb254c075932ee544d402821",
+    "runtime_phase_main": "4791f9ae12f9ab0597147bda846ec4434616d432faeae945e81c6b9aa400d86a",
+    "runtime_stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "runtime_stdout": "39b8668c7b127f5c234811bdc4fc3bc3020c9a2d36f3a1f03e099c9f23bf0742",
+    "p2_xml": "b349d93a672f3b5d8996eea63824035b06605dee0169190f86405efc0b0f8b8c",
+    "readiness_xml": "aee8a153c0f5dd86b21aa6b4a40125d3636642a975e29e9dcf1a81ff3dd5560c"
+  },
+  "source_hashes_sha256": {
+    "app/ElementsLibraryPanel.tsx": "2f0c716bd77a5efb7fe18436bfdc1e46b8a85f16d0f562b3986cf67bb30e3f4c",
+    "app/element-adapter.ts": "4f6e7621bcd8795c150a2282d5d41aa8a003ab0570bc1238e88f64d4328344b9",
+    "app/useTimelineSave.ts": "33e0ff6b26689e8af62b099557e8455f6ba87ad2b9bbbcbc69e42ac84918638a",
+    "app/timelineLocalSaveHandoff.ts": "fb64362cb44a83eb3554dac77158072ad91423b3d72927ae4fa8c4d20154312c",
+    "app/localSaveSession.ts": "def2c8c040daea9cff212c40f4f01062d2a6e7bfe6f76a4928cd53eabbf59230",
+    "app/p2-elements-assets.spec.ts": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+    "runtime/runtime_protocol/server.py": "5188ad162296d7abd121d79abd2f6d1c89ef655fc30b9e24ae3c80628c974832",
+    "runtime/runtime_protocol/timeline_commit_execution.py": "334c161f8cc652a6f645fb94d5b7667ad345fd33a44f1560b01547e5f765f655",
+    "agent/astrid/sdk/timeline/commit.py": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7",
+    "runtime/tests/helpers/p2_commit_phase_capture.py": "a17a92115661fcef13b49169504ad8726e6f6c0cdce66b195128b14477fa76a4"
+  },
+  "checks": {
+    "json_parse": "PASS (jq empty)",
+    "git_diff_check": "PASS",
+    "source_changed": false,
+    "tsc_or_lint": "not run per readonly task",
+    "tests": "not run per task; no API/native/browser/service/full rerun"
+  }
+}
