@@ -1,4 +1,4 @@
-<!-- main | 2026-10-25T10:17:07Z | dispatcher heartbeat 9s | live 2 (sol 1, luna 1, other 0) | busy30 18 | status age 0m -->
+<!-- main | 2026-10-25T10:21:02Z | dispatcher heartbeat 2s | live 3 (sol 1, luna 2, other 0) | busy30 18 | status age 3m -->
 # runtime board, 2026-10-25T10:16:50Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
@@ -406,7 +406,9 @@
 
 | D111b-actual-read | Reduce actual generic request read cost | HARD Sol | Corrected1010 path evidence | doing | rt-D111b-actual-read-sol-1016 | Actualdoc.patch has no sourcehydration. Plain callable timers then smallest request-private reuse; no cross-request cache/trust change. | Normald23a base |
 
-Runtime producer: RELEASED d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e, tree6283b5 EXACT independent32c. Packet design/runtime-D112a-release-0952.json;15 canonical mappings unchanged. App normal8b389 adoption acknowledged; current full P2 is READY underD118 without D111b wait.
+| OPS-App-tail-allocation | Relay existing reserved tail owners | Manager peer relay | Agent published0956 | merged | Existing Agent source allocation | Authoritative compileaudio2,sheet15,WC6three peer relayed toApp. Runtime opens no competing writer. | Evidence only |
+
+Runtime producer: RELEASED d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e, tree6283b5 EXACT independent32c. Packet design/runtime-D112a-release-0952.json;15 canonical mappings unchanged. App normal96d475 adopts exactd23a8; fullP2 actual15203 on96d475/070dfc/d23a8/635f RUNNING after preflight19156PASS, Appsolecontroller1004.
 core open: Runtime D111b actual generic head/history/closure read cost remains open. Positional source-document attribution corrected1010; source snapshots02b are unused by measured doc.patch and remain held. Sol1016 retargets normald23a. Agent437; full2016 remains8763PASS159FAIL347ERROR,173subtests. D54a upstream23 actual16:15PASS1FAIL;7absent. Independent1001:REG14/NEW8/UNKN1.
 regressions: D118 independent1001 establishes14 host-bootstrap identical-body regressions in bounded23 scope; PRE0/REG14/NEW8/UNKN1. Prior REG0 is superseded. Agent allocator notified; no P2 credit.
 Gates: P1/P3 recorded GO; P4 independentGO28.101s. Final tuple/core/currentP2/render remain required.
@@ -417,11 +419,11 @@ Blockers: D69 — Runtime113-function JOIN72assert/8raises and snapshot20PASS qu
 Blockers: D54a — Agent owns fourteen identical-body host-bootstrap regressions newly proved on pristine upstream; peer sent with exact independent map. No unchanged retry.
 Blockers: R2 held candidate — Independent1006 proves obsolete fixture occurrence token. Agent already reviewed normal correction; exact held successor requested, no unchanged three retry.
 Blockers: Final cut — D69, green current core, final pinned P1-P5 and genuine installed render owed. No final tuple or ZIP.
-Next ready: D111b sole Sol1016 retarget assigned; auth source1002 independent security1014 active. Finite final-inventory review now ready. App fullP2 authorized now byD118 on releasedD112. No unchanged full/P4/family repeats.
+Next ready: D111b sole Sol1016 retarget assigned; auth source1002 independent security1014 active. Finite final-inventory review now ready. App actual15203 RUNNING onreleasedD112; sameID toterminal. No unchanged full/P4/family repeats.
 Venues: Main upstream23, R2three and D111b native0958 terminal. No main heavy body active; next faithful D111b measurement owns priority. No local duplicate bodies.
 Delivery: Applied rehearsal trees and durable patches retained; later D07/Windows final application and platform checks owed. Footprint complete peak unknown.
 Later: D107 held2154; D100 candidate20PASS6FAIL at duplicatechapter seed remains held; originalTEN distinct. Fixturepurpose27 complete: no pin-loss bug,17 not retired. Three Remotion copies await owner disposition.
 Safety: Withdrawn D88/D111memo stopped. D106 ORCH outputs only; denied hub target never retried. Manager edits no product/test/generated/pin files.
 Disk: About5.9GB available. Fresh audit found no ended clean unreferenced Runtime worktree. Sweep3 removed0. Five dirty v1 trees/prohibited Codex session paths untouched; compact-scratch touches those paths and is not run.
 live 3 / cap 6; ready-undispatched 0. Security1014, sole HARD Sol1016 and finite final-inventory/accounting reviewer1018 assigned.
-INBOX consumed through1106999 bytes. Updated 2026-10-25T10:16:50Z.
+INBOX consumed through1111869 bytes. Updated 2026-10-25T10:16:50Z.

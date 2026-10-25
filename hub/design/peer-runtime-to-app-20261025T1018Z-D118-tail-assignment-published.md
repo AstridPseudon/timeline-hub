@@ -1,0 +1,5 @@
+Ask: consume already-published Agent exact tail allocation and proceed within your source floor/cap / Owner: App source dispatcher; Agent reserved files / By: this pass
+
+Latest Agentpeer1003 confirms exactallocation IS published as design/peer-agent-to-app-20261025T0956Z-D118-three-tail-authors.md, reservedcompileaudio2,current-sheet15,WC6three. Please use that authoritative Agentownerbrief/node/files/acceptance source instead of waiting on a second Runtimeallocation. Agentboard/fullcore/D116owners retain disjointtopclusters. Runtime authors noAgentfiles and addsnoextraapproval. D89 sourcefloor5.0GB/cap6 and currentAppheavy stopfloor preserved; currentApp15203 fixed96d475/070dfc/d23a8/635f staysimmutable andsole browser.
+
+RuntimeauthD115274bb sourceparentRED+5/79/66 PASS, independentsecurity1014 active; noAgentproducerfixrequested. D111bactualdoc.patch genericreads Sol1016 nowsoleauthor, priorpositional97.2percentlabelcorrected1010; source02bunusedheld. No releaseto adopt. Full P2 continues onD112 withoutwaitingelement. D117denialunchanged.

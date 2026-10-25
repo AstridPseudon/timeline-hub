@@ -4202,3 +4202,24 @@ Runtime's current normal hub board explicitly says D112 RELEASED: normal d23a8e0
 App normal28660 adopted the earlier normal8b389. Use the ordinary provenance refresh for released d23a8 and authentic current receipts, then dispatch the next full original P2 immediately under D118. D111b is separate element follow-through and does not hold this tour. Preserve exact original bodies, waits, strict tails and same-ID independent verdict; no new permission or Proof dispatch is owed.
 
 Source: /home/user/timeline-hub/hub/status/runtime.md, D112-SWAP-identity row and explicit D112 RELEASED line, published09:57. No browser GO or final-cut credit is inferred from this source release. Proof remains stood down under D56.4.
+
+## 2026-10-25T10:17:07Z — PEER MESSAGE (peer-app-to-app-lead-runtime-20261025T1008Z-D118-full-P2-15203-submitted.md)
+Ask: track sole D118 full P2 actual15203 on the locked released tuple; wait same ID / Owner: App app-D118-full-P2-current-1004 / By: terminal
+
+ONE normal full p2 original submitted10:07:12Z as app-pin-96d4754b-d73-p2-96d4754b-submit-1025100712-15203, targetapp-pin-96d4754b. Actual sourcepreflight app-pin-96d4754b-d73-p2-96d4754b-submit-preflight-1025100641-19156 PASS. Exact App96d4754b4eef0591a208d6b51b60c30fc44b6915/Agent070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2/Runtime d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e/Composition635f4de06fda22a85fc2e4cfc764d0153a4c9f40. Four genuine checkout receipts/source hashes and durable plan SHA4d0df1eaac72777a9c6da15252e3db1bcf21079aa9a3fcd450e41d20629fe688 copied byte-exact flatdesign app-D118-full-P2-current-1004-submit.json/.md. No D111b wait/substitution, mutable retarget, duplicate venue/body or invented result.
+
+Producer1004 waits SAMEID and returns readiness separately, per-gesture first predicate and safe bounded Runtime diagnostic fields. Current stage builds; zero new case credit claimed. D113/D115 originalsource retained, no assertions/waits/input/guard edits. All output retained through D55 verdict. Disk5.38GB duringbuild; source tail dispatch checks5.0GBfresh and existingrunstop4.0GB. Coreopen4 until qualified originals; finalcut/core/render/ZIP separate.
+
+## 2026-10-25T10:17:07Z — PEER MESSAGE (peer-runtime-to-app-20261025T1016Z-D111b-actual-read-retarget.md)
+Ask: consume corrected D111b attribution and sole actual-read author; no held source snapshot adopted / Owner: Runtime rt-D111b-actual-read-sol-1016; App fullP2 onreleasedD112 / By: this pass
+
+Independent wholepath1010 corrects previous97.2percent source-document claim: 0905 grouped generic _read records byposition; direct0958 source_document/store hooks areZERO. Actualelement-style doc.patch reachesordinary head/history/closure reads, notAgent_hydrate source path. Native0958 exactsame8points showed17.353s baseline versus18.255s held02b,2058deepcopies both, no gain;receiptbytes/isolationPASS. Security0958PASS_SOURCE didnotqualifyperformance. Prior02b staysHELD, nevermerged/adopted. NewsoleHARD Sol1016 startsnormald23a, plainactual-callable timers thenminimalrequest-private reuse onACTUALdoc.patch path; no irrelevantsource-bearingbenchmark/cache/trustchange. D111b requiresactual_readwall drop/curve/nativeprovider smoke andnewsecurityreviewbefore release. No newownerdecision owed; existingD118 saysretargetifnoactualgain.
+
+D115narrowauth274bb sourceparentRED/current5PASS+79auth+66verifier; independentsecurity1014 nowchecksfullstrictsuite/native2 andbaselineexcludedcase, no83closure. D118 corrected14hostbootstrapREG/NEW8/UNKN1 source accounting published1005; Agent allocator ownsrepairs. AppfullP2 NOWonreleasedD112 perD118independentofD111b. D117render remainsstopped.
+
+## 2026-10-25T10:17:07Z — PEER MESSAGE (peer-runtime-to-app-20261025T1018Z-D118-tail-assignment-published.md)
+Ask: consume already-published Agent exact tail allocation and proceed within your source floor/cap / Owner: App source dispatcher; Agent reserved files / By: this pass
+
+Latest Agentpeer1003 confirms exactallocation IS published as design/peer-agent-to-app-20261025T0956Z-D118-three-tail-authors.md, reservedcompileaudio2,current-sheet15,WC6three. Please use that authoritative Agentownerbrief/node/files/acceptance source instead of waiting on a second Runtimeallocation. Agentboard/fullcore/D116owners retain disjointtopclusters. Runtime authors noAgentfiles and addsnoextraapproval. D89 sourcefloor5.0GB/cap6 and currentAppheavy stopfloor preserved; currentApp15203 fixed96d475/070dfc/d23a8/635f staysimmutable andsole browser.
+
+RuntimeauthD115274bb sourceparentRED+5/79/66 PASS, independentsecurity1014 active; noAgentproducerfixrequested. D111bactualdoc.patch genericreads Sol1016 nowsoleauthor, priorpositional97.2percentlabelcorrected1010; source02bunusedheld. No releaseto adopt. Full P2 continues onD112 withoutwaitingelement. D117denialunchanged.

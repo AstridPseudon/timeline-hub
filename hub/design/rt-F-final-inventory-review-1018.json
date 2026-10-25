@@ -1,0 +1,63 @@
+{
+  "review": "rt-F-final-inventory-review-1018",
+  "mode": "independent finite read-only evidence review",
+  "verdicts": {
+    "A_candidate_inventory": "PASS",
+    "B_D118_corrected_accounting": "PASS"
+  },
+  "A": {
+    "candidate": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-current-core-prep-1008/evidence/candidate",
+    "predecessor": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-D84-core-prep-2207/evidence/candidate",
+    "predecessor_python_targets": 92,
+    "candidate_python_targets": 96,
+    "typescript_target_preserved": true,
+    "added_exact": [
+      "tests/test_timeline_history_assembly.py",
+      "tests/test_timeline_history_state.py",
+      "tests/test_timeline_native_asset_union.py",
+      "tests/test_timeline_commit_redacted_diagnostics.py"
+    ],
+    "removed_predecessor_targets": [],
+    "changed_predecessor_targets": [],
+    "e6b_publication_target_retained": true,
+    "held_excluded": ["D111b", "D115"],
+    "predecessor_inventory_sha256": "9705979776ebb9182d986e9364a29911fafd04227e817f5f19346e8fd116bb97",
+    "candidate_core_inventory_sha256": "11688c6d8ca65b216c5b95df3e12962497052799e2e2b86ac6959de246205a10",
+    "runtime_head": "d23a8e0d24bf2aeaf984072eaca0d3dcf8873c2e",
+    "source_hash_audit": {"entries": 96, "missing": 0, "bad": 0},
+    "d73_no_body_acceptance": "PASS",
+    "pending_tuple_refusal": "PASS",
+    "existing_236_collect_only": "reused; not repeated",
+    "static_checks": {
+      "python_compile": "PASS",
+      "ruff_select_F": "PASS",
+      "mypy": "PASS",
+      "bash_syntax": "PASS"
+    },
+    "final_tuple": "PENDING",
+    "agent2252_join_claim": false,
+    "matrix": {
+      "route_venues": 10,
+      "final_p4_selectors": 3,
+      "command_syntax": "PASS",
+      "historical_stub_control": "STALE_INPUT",
+      "stale_reason": "current tests/suites.conf:203 contains agent p4-current-becfe-http-3legs, but the historical stub asserts that row is absent",
+      "registry_modified": false
+    }
+  },
+  "B": {
+    "corrected_markdown": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D118-accounting-corrected-1005.md",
+    "corrected_json": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D118-accounting-corrected-1005.json",
+    "union": {"PRE": 0, "REG": 14, "NEW-OURS": 8, "UNKN": 1, "total": 23},
+    "reg_exact_set_sha256": "c7d47597d749e94aa5003552a31d176b6ca42d35793e602494bb40b9fdefa38b",
+    "all_reg_rows": "identical-body upstream PASS/current FAIL",
+    "corrected_md_sha256": "0a576fd1724a0e5b1eebd221662d4922c6d4e3b3d53ceb9cc4dc82efba8cddca",
+    "corrected_json_sha256": "adafbf53765b494037a0b04102b38a3ff8efd914e84c2eba718f4b09ac918c05",
+    "independent_inputs_unchanged": true,
+    "original_inputs_unchanged": true,
+    "upstream_rerun": false,
+    "new_source_audit": false,
+    "semantic_reclassification": false
+  },
+  "evidence_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-inventory-review-1018/evidence"
+}
