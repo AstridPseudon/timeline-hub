@@ -339,8 +339,32 @@ class State:
                 self._item_ids(value.get('items', []), set(mapping), ref)
             return mapping
         baseline = bundle_from_document(document)
-        original = one(baseline['placements'], 'occurrence_id', owner.removeprefix('occurrence:'))
         source = self.bundle['source_mapping']['shots'].get(shot)
+        if isinstance(source, dict) and shot == source.get('shot_id'):
+            # Shared placement reopens the exact physical image, without adding
+            # its newly created owner to the immutable batch-input document.
+            image = one(document['shot_revisions'], 'revision_id', source.get('revision_id'))
+            internal = one(document['internal_timeline_revisions'], 'revision_id',
+                           image['internal_timeline_revision_id'])
+            expected = {'shot_id': image['shot_id'], 'revision_id': image['revision_id'],
+                        'content_digest': image['content_digest'],
+                        'internal_timeline_id': internal['timeline_id'],
+                        'internal_timeline_revision_id': internal['revision_id'],
+                        'internal_timeline_content_digest': internal['content_digest'],
+                        'item_id_map': {}}
+            original = one(baseline['placements'], 'occurrence_id',
+                           owner.removeprefix('occurrence:'), optional=True)
+            if (shot != image['shot_id'] or not equal(source, expected)
+                    or original is not None and not equal(
+                        {**baseline['source_mapping']['shots'][original['shot_id']], 'item_id_map': {}},
+                        expected)):
+                raise CommandError('shot item source changed', kind='identity_conflict', ref=ref)
+            # Physical item IDs need no placement correspondence. Guarded payload
+            # replacement may change membership; never extend an alias map for it.
+            for payload in (image['payload'], current['payload']):
+                self._item_ids(payload.get('items', []), None, ref)
+            return {row['item_id']: row['item_id'] for row in current['payload'].get('items', [])}
+        original = one(baseline['placements'], 'occurrence_id', owner.removeprefix('occurrence:'))
         expected = baseline['source_mapping']['shots'].get(original['shot_id'])
         if shot != original['shot_id'] or source is None or not equal(source, expected):
             raise CommandError('shot item source changed', kind='identity_conflict', ref=ref)
@@ -365,7 +389,7 @@ class State:
             raise CommandError('shot items must be an array', kind='identity_conflict', ref=ref)
         ids = [row.get('item_id') if isinstance(row, dict) else None for row in rows]
         if (any(not isinstance(identity, str) or not identity for identity in ids)
-                or len(set(ids)) != len(ids) or set(ids) != expected):
+                or len(set(ids)) != len(ids) or expected is not None and set(ids) != expected):
             raise CommandError('shot item correspondence changed', kind='identity_conflict', ref=ref)
 
     def project_shot_items(self, ref, path, state):
@@ -375,12 +399,15 @@ class State:
         from astrid.core.timeline.authoring_bundle import _remap_known_item_references
 
         mapping = self.shot_item_map(ref)
+        shot = self.occurrence(ref.removesuffix('/shot'))['shot_id']
+        source = self.bundle['source_mapping']['shots'].get(shot, {})
+        expected = None if shot == source.get('shot_id') else set(mapping)
         value = state['value']
         if len(path) == 1 and isinstance(value, dict) and 'items' in value:
-            self._item_ids(value['items'], set(mapping), ref)
+            self._item_ids(value['items'], expected, ref)
             return present(_remap_known_item_references(value, mapping))
         if list(path) == ['payload', 'items']:
-            self._item_ids(value, set(mapping), ref)
+            self._item_ids(value, expected, ref)
             return present(_remap_known_item_references({'items': value}, mapping)['items'])
         if len(path) == 3 and path[2].startswith('item_id:'):
             identity = path[2].split(':', 1)[1]
