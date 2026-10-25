@@ -642,6 +642,11 @@ os = filesystem
 
 
 _DIR_FLAGS = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLOW", 0)
+# Ancestors are only traversed, so Linux opens them with O_PATH: no read
+# permission is needed (Landlock sandboxes, mode 0711 homes), and O_DIRECTORY
+# plus O_NOFOLLOW still reject a symlinked component.
+_WALK_FLAGS = (os.O_PATH | getattr(os, "O_DIRECTORY", 0) | _os.O_NOFOLLOW
+               if hasattr(_os, "O_PATH") and _os.name != "nt" else _DIR_FLAGS)
 _NOFOLLOW = getattr(os, "O_NOFOLLOW", 0)
 
 
@@ -665,10 +670,12 @@ def has_symlink_component(value: str | Path) -> bool:
 def open_directory_chain(value: str | Path) -> int:
     """Open every lexical component with O_NOFOLLOW, retaining the leaf fd."""
     path = absolute_path(value)
-    fd = os.open(path.anchor, _DIR_FLAGS)
+    parts = path.parts[1:]
+    fd = os.open(path.anchor, _WALK_FLAGS if parts else _DIR_FLAGS)
     try:
-        for component in path.parts[1:]:
-            next_fd = os.open(component, _DIR_FLAGS, dir_fd=fd)
+        for index, component in enumerate(parts):
+            flags = _DIR_FLAGS if index == len(parts) - 1 else _WALK_FLAGS
+            next_fd = os.open(component, flags, dir_fd=fd)
             os.close(fd)
             fd = next_fd
         return fd
