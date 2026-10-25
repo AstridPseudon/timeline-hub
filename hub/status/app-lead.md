@@ -1,1 +1,1 @@
-10:14Z app-lead: daemons up (uptime 2893m, no restart), 3 workers (full P2 15203 running + 2 tail authors), disk 4.6G, 18 wt dirs (6 pins), codex unchanged, /tmp/w-* ~1MB; core open 4; host CLEAR sent for rt-pin-c91626f5 + rt-pin-1daca2a3; no blocked:orchestrator, no refusals
+10:40Z app-lead: daemons up (uptime ~2920m, no restart), 1 worker (reviewer1036), disk 5.1G, 14 wt dirs, core open 4; blocked:orchestrator 1 (P2-current-parent readiness scope, reported 10:39Z); no refusals
