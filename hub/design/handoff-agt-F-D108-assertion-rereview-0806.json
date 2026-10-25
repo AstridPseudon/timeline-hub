@@ -1,0 +1,115 @@
+{
+  "schema": "timeline.agent.d108.assertion-rereview.v1",
+  "task": "F-D108",
+  "verdict": "PASS_FINITE_FALLBACK_NOT_FULL_D69",
+  "reviewed": {
+    "successor_markdown": "design/handoff-agt-D108-assertion-return-0758.md",
+    "successor_json": "design/handoff-agt-D108-assertion-return-0758.json",
+    "prior_independent_fail": "design/handoff-agt-D108-assertion-review-0754.json"
+  },
+  "corrections": [
+    {
+      "id": "actual-six-path-D110-scope",
+      "verdict": "PASS",
+      "result": {
+        "captured": "d6294843286c18e57af3c1874cf1996be42212d2",
+        "normal": "b943270a9ed42bb968dbaeace7b296d9898ea21b",
+        "path_count": 6,
+        "paths": [
+          "astrid/sdk/timeline/inverse.py",
+          "tests/editing_conformance/test_cli_trim_runtime.py",
+          "tests/editing_conformance/test_m1_legacy_archive_read.py",
+          "tests/editing_conformance/test_recipe_m2_clip_trim.py",
+          "tests/editing_conformance/test_s3_reviewed_cohort_runtime.py",
+          "tests/sdk/test_inverse_removed_shot_owners_runtime.py"
+        ],
+        "d110_blob_match": true,
+        "d110_candidate": "ccf831df632c0821fea0dec102b6fbd6a30439ad"
+      }
+    },
+    {
+      "id": "fallback-direction-counts-residue",
+      "verdict": "PASS",
+      "result": {
+        "old": "d6294843286c18e57af3c1874cf1996be42212d2",
+        "current": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+        "common_modified_python_test_paths": 146,
+        "common_functions": 4214,
+        "changed_bodies": 189,
+        "removed_assertion_or_raise_fingerprints": 310,
+        "added_assertion_or_raise_fingerprints": 119,
+        "old_predicate_rows": 956,
+        "exact_preserved_old_predicate_rows": 646,
+        "uncleared_old_predicate_rows": 310,
+        "residue_vs_authoritative": {
+          "changed_bodies": 60,
+          "removed_assertion_or_raise_fingerprints": 197,
+          "added_assertion_or_raise_fingerprints": -168
+        }
+      }
+    },
+    {
+      "id": "crosswalk-hashes-vs-missing-manifest",
+      "verdict": "PASS",
+      "result": {
+        "crosswalk_json_sha256": "e131b68cef9a9198198155d8a736174b2b2970cbba1445870c86f53f37ca1515",
+        "crosswalk_markdown_sha256": "135f2e0b89e8d0767c384f43c5b876fe9cfa6ce15045ec2b23e3266175861d5b",
+        "missing_manifest_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D108-rehearsal-source-0645/evidence/d108-source-rehearsal-manifest.json",
+        "missing_manifest_present": false,
+        "missing_manifest_expected_sha256": "37e559e6e176f4d9b4c20db27cdf6de8b4f5ef532b5abedf35533caffb2a4504"
+      }
+    },
+    {
+      "id": "finite-rows-groups",
+      "verdict": "PASS",
+      "result": {
+        "changed_body_rows": 189,
+        "old_predicate_rows": 956,
+        "removed_rows": 310,
+        "added_rows": 119,
+        "duplicate_row_ids": 0,
+        "groups": 8,
+        "group_union_exact": true,
+        "group_cross_overlap": 0,
+        "changed_body_source_metadata_exact": true,
+        "predicate_source_metadata_exact": true,
+        "markers_parameters_raises_metadata_exact": true,
+        "removed_rows_uncleared": true,
+        "approved_removed_rows": 0
+      }
+    }
+  ],
+  "preservation_inquiry": {
+    "verdict": "PASS_AS_SEPARATE_CONTEXT",
+    "old": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+    "new_objects": [
+      "d6294843286c18e57af3c1874cf1996be42212d2",
+      "c456b3281497653cecf44f61acd6fa30565d83c8"
+    ],
+    "contains_per_predicate_source_approval_mapping": false,
+    "content": "comparison totals only; no clearance"
+  },
+  "authoritative_membership": {
+    "status": "EXACTMISSING",
+    "changed_bodies": 129,
+    "removed_assertion_fingerprints": 113,
+    "added_assertion_fingerprints": 287,
+    "is_input_limit_not_clearance": true
+  },
+  "readiness": {
+    "false_readiness_claim": false,
+    "finite_fallback_status": "NOTPROMOTED",
+    "full_d69_scope": "NOT_QUALIFIED",
+    "production_caller_or_authority_changed": false
+  },
+  "checks": {
+    "json_parse": "PASS",
+    "exact_source_hashes_and_git_blobs": "PASS",
+    "stdlib_ast_multiset_recompute": "PASS",
+    "rowset_arithmetic": "PASS",
+    "in_memory_compile": "PASS",
+    "git_diff_check": "PASS",
+    "product_tests_type_lint": "NOT_APPLICABLE_READ_ONLY_SCOPE"
+  },
+  "next_scope": "Obtain the genuine applied rehearsal manifest/audit and authoritative selector/fingerprint membership; map authoritative rows to exact current source lines/blobs and approvals before any full D69 qualification."
+}
