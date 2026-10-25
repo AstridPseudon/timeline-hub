@@ -1,1 +1,1 @@
-LEAD 23:09Z | up | P1 GO stands, P3 GO | P2 now running as 8 isolated gestures, 0 of 8 pass so far, App and Runtime working | P4 ten-note still 45s, Runtime fix owned | disk 8G
+LEAD 05:25Z | up | P1 GO stands, P3 GO | P4 ten-note now passes: 28.1s against 45s, independent GO | P2 4 of 8 isolated GO, SWAP/ADD undo and element still failing, Runtime D102 release owned | disk 8G
