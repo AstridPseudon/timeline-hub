@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T15:12:49Z | dispatcher heartbeat 3s | live 1 (sol 0, luna 1, other 0) | busy30 9 | status age 2m -->
-# app board, 2026-10-25T15:11Z
+<!-- app | 2026-10-25T15:17:34Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 9 | status age 1m -->
+# app board, 2026-10-25T15:16Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -103,7 +103,7 @@
 
 | D124-10721-review | Qualify full tails and actual timing | Luna independent | Actual10721 terminal packet | merged | app-D124-10721-independent-review-1455 | Exact custody and five complete tails GO. Timing UNKNOWN: browser key hash absent; candidate only. No dominant cost attribution. | Evidence only |
 
-| D127b-stacks | Publish retained safe sampler frames | Luna read only | D127b and independent1455 | doing | Original1503; persistent return1510 | Three safe stack files recovered from exact worker commit. Correct one custody typo and missing handoff; final independent privacy review next. | Evidence branch only |
+| D127b-stacks | Publish retained safe sampler frames | Luna and independent Luna | D127b and independent1455 | review | Persistent return1510; reviewer1512 | All three retained stack files and explicit missing files preserved. Correct full tuple and bounds; final privacy and custody review active. | Evidence only |
 
 Integration: App84857c45347539c7820bb054b69e2e5ad4079081/tree7feb5b12a1ad9629f096700c40c393d5b3998217 equals the entire independently1414 reviewed candidate tree. Only exact two D126 and strict bootstrap test blobs imported. Targeted normal2, mutations, types and lint PASS. [Normal receipt](../../design/app-D126-normal-home-1437.json). Actual3250 remains frozenfe3309/070dfc/5e9ad/635f and excludes new helper/hook. No result retarget.
 
@@ -116,12 +116,12 @@ D118a claim1124 posted to Agent INBOX before three starts: occurrence2 own-node 
 
 Blockers: App current SWAP — Actual3250 independent five-case GO; SWAP409 history_unavailable with lower private binding UNKNOWN. MAIN assigned Runtime root and correlation14:29; no App duplicate.
 Blockers: App element — Actual10721 independently FAIL at applied status; exact request binding UNKNOWN. D127b safe stack packet1503 active for Runtime source cost owner. No new tour before fixes ship.
-Blockers: Farm host14 and batch — Agent upstream fallback is normal a4e016 and original14 independently PASS. REG closure awaits core; Farm child metadata refusal remains stopped with Runtime1404 correction owner.
+Blockers: Farm host14 and batch — Agent upstream fallback is normal a4e016 and original14 independently PASS. REG closure awaits core; Farm retained source directory refusal remains stopped; Runtime kit owner handles the new guard after metadata correction.
 Blockers: Farm batch — Atomic and native binding are normal Agent source; downstream product adoption waits unfiltered Farm core. Captured-redo test setup is home. No App author or review wait remains.
 Blockers: Final cut — Current full P2 remains NO-GO; final P1-P5/core/D69 and genuine installed render still owed. Existing denied acquisition and cleanup routes remain stopped.
-Next ready: Persistent stack return1510, then one independent privacy and custody review. Final SWAP source recipe PASS sent to Runtime; no App input wait. D127b holds new tours until fixes ship.
-live 0 / cap 3; queued 1; ready-undispatched 0; core open: 2. Safe stack return1510 ready and queued; recipe PASS published. No heavy body or new original. No heavy body, new small Agent author or speculative source fix.
-Capacity: Free5.058GB at14:57Z after body ended. Sweep3 removed0; compact packed0 scratch dirs, gzipped1 old log and packed0 test dirs. Prior guarded oldfe3309 recycle remains scoped. D89c original5331136512byte admission carried;4.0GB ongoing stop. Only old completed pin recycled; current inputs and all original outputs retained.
+Next ready: Independent stack privacy and custody verdict1512, then immediate safe publication to Runtime. Final SWAP source recipe PASS already sent. D127b holds new tours until fixes ship.
+live 1 / cap 3; ready-undispatched 0; core open: 2. Stack reviewer1512 active; all authors finished. No heavy body, no new original and no source author waiting. No heavy body, new small Agent author or speculative source fix.
+Capacity: Free5.039GB at15:15Z with one reviewer; no heavy body. Sweep3 removed0; compact packed0 scratch dirs, gzipped1 old log and packed0 test dirs. Prior guarded oldfe3309 recycle remains scoped. D89c original5331136512byte admission carried;4.0GB ongoing stop. Only old completed pin recycled; current inputs and all original outputs retained.
 INBOX consumed through2272227 bytes, including Runtime1448, D127b and delayed old pin note1444. Pin release already complete; no repeated action. Host1446 CLEAR consumed; oldpin release complete. Runtime1426 input ask has an existing-worker evidence row. Sampled10721 independent NO-GO; timing UNKNOWN. Safe stack packet active. No source/adoption wait.
 Later: Nativecheckout4/trackbatch1 share known m1.film missingwordanchor setup; no diff/retirement. D116 reviewedjoin held for Agent raw/config batch. D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees retain guards. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakening, credentials or refused-route retry.
 

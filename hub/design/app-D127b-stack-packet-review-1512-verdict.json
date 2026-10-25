@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "task": "D127b independent retained10721 safe-stack packet review",
+  "actual_id": "app-pin-84857c45-d73-p2-84857c45-submit-1025144552-10721",
+  "packet_verdict": "FAIL",
+  "packet_privacy": "PASS",
+  "packet_custody": "FAIL",
+  "request_binding": "UNKNOWN",
+  "parent_complete": true,
+  "handoff_present": true,
+  "source_frame_bytes_unchanged": true,
+  "original1503_commit": "48464827dab6024c470c852d92d72b254a0131f8",
+  "source_frame_hashes": {
+    "p2-commit-phase.stacks.txt": "7d5d143cab62b79a6e239b8e5b51090f208fadef271a03149d831acbfdf46ea0",
+    "per-launch-1b97ab3a-6918-4d73-888d-88ea4f1b3b7d.stacks.txt": "5f07fda1b7d2591f167669e43f3f14ede0428d35aa6cadf3b07962b0de379f2c",
+    "per-launch-d15d840a-f5ce-447f-8e06-e3b003792872.stacks.txt": "e8e0824d711ca0110afab9a523ae70255dcd35cdc89bfd72ba60855c081d7f54"
+  },
+  "source_custody": {
+    "app_commit": "84857c45347539c7820bb054b69e2e5ad4079081",
+    "app_tree": "7feb5b12a1ad9629f096700c40c393d5b3998217",
+    "agent_commit": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "agent_tree": "6056414359ae9fce08d999d54cbecf719fda33c3",
+    "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+    "composition_commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "composition_tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "helper_sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760",
+    "stack_index_and_handoff_match_manifest": true,
+    "facts_tuple_matches_manifest": false
+  },
+  "coverage": {
+    "available_stack_artifacts": 3,
+    "absent_stack_artifacts": 3,
+    "retained_jsonl_sources": 6,
+    "jsonl_hashes_and_sizes_match_sources": true,
+    "safe_frame_counts_match_raw_sources": true,
+    "absent_paths_verified_absent": true,
+    "root_lines_frames": [62, 50],
+    "launch_1b97_lines_frames": [72, 60],
+    "launch_d15d_lines_frames": [74, 62]
+  },
+  "privacy": {
+    "raw_stack_blobs": false,
+    "raw_payloads": false,
+    "raw_keys": false,
+    "auth_or_credentials": false,
+    "private_urls": false,
+    "absolute_paths": false,
+    "locals": false,
+    "safe_outputs_use_relative_frames_hashes_lines_counts": true
+  },
+  "binding": {
+    "element": {
+      "status": "exact_key_join",
+      "evidence": "retained Playwright element trace network header hash matches retained Runtime launch-d22 request 3 key hash",
+      "runtime_outcome": "UNKNOWN"
+    },
+    "swap": {
+      "status": "UNKNOWN",
+      "reason": "retained SWAP trace header hashes do not match any retained Runtime key hash"
+    },
+    "overall": "UNKNOWN",
+    "no_timing_or_order_inference": true
+  },
+  "failures": [
+    {
+      "kind": "custody_metadata",
+      "pointer": "evidence/facts.json:2752",
+      "observed": "Composition commit SHA is 635f4de06da22a85fc2e4cfc764d0153a4c9f40",
+      "expected": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "impact": "facts.json does not satisfy the exact four-SHA custody requirement, despite corrected stack-index.json and handoff.md"
+    }
+  ],
+  "tests": "N/A: read-only artifact/privacy/custody review; no browser, native, replay, collector, probe, or full suite run"
+}
