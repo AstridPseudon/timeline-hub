@@ -1,0 +1,140 @@
+{
+  "schema": "timeline.agent.ops_d138_cli22_source_manifest.v2",
+  "task": "D138",
+  "owned_surface": "ops-d138-cli22/",
+  "qualified_agent": {
+    "path": "/home/user/work/agent",
+    "commit": "41ad656529fa8489829de9078b1b6e157c7433c8",
+    "tree": "d29e47fe7be6e55940b42fa1477a23e7925f62fa",
+    "status": "clean"
+  },
+  "independent_review_tree": {
+    "commit": "4fec53e0b14aea355e51c96c883fd75eef67a17c",
+    "tree": "d29e47fe7be6e55940b42fa1477a23e7925f62fa",
+    "equals_qualified_agent_tree": true
+  },
+  "normal_runtime": {
+    "path": "/home/user/work/runtime",
+    "commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+    "tree": "5d0cedf2e5134acf895e8d43191cc5fdc09f9883",
+    "status": "clean"
+  },
+  "app": {
+    "path": "/home/user/work/app",
+    "commit": "5696769dfca056676cde1ab46d8bc94354b3a44a",
+    "tree": "0748df404125114a0f68b701fa76f43abd3fc79a",
+    "status": "clean"
+  },
+  "composition": {
+    "path": "/home/user/work/composition",
+    "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+    "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148",
+    "status": "clean"
+  },
+  "lock": {
+    "path": "/home/user/work/agent/runtime.lock.json",
+    "sha256": "073d218447f28e48ef0d39cd01c811443b20b0328982eac1b126bcc5b9df390a",
+    "source_commit": "f103bb46866999c961a8865636f2e66d544e0c9b",
+    "canonical_count": 15,
+    "producer": "astrid-runtime"
+  },
+  "canonical15": [
+    {
+      "consumer": "astrid/core/timeline/schema/timeline-config.schema.json",
+      "sha256": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+      "lock_sha256": "sha256:4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+      "mapping": "contract/schemas/timeline-config.schema.json"
+    },
+    {
+      "consumer": "astrid_runtime_client/__init__.py",
+      "sha256": "d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2",
+      "lock_sha256": "sha256:d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2",
+      "mapping": "packages/python/astrid_runtime_client/__init__.py"
+    },
+    {
+      "consumer": "astrid_runtime_client/contract_metadata.py",
+      "sha256": "b42c58a36fff3e3136824492382eb05e983c247e5ca0656b35836e1a4e9ee72b",
+      "lock_sha256": "sha256:b42c58a36fff3e3136824492382eb05e983c247e5ca0656b35836e1a4e9ee72b",
+      "mapping": "packages/python/astrid_runtime_client/contract_metadata.py"
+    },
+    {
+      "consumer": "astrid_runtime_client/generated.py",
+      "sha256": "952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b",
+      "lock_sha256": "sha256:952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b",
+      "mapping": "packages/python/astrid_runtime_client/generated.py"
+    },
+    {
+      "consumer": "astrid_runtime_client/timeline_commit_types.py",
+      "sha256": "6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417",
+      "lock_sha256": "sha256:6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417",
+      "mapping": "packages/python/astrid_runtime_client/timeline_commit_types.py"
+    },
+    {
+      "consumer": "tests/fixtures/runtime-responses/events_page_1_200.json",
+      "sha256": "6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d",
+      "lock_sha256": "sha256:6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d",
+      "mapping": "conformance/responses/events_page_1_200.json"
+    },
+    {
+      "consumer": "tests/fixtures/runtime-responses/events_page_2_200.json",
+      "sha256": "d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2",
+      "lock_sha256": "sha256:d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2",
+      "mapping": "conformance/responses/events_page_2_200.json"
+    },
+    {
+      "consumer": "tests/fixtures/runtime-responses/invalid_cursor_400.json",
+      "sha256": "16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff",
+      "lock_sha256": "sha256:16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff",
+      "mapping": "conformance/responses/invalid_cursor_400.json"
+    },
+    {
+      "consumer": "tests/fixtures/runtime-responses/managed_outputs_200.json",
+      "sha256": "6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d",
+      "lock_sha256": "sha256:6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d",
+      "mapping": "conformance/responses/managed_outputs_200.json"
+    },
+    {
+      "consumer": "tests/fixtures/runtime-responses/not_found_404.json",
+      "sha256": "4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6",
+      "lock_sha256": "sha256:4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6",
+      "mapping": "conformance/responses/not_found_404.json"
+    },
+    {
+      "consumer": "tests/fixtures/runtime-responses/publish_conflict_409.json",
+      "sha256": "e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08",
+      "lock_sha256": "sha256:e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08",
+      "mapping": "conformance/responses/commit_conflict_409.json"
+    },
+    {
+      "consumer": "tests/fixtures/runtime-responses/task_admission_201.json",
+      "sha256": "108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c",
+      "lock_sha256": "sha256:108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c",
+      "mapping": "conformance/responses/task_admission_201.json"
+    },
+    {
+      "consumer": "tests/fixtures/runtime-responses/task_read_200.json",
+      "sha256": "cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829",
+      "lock_sha256": "sha256:cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829",
+      "mapping": "conformance/responses/task_read_200.json"
+    },
+    {
+      "consumer": "tests/fixtures/runtime-responses/validation_error_422.json",
+      "sha256": "2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a",
+      "lock_sha256": "sha256:2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a",
+      "mapping": "conformance/responses/validation_error_422.json"
+    },
+    {
+      "consumer": "tests/fixtures/visual-boundary-v1.json",
+      "sha256": "1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55",
+      "lock_sha256": "sha256:1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55",
+      "mapping": "conformance/fixtures/visual-boundary-v1.json"
+    }
+  ],
+  "protected_hashes": {
+    "/home/user/work/agent/tools/p4-d73-pinned-launch.sh": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+    "/home/user/work/agent/tests/editing_conformance/test_native_batch_ingress.py": "8bff12b06be10a5b08597dc6c0bf6566b1ffe409f479a6b7d49ac3285dfb845e",
+    "/home/user/work/agent/tests/helpers/runtime.py": "4d084450df4d8e9dbdef934bf19ab9d909a8caecdd2646a21b758955e07a883f",
+    "/home/user/work/agent/astrid/sdk/timeline/sync.py": "e0b9aa8815623299aaf24547f0f6bcff9178c2db59ed5cc178a1bdc18a58c254"
+  },
+  "launcher_unchanged": true
+}

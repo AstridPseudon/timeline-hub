@@ -1,0 +1,28 @@
+{
+  "schema": "timeline.agent.ops_d138_cli22_service_return.v1",
+  "task": "D138",
+  "base": "tl/agt-OPS-D138-cli22-service-review-2244",
+  "verdict": "CONTROLS_PASS_RECEIVING_NOT_READY",
+  "scope": "ops-d138-cli22/ only",
+  "qualified_source": {
+    "agent": "41ad656529fa8489829de9078b1b6e157c7433c8",
+    "independent_review": "4fec53e0b14aea355e51c96c883fd75eef67a17c",
+    "runtime": "f103bb46866999c961a8865636f2e66d544e0c9b",
+    "lock_source": "f103bb46866999c961a8865636f2e66d544e0c9b",
+    "canonical15": "exact"
+  },
+  "resolved_findings": ["D138-F1", "D138-F2"],
+  "controls": {
+    "exact22_static_ast_paramset_marker": "PASS",
+    "central_parser_argv": "PASS",
+    "supported_launcher_positive_exit17_one_call": "PASS",
+    "poisoned_identity_zero_body": "PASS",
+    "tuple_lock_mismatch_zero_launch": "PASS",
+    "duplicate_key_zero_launch": "PASS",
+    "malformed_key_zero_launch": "PASS",
+    "per_id_artifacts": "PASS"
+  },
+  "receiving": "NOT_READY",
+  "full_closed_manifest_origins_receipts_central_installation": "NOT_READY",
+  "exact22_body_original22_live_source_preflight": "NOTRUN"
+}

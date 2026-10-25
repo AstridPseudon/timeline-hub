@@ -1,0 +1,22 @@
+{
+  "schema": "timeline.agent.ops_d138_cli22_findings.v1",
+  "reviewed_findings": [
+    {
+      "id": "D138-F1",
+      "prior_status": "FAIL",
+      "disposition": "RESOLVED",
+      "cause": "vendored_runtime_commit() followed Agent runtime.lock provenance ab1e while the manifest named normal Runtime f103",
+      "resolution": "qualified Agent 41ad has the independently reviewed 4fec tree and only changes runtime.lock source_commit to f103; actual helper now selects f103",
+      "guard": "source guard requires actual Agent 41ad, lock source f103, and matching Runtime tuple"
+    },
+    {
+      "id": "D138-F2",
+      "prior_status": "FAIL",
+      "disposition": "RESOLVED_IN_PRIVATE_ROW",
+      "cause": "unchanged supported launcher is last-write-wins for duplicate manifest keys",
+      "resolution": "named CLI22 row runs a complete key=value, duplicate, malformed, and tuple-lock pre-dispatch validator before the unchanged launcher",
+      "guard": "duplicate, malformed, or mismatch exits before launcher invocation and produces zero body artifacts"
+    }
+  ],
+  "finite_disposition": "No additional findings. Full receiving remains separately NOT_READY."
+}

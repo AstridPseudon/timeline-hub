@@ -1,0 +1,12 @@
+{
+  "status": "NOT_READY",
+  "missing": [
+    "central named row installation receipt",
+    "receipt-rendered complete manifest with real interpreter, schema, profile, origins, and dependency hashes",
+    "central request-test/test-run request and snapshot receipt",
+    "per-ID launcher preflight/body logs and XML",
+    "actual pytest collection and exact22 body/provider result",
+    "closed original22/full manifest, origins, receipts, and central installation evidence"
+  ],
+  "not_claimed": ["live source", "live preflight", "exact22 body", "original22 behavior", "full suite"]
+}

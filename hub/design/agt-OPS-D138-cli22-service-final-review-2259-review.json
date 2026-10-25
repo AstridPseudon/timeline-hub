@@ -1,0 +1,57 @@
+{
+  "schema": "timeline.agent.ops_d138_cli22_service_final_review.v1",
+  "task": "agt-OPS-D138-cli22-service-final-review-2259",
+  "reviewed_recipe_commit": "f987135c6a47bd244ff698f9770a58d68bcb76b4",
+  "reviewed_recipe_base": "de3b5d376b",
+  "owned_surface": "ops-d138-cli22/",
+  "verdict": "PASS",
+  "finite_findings": [
+    {
+      "id": "D138-F1",
+      "title": "mixed Runtime source",
+      "prior_status": "FAIL",
+      "final_status": "CLOSED",
+      "evidence": "Agent 41ad656529fa8489829de9078b1b6e157c7433c8 has the independently qualified normal lock source Runtime f103bb46866999c961a8865636f2e66d544e0c9b; vendored_runtime_commit() reads that lock and the source guards require the matching runtime tuple."
+    },
+    {
+      "id": "D138-F2",
+      "title": "supported launcher accepts duplicate manifest keys",
+      "prior_status": "FAIL",
+      "final_status": "CLOSED",
+      "evidence": "The actual named row performs a strict private key=value, duplicate, required-field, tuple, lock-source, canonical-15, and lock-digest check before exec of the unchanged supported launcher. Duplicate, malformed, and tuple-mismatch attacks returned 2 with zero launcher calls and zero artifacts."
+    }
+  ],
+  "focused_controls": {
+    "private_operational_controls": "PASS 11/11",
+    "independent_named_row_attacks": "PASS valid rc=0 one marker call; duplicate/malformed/tuple-mismatch rc=2, no extra calls, no artifacts",
+    "exact22_ast_selector_marker_conservation": "PASS",
+    "central_parser_argv_and_no_legacy_selector": "PASS",
+    "supported_launcher_positive": "PASS exit 17, one body call, shell-sensitive argv preserved",
+    "poisoned_identity": "PASS nonzero refusal, zero body calls",
+    "per_id_artifacts": "PASS",
+    "source_tuple_parent_origin_schema_canonical15": "PASS",
+    "no_cache_flag_and_pinned_launcher": "PASS",
+    "ruff_compile_shell_diff": "PASS"
+  },
+  "receiving": {
+    "status": "NOT_READY",
+    "source_ready": false,
+    "reason": "No authentic receipt-rendered manifest, central installed row/request receipt, real interpreter/schema/profile dependency inputs, or per-request receipts/XML/logs were supplied. Source admission therefore remains fail-closed and no collection, provider, body, exact22, or full-suite evidence is claimed.",
+    "body": "NOTRUN",
+    "preflight": "NOTRUN",
+    "pytest_collection": "NOTRUN",
+    "central_request": "NOTRUN",
+    "full_suite": "NOTRUN"
+  },
+  "product_scope": {
+    "product_imports": "NOTRUN",
+    "product_launcher_modified": false,
+    "c0_dto_or_source_behavior_changed": false,
+    "changed_files": [
+      "ops-d138-cli22/README.md",
+      "ops-d138-cli22/check.py",
+      "ops-d138-cli22/suites.conf",
+      "ops-d138-cli22/test_recipe.py"
+    ]
+  }
+}

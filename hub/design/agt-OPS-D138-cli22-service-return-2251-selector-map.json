@@ -1,0 +1,16 @@
+{
+  "schema": "timeline.agent.ops_d138_cli22_selector_map.v1",
+  "count": 22,
+  "unique": 22,
+  "marker": "pytest.mark.integration",
+  "retired_parser_only_selector": "excluded",
+  "partition": {
+    "test_batch_original_claims_one_publication_reload_inverse": 2,
+    "test_file_lost_ack_restart_exact_retry_before_original_suffix": 8,
+    "test_file_uses_original_pair_after_peer_advances_head": 4,
+    "test_file_refusal_is_atomic_and_keeps_file": 5,
+    "test_captured_file_retry_refuses_boolean_to_number_claim": 2,
+    "test_file_preview_keeps_batch_for_one_real_publication": 1
+  },
+  "central_parser": "requested files append to the named row; each exact selector is retained"
+}
