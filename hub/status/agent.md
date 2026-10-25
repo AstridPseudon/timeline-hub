@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T08:13:37Z | dispatcher heartbeat 7s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 0m -->
-# agent board, 2026-10-25T08:13:14Z
+<!-- agent | 2026-10-25T08:17:13Z | dispatcher heartbeat 10s | live 2 (sol 0, luna 2, other 0) | busy30 9 | status age 2m -->
+# agent board, 2026-10-25T08:15:03Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -297,11 +297,11 @@ D107: Sol0659 exact2e3331 independent protected0715 PASS_SOURCE. Exact legacy re
 Safety: Withdrawn D88 action stopped. D93 original credential/session/scope limits persist. D98a diagnostic spent; no new observer/body. D106 denies hub writes; all new worker outputs use exact ORCH paths.
 Disk: Free5.27GiB; no eligible clean ended Agent tree, old dirty G2 retained. Sweep3 removed0, broken-pipe warnings. Compact not run because it writes codex sessions, forbidden by D108a. D89 source6 above5GB, heavy1 above5.2GB, no starts below4.5GB.
 Blockers: Agent D107 — Independent0715 PASS_SOURCE; current test remains held on2154 and D108 terminal before needed MAIN proof. Receipt0721 PASS; no effective retirement.
-Blockers: Agent D108b — Sole local0811 uses installed819acf, exact070dfc/1daca/Appcurrent/635f checkout receipts and parsed controls before one full body. MAIN duplicate is withdrawn.
+Blockers: Agent D108b — Sole local0811 verifies genuine819acf/four immutable checkouts and parsed controls before one full body. Runtime confirms no MAIN body; duplicate venue wait cleared.
 Blockers: Agent D69 — D07/Windows source independently PASS, behavior owed. Assertion corrections0806 PASS only; Runtime original applied audit membership requested0755. Baseline0813 in review.
 Blockers: Final cut — D59 final tuple gates/core, D69 and genuine installed render remain owed.
 Next ready: Local full-core0811 exact checkouts/controls then agent-core-full. Baseline independent0813 active; D69 authoritative input awaited. Family bodies remain paused.
 live 2 / cap 6; ready-undispatched 0 eligible local starts. One heavy localfull-core0811 plus baseline review0813. Assertion finite corrections0806 PASS; no fullD69 claim. No manager product/test/generated/pin edits or body execution.
-Inbox consumed through1484891 bytes. Updated 2026-10-25T08:13:14Z.
-Later: U4a D111 — Runtime memo1171212 security0729 FAIL; wholepath0729 and measured Sol0744 own genuine scaling follow-through. Agent adoption waits actual qualified release/security/native-seed smoke; no duplicate writer or P2 single.
-Later: MAIN profile input — Superseded by D108b local venue08:10. Runtime0759 checkpoints preparation; no MAIN installer/body needed. Local installed819acf is the owner-approved input.
+Inbox consumed through1486504 bytes. Updated 2026-10-25T08:15:03Z.
+Later: U4a D111a — Memo1171212 is WITHDRAWN, never merged. Runtime soleLuna0811 samples whole real element request on1daca/070dfc; no Agent memo adoption or source writer. Any qualified later release uses normal tools.
+Later: MAIN profile input — Resolved by D108b local venue. Runtime confirms MAIN0759 unsubmitted and retained; no duplicate body. Local0811 uses genuine819acf/lockf4fc/registryd609.
