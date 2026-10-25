@@ -1,0 +1,33 @@
+{
+  "review": "D73-exact-node-final-review-2143",
+  "composition": {
+    "commit": "ff6498859bb2a72b1b7d52d807dd04d3852fc055",
+    "tree": "132fed4ecd3172e28599716b949039d664d5126a",
+    "clean": true
+  },
+  "agent": {
+    "path": "/home/user/work/wt/agt-pin-2eca9a1d",
+    "commit": "2eca9a1da94eb35bb969540e150192ff920ce326",
+    "tree": "888c16e3dbbff2d6827e7ffcfea64208b0e2a5e4",
+    "clean": true,
+    "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-2eca9a1da94eb35bb969540e150192ff920ce326",
+    "sha256": {
+      "tools/p4-d73-pinned-launch.sh": "9f668e398b1ea4cce48a6c610102723e0a3dab27a764be4191015aa7fc4110cd",
+      "tests/sdk/test_timeline_selected_schema_runtime.py": "8243f3b9fe71b218b3b6a402c10d099e15c848b91b82770383e91a2dd3a72b86",
+      "tests/editing_conformance/test_occurrence_fork_source_baseline.py": "3fef15b5862e044942f2d0164b37f6f9281f86d378345d8a0b262c64870af8a",
+      "tests/sdk/test_p4_d73_pinned_launcher.py": "0c2c70bd5e26598beebd31f4c7a0a3c1bf48bdc5e9f32ff93c6b54bf15b4b600"
+    }
+  },
+  "runtime": {
+    "path": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "clean": true
+  },
+  "central": {
+    "suites_conf": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf",
+    "selected_row": false,
+    "fork_row": false,
+    "rendered_four_repo_manifest": false
+  }
+}

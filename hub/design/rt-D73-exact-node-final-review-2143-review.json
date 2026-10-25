@@ -1,0 +1,51 @@
+{
+  "task": "D73-exact-node-final-review-2143",
+  "repo": "composition",
+  "composition_commit": "ff6498859bb2a72b1b7d52d807dd04d3852fc055",
+  "composition_tree": "132fed4ecd3172e28599716b949039d664d5126a",
+  "decision": "FAIL_CODE",
+  "source_review": "FAIL_CODE",
+  "functional_receiving_readiness": "NOT_READY",
+  "findings": [
+    {
+      "id": "D73-CODE-1",
+      "severity": "blocking",
+      "title": "dry-check rejects the manifest format consumed by the launcher",
+      "evidence": "ops-d73-exact-nodes/dry-check.sh:75 invokes python -m json.tool on D73_MANIFEST, while tools/p4-d73-pinned-launch.sh:16-22 consumes newline-delimited key=value entries and the reviewed control fixture writes that same format at tests/sdk/test_p4_d73_pinned_launcher.py:128.",
+      "observed": "Running --source-check with an existing key=value launcher manifest failed with 'manifest JSON parse failed'.",
+      "impact": "Once the real manifest is rendered, the advertised source-check and therefore --controls path cannot admit it.",
+      "required_fix": "Validate the actual key=value manifest format (or use a separate JSON source receipt without passing it as the launcher manifest)."
+    },
+    {
+      "id": "D73-CODE-2",
+      "severity": "blocking",
+      "title": "the advertised controls path does not exercise the production run CLI",
+      "evidence": "ops-d73-exact-nodes/dry-check.sh:82-87 runs pytest on the focused test file; that test invokes the launcher as [manifest, 'dry', '--', command] at tests/sdk/test_p4_d73_pinned_launcher.py:155. The candidate README claims --controls calls the reviewed launcher through real run -- argv, but no run-mode invocation is present in the candidate or focused test.",
+      "impact": "The bounded PASS covers the dry stub path only; it does not validate the exact production run -- entrypoint used by the two suite rows.",
+      "required_fix": "Either change the candidate claim to the supported dry control, or add/review a bounded control that actually invokes the launcher with run -- and preserves the positive-17/poison-zero assertions."
+    }
+  ],
+  "admission": {
+    "agent_checkout": {
+      "path": "/home/user/work/wt/agt-pin-2eca9a1d",
+      "commit": "2eca9a1da94eb35bb969540e150192ff920ce326",
+      "tree": "888c16e3dbbff2d6827e7ffcfea64208b0e2a5e4",
+      "clean": true,
+      "receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/checkout-agent-2eca9a1da94eb35bb969540e150192ff920ce326"
+    },
+    "runtime_checkout": {
+      "path": "/home/user/work/wt/rt-pin-ab1e4f61",
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "clean": true
+    },
+    "central_rows": "absent",
+    "rendered_manifest": "missing",
+    "fresh_per_id_results": "missing"
+  },
+  "claims": {
+    "functional_body": "NOTRUN",
+    "installed_route": "NOT_CLAIMED",
+    "production_request_reply_shapes": "unchanged; not functionally exercised"
+  }
+}
