@@ -125,12 +125,13 @@ def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scop
         "dependency_manifest": bootstrap["dependency_manifest"],
     }
     bundle = bundle_from_document(empty)
-    initialized = execute(bundle, [capture_initialize(
+    initialize = capture_initialize(
         bundle, name="Voice", slug="film", output={
-            "resolution": "1280x720", "fps": FPS, "file": "output.mp4",
+            "resolution": "1280x720", "fps": 30, "file": "output.mp4",
             "background": None, "background_scale": None,
         },
-    )]).bundle
+    )
+    initialized = execute(bundle, [initialize]).bundle
     parent_track = capture_track_create(initialized, "parent", {
         "id": "picture", "kind": "visual",
     })
@@ -152,6 +153,9 @@ def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scop
     if reused:
         voices.append(dict(voices[0], id="other", at=4))
     after = copy.deepcopy(occurred)
+    # timeline.init accepts only its supported bootstrap fps; retain the exact
+    # authored rational output through the emitter's guarded before/after patch.
+    after["parent"]["config"]["output"]["fps"] = copy.deepcopy(FPS)
     after["parent"]["config"]["theme_overrides"] = {"visual": {"canvas": {"fps": FPS}}}
     after["shots"]["shot"]["payload"].update(
         {"items": [], **(opaque if opaque_pin_scope == "shot" else {})})
@@ -177,12 +181,7 @@ def seed(root, reused, *, duration_ms=10000, source_window=None, opaque_pin_scop
         "schema_version": 1, "op": "media.admit", "version": "1", "select": None,
         "args": {"inputs": [{"pin": {"media_id": media, "content_digest": media}}]},
     }
-    submit([capture_initialize(
-        bundle, name="Voice", slug="film", output={
-            "resolution": "1280x720", "fps": FPS, "file": "output.mp4",
-            "background": None, "background_scale": None,
-        },
-    ), parent_track, card, occurrence, media_admission, *changes], "initial-commit")
+    submit([initialize, parent_track, card, occurrence, media_admission, *changes], "initial-commit")
 
     service.close()
     return {'project': project, 'pin': pin, 'source': source}
