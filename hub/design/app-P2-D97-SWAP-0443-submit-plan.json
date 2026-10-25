@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "suite": "p2-popup-swap",
+  "pins": {
+    "app": {
+      "checkout": "/home/user/work/wt/app-P2-D97-SWAP-submit-0443",
+      "head": "3199118dce058a570c71380917f76aa413114d91",
+      "tree": "49ec172fb7dd45ac0a1ac50b5df748394a8f6de2"
+    },
+    "agent": {
+      "checkout": "/home/user/work/agent",
+      "head": "5faeec5bbced687f040751ded739e1b9c8c41757",
+      "tree": "455b16e8b6384abde89b4e1187e7e7317fe8cab7"
+    },
+    "runtime": {
+      "checkout": "/home/user/work/runtime",
+      "head": "0c62dfa63db9ff608ac9338388431e31a814e080",
+      "tree": "e22cdd54b668acea9fe593e6724b34d1a56f7530"
+    },
+    "composition": {
+      "checkout": "/home/user/work/composition",
+      "head": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    }
+  },
+  "checkouts": {
+    "app": "/home/user/work/wt/app-pin-3199118d",
+    "agent": "/home/user/work/wt/agt-pin-5faeec5b",
+    "runtime": "/home/user/work/wt/rt-pin-0c62dfa6",
+    "composition": "/home/user/work/wt/vw-pin-635f4de0"
+  },
+  "target": "app-pin-3199118d",
+  "suites": {
+    "normal": "p2-d97-swap-0443",
+    "preflight": "p2-d97-swap-0443-preflight"
+  },
+  "recipes": {
+    "preflight": "D66_APP_SHA='3199118dce058a570c71380917f76aa413114d91' D66_APP_TREE='49ec172fb7dd45ac0a1ac50b5df748394a8f6de2' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-3199118d' D66_AGENT_SHA='5faeec5bbced687f040751ded739e1b9c8c41757' D66_AGENT_TREE='455b16e8b6384abde89b4e1187e7e7317fe8cab7' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-5faeec5b' D66_RUNTIME_SHA='0c62dfa63db9ff608ac9338388431e31a814e080' D66_RUNTIME_TREE='e22cdd54b668acea9fe593e6724b34d1a56f7530' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-0c62dfa6' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-popup-swap' --preflight",
+    "normal": "D66_APP_SHA='3199118dce058a570c71380917f76aa413114d91' D66_APP_TREE='49ec172fb7dd45ac0a1ac50b5df748394a8f6de2' D66_APP_CHECKOUT='/home/user/work/wt/app-pin-3199118d' D66_AGENT_SHA='5faeec5bbced687f040751ded739e1b9c8c41757' D66_AGENT_TREE='455b16e8b6384abde89b4e1187e7e7317fe8cab7' D66_AGENT_CHECKOUT='/home/user/work/wt/agt-pin-5faeec5b' D66_RUNTIME_SHA='0c62dfa63db9ff608ac9338388431e31a814e080' D66_RUNTIME_TREE='e22cdd54b668acea9fe593e6724b34d1a56f7530' D66_RUNTIME_CHECKOUT='/home/user/work/wt/rt-pin-0c62dfa6' D66_COMPOSITION_SHA='635f4de06fda22a85fc2e4cfc764d0153a4c9f40' D66_COMPOSITION_TREE='5ab5191a296980a0a6bcd1178ab6902d6478a148' D66_COMPOSITION_CHECKOUT='/home/user/work/wt/vw-pin-635f4de0' ASTRID_P2_COMMIT_PHASE_CAPTURE_WATCHDOG_SECONDS='' '/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node' --max-old-space-size=6144 --import tsx scripts/testing/d66-plain-stack.mjs 'p2-popup-swap'"
+  },
+  "preflight": {
+    "id": "app-pin-3199118d-p2-d97-swap-0443-preflight-1025044410-3377",
+    "resultDir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-3199118d-p2-d97-swap-0443-preflight-1025044410-3377"
+  },
+  "normal": {
+    "id": "app-pin-3199118d-p2-d97-swap-0443-1025044440-2714",
+    "resultDir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-3199118d-p2-d97-swap-0443-1025044440-2714"
+  }
+}

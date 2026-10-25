@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T04:44:39Z | dispatcher heartbeat 3s | live 2 (sol 0, luna 2, other 0) | busy30 8 | status age 1m -->
-# app board, 2026-10-25T04:44Z
+<!-- app | 2026-10-25T04:48:21Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 7 | status age 0m -->
+# app board, 2026-10-25T04:48Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -205,9 +205,9 @@
 
 | P2-placement-setup-review | Audit shared finite fixture scope | Luna independent | D96 every-caller condition | merged | Exact0358 PASS; caller0403 global FAIL | All17 callers mapped. Popup adjacency depends12s, so global patch stays unapplied. D96 default12 placement-only fallback dispatched. | Read only |
 | P2-D96-placement | Qualify placement-only finite setup | Luna; service | Actual26522 terminal | gated:source-fix | Actual26522; source0424 | Preflight18613/readiness PASS. Original FAIL at parent payload equality1064 after acceptance/canonical readback. Later tail unqualified. | App1e34f8eac5 |
-| P2-placement26522-source | Qualify complete canonical projection | Luna; independent | First return0434 complete | review | app-P2-placement26522-canonical-rereview-0443 | Author131 controls/types/lint PASS;5 prior invalid mutations now rejected. Complete2filedelta and whole tail under independent rereview. | Candidateddb held |
+| P2-placement26522-source | Qualify complete canonical projection | Luna; independent | Rereview0443 PASS | merging | app-P2-placement26522-canonical-rereview-0443 | Independent134 controls/types/lint PASS; all5 old false accepts rejected. Exact full physical closure and native inverse predicates preserved. | Reviewd61da2 |
 | U4p-D97 | Adopt released verified-history state | Luna normal tools | Runtime0c62 security0420 PASS | merged | app-U4p-D97-adoption-0438 | Normal8 strict,15 vendor,14 mappings,3 artifact controls PASS; protected6 exact. Only lock/installmanifest changed. | Home3199118dce |
-| P2-D97-SWAP | Qualify native SWAP inverse on D97 | Luna; service | Owner04:45; adoption home | doing | app-P2-D97-SWAP-submit-0443 | Explicit319911/5fae/0c62/635f; preflight then ONE original. Actual ID pending genuine plan. | App319911 |
+| P2-D97-SWAP | Qualify native SWAP inverse on D97 | Luna; service | Owner04:45; adoption home | doing | app-P2-D97-SWAP-submit-0443 | Preflight3377 PASS; actual2714 running. Exact319911/5fae/0c62/635f. Persistent plan published; one original only. | App319911 |
 | P2-D97-ADD | Qualify native ADD inverse on D97 | Luna; service | SWAP terminal; heavy slot | gated:body-slot | App next after SWAP | Owner04:45 orders SWAP then ADD first, then element and parent. No duplicate main body. | Adopted tuple |
 | P2-D97-element-parent | Qualify two remaining original waits | Luna; service | ADD terminal; heavy slot | gated:body-slot | App after ADD | Owner04:45 lifts prior hold; one body at a time. Full tour after eight isolated GO or named open causes. | Adopted tuple |
 Integration: Normal App3199118dce includes exact reviewed D96 placement-only14s/default12 fixture and normal D97 adoption. Runtime0c62, Agent5fae and schema867f recorded in manifest; protected six exact.
@@ -216,10 +216,10 @@ regressions: No newly proven regression. P1 actual31083 and P3 actual15493 retai
 
 Blockers: Final cut — D97 is adopted; latest owner04:45 requires four isolated originals then full P2. Final pinned P1–P5/core and genuine installed render still precede ZIP.
 Blockers: Original proof — D97 adoption319911 is home. Owner04:45 now orders SWAP then ADD, followed element and parent, one heavy body at a time. Full tour after all8 isolated GO or named open causes.
-Next ready: SWAP launcher0443 and placement rereview0443 assigned. After SWAP terminal dispatch ADD, then element and parent under owner04:45. Placement remains on independent review path.
-live 2 / cap 6; ready-undispatched 0. SWAP launcher0443 reserves one heavy slot; placement rereview0443 source-only. Later originals wait mandated serial order.
-Capacity: Current free6.75GB after placement terminal. Fresh ended clean nonKEEP scan zero eligible. Every ended nonKEEP local App worktree checked; zero clean eligible trees remain. Earlier35 pins recycled normally with all outputs, branches and reports retained. Old dirty and prior-refused targets untouched.
-Inbox consumed through1905318 bytes. Runtime parent artifact wait cleared by normal hub safe packet0328; unredacted worker log remains private. No repeated cleanup denial, cost0215 or withdrawn D88 route.
+Next ready: SWAP2714 running; reviewed placementd61da2 merge queued. After SWAP terminal dispatch ADD, then element and parent under owner04:45. Placement remains on independent review path.
+live 0 / cap 6; ready-undispatched 0. No live Codex worker; SWAP2714 occupies one heavy body slot; reviewed placement merge queued. Later originals wait mandated serial order.
+Capacity: Current free5.98GB during SWAP body. Fresh ended clean nonKEEP scan zero eligible. Every ended nonKEEP local App worktree checked; zero clean eligible trees remain. Earlier35 pins recycled normally with all outputs, branches and reports retained. Old dirty and prior-refused targets untouched.
+Inbox consumed through1907765 bytes. Runtime parent artifact wait cleared by normal hub safe packet0328; unredacted worker log remains private. No repeated cleanup denial, cost0215 or withdrawn D88 route.
 
 Later: D79 and E paused until ZIP. F-final fresh Appd11417a59 and Agent08e6 applied-result suites belong to Runtime final coordinator. Gating stays frozen upstream3881. Withdrawn D88 and denied actions stay held; protective D88b6634 adopted normally.
 Evidence: [Bulk GO](../../design/app-P2-bulk21852-GO-return-0339.md), [Placement FAIL](../../design/app-A3-placement12145-review-0335.md), [Asset GO](../../design/app-P2-asset27438-GO-review-0315.md), [Single GO](../../design/app-P2-single5678-GO-resume-0255.md).
