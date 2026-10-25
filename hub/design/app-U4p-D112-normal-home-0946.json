@@ -1,0 +1,14 @@
+{
+  "task": "U4p D112",
+  "normal_app": "28660e72fabcc72baeda158b5088bfae00caaa2f",
+  "normal_tree": "59f8bdd20ebfec9850f90f3b428d230589f0f11d",
+  "author": "5550c97a521c57366b46d635e349cda409e27787",
+  "author_tree": "59f8bdd20ebfec9850f90f3b428d230589f0f11d",
+  "whole_tree_equal": true,
+  "queue_receipt": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/queue/done/merge-app-U4p-D112-normal-adoption-0938",
+  "runtime": "8b3895cf141f5b7359cceacefde62c9a9475eabf",
+  "runtime_tree": "5b39e3bcce3ecaa8e184c82e30335ba881b6a3d2",
+  "acceptance": "app-U4p-D112-acceptance-0942 PASS Node20 2/2",
+  "runtime_release_limit": "Owner actualhome0931 still validates Runtime normal source before release; no browser request submitted",
+  "timestamp": "2026-10-25T09:46Z"
+}
