@@ -288,7 +288,7 @@ def test_ordinary_cli_refuses_active_pinokio_pointer(tmp_path, monkeypatch, caps
     })
 
     assert cli.main(mode) == 1
-    assert "Astrid on this computer is managed by Pinokio. Update it from Pinokio." in capsys.readouterr().out
+    assert "Astrid on this computer was installed with Pinokio. Use Pinokio to update or uninstall it." in capsys.readouterr().out
 
 
 def test_pinokio_install_refuses_existing_login_install(tmp_path, monkeypatch, capsys):
@@ -299,7 +299,7 @@ def test_pinokio_install_refuses_existing_login_install(tmp_path, monkeypatch, c
 
     assert cli.main(["--managed-by", "pinokio", "--root", str(pinokio_root)]) == 1
     output = capsys.readouterr().out
-    assert f"Astrid's login-service installation is at {login_root}." in output
+    assert f"Astrid is already installed on this computer ({login_root})." in output
 
 
 def test_pinokio_install_refuses_login_service_pointer(tmp_path, monkeypatch, capsys):
@@ -310,7 +310,7 @@ def test_pinokio_install_refuses_login_service_pointer(tmp_path, monkeypatch, ca
     })
 
     assert cli.main(["--managed-by", "pinokio", "--root", str(tmp_path / "pinokio-app")]) == 1
-    assert f"Astrid's login-service installation is at {login_root}." in capsys.readouterr().out
+    assert f"Astrid is already installed on this computer ({login_root})." in capsys.readouterr().out
 
 
 @pytest.mark.parametrize("mode", [["--update"], ["--uninstall"]])

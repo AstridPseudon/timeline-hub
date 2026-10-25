@@ -68,13 +68,13 @@ def main(argv: list[str] | None = None) -> int:
                     recorded = backend.service.recorded()
                     if not args.root and (recorded.get("managed_by") == "pinokio"
                                           or prior.get("managed_by") == "pinokio"):
-                        raise ValueError("Astrid on this computer is managed by Pinokio. Update it from Pinokio.") from None
+                        raise ValueError("Astrid on this computer was installed with Pinokio. Use Pinokio to update or uninstall it.") from None
                     if (args.managed_by == "pinokio" or prior.get("managed_by") == "pinokio"
                             or (args.root and recorded.get("managed_by") == "pinokio"
                                 and recorded.get("program_root") == str(root))):
-                        raise ValueError("Stop Astrid in Pinokio first, then try again.") from None
+                        raise ValueError("Astrid is still running. Stop it in Pinokio, then try again.") from None
                     if recorded.get("managed_by") == "pinokio":
-                        raise ValueError("Astrid on this computer is managed by Pinokio. Update it from Pinokio.") from None
+                        raise ValueError("Astrid on this computer was installed with Pinokio. Use Pinokio to update or uninstall it.") from None
                     raise
                 locked = True
             try:
@@ -94,9 +94,9 @@ def main(argv: list[str] | None = None) -> int:
                     raise ValueError("Unknown Astrid installation manager.")
                 if recorded.get("managed_by") == "pinokio":
                     if managed_by != "pinokio" or (not args.root and mode != "doctor"):
-                        raise ValueError("Astrid on this computer is managed by Pinokio. Update it from Pinokio.")
+                        raise ValueError("Astrid on this computer was installed with Pinokio. Use Pinokio to update or uninstall it.")
                     if absolute(recorded["program_root"]) != root:
-                        raise ValueError(f"Astrid is already managed by Pinokio at {recorded['program_root']}.")
+                        raise ValueError(f"Astrid is already installed in Pinokio at {recorded['program_root']}.")
                 elif managed_by == "pinokio":
                     login_root = recorded.get("program_root") if not recorded.get("uninstalled") else None
                     default_root = absolute(default_program_root(Path.home(), sys.platform))
@@ -108,9 +108,9 @@ def main(argv: list[str] | None = None) -> int:
                     if not login_root and backend.service.login_service_exists():
                         login_root = str(backend.service.path) if sys.platform != "win32" else "the Astrid Runtime sign-in task"
                     if login_root:
-                        raise ValueError(f"Astrid's login-service installation is at {login_root}. Uninstall it before installing Astrid in Pinokio.")
+                        raise ValueError(f"Astrid is already installed on this computer ({login_root}). Uninstall that copy first, then install Astrid in Pinokio.")
                 if prior.get("managed_by") == "pinokio" and managed_by != "pinokio":
-                    raise ValueError("Astrid on this computer is managed by Pinokio. Update it from Pinokio.")
+                    raise ValueError("Astrid on this computer was installed with Pinokio. Use Pinokio to update or uninstall it.")
                 if (recorded.get("program_root") and managed_by != "pinokio"
                         and (not recorded.get("uninstalled") or mode == "uninstall")):
                     recorded_root = absolute(recorded["program_root"])

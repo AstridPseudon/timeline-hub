@@ -27,13 +27,13 @@ An active login-service install prevents a Pinokio install and the error names
 that installation. Ordinary install/update without an explicit root refuses a
 Pinokio selection with:
 
-> Astrid on this computer is managed by Pinokio. Update it from Pinokio.
+> Astrid on this computer was installed with Pinokio. Use Pinokio to update or uninstall it.
 
 The foreground run entry holds the per-user installer lock for its entire
 lifetime. Install/repair, update and uninstall take that same kernel lock
 without waiting. If the foreground owner holds it, mutations fail with:
 
-> Stop Astrid in Pinokio first, then try again.
+> Astrid is still running. Stop it in Pinokio, then try again.
 
 This excludes foreground startup and installer mutations in both directions.
 The OS releases the lock when its owner exits or crashes; descendants do not

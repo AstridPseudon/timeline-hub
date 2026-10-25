@@ -32,10 +32,10 @@ def _run(root: Path, argv: list[str], system: str, lock_fd: int) -> None:
     root = absolute(root)
     record = read_json(root / "install.json")
     if record.get("owner") != LABEL or record.get("managed_by") != "pinokio":
-        raise ValueError("This is not a Pinokio-managed Astrid installation.")
+        raise ValueError("This copy of Astrid wasn't installed with Pinokio.")
     version = current(root)
     if version is None:
-        raise ValueError("Astrid has no installed version. Install Astrid in Pinokio first.")
+        raise ValueError("Astrid isn't fully installed. Choose Reset in Pinokio, then install again.")
     data = absolute(record["data_root"])
     env = {key: value for key, value in os.environ.items() if key not in {
         "PYTHONPATH", "PYTHONHOME", "ASTRID_WORKSPACE_ENDPOINT",

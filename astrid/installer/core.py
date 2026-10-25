@@ -137,7 +137,7 @@ class Installer:
 
     def _ready(self) -> None:
         if self.managed_by == "pinokio":
-            self.say("Astrid is installed. Start Astrid in Pinokio.")
+            self.say("Astrid is installed. Choose Start in Pinokio.")
         else:
             self.say("Open https://astrid.haus")
             self.backend.open()
@@ -283,7 +283,7 @@ class Installer:
             install_launcher(self.root)
             if transaction is not None:
                 self._save_update(transaction, "switched")
-            self.say("Saving the Pinokio installation." if self.managed_by == "pinokio" else "Starting Astrid at sign-in.")
+            self.say("Finishing up." if self.managed_by == "pinokio" else "Starting Astrid at sign-in.")
             self.backend.register(candidate, self.data)
             if transaction is not None:
                 self._save_update(transaction, "registered")

@@ -90,7 +90,7 @@ def test_busy_pinokio_mutation_refuses_before_writing_install_state(tmp_path, mo
         else:
             argv = ["--root", str(root), "--update" if mode == "update" else "--uninstall"]
         assert cli.main(argv) == 1
-        assert "Stop Astrid in Pinokio first, then try again." in capsys.readouterr().out
+        assert "Astrid is still running. Stop it in Pinokio, then try again." in capsys.readouterr().out
         assert current_calls == []
         assert (marker_path.read_bytes() if marker_path.exists() else None) == marker_before
         assert (selection_path.read_bytes() if selection_path.exists() else None) == selection_before
@@ -422,7 +422,7 @@ def test_posix_run_lock_is_not_inherited_by_child_and_crash_releases_it(tmp_path
         assert record["lock_held"] is True
         assert child_record == {"lock_fd_inherited": False}
         assert cli.main(["--update", "--root", str(app_root)]) == 1
-        assert "Stop Astrid in Pinokio first" in capsys.readouterr().out
+        assert "Astrid is still running. Stop it in Pinokio" in capsys.readouterr().out
         assert not (app_root / "update-transaction.json").exists()
 
         process.send_signal(signal.SIGKILL)
