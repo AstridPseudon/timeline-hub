@@ -1,0 +1,48 @@
+{
+  "schema": "timeline.agent.f_d134_classification_bounds.v1",
+  "review_id": "F-D134-own344-review-2011",
+  "finite_equation": {
+    "TEST_SETUP_OR_EXPECTATION_PROVED": 132,
+    "PRODUCT_FAULT_PROVED": 0,
+    "UNKNOWN": 212,
+    "sum": 344
+  },
+  "retained_proved_clusters": [
+    {"cluster": "managed_edge_fixture", "count": 102, "reason": "Each affected fixture source directly performs a generic doc.patch against parent occurrences; C0 requires semantic closure creation/attachment/per-occurrence operations. The guard is corroborating evidence, not the sole basis."},
+    {"cluster": "stale_source_pin_or_hash_expectation", "count": 11, "reason": "The source contains explicit historical hash/pin assertions; qualified tuple objects were independently hashed and differ. This proves an input/expectation boundary, not a product fault."},
+    {"cluster": "fixture_call_missing_required_args", "count": 2, "reason": "The retained traceback reaches a fixture wrapper call with three required arguments omitted."},
+    {"cluster": "detached_fixture_preflight", "count": 4, "reason": "The retained traceback reaches fixture preflight indexing an absent clip row before the product assertion."},
+    {"cluster": "fixture_missing_client", "count": 1, "reason": "The retained source calls the fixture helper without the required client attribute."},
+    {"cluster": "retired_save_route_expectation", "count": 1, "reason": "The source calls publish_parent_composition; C0 requires commitTimeline and explicitly excludes document overwrite routes."},
+    {"cluster": "v2_status_label_expectation", "count": 3, "reason": "The source expects rebased for new-v2 requests; C0 records merged for new non-base landings and preserves rebased only for historical receipts."},
+    {"cluster": "clip_mirror_fixture_guard", "count": 7, "reason": "The source/test purpose is explicit and the current lookup/restructure guard rejects two unequal parent clip lists before the intended timing assertion."},
+    {"cluster": "legacy_archive_shape_expectation", "count": 1, "reason": "The named legacy-archive test explicitly asserts the removed on-shaped field; retained traceback is KeyError at that assertion."}
+  ],
+  "downgraded_to_unknown": [
+    {
+      "cluster": "projection_fixture_missing_item",
+      "count": 9,
+      "reason": "Failure occurs at source_payload[items][0] before the product assertion. Existing D100 first-birth/source authority is a protected dependency; setup-frame absence alone cannot prove a test bug.",
+      "nodeids": [
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[child]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[duplicate]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[new_shot]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[parent]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[remove]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_candidate_matches_sdk_opener_exactly[sdk_bundle]",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_entire_expansion_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_real_saved_projection_config_registry_and_full_pins_golden",
+        "tests/sdk/test_timeline_capture_projection.py::test_saved_canonical_images_preserve_authored_fields_pins_order_and_read_rows"
+      ]
+    }
+  ],
+  "protected_unknown_boundaries": [
+    "Gate3/D133 live authored-input and caller authority cases",
+    "D23/D14 protected live behavior and authority cases",
+    "D100 first-birth and missing-authority cases, including the nine projection records",
+    "Any managed refusal without direct source applicability and C0 predicate evidence",
+    "Any unresolved first-boundary failure lacking an accepted record plus legitimate caller trace"
+  ],
+  "reg14": {"status": "UNVERIFIED_CURRENT_REG", "count": 14, "retirement": 0},
+  "migration_boundary": "No classification grants permission to migrate, rewrite, weaken, retarget, or delete a test or source route. Original author packet remains unchanged."
+}

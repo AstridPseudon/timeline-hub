@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T20:15:23Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 12 | status age 0m -->
-# agent board, 2026-10-25T20:15Z
+<!-- agent | 2026-10-25T20:19:35Z | dispatcher heartbeat 9s | live 4 (sol 0, luna 4, other 0) | busy30 13 | status age 0m -->
+# agent board, 2026-10-25T20:19Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -102,15 +102,23 @@
 
 | D134 environment preparation | Preserve unsupported recipe seam | Luna | Independent source review | later | Author2000; independent2010 PASS | PASS source seam; no usable fix | D73 reinjects PYTHONNOUSERSITE at128 and149. Candidate omits dispatch/origin checks and is not runnable. Normal D137 route unchanged. | Evidence only |
 
-| D134 own344 partition | Separate test setup and product failure evidence | Luna read only | Owner20:09 split | review | Author2003; independent2011 | Provisional split under challenge | Author141 setup,0 proven product,203 UNKNOWN. Independent per-ID review challenges guard, projection and pin assumptions before any migration author. | Evidence only |
+| D134 own344 partition | Separate setup and product evidence | Luna read only | First return2016 | review | Author2003; independent2011 FAIL | Reviewed132 setup,0 proved product,212 unknown. Exact9 projection downgrade; first return active. | Evidence only |
 
 | D137 real child and core | Build exact child then run ship-grade core | Luna / service | Installed c3226b kit receipt | blocked:runtime | Prepared same-WIP controller | No request before actual received hash | D137 lifts fixture gate. Verify regular0755 andc3226b, then ONE a4e016/5e9ad request. If built run core; refusal retains exact row and stage stderr, no retry. | Frozen a4e016 /5e9ad |
 
 | D134 D73 source | Reconcile launcher and host environment | Luna and independent | Runtime source owner | blocked:runtime | Peer2015 asks exact owner | Independent2010 source PASS. D73 reinjects unsupported variable; outer recipe is insufficient. No working fix or new body. | Evidence only |
 
+| D134 partition return | Correct nine projection classifications | Luna | Independent2011 FAIL | doing | agt-F-D134-partition-return-2016 | Reviewed132 setup,0 proved product,212 unknown. Original packet retained; exact derivative in progress. | Evidence only |
+| D134 managed media48 | Preserve occurrence media setup | Luna | Independent2011 finite source | doing | agt-F-D134-media48-2016 | Own48 only; semantic caller migration must conserve all inputs and predicates. No product or closure claim. | Pending |
+| D134 parent24 manifest2 | Preserve parent and manifest setup | Luna | Independent2011 finite source | doing | agt-F-D134-parent24-manifest2-2016 | Own26 only; caller and managed membership setup. Exact source and protected review before any closure. | Pending |
+
+| D134 managed30 | Preserve remaining managed fixture purposes | Luna hosted | App admitted source slot | blocked:app | Peer2018 asks first slot owner | Six disjoint files; exact30 source guidance. No shared fixture or product writer. | Pending |
+
+| D134 selected4 | Preserve selected schema caller and labels | Luna | Independent2011 finite source | doing | agt-F-D134-selected4-2019 | Exact4 only; new merged labels and faithful retired caller replacement. Seven unknown cases unchanged. | Pending |
+
 Integration: Agent a30e74e901a28b39c28facba3deb00d76f186e23, tree ece8e0887e48e45cb1fce85b1256c49a0f6126c0; clean19:40Z. Native companions78db and graph callers a30e contain exact reviewed blobs. Runtime ab1e lock qualified. Released Agent070dfc unchanged; no product release before proper batch proof.
 
-Current measurement: service agent-agent-core-full-1025191128-18455 terminal exit1 at19:35Z. Operator8926 PASS /190 FAIL /180 ERROR /173 subtests PASS /1379.05s. Independent1937 complete:344 failing new-file nodes,14 prior host nodes UNVERIFIED per owner20:09,12 UNKNOWN. Own344 author141 setup,0 proved product,203 UNKNOWN is provisional; independent2011 challenges source attribution. XML and full disk witness missing; final core and REG counts UNKNOWN. Read-only wholepath1948 source cause under independent review1954; no actual matching pristine body or REG0 inferred. Historical30693 core425/REG14 retained as prior checkpoint only. Owner20:09 maps current14 to UNVERIFIED pending custody proof; current environment cause independently established, no REG0 claim. No ship, custody or release credit; retirement0. Raw18455 is protected by KEEP while review is open.
+Current measurement: service agent-agent-core-full-1025191128-18455 terminal exit1 at19:35Z. Operator8926 PASS /190 FAIL /180 ERROR /173 subtests PASS /1379.05s. Independent1937 complete:344 failing new-file nodes,14 prior host nodes UNVERIFIED per owner20:09,12 UNKNOWN. Own344 reviewed132 setup,0 proved product,212 UNKNOWN; independent2011 downgraded nine projection cases. Corrected derivative2016 active. XML and full disk witness missing; final core and REG counts UNKNOWN. Read-only wholepath1948 source cause under independent review1954; no actual matching pristine body or REG0 inferred. Historical30693 core425/REG14 retained as prior checkpoint only. Owner20:09 maps current14 to UNVERIFIED pending custody proof; current environment cause independently established, no REG0 claim. No ship, custody or release credit; retirement0. Raw18455 is protected by KEEP while review is open.
 
 Bounded proof:16bb/5e9ad native5 PASS and originalten6 PASS4 FAIL, independently1405. Current originalTrue still FAIL at redo birth on d4ba/ab1e; exact records missing and causal owner unknown. Scalar, compound and separate remain live. Synthetic3/native2 PASS does not close originalfour.
 
@@ -120,7 +128,6 @@ Blockers: SWAP safety — D130 holds recovery and related qualification after au
 Blockers: D69 and D59 — genuine installed render90, platform, final upstream audit, fullP2, final tupleP1-P5, wheel and ZIP owed. Farm D77 only after qualified maker kit.
 
 Next ready: actual received installed c3226b regular0755 and receipt, then immediate ONE normal child on frozen a4e016/5e9ad and ship-grade core if built. D137 reviewed CAS kit install and actual received hash/mode precede prepared same-WIP ONE changed normal child request/core. No fixture E2E prerequisite. Production request remains unspent. Private U2 candidate32dde independently PASS and heldD59; own344 review2011 active; env-source2010 PASS confirms finite unsupported seam.
-live 1 / cap 6 source; ready-undispatched 0 local. Own344 independent review2011; no heavy body. Env-source2010 complete, finite seam retained. D137 controller prepared, kit blocked. Old proof-pin conflict rows superseded; Main retarget1939 read only.
 
 Disk:6.224GB20:00Z. Sweep3 completed0; compact packed0 scratch/test runs and gzipped2 old logs; ended clean nonKEEP scan found0. Protected d22/f1012 and held/refused targets unchanged; six-pin guard receipt design/agent-D128-six-pin-guards-1557.json retained. KEEP on current18455.
 H6: Runtime19:53, App19:51 and Farm authoritative16:05 read this pass. Runtime1926 source PASS consumed; App D100 final receiver1939, D127c Sol1935 and App16 artifacts1941 active. Main1927 source PASS clears Runtime conflict wait. No cross-lane dependency silently left ready. D137 kit receipt remains the sole child/core prerequisite; local maker0857 verified20:10.
@@ -132,3 +139,7 @@ INBOX consumed through1843232 bytes. Current pass20:08: D137 received and applie
 Delayed Runtime1957 canonical-ready note is superseded by recorded D137; no fixture dispatch. Canonicalb855 source PASS is preserved without implying a bootstrap fix.
 
 Pass20:15: no new inbox bytes beyond1843232. Worker2011 live, env2010 complete, fixture2006 stopped. Runtime19:57/App20:03/Farm19:25 boards read; delayed E2E instructions superseded by D137. Actual maker0857 and bench123bb verified. Peer2015 assigns the finite D73 source seam to Runtime without gating D137. Clean ended nonKEEP worktree scan found0. No product/Git edits or new body.
+
+Pass 2026-10-25T20:17Z: independent2011 finished FAIL on original141/0/203; finite reviewed132/0/212 accepted as source guidance. Same-branch firstreturn2016 and disjoint media48/parent24+manifest2 Luna authors dispatched immediately. Original14 UNVERIFIED and12 UNKNOWN retained; finalcounts remain unknown. No original9 closure, no fullbody, no fixture. live3/cap6 source; ready-undispatched0 local; further managed30 source requested App when admitted.
+
+Current pass 2026-10-25T20:19Z: live4 / cap6 source; ready-undispatched0 local. Media48, parent24+manifest2, selected4, and partition derivative2016 active. App managed30 requested via peer2018; exclusive files recorded. No heavy body or fixture. Child kit remains0857, bench123bb; canonical c3226b receiving receipt is the sole D137 request prerequisite. Source work preserves all original predicates and authored inputs; no body or release credit yet.

@@ -1,0 +1,62 @@
+{
+  "schema": "timeline.agent.f_d134_own344_review.v1",
+  "review_id": "F-D134-own344-review-2011",
+  "verdict": "FAIL_AUTHOR_PACKET_OVERSTATES_PROOF",
+  "scope": "Independent read-only review of author2003 permanent evidence against retained 1937 result and C0.",
+  "service": {
+    "id": "agent-agent-core-full-1025191128-18455",
+    "status": "fail",
+    "exit": 1,
+    "snapshot_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+    "log_sha256": "65def166348d4ffde949d530bff1a7bcba820ad674ca85b8ccc3e708c781ae8e",
+    "summary": "190 failed, 180 errors, 8926 passed, 86 warnings, 173 subtests passed",
+    "raw_bad_ids": 370,
+    "raw_bad_id_duplicates": 0,
+    "raw_status_counts": {"FAILED": 190, "ERROR": 180}
+  },
+  "tuple": {
+    "agent": {"commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186", "tree": "60d45288145414ee4702fcce61af7c7810c2a3df"},
+    "runtime": {"commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344", "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f"},
+    "app": {"commit": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7", "tree": "dd2afd6c5c7a1ac73feaac4390cc64d7f31fe7b9"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"},
+    "named_upstream": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+    "terminal_reference": "92443771676ef2bbb547d0a103d708fa8bec4c63"
+  },
+  "membership": {
+    "retained_1937_bad_ids": 370,
+    "author_selected_ids": 344,
+    "selected_exact_subset_of_raw": true,
+    "selected_missing_from_raw": 0,
+    "raw_not_selected": 26,
+    "author_per_id_rows": 344,
+    "author_unique_nodeids": 344,
+    "author_per_id_sha256": "f98a97e4f9dd9773acd18f85d7ae649c95f1c970a213680d9324c573c9d2b97a"
+  },
+  "source_qualification": {
+    "current_source_blob_mismatches": 0,
+    "named_upstream_present_files": 0,
+    "current_test_files": 58,
+    "current_test_files_absent_at_named_upstream": 58,
+    "current_source_check": "PASS_STATIC",
+    "c0_contract_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "c0_contract_path": "contract/commit-v2.md"
+  },
+  "classification": {
+    "author": {"TEST_SETUP_OR_EXPECTATION_PROVED": 141, "PRODUCT_FAULT_PROVED": 0, "UNKNOWN": 203, "sum": 344},
+    "reviewed": {"TEST_SETUP_OR_EXPECTATION_PROVED": 132, "PRODUCT_FAULT_PROVED": 0, "UNKNOWN": 212, "sum": 344},
+    "correction": "Downgrade exactly the nine projection_fixture_missing_item records to UNKNOWN.",
+    "product_fault_proved": false
+  },
+  "reg14": {
+    "status": "UNVERIFIED_CURRENT_REG",
+    "count": 14,
+    "prior_unknown_count": 12,
+    "retirement": 0
+  },
+  "custody": {
+    "raw_log_hash_verified": true,
+    "raw_xml_available": false,
+    "accepted_records_and_legitimate_caller_trace_available": false,
+    "no_product_fault_credit": true
+  }
+}
