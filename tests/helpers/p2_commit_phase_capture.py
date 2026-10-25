@@ -11,7 +11,7 @@ cannot consume its evidence.  For timeline commits, the dispatch boundary is
 ``RuntimeHandler._timeline_commit`` entry.  Socket/client arrival and body
 receipt have no earlier hook here and remain explicitly unsupported; caller
 receipt is outside this process and remains UNKNOWN.
-For an explicitly enabled, mounted ``clip.set-element`` request, the handler
+For the first explicitly enabled, mounted element-insertion ``doc.patch`` request, the handler
 boundary also arms one stdlib ``cProfile`` instance on that request's thread.
 It is enabled on ``_timeline_commit`` entry and disabled on its return or
 exception; no profile hook is installed for other requests or threads.  Only
@@ -75,7 +75,7 @@ WITNESS_PHASES = frozenset(("dispatch_queue", "coordinator_lock", "handler_entry
 PROFILE_FORMAT_VERSION = 1
 PROFILE_TOP_FUNCTIONS = 40
 PROFILE_MAX_EDGES = 1600
-PROFILE_COMMAND = "clip.set-element"
+PROFILE_COMMAND = "doc.patch"
 _CAPTURE_NAMESPACE = 0
 
 
@@ -464,8 +464,7 @@ class P2CommitPhaseCapture:
             body = json.loads(bytes(raw))
         except (TypeError, ValueError, UnicodeDecodeError):
             return None
-        if (not isinstance(body, dict) or body.get("api_version") != 1
-                or body.get("dry_run") is True):
+        if not isinstance(body, dict) or body.get("api_version") != 1:
             return None
         commands = body.get("commands")
         if not isinstance(commands, list):
@@ -479,25 +478,77 @@ class P2CommitPhaseCapture:
         return (isinstance(commands, list)
                 and any(isinstance(command, dict)
                         and command.get("op") == PROFILE_COMMAND
+                        and isinstance(command.get("args"), dict)
+                        and isinstance(command["args"].get("changes"), list)
+                        and any(isinstance(change, dict)
+                                and change.get("op") == "list.insert"
+                                and isinstance(change.get("value"), dict)
+                                and isinstance(change["value"].get("elementRef"), dict)
+                                for change in command["args"]["changes"])
                         for command in commands))
 
     @classmethod
     def _is_element_request(cls, handler: Any) -> bool:
         """Recognize only the mounted App element commit at the handler seam.
 
-        ``_dispatch`` has already prefetched the bounded timeline body before
-        calling ``_route``.  Reading that existing byte buffer here avoids a
-        product hook and avoids consuming ``rfile``.  Direct calls without
-        the mounted prefetch are intentionally not profiled: they cannot
-        prove the real request-selection predicate.
+        The mounted effect Apply appends one element row. documentPatchIntent
+        emits its parent clips insertion and allocation; localSaveSession adds
+        the original step and App source. Params use set; Undo uses inverse.
+        Reading the existing prefetch never consumes or changes ``rfile``.
+        Dispatch/prefetch provenance is checked separately before arming.
         """
         body = cls._profile_body(handler)
         commands = body.get("commands") if body is not None else None
-        return (isinstance(commands, list) and len(commands) == 1
-                and isinstance(commands[0], dict)
-                and commands[0].get("op") == PROFILE_COMMAND)
+        if (body is None or body.get("dry_run", False) is not False
+                or body.get("source") != {"via": "app"}
+                or not isinstance(commands, list) or len(commands) != 1):
+            return False
+        command = commands[0]
+        if (not isinstance(command, dict) or command.get("op") != PROFILE_COMMAND
+                or command.get("schema_version") != 1 or command.get("version") != "1"
+                or "select" not in command or command["select"] is not None
+                or not isinstance(command.get("args"), dict)):
+            return False
+        changes = command["args"].get("changes")
+        if not isinstance(changes, list) or len(changes) != 1:
+            return False
+        change = changes[0]
+        if (not isinstance(change, dict) or change.get("op") != "list.insert"
+                or change.get("ref") != "parent" or change.get("path") != ["clips"]
+                or change.get("before") != {"state": "absent"}):
+            return False
+        row = change.get("value")
+        if not isinstance(row, dict):
+            return False
+        element = row.get("elementRef")
+        identity = change.get("id")
+        order = change.get("order_before")
+        steps = body.get("steps")
+        return (isinstance(identity, str) and bool(identity) and row.get("id") == identity
+                and command.get("created") == [f"parent/clip:{identity}"]
+                and isinstance(order, list) and all(isinstance(item, str) for item in order)
+                and identity not in order
+                and "after_id" in change and change["after_id"] == (order[-1] if order else None)
+                and isinstance(element, dict) and element.get("kind") == "effect"
+                and all(isinstance(element.get(key), str) and bool(element[key])
+                        for key in ("id", "revision", "packId"))
+                and row.get("clipType") == element["id"]
+                and isinstance(steps, list) and len(steps) == 1
+                and isinstance(steps[0], dict)
+                and steps[0].get("intent") == "timeline.apply_element"
+                and steps[0].get("command_ordinals") == [0]
+                and steps[0].get("patch") == changes)
 
     def _start_profile(self, request: dict[str, Any], handler: Any) -> None:
+        dispatch_frame = request.get("profile_dispatch_frame")
+        dispatch = self._frames.get(dispatch_frame) if isinstance(dispatch_frame, int) else None
+        if (dispatch is None or dispatch.get("phase") != "request_scope"
+                or dispatch.get("ordinal") != request["ordinal"]
+                or request["handler"] != id(handler)
+                or request["thread"] != threading.get_ident()
+                or request.get("profile_prefetched_body") is None
+                or request["profile_prefetched_body"] != id(getattr(handler, "_prefetched_body", None))):
+            return
         # Setup/native commits are allowed before the selected element edit.
         # Once an element-shaped POST is seen, consume the one-shot selection,
         # including a mixed-command or dry-run refusal, so retries cannot move
@@ -701,8 +752,9 @@ class P2CommitPhaseCapture:
 
             candidate_edges: list[tuple[int, int, int, dict[str, Any]]] = []
             for callee_key, callee in top_keys.items():
-                values = stats_data.get(callee_key)
-                callers = values[4] if isinstance(values, tuple) and len(values) >= 5 else {}
+                callee_stats = stats_data.get(callee_key)
+                callers = (callee_stats[4]
+                           if isinstance(callee_stats, tuple) and len(callee_stats) >= 5 else {})
                 if not isinstance(callers, dict):
                     continue
                 for caller_key, call_value in callers.items():
@@ -1210,6 +1262,7 @@ class P2CommitPhaseCapture:
         if module == "runtime_protocol.server":
             return {
                 "RuntimeHandler._dispatch": "dispatch_scope",
+                "RuntimeHandler._prefetch_body": "profile_prefetch",
                 "RuntimeHandler._timeline_commit": "handler_entry",
                 "RuntimeHandler._authorize_timeline_commit": "authorization",
                 "RuntimeHandler._send": "http_response",
@@ -1255,9 +1308,23 @@ class P2CommitPhaseCapture:
                 ordinal = self._new_request(handler=handler)
                 if ordinal is None:
                     return None
+                if frame.f_code is self._code_for(getattr(type(handler), "_dispatch", None)):
+                    self._requests[ordinal]["profile_dispatch_frame"] = id(frame)
                 self._begin(ordinal, "dispatch_queue")
                 self._arm_watchdog(ordinal)
                 self._frames[id(frame)] = {"phase": "request_scope", "ordinal": ordinal}
+                return self._trace
+            if phase == "profile_prefetch":
+                handler = frame.f_locals.get("self")
+                ordinal = self._handler_requests.get(id(handler))
+                if ordinal is None:
+                    return None
+                request = self._requests[ordinal]
+                if (request.get("profile_dispatch_frame") != id(frame.f_back)
+                        or frame.f_code is not self._code_for(getattr(type(handler), "_prefetch_body", None))
+                        or frame.f_locals.get("limit") != getattr(handler, "TIMELINE_BODY_BYTES", None)):
+                    return None
+                self._frames[id(frame)] = {"phase": phase, "ordinal": ordinal, "error": False}
                 return self._trace
             if phase == "handler_entry":
                 handler = frame.f_locals.get("self")
@@ -1302,6 +1369,16 @@ class P2CommitPhaseCapture:
             return self._trace
         phase = state["phase"]
         ordinal = state["ordinal"]
+        if phase == "profile_prefetch":
+            if event == "exception":
+                state["error"] = True
+            elif event == "return":
+                handler = frame.f_locals.get("self")
+                raw = getattr(handler, "_prefetched_body", None)
+                if not state["error"] and isinstance(raw, bytes):
+                    self._requests[ordinal]["profile_prefetched_body"] = id(raw)
+                del self._frames[id(frame)]
+            return self._trace
         if phase == "request_scope":
             if event == "exception":
                 state["error"] = True
