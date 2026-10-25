@@ -1,0 +1,58 @@
+{
+  "task": "rt-R2-occurrence-boundaries-1152",
+  "disposition": "UNAPPLIED",
+  "owner": "undetermined from authentic retained records",
+  "runtime": {
+    "head": "7070f1378d1917fcce69857ebd33cd2b3015568b",
+    "tree": "cd68015cb9fe85a6ecd2d15dd7e2eac69f67e2b1",
+    "verifier": {
+      "inverse": "runtime_protocol/timeline_commit_auth.py:1415-1788",
+      "created_child": "runtime_protocol/timeline_commit_auth.py:1854-2111",
+      "command_output": "runtime_protocol/timeline_commit_auth.py:2147-2293",
+      "sequential_capture": "runtime_protocol/timeline_commit_auth.py:2521-2828"
+    }
+  },
+  "agent": {
+    "head": "547e10456250c1b5bcf63b44a50c90ff0563ce1e",
+    "tree": "68df11fad2b082fa12d99ca20404e1e40e350cd7",
+    "producer_capture_inverse": [
+      "astrid/sdk/timeline/native_occurrence_create.py:53-61",
+      "astrid/sdk/timeline/native_occurrence_media_commands.py:277-284",
+      "astrid/sdk/timeline/producer.py:28-44",
+      "astrid/sdk/timeline/inverse.py:1032-1219",
+      "astrid/sdk/timeline/_commit_preview.py:25-90",
+      "astrid/sdk/timeline/commit.py:1160-1469"
+    ]
+  },
+  "retained_app_packet": {
+    "facts": "design/app-D118c-occurrence2-invalid-exact-1132-facts.json",
+    "runtime_pin": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+    "false_guard": "timeline_commit_auth.py:1645",
+    "true_guard": "timeline_commit_auth.py:2267"
+  },
+  "missing_authentic_records": {
+    "false_media_undo": [
+      "accepted source records.commands[*].bindings commit.effect before-image",
+      "inverse inverse.stage and commit.materialization bindings",
+      "source/inverse closure images"
+    ],
+    "true_grouped_birth": [
+      "following child-media bindings for physical alias/promotion",
+      "original/landing sequential command outputs and records",
+      "prepared canonical closure and matching digest"
+    ]
+  },
+  "closest_passing_controls": [
+    "tests/test_timeline_commit_authentication.py::test_created_child_public_sequential_birth_aliases_accept_fields_and_atomic",
+    "tests/test_timeline_commit_authentication.py::test_created_child_promotion_keeps_prior_parent_media_and_mirror_writes",
+    "tests/test_timeline_popup_fork_owner_projection.py::test_actual_agent_fork_add_media_reaches_owner_projection",
+    "tests/test_timeline_inverse_historical_image.py::test_redo_reopens_exact_retired_images_with_one_native_write"
+  ],
+  "changes": [],
+  "verification": {
+    "ast_compile": "PASS",
+    "sha256_source_inventory": "PASS",
+    "git_diff_check": "PASS",
+    "pytest": "NOT RUN per source-only brief"
+  }
+}

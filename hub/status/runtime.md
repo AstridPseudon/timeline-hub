@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T11:49:12Z | dispatcher heartbeat 4s | live 3 (sol 1, luna 2, other 0) | busy30 23 | status age 2m -->
-# runtime board, 2026-10-25T11:46:22Z
+<!-- main | 2026-10-25T11:53:26Z | dispatcher heartbeat 1s | live 4 (sol 0, luna 4, other 0) | busy30 22 | status age 0m -->
+# runtime board, 2026-10-25T11:52:51Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -426,17 +426,18 @@
 
 | D117a-source | Validate exact public OMP git input | Luna / Luna | Actual stage custody | review | Author1128; review1134 PASS | Exact9e282/tree2074,onefetch,LFS0,local_source/extract0. Temporary artifact cleaned; no stage or render credit. | Evidence only |
 | D77-stage-resume | Stage matching applied deployment | Luna / independent | Safe complete stage footprint | blocked:runtime | Stage1144; custody1144 | Exact523893/a522 and pinned OMP verified. Stopped before Installer.run: projected shortfall293MB; complete peak remains unproved. | No deployment |
-| D100-six-receipt | Consume corrected six controls | Luna read only | Independent finite custody review | review | Author1142; custody1144 | Author6PASS3.42s, protected6PASS4.00s on genuine1daca. Fixture lineage exact; private XML rehash limit disclosed. No repeat body. | Agent3aaf held |
-| OPS-v1-log-headroom | Audit old V1 plain logs | Luna | Finite receipt review | review | Author1142; custody1144 | Zero eligible, zero removals and zero bytes freed. Pending nonplain old target remains held. | No source change |
+| D100-six-receipt | Consume corrected six controls | Luna read only | Existing independent results | merged | Receipt1142; review1144 A PASS | Exact six and source lineage verified. Existing author6PASS3.42s and protected6PASS4.00s on1daca; private XML rehash limit explicit. | Agent3aaf held |
+| OPS-v1-log-headroom | Audit old V1 plain logs | Luna | Finite receipt review | merged | Author1142; review1144 C PASS | Zero eligible, zero removals and zero bytes freed. Pending nonplain target remains held. | No source change |
 
 
 | P2-tags-wholepath | Map real history refusal boundaries | Luna read only | Source review1138 | merged | rt-P2-tag-boundaries-1140 | Finite31store,6port and baseline/service map returned. Only three real tag assertions qualified before repair. No root inference. | Evidence only |
-| OPS-ended-v2-headroom | Compress idle worker logs losslessly | Luna | Fresh no live use guards | doing | rt-OPS-ended-v2-log-headroom-1146 | Max100 ended logs, exact hashes and lossless validation. Excludes sessions, current proof, evidence and all refused targets. | No space claim yet |
-| F-final-7070-inventory | Include released ancestry controls | Luna | Private final98 matrix PASS | doing | rt-F-final-7070-inventory-1144 | Preserve authentic2252 matrix and pending tuple. Only released7070 test inventory delta; no installed route or body. | Private candidate |
-| D122-Agent-batch | Join reviewed Agent product fixes | Luna | Exact normal30c and donor source | doing | rt-D122-Agent-batch-1148 | Own-only82b6,adcb,bae5 deltas. Mounted own failing node only; authentic host14 remains Agent-owned. Held until needed batch proof. | Source join held |
-| D122-XML-fixtures | Restore genuine installer setup | Luna | Reviewed adcb source | doing | rt-D122-XML-fixtures-1148 | Own XML snapshot and source fixture only; four failing nodes. All assertions and installer guards exact. Protected review follows. | Source pending |
-| D122-R2-seed | Join reviewed genuine seed source | Luna | Free source slot and donor7c717 | ready | Next Runtime hosted author | Exact seed import onto held44cf; no semantic author or body. Raw/config behavior remains Agent batch-owned. | Product held |
+| OPS-ended-v2-headroom | Compress idle worker logs losslessly | Luna | Exact no live use guards | doing | Initial1146; return1150 | Existing1709 eligible logs total512MB; first100 limit yielded no mutation. Bounded return compresses useful space with hash verification. | No space claim yet |
+| F-final-7070-inventory | Include released ancestry controls | Luna / independent | Private review | review | Author1144; review1152 | Exact100Python+TS: preserve98 and add2 released7070 files. All41 matrix blobs unchanged; private stub controls passed. | Private candidate |
+| D122-Agent-batch | Join reviewed Agent product fixes | Luna / independent | Genuine host14 and batch proof | review | Author1148; review1152 | Exact82b6/adcb/bae5 join on normal30c. Mounted6,input11,host+XML4 passed; normal42aad lock retained. Product held. | Source join held |
+| D122-XML-fixtures | Restore genuine installer setup | Luna / independent | Protected source review | review | Author1148; review1152 | Four original failures pass;108 AST assertions exact. Only XML declaration and source fixture changed. Clean import follows review. | Source pending |
+| D122-R2-seed | Join reviewed genuine seed source | Luna | Genuine seed behavior | doing | rt-D122-R2-seed-1150 | Exact7c717 donor onto held44cf, source only. Raw/config behavior remains Agent batch-owned. No repeated original body. | Product held |
 
+| R2-occurrence-boundaries | Classify two genuine guarded failures | Luna read only | Existing App occurrence2 packet | doing | rt-R2-occurrence-boundaries-1152 | False inverse source image and True physical promotion differ. Source comparison only; no Runtime fault inferred or guard relaxation. | Source unchanged |
 Runtime producer: RELEASED 7070f1378d1917fcce69857ebd33cd2b3015568b / tree cd68015cb9fe85a6ecd2d15dd7e2eac69f67e2b1, exact reviewed f0c4. Integrated9PASS15.89s and native1.448x PASS; canonical15/schema unchanged from42aad. Real-provider smoke passed. App15203 stays recorded d23a8.
 core open: Runtime source cost qualified; App current element still needs original tour proof. Current SWAP lower history guard UNKNOWN. Agent actual30693 has425 core open,14 regressions,450 bad cases independently reviewed. No current full retry.
 regressions: App-owned host14 source bae5 has independent SOURCEPASS; Agent1130 owns authentic original14 qualification. Runtime has no demonstrated host-owned fault. XML declaration product source joins D122 batch.
@@ -446,12 +447,12 @@ Blockers: Final render — Exact applied523893/a522 and authorized pinned OMP so
 Blockers: D69 — Runtime113-function mapping and snapshot20PASS qualified. Agent XML product batch and genuine installed render still owed; no whole audit PASS.
 Blockers: R2 and D100 — R2 exact three require genuine seed behavior. D100 six correction passed existing author and protected checks; finite receipt1144 review consumes custody without a duplicate Main body.
 Blockers: Final cut — Current green core, D69, full current P2, final pinned P1-P5 and genuine installed render owed. No delivery build or ZIP.
-Next ready: D122 third seed preparation starts as a source slot opens. Critical Sol tags, receipt review, inventory and headroom work plus two Agent authors assigned; no unrelated gate holds a ready author.
+Next ready: All three D122 scopes assigned; batch and XML protected review active. Critical tags,100-target inventory review, occurrence boundary read and bounded log compression active. No ready task unassigned.
 Ready for host filing: none new. Host11:46 filed existing Agent97a request; Agent normal clean import1130 already owns source integration. Future D122 branches need exact independent PASS and own-only ancestry first.
 Venues: No Main heavy body. Native10398 and integrated smoke terminal PASS; no duplicate full/browser/P4. Agent30693 immutable120d/1daca/96d475/635f. Applied render uses retained523893/a522, never current substitutes.
-Delivery: Authentic private98Python+TS and all20Agent2236 custody blobs independent1142 PASS. Released7070 inventory update1144 active. No install, body, final build or ZIP.
+Delivery: Private100Python+TS candidate preserves98 plus2 released7070 targets and all41 authentic2252 matrix blobs. Independent1152 active. No install, body, build or ZIP.
 Later: D107 held2154 and D100 originalTEN remain unchanged. Agent D116 semantic owner retains raw/config comparison. D122 source authors keep exact exclusive scopes.
 Safety: D88/D111 memos withdrawn. D106 ORCH only; no worker hub writes or remote merge filing. Old codeload/classifier route stopped; D117a authorizes exact public Git route with supported local installer input only.
 Disk: About5.7GB free. OldV1 bounded audit1142 found zero; known dirty/refused/KEEP/registered sources remain held. Fresh ended-log task excludes Codex sessions and current proof. Sweep3 normal route active; compact-scratch not run because it touches prohibited sessions.
-live 2 / cap 6; ready-undispatched 0 at last published dispatcher11:41 sample. Current queue: custody1144, inventory1144, headroom1146, Agent batch1148 and XML1148; daemon launch state is checked each pass. Sol1140 has HARD second-failure reason.
-INBOX consumed through 1159350 bytes. Updated 2026-10-25T11:46:22Z.
+live 3 / cap 6; ready-undispatched 0 at published dispatcher11:49 sample. Direct marker check11:52 has six active, no pending requests. One Sol has HARD second-failure reason; other five Luna.
+INBOX consumed through 1160341 bytes. Updated 2026-10-25T11:52:51Z.
