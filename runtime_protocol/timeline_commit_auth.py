@@ -564,15 +564,17 @@ def validate_bindings(request, records, expected, boundary, output, step, ordina
                     "provider read binding differs from its dependency")
         if "successor" in binding:
             from .timeline_materialization import edges
-            before_rows, after_rows = edges({"parent_revision": boundary["parent"]}), edges({"parent_revision": output["parent"]})
+            # Materialization spans the complete step, even when its record is
+            # attached to a later command with a different intermediate input.
+            before_rows, after_rows = edges({"parent_revision": bound["parent"]}), edges({"parent_revision": output["parent"]})
             owner = binding.get("owner", "").removeprefix("occurrence:").removesuffix("/shot")
             successor = binding["successor"]
             require(binding["key"] == "commit.materialization" and owner in before_rows and owner in after_rows
                     and successor in output, "provider successor lacks an authenticated owner edge")
             before_shot = "shot-revision:" + before_rows[owner][1]
             after_shot = "shot-revision:" + after_rows[owner][1]
-            require(before_shot in boundary and after_shot in output, "provider successor has an absent owner image")
-            before_internal = "internal-revision:" + boundary[before_shot]["internal_timeline_revision_id"]
+            require(before_shot in bound and after_shot in output, "provider successor has an absent owner image")
+            before_internal = "internal-revision:" + bound[before_shot]["internal_timeline_revision_id"]
             after_internal = "internal-revision:" + output[after_shot]["internal_timeline_revision_id"]
             require((physical, successor, binding.get("edge_before"), binding.get("edge_after")) in {
                 (before_shot, after_shot, before_internal, after_internal),
