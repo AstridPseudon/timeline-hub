@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T14:58:47Z | dispatcher heartbeat 11s | live 3 (sol 0, luna 3, other 0) | busy30 6 | status age 1m -->
-# app board, 2026-10-25T14:57Z
+<!-- app | 2026-10-25T15:03:24Z | dispatcher heartbeat 15s | live 2 (sol 0, luna 2, other 0) | busy30 7 | status age 0m -->
+# app board, 2026-10-25T15:04Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -77,7 +77,7 @@
 | D118a-captured-redo1 | Preserve exact captured redo closure | Luna and protected Luna | Agent normal home1313 | merged | Author1242; review1251 | Exact SQLite and db_path setup home0b586. Original1 PASS2.38s at donor; seven assertions exact. No full core credit. | 0b586e4b56 |
 
 | D124-sampler-prep | Reuse sampler for actual element process | Luna | Source inventory complete | merged | app-D124-actual-element-sampler-prep-1245 | Exact seam: D66 overwrites PYTHONPATH; existing phase helper needs sampler wiring. Source and safe recipe inventoried; no body. | Evidence only |
-| D124-full-P2 | Run actual sampled element tour | Luna and service | Protected1435 activation PASS | doing | app-D124-sampled-full-P2-1440 | Actual10721 terminal FAIL; controller extracting safe packet after preflight30400 PASS. Exact84857/070dfc/5e9ad/635f with reviewed6c9. Plan4fb77f; same ID only. [Packet](../../design/app-D124-sampled-full-P2-1440-submit.json). | App84857 tuple |
+| D124-full-P2 | Qualify sampled original tour | Luna and independent Luna | Actual10721 terminal | gated:recorded-no-go | Controller1440; independent1455 | Independent NO-GO: readiness PASS; originals5 PASS,2 FAIL,1 NOTRUN. [Verdict](../../design/app-D124-10721-independent-review-1455-verdict.json). | App84857 tuple |
 
 | D124-capture | Truthful dispatch and sampler capture | Luna and protected Luna | Final1315 SOURCE PASS | merged | Clean1321; Runtime normal453b | Exact helperSHA and normal remote receipt verified;19 controls/statics PASS at donor. Browser qualification still owed. | Runtime453b3e6f92 |
 | D124-hook | Attach reviewed helper through normal D66 | Luna and protected Luna | Protected1320 SOURCE PASS | merged | Author1312; review1320 | Whole normal tree equals reviewed4c56.29 D66 and2 route, types/lint PASS; actual sampler attachment qualified only in later tour. | af5fe0a274 |
@@ -90,16 +90,20 @@
 | D124-activation | Prove correct helper startup route | HARD Sol | Repeated Luna startup failures | merged | app-D124-activation-wholepath-sol-1425 | Configuration root proved: required helper basename with exact6c9 bytes. No source repair. Actual socket control pending Luna1435; no activation GO yet. | Source unchanged |
 
 | D124-activation-proof | Preserve actual helper startup proof | Luna independent | Normal84857 and canonical6c9 source | merged | app-D124-protected-activation-1435 | Fresh normal2 and reviewed2 PASS. Exact6c9,102 rows/30754B,0600,bounded phases/sampler/privacy PASS. No original body or source edits. | App84857 |
-| D124-correlation | Join browser helper and error diagnostic | Runtime current author | Existing safe hash and source audit | blocked:runtime | Runtime MAIN14:29 source owner | Public and logged IDs differ. Existing exact key hash joins browser/helper; Runtime log needs supported safe join. Peer1435 sent; no App duplicate writer. | Source unchanged |
+| D124-correlation | Join safe attempt and refusal diagnostic | Runtime Luna; App retained review | Existing key hash convention | blocked:runtime | Runtime1450; App1455 complete | App finite answer: browser key presence only, no retained per-attempt join. Runtime existing diagnostic adds key hash before final review. | Source unchanged |
 
 | D74-fe3309-pin | Release completed tagged tuple pin | Manager and host audit | Host1446 and fresh static guards | merged | Guarded recycle1448 | Only oldfe3309 recycled; zero refusal. Current84857 tuple and all3250 outputs, branches and reports kept. [Receipt](../../design/app-pin-guarded-release-1448.json). | No source edits |
 | D127-Runtime-inputs | Hand retained tagged tour source facts | Existing producer and review | Runtime1426 peer ask | merged | Controller1407; independent D125 verdict | Safe facts and source sequence published. No standalone native package or lower private binding in handback; UNKNOWN stays explicit. | Source unchanged |
 
-| D127-SWAP-recipe | Hand exact source fixture sequence | Luna read only | Runtime1441 finite source ask | doing | app-D127-SWAP-source-recipe-1452 | Actual10721 body terminal; dispatched at5.058GB. Exact source-only construction and historical identity bounds; no replay. | Source unchanged |
+| D127-SWAP-recipe | Hand exact source fixture sequence | Luna and independent Luna | Runtime1441 finite source ask | review | Author1452; reviewer1501 | Exact source recipe published. Frozen constructor, media selection and fork then SWAP; historical private pairing absent. No replay. | Source unchanged |
 
 | D125-local-prep | Prepare exact local fallback | Luna read only | Exact four local receipts | merged | app-D125-local-fallback-prep-1356 | Source/API/Node and source hashes PASS; no body. Dependency omission is explicit and assigned to D127 controller. | Frozen fe3309 tuple |
 
 | D74-D124-old-pins | Release obsolete completed tuple pins | Manager and host audit | Host1249 and fresh guards | merged | Guarded recycle1254 | Both34d464 and7070 recycled normally;187142144 bytes net. All outputs, reports, branches and current inputs kept. Zero refusal. | No source edits |
+
+| D124-10721-review | Qualify full tails and actual timing | Luna independent | Actual10721 terminal packet | merged | app-D124-10721-independent-review-1455 | Exact custody and five complete tails GO. Timing UNKNOWN: browser key hash absent; candidate only. No dominant cost attribution. | Evidence only |
+
+| D127b-stacks | Publish retained safe sampler frames | Luna read only | D127b and independent1455 | doing | app-D127b-10721-safe-stacks-1503 | Existing per-launch frames, hashes and counts only; exact request binding or honest UNKNOWN. Preserve10721 outputs; no new body. | Source unchanged |
 
 Integration: App84857c45347539c7820bb054b69e2e5ad4079081/tree7feb5b12a1ad9629f096700c40c393d5b3998217 equals the entire independently1414 reviewed candidate tree. Only exact two D126 and strict bootstrap test blobs imported. Targeted normal2, mutations, types and lint PASS. [Normal receipt](../../design/app-D126-normal-home-1437.json). Actual3250 remains frozenfe3309/070dfc/5e9ad/635f and excludes new helper/hook. No result retarget.
 
@@ -111,13 +115,13 @@ D118a claim1124 posted to Agent INBOX before three starts: occurrence2 own-node 
 
 
 Blockers: App current SWAP — Actual3250 independent five-case GO; SWAP409 history_unavailable with lower private binding UNKNOWN. MAIN assigned Runtime root and correlation14:29; no App duplicate.
-Blockers: App element — Sole App owner. Strict bounds normal84857; startup root proved. Luna1435 actual activation PASS. Sole sampled controller1440 admitted; browser/helper keyhash+UTC joins timing. Runtime current diagnostics author owns separate error-log join; no semantic wait.
+Blockers: App element — Actual10721 independently FAIL at applied status; exact request binding UNKNOWN. D127b safe stack packet1503 active for Runtime source cost owner. No new tour before fixes ship.
 Blockers: Farm host14 and batch — Agent upstream fallback is normal a4e016 and original14 independently PASS. REG closure awaits core; Farm child metadata refusal remains stopped with Runtime1404 correction owner.
 Blockers: Farm batch — Atomic and native binding are normal Agent source; downstream product adoption waits unfiltered Farm core. Captured-redo test setup is home. No App author or review wait remains.
 Blockers: Final cut — Current full P2 remains NO-GO; final P1-P5/core/D69 and genuine installed render still owed. Existing denied acquisition and cleanup routes remain stopped.
-Next ready: Actual10721 terminal FAIL; controller extracts safe packet. Independent1455 brief ready for terminal packet. Source recipe1452 dispatched immediately; no heavy body, Runtime semantic writer separate.
-live 1 / cap 3; queued 1; ready-undispatched 0; core open: 2. No heavy body. Controller1440 extracts terminal10721; source recipe1452 queued. Independent1455 awaits evidence, no rerun.
-Capacity: Free5.058GB at14:57Z after body ended. Sweep3 removed0; compact packed0 scratch dirs and gzipped1 old log, test compaction finishing. Prior guarded oldfe3309 recycle remains scoped. D89c original5331136512byte admission carried;4.0GB ongoing stop. Only old completed pin recycled; current inputs and all original outputs retained.
-INBOX consumed through2262744 bytes; no new items at14:54Z. Host1446 CLEAR consumed; oldpin release complete. Runtime1426 input ask has an existing-worker evidence row. Sampled actual10721 same-ID running; no source/adoption wait.
+Next ready: Safe stack publisher1503 and recipe reviewer1501 active. Independent1455 handback sent to Runtime immediately: exact binding UNKNOWN. D127b forbids new tour until owner fixes ship.
+live 1 / cap 3; queued 1; ready-undispatched 0; core open: 2. Source recipe review1501 and safe stack packet1503. No heavy body, new small Agent author or speculative source fix.
+Capacity: Free5.058GB at14:57Z after body ended. Sweep3 removed0; compact packed0 scratch dirs, gzipped1 old log and packed0 test dirs. Prior guarded oldfe3309 recycle remains scoped. D89c original5331136512byte admission carried;4.0GB ongoing stop. Only old completed pin recycled; current inputs and all original outputs retained.
+INBOX consumed through2268584 bytes, including Runtime1448 and owner D127b. Both asks now have rows and worker ownership. Host1446 CLEAR consumed; oldpin release complete. Runtime1426 input ask has an existing-worker evidence row. Sampled10721 independent NO-GO; timing UNKNOWN. Safe stack packet active. No source/adoption wait.
 Later: Nativecheckout4/trackbatch1 share known m1.film missingwordanchor setup; no diff/retirement. D116 reviewedjoin held for Agent raw/config batch. D79 waits ZIP, E4 dropped; D74 orphan graph and dirty trees retain guards. No manager product/test/generated/pin edits, Git writes, upstream push, M5, weakening, credentials or refused-route retry.
 

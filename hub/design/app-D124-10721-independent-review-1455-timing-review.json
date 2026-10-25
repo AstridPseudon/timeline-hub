@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "task": "D124 actual element timing review",
+  "actual_id": "app-pin-84857c45-d73-p2-84857c45-submit-1025144552-10721",
+  "verdict": "UNKNOWN",
+  "reason": "The browser diagnostic retained only idempotency-key presence, not its safe hash. Public/logged request IDs are not treated as equivalent. The candidate Runtime request therefore cannot be proven to be the element POST.",
+  "browser": {
+    "method": "POST",
+    "route": "/v1/projects/{project_id}/timelines/{timeline_id}/commit",
+    "apply_click_elapsed_ms": 26956,
+    "request_start_elapsed_ms": 27595,
+    "test_outcome_elapsed_ms": 32158,
+    "response": "none",
+    "response_status": "UNKNOWN",
+    "idempotency_key_hash_available": false
+  },
+  "candidate_runtime_request": {
+    "status": "candidate_only",
+    "utc_anchor": "2026-10-25T14:49:25.626Z",
+    "pid": 12960,
+    "birth_ticks": 19014785,
+    "namespace": "pid-12960-birth-19014785-capture-1",
+    "ordinal": 3,
+    "sample_total": 352,
+    "lost_samples": 3,
+    "truncated": true,
+    "dispatch_queue_ms": 1.071,
+    "handler_entry_start_ms": 34001.503,
+    "provider_start_ms": 34089.309,
+    "dispatch_wall_denominator_ms": null,
+    "handler_end_ms": null,
+    "provider_end_ms": null,
+    "http_response_ms": null,
+    "backend_outcome": "UNKNOWN"
+  },
+  "boundary_verdicts": {
+    "arrival": "UNKNOWN: no earlier socket/server-accept hook",
+    "dispatch": "OBSERVED for candidate only",
+    "queue": "OBSERVED for candidate only",
+    "lock": "UNKNOWN: no exact threading.Lock.acquire boundary",
+    "handler": "UNKNOWN: candidate remained pending",
+    "response": "UNKNOWN: no response observed",
+    "backend_outcome": "UNKNOWN",
+    "browser_to_helper_join": "UNKNOWN"
+  },
+  "capture_quality": {
+    "summary_records": 20,
+    "completed_requests": 19,
+    "pending_requests": 1,
+    "total_samples": 6089,
+    "total_lost_samples": 109,
+    "truncated_records": 19,
+    "capacity_dropped_events": 5109,
+    "events_seen": 7598,
+    "events_retained": 2489,
+    "top10_inclusive_frames": 10,
+    "total_dispatch_wall_ms": 150275.613,
+    "observer_cpu_ms": 21000.903,
+    "per_request_dispatch_denominator_present_for_completed_requests": true,
+    "frame_counts_are_not_cpu_time": true
+  },
+  "privacy": {
+    "raw_payloads": false,
+    "raw_keys": false,
+    "raw_auth": false,
+    "private_urls": false,
+    "raw_stacks": false
+  },
+  "attribution_policy": {
+    "native_1_75_attribution": "NOT_ASSERTED",
+    "dominant_cost": "NOT_ASSERTED",
+    "activation_witness": "PASS_PROTECTED_ACTIVATION, but insufficient for browser/helper request identity"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "case": "popup SWAP",
+  "browser": {"method": "POST", "route": "/v1/projects/{project_id}/timelines/{timeline_id}/commit", "status": 409, "response": "refused"},
+  "static_reason_tag": "history_unavailable",
+  "safe_reason": "semantic identity history is unavailable",
+  "safe_hint": "Refresh the timeline history before retrying",
+  "diagnostic_request_id": "private; not published",
+  "public_logged_request_id_equivalence": "not assumed",
+  "helper_key_hash_join": "UNKNOWN",
+  "runtime_namespace_binding": "UNKNOWN",
+  "common_cause": "not inferred"
+}

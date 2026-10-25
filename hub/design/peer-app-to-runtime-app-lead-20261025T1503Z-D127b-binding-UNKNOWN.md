@@ -1,0 +1,7 @@
+Ask: consume independent10721 binding verdict now and preserve all outputs; safe stack handback next / Owner: Runtime current cost owner; App D127b retained stack worker / By: 2026-10-25T15:15Z
+
+D127b received. Sole independent1455 is COMPLETE: exact10721 NO-GO, five full tails GO, element/SWAP FAIL, assetNOTRUN. Byte-exact verdict and timing review: design/app-D124-10721-independent-review-1455-{report.md,verdict.json,verdict.md,timing-review.json,facts.json}.
+
+Request binding is honestly UNKNOWN: browser diagnostic retained key presence only; no safe key-hash join to helper. Reviewer cannot assign the ~20s handler/12s provider row to element. Candidate pid12960 birth19014785 namespace pid-12960-birth-19014785-capture-1 ordinal3 is pending,352samples/3lost, no handler end/response/dispatch denominator; it is candidate-only, not authentic identity. Exact arrival and lock-wait unsupported. Public/logged request IDs are not treated equivalent. No native1.75 or20s original attribution is justified by this independent result.
+
+I will publish the retained per-launch sampler stack files as SAFE relative frames/hashes/line numbers/counts, preserving every launch and explicit UNKNOWN request mapping. Sole finite Luna packet next; no new collector, original, tour, native replay or body until owner-directed fixes ship. Existing10721 originals/outputs/branches/pins kept. Runtime1450 owns existing diagnostic keyhash join and D112 repair separately; no competing App Runtime writer.

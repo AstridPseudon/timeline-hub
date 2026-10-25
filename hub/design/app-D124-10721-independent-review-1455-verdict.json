@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "task": "D124 independent actual10721 verdict",
+  "verdict": "NO-GO",
+  "partial_verdict": "partialGO: five qualified original tails passed",
+  "go_eligible": false,
+  "basis": "D55b requires all eight original P2 gestures to pass on one exact tuple. The submitted terminal run has five PASS, two FAIL, and one serially NOT_RUN. Readiness is a separate PASS.",
+  "normal": {
+    "id": "app-pin-84857c45-d73-p2-84857c45-submit-1025144552-10721",
+    "status": "FAIL",
+    "exit": 1,
+    "duration_seconds": 568,
+    "body_count": 1,
+    "duplicate_body_count": 0,
+    "manifest_sha256": "46670521226a66bccca4fce9cfd979eaa8346c497ceffb720f90e571ca98d8e4"
+  },
+  "preflight": {
+    "id": "app-pin-84857c45-d73-p2-84857c45-submit-preflight-1025144221-30400",
+    "status": "PASS",
+    "exit": 0,
+    "manifest_sha256": "6df5da481627f07a55ee25d7109cda9cb49e9831c1af8da23a673470a527dd4d"
+  },
+  "junit": {
+    "original": {
+      "path": "d66/p2.xml",
+      "sha256": "b46dd5e52f8d4c3827871b0b6b7be97b6026ade6581c390151e771823be91708",
+      "pass": 5,
+      "fail": 2,
+      "not_run": 1,
+      "error": 0
+    },
+    "readiness": {
+      "path": "d66/readiness.xml",
+      "sha256": "b8c5bfb0ef8a8c690ceee87a73b08ee3011e8f5bfbfc8de7ffc8b6af90cb8888",
+      "pass": 1,
+      "fail": 0,
+      "not_run": 0,
+      "error": 0
+    },
+    "collection_sha256": "56ebb0100e596dc8f23ccadc30be106672ec044feb9888ff80e6a9e06524bc9a"
+  },
+  "original_cases": [
+    {
+      "name": "P2 mounted automatic child placement",
+      "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+      "line": 1214,
+      "status": "PASS",
+      "tail_qualified": true,
+      "predicates": {
+        "canonical_closure_digest": true,
+        "history_records": true,
+        "reload": true,
+        "guarded_native_inverse": true,
+        "zero_legacy_traffic": true
+      }
+    },
+    {
+      "name": "P2 popup mounted ADD on selected child",
+      "file": "tests/e2e/local/three-products.p2-popup.spec.ts",
+      "line": 941,
+      "status": "PASS",
+      "tail_qualified": true,
+      "predicates": {
+        "canonical_closure_digest": true,
+        "history_records": true,
+        "reload": true,
+        "guarded_native_inverse": true,
+        "zero_legacy_traffic": true
+      }
+    },
+    {
+      "name": "P2 mounted single parent move",
+      "file": "tests/e2e/local/three-products.p2-tour.spec.ts",
+      "line": 746,
+      "status": "PASS",
+      "tail_qualified": true,
+      "predicates": {
+        "canonical_closure_digest": true,
+        "history_records": true,
+        "reload": true,
+        "guarded_native_inverse": true,
+        "zero_legacy_traffic": true
+      }
+    },
+    {
+      "name": "P2 mounted transition None single",
+      "file": "tests/e2e/local/three-products.p2-tour.spec.ts",
+      "line": 778,
+      "status": "PASS",
+      "tail_qualified": true,
+      "predicates": {
+        "canonical_closure_digest": true,
+        "history_records": true,
+        "reload": true,
+        "guarded_native_inverse": true,
+        "zero_legacy_traffic": true
+      }
+    },
+    {
+      "name": "P2 mounted transition None bulk",
+      "file": "tests/e2e/local/three-products.p2-tour.spec.ts",
+      "line": 798,
+      "status": "PASS",
+      "tail_qualified": true,
+      "predicates": {
+        "canonical_closure_digest": true,
+        "history_records": true,
+        "reload": true,
+        "guarded_native_inverse": true,
+        "zero_legacy_traffic": true
+      }
+    },
+    {
+      "name": "P2 mounted element edit",
+      "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+      "line": 1038,
+      "status": "FAIL",
+      "tail_qualified": false,
+      "first_unmet": {
+        "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+        "line": 1052,
+        "predicate": "dialog status contains applied",
+        "backend_outcome": "UNKNOWN",
+        "browser_response": "none observed before page close"
+      }
+    },
+    {
+      "name": "P2 mounted popup SWAP",
+      "file": "tests/e2e/local/three-products.p2-popup.spec.ts",
+      "line": 949,
+      "status": "FAIL",
+      "tail_qualified": false,
+      "first_unmet": {
+        "file": "tests/e2e/local/three-products.p2-popup.spec.ts",
+        "line": 495,
+        "predicate": "accepted response status equals 200",
+        "received_status": 409,
+        "safe_reason": "history_unavailable",
+        "backend_attribution": "UNKNOWN",
+        "static_reason_source_match": [
+          "runtime_protocol/timeline_commit_baseline.py:24-27",
+          "runtime_protocol/service.py:2572-2577",
+          "contract/commit-v2.md:597-602"
+        ]
+      }
+    },
+    {
+      "name": "P2 mounted registerAsset save",
+      "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+      "line": 1133,
+      "status": "NOT_RUN",
+      "tail_qualified": false,
+      "first_unmet": {
+        "predicate": "serially blocked by earlier element failure"
+      }
+    }
+  ],
+  "readiness": {
+    "status": "PASS",
+    "separate_from_original_gate": true
+  },
+  "custody": {
+    "all_four_checkouts_clean": true,
+    "all_four_heads_and_trees_verified": true,
+    "tuple": {
+      "app": {"sha": "84857c45347539c7820bb054b69e2e5ad4079081", "tree": "7feb5b12a1ad9629f096700c40c393d5b3998217"},
+      "agent": {"sha": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"},
+      "runtime": {"sha": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344", "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f"},
+      "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+    },
+    "receipts_sha256": {
+      "app": "7f79b331e47735c49149c495c09d7dd3ae09a4ee58d3d9e83bcdd89ce2d89519",
+      "agent": "a8abf836cedf70334caaa9030d021a0c20d52b05b0b671a607c7d0c45d5fbc05",
+      "runtime": "151eff8ff0511a4acda3e0e1941eab640ddb87bd90ca1be692589e7b49ec2713",
+      "composition": "ea43438c8e7327f152faf44d2d8e56133dd4b6aaf2205c4196d61b6c7b1e9ab1"
+    },
+    "durable_plan": {
+      "path": "workers/app-D124-sampled-full-P2-1440/submission/full-p2/p2-submit-plan.json",
+      "sha256": "4fb77fe90f3e5afa603d82fb86221aed511276a2cd77d52899c8bbc954caa777",
+      "identity_verified": true
+    },
+    "source_manifest_identity_verified": true,
+    "service_source_roots": {
+      "preflight_commit": "a272d48019a747bfec602268dbe56161e611def1",
+      "normal_commit": "f6ba9d9b6480f5105174b4e8b7ceb133b0d1d689",
+      "tree": "7feb5b12a1ad9629f096700c40c393d5b3998217",
+      "dirty": false
+    },
+    "helper": {
+      "source": "workers/app-D124-activation-wholepath-sol-1425/evidence/p2_commit_phase_capture.py",
+      "sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760",
+      "reviewed_normal_path": true
+    },
+    "app_original_source_hashes_sha256_match_before_after": true,
+    "contract_sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7"
+  },
+  "profile": {
+    "compiler": "authoring-bundle-1",
+    "node": "v20.19.4",
+    "npm": "10.8.2",
+    "protocol": "workspace.v1",
+    "provider": "astrid-v1",
+    "runtime_server": "AstridRuntime/0.1 Python/3.13.16",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b"
+  },
+  "privacy": {
+    "raw_payloads_published": false,
+    "raw_keys_published": false,
+    "credentials_published": false,
+    "private_urls_published": false,
+    "stacks_published": false
+  },
+  "review_execution": {
+    "source_changes": false,
+    "targeted_tests": "N/A: read-only review",
+    "typecheck": "N/A: read-only review",
+    "lint": "N/A: read-only review",
+    "rerun_original_or_browser_suite": false
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "actual_id": "app-pin-84857c45-d73-p2-84857c45-submit-1025144552-10721",
+  "readiness": {"count": 1, "pass": 1, "fail": 0, "error": 0, "not_run": 0},
+  "originals": {"count": 8, "pass": 5, "fail": 2, "error": 0, "not_run": 1},
+  "cases": [
+    {"name": "element edit", "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "line": 1038, "outcome": "FAIL", "first_unmet": "dialog status contains applied", "assertion_line": 1052, "backend_outcome": "UNKNOWN", "browser_response": "none observed before page close"},
+    {"name": "registerAsset", "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "line": 1133, "outcome": "NOT_RUN", "first_unmet": "serially blocked by earlier element failure"},
+    {"name": "automatic child placement", "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "line": 1214, "outcome": "PASS", "attempts": 2, "passing_attempt": 2},
+    {"name": "popup ADD", "file": "tests/e2e/local/three-products.p2-popup.spec.ts", "line": 941, "outcome": "PASS"},
+    {"name": "popup SWAP", "file": "tests/e2e/local/three-products.p2-popup.spec.ts", "line": 949, "outcome": "FAIL", "first_unmet": "accepted response status equals 200", "assertion_line": 495, "received_status": 409, "static_reason_tag": "history_unavailable"},
+    {"name": "parent move", "file": "tests/e2e/local/three-products.p2-tour.spec.ts", "line": 746, "outcome": "PASS"},
+    {"name": "transition None single", "file": "tests/e2e/local/three-products.p2-tour.spec.ts", "line": 778, "outcome": "PASS"},
+    {"name": "transition None bulk", "file": "tests/e2e/local/three-products.p2-tour.spec.ts", "line": 798, "outcome": "PASS"}
+  ],
+  "self_verdict": "not_claimed"
+}

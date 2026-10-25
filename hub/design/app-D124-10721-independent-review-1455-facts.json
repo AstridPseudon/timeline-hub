@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "task": "D124 independent actual10721 verdict",
+  "terminal_id": "app-pin-84857c45-d73-p2-84857c45-submit-1025144552-10721",
+  "terminal_status": "FAIL",
+  "independent_verdict": "NO-GO; partialGO for five qualified PASS tails",
+  "counts": {
+    "original_pass": 5,
+    "original_fail": 2,
+    "original_not_run": 1,
+    "original_error": 0,
+    "readiness_pass": 1
+  },
+  "first_failed_predicates": [
+    {"case": "element edit", "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "line": 1052, "predicate": "dialog status contains applied", "backend_outcome": "UNKNOWN"},
+    {"case": "popup SWAP", "file": "tests/e2e/local/three-products.p2-popup.spec.ts", "line": 495, "predicate": "accepted response status equals 200", "received_status": 409, "safe_reason": "history_unavailable"},
+    {"case": "registerAsset", "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "line": 1133, "predicate": "serially blocked by earlier element failure", "status": "NOT_RUN"}
+  ],
+  "timing_verdict": "UNKNOWN",
+  "timing_reason": "No browser/helper safe idempotency-key hash join; candidate request is pending and lacks a request-wall denominator and response outcome.",
+  "source_custody_verified": true,
+  "four_clean_checkout_receipts_verified": true,
+  "no_raw_private_data_published": true,
+  "no_source_or_test_changes": true,
+  "rerun_performed": false
+}

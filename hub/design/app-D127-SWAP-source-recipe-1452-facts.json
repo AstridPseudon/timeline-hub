@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "task": "D127 finite READ ONLY source recipe handback",
+  "source_custody": {
+    "app_commit": "fe3309dba4520835a685f925468bff1acdc0506f",
+    "app_tree": "e55f0d65dca0c9f2ba3013df4cab999f314308b9",
+    "qualified_original": "3250",
+    "popup_source_sha256": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "worktree_clean": true,
+    "product_edits": false
+  },
+  "retained_submission": {
+    "normal_id": "app-pin-fe3309db-d73-p2-fe3309db-submit-1025140943-3250",
+    "preflight_status": "PASS",
+    "terminal_status": "FAIL",
+    "original_counts": {"pass": 5, "fail": 2, "not_run": 1, "error": 0},
+    "swap_public_status": 409,
+    "swap_public_tag": "history_unavailable",
+    "swap_private_binding": "UNKNOWN",
+    "raw_private_data_published": false
+  },
+  "recipe_status": {
+    "source_only": true,
+    "runtime_execution": false,
+    "browser_extraction": false,
+    "request_replay": false,
+    "credential_export": false,
+    "lower_guard_or_correlation_attribution": false
+  }
+}
