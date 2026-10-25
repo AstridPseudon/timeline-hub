@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/shared/components/ui/button.tsx';
 import { RadioGroup, RadioGroupItem } from '@/shared/components/ui/radio-group.tsx';
 import { SegmentedControl, SegmentedControlItem } from '@/shared/components/ui/segmented-control.tsx';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/components/ui/tooltip.tsx';
 import { runInstallPrompt, useInstallPromptSignals, useStandaloneStatus } from '@/shared/hooks/platformInstall/signals.ts';
 import { detectInstallScenario } from '@/pages/Home/installScenario.ts';
 import { LOCAL_SETUP, type WindowMode } from '@/shared/components/RuntimeConnection/copy.ts';
@@ -96,14 +97,13 @@ export function WelcomeRunMode({ onContinue, windowMode, setWindowMode, runMode,
                   <span className="rounded-full bg-muted px-2 py-px text-[11px] text-muted-foreground">Most convenient</span>
                 </span>
                 <RunModeMink scene="beach" active={runMode === 'hosted'} className={OPTION_MINK} />
-                <span className={OPTION_DESCRIPTION}><span className="relative block pl-3.5"><span aria-hidden="true" className="absolute left-0">•</span>Your files, models and agents run on your computer</span><span className="relative block pl-3.5"><span aria-hidden="true" className="absolute left-0">•</span>Editor stays up to date automatically</span></span>
+                <span className={OPTION_DESCRIPTION}><span className="relative block pl-3.5"><span aria-hidden="true" className="absolute left-0">•</span>Your files, models & agents stay on your computer, the app accesses via Chrome</span><span className="relative block pl-3.5"><span aria-hidden="true" className="absolute left-0">•</span>The app stays up to date automatically</span></span>
               </label>
               {runMode === 'hosted' && canInstall && <div className="space-y-2 px-3.5 pb-3.5 pl-[43px]">
                 <SegmentedControl value={windowMode} onValueChange={value => setWindowMode(value as WindowMode)} size="sm" aria-label="How to open Astrid">
-                  <SegmentedControlItem value="app-window">Install as app</SegmentedControlItem>
-                  <SegmentedControlItem value="browser-tab">Stay in browser</SegmentedControlItem>
+                  <Tooltip><TooltipTrigger asChild><SegmentedControlItem value="app-window">Install as app</SegmentedControlItem></TooltipTrigger><TooltipContent>{"Its own window and a Dock or taskbar icon. Nothing to download; it's still astrid.haus."}</TooltipContent></Tooltip>
+                  <Tooltip><TooltipTrigger asChild><SegmentedControlItem value="browser-tab">Stay in browser</SegmentedControlItem></TooltipTrigger><TooltipContent>Keep using it in this tab.</TooltipContent></Tooltip>
                 </SegmentedControl>
-                <p className="text-[13px] leading-5 text-muted-foreground">{windowMode === 'app-window' ? "Its own window and a Dock or taskbar icon. Nothing to download; it's still astrid.haus." : 'Keep using it in this tab.'}</p>
               </div>}
               {runMode === 'hosted' && installUnavailable && <p className="px-3.5 pb-3.5 pl-[43px] text-[13px] leading-5 text-muted-foreground">Not installed. You can install it any time from the install icon in the address bar.</p>}
               {runMode === 'hosted' && scenario === 'unsupported' && <p className="px-3.5 pb-3.5 pl-[43px] text-[13px] text-muted-foreground">Needs Chrome or Edge to reach your computer.</p>}
@@ -116,7 +116,7 @@ export function WelcomeRunMode({ onContinue, windowMode, setWindowMode, runMode,
                   <span className="rounded-full bg-muted px-2 py-px text-[11px] text-muted-foreground">Most control</span>
                 </span>
                 <RunModeMink scene="desk" active={runMode === 'local'} className={OPTION_MINK} />
-                <span className={OPTION_DESCRIPTION}><span className="relative block pl-3.5"><span aria-hidden="true" className="absolute left-0">•</span>App runs on your machine too</span><span className="relative block pl-3.5"><span aria-hidden="true" className="absolute left-0">•</span>No permissions and works offline. GitHub <a className="underline underline-offset-4 hover:text-foreground" href={LOCAL_SETUP.repoUrl} target="_blank" rel="noreferrer">here</a>.</span></span>
+                <span className={OPTION_DESCRIPTION}><span className="relative block pl-3.5"><span aria-hidden="true" className="absolute left-0">•</span>Everything runs on your machine</span><span className="relative block pl-3.5"><span aria-hidden="true" className="absolute left-0">•</span>No permissions and works offline. GitHub <a className="underline underline-offset-4 hover:text-foreground" href={LOCAL_SETUP.repoUrl} target="_blank" rel="noreferrer">here</a>.</span></span>
               </label>
             </div>
           </RadioGroup>

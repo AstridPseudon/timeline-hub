@@ -115,7 +115,7 @@ interface SegmentedControlItemProps
 }
 
 const SegmentedControlItem = React.forwardRef<HTMLButtonElement, SegmentedControlItemProps>(
-  ({ className, variant: itemVariant, colorScheme, size: itemSize, value, icon, children, ...props }, ref) => {
+  ({ className, variant: itemVariant, colorScheme, size: itemSize, value, icon, children, onClick, ...props }, ref) => {
     const context = React.useContext(SegmentedControlContext)
     if (!context) {
       throw new Error("SegmentedControlItem must be used within a SegmentedControl")
@@ -133,7 +133,10 @@ const SegmentedControlItem = React.forwardRef<HTMLButtonElement, SegmentedContro
         role="radio"
         aria-checked={isActive}
         data-state={isActive ? "active" : "inactive"}
-        onClick={() => onValueChange(value)}
+        onClick={(event) => {
+          onClick?.(event)
+          if (!event.defaultPrevented) onValueChange(value)
+        }}
         className={cn(segmentedControlItemVariants({ variant, colorScheme, size }), className)}
         {...props}
       >

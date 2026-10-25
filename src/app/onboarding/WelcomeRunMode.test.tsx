@@ -1,4 +1,7 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { useState } from 'react';
+import { TooltipProvider } from '@/shared/components/ui/tooltip.tsx';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const install = vi.hoisted(() => ({
@@ -22,7 +25,7 @@ vi.mock('@/shared/hooks/platformInstall/signals.ts', () => ({
 import { WelcomeRunMode, type RunMode, type WindowMode } from './WelcomeRunMode.tsx';
 
 function mount(onContinue: (phase: 'connection' | 'local') => void = install.onContinue, runMode: RunMode = 'hosted', windowMode: WindowMode = 'app-window', setWindowMode = vi.fn()) {
-  return render(<WelcomeRunMode windowMode={windowMode} setWindowMode={setWindowMode} onContinue={onContinue} runMode={runMode} setRunMode={vi.fn()} />);
+  return render(<TooltipProvider><WelcomeRunMode windowMode={windowMode} setWindowMode={setWindowMode} onContinue={onContinue} runMode={runMode} setRunMode={vi.fn()} /></TooltipProvider>);
 }
 
 beforeEach(() => {
@@ -41,22 +44,28 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); delete (navigator as Navigator & { clipboard?: Clipboard }).clipboard; });
 
 describe('run-mode choice', () => {
-  it('selects the hosted tile by default and explains the install-as-app choice in Chrome', () => {
+  it('selects the hosted tile by default and explains the install-as-app choice in Chrome', async () => {
     install.prompt = { prompt: vi.fn(), userChoice: Promise.resolve({ outcome: 'accepted' }) };
     mount();
     expect(screen.getByRole('radio', { name: 'Use the hosted version' })).toHaveAttribute('aria-checked', 'true');
     expect(screen.getByRole('radiogroup', { name: 'How to open Astrid' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Install as app' })).toHaveAttribute('aria-checked', 'true');
     expect(screen.getByRole('radio', { name: 'Stay in browser' })).toBeInTheDocument();
-    expect(screen.getByText("Its own window and a Dock or taskbar icon. Nothing to download; it's still astrid.haus.")).toBeInTheDocument();
+    const user = userEvent.setup();
+    expect(screen.queryByText("Its own window and a Dock or taskbar icon. Nothing to download; it's still astrid.haus.")).not.toBeInTheDocument();
+    await user.hover(screen.getByRole('radio', { name: 'Install as app' }));
+    expect(await screen.findByText("Its own window and a Dock or taskbar icon. Nothing to download; it's still astrid.haus.")).toBeInTheDocument();
   });
 
-  it('explains that the browser choice keeps using this tab', () => {
+  it('explains that the browser choice keeps using this tab', async () => {
     install.prompt = { prompt: vi.fn(), userChoice: Promise.resolve({ outcome: 'accepted' }) };
     const setWindowMode = vi.fn();
     mount(undefined, 'hosted', 'browser-tab', setWindowMode);
     expect(screen.getByRole('radio', { name: 'Stay in browser' })).toHaveAttribute('aria-checked', 'true');
-    expect(screen.getByText('Keep using it in this tab.')).toBeInTheDocument();
+    const user = userEvent.setup();
+    expect(screen.queryByText('Keep using it in this tab.')).not.toBeInTheDocument();
+    await user.hover(screen.getByRole('radio', { name: 'Stay in browser' }));
+    expect(await screen.findByText('Keep using it in this tab.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Continue in this tab' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Continue in this tab' }));
     expect(install.onContinue).toHaveBeenCalledWith('connection');
@@ -64,11 +73,28 @@ describe('run-mode choice', () => {
     expect(setWindowMode).toHaveBeenCalledWith('app-window');
   });
 
+  it('switches the run-mode choice on click even with the hover tooltips attached', async () => {
+    install.prompt = { prompt: vi.fn(), userChoice: Promise.resolve({ outcome: 'accepted' }) };
+    function ModeHarness() {
+      const [mode, setMode] = useState<WindowMode>('app-window');
+      return <TooltipProvider><WelcomeRunMode windowMode={mode} setWindowMode={setMode} onContinue={install.onContinue} runMode="hosted" setRunMode={vi.fn()} /></TooltipProvider>;
+    }
+    render(<ModeHarness />);
+    const user = userEvent.setup();
+    expect(screen.getByRole('radio', { name: 'Install as app' })).toHaveAttribute('aria-checked', 'true');
+    await user.hover(screen.getByRole('radio', { name: 'Stay in browser' }));
+    await user.click(screen.getByRole('radio', { name: 'Stay in browser' }));
+    expect(screen.getByRole('radio', { name: 'Stay in browser' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('radio', { name: 'Install as app' })).toHaveAttribute('aria-checked', 'false');
+    await user.click(screen.getByRole('radio', { name: 'Install as app' }));
+    expect(screen.getByRole('radio', { name: 'Install as app' })).toHaveAttribute('aria-checked', 'true');
+  });
+
   it('keeps the local option description short and links here to the editor repository', () => {
     mount(() => undefined, 'local');
 
     const localLabel = screen.getByRole('radio', { name: 'Run app on your computer' }).closest('label');
-    expect(localLabel?.textContent).toContain('•App runs on your machine too•No permissions and works offline. GitHub here.');
+    expect(localLabel?.textContent).toContain('•Everything runs on your machine•No permissions and works offline. GitHub here.');
 
     const link = screen.getByRole('link', { name: 'here' });
     expect(link).toHaveAttribute('href', 'https://github.com/banodoco/astrid-app');
@@ -186,7 +212,7 @@ describe('run-mode choice', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Install and continue' }));
     expect(await screen.findByText('Astrid opened in its own window')).toBeInTheDocument();
     install.standalone = true;
-    view.rerender(<WelcomeRunMode windowMode="app-window" setWindowMode={vi.fn()} onContinue={install.onContinue} runMode="hosted" setRunMode={vi.fn()} />);
+    view.rerender(<TooltipProvider><WelcomeRunMode windowMode="app-window" setWindowMode={vi.fn()} onContinue={install.onContinue} runMode="hosted" setRunMode={vi.fn()} /></TooltipProvider>);
     await vi.waitFor(() => expect(install.onContinue).toHaveBeenCalledWith('connection'));
     expect(screen.queryByText('Astrid opened in its own window')).not.toBeInTheDocument();
   });

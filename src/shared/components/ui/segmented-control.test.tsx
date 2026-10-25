@@ -23,6 +23,22 @@ describe('SegmentedControl', () => {
     expect(onValueChange).toHaveBeenCalledWith('videos');
   });
 
+  it('runs a passed onClick and still selects the item', () => {
+    const onValueChange = vi.fn();
+    const onClick = vi.fn();
+
+    render(
+      <SegmentedControl value="images" onValueChange={onValueChange}>
+        <SegmentedControlItem value="images">Images</SegmentedControlItem>
+        <SegmentedControlItem value="videos" onClick={onClick}>Videos</SegmentedControlItem>
+      </SegmentedControl>,
+    );
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Videos' }));
+    expect(onClick).toHaveBeenCalledOnce();
+    expect(onValueChange).toHaveBeenCalledWith('videos');
+  });
+
   it('applies variant and size classes', () => {
     render(
       <SegmentedControl value="a" onValueChange={() => {}} variant="retro" size="sm" data-testid="control">
