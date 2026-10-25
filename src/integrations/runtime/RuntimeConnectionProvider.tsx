@@ -258,6 +258,11 @@ export function RuntimeConnectionProvider({
     rememberPinokioManaged(outcome.managedByPinokio);
     setManagedByPinokio(outcome.managedByPinokio);
   }, [outcome]);
+  // A fresh health response is authoritative immediately. The persisted value is
+  // only the fallback for states (such as not_running) where this probe has no provenance.
+  const currentManagedByPinokio = outcome && 'managedByPinokio' in outcome
+    ? outcome.managedByPinokio
+    : managedByPinokio;
 
   const mounted = useRef(true);
   const inFlight = useRef<AbortController | null>(null);
@@ -454,7 +459,7 @@ export function RuntimeConnectionProvider({
         state: { status: 'connected', realm: { realm_id: '', display_name: '' } },
         isConnected: true,
         connectedBefore: true,
-        managedByPinokio,
+        managedByPinokio: currentManagedByPinokio,
         isBooting: false,
         isChecking: false,
         realmName: null,
@@ -473,7 +478,7 @@ export function RuntimeConnectionProvider({
       askUnanswered,
       confirmPermission,
       connectedBefore: connectedBeforeAtMount,
-      managedByPinokio,
+      managedByPinokio: currentManagedByPinokio,
       localServiceOutOfDate,
       setLocalServiceOutOfDate,
     } as const;
@@ -498,7 +503,7 @@ export function RuntimeConnectionProvider({
       };
     }
     return { ...notConnected, state: { status: 'connecting' }, isBooting: outcome === null };
-  }, [gated, requireLocalNetworkPermission, outcome, permission, isChecking, connectedBeforeAtMount, managedByPinokio, connect, failedReadings, scenario, localServiceOutOfDate, permissionLost, askUnanswered, confirmPermission]);
+  }, [gated, requireLocalNetworkPermission, outcome, permission, isChecking, connectedBeforeAtMount, currentManagedByPinokio, connect, failedReadings, scenario, localServiceOutOfDate, permissionLost, askUnanswered, confirmPermission]);
 
   return <RuntimeConnectionContext.Provider value={value}>{children}</RuntimeConnectionContext.Provider>;
 }

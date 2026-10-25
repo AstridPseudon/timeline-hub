@@ -135,6 +135,16 @@ function PanelProbe() {
   </>;
 }
 
+function RecordingPanelProbe({ values }: { values: RuntimeConnectionValue[] }) {
+  const connection = useRuntimeConnection();
+  latest = connection;
+  values.push(connection);
+  return <>
+    <RuntimeConnectionPanel connection={connection} />
+    <span data-testid="status">{connection.state.status}</span>
+  </>;
+}
+
 function RecordingProbe({ states }: { states: RuntimeConnectionValue['state'][] }) {
   const connection = useRuntimeConnection();
   latest = connection;
@@ -238,10 +248,18 @@ describe('granted', () => {
   it('uses Pinokio update instructions when an incompatible Runtime reports Pinokio', async () => {
     const gateway = fakeGateway();
     gateway.routes['/v1/health'] = () => json({ status: 'ok', schema_digest: 'sha256:old-runtime', install: { managed_by: 'pinokio' } });
-    renderPanelProvider(gateway, fakePermissions('granted').permissions, { pollIntervalMs: 600_000 });
+    // Simulate a changed install: this browser last saw a non-Pinokio Runtime.
+    window.localStorage.setItem(PINOKIO_STORAGE_KEY, '0');
+    const values: RuntimeConnectionValue[] = [];
+    render(
+      <RuntimeConnectionProvider gated requireLocalNetworkPermission fetchImpl={gateway.fetchImpl} permissions={fakePermissions('granted').permissions} pollIntervalMs={600_000}>
+        <RecordingPanelProbe values={values} />
+      </RuntimeConnectionProvider>,
+    );
     await waitFor(() => expect(status()).toBe('update_needed'));
-    expect(window.localStorage.getItem(PINOKIO_STORAGE_KEY)).toBe('1');
-    expect(screen.getByText(CONNECTION_COPY.updateNeeded.pinokioSentence)).toBeInTheDocument();
+    expect(values.find((value) => value.state.status === 'update_needed')?.managedByPinokio).toBe(true);
+    expect(await screen.findByText(CONNECTION_COPY.updateNeeded.pinokioSentence)).toBeInTheDocument();
+    await waitFor(() => expect(window.localStorage.getItem(PINOKIO_STORAGE_KEY)).toBe('1'));
     expect(screen.queryByRole('button', { name: /Copy command/ })).not.toBeInTheDocument();
   });
 
