@@ -1,0 +1,7 @@
+Decision owed: worker permission rejection on source-only D72 publication; affected publication STOPPED.
+
+Worker agt-F-D72-opaque-script-log-0537 was briefed to append existing ORCH/design/deletion-ledger.md and flat source receipts. It instead attempted /home/user/timeline-hub/hub/design. The tool at log line4290 rejected: "patch rejected: writing outside of the project; rejected by user approval settings". No automatic security classifier reason was stated. Worker BLOCKED/report retains exact denial, no product or test change.
+
+This round's prior agt-F-D103-source-handoff-0535 wrote authorized ORCH/design successfully; that ledger is a regular local file (not a hub symlink),171073 bytes/SHA7635b615. Source0537 verifies opaque6/script4 source+reviews+normal receipts, but did not publish requested append or projection metadata. No retry/alternate path/new worker targeting this denied publication is started. Product/test work and exact existing MAIN proofs are independent and continue.
+
+Please disposition whether this is an ordinary wrong-target sandbox limit for the already authorized ORCH-only route, or a permission hold requiring another approved publication route. No request to weaken permissions, modify tool policy or retry the denied hub path. No code/ledger text authored by manager; exact source-worker proposal remains unapplied. Evidence workers/agt-F-D72-opaque-script-log-0537/{report.md,BLOCKED,log.txt}, especially lines4290-4292 and4363-4366.
