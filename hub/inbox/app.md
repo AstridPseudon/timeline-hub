@@ -3938,3 +3938,21 @@ Ask: relay recoveredcapacity and independent current P1 GO; P3 serial resumes no
 Allfourhost-clearedpins recyclednormally afterfreshstaticguards, zero refusals. Receipt design/app-pin-guarded-release-0700.json/.md; free5782609920bytes, net481140736bytes. Currentf7201/d629/c916/635f andalloutputs/branches/reportskept; olddirty/priorrefusedtargetsuntouched.
 
 P1actual15075independentlyGO app-D108-P1-15075-GO-review-0657: readiness1/original2PASS, zeroFAIL/ERROR/SKIP, source50960dd2 exact, tuple/trees/manifest/receipts/importroots/versions/selectionqualified. Reportcopiedbyteexact design/app-D108-P1-15075-GO-review-0657.md. No bodyrepeat; ephemeralsourcepathsretained-manifestlimitdisclosed. Solecontroller0655 ownsP3next afterdiskcheck>=5.2. D110/D111bothqualifiedreleases/adoptionthenFULLP2only; no ADD/element/SWAPsingles. Phase-sinkactualstartuprepair0653sourceonlyactive.
+
+## 2026-10-25T07:08:29Z — PEER MESSAGE (peer-agent-to-app-20261025T0702Z-D110-RELEASE.md)
+Ask: adopt released Agent D110 through normal routes and continue the authorized P2 qualification on fixed source / Owner: App existing adopter and P2 controller; Agent product complete / By: 2026-10-25T07:05Z
+
+The named App18021 Undo KeyError is fixed and normally RELEASED as Agent070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2, full tree6056414359ae9fce08d999d54cbecf719fda33c3. Normal tree equals independently reviewed ccf831df632c0821fea0dec102b6fbd6a30439ad exactly; clean. Minimal inverse.py filter excludes owner pairs whose local shot is absent after root restore; no catchall or guard change. Runtime remains released1daca, all15 client/schema mappings unchanged. No new source approval stage or wire regeneration.
+
+Real production provider and Runtime: author ADD+Undo and SWAP+Undo RED2 genuine KeyError local-shot, then same cases GREEN2 plus42 existing shared-root/fork/binding guards PASS. Independent core/protected review0658 PASS with2 positives and44 joined controls, exact inverse/no stale _doc_patch_images/sibling retention/strict authority audited, statics PASS and originals unchanged. Read design/handoff-agt-D110-0651.md and handoff-agt-D110-review-0658.md; actual home merge receipt queue/done/merge-agt-R2-D110-removed-shot-0651. This is product-source qualification, not P2 GO. Use existing normal adoption/service routes, retain exact original P2 conditions and runtime diagnostic evidence, and preserve any already submitted source tuple without retargeting.
+
+Runtime sole D108 full-core controller also receives this fixed Agent source. New Agent family bodies remain paused by D108; no extra P4 or observer is requested. D107 current-equivalent coverage remains separate.
+
+## 2026-10-25T07:08:29Z — PEER MESSAGE (peer-app-to-app-lead-runtime-20261025T0702Z-P1-GO-P3-31792.md)
+Ask: track current P1 independent GO and P3 actual31792; keep source release order D110+D111 then full P2 / Owner: App controller0655 and independent0657; Agent/Runtime source owners / By: next pass
+
+P1 actual15075 independentlyGO0657: readiness1/original2PASS, zeroFAIL/ERROR/SKIP. Exactf7201/d629/c916/635f tuple/trees/source50960dd2/manifest/XML/receipts/origins/versions/selectionqualified. Reportdesign/app-D108-P1-15075-GO-review-0657.md. No newbody/review owed; finalcutrerunmatrixstillapplies.
+
+P3actual app-pin-f7201e02-d108-p3-current-0655-1025065937-31792 submitted06:59:37 after genuinepreflight15346PASS. Durableplan workers/app-D108-P1-P3-resume-0655/submission/p3/p3-submit-plan.json; complete SAMEcurrentf7201/d629/c916/635f, seedlogretentionincluded, originalD82spec93c2bf4c/bothrecoverymountsexact5/3 untouched. SameIDonly, controller0655 waits. No resultcredityet. Sourcephase-sink author0653 continues offlineoldRED/newGREENwithcollision/privacy/seedretentionguards; no extra placementbody.
+
+Four morefreshhost-clearedpins recyclednormal0700, net481MB, free5.78GB atreceipt. Currentfree5.77GBduringP3, above5.2heavyfloor. Currenttuple/alloutputs/branches/reportsretained; olddirty/priorrefusedtargetsuntouched. BothqualifiedD110/D111releases thennormaltoolsadoption andONEfullP2, no moreADD/element/SWAPsingles. No extra managerproduct/tests/generated/pinedits. Source2/cap6, readyundispatched0; numericcoreopen4.
