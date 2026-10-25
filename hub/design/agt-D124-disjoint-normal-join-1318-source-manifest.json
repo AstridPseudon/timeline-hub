@@ -1,0 +1,162 @@
+{
+  "task": "D124",
+  "normal_head": "0b586e4b56cffbcd066ea8792adf46b660f5395a",
+  "donor_commit": "07ff6c71d301d6cdc230664c4ed2cc4b4bf2e6e5",
+  "donor_parent": "3ab324c891d3121c46d4aff0a339468a9339e0f2",
+  "d116_seed_commit": "0643b073a2b101f484ac3836dbbb796d86505fe8",
+  "product_join_scope": [
+    "astrid/sdk/timeline/_doc_patch_materialize.py",
+    "astrid/sdk/timeline/_recording.py",
+    "tests/sdk/test_d124_shared_custody.py",
+    "tests/editing_conformance/native_word_anchor_fixture.py",
+    "tests/editing_conformance/test_native_word_anchor.py",
+    "tests/editing_conformance/test_word_binding_recipe.py"
+  ],
+  "target_blobs": [
+    {
+      "path": "astrid/sdk/timeline/_doc_patch_materialize.py",
+      "source": "07ff6c71d301d6cdc230664c4ed2cc4b4bf2e6e5",
+      "base_sha256": "68b7494031f739344826d21d690fcf22836c5bcfe5295f736432552fcd86ad2f",
+      "source_sha256": "fa63d5dc7e3c5645d0225d0146a8b7b820cf3295e6fc87ff02b0aff918aeb252",
+      "current_sha256": "fa63d5dc7e3c5645d0225d0146a8b7b820cf3295e6fc87ff02b0aff918aeb252"
+    },
+    {
+      "path": "astrid/sdk/timeline/_recording.py",
+      "source": "07ff6c71d301d6cdc230664c4ed2cc4b4bf2e6e5",
+      "base_sha256": "85aefe0328a7c9787a18c2b7e19eb8b3e4220a1c53627d1e16102b42b29c8b43",
+      "source_sha256": "3940d0296f55bfc2b7cff6f4998adc4a6caf3290c1fcae10ddea813edc50f7e4",
+      "current_sha256": "3940d0296f55bfc2b7cff6f4998adc4a6caf3290c1fcae10ddea813edc50f7e4"
+    },
+    {
+      "path": "tests/sdk/test_d124_shared_custody.py",
+      "source": "07ff6c71d301d6cdc230664c4ed2cc4b4bf2e6e5",
+      "base_sha256": null,
+      "source_sha256": "2efc1d01807dbe7a312a7b7ccf5f13a4e1c9a42c5ab4cbcd61e1829561e7ced1",
+      "current_sha256": "2efc1d01807dbe7a312a7b7ccf5f13a4e1c9a42c5ab4cbcd61e1829561e7ced1"
+    },
+    {
+      "path": "tests/editing_conformance/native_word_anchor_fixture.py",
+      "source": "0643b073a2b101f484ac3836dbbb796d86505fe8",
+      "base_sha256": "e0b170149fa08cd2bd5655af505b4b96cc0faccc5dceba51c50ee2cbdcb1c91a",
+      "source_sha256": "7da0e3db8ad190251f0266918a6d01771b235c748d00027c6e70a7d370f321e8",
+      "current_sha256": "7da0e3db8ad190251f0266918a6d01771b235c748d00027c6e70a7d370f321e8"
+    },
+    {
+      "path": "tests/editing_conformance/test_native_word_anchor.py",
+      "source": "0643b073a2b101f484ac3836dbbb796d86505fe8",
+      "base_sha256": "ab07f5b9cda3a42d0c9273917b46d9486c39b453b979d2ad5d39df5528d4179f",
+      "source_sha256": "8bfb67093dda0b84b1c8ff6b18db52ed727e37a111c85d4d1c4796519e524ea8",
+      "current_sha256": "8bfb67093dda0b84b1c8ff6b18db52ed727e37a111c85d4d1c4796519e524ea8"
+    },
+    {
+      "path": "tests/editing_conformance/test_word_binding_recipe.py",
+      "source": "0643b073a2b101f484ac3836dbbb796d86505fe8",
+      "base_sha256": "f23e227bce165d3c7ada70d9742c1e6f36159823c845df9903903f71575228bd",
+      "source_sha256": "0c35eb6bb61f7f1990bd7b83270dc5b4c4ce30bb31a6d3b922750f4c32ff5b04",
+      "current_sha256": "0c35eb6bb61f7f1990bd7b83270dc5b4c4ce30bb31a6d3b922750f4c32ff5b04"
+    }
+  ],
+  "donor_changed_paths": [
+    [
+      "astrid/sdk/timeline/_commit_patch.py",
+      "held-runtime-owner; evidence only"
+    ],
+    [
+      "astrid/sdk/timeline/_doc_patch_materialize.py",
+      "imported-agent-owned"
+    ],
+    [
+      "astrid/sdk/timeline/_recording.py",
+      "imported-agent-owned"
+    ],
+    [
+      "astrid/sdk/timeline/commit.py",
+      "excluded; final donor bytes already exact normal"
+    ],
+    [
+      "tests/editing_conformance/native_word_anchor_fixture.py",
+      "imported-exact-D116"
+    ],
+    [
+      "tests/editing_conformance/test_native_word_anchor.py",
+      "imported-exact-D116"
+    ],
+    [
+      "tests/editing_conformance/test_word_binding_recipe.py",
+      "imported-exact-D116"
+    ],
+    [
+      "tests/sdk/test_d124_shared_custody.py",
+      "imported-additive"
+    ]
+  ],
+  "protected_runtime_owner_blobs": [
+    {
+      "path": "astrid/sdk/timeline/commit.py",
+      "current_sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+      "normal_sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3"
+    },
+    {
+      "path": "astrid/sdk/timeline/_commit_preview.py",
+      "current_sha256": "9380dd2e3eb9c041b8515e20d979e2cce4aa0ca9cbfeed81f40c315357f77c36",
+      "normal_sha256": "9380dd2e3eb9c041b8515e20d979e2cce4aa0ca9cbfeed81f40c315357f77c36"
+    },
+    {
+      "path": "astrid/sdk/timeline/_commit_patch.py",
+      "current_sha256": "76224a62434ade240e298bf6a1d14b64bdc2ed650923c2160cf22bdbb23a4a50",
+      "normal_sha256": "76224a62434ade240e298bf6a1d14b64bdc2ed650923c2160cf22bdbb23a4a50"
+    }
+  ],
+  "preserved_non_target_normal_blobs": [
+    [
+      "astrid/installer/service.py",
+      "a916575d476a7dc60501151ad824aa778683cb5b",
+      "aaa5c8cb524a385cdb7b9b811d5ab9e5e9d84853"
+    ],
+    [
+      "astrid/packs/rendering/docs/scripts/timeline_document.py",
+      "0984594f6998b321b2e9e35ac5b485199158ddfa",
+      "63d6962333ae3462e01440a41fe741523504e74c"
+    ],
+    [
+      "astrid/sdk/timeline/commit.py",
+      "0ab8cb16761c9ce6a971fae3e8600f35f391760e",
+      "3ca7c6e970cc162cef30989ad9cb5e0e2a61715c"
+    ],
+    [
+      "astrid/sdk/timeline/native_text_binding.py",
+      "4314cb7af62896a2a34df8e89985899dc01d671e",
+      "adbbbf032698e00e34fc4f0cb97e6b3751aae405"
+    ],
+    [
+      "tests/editing_conformance/test_captured_redo_media_closure.py",
+      "87546f29b870e02ffad7a9c896a40e8ff4b0b959",
+      "78cb891c75e1385394dd82cf9e0c88305e97c87b"
+    ],
+    [
+      "tests/editing_conformance/test_commit_document_input_capture.py",
+      "b3f6000d7b3d437a8cda3e493815c367c1b710a4",
+      "e5bbc314d3fe68d1ddb7c42e2dccc2059bbe9a01"
+    ],
+    [
+      "tests/fixtures/installer/task.xml",
+      "e5d52c58ea594a3359cd4219aef0ceb923ad40bf",
+      "d7c4b0998ecb01af6ac5db279637f93567823960"
+    ],
+    [
+      "tests/sdk/test_native_text_binding_authority_fields.py",
+      null,
+      "a9a33d07f0e30a90df6d235be9bc6a3d2081449e"
+    ],
+    [
+      "tests/test_installer_platforms.py",
+      "55d0bbfd4200756d1a5322ed63e52ada32a44560",
+      "ac69059c2b31d5e2ce968e697b1df68e5ed40232"
+    ]
+  ],
+  "notes": [
+    "No whole-branch merge, pin, Git write, deletion, or semantic authoring.",
+    "Non-target normal blobs are the nine files changed by the normal join relative to donor parent; they remain exact at HEAD.",
+    "The preserved_non_target_normal_blobs third field is the current HEAD Git blob; the first is donor-parent blob. Added-file base is null."
+  ]
+}
