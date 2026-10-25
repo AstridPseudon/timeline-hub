@@ -1,0 +1,9 @@
+scope	count	status	authority	hash_or_rule
+executed161	161	IMMUTABLE_NOT_REBOUND	rt-D86-successor161-exact-home-0254	set difference only; no unchanged retry
+later102	102	IMMUTABLE_RECEIVING_SET	rt-D86-later-receipts-0256	set difference only; no count sum
+D91-shared-inverse	10	SCHEDULED_ELSEWHERE	inputs/scheduled-elsewhere.tsv	no actual result; excluded from this packet
+new-exact10	10	SOURCE_READY_ONLY	inputs/membership.tsv	membership governs; inverse7 plus D92 compound3
+original550	550	PRESERVED	flat normal design original550 rollup/dispositions	abea44dbd2294e2e8ed1a8634618a6bb0fa85590619487002a1e933e45bb88e2
+NO_JUNIT_CASE	23	PRESERVED	flat normal design unexecuted-23	7f70512cfdf3d6db36c5c59106805beae7a73391803eb5d161683d8d4f98dfca
+D87-ledger-retirements	25	PRESERVED	inverse7 review-log0239 append-CAS	original ledger and retirements unchanged
+held-predicates	PRESERVED	PRESERVED	fd86 prior packet boundary records	no held row is promoted by count

@@ -1,0 +1,9 @@
+{
+  "method": "ast.parse and compile(source, filename, exec)",
+  "source_files": [
+    {"path": "tests/editing_conformance/test_inverse_stage_runtime_regressions.py", "sha256": "6c02629fded13bbd97a2cd62d5954083c04cbead04a67e6b30df500f2a4fc1f1", "functions_present": true, "compile": true},
+    {"path": "tests/timeline/test_authoring_media.py", "sha256": "dd18f9bce71355a655413c6534c66300e29c2da1e42ff59bc3515b5727f8f634", "functions_present": true, "compile": true}
+  ],
+  "selected_count": 10,
+  "status": "PASS_STATIC_ONLY"
+}

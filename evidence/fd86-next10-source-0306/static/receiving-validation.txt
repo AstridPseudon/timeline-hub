@@ -1,0 +1,16 @@
+[source hashes]
+PENDING fresh manager four-repo custody; current normal Agent hashes recorded in inputs/source-hashes.tsv.
+[source ancestry]
+PASS: e6ffc8f62b and 57ad7d2987 are ancestors of current normal Agent 562ee30b6e.
+[AST/in-memory compile]
+PASS: all ten selectors resolve to existing functions; both selected source files compile in memory.
+[set accounting]
+PASS: ten exact members; disjoint from executed161, later102, and D91 scheduled10 by selector-set comparison.
+[preservation]
+PASS: original550, 23 NO_JUNIT_CASE rows, D87 ledger/retirements, and held predicates remain boundary-preserved.
+[path-sensitive preflight]
+PENDING: no fresh preflight was run.
+[body]
+PENDING: no test collection or body execution was run.
+[behavior]
+OPEN: inverse7 MAIN7 and D92 compound3 MAIN3.

@@ -1,0 +1,8 @@
+agent fd86-next10-source-0306 env -i HOME=/root LANG=C.UTF-8 LC_ALL=C.UTF-8 PYTHONNOUSERSITE=1 \
+  P4_LAUNCHER=<FRESH_AGENT_CHECKOUT>/tools/p4-d73-pinned-launch.sh \
+  P4_D73_MANIFEST=<FRESH_RENDERED_FOUR_REPO_D73_MANIFEST> \
+  P4_D73_EVIDENCE=<FRESH_MAIN_EVIDENCE_DIRECTORY> \
+  P4_D73_REQUEST_ID=<FRESH_MAIN_AFFECTED_BATCH_REQUEST_ID> \
+  MAIN_BATCH_SELECTOR_FILE=<THIS_PACKET>/inputs/selector-argv.txt \
+  MAIN_BATCH_EXPECTED_SELECTOR_COUNT=10 \
+  /bin/bash --noprofile --norc -c 'set -eu; exec <THIS_PACKET>/route/main-affected-batch-recipe.sh'
