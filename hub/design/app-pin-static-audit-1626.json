@@ -1,0 +1,13 @@
+{
+  "utc": "2026-10-25T16:25:56.862695+00:00",
+  "pin": "app-pin-84857c45",
+  "path": "/home/user/work/wt/app-pin-84857c45",
+  "pin_head": "84857c45347539c7820bb054b69e2e5ad4079081",
+  "normal_app": "d4e5284dfcc20801977cef12253b12f9cc8798fd",
+  "clean": true,
+  "running_marker": false,
+  "KEEP_unchanged": true,
+  "active_static_references": [],
+  "host_process_use": "UNKNOWN; lead requested",
+  "recycle_attempted": false
+}

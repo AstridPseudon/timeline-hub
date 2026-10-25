@@ -1,0 +1,14 @@
+{
+  "utc": "2026-10-25T16:24:34.793525+00:00",
+  "normal_app": "d4e5284dfcc20801977cef12253b12f9cc8798fd",
+  "normal_tree": "5efca939546f30b039cb9cacba7a29d7db690f2a",
+  "tested_adopter": "fcb8b7e563d959c9b34e402df32b666e0b6f0414",
+  "tested_tree": "5efca939546f30b039cb9cacba7a29d7db690f2a",
+  "whole_tree_equal": true,
+  "queue_receipt": "merged tl/app-U4p-R2-diagnostic-adoption-1615 into app tl/integration -> d4e5284dfc",
+  "runtime_release": "ab1e4f6141987706132916e2da16477f5a019464",
+  "source_checks": "author1615 all requested checks PASS; vendor17/artifact3, mappings14 and protected8 exact; supportedNode20",
+  "historical_tour_10721_app": "84857c45347539c7820bb054b69e2e5ad4079081",
+  "tour_or_recovery_claim": false,
+  "D130": "held; unrelated qualified source only"
+}

@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "task": "D127 first return source custody",
+  "base_commit": "453b3e6f92045980219ec4948419ee5ad25c817d",
+  "candidate_commit": "b81c0ab26df66c7e6f4656104a02e001224b3ffd",
+  "candidate_tree": "4fc171c1639d52df2fe0996f34311fa43ae42654",
+  "current_parent": "b81c0ab26df66c7e6f4656104a02e001224b3ffd",
+  "current_tree": "uncommitted; not materialized",
+  "files": {
+    "tests/helpers/p2_commit_phase_capture.py": {
+      "base_blob": "e0e239ea9ef6bb99be5f3e1e0819842a779afb50",
+      "candidate_blob": "6984ac1da77f1b499703cfac45d27149eddcbdae",
+      "base_sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760",
+      "candidate_sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+      "current_sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+      "changed_since_candidate": false
+    },
+    "tests/test_p2_commit_phase_capture.py": {
+      "base_blob": "aa586f3b9c984a2ce7771e7b097d694b090f3896",
+      "candidate_blob": "5319d1073b86e76f8b7e21cb12d87c3701a9c986",
+      "base_sha256": "1a1b475e8095a8a70cd5d7f5c884b6d68a37d19d62807d70d982f5224025aff9",
+      "candidate_sha256": "fe3842291d1271e8291ce121e57343d35f84bc70a8bbb12b5464fe81d0a6f9ef",
+      "current_sha256": "d6b5703492b4b4d399ee1d5d7350faae615a01448df70229efc3cc03a1ecff18",
+      "changed_since_candidate": true,
+      "candidate_to_current_diff": "2 insertions, 3 deletions: restore receipt assertion AST; lifecycle additive"
+    }
+  },
+  "diff_scope": {
+    "authorized_files_only": true,
+    "current_vs_base_insertions": 156,
+    "current_vs_base_deletions": 19,
+    "unauthorized_files": [],
+    "product_or_activation_edits": false
+  },
+  "caller_chain_read_only": [
+    "App persisted outbox",
+    "App commit session",
+    "App registered commitTimeline provider",
+    "Runtime _dispatch -> _timeline_commit -> provider"
+  ],
+  "privacy_bounds": {
+    "raw_payloads": false,
+    "raw_keys": false,
+    "credentials": false,
+    "private_urls": false,
+    "sink_mode": "0600",
+    "max_requests": 8,
+    "max_events": 128,
+    "max_bytes": 65536,
+    "sampling_interval_ms": 20,
+    "top_frames": 10,
+    "phase_count_cap": 32
+  },
+  "central_receipt_reused": {
+    "request_id": "app-D127-leaf-retention-author-1606-targeted-1025160952-28551",
+    "status": "pass",
+    "result": "23 passed in 3.46s"
+  }
+}

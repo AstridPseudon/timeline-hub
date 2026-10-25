@@ -1,0 +1,54 @@
+{
+  "schema_version": 2,
+  "task": "D127 first return",
+  "decision": "frozen helper; four strict contract migrations; one unnecessary assertion rewrite restored",
+  "source": {
+    "base_commit": "453b3e6f92045980219ec4948419ee5ad25c817d",
+    "candidate_commit": "b81c0ab26df66c7e6f4656104a02e001224b3ffd",
+    "candidate_tree": "4fc171c1639d52df2fe0996f34311fa43ae42654",
+    "authorized_files": [
+      "tests/helpers/p2_commit_phase_capture.py",
+      "tests/test_p2_commit_phase_capture.py"
+    ],
+    "helper_sha256": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+    "test_sha256": "d6b5703492b4b4d399ee1d5d7350faae615a01448df70229efc3cc03a1ecff18",
+    "helper_byte_exact_candidate": true,
+    "helper_changed_this_return": false
+  },
+  "assertion_custody": {
+    "old_test_functions": 19,
+    "old_assertions_actual": 160,
+    "current_test_functions": 23,
+    "current_assertions": 181,
+    "new_adversarial_tests": [
+      "test_nearest_safe_leaf_is_projected_separately_from_routing_frames",
+      "test_leaf_projection_counter_and_output_remain_bounded",
+      "test_return_without_response_is_not_buffer_completion_or_request_completion",
+      "test_raised_dispatch_is_labeled_without_inventing_a_duration"
+    ],
+    "old_tests_deleted_or_skipped": false,
+    "weakening_or_optionalization": false
+  },
+  "preserved_controls": [
+    "equal/no-write",
+    "bounds",
+    "privacy",
+    "lifecycle",
+    "watchdog",
+    "0600 sink",
+    "8 requests",
+    "128 events",
+    "65536 bytes",
+    "20ms sampling",
+    "10 top frames",
+    "32 phase count cap"
+  ],
+  "central_receipt_reused": {
+    "request_id": "app-D127-leaf-retention-author-1606-targeted-1025160952-28551",
+    "status": "pass",
+    "tree": "4fc171c1639d52df2fe0996f34311fa43ae42654",
+    "result": "23 passed in 3.46s",
+    "basis": "helper byte-exact unchanged"
+  },
+  "app_validator_separate_owner": true
+}

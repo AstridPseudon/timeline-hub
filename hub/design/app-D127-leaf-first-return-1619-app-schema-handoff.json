@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "task": "D127 App strict validator handoff",
+  "helper_sha256_frozen": "4ee0424b63f1f9847995a605dc1050ad7cb8ca75f4d64b8c36d851cfe723f41e",
+  "old_helper_sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760",
+  "old_app_accepted_hashes": [
+    "a17a92115661fcef13b49169504ad8726e6f0cdce66b195128b14477fa76a4",
+    "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760"
+  ],
+  "keysets": {
+    "summary": [
+      "schema_version",
+      "request",
+      "phase",
+      "last_phase",
+      "phases",
+      "lifecycle",
+      "durations_ms",
+      "utc",
+      "at_ms",
+      "capture_anchor",
+      "capture_namespace",
+      "pid",
+      "birth_ticks",
+      "method",
+      "route_template",
+      "idempotency_key_sha256",
+      "dispatch_start_ms",
+      "sampling",
+      "unknown_boundaries",
+      "unsupported_boundaries",
+      "truncated",
+      "retention"
+    ],
+    "phase_state": [
+      "status",
+      "count",
+      "start_ms",
+      "end_ms"
+    ],
+    "arrival_state": [
+      "status",
+      "count",
+      "start_ms",
+      "end_ms",
+      "reason"
+    ],
+    "duration": [
+      "dispatch_queue_ms",
+      "handler_ms",
+      "dispatch_total_ms",
+      "dispatch_to_completion_wall_ms",
+      "provider_wall_ms",
+      "response_write_wall_ms",
+      "execution_lock_wait_ms",
+      "caller_receipt_ms"
+    ],
+    "sampling": [
+      "sampling_interval_ms",
+      "sample_total",
+      "lost_samples",
+      "observer_cpu_ms",
+      "observer_cpu_scope",
+      "observer_cpu_attribution",
+      "top_inclusive_frames",
+      "top_leaf_frames",
+      "sample_membership",
+      "dispatch_wall_denominator_ms",
+      "counter_limits",
+      "sampler_errors"
+    ],
+    "sampling_row": [
+      "file",
+      "function",
+      "line",
+      "sample_count",
+      "sample_total",
+      "lost_samples",
+      "sample_share",
+      "dispatch_wall_share"
+    ],
+    "retention": [
+      "format_version",
+      "mode",
+      "rolling",
+      "final_request",
+      "output"
+    ],
+    "rolling": [
+      "capacity_events",
+      "events_seen",
+      "events_retained",
+      "capacity_dropped_events",
+      "complete",
+      "incomplete_limit"
+    ],
+    "final_request": [
+      "request",
+      "outcome",
+      "events_seen",
+      "events_retained",
+      "buffer_complete",
+      "complete",
+      "incomplete_limit"
+    ],
+    "output": [
+      "max_bytes",
+      "bytes",
+      "events"
+    ]
+  },
+  "event_variants": {
+    "non_witness": [
+      "schema_version",
+      "request",
+      "phase",
+      "state",
+      "at_ms",
+      "count",
+      "utc",
+      "capture_namespace"
+    ],
+    "witness": [
+      "schema_version",
+      "request",
+      "phase",
+      "state",
+      "at_ms",
+      "count",
+      "namespace",
+      "capture_namespace",
+      "pid",
+      "birth_ticks",
+      "utc",
+      "method",
+      "route_template",
+      "idempotency_key_sha256"
+    ],
+    "http_response_adds": [
+      "status"
+    ]
+  },
+  "phase_names": {
+    "normal": [
+      "dispatch_queue",
+      "handler_entry",
+      "authorization",
+      "coordinator_admission",
+      "coordinator_lock",
+      "provider",
+      "accept",
+      "receipt",
+      "http_response"
+    ],
+    "reviewed": [
+      "arrival",
+      "dispatch_queue",
+      "handler_entry",
+      "authorization",
+      "coordinator_admission",
+      "coordinator_lock",
+      "provider",
+      "accept",
+      "receipt",
+      "http_response"
+    ]
+  },
+  "constants": {
+    "event_schema_version": 1,
+    "retention_format_version": 2,
+    "retention_mode": "rolling_plus_final_request",
+    "max_requests": 8,
+    "max_events": 128,
+    "max_bytes": 65536,
+    "sampling_interval_ms": 20,
+    "top_frames": 10,
+    "phase_count_cap": 32,
+    "sink_creation": "O_EXCL 0600 under TMPDIR"
+  },
+  "lifecycle": {
+    "allowed": [
+      "completed",
+      "raised",
+      "returned_without_response",
+      "pending_at_stop"
+    ],
+    "derivation": {
+      "completed": "dispatch_finished and dispatch_returned and http_response observed",
+      "raised": "dispatch_finished and dispatch_returned and dispatch_raised",
+      "returned_without_response": "dispatch_finished and dispatch_returned without response and without dispatch_raised",
+      "pending_at_stop": "dispatch_finished is false at stop"
+    },
+    "final_request": "highest ordinal whose outcome is not completed"
+  },
+  "derivations": {
+    "leaf": "first safe frame in sampled frame/f_back chain, one count per sample; inclusive projection remains separate and deduplicated per sample",
+    "row_order": "count descending then (file,function,line), maximum 10 rows",
+    "dispatch_wall_denominator": "dispatch_to_completion_wall_ms; null when no truthful dispatch end",
+    "completeness": "buffer_complete == complete; both are strict retained-buffer completeness booleans",
+    "privacy": "safe frame allowlist, static route template, SHA256 idempotency key, PID birth and UTC; no body/header/credential/raw-key/private-URL/exception text"
+  },
+  "strict_old_to_new_mapping": [
+    {
+      "old": "summary without lifecycle",
+      "new": "summary.lifecycle",
+      "required": "exact key + enum"
+    },
+    {
+      "old": "inclusive sampling only",
+      "new": "inclusive + top_leaf_frames",
+      "required": "exact bounded array"
+    },
+    {
+      "old": "frame row without lost_samples",
+      "new": "lost_samples on both row kinds",
+      "required": "exact integer"
+    },
+    {
+      "old": "final_request without buffer_complete",
+      "new": "buffer_complete plus retained complete",
+      "required": "exact boolean; keep complete"
+    },
+    {
+      "old": "complete/failed/pending",
+      "new": "completed/raised/returned_without_response/pending_at_stop",
+      "required": "strict enum replacement, no union"
+    },
+    {
+      "old": "inferred handler/request wall duration",
+      "new": "null unless truthful dispatch return/end",
+      "required": "assert null, no inference"
+    }
+  ],
+  "owner_boundary": "App strict validator adoption only; no App cross-write or caller/product/activation change in D127."
+}

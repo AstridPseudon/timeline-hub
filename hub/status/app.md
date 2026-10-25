@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T16:22:23Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 14 | status age 2m -->
-# app board, 2026-10-25T16:15Z
+<!-- app | 2026-10-25T16:27:29Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 0m -->
+# app board, 2026-10-25T16:24Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna and HARD Sol | Frozen upstream 3881 | merged | Authors and independent reviews | True merges, both test families retained; final 289 checks, types and lint PASS. | d24ed69dcd |
@@ -107,22 +107,23 @@
 
 | D116-current17 | Map shared current word setup | Luna and independent | Agent peer1526; normal20177 | merged | Author1540; independent1548 | Source applicability17/17 PASS; scalar suppliedhash malformed65chars, exact64 reviewerhash published. All selector-specific topology still missing. No behavior credit. | Source unchanged |
 | D118d-pair16 | Preserve current pair-reader purposes | Luna and independent | Historical30693 exact16 | merged | Author1540; independent1552 | Current file byte-exact captured120d; all16 PASS in30693. Existing7d858 setupfix home; no diff, rerun or current5e9ad behavior credit. | Agent20177 unchanged |
-| D118d-projection9 | Preserve real capture projection purposes | HARD Sol and independent Luna | Sol1606 source complete | review | app-D118d-projection-Sol-protected-review-1616 | Genuine source mapping and accepted provenance setup; statics and43 original ASTs PASS. Own9 NOTRUN for12.2MB lightfloor shortfall. | d05975c7d6 held |
+| D118d-projection9 | Preserve real capture projection purposes | HARD Sol and independent Luna | Independent1616 SOURCE PASS | doing | app-D118d-projection-clean-proof-1623 | Exact reviewed blob clean import and unspent own9 active. Source mapping/provenance,43 original assertions and goldens qualified; no behavior GO yet. | d05975c7d6 held |
 
-| D118d-graph9 | Preserve typed root and tamper purposes | Luna and independent | Authored-input scope decision | blocked:orchestrator | Independent1610 SOURCE PASS | New occurrence gain:null is schema-invalid. Exact local numeric1 setup scope requested; all33 original assertions stay held unchanged. | 94ac9347b held |
+| D118d-graph9 | Preserve typed root and tamper purposes | Luna and independent | D132 exact scope approved | doing | app-D132-graph-numeric-setup-1627 | One shared authored gain:null to1 only. Verify ours and no null-gain purpose; all33 predicates exact. Independent review then own9. | 94ac9347b base |
 
 | D127-leaf-retention | Retain safe leaf and lifecycle evidence | Luna and protected review | Review1613 FAIL; source semantics PASS | doing | app-D127-leaf-first-return-1619 | Exact central28551 PASS23. Correct160-assertion custody and freeze schema/hash. App strict validator migration next; no activation. | b81c0ab26d held |
 
-| U4p-R2-diagnostic | Adopt qualified inverse redo and diagnostics | Luna | Released ab1e and genuine checkout | doing | app-U4p-R2-diagnostic-adoption-1615 | Normal tool-only adoption active. Agent070dfc, originals and all historical tuples preserved; D130 held recovery excluded. | App84857 base |
+| U4p-R2-diagnostic | Adopt qualified inverse redo and diagnostics | Luna | Qualified ab1e normal receipt | merged | Adopter1615; normal1624 | Entire normal tree equals tested author. Vendor17/artifact3/lint PASS; mappings14/protected8 exact. D130 recovery excluded; no gate claim. | d4e5284dfc |
 
-Integration: App84857c45347539c7820bb054b69e2e5ad4079081/tree7feb5b12a1ad9629f096700c40c393d5b3998217 equals independently reviewed1414 full tree. Only exact D126 and strict bootstrap test blobs imported; normal2/mutations/types/lint PASS. [Receipt](../../design/app-D126-normal-home-1437.json). Runtime product for actual10721 stays5e9ad; reviewed external6c9 helper through normal hook. No result retarget.
+| D127-App-validator | Strictly validate leaf and lifecycle schema | Luna and protected review | Runtime helper schema freeze | doing | app-D127-leaf-App-validator-1623 | Exact new hash arm and invariant mutations; old schemas retained strict. Combined protected review before merge or activation. | App d4e528 base |
+
+Integration: Appd4e5284dfcc20801977cef12253b12f9cc8798fd/tree5efca939546f30b039cb9cacba7a29d7db690f2a equals entire tested adopter1615 tree. Only runtime.lock.json/install-manifest.json changed over84857. Qualified Runtimeab1e tools adopted; vendor17/artifact3/lint PASS, mappings14/protected8 exact. [Receipt](../../design/app-U4p-R2-normal-home-1624.json). Historical10721 remains84857/070dfc/5e9ad/635f with external6c9 helper; no result retarget.
 
 Current P2 remains NO-GO. Actual10721: readiness1 PASS; original5 PASS,2 FAIL,1 NOTRUN. Exact element key joins d22 request3,352samples/3lost/PENDING; only routing frames, no provider leaf, final response, duration or wall denominator. Completed request2 is distinct. Existing five full tails independently GO; asset8974 retains its separate exact tuple GO. Final full8 still owed.
 
 Safety: Runtime1553 reports automatic classifier refusal on WAL1537 recovery pytest. Related1545 stopped, WIP held. App records gated:safety-D130 for related recovery, qualification, adoption and tours. No retry, alternate route, machine transfer, rephrasing or D112 rollback. Runtime escalation owns the safety disposition; separately qualified00ede diagnostic source does not qualify recovery.
 
 Blockers: SWAP safety — Runtime escalation runtime-20261025T1553Z-D127-safety-refusal.md; automatic classifier refusal. Related source/replay/release/adoption/tours held.
-Blockers: Graph authored input — orchestrator owes exact numeric1 local graph-setup scope; escalation app-20261025T1617Z-graph-authored-null-setup.md. No source change or repeated own9.
 Blockers: Element evidence — App helper author1606 owns bounded safe leaf/lifecycle retention after trace1600. Existing10721 gives no dominant operation or final duration; no speculative product author.
 Blockers: Agent core — D128 assigns full core to Agent local service on a4e016. Latest425/REG14 remain until actual full; Farm core dropped. No App input wait or duplicate body.
 Blockers: Final render — Farm owns only D77 genuine installed stage/render. Prior denied acquisition stays stopped; no Farm core/census dependency.
@@ -144,3 +145,7 @@ Pass16:16: fresh4926431232 bytes, live2/cap3, allowed projection protected revie
 Pass16:17: graph1610 independent source finding PASS; current C0 rejects authored new gain:null. Scope exception escalated samepass before any input edit, all33 assertions and original9 kept. Routine peer waits cleared or assigned; no duplicate shared17 reader.
 
 Pass16:19: protected1613 sourceprivacy/bounds/lifecycle PASS, exact central28551 all23PASS. OverallFAIL for inaccurate169vs160 originalassertion claim/changed5AST and App strictvalidator mismatch. Firstreturn1619 on samebranch maps every originalpurpose under D120 and restores unnecessarychanges; helperbytes preferablyfrozen. App validator is independent ready-after-schemafreeze scope. No test weakening or permission bypass.
+
+Pass16:24: qualified U4p merged normallyd4e528, fulltree exact testedauthorfcb8, no retarget. Cleanprojectionproof1623 and strictAppvalidator1623 dispatched atfresh5098262528; helperfirstreturn1619 remains third source worker. Graph exactscopequestion remainsownerheld; no classifier workaround.
+
+Pass16:27: D132(A) APPROVED recorded via lead. Cleared graph orchestratorwaitsamepass; claimed sharedfixtureONEline toAgentbefore1627author. Ownercondition review-before-own9 honored. Firstreturn1619 helperfrozen4ee andexact160assertionmapping published; one unnecessaryobserverrewrite restored, remaining4strictschema migrations queuedcombinedreview afterApp1623return.
