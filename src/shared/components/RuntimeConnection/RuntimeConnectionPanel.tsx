@@ -308,7 +308,8 @@ function BlockedCard({ onBack }: { readonly onBack?: () => void }) {
 /** Repeated probes went unanswered with permission granted; polling continues during install or repair. */
 function NotRunningCard({ connection, onBack }: { readonly connection: RuntimeConnectionValue; readonly onBack?: () => void }) {
   const { notRunning } = COPY;
-  return <Card title={notRunning.title} sentence={connection.managedByPinokio === true ? `${notRunning.sentence} ${notRunning.pinokioHint}` : notRunning.sentence} onBack={onBack} action={<div className="space-y-2"><CopyInstallCommand mode="install" /><Button type="button" variant="outline" className="w-full" onClick={connection.connect}>{notRunning.retry}</Button></div>} status={COPY.waiting} showHelp />;
+  const pinokioManaged = connection.managedByPinokio === true;
+  return <Card title={notRunning.title} sentence={pinokioManaged ? `${notRunning.sentence} ${notRunning.pinokioHint}` : notRunning.sentence} onBack={onBack} action={<div className="space-y-2">{!pinokioManaged && <CopyInstallCommand mode="install" />}<Button type="button" variant="outline" className="w-full" onClick={connection.connect}>{notRunning.retry}</Button></div>} status={COPY.waiting} showHelp />;
 }
 
 /** Astrid answered, but not this page: no install help, because Astrid is already running. Polling continues. */

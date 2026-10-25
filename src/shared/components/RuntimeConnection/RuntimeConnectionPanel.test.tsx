@@ -322,6 +322,28 @@ describe('RuntimeConnectionPanel', () => {
     expect(screen.queryByText('Set up Astrid on this computer')).not.toBeInTheDocument();
   });
 
+  it.each([
+    ['Pinokio', true, false],
+    ['non-Pinokio', false, true],
+    ['unknown', null, true],
+  ] as const)('not-running guidance for %s provenance keeps the matching actions', (provenance, managedByPinokio, showsInstaller) => {
+    const connect = vi.fn();
+    panel(connectionFor({ status: 'not_running' }, { managedByPinokio, connect }));
+    const sentence = screen.getByText((_, element) => element?.tagName === 'P' && element.textContent?.startsWith(COPY.notRunning.sentence) === true);
+    expect(sentence.textContent?.includes(COPY.notRunning.pinokioHint)).toBe(managedByPinokio === true);
+    const retry = screen.getByRole('button', { name: COPY.notRunning.retry });
+    expect(retry).toBeInTheDocument();
+    if (showsInstaller) {
+      expect(screen.getByRole('code')).toHaveTextContent(installCommand('install'));
+      expect(screen.getByRole('button', { name: COPY.agent.commandCopy })).toBeInTheDocument();
+    } else {
+      expect(screen.queryByRole('code')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: COPY.agent.commandCopy })).not.toBeInTheDocument();
+    }
+    fireEvent.click(retry);
+    expect(connect).toHaveBeenCalledOnce();
+  });
+
   describe('refused', () => {
     it('says Astrid is running, names this page, and offers no install command', () => {
       panel(connectionFor({ status: 'refused' }));
