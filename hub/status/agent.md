@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T14:59:27Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 2m -->
-# agent board, 2026-10-25T14:57Z
+<!-- agent | 2026-10-25T15:03:53Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 2m -->
+# agent board, 2026-10-25T15:02Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -52,7 +52,7 @@
 
 | D124 shared product roots | Join producer inverse and word seed repairs | HARD Sol / Luna | Farm core before release | merged | agt-D124-union-custody-sol-1327 | Independent1339 SOURCE PASS | Strict53 PASS; Main exact5e9ad native5 PASS; original10 sixPASS fourFAIL. Shared source continuation1417 active; Farm core owed. | 61fefc6983 /16bb |
 | D124 remaining shared four | Repair grouped and scalar materialization | HARD Sol / Luna | Runtime source and grouped inverse | blocked:runtime | Author1417; review1433; Runtime source request | New minimum1 PASS1 FAIL | No Agent product delta. Runtime step-source mismatch independently PASS1433 with genuine1PASS/1FAIL; source packet sent to Runtime. Other roots separate. | 8d2d regression held |
-| D124 grouped inverse alias | Preserve sequential alias custody in inverse | HARD Sol / Farm Luna | Formal Farm source review and Runtime fix | blocked:runtime | Author1435; Farm reviewer requested1450 | Focused2 PASS1 FAIL | No Agent product edit. Runtime final lookup loses earlier child boundary after removal. Same Runtime auth owner requested; originals unreplayed. | a0d839 regression held |
+| D124 grouped inverse alias | Preserve sequential alias custody in inverse | HARD Sol / Farm Luna | Formal Main source review and Runtime fix | blocked:runtime | Author1435; Main review requested1501 | Focused2 PASS1 FAIL | No Agent product edit. Runtime final lookup loses earlier child boundary after removal. Same Runtime auth owner requested; originals unreplayed. | a0d839 regression held |
 | D124 Farm core | Measure reviewed merged batch | Farm service | Reviewed maker installation and genuine inputs | blocked:farm | Farm lead and controller | Next command1426 PASS_SOURCE | Owner14:45 names a4e016 core; exact Runtime5e9ad, Appd8a1, Composition635f and lock source sent directly1450. Historical zero-body tuples retained. | a4e016 named |
 | D124 upstream host14 | Recheck pristine b742 behavior | Runtime Luna / independent | Actual26621 source and XML | merged | Runtime1300; independent1307 | PASS14 in2.29s | Actual b742/d4f module origins and all14 XML verified. Rendered receipt path mismatch retained. Current REG14 remains open. | Pristine b742 |
 
@@ -70,15 +70,15 @@ Current full checkpoint:8823 PASS /159 FAIL /291 ERROR /173 subtests /0 skips on
 New bounded proof: exact16bb/5e9ad native5 PASS; originalten6 PASS4 FAIL independently1405. Both word recipes, occurrenceFalse and numeric3 PASS. OccurrenceTrue and scalar/compound/separate stay live failures. No unchanged repeat or full-count deduction.
 
 Blockers: Agent core425 and REG14 — Farm full core owed. Step-edge1433 independently qualified; inverse1435 separate Runtime fact awaits Farm review. Runtime same auth owner requested; original pairs missing.
-Blockers: Farm child — refused metadata remains stopped. Farm inventory is EXACTMISSING after cleanup; Runtime exact maker e62f installed1431; receipt sent to Farm1452. Farm verifies propagated hash then recorded one changed normal request. No further inventory request.
+Blockers: Farm child — new retained-source integrity refusal after the authorized e62f request14:52. Runtime source diagnosis requested1501; Farm request stopped. Earlier metadata wait cleared; core zero-body.
 Blockers: Agent D69 — installed render90 and final upstream-cut audit owed. XML107 source is home; genuine platform proof remains separate.
 Blockers: Farm D117a — normal installer stage and genuine installed render pending after core. Prior denied route stays stopped.
 Blockers: Final cut — D123 rehearsal5bd01 SOURCE PASS on b742. Final tip freezes once at D59; final gates, core, D69, wheel and render owed.
 
-Next ready: Farm lead has exact a4e016/5e9ad/d8a1/635f pins and lock source, plus qualified291c packet. Runtime owns two separate auth source findings; Farm Luna formal inverse review requested1450. Main current-equivalent2 proof requested1445 on normal20177; originalten unchanged.
+Next ready: Farm lead has exact a4e016/5e9ad/d8a1/635f pins and lock source, plus qualified291c packet. Runtime owns two separate auth source findings; Main Luna formal inverse review requested1501; unstarted Farm request withdrawn. Main current-equivalent2 proof requested1445 on normal20177; originalten unchanged.
 live 0 / cap0 local by owner14:49 merges-and-receipts directive; ready-undispatched0 local. All local authors/reviewers ended and auto-recycled. Every NEW author/review goes to Farm, or App/Main with room. No local heavy or new source starts pending owner venv disposition.
 
-Disk: 4924424192 bytes at14:55Z; this pass normal sweep3 and compact are running. Fresh ended+clean+nonKEEP scan has no eligible trees; old dirty/refused agt-G2-open-commit preserved. Six obsolete pins wait existing lead host-use audit in peer-agent-to-lead-20261025T1353Z-unused-pins-host-audit.md. No KEEP release, refused-target retry or ~/.codex mutation.
+Disk: 4920373248 bytes at15:00Z; sweep3 removed0 and compact packed0, gzipped0. Fresh ended+clean+nonKEEP scan has no eligible trees; old dirty/refused agt-G2-open-commit preserved. Six obsolete pins wait existing lead host-use audit in peer-agent-to-lead-20261025T1353Z-unused-pins-host-audit.md. No KEEP release, refused-target retry or ~/.codex mutation.
 
 D120/D124: own failing nodes per fix; one Farm unfiltered core per merged batch at60–90min or3+ fixes before adoption. Up to3 source-only starts at>=4.6GB/noheavy; stop4.0GB. Ordinary light proof>=5.0GB. D89c heavy admission at controller dispatch, with4.0GB stop throughout.
 Later: D23/D14 deferred anchors unchanged. D107 current equivalents and broad word cases remain separately held. Complete historical physical records EXACTMISSING. E2/D79 paused until ZIP; D13 installed environment gap remains explicit.
@@ -87,4 +87,6 @@ Inbox consumed through1671392 bytes. Manager made no product, test, generated, p
 
 Owner14:45 direct Farm pin request satisfied: a4e016/5e9ad/d8a1/635f exact full SHAs+trees, runtime.lock source_commit5e9ad Git-read and lock hash sent in peer-agent-to-farm-20261025T1447Z-a4e016-exact-companion-pins.md. Source packet includes qualified1426 command/guard hashes. Owner14:49 freezes all NEW local authors/reviews; formal inverse review sent to Farm. Runtime metadata source applicability wait cleared; no more inventory requests.
 
-Pass14:57: Runtime exclusive author rt-R2-step-boundary-1444 acknowledged with finalized1433 and separate1435 packets in peer1457. No new local author/review or ready merge. Farm14:50 has a4e016 checkout and requests Runtime5e9ad. Farm1452 receipt identifies make-child-venv e62f; unchanged bench_store.py is not the correction signal. Fresh ended/clean/nonKEEP scan has zero eligible worktrees; only old dirty G2 remains. Await Farm formal inverse review1450; no duplicate reviewer dispatched.
+Pass14:57: Runtime exclusive author rt-R2-step-boundary-1444 acknowledged with finalized1433 and separate1435 packets in peer1457. No new local author/review or ready merge. Farm14:50 has a4e016 checkout and requests Runtime5e9ad. Farm1452 receipt identifies make-child-venv e62f; unchanged bench_store.py is not the correction signal. Fresh ended/clean/nonKEEP scan has zero eligible worktrees; only old dirty G2 remains. Farm1450 review not dispatched on actual board; transferred to Main1501 with explicit withdrawal. No local reviewer dispatched.
+
+Pass15:02: Farm actual new refusal log consumed after readonly-source stage. Runtime receives one source-only diagnosis request; no retry or alternate route. Main receives independent inverse review1501; Farm unstarted1450 withdrawn, any actual reviewer must be returned before duplication. Runtime current-equivalent two request1445 remains ready remote. Next evidence: Farm source disposition, Main author1444 and reviewer1501, or two current journeys. Counts unchanged.
