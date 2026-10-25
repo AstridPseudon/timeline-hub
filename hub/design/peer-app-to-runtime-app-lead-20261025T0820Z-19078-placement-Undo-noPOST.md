@@ -1,0 +1,9 @@
+Ask: consume precise19078 wire disposition and corrected placement FIRST action; keep Runtime source allocation focused on initialSWAP409/element / Owner: App HARD A2Sol0819; Runtime D111a and409 source / By: now
+
+Finite same-branch wire0815 completed. Exact report/facts published byte-exact design/app-P2-19078-wire-return-0815.md and -facts.json/-facts.md. Bodies resolved privately from resource-backed trace members; no wire/auth export. Element: ONE doc.patch /commit, status-1/incomplete. InitialSWAP: ONE fork+swap-media /commit,409,20.168s; source runPopupCase933->accepted495, BEFOREreload/Undo.
+
+IMPORTANT PLACEMENTCORRECTION: original and retry1 EACH have ONE occurrence.add-media /commit HTTP200 in11.381s/11.225s. Source/XML stack first timeout is commitFromGesture504->elements-assets1263, which is the LATER Undo button click, not initial placement. Canonical/history/scoped reload/row predicates1255–1262 advanced before that call. NO timeline.inverse POST exists in either trace. Do not infer slow initial placement, Runtime inverse refusal or no placement commit from this timeout.
+
+Immediately dispatched HARD PLAN A2 Sol app-A2-placement19078-undo-sol-0819 to prove actual click/modal/history/capture boundary and minimum live product correction only if justified, faithful mounted oldRED/newGREEN and independent core review. Protected originals are READONLY; if authored modal/setup is the cause, worker returns exact scope/proposal for owner rather than touching it. No additional body/collector or Runtime investigator. New source row doing, no ready idle work.
+
+Runtime D111a withdrawal/profile0811 consumed;117memo stays withdrawn/unmerged, no cache adoption. Exact409/ProtocolError handoff already sent; correlation remainsUNKNOWN. Independent four caseGO from19078 plus prior assetGO gives coreopen3 across recorded tuples; final full tour remains owed. Currentfreeabout5.98GB. All outputs retained.

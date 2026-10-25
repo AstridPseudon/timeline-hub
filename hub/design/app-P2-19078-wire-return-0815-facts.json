@@ -1,0 +1,176 @@
+{
+  "task": "app-P2-19078-wire-return-0815",
+  "classification": "finite retained-trace wire disposition",
+  "question": "whether placement had NO intended commit or a pending intended commit",
+  "answer": "pending intended commit",
+  "authorized_tuple": {
+    "app": "04beedcd18b8abb49502f65cd3facaafbe93db4e",
+    "agent": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2",
+    "runtime": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "artifact_root": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/app-pin-04beedcd-d73-p2-04beedcd-submit-1025075440-19078/d66",
+  "endpoint_classification": {
+    "commit_endpoint_pattern": "/api/runtime/v1/projects/.../timelines/.../commit",
+    "classification_rule": "POST whose relative URL path ends in /commit; IDs and full URLs intentionally omitted",
+    "other_post_classes": ["handshake", "inspect", "import"],
+    "trace_results": [
+      {
+        "case": "element singletrace",
+        "trace_zip": "p2/three-products.p2-elements-4b4f7-tch-reload-and-guarded-Undo/trace.zip",
+        "trace_zip_sha256": "4f450e27d535ede05f8f1d5b50b3e82725fd3674419535d99273e66b46b8a784",
+        "intended_endpoint": "PRESENT",
+        "commit_post_count": 1,
+        "commit_posts": [
+          {
+            "network_member": "0-trace.network",
+            "network_line": 105,
+            "method": "POST",
+            "endpoint": "/api/runtime/v1/projects/.../timelines/.../commit",
+            "command_ops": ["doc.patch"],
+            "commands_count": 1,
+            "steps_count": 1,
+            "merge": "atomic",
+            "dry_run": false,
+            "response_status": -1,
+            "response_state": "incomplete",
+            "monotonic_start": 39700.067,
+            "monotonic_end": null,
+            "duration_ms": -1,
+            "postData_resource": "resources/a34d1c784dafa04e1ade3ca5657e0a83d837759c.json",
+            "postData_resource_sha256": "48d0b5e103f4c1f37e75fd72b884134399f2b455a8014951ecdd103a2697fc54",
+            "response_resource": null,
+            "safe_body_finding": "body resource present and parsed privately; top-level command op is doc.patch"
+          }
+        ],
+        "endpoint_counts": {"handshake": 6, "inspect": 2, "import": 0, "commit": 1},
+        "network_parser": {"member": "0-trace.network", "lines": 108, "json_parse_errors": 0, "parsed_to_eof": true},
+        "event_resource": {"member": "0-trace.trace", "lines": 314, "sha256": "11f8236112be5b7ae9cc46d56571933d1f4af55e79842398da580d6ac1d25ce6"},
+        "network_sha256": "51cf9e9569fa5560d8f5fb30202581b67cc4817744fc0a66493d583709813f48",
+        "parser_limit": "No truncation or parser error; 108 JSONL network records consumed through EOF."
+      },
+      {
+        "case": "placement original",
+        "trace_zip": "p2/three-products.p2-elements-1bf41-nd-closure-and-guarded-Undo/trace.zip",
+        "trace_zip_sha256": "b50c9f504ca314a8443736b79a7b1457a9fa7c72d3bb46aba4fe9e1995f78a87",
+        "intended_endpoint": "PRESENT",
+        "commit_post_count": 1,
+        "commit_posts": [
+          {
+            "network_member": "0-trace.network",
+            "network_line": 137,
+            "method": "POST",
+            "endpoint": "/api/runtime/v1/projects/.../timelines/.../commit",
+            "command_ops": ["occurrence.add-media"],
+            "commands_count": 1,
+            "steps_count": 1,
+            "merge": "fields",
+            "dry_run": false,
+            "response_status": 200,
+            "response_state": "completed",
+            "monotonic_start": 85990.415,
+            "monotonic_end": 97371.43,
+            "duration_ms": 11381.015,
+            "postData_resource": "resources/94e4fc53a0f48b4aa70f468810e10345403f7c73.json",
+            "postData_resource_sha256": "11eb8e8399020b29e4b87d31975c6b68f406a3b4080ad43b21106817b09e51cc",
+            "response_resource": "resources/9b1f8bc207549a93565899fde3156e9b4d5fadcb.json",
+            "safe_body_finding": "body resource present and parsed privately; top-level command op is occurrence.add-media"
+          }
+        ],
+        "endpoint_counts": {"handshake": 13, "inspect": 68, "import": 1, "commit": 1},
+        "network_parser": {"member": "0-trace.network", "lines": 495, "json_parse_errors": 0, "parsed_to_eof": true},
+        "event_resource": {"member": "0-trace.trace", "lines": 536, "sha256": "c2943ce2274392d92f6f7df87c90a28386310084ea89ee3a92382c16106ee268"},
+        "network_sha256": "44f3025fdd2057a97c53350c1694dd00663fa76875863a8c1c6347cae9a4e532",
+        "parser_limit": "No truncation or parser error; 495 JSONL network records consumed through EOF."
+      },
+      {
+        "case": "placement retry1",
+        "trace_zip": "p2/three-products.p2-elements-1bf41-nd-closure-and-guarded-Undo-retry1/trace.zip",
+        "trace_zip_sha256": "313d771cdd5aba9e35c5e4de276d2ae01780b9b951433339a830c617ae5500fe",
+        "intended_endpoint": "PRESENT",
+        "commit_post_count": 1,
+        "commit_posts": [
+          {
+            "network_member": "0-trace.network",
+            "network_line": 138,
+            "method": "POST",
+            "endpoint": "/api/runtime/v1/projects/.../timelines/.../commit",
+            "command_ops": ["occurrence.add-media"],
+            "commands_count": 1,
+            "steps_count": 1,
+            "merge": "fields",
+            "dry_run": false,
+            "response_status": 200,
+            "response_state": "completed",
+            "monotonic_start": 229954.714,
+            "monotonic_end": 241179.691,
+            "duration_ms": 11224.977,
+            "postData_resource": "resources/e1f78189fcbee6926c3227f221f2e39d1fdaf05c.json",
+            "postData_resource_sha256": "3bcabc71252a3862c64f49e5292ff12b5b87189c048e14fcd961484608ca1aa5",
+            "response_resource": "resources/72818ddbb05cc20af8614d103954c3a81279fb2d.json",
+            "safe_body_finding": "body resource present and parsed privately; top-level command op is occurrence.add-media"
+          }
+        ],
+        "endpoint_counts": {"handshake": 13, "inspect": 68, "import": 1, "commit": 1},
+        "network_parser": {"member": "0-trace.network", "lines": 495, "json_parse_errors": 0, "parsed_to_eof": true},
+        "event_resource": {"member": "0-trace.trace", "lines": 571, "sha256": "985bfe0ab82150bfb610087b8fa07898b287f32eafb853ddc5445baa7ff1f171"},
+        "network_sha256": "08ce8fa9b83834203be069ed885069a8ec0f391be606dee6fd548bd5bdc86b39",
+        "parser_limit": "No truncation or parser error; 495 JSONL network records consumed through EOF."
+      },
+      {
+        "case": "SWAP",
+        "trace_zip": "p2/three-products.p2-popup-P2-12bf5-ed-old-new-media-selections/trace.zip",
+        "trace_zip_sha256": "9dd1d7183e7075cad08edf2ba3e8215426ac242dcc3d1dea14e8f0409472473e",
+        "intended_endpoint": "PRESENT",
+        "commit_post_count": 1,
+        "commit_posts": [
+          {
+            "network_member": "0-trace.network",
+            "network_line": 164,
+            "method": "POST",
+            "endpoint": "/api/runtime/v1/projects/.../timelines/.../commit",
+            "command_ops": ["occurrence.fork", "occurrence.swap-media"],
+            "commands_count": 2,
+            "steps_count": 1,
+            "merge": "fields",
+            "dry_run": false,
+            "response_status": 409,
+            "response_state": "completed refusal",
+            "monotonic_start": 431133.077,
+            "monotonic_end": 451301.598,
+            "duration_ms": 20168.521,
+            "postData_resource": "resources/4afa63eff163b031ef6ed4d92c0232914e9c697b.json",
+            "postData_resource_sha256": "d697a7779eeff6077c4d5c209e350fac0d4a3327db6f159282599ba1ee6f2bd0",
+            "response_resource": "resources/2dc98d256faecfcd7c098431083f62fc5102c979.json",
+            "safe_body_finding": "body resource present and parsed privately; command ops include occurrence.swap-media"
+          }
+        ],
+        "endpoint_counts": {"handshake": 6, "inspect": 9, "import": 1, "commit": 1},
+        "network_parser": {"member": "0-trace.network", "lines": 165, "json_parse_errors": 0, "parsed_to_eof": true},
+        "event_resource": {"member": "0-trace.trace", "lines": 382, "sha256": "3260b4428e797d263147d8f1e0eda7748cd5cfb81a0a6cfcb4299aa5e2ebc50c"},
+        "network_sha256": "fc184ae11f84c84fd0f37b86e1d62162930874a4ed6738b6f1309b48002149ce",
+        "parser_limit": "No truncation or parser error; 165 JSONL network records consumed through EOF."
+      }
+    ]
+  },
+  "source_boundary": {
+    "swap_initial_accepted_call": "runPopupCase933 -> accepted495, before reload/Undo; retained exactly",
+    "historical_inverse503": "not borrowed",
+    "runtime_ordinal_correlation": "not used; no actual artifact joins a Runtime ordinal to these browser records",
+    "placement_disposition": "PRESENT in both original and retry1; each has one pending/initiated commit POST that completed with HTTP 200, so placement was not NO-POST"
+  },
+  "contract_guard": {
+    "request_fields": ["api_version", "project_id", "timeline_id", "base_revision_id", "base_publication_id", "commands[schema_version,op,version,select,args,created]", "label", "steps[id,label,intent,tags,command_ordinals,patch,reads]", "merge(fields|atomic)", "reads", "source", "rationale", "group_id", "dry_run", "Idempotency-Key"],
+    "reply_variants": ["accepted", "merged{data,receipt}", "canonical_document/digest", "id_map", "commands/steps/dependencies/effects", "base/previous/acceptedpairs", "versions", "publisher", "history", "guardedundo", "receipt_id", "historicalrebased", "preview/would_status", "conflictreason/head", "invalidcode/path/hint/suggested_command"]
+  },
+  "verification": {
+    "manifest_xml_and_four_zips": "parsed",
+    "zip_hashes": "matched retained 0810 packet",
+    "endpoint_counts": "computed from all 4 0-trace.network files; no JSONL parse errors",
+    "source": "READONLY; no source files changed",
+    "git_diff_check": "PASS",
+    "git_status_clean": "PASS",
+    "tests_tsc_lint_reruns": false,
+    "new_browser_http_collector_runtime_replay": false
+  }
+}

@@ -1,5 +1,5 @@
-<!-- app | 2026-10-25T08:17:19Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 6 | status age 0m -->
-# app board, 2026-10-25T08:17Z
+<!-- app | 2026-10-25T08:21:42Z | dispatcher heartbeat 11s | live 1 (sol 1, luna 0, other 0) | busy30 7 | status age 2m -->
+# app board, 2026-10-25T08:19Z
 | ID | task (short) | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U3 | Upstream editor joins | Luna; core Sol | Frozen upstream 3881 | merged | Authors and reviews | True merges, both test families retained. | 2312114d0d |
@@ -15,7 +15,7 @@
 | A4-D52 | Proven dormant deletion | Luna; review | Caller census | merged | Authors1118/1210; reviews1121/1232 | Parent/track and exclusive transcript pairs removed; live session retained. | 2e3c8f/cca3deb |
 | D69 | Restore and audit upstream behavior | Luna; placement Sol | Frozen upstream3881 | merged | Final1704; reviews1633/1636/1657 | 1403 cleared, 67 cited, four restored, zero remaining. 41 placement plus113 controls/types PASS. | c3d79ef88a |
 | P1 | Current plain original control | Service; Luna | App1540 tuple | merged | Actual26312; verdict1616 | Exit0/237s, readiness1 and original2 PASS. Recorded tuple only. | App1540b3f12e |
-| P2 | Eight original core gestures | Service; Luna | Qualified current source | doing | Early19078; independent0807; path0810 | Early full tour: four case GO on one tuple. Prior asset GO retained. SWAP409,element status and placement response wait remain; Runtime source disposition active. | Recorded tuples |
+| P2 | Eight original core gestures | Service; Luna | Qualified current source | doing | Early19078; independent0807; path0810 | Early full tour: four case GO on one tuple. Prior asset GO retained. SWAP409,element status and placement Undo noPOST remain; Runtime source disposition active. | Recorded tuples |
 | P2-parent-reads | Exact declared history reads | Luna; review | Contract C0 | merged | Author1625; review1636; integrated1643 | 13 Node and7 semantic controls, four types/lint PASS. | a2a6e4abbd |
 | P2-popup-runtime | Fork-created physical observation | Runtime Luna; security | Actual422 | merged | Author1643; security1658; home1704 | b318 tree equals reviewed88b9; 228 auth,18 Agent,13 RequestPort PASS. | Runtime b318a8ec4 |
 | P2-element-observer | Actual CLI safe phase capture | Luna | Runtime helper2c1 | merged | Author1715; return1722 | Real normal CLI accepted HTTP commit proves provider,receipt,response; focused controls/types/lint PASS. | 255f9f1218 |
@@ -265,19 +265,21 @@
 
 | D108-P2-19078-verdict | Qualify four passing original gestures | Luna independent | Actual19078 XML and source | merged | app-D108-P2-19078-pass-review-0807 | Independent GO: ADD,parent,single,bulk with full strict tails. [Verdict](../../design/app-D108-P2-19078-pass-review-0807-verdict.md) | 04beed/070dfc/1daca/635f |
 
-| P2-19078-failed-paths | Attribute three original failures | Luna read only | Actual19078 terminal | merged | app-P2-19078-failed-paths-0810 | InitialSWAP409 before reload/Undo; element pending; placement response wait. No App repair proved. [Facts](../../design/app-P2-19078-failed-paths-0810-facts.md) | Source unchanged |
+| P2-19078-failed-paths | Attribute three original failures | Luna read only | Actual19078 terminal | merged | app-P2-19078-failed-paths-0810 | InitialSWAP409 before reload/Undo; element pending; placement Undo noPOST. No App repair proved. [Facts](../../design/app-P2-19078-failed-paths-0810-facts.md) | Source unchanged |
 
-| P2-19078-wire | Classify intended commit requests | Luna read only | Exact retained19078 traces | doing | app-P2-19078-wire-return-0815 | Finite endpoint/op/status classification for element and placement, including resource-backed POST bodies. No new whole-path/body/collector. | Evidence only |
+| P2-19078-wire | Classify intended commit requests | Luna read only | Exact retained19078 traces | merged | app-P2-19078-wire-return-0815 | Placement initialPOST200 twice; only add-media, no inversePOST. Element doc.patch incomplete; SWAP fork/swap409. [Facts](../../design/app-P2-19078-wire-return-0815-facts.md) | Evidence only |
+
+| A2-placement19078-Undo | Restore actual native Undo dispatch | HARD Sol; review if fix | Exact19078 Undo boundary | doing | app-A2-placement19078-undo-sol-0819 | Initial placement/canonical/history/reload advance. Undo1263 has no inversePOST. Prove modal/click/capture source; protected originals read only. | Source pending |
 
 Integration: Normal App04beedcd18 includes independently reviewed portable capture repair33fce and D110 adoption6e21 targeting Agent070dfc; Runtime lock remainsc916, production-equivalent to released1daca. Exact early19078 used authorized04beed/070dfc/1daca/635f and independently qualifies four original cases. D105a scoped oracle398489 and seed-log retention51239 are home. No D111 candidate is adopted.
-core open: 3 — SWAP, element and placement lack GO. Early19078 independently qualifies ADD,parent,single,bulk on04beed/070dfc/1daca/635f. Prior asset27438 GO retains its older tuple. Five gestures qualified across recorded tuples; full current tour remains NO-GO. New SWAP409 history_unavailable and uncorrelated ProtocolError need exact Runtime/source disposition. Final D111 tour still owed.
+core open: 3 — SWAP,element,placement lack GO. Early19078 has four case GO on04beed/070dfc/1daca/635f, prior assetGO is older tuple. Placement initialHTTP200/canonical/history/scopedreload advanced; Undo1263 has no inversePOST, Sol0819 owns exact App boundary. SWAP initial409 and element cost belong to Runtime disposition; final full tour remains owed.
 regressions: Runtime689 request_id regression fixed in1daca. Inverse KeyError source correction is released and adopted, with full-tour proof owed; Runtime history cost remains open. Early log retention is kept; its repeated-start phase-sink interaction is repaired at04beed without changing protected tests.
 
 Blockers: Runtime D111a — Memo1171212 is withdrawn, never merged. Whole-element cross-process profile0811 precedes any fix; qualified source release/adoption then final tour.
 Blockers: Runtime19078 — SWAP409 history_unavailable and retained ProtocolError need exact source disposition. Peer0810 sent; App failed-path0810 maps gesture/request correlation.
 Blockers: Final cut — Five gesture GO across recorded tuples; complete current P2 and final pinned P1–P5/core plus genuine installed render required before ZIP.
-Next ready: Wire return0815 finishes specific retained POST disposition; D111a whole-request profile0811 owns next cost finding. Four19078 case GO complete. Qualified remaining fixes/adoption then final P2; no unchanged retry.
-live 1 / cap 6; ready-undispatched 0; core open: 3. Latest dispatcher08:12Z count; finite wire-return0815 dispatched, other App workers complete. No App heavy body.
+Next ready: A2 placement Undo boundary Sol0819 is dispatched from exact no-inverse evidence. Runtime D111a whole-request profile0811 and exact initialSWAP409 source disposition remain external; qualified fixes/adoption then final full P2.
+live 1 / cap 6; ready-undispatched 0; core open: 3. Latest dispatcher08:12Z count; wire0815 now complete and HARD A2Sol0819 dispatched. No App heavy body.
 Capacity: Seven host-cleared stale pins recycled after fresh static guards, zero refusals; net867MB, free6.30GB at receipt0642. Four additional host-cleared pins recycled0700,zero refusals/net481MB; free5.78GB at receipt,6.53 GB after two host-cleared old pins recycled at07:47Z, net294MB and zero refusals. All finished clean non-KEEP worker trees already retired. All outputs/branches/reports/current pins retained; prior dirty/refused targets untouched. Source cap6 above5.0GB; heavy1 above5.2GB; nothing new below4.5GB.
 Inbox consumed through2023421 bytes. Direct published Runtime peer0811 and BOARD-HEADER D111a consumed: memo withdrawn, Runtime element profile0811 dispatched. No new App source fix justified yet; finite wire0815 active. No safety or permission refusal.
 
