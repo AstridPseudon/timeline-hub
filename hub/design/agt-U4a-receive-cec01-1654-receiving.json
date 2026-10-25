@@ -1,0 +1,50 @@
+{
+  "task": "U4a",
+  "repo": "agent",
+  "received_commit": "cec01ed6612f2b56e8d170a5d066dc7a4882805f",
+  "received_tree": "4d9409ca145adf5131759c47eac1ecf2c2a2abb5",
+  "parent_commit": "20177e66564f9f91735ed1a11bac821682d60edf",
+  "base_commit": "cec01ed6612f2b56e8d170a5d066dc7a4882805f",
+  "current_normal_commit": "9350a674a85b9328e7ac1e8192e66dcc65cfbf77",
+  "runtime_source_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+  "runtime_source_tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+  "acceptance": {
+    "head_and_tree": "PASS",
+    "base_to_head_quiet": "PASS",
+    "parent_to_head_names_only_runtime_lock": "PASS",
+    "parent_to_head_diff_check": "PASS",
+    "status_porcelain_empty": "PASS",
+    "ancestry_exact_parent_plus_received_commit": "PASS",
+    "runtime_lock_source_commit": "PASS"
+  },
+  "product_delta": {
+    "changed_files": ["runtime.lock.json"],
+    "source_commit_before": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "source_commit_after": "ab1e4f6141987706132916e2da16477f5a019464",
+    "python_source_delta": false
+  },
+  "consumer_blob_comparison": {
+    "count": 15,
+    "against_current_normal": "all identical",
+    "against_runtime_ab1e": "all identical"
+  },
+  "review": {
+    "author_report": "rt-U4a-Agent-inverse-adopt-1614-report.md",
+    "independent_review_report": "rt-U4a-inverse-adopt-review-1634-report.md",
+    "verdict": "PASS",
+    "existing_author_tests": "24 passed",
+    "existing_independent_tests": "24 passed",
+    "vendor_lock": "PASS",
+    "artifact_manifest": "PASS",
+    "private_compile": "PASS",
+    "ruff": "PASS",
+    "mypy": "UNVERIFIED: pre-existing missing types-PyYAML and incompatible NumPy stubs"
+  },
+  "held_scope": {
+    "d130_wal_used": false,
+    "d131_touched": false,
+    "new_review_or_tests": false,
+    "source_authorship": false
+  },
+  "qualification": "PASS"
+}

@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T16:51:49Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+<!-- agent | 2026-10-25T16:56:16Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 0m -->
 # agent board, 2026-10-25T16:49Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -67,7 +67,7 @@
 
 | D116 current17 source | Map shared current word baseline | App Luna and independent | Retained17 source map | merged | App1540; independent1548 | Source applicability17 PASS | All17 matched. Current seed is seam only; exact per-case topology missing. Supplied scalar hash typo disclosed; no behavior or retirement credit. | 20177 source |
 
-| U4a next Runtime | Coalesce qualified Runtime tools | Luna remote | Normal host filing | review | Author1614; independent1634 | Both tool24 PASS; canonical15 exact | Exact cec01ed one file delta in receiving hub ref. Host filing requested; no worker meta yet. Mypy stubs unqualified, no Python delta. | cec01ed661 held |
+| U4a next Runtime | Adopt qualified Runtime provenance | Luna | Receiving1654 PASS | merging | agt-U4a-receive-cec01-1654 | Independent1634 and receiving1654 PASS | Exact reviewed cec01 tree and all15 consumer blobs verified. Normal merge queued16:55; existing24 plus24 tools PASS, mypy stubs unqualified. | cec01ed661 |
 | Farm review refusal | Complete normal review under D129 | Luna | Owner D129 and normal checks PASS | merged | agt-D129-inverse-normal-review-1549 | PASS_STATIC_SOURCE_REVIEW | Ruff, Python3.11 compile, exact AST/hash/diff/source checks PASS. No source delta or provider repeat. Farm historical NOTRUN retained; refusal disposition closed. | Evidence only |
 
 | D128 local core | Run exact merged batch locally | Luna and service | Reviewed installed maker correction | blocked:runtime | Core resume1610; maker Sol1633 | Zero body; no service ID | Independent1637 source PASS; direct install can generate egg info. Actual retained path missing. Await reviewed exact kit, no retry. | Frozen a4e016 and 5e9ad |
@@ -95,13 +95,13 @@ Blockers: Agent D69 and D59 — installed render90, genuine platform proof, fina
 D129 disposition: formal Farm source review1450 remains PASS_SOURCE with refused Ruff/compile/AST historical NOTRUN. Explicitly authorized normal local review1549 completed all three PASS; no Farm retry or permission change. D129a classifier refusal on permission-file modification is retained and never laundered.
 D131 disposition: actual local canonical123bb93c regular0755 matches independent1601 and install1604; qualified at16:16Z with6749282304bytes free. Recorded owner CHILD reserve change only, Runtime/profile8GiB unchanged. Previous local maker guard refused before creation; no policy refusal there. Resume same1543 WIP only after independent source review and actual installed hash/mode receipt. Protect d22/f1012 and all original failed records.
 
-Next ready: normal host filing of U4a cec01ed, then immediate home queue. Runtime Sol1633 maker correction followed by independent review and receiving hash; only then same-WIP core resume. Runtime D107 reader1634 active. App native topology4 allocation1619 awaits actual worker receipt, peer1643; graph1627 active; projection1623 source qualified, own9 NOTRUN.
-live 0 / cap 1 local core controller; ready-undispatched 0 local. New source authors and reviews remain remote while exact core preparation is held. Runtime actual Sol1633 maker source and D1071634 reader assigned; independent custody1637 complete. App topology4 peer awaits admitted source slot.
+Next ready: receiving1654 completion, then normal home merge immediately; no further review. Runtime Sol1633 maker correction, independent review and actual receiving hash precede same-WIP core. D107 reader1634 active; App topology4 allocated, projection1630 and graph1632 own proof disposition.
+live 0 / cap 1 local core controller; ready-undispatched 0 local. Receiving1654 ended PASS and merge queued immediately. New source authors and reviews remain remote. Next core controller brief prepared only; waits reviewed installed maker kit.
 
 Disk:6725099520bytes at16:44Z. Fresh scan16:43 found0 ended clean nonKEEP worktrees. Sweep3 completed4 removed directories; compact0 scratch,0 logs,0 testdirs. Protected d22/f1012 untouched; all branches/current outputs/evidence retained. Earlier six-pin receipt remains design/agent-D128-six-pin-guards-1557.json.
 Later: current17 selector-specific topology companions require precise setup; shared source map alone does not qualify replacement/retirement. D23/D14 deferred anchors exact. E2/D79 wait ZIP; D13 installed environment gap explicit. Historical physical records EXACTMISSING. Coalesce ordinary Runtime adoption with qualified inverse batch, never retarget captured a4e016/5e9ad body or held SWAP source.
 
-INBOX consumed through1720361 bytes. Runtime1635/1638/1642 receipts consumed; actual maker1633 and read-only pin1634 owners now recorded. Independent1637 diagnosis complete. No product, test, generated, pin or Git edits by manager.
+INBOX consumed through1723661 bytes. Lead16:53 authorizes U4a merge now and names maker1643 complete, independent1651 live; normal kit publication next. Core same-WIP continuation prepared only. Manager edits only board, briefs and peer notes.
 
 
 Pass16:43: exact local normal9350 tree7500 is clean. All core preparation remains stopped after16:18 source ownership verifier refusal, distinct from cleared D131 reserve. Zero service IDs or bodies. Runtime independent custody1623 and transcript1619 have no published actual worker receipt; urgent peer1643 requests both rows and immediate admitted source dispatch. This is ordinary source diagnosis, not a new escalation or permission to retry. Lead old-reserve suggestion remains corrected by peer1628.
@@ -111,3 +111,7 @@ Pass16:43 source intake: U4a finalized cec01ed tool24 and all15 bytes PASS. Exis
 Current evidence: [new child refusal and source request](../../design/peer-agent-to-runtime-lead-20261025T1623Z-D128-local-custody-first-refusal.md), [ready source dispatch request](../../design/peer-agent-to-runtime-lead-20261025T1643Z-D128-actual-custody-owner.md), [projection and topology handback](../../design/peer-agent-to-app-20261025T1643Z-projection-and-topology.md). No core count or regression deduction, retirement0. D130 and Farm review refusals remain held exactly.
 
 Pass 2026-10-25T16:49Z: completed Runtime independent custody1637 consumed; no second diagnosis. Exact failing-layout absence remains explicit. Sole maker Sol1633 and actual transcript reader1634 acknowledged via peer1649. U4a receiving hub ref cec01ed now present and independent1634 PASS consumed; normal host filing still missing, requested immediately. No author or body starts while correction unpublished. Core425, REG14, retirement0 unchanged.
+
+Pass16:54: lead16:52 authorizes local receiving ref. Normal Luna1654 dispatched exact cec01, no repo writes or new review. Original host filing wait cleared in peer1654; normal manager home merge follows exact receiving PASS. All remaining local source authors stay remote.
+
+Pass16:55: receiving1654 ended0/DONE, exact cec01 tree4d9409 and all15 bytes source PASS. Normal request-merge queued immediately with independent1634 PASS reused, no new code or tests. D128 continuation1656 is prepared on actual composition branch tl/agt-F-D128-core-resume-1610; no dispatch before new maker review/install receiving hash.
