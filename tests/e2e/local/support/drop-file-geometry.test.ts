@@ -12,29 +12,48 @@ const tracks = [
   { id: 'parent', label: 'Parent', kind: 'visual' as const },
   { id: 'occurrence', label: 'Occurrence', kind: 'visual' as const },
 ];
+const embeddedTracks = [
+  { id: 'plate', label: 'plate', kind: 'visual' as const },
+  { id: 'V2', label: 'V2', kind: 'visual' as const },
+];
 const editRect = { x: 100, y: 100, left: 100, top: 100, right: 700, bottom: 300, width: 600, height: 200, toJSON() {} };
 const wrapperRect = { x: 50, y: 100, left: 50, top: 100, right: 750, bottom: 300, width: 700, height: 200, toJSON() {} };
+const embeddedV2Y = editRect.top + 48 + 24;
 
-function createTimelineData(): TimelineData {
+function createTimelineData(fixture: 'parent' | 'embedded' = 'parent'): TimelineData {
+  const fixtureTracks = fixture === 'embedded' ? embeddedTracks : tracks;
   const config = {
     output: { resolution: '1280x720', fps: 30, file: 'out.mp4' },
-    tracks,
+    tracks: fixtureTracks,
     clips: [],
   };
   const current = {
     ...configToRows(config),
-    tracks,
+    tracks: fixtureTracks,
     config,
     resolvedConfig: { ...config, registry: {} },
   } as TimelineData;
-  current.rows = [
-    { id: 'parent', actions: [{ id: 'parent-clip', start: 0, end: 3, effectId: 'effect-parent-clip' }] },
-    { id: 'occurrence', actions: [] },
-  ];
+  current.rows = fixture === 'embedded'
+    ? [
+        { id: 'plate', actions: [{ id: 'f2-plate', start: 0, end: 12, effectId: 'effect-f2-plate' }] },
+        { id: 'V2', actions: [
+          { id: 'f2-agent-clip', start: 3, end: 6, effectId: 'effect-f2-agent-clip' },
+          { id: 'f2-agent-clear-clip', start: 6, end: 9, effectId: 'effect-f2-agent-clear-clip' },
+        ] },
+      ]
+    : [
+        { id: 'parent', actions: [{ id: 'parent-clip', start: 0, end: 3, effectId: 'effect-parent-clip' }] },
+        { id: 'occurrence', actions: [] },
+      ];
   return current;
 }
 
-function setup({ scaleWidth = 100, scrollLeft = 0, withLane = false } = {}) {
+function setup({ scaleWidth = 100, scrollLeft = 0, withLane = false, fixture = 'parent' }: {
+  scaleWidth?: number;
+  scrollLeft?: number;
+  withLane?: boolean;
+  fixture?: 'parent' | 'embedded';
+} = {}) {
   const wrapper = document.createElement('div');
   wrapper.className = 'timeline-wrapper';
   const edit = document.createElement('div');
@@ -45,12 +64,12 @@ function setup({ scaleWidth = 100, scrollLeft = 0, withLane = false } = {}) {
   wrapper.getBoundingClientRect = () => wrapperRect;
   edit.getBoundingClientRect = () => editRect;
   edit.scrollLeft = scrollLeft;
-  const current = createTimelineData();
+  const current = createTimelineData(fixture);
   const lanes = withLane
     ? [{ laneId: 'astrid.transcript', height: 24, opaque: true } as DataLaneView]
     : [];
   const layout = buildTimelineRowLayout({
-    tracks,
+    tracks: fixture === 'embedded' ? embeddedTracks : tracks,
     lanes,
     mediaRowHeight: 48,
     placement: withLane ? { version: 1, lanes: [{ laneId: 'astrid.transcript', beforeTrackId: 'parent' }] } : undefined,
@@ -86,11 +105,17 @@ function positionAtClientX(setupResult: ReturnType<typeof setup>, clientX: numbe
   return position!;
 }
 
-function positionAt(setupResult: ReturnType<typeof setup>, time: number, clientY = 124, scaleWidth = setupResult.pixelsPerSecond) {
-  const clipLeft = editRect.left - setupResult.edit.scrollLeft;
+function positionAt(
+  setupResult: ReturnType<typeof setup>,
+  time: number,
+  clientY = 124,
+  scaleWidth = setupResult.pixelsPerSecond,
+  from = 0,
+) {
+  const clipLeft = editRect.left - setupResult.edit.scrollLeft + from * scaleWidth;
   const clientX = timelineFileDropClientX({
     clipLeft,
-    from: 0,
+    from,
     time,
     pixelsPerSecond: scaleWidth,
   });
@@ -150,6 +175,55 @@ describe('external file-drop pointer geometry', () => {
     expect(corrected.isNewTrack).toBe(false);
     expect(corrected.trackId).toBeUndefined();
     expect(corrected.plan?.rejectReason).toBe('data_lane_target');
+  });
+
+  it('keeps the embedded occurrence V2 start at 4.5s with the real clip fixture', () => {
+    const setupResult = setup({ fixture: 'embedded' });
+    const oldClipLeft = editRect.left + 3 * setupResult.pixelsPerSecond;
+    const oldClientX = oldClipLeft + (4.5 - 3) * setupResult.pixelsPerSecond;
+    const oldPosition = positionAtClientX(setupResult, oldClientX, embeddedV2Y, setupResult.pixelsPerSecond);
+
+    expect(oldPosition.time).toBe(2);
+    expect(oldPosition.plan?.requestedTrackId).toBe('V2');
+    expect(oldPosition.isNewTrack).toBe(true);
+
+    const corrected = positionAt(setupResult, 4.5, embeddedV2Y, setupResult.pixelsPerSecond, 3);
+    expect(corrected.time).toBe(4.5);
+    expect(corrected.plan?.resolvedStart).toBe(4.5);
+    expect(corrected.plan?.requestedTrackId).toBe('V2');
+    expect(corrected.isReject).toBe(false);
+  });
+
+  it('keeps embedded occurrence placement correct under zoom, scroll and viewport clamp', () => {
+    const setupResult = setup({ fixture: 'embedded', scaleWidth: 140, scrollLeft: 360 });
+    const corrected = positionAt(setupResult, 4.5, embeddedV2Y, 140, 3);
+    const clientX = timelineFileDropClientX({
+      clipLeft: editRect.left - setupResult.edit.scrollLeft + 3 * 140,
+      from: 3,
+      time: 4.5,
+      pixelsPerSecond: 140,
+    });
+
+    expect(clientX).toBeGreaterThanOrEqual(wrapperRect.left);
+    expect(clientX).toBeLessThanOrEqual(wrapperRect.right);
+    expect(corrected.time).toBe(4.5);
+    expect(corrected.plan?.resolvedStart).toBe(4.5);
+    expect(corrected.plan?.requestedTrackId).toBe('V2');
+  });
+
+  it.each([
+    ['wrong occurrence', (rows: TimelineData['rows']) => rows.map((row) => row.id === 'V2' ? { ...row, id: 'wrong-occurrence:V2' } : row)],
+    ['missing occurrence', (rows: TimelineData['rows']) => rows.filter((row) => row.id !== 'V2')],
+    ['ambiguous occurrence', (rows: TimelineData['rows']) => [...rows, { id: 'V2', actions: [] }]],
+  ])('rejects a %s row snapshot before planner rerouting', (_name, mutateRows) => {
+    const setupResult = setup({ fixture: 'embedded' });
+    setupResult.current.rows = mutateRows(setupResult.current.rows);
+    const corrected = positionAt(setupResult, 4.5, embeddedV2Y, setupResult.pixelsPerSecond, 3);
+
+    expect(corrected.isReject).toBe(true);
+    expect(corrected.isNewTrack).toBe(false);
+    expect(corrected.trackId).toBeUndefined();
+    expect(corrected.plan?.rejectReason).toBe('timeline_layout_unavailable');
   });
 
   it.each([
