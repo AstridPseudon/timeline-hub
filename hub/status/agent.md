@@ -1,4 +1,4 @@
-<!-- agent | 2026-10-25T11:48:30Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 5 | status age 6m -->
+<!-- agent | 2026-10-25T11:52:09Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 2m -->
 # agent board, 2026-10-25T11:42Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -14,7 +14,7 @@
 | P4 | Keep exact ten-note qualification | Luna / Service | Recorded tuple | merged | Runtime22560 and independent0450 | PASS28.101s versus45s; all per-note durations UNKNOWN. No repeat; final tuple gates still owed. | 786 /0c62 |
 | D108 core2016 | Retain original full checkpoint | Service / Luna | Exact original evidence | merged | Core0811 and classification0846 | 8763 PASS159 FAIL347 ERROR.506bad; source categories and corrected23-node comparison retained. | 070dfc /1daca |
 | D118 core30693 | Retain latest full checkpoint | Service / Luna | Independent1104 | merged | Core1024; classify1055; review1104 | 8823 PASS159 FAIL291 ERROR;450bad, core425, REG14. Summary ambienttree discrepancy resolved1111. | 120d /1daca |
-| D122 host14 | Qualify bootstrap regression repair | App Luna / Agent proof | App source1111 PASS | doing | agt-D118-host14-resume-1141 | Original14 unchanged; source bae5 PASS and additive3 PASS. Prior1130 zero-body disk hold; genuine profile proof resumed. | bae5 held |
+| D122 host14 | Qualify bootstrap regression repair | App Luna / Agent proof | App source1111 PASS | doing | agt-OPS-host14-route-1150 | Original14 unchanged; source bae5 PASS and additive3 PASS. Three zero-body route failures; actual precondition trace active; no original14 result yet. | bae5 held |
 | D122 product batch | Join qualified producer, XML and host fixes | Runtime Luna requested | Normal30caca | ready | Runtime hosting requested1136 | Exact82b6,adcb,bae5 source reviews PASS; own-node proof and one full core before adoption. | Held reviewed donors |
 | D122 XML fixtures | Repair four installer setup failures | Runtime Luna requested | Reviewed adcb source | ready | Runtime hosting requested1136 | Snapshot declaration and three genuine schema fixture inputs; all original predicates retained. | Not authored yet |
 | D122 R2 seed join | Bind current reviewed seed to held restore | Runtime Luna requested | D116 exact source | ready | Runtime hosting requested1136 | Import reviewed seed only; three originals remain unqualified. Prior44cf0PASS3 setupERROR retained. | 44cf held |
@@ -22,18 +22,21 @@
 | D115 effect83 | Consume released ordinal-boundary verifier | Runtime / Agent | Normal tool adoption complete | review | Runtime369 release; Agent30caca | Strict321/native2 PASS at Runtime scope. Actual affected originals and next full count still owed. | Runtime369 /42aad |
 | D115 producer | Preserve sealed predecessor inputs | Sol / independent Luna | Qualified42aad output | ready | Batch hosting requested1136 | 82b6 independent1020 SOURCEPASS; real mounted GREEN at Runtime release. Original32 qualified at donor scope. | 82b6 held |
 | D69 XML source | Restore exact Windows XML predicates | Luna / independent Luna | Review1111 | review | XML author1104; review1111 | Pristine AST equivalent service; protected1 PASS. Four fixture failures have separate source row. | adcb /e2da held |
-| D69 predicate map | Reconcile exact upstream purposes | Luna read only | Retained semantic evidence | review | agt-D69-predicate-join-1130 | 57/59 approved and107 restored;90 render still held. Residual exact purpose list remains open; no whole audit PASS. | Evidence only |
+| D69 predicate map | Reconcile exact upstream purposes | Luna read only | Retained semantic evidence | review | agt-D69-join-return-1150 | 57/59 approved and107 restored;90 render still held. Exact completed1042 semantic join now being folded; no whole audit PASS. | Evidence only |
 | D118 sheet15 | Use supported verified-media setup reads | App Luna / protected Luna | Final1056 PASS | merging | Clean import1111 normal0ad492 | Exact cumulative reviewed blob;248 assertions and10 tests retained. Functional13 and other2 failures stay open. | 0ad49261ed |
 | D118 WC6three | Keep actual mounted capture protocol | App Luna / protected Luna | Review1054 PASS | merging | App1050 normal36e44 | All15 offline PASS at reviewed scope;59 assertions conserved. Real service/core proof still owed. | fff96 /36e44 |
 | D118 audio2 | Preserve genuine managed WAV inputs | App Luna / protected Luna | Review1017 | merging | App1015 normal e8b1 | 52 original assertions retained; fixture env cleanup source PASS.30693 predates fix; actual own-node proof owed. | e8b1a517f6 |
-| D118 occurrence2 | Preserve real occurrence birth behavior | App Luna | Exact safe input1130 | review | App first return requested1136 | Metadata-only2f9c failed causal review1111. Actual expected409 versus subprocess1; lower frame UNKNOWN. | 2f9c held |
+| D118 occurrence2 | Preserve real occurrence birth behavior | App Luna | Exact safe input1130 | doing | app-D118c-occurrence2-own-nodes-1124 | Failed metadata proposal abandoned; source byte-exact26ec. Exact own-node authority/status cause remains open. | No normal diff |
 | D118 video1 | Bind prepared-video actual source guard | App Luna / protected Luna | Review1111 PASS_SOURCE | review | App1105; normal remote requested | Exact369 source/tree guard fix reviewed;52 file assertions retained. Actual3116 own-node proof pending. | 47d1ca held |
+| D118a Scene summary | Preserve real public Scene summary | App Luna / protected Luna | Review1123 SOURCEPASS | merging | App1118 normalfc808 | Exact test-scoped env cleanup; assertions conserved. Genuine functional summary still owed. | 528ec /fc808 |
+| D118a script pin | Preserve pinned script after live rebind | App Luna / protected Luna | Review1132 PASS1 | merging | App1124 normal queue | Independent exact original PASS2.41s on42aad;7 assertions and49 calls conserved. Final tuple separate. | 706e83559 |
+| D118a atomic scope | Preserve authenticated atomic script scopes | App Luna | App selfclaim1124 | doing | app-D118a-atomic-scope1-1124 | Exclusive test file reservation. Exact own-node result and any source diff awaited. | Source pending |
 | D100 candidate | Preserve sequential shared-item provenance | Sol / protected Luna | Exact current source applicability | review | Author1100; protected1104 | Six corrected formerly duplicate-seed controls PASS4.00s; prior20 conserved, TEN unchanged. Product held. | 3aaf held |
 | D107 current equivalent | Preserve legacy archive and current sequence | Sol / protected Luna | Qualified current seed | gated:word-source | Original2e3331; Runtime receiver | SOURCEPASS only; exact ten not effectively retired before replacement behavior qualifies. | 2e3331 held |
 | D117 installed render | Retain authentic source-access stop | Owner / Runtime | Authorized OMP archive or owner disposition | gated:D117 | Runtime stage403 | GitHub auto-classifier refusal stays stopped. No retry, mirror, alternate source or genuine render claim. | Applied523893 |
 | D59 final cut | Qualify final gates and full delivery | Runtime coordinator | Core and REG zero, D69, render | gated:D59 | Existing final coordinator | Final P1–P5, full core, reverse audit and genuine installed render owed. No ZIP claim. | Cut pending |
 
-Integration: normal Agent30caca3e23 contains reviewed sheet and WC6 test changes plus normal Runtime42aad lock-only provenance. Agent product remains released070dfc. Held82b6/adcb/bae5 product changes are not adopted. Exact merge receipts are in queue/done and worker reports.
+Integration: normal Agentfc808f0a26 contains reviewed sheet, WC6, video and Scene test changes plus normal Runtime42aad lock-only provenance. Agent product remains released070dfc. Held82b6/adcb/bae5 product changes are not adopted. Exact merge receipts are in queue/done and worker reports.
 
 core open: 425 on immutable30693. Confirmed regressions:14, all still open until original-node proof. Effective retirements added this batch:0. D107 ten remain held, not counted as closed. Historical550,267,276 and506 inventories remain distinct.
 
@@ -45,7 +48,7 @@ Blockers: Owner D117 — GitHub access auto-classifier refusal; no retry or alte
 Blockers: Final cut — final tuple P1–P5, full core, D69 and render remain owed.
 
 Next ready: REG14 authentic proof; Runtime hosted product batch, XML fixtures and R2 seed join; App hosted D116 source join and occurrence first return. Hosting requests1136 published; actual remote worker IDs awaited, no competing local authors.
-live 0 / cap 6; one local proof controller queued. Remote source capacity requested: Runtime up to3, App up to3. Ready-undispatched local authors:0 by D122 hosting allocation; ready remote requests4 await actual ownership receipts.
+live 2 / cap 6; REG14 route and D69 finite join active. Remote source capacity requested: Runtime up to3, App up to3. Ready-undispatched local authors:0 by D122 hosting allocation; ready remote requests4 await actual ownership receipts.
 
 Disk: latest verified5136846848 bytes before proof resume. Lossless finished-output compression freed96301207 bytes plus verified private-cache archive9MB and finished logs. All decompressed hashes exact. Pins, KEEP, venvs and previously refused paths untouched. Sweep3 running through normal helper. No heavy body active.
 

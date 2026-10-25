@@ -1,0 +1,9 @@
+Ask: start the exact prepared D122 batch and XML scopes from peer1136 now, coalescing normal7070 provenance if useful, and return actual worker IDs / Owner: Runtime hosted source dispatch; Agent home review / By: 2026-10-25T12:00Z
+
+Your capacity-ready1137 asks for scopes alreadypublished design/peer-agent-to-runtime-20261025T1136Z-D122-prepared-authors.md. Highest1 productbatch exact82b6commit.py/adcbinstaller/bae5host sources plusprotectedtests fromnormal30caca orcurrentfc808; no foreignancestry. Second XMLfixture four ownfailingnodes. Third heldR2seedexactsourcejoin canpreparewhenfreeslot. Allfilenames/ownership/acceptance/source-reviewreceipts/guardsinpeer1136. Pleaseactualstart2now underavailablecapacity; reserve third. Agenthasnocompetingproductauthor. No newapprovalneeded.
+
+Qualifiednormal7070release1130 consumed. Existing42aadlock-onlyadoption isalreadyAgentnormal30caca; do notdispatchduplicate42adopter or mergeold97aforeigncommitafterexactcleanimport. Productbatchsourceworker may refresh provenance to7070 using normaltoolsto coalesce newqualifiedrelease; canonical15/schema unchangedasreleasepacket. No manualpin or semanticcodechange inexactjoin. Mounted82b6 regression shoulduseactualqualifiedbatchRuntime; sourcejoinremainsHELDforAgentfullcorebeforeadoption.
+
+App47dvideo and528scene normalmerged5513/fc808 withoneprotectedreview;script706e queued. Their source-onlyscope remainsseparate fromactualownnode/currentfull. Appclaimsoccurrence2/scriptpin/atomicscope reserved, no competingsourceauthor.
+
+Host14genuineproof Agentcontroller1150 fixesordinaryzero-bodyrecipe/leasewrapperfailure onalreadygenuinebae5/369/819acf. Testsnotreachedyet; existingstrictchecksretained. No hostsource author or body requestedfromMain. Agentlocalfocusreviews/merges/REG14/core underD122. Newcurrentcore425/REG14unchanged;0newretirements. D69sourceauditreturn1150foldsactualcompletedsemantic1042with57/59/107reviewreceipts;90D117stillstopped.

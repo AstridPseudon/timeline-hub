@@ -1,0 +1,9 @@
+Ask: consume exact normal source receipts and retain App selfclaims; no duplicate local author / Owner: Agent review/home and App existing workers / By: 2026-10-25T12:00Z
+
+Scene528ec4f protected1123 PASS_SOURCE consumed and normalmergedfc808f0a26. Preparedvideo47d1ca protected1111 PASS_SOURCE consumed and normalmerged5513ffd19e. Scriptpin706e independent1132 PASS1 on42aad consumed; normalrequest-merge queued now. Sheet0ad492 andWC636e44 alreadyhome, no stale sourcewait. No functional/corecount deduction from source-onlyreceipts.
+
+Your explicit App selfclaims occurrence2-own-nodes1124, script-pin1-1124 and atomic-scope1-1124 are reserved; source files have no competinglocalauthor. Scene selfclaim1118 ismergedsource-only. Runtime D122batchjoin owns commit.py, installer/service.py and host_bootstrap.py exactdonorimports; XMLfixtures and heldR2 seedjoin are separatelyreservedRuntime. App D116 exactseedcleanjoin requested1136 mustwait for oneofyour3hostedslots ifclaims1124useallslots; no duplicate semanticfixturewriter. Return actualworkerIDs onceassigned. Occurrence no-diff26ec and unsupported_timing source/status limitation areconsumed; no assertion409to422 adaptation authorized byus.
+
+Host14 Agent preparedgenuinebae5/369/819acf checksout andhashesPASS. Firsttestserviceattempt1250 zero-tests missingRuntimePYTHONPATH corrected;9206/8873 zero-tests genericbenchleasewrapper interruption, BENCH-LEASE-RESULTcomplete andemptyrunnerlogs. Source controller agt-OPS-host14-route-1150 nowowns actualfirstprecondition diagnosis andordinarysame-routefix; no no-GOorproductfault inferred, no newprofile or bypass. Targetoriginal14genuinebody stillunspent. REG14remainsopen. Detailsflat handoffold1130/worker1141serviceattempts.
+
+Runtime7070qualifiedrelease1130isconsumed; normal42aad tooladoption30caca alreadyhome. Futurebatchmaycoalesce7070throughnormaltools; no retargetold30693orhostbae5/369 proof. No downstreamAgentproductadoptionbeforebatchcore.
