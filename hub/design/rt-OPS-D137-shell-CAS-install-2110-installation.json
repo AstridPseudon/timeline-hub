@@ -1,0 +1,89 @@
+{
+  "task": "rt-OPS-D137-shell-CAS-install-2110",
+  "result": "PASS_INSTALL",
+  "observed_utc": "2026-10-25T21:11:01Z",
+  "source": {
+    "repo": "composition",
+    "commit": "cf80cfcb918ee9e311a294fb7291ad5e11c48d0b",
+    "tree": "363a551a00e9dc081da9760e21a6383296135c06",
+    "path": "ops-child-custody/make-child-venv",
+    "sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+    "bytes": 75541,
+    "mode": "0755",
+    "regular_single_link": true
+  },
+  "target": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+    "sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+    "bytes": 75541,
+    "mode": "0755",
+    "regular_single_link": true,
+    "cmp_candidate": true
+  },
+  "preimage": {
+    "sha256": "4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36",
+    "bytes": 75503,
+    "mode": "0755",
+    "regular_single_link": true,
+    "cas_verified": true
+  },
+  "backup": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/backups/make-child-venv.20261025T211101Z.bak",
+    "sha256": "4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36",
+    "bytes": 75503,
+    "mode": "0755",
+    "regular_single_link": true,
+    "no_clobber": true,
+    "preimage_cmp": true
+  },
+  "previous_backup_untouched": {
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/backups/make-child-venv.20261025T203242Z.bak",
+    "sha256": "0857a5e0d9faeceb585b371f1f82cbf4b574ff20350974fd3c95f852e57b6d39",
+    "bytes": 68351,
+    "mode": "0755"
+  },
+  "protected_helpers": {
+    "bench_store.py": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py",
+      "sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+      "bytes": 43403,
+      "mode": "0755",
+      "regular_single_link": true,
+      "unchanged": true
+    },
+    "verify_dependency_seed.py": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/verify_dependency_seed.py",
+      "sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+      "bytes": 52731,
+      "mode": "0755",
+      "regular_single_link": true,
+      "unchanged": true
+    }
+  },
+  "guarded_install": {
+    "command": "ORCH=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch SOURCE_CHECKOUT=/home/user/work/wt/rt-OPS-D137-shell-CAS-install-2110 TMPDIR=/tmp/w-9ba5e4b855 D137_DECISION=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-D137-shell-CAS-install-2110/evidence/d137-decision.json bash ops-child-custody/install-prep/apply-reviewed-maker.sh",
+    "status": 0,
+    "output": "PASS: candidate installed with CAS preimage, no-clobber backup, atomic replacement, and helper readback",
+    "route": "CAS_MANAGER_ONLY",
+    "lock": ".make-child-venv.install.lock",
+    "lock_after_install": "absent",
+    "descriptor_identity_cas": true,
+    "no_follow_exclusive": true,
+    "atomic_rename": true,
+    "readback": true
+  },
+  "postinstall": {
+    "bash_n": "PASS",
+    "embedded_python_compile_blocks": 7,
+    "installed_serialized_store_smoke": "PASS",
+    "smoke_cases": ["nonzero private stderr and rollback cleanup", "timeout private stderr and rollback cleanup"],
+    "smoke_source": "live installed target bytes",
+    "smoke_used_source_superset": false
+  },
+  "publication": {
+    "installed_hash_ready_for_publication": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+    "publication_performed": false,
+    "publication_ready": false,
+    "acceptance": "installation receipt only; no E2E or production acceptance claim"
+  }
+}

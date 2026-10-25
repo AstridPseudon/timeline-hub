@@ -1,0 +1,31 @@
+{
+  "task": "rt-OPS-D137-shell-CAS-install-2110",
+  "verdict": "PASS_INSTALL",
+  "findings": [],
+  "confirmed": [
+    "exact reviewed candidate installed through apply-reviewed-maker.sh",
+    "target preimage CAS matched 4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36",
+    "descriptor-bound O_EXCL/O_NOFOLLOW backup and replacement reservations passed",
+    "identity CAS and atomic directory-descriptor-bound rename passed",
+    "no-clobber backup and postcommit target/helper readback passed",
+    "protected bench_store.py and verify_dependency_seed.py remained unchanged",
+    "installed target bash syntax and seven embedded Python blocks passed",
+    "bounded installed-byte serialized Store smoke passed nonzero and timeout cleanup cases"
+  ],
+  "limitations": [
+    "fixture E2E gate is WITHDRAWN/NOTRUN and e2e_pass is false",
+    "no production install claim beyond the manager-only CAS receipt",
+    "no child/core request, package acquisition, whole make, Farm run, or full suite",
+    "publication was not performed by this worker; installed hash is recorded for the manager",
+    "no Agent next request was issued by this worker"
+  ],
+  "source_and_helpers": {
+    "source_commit": "cf80cfcb918ee9e311a294fb7291ad5e11c48d0b",
+    "source_tree": "363a551a00e9dc081da9760e21a6383296135c06",
+    "candidate_sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+    "installed_sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+    "backup_sha256": "4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36",
+    "bench_store_sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+    "dependency_helper_sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+  }
+}

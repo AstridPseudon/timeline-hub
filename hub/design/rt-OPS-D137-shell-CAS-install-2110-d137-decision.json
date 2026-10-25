@@ -1,0 +1,13 @@
+{
+  "authorization": "D137",
+  "fixture_e2e_gate": "WITHDRAWN",
+  "e2e_result": "NOTRUN",
+  "e2e_pass": false,
+  "install_route": "CAS_MANAGER_ONLY",
+  "production_install": false,
+  "candidate_sha256": "f07b80937dde807d9aa5dad1deed278d831e7f56fb3810708e955926b45b969f",
+  "candidate_bytes": 75541,
+  "source_commit": "cf80cfcb918ee9e311a294fb7291ad5e11c48d0b",
+  "reviewed_installer": "installer1826",
+  "decision_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-OPS-D137-shell-CAS-install-2110/evidence/d137-decision.json"
+}
