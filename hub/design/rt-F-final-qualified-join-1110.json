@@ -1,0 +1,143 @@
+{
+  "base": {
+    "branch": "tl/integration",
+    "commit": "42aad0e92f6da8ea83dd0a382a87e3acd12651b0",
+    "tree": "085a5be70b56353deb41ae7d743336a4ccb7f29c"
+  },
+  "candidate": {
+    "bytes": 240649,
+    "files_sha256": {
+      "acceptance-d73.py": "08d69d10a58c8b65ded99165054e6f11e42fcaf9c9c9471b57cdaa2d2d81d8f8",
+      "core-inventory.json": "283ae7ff589c05a8cb53f4159145140464d088e2c4276a1b8d9e0b68f1705c0e",
+      "d59-final-matrix/README.md": "c6e724fe9c454e7bd4bf57a81c9146ec3c5cc52e5ff82c4b862733bae148b99f",
+      "d59-final-matrix/commands.sh": "ff23c02659a163a63c8e84a5909a5858948c0297ab5080e6e20775e7fc1e50bf",
+      "d59-final-matrix/final-source-tuple.template.json": "9a0340907ac3dd9d557c376e9d62426509a6c77f8ce23e2400c372892897a22f",
+      "d59-final-matrix/inherited-d84/acceptance-d73.py": "08d69d10a58c8b65ded99165054e6f11e42fcaf9c9c9471b57cdaa2d2d81d8f8",
+      "d59-final-matrix/inherited-d84/core-inventory.json": "9705979776ebb9182d986e9364a29911fafd04227e817f5f19346e8fd116bb97",
+      "d59-final-matrix/inherited-d84/install-final-services.py": "6e7eafca3f31c559e07d85a69ef9ac1f785679f727dad831b005a9cb9c6e01f1",
+      "d59-final-matrix/inherited-d84/run-final-delivery.py": "cf714b7d6105ddf1bd752f311bb2982896e5b67e4988b4096417e6b30f8237f8",
+      "d59-final-matrix/inherited-d84/run-final-services.py": "05c5662aa14c3bb288f672421d448335a0b10df659fd58439e6abd296c4c3a97",
+      "d59-final-matrix/inherited-d84/runtime-final-service-rows.txt": "be2572c2b4ea888237a8696c15e68505010da4453df93aba9ff876b724e2553a",
+      "d59-final-matrix/inherited-d84/submit-final.py": "345c8663dde1379264f913e0b72657dbe0d326aac13571dd5cc1e0700087bcca",
+      "d59-final-matrix/inherited-d84/submit-packet.md": "450f67c20acbf5dee1ec229a150ca35e1ea438e432145f66a1c6e9958cd7ca93",
+      "d59-final-matrix/run-final-matrix.py": "cb978383c36dc54b8150234c9783b814bfc3c4bf9517248d09a191505dad0b2d",
+      "d59-final-matrix/source-hash-manifest.json": "b3534c60b0e02ab4c9e975c1c51b86326bcc8fb55a41239ba8d31830a387e951",
+      "d59-final-matrix/stubcontrols.py": "ad937f1ca2213dab9bd9ad142e7c5d9b07e1ee008fb872a22b52366f87a82abe",
+      "install-final-services.py": "fa661ea8d8e0de505440d3b9b1ce00cba185ba8f0721a2d93894fc653a8829c6",
+      "run-final-delivery.py": "b72e8df18a3404b127c1a0c52d6bd9d48117178e80a3be9f87875a5486d8d324",
+      "run-final-services.py": "a2d463b32c9a1e13be1c0c7f1c003867094554b3a9a78ed6c332d273e03ce963",
+      "runtime-final-service-rows.txt": "527f61360f48fd8e3e9a03d07375caae1c23b9b72cefa6bddf33197aa47d220a",
+      "source-inputs/test_timeline_command_output_manifest_auth.py": "e516d3280a1ed3606361e41c06add6b0395751b3015f259e57b5333de9590e81",
+      "source-inputs/test_timeline_intermediate_image_auth.py": "90c09fa44d098333e6b7dcbbd20ed0af5c653ebd5c37f7667d0d9883e18ad6c1",
+      "source-inputs/test_timeline_popup_fork_authority.py": "16dc1297695bf9203601ff1063953b71c19728c15843c62274f3827683492468",
+      "source-inputs/test_timeline_schema_resolution.py": "2283e7169f4f82dafeec0b8d5affd9dca2bf65639dad5a46004d7db27b0d75ae",
+      "source-inputs/test_timeline_validation_cost.py": "68e27d3a3b703f7c9feb29802078a29ad4840da57f40775d79bcad17e386eeb2",
+      "submit-final.py": "345c8663dde1379264f913e0b72657dbe0d326aac13571dd5cc1e0700087bcca",
+      "submit-packet.md": "1a59e651d85331988f7ea8ecb358f7238590ac86e414493097321b302373288a"
+    },
+    "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-qualified-join-1110/evidence/candidate"
+  },
+  "core_lineage": {
+    "approved_changed_files": {
+      "core-inventory.json": {
+        "after": "283ae7ff589c05a8cb53f4159145140464d088e2c4276a1b8d9e0b68f1705c0e",
+        "before": "11688c6d8ca65b216c5b95df3e12962497052799e2e2b86ac6959de246205a10"
+      },
+      "install-final-services.py": {
+        "after": "fa661ea8d8e0de505440d3b9b1ce00cba185ba8f0721a2d93894fc653a8829c6",
+        "before": "9955ba27f401e6cef4abe568ffe777f54ca96249b6becf00f96b57fb186a5c53"
+      },
+      "run-final-delivery.py": {
+        "after": "b72e8df18a3404b127c1a0c52d6bd9d48117178e80a3be9f87875a5486d8d324",
+        "before": "caafb0cf96a9074e2f2714e7582a621c628aa99446b6ddec415ea1667e483e20"
+      },
+      "run-final-services.py": {
+        "after": "a2d463b32c9a1e13be1c0c7f1c003867094554b3a9a78ed6c332d273e03ce963",
+        "before": "20032dda2336694b8cde81d4c0793fdb8209f8016a5ad1213bcbac3fb0afbd34"
+      },
+      "runtime-final-service-rows.txt": {
+        "after": "527f61360f48fd8e3e9a03d07375caae1c23b9b72cefa6bddf33197aa47d220a",
+        "before": "81ffba08898be52d5d8ce63b18d9e2c21edd2a736a13fe485b33882ddab22868"
+      },
+      "submit-packet.md": {
+        "after": "1a59e651d85331988f7ea8ecb358f7238590ac86e414493097321b302373288a",
+        "before": "9715cf691d4f6ab23b6a32e641b57870e4b6cfe0b2bc63ccbc6492d2db0c06ef"
+      }
+    },
+    "d115_added_test_blobs": {
+      "tests/test_timeline_command_output_manifest_auth.py": {
+        "git_blob": "f8c29e32f8ade76401163c953eb476033343b25d",
+        "sha256": "e516d3280a1ed3606361e41c06add6b0395751b3015f259e57b5333de9590e81"
+      },
+      "tests/test_timeline_intermediate_image_auth.py": {
+        "git_blob": "ce15f084566a44231da76b5a3515f3c4a2d61732",
+        "sha256": "90c09fa44d098333e6b7dcbbd20ed0af5c653ebd5c37f7667d0d9883e18ad6c1"
+      }
+    },
+    "predecessor_inventory_sha256": "9705979776ebb9182d986e9364a29911fafd04227e817f5f19346e8fd116bb97",
+    "selector": {
+      "d111b_excluded": true,
+      "preserved_original_targets": 96,
+      "python_targets": 98,
+      "swap_excluded": true,
+      "typescript": "packages/typescript: npm test"
+    },
+    "source_core_files": 11,
+    "source_core_inventory_sha256": "11688c6d8ca65b216c5b95df3e12962497052799e2e2b86ac6959de246205a10",
+    "source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-current-core-prep-1008/evidence/candidate",
+    "source_worker": "rt-F-final-current-core-prep-1008",
+    "unchanged_inherited_files": [
+      "acceptance-d73.py",
+      "source-inputs/test_timeline_popup_fork_authority.py",
+      "source-inputs/test_timeline_schema_resolution.py",
+      "source-inputs/test_timeline_validation_cost.py",
+      "submit-final.py"
+    ]
+  },
+  "excluded_actions": [
+    "installation",
+    "registry mutation",
+    "service body",
+    "full suite",
+    "browser",
+    "P4",
+    "render",
+    "build",
+    "ZIP",
+    "network",
+    "package acquisition",
+    "tuple selection"
+  ],
+  "matrix_lineage": {
+    "byte_exact_noncache_files": 14,
+    "copied_noncache_files": 14,
+    "current_agent_selectors": 5,
+    "final_p4_selectors": 3,
+    "pending_refuses_before_dispatch": true,
+    "requested_path_absent": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-matrix-Agent-2252/evidence/d59-final-matrix",
+    "retained_source_path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-final-matrix-return-2228/evidence/d59-final-matrix",
+    "source_manifest_sha256": "b3534c60b0e02ab4c9e975c1c51b86326bcc8fb55a41239ba8d31830a387e951",
+    "ten_venues": true,
+    "tuple": "PENDING"
+  },
+  "preserved_controls": {
+    "c0_v2_wire_shape": true,
+    "d68_extras_and_overlap": true,
+    "d73_capture_once": true,
+    "d73_four_checkouts": true,
+    "d73_preflight_before_body": true,
+    "poison_zero": true,
+    "positive_once": true
+  },
+  "schema": "timeline.runtime.f-final-qualified-join.v1",
+  "status": "PRIVATE_PENDING_FINAL_CUT",
+  "validation": {
+    "bash_n": "PASS",
+    "d73_acceptance": "PASS",
+    "installer_refusal": "REFUSED before mutation: current registry hash differs from preserved predecessor guard",
+    "json": "PASS",
+    "matrix_plan": "PASS dispatched=0 pending tuple",
+    "matrix_stubcontrols": "BLOCKED_BY_CURRENT_INSTALLED_ROUTE: p4-current-becfe-http-3legs is now present; retained control expects absent route",
+    "python_compile": "PASS"
+  }
+}
