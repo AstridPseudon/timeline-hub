@@ -1,0 +1,33 @@
+{
+  "author_commit": "a0d8398604780c01cb4213e91af1fedb49b17afd",
+  "files": [
+    {
+      "path": "design/handoff-agt-D124-inverse-1450-root-cause.md",
+      "source_path": "workers/agt-D124-inverse-alias-sol-1435/evidence/root-cause.md",
+      "sha256": "15ba548d7045cc7eae5de28c4a77790ad5b96e72476c4ef87f4f999e4a6fa493"
+    },
+    {
+      "path": "design/handoff-agt-D124-inverse-1450-source-manifest.json",
+      "source_path": "workers/agt-D124-inverse-alias-sol-1435/evidence/source-manifest.json",
+      "sha256": "c1c04674f75d581fd1ae16d4cd18a0dd2d80fc3330badb849e771384169ddfb9"
+    },
+    {
+      "path": "design/handoff-agt-D124-inverse-1450-validation.md",
+      "source_path": "workers/agt-D124-inverse-alias-sol-1435/evidence/validation.md",
+      "sha256": "f8b25e938f0b7f6c831af2691b1f78f7faabcd915ddc66d313ec35e5c49d60c7"
+    },
+    {
+      "path": "design/handoff-agt-D124-inverse-1450-own-node-recipe.md",
+      "source_path": "workers/agt-D124-inverse-alias-sol-1435/evidence/own-node-recipe.md",
+      "sha256": "b395c0800bb87a6c4189dd0b2c3041ea12f96eae21c2854470488b9a3b4fb0e0"
+    },
+    {
+      "path": "design/handoff-agt-D124-inverse-1450-regression.py",
+      "source_commit": "a0d8398604780c01cb4213e91af1fedb49b17afd",
+      "source_path": "tests/sdk/test_d124_grouped_inverse_boundary.py",
+      "sha256": "3edecac062ecd2a066dc04c7034ec927d9a8bca318718d2962d0346be91551ca"
+    }
+  ],
+  "no_product_changes": true,
+  "review": "author internal read-only assessment recorded; normal independent Luna review requested on Farm"
+}
