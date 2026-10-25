@@ -658,9 +658,14 @@ class Backend:
             with self.log.open("a", encoding="utf-8") as stream:
                 stream.write(line + "\n")
 
-        shim, hint = install_shim(self.service, say=report)
+        shim = hint = None
+        try:
+            shim, hint = install_shim(self.service, say=report)
+        except Exception as exc:
+            report(f"Astrid command shim setup failed ({type(exc).__name__}); use the run-astrid launcher.")
         marker = self.root / "install.json"
-        write_json(marker, {**read_json(marker), "command_shim": str(shim) if shim else None})
+        command_shim = shim if self.service.system == "win32" or hint is None else None
+        write_json(marker, {**read_json(marker), "command_shim": str(command_shim) if command_shim else None})
         try:
             webbrowser.open("https://astrid.haus/?connect=1")
         except OSError:

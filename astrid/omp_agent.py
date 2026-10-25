@@ -16,6 +16,7 @@ import subprocess
 import sys
 import tempfile
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 from typing import Any
@@ -489,6 +490,15 @@ def _run_key_command(argv: list[str]) -> int:
         print(json.dumps({"error": "invalid_key"}))
         return 3
     base = os.environ.get("ASTRID_OPENROUTER_API_BASE", "https://openrouter.ai")
+    try:
+        parsed_base = urllib.parse.urlsplit(base)
+        allowed_base = parsed_base.scheme == "https" and parsed_base.hostname is not None or (
+            parsed_base.scheme == "http" and parsed_base.hostname in {"127.0.0.1", "localhost"}
+        )
+    except ValueError:
+        allowed_base = False
+    if not allowed_base:
+        base = "https://openrouter.ai"
     try:
         request = urllib.request.Request(base.rstrip("/") + "/api/v1/auth/key", headers={"Authorization": f"Bearer {key}"})
         with urllib.request.urlopen(request, timeout=10):

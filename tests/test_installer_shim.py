@@ -182,6 +182,7 @@ def test_verified_lifecycle_records_shim_and_prints_final_hint(tmp_path, monkeyp
     backend = LifecycleBackend(root, data)
     lines = []
     backend.service = Service(root, tmp_path / "install.log", Mock(return_value=""), home=tmp_path / "home", system=system)
+    shim_path = root / "astrid.cmd" if system == "win32" else backend.service.home / ".local/bin/astrid"
     backend.log, backend.say = tmp_path / "install.log", lines.append
     backend.open = lambda: Backend.open(backend)
     monkeypatch.setattr("webbrowser.open", lambda *_: None)
@@ -200,15 +201,18 @@ def test_verified_lifecycle_records_shim_and_prints_final_hint(tmp_path, monkeyp
         shim.write_text(shim.read_text() + "\n# old content\n")
     Installer(root, data, backend, say=lines.append).run(mode, {})
     record = read_json(root / "install.json")
-    assert launcher.owned_shim(Path(record["command_shim"]))
-    assert "old content" not in Path(record["command_shim"]).read_text()
+    if system == "win32":
+        assert launcher.owned_shim(Path(record["command_shim"]))
+        assert "old content" not in Path(record["command_shim"]).read_text()
+    else:
+        assert record["command_shim"] is None
     hint = "Open a new terminal, then run astrid." if system == "win32" else launcher.PATH_HINT
     assert lines[-1] == hint and lines.count(hint) == 1
     # The real removal boundary cleans up the shim before deleting programs.
     backend.preflight_remove = lambda *_args, **_kwargs: None
     backend.uv = tmp_path / "uv"
     assert Backend.remove(backend, root, data, delete_data=False) == []
-    assert not Path(record["command_shim"]).exists()
+    assert not shim_path.exists()
 
 
 def test_installer_clash_records_fallback_logs_reason_and_preserves_foreign_cmd(tmp_path, monkeypatch, registry):
@@ -229,6 +233,30 @@ def test_installer_clash_records_fallback_logs_reason_and_preserves_foreign_cmd(
     monkeypatch.setattr(backend, "preflight_remove", lambda *_args, **_kwargs: None)
     assert backend.remove(root, tmp_path / "data", delete_data=False) == [foreign]
     assert foreign.read_text() == "user command"
+
+
+def test_open_records_posix_shim_only_when_its_folder_is_on_path(tmp_path, monkeypatch):
+    root = tmp_path / "program"
+    root.mkdir()
+    backend = Backend(root, tmp_path / "install.log", tmp_path / "uv")
+    backend.service = Service(root, backend.log, Mock(), home=tmp_path / "home", system="linux")
+    monkeypatch.setattr("webbrowser.open", lambda *_: None)
+    monkeypatch.setenv("PATH", str(backend.service.home / ".local/bin") + ":/usr/bin:/bin")
+    backend.open()
+    record = read_json(root / "install.json")
+    assert record["command_shim"] == str(backend.service.home / ".local/bin/astrid")
+
+
+def test_open_shim_failure_is_logged_and_does_not_fail_install(tmp_path, monkeypatch):
+    root = tmp_path / "program"
+    root.mkdir()
+    backend = Backend(root, tmp_path / "install.log", tmp_path / "uv")
+    backend.service = Service(root, backend.log, Mock(), home=tmp_path / "home", system="linux")
+    monkeypatch.setattr("astrid.installer.backend.install_shim", Mock(side_effect=PermissionError()))
+    monkeypatch.setattr("webbrowser.open", lambda *_: None)
+    backend.open()
+    assert read_json(root / "install.json")["command_shim"] is None
+    assert "command shim setup failed (PermissionError)" in backend.log.read_text()
 
 
 @pytest.mark.posix_native

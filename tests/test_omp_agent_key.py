@@ -178,6 +178,21 @@ def test_provider_network_error(provider, fake_omp, capsys, monkeypatch):
     assert not fake_omp[1].exists()
 
 
+@pytest.mark.parametrize("base", ["http://openrouter.ai", "http://[::1]"])
+def test_untrusted_provider_base_falls_back_to_openrouter(provider, fake_omp, capsys, monkeypatch, base):
+    monkeypatch.setenv("ASTRID_OPENROUTER_API_BASE", base)
+    seen = []
+
+    def unavailable(request, **_kwargs):
+        seen.append(request.full_url)
+        raise OSError("offline")
+
+    monkeypatch.setattr(omp_agent.urllib.request, "urlopen", unavailable)
+    assert omp_agent.main(["agent", "key", "set", "openrouter"]) == 4
+    assert seen == ["https://openrouter.ai/api/v1/auth/key"]
+    assert json.loads(capsys.readouterr().out) == {"error": "provider_unreachable"}
+
+
 @pytest.mark.parametrize("failure", ["exit", "timeout"])
 def test_import_failure_removes_private_file(provider, fake_omp, tmp_path, capsys, monkeypatch, failure):
     if failure == "exit":
