@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T08:38:35Z | dispatcher heartbeat 8s | live 1 (sol 0, luna 1, other 0) | busy30 7 | status age 5m -->
-# agent board, 2026-10-25T08:33:34Z
+<!-- agent | 2026-10-25T08:41:46Z | dispatcher heartbeat 2s | live 1 (sol 0, luna 1, other 0) | busy30 5 | status age 1m -->
+# agent board, 2026-10-25T08:40:16Z
 | ID | task | model | needs | status | worker | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 / U2b / U2 freeze | Merge upstream snapshot | Luna / Sol | D48, D51 | merged | Draft0651; Sol0755; join0816 | Source reviewed; joined123 and all15 mappings passed on0c2. D51 holds current snapshot. | d01d562ba1 |
@@ -272,7 +272,7 @@
 | F D103 metadata | Preserve genuine CLI video admission | Luna / independent Luna | Actual integrated source and MAIN three | merging | Author 0635; protected 0639 A PASS | Tracked MP4 independently confirms 1920x1080 and 42s; all38 assertions exact. Source normal217035; functional proof now D108. | d588e552be |
 | U4a home receipt | Publish actual finalized adoption evidence | Luna | Actual read-only tool checks | merged | agt-U4a-D102c-home-receipt-0647 | Actual captured d629 and final dd2fc/44cf hashes published; all15 mappings exact. Missing0625 artifacts disclosed. Later normal test merges do not change adoption. | Captured d629 /1daca |
 | F S3 setup return | Preserve registered dry-run capture | Runtime Luna / protected Luna | Normal merge and meaningful changed-source proof | merging | Author0627; protected0629 PASS | Own-only badfe uses real registered capture; all12 assertions exact. Normaldac3; D108 proof owed. Physical promotion and descriptor findings remain separate. | badfe6964f |
-| D108 full core | Measure full current Agent core | Luna / service | D108b tuple and genuine 819acf | doing | Local0811; service2016 | Actual2016 running since08:18Z; past59%. No marker filter; one heavy body. [Run](../../tests/agt-F-D108b-core-local-0811-agent-core-full-1025081835-2016/status) | 070dfc /1daca /04beed /635f |
+| D108 full core | Measure full current Agent core | Luna / service | D108b tuple and genuine 819acf | doing | Local0811; service2016 | Actual2016 running since08:18Z; reached76%. No marker filter; one heavy body. [Run](../../tests/agt-F-D108b-core-local-0811-agent-core-full-1025081835-2016/status) | 070dfc /1daca /04beed /635f |
 | F D103 S3 source log | Preserve exact reviewed source receipts | Luna | Durable per-area reconciliation | doing | Handoff0648; durable source0652 | Four selectors and two SOURCEQUALIFIED receipts published. Combined ledger regenerated from per-area files; durable-source worker owns exact eight missing rows. | d588 / badfe |
 | R2 D110 critical undo | Exclude stale removed local-shot owners | Luna / independent core Luna | Normal tree equals reviewed candidate | merged | Author0651; core review0658 PASS | GenuineRED2 thenGREEN2; independent44 controls PASS, exact inverse/cache/guards audited. Home tree605641 equals reviewed candidate exactly; no P2 GO claim. | 070dfc5ef4 |
 | F ledger durable source | Preserve approved rows through regeneration | Luna | Normal MAIN generation from per-area source | merged | agt-F-ledger-durable-source-0652 PASS | Eight exact reviewed receipt rows in existing Agent source;88200-byte prefix exact, final95086 SHA1ca791. Combined view regeneration is normal sync. | Receipt source only |
@@ -297,12 +297,12 @@ D100: Runtime receiver0634 has exact dd2fc new26 with lock1daca; actual old30890
 Restore: Exact44cf combines reviewed restore and two word-choice originals on corrected mirror and released1daca. Prior new regression and strict3 PASS retained; only ID5 and choices3/9 owed. No four-control or unchanged60 repeat.
 D107: Sol0659 exact2e3331 independent protected0715 PASS_SOURCE. Exact legacy read remains normalb27ff; original ten unchanged. Current equivalent still depends on held2154. No normal merge or functional closure.
 Safety: Withdrawn D88 action stopped. D93 original credential/session/scope limits persist. D98a diagnostic spent; no new observer/body. D106 denies hub writes; all new worker outputs use exact ORCH paths.
-Disk: About5.12GB available; actual core2016 already running. Compact-scratch completed, about15MB freed; approved sweep3 active. No eligible clean non-KEEP worktree; prior refused dirtyG2 untouched. Host audit0826 returns KEEP for all three newer pins.
+Disk: About5.08GB available; actual core2016 already running. Sweep3 completed, one old temp dir removed. Stock compact invoked once; no repeat because its Codex-session step is prohibited byD108a. No eligible clean non-KEEP worktree; prior refused dirtyG2 untouched. Host audit0826 returns KEEP for all three newer pins.
 Blockers: Agent D107 — Independent0715 PASS_SOURCE; current test remains held on2154 and D108 terminal before needed MAIN proof. Receipt0721 PASS; no effective retirement.
 Blockers: Agent D108b — Actual service2016 is RUNNING. Qualified819acf and four checkouts captured once; positive17 once/poison zero passed. Other heavy bodies and new source authors stay held.
 Blockers: Agent D69 — Genuine original manifest/parser published; complete final fingerprint membership EXACTMISSING. Finite fallback0806 PASS only. Baseline repair0820 independent0830 PASS; retained upstream FAIL and Runtime isolation UNCERTAIN unchanged.
 Blockers: Final cut — D59 final tuple gates/core, D69 and genuine installed render remain owed.
-Next ready: Existing core2016 terminal export then D54a classification; baseline0830 PASS ready for classification; host audit0826 KEEP. New source authors and family bodies held until core terminal.
+Next ready: Core2016 terminal export and D54a classification; prepared original-membership and applied-staging briefs dispatch after terminal. Baseline0830 PASS. New source authors and family bodies held while core runs.
 live 1 / cap 6; ready-undispatched 0 eligible starts. Sole core0811 body2016; baseline0830 PASS and host audit0826 KEEP completed. New source authors held underD108b; no manager product/test/pin edits.
 Inbox consumed through1492795 bytes. Updated 2026-10-25T08:33:34Z.
 Later: U4a D111a — Memo1171212 is WITHDRAWN, never merged. Runtime soleLuna0811 samples whole real element request on1daca/070dfc; no Agent memo adoption or source writer. Any qualified later release uses normal tools.
