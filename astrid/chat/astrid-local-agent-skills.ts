@@ -2,7 +2,7 @@ import { existsSync, realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { discoveryProbe } from './discoveryProbe.ts';
-import { agentCommand, LOCAL_AGENT_TABLE, type LocalAgentId } from './localAgents.ts';
+import { agentCommand, astridSignInLine, LOCAL_AGENT_TABLE, type LocalAgentId } from './localAgents.ts';
 
 type ExternalAgent = Exclude<LocalAgentId, 'astrid'>;
 type SkillStatus = { skillSynced: boolean; detail?: string };
@@ -30,7 +30,7 @@ export class LocalAgentSkills {
   }
 
   terminal(agent: LocalAgentId): { command: string } & SkillStatus {
-    if (agent === 'astrid') return { command: agentCommand(LOCAL_AGENT_TABLE.astrid.signInLine), skillSynced: true };
+    if (agent === 'astrid') return { command: agentCommand(astridSignInLine(this.env)), skillSynced: true };
     return { command: agent === 'claude-code' ? 'claude' : agent, ...(this.results.get(agent) ?? this.check(agent)) };
   }
 

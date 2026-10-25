@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { LocalAgentSkills } from './astrid-local-agent-skills.ts';
 import { createAstridAcpHttpServer } from './astrid-acp-bridge.ts';
 import { bridgeTestClient } from './bridge-test-client.ts';
-import { EXTERNAL_AGENT_IDS, LOCAL_AGENT_TABLE, type LocalAgentId } from './localAgents.ts';
+import { agentCommand, astridSignInLine, EXTERNAL_AGENT_IDS, formatAstridSignInLine, LOCAL_AGENT_TABLE, type LocalAgentId } from './localAgents.ts';
 import { processHasExited } from './testProcess.ts';
 
 const harnesses = { 'claude-code': 'claude', codex: 'codex', hermes: 'hermes' } as const;
@@ -36,7 +36,7 @@ if (${JSON.stringify(mode)} === 'timeout') {
 }
 `);
   chmodSync(python, 0o755);
-  const env = { HOME: home, USERPROFILE: home, PATH: '', ASTRID_SERVICE_PYTHON: python };
+  const env = { HOME: home, USERPROFILE: home, PATH: '', ASTRID_SERVICE_PYTHON: python, ASTRID_INSTALL_PROGRAM_ROOT: home };
   const skills = new LocalAgentSkills(env, home, mode === 'timeout' ? 300 : 2_000);
   let connection = 0;
   const host = () => ({ initialize: async () => ({}), request: async () => ({}), dispose: async () => {} }) as never;
@@ -134,4 +134,39 @@ test('missing Astrid interpreter is a cached best-effort failure', async () => {
   const skills = new LocalAgentSkills({ HOME: process.cwd() });
   assert.deepEqual(await skills.sync('codex'), { skillSynced: false, detail: "Astrid's Python wasn't found." });
   assert.equal(skills.sync('codex'), skills.sync('codex'));
+});
+
+test('Astrid agents response reads the shim record for sign-in copy, steps and terminal command', async () => {
+  const f = fixture();
+  const previous = process.env.ASTRID_INSTALL_PROGRAM_ROOT;
+  process.env.ASTRID_INSTALL_PROGRAM_ROOT = f.home;
+  try {
+    const record = join(f.home, 'install.json');
+    const fallback = formatAstridSignInLine(f.home);
+    for (const contents of [null, '{', '{}', '{"command_shim":null}', JSON.stringify({ command_shim: join(f.home, '.local/bin/astrid') }), '{"command_shim":null}']) {
+      if (contents !== null) writeFileSync(record, contents);
+      const written = contents?.includes('.local') ?? false;
+      const line = written ? 'Run `astrid`, then enter `/login` in Astrid.' : fallback;
+      const command = written ? 'astrid' : agentCommand(fallback);
+      const response = await f.call('/agents');
+      assert.equal(response.status, 200);
+      const row = (await response.json()).agents.find((agent: { id: string }) => agent.id === 'astrid');
+      assert.equal(row.line, line);
+      assert.equal(row.signInLine, line);
+      assert.deepEqual(row.steps, [
+        { kind: 'sign-in', command, label: 'Start Astrid in a terminal' },
+        { kind: 'sign-in', command: '/login', label: 'Then sign in' },
+      ]);
+      assert.deepEqual(row.terminal, { command, skillSynced: true });
+    }
+    writeFileSync(record, '{"command_shim":"managed"}');
+    assert.equal(astridSignInLine({ ASTRID_SERVICE_PYTHON: join(f.home, 'versions/v1/py/bin/python') }), 'Run `astrid`, then enter `/login` in Astrid.');
+    for (const platform of ['linux', 'darwin', 'win32'] as const) {
+      assert.equal(formatAstridSignInLine(f.home, platform, true), 'Run `astrid`, then enter `/login` in Astrid.');
+    }
+  } finally {
+    if (previous === undefined) delete process.env.ASTRID_INSTALL_PROGRAM_ROOT;
+    else process.env.ASTRID_INSTALL_PROGRAM_ROOT = previous;
+    await f.close();
+  }
 });

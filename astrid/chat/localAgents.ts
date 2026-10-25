@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { readFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, win32 } from 'node:path';
 
 export const localAgentIdSchema = z.enum(['astrid', 'claude-code', 'codex', 'hermes']);
@@ -6,7 +7,8 @@ export type LocalAgentId = z.infer<typeof localAgentIdSchema>;
 export const LOCAL_AGENT_IDS = localAgentIdSchema.options;
 export const EXTERNAL_AGENT_IDS = LOCAL_AGENT_IDS.filter((id): id is Exclude<LocalAgentId, 'astrid'> => id !== 'astrid');
 
-export function formatAstridSignInLine(root: string, platform = process.platform): string {
+export function formatAstridSignInLine(root: string, platform = process.platform, shimWritten = false): string {
+  if (shimWritten) return 'Run `astrid`, then enter `/login` in Astrid.';
   if (platform === 'win32') {
     const launcher = win32.join(root, 'run-astrid.cmd').replaceAll("'", "''");
     return `Run \`& '${launcher}'\`, then enter \`/login\` in Astrid.`;
@@ -15,19 +17,24 @@ export function formatAstridSignInLine(root: string, platform = process.platform
   return `Run \`'${launcher}'\`, then enter \`/login\` in Astrid.`;
 }
 
-function astridSignInLine(): string {
-  const configuredRoot = process.env.ASTRID_INSTALL_PROGRAM_ROOT;
-  const servicePython = process.env.ASTRID_SERVICE_PYTHON;
-  const fromService = servicePython && isAbsolute(servicePython)
-    ? [1, 2, 3, 4, 5].reduce(path => dirname(path), servicePython)
+export function astridSignInLine(env: NodeJS.ProcessEnv = process.env, platform = process.platform): string {
+  const paths = platform === 'win32' ? win32 : { dirname, isAbsolute, join };
+  const configuredRoot = env.ASTRID_INSTALL_PROGRAM_ROOT;
+  const servicePython = env.ASTRID_SERVICE_PYTHON;
+  const fromService = servicePython && paths.isAbsolute(servicePython)
+    ? [1, 2, 3, 4, 5].reduce(path => paths.dirname(path), servicePython)
     : undefined;
-  const home = process.env.USERPROFILE || process.env.HOME || '.';
-  const defaultRoot = process.platform === 'win32'
-    ? join(process.env.LOCALAPPDATA || join(home, 'AppData', 'Local'), 'Astrid')
-    : join(process.env.XDG_DATA_HOME || join(home, '.local', 'share'), 'astrid');
-  const root = configuredRoot && isAbsolute(configuredRoot) ? configuredRoot
+  const home = env.USERPROFILE || env.HOME || '.';
+  const defaultRoot = platform === 'win32'
+    ? paths.join(env.LOCALAPPDATA || paths.join(home, 'AppData', 'Local'), 'Astrid')
+    : paths.join(env.XDG_DATA_HOME || paths.join(home, '.local', 'share'), 'astrid');
+  const root = configuredRoot && paths.isAbsolute(configuredRoot) ? configuredRoot
     : fromService || defaultRoot;
-  return formatAstridSignInLine(root);
+  let shimWritten = false;
+  try {
+    shimWritten = typeof JSON.parse(readFileSync(paths.join(root, 'install.json'), 'utf8')).command_shim === 'string';
+  } catch { /* Older installs and clashes retain the absolute launcher command. */ }
+  return formatAstridSignInLine(root, platform, shimWritten);
 }
 
 /** One shared table for the service's agent names and the exact recovery lines shown in the menu. */
@@ -37,7 +44,7 @@ export const LOCAL_AGENT_TABLE: Record<LocalAgentId, {
   notInstalledLine?: string;
   windowsNotInstalledLine?: string;
 }> = {
-  astrid: { name: 'Astrid', signInLine: astridSignInLine() },
+  astrid: { name: 'Astrid', get signInLine() { return astridSignInLine(); } },
   'claude-code': {
     name: 'Claude Code',
     signInLine: 'Run `claude auth login`, then come back.',
