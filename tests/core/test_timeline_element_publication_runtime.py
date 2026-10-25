@@ -602,7 +602,7 @@ def test_public_helper_optional_session_rebases_over_disjoint_edit(retained_pack
     result = owner.update_parent_element(case.project, 'film', realm='realm', clip_id='effect',
         element=case.selected, expected_head=expected, duration=3, session=session)
     assert result.ok, result.error
-    assert result.receipt.result['status'] == 'rebased'
+    assert result.receipt.result['status'] == 'merged'
     state = State(case.bundle())
     assert state.entity(REF)['hold'] == 3
     assert state.entity('parent/track:picture')['label'] == 'Concurrent'
