@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T04:13:49Z | dispatcher heartbeat 9s | live 2 (sol 2, luna 0, other 0) | busy30 20 | status age 3m -->
-# runtime board, 2026-10-25T04:10:53Z
+<!-- main | 2026-10-25T04:17:17Z | dispatcher heartbeat 4s | live 4 (sol 2, luna 2, other 0) | busy30 22 | status age 1m -->
+# runtime board, 2026-10-25T04:16:07Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -271,8 +271,10 @@
 
 | D94a-deployment-premise | Enforce protection on each installation | HARD Sol | D97 resolves deployment assumption | doing | rt-D97-permission-gate-sol-0412 | Check DB,WAL,SHM and directory owner/mode; otherwise full verify. Add uid/mode invalidation and protected default curve. | Base09a27 |
 | D86-current-source-delta | Bind next corrected affected cases | Luna source only | Exact reviewed current home receipts | doing | rt-D86-current-delta-bind-0407 | Ready27 plus source-eligible word46/D92three and other exact changed overlaps. Preserve550/23 and exclude active or passed scopes. | Private plan |
-| D86-video4-correspondence | Return retained physical item mapping | Luna read only | Existing actual9211 artifacts | doing | rt-peer-proof-packets-0406 | Inspect only requested identifiers and materialization maps. Return exact absence where not retained; no new collector. | Existing9211 |
-| D91-wholepath | Compare failed and passing step claims | Luna read only | Actual17648 ten errors | doing | rt-D91-wholepath-0409 | Independent full caller-path comparison runs beside Sol correction. No product or test writes, no new body. | Source39fcc |
+| D86-video4-correspondence | Return retained physical item mapping | Luna read only | Existing artifact inspection complete | merged | rt-peer-proof-packets-0406 | All requested correspondence fields EXACTMISSING in actual9211 artifacts. Safe flat packet published; no reconstruction or collector. | Existing9211 |
+| D91-wholepath | Compare failed and passing step claims | Luna read only | Exact source finding complete | merged | rt-D91-wholepath-0409 | Fixture submits doc.patch with empty step patch. Current passing examples aggregate real patch claims. Sol correction assigned; product unchanged. | Source39fcc |
+
+| D86-current96 | Qualify meaningful corrected family sources | Luna / main service | Genuine immutable receiving controls | doing | rt-D86-current96-body-0415 | Exact96 source-bound selectors; no D91, passed inverse7 or held product rows. One main body after real controls; no gate credit. | Source packet4b0cbc |
 
 Runtime producer: Released 6634 unchanged. D94a 09a27 passed 246 targeted cases with flat forward and warm history work. D97 now requires a runtime permission check; sole author 0412 is assigned from exact 09a27. No release or adoption.
 core open: Original 14151 FAIL 45.448s; diagnostic 25257 FAIL 45.557s. D91 ten-case proof 17648 has ten setup errors. Candidate mandatory eight has six failures and two setup errors. All original outcomes remain visible.
@@ -284,12 +286,12 @@ Blockers: Agent proof — D91 ten errors now reach the step-patch claim guard. S
 Blockers: Agent records — Inverse four and numeric three source findings do not justify verifier changes. Complete accepted/rejected producer records are missing; exact conditional seams and limits returned.
 Blockers: Final cut — D59 requires all-lane core0/regressions0, final P1–P5/core, D69 and genuine installed render. Existing-clone final candidate has private checks only; no build or ZIP.
 Safety: Withdrawn D88 prototype and denied action remain stopped. D93 permits original fixture credentials, session, granted scopes and calls only. No new exploit tooling or denied-route retry.
-Next ready: D97 author0412 assigned immediately after owner disposition. Security0409, D91Sol0409, wholepath0409, packets0406 and currentdelta0407 fill the remaining source/review slots. No eligible ready start waits.
-Venues: Main heavy slot free after D91 ten proof17648. Source receiver0407 prepares the exact next family delta. Approved Runtime release and P4 take priority when ready; no unchanged family or App body.
+Next ready: D97 source0412 and D91 correction0409 active. Initial security0409 passed conditionally; final security waits exact D97 tree and curve. Current96 body0415 assigned from completed source packet0407.
+Venues: Current96 worker0415 owns the sole main family body. Approved Runtime release and P4 take priority before any next family submission. No unchanged family or App original is authorized.
 Delivery: Private final receipt0358 accepts complete shallow existing clones and reports exact missing objects. No fetch, worktree creation, install, build or rehearsal body. Earlier installed prose and renderer checks retained.
 Source ownership: Manager edits process files only. D97Sol0412 owns store. D91Sol0409 owns shared-inverse fixture; Luna0409 reads the whole path. Agent0355 owns common M1 fixture; no competing Runtime author.
 Later: Current delta includes reviewed word46/D92three and meaningful corrected overlaps. Media18 joins after actual normal receipt. Optional candidate five were not selected. Passed inverse7 stays excluded.
 Disk: Last measured5.70GB. No ended clean nonKEEP worktrees remain. Old dirty and refused targets untouched. Sweep3 removed0; compact packed0 and gzipped5 old logs. Branches, reports and receipts retained.
-live 6 plus queued0 / cap 6; ready-undispatched 0 eligible starts. Source/review above5.0GB; one heavy above5.2GB; nothing new below4.5GB.
-Dispatcher: D97 author0412 queued; initial security0409, D91Sol0409, wholepath0409, packets0406 and currentdelta0407 assigned. No current original gate body.
-INBOX consumed through867894 bytes. Updated 2026-10-25T04:10:53Z. D97 clears the orchestrator premise blocker; final exact source review remains required.
+live 3 / cap 6; ready-undispatched 0 eligible starts. Source/review above5.0GB; heavy1 above5.2GB; nothing new below4.5GB.
+Dispatcher: D97 author0412, D91Sol0409 and current96 body0415 active. Initial security, wholepath, packet exporter and source binder completed. No current original gate body.
+INBOX consumed through867894 bytes. Updated 2026-10-25T04:16:07Z. D97 clears the orchestrator premise blocker; final exact source review remains required.
