@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import os from 'node:os';
 import path from 'node:path';
@@ -11,7 +11,6 @@ import ts from 'typescript';
 import { appCheckoutTarget, buildSubmitPlan, captureSubmitPins, configureRuntimeLogEnv, exactCheckoutPath, playwrightLaunchEnv, preflightSources, receiptCheckout, registerSubmitRecipes, selectPinnedSources, serviceRecipe, suites, submit, validatePinnedSource, validatePinnedSources, validateSelectedSource, waitForSubmitReceipts } from './d66-plain-stack.mjs';
 
 const require = createRequire(import.meta.url);
-
 const state = (overrides = {}) => ({
   root: '/snapshot/agent', head: 'a'.repeat(40), tree: 'b'.repeat(40), branch: null, dirty: false, ...overrides,
 });
@@ -24,8 +23,11 @@ test('D66 full P2 launch retains bounded Runtime phase logs while other suites s
   });
 
   assert.equal(launch('p2').D66_RUNTIME_LOG_DIR, path.join('/tmp/d66-p2-launch', 'runtime-private'));
+  assert.equal(launch('p2').D66_RUNTIME_PHASE_LAUNCH_ORDINAL, '2');
   assert.equal(launch('p2', 'readiness').D66_RUNTIME_LOG_DIR, undefined);
+  assert.equal(launch('p2', 'readiness').D66_RUNTIME_PHASE_LAUNCH_ORDINAL, undefined);
   assert.equal(launch('p2-element').D66_RUNTIME_LOG_DIR, path.join('/tmp/d66-p2-element-launch', 'runtime-private'));
+  assert.equal(launch('p2-element').D66_RUNTIME_PHASE_LAUNCH_ORDINAL, '2');
   assert.equal(launch('p1').D66_RUNTIME_LOG_DIR, undefined);
   assert.equal(launch('p3').D66_RUNTIME_LOG_DIR, undefined);
   assert.notEqual(launch('p2').D66_RUNTIME_LOG_DIR, launch('p2-element').D66_RUNTIME_LOG_DIR);
@@ -37,15 +39,20 @@ test('D102 configures the existing Runtime sink before native seed and preserves
   const nativeSeedEnv = configureRuntimeLogEnv({ suite: suites.p2, output, env: { ...inherited } });
 
   assert.equal(nativeSeedEnv.D66_RUNTIME_LOG_DIR, path.join(output, 'runtime-private'));
+  assert.equal(nativeSeedEnv.D66_RUNTIME_PHASE_LAUNCH_ORDINAL, '1');
   assert.equal(playwrightLaunchEnv({ suite: suites.p2, suiteName: 'p2', output,
     junit: { readiness: '/tmp/readiness.xml', original: '/tmp/original.xml' }, stage: 'p2', baseEnv: inherited }).D66_RUNTIME_LOG_DIR,
   nativeSeedEnv.D66_RUNTIME_LOG_DIR);
+  assert.equal(playwrightLaunchEnv({ suite: suites.p2, suiteName: 'p2', output,
+    junit: { readiness: '/tmp/readiness.xml', original: '/tmp/original.xml' }, stage: 'p2', baseEnv: inherited }).D66_RUNTIME_PHASE_LAUNCH_ORDINAL,
+  '2');
   assert.equal(playwrightLaunchEnv({ suite: suites.p2, suiteName: 'p2', output,
     junit: { readiness: '/tmp/readiness.xml', original: '/tmp/original.xml' }, stage: 'readiness', baseEnv: inherited }).D66_RUNTIME_LOG_DIR,
   undefined);
 
   const disabledEnv = configureRuntimeLogEnv({ suite: suites.p1, output, env: { ...inherited } });
   assert.equal(disabledEnv.D66_RUNTIME_LOG_DIR, undefined);
+  assert.equal(disabledEnv.D66_RUNTIME_PHASE_LAUNCH_ORDINAL, undefined);
 });
 
 async function loadD102Module(source, sourceUrl, { modules, controlProcess, fetch }) {
@@ -64,7 +71,7 @@ async function loadD102Module(source, sourceUrl, { modules, controlProcess, fetc
     controlRequire, module, module.exports, controlProcess, fetch);
 }
 
-async function runD102LauncherControl(f, { source, failure, suiteName = 'p2', inheritedEnv = {} }) {
+async function runD102LauncherControl(f, { source, failure, suiteName = 'p2', inheritedEnv = {}, harnessSource = null }) {
   const sourceFile = path.join(f.snapshot, 'scripts/testing/d66-plain-stack.mjs');
   const output = mkdtempSync(path.join(f.base, `d102-${failure}-`));
   const runtimeLogDir = path.join(output, 'runtime-private');
@@ -151,6 +158,7 @@ async function runD102LauncherControl(f, { source, failure, suiteName = 'p2', in
       writeFileSync(path.join(tempRoot, 'support/credentials/owner.token'), 'offline-owner');
       // A stdio-only child supplies the real spawnGroup streams and exit/close events. No listener is opened.
       const script = [
+        `if (process.env.ASTRID_P2_COMMIT_PHASE_CAPTURE === '1') { const fd = require('node:fs').openSync(process.env.ASTRID_P2_COMMIT_PHASE_CAPTURE_SINK, 'wx', 0o600); require('node:fs').writeSync(fd, JSON.stringify({ schema_version: 2, request: 1, phase: 'offline', state: 'final', at_ms: 0, count: 1 }) + '\\n'); require('node:fs').closeSync(fd); }`,
         `process.stderr.write(${JSON.stringify(stderr)});`,
         ...(failure === 'startup' ? [] : [
           `process.stdout.write('${JSON.stringify({ endpoint: 'http://127.0.0.1:45455' })}\\n');`,
@@ -183,7 +191,8 @@ async function runD102LauncherControl(f, { source, failure, suiteName = 'p2', in
     '@playwright/test': { expect() { assert.fail('D102 must stop before original assertions'); } },
   };
   const harnessUrl = new URL('../../tests/e2e/local/support/harness.ts', import.meta.url);
-  modules['../../tests/e2e/local/support/harness.ts'] = await loadD102Module(readFileSync(harnessUrl, 'utf8'), harnessUrl.href,
+  const selectedHarnessSource = harnessSource ?? readFileSync(harnessUrl, 'utf8');
+  modules['../../tests/e2e/local/support/harness.ts'] = await loadD102Module(selectedHarnessSource, harnessUrl.href,
     { modules, controlProcess, fetch });
   const namespace = await loadD102Module(source, pathToFileURL(sourceFile).href, { modules, controlProcess, fetch });
   try {
@@ -203,13 +212,13 @@ async function runD102LauncherControl(f, { source, failure, suiteName = 'p2', in
   assert.equal(seedEnv === undefined, failure === 'startup');
   assert.equal(existsSync(path.join(output, 'readiness.xml')), false);
   assert.equal(existsSync(path.join(output, 'p2.xml')), false);
-  return { runtimeLogDir, stderr: stderr + (failure === 'startup' ? '' : shutdown), children, seedEnv, env: controlProcess.env };
+  return { runtimeLogDir, stderr: stderr + (failure === 'startup' ? '' : shutdown), children, seedEnv, env: controlProcess.env,
+    harnessNamespace: modules['../../tests/e2e/local/support/harness.ts'] };
 }
 
-test('D102 actual old-red/new-green launcher/start/spawn/stop retains startup and native-seed failures offline', async (t) => {
+test('D102 actual launcher/start/spawn/stop retains startup and native-seed failures offline', async (t) => {
   const f = serviceFixture();
   const beforeEnv = { ...process.env };
-  const oldSource = execFileSync('git', ['show', 'f0fcdce17841a6b4bb09521c52610010745325d4:scripts/testing/d66-plain-stack.mjs'], { encoding: 'utf8' });
   const newSource = readFileSync(new URL('./d66-plain-stack.mjs', import.meta.url), 'utf8');
   const retained = (control) => {
     assert.equal(readFileSync(path.join(control.runtimeLogDir, 'runtime.stderr.log'), 'utf8'), control.stderr);
@@ -217,15 +226,11 @@ test('D102 actual old-red/new-green launcher/start/spawn/stop retains startup an
     for (const stream of ['stdout', 'stderr']) assert.equal(statSync(path.join(control.runtimeLogDir, `runtime.${stream}.log`)).mode & 0o777, 0o600);
   };
   for (const failure of ['startup', 'native-seed']) {
-    const oldControl = await runD102LauncherControl(f, { source: oldSource, failure });
-    assert.equal(oldControl.env.D66_RUNTIME_LOG_DIR, undefined);
-    assert(oldControl.children.every(({ env }) => env.D66_RUNTIME_LOG_DIR === undefined));
-    assert.throws(() => retained(oldControl), { code: 'ENOENT' }, 'the same retention assertion must be RED on actual old source');
     const newControl = await runD102LauncherControl(f, { source: newSource, failure });
     assert.equal(newControl.env.D66_RUNTIME_LOG_DIR, newControl.runtimeLogDir);
     assert(newControl.children.every(({ env }) => env.D66_RUNTIME_LOG_DIR === newControl.runtimeLogDir));
     retained(newControl);
-    t.diagnostic(`${failure}: actual old source retention RED (ENOENT); current source GREEN (private streams survive real cleanup)`);
+    t.diagnostic(`${failure}: private streams survive real cleanup`);
   }
   const canary = path.join(f.base, 'inherited-sink-must-not-exist');
   const disabled = await runD102LauncherControl(f, { source: newSource, failure: 'startup', suiteName: 'p1',
@@ -239,9 +244,53 @@ test('D102 actual old-red/new-green launcher/start/spawn/stop retains startup an
   retained(unsafeInherited);
   assert.equal(JSON.stringify({ ...process.env }) === JSON.stringify(beforeEnv), true,
     'controls must not configure or leak the host environment');
-  for (const [label, source] of [['old', oldSource], ['new', newSource]]) {
-    t.diagnostic(`${label} launcher SHA256 ${createHash('sha256').update(source).digest('hex')}`);
+  t.diagnostic(`current launcher SHA256 ${createHash('sha256').update(newSource).digest('hex')}`);
+});
+
+test('D105 actual two-start production caller keeps independent private evidence', async () => {
+  const f = serviceFixture();
+  const launcherSource = readFileSync(new URL('./d66-plain-stack.mjs', import.meta.url), 'utf8');
+  const harnessUrl = new URL('../../tests/e2e/local/support/harness.ts', import.meta.url);
+  const newHarnessSource = readFileSync(harnessUrl, 'utf8');
+
+  const control = await runD102LauncherControl(f, { source: launcherSource, failure: 'native-seed', harnessSource: newHarnessSource });
+  const phaseOne = path.join(control.runtimeLogDir, 'p2-commit-phase.jsonl');
+  assert.equal(existsSync(phaseOne), true, 'first production start must create its phase sink');
+  const seedPhase = readFileSync(phaseOne, 'utf8');
+  control.env.D66_RUNTIME_PHASE_LAUNCH_ORDINAL = '2';
+  const stageStarts = [];
+  for (let start = 0; start < 2; start += 1) {
+    let harness;
+    let error;
+    try {
+      harness = await control.harnessNamespace.startDirectHarness({ deferTimelineInitialization: true });
+      await harness.enableTimelineAuthoring(process.execPath);
+    } catch (caught) {
+      error = caught;
+    } finally {
+      await harness?.stop();
+    }
+    stageStarts.push({ harness, error });
   }
+  assert.equal(stageStarts.every(({ error }) => error === undefined), true);
+  const launchDirectories = readdirSync(control.runtimeLogDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && entry.name.startsWith('launch-'))
+    .map((entry) => path.join(control.runtimeLogDir, entry.name));
+  assert.equal(launchDirectories.length, 2);
+  for (const launchDirectory of launchDirectories) {
+    assert.equal(statSync(launchDirectory).mode & 0o777, 0o700);
+    assert.equal(existsSync(path.join(launchDirectory, 'p2-commit-phase-2.jsonl')), true);
+    assert.equal(statSync(path.join(launchDirectory, 'p2-commit-phase-2.jsonl')).mode & 0o777, 0o600);
+    assert.equal(existsSync(path.join(launchDirectory, 'runtime.stdout-2.log')), true);
+    assert.equal(existsSync(path.join(launchDirectory, 'runtime.stderr-2.log')), true);
+    assert.equal(statSync(path.join(launchDirectory, 'runtime.stdout-2.log')).mode & 0o777, 0o600);
+    assert.equal(statSync(path.join(launchDirectory, 'runtime.stderr-2.log')).mode & 0o777, 0o600);
+  }
+  assert.equal(existsSync(path.join(control.runtimeLogDir, 'runtime.stderr.log')), true);
+  assert.equal(existsSync(path.join(control.runtimeLogDir, 'runtime.stdout.log')), true);
+  assert.equal(readFileSync(path.join(control.runtimeLogDir, 'runtime.stderr.log'), 'utf8'), control.stderr);
+  assert.equal(readFileSync(phaseOne, 'utf8'), seedPhase);
+  assert.equal(new Set(launchDirectories).size, 2);
 });
 
 test('D83 focused P2 descriptors select one exact original test each and retain the full eight-test tour', () => {

@@ -245,13 +245,17 @@ function shellQuote(value) {
 }
 
 export function playwrightLaunchEnv({ suite, suiteName, output, junit, stage, baseEnv = process.env }) {
-  const env = configureRuntimeLogEnv({ suite, output, env: {
+  const env = configureRuntimeLogEnv({ suite, output, phaseLaunchOrdinal: stage === suiteName ? 2 : 1, env: {
     ...baseEnv,
     PLAYWRIGHT_OUTPUT_DIR: path.join(output, stage),
     PLAYWRIGHT_JUNIT_OUTPUT_FILE: junit[stage === 'readiness' ? 'readiness' : 'original'],
   } });
   delete env.D66_RUNTIME_LOG_DIR;
-  if (suite.retainRuntimeLogs && stage === suiteName) env.D66_RUNTIME_LOG_DIR = path.join(output, 'runtime-private');
+  delete env.D66_RUNTIME_PHASE_LAUNCH_ORDINAL;
+  if (suite.retainRuntimeLogs && stage === suiteName) {
+    env.D66_RUNTIME_LOG_DIR = path.join(output, 'runtime-private');
+    env.D66_RUNTIME_PHASE_LAUNCH_ORDINAL = '2';
+  }
   if (stage === suiteName) {
     env.D79_HUNG_STACK_EVIDENCE_DIR = path.join(output, 'hung-request-stacks');
     env.D79_HUNG_STACK_RUN_ID = `${suiteName}-${stage}`;
@@ -260,9 +264,13 @@ export function playwrightLaunchEnv({ suite, suiteName, output, junit, stage, ba
 }
 
 /** Configure the existing Runtime sink before the direct harness is constructed. */
-export function configureRuntimeLogEnv({ suite, output, env = process.env }) {
+export function configureRuntimeLogEnv({ suite, output, phaseLaunchOrdinal = 1, env = process.env }) {
   delete env.D66_RUNTIME_LOG_DIR;
-  if (suite.retainRuntimeLogs) env.D66_RUNTIME_LOG_DIR = path.join(output, 'runtime-private');
+  delete env.D66_RUNTIME_PHASE_LAUNCH_ORDINAL;
+  if (suite.retainRuntimeLogs) {
+    env.D66_RUNTIME_LOG_DIR = path.join(output, 'runtime-private');
+    env.D66_RUNTIME_PHASE_LAUNCH_ORDINAL = String(phaseLaunchOrdinal);
+  }
   return env;
 }
 
