@@ -1,0 +1,66 @@
+{
+  "task": "agt-D69-predicate-join-1130",
+  "result": "NOT_WHOLE_AUDIT_PASS",
+  "scope": {
+    "changed_function_bodies": 129,
+    "removed_assertion_fingerprints_multiplicity": 113,
+    "added_assertion_fingerprints_multiplicity": 287,
+    "source": "retained D108/D69 metric and JOIN artifacts; do not sum report labels"
+  },
+  "source_custody": {
+    "old_commit": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+    "old_tree": "2694ae8d2709526b40fa037bda8b159cf412769d",
+    "captured_new_commit": "d6294843286c18e57af3c1874cf1996be42212d2",
+    "captured_new_tree": "6aeae30f0892a424104a4348bca6fd74ba1315d6",
+    "current_normal_commit": "d0ecf1d69a7b37f86034bc52004f73f6c6231603",
+    "current_normal_tree": "e9845f8cf5a6ba80210336d0e2452f80a0918762",
+    "membership_sha256": "1bd9b4c08c1ade951f28983172c6e76205401c93af5943abc2c3d924ddb6e7d0",
+    "recovered_handoff_sha256": "af04bc82117976029346a9a6646b956ab16390627a9d764be6a30ef668ee0411",
+    "parser_sha256": "f8a000977ee880cefb4e1d8313157049acc667549a88351d3547b03b5e4c8c96",
+    "joined_disjoint_function_scopes": 64,
+    "residual_odd": "66 fingerprint records across 25 functions; source-only, not semantic PASS",
+    "residual_even": "66 residual assertion units across 25 functions; source-only, not semantic PASS"
+  },
+  "cleared_from_retained_receipts": [
+    {
+      "scope": "indexes 57 and 59",
+      "source": "current/captured production scene bodies match",
+      "behavior": "approved D09 advisory scene-check boundary",
+      "owner": "Agent scene-check/public caller",
+      "receipt": "deletion-ledger.agent.md:184; retained residual-review-1059"
+    },
+    {
+      "scope": "index 107",
+      "source": "e2da11c027 restores both XML predicates; adcbbea915 restores service.render to upstream source",
+      "behavior": "protected Windows predicate test 1 passed",
+      "owner": "Agent installer/service",
+      "receipt": "agt-U2-D69-XML-review-1111"
+    }
+  ],
+  "remaining_open": [
+    {
+      "scope": "index 90: tests/stage1/test_media_handoff_render_boundary.py::test_host_derived_registry_reaches_canonical_remotion_executor_process",
+      "source": "faithful current/captured repair verified",
+      "behavior": "OPEN: genuine installed Remotion/render proof is still owed",
+      "owner": "Agent installed-render/D117; STOPPED"
+    },
+    {
+      "scope": "retained residual odd/even source-only packets",
+      "source": "OPEN: exact source custody exists, but source identity is not behavioral clearance",
+      "behavior": "OPEN only where the retained reports say unresolved/FAIL; includes D18, D07, and other separately owned boundaries",
+      "owner": "per retained owner boundaries; no new owner inferred"
+    }
+  ],
+  "validation": {
+    "json_parse": "PASS for retained join, odd handoff, and even source-check JSON",
+    "hash_checks": "PASS for retained membership, parser, and recorded custody digests",
+    "ast_source_checks": "PASS: index 90 current equals captured; index 107 test source is restored and adcb service source matches upstream",
+    "git_diff_check": "PASS",
+    "tests_typecheck_lint": "N/A by read-only task"
+  },
+  "limits": [
+    "No new semantic review, body reconstruction, code change, ledger change, or behavior run was performed.",
+    "The retained metric record states that complete original per-function membership cannot be recovered from aggregate totals alone.",
+    "This artifact does not claim whole-audit PASS until installed-render behavior for index 90 is qualified."
+  ]
+}
