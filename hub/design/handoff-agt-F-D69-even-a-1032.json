@@ -1,0 +1,71 @@
+{
+  "prefix": "D69",
+  "task": "D69 independent READ ONLY semantic review",
+  "partition": "even-a",
+  "immutable_function_indexes": [0, 4, 6, 12, 14],
+  "source_commits": {
+    "old": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+    "captured_new": "d6294843286c18e57af3c1874cf1996be42212d2",
+    "current_normal": "d0ecf1d69a7b37f86034bc52004f73f6c6231603"
+  },
+  "scope": {
+    "functions": 5,
+    "assertion_units": 12,
+    "removed_units": 3,
+    "added_units": 9,
+    "membership_removed_units_index_14": 0
+  },
+  "verdicts": {
+    "PASS": 10,
+    "equivalent-approved": 2,
+    "FAIL": 0,
+    "UNRESOLVED": 0
+  },
+  "source_identity": "PASS: all selected current-normal blobs and body hashes equal captured-new",
+  "functions": [
+    {
+      "function_index": 0,
+      "function_key": "tests/core/execution/test_generic_host_child_bridge_d18.py:test_d18_bounded_network_context_and_contained_child",
+      "verdict": "PASS",
+      "caller": "tests/core/execution/test_generic_host_child_bridge_d18.py:serve_one -> GenericPackHost.run_task; astrid/core/execution/generic_host.py:_start_network_broker/invoke_capability/run_task",
+      "unit_verdicts": ["equivalent-approved", "PASS", "PASS"]
+    },
+    {
+      "function_index": 4,
+      "function_key": "tests/core/execution/test_generic_host_child_bridge_d18.py:test_materialization_pending_writes_consume_capacity",
+      "verdict": "PASS",
+      "caller": "tests/core/execution/test_generic_host_child_bridge_d18.py:_materialize -> HostChildBridge.dispatch; astrid/core/execution/_child_bridge.py:_materialize_output",
+      "unit_verdicts": ["equivalent-approved", "PASS"]
+    },
+    {
+      "function_index": 6,
+      "function_key": "tests/core/execution/test_generic_host_child_bridge_d18.py:test_real_sdk_verified_artifacts_and_managed_outputs",
+      "verdict": "PASS",
+      "caller": "tests/core/execution/test_generic_host_child_bridge_d18.py:serve_one -> GenericPackHost.run_task",
+      "unit_verdicts": ["PASS"]
+    },
+    {
+      "function_index": 12,
+      "function_key": "tests/core/timeline/test_clip_fields.py:test_render_status_defaults_to_pinned_union_composition",
+      "verdict": "PASS",
+      "caller": "astrid/core/timeline/clip_fields.py:_composition_version/render_status; current remotion/package-lock.json Composition 0.0.14",
+      "unit_verdicts": ["equivalent-approved", "PASS"]
+    },
+    {
+      "function_index": 14,
+      "function_key": "tests/integrations/test_generic_host_activation_acceptance.py:test_precommit_failure_revokes_before_stopping_exact_host",
+      "verdict": "PASS",
+      "caller": "Runtime runtime_protocol/remote_worker_activation.py:QualifiedRemoteWorkerLauncher.activate",
+      "membership_removed_units": 0,
+      "unit_verdicts": ["PASS", "PASS", "PASS", "PASS"]
+    }
+  ],
+  "checks": {
+    "membership_json_parse": "PASS",
+    "source_blob_hash_conservation": "PASS",
+    "ast_fingerprints": "PASS from immutable handoff records; no runtime imports",
+    "git_diff_check": "PASS",
+    "tests_typecheck_lint": "N/A read-only task"
+  },
+  "changes": "No product, test, generated, pin, registry, ledger, foreign-output, or source changes."
+}
