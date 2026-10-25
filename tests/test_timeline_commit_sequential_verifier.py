@@ -86,6 +86,7 @@ def test_private_sequential_history_survives_restart_and_exact_retry(service):
         (result["receipt"]["receipt_id"],),
     ).fetchone()[0])
     assert metadata["_sequential_execution"]["capture"]["context"]["request"] == submitted
+    assert "request_id" not in metadata["_sequential_execution"]["capture"]["context"]
     before = auth.rows(service)
     service.close()
     restarted = RuntimeService(root)

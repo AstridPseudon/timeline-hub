@@ -207,7 +207,7 @@ class CommitExecutionCoordinator:
                 if entry.users == 0:
                     del self._entries[key]
 
-    def _lookup(self, context, authorize):
+    def _lookup(self, context, authorize, *, diagnostic_request_id=None):
         from .errors import AuthorizationError, ForbiddenError
         from .timeline_commit import CommitRejected
 
@@ -216,22 +216,22 @@ class CommitExecutionCoordinator:
         except (CommitRejected, AuthorizationError, ForbiddenError):
             raise
         except Exception as exc:
-            _emit_redacted_diagnostic(context.get("request_id"), exc)
+            _emit_redacted_diagnostic(diagnostic_request_id, exc)
             raise CommitOutcomeUnknown() from exc
 
-    def execute(self, context, provider, port_factory, *, authorize):
+    def execute(self, context, provider, port_factory, *, authorize, diagnostic_request_id=None):
         with self.commit_store.verification_scope():
-            return self._execute(context, provider, port_factory, authorize=authorize)
+            return self._execute(context, provider, port_factory, authorize=authorize,
+                                 diagnostic_request_id=diagnostic_request_id)
 
-    def _execute(self, context, provider, port_factory, *, authorize):
+    def _execute(self, context, provider, port_factory, *, authorize, diagnostic_request_id=None):
         context = detached(context)
-        context["request_id"] = _validated_request_id(context.get("request_id"))
         if request_identity(context) != context["request_hash"]:
             reject("invocation_mismatch", status=422)
         # There is intentionally no optimistic dependency/head read here. Even
         # callers with an earlier cache miss repeat this lookup after waiting.
         with self._execution(context) as acquired:
-            replay = self._lookup(context, authorize)
+            replay = self._lookup(context, authorize, diagnostic_request_id=diagnostic_request_id)
             if replay is not None:
                 return replay
             if not acquired:
@@ -256,7 +256,7 @@ class CommitExecutionCoordinator:
                             error = exc
             # No provider completion, including a close/hook exception, can
             # supersede a committed winner. A failed read is an unknown outcome.
-            replay = self._lookup(context, authorize)
+            replay = self._lookup(context, authorize, diagnostic_request_id=diagnostic_request_id)
             if replay is not None:
                 return replay
             if error is not None:

@@ -133,6 +133,7 @@ def test_mounted_service_forwards_full_v2_context_and_structured_invalid_reply(r
     assert provider_context == context
     assert context["publisher"] == "authenticated-editor"
     assert context["idempotency_key"] == "mounted-v2-invalid"
+    assert "request_id" not in context
 
 
 def _winner_before_lock(realm, op):

@@ -2503,8 +2503,8 @@ class RuntimeService:
         }).encode()).hexdigest()
         context = {"request": detached(request), "invocation": invocation,
                    "request_hash": request_hash, "idempotency_key": idempotency_key,
-                   "publisher": publisher, "realm_id": self.realm["id"],
-                   "request_id": _new_request_id()}
+                   "publisher": publisher, "realm_id": self.realm["id"]}
+        request_id = _new_request_id()
         commits, coordinator = self._timeline_commits()
         with self.store._mutex:
             self._timeline_commit_started = True
@@ -2519,9 +2519,10 @@ class RuntimeService:
                 if replay is not None:
                     return replay
                 require_active()
-                _emit_redacted_diagnostic(context["request_id"], reason="provider_none")
+                _emit_redacted_diagnostic(request_id, reason="provider_none")
                 raise CommitUnavailable()
-            outcome = coordinator.execute(context, provider, port_factory, authorize=check)
+            outcome = coordinator.execute(context, provider, port_factory, authorize=check,
+                                          diagnostic_request_id=request_id)
             if "http_status" in outcome:
                 raise public_failure(outcome)
             return outcome
@@ -2532,7 +2533,7 @@ class RuntimeService:
         except RuntimeErrorBase:
             raise
         except Exception as exc:
-            _emit_redacted_diagnostic(context["request_id"], exc)
+            _emit_redacted_diagnostic(request_id, exc)
             raise CommitUnavailable() from exc
 
     def _ensure_timeline_commit_baseline(self, commits, project_id, timeline_id, authorize):
