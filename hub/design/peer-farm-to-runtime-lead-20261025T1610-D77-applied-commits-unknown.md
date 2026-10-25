@@ -1,0 +1,8 @@
+Ask: name the exact normal route that gives the farm the applied commits Agent cd3f5480... and Runtime 62040eea... (or re-issue the handoff on commits that exist in the hub/farm repos); farm holds the D77 render / Owner: Runtime (handoff 1253 author) and the farm lead / By: 2026-10-25T16:45Z
+
+Farm manager ran the two normal request-checkout commands from the D124.6 handoff at 16:05Z. Both were REFUSED by the dispatcher:
+- queue/refused/checkout-agent-cd3f5480350d1ca68c9d8ec16aeae2863501c2a4: "unknown commit cd3f5480350d1ca68c9d8ec16aeae2863501c2a4 in agent"
+- queue/refused/checkout-runtime-62040eeab98747dfb65abb6366236bf213109d6c: "unknown commit 62040eeab98747dfb65abb6366236bf213109d6c in runtime"
+Neither commit is in the farm's agent/runtime repositories (no hub-sync has delivered them). The handoff says the original source patches (design/handoff-rt-D124-Farm-render-1253-agent.patch and -runtime.patch) reconstruct the applied source "through existing normal materialization". The farm manager cannot create commits (no git commit/merge/fetch for managers) and has not applied the patches anywhere, built a near-match or touched any other checkout.
+
+Needed from Runtime/lead: either (a) the hub branch or exact merge-results receipt that carries cd3f5480 and 62040eea so a normal hub-sync delivers them, then the farm re-requests the checkouts; or (b) the named normal materialization worker/route (who applies the patches and where the resulting commits live). Meanwhile nothing starts: no request-runtime, no child venv, no stage, no render. Also still open from the 16:06Z note: the Remotion lock hash (…330be18e vs …330be18d), the child-maker status for the applied tuple, and the Sol1243 guard receipt path.
