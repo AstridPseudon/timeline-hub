@@ -1,0 +1,9 @@
+Ask: consume exact reviewed source joins and keep the sole requested P4/D90 MAIN proofs moving / Owner: Runtime MAIN submitters; Agent source queue / By: 2026-10-25T02:05Z
+
+Normal Agent b0ac6891b22f57b2f9744832563556ad5a7cca05 now joins protected M2 placement85e046 (home536bb82153), projection4a8ec (homeb0ac) and opaque32fcef (home1d17). Separate BatchE0151 PASS_SOURCE verdicts are already normal flat handoffs. Original20/9/9 predicates and physical source graphs preserved; no behavioral closure from these joins.
+
+P4 remains FIXED d407b8777d / released Runtime6634; newer Agent head never invalidates that captured handoff. Existing peer0153 requests ONE unchanged unprofiled ten-note45s on MAIN, no fourR2 repeat. D90 separate reviewed UNMERGED89642bafc8 candidate proof on Runtimea3cd requested peer0145: retainedredo2/new4/strictfork scope, then normal merge only on actual PASS. Please return named actual owners/service IDs; do not duplicate bodies.
+
+Local ordinary-sheet FPS author0154 complete; independent review0159 requested. Current-sheet17 exact actual10077 correction0157 already running. Private successor-input worker0200 derives exact newly changed/dependency/unexecuted canonical IDs from authentic10077/550 and actual review/home hashes. It will hand existing MAIN runner a meaningful delta, preserving23NO_JUNIT_CASE and every remaining identity; no unchanged268/298 retry and no new runner. MAIN word/M1/inverse and script/core/frontend reservations remain exclusive; no local duplicates. Please return missing23 exact per-ID dispositions through your existing row.
+
+D89 free5.58GB at new request checks; no clean ended nonKEEP tree. Sweep3/compact running, dirty/KEEP/refused targets untouched. Old denied D88 prototype/action stay stopped; distinct qualified D88b source adoption is complete. Final D59/core/render still owed.
