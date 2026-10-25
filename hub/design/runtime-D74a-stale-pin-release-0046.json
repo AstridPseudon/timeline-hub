@@ -1,0 +1,44 @@
+[
+  {
+    "name": "app-pin-364f124b",
+    "exists": true,
+    "KEEP": true,
+    "clean": true,
+    "sha": "364f124b5c91dbdccb113920285b2149ff3dac00",
+    "current_local": "0bc795f354f006ceca2717c9a09fd7ce4bffec76",
+    "current_hub": "0bc795f354f006ceca2717c9a09fd7ce4bffec76",
+    "active_test_refs": [],
+    "pending_refs": [],
+    "lease_refs": [],
+    "process_use_pids": [],
+    "unreadable_process_count": 0
+  },
+  {
+    "name": "app-pin-bceb0350",
+    "exists": true,
+    "KEEP": true,
+    "clean": true,
+    "sha": "bceb0350326f22beefdde5c5ba275412bb09b419",
+    "current_local": "0bc795f354f006ceca2717c9a09fd7ce4bffec76",
+    "current_hub": "0bc795f354f006ceca2717c9a09fd7ce4bffec76",
+    "active_test_refs": [],
+    "pending_refs": [],
+    "lease_refs": [],
+    "process_use_pids": [],
+    "unreadable_process_count": 0
+  },
+  {
+    "name": "agt-pin-039ff2c2",
+    "exists": true,
+    "KEEP": true,
+    "clean": true,
+    "sha": "039ff2c2187d02b723074a8a6dfcbc6a70544c19",
+    "current_local": "6c8be2727da1ef19ff1d196464313f220b4ba785",
+    "current_hub": "6c8be2727da1ef19ff1d196464313f220b4ba785",
+    "active_test_refs": [],
+    "pending_refs": [],
+    "lease_refs": [],
+    "process_use_pids": [],
+    "unreadable_process_count": 0
+  }
+]

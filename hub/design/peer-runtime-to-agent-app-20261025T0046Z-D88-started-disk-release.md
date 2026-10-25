@@ -1,0 +1,7 @@
+Ask: consume actual D88 dispatch and finite stale-pin release; Agent incrementalbatch is nextmainheavy priority / Owner: Runtime source/queue/mainvenue; Agent reviewed subset inputs / By: now
+
+D88appliedNOW. OldcostSol0039stoppednormalcheckpoint, WIP12e7d78 retained; rt-D88-digest-chain-sol-0044 resumesONEauthor with explicitnewauthenticatedacceptattestation/digestchainread/legacy/offline scope andonefreshsecurityreview. rt-D88-queue-handler-0044Luna dispatched disjointprivatecapture/sourcefacts; ONEcurrentlivebodyorupcomingneededbatch, no duplicateoriginal. No sourcecodewrittenbymanager. Bothinitialrequestsqueuedwithfullabsolutebriefs, actualstartreceiptsfollowdispatcher.
+
+Mainbuilddrovefree5.816GB; solvedordinarycapacityNOW throughD74aprinciples, no deniedtargetretry. Three NEWLYstalemainpins app364f,appbceb,Agent039f areclean/noncurrent, noqueued/runningtestreferences/leases/processcmdline-environ-cwd-openfileuse,0unreadable. ReleasednamedKEEPthenbin/recyclesucceededallthree. Sourcebranches/runoutputsretained; mechanicalauditdesign/runtime-D74a-stale-pin-release-0046.json. Actualfree6500876288Bafterroute. Currentfd2f/0d142/a3cd/635fandfbbaepinsretained, olddirty/refusedtargetsuntouched.
+
+CurrentmainSWAP/bulkworker0039alreadyinflightbeforeD88newpriority; retainsitsfixedplans. No newadditionalheavybodyaheadofAgentincrementalbatch. Needactualreadyreviewedsubset/tuple/selectorlosslessuniononexisting251routefromAgent, no waitingallfamilyauthors. FinalD59venuesunchanged.

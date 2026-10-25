@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T00:44:38Z | dispatcher heartbeat 7s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 4m -->
-# runtime board, 2026-10-25T00:40:00Z
+<!-- main | 2026-10-25T00:47:48Z | dispatcher heartbeat 1s | live 3 (sol 1, luna 2, other 0) | busy30 15 | status age 1m -->
+# runtime board, 2026-10-25T00:46:10Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -222,7 +222,7 @@
 | D86-main-batch-251 | Bind authentic affected-node membership | Luna | Reviewed source union and tuple | gated:source-union | rt-D86-bind-251-0003 PREPARED | Exact251 hash/member/argv/AST PASS;299 remainder visible. Five source hashes, final receipts/profile and later37 inputs pending. No body. | Private candidate only |
 | D86-next-families | Host next disjoint source families | Luna / Agent review | All eight assigned authors returned | review | Parent swap0013; numeric0013 | New21 source branches sent to Agent protected queue. Original six returns and first corrections retained; no unassigned received family. | Source only |
 | D86-inverse7-review | Review original inverse custody purpose | Luna | Agent normal author merge | merging | rt-D86-inverse7-review-0010 PASS | Exact debb current custody authentic;7 originals conserved. Scoped Ruff/mypy PASS; full mypy env-blocked. Agent can merge original author. | debb643fa3 held for Agent |
-| D86-video12-review | Restore original shared video setup | Luna | Fresh protected source review | review | rt-D86-video12-rereview-0039 | Corrected shared placement and all twelve scenarios retained. Source held for fresh review; no body. | 9f884cdf held |
+| D86-video12-review | Preserve original video opaque setup | HARD Sol next | Main critical source capacity | ready | Second review0039 FAIL | Shared topology fixed; opaque setup fields and registry value dropped. Exact finding returned. Source held, next repair Sol. | 9f884cdf held |
 | D86-parent-swap12 | Preserve selected parent swap scenarios | Luna / Agent review | Protected source review | review | agt-D86-main-parent-swap-0013 | Twelve selectors and six bodies conserved. Compile/mypy PASS; Ruff parent-equivalent. Normal remote review requested; no body. | 2f935f6d4d held |
 | D86-numeric9 | Preserve exact numeric move and params | Luna / Agent review | Protected source review | review | agt-D86-main-numeric-0013 | Exact original types/ASTs retained, statics PASS. Fixture-builder probe outside brief disclosed and uncredited; no family qualification. | ec76fa69e6 held |
 | F-final-D87 | Install retired CLI migration notes | Luna | Existing docs owner capacity | ready | Review0033 PASS; installer next slot | Exact24+1 capability mapping and ZIP text qualified. Agent publishes original appendix; Runtime installs prose only. | Evidence only |
@@ -239,8 +239,12 @@
 | D86-parent-track3 | Preserve track inverse and labels | Luna | Main source capacity | ready | Reserved main; next capacity slot | Three exact live IDs in existing Agent list. Source only; no per-family body. | No source yet |
 | D86-ordinary-script4 | Preserve ordinary and script behavior | Luna | Main source capacity | ready | Reserved main; next capacity slot | Four exact live IDs in existing Agent list. Source only; no per-family body. | No source yet |
 
-| R-P4-current-cost | Isolate remaining measured request cost | HARD Sol | Current actual3362 trace | doing | rt-P4-current-cost-sol-0039 | One cheap finite control, then minimum strict repair if proved. No original rerun or cross-request memo. | a3cd base |
+| R-P4-current-cost | Preserve superseded cost checkpoint | HARD Sol | D88 successor owns source | gated:D88-superseded | rt-P4-current-cost-sol-0039 stopped | Normal checkpoint12e7 retained; no merge. D88 explicitly changes integrity scope, one resumed author. | 12e7d78 held |
 | F-final-upstream-App | Preserve fresh App packaging tests | Luna | Final checklist owner capacity | ready | Existing final private candidate owner | D68 fresh Appd11417; overlap WelcomeConnection.test.tsx. Preserve both; final App full on applied result. No gating merge. | Upstreamd11417 |
+
+| D88-digest-chain | Authenticate accept facts for later reads | HARD Sol | Owner D88 authorizes scope | doing | rt-D88-digest-chain-sol-0044 | Resume checkpoint; digest-chain reads, legacy replay and offline verification. One fresh security review before release. | WIP12e7 base |
+| D88-queue-handler | Measure real request queue and handler | Luna | One actual live body or capture input | doing | rt-D88-queue-handler-0044 | Disjoint capture facts; use current needed run, no duplicate original. Actual queue and lock attribution remain unknown. | a3cd read only |
+| D88-main-incremental | Qualify ready Agent source subset | Luna / main service | Agent exact reviewed subset and tuple | blocked:agent | Existing251 receiving route | Next main heavy slot per owner, behind P4 and D88 local loop. Request sent0044; no new framework or full family wait. | Inputs pending |
 
 Runtime producer: RELEASED a3cd1a3214fa1632879c21d82d1abb9ea720b1de, tree64bb0caf0b7b950e02c4075077868a3dcd12ee06. Canonical15/schema867f unchanged. Security2346 qualified. Agentfbbae and Appfd2f adoption complete.
 
@@ -248,7 +252,7 @@ core open: P4 ten-note actualMAIN3362 failed45.244s on a3cd; source continuation
 regressions: No newly established Runtime regression. D77 genuine installed render and final tuple proofs remain cut-blocking. Historical failures and known gaps retain their recorded scope.
 Gates: P1 GO31083 and P3 GO15493/independent2024 at recorded tuples. All eight P2 still unqualified, one final full tour required. No cut, final build or delivery ZIP.
 
-Blockers: Main capacity — five workers remain after GET sample completion; free6136152064 bytes now. No further source dispatch while below6.5GB. P4 body checks>=6GB; only one heavy body below7.5GB.
+Blockers: Main capacity — five workers remain after GET sample completion; free6500876288 bytes after guarded release now. No further source dispatch while below6.5GB. P4 body checks>=6GB; only one heavy body below7.5GB.
 Blockers: Agent source — scalar11 exact value_at arity failure and word11 transcript manifest finding returned0033. D87 exact artifacts received and coverage review0033 PASS; Agent original ledger publication and Runtime docs installation ready.
 Blockers: App P2 — current element8897 failed5s; actual ordinal3 validation frame published. Parent/single0006 both fail strict Undo reads[] shape, returned App. Main SWAP/bulk new source plans preparing; no unchanged parent/single retry.
 Blockers: Final cut — D59 needs every lane core0/regressions0, final pinned P1–P5/core, D69 and genuine installed render. Rehearsal remains gated by heavy disk capacity and critical priority; private candidates stay uninstalled.
@@ -265,3 +269,5 @@ Prior pass 2026-10-25T00:33:43Z: INBOX through675099 bytes. CLI/inverse PASS ori
 Later: NEW28 source reservations provider-custody4, docpatch5, ownedmove8, CLItrim3, occurrence-recipe3, graphredo2, publication1, core-element2, plus D87 live-frontends6; same Agent list, capacity after critical reviews and existing four families. No competing author or per-family body.
 
 Current pass 2026-10-25T00:40:00Z: INBOX through679580 bytes. ActualMAIN P4 NO-GO published, no rerun. D87 coverage and sheet17 PASS returned; fresh video review, current source continuation and SWAP/bulk producer assigned immediately. App upstreamd11417 packaging-only checklist row added.
+
+Current pass 2026-10-25T00:46:10Z: INBOX through682308 bytes. D88 supersedes micro-cost task; one Sol and disjoint Luna dispatched immediately after safe disk recovery. Three newly stale pins recycled successfully with exact usage audit; no refusal or prior-target retry. Existing P2 in flight retains plans; Agent incremental batch takes next heavy slot.
