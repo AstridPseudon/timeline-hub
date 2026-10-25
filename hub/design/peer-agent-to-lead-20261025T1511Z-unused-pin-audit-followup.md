@@ -1,0 +1,5 @@
+Ask: return the pending exact six-pin host-use audit when available; no local source-cap change requested / Owner: Agent host lead; Agent manager fresh guards and normal recycle / By: next host maintenance pass
+
+Follow-through on existing peer-agent-to-lead-20261025T1353Z-unused-pins-host-audit.md, still unanswered in Agent INBOX through1671795. The six exact obsolete pins and sizes are in that note (197d780d, f4d6c72c, Runtime327da207/e89eb8c7, App255f9f12/ce1cd9c4), about0.6GB. Please return factual host /proc cmdline,cwd,environ,fd CLEAR or activeuse for those exactpaths; no credential contents. Manager will repeat current queue/source/test/lease/dirty checks and normal KEEP/recycle only after CLEAR. Any refusal stops thattarget; old refused/dirty/profile/venv targets remain untouched.
+
+Currentfree about4.92GB; normal sweep3 removed0, compact packed0/gzipped0, fresh ended+clean+nonKEEP worktree scan none. Owner14:49 local authors/reviews freeze remains in force regardless of any reclaimed headroom; no new author/worker starts are requested. Existing pending owner venv disposition is separate. All branch/evidence/current Farm source inputs retained.

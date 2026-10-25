@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T15:08:27Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 6m -->
-# agent board, 2026-10-25T15:02Z
+<!-- agent | 2026-10-25T15:12:57Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 1 | status age 0m -->
+# agent board, 2026-10-25T15:12Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -63,6 +63,8 @@
 | D124 Farm input command | Publish qualified core and host commands | Luna read only | Actual Farm receipts | merged | agt-D124-Farm-command-final-review-1336 | Independent1336 PASS | Exact worker Git blobs published1342; shell/JSON/source checks PASS. Farm profile and D73 execution inputs remain lead-owned. | Evidence only |
 | D124 next Farm command | Preserve full qualified Farm controls | Luna | Actual Farm inputs and disposition | merged | First return1424; reviewer1426 | Independent1426 PASS_SOURCE | Exact291c restores all old controls and complete parents. Five source files published with Git/hash receipt1429; no Farm execution. | 291c evidence |
 
+| D127 provider cost | Reduce measured provider lifecycle cost | Luna remote | Runtime aggregated profile | blocked:runtime | Runtime profile owner; Agent author reserved | Owner15:10 names about12s provider share in20s lifecycle. Await exact dominant path and scoped profile; no speculative fix or repeat. | Source unchanged |
+
 Integration: normal Agent20177e6656 adds only two current-word test paths over a4e016b6a9, which contains reviewed union16bb through61fefc and host fallback96df. Local home20177 and normal merge receipt confirmed. Runtime lock5e9ad. Binding225fccb, capturedredo0b586, producer82b6, installer/XML and atomic remain. Released Agent070dfc stays unchanged until own-node proof and Farm core. Host9ea and separate Runtimea1 overlay remain excluded.
 
 core open: 425 on immutable30693. Confirmed regressions:14 until next full core; original14 independently GREEN at fallback96df. Effective retirements added this batch:0. D107 ten remain held, not counted closed.
@@ -70,7 +72,7 @@ Current full checkpoint:8823 PASS /159 FAIL /291 ERROR /173 subtests /0 skips on
 New bounded proof: exact16bb/5e9ad native5 PASS; originalten6 PASS4 FAIL independently1405. Both word recipes, occurrenceFalse and numeric3 PASS. OccurrenceTrue and scalar/compound/separate stay live failures. No unchanged repeat or full-count deduction.
 
 Blockers: Agent core425 and REG14 — Farm full core owed. Step-edge1433 independently qualified; inverse1435 separate Runtime fact awaits Farm review. Runtime same auth owner requested; original pairs missing.
-Blockers: Farm child — new retained-source integrity refusal after the authorized e62f request14:52. Runtime source diagnosis requested1501; Farm request stopped. Earlier metadata wait cleared; core zero-body.
+Blockers: Farm child — new retained-source integrity refusal after the authorized e62f request14:52. Runtime census1457 owns source diagnosis; Farm request stopped. Earlier metadata wait cleared; core zero-body.
 Blockers: Agent D69 — installed render90 and final upstream-cut audit owed. XML107 source is home; genuine platform proof remains separate.
 Blockers: Farm D117a — normal installer stage and genuine installed render pending after core. Prior denied route stays stopped.
 Blockers: Final cut — D123 rehearsal5bd01 SOURCE PASS on b742. Final tip freezes once at D59; final gates, core, D69, wheel and render owed.
@@ -78,15 +80,16 @@ Blockers: Final cut — D123 rehearsal5bd01 SOURCE PASS on b742. Final tip freez
 Next ready: Farm lead has exact a4e016/5e9ad/d8a1/635f pins and lock source, plus qualified291c packet. Runtime owns two separate auth source findings; Main Luna formal inverse review requested1501; unstarted Farm request withdrawn. Main current-equivalent2 proof requested1445 on normal20177; originalten unchanged.
 live 0 / cap0 local by owner14:49 merges-and-receipts directive; ready-undispatched0 local. All local authors/reviewers ended and auto-recycled. Every NEW author/review goes to Farm, or App/Main with room. No local heavy or new source starts pending owner venv disposition.
 
-Disk: 4920373248 bytes at15:00Z; sweep3 removed0 and compact packed0, gzipped0. Fresh ended+clean+nonKEEP scan has no eligible trees; old dirty/refused agt-G2-open-commit preserved. Six obsolete pins wait existing lead host-use audit in peer-agent-to-lead-20261025T1353Z-unused-pins-host-audit.md. No KEEP release, refused-target retry or ~/.codex mutation.
+Disk: 4912865280 bytes at15:12Z; sweep3 removed0 and compact packed0, gzipped0. Fresh ended+clean+nonKEEP scan has no eligible trees; old dirty/refused agt-G2-open-commit preserved. Six obsolete pins wait existing lead host-use audit in peer-agent-to-lead-20261025T1353Z-unused-pins-host-audit.md. No KEEP release, refused-target retry or ~/.codex mutation.
 
 D120/D124: own failing nodes per fix; one Farm unfiltered core per merged batch at60–90min or3+ fixes before adoption. Up to3 source-only starts at>=4.6GB/noheavy; stop4.0GB. Ordinary light proof>=5.0GB. D89c heavy admission at controller dispatch, with4.0GB stop throughout.
 Later: D23/D14 deferred anchors unchanged. D107 current equivalents and broad word cases remain separately held. Complete historical physical records EXACTMISSING. E2/D79 paused until ZIP; D13 installed environment gap remains explicit.
 
-Inbox consumed through1671392 bytes. Manager made no product, test, generated, pin or Git changes. Peer1405/1408/1409/1410/1414 and owner14:20 capacity directive consumed; Runtime and Farm notified of qualified source findings and final command PASS. Source1412 findings exported byte-exact from authored Git blobs; Final291c packet independently PASS_SOURCE and published1429; actual Farm inputs and propagated maker verification pending. Host fix deadline met by normala4e016 before14:00Z; REG closes only on next core.
+Inbox consumed through1671795 bytes. Manager made no product, test, generated, pin or Git changes. Peer1405/1408/1409/1410/1414 and owner14:20 capacity directive consumed; Runtime and Farm notified of qualified source findings and final command PASS. Source1412 findings exported byte-exact from authored Git blobs; Final291c packet independently PASS_SOURCE and published1429; actual Farm inputs and propagated maker verification pending. Host fix deadline met by normala4e016 before14:00Z; REG closes only on next core.
 
 Owner14:45 direct Farm pin request satisfied: a4e016/5e9ad/d8a1/635f exact full SHAs+trees, runtime.lock source_commit5e9ad Git-read and lock hash sent in peer-agent-to-farm-20261025T1447Z-a4e016-exact-companion-pins.md. Source packet includes qualified1426 command/guard hashes. Owner14:49 freezes all NEW local authors/reviews; formal inverse review sent to Farm. Runtime metadata source applicability wait cleared; no more inventory requests.
 
-Pass14:57: Runtime exclusive author rt-R2-step-boundary-1444 acknowledged with finalized1433 and separate1435 packets in peer1457. No new local author/review or ready merge. Farm14:50 has a4e016 checkout and requests Runtime5e9ad. Farm1452 receipt identifies make-child-venv e62f; unchanged bench_store.py is not the correction signal. Fresh ended/clean/nonKEEP scan has zero eligible worktrees; only old dirty G2 remains. Farm1450 review not dispatched on actual board; transferred to Main1501 with explicit withdrawal. No local reviewer dispatched.
 
-Pass15:02: Farm actual new refusal log consumed after readonly-source stage. Runtime receives one source-only diagnosis request; no retry or alternate route. Main receives independent inverse review1501; Farm unstarted1450 withdrawn, any actual reviewer must be returned before duplication. Runtime current-equivalent two request1445 remains ready remote. Next evidence: Farm source disposition, Main author1444 and reviewer1501, or two current journeys. Counts unchanged.
+
+
+Current pass15:12: all local D124 authors/reviewers ended; no new ready merge or queue refusal. Farm14:57 confirms Runtime5e9ad source checkout and reused a4e016 profile, but changed child request refused retained-source ownership after clearing metadata. Sole Runtime census1457 owns source diagnosis; failed request stays stopped. Main independent inverse review1501 replaces withdrawn Farm1450 request. Meaningful current-equivalent2 receiver1445 and D127 actual aggregated provider profile remain remote inputs. Host six-pin use audit followed up1511; fresh guarded recycling only after factual CLEAR. No local worker, original repeat, product or pin change.
