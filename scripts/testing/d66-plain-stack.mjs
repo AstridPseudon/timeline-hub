@@ -275,11 +275,28 @@ export function captureSubmitPins(paths = normalHomes) {
   return pins;
 }
 
-export function buildSubmitPlan({ name, target, paths = normalHomes, checkoutRoot = '/home/user/work/wt', receiptRoot = path.join(orch, 'queue', 'done') } = {}) {
+function explicitSubmitTuple(env, homes, appRoot) {
+  const tupleKeys = sourceRoles.flatMap((role) => [
+    `D66_${role.toUpperCase()}_SHA`, `D66_${role.toUpperCase()}_TREE`, `D66_${role.toUpperCase()}_CHECKOUT`,
+  ]);
+  if (!tupleKeys.some((key) => env[key]?.trim())) return null;
+
+  const sources = selectPinnedSources(env, homes, appRoot);
+  const pins = {};
+  const checkouts = {};
+  for (const role of sourceRoles) {
+    pins[role] = { checkout: sources[role].normal_home, head: sources[role].head, tree: sources[role].tree };
+    checkouts[role] = sources[role].checkout;
+  }
+  return { pins, checkouts };
+}
+
+export function buildSubmitPlan({ name, target, paths = normalHomes, pins: fixedPins, checkouts: fixedCheckouts,
+  checkoutRoot = '/home/user/work/wt', receiptRoot = path.join(orch, 'queue', 'done') } = {}) {
   assert(suites[name], 'choose p1, p2, p2-element or p3');
   if (target?.startsWith('integration:')) throw new Error('D66 submit requires the stable exact App checkout target');
-  const pins = captureSubmitPins(paths);
-  const checkouts = Object.fromEntries(sourceRoles.map((role) => [role, exactCheckoutPath(role, pins[role].head, checkoutRoot)]));
+  const pins = fixedPins ?? captureSubmitPins(paths);
+  const checkouts = fixedCheckouts ?? Object.fromEntries(sourceRoles.map((role) => [role, exactCheckoutPath(role, pins[role].head, checkoutRoot)]));
   const checkoutRequests = sourceRoles.map((role) => ({
     role, head: pins[role].head, checkout: checkouts[role],
     command: [path.join(orch, 'bin', 'request-checkout'), role, pins[role].head, `D66 exact ${role} source`],
@@ -571,7 +588,9 @@ async function submitUnlocked(name, { env = process.env, homes = normalHomes, ap
   }
 
   const target = env.D66_SUBMIT_TARGET?.trim();
-  const plan = buildSubmitPlan({ name, target, paths: homes, checkoutRoot, receiptRoot });
+  const explicit = explicitSubmitTuple(env, homes, appRoot);
+  const plan = buildSubmitPlan({ name, target, paths: homes, checkoutRoot, receiptRoot,
+    pins: explicit?.pins, checkouts: explicit?.checkouts });
   for (const request of plan.checkoutRequests) {
     const result = await runCommand(request.command[0], request.command.slice(1));
     if (result.status !== 0) throw new Error(`D73 ${request.role} request-checkout refused: exit=${result.status}`);
