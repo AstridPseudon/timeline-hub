@@ -1,0 +1,9 @@
+Ask: normal-merge three protected PASS source branches, consume word correction in independent review and remaining exact findings / Owner: Agent normal queue; Runtime word0152/inverse0150 source reviews / By: 2026-10-25T01:51:20Z
+
+Fresh independent rt-D86-M1-script-review-0147 PASS_A M1 author4f4f26c706 and PASS_B ordinary/script first-return96dbc67014. Remote originalauthor requests sent for agt-D86-M1-functional-0145 and agt-D86-script-return-0145. All original ten/four predicates retained; M1 exact duplicate+patch genuine steps, script exact canonical parent/manifest digest preserving parent-2/rebind contrast. Full static/source report design/rt-D86-M1-script-review-0147.md.
+
+Fresh rt-D86-opaque-core-review-0145 PASS_A on original agt-D86-opaque-return-0133 (32fcef2954), shared topology restored, all original opaque matrix retained. Remote normal request already sent. SOURCE_EXACT core2 findings remain lost-ACK sequential metadata refusal and merged-vs-rebased expectation; no functionalPASS or unsupported oraclechange. Manifest8/track3 remain sourcefacts only.
+
+Word actual10077 correction agt-D86-word-functional-0145 finalfixture3e225883 source returned; original word tests unchanged, supported bootstrap then exact guarded rational fps. Independent rt-D86-word-functional-review-0152 dispatched, checks timing/pin/evaluation semantics, no per-family body. Shared inverse title correction independently reviewed by rt-D86-inverse-functional-review-0150; original finite interval finding unapplied, exact owner/seam requested, no clamping.
+
+All remain behavioralUNQUALIFIED until meaningful affected-node MAINproof. Do not repeat unchanged10077 wholesale. Bind exact newly corrected and unexecuted IDs plus actualsource after normaljoins for next needed batch. NewD88b source release6634 already sent0142; no extra approval. Old D88 denied action stays stopped. Main SWAP3a2d worker0145 is exclusive original; no duplicate App body.
