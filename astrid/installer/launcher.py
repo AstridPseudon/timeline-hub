@@ -143,6 +143,33 @@ replace_process([python, "-I", "-m", "astrid.omp_agent", *sys.argv[1:]], env)
 def install(root: Path) -> tuple[Path, ...]:
     """Write stable launchers that follow root/current without changing PATH."""
     root = Path(root).absolute()
+    runtime_runner = root / "run_runtime.py"
+    runtime_runner.write_text(
+        'import sys\nfrom pathlib import Path\n'
+        'from astrid.installer.foreground import launch\n'
+        'launch(Path(__file__).resolve().parent, sys.argv[1:])\n',
+        encoding="utf-8", newline="\n",
+    )
+    # Both renderings are useful for packaging/review; only the native one
+    # is invoked. They follow current just like the agent launcher below.
+    (root / "run.cmd").write_text(
+        '@echo off\r\nsetlocal\r\n'
+        'set "ASTRID_PROGRAM_ROOT=%~dp0"\r\n'
+        'for /f "usebackq delims=" %%V in ("%ASTRID_PROGRAM_ROOT%current") do set "ASTRID_VERSION=%%V"\r\n'
+        '"%ASTRID_PROGRAM_ROOT%versions\\%ASTRID_VERSION%\\py\\Scripts\\python.exe" -I "%ASTRID_PROGRAM_ROOT%run_runtime.py" %*\r\n'
+        'exit /b %errorlevel%\r\n',
+        encoding="utf-8", newline="",
+    )
+    runtime_launcher = root / "run"
+    runtime_launcher.write_text(
+        '#!/bin/sh\nset -eu\n'
+        'root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)\n'
+        'version=$(cat "$root/current")\n'
+        'case "$version" in *[!A-Za-z0-9._-]*|"") echo "Astrid current version pointer is invalid." >&2; exit 2;; esac\n'
+        'exec "$root/versions/$version/py/bin/python" -I "$root/run_runtime.py" "$@"\n',
+        encoding="utf-8", newline="\n",
+    )
+    runtime_launcher.chmod(0o755)
     runner = root / "run_astrid.py"
     # This launcher is rewritten before repair/update, while the selected
     # version may predate the helper. Embed its authoritative implementation

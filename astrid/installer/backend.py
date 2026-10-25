@@ -19,7 +19,6 @@ from runtime_protocol import platform
 from runtime_protocol.door import DEFAULT_DOOR_PORT
 
 from ..core.generation.vibecomfy_dependency import VIBECOMFY_ENGINE_REVISION
-
 from .core import (
     BackupSpaceError,
     VerificationError,
@@ -67,8 +66,9 @@ def _runtime_json(output: str) -> dict:
 
 
 class Backend:
-    def __init__(self, root: Path, log: Path, uv: Path, *, say=print):
+    def __init__(self, root: Path, log: Path, uv: Path, *, say=print, managed_by: str | None = None):
         self.root, self.log, self.uv, self.say = root, log, uv, say
+        self.managed_by = managed_by
         self.service = Service(root, log, self.run, say=say)
 
     def run(self, argv, *, extra_env=None, cwd=None, timeout=1800, clean_bun_env=False) -> str:
@@ -233,19 +233,26 @@ class Backend:
             raise RuntimeError("Runtime discovery owner identity changed; refusing to change it.")
         return "live"
 
+    def require_stopped(self, data: Path) -> None:
+        discovery = data / "runtime" / "discovery.json"
+        if discovery.exists() and self._discovery_owner_state(discovery) == "live":
+            raise ValueError("Stop Astrid in Pinokio first, then try again.")
+
     def stop(self, version: Version | None, data: Path) -> None:
-        self.service.disable()
+        if self.managed_by != "pinokio":
+            self.service.disable()
         if version is not None and not version.python.is_file():
             version = None
         discovery = data / "runtime" / "discovery.json"
         owner_state = self._discovery_owner_state(discovery) if discovery.exists() else "stopped"
         if owner_state == "live":
             self.runtime(version, data, "down", profile=True)
-        elif owner_state in {"stopped", "stale"}:
+        elif owner_state in {"stopped", "stale"} and self.managed_by != "pinokio":
             # A candidate can fail before its foreground owner publishes fresh
             # discovery. Old absent-owner records remain Runtime's to reconcile.
             self.service.stop_foreground()
-        self.service.stop()
+        if self.managed_by != "pinokio":
+            self.service.stop()
         if discovery.exists():
             # A manager may still be draining after its stop operation.
             owner_state = self._discovery_owner_state(discovery)
@@ -479,7 +486,13 @@ class Backend:
         chat_cwd, chat_options = self._prior_chat_settings(version)
         if chat_cwd == data / "chat":
             platform.private_directory(chat_cwd)
-        self.service.register(version, data)
+        if self.managed_by == "pinokio":
+            write_json(self.service.selection, {
+                "owner": "haus.astrid.runtime", "program_root": str(self.root),
+                "data_root": str(data), "managed_by": "pinokio",
+            })
+        else:
+            self.service.register(version, data)
         realm = self.workspace(version, data)
         record = self.service.recorded()
         settings = {"ASTRID_ACP_CWD": str(chat_cwd), **chat_options} if chat_cwd else {}
@@ -487,6 +500,8 @@ class Backend:
                                            "realm_root": realm["realm_root"], "chat_settings": settings})
 
     def start(self, version: Version, data: Path) -> None:
+        if self.managed_by == "pinokio":
+            raise RuntimeError("Start Astrid in Pinokio.")
         if not self.service.start():
             self.service.start_foreground(version, data)
 
@@ -575,14 +590,15 @@ class Backend:
     def unregister(self) -> None:
         record = self.service.recorded()
         if record:
-            kept = {key: record[key] for key in ("owner", "program_root", "data_root", "realm_id", "realm_root", "chat_settings")
+            kept = {key: record[key] for key in ("owner", "program_root", "data_root", "realm_id", "realm_root", "chat_settings", "managed_by")
                     if key in record}
             version = current(self.root)
             if "chat_settings" not in kept and version is not None:
                 chat_cwd, options = self._selected_chat_settings(version, Path(record["data_root"]))
                 kept["chat_settings"] = {"ASTRID_ACP_CWD": str(chat_cwd), **options}
             write_json(self.service.selection, {**kept, "uninstalled": True})
-        self.service.unregister()
+        if self.managed_by != "pinokio":
+            self.service.unregister()
 
     def preflight_remove(self, root: Path, data: Path, *, delete_data: bool) -> Path | None:
         """Prove that removing programs cannot also remove a workspace."""
@@ -659,7 +675,10 @@ class Backend:
             try:
                 root.rmdir()
             except OSError:
-                write_json(root / "install.json", {"owner": "haus.astrid.runtime", "data_root": str(data)})
+                retained_marker = {**marker, "owner": "haus.astrid.runtime", "data_root": str(data)}
+                if record.get("managed_by") == "pinokio":
+                    retained_marker["managed_by"] = "pinokio"
+                write_json(root / "install.json", retained_marker)
                 residue.append(root)
         for data_path in data_targets:
             if not data_path.exists():
@@ -685,6 +704,12 @@ class Backend:
                     bootstrap.parent.rmdir()
                 except OSError:
                     pass  # Other files in the default root remain untouched.
+        if not residue and getattr(self, "managed_by", None) == "pinokio":
+            # Release the one-user claim only after program removal succeeds.
+            # Retain the normal uninstalled receipt for workspace recovery,
+            # with no manager or program pointer blocking a later install.
+            write_json(self.service.selection, {key: value for key, value in record.items()
+                                               if key not in {"managed_by", "program_root"}})
         return residue
 
     def open(self) -> None:

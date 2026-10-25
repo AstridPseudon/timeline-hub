@@ -55,10 +55,10 @@ def bootstrap_root(home: Path, system: str) -> Path:
 
 
 def command(version: Version, data: Path, *, windows: bool = False, log: Path | None = None,
-            env_file: Path | None = None) -> list[str]:
+            env_file: Path | None = None, extra_args: list[str] | None = None) -> list[str]:
     python = version.python.with_name("pythonw.exe") if windows else version.python
     arguments = ["run", "--profile", "astrid", "--data-root", str(data),
-                 "--source-manifest", str(version.profile)]
+                 "--source-manifest", str(version.profile), *(extra_args or [])]
     if env_file is None and not windows:
         return [str(python), "-I", "-m", "astrid_runtime", *arguments]
     # Task Scheduler cannot set an environment and Hidden does not hide a
@@ -156,6 +156,11 @@ class Service:
         executable = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
         return self.run([executable, "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
                          "-Command", "$ErrorActionPreference='Stop'; " + script])
+
+    def login_service_exists(self) -> bool:
+        if self.system == "win32":
+            return bool(self.powershell(TASK_QUERY + "if ($t) { $t.TaskName }").strip())
+        return self.path.exists()
 
     def systemd(self) -> bool:
         if self.system != "linux":

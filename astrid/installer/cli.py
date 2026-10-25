@@ -32,6 +32,7 @@ def parser() -> argparse.ArgumentParser:
                       help="write a redacted support bundle using the installed version")
     result.add_argument("--delete-data", action="store_true", help="also delete the selected data root during uninstall")
     result.add_argument("--root", type=Path, help="absolute managed program directory")
+    result.add_argument("--managed-by", choices=["pinokio"], help="install without a login service; Pinokio owns the process")
     result.add_argument("--data-root", type=Path, help="absolute workspace support directory")
     result.add_argument("--manifest", type=Path, help="local copy of the pinned hosted install manifest")
     result.add_argument("--uv", type=Path, help="absolute pinned uv executable supplied by the bootstrap")
@@ -44,6 +45,8 @@ def main(argv: list[str] | None = None) -> int:
             else "doctor" if args.doctor is not None else "install")
     if args.delete_data and mode != "uninstall":
         parser().error("--delete-data is only valid for uninstall.")
+    if args.managed_by and (args.root is None or not args.root.expanduser().is_absolute()):
+        parser().error("--managed-by pinokio requires an absolute --root.")
     from runtime_protocol import platform
     log = platform.log_dir() / "install.log"
     try:
@@ -51,17 +54,6 @@ def main(argv: list[str] | None = None) -> int:
         root = absolute(args.root or default_program_root(Path.home(), sys.platform))
         uv = args.uv or Path(os.environ.get("ASTRID_INSTALL_UV", bootstrap_root(Path.home(), sys.platform) / ("uv.exe" if sys.platform == "win32" else "uv")))
         backend = Backend(root, log, uv)
-        recorded = backend.service.recorded()
-        if not recorded:
-            prior = read_json(root / "install.json")
-            if prior.get("owner") == LABEL and prior.get("data_root"):
-                recorded = {"data_root": prior["data_root"]}
-        if recorded.get("program_root"):
-            recorded_root = absolute(recorded["program_root"])
-            if args.root and recorded_root != root:
-                raise ValueError(f"The login service already belongs to {recorded_root}.")
-            root = recorded_root
-            backend = Backend(root, log, uv)
         # Windows keeps open files locked, so its per-user lock must survive
         # removal of both the program directory and the default workspace.
         lock_parent = default_program_root(Path.home(), sys.platform).parent
@@ -72,6 +64,49 @@ def main(argv: list[str] | None = None) -> int:
         with lock_path.open("a+b") as lock:
             platform.lock_file(lock.fileno(), blocking=False)
             try:
+                # The single per-user selection is also the Pinokio pointer.
+                # Inspect it under the installer lock before claiming any root.
+                recorded = backend.service.recorded()
+                if mode == "doctor" and not args.root and recorded.get("managed_by") == "pinokio":
+                    root = absolute(recorded["program_root"])
+                    backend = Backend(root, log, uv)
+                prior = read_json(root / "install.json")
+                managed_by = args.managed_by or (prior.get("managed_by") if args.root or mode == "doctor" else None)
+                if (managed_by is None and (args.root or mode == "doctor")
+                        and recorded.get("managed_by") == "pinokio"
+                        and recorded.get("program_root") == str(root)):
+                    managed_by = "pinokio"
+                if managed_by not in {None, "pinokio"}:
+                    raise ValueError("Unknown Astrid installation manager.")
+                if recorded.get("managed_by") == "pinokio":
+                    if managed_by != "pinokio" or (not args.root and mode != "doctor"):
+                        raise ValueError("Astrid on this computer is managed by Pinokio. Update it from Pinokio.")
+                    if absolute(recorded["program_root"]) != root:
+                        raise ValueError(f"Astrid is already managed by Pinokio at {recorded['program_root']}.")
+                elif managed_by == "pinokio":
+                    login_root = recorded.get("program_root") if not recorded.get("uninstalled") else None
+                    default_root = absolute(default_program_root(Path.home(), sys.platform))
+                    default_marker = read_json(default_root / "install.json")
+                    if not login_root and default_marker.get("owner") == LABEL and default_marker.get("managed_by") != "pinokio":
+                        login_root = str(default_root)
+                    if prior.get("owner") == LABEL and prior.get("managed_by") != "pinokio":
+                        login_root = str(root)
+                    if not login_root and backend.service.login_service_exists():
+                        login_root = str(backend.service.path) if sys.platform != "win32" else "the Astrid Runtime sign-in task"
+                    if login_root:
+                        raise ValueError(f"Astrid's login-service installation is at {login_root}. Uninstall it before installing Astrid in Pinokio.")
+                if prior.get("managed_by") == "pinokio" and managed_by != "pinokio":
+                    raise ValueError("Astrid on this computer is managed by Pinokio. Update it from Pinokio.")
+                if recorded.get("program_root") and not recorded.get("uninstalled") and managed_by != "pinokio":
+                    recorded_root = absolute(recorded["program_root"])
+                    if args.root and recorded_root != root:
+                        raise ValueError(f"The login service already belongs to {recorded_root}.")
+                    root = recorded_root
+                    backend = Backend(root, log, uv)
+                    prior = read_json(root / "install.json")
+                if not recorded and prior.get("owner") == LABEL and prior.get("data_root"):
+                    recorded = {"data_root": prior["data_root"]}
+                backend.managed_by = managed_by
                 data = absolute(recorded.get("data_root") or args.data_root or platform.data_root())
                 if sys.platform == "win32":
                     for name, path in (("program directory", root), ("workspace", data)):
@@ -90,8 +125,16 @@ def main(argv: list[str] | None = None) -> int:
                 if mode == "uninstall" and not marker and recorded.get("owner") != LABEL:
                     raise ValueError("No managed Astrid installation was found to uninstall.")
                 if mode not in {"uninstall", "doctor"}:
+                    if managed_by == "pinokio":
+                        backend.require_stopped(data)
                     platform.private_directory(root)
-                    write_json(root / "install.json", {"owner": LABEL, "data_root": str(data)})
+                    marker = {**marker, "owner": LABEL, "data_root": str(data)}
+                    if managed_by:
+                        marker["managed_by"] = managed_by
+                    write_json(root / "install.json", marker)
+                    if managed_by == "pinokio":
+                        write_json(backend.service.selection, {**recorded, "owner": LABEL,
+                                   "program_root": str(root), "data_root": str(data), "managed_by": "pinokio"})
                 print(f"Using your workspace at {data}.")
                 manifest = {}
                 installed = current(root)
@@ -108,7 +151,8 @@ def main(argv: list[str] | None = None) -> int:
                 bundle = None
                 if mode == "doctor":
                     bundle = default_doctor_bundle() if args.doctor == "__default__" else Path(args.doctor)
-                Installer(root, data, backend).run(mode, manifest, delete_data=args.delete_data, bundle=bundle)
+                options = {"managed_by": managed_by} if managed_by else {}
+                Installer(root, data, backend, **options).run(mode, manifest, delete_data=args.delete_data, bundle=bundle)
             finally:
                 platform.unlock_file(lock.fileno())
         return 0
@@ -117,7 +161,7 @@ def main(argv: list[str] | None = None) -> int:
             with log.open("a", encoding="utf-8") as stream:
                 traceback.print_exc(file=stream)
         print(FAILURE_MESSAGE)
-        if isinstance(failure, BackupSpaceError):
+        if isinstance(failure, (BackupSpaceError, ValueError)):
             print(str(failure))
         print(f"Details: {log}")
         return 1
