@@ -1,1 +1,1 @@
-2026-10-25T15:43:15Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 14G free; farm agent-core-full route DROPPED (MAIN 16:00Z, Agent hosts it); only D77 installed render remains, awaiting Runtime inputs
+2026-10-25T16:15:11Z procs: hub-syncd dispatcher run-manager up; workers running 0; disk 12G free; D77 render HELD: applied commits Agent cd3f5480 / Runtime 62040eea unknown to farm repos (checkouts refused 16:05Z), awaiting Runtime/MAIN route; also open: lock-hash typo, child-maker status, guard receipt path
