@@ -1,0 +1,187 @@
+{
+  "report": "P2 element3111 finite producer evidence handoff",
+  "scope": "same-run safe facts only; producer evidence, not an independent NO-GO verdict, reproduction, whole-path diagnosis, or source authorship",
+  "run": {
+    "id": "app-pin-24865fa2-p2-d88b-element-0205-1025020649-3111",
+    "host": "app-pin-24865fa2",
+    "suite": "p2-element",
+    "started_at": "2026-10-25T02:07:04.379Z",
+    "finished_at": "2026-10-25T02:11:29.986Z",
+    "service_wall_seconds": 265.607,
+    "terminal": "FAIL",
+    "preflight": {
+      "id": "app-pin-24865fa2-p2-d88b-element-0205-preflight-1025020619-31113",
+      "result": "PASS"
+    },
+    "readiness": {
+      "result": "PASS",
+      "tests": 1,
+      "failures": 0,
+      "suite_seconds": 50.267861,
+      "testcase_seconds": 23.392
+    },
+    "original": {
+      "result": "FAIL",
+      "tests": 1,
+      "failures": 1,
+      "suite_seconds": 60.987685,
+      "testcase_seconds": 13.631
+    }
+  },
+  "source": {
+    "heads": {
+      "app": "24865fa212148e9bc149a1285936372656037e55",
+      "agent": "6386c700ee56264aebe12da4558ac74dda0d60ca",
+      "runtime": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+      "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+    },
+    "trees": {
+      "app": "741333cebfb2b6505a080507bb6c9789df494d43",
+      "agent": "4f157f4445968ca625017a7e20bd7ca317fa0d5d",
+      "runtime": "47b376717ce7a919a697c62133de3e74dc9f6d3a",
+      "composition": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    },
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "test_sha256_before_after_unchanged": {
+      "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "8182770e910326297b943d520d61fb114f4d9a28aebb58955508b2226e7620d2",
+      "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593"
+    },
+    "original_ui5s_changed": false
+  },
+  "first_failure": {
+    "source_file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "line": 433,
+    "predicate": "expect(dialog.getByRole('status')).toContainText('applied')",
+    "expected": "applied",
+    "observed": "status element not found within 5000 ms",
+    "reached_assertions": [
+      { "source_file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "line": 429, "predicate": "expect(dialog).toBeVisible()", "result": "reached" },
+      { "source_file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "line": 431, "predicate": "expect(dialog.getByText('AM Burst', { exact: true })).toBeVisible()", "result": "reached" },
+      { "source_file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "line": 433, "predicate": "expect(dialog.getByRole('status')).toContainText('applied')", "result": "failed" }
+    ],
+    "not_claimed": "Assertions after line 433 are not listed as reached; helper-name tails are not inferred.",
+    "follow_on": "The line 155 response-watcher error occurred after page closure during teardown and is not the first failed predicate."
+  },
+  "phase_capture": {
+    "source_helper": {
+      "path": "tests/helpers/p2_commit_phase_capture.py",
+      "mode": "0644",
+      "size_bytes": 24831,
+      "sha256": "812bcda5fb0eea60f4a66225e454400b16c296ce12c982963ac47f7de5d6d6fa",
+      "emitted_schema_versions": [1],
+      "schema_version_2_observed": false
+    },
+    "source_loader": {
+      "path": "scripts/testing/sitecustomize.py",
+      "mode": "0644",
+      "size_bytes": 3223,
+      "sha256": "83c28b437417753a221e0fec36047dd6bb267256366dd4acacb8ef8d8137615e"
+    },
+    "phase_jsonl": {
+      "path": "d66/runtime-private/p2-commit-phase.jsonl",
+      "mode": "0600",
+      "size_bytes": 15270,
+      "sha256": "d65d74f230ad5bab70873d23b1c0ffdd819f5555aa2684d26ed90e11c1fbee36"
+    },
+    "records": {
+      "total_jsonl_records": 128,
+      "phase_records": 126,
+      "summary_records": 2,
+      "requests_observed": 3,
+      "max_requests": 8,
+      "max_events": 128,
+      "max_bytes": 65536,
+      "truncated": false,
+      "schema_versions_observed": [1]
+    },
+    "ordinals": [
+      {
+        "ordinal": 1,
+        "records": 46,
+        "phase_counts": { "dispatch_queue": 1, "handler_entry": 1, "authorization": 14, "coordinator_admission": 1, "coordinator_lock": 1, "provider": 1, "accept": 1, "receipt": 1, "http_response": 2 },
+        "last_phase": "http_response",
+        "http_statuses": [200, 200],
+        "duration_ms": 2807.839,
+        "durations_ms": { "dispatch_queue": 1.523, "handler": 2806.316, "provider": 2093.87, "response_write": 1.735, "execution_lock_wait": null, "caller_receipt": null },
+        "boundary": "completed: accept, receipt, and HTTP response observed"
+      },
+      {
+        "ordinal": 2,
+        "records": 64,
+        "phase_counts": { "dispatch_queue": 1, "handler_entry": 1, "authorization": 23, "coordinator_admission": 1, "coordinator_lock": 1, "provider": 1, "accept": 1, "receipt": 1, "http_response": 2 },
+        "last_phase": "http_response",
+        "http_statuses": [200, 200],
+        "duration_ms": 18603.793,
+        "durations_ms": { "dispatch_queue": 2.866, "handler": 18600.927, "provider": 11851.016, "response_write": 15.101, "execution_lock_wait": null, "caller_receipt": null },
+        "boundary": "completed: accept, receipt, and HTTP response observed"
+      },
+      {
+        "ordinal": 3,
+        "records": 16,
+        "phase_counts": { "dispatch_queue": 1, "handler_entry": 1, "authorization": 5, "coordinator_admission": 1, "coordinator_lock": 1, "provider": 1, "accept": 0, "receipt": 0, "http_response": 0 },
+        "last_phase": "authorization",
+        "duration_ms_observed": 180.24,
+        "boundary": "pending: provider started; provider end, accept, receipt, and HTTP response were not observed",
+        "terminal_summary": "not emitted because the dispatch did not finish"
+      }
+    ],
+    "unknown_boundaries": [
+      "caller receipt is outside the Runtime process",
+      "client request to server receive is outside the Runtime process",
+      "exact threading.Lock.acquire wait is not represented by this phase hook",
+      "no later accept, receipt, response, or post-close outcome is retained"
+    ]
+  },
+  "intended_request_dump_correlation": {
+    "app_diagnostic": {
+      "path": "d66/p2-element/three-products.p2-elements-4b4f7-tch-reload-and-guarded-Undo/p2-element-apply-diagnostic.json",
+      "mode": "0600",
+      "size_bytes": 2344,
+      "sha256": "dcec40e74979efde77ec743b891c773926fad0e11e128a305511d5f8b937fd7e",
+      "correlation": "apply-1",
+      "request_kind": "scoped-commit",
+      "request_start_elapsed_ms": 29143,
+      "test_outcome_elapsed_ms": 33653,
+      "retained_elapsed_ms": 33725,
+      "teardown_start_elapsed_ms": 33727,
+      "page_close_elapsed_ms": 33746,
+      "request_to_test_outcome_ms": 4510,
+      "request_to_page_close_ms": 4603,
+      "response_status": "UNKNOWN",
+      "response": "none",
+      "terminal": "pending"
+    },
+    "runtime_ordinal": 3,
+    "basis": "the sole incomplete Runtime ordinal is the same mounted element apply request retained as apply-1/scoped-commit",
+    "dump_intent": "watchdog dump for the active request ordinal 3; no body, key, auth, URL, identifier, or raw stack is exported"
+  },
+  "watchdog": {
+    "configured_seconds": 2,
+    "source_default_max_captures": 2,
+    "retained_dump": {
+      "path": "d66/runtime-private/p2-commit-phase.stacks.txt",
+      "mode": "0600",
+      "size_bytes": 15077,
+      "sha256": "0bf7f3e3eae3873147124a6f9d73a2f32c9489a047404c7993aa47e13fbb02ab",
+      "observed_capture_blocks": 2
+    },
+    "safe_dump_frame": {
+      "file": "runtime_protocol/timeline_commit_validation.py",
+      "line": 173,
+      "function": "validate_commit_value",
+      "meaning": "observed stack frame only; not a causal diagnosis or independent verdict"
+    }
+  },
+  "retained_artifacts": {
+    "manifest": { "path": "d66/manifest.json", "mode": "0644", "size_bytes": 6399, "sha256": "b1256218f0274eebdbe3d056b38ac02a100dec83637d9cfb0e9307db3e3733d7" },
+    "original_xml": { "path": "d66/p2-element.xml", "mode": "0644", "size_bytes": 5469, "sha256": "f4c596837e38fa97d9ec1fdbd766d19dbc7c0112b92dd3105a73deabfac45271" },
+    "readiness_xml": { "path": "d66/readiness.xml", "mode": "0644", "size_bytes": 1683, "sha256": "a48a5fd9f52e591be54144866418750773f03c180c8bea22159581837d2271a4" }
+  },
+  "nonclaims": [
+    "No independent NO-GO verdict, reproduction, whole-path causal diagnosis, or source author is claimed.",
+    "No queue timing is inferred from unavailable fields.",
+    "Absent accept, receipt, response, or post-close outcome remains UNKNOWN rather than deadlock or permanent failure.",
+    "Old element8897 remains a distinct result and is not combined with this run.",
+    "Raw private phase, stack, body, browser, and original output files remain in place and were not modified."
+  ]
+}
