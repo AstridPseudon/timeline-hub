@@ -23,6 +23,10 @@ pytestmark = pytest.mark.integration
 @pytest.fixture
 def film(base_film):
     from runtime_protocol.service import RuntimeService
+    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+
+    from astrid.sdk.timeline.commit import bundle_from_document
+    from astrid.sdk.timeline.emitter import emit_document_commands
 
     fixture, parent, _ = base_film
     parent = copy.deepcopy(parent)
@@ -33,12 +37,32 @@ def film(base_film):
     parent['config']['clips'] = copy.deepcopy(parent['clips'])
     service = RuntimeService(fixture.duplicate_root)
     try:
-        head = service.get_project_timeline(fixture.project_id, fixture.timeline_id)['head_revision_id']
-        baseline = service.publish_parent_composition(fixture.project_id, fixture.timeline_id, {
-            'project_id': fixture.project_id, 'timeline_id': fixture.timeline_id,
-            'expected_head': head, 'parent_revision_id': 'native-checkout-baseline',
-            'parent_composition': parent,
-        }, idempotency_key='native-checkout-baseline')
+        service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
+        head = service.get_project_timeline(fixture.project_id, fixture.timeline_id)
+        document = service._timeline_commits()[0].revision_closure(
+            fixture.project_id, fixture.timeline_id, head['head_revision_id'])
+        before = bundle_from_document(document)
+        after = copy.deepcopy(before)
+        after['parent'] = parent
+        commands = emit_document_commands(before, after)
+        body = {
+            'api_version': 1, 'project_id': fixture.project_id, 'timeline_id': fixture.timeline_id,
+            'base_revision_id': head['head_revision_id'], 'base_publication_id': head['head_publication_id'],
+            'commands': commands, 'label': 'Native checkout baseline', 'merge': 'atomic', 'reads': [],
+            'dry_run': False, 'source': {'via': 'python'}, 'rationale': 'Native checkout fixture',
+            'group_id': 'native-checkout-baseline',
+            'steps': [{'id': 'baseline', 'label': 'Native checkout baseline',
+                       'intent': 'Prepare native checkout fixture', 'tags': ['integration'],
+                       'command_ordinals': list(range(len(commands))),
+                       'patch': [change for command in commands for change in command['args']['changes']],
+                       'reads': []}],
+        }
+        baseline = service.commit_timeline(
+            fixture.project_id, fixture.timeline_id, body,
+            idempotency_key='native-checkout-baseline', publisher='owner',
+            invocation_path=f'/v1/projects/{fixture.project_id}/timelines/{fixture.timeline_id}/commit',
+            authorize=lambda: None,
+        )
     finally:
         service.close()
     return fixture, parent, baseline
@@ -56,6 +80,10 @@ def gate3_film(base_film):
     declaration, so composed preflight reaches the unavailable executor.
     """
     from runtime_protocol.service import RuntimeService
+    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+
+    from astrid.sdk.timeline.commit import bundle_from_document
+    from astrid.sdk.timeline.emitter import emit_document_commands
 
     fixture, parent, _ = base_film
     parent = copy.deepcopy(parent)
@@ -72,12 +100,32 @@ def gate3_film(base_film):
     parent['config']['clips'] = copy.deepcopy(parent['clips'])
     service = RuntimeService(fixture.duplicate_root)
     try:
-        head = service.get_project_timeline(fixture.project_id, fixture.timeline_id)['head_revision_id']
-        baseline = service.publish_parent_composition(fixture.project_id, fixture.timeline_id, {
-            'project_id': fixture.project_id, 'timeline_id': fixture.timeline_id,
-            'expected_head': head, 'parent_revision_id': 'gate3-valid-baseline',
-            'parent_composition': parent,
-        }, idempotency_key='gate3-valid-baseline')
+        service.register_timeline_commit_provider(load_timeline_commit_provider('astrid'))
+        head = service.get_project_timeline(fixture.project_id, fixture.timeline_id)
+        document = service._timeline_commits()[0].revision_closure(
+            fixture.project_id, fixture.timeline_id, head['head_revision_id'])
+        before = bundle_from_document(document)
+        after = copy.deepcopy(before)
+        after['parent'] = parent
+        commands = emit_document_commands(before, after)
+        body = {
+            'api_version': 1, 'project_id': fixture.project_id, 'timeline_id': fixture.timeline_id,
+            'base_revision_id': head['head_revision_id'], 'base_publication_id': head['head_publication_id'],
+            'commands': commands, 'label': 'Gate3 valid baseline', 'merge': 'atomic', 'reads': [],
+            'dry_run': False, 'source': {'via': 'python'}, 'rationale': 'Gate3 valid fixture',
+            'group_id': 'gate3-valid-baseline',
+            'steps': [{'id': 'baseline', 'label': 'Gate3 valid baseline',
+                       'intent': 'Prepare Gate3 fixture', 'tags': ['integration'],
+                       'command_ordinals': list(range(len(commands))),
+                       'patch': [change for command in commands for change in command['args']['changes']],
+                       'reads': []}],
+        }
+        baseline = service.commit_timeline(
+            fixture.project_id, fixture.timeline_id, body,
+            idempotency_key='gate3-valid-baseline', publisher='owner',
+            invocation_path=f'/v1/projects/{fixture.project_id}/timelines/{fixture.timeline_id}/commit',
+            authorize=lambda: None,
+        )
     finally:
         service.close()
     return fixture, parent, baseline
