@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T00:08:35Z | dispatcher heartbeat 1s | live 1 (sol 0, luna 1, other 0) | busy30 8 | status age 1m -->
-# runtime board, 2026-10-25T00:07:30Z
+<!-- main | 2026-10-25T00:12:10Z | dispatcher heartbeat 2s | live 2 (sol 0, luna 2, other 0) | busy30 10 | status age 2m -->
+# runtime board, 2026-10-25T00:10:00Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -199,7 +199,7 @@
 
 | P2-popup-digest | Preserve exact raw canonical digest | App Luna / independent | App source and controls complete | merged | Author2233; review2239; return2246 | App63d7 preserves numeric spelling; canonical and opaque mutation controls PASS. New ADD7872 remains App owned; old5083 stays failed. | App63d7c74b6d |
 | P2-parent-envelope | Preserve exact parent request shape | App Luna / Luna | Independent2344 PASS | merged | App2338; review2344 | NormalApp364f has strict initial and Undo envelopes;13controls/types/lint PASS. Original parent still unqualified. | App364f124b5c |
-| P2-swap-command | Declare SWAP asset allocation | Luna / Luna | Independent core review PASS | merging | Author2343; review2349 PASS | Exact80a source37PASS; protected six exact. TypeScript has parent-identical3 Composition errors, zero new. Normal remote merge requested. | 80a604118 held for App |
+| P2-swap-command | Declare SWAP asset allocation | Luna / Luna | Independent core review and App merge | doing | Author2343; review2349; App2341a | Normal App2341a merged exact reviewed provider53550/testa794.37focusedPASS; no new type diagnostics. Original SWAP qualification pending. | 80a604118 /App2341a1de21 |
 | P2-popup-canonical | Qualify complete canonical expectation | App Luna | ADD7872 raw digest passed | blocked:app | app-P2-popup-7872-exact-expectation-2301 | Strict full equality860 differs in parent revision identity/digest. App owns retained-data attribution and exact correction; no Runtime source request. | App63d7 / Runtime732 |
 | P2-transition-intent | Preserve exact clear step intent | App Luna / Luna | Independent2344 PASS | merged | App2338; review2344 | Same reviewed tour batch keeps exact mounted clear intent and all step fields. Original single-clear still unqualified. | App364f124b5c |
 
@@ -219,8 +219,10 @@
 | D86-parent-auto | Migrate14 parent completion cases | Luna / Agent review | Agent protected review then merge | review | agt-D86-main-parent-auto-2343 | Source/compile/Ruff/mypy/AST PASS; all3 test bodies and14 selectors exact. Remote owner review requested; no body. | cf0251d0b2 |
 
 | D86-main-batch-union | Retain smaller private batch recipe | Luna | Authentic251 successor | gated:superseded | rt-D86-batch-union-2356 PREPARED | Private110 selector strings prepared; exact expanded ABI family joins authentic251 in successor. No live install/body; no fresh stub credit. | Private candidate only |
-| D86-main-batch-251 | Bind authentic affected-node membership | Luna | Reviewed Agent source union | doing | rt-D86-bind-251-0003 | Agent2342 exact251 and all299 remainder received. Private main route binds exact nodes; later37 source families remain pending. No body yet. | Private candidate only |
+| D86-main-batch-251 | Bind authentic affected-node membership | Luna | Reviewed source union and tuple | gated:source-union | rt-D86-bind-251-0003 PREPARED | Exact251 hash/member/argv/AST PASS;299 remainder visible. Five source hashes, final receipts/profile and later37 inputs pending. No body. | Private candidate only |
 | D86-next-families | Host next disjoint source families | Luna | Agent exact reserved assignments | blocked:agent | Requested via peer0007 | Six initial authors returned. Up to four additional source slots available after disk checks; Agent chooses disjoint live core families. | No new source |
+| D86-inverse7-review | Review original inverse custody purpose | Luna | Exact Agent2353 source branch | review | rt-D86-inverse7-review-0010 | Source-only protected review; current hash correction must preserve original historical or current custody purpose. Seven nodes, no body. | Author debb643fa3 |
+| D86-video12-review | Review video unplace setup migration | Luna | Exact Agent2353 source branch | review | rt-D86-video12-review-0010 | Source-only protected review of genuine bootstrap/capture/claims and all twelve original predicates. No body or product change. | Author d2f8c02c6d |
 Runtime producer: RELEASED a3cd1a3214fa1632879c21d82d1abb9ea720b1de, tree64bb0caf0b7b950e02c4075077868a3dcd12ee06. Canonical15/schema867f unchanged. [Security and release](../../design/runtime-R2-provider-security-2346.md).
 
 core open: P4 ten-note remains45.314s. Bad9/7627 security failures stay held. Full-provider6a9 passed independent final security and is released in normal a3cd; Agent normal adoption and one remaining original are ready. Four R2 originals retain actual7c48/732 qualification. Element7131 remains failed5s; App current adoption and original are ready. Source release alone closes no original timing failure.
@@ -238,5 +240,5 @@ Delivery: Runtime merge, Agent merge, authentic App manifest command with schema
 Later: E1/E3, AgentE2 and D79 paused until ZIP. D42 cross-request memo held; V4 cut, D14/D23 deferred; unsafe D34 cleanup held. D56 Farm/schema access stopped. All historical safety/access/cleanup/process refusals remain stopped.
 Disk: 7521595392 available bytes at23:31; sourcecap6 underD85, service tiers retained. Sweep3 removed0; compact packed0 and gzipped10old logs. No ended clean nonKEEP Runtime tree eligible; no refused-target retry.
 
-live 2 / cap 6 source; ready-undispatched 0. Authentic251 binding0003 active; parent/single producer0006 queued. CLI and inverse corrections await Agent review; available source slots requested for new disjoint families. Heavy body cap1 below7.5GB.
-Current pass 2026-10-25T00:07:30Z: INBOX through639920 bytes. New App parent/single request assigned immediately to existing main venue. Inverse4a16 remote review requested. Runtime a3cd released; no original closure inferred. No eligible clean ended tree; cleanup unchanged.
+live 3 / cap 6 source; ready-undispatched 0. Main parent/single producer0006 active; inverse7 and video12 protected reviewers0010 queued. CLI27dc/inverse4a16 await Agent review. Batch251 ready privately; one main heavy body cap below7.5GB.
+Current pass 2026-10-25T00:10:00Z: INBOX through641819 bytes. Agent two exclusive review asks dispatched in same pass. App SWAP actual MERGED2341a receipt consumed. Private251 ready; no source join/tuple or original credit invented. Main free7160086528 bytes before review dispatches.
