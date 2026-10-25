@@ -424,7 +424,7 @@ def test_storage_admission_below_default_floor_is_refused(tmp_path, monkeypatch)
         monkeypatch.setattr("runtime_protocol.store.shutil.disk_usage", lambda _path: SimpleNamespace(free=1))
         with pytest.raises(ConflictError) as refused:
             service.create_task({"capability_id": "render.large", "capability_digest": _digest("render.large-v1"), "idempotency_key": "disk-full"})
-        assert refused.value.details["floor_bytes"] == 4 * 1024**3
+        assert refused.value.details["floor_bytes"] == 1024**3
         assert refused.value.details["reason"] == "insufficient_storage"
         assert service.store.conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0] == 0
     finally:

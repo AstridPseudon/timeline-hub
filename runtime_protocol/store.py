@@ -8,7 +8,6 @@ import hashlib
 import math
 from .dirfd import filesystem as os
 import re
-import shlex
 import sqlite3
 import shutil
 import stat
@@ -31,6 +30,7 @@ from .cas import ContentAddressedStore
 from .dirfd import remove_tree_at
 from .snapshot_refs import check_working_copy_base, parent_revision_row, prepare_snapshot, publish_snapshot, rewrite_spec_snapshots, source_kind_of, validate_capture_scope, working_copy_binding
 from .sqlite_uri import sqlite_file_uri
+from .storage import free_disk_floor_bytes
 from .util import canonical_json, new_id, now
 from .visual_seam import (
     admit_closure,
@@ -183,12 +183,10 @@ GENERATION_INTENT_STORAGE_KEY = "__runtime_generation_intent"
 LEGACY_GENERATION_INTENT_STORAGE_KEY = "generation_intent"
 THUMBNAIL_RECIPE_VERSION = 1
 # Remotion creates a webpack/Chromium workspace in addition to the
-# Runtime-owned materialization and encoded output.  Keep that bounded
-# workspace in the admission envelope so live scratch accounting cannot
-# reject a render that passed admission.
+# Runtime-owned materialization and encoded output.
 _REMOTION_RUNTIME_WORKSPACE_BYTES = 128 * 1024 * 1024
-# Leave headroom for content-dependent frame sizes and unmodelled render scratch.
-_MANAGED_RENDER_STORAGE_SAFETY_FACTOR = 1.25
+# Expected usage with a modest allowance for content-dependent sizes.
+_MANAGED_RENDER_STORAGE_SAFETY_FACTOR = 1.10
 FACT_EXACT_KEYS = frozenset({
     "interpreter", "runtime_lock", "engine_lock", "model_digest",
     "custom_node_digest", "driver", "root", "port",
@@ -2259,7 +2257,7 @@ class RealmStore:
         return frozen, ordered_input_ids, {"config": expanded_config, "registry": expanded_registry}
 
     def _derive_managed_render_storage_estimate(self, config, registry, ordered_input_ids, profile=None):
-        """Derive a conservative whole-task budget from Runtime-owned inputs.
+        """Derive expected whole-task usage from Runtime-owned inputs.
 
         Runtime owns exact CAS object sizes and immutable snapshot bytes.
         Profile validation remains a host concern, while this admission
@@ -2371,23 +2369,25 @@ class RealmStore:
             png_raw_frame_bytes = (4 * width + 1) * height
             frame_sequence_bytes = ((png_raw_frame_bytes * 101 + 99) // 100) * render_frames
         else:
-            # JPEG95 varies by content; 0.5 bytes per pixel stays conservative for real frames.
-            jpeg_frame_bytes = (width * height) // 2
+            # Nine 1080p JPEG95 samples from the 5879-frame film used
+            # 0.040-0.162 bytes/pixel (mean 0.089). Plan at 0.25; actual
+            # volume space, rather than this estimate, guards the render.
+            jpeg_frame_bytes = (width * height + 3) // 4
             frame_sequence_bytes = jpeg_frame_bytes * render_frames
         materialization_bytes = (
             managed_input_bytes
-            + managed_entry_bytes
             + snapshot_bytes
         )
-        scratch_bytes = max(
-            256 * 1024 * 1024,
-            math.ceil((
-                materialization_bytes
-                + frame_sequence_bytes
-                + 2 * 1024 * 1024
-                + _REMOTION_RUNTIME_WORKSPACE_BYTES
-            ) * _MANAGED_RENDER_STORAGE_SAFETY_FACTOR),
-        )
+        # The support probe briefly stages assets, then removes them. The
+        # actual render reuses the invocation-owned materialized paths.
+        # Its JPEG sequence and a parallel encoder's working file are
+        # alternatives; settlement can need one additional CAS output copy.
+        scratch_bytes = math.ceil((
+            materialization_bytes
+            + max(managed_entry_bytes, frame_sequence_bytes, output_bytes)
+            + 2 * 1024 * 1024
+            + _REMOTION_RUNTIME_WORKSPACE_BYTES
+        ) * _MANAGED_RENDER_STORAGE_SAFETY_FACTOR)
         return {"scratch_bytes": int(scratch_bytes), "output_bytes": int(output_bytes)}
 
     @staticmethod
@@ -2862,17 +2862,14 @@ class RealmStore:
                         waiting_reason = "waiting_for_executor_facts"
                     else:
                         waiting_reason = "capability_unavailable"
-                preflight = self.storage_preflight(capability, storage_estimate=storage_estimate)
-                if not preflight["ok"]:
-                    realm_id = self.conn.execute("SELECT id FROM realm LIMIT 1").fetchone()[0]
-                    command = (
-                        f"astrid-runtime-protocol compact --root {shlex.quote(str(self.root))} "
-                        f"--confirm {shlex.quote('COMPACT IDEMPOTENCY ' + realm_id)}"
-                    )
+                storage_preflight = self.storage_preflight(capability, storage_estimate=storage_estimate)
+                if not storage_preflight["ok"]:
                     raise ConflictError(
-                        "task admission refused: storage estimate would cross the free-space floor; "
-                        f"run {command} offline to reclaim space",
-                        details={**preflight, "reclaim_command": command},
+                        f"task admission refused: needs {storage_preflight['required_bytes'] / 1e9:.2f} GB "
+                        f"plus {storage_preflight['floor_bytes'] / 1e9:.2f} GB free-space reserve; "
+                        f"{storage_preflight['available_bytes'] / 1e9:.2f} GB free. "
+                        "Free disk space and try again.",
+                        details=storage_preflight,
                     )
                 if predecessors:
                     self._validate_continuation_predecessors(predecessors, project_id)
@@ -3916,12 +3913,7 @@ class RealmStore:
             source = "task"
         required = scratch_bytes + output_bytes
         available = int(shutil.disk_usage(self.root).free)
-        try:
-            floor = int(os.environ.get("ASTRID_RUNTIME_FREE_DISK_FLOOR_BYTES", str(4 * 1024**3)))
-        except ValueError as exc:
-            raise ValidationError("ASTRID_RUNTIME_FREE_DISK_FLOOR_BYTES must be an integer") from exc
-        if floor < 0:
-            raise ValidationError("ASTRID_RUNTIME_FREE_DISK_FLOOR_BYTES must be nonnegative")
+        floor = free_disk_floor_bytes()
         ok = available - required >= floor
         return {"ok": ok, "required_bytes": required, "available_bytes": available, "floor_bytes": floor, "scratch_bytes": scratch_bytes, "output_bytes": output_bytes, "estimate_source": source, "reason": None if ok else "insufficient_storage"}
 
