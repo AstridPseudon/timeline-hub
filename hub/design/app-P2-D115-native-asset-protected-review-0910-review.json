@@ -1,0 +1,62 @@
+{
+  "task": "D115/P2",
+  "result": "PASS",
+  "reviewed_commit": "e74460003d09262cd30f46bccd3009fb4a321c9d",
+  "normal_base": "dc8c809cd9a5a2e4fa712718a69b29745f59341e",
+  "review_scope": [
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "tests/e2e/local/support/p2-elements-assets-receipt.test.mjs"
+  ],
+  "source_basis": {
+    "plan": "PLAN.md §3 A2/A3/P2 and C0 §§1–7",
+    "approval": "D101 approval recorded in managers/app/INBOX.md",
+    "agent": "astrid/sdk/timeline/_commit_patch.py native_asset_reads; parent registry plus config registry-or-config field guards",
+    "runtime": "runtime_protocol/timeline_commit_auth.py native_asset_reads and exact dependency-union coverage",
+    "contract": "C0 field dependencies are exact tagged field guards, with absent distinct from present"
+  },
+  "independent_evidence": {
+    "saved_run": "15712 readiness PASS; original failure only at data.steps[0].dependencies",
+    "saved_http": "two commit POSTs HTTP 200; Undo accepted; history and canonical readbacks HTTP 200",
+    "retained_mismatch": "old parent scope dependency versus exact parent.registry present and parent.config.registry absent fields",
+    "current_asset_transcript": "independent before-document values match the exact field union; full envelope and history projections remain guarded",
+    "negative_mutations": "review-only source-derived mutations for dropped, duplicated, reordered, extra, wrong-path, wrong-ref and wrong-state dependencies were rejected by the actual full-envelope helper",
+    "prior_red_current_green": "saved D66 original run is RED at the stale dependency assertion; current receipt oracle is GREEN after the e744 expectation correction"
+  },
+  "tests": [
+    {
+      "command": "/opt/node20/bin/node --import tsx --test tests/e2e/local/support/p2-elements-assets-receipt.test.mjs tests/e2e/local/support/p2-media-import-oracle.test.ts tests/e2e/local/support/p2-parent-oracle.test.mjs tests/e2e/local/support/p2-transition-oracle.test.mjs",
+      "result": "PASS: 4/4 files"
+    },
+    {
+      "command": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node --import tsx --test tests/e2e/local/support/p2-elements-assets-receipt.test.mjs tests/e2e/local/support/p2-media-import-oracle.test.ts tests/e2e/local/support/p2-parent-oracle.test.mjs tests/e2e/local/support/p2-transition-oracle.test.mjs",
+      "result": "PASS: 4/4 files"
+    },
+    {
+      "command": "/home/user/work/runtimes/agent-remotion-app-p1-787-2a9-1830/.toolchain/node-v20.19.4-linux-x64/bin/node node_modules/vitest/vitest.mjs run --config /tmp/p2-d115-native-asset-review/vitest.semantic.config.ts --no-cache --no-file-parallelism",
+      "result": "PASS: semantic oracle 7 tests"
+    },
+    {
+      "command": "node --import tsx --test tests/e2e/local/support/p2-semantic-oracle.test.mjs",
+      "result": "UNAVAILABLE: pre-existing ERR_MODULE_NOT_FOUND for @astrid/packs; fallback used the existing real App graph/bundle recipe"
+    },
+    {
+      "command": "flock -w 180 /home/user/work/.app-tsc.lock ... tsc --noEmit --incremental false -p tsconfig.json tsconfig.app.json tsconfig.node.json",
+      "result": "PASS: all three configs"
+    },
+    {
+      "command": "eslint changed two files --max-warnings 0 && git diff --check",
+      "result": "PASS"
+    }
+  ],
+  "scope_checks": {
+    "worktree": "clean; no retained reviewer edits",
+    "authored_hashes": {
+      "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "b6a0ebb2597177c9719f0b23fbc3d135ecdcc019",
+      "tests/e2e/local/support/p2-elements-assets-receipt.test.mjs": "c2cf694927656cfe4fb2bef032c71266e49c3c68"
+    },
+    "protected_six": "all six selected neighbouring file hashes equal both reviewed commit and normal base",
+    "d113": "the two modal-close lines from d2d8b2104d remain byte-preserved",
+    "product_changes": "none"
+  },
+  "next_step": "Full P2 proof after qualified Runtime releases/adoption; no isolated asset successor under D115"
+}

@@ -1,0 +1,23 @@
+{
+  "utc": "2026-10-25T09:19:03.452812+00:00",
+  "current_heads": {
+    "app": "7841a946197b5312d79b594ffec0e5f7a937b6c0",
+    "agent": "f3c0bc72898e59e8f8b87c60cb0a47cf247d8c9e",
+    "runtime": "e6b669b98d8eeb349c311741cdfd8cfbfe5e5486",
+    "composition": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40"
+  },
+  "target": {
+    "name": "app-pin-04beedcd",
+    "sha": "04beedcd18b8abb49502f65cd3facaafbe93db4e",
+    "path": "/home/user/work/wt/app-pin-04beedcd",
+    "clean": true,
+    "current_lane_head": false,
+    "queue_refs": [],
+    "lease_refs": [],
+    "running_worker_refs": [],
+    "live_test_refs": [],
+    "KEEP": true
+  },
+  "host_process_use": "NOT_CHECKED: isolated manager namespace; lead input requested",
+  "no_mutation": true
+}

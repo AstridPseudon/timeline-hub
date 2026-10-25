@@ -1,0 +1,10 @@
+{
+  "utc": "2026-10-25T09:19:03.481838+00:00",
+  "home": "7841a946197b5312d79b594ffec0e5f7a937b6c0",
+  "tree": "8f7124205d42305944a8c772c398639bcae5761e",
+  "author": "e74460003d09262cd30f46bccd3009fb4a321c9d",
+  "review": "app-P2-D115-native-asset-protected-review-0910 PASS",
+  "entire_tree_equals_reviewed_author": true,
+  "normal_merge_receipt": "merged tl/app-P2-D114-asset15712-native-source-0904 into app tl/integration -> 7841a94619",
+  "ledger_paragraph_copied_exact": true
+}

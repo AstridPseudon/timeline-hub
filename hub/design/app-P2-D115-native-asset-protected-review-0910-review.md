@@ -1,0 +1,7 @@
+# D115/P2 protected review: PASS
+
+Reviewed exact commit `e74460003d09262cd30f46bccd3009fb4a321c9d` against normal base `dc8c809cd9a5a2e4fa712718a69b29745f59341e`. The diff is limited to the two authorized App test files and corrects only `data.steps[0].dependencies`: the stale whole-parent scope becomes the source-derived union of the present `parent.registry` field and absent `parent.config.registry` field. The exact `ref`, path, state, and value are derived from the independent before document, not from the observed reply.
+
+D101 approval and C0 were checked against the Agent `native_asset_reads` producer and Runtime’s independent exact-union authorization. The saved 15712 run shows two HTTP-200 accepted commits, including Undo; the original RED was only the stale dependency assertion. Current receipt/neighbour controls pass under both supported Node 20 runtimes. Review-only wrong-but-valid dropped, duplicate, reordered, extra, wrong-path, wrong-ref, and wrong-state dependency mutations were rejected by the actual full-envelope helper. The semantic direct command remains unavailable because of the pre-existing `@astrid/packs` resolution failure; the existing real App graph/bundle Vitest recipe passes all seven semantic tests.
+
+TypeScript, scoped ESLint, diff check, six protected neighbouring hashes, and D113’s two modal-close lines are clean. No product or unrelated-test change was made. Next evidence is the planned full P2 proof after qualified Runtime release/adoption; D115 does not create an isolated asset successor.
