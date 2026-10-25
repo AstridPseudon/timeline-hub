@@ -1,0 +1,56 @@
+{
+  "base": "b742893426a46a99a2f30583a54faeebe2bd98b7",
+  "normal": "3ab324c891d3121c46d4aff0a339468a9339e0f2",
+  "effective_source_tree": "43bcbc8afbcdca3ca929ecaada61ab4aded84ccf",
+  "tracked_delta_bytes": 12064418,
+  "patch_sha256": "6c0249f4f0c4d439ac5758e7243ff2d02b66481da47b09de9f0c67779d4541c0",
+  "input_patch_sha256": "5d80a03cecb72f29399368ab164097713cebe18d7b5921774ff56657b13c86e9",
+  "new_files_included": 526,
+  "source_state": "FINAL MECHANICAL SOURCE; independent source-conservation PASS; consumption BLOCKED inherited Windows lookup scope decision and targeted qualification prerequisites",
+  "upstream_paths_unchanged": 43,
+  "independent_review": "independent-review.json",
+  "scope_question": "pending: authorize str(relative)->relative.as_posix() repair or retain captured-normal and repair separately",
+  "tests_executed": false,
+  "capture": {
+    "base_sha": "b742893426a46a99a2f30583a54faeebe2bd98b7",
+    "base_tree": "ccb2f286eae9419b95a3f54b11208f68c57b27cf",
+    "frozen_upstream": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+    "captured_normal_sha": "3ab324c891d3121c46d4aff0a339468a9339e0f2",
+    "captured_normal_tree": "eee58bae6c33eb1158f0bcc2b15bb507ee9a32e6",
+    "scope": "D123 source-only F-FINAL candidate; no integration/gating retarget",
+    "tmpdir": "/tmp/w-c8c731aa16"
+  },
+  "path_accounting": {
+    "reported_paths": 71,
+    "reported_overlaps": 35,
+    "reported_test_paths": 12,
+    "actual_frozen_to_new_upstream_paths": 75,
+    "actual_current_overlaps": 38,
+    "actual_test_paths": 14,
+    "current_reject_paths": 7,
+    "mapped_predicates": 173
+  },
+  "resolution": "D123 upstream behavior for incidental chat/EOF/generated bundle; D77(1)/D77a local-schema migration retained. Windows registration case already upstream.",
+  "blockers": [
+    "Inherited Windows schema-key bug awaits explicit scope decision",
+    "4.30GiB free below5GiB lightfloor",
+    "Exact chatZod4.3.6 absent; available shared4.4.3 not substituted",
+    "CI testBun1.3.14 not present; available buildBun1.4.2 not substituted",
+    "Central service lacks a named Agent chat route; service test uses live loopback"
+  ],
+  "static_results": {
+    "mypy": "PASS one sourcefile",
+    "node20_script_syntax": "PASS",
+    "python_ast_syntax": "PASS four files",
+    "ruff": "2 upstream baseline findings:I001,BLE001",
+    "whitespace": "157 inherited warnings;0new",
+    "patch_reverse_check": "PASS"
+  },
+  "handoff_destination_note": "Prepared under own evidence. D30/user rule forbids worker writes to shared design/; manager may publish handoff to requested shared design paths. No attempt to bypass write boundary.",
+  "recommended_next_steps": [
+    "Decide inherited Windows one-line repair scope",
+    "If authorized repair, extend platform-neutral schema-key regression control and repeat independent review on final source",
+    "Supply disk/exact chat dependency/runner prerequisites and central chat route; run only targeted commands in validation-commands.md",
+    "Manager publishes shared handoff and owns F-final/cut routing; do not merge candidate into integration or retarget gates"
+  ]
+}

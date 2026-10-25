@@ -1,0 +1,14 @@
+{
+  "base": "b742893426a46a99a2f30583a54faeebe2bd98b7",
+  "normal": "3ab324c891d3121c46d4aff0a339468a9339e0f2",
+  "effective_source_tree": "43bcbc8afbcdca3ca929ecaada61ab4aded84ccf",
+  "tracked_delta_bytes": 12064418,
+  "patch_sha256": "6c0249f4f0c4d439ac5758e7243ff2d02b66481da47b09de9f0c67779d4541c0",
+  "input_patch_sha256": "5d80a03cecb72f29399368ab164097713cebe18d7b5921774ff56657b13c86e9",
+  "new_files_included": 526,
+  "source_state": "FINAL MECHANICAL SOURCE; independent source-conservation PASS; consumption BLOCKED inherited Windows lookup scope decision and targeted qualification prerequisites",
+  "upstream_paths_unchanged": 43,
+  "independent_review": "independent-review.json",
+  "scope_question": "pending: authorize str(relative)->relative.as_posix() repair or retain captured-normal and repair separately",
+  "tests_executed": false
+}

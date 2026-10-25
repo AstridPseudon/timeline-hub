@@ -1,0 +1,15 @@
+D123 source checkpoint; consumption BLOCKED.
+
+Exact base b742893426a46a99a2f30583a54faeebe2bd98b7 / treeccb2f286eae9419b95a3f54b11208f68c57b27cf. Captured Agent normal ONCE at start:3ab324c891d3121c46d4aff0a339468a9339e0f2 / treeeee58bae6c33eb1158f0bcc2b15bb507ee9a32e6. Imported only frozen92443771676ef2bbb547d0a103d708fa8bec4c63 -> that normal. No held/unmerged D122 or hostef4c/Sol1217 donor import.
+
+Current source tree 43bcbc8afbcdca3ca929ecaada61ab4aded84ccf; patch b742-current-normal.patch SHA256 6c0249f4f0c4d439ac5758e7243ff2d02b66481da47b09de9f0c67779d4541c0 (12064418bytes, includes526newfiles). Filesystem-only gitapply--reject; no index/Git object/commit/ref writes. Actual seven rejects resolved by upstream bytes for incidental EOF/generated changes and existing Windows test; D77 substantive migration applies cleanly. Own reject files deleted with apply_patch only. All920 partial-result hashes/modes remain exact.
+
+Mapped all71reported upstream paths/35overlaps/12test overlaps, plus four earlier08e6 Windows paths:75total/38current overlaps/14testfiles. Predicate map preserves173case bodies with explicit old-to-new service test rename; no ours-specific case lost. All49normal chat source deltas are EOF-only, so upstream service.mjs is exact. Reviewed upstream OMP18.12.6 source/npm/native route first. Repo-selected HTTPS still uses codeload; local-repo and exact npm routes remain existing alternatives, not newly chosen production selections. D117a acquisition/stage is deferred. No source acquisition or installed producer retarget.
+
+Independent read-only core review: source conservation PASS, C0/D13 auth/reads/no-write/no-leak/nativeatomic unchanged from captured normal outside upstream paths. Consumption BLOCKED by inherited Windows lookup at backend.py:182: str(Path(...)) backslashes do not match POSIX runtime.lock.json key. Proposed one-line as_posix repair awaits orchestrator authorization; current source stays mechanical.
+
+Static evidence: mypy1source PASS; Node20.19.4service.mjs syntax PASS; Python ast.parse fourfiles PASS. Ruff2findings are exact upstream baseline (I001 at3;BLE001 at676,upstream664). Whitespace157warnings (115tracked+42newfiles), all inherited from normal162; no new diagnostic. Patch reverse--check PASS. Exact executed commands/returncodes:static-checks.json. Pending test commands:validation-commands.md.
+
+No pytest/Bun test bodies were run. Disk4.30GiB<5GiB, exact Zod4.3.6missing (shared4.4.3 untouched), required CI testBun1.3.14missing; no near-match/dependency install/bypass. No synthetic installer.xml. service.test uses loopback and needs central route, which is not registered as an Agent chat suite. TS chat typecheck/lint not package-configured and remain unverified.
+
+No full/browser/P1-P5/render/stage/acquisition/D54/gating reruns, integration edits/merge requests, release or freeze change. Manager owns later b742 cut matrix. Publish this handoff to requested shared design/ destinations via manager; worker does not write design/ under D30 boundary. Next: settle scope question, supply prerequisites, execute targeted commands, repeat final-source review after any approved fix.
