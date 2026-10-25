@@ -64,13 +64,15 @@ def shared_editing(request, tmp_path, monkeypatch):
             )
             # Sharing captures an unchanged published source, after preparation.
             staged = submit_setup([shot_set], "shared-inverse-source")
-        if index == 3:
+        if index in (1, 3):
             host = copy.deepcopy(staged)
             host_occurrence = next(
                 occurrence for occurrence in host["parent_revision"]["payload"]["occurrences"]
-                if occurrence["occurrence_id"] == "occurrence-3"
+                if occurrence["occurrence_id"] == f"occurrence-{index}"
             )
-            host_occurrence["duration_ms"] = 2000
+            # Setup-only host windows contain the complete unchanged move/ABA/
+            # sibling sequence; authored clip timing remains 1.8 seconds.
+            host_occurrence["duration_ms"] = 9800 if index == 3 else 5800
             host_parent = host["parent_revision"]["payload"]
             host["parent_revision"]["content_digest"] = _digest(host_parent)
             staged_bundle = bundle_from_document(staged)
