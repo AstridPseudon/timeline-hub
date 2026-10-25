@@ -1,0 +1,24 @@
+{
+  "schema": "timeline.agent.f_d134_source_comparison.v1",
+  "current_tuple": {
+    "agent": {"commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186", "tree": "60d45288145414ee4702fcce61af7c7810c2a3df"},
+    "runtime": {"commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344", "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f"},
+    "app": {"commit": "d8a1cd40b866c49c0ab415682391f0ec87a7a8e7", "tree": "dd2afd6c5c7a1ac73feaac4390cc64d7f31fe7b9"},
+    "composition": {"commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "prior_agent": {"commit": "96df3f5b4862b1c267e3816237bae8a64b5dc31f", "tree": "a3a37c09ed071879d92a51d963ca3fe65616115f"},
+  "relevant_blob_equality": {
+    "astrid/sdk/host_bootstrap.py": {"a4e016b6": "ac5308e8420819b976c5072d8f6b8b7043b3be9a", "96df3f5b": "ac5308e8420819b976c5072d8f6b8b7043b3be9a", "sha256": "0c3c8ae829991a22b7cda06cf08b3f4d089df46f5a4ea4f1af8e4c6dab07ec25"},
+    "astrid/core/rendering/remotion_runtime.py": {"a4e016b6": "1fbdad9bb8b75cb270186271e915b25f8e180a59", "96df3f5b": "1fbdad9bb8b75cb270186271e915b25f8e180a59", "sha256": "0284b17ab0cb3adbfbfd5875c3655cb50e8f85348e93e011fdb2817585647ea2"},
+    "tests/sdk/test_host_bootstrap_source_identity.py": {"a4e016b6": "75a61d96ae7f275b03a2daca47903011c352ef6c", "96df3f5b": "75a61d96ae7f275b03a2daca47903011c352ef6c"}
+  },
+  "current_frozen_receipts": {
+    "runtime_lock_sha256": "4a3d51004d022b4c4adc77a15ac919f9716e7c01b37e30eba7d16031aa51d0be",
+    "schema_sha256": "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
+    "node": "v20.19.4",
+    "profile_version": "0.0.14",
+    "source_manifest_sha256": "b539c6bda83fcef7222a3be667a74465317fe05b8de359dc6e7784db5d9b676d",
+    "service_snapshot_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0"
+  },
+  "conclusion": "Relevant host boundary source is unchanged; current full-run environment is the demonstrated difference. Other a4e changes are not assigned as causes without a stack or source path tying them to this boundary."
+}
