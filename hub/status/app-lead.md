@@ -1,1 +1,1 @@
-app-lead 04:13Z: daemons up (uptime 2531m, machine up 42h, no restart), 2 workers running, disk 6.4G free (21 wt dirs), codex sizes unchanged since 17:12Z; board 'live 2 / cap 6; ready-undispatched 0'; no blockers, no LEAD FETCH, no new refusals; D96 placement migration relayed; P1/P3 GO, P2 isolated 3/8 GO, full tour after D94
+app-lead 04:42Z: daemons up (uptime ~2560m, no restart), disk ~6.1G (heavy floor 5.2G), no blockers, no LEAD FETCH, no new refusals; codex unchanged; Runtime 0c62dfa63 released (hold lifted), P1/P3 GO, P2 isolated 3/8 GO
