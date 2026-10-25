@@ -1,0 +1,106 @@
+D108 source-only core handoff; body is a handoff string and MUST NOT be run by this worker.
+
+AUTHORITATIVE ROW
+tests/suites.conf:181 OWN-REHEARSAL-SUITE
+row_sha256=5024cb2773850175511a6dcaa791720896415701d96093c6f63544d5ead10033
+
+BODY RECIPE (existing row, unchanged selector semantics)
+exec /home/user/work/agent/tools/p4-d73-pinned-launch.sh "$P4_D73_MANIFEST" run -- -m pytest -q -n 3 -o addopts= -p no:cacheprovider --timeout=45 --junitxml="$P4_D73_EVIDENCE/OWN-REHEARSAL-SUITE.xml" tests/editing_conformance tests/sdk tests/timeline tests/core/timeline tests/core/test_timeline_element_orphan_cleanup.py tests/core/test_timeline_element_publication.py tests/core/test_timeline_element_publication_runtime.py tests/core/rendering/test_timeline_visualize_cli_grammar.py tests/core/rendering/test_local_schema.py tests/packs/timeline tests/packs/rendering/test_composition_package.py tests/packs/rendering/test_render_export_task_adapter.py tests/packs/rendering/test_timeline_filmstrip_cards.py tests/packs/rendering/test_timeline_filmstrip_execution.py tests/packs/video_editing/test_runtime_publication_chain.py tests/stage1/test_cold_launch_autobootstrap.py tests/test_installer_schema.py tests/test_installer_sources.py tests/test_installer_bootstrap_schema.py tests/test_timeline_clip_replacement.py tests/v10/test_timelines_create.py
+
+The existing controller binds its own immutable D108 manifest/evidence paths.
+This file does not create or replace them. There is no -m integration, no
+--ignore, no addopts inherited from a local config, and no selector filtering.
+
+ROOT INVENTORY (current collect-only; files / nodes)
+tests/editing_conformance                                             154 / 4412
+tests/sdk                                                           160 / 3079
+tests/timeline                                                       38 / 567
+tests/core/timeline                                                 17 / 304
+tests/core/test_timeline_element_orphan_cleanup.py                    1 / 48
+tests/core/test_timeline_element_publication.py                        1 / 45
+tests/core/test_timeline_element_publication_runtime.py                 1 / 60
+tests/core/rendering/test_timeline_visualize_cli_grammar.py            1 / 11
+tests/core/rendering/test_local_schema.py                               1 / 29
+tests/packs/timeline                                                  23 / 365
+tests/packs/rendering/test_composition_package.py                      1 / 7
+tests/packs/rendering/test_live_scene_composition.py                    1 / 20
+tests/packs/rendering/test_render_export_task_adapter.py                1 / 137
+tests/packs/rendering/test_timeline_filmstrip_cards.py                  1 / 39
+tests/packs/rendering/test_timeline_filmstrip_execution.py               1 / 28
+tests/packs/video_editing/test_runtime_publication_chain.py              1 / 14
+tests/stage1/test_cold_launch_autobootstrap.py                           1 / 30
+tests/test_installer_schema.py                                           1 / 4
+tests/test_installer_sources.py                                          1 / 44
+tests/test_installer_bootstrap_schema.py                                 1 / 1
+tests/test_timeline_clip_replacement.py                                 1 / 8
+tests/v10/test_timelines_create.py                                      1 / 16
+TOTAL                                                                    409 / 9268
+
+FAMILY COVERAGE LIMIT
+The following is the existing 47-family dispatch map. Each family is covered
+only by the named row-181 root(s); this is not a per-family selector list and
+creates no result/classification credit. Held candidate submissions are not
+included or overlaid.
+F01 NativeSheet ordinary-runtime fixture -> tests/editing_conformance/test_native_sheet_ordinary_runtime.py
+F02 R2 inverse/authentication source identity -> tests/editing_conformance/test_inverse_stage_runtime_regressions.py
+F03 cli-document-commit -> tests/packs/timeline/test_cli_document_commit.py
+F04 commit-provider-custody -> tests/sdk/test_timeline_commit_provider.py, tests/sdk/test_timeline_commit_provider_add_delete_runtime.py, tests/sdk/test_timeline_commit_provider_scalar.py, tests/sdk/test_timeline_semantic_reservations.py
+F05 document-patch-emitter -> tests/editing_conformance/test_doc_patch_atomic_scope_runtime.py, tests/timeline/test_authoring_media.py
+F06 fresh word transcript frontend source identity -> tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py
+F07 media-manifest inverse fixture -> tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py
+F08 native-batch-ingress -> tests/editing_conformance/test_native_batch_ingress.py
+F09 native-word-binding -> tests/editing_conformance/test_native_word_anchor.py, tests/editing_conformance/test_word_binding_recipe.py
+F10 relational-timing-capture -> tests/editing_conformance/test_timing_retained_inputs.py
+F11 saved capture/projection source fixture -> tests/sdk/test_timeline_capture_projection.py
+F12 selected-schema runtime fixture registration -> tests/sdk/test_timeline_numeric_revision_runtime.py
+F13 test-native-sheet-ordinary-runtime -> tests/editing_conformance/test_native_sheet_ordinary_runtime.py
+F14 test-next-command-cohort-runtime -> tests/editing_conformance/test_next_command_cohort_runtime.py
+F15 test-next-ordinary-union-runtime -> tests/editing_conformance/test_next_ordinary_union_runtime.py
+F16 test-occurrence-media-manifest-inverse -> tests/editing_conformance/test_occurrence_media_manifest_inverse.py
+F17 test-recipe-m2-auto-placement -> tests/editing_conformance/test_recipe_m2_auto_placement.py
+F18 test-recipe-m2-placement-create-unplace -> tests/editing_conformance/test_recipe_m2_placement_create_unplace.py
+F19 test-recipe-m2-shared-auto-placement -> tests/editing_conformance/test_recipe_m2_shared_auto_placement.py
+F20 test-recipe-m2-shot-pool -> tests/editing_conformance/test_recipe_m2_shot_pool.py
+F21 test-recipe-m2-video-unplace -> tests/editing_conformance/test_recipe_m2_video_unplace.py
+F22 test-recipe-occurrence-media -> tests/editing_conformance/test_recipe_occurrence_media.py
+F23 test-s3-reviewed-cohort-runtime -> tests/editing_conformance/test_s3_reviewed_cohort_runtime.py
+F24 test-timeline-clip-scalar-provider -> tests/sdk/test_timeline_clip_scalar_provider.py
+F25 test-timeline-element-publication-runtime -> tests/core/test_timeline_element_publication_runtime.py
+F26 test-timeline-script -> tests/sdk/test_timeline_script.py
+F27 wc6-completion-capture -> tests/sdk/test_wc6_completion_capture.py
+F28 commitTimeline provider / CLI trim/move -> tests/editing_conformance/test_cli_trim_runtime.py
+F29 commitTimeline provider / M1 outbox/restart -> tests/editing_conformance/test_commit_runtime_m1.py
+F30 commitTimeline provider / NativeSheet frontends -> tests/editing_conformance/test_commit_runtime_native_frontends.py
+F31 commitTimeline provider / native checkout -> tests/editing_conformance/test_commit_runtime_native_checkout.py
+F32 commitTimeline provider / occurrence-media -> tests/editing_conformance/test_commit_runtime_occurrence_media.py
+F33 commitTimeline provider / opaque occurrence -> tests/editing_conformance/test_commit_runtime_opaque_items.py
+F34 commitTimeline provider / owned parent move -> tests/editing_conformance/test_owned_move_publish_runtime.py
+F35 commitTimeline provider / parent media swap -> tests/editing_conformance/test_commit_runtime_parent_media_swap.py
+F36 commitTimeline provider / parent track batch -> tests/editing_conformance/test_commit_runtime_parent_track_batch_inverse.py
+F37 commitTimeline provider / parent track label -> tests/editing_conformance/test_commit_runtime_parent_track_label.py
+F38 commitTimeline provider / scalar outbox -> tests/editing_conformance/test_commit_runtime_scalar.py
+F39 commitTimeline provider / selected-schema HTTP seed -> tests/sdk/test_timeline_selected_schema_runtime.py
+F40 commitTimeline provider / shared inverse -> tests/editing_conformance/test_commit_runtime_shared_inverse.py
+F41 commit-rebase-custody -> tests/editing_conformance/test_owned_move_publish_runtime.py, tests/editing_conformance/test_prepared_video_birth.py
+F42 historical-redo-authority -> tests/editing_conformance/test_historical_shared_redo_authority.py
+F43 publication-route -> tests/packs/video_editing/test_runtime_publication_chain.py
+F44 selected-schema-inverse -> tests/sdk/test_timeline_selected_schema_runtime.py
+F45 semantic-history-authority -> tests/sdk/test_timeline_commit_graph_roots.py
+F46 test-commit-runtime-clip-scalar-fields -> tests/editing_conformance/test_commit_runtime_clip_scalar_fields.py
+F47 test-commit-runtime-numeric-move -> tests/editing_conformance/test_commit_runtime_numeric_move.py
+F48/F49/F50/F51/F52/F53/F54/F55/F56/F57 are held historical rehearsal clusters, not additional D108 body submissions; they remain in the preserved maps and are not silently overlaid.
+
+POST-RUN CLASSIFICATION INPUTS (read-only existing records)
+upstream924_xml=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D60-snapshot-return-1342/evidence/upstream-full-9244377.xml
+upstream924_sha256=2941565205663912985f766210bfead7db42264976fabee7dc899d03d4f4657f
+D63_276=design/handoff-agt-F-D63-final-rollup-1517-d63-final-rollup-1517.{json,tsv}
+D63_rename=design/handoff-agt-F-D63-rename-return-1508-d63-rename-correction-1508.{json,tsv}
+D63_different_causes=design/handoff-agt-F-D63-different-causes-1528-d63-different-causes-1528.{json,tsv}
+D54_current=design/agt-F-D54-current-rollup-1254.json
+historical_550_rollup=design/handoff-agt-F-successor-0209-original550-rollup.tsv
+historical_550_dispositions=design/handoff-agt-F-successor-0209-original550-dispositions.tsv
+historical_no_junit=23 (preserve; no new classification)
+
+No body, helper, fixture, service, profile, original, browser, render,
+install, registry, or full-suite execution is authorized by this worker.
+

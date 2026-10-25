@@ -1,0 +1,174 @@
+{
+  "schema": "timeline.agent.d108.core-input-handoff.v1",
+  "task": "agt-F-D108-core-input-0656",
+  "status": "source_complete_body_not_run",
+  "owner": "existing Runtime rt-D108-agent-core-main-0645",
+  "decision_order": {
+    "d110": "agt-R2-D110-removed-shot-0651 outranks same-tuple D108 body until its protected review/release",
+    "d108": "one existing unfiltered core body replaces the 47 proof-owed normal family bodies",
+    "new_family_submissions": "paused until D108 terminal result"
+  },
+  "source": {
+    "agent": {
+      "commit": "b27ff3449ec4d9b5e14ac25b8f5a18c1999c21f6",
+      "tree": "972188c76ed7a9e8f41d1baf6768673de2596efc",
+      "checkout": "/home/user/work/wt/agt-F-D108-core-input-0656",
+      "remote": "https://github.com/peteromallet/astrid-agent",
+      "clean": true
+    },
+    "runtime": {
+      "commit": "1daca2a33f6d7b10053e07c539a54843e3984e19",
+      "tree": "a522511414947e48e317a5e5c2103483b121a750",
+      "checkout": "/home/user/work/wt/rt-pin-1daca2a3",
+      "remote": "https://github.com/banodoco/banodoco-workspace-runtime",
+      "clean": true,
+      "runtime_lock_source_commit_matches": true,
+      "producer_receipt": "immutable exact producer"
+    },
+    "mutable_final_tuple": "not captured"
+  },
+  "authoritative_recipe": {
+    "file": "tests/suites.conf",
+    "line": 181,
+    "name": "OWN-REHEARSAL-SUITE",
+    "row_sha256": "5024cb2773850175511a6dcaa791720896415701d96093c6f63544d5ead10033",
+    "body_selector": {
+      "pytest": ["-m", "pytest", "-q", "-n", "3"],
+      "addopts": "",
+      "plugins": ["no:cacheprovider"],
+      "timeout_seconds": 45,
+      "marker_filter": null,
+      "ignored_paths": [],
+      "unfiltered": true
+    },
+    "roots_file": "handoff-agt-D108-0656-core-roots.txt",
+    "root_count": 23
+  },
+  "collection_only": {
+    "allowed_exception_used": true,
+    "command_kind": "pytest --collect-only; no body",
+    "result": "9268 tests collected in 18.84s",
+    "exit_code": 0,
+    "files": 409,
+    "inventory_aggregate_sha256": "7ac5cdd0bfa2b811f9a0a4fb719d9a28ef6080d2bb879ed29fe54fc1a6882b69",
+    "includes": ["tests/editing_conformance/test_m1_legacy_archive_read.py"],
+    "not_overlaid": ["held D110 candidate test; not normal row-181 membership"],
+    "evidence_dir": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D108-core-input-0656/evidence",
+    "artifacts": {
+      "stdout": "d108-core-collect.out",
+      "stderr": "d108-core-collect.err",
+      "exit": "d108-core-collect.exit",
+      "junit": "d108-core-collect.xml",
+      "selectors": "current-selectors.txt",
+      "source_inventory": "current-source-inventory.json"
+    }
+  },
+  "root_inventory": {
+    "tests/editing_conformance": {"files": 154, "nodes": 4412},
+    "tests/sdk": {"files": 160, "nodes": 3079},
+    "tests/timeline": {"files": 38, "nodes": 567},
+    "tests/core/timeline": {"files": 17, "nodes": 304},
+    "tests/core/test_timeline_element_orphan_cleanup.py": {"files": 1, "nodes": 48},
+    "tests/core/test_timeline_element_publication.py": {"files": 1, "nodes": 45},
+    "tests/core/test_timeline_element_publication_runtime.py": {"files": 1, "nodes": 60},
+    "tests/core/rendering/test_timeline_visualize_cli_grammar.py": {"files": 1, "nodes": 11},
+    "tests/core/rendering/test_local_schema.py": {"files": 1, "nodes": 29},
+    "tests/packs/timeline": {"files": 23, "nodes": 365},
+    "tests/packs/rendering/test_composition_package.py": {"files": 1, "nodes": 7},
+    "tests/packs/rendering/test_live_scene_composition.py": {"files": 1, "nodes": 20},
+    "tests/packs/rendering/test_render_export_task_adapter.py": {"files": 1, "nodes": 137},
+    "tests/packs/rendering/test_timeline_filmstrip_cards.py": {"files": 1, "nodes": 39},
+    "tests/packs/rendering/test_timeline_filmstrip_execution.py": {"files": 1, "nodes": 28},
+    "tests/packs/video_editing/test_runtime_publication_chain.py": {"files": 1, "nodes": 14},
+    "tests/stage1/test_cold_launch_autobootstrap.py": {"files": 1, "nodes": 30},
+    "tests/test_installer_schema.py": {"files": 1, "nodes": 4},
+    "tests/test_installer_sources.py": {"files": 1, "nodes": 44},
+    "tests/test_installer_bootstrap_schema.py": {"files": 1, "nodes": 1},
+    "tests/test_timeline_clip_replacement.py": {"files": 1, "nodes": 8},
+    "tests/v10/test_timelines_create.py": {"files": 1, "nodes": 16},
+    "total": {"files": 409, "nodes": 9268}
+  },
+  "coverage": {
+    "normal_family_body_count_replaced": 47,
+    "family_map": "handoff-agt-D108-0656-core-roots.txt F01-F47",
+    "family_limit": "root membership only; no per-family result or classification credit before terminal body receipt",
+    "held_candidates": "held and excluded; not overlaid",
+    "D13": "explicit environment scope retained",
+    "D23_D14": "explicit deferred scopes retained",
+    "D107_legacy_original": "retained when present; not ledger-closed by assumption"
+  },
+  "history_preservation": {
+    "rehearsal_partition": "PRE-EXISTING=16 / KNOWN=37 / ENV=73 / NEW-OURS core=424 / NEW-OURS non-core=0 / REGRESSION=0 = 550",
+    "no_junit_case_count": 23,
+    "new_core_open_count": "not inferred before D108 terminal",
+    "classification_rules": [
+      "current FAIL overrides earlier PASS",
+      "selector absent after existing rename check is NEW-OURS, not guessed pre-existing",
+      "no new baseline body",
+      "D54a classification is post-run only"
+    ]
+  },
+  "postrun_inputs": {
+    "upstream924_xml": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-F-D60-snapshot-return-1342/evidence/upstream-full-9244377.xml",
+      "sha256": "2941565205663912985f766210bfead7db42264976fabee7dc899d03d4f4657f",
+      "counts": "12396 passed, 91 failed, 14 errors, 16 skipped, 566 subtests; root total 13083"
+    },
+    "D63_exact276": {
+      "json": "design/handoff-agt-F-D63-final-rollup-1517-d63-final-rollup-1517.json",
+      "tsv": "design/handoff-agt-F-D63-final-rollup-1517-d63-final-rollup-1517.tsv",
+      "json_sha256": "19c109abc76eb783d013b8e79b3604bbcdc7756e569cfb91892b1e49d3a8eddf",
+      "tsv_sha256": "c6057f2edfcc21c74fb4d21b9d2b89986414c2ef87db27378bd943ba93f6b222"
+    },
+    "D63_rename": {
+      "json": "design/handoff-agt-F-D63-rename-return-1508-d63-rename-correction-1508.json",
+      "tsv": "design/handoff-agt-F-D63-rename-return-1508-d63-rename-correction-1508.tsv",
+      "json_sha256": "efd7053c59cb5fd0ce918988a145c656ee8478c940089236e928fcde464c52c7",
+      "tsv_sha256": "e72672c0762c5787f861e818753832f41072282fa53f68cb1339df3073c2f90f"
+    },
+    "D63_different_causes": {
+      "json": "design/handoff-agt-F-D63-different-causes-1528-d63-different-causes-1528.json",
+      "tsv": "design/handoff-agt-F-D63-different-causes-1528-d63-different-causes-1528.tsv",
+      "json_sha256": "f28136725fbc6810ba6c9860a9a1fe4d1addc73ce6b47266de04e57e9c891ab7",
+      "tsv_sha256": "69bb0997d450941458ffb07bb59271b887e182e0a9761d6ca5537b4c098da157"
+    },
+    "D54_current_rollup": {
+      "path": "design/agt-F-D54-current-rollup-1254.json",
+      "sha256": "ac14855e5d8337194960d424726352c6343ca3b2f705654e9f4fc498e574a43a"
+    },
+    "historical550": {
+      "rollup": "design/handoff-agt-F-successor-0209-original550-rollup.tsv",
+      "rollup_sha256": "5fdefc7f09ec13f2cdf16f3c870a114e9c7097a224afd6127ea8b2f370d87722",
+      "dispositions": "design/handoff-agt-F-successor-0209-original550-dispositions.tsv",
+      "dispositions_sha256": "abea44dbd2294e2e8ed1a8634618a6bb0fa85590619487002a1e933e45bb88e2",
+      "no_junit_case_count": 23
+    }
+  },
+  "production_caller_seams": [
+    "astrid/sdk/timeline/commit_session.py:163 Timeline.commit",
+    "astrid/sdk/timeline/sync.py:313 TimelineSession.commit and :320 commit_many",
+    "astrid/sdk/timeline/commit.py:1160 RuntimeCommitService.commit and :1472 create_runtime_commit_service",
+    "astrid/sdk/remote.py:1547 commit_timeline",
+    "astrid/sdk/timeline_sheet.py:862 NativeSheet commit_many"
+  ],
+  "c0_request_fields": [
+    "api_version", "project_id", "timeline_id", "base_revision_id",
+    "base_publication_id", "commands", "label", "steps", "merge", "reads",
+    "dry_run", "source", "rationale", "group_id", "HTTP Idempotency-Key"
+  ],
+  "c0_reply_shapes": [
+    "accepted or merged with canonical document, base/landing pair, merge_mode, receipt, records, bindings, effects, dependencies, steps, history, undo_steps",
+    "conflict with reason and head",
+    "invalid with code, path, hint, suggested command",
+    "preview with would_status and null receipt"
+  ],
+  "body_execution": {
+    "executed": false,
+    "full_body_requested": false,
+    "full_body_result": null,
+    "body_launcher_changed": false,
+    "product_or_test_changes": false,
+    "registry_or_install_changes": false
+  }
+}
+
