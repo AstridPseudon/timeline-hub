@@ -1,0 +1,309 @@
+{
+  "packet_schema": "timeline.p2.retained-safe-return.v1",
+  "task": "app-P2-ADD11713-retained-return-0346",
+  "scope": "readonly retained D66 artifacts",
+  "verdict_scope": "bounded retained evidence; no new original run, collector, replay, or independent NO-GO verdict",
+  "source_tuple": {
+    "base_app_commit": "043631dbabfed566cfe037709c7fe861d6435b52",
+    "app": {
+      "commit": "043631dbabfed566cfe037709c7fe861d6435b52",
+      "tree": "e3aa703cc3aaf6d152279881dca4c0c6916b7256"
+    },
+    "agent": {
+      "commit": "6386c700ee56264aebe12da4558ac74dda0d60ca",
+      "tree": "4f157f4445968ca625017a7e20bd7ca317fa0d5d"
+    },
+    "runtime": {
+      "commit": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+      "tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a"
+    },
+    "composition": {
+      "commit": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40",
+      "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"
+    }
+  },
+  "run_ids": {
+    "preflight": "app-pin-043631db-p2-hold-label-add-0335-preflight-1025033648-16010",
+    "original": "app-pin-043631db-p2-hold-label-add-0335-1025033719-11713",
+    "target": "app-pin-043631db"
+  },
+  "submission": {
+    "suite": "p2-popup-add",
+    "plan_sha256": "144409857e83c8c5f1117e4908fe5a25f96f827f0b8229d1ac5ef78d57a815f7",
+    "plan_bytes": 3704,
+    "body_submission_count": 1,
+    "preflight_submission_count": 1
+  },
+  "source_hashes": {
+    "tests/e2e/local/three-products.p2-popup.spec.ts": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+    "scripts/testing/d66-plain-stack.mjs": "5d4f29fc6af03b505398328040b3e4103dba9232d59b06c53cb0ec8bf5ad2b2c",
+    "scripts/testing/d66-plain-stack.test.mjs": "ee7aa00fe41d1172f61578d52527b59f8e3305815e0a16b9b2e850709f1d8d9f"
+  },
+  "preflight": {
+    "status": "pass",
+    "exit": 0,
+    "duration_seconds_reported": 6,
+    "manifest": {
+      "bytes": 3581,
+      "sha256": "b041bae515127cd3159692eb237c6943bfef253204f7b066166782037f422886"
+    },
+    "pins_verified": true,
+    "source_checkout_state": "clean"
+  },
+  "original": {
+    "status": "fail",
+    "exit": 1,
+    "test_count": 1,
+    "failed_count": 1,
+    "readiness": {
+      "status": "pass",
+      "tests": 1,
+      "failures": 0,
+      "exit": 0,
+      "duration_seconds": 8.149
+    },
+    "body": {
+      "status": "fail",
+      "tests": 1,
+      "failures": 1,
+      "duration_seconds": 35.288,
+      "terminal_suite_exit": 1
+    },
+    "body_manifest": {
+      "bytes": 6395,
+      "sha256": "7d8cffa48f9de97ef06bfe7ad4dd10a536430fb19c74e58573dbccdbf1f9a5f2"
+    },
+    "junit": {
+      "readiness_xml": {
+        "bytes": 1690,
+        "sha256": "e1db89639f241ee459f2aea52d0c60e22736ebe2c1596f282aa6579e05addf45"
+      },
+      "original_xml": {
+        "bytes": 4003,
+        "sha256": "6082a2a25a5be90e3f2d34e7d3f85a18126eac6e7c4f9dcbb1707fb3e88e396c"
+      }
+    }
+  },
+  "predicate_ledger": {
+    "passed_prefix": [
+      "initial occurrence.add-media commit reached the accepted helper at three-products.p2-popup.spec.ts:933",
+      "initial accepted envelope, canonical document equality, history/head, reload, canonical readback, exact selected occurrence shot/revision, preview head, added hold row, tracks/assets, and selected-label assertion at :892",
+      "reloaded history/canonical equality through :895",
+      "inverse request shape and target publication assertions at :900-901"
+    ],
+    "first_failed": {
+      "predicate": "accepted(inverse)",
+      "source": "tests/e2e/local/three-products.p2-popup.spec.ts:495",
+      "called_from": "tests/e2e/local/three-products.p2-popup.spec.ts:902",
+      "expected_http_status": 200,
+      "observed_http_status": 503,
+      "response_code": "not_ready",
+      "response_reason": "runtime_unavailable",
+      "receipt": "absent"
+    },
+    "tail_not_run": [
+      "inverse accepted result and canonical restoration at :903",
+      "final history, inverse history attribution, guarded selection comparison, final head/canonical, two-entry count, traffic, and final history equality at :904-917"
+    ]
+  },
+  "request_reply_projection": {
+    "contract_shape_checked": {
+      "request_fields": [
+        "api_version",
+        "project_id",
+        "timeline_id",
+        "base_revision_id",
+        "base_publication_id",
+        "commands",
+        "label",
+        "steps",
+        "merge",
+        "dry_run",
+        "source",
+        "optional_reads",
+        "optional_rationale",
+        "optional_group_id",
+        "Idempotency-Key"
+      ],
+      "command_shape": ["schema_version", "op", "version", "select", "args", "created"],
+      "reply_success_shape": ["data", "receipt"],
+      "reply_data_fields_asserted_for_initial": [
+        "canonical_document",
+        "document_digest",
+        "commands",
+        "id_map",
+        "provider_version",
+        "compiler_version",
+        "merge_mode",
+        "steps",
+        "publisher",
+        "source",
+        "label",
+        "base_revision_id",
+        "base_publication_id",
+        "previous_revision_id",
+        "previous_publication_id",
+        "accepted_revision_id",
+        "rebased_onto"
+      ],
+      "authoritative_history_and_guard_assertions": "initial accepted history records, dependencies/selections/effects, and guarded undo target were exercised before the inverse failure; raw values are not exported"
+    },
+    "initial": {
+      "category": "occurrence.add-media",
+      "source_correlation": "runPopupCase op and gesture at tests/e2e/local/three-products.p2-popup.spec.ts:941-946; POST captured by commitFromGesture at :930",
+      "http_status": 200,
+      "data_status": "accepted",
+      "success_envelope": ["data", "receipt"],
+      "receipt": "present",
+      "provider": "astrid-v1",
+      "compiler": "authoring-bundle-1",
+      "runtime_ordinal": "UNKNOWN"
+    },
+    "inverse": {
+      "category": "timeline.inverse",
+      "source_correlation": "Undo click captured by commitFromGesture at :897-899; target-publication assertion passed at :900-901",
+      "http_status": 503,
+      "data_status": "UNKNOWN",
+      "response_code": "not_ready",
+      "response_reason": "runtime_unavailable",
+      "success_envelope": "UNKNOWN; error response retained instead",
+      "receipt": "absent",
+      "provider": "UNKNOWN at reply level",
+      "compiler": "UNKNOWN at reply level",
+      "runtime_ordinal": "UNKNOWN"
+    }
+  },
+  "service_and_phase_capture": {
+    "manifest_service_versions": {
+      "node": "v20.19.4",
+      "npm": "10.8.2",
+      "runtime_server": "AstridRuntime/0.1 Python/3.13.16",
+      "protocol": "workspace.v1",
+      "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+      "provider": "astrid-v1",
+      "compiler": "authoring-bundle-1"
+    },
+    "phase_artifact": {
+      "schema_version": 1,
+      "event_count": 128,
+      "bytes": 12877,
+      "sha256": "6eeec3651129d1c074869ca49d43d391dd8ba211b5932cf74378f78ad7463631",
+      "first_at_ms": 2194.211,
+      "last_at_ms": 34930.314,
+      "request_ordinals": [1, 2, 3],
+      "overall_phase_counts": {
+        "dispatch_queue": 6,
+        "handler_entry": 5,
+        "authorization": 86,
+        "coordinator_admission": 5,
+        "coordinator_lock": 5,
+        "provider": 5,
+        "accept": 4,
+        "receipt": 4,
+        "http_response": 8
+      },
+      "by_ordinal": {
+        "1": {
+          "events": 46,
+          "first_at_ms": 2194.211,
+          "last_at_ms": 4132.803,
+          "phase_counts": {
+            "dispatch_queue": 2,
+            "handler_entry": 2,
+            "authorization": 28,
+            "coordinator_admission": 2,
+            "coordinator_lock": 2,
+            "provider": 2,
+            "accept": 2,
+            "receipt": 2,
+            "http_response": 4
+          },
+          "http_responses": [
+            {"state": "start", "status": 200, "count": 1},
+            {"state": "end", "status": 200, "count": 1},
+            {"state": "start", "status": 200, "count": 2},
+            {"state": "end", "status": 200, "count": 2}
+          ]
+        },
+        "2": {
+          "events": 64,
+          "first_at_ms": 11285.814,
+          "last_at_ms": 27901.631,
+          "phase_counts": {
+            "dispatch_queue": 2,
+            "handler_entry": 2,
+            "authorization": 46,
+            "coordinator_admission": 2,
+            "coordinator_lock": 2,
+            "provider": 2,
+            "accept": 2,
+            "receipt": 2,
+            "http_response": 4
+          },
+          "http_responses": [
+            {"state": "start", "status": 200, "count": 1},
+            {"state": "end", "status": 200, "count": 1},
+            {"state": "start", "status": 200, "count": 2},
+            {"state": "end", "status": 200, "count": 2}
+          ]
+        },
+        "3": {
+          "events": 18,
+          "first_at_ms": 34668.371,
+          "last_at_ms": 34930.314,
+          "phase_counts": {
+            "dispatch_queue": 2,
+            "handler_entry": 1,
+            "authorization": 12,
+            "coordinator_admission": 1,
+            "coordinator_lock": 1,
+            "provider": 1
+          },
+          "http_responses": []
+        }
+      }
+    },
+    "ordinal_to_action": "UNKNOWN: retained phase events contain request ordinals but no action labels or ordinal header; ADD and inverse are not assigned to 1, 2, or 3",
+    "provider_phase_identity": "UNKNOWN per ordinal; manifest provider identity is recorded above",
+    "accept_receipt_phase_limit": "accept and receipt phases are present for ordinals 1 and 2 and absent for ordinal 3; this does not identify the browser action or prove the inverse outcome",
+    "http_phase_limit": "HTTP-200 start/end phase events are present for ordinals 1 and 2; ordinal 3 has no retained terminal HTTP event; browser-level inverse response is independently 503",
+    "truncation": "not declared, but ordinal 3 is incomplete because it ends after provider phase with no accept, receipt, or HTTP response",
+    "dump_attribution_limit": "no raw request body, authorization, idempotency key, URL, private canonical document, request/receipt ID, stack, or frame data exported; error context and trace remain retained privately"
+  },
+  "comparison_swap9674": {
+    "reference": "app-P2-SWAP9674-safe-0255",
+    "shared_boundary_only": [
+      "readiness passed",
+      "initial gesture commit advanced before Undo",
+      "inverse accepted helper expected HTTP 200 but observed 503 not_ready/runtime_unavailable",
+      "no inverse receipt and post-inverse restoration/history tail unknown"
+    ],
+    "ADD_specific": [
+      "initial category is occurrence.add-media",
+      "selected-label assertion at source line 892 passed before the inverse failure",
+      "ADD phase ordinal-to-action correlation is independently UNKNOWN"
+    ],
+    "non_inference_rule": "SWAP9674's ordinal counts and action labels are not borrowed; no shared cause is inferred"
+  },
+  "retained_artifacts": {
+    "error_context": {
+      "bytes": 14710,
+      "sha256": "1b9805275c6a503ba10736a08a8d073666bf793325a6f447bc74bf605e0087bf"
+    },
+    "trace": {
+      "bytes": 4430183,
+      "sha256": "e4681f17a89d9a7cf692a1126c65c1c417a527fb8fa215571d2634849476bc07"
+    }
+  },
+  "limits_and_next_owner": {
+    "unknowns": [
+      "inverse eventual accepted/merged/refused outcome",
+      "inverse receipt and canonical restoration",
+      "which runtime ordinal is initial ADD or inverse",
+      "provider/compiler values on the 503 reply",
+      "whether the incomplete third ordinal belongs to the browser action"
+    ],
+    "next_decision_owner": "Runtime owns the next source decision for server-side 503; this packet does not speculate an App fix"
+  }
+}
