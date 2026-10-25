@@ -770,8 +770,9 @@ def _reconcile_materialized_owner_images(result, accepted):
             result[ref] = copy.deepcopy(accepted[ref])
 
 
-def step_output(boundary, step, records, accepted, original=None):
+def step_output(boundary, step, records, accepted, original=None, authenticated=None):
     """Project complete authoritative effects solely to authenticate their boundaries."""
+    expected = authenticated if authenticated is not None else accepted
     result = copy.deepcopy(boundary)
     for effect in step["patch"]:
         ref, path = effect["ref"], normalized_path(effect["ref"], effect["path"])
@@ -784,7 +785,8 @@ def step_output(boundary, step, records, accepted, original=None):
                 result.pop(ref, None)
             else:
                 require(effect["op"] == "set", "provider root effect is not an observed value")
-                result[ref] = {**copy.deepcopy(accepted.get(ref, {})), "revision_id": ref.partition(":")[2],
+                result[ref] = {**copy.deepcopy(expected.get(ref, accepted.get(ref, {}))),
+                               "revision_id": ref.partition(":")[2],
                                "content_digest": digest(effect["value"]), "payload": copy.deepcopy(effect["value"])}
                 if ref.startswith("shot-revision:"):
                     result[ref]["internal_timeline_revision_id"] = effect["value"]["internal_timeline_revision_id"]
@@ -811,7 +813,7 @@ def step_output(boundary, step, records, accepted, original=None):
             if mirror in payload and mirror in result[ref]["payload"].get("config", {}):
                 result[ref]["payload"][mirror] = copy.deepcopy(result[ref]["payload"]["config"].get(mirror))
         result[ref]["content_digest"] = digest(result[ref]["payload"])
-    _align_materialized_images(result, accepted)
+    _align_materialized_images(result, expected)
     # Bindings of complete effect images carry the provider's generated revision
     # names. Their payload digest must agree with the projected observations.
     for row in result["parent"]["payload"]["occurrences"]:
@@ -821,7 +823,7 @@ def step_output(boundary, step, records, accepted, original=None):
                 "provider occurrence effect changes physical shot ownership")
         result[ref]["shot_id"] = row["shot_id"]
     for ref, image in list(result.items()):
-        known = accepted.get(ref)
+        known = expected.get(ref)
         if ref == "parent":
             pins = [binding for ordinal in step["command_ordinals"]
                     for binding in records["commands"][ordinal]["bindings"]
@@ -832,13 +834,13 @@ def step_output(boundary, step, records, accepted, original=None):
                 require(len({pin["revision_id"] for pin in pins}) == 1, "provider intermediate parent pins disagree")
                 image["revision_id"] = pins[0]["revision_id"]
             else:
-                reconciled = known is not None and _parent_materialization_reconciles(result, accepted)
+                reconciled = known is not None and _parent_materialization_reconciles(result, expected)
                 require(known is not None and (value_equal(known["payload"], image["payload"])
                                                 or reconciled),
                         "provider intermediate parent lacks an effect image")
                 result[ref] = copy.deepcopy(known)
                 if reconciled:
-                    _reconcile_materialized_owner_images(result, accepted)
+                    _reconcile_materialized_owner_images(result, expected)
         elif known is not None and value_equal(known["payload"], image["payload"]):
             result[ref] = copy.deepcopy(known)
     return result
@@ -2864,7 +2866,12 @@ def validate(request, prepared, source, base=None, continuations=None, history=N
                     require(_capture_projection_equal(images(captured["output"]), command_inputs[next_ordinal]),
                             "provider sequential command output differs from its next input projection")
         validate_step(request, records, step, boundary, batch_reads, continuations, command_inputs, sequential)
-        output = step_output(boundary, step, records, accepted, original)
+        authenticated_output = None
+        if sequential is not None:
+            last = sequential["landing"].get(step["command_ordinals"][-1])
+            if last is not None:
+                authenticated_output = images(last["output"])
+        output = step_output(boundary, step, records, accepted, original, authenticated_output)
         if sequential is not None:
             last = sequential["landing"].get(step["command_ordinals"][-1])
             require(last is not None and _capture_projection_equal(images(last["output"]), output),
