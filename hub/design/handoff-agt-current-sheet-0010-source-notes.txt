@@ -1,0 +1,74 @@
+F-D85 authored-destination fixture correction (source only)
+
+Owned file: tests/editing_conformance/test_native_sheet_current_runtime.py
+Starting commit/return: d456b539a1fb66fe054002ad9a690c58e1edc763
+Original author base: efa0504f352e7c90149e8a9094d7b5400fc1d81e
+Delta from preserved return: 6 insertions, 5 deletions; one helper block only.
+
+Read PLAN.md, normative design/commit-v2.md sections 1-5, review-2353,
+final-review-0005, return-0000 reports, and current emitter/provider/caller source.
+
+Decision: use the exact publicly read Runtime parent payload as the emitter's
+before parent. Deep-copy that complete bundle, then overlay only non-occurrence
+fixture fields. The exact occurrence rows/order/physical shot and revision links
+are therefore equal on both inputs. All placements, child payloads, source
+mappings, immutable source images, audio/text bindings and manifest pins outside
+that authored parent are untouched. The destination still submits real emitted
+guarded doc.patch commands through TimelineSession.commit_many, merge=atomic.
+It does not publish a reopened two-occurrence authoring candidate, which would
+materialize independent authoring shot identities.
+
+Source discrepancy in review-0005: its stated rejection is not established by
+the current source. commit.bundle_from_document calls open_authoring_bundle;
+authoring_bundle.py:400-401 removes occurrences from the detached parent and
+retains them as placements/source_mapping. emitter._outside drops the complete
+parent before comparing provenance. Hence the previous pop alone does not prove
+the claimed edge mismatch. The candidate nevertheless follows the assigned
+physical-graph requirement explicitly: both emitter parent payloads now include
+the exact authentic physical occurrence edges, without touching product code.
+
+Source reasoning (not execution): emitter._outside is unchanged because the
+candidate deep-copies and changes only parent fields. emitter._root_pairs yields
+the two complete parents; managed_edges(parent, ...) reads identical occurrence
+tuples. All child roots are unchanged, so no child physical resolution or
+authoring recompilation is requested by the emitter. Existing payload validation,
+identity allocation, previous-value guards and canonical commit checks remain.
+No emitter, fixture helper, test body, service or functional command was executed.
+
+Caller custody (read only): sync.py:320 commit_many builds v2 step metadata;
+sync.py:539 _flush freezes the base pair, commands, source and options, then
+calls self.client.timelines.commit. WorkspaceClient.commit_timeline delegates
+to the generated canonical commit_timeline operation. The retained source-side
+publish_authoring_candidate calls writer.commit_timeline at authoring_bundle.py:1884.
+No accepted history, receipt or authority is synthesized by this correction.
+
+Verification:
+- check_source.py: stdlib-only parsing, compile (never exec), AST comparison,
+  selector extraction, path audit and hashes; PASS.
+- All ten complete test ASTs match original base and return (including nested
+  functions, assertions, raises, decorators, parameters, inputs and branches).
+- All 17 requested selectors plus two original additional cases are retained;
+  exact requested roster is selectors.txt.
+- Scoped Ruff and mypy pass on actual git-show original and return source plus
+  candidate using the same current pyproject.toml and shared read-only venv.
+  Exact commands, outputs and exit codes are in static-checks.json.
+- Cumulative git diff --check and working git diff --check: PASS.
+- Repository-wide comparators were not rerun; prior YAML/NumPy stub limitations
+  are not claimed fixed or qualified by scoped checks.
+- No pytest, central service, build, render, product function or original test
+  body execution. No shared dependencies/pins/generated/schema/ledger changes.
+
+Read-only source SHA256s:
+emitter.py c399e4d9522f9c43c10f23d039c0211d5f3dd11f9bb7edffb06da07151c1e48a
+_doc_patch.py 15cc750407eb3b057900befd95cd2bd30c28f41acda9bb2f31e5c2f48f5ad00f
+commit.py 6c2fc6c8dcfc228c87a285e0869b803a034b9e41c7b2e643ee500b78605b6437
+authoring_bundle.py 0611d655f3386f9b06888fa87fa9c38c0ee2d8f89411e944715daa80fa819a4d
+native_occurrence_shared.py 931a9c6ce96b1655660c2c0c3452480e56fa56d1d9097d93d123508d4b7a1840
+sync.py e0b9aa8815623299aaf24547f0f6bcff9178c2db59ed5cc178a1bdc18a58c254
+
+Proposed existing behavior log entry (not applied):
+F-D85 | PASS_SOURCE (author checks; independent review pending) | current-sheet17 destination patches authored fields with exact Runtime occurrence edges and shared source intact; functional qualification pending
+
+Next: one independent protected final source review of the harness-created
+commit, reviewed/home hash equality check before merge, then only the single
+explicitly authorized affected-node qualification batch on MAIN.

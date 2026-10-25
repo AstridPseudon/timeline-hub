@@ -1,0 +1,86 @@
+[
+  {
+    "status": "fulfilled",
+    "value": {
+      "name": "ruff-original",
+      "cmd": "env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-F-current-sheet-sol-0010:/home/user/work/runtime /home/user/work/venv-agent/bin/python -m ruff check --no-cache --config pyproject.toml --stdin-filename tests/editing_conformance/test_native_sheet_current_runtime.py - < /tmp/w-120219f8c7/original/test_native_sheet_current_runtime.py",
+      "chunk_id": "a466c4",
+      "wall_time_seconds": 0.086177973,
+      "exit_code": 0,
+      "original_token_count": 5,
+      "output": "All checks passed!\n"
+    }
+  },
+  {
+    "status": "fulfilled",
+    "value": {
+      "name": "ruff-return",
+      "cmd": "env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-F-current-sheet-sol-0010:/home/user/work/runtime /home/user/work/venv-agent/bin/python -m ruff check --no-cache --config pyproject.toml --stdin-filename tests/editing_conformance/test_native_sheet_current_runtime.py - < /tmp/w-120219f8c7/return/test_native_sheet_current_runtime.py",
+      "chunk_id": "d3c845",
+      "wall_time_seconds": 0.097553967,
+      "exit_code": 0,
+      "original_token_count": 5,
+      "output": "All checks passed!\n"
+    }
+  },
+  {
+    "status": "fulfilled",
+    "value": {
+      "name": "ruff-candidate",
+      "cmd": "env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-F-current-sheet-sol-0010:/home/user/work/runtime /home/user/work/venv-agent/bin/python -m ruff check --no-cache --config pyproject.toml tests/editing_conformance/test_native_sheet_current_runtime.py",
+      "chunk_id": "a631cf",
+      "wall_time_seconds": 0.105191295,
+      "exit_code": 0,
+      "original_token_count": 5,
+      "output": "All checks passed!\n"
+    }
+  },
+  {
+    "status": "fulfilled",
+    "value": {
+      "name": "mypy-original",
+      "cmd": "env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-F-current-sheet-sol-0010:/home/user/work/runtime /home/user/work/venv-agent/bin/python -m mypy --config-file pyproject.toml --follow-imports=skip --ignore-missing-imports --no-incremental --cache-dir /tmp/w-120219f8c7/mypy-original /tmp/w-120219f8c7/original/test_native_sheet_current_runtime.py",
+      "chunk_id": "7339d6",
+      "wall_time_seconds": 2.264442591,
+      "exit_code": 0,
+      "original_token_count": 11,
+      "output": "Success: no issues found in 1 source file\n"
+    }
+  },
+  {
+    "status": "fulfilled",
+    "value": {
+      "name": "mypy-return",
+      "cmd": "env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-F-current-sheet-sol-0010:/home/user/work/runtime /home/user/work/venv-agent/bin/python -m mypy --config-file pyproject.toml --follow-imports=skip --ignore-missing-imports --no-incremental --cache-dir /tmp/w-120219f8c7/mypy-return /tmp/w-120219f8c7/return/test_native_sheet_current_runtime.py",
+      "chunk_id": "70971d",
+      "wall_time_seconds": 2.182300654,
+      "exit_code": 0,
+      "original_token_count": 11,
+      "output": "Success: no issues found in 1 source file\n"
+    }
+  },
+  {
+    "status": "fulfilled",
+    "value": {
+      "name": "mypy-candidate",
+      "cmd": "env PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/home/user/work/wt/agt-F-current-sheet-sol-0010:/home/user/work/runtime /home/user/work/venv-agent/bin/python -m mypy --config-file pyproject.toml --follow-imports=skip --ignore-missing-imports --no-incremental --cache-dir /tmp/w-120219f8c7/mypy-candidate tests/editing_conformance/test_native_sheet_current_runtime.py",
+      "chunk_id": "372874",
+      "wall_time_seconds": 2.068765435,
+      "exit_code": 0,
+      "original_token_count": 11,
+      "output": "Success: no issues found in 1 source file\n"
+    }
+  },
+  {
+    "status": "fulfilled",
+    "value": {
+      "name": "diff-check",
+      "cmd": "git diff --check efa0504f352e7c90149e8a9094d7b5400fc1d81e -- tests/editing_conformance/test_native_sheet_current_runtime.py",
+      "chunk_id": "39cfec",
+      "wall_time_seconds": 0.033983993,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  }
+]

@@ -1,0 +1,17 @@
+{
+  "original_commit": "efa0504f352e7c90149e8a9094d7b5400fc1d81e",
+  "return_commit": "d456b539a1fb66fe054002ad9a690c58e1edc763",
+  "head": "d456b539a1fb66fe054002ad9a690c58e1edc763",
+  "head_tree": "3707f4b24ae7bd1d3be43cb4e038e4902450b63d",
+  "original_file_sha256": "2dd71d0be3d2f455427de6f96f8926a9d0095d2dd244a5426e9367a598e697c4",
+  "return_file_sha256": "8fcfca736f7c31575f4e6ba35137197a7b1e99f1f9696281e5c888f98b09e2e1",
+  "candidate_file_sha256": "6e8b187f8a3bcef57056462974002e7bf27f9d5c04d98e278cbbbfee9c632d8d",
+  "candidate_git_blob": "af48fe6fc8f8233d6776e7d6aa7e3f6e79c1ad75",
+  "candidate_diff_sha256": "fff58064ee0193c486b295eb8610cd08e50c1e1f0da5d5b5853aec5ea4377ce7",
+  "cumulative_diff_sha256": "fd7786dca76af0b84c7662d92e721b3f2671c2ddd8ff2747a44da52b7b8739cb",
+  "original_test_ast_sha256": "a332863aea3321d05a620d50dc03dcdd9d319996390a8f807e22b3bb78868d20",
+  "candidate_test_ast_sha256": "a332863aea3321d05a620d50dc03dcdd9d319996390a8f807e22b3bb78868d20",
+  "test_function_count": 10,
+  "requested_selectors": 17,
+  "total_preserved_selectors": 19
+}
