@@ -1,0 +1,32 @@
+{
+  "sourceguard": {
+    "final_095c_exact_hash": "PASS in source and Node22 actual node",
+    "final_arm_strict_profiler": "PASS: explicit branch, exact digest, canonical basename",
+    "normal_arm_preserved": "PASS: exact runtimeCheckout/tests/helpers/p2_commit_phase_capture.py path",
+    "reviewed_arm_preserved": "PASS: exact old digest plus canonical basename",
+    "reviewed_new_arm_preserved": "PASS: fallback exact old digest plus canonical basename",
+    "wrong_hash_refused": "PASS: mutation of final digest throws",
+    "wrong_basename_refused": "PASS: final digest with unknown-helper.py throws",
+    "arbitrary_hash_acceptance": "PASS: impossible through fail-closed fallback",
+    "readCapture_allowlist": "PASS: same four hashes",
+    "readCapture_arm_mapping": "PASS: final digest maps only to reviewed-profiler",
+    "env_hash_source_proof": "PASS actual harness probe: supplied exact 095c bytes returned exact digest; noncanonical temporary basename remains outside sourceguard qualification",
+    "whole_path_source_identity": "PASS statically and by Git object: Runtime 368f/tree 8d5683/helper 095c",
+    "actual_no_live_node22_assertion": "PASS: 1 sourceguard node, 1 reviewed-profiler node, 1 reviewed-new node",
+    "required_node20_assertion": "NOTRUN: wrapper-only zero intended child nodes"
+  },
+  "conservation": {
+    "normal_d5a1_to_final": "PASS: only permitted bootstrap support test changed; outside diff empty",
+    "prepared_ad57_to_final": "PASS: final sourceguard change preserves prior profiler schema/validator content",
+    "intermediate_6c032_to_final": "PASS: only sourceguard helper/test plus live assertion extraction",
+    "outside_modes": "PASS: only 100644 support test modified"
+  },
+  "coupled_path": {
+    "mounted_outbox": "PASS source shape: ElementsLibraryPanel -> adapter -> useTimelineSave/localSaveSession",
+    "registered_runtime_commit": "PASS source shape: dataProvider.commitTimeline",
+    "dispatch_prefetch_timeline_commit": "PASS source shape from retained 2002 Runtime evidence; Runtime unchanged",
+    "generated_post_commit_idempotency": "PASS source shape: generated POST /commit with Idempotency-Key",
+    "live_qualification": "HELD"
+  },
+  "verdict": "SOURCEFAIL because required Node20 proof is not independently executed; no source-logic blocker remains after F001"
+}

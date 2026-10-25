@@ -1,0 +1,46 @@
+{
+  "manifest_kind": "D127c independent committed-source reconstruction",
+  "app": {
+    "commit": "466c921f40fb9c08e50928df6dea27dfdfb45d15",
+    "tree": "6d2744e271f016206854ab33f57b3cfc737ad54d",
+    "parent": "6c0329334797b42565918114f2e760a606b026b6",
+    "sourceguard_file": {
+      "path": "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts",
+      "sha256": "59a4d116683f88d415024b6d9236e578cf03c11e2c913b56278f9d57448b40ef",
+      "git_blob_sha1": "dea8cda5c28fb4cfe9142c046e9771398274aac9",
+      "mode": "100644",
+      "size": 60923
+    },
+    "scope_from_normal_d5a1": {
+      "raw_diff": "100644 100644 51047a0247 dea8cda5c28fb4cfe9142c046e9771398274aac9 M tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts",
+      "outside_permitted_file": "no differences"
+    },
+    "prepared_ad57": {
+      "commit": "ad57ece9df7890e6d644cc246d4d3bb865129cc1",
+      "tree": "854f6a47a22046af7465cde56abad60439fe5d96",
+      "only_final_change_before_intermediate": "reviewed profiler hash a92122c… became 095c252b…"
+    },
+    "intermediate_6c032": {
+      "commit": "6c0329334797b42565918114f2e760a606b026b6",
+      "tree": "8b9a12d2d77708d260db8a9bd6b9fadff611bf44",
+      "only_final_change": "added shared sourceguard helper/test and replaced the old inline final assertion with that helper"
+    }
+  },
+  "runtime": {
+    "commit": "368f53f4454d5908c86de53d174f0bedcf23781c",
+    "tree": "8d5683702f36034f27ee7f49737665d66dbc2b75",
+    "helper": {
+      "path": "tests/helpers/p2_commit_phase_capture.py",
+      "sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d"
+    },
+    "capture_test_sha256": "ee789ec10738e1d9f3a2aae92c15b6d49cc86ad4f3c6e0e7cafc5fe5c883cf88"
+  },
+  "mounted_path_files": {
+    "src/tools/video-editor/components/ElementsLibraryPanel.tsx": "2f0c716bd77a5efb7fe18436bfdc1e46b8a85f16d0f562b3986cf67bb30e3f4c",
+    "src/tools/video-editor/hooks/useTimelineSave.ts": "33e0ff6b26689e8af62b099557e8455f6ba87ad2b9bbbcbc69e42ac84918638a",
+    "src/integrations/runtime/dataProvider.ts": "9213ed6694cef931fe84fa3c83fda0b06ed02532c1b9b6271ef48c32d38f8988",
+    "src/integrations/runtime/generated.ts": "7be7f351d485fdb24a7ebb0329fea7c65037675b11a96c581d33e60a14a581a4",
+    "src/tools/video-editor/commands/documentPatchIntent.ts": "732473c05b7709b8a4bb95160df3f40679caca9e7fe26384fe0a2ec4d80d08b6",
+    "src/tools/video-editor/commands/localSaveSession.ts": "def2c8c040daea9cff212c40f4f01062d2a6e7bfe6f76a4928cd53eabbf59230"
+  }
+}

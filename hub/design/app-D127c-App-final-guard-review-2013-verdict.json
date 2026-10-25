@@ -1,0 +1,33 @@
+{
+  "review": "D127c independent protected final App sourceguard review",
+  "verdict": "SOURCEFAIL",
+  "sourceguard_finding": "D127c-F001 resolved in source; no new source logic defect found",
+  "validation_finding": {
+    "id": "D127c-F002",
+    "severity": "blocker",
+    "status": "confirmed",
+    "summary": "The required supported Node20.19.4 bounded command selected only the file wrapper in this sandbox; its event stream had zero intended inner test nodes, so it is NOTPASS.",
+    "cause": "Node20 test isolation spawns a worker that this sandbox does not execute; Node20.19.4 has no test-isolation=none control. The Node22 same-process supplemental controls execute the intended nodes.",
+    "effect": "The final source is statically coherent and passes actual Node22 sourceguard/profiler/reviewed-new controls, but the required supported-Node20 evidence gate remains unqualified.",
+    "required_disposition": "Rerun the anchored no-live Node20 controls outside this sandbox and require named inner-node pass counts before changing this verdict to SOURCEPASS."
+  },
+  "app": {
+    "commit": "466c921f40fb9c08e50928df6dea27dfdfb45d15",
+    "tree": "6d2744e271f016206854ab33f57b3cfc737ad54d",
+    "parent": "6c0329334797b42565918114f2e760a606b026b6",
+    "sourceguard_blob_sha256": "59a4d116683f88d415024b6d9236e578cf03c11e2c913b56278f9d57448b40ef",
+    "sourceguard_blob_git_sha1": "dea8cda5c28fb4cfe9142c046e9771398274aac9"
+  },
+  "runtime": {
+    "commit": "368f53f4454d5908c86de53d174f0bedcf23781c",
+    "tree": "8d5683702f36034f27ee7f49737665d66dbc2b75",
+    "helper_sha256": "095c252b111a6d43cb5b4b9ed284b5a445b8b6fe69ca0ad4ee6950f1383c352d",
+    "central_targeted_result": "30318: 61 passed in 3.62s (reused; not rerun)"
+  },
+  "scope": {
+    "only_changed_path_from_normal": "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts",
+    "outside_scope_diff": "clean",
+    "working_tree": "clean",
+    "live_body": "not run"
+  }
+}
