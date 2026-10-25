@@ -221,12 +221,24 @@ def _settle(service, attempt, key, value):
 
 def test_publication_is_fenced_atomic_and_exactly_replayable(requester, monkeypatch):
     import copy
+    import json
 
+    from astrid.core.timeline.authoring_bundle import compile_authoring_candidate
+    from astrid.sdk.timeline.commands import execute
     from astrid.sdk.workspace_client import WorkspaceClientError
     from test_timeline_render_publication_authority import _state
 
     world = requester
+    authored_bundle = world.session._bundle(world.session._state())
     _assembly(world)
+    assembly_spec = world.service.task(world.attempt["task_id"])["task"]["spec"]["spec"]
+    verified_media = [child["verified_media"]
+                      for child in assembly_spec["inputs"]["resolved_children"]["children"]]
+    expected_bundle = execute(
+        copy.deepcopy(authored_bundle), copy.deepcopy(world.proposal["commands"]),
+        verified_media=verified_media,
+    ).bundle
+    expected_parent = compile_authoring_candidate(expected_bundle).publication["parent_composition"]
     steps = [{"id": "assembly", "label": "Ordered visuals", "intent": "Keep the original requester intent",
               "tags": ["assembly", "render"], "command_ordinals": list(range(len(world.proposal["commands"]) + 1)),
               "patch": [], "reads": []}]
@@ -265,6 +277,18 @@ def test_publication_is_fenced_atomic_and_exactly_replayable(requester, monkeypa
     }
     assert params["output_name"] == "final.mp4"
     assert "timeline_snapshot" not in params
+    accepted_parent = data["canonical_document"]["parent_revision"]
+    assert accepted_parent["payload"]["config"] == expected_parent["config"]
+    assert accepted_parent["payload"]["registry"] == expected_parent["registry"]
+    durable_parent = world.service.store.conn.execute(
+        "SELECT payload_json, content_digest FROM parent_composition_revisions WHERE id=?",
+        (accepted_parent["revision_id"],),
+    ).fetchone()
+    assert (
+        json.loads(durable_parent["payload_json"]) == expected_parent
+        and durable_parent["content_digest"] == _digest(canonical_json(expected_parent))
+        and params["canonical_revision"]["content_digest"] == durable_parent["content_digest"]
+    )
     assert _publish(world, **options) == result
     assert world.service.store.conn.execute(
         "SELECT COUNT(*) FROM timeline_commit_history WHERE publication_id=?", (receipt["receipt_id"],),
