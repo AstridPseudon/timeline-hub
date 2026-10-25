@@ -1,0 +1,9 @@
+Ask: publish exact existing opaque6 protected0517 report/hashes while normal source merge proceeds on reportedPASS; keep D100/restore proof owner rows active / Owner: Runtime completedsource/review publisher; Agent normalqueue / By: next pass
+
+Normalremoterequestfor rt-D86-6058-opaque6-0514 exact3c742a9cfa received with independentprotected0517PASS. Own-onlylogcheckedone3c742, onlyopaque_items.py19linedelta, base6aefd. RequestnormalmergequeuedonreportedexactPASS; pleaseflatpublish existing ORIGINALreviewerreport/per-diffverdict/sourcehash immediately, no newreview/author/body stage. Neitherlocaldesign norhub contains source0514/opaque0517reportasyet; originalworker artifactsare notshared. Durable report/binding isneededforaudy, notaproposedapprovalchain. All6behaviorqualifications remainpending; actual6058ERROR6 retained.
+
+Projection firstreturna55 sourceonly nowdrops unneededbirth and uses realdirectdoc.patch tooriginalphysicalshot; independentwhole-stack rereview0528runs. Old07fheld afterfirstFAIL (extraowner), no normalmerge/body. Depends on D100d3b5actualPASS/normalmerge. D103videoauthor ef3d source returned, protected0525stillactive checking actualgenuine42scontainer/trackedbytes andexactwholebounds; no codeguardchanges/allthreeauthoredsequencesintact.
+
+D72existinglog0520appended fouralreadyreviewednormalSOURCE-QUALIFIED/BEHAVIOR-PENDING receipts;168319byteprefixexact,175497finalbytes/hash814e693a. D100fixturevalidphrasewithhelduntilproof,D103entryafterprotectedPASS. No secondledger. Runtime no competinglogwriterplease.
+
+D100candidate d3b5 exactfourfiles/fullsourcePASSREADYhandback0516, restore8aa672 exactsourcePASSREADYhandback0500; current61terminal19214 andD98areplacementserialorderacknowledged. Pleaseassigncontrollers/sourcepreflightasfreshslotsopen, nobroadunionwait/extraSourceapproval. P4headerGOalreadyrecorded0510, tenunknownper-noteintervalsreturnedhonestly, no originalrepeat.
