@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T13:17:24Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 3 | status age 1m -->
-# agent board, 2026-10-25T13:16Z
+<!-- agent | 2026-10-25T13:21:02Z | dispatcher heartbeat 0s | live 1 (sol 0, luna 1, other 0) | busy30 4 | status age 2m -->
+# agent board, 2026-10-25T13:19Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -50,7 +50,7 @@
 | D118a native checkout4 | Preserve native checkout behavior | App Luna | Genuine current word seed | gated:word-source | app-D118a-native-checkout4-1215 | Pending or no diff | No diff. Exact own4 setup ERROR at shared m1.film missing legacy word anchor; real checkout tail unverified. | Source unchanged |
 | D118a track batch1 | Preserve parent track batch inverse | App Luna | Genuine current word seed | gated:word-source | app-D118a-track-batch1-1215 | Pending or no diff | No diff. Exact own1 setup ERROR at shared m1.film missing legacy word anchor. Inputs and grouping unchanged. | Source unchanged |
 
-| D124 shared product roots | Repair shared producer inverse and seed roots | HARD Sol / Luna | Independent review1311 | review | Author1247; agt-D124-shared-core-review-1311 | Source review active | 53 offline PASS; actual Runtime42aad and Farm core owed. Exact source route groups112 word,98 occurrence,215 others carry no closure. | 07ff6c71d3 held |
+| D124 shared product roots | Repair shared producer inverse and seed roots | HARD Sol / Luna | Normal union and genuine Runtime | doing | Author1247; review1311 PASS; join1318 | Independent53 PASS | Disjoint exact join active; producer remains Runtime-owned. Genuine Runtime42aad and Farm core owed. Exact source route groups112 word,98 occurrence,215 others carry no closure. | 07ff6c71d3 held |
 | D124 Farm core | Measure reviewed merged batch | Farm service | Ready head and authentic Farm inputs | blocked:farm | Farm lead requested1251 and1316 | Pending or no diff | Actualb545 and exact1232 mergedlist published1251. Sole unfiltered Farm core requested; genuine inputs first, no local duplicate. | b545b616a4 |
 | D124 upstream host14 | Recheck pristine b742 behavior | Runtime Luna requested | Existing D123 source qualification | blocked:runtime | Runtime rt-D124-b742-host14-1300 | Pending or no diff | Exact original14 on pristine b742 pair; genuine profile and source guards. No current-source repeat or gating retarget. | b742 base |
 
@@ -68,8 +68,8 @@ Blockers: Agent D69 — installed render90 and final b742 cut audit remain. XML1
 Blockers: Runtime D117a — exact authorized git source and installer integrity handoff; historical refusal retained. Genuine installed render NOTRUN.
 Blockers: Final cut — D123 fresh b742 patch, final tuple P1–P5, full core, D69 and render remain owed.
 
-Next ready: independent shared-source review1311 running. Exact normal join follows PASS; Main genuine own-node prep1303 requested. Farm original14 on9ea and core onb545 have ready source inputs; named controllers still requested. Runtime current-patch1257 remains sole D123 owner.
-live 1 / cap 3 at D89b floor; ready-undispatched 0 local. Small-file authors paused by D124. Farm owns heavy bodies, no local duplicate. Source author07ff finished53 offline; no product release or count deduction.
+Next ready: shared-source1311 PASS. Disjoint exact normal join1318 active; Main genuine recipe2 proof requested on frozen07ff after independent PASS. Farm original14 on9ea and core onb545 have ready source inputs; named controllers still requested. Runtime current-patch1257 remains sole D123 owner.
+live 1 / cap 3 at D89b floor; ready-undispatched 0 local. Small-file authors paused by D124. Farm owns heavy bodies, no local duplicate. Source07ff independently53 offline PASS; no genuine acceptance, product release or count deduction.
 
 Disk: 5142237184 bytes after lead-CLEAR and fresh-guard normal recycling21b and9ea; all source branches/evidence retained. No refusal. compact-scratch completed0 dirs,0 logs,0 test dirs. Sweep3 pending. Only finished nonKEEP worktree is prior dirty/refused agt-G2-open-commit, preserved. Receipts design/agent-agt-pin-21b30467-guarded-release-1315.json and agent-agt-pin-9ea67534-guarded-release-1315.json.
 
@@ -77,7 +77,7 @@ D120 and D124: own failing nodes per fix; one Farm unfiltered core per merged ba
 
 Later: two D23 child-word originals and D14 deferred anchors remain unchanged and visibly unqualified. Missing numeric3/video4 complete correspondence records remain EXACTMISSING; no invented fixes or collector. E2 ABI retirement paused until after ZIP; withdrawn1171212 memo never adopted. D79 genuine replay input absent. D13 installed environment remains an explicit known gap.
 
-Inbox consumed through 1634747 bytes. Manager made no product, test, generated, pin or Git changes. D123 stopped WIP80d185 is distinct current-normal scope; Runtime hosted resume requested after scope correction. Historical47f6 is not substituted. New source handbacks do not reduce core or regression counts. Peer safe-input1130 and predicate JOIN1130 artifacts exported byte-exact to flat ORCH design; no evidence branch merged.
+Inbox consumed through 1639318 bytes. Manager made no product, test, generated, pin or Git changes. D123 stopped WIP80d185 is distinct current-normal scope; Runtime hosted resume requested after scope correction. Historical47f6 is not substituted. New source handbacks do not reduce core or regression counts. Peer safe-input1130 and predicate JOIN1130 artifacts exported byte-exact to flat ORCH design; no evidence branch merged.
 
 D124: host fix or upstream-behavior revert by14:00Z if current attempt fails, unless cited C0 requires ours. Pristine b742 host14 controller Runtime1300 is assigned. Host9ea final source review1249 PASS; Farm actual14 owed. D124 Farm core/render venue is now in header.
 
