@@ -162,6 +162,9 @@ def _evaluation(method):
                 if getattr(self._verification, "current", None) is None:
                     with self.verification_scope():
                         return evaluate(self, *args, **kwargs)
+                if method.__name__ != "accept" and not self._reading:
+                    with self._read_transaction():
+                        return evaluate(self, *args, **kwargs)
                 self._sync_replay_memo()
                 version = self._replay_store_version
                 boundary = self._history_inputs is None
@@ -238,6 +241,9 @@ class TimelineCommitStore:
         self._replay_generation = 0
         self._replay_store_version = None
         self._history_state = {}
+        self._connection = self.store.conn
+        self._reading = False
+        self._acceptance_transaction = False
         value = os.stat(self.store.db_path)
         self._database_identity = (value.st_dev, value.st_ino)
         self._wal_identity = None
@@ -251,14 +257,15 @@ class TimelineCommitStore:
             self._replay_generation += 1
 
     def _store_version(self):
-        # D94: trust only this process's verified bytes at an unchanged SQLite
-        # boundary. Raw same-size/inode edits invisible to SQLite are excluded
-        # by the owner-approved threat model; every restart starts cold.
+        # data_version is meaningful only on the same live connection. The
+        # RealmStore mutex also serializes its use across request threads.
+        if self.store.conn is not self._connection:
+            raise ProtocolError("accepted commit connection was replaced; reopen required")
         files = []
         for path in (self.store.db_path, str(self.store.db_path) + "-wal"):
             try:
                 value = os.stat(path)
-                files.append((value.st_dev, value.st_ino, value.st_size))
+                files.append((value.st_dev, value.st_ino, value.st_size, value.st_mtime_ns, value.st_ctime_ns))
             except FileNotFoundError:
                 files.append(None)
         if files[0] is None or files[0][:2] != self._database_identity:
@@ -269,8 +276,36 @@ class TimelineCommitStore:
             self._wal_identity = files[1][:2]
         if self._wal_identity is not None and (files[1] is None or files[1][:2] != self._wal_identity):
             raise ProtocolError("accepted commit WAL was replaced; reopen required")
-        return (id(self.store.conn), self.store.conn.total_changes,
-                self.store.conn.execute("PRAGMA data_version").fetchone()[0], tuple(files))
+        return (id(self._connection), self._connection.total_changes,
+                self._connection.execute("PRAGMA data_version").fetchone()[0], tuple(files))
+
+    @contextmanager
+    def _read_transaction(self):
+        with self.store._mutex:
+            try:
+                self._store_version()
+                owned = not self._connection.in_transaction
+                if owned:
+                    self._connection.execute("BEGIN")
+                self._reading = True
+                try:
+                    # Compare after entering the snapshot, before any cache hit.
+                    self._sync_replay_memo()
+                    yield
+                    self._check_history_version()
+                finally:
+                    self._reading = False
+                    if owned:
+                        self._connection.rollback()
+                    elif not self._acceptance_transaction:
+                        # An unrelated caller transaction may still roll back.
+                        # Its provisional rows cannot become retained proofs.
+                        self.clear_replay_memo()
+                # data_version can stay at the snapshot's value until it ends.
+                self._check_history_version()
+            except BaseException:
+                self.clear_replay_memo()
+                raise
 
     def _check_history_version(self):
         if self._store_version() != self._replay_store_version:
@@ -309,17 +344,24 @@ class TimelineCommitStore:
 
     @contextmanager
     def _accepting(self):
-        self._sync_replay_memo()
-        before = self._replay_store_version
-        assert before is not None
         try:
-            yield
-            # A transaction may change total_changes and file sizes, but never
-            # absorb another connection's commit as one of our own writes.
-            after = self._store_version()
-            replaced = any(old is not None and (new is None or old[:2] != new[:2])
-                           for old, new in zip(before[3], after[3]))
-            if after[0] != before[0] or after[2] != before[2] or replaced:
+            with self.store._transaction():
+                # BEGIN IMMEDIATE excludes other SQLite writers. A change
+                # before that fence must invalidate all earlier proofs.
+                self._acceptance_transaction = True
+                self._sync_replay_memo()
+                before = self._replay_store_version
+                assert before is not None
+                yield
+                after = self._store_version()
+                if after[2] != before[2]:
+                    raise ProtocolError("accepted commit inputs changed during acceptance")
+            # Sample once after COMMIT and retain that exact sample. Comparing
+            # its external-write counter prevents absorbing a writer that won
+            # the lock immediately after our own commit. A later writer is
+            # detected against this sample at the next boundary.
+            committed = self._store_version()
+            if committed[2] != after[2]:
                 raise ProtocolError("accepted commit inputs changed during acceptance")
         except BaseException:
             self.clear_replay_memo()
@@ -327,9 +369,10 @@ class TimelineCommitStore:
         else:
             # Only the successful acceptance transaction may extend history
             # without discarding earlier full replay proofs.
-            self._replay_store_version = self._store_version()
+            self._replay_store_version = committed
             self._history_state["heads"].clear()
         finally:
+            self._acceptance_transaction = False
             self._verification.current["accepting"] = False
 
     @contextmanager
@@ -355,6 +398,10 @@ class TimelineCommitStore:
         current = getattr(self._verification, "current", None)
         if current is None:
             with self.verification_scope(), self.history_read_scope():
+                yield
+            return
+        if not self._reading:
+            with self._read_transaction(), self.history_read_scope():
                 yield
             return
         previous = current["inputs"]
@@ -822,8 +869,8 @@ class TimelineCommitStore:
             entry = self.history_entry(project_id, timeline_id, row["publication_id"])
             if entry["revision_id"] != row["revision_id"]:
                 reject("history_unavailable")
-            from .timeline_commit_baseline import _shot_projection, _text_bindings
             from .timeline_catalog import verify_catalog_tail
+            from .timeline_commit_baseline import _shot_projection, _text_bindings
             ledger = self.conn.execute("SELECT resulting_stream_seq, last_project_seq FROM command_idempotency WHERE txn_id=?",
                                        (row["publication_id"],)).fetchone()
             try:
@@ -1649,7 +1696,7 @@ class TimelineCommitStore:
         with self.store._mutex:
             if self.conn.in_transaction:
                 raise ProtocolError("commit acceptance requires the outer transaction")
-            with self._accepting(), self.store._transaction():
+            with self._accepting():
                 authorize()
                 replay = self._lookup(context)
                 if replay is not None:

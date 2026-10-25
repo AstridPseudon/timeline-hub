@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 import copy
+import os
 import shutil
 import sqlite3
 from collections import Counter
-from contextlib import closing
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import closing, contextmanager
 
 import pytest
 import test_timeline_commit_integration as real
@@ -115,7 +117,7 @@ def test_change_after_warm_hit_is_refused_before_return(service, monkeypatch, wr
 
 def test_retained_warm_forgery_is_also_rejected_after_an_external_write(service, monkeypatch):
     connection = service.store.conn
-    original = verification_cases.accepted
+    original = verification_cases.read
     with closing(sqlite3.connect(service.store.db_path, isolation_level=None)) as writer:
         class ExternalMutations:
             def __getattr__(self, name):
@@ -126,16 +128,184 @@ def test_retained_warm_forgery_is_also_rejected_after_an_external_write(service,
                 # the second real connection. Reads still use Runtime's handle.
                 return (writer if query.startswith("UPDATE") else connection).execute(query, parameters)
 
-        def accepted(*args, **kwargs):
+        reads = []
+
+        def read(*args, **kwargs):
+            # Keep Runtime's pinned handle intact at each verification. The
+            # unchanged witness uses this adapter only for its SQL mutations.
+            service.store.conn = connection
             result = original(*args, **kwargs)
-            service.store.conn = ExternalMutations()
+            if not reads:
+                service.store.conn = ExternalMutations()
+            reads.append(True)
             return result
 
-        monkeypatch.setattr(verification_cases, "accepted", accepted)
+        monkeypatch.setattr(verification_cases, "read", read)
         try:
             verification_cases.test_retained_rehashed_step_forgery_refuses_with_warm_memo(service, monkeypatch)
         finally:
             service.store.conn = connection
+
+
+@pytest.mark.parametrize("corrupt", [False, True])
+def test_external_write_before_begin_immediate_cannot_be_absorbed(service, monkeypatch, corrupt):
+    commits, publication, expected, calls = warm(service, monkeypatch)
+    next_body = body(service)
+    change = next_body["commands"][0]["args"]["changes"][0]
+    change["before"] = {"state": "present", "value": copy.deepcopy(change["value"])}
+    next_body["steps"][0]["patch"] = [copy.deepcopy(change)]
+    transaction = service.store._transaction
+    writes = []
+
+    @contextmanager
+    def external_then_begin():
+        with closing(sqlite3.connect(service.store.db_path, isolation_level=None)) as writer:
+            if corrupt:
+                writer.execute("UPDATE command_idempotency SET event_ids_json='[]' WHERE txn_id=?", (publication,))
+            else:
+                writer.execute("UPDATE timelines SET name=COALESCE(name, '') || ' changed'")
+        writes.append(True)
+        with transaction():
+            yield
+
+    monkeypatch.setattr(service.store, "_transaction", external_then_begin)
+    if corrupt:
+        before = service.store.conn.execute("SELECT COUNT(*) FROM timeline_commit_history").fetchone()[0]
+        with pytest.raises(RuntimeErrorBase):
+            commit(service, next_body, key="race")
+        assert service.store.conn.execute("SELECT COUNT(*) FROM timeline_commit_history").fetchone()[0] == before
+        assert not any(commits._history_state.values())
+    else:
+        assert commit(service, next_body, key="race")["data"]["status"] == "accepted"
+        assert calls[publication] == 2
+        assert commits.history_entry(service.test_project, "main", publication) == expected
+    assert writes == [True]
+
+
+@pytest.mark.parametrize("moment", ["before-sample", "after-sample"])
+@pytest.mark.parametrize("corrupt", [False, True])
+def test_external_write_after_own_commit_is_not_a_new_trusted_baseline(service, monkeypatch, moment, corrupt):
+    commits, publication, expected, calls = warm(service, monkeypatch)
+    next_body = body(service)
+    change = next_body["commands"][0]["args"]["changes"][0]
+    change["before"] = {"state": "present", "value": copy.deepcopy(change["value"])}
+    next_body["steps"][0]["patch"] = [copy.deepcopy(change)]
+    version = commits._store_version
+    writes = []
+
+    def changed():
+        current = commits._verification.current
+        race = current is not None and current["accepting"] and not service.store.conn.in_transaction and not writes
+
+        def external_write():
+            with closing(sqlite3.connect(service.store.db_path, isolation_level=None)) as writer:
+                if corrupt:
+                    writer.execute("UPDATE command_idempotency SET event_ids_json='[]' WHERE idempotency_key=?",
+                                   ("post-commit-race",))
+                else:
+                    writer.execute("UPDATE timelines SET name=COALESCE(name, '') || ' changed'")
+            writes.append(True)
+
+        if race and moment == "before-sample":
+            external_write()
+        result = version()
+        if race and moment == "after-sample":
+            external_write()
+        return result
+
+    monkeypatch.setattr(commits, "_store_version", changed)
+    generation = commits._replay_generation
+    if corrupt:
+        with pytest.raises(RuntimeErrorBase):
+            commit(service, next_body, key="post-commit-race")
+        assert not any(commits._history_state.values())
+    else:
+        # The production coordinator recovers a committed winner after the
+        # store invalidates its proofs. It must authenticate the old rows anew.
+        accepted = commit(service, next_body, key="post-commit-race")
+        assert accepted["data"]["status"] == "accepted"
+        assert commits.history_entry(service.test_project, "main", publication) == expected
+        assert calls[publication] == 2
+        assert commit(service, next_body, key="post-commit-race") == accepted
+    assert writes == [True]
+    assert commits._replay_generation > generation
+    # Our transaction did commit; its lost acknowledgement must not erase it.
+    assert service.store.conn.execute("SELECT COUNT(*) FROM timeline_commit_history").fetchone()[0] == 3
+
+
+@pytest.mark.parametrize("component", ["database", "wal"])
+@pytest.mark.parametrize("timestamp", ["mtime", "ctime"])
+def test_same_size_file_timestamp_change_invalidates_verified_state(service, monkeypatch, component, timestamp):
+    commits, publication, expected, calls = warm(service, monkeypatch)
+    path = service.store.db_path if component == "database" else service.store.db_path.with_name("realm.sqlite3-wal")
+    before = path.stat()
+    version = commits._store_version()
+    os.utime(path, ns=(before.st_atime_ns, before.st_mtime_ns + 1_000_000))
+    if timestamp == "ctime":
+        os.utime(path, ns=(before.st_atime_ns, before.st_mtime_ns))
+        assert path.stat().st_mtime_ns == before.st_mtime_ns
+        assert path.stat().st_ctime_ns != before.st_ctime_ns
+    assert path.stat().st_size == before.st_size
+    assert commits._store_version() != version
+    assert commits.history_entry(service.test_project, "main", publication) == expected
+    assert calls[publication] == 2
+
+
+def test_every_cached_read_checks_after_begin_and_across_threads(service, monkeypatch):
+    commits, publication, expected, calls = warm(service, monkeypatch)
+    verify = commits._verify_accepted
+
+    def checked(*args, **kwargs):
+        assert service.store.conn is commits._connection
+        assert service.store.conn.in_transaction
+        assert service.store._mutex._is_owned()
+        return verify(*args, **kwargs)
+
+    monkeypatch.setattr(commits, "_verify_accepted", checked)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        futures = [pool.submit(commits.history_entry, service.test_project, "main", publication) for _ in range(4)]
+        assert [future.result(timeout=10) for future in futures] == [expected] * 4
+    assert calls == {publication: 1}
+    assert not service.store.conn.in_transaction
+
+
+def test_replacing_connection_with_equal_data_version_requires_new_store(service, monkeypatch):
+    commits, publication, _, _ = warm(service, monkeypatch)
+    connection = service.store.conn
+    with closing(sqlite3.connect(service.store.db_path, isolation_level=None)) as other:
+        assert other.execute("PRAGMA data_version").fetchone()[0] == connection.execute("PRAGMA data_version").fetchone()[0]
+        service.store.conn = other
+        try:
+            with pytest.raises(ProtocolError, match="connection was replaced; reopen required"):
+                commits.history_entry(service.test_project, "main", publication)
+            assert not any(commits._history_state.values())
+        finally:
+            service.store.conn = connection
+
+
+def test_closed_store_refuses_and_reopened_handle_verifies_cold(service, monkeypatch):
+    commits, publication, expected, _ = warm(service, monkeypatch)
+    root = service.store.root
+    service.close()
+    with pytest.raises(ProtocolError, match="connection was replaced; reopen required"):
+        commits.history_entry(service.test_project, "main", publication)
+    assert not any(commits._history_state.values())
+    reopened = RuntimeService(root)
+    try:
+        fresh, _ = reopened._timeline_commits()
+        assert not any(fresh._history_state.values())
+        calls = []
+        verify = fresh._verify_accepted_record
+
+        def counted(*args, **kwargs):
+            calls.append(True)
+            return verify(*args, **kwargs)
+
+        monkeypatch.setattr(fresh, "_verify_accepted_record", counted)
+        assert fresh.history_entry(service.test_project, "main", publication) == expected
+        assert calls == [True]
+    finally:
+        reopened.close()
 
 
 def test_refusal_discards_state_and_a_new_store_always_verifies_cold(service, monkeypatch):
@@ -149,6 +319,25 @@ def test_refusal_discards_state_and_a_new_store_always_verifies_cold(service, mo
     assert not any(commits._history_state.values())
     assert commits.history_entry(service.test_project, "main", publication) == expected
     assert calls == {publication: 2}
+
+
+def test_external_write_at_read_begin_invalidates_before_a_cache_hit(service, monkeypatch):
+    commits, publication, expected, calls = warm(service, monkeypatch)
+    writes = []
+
+    def before_begin(query):
+        if query == "BEGIN" and not writes:
+            with closing(sqlite3.connect(service.store.db_path, isolation_level=None)) as writer:
+                writer.execute("UPDATE timelines SET name=COALESCE(name, '') || ' changed'")
+            writes.append(True)
+
+    service.store.conn.set_trace_callback(before_begin)
+    try:
+        assert commits.history_entry(service.test_project, "main", publication) == expected
+        assert calls == {publication: 2}
+        assert writes == [True]
+    finally:
+        service.store.conn.set_trace_callback(None)
     reopened = TimelineCommitStore(service.store, validate_prepared=commits.validate_prepared,
                                    validate_event=commits.validate_event)
     verified = []
