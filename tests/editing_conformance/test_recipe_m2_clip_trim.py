@@ -130,6 +130,100 @@ def test_native_group_replaces_track_ripple_and_compiles_parent_extension():
     assert timeline_duration_seconds(compiled, 30) == pytest.approx(2.5)
 
 
+def test_native_group_preserves_exact_track_scoped_ripple_timing_and_audio():
+    original = bundle()
+    original['parent']['config']['output'] = {'fps': 30}
+    for rows in (original['parent']['clips'], original['parent']['config']['clips']):
+        rows[0].update(at=0, **{'from': 0, 'to': 1, 'hold': 1, 'speed': 1})
+        rows[1].update(at=1, **{'from': 0, 'to': 1, 'hold': 1, 'speed': 1})
+        rows.append({'id': 'music', 'track': 'music', 'asset': 'music', 'clipType': 'media',
+                     'at': 0, 'from': 0, 'to': 2, 'hold': 2})
+    original['parent']['config']['tracks'].append({'id': 'music', 'kind': 'audio'})
+    original['parent']['registry']['assets']['music'] = {
+        'media_id': 'sha256:' + '2' * 64, 'type': 'audio', 'duration': 2,
+    }
+    assert (clip(original)['at'], clip(original)['from'], clip(original)['to']) == (0, 0, 1)
+
+    trim = capture_clip_trim(original, REF, in_s=0, out_s=1.5)
+    intermediate = execute(original, [trim]).bundle
+    move = capture_move(intermediate, 'parent/clip:clip-b', 1.5)
+    plan = execute(original, [trim, move])
+
+    rows = {row['id']: row for row in plan.bundle['parent']['clips']}
+    assert (rows['clip-a']['at'], rows['clip-a']['from'], rows['clip-a']['to']) == (0, 0, 1.5)
+    assert (rows['clip-b']['at'], rows['clip-b']['from'], rows['clip-b']['to']) == (1.5, 0, 1)
+    assert (rows['music']['at'], rows['music']['from'], rows['music']['to']) == (0, 0, 2)
+
+    compiled = document_from_bundle(plan.bundle)['parent_revision']['payload']
+    assert timeline_duration_seconds(compiled, 30) == pytest.approx(2.5)
+
+
+def test_native_speed_two_preserves_source_window_move_and_endpoint_length():
+    original = bundle()
+    for rows in (original['parent']['clips'], original['parent']['config']['clips']):
+        rows[0].update(at=4, **{'from': 2, 'to': 4, 'hold': 2, 'speed': 2})
+
+    row = clip(original)
+    assert (row['at'], row['from'], row['to'], row['speed']) == (4, 2, 4, 2)
+    assert 'source_start' not in row and 'source_end' not in row
+    assert (clip_start_frame(row, 30), clip_end_frame(row, 30)) == (120, 150)
+
+    inconsistent = copy.deepcopy(original)
+    for rows in (inconsistent['parent']['clips'], inconsistent['parent']['config']['clips']):
+        rows[0]['at'] = 0
+        rows[0]['duration'] = 3
+    before_inconsistent = copy.deepcopy(inconsistent)
+    with pytest.raises(CommandError, match='unambiguous positive authored duration/window'):
+        capture_move(inconsistent, REF, 10)
+    assert inconsistent == before_inconsistent
+
+    moved = execute(original, [capture_move(original, REF, 10)])
+    assert (clip(moved.bundle)['at'], clip(moved.bundle)['from'],
+            clip(moved.bundle)['to'], clip(moved.bundle)['speed']) == (10, 2, 4, 2)
+    moved_again = execute(moved.bundle, [capture_move(moved.bundle, REF, 20)])
+    assert (clip(moved_again.bundle)['at'], clip(moved_again.bundle)['from'],
+            clip(moved_again.bundle)['to'], clip(moved_again.bundle)['speed']) == (20, 2, 4, 2)
+
+    endpoint = execute(moved_again.bundle,
+                       [capture_clip_trim(moved_again.bundle, REF, out_s=5)])
+    final = clip(endpoint.bundle)
+    assert (final['at'], final['from'], final['to'], final['speed']) == (20, 2, 5, 2)
+    assert final['at'] + clip_timeline_duration(final) == pytest.approx(21.5)
+
+
+def test_native_group_preserves_shifted_source_window_and_audio_bytes():
+    original = bundle()
+    original['parent']['config']['output'] = {'fps': 30}
+    for rows in (original['parent']['clips'], original['parent']['config']['clips']):
+        rows[0].update(at=0, **{'from': 3, 'to': 4, 'hold': 1, 'speed': 1})
+        rows[1].update(at=1, **{'from': 8, 'to': 9, 'hold': 1, 'speed': 1})
+        rows.append({'id': 'music', 'track': 'music', 'asset': 'music', 'clipType': 'media',
+                     'at': 0, 'from': 0, 'to': 2, 'hold': 2})
+    original['parent']['config']['tracks'].append({'id': 'music', 'kind': 'audio'})
+    original['parent']['registry']['assets']['music'] = {
+        'media_id': 'sha256:' + '2' * 64, 'type': 'audio', 'duration': 2,
+    }
+    audio_before = copy.deepcopy(next(row for row in original['parent']['clips']
+                                     if row['id'] == 'music'))
+    assert (clip(original)['at'], clip(original)['from'], clip(original)['to']) == (0, 3, 4)
+    assert (next(row for row in original['parent']['clips'] if row['id'] == 'clip-b')['at'],
+            next(row for row in original['parent']['clips'] if row['id'] == 'clip-b')['from'],
+            next(row for row in original['parent']['clips'] if row['id'] == 'clip-b')['to']) == (1, 8, 9)
+
+    trim = capture_clip_trim(original, REF, in_s=3, out_s=4.5)
+    intermediate = execute(original, [trim]).bundle
+    move = capture_move(intermediate, 'parent/clip:clip-b', 1.5)
+    plan = execute(original, [trim, move])
+
+    rows = {row['id']: row for row in plan.bundle['parent']['clips']}
+    assert (rows['clip-a']['at'], rows['clip-a']['from'], rows['clip-a']['to']) == (0, 3, 4.5)
+    assert (rows['clip-b']['at'], rows['clip-b']['from'], rows['clip-b']['to']) == (1.5, 8, 9)
+    assert rows['music'] == audio_before
+
+    compiled = document_from_bundle(plan.bundle)['parent_revision']['payload']
+    assert timeline_duration_seconds(compiled, 30) == pytest.approx(2.5)
+
+
 def test_windowless_trim_uses_file_not_hold_and_length_helper_stays_windowless():
     from astrid.sdk.timeline.doc import _set_length, _trim_front
 
