@@ -1,0 +1,12 @@
+category	count	fact
+READY prior	27	unchanged predecessor packet against 68404
+READY added	49	word-bootstrap46 from actual11789 + D92-docpatch5-compound3 from actual18575
+READY current	76	27 + 49, unique canonical selectors
+MAIN overlap	20	existing same-hash rows retained, not duplicated
+HELD existing	10	video item-correspondence4 + numeric inverse3 + opaque create/fork3
+HELD shared timing	2	actual9211 ordinals102/103; no changed helper dependency proven
+PENDING	0	word/D92 exact normal receipts now present
+ORIGINAL historical	550	preserved unchanged
+NO_CASE historical	23	preserved unchanged
+QUEUED_READY	22	distinct, not absorbed
+CANDIDATE	13	distinct, not absorbed

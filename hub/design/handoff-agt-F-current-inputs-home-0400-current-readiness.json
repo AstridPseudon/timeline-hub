@@ -1,0 +1,29 @@
+{
+  "base": {
+    "commit": "68404b8484749d1d8ec2bdaef34faa004ad87dbe",
+    "tree": "bc0eaa245fe5ec6f16b17b3b64c2b499f85e82f2"
+  },
+  "actual_runs": {
+    "prior": "9211",
+    "word": "11789",
+    "d92": "18575"
+  },
+  "normal_receipts": {
+    "word-bootstrap46": "f51844083737a484422bb07a9d6679f489bbcd78",
+    "D92-docpatch5-compound3": "b7c5ce47fd6b1bdc3ae84b4de6b7734acfb4991b"
+  },
+  "readiness": {
+    "ready_current": 76,
+    "ready_prior": 27,
+    "ready_delta": 49,
+    "main_overlap": 20,
+    "held_existing": 10,
+    "held_shared_timing": 2,
+    "pending": 0,
+    "original550": 550,
+    "no_case23": 23,
+    "queued_ready22": 22,
+    "candidate13": 13
+  },
+  "qualification": "SOURCE_ONLY; no behavior qualification or MAIN execution claimed"
+}

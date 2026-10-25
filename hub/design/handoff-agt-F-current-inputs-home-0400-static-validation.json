@@ -1,0 +1,29 @@
+{
+  "schema": "F-D86-static-validation/v1",
+  "base": "68404b8484749d1d8ec2bdaef34faa004ad87dbe",
+  "normal_receipts": {
+    "D92": "b7c5ce47fd6b1bdc3ae84b4de6b7734acfb4991b",
+    "word_bootstrap46": "f51844083737a484422bb07a9d6679f489bbcd78"
+  },
+  "source_only": true,
+  "no_behavior_execution_claimed": true,
+  "prior27_relevant_blob_count": 15,
+  "prior27_relevant_blobs_unchanged": true,
+  "word_normal_diff_paths": [
+    "tests/editing_conformance/native_word_anchor_fixture.py"
+  ],
+  "D92_normal_diff_paths": [
+    "tests/timeline/test_authoring_media.py"
+  ],
+  "shared_timing_dependency_proven": false,
+  "shared_timing_base_blob": "6ea60c464413c25fbefb3a94c161f6f61ee32677",
+  "shared_timing_word_receipt_blob": "6ea60c464413c25fbefb3a94c161f6f61ee32677",
+  "shared_timing_held": true,
+  "AST_parse_compile_parent_candidate": "PASS (6/6 snapshots)",
+  "ruff_parent_candidate": "PASS",
+  "mypy_parent_candidate": "PASS",
+  "ruff_current_allowed_files": "PASS",
+  "mypy_current_allowed_files": "PASS",
+  "git_diff_check": "PASS",
+  "product_files_changed": false
+}

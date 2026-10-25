@@ -1,0 +1,148 @@
+{
+  "schema": "F-D86-source-exact-hashes/v1",
+  "records": [
+    {
+      "family": "video12",
+      "protected_source_commit": "5b3e095f2af31958ed535ddf20d2b9da0bd27988",
+      "protected_review": "rt-D86-video12-review-0328-report.md",
+      "normal_home_receipt": "68404b8484749d1d8ec2bdaef34faa004ad87dbe",
+      "changed_paths_sha256": {
+        "tests/editing_conformance/test_commit_runtime_video_unplace.py": "fe54a4f5d41677d95f4d7c4fa9edde56028333250be405080b41ad2101429cd2"
+      },
+      "dependency_paths_sha256": {
+        "astrid/sdk/timeline/commit.py": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7",
+        "astrid/sdk/timeline/inverse.py": "06bd41f404a40c17a1ec06b49c8443e0e755f622134822ede55fb3ca79234cee",
+        "astrid/sdk/timeline/_command_state.py": "689c59d323aca2d508d152f5d5513beed094edf2f6fd9b8ef93f12f475104c39"
+      },
+      "status": "READY"
+    },
+    {
+      "family": "ordinarysheet11",
+      "protected_source_commit": "8aa201a76cf3ceca2b67d54a871b2ec0c057d4d6",
+      "protected_review": "sheet11-source-verdict.md",
+      "normal_home_receipt": "f31f315a8d870a72fe4917a575a38797ca439623",
+      "changed_paths_sha256": {
+        "tests/editing_conformance/test_native_sheet_ordinary_runtime.py": "a4183c3e875f4a0c2337c44aa8de07fe0d1abd717d6df9ba122285a0a04045af"
+      },
+      "dependency_paths_sha256": {
+        "astrid/sdk/timeline/commit.py": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7",
+        "astrid/sdk/timeline/commands.py": "b89798a439daace286e6702647c670c532a21575719e4df1bda87607b855ee96"
+      },
+      "status": "MAIN_OVERLAP"
+    },
+    {
+      "family": "projection9",
+      "protected_source_commit": "b8dbb40a3c038634f232f4b10dad4eaf9ddef4ba",
+      "protected_review": "projection9-source-verdict.md",
+      "normal_home_receipt": "9c4b6354d8c2334fed2cbd21ada2ca3686a9b509",
+      "changed_paths_sha256": {
+        "tests/sdk/test_timeline_capture_projection.py": "90c4625a7481fdcd570ec8b85bbe95325f4d3c57f0a3a26017dd405b8269b638"
+      },
+      "dependency_paths_sha256": {
+        "astrid/sdk/timeline/capture.py": "d96af5fb7b20e61671e17e23ac3c259c85c3c2da906b2af8751ad92ad7883af7",
+        "astrid/sdk/timeline/commit.py": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7"
+      },
+      "status": "MAIN_OVERLAP"
+    },
+    {
+      "family": "numeric9",
+      "protected_source_commit": "9c08deda0e4ffb6d3632d87ef255e13870d71791",
+      "protected_review": "F-D86-numeric6-PASS_SOURCE.md",
+      "normal_home_receipt": "595464fd1cae3204f3c5cb99f7f72a1b4d2083ba",
+      "changed_paths_sha256": {
+        "tests/editing_conformance/test_commit_runtime_numeric_move.py": "92302c6f35d033ba27b54da9a1a5544807c6c4268d25499693f6dc38afaf9c7c"
+      },
+      "dependency_paths_sha256": {
+        "tests/editing_conformance/test_commit_runtime_numeric_params.py": "1ced4d39f8c2da4972863500b20aa67da1ee458f20ee9f4c86be152fd716b5d6",
+        "astrid/sdk/timeline/emitter.py": "c399e4d9522f9c43c10f23d039c0211d5f3dd11f9bb7edffb06da07151c1e48a",
+        "astrid/sdk/timeline/commit.py": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7",
+        "astrid/sdk/timeline/commands.py": "b89798a439daace286e6702647c670c532a21575719e4df1bda87607b855ee96"
+      },
+      "status": "READY"
+    },
+    {
+      "family": "CLItrim3",
+      "protected_source_commit": "1ce55afcf9e087ceae363aff1ae3b10cc950bfdd",
+      "protected_review": "verdict.md",
+      "normal_home_receipt": "5687f58dbd3c33f50c462ee2f800fb1b5b550b52",
+      "changed_paths_sha256": {
+        "tests/editing_conformance/test_cli_trim_runtime.py": "40f4eee17346ab45be79ee29e5062be290fd50cbc4beaea140858121dd029d54"
+      },
+      "dependency_paths_sha256": {
+        "astrid/sdk/timeline/native_occurrence_media_commands.py": "419149d2092e271e8a2f82754843f381e1e70b5a892b9f8fe13820f04effac4c",
+        "astrid/sdk/timeline/emitter.py": "c399e4d9522f9c43c10f23d039c0211d5f3dd11f9bb7edffb06da07151c1e48a",
+        "astrid/sdk/timeline/commit.py": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7"
+      },
+      "status": "READY"
+    },
+    {
+      "family": "opaque9",
+      "protected_source_commit": "9f88f8cd0808f56530c9a297b22c0862f13e9529",
+      "protected_review": "rt-D86-opaque-script-review-0323-report.md",
+      "normal_home_receipt": "eb5c794b2377a5ed862cdb9e12b7fd723ffd5ca5",
+      "changed_paths_sha256": {
+        "tests/editing_conformance/test_commit_runtime_opaque_items.py": "2edbef0682c7468d2879a1163a32716305fc6276ec4a99777f7eb4b12e7e5320"
+      },
+      "dependency_paths_sha256": {
+        "astrid/sdk/timeline/emitter.py": "c399e4d9522f9c43c10f23d039c0211d5f3dd11f9bb7edffb06da07151c1e48a",
+        "astrid/sdk/timeline/native_occurrence_media_commands.py": "419149d2092e271e8a2f82754843f381e1e70b5a892b9f8fe13820f04effac4c",
+        "astrid/sdk/timeline/commit.py": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7"
+      },
+      "status": "READY"
+    },
+    {
+      "family": "ordinaryscript4",
+      "protected_source_commit": "a2c71eeceb407607d4d66630aa6af08e1974123f",
+      "protected_review": "rt-D86-opaque-script-review-0323-report.md",
+      "normal_home_receipt": "b4a074bc3a4eb6bc88f5e8e36e4cd4e77def47ea",
+      "changed_paths_sha256": {
+        "tests/editing_conformance/test_s3_reviewed_cohort_runtime.py": "71a8d53e2e9da99c7d82f25070a2515183aed635948f31b0849cc6f11bb87c99",
+        "tests/editing_conformance/test_next_ordinary_union_runtime.py": "6a3555545989866bcb96b63f7c5bd8f6cf23de5b8d6e9ea60fdb3a47a0752421",
+        "tests/sdk/test_timeline_script.py": "c2cabefe8a55cd2d98aeb22ab2d37095bd7139cba9af516d26797c0e0c8c2fc5"
+      },
+      "dependency_paths_sha256": {
+        "astrid/sdk/timeline_script.py": "9ce326dc839d9118932d0cdfd9bdb8cbb6e0051aac4a758a6a439df1c4c6b74e",
+        "astrid/sdk/timeline/native_occurrence_media_commands.py": "419149d2092e271e8a2f82754843f381e1e70b5a892b9f8fe13820f04effac4c",
+        "astrid/sdk/timeline/commit.py": "eec60cd2520730e5ccfa8ebde6ad6a1fa986df62520c57d6575f5512c79b9cf7"
+      },
+      "status": "READY"
+    },
+    {
+      "family": "word-bootstrap46",
+      "protected_source_commit": "b2cb7728522910e0196c677b1b42b72e67491ebd",
+      "protected_review": "agt-F-word-D92-review-0348-report.md",
+      "normal_home_receipt": "f51844083737a484422bb07a9d6679f489bbcd78",
+      "changed_paths_sha256": {
+        "tests/editing_conformance/native_word_anchor_fixture.py": "b5247b5ef47b80f2810d8d2af67412a7b7687643"
+      },
+      "dependency_paths_sha256": {
+        "tests/editing_conformance/test_timing_retained_inputs.py": "6ea60c464413c25fbefb3a94c161f6f61ee32677"
+      },
+      "status": "READY_NEW_NORMAL"
+    },
+    {
+      "family": "D92-docpatch5-compound3",
+      "protected_source_commit": "da61c4b29a2fa5d1c49eb36922c1b042e9e72852",
+      "protected_review": "agt-F-word-D92-review-0348-report.md",
+      "normal_home_receipt": "b7c5ce47fd6b1bdc3ae84b4de6b7734acfb4991b",
+      "changed_paths_sha256": {
+        "tests/timeline/test_authoring_media.py": "dc9b03efa98adb1d344e93040fa7c085f479facc"
+      },
+      "dependency_paths_sha256": {},
+      "status": "READY_NEW_NORMAL"
+    },
+    {
+      "family": "word11-shared-timing",
+      "protected_source_commit": "32619f8656d0ab481c1486ee6cea23969bd7a788",
+      "protected_review": "rt-D86-word11-review-0022-report.md;rt-D86-scalar-word-review-0110.md",
+      "normal_home_receipt": "",
+      "changed_paths_sha256": {
+        "tests/editing_conformance/native_word_anchor_fixture.py": "b5247b5ef47b80f2810d8d2af67412a7b7687643"
+      },
+      "dependency_paths_sha256": {
+        "tests/editing_conformance/test_timing_retained_inputs.py": "6ea60c464413c25fbefb3a94c161f6f61ee32677"
+      },
+      "status": "HELD_NO_PROVEN_DEPENDENCY"
+    }
+  ]
+}
