@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T07:12:16Z | dispatcher heartbeat 12s | live 4 (sol 0, luna 4, other 0) | busy30 11 | status age 6m -->
-# runtime board, 2026-10-25T07:01:20Z
+<!-- main | 2026-10-25T07:15:56Z | dispatcher heartbeat 3s | live 3 (sol 0, luna 3, other 0) | busy30 11 | status age 0m -->
+# runtime board, 2026-10-25T07:16:03Z
 
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | commit |
 |---|---|---|---|---|---|---|---|
@@ -241,7 +241,7 @@
 | R-P4-wholepath | Compare failing and passing request paths | Luna read only | Measured sample owns next fix | merged | rt-P4-D88b-wholepath-0229 complete | Same service retains memo; original restarts before Undo. Remaining fresh inputs scale. Source lifetime facts do not prove dominant cost. | Runtime6634 unchanged |
 | P2-single-GO-packet | Export authentic single result safely | Luna read only | Sole App verdict | merged | rt-native-single-export-0235 complete | Safe exact XML, tuple, receipts, source, exit and profile packet published0254. No semantic verdict or new body. | Service5678 |
 | D86-later-delta | Qualify disjoint102 originals | Luna / service | Actual source-specific corrections | review | Actual11789; exporter0310 | 102 executed:10 PASS24 FAIL68 ERROR. Safe exact per-ID and owner packet published; no source-only closure. | 562ee/6634/c101/635f |
-| R-P2-SWAP-inverse503 | Resolve native inverse unavailable reply | Agent Luna / review | D110 source and real-provider proof | blocked:agent | agt-R2-D110-removed-shot-0651 | Actual18021 stderr names KeyError in Agent remember after restored shot removal. Agent owns minimal filter; no duplicate Runtime replay. | Runtime1daca unchanged |
+| R-P2-SWAP-inverse503 | Resolve native inverse unavailable reply | Agent Luna / Luna | Full P2 after D111 release | review | Agent0651; core0658 PASS | Normal070dfc tree equals reviewed source. Real-provider ADD/SWAP RED2/GREEN2 and44 controls PASS; original full-tour proof remains App-owned. | Agent070dfc5ef4 |
 | P2-single-proof-supplement | Export remaining safe verdict inputs | Luna read only | Sole App reviewer0247 | merged | rt-native-single-supplement-0257 complete | Exact preflight and one-case record plus safe central tail published0259. Source cmp/hash/safety checks PASS; no extra verdict or body. | Actual5678 |
 
 | D86-auto-guard-six | Preserve exact asset collection guards | Agent HARD Sol | Agent source and protected review | doing | agt-R1-asset-guard-sol-0317 | Agent found collection asset scope widened to whole parent. Narrow R1 author owns it; Runtime preview was not reached. | Agent current source |
@@ -344,27 +344,33 @@
 
 | R2-choice-three-prep | Prepare remaining inverse and word originals | Luna source only | Full core first under D108 | gated:D108-core | Prep0638 complete; rebound44cf | Exact three source recipe prepared with reviewed blobs and normal 1daca lock. No actual originals run; prior four PASS controls excluded. | Held candidate |
 
-| D108-Agent-core | Measure current Agent core outcomes | Luna / service | Qualified D110 Agent fix | blocked:agent | Prep0645; resume0656 stopped | No central body submitted. Full-core preparation retained; resume on qualified D110 source. Forty-seven board rows are not a selector manifest. | No current result |
+| D108-Agent-core | Measure current Agent core outcomes | Luna / service | D110 released; source capture | doing | rt-D108-full-core-0711 | Authoritative23 roots and47 scopes received. Pre-fix9268 collection retained; actual current tuple/count captured by sole new controller. | Agent070dfc ready |
 | D108-reverse-audit | Preserve upstream and live predicates | Luna independent | Exact applied trees | review | rt-F-D108-reverse-audit-0645 | Source identities checked. Final initial audit: Agent96 cited and8 unresolved; Runtime10 unresolved. Citation crosswalk and TS audit assigned. | Source only |
 
 | D111-validation-memo | Avoid repeated successful schema validation | Luna / independent review | Actual element-path measurement | doing | Author0653; curve return0706 | Author79 PASS and smoke2 PASS. Native N=1 wall2754/2755ms proves no gain; missing finite N gate returned once, source stays held. | 1171212ce held |
-| D108-python-citations | Reconcile Python predicate signals | Luna read only | Applied source receipts | doing | rt-F-D108-python-citations-0700 | Map 104 Agent and ten Runtime missing predicates plus changed assertions to exact preserved source and approved entries. No test changes. | Evidence pending |
-| D108-typescript-audit | Audit applied App and Composition tests | Luna read only | Applied source receipts | doing | rt-F-D108-typescript-audit-0700 | Complete TS predicate and assertion accounting; verify fresh onboarding suites and both source sides. No test bodies or packages run. | Evidence pending |
+| D108-python-citations | Reconcile Python predicate signals | Luna / independent Luna | Independent result review | review | Author0700; reviewer0715 | Runtime10 mapped by exact source. Agent three D07 gaps and Windows/D18 census discrepancy sent to Agent. Changed assertion signals still need exact review. | Source evidence only |
+| D108-typescript-audit | Audit applied App and Composition tests | Luna / independent Luna | Independent result review | review | Author0700; reviewer0715 | Composition source accounting PASS. App D01 revision and three label/signature gaps sent to App. Fresh onboarding suites retained;77 lexical limits explicit. | Source evidence only |
+
+
+| D108-Agent-source-gaps | Preserve D07 and installer predicates | Agent source owner | Existing exact scope and source | blocked:agent | Peer0715; Runtime reviewer0715 | Three D07 purposes and Windows/D18 census need exact replacement or restoration. D107 current-combination gap stays separately owned. | No source change |
+| D108-App-source-gaps | Preserve revision and label predicates | App source owner | Existing exact scope and source | blocked:app | Peer0715; Runtime reviewer0715 | D01 project history/restore/CAS and three label/signature predicates need exact approval or faithful source repair. No weakening authorized. | No source change |
+| D108-route-prep | Prepare the sole full-core route | Luna / independent Luna | Full controller0711 | review | Prep0707; reviewer0715 | Private23-root row, positive17 and poisonzero PASS; live registry exact. No core body or provider proof claimed by prep. | Private candidate |
 
 Runtime producer: RELEASED 1daca2a33, reviewed product tree a522. Normal c916 adds the required genuine-provider release check only. Agent d629 and App0b6cee fixed-producer adoption are complete.
 core open: 1 known Runtime P2 performance issue, D111. Agent current core count UNKNOWN until D108. Agent D110 independently owns the named inverse KeyError; no guessed shared cause.
 regressions: D102 shared-context request_id regression is closed on normal1daca. D111 performance qualification is pending; original D100 failures remain held and visible.
 Gates: P1/P3 historical GO; P4 independent GO28.101s with per-note durations UNKNOWN. Four isolated P2 GO retain recorded tuples. Current tour and final D59 gates/core/render remain owed.
 
-Blockers: Agent D110 — Minimal inverse owner-filter fix0651, real-provider ADD/SWAP RED/GREEN and independent review precede same-tuple D108 core.
 Blockers: Agent D107 — Current combined word sequence failed protected review; Agent first return0647 owns it. Exact legacy read source is normally merged.
 Blockers: Runtime D111 — Genuine element-path profile, bounded positive validation memo if confirmed, strict controls, flat curve, real-provider smoke and review before release.
-Blockers: Final cut — D69 citation and TS audit, all-lane core qualification, final P1-P5 and genuine installed render remain owed. No final tuple or ZIP.
+Blockers: Agent D69 — Three D07 predicate gaps and exact Windows/D18 census discrepancy need Agent source disposition; peer0715 sent.
+Blockers: App D69 — D01 project revision and three label/signature predicates need exact approved mapping or faithful repair; peer0715 sent.
+Blockers: Final cut — D69 source qualification, all-lane core, final P1-P5 and genuine installed render remain owed. No final tuple or ZIP.
 Safety: Withdrawn D88 stays stopped. D106 ORCH-only publication rule applies; nobody retries denied hub writes. Every brief names exact own ORCH output paths.
-Next ready: D111 measurement/source; independent Python citation and TS audits now. D108 preparation resumes promptly after qualified D110. Family bodies remain paused under D108.
-Venues: No D108 core body submitted. Stopped controller0656 preserves WIP at D110 priority checkpoint. App exclusively owns P1/P3 and future full P2; no Runtime browser duplicate.
+Next ready: D108 full-core0711 dispatched immediately on D110 release. Private route prep0707 and two source audits active. D111 finite-curve first return0706 active; family bodies paused.
+Venues: D1080711 owns next sole MAIN heavy body, exact current source capture and real central ID pending. App exclusively owns current P1/P3 and future full P2; no duplicate browser body.
 Delivery: D108 source apply complete with durable receipts. Audit has unresolved predicate signals. D77 genuine installed render follows core and source qualification; no ZIP publication.
 Later: No unchanged family repeats, original ten D100, four passed restore controls or P4 repeats. New26 and three-original candidates remain held under D108.
 Disk: About6.30GB free. Sweep3 and compact attempted through approved routes; sweep emitted broken-pipe warnings. No claimed new space from this pass. Referenced sources and all branches retained.
-live 3 / cap 6; ready-undispatched 0 eligible local starts. D111 finite-curve first return and two disjoint audit workers active. Original source held; D108 preparation preserved.
-INBOX consumed through 1029141 bytes. Updated 2026-10-25T07:01:20Z. Latest D110/D111 decisions consumed; D109 ADD replay cancelled, element measurement belongs to D111.
+live 3 / cap 6; ready-undispatched 0 eligible local starts. Full-core0711, D111 curve return0706 and independent audit-result reviewer0715. Source audits and private route preparation returned.
+INBOX consumed through 1037115 bytes. Updated 2026-10-25T07:16:03Z. Latest D110/D111 decisions consumed; D109 ADD replay cancelled, element measurement belongs to D111.

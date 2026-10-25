@@ -1,0 +1,400 @@
+from astrid.sdk.timeline.commands import execute, operations
+from astrid.sdk.timeline.commit import bundle_from_document
+from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+from astrid.sdk.timeline.native_occurrence_media_commands import capture_occurrence_add_media
+from astrid.sdk.timeline.native_parent_media_commands import capture_clip_add_media
+from astrid.sdk.timeline.sync import TimelineSession
+from astrid.sdk.timeline_sheet import NativeSheet
+from tests.helpers.runtime import new_runtime_daemon, runtime_checkout, use_runtime
+
+pytestmark = pytest.mark.integration
+
+PROJECT = "fresh-word-anchor"
+TIMELINE = "film"
+TARGET = "parent/clip:target"
+SOURCE = "occurrence:source-occurrence/clip:source"
+NORMAL_RUNTIME = "95bd3c5f6d00e9bc8cc8cbe5ef510b68ed660f3c"
+ORDINARY_SCHEMA = "6ba7b51e9518e7fb08b27ad5b7225855276b657d0adebf704dd853f699768f2d"
+
+
+class MemorySocket:
+    def __init__(self, data):
+        self.input = io.BytesIO(data)
+        self.output = bytearray()
+
+    def makefile(self, *args):
+        return self.input
+
+    def sendall(self, data):
+        self.output.extend(data)
+
+    def settimeout(self, timeout):
+        pass
+
+
+def _command(op, select, args):
+    return {"schema_version": 1, "op": op, "version": "1", "select": select, "args": args}
+
+
+@pytest.fixture
+def fresh_realm(tmp_path, monkeypatch):
+    """Create one small realm with a verified source and target clip."""
+    assert (hashlib.sha256(Path("astrid/core/timeline/schema/edit-command.schema.json").read_bytes()).hexdigest()
+            == ORDINARY_SCHEMA)
+    assert "clip.anchor" in operations()
+    assert json.loads(Path("runtime.lock.json").read_text())["source_commit"] == NORMAL_RUNTIME
+    use_runtime()
+    monkeypatch.syspath_prepend(str(runtime_checkout() / "tests"))
+    from runtime_protocol.timeline_commit_provider import load_timeline_commit_provider
+    from test_generation_publish_v1_settlement import _effect, _fixture, _output, _settle
+
+    def effect(project_id):
+        value = _effect(project_id, groups=[{"group_key": "main", "selectors": [
+            {"selector": "source", "ordinal": 0, "variant_key": "source", "output_port": "video"},
+        ]}])
+        value["payload"]["metadata"] = {"params": {"duration_seconds": 2.0}}
+        return value
+
+    service, project, task, attempt, admitted = _fixture(tmp_path, effect_factory=effect, slug=PROJECT)
+    root = service.store.root
+    try:
+        _settle(service, attempt, [_output(b"fresh-source", output_port="video", group_key="main",
+            variant_key="source", ordinal=0, filename="source.mp4", media_type="video/mp4",
+            duration_seconds=2.0)], effect=admitted)
+        association, = service.managed_outputs(task["task"]["id"])
+        pin = service.get_project_media_selection(project["id"], {
+            "association_id": association["association_id"],
+            "object_id": association["object_id"],
+            "version": association["lifecycle"]["version"],
+        }, authorize=lambda: None)
+        verified_media = service.get_project_verified_media(project["id"], pin, authorize=lambda: None)
+        content = build_transcript(pin["object_id"], "line", "fresh boundary", [
+            [0.25, 0.75, "fresh"],
+            [1.0, 1.5, "boundary"],
+        ])
+        document_id = transcript_document_id(project["id"], pin["object_id"], content["source_id"])
+        document = service.create_document(project["id"], {
+            "document_id": document_id,
+            "kind": "media.transcript",
+            "content": content,
+        }, idempotency_key="fresh-transcript")["data"]
+        from runtime_protocol.timeline_commit_inputs import content_digest
+
+        transcript_pin = {
+            "document_id": document_id,
+            "version": document["version"],
+
+exec
+/bin/bash -lc 'python3 -m pytest -q tests/test_vendor_lock.py tests/stage1/test_vendored_workspace_client_parity_luna.py' in /home/user/work/wt/agt-D108-runtime-c916-adoption
+ exited 4 in 888ms:
+ImportError while loading conftest '/home/user/work/wt/agt-D108-runtime-c916-adoption/tests/conftest.py'.
+tests/conftest.py:24: in <module>
+    from astrid.core.pack import source_setup
+astrid/core/pack/source_setup.py:22: in <module>
+    from astrid.core.foundation.atomic_io import read_json, write_json_atomic
+astrid/core/foundation/atomic_io.py:16: in <module>
+    from runtime_protocol import platform
+E   ModuleNotFoundError: No module named 'runtime_protocol'
+
+codex
+The first targeted pytest invocation exposed an environment issue, not a code failure: this Agent checkout needs the immutable Runtime source on `PYTHONPATH` for `runtime_protocol` imports. I’m rerunning the same targeted files with the requested c916 checkout supplied read-only, then I’ll record final hashes and status.
+exec
+/bin/bash -lc 'PYTHONPATH=/home/user/work/wt/rt-pin-c91626f5:$PYTHONPATH python3 -m pytest -q tests/test_vendor_lock.py tests/stage1/test_vendored_workspace_client_parity_luna.py' in /home/user/work/wt/agt-D108-runtime-c916-adoption
+ succeeded in 1559ms:
+.............................                                            [100%]
+=============================== warnings summary ===============================
+../../../../../usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464
+  /usr/local/lib/python3.13/dist-packages/_pytest/config/__init__.py:1464: PytestConfigWarning: Unknown config option: timeout
+  
+    self._warn_or_fail_if_strict(f"Unknown config option: {key}\n")
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+29 passed, 1 warning in 1.00s
+
+exec
+/bin/bash -lc "set -e
+printf '%s\\n' '--- final tool check ---'
+python3 scripts/vendor_lock.py check runtime.lock.json --producer /home/user/work/wt/rt-pin-c91626f5
+printf '%s\\n' '--- diff check ---'
+git diff --check
+printf '%s\\n' '--- Agent status ---'
+git status --short --branch
+printf '%s\\n' '--- Runtime pin status ---'
+git -C /home/user/work/wt/rt-pin-c91626f5 status --short --branch
+printf '%s\\n' '--- hashes ---'
+sha256sum runtime.lock.json /home/user/work/wt/rt-pin-c91626f5/contract/artifacts.json
+printf '%s\\n' '--- source identity ---'
+git -C /home/user/work/wt/rt-pin-c91626f5 rev-parse HEAD
+git -C /home/user/work/wt/rt-pin-c91626f5 rev-parse HEAD"'^{tree}
+printf '"'%s\\n' '--- changed paths ---'
+git diff --name-status
+printf '%s\\n' '--- expected lock metadata ---'
+python3 - <<'PY'
+import json
+print(json.dumps(json.load(open('runtime.lock.json')), indent=2, sort_keys=True))
+PY" in /home/user/work/wt/agt-D108-runtime-c916-adoption
+ succeeded in 421ms:
+--- final tool check ---
+ok runtime.lock.json (matches producer manifest)
+--- diff check ---
+--- Agent status ---
+## tl/agt-D108-runtime-c916-adoption
+ M runtime.lock.json
+--- Runtime pin status ---
+## HEAD (no branch)
+--- hashes ---
+44ccac649b50d8163ed1f60b49530b618cc3f8bb70973f5578436676d8d208bb  runtime.lock.json
+9bbce65e5b8dd4fd7ca1f24105ffb88d341e5d5beb10348e555dda79145c4dd3  /home/user/work/wt/rt-pin-c91626f5/contract/artifacts.json
+--- source identity ---
+c91626f5e905f9336b51aae0486a071d83f0bac7
+16264479ae18fbb05ec5356ce5b5ab6f69dea9aa
+--- changed paths ---
+M	runtime.lock.json
+--- expected lock metadata ---
+{
+  "files": {
+    "astrid/core/timeline/schema/timeline-config.schema.json": {
+      "from": "contract/schemas/timeline-config.schema.json",
+      "sha256": "sha256:4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd"
+    },
+    "astrid_runtime_client/__init__.py": {
+      "from": "packages/python/astrid_runtime_client/__init__.py",
+      "sha256": "sha256:d095328fdfadc0883aa103147eb8be8d91f24de2f5fc81c6a9ac37be1809ecc2"
+    },
+    "astrid_runtime_client/contract_metadata.py": {
+      "from": "packages/python/astrid_runtime_client/contract_metadata.py",
+      "sha256": "sha256:b42c58a36fff3e3136824492382eb05e983c247e5ca0656b35836e1a4e9ee72b"
+    },
+    "astrid_runtime_client/generated.py": {
+      "from": "packages/python/astrid_runtime_client/generated.py",
+      "sha256": "sha256:952fe98a54c9529af723a029957994efec52821da24a2e9c9c34a8dce99e274b"
+    },
+    "astrid_runtime_client/timeline_commit_types.py": {
+      "from": "packages/python/astrid_runtime_client/timeline_commit_types.py",
+      "sha256": "sha256:6c0d21d3eb87cff2977f9e33a5b4d0da13676c4ebad0df4c935f39106a45b417"
+    },
+    "tests/fixtures/runtime-responses/events_page_1_200.json": {
+      "from": "conformance/responses/events_page_1_200.json",
+      "sha256": "sha256:6aaaabe512589beddddd5ef64f2307c39d365a99565c5a3291a15933a114be0d"
+    },
+    "tests/fixtures/runtime-responses/events_page_2_200.json": {
+      "from": "conformance/responses/events_page_2_200.json",
+      "sha256": "sha256:d5bffdc93e9939779c92a18c047e70df21711f12e16c345f43f3cbdec5b27eb2"
+    },
+    "tests/fixtures/runtime-responses/invalid_cursor_400.json": {
+      "from": "conformance/responses/invalid_cursor_400.json",
+      "sha256": "sha256:16a1db399e06b8d059472f567a091b4bd579d13d8885595376f61835646bfbff"
+    },
+    "tests/fixtures/runtime-responses/managed_outputs_200.json": {
+      "from": "conformance/responses/managed_outputs_200.json",
+      "sha256": "sha256:6bcef19aca4ad8d574c60d738b54ba57fce6a3a9d4e1481c6f8f088dd460858d"
+    },
+    "tests/fixtures/runtime-responses/not_found_404.json": {
+      "from": "conformance/responses/not_found_404.json",
+      "sha256": "sha256:4a40fedbeccd345f24944e4af368c50430593d976a923c12af93ba21faa21af6"
+    },
+    "tests/fixtures/runtime-responses/publish_conflict_409.json": {
+      "from": "conformance/responses/commit_conflict_409.json",
+      "sha256": "sha256:e06c5818e9c37a1e1118d3e2df2447808277d148553bb3c418e48b1a3c6e4c08"
+    },
+    "tests/fixtures/runtime-responses/task_admission_201.json": {
+      "from": "conformance/responses/task_admission_201.json",
+      "sha256": "sha256:108559a92c9e681e3ade37fa6b567e1eaac3edce221665a07a81c2c2c06bb48c"
+    },
+    "tests/fixtures/runtime-responses/task_read_200.json": {
+      "from": "conformance/responses/task_read_200.json",
+      "sha256": "sha256:cc590c4f7d34820382b684d737f1cdb45eebeb20fbad2d5edda2dadac8ab2829"
+    },
+    "tests/fixtures/runtime-responses/validation_error_422.json": {
+      "from": "conformance/responses/validation_error_422.json",
+      "sha256": "sha256:2a02a9147bc0a8b74727d9c577803b0aca333bd0dd035602dafcf2503b00ff1a"
+    },
+    "tests/fixtures/visual-boundary-v1.json": {
+      "from": "conformance/fixtures/visual-boundary-v1.json",
+      "sha256": "sha256:1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55"
+    }
+  },
+  "manifest": "contract/artifacts.json",
+  "producer": "astrid-runtime",
+  "producer_version": "sha256:084f3f2510edff28c18d33aac4a459f8aa6df3cb4fd71cba4fb292274ea8ade5",
+  "source_commit": "c91626f5e905f9336b51aae0486a071d83f0bac7"
+}
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import hashlib, subprocess
+from pathlib import Path
+root=Path('.')
+entries=[]
+raw=subprocess.run(['git','ls-tree','-z','HEAD'],check=True,capture_output=True).stdout
+for rec in raw.split(b'\\0'):
+    if not rec: continue
+    header,obj=rec.split(b'\\t',1)
+    mode,kind,sha=header.split()
+    if obj == b'runtime.lock.json':
+        payload=(root/'runtime.lock.json').read_bytes()
+        blob=hashlib.sha1(b'blob '+str(len(payload)).encode()+b'\\0'+payload).hexdigest().encode()
+        sha=blob
+    entries.append(mode+b' '+obj+b'\\0'+bytes.fromhex(sha.decode()))
+tree=b''.join(entries)
+print('prospective_root_tree='+hashlib.sha1(b'tree '+str(len(tree)).encode()+b'\\0'+tree).hexdigest())
+PY" in /home/user/work/wt/agt-D108-runtime-c916-adoption
+ succeeded in 0ms:
+prospective_root_tree=7551321a2d30bbb7f1dee73479d4c86e78ead594
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import hashlib, subprocess
+raw=subprocess.run(['git','ls-tree','-z','HEAD'],check=True,capture_output=True).stdout
+entries=[]
+for rec in raw.split(b'\\0'):
+ if not rec: continue
+ header,obj=rec.split(b'\\t',1); mode,kind,sha=header.split(); entries.append(mode+b' '+obj+b'\\0'+bytes.fromhex(sha.decode()))
+tree=hashlib.sha1(b'tree '+str(sum(map(len,entries))).encode()+b'\\0'+b''.join(entries)).hexdigest()
+print(tree)
+PY
+git rev-parse HEAD"'^{tree}' in /home/user/work/wt/agt-D108-runtime-c916-adoption
+ succeeded in 0ms:
+6b411a74d3b5c0578953e0eb5761fb359b8456f5
+6056414359ae9fce08d999d54cbecf719fda33c3
+
+exec
+/bin/bash -lc 'git ls-tree -z HEAD | od -An -tx1 -N120; git ls-tree HEAD | head -5' in /home/user/work/wt/agt-D108-runtime-c916-adoption
+ succeeded in 0ms:
+ 31 30 30 36 34 34 20 62 6c 6f 62 20 36 62 66 31
+ 37 61 31 64 30 32 32 34 66 63 35 66 32 66 30 65
+ 62 66 65 37 38 38 38 38 39 39 66 63 62 33 66 31
+ 37 34 65 31 09 2e 65 6e 76 2e 65 78 61 6d 70 6c
+ 65 00 31 30 30 36 34 34 20 62 6c 6f 62 20 39 65
+ 37 65 61 34 66 61 30 65 38 32 65 61 61 36 66 33
+ 33 62 66 30 65 62 65 37 30 32 30 37 65 61 36 35
+ 36 38 65 66 34 61 09 2e
+100644 blob 6bf17a1d0224fc5f2f0ebfe7888899fcb3f174e1	.env.example
+100644 blob 9e7ea4fa0e82eaa6f33bf0ebe70207ea6568ef4a	.gitattributes
+040000 tree ba409faa8885171b035ee47ec6d51929adc39686	.github
+100644 blob d57a7f8f0a41497fc3b5f3e01163492c61bf333f	.gitignore
+100644 blob f5b3751f5dd2715bb5a0f3398fb60f0426cba32e	.node-version
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import hashlib, subprocess
+raw=subprocess.run(['git','ls-tree','-z','HEAD'],check=True,capture_output=True).stdout
+entries=[]
+for rec in raw.split(b'\\0'):
+ if not rec: continue
+ header,obj=rec.split(b'\\t',1); mode,kind,sha=header.split(); entries.append(mode+b' '+obj+b'\\0'+bytes.fromhex(sha.decode()))
+calc=b''.join(entries)
+actual=subprocess.run(['git','cat-file','tree','HEAD"'^{tree}'"'],check=True,capture_output=True).stdout
+print('calc len',len(calc),'actual len',len(actual),'equal',calc==actual)
+for i,(a,b) in enumerate(zip(calc,actual)):
+ if a"'!=b:
+  print('"'first diff',i,hex(a),hex(b),calc[max(0,i-20):i+30],actual[max(0,i-20):i+30]); break
+print('calc tree',hashlib.sha1(b'tree '+str(len(calc)).encode()+b'\\0'+calc).hexdigest())
+print('actual tree',subprocess.run(['git','rev-parse','HEAD"'^{tree}'"'],check=True,capture_output=True,text=True).stdout.strip())
+PY" in /home/user/work/wt/agt-D108-runtime-c916-adoption
+ succeeded in 0ms:
+calc len 1326 actual len 1306 equal False
+first diff 82 0x30 0x34 b'\x9e~\xa4\xfa\x0e\x82\xea\xa6\xf3;\xf0\xeb\xe7\x02\x07\xeaeh\xefJ040000 .github\x00\xba@\x9f\xaa\x88\x85\x17\x1b\x03^\xe4~\xc6\xd5\x19' b'\x9e~\xa4\xfa\x0e\x82\xea\xa6\xf3;\xf0\xeb\xe7\x02\x07\xeaeh\xefJ40000 .github\x00\xba@\x9f\xaa\x88\x85\x17\x1b\x03^\xe4~\xc6\xd5\x19)'
+calc tree 6b411a74d3b5c0578953e0eb5761fb359b8456f5
+actual tree 6056414359ae9fce08d999d54cbecf719fda33c3
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import hashlib, subprocess
+raw=subprocess.run(['git','ls-tree','-z','HEAD'],check=True,capture_output=True).stdout
+entries=[]
+for rec in raw.split(b'\\0'):
+ if not rec: continue
+ header,obj=rec.split(b'\\t',1); mode,kind,sha=header.split(); mode=mode.lstrip(b'0') or b'0'; entries.append(mode+b' '+obj+b'\\0'+bytes.fromhex(sha.decode()))
+calc=b''.join(entries)
+print('validated current tree',hashlib.sha1(b'tree '+str(len(calc)).encode()+b'\\0'+calc).hexdigest())
+lock=b'runtime.lock.json'
+new=[]
+for rec in raw.split(b'\\0'):
+ if not rec: continue
+ header,obj=rec.split(b'\\t',1); mode,kind,sha=header.split(); mode=mode.lstrip(b'0') or b'0'
+ if obj==lock:
+  payload=open(lock,'rb').read(); sha=hashlib.sha1(b'blob '+str(len(payload)).encode()+b'\\0'+payload).hexdigest().encode()
+ new.append(mode+b' '+obj+b'\\0'+bytes.fromhex(sha.decode()))
+print('prospective_root_tree',hashlib.sha1(b'tree '+str(sum(map(len,new))).encode()+b'\\0'+b''.join(new)).hexdigest())
+PY" in /home/user/work/wt/agt-D108-runtime-c916-adoption
+ succeeded in 0ms:
+validated current tree 6056414359ae9fce08d999d54cbecf719fda33c3
+prospective_root_tree 68df11fad2b082fa12d99ca20404e1e40e350cd7
+
+codex
+All final checks pass: the detached Runtime checkout remains clean; Agent has exactly one modified path; the post-refresh lock check and `git diff --check` are clean; targeted tests pass 29/29. I’m recording the required conventional commit message and completion marker now. The harness will create the successor commit, so I’ll distinguish the current Agent HEAD from the deterministic post-change tree in the report.
+apply patch
+patch: completed
+/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D108-runtime-c916-adoption/commit-msg
+diff --git a//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D108-runtime-c916-adoption/commit-msg b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D108-runtime-c916-adoption/commit-msg
+new file mode 100644
+index 0000000000000000000000000000000000000000..dd1197de3d05964990e435f96cacf351ee6f9f83
+--- /dev/null
++++ b//tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D108-runtime-c916-adoption/commit-msg
+@@ -0,0 +1,4 @@
++chore(timeline): adopt Runtime c916 provenance
++
++Refresh the ordinary Runtime vendor lock against the immutable c916
++checkout without changing vendored artifact bytes.
+
+exec
+/bin/bash -lc "touch /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D108-runtime-c916-adoption/DONE
+ls -l /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D108-runtime-c916-adoption/commit-msg /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D108-runtime-c916-adoption/DONE
+printf '%s\\n' '--- final source status ---'
+git status --short --branch
+printf '%s\\n' '--- commit message ---'
+sed -n '1,80p' /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D108-runtime-c916-adoption/commit-msg" in /home/user/work/wt/agt-D108-runtime-c916-adoption
+ succeeded in 70ms:
+-rw-r--r-- 1 root root   0 Oct 25 07:15 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D108-runtime-c916-adoption/DONE
+-rw-r--r-- 1 root root 167 Oct 25 07:15 /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-D108-runtime-c916-adoption/commit-msg
+--- final source status ---
+## tl/agt-D108-runtime-c916-adoption
+ M runtime.lock.json
+--- commit message ---
+chore(timeline): adopt Runtime c916 provenance
+
+Refresh the ordinary Runtime vendor lock against the immutable c916
+checkout without changing vendored artifact bytes.
+
+codex
+Implemented D108 provenance adoption.
+
+- Updated only `runtime.lock.json`: `source_commit` → `c91626f5e905f9336b51aae0486a071d83f0bac7`.
+- Runtime checkout: HEAD `c91626f5e905f9336b51aae0486a071d83f0bac7`, tree `16264479ae18fbb05ec5356ce5b5ab6f69dea9aa`, clean.
+- All 15 vendored artifact bytes unchanged.
+- Lock SHA256: `44ccac649b50d8163ed1f60b49530b618cc3f8bb70973f5578436676d8d208bb`
+- Manifest SHA256: `9bbce65e5b8dd4fd7ca1f24105ffb88d341e5d5beb10348e555dda79145c4dd3`
+
+Commands/results:
+
+- Direct old-lock check refused exactly: `producer commit: expected 1daca2a33f6d7b10053e07c539a54843e3984e19, got c91626f5e905f9336b51aae0486a071d83f0bac7`.
+- Refresh tooling: succeeded.
+- `vendor_lock.py check`: passed.
+- Targeted pytest: `29 passed`.
+- `git diff --check`: passed.
+
+Agent current HEAD/tree: `070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2` / `6056414359ae9fce08d999d54cbef719fda33c3`. Harness successor commit is not yet materialized; prospective tree is `68df11fad2b082fa12d99ca20404e1e40e350cd7`.
+
+Completion marker and commit message were written.
+tokens used
+102,247
+Implemented D108 provenance adoption.
+
+- Updated only `runtime.lock.json`: `source_commit` → `c91626f5e905f9336b51aae0486a071d83f0bac7`.
+- Runtime checkout: HEAD `c91626f5e905f9336b51aae0486a071d83f0bac7`, tree `16264479ae18fbb05ec5356ce5b5ab6f69dea9aa`, clean.
+- All 15 vendored artifact bytes unchanged.
+- Lock SHA256: `44ccac649b50d8163ed1f60b49530b618cc3f8bb70973f5578436676d8d208bb`
+- Manifest SHA256: `9bbce65e5b8dd4fd7ca1f24105ffb88d341e5d5beb10348e555dda79145c4dd3`
+
+Commands/results:
+
+- Direct old-lock check refused exactly: `producer commit: expected 1daca2a33f6d7b10053e07c539a54843e3984e19, got c91626f5e905f9336b51aae0486a071d83f0bac7`.
+- Refresh tooling: succeeded.
+- `vendor_lock.py check`: passed.
+- Targeted pytest: `29 passed`.
+- `git diff --check`: passed.
+
+Agent current HEAD/tree: `070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2` / `6056414359ae9fce08d999d54cbef719fda33c3`. Harness successor commit is not yet materialized; prospective tree is `68df11fad2b082fa12d99ca20404e1e40e350cd7`.
+
+Completion marker and commit message were written.
