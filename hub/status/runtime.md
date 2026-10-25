@@ -1,5 +1,5 @@
-<!-- main | 2026-10-25T21:02:50Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 14 | status age 2m -->
-# runtime board, 2026-10-25T20:57:28Z
+<!-- main | 2026-10-25T21:07:30Z | dispatcher heartbeat 6s | live 1 (sol 0, luna 1, other 0) | busy30 13 | status age 2m -->
+# runtime board, 2026-10-25T21:05:03Z
 | ID | task (short) | model | needs | status | worker | proof (test id / result on the integrated head) | independent review | commit |
 |---|---|---|---|---|---|---|---|---|
 | C0/R0 | Approved contract and frozen client | Sol / Luna | Approved contract | merged | Prior source and independent reviews | Frozen client, schema and producer qualified. [Evidence](../../design/runtime-prior-proof-evidence-0051.md) | Prior evidence | 34eac0041; 62c454ac0 |
@@ -478,30 +478,32 @@
 
 | D73-env | Preserve supported launcher environment | Luna | Host filing and Agent intake | merging | Author2026; protected2036 PASS | Two child shells unset inherited variable; actual launcher positive and poison controls PASS. No live body claim. | Independent2036 PASS | 375c773449 |
 
-| D134-inverse7 | Preserve historical inverse purposes | Luna | Independent first-return review | review | Return2053; protected2100 | Exact one-file source guard migration returned; seven original cases and all predicates retained. Functional NOTRUN. | Independent2100 active | Source pending |
-| D134-history5 | Preserve word video and archive purposes | Luna | Independent first-return review | review | Return2053; protected2100 | Gate1 and prepared tuple updates returned. M1 unchanged; archive exists but on behavior UNKNOWN. Functional NOTRUN. | Independent2100 active | Source pending |
+| D134-inverse7 | Preserve historical inverse purposes | Luna | Agent normal intake and own seven | merging | Return2053; protected2100 PASS | One-file strict source tuple migration; Runtime6634 retained. All seven predicates exact; functional NOTRUN. | Independent2100 A PASS | 9a7c9e38cf |
+| D134-history5 | Preserve word video and archive purposes | Luna | Agent normal intake and own four | merging | Return2053; protected2100 PASS | Two-file Gate1/prepared tuple repair. M1 unchanged and UNKNOWN; no unchanged rerun. Functional NOTRUN. | Independent2100 B PASS | 9e85402544 |
 | OPS-D137-installed-custody | Verify exact live maker and backup | Luna | Installed2031 | merged | rt-OPS-D137-installed-review-2036 | Source and installed custody PASS. Real child and core acceptance remain unverified. | Independent2036 PASS | Installed4435d44 |
 
-| D134-Runtime49 | Classify word and PARAM boundaries | Luna | Independent source assessment review | review | Author2052; review2100 | Author27 setup and22 UNKNOWN of49; zero proved product gaps. Classification unqualified until independent verdict. | Independent2100 active | No source change |
+| D134-Runtime49 | Classify word and PARAM boundaries | Luna | Source evidence qualified | merged | Author2052; review2100 PASS | Exact49:27 setup,22 UNKNOWN,0 proved product gaps. Review report count typo disclosed; per-ID and JSON counts qualified. | Independent2100 C PASS | Evidence only |
 
-| OPS-D137-shell-closure | Carry all maker shell dependencies | Luna | Actual2044 refusal | doing | Source2058; wholepath2058 | Critical source return plus independent full-path dependency census. Verifier and guards unchanged; no install or request. | Independent reader active | 0c417 baseline |
+| OPS-D137-shell-closure | Carry all maker shell dependencies | Luna | Final independent security | review | Source2058; wholepath2058; review2103 | Both omitted helpers proved. Parent RED and candidate GREEN through serialized boundary;44 controls PASS. No live acceptance. | Security2103 active | cf80cfcb91 / f07b8093 |
 
 | D127c-normal-source | Carry reviewed final profiler helper | Luna | Exact reviewed and integrated tree | merged | App clean2010; normal cf0b82dd | Full tree8d568 equals reviewedfb4add. Central61 and Node20three controls retained; no original element result. | Runtime2002 and App2047 PASS | cf0b82dd47 |
+
+| D73-exact-node-route | Bind current immutable own-node route | Luna | Existing service source and selectors | doing | rt-D73-exact-node-route-2104 | Agent2053 ask assigned. Private supported recipe and dry controls only; no live config or original bodies. | Review next | Source pending |
 
 Runtime producer: Normal cf0b82dd helper/tests, entire reviewed8d568 tree exact; product ab1e unchanged. Private upstream0bb3 uses earlier e319 helper, so D59 join must conserve new helper too. No U1 merge before D59.
 Core: D13418455 measurement8926 PASS190 FAIL180 ERROR173 subtests; raw XML and full disk witness missing. Reviewed own344 split132 setup,0 proved product,212 unknown. Current REG unverified, no ship credit.
 Gates: P1/P3/P4/P5 recorded GO. Full P2 NO-GO element/SWAP. No D59 cut, final build or ZIP.
-Blockers: Child/core — actual2044 refused at venv-log-setup, missing stage_stderr_path. Source2058 and independent wholepath2058 active. No child/core or stage log; Agent request and Farm remain held.
+Blockers: Child/core — actual2044 refused at venv-log-setup, missing stage_stderr_path. Both missing helpers proved; source2058 candidate f07b8093, final security2103 active. No child/core or stage log; Agent request and Farm remain held.
 Blockers: SWAP safety — D130 holds WAL recovery and related qualification after classifier refusal1537. No retry, transfer, alternate test or rollback. Existing escalation retained.
 Blockers: Element — Runtime helper normalcf0b82dd exact reviewedtree; AppF001 and actualNode20F0022047 PASS. App sole later element receiver needs genuine admission and original proof; no cost author yet.
 Blockers: D69 and cut — ship-grade core, current REG0, full P2, installed render90, final tuple P1-P5, wheel, Windows and ZIP remain owed.
 Blockers: Agent source intake — D136a c992 final2034 PASS and D73 375c protected2036 PASS; remote helpers exit3 D106. Host filing requested in peer2043; no direct hub writes or retry.
 Blockers: Runtime union — Farm sole six-file receiving proof now has flat recipe and exact32dde Agent binding in peer2041. Functional result owed; private source review PASS only.
-Next ready: Critical maker source2058 then independent review. Host files reviewed D136a and D73 branches. Farm union receiver has exact inputs; Agent actual request stopped pending reviewed change and owner disposition.
+Next ready: Maker final security2103 then normal reviewed CAS installation. Future changed real request still needs recorded owner disposition. Host files reviewed D136a and D73 branches. Farm union receiver has exact inputs; Agent actual request stopped pending reviewed change and owner disposition.
 D100: App corrected27 PASS; original9 nine setup errors. D136a product correction independently source/security PASS and held for Agent intake, unchanged original9 and later batch core. No fixture rewrite.
 D77: Farm changed child follows Agent actual D137 result; no Farm fixture bodies/core. Exact applied source and lock handoffs remain qualified.
 Delivery: D59 integration tuple only; stale547e proof pin excluded. Private Agent32dde review1959 PASS; Runtime0bb3 source PASS, Farm targeted result owed. App private upstream join remains App-owned.
 Safety: All prior refusals held. Managers write ORCH boards/briefs/peers and copy authored handbacks only. No product/test/pin/Git mutation or credentials.
 Disk: Fresh4.758 GB after completed-source auto-recycle and before reviewer2100; cap3 below5GB, source floor4.6GB, stop4GB. Sweep3 removed0; compact packed0 and gzipped3 logs; no eligible unguarded Runtime trees identified. Protected raw KEEP retained.
-live 3 / cap 3; ready-undispatched 0. Critical maker2058, independent shell wholepath2058 and combined D134 protected2100 active. Fresh4.758GB before final reviewer; no local heavy body.
-INBOX consumed through1534215 bytes including actual2047 refusal, sourcePASS receivers and Runtime helper merge request. Owner20:52 Runtime49 source returned and under review2100. D134 twelve assigned; App helper Node20 bound proof and private menu source remain App-owned. Updated 2026-10-25T20:43:37Z.
+live 2 / cap 3; ready-undispatched 0. Maker final security2103 and Agent exact-node route2104 active. Source returns2100 PASS sent for host filing. Fresh4.869GB before route dispatch; no local heavy body.
+INBOX consumed through1536218 bytes including Agent2053 exact-node service ask; worker2104 assigned. Helper merged cf0b82dd; App original9 review wait explicitly cleared in peer2102. Owner20:52 Runtime49 source returned and under review2100. D134 twelve assigned; App helper Node20 bound proof and private menu source remain App-owned. Updated 2026-10-25T20:43:37Z.

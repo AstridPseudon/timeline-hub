@@ -1,0 +1,67 @@
+{
+  "task": "rt-OPS-D137-shell-wholepath-2058",
+  "mode": "READONLY_SOURCE_AUDIT",
+  "observed_utc": "2026-10-25",
+  "source": {
+    "repo": "composition",
+    "commit": "0c4170e42d2ff435ea855a54c940299619f6a285",
+    "tree": "b43a840b75bf895f9789732c56585175c4b367bf",
+    "parent": "4932c0f8e2e02ce6a203bf41fe014f9c3a7db5fa",
+    "path": "ops-child-custody/make-child-venv",
+    "sha256": "4435d49953f583234e17a549b4df9896d9d45aa8aa7242ea51a61560ad1d0a36",
+    "bytes": 75503,
+    "mode": "0755"
+  },
+  "live_controls_read_only": {
+    "bench_store.py": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py",
+      "sha256": "123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2"
+    },
+    "verify_dependency_seed.py": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/verify_dependency_seed.py",
+      "sha256": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+    }
+  },
+  "embedded_blocks": {
+    "STORE_PY": {
+      "sha256": "0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c",
+      "parent_equal": true
+    },
+    "STORE_VERIFY": {
+      "sha256": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209",
+      "parent_equal": true
+    },
+    "STORE_BUILD": {
+      "sha256": "729036a7bca12cba36b87e39c556a82859d2e5fe76fba102cc6c7b5f86c253c3",
+      "parent_equal": true
+    }
+  },
+  "boundary": {
+    "entrypoint": "make-child-venv -> embedded STORE_PY -> Store.ensure -> build(stage, final)",
+    "child_shell": "bash -u -o pipefail -c STORE_CONTEXT + setup + STORE_BUILD_BODY",
+    "store_ensure_lines": "bench_store.py:650-730",
+    "context_line": "make-child-venv:385",
+    "first_recipe_stage": "venv",
+    "recipe_run_stage_invocations": 34,
+    "reported_actual": "Agent2044/peer2047 ordinary refusal at venv-log-setup; environment line 60 reports stage_stderr_path: command not found; actual stderr body remains EXACTMISSING",
+    "actual_request_replayed": false,
+    "body_or_fixture_executed": false,
+    "store_or_child_executed": false
+  },
+  "protected_state": {
+    "STORE_PY": "unchanged",
+    "STORE_VERIFY": "unchanged",
+    "trust_and_verifier": "unchanged in this commit",
+    "ownership_and_RECORD": "unchanged in this commit",
+    "source_and_reserve_controls": "unchanged in this commit",
+    "registration_and_cleanup_engine": "unchanged in this commit",
+    "verifier_relaxation_proposed": false,
+    "source_writer_or_result_reader_added": false
+  },
+  "source_checks": {
+    "bash_n": "PASS",
+    "embedded_python_compile_in_memory": "PASS",
+    "worktree_clean_at_audit": true,
+    "full_or_live_suite": "NOT RUN by explicit task restriction"
+  }
+}

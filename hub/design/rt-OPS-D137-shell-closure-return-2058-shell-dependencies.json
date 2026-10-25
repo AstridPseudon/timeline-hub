@@ -1,0 +1,45 @@
+{
+  "serialization": {
+    "producer": "make-child-venv export STORE_CONTEXT",
+    "variables": [
+      "FARM_SCHEMA_SOURCE", "FARM_REQUIRED", "FARM_AUTHORITY", "O", "A", "R", "W",
+      "PYTHON", "TIMEOUT_BIN", "PIP_TIMEOUT_SECONDS", "LOCAL_TIMEOUT_SECONDS",
+      "FREEZE_TIMEOUT_SECONDS", "BUILD_TIMEOUT_SECONDS", "KILL_AFTER_SECONDS",
+      "PIP_NETWORK_TIMEOUT_SECONDS", "PIP_RETRIES", "REQUIREMENTS_PATH", "N", "S", "BS",
+      "RT", "RUNTIME_SHA", "CLIENT_IDENTITY", "LOCK_SHA", "VERIFIER_SHA256",
+      "BOOTSTRAP_ARCHIVE", "DEPENDENCY_SEED", "SCRIPT_DIR"
+    ],
+    "functions": [
+      "failure", "run_stage", "progress", "source_state", "stage_stderr_path", "retain_stage_stderr"
+    ]
+  },
+  "call_graph": {
+    "run_stage": {
+      "calls": ["stage_stderr_path", "failure", "progress", "timeout"],
+      "variables": ["CURRENT_STAGE", "STAGE_STARTED", "STAGE_STDERR", "T", "KILL_AFTER_SECONDS", "TIMEOUT_BIN", "CHILD_VENV_STAGE"]
+    },
+    "failure": {
+      "calls": ["retain_stage_stderr"],
+      "variables": ["STAGE_STDERR", "T", "STAGE_STARTED", "S", "RUNTIME_SHA", "REQUIREMENTS_PATH", "LOCK_SHA", "N", "STDERR_RETENTION_STATUS"],
+      "external_commands": ["date", "printf", "chmod"]
+    },
+    "stage_stderr_path": {
+      "calls": ["mkdir", "chmod", "printf"],
+      "variables": ["T", "stage"]
+    },
+    "retain_stage_stderr": {
+      "calls": ["PYTHON -I embedded retention program"],
+      "variables": ["PYTHON", "source", "O", "N", "stage"],
+      "ownership": "maker-owned tests/provision-stderr, regular single-link 0600, bounded and no-clobber"
+    },
+    "progress": {
+      "calls": ["date", "printf"],
+      "variables": []
+    },
+    "source_state": {
+      "calls": ["git"],
+      "variables": ["checkout", "wanted", "actual", "status"]
+    }
+  },
+  "closure_status": "complete for the actual D137 path; both previously omitted helper definitions now cross the process boundary"
+}

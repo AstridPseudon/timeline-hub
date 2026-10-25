@@ -1,0 +1,157 @@
+{
+  "source": "ops-child-custody/make-child-venv@0c4170e42d2ff435ea855a54c940299619f6a285",
+  "serialization": {
+    "source_line": 385,
+    "declared_functions": [
+      "failure",
+      "run_stage",
+      "progress",
+      "source_state"
+    ],
+    "declared_variables": [
+      "FARM_SCHEMA_SOURCE",
+      "FARM_REQUIRED",
+      "FARM_AUTHORITY",
+      "O",
+      "A",
+      "R",
+      "W",
+      "PYTHON",
+      "TIMEOUT_BIN",
+      "PIP_TIMEOUT_SECONDS",
+      "LOCAL_TIMEOUT_SECONDS",
+      "FREEZE_TIMEOUT_SECONDS",
+      "BUILD_TIMEOUT_SECONDS",
+      "KILL_AFTER_SECONDS",
+      "PIP_NETWORK_TIMEOUT_SECONDS",
+      "PIP_RETRIES",
+      "REQUIREMENTS_PATH",
+      "N",
+      "S",
+      "BS",
+      "RT",
+      "RUNTIME_SHA",
+      "CLIENT_IDENTITY",
+      "LOCK_SHA",
+      "VERIFIER_SHA256",
+      "BOOTSTRAP_ARCHIVE",
+      "DEPENDENCY_SEED",
+      "SCRIPT_DIR"
+    ],
+    "child_command": "python Store_PY -> subprocess.run(timeout, bash -u -o pipefail -c context + setup + body)",
+    "context_is_not_parent_shell": true
+  },
+  "transitive_function_closure": {
+    "available": {
+      "progress": {
+        "line": 38,
+        "calls": [],
+        "inputs": ["date external command", "* positional arguments"]
+      },
+      "source_state": {
+        "lines": "100-106",
+        "calls": ["git external command"],
+        "inputs": ["checkout positional argument", "wanted positional argument"]
+      },
+      "failure": {
+        "lines": "120-149",
+        "calls": ["retain_stage_stderr"],
+        "inputs": ["STAGE_STDERR from run_stage", "STAGE_STARTED from run_stage", "T from setup", "S", "RUNTIME_SHA", "REQUIREMENTS_PATH", "LOCK_SHA", "N", "O", "PYTHON"]
+      },
+      "run_stage": {
+        "lines": "298-318",
+        "calls": ["stage_stderr_path", "failure", "progress"],
+        "inputs": ["stage and budget positional arguments", "STAGE_STARTED/CURRENT_STAGE/STAGE_STDERR runtime locals", "TIMEOUT_BIN", "KILL_AFTER_SECONDS"]
+      }
+    },
+    "omitted_direct_callees": [
+      {
+        "function": "stage_stderr_path",
+        "definition_lines": "286-296",
+        "called_from": "run_stage:304",
+        "effect_on_first_stage": "the first STORE_BUILD stage is venv; assignment fails before timeout launches and failure receives stage venv-log-setup"
+      },
+      {
+        "function": "retain_stage_stderr",
+        "definition_lines": "151-284",
+        "called_from": "failure:129",
+        "effect_on_later_failure": "a command or timeout can leave a staging stderr file, but failure cannot hand it to tests/provision-stderr before Store.ensure rollback"
+      }
+    ],
+    "smallest_proved_author_seam": {
+      "file": "ops-child-custody/make-child-venv",
+      "line": 385,
+      "source_only_change_shape": "extend the existing declare -f list with retain_stage_stderr and stage_stderr_path",
+      "not_applied_by_this_worker": true,
+      "why": "it supplies exactly the two missing transitive helpers while preserving the existing Store boundary and the private retention implementation"
+    }
+  },
+  "variable_closure": {
+    "no_missing_context_variable_proved": true,
+    "context_inputs_used_by_retained_functions": {
+      "failure": ["O", "PYTHON", "N", "S", "RUNTIME_SHA", "REQUIREMENTS_PATH", "LOCK_SHA"],
+      "run_stage": ["TIMEOUT_BIN", "KILL_AFTER_SECONDS"],
+      "source_state": [],
+      "progress": []
+    },
+    "setup_defines_before_recipe": ["T", "D", "MAKER_SOURCE", "RUN_ID", "SRC", "REPORT_DIR", "REPORT_TMP", "F"],
+    "recipe_defines_before_use": ["P", "PIP_ARGS", "REQ", "SEED_SNAPSHOT conditional", "AGENT_SRC", "RUNTIME_SRC", "BUILD_INPUT", "PROVENANCE_SCRIPT", "DIST_METADATA_SCRIPT", "IDENTITY_SCRIPT"],
+    "run_stage_runtime_locals": ["stage", "budget", "CURRENT_STAGE", "STAGE_STARTED", "STAGE_STDERR", "rc"],
+    "failure_runtime_locals": ["rc", "stage", "elapsed_seconds", "STDERR_RETENTION_STATUS"],
+    "important_nonmissing_detail": "T and D are positional arguments to STORE_PY build(stage, final), then assigned by the serialized setup string; they do not need STORE_CONTEXT entries"
+  },
+  "branch_trace": [
+    {
+      "branch": "stage-log-setup",
+      "run_stage_line": 304,
+      "failure_line": 136,
+      "Store_boundary": "Store.ensure:687 -> exception:718-730",
+      "outcome": "marker can be parsed, staging rollback removes the stage, no exact stderr payload exists because setup failed before the stage command"
+    },
+    {
+      "branch": "stage command nonzero",
+      "run_stage_lines": "312-315",
+      "failure_line": 129,
+      "Store_boundary": "Store.ensure:687 -> exception:718-730",
+      "outcome": "with stage_stderr_path present but retain_stage_stderr omitted, handoff is refused/unavailable and rollback removes the private staging log"
+    },
+    {
+      "branch": "timeout",
+      "run_stage_lines": "312-315",
+      "failure_line": 129,
+      "Store_boundary": "same as nonzero",
+      "outcome": "same missing handoff; timeout status is preserved in rc but private stderr is not durable"
+    },
+    {
+      "branch": "source-changed-during-build",
+      "line": 1016,
+      "outcome": "source_state is serialized; explicit failure uses the current STAGE_STDERR value, but the handoff helper is still absent from the current context"
+    },
+    {
+      "branch": "Store cleanup/handoff",
+      "Store_lines": "718-730",
+      "outcome": "rollback occurs before _record_failure; only build.failure_evidence survives into the bounded public failure record, so retention must happen in maker failure before rollback"
+    }
+  ],
+  "test_blindspot": {
+    "passing_controls": "44/44 is reported by the existing validation evidence; this worker did not rerun unittest or any body/Store/fixture path",
+    "isolated_test_extraction": {
+      "test_file": "ops-child-custody/tests/test_custody.py",
+      "lines": "41-48, 69-76, 105-118, 146-157",
+      "helper_source": "text from progress() through before N plus text from failure() through before missing=()",
+      "accidentally_available": ["retain_stage_stderr", "stage_stderr_path", "run_stage", "failure", "progress", "source_state"]
+    },
+    "Store_boundary_control": {
+      "test": "test_store_cleanup_boundary_keeps_nonzero_and_timeout_evidence",
+      "lines": "88-140",
+      "gap": "it calls an extracted run_stage in a test-defined build callback and manually sets build.failure_evidence; it does not execute STORE_CONTEXT serialization or the real embedded build() shell boundary"
+    },
+    "missing_regression_shape": "a source-only control that derives the exact STORE_CONTEXT function list, follows run_stage -> stage_stderr_path and failure -> retain_stage_stderr, and fails when either callee is absent; no body, Store, child, fixture, or real request is required for this static control"
+  },
+  "external_command_note": {
+    "scope": "separate from the proved function-closure defect",
+    "preflight_list_line": 322,
+    "later_used_but_not_in_require_command_list": ["timeout", "date", "mkdir", "readlink", "python3"],
+    "status": "source-only observation; not the reported stage_stderr_path function-not-found cause and no change proposed here"
+  }
+}

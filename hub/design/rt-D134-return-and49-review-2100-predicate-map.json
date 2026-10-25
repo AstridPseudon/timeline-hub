@@ -1,0 +1,46 @@
+{
+  "schema": "timeline.agent.d134_return_and49_review_predicate_map.v1",
+  "task": "D134",
+  "method": "source diff, SHA-256/blob verification, and AST assertion/raise conservation against Agent a30e74e901",
+  "A_inverse7": {
+    "node_count": 7,
+    "parameter_tuples": [
+      ["4", ["clips"], false],
+      ["16", ["clips"], true],
+      ["28", ["config", "clips"], false],
+      ["40", ["config", "clips"], true],
+      ["49", null, null]
+    ],
+    "test_functions": {
+      "test_known_whole_inverse_authenticates_forward_history_and_exact_redo": {"assertions_before_after": [45, 45], "raises_before_after": [0, 0]},
+      "test_known_inverse_refuses_forged_source_publication_and_step_without_writes": {"assertions_before_after": [7, 7], "raises_before_after": [2, 2]},
+      "test_known_inverse_refuses_native_write_and_aba_without_writes": {"assertions_before_after": [4, 4], "raises_before_after": [1, 1]}
+    },
+    "preserved": ["auth", "forged source", "forged step", "ABA", "physical", "no-write", "history", "redo", "origin"]
+  },
+  "B_history5": {
+    "node_count": 5,
+    "gate1_parameter_values": ["python", "cli", "sheet"],
+    "gate1_roundtrip_assertions_before_after": {"count": 15, "sha256": "632f5725d3b3b60e47f2f3674457ec2911612c6b038518dc127c6a74a1d94e2b"},
+    "prepared_assertions_before_after": {"count": 24, "sha256": "9d8f5c182cb587acb1fee4fa14cff2fe2aaeebe31282859ec393dba29c1b7c2c"},
+    "prepared_raises_before_after": {"count": 2, "sha256": "baaf547cb30e17f542477cec4f87470503ef49bc99ace21d813f1d66774b3ea5"},
+    "m1_assertions_before_after": {"count": 22, "sha256": "29ffcf4e98824c41beb3072d3b7340c39e72e8eb60060bf8f26d33adc5e0a743"},
+    "m1_source_sha256_before_after": "838c77332683358877059f1357267a49cd130a985be4e4755a9655ec3f930d01",
+    "preserved": ["all original params", "inputs", "media", "transcript anchors", "opaque", "on", "no-write", "privacy", "history", "inverse", "retry", "conflict", "preview"]
+  },
+  "C_runtime49": {
+    "source_assessment_ids": 49,
+    "groups": {"root-048": 35, "root-022": 14},
+    "first_frames": {
+      "root-048": ["astrid/sdk/timeline/validation.py:650", "runtime_protocol/service.py:2546"],
+      "root-022": ["astrid/sdk/timeline/commit.py:1331", "runtime_protocol/service.py:2546"]
+    },
+    "source_hashes": {"per_id_rows": 49, "unique_frozen_agent_source_blobs": 12, "mismatches": 0},
+    "preserved_predicates": "per-id original node IDs, authored inputs, source hashes, first frames, and disposition boundaries retained",
+    "missing_records_not_reconstructed": ["raw XML", "runner receipt", "disk witness", "request bodies", "accepted records", "caller traces"]
+  },
+  "original_failures": {
+    "2045": "preserved unchanged",
+    "2046": "FAIL_AUTHORITY_CLAIMS preserved unchanged; no product fault credited"
+  }
+}

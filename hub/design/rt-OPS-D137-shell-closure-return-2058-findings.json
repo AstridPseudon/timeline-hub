@@ -1,0 +1,34 @@
+{
+  "task": "D137 shell closure first return",
+  "result": "FIXED_SOURCE_UNIT",
+  "actual_refusal": {
+    "packet": "peer-agent-to-runtime-lead-farm-20261025T2047Z-D137-real-refusal-no-retry.md",
+    "stage": "venv-log-setup",
+    "exit": 2,
+    "first_error": "environment: line 60: stage_stderr_path: command not found",
+    "stage_stderr": "EXACTMISSING",
+    "classification": "ordinary maker/program refusal",
+    "retry": "forbidden; none performed"
+  },
+  "root_cause": {
+    "entrypoint": "make-child-venv",
+    "runner": "Store.ensure build callback serializes STORE_CONTEXT and executes bash -u -o pipefail",
+    "missing_transitive_helpers": ["stage_stderr_path", "retain_stage_stderr"],
+    "failure_chain": "run_stage -> stage_stderr_path; failure -> retain_stage_stderr"
+  },
+  "fix": "Export both transitive shell helpers in the existing STORE_CONTEXT declaration; no alternate shell/profile or guard change.",
+  "preserved": [
+    "STORE_PY byte identity",
+    "STORE_VERIFY byte identity",
+    "bench_store.py and dependency helper hashes",
+    "private 0600 stderr ownership, 1 MiB bound, digest/truncation metadata, O_NOFOLLOW/O_EXCL/no-clobber",
+    "Store rollback and public payload-free failure marker",
+    "source, metadata, RECORD, ownership, hash, registration and reserve controls"
+  ],
+  "remaining_boundaries": [
+    "No genuine child request was retried",
+    "No whole-make/provider/body/core/full suite was run",
+    "No production installation or live Store publication was performed",
+    "Agent result-custody review and independent source/security review remain downstream gates"
+  ]
+}

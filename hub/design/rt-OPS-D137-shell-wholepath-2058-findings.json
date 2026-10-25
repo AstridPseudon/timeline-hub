@@ -1,0 +1,77 @@
+{
+  "task": "rt-OPS-D137-shell-wholepath-2058",
+  "verdict": "SOURCE_CLOSURE_DEFECT_PROVED",
+  "acceptance": "UNVERIFIED",
+  "actual_result": {
+    "source": "peer-agent-to-runtime-lead-farm-20261025T2047Z-D137-real-refusal-no-retry.md",
+    "request_replayed": false,
+    "reported_stage": "venv-log-setup",
+    "reported_exit": 2,
+    "reported_error": "environment: line 60: stage_stderr_path: command not found",
+    "stderr_payload": "EXACTMISSING; no reconstruction or retry performed",
+    "interpretation": "ordinary maker/program refusal, not a policy refusal"
+  },
+  "findings": [
+    {
+      "id": "D137-WP-001",
+      "severity": "BLOCKER_FOR_REAL_CHILD_BOUNDARY",
+      "status": "PROVED_FROM_SOURCE",
+      "summary": "The serialized shell recipe omits stage_stderr_path from STORE_CONTEXT.",
+      "evidence": [
+        "make-child-venv:298-305: run_stage invokes stage_stderr_path before launching the timeout",
+        "make-child-venv:385: STORE_CONTEXT exports only failure, run_stage, progress, source_state",
+        "make-child-venv:286-296: stage_stderr_path exists in the parent source but is not exported"
+      ],
+      "consequence": "The first recipe stage is venv. Its log setup fails before the stage command, so the maker writes only bounded failure metadata and Store.ensure rollback removes the staging tree. The reported venv-log-setup refusal is therefore explained by the source boundary itself.",
+      "smallest_author_seam": "Add stage_stderr_path to the existing declare -f list; do not alter Store, verifier, retention policy, or trust checks."
+    },
+    {
+      "id": "D137-WP-002",
+      "severity": "BLOCKER_FOR_FAILURE_EVIDENCE",
+      "status": "PROVED_FROM_SOURCE",
+      "summary": "The serialized shell recipe also omits retain_stage_stderr from the failure path.",
+      "evidence": [
+        "make-child-venv:120-149: failure attempts retain_stage_stderr before writing the public marker",
+        "make-child-venv:151-284: retain_stage_stderr owns the bounded 0600 private handoff",
+        "make-child-venv:385: retain_stage_stderr is absent from STORE_CONTEXT",
+        "bench_store.py:718-730: Store.ensure rolls back the creation before recording build.failure_evidence"
+      ],
+      "consequence": "If the first helper omission were repaired alone, a later ordinary command failure or timeout would still lose the staging stderr during Store rollback because failure could not perform the handoff. Exit status and public marker fields can survive while exact private stderr remains absent.",
+      "smallest_author_seam": "Add retain_stage_stderr to the same existing declare -f list."
+    },
+    {
+      "id": "D137-WP-003",
+      "severity": "TEST_BLINDSPOT",
+      "status": "PROVED_FROM_SOURCE",
+      "summary": "The 44 passing controls do not exercise the production serialization boundary.",
+      "evidence": [
+        "test_custody.py:41-48,69-76,105-118,146-157 extract a contiguous source range that supplies both omitted helpers",
+        "test_custody.py:88-140 uses a test-defined build callback and manually assigns failure_evidence",
+        "No existing test asserts that every function called by the serialized STORE_CONTEXT closure is exported"
+      ],
+      "consequence": "The source controls can prove retention behavior and Store cleanup in isolation while passing through a helper set larger than the real child shell receives. They do not falsify the observed venv-log-setup failure.",
+      "recommended_control": "Add a static source check for the exact STORE_CONTEXT function list and its transitive shell-function callees; if a behavioral control is later authorized, it must invoke the actual serialized recipe boundary, not supply extra helpers."
+    },
+    {
+      "id": "D137-WP-004",
+      "severity": "CONTROL_PRESERVATION",
+      "status": "CONFIRMED_SOURCE_HASHES",
+      "summary": "The current commit did not alter Store, verifier, build recipe, or protected source-control blocks.",
+      "evidence": [
+        "STORE_PY sha256 0889b24010e67bd31f28f5efbaec37fed43adf1a0d5ebe8c4fcd57a8248ca50c; parent equal",
+        "STORE_VERIFY sha256 f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209; parent equal",
+        "STORE_BUILD sha256 729036a7bca12cba36b87e39c556a82859d2e5fe76fba102cc6c7b5f86c253c3; parent equal",
+        "bench_store.py sha256 123bb93c1f2e3d6bd23c21e50cc8445afc8853e5e659759cd30dcaa53b7adfe2",
+        "verify_dependency_seed.py sha256 116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2"
+      ],
+      "unchanged": ["trust", "ownership", "RECORD", "source authentication", "reserve policy", "registration", "cleanup engine", "D130 SWAP/WAL"],
+      "verifier_relaxation": false
+    }
+  ],
+  "source_owner_handoff": {
+    "finite_finding": "The current author seam is one STORE_CONTEXT line: the existing function export list is not transitively closed.",
+    "required_names": ["failure", "retain_stage_stderr", "stage_stderr_path", "run_stage", "progress", "source_state"],
+    "not_done_here": ["no product edit", "no focused test edit", "no Store/body/fixture/child execution", "no result reader", "no source writer", "no install", "no request retry"],
+    "next_step": "Source owner may make the two-name closure change and add a boundary regression, then independently requalify with the settled 44 controls and the owner-disposition gate."
+  }
+}

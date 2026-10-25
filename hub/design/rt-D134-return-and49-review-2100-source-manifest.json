@@ -1,0 +1,172 @@
+{
+  "schema": "timeline.agent.d134_return_and49_review_source_manifest.v1",
+  "task": "D134",
+  "review_parent": {
+    "agent_commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+    "agent_tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+    "review_worktree": "/home/user/work/wt/rt-D134-return-and49-review-2100",
+    "review_worktree_status": "clean"
+  },
+  "prior_failures_preserved": {
+    "inverse7_source_2045": {
+      "decision": "UNAPPLIED_EXACTMISSING",
+      "evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D134-inverse7-source-2045/evidence"
+    },
+    "history5_source_2045": {
+      "decision": "UNAPPLIED_EXACT_MISSING_AUTHORITY",
+      "evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D134-history5-source-2045/evidence"
+    },
+    "independent_review_2046": {
+      "verdict": "FAIL_AUTHORITY_CLAIMS",
+      "product_fault_proved": 0,
+      "evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-D134-twelve-protected-review-2046/evidence"
+    }
+  },
+  "parts": {
+    "A_inverse7": {
+      "verdict": "PASS",
+      "finalized_branch": "tl/rt-D134-inverse7-return-2053",
+      "finalized_commit": "9a7c9e38cf9baa72a4b10b7b6a50cf47b6447430",
+      "scope": {
+        "changed_paths": [
+          "tests/editing_conformance/test_inverse_stage_runtime_regressions.py"
+        ],
+        "parent_blob": "b97bd6a6b6da650cd60b48f78a31fabd7471f26b",
+        "after_blob": "55e7cec5da3463360a4f862986bc28e6a1e39345",
+        "after_sha256": "c578ec36e41ec2d68fe6de8a7d3a443aab8477cbb8492f7cbd786abb9e48ddd3"
+      },
+      "selected_tuple": {
+        "agent": {
+          "commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+          "tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+          "commit_py_sha256": "2b81e46ac0f3553d1de812cf0533be2a9aecbd8cdfcaab118ac671eff75107b3",
+          "inverse_py_sha256": "6c794734cb763c21cec386f764bc63b94f3a74b4dd9f8464136a285c628d0423",
+          "origin": "current normal Agent source in the reviewed branch"
+        },
+        "runtime": {
+          "commit": "6634a17f3ffd885567ba3c91b6c7a560df7375a4",
+          "tree": "47b376717ce7a919a697c62133de3e74dc9f6d3a",
+          "auth_py_sha256": "4ac2b8792fe0389afb6eb710a348c35fa196131a13cab175bd3646f7d2cc0aeb",
+          "store_py_sha256": "2a68990b180326585b7f0abaf1ee54c8ff9340e83663f17cd1efff1b2bd78a5c",
+          "origin": "immutable Runtime git archive/object"
+        },
+        "caller_binding": "runtime_case calls use_runtime(commit=RUNTIME_COMMIT)",
+        "identity_equality_strict": true,
+        "mutable_checkout_selected": false
+      },
+      "preservation": {
+        "node_ids": 7,
+        "parameter_inputs": "exact",
+        "assertions": "exact; counts 45, 7, and 4 by test function",
+        "raises": "exact",
+        "auth_aba_no_write_physical_history_predicates": "exact",
+        "runtime_commit_retained": true,
+        "functional_status": "NOTRUN_DISK_FLOOR"
+      }
+    },
+    "B_history5": {
+      "verdict": "PASS",
+      "finalized_branch": "tl/rt-D134-history5-return-2053",
+      "finalized_commit": "9e85402544af522a2b5bb2716731b2dfe4413652",
+      "scope": {
+        "review_scope_paths": [
+          "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py",
+          "tests/editing_conformance/test_prepared_video_birth.py",
+          "tests/editing_conformance/test_m1_legacy_archive_read.py"
+        ],
+        "changed_paths": [
+          "tests/editing_conformance/test_gate1_fresh_word_transcript_frontends.py",
+          "tests/editing_conformance/test_prepared_video_birth.py"
+        ],
+        "m1_reviewed_unchanged": true,
+        "m1_sha256_before_after": "838c77332683358877059f1357267a49cd130a985be4e4755a9655ec3f930d01",
+        "gate1_after_sha256": "3a29ab2fd37e940c4d8fd88a17f9621b188bd307774c05b69ed06411393f33cf",
+        "prepared_after_sha256": "a10d730edb293def6c6a40e9852fbe68f94ae4ad5db5375bdffca82dd4453864"
+      },
+      "selected_tuple": {
+        "agent": {
+          "commit": "a30e74e901a28b39c28facba3deb00d76f186e23",
+          "tree": "ece8e0887e48e45cb1fce85b1256c49a0f6126c0",
+          "origin": "current normal Agent source"
+        },
+        "runtime": {
+          "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+          "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+          "origin": "qualified current Runtime source"
+        },
+        "schema": {
+          "path": "astrid/core/timeline/schema/edit-command.schema.json",
+          "sha256": "d106dfe8212500709b4072d7bc0486f83c27d5d8de33d215cb52b9ea7d46357d"
+        },
+        "runtime_lock": {
+          "path": "runtime.lock.json",
+          "sha256": "ad818e99cb0759d1742d9f67b5bb3367b03fd3e88d8f65846253169272b8b6ce",
+          "source_commit": "ab1e4f6141987706132916e2da16477f5a019464"
+        },
+        "caller_bindings": {
+          "gate1": "use_runtime(commit=NORMAL_RUNTIME), with NORMAL_RUNTIME equal to runtime.lock source_commit",
+          "prepared": "vendored_runtime_commit() equals expected ab1e4f6141987706132916e2da16477f5a019464; use_runtime(commit=runtime_pin); HEAD/tree guards equal selected tuple"
+        },
+        "identity_equality_strict": true,
+        "mutable_checkout_selected": false
+      },
+      "preservation": {
+        "node_ids": 5,
+        "gate1_parameters": ["python", "cli", "sheet"],
+        "prepared_assertions": 24,
+        "prepared_raises": 2,
+        "m1_assertions": 22,
+        "m1_raises": 0,
+        "authored_inputs_media_transcript_anchor_opaque_on_no_write_history_predicates": "exact",
+        "m1_archive": {
+          "sha256": "2915bd4ac0d46954d19c30f87a517b82074218699978e650fab03fcba81b72d3",
+          "exists": true,
+          "on_behavior": "UNKNOWN"
+        },
+        "functional_status": "NOTRUN_DISK_FLOOR"
+      }
+    },
+    "C_runtime49": {
+      "verdict": "PASS",
+      "scope": {
+        "root-048": 35,
+        "root-022": 14,
+        "total": 49
+      },
+      "frozen_tuple": {
+        "agent_commit": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+        "agent_tree": "60d45288145414ee4702fcce61af7c7810c2a3df",
+        "runtime_commit": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+        "runtime_tree": "de2954a0ceadb4455903d9abdfec3b773318a50f",
+        "runtime_first_frame": "runtime_protocol/service.py:2546",
+        "provider": "runtime_protocol/timeline_commit_provider.py",
+        "agent_first_frames": {
+          "root-048": "astrid/sdk/timeline/validation.py:650",
+          "root-022": "astrid/sdk/timeline/commit.py:1331"
+        }
+      },
+      "conservation": {
+        "unique_ids": 49,
+        "duplicate_ids": 0,
+        "membership_mismatches": 0,
+        "source_blob_mismatches": 0,
+        "first_frame_mismatches": 0,
+        "dispositions": {
+          "FIXTURE_SETUP": 27,
+          "UNKNOWN": 22,
+          "PROVED_PRODUCT_CONTRACT_GAP": 0
+        }
+      },
+      "classification_basis": {
+        "root-048_fixture_setup": "27 M1 cases author legacy word:word-1 in test_commit_runtime_m1.py without a transcript/source binding; first frozen Agent boundary is validation.py:650",
+        "root-048_unknown": "8 retained-input cases retain a transcript pin but clear the authored word choice; authenticated request, hydrated source mapping, accepted record, and exact first command are missing",
+        "root-022_unknown": "14 selected-PARAM cases have explicit selection setup, but authenticated request, hydrated authority state, accepted record, and failing command ordinal are missing",
+        "deferred_D14_D23": "not used as blanket classification",
+        "guard_location_causality": "not inferred",
+        "missing_records": ["raw XML", "full disk witness", "raw runner receipt", "authenticated request body", "accepted record", "complete caller trace"]
+      }
+    }
+  },
+  "functional_status": "NOTRUN; source-only review under the 5,000,000,000-byte admission floor",
+  "no_changes": ["product", "Runtime", "auth", "schema", "generated", "pins", "fixtures", "media", "transcripts", "API shapes"]
+}

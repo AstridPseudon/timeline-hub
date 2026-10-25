@@ -1,0 +1,46 @@
+{
+  "schema": "timeline.agent.d134_return_and49_review_findings.v1",
+  "task": "D134",
+  "overall_verdict": "PASS",
+  "parts": {
+    "A_inverse7": {
+      "verdict": "PASS",
+      "finding": "The finalized one-file migration selects current Agent a30e74e901 with exact commit.py/inverse.py hashes, retains historical Runtime 6634a17f3f exactly, and preserves strict identity equality plus all seven cases and behavioral predicates."
+    },
+    "B_history5": {
+      "verdict": "PASS",
+      "finding": "The reviewed three-file scope is exact: Gate1 and prepared callers use the same approved current Runtime ab1e4f6141 tuple as their claimed source; the finalized commit changes only those two files and M1 is byte-identical. The authenticated archive exists, but M1 on/opaque/anchor behavior remains UNKNOWN."
+    },
+    "C_runtime49": {
+      "verdict": "PASS",
+      "finding": "The 49-case source assessment is conserved and source-supported: 35 root-048 plus 14 root-022, 27 proven fixture/setup, 22 UNKNOWN, and 0 proved product contract gaps. Missing request/accepted/caller records remain explicitly missing."
+    }
+  },
+  "review_findings": [
+    {
+      "severity": "INFO",
+      "part": "A",
+      "text": "D120 current-source migration is faithful; no pin refresh, provider change, mutable checkout, new approval gate, or identity relaxation found. Functional qualification is not claimed."
+    },
+    {
+      "severity": "INFO",
+      "part": "B",
+      "text": "Gate1 use_runtime and runtime.lock agree on ab1e4f614198; prepared vendored_runtime_commit, use_runtime, HEAD, and tree guards agree on the same tuple. M1 archive existence does not close behavior."
+    },
+    {
+      "severity": "INFO",
+      "part": "C",
+      "text": "Causal classification was not inferred from guard location. D14/D23 were not applied as blanket deferrals, and absent private inputs were not reconstructed."
+    }
+  ],
+  "functional_status": {
+    "verdict": "NOTRUN",
+    "reason": "Main free space was below the mandated 5 GB functional admission floor; source-only checks only.",
+    "tests_run": false
+  },
+  "next_steps": [
+    "Owner intake may run only the exact assigned functional nodes after the disk floor is met.",
+    "Keep M1 behavior UNKNOWN until an authorized qualified run proves the on/opaque/anchor path.",
+    "Do not route C UNKNOWN cases to implementation without the listed authenticated records."
+  ]
+}
