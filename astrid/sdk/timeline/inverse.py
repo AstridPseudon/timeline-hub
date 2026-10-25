@@ -1004,8 +1004,13 @@ def _validate_materializations(records):
         expected, missing = [], set()
         for old_images, old_rows, new_images, new_rows, commands, step in _managed_boundaries(entry, before, after):
             transitions = []
+            # Legacy inverse steps emit materializations alongside effect pins.
+            # Require their complete stage proof set when that representation is
+            # present; v2 effect-only stages have no materialization claims.
+            materialized = any(binding.get('key') == 'commit.materialization'
+                               for command in commands for binding in command['bindings'])
             _materialization_sites(entry, old_images, old_rows, new_images, new_rows, commands, step,
-                                   transitions, missing, [])
+                                   transitions, missing, [], include_inverse_stages=materialized)
             expected.extend((old, new, owner + '/shot', step['id'], step['command_ordinals'][-1])
                             for old, new, owner in transitions)
         if missing:
