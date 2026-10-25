@@ -1,0 +1,18 @@
+{
+  "source_repository": "/home/user/peteromallet/astrid-agent",
+  "source_ref": "tl/agt-F-D134-parent24-manifest2-2016",
+  "source_commit": "96c1f58c0c4e02a3c344e662d243796d0755fd14",
+  "source_parent": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "source_subject": "test(timeline): repair manifest media fixture plumbing",
+  "source_changed_paths": [
+    "tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py"
+  ],
+  "source_parent_target_blob": "18ab205665cde75e4c58d2f2e8f4ef917b63fabb",
+  "source_target_blob": "e63d777f93b458f6276d10aafa69497b8e2a75d8",
+  "source_lockfiles": {
+    "requirements/runtime.lock": "e43744b416b080470804b1a691f5e08e663ceb19",
+    "runtime.lock.json": "240f4fba3e86c0762a5c934ec37d9abbbb17e477"
+  },
+  "freshness": "source parent equals receiving HEAD; parent target equals receiving preimage",
+  "review_predicate": "Independentparent26-review2026 PASS_SOURCE_ONLY_FINITE_UNAPPLIED"
+}

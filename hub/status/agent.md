@@ -1,5 +1,5 @@
-<!-- agent | 2026-10-25T20:36:13Z | dispatcher heartbeat 5s | live 3 (sol 0, luna 3, other 0) | busy30 17 | status age 0m -->
-# agent board, 2026-10-25T20:33Z
+<!-- agent | 2026-10-25T20:40:21Z | dispatcher heartbeat 11s | live 1 (sol 0, luna 1, other 0) | busy30 16 | status age 2m -->
+# agent board, 2026-10-25T20:38Z
 | ID | task | model | needs | status | worker | review | proof | commit |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | U2 | Frozen upstream and late platform coverage | Luna / Sol | D60 | merged | Original U2 owners | Historical scope | Final5ffc passed52 protected and138 core; late Windows test source qualified; final platform proof pending. | 5ffc; d0ec |
@@ -106,11 +106,11 @@
 
 | D137 real child and core | Build exact child then run ship-grade core | Luna / service | Installed c3226b kit receipt | blocked:runtime | Prepared same-WIP controller | No request before actual received hash | D137 lifts fixture gate. Verify regular0755 andc3226b, then ONE a4e016/5e9ad request. If built run core; refusal retains exact row and stage stderr, no retry. | Frozen a4e016 /5e9ad |
 
-| D134 D73 source | Reconcile launcher and host environment | Luna and independent | Runtime source owner | blocked:runtime | Peer2015 asks exact owner | Independent2010 source PASS. D73 reinjects unsupported variable; outer recipe is insufficient. No working fix or new body. | Evidence only |
+| D134 D73 source | Reconcile launcher and host environment | Luna and independent | Runtime source review and kit | doing | rt-D73-env-source-2026 | Narrow launcher source owner active; host guard and parsed controls preserved. No extra D137 prerequisite. | Pending |
 
 | D134 partition return | Correct nine projection classifications | Luna | Independent2020 PASS | merged | Author2016; final review2020 | Classification PASS only: exact9 category changes,344 IDs and outside fields conserved.132 setup,0 proved product,212 unknown. | Evidence only |
 | D134 managed media48 | Preserve occurrence media setup | Luna | Qualified D100 source and setup | blocked:app | Author2016; independent2024 PASS | UNAPPLIED source unchanged. Existing9486 addresses item-birth seam; mutable author Runtime and missing XML unqualified. No new API decision. | Evidence only |
-| D134 parent24 manifest2 | Preserve parent and manifest setup | Luna | Clean receiving2034 | doing | Protected2026 PASS; import2034 | Sole wrapper delta approved;23 assertions conserved. Parent24 and manifest2 behavior remains blocked at shared media setup. | Donor96c1f58 |
+| D134 parent24 manifest2 | Preserve parent and manifest setup | Luna | Normal merge queue | merging | Protected2026 PASS; import2034 | Exact e63d blob;23 assertions conserved. Parent24 and manifest2 still hit shared media setup. No behavior closure. | 27e7f88cebd |
 
 | D134 managed30 | Preserve remaining managed fixture purposes | Luna hosted | App admitted source slot | blocked:app | Peer2018 asks first slot owner | Six disjoint files; exact30 source guidance. No shared fixture or product writer. | Pending |
 
@@ -165,3 +165,5 @@ Pass 2026-10-25T20:31Z: mirror7 andpreflight5 Luna sourceauthorsdispatched oncur
 Pass 2026-10-25T20:33Z: selected4 protectedFAIL for originalABI1request conversion and addedconfig.clips; samebranchLuna firstreturn2034 dispatchedimmediately. ParentwrapperprotectedPASS_SOURCE_ONLY_FINITE_UNAPPLIED; cleanimport2034 ensures oneexactownfile/currentpreimage and D134commitID before normalmerge. Candidate c3226b is NOT expectedfinalmakerhash: Runtime2018 successorretentiondelta mustbe reviewed/installed; receipt controls finalexpectedhash. Local5/cap6source,0readyundispatchedlocal; no heavy or realrequest. Inbox1845255.
 
 Pass20:36: root-review2029 independentPASS finiteall370 IDs/frames/groups and132+0+212+14+12. No causalpromotion or productfault. Historical G2open worktree inspected readonly: dirtysync.py, noendedmarker; noteligiblecleanrecycle. Existing0816KEEP honored; oldrtm2dirs lack workerrecords and are untouched. No protected/refused cleanup target retried. Sourcejobsfinish/recycle throughnormalharness. D137still0857 sourcehold.
+
+Pass 2026-10-25T20:38Z: manifestclean2034 finished exacte63ddonor/currenta30epreimage, soleowncommit27e7namesD134; normalrequest-mergequeuedafteroneprotected2026PASS. Cleanimportrepeatedknownown2despitenorepeatbrief; retainedtwoERRORreceipt givesnoclosureandwillnotberepeated. Runtimepeer2026namesD73source2026, D137successor4435source0c417independent2026active, D136afpsreturn2026exclusive. Installedmakerstill0857; requestunspent. Inbox1846839.

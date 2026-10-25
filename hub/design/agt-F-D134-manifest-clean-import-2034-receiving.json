@@ -1,0 +1,19 @@
+{
+  "task": "D134",
+  "repo": "agent",
+  "receiving_worktree": "/home/user/work/wt/agt-F-D134-manifest-clean-import-2034",
+  "receiving_head": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "target": "tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py",
+  "current_preimage_blob": "18ab205665cde75e4c58d2f2e8f4ef917b63fabb",
+  "imported_blob": "e63d777f93b458f6276d10aafa69497b8e2a75d8",
+  "changed_paths": [
+    "tests/editing_conformance/test_commit_runtime_media_manifest_inverse.py"
+  ],
+  "outside_target_worktree_diff": "clean",
+  "lockfiles": {
+    "requirements/runtime.lock": "e43744b416b080470804b1a691f5e08e663ceb19",
+    "runtime.lock.json": "240f4fba3e86c0762a5c934ec37d9abbbb17e477"
+  },
+  "assertion_lines": 23,
+  "behavior_claim": false
+}

@@ -1,0 +1,17 @@
+{
+  "source_only": true,
+  "finite_import": true,
+  "unapplied": true,
+  "donor_commit": "96c1f58c0c4e02a3c344e662d243796d0755fd14",
+  "donor_parent": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "receiving_head": "a30e74e901a28b39c28facba3deb00d76f186e23",
+  "target_only": true,
+  "target_blob_exact": true,
+  "all_23_manifest_assertions_retained": true,
+  "authored_inputs_retained": true,
+  "forwards_exact_swap_parent_and_source_bytes": true,
+  "runtime_lock_exact": true,
+  "product_release_claim": false,
+  "behavior_closure": false,
+  "known_result": "original two cases remain managed-edge errors"
+}
