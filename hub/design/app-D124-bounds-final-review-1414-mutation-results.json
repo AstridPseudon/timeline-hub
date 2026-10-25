@@ -1,0 +1,17 @@
+{
+  "positive_control": "accepted",
+  "old_six": [
+    {"name": "rolling.events_retained=999999", "result": "rejected"},
+    {"name": "output.bytes=999999", "result": "rejected"},
+    {"name": "phase UNKNOWN with count=1", "result": "rejected"},
+    {"name": "phase start_ms=-1", "result": "rejected"},
+    {"name": "sample_share=2", "result": "rejected"},
+    {"name": "PRIVATE_MARKER safe free-string value", "result": "rejected"}
+  ],
+  "same_shape_private_values": [
+    {"field": "top_inclusive_frames[].function", "result": "rejected"},
+    {"field": "top_inclusive_frames[].file", "result": "rejected"},
+    {"field": "sampling.sampler_errors[]", "result": "rejected"}
+  ],
+  "source_constants": {"max_requests": 8, "max_events": 128, "max_bytes": 65536, "sampling_interval_ms": 20, "max_phase_count": 32}
+}

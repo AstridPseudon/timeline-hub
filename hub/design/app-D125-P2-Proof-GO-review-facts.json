@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "task": "D125 independent P2 Proof GO review",
+  "terminal_id": "app-pin-fe3309db-d73-p2-fe3309db-submit-1025140943-3250",
+  "preflight_id": "app-pin-fe3309db-d73-p2-fe3309db-submit-preflight-1025140913-15235",
+  "preflight_status": "PASS",
+  "terminal_status": "FAIL",
+  "counts": {"readiness_pass": 1, "original_pass": 5, "original_fail": 2, "original_notrun": 1, "original_error": 0},
+  "tuple_verified": true,
+  "four_clean_checkout_receipts_verified": true,
+  "durable_plan_sha256": "36fc0caa325e5a262a587c6342e329bca0929d49fe21e0a9f0c3bde3b9ad9a81",
+  "normal_manifest_sha256": "dd9301beeaa53555a547f4c572f8945a5573f5aca37505c94a291dfd6a064cbd",
+  "readiness_xml_sha256": "335552adae373a238bdac3b645994e0aa5ec841b9d4c0c82e315b053891e7210",
+  "original_xml_sha256": "2b9a37aa48255b2854ff30ae043021b1af6ea23d28fb893dc5a08845ecf77e4b",
+  "source_hashes_verified": true,
+  "private_diagnostics_searched": true,
+  "swap_public_static_tag": "history_unavailable",
+  "swap_lower_attribution": "UNKNOWN",
+  "pending_element_http": "UNKNOWN",
+  "backend_cost_inferred": false,
+  "independent_verdict": "NO-GO; partialGO for five qualified PASS tails",
+  "no_raw_private_data_published": true
+}

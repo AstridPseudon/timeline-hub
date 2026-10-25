@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "task": "D125 independent P2 Proof tour verdict",
+  "verdict": "NO-GO",
+  "partial_verdict": "partialGO",
+  "go_eligible": false,
+  "basis": "Overall GO requires all eight original full tails to pass on the exact tuple with truthful custody. This terminal result has five PASS, two FAIL, and one NOTRUN.",
+  "preflight": {
+    "id": "app-pin-fe3309db-d73-p2-fe3309db-submit-preflight-1025140913-15235",
+    "status": "PASS",
+    "exit": 0,
+    "manifest_sha256": "cdb895d7fbea3860259fb4b684b56f46a17561fbb86e26286f94a2593b174c00"
+  },
+  "normal": {
+    "id": "app-pin-fe3309db-d73-p2-fe3309db-submit-1025140943-3250",
+    "status": "FAIL",
+    "exit": 1,
+    "duration_seconds": 554,
+    "body_count": 1,
+    "duplicate_body_count": 0,
+    "manifest_sha256": "dd9301beeaa53555a547f4c572f8945a5573f5aca37505c94a291dfd6a064cbd"
+  },
+  "tuple": {
+    "app": {"sha": "fe3309dba4520835a685f925468bff1acdc0506f", "tree": "e55f0d65dca0c9f2ba3013df4cab999f314308b9"},
+    "agent": {"sha": "070dfc5ef4f3dc35062fcb36a50cb571cd77fbd2", "tree": "6056414359ae9fce08d999d54cbecf719fda33c3"},
+    "runtime": {"sha": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344", "tree": "de2954a0ceadb4455903d9abdfec3b773318a50f"},
+    "composition": {"sha": "635f4de06fda22a85fc2e4cfc764d0153a4c9f40", "tree": "5ab5191a296980a0a6bcd1178ab6902d6478a148"}
+  },
+  "custody": {
+    "all_four_heads_and_trees_verified": true,
+    "all_four_checkouts_clean": true,
+    "receipts": {
+      "app": "f09f23713c6cc722f8ae36dbd9b1c02206ee76a3c044cf381a62cd9ec45a5e85",
+      "agent": "a8abf836cedf70334caaa9030d021a0c20d52b05b0b671a607c7d0c45d5fbc05",
+      "runtime": "151eff8ff0511a4acda3e0e1941eab640ddb87bd90ca1be692589e7b49ec2713",
+      "composition": "ea43438c8e7327f152faf44d2d8e56133dd4b6aaf2205c4196d61b6c7b1e9ab1"
+    },
+    "durable_plan": {
+      "path": "workers/app-D127-full-P2-admitted-resume-1407/submission/full-p2/p2-submit-plan.json",
+      "sha256": "36fc0caa325e5a262a587c6342e329bca0929d49fe21e0a9f0c3bde3b9ad9a81",
+      "identity_verified": true,
+      "recipes_verified": true
+    },
+    "source_prep_plan_sha256": "cda9106c30404449f41940c04a27abdd1a926a05c1cb625193273d21b8efa5b8",
+    "source_prep_plan_role": "provenance only; not submitted persistent-plan identity"
+  },
+  "profile": {
+    "node": "v20.19.4",
+    "npm": "10.8.2",
+    "runtime_server": "AstridRuntime/0.1 Python/3.13.16",
+    "protocol": "workspace.v1",
+    "schema_digest": "sha256:867f3553ac0ff264300e5a2596b363cdb4c071842eb6570ad461c093d351708b",
+    "provider": "astrid-v1",
+    "compiler": "authoring-bundle-1"
+  },
+  "junit": {
+    "readiness": {"path": "d66/readiness.xml", "sha256": "335552adae373a238bdac3b645994e0aa5ec841b9d4c0c82e315b053891e7210", "pass": 1, "fail": 0, "not_run": 0},
+    "original": {"path": "d66/p2.xml", "sha256": "2b9a37aa48255b2854ff30ae043021b1af6ea23d28fb893dc5a08845ecf77e4b", "pass": 5, "fail": 2, "not_run": 1, "error": 0}
+  },
+  "original_cases": [
+    {"name": "P2 popup mounted ADD on selected child uses shared occurrence fork and A2 commit", "status": "PASS", "file": "tests/e2e/local/three-products.p2-popup.spec.ts", "line": 941, "tail_qualified": true, "predicates": {"canonical_closure_digest": true, "history_records": true, "reload": true, "guarded_native_inverse": true, "zero_legacy_traffic": true}},
+    {"name": "P2 popup mounted SWAP on selected child uses authenticated old/new media selections", "status": "FAIL", "file": "tests/e2e/local/three-products.p2-popup.spec.ts", "line": 949, "first_unmet": {"file": "tests/e2e/local/three-products.p2-popup.spec.ts", "line": 495, "predicate": "accepted response status equals 200; actual status was 409"}, "safe_static_reason_tag": "history_unavailable", "static_reason_source_match": ["runtime_protocol/timeline_commit_baseline.py:24-27", "runtime_protocol/service.py:2572-2577", "contract/commit-v2.md:597-602"], "lower_private_phase_attribution": "UNKNOWN", "tail_qualified": false},
+    {"name": "P2 mounted single parent move: v2 commit, exact field delta, reload and guarded Undo", "status": "PASS", "file": "tests/e2e/local/three-products.p2-tour.spec.ts", "line": 746, "tail_qualified": true, "predicates": {"canonical_closure_digest": true, "history_records": true, "reload": true, "guarded_native_inverse": true, "zero_legacy_traffic": true}},
+    {"name": "P2 mounted transition None single: raw clear preserves opaque data/order and guarded Undo", "status": "PASS", "file": "tests/e2e/local/three-products.p2-tour.spec.ts", "line": 778, "tail_qualified": true, "predicates": {"canonical_closure_digest": true, "history_records": true, "reload": true, "guarded_native_inverse": true, "zero_legacy_traffic": true}},
+    {"name": "P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo", "status": "PASS", "file": "tests/e2e/local/three-products.p2-tour.spec.ts", "line": 798, "tail_qualified": true, "predicates": {"canonical_closure_digest": true, "history_records": true, "reload": true, "guarded_native_inverse": true, "zero_legacy_traffic": true}},
+    {"name": "P2 mounted element edit: real catalog apply, exact params patch, reload and guarded Undo", "status": "FAIL", "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "line": 1038, "first_unmet": {"file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "line": 1052, "predicate": "dialog status contains applied"}, "pending_element_http": "UNKNOWN", "backend_cost_inferred": false, "tail_qualified": false},
+    {"name": "P2 mounted registerAsset save: real file drop, exact media/registry fields, reload and guarded Undo", "status": "NOTRUN", "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "line": 1133, "first_unmet": {"file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "line": 1133, "predicate": "serially blocked after earlier element-edit failure"}, "tail_qualified": false},
+    {"name": "P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo", "status": "PASS", "file": "tests/e2e/local/three-products.p2-elements-assets.spec.ts", "line": 1214, "tail_qualified": true, "predicates": {"canonical_closure_digest": true, "history_records": true, "reload": true, "guarded_native_inverse": true, "zero_legacy_traffic": true}}
+  ],
+  "source_hashes": {
+    "scripts/testing/d66-plain-stack.mjs": "81d273e626240cb02b0f1a5cee7314325bf935bf487874a178acede4d9de0dd3",
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+    "tests/e2e/local/three-products.p2-popup.spec.ts": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "tests/e2e/local/three-products.p2-tour.spec.ts": "83948c53c7990824fce81be7f0db2b4f947837c66a827abf2ffb08492f09bee4",
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "7cca78274f96c9466d82bea3108f6f8a447462c9cd722c078ab958bc3578d637",
+    "scripts/testing/d66-plain-stack.test.mjs": "5519efcccf4036c7d88e4d95012c9db4fa377609b838050873ad53d0260e77bd",
+    "runtime_protocol/timeline_commit_baseline.py": "36076f4a0ffa26e6544ec9704000a22a6bd46370cacb6577ea9f5dadac346e31",
+    "runtime_protocol/service.py": "7277fc12e502a419ccd9eea9dfd2b3693bc8b2c8963e9fdf7224402d8a03a529",
+    "contract/commit-v2.md": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7"
+  },
+  "result_hashes": {
+    "preflight_manifest.json": "cdb895d7fbea3860259fb4b684b56f46a17561fbb86e26286f94a2593b174c00",
+    "normal_manifest.json": "dd9301beeaa53555a547f4c572f8945a5573f5aca37505c94a291dfd6a064cbd",
+    "readiness.xml": "335552adae373a238bdac3b645994e0aa5ec841b9d4c0c82e315b053891e7210",
+    "p2.xml": "2b9a37aa48255b2854ff30ae043021b1af6ea23d28fb893dc5a08845ecf77e4b",
+    "collection.txt": "56ebb0100e596dc8f23ccadc30be106672ec044feb9888ff80e6a9e06524bc9a",
+    "durable_plan.json": "36fc0caa325e5a262a587c6342e329bca0929d49fe21e0a9f0c3bde3b9ad9a81"
+  },
+  "searched_paths": [
+    "tests/app-pin-fe3309db-d73-p2-fe3309db-submit-preflight-1025140913-15235",
+    "tests/app-pin-fe3309db-d73-p2-fe3309db-submit-1025140943-3250/d66/{manifest.json,readiness.xml,p2.xml,collection.txt,runtime-private/}",
+    "workers/app-D127-full-P2-admitted-resume-1407/{evidence/facts.json,submission/full-p2/p2-submit-plan.json}",
+    "frozen App/Agent/Runtime/Composition pinned checkouts"
+  ],
+  "privacy": {"raw_payloads_published": false, "credentials_published": false, "private_urls_published": false, "stacks_published": false, "opaque_private_identities_published": false},
+  "review_execution": {"source_changes": false, "targeted_tests": "N/A: read-only review", "typecheck": "N/A: read-only review", "lint": "N/A: read-only review", "rerun_original_or_broad_suite": false}
+}

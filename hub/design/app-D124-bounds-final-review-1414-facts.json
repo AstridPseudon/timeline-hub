@@ -1,0 +1,35 @@
+{
+  "verdict": "PASS_SOURCE_ONLY",
+  "candidate": "9d75477be4ab209fed52087f06bfcd20487ce1a9",
+  "candidate_tree": "7feb5b12a1ad9629f096700c40c393d5b3998217",
+  "parent": "4b4e0558ef3853bc999dd65c0df4580ad5704eff",
+  "parent_tree": "8e4c8ca6d96a8d39fdad7d4618f940880f8ab46e",
+  "owned_files": [
+    "tests/e2e/fake-runtime/server.contract.test.mjs",
+    "tests/e2e/local/support/p2-runtime-phase-bootstrap.test.ts"
+  ],
+  "fake_runtime_blob": "62a0e80dcd4b70523cbf4490e20cb7fe17518558",
+  "phase_bootstrap_blob": "6f21c0c53517f24da5551bee09382f2f37d5f392",
+  "normal_helper": {
+    "source": "/home/user/work/wt/rt-pin-5e9ad1c6/tests/helpers/p2_commit_phase_capture.py",
+    "sha256": "a17a92115661fcef13b49169504ad8726e6f6c0cdce66b195128b14477fa76a4",
+    "activation": "genuine normal route reached endpoint"
+  },
+  "reviewed_helper": {
+    "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/app-D124-helper-final-review-1315-helper.py",
+    "sha256": "6c9daef27884c30b8faf234349078310af7ebe016bf0c4339960d5baae5a0760",
+    "activation": "fresh exact D66 launch unqualified: Runtime exited before endpoint readiness; retained parent control passed"
+  },
+  "mutation_controls": {
+    "old_six": "rejected",
+    "private_marker_function_file_sampler_error": "rejected",
+    "positive_reviewed_capture": "accepted"
+  },
+  "static": {
+    "eslint": "PASS",
+    "tsc_app": "PASS",
+    "tsc_node": "PASS",
+    "diff_check": "PASS",
+    "scope_conservation": "PASS"
+  }
+}

@@ -1,0 +1,1 @@
+ZIP note: carry candidate `9d75477be4ab209fed52087f06bfcd20487ce1a9` with App blobs `62a0e80dcd4b70523cbf4490e20cb7fe17518558` and `6f21c0c53517f24da5551bee09382f2f37d5f392`; D126 old predicates are preserved. No browser credit; reviewed-helper fresh activation remains unqualified before any ZIP claim.
