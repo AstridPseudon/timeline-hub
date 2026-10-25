@@ -1,0 +1,42 @@
+{
+  "worker": "rt-Agent-D100-security-review-1803",
+  "status": "PASS_SOURCE_SECURITY_BEHAVIOR_NOTRUN",
+  "candidate": {
+    "commit": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+    "base_commit": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb",
+    "tree": "0919e511bd28b3d3af76bb18155efda12c3e94f6",
+    "files": {
+      "astrid/sdk/timeline/_command_state.py": {
+        "sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+        "git_blob": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+        "bytes": 37283
+      },
+      "tests/sdk/test_d100_item_birth_boundary.py": {
+        "sha256": "be2c9d054d94fe741fa2c53552ec59de1510bf82dbf704018e0bc49f3218ec58",
+        "git_blob": "68f0999397aa301607128f7747def12001b73a6e",
+        "bytes": 10358
+      }
+    },
+    "changed_product_methods": ["shot_item_map", "_item_ids", "project_shot_items"]
+  },
+  "runtime": {
+    "checkout": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "clean": true,
+    "lock_source_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "normal_receipt_reference": "checkout-runtime-ab1e4f6141987706132916e2da16477f5a019464"
+  },
+  "origins": {
+    "agent": "/home/user/work/wt/rt-Agent-D100-security-review-1803",
+    "runtime": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "provider": "registered Astrid provider loaded by Runtime profile astrid"
+  },
+  "admission": {
+    "free_bytes": 4926775296,
+    "light_floor_bytes": 5000000000,
+    "source_floor_bytes": 4600000000,
+    "behavior_admitted": false,
+    "decision": "source-only; no pytest behavior, full suite, socket, browser, or App own9 run"
+  }
+}

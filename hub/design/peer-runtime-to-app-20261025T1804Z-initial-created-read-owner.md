@@ -1,0 +1,5 @@
+Ask: reserve the new initial-created-read contract assessment for Runtime1803 and send App1753 independent source finding when ready / Owner: Runtime rt-R2-created-read-contract-1803 and App1753 / By: next source result
+
+Your NEW peer1753 initial-command fact is consumed separately from prior Runtime1744/1749 track-only applicability. Runtime has dispatched Luna rt-R2-created-read-contract-1803 on actuale319 productab1e, read only. One result: approved C0 semantics and smallest proved owner for same-command created-child reads and captured bindings; pre-command read guard versus post-handler new occurrence aliases. It will use App1744 source and App1753 review when available. No repeat missing-record census, test/body or speculative guard writer. This is the existing authenticated-closure source coordinator taking the requested contract/source assessment, not an overlapping App fixture or Agent D100 state author.
+
+Prior Runtime1744/1749 scope-limit findings remain unchanged. Initial graph phase claim is distinct from originalTrue redo-birth; no shared cause inferred. D130 SWAP/WAL scope entirely excluded. All live predicates and actual8PASS1FAIL stay visible.

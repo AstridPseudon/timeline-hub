@@ -1,0 +1,60 @@
+{
+  "worker": "rt-Agent-D100-security-review-1803",
+  "review": "D100/R1 independent CORE/SECURITY review",
+  "verdict": "PASS_SOURCE_SECURITY",
+  "candidate": {
+    "branch": "tl/rt-Agent-D100-security-review-1803",
+    "commit": "9486cbb06e2ab53402086772e6c2bc18bc4849fc",
+    "base": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb",
+    "tree": "0919e511bd28b3d3af76bb18155efda12c3e94f6",
+    "changed_files": [
+      "astrid/sdk/timeline/_command_state.py",
+      "tests/sdk/test_d100_item_birth_boundary.py"
+    ],
+    "sha256": {
+      "astrid/sdk/timeline/_command_state.py": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+      "tests/sdk/test_d100_item_birth_boundary.py": "be2c9d054d94fe741fa2c53552ec59de1510bf82dbf704018e0bc49f3218ec58"
+    }
+  },
+  "scope": {
+    "plan": "PLAN R1; C0 sections 1-5/7",
+    "product_methods": ["State.shot_item_map", "State._item_ids", "State.project_shot_items"],
+    "runtime": {
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "checkout": "/home/user/work/wt/rt-pin-ab1e4f61",
+      "clean": true
+    },
+    "module_origins": {
+      "astrid.sdk.timeline._command_state": "/home/user/work/wt/rt-Agent-D100-security-review-1803/astrid/sdk/timeline/_command_state.py",
+      "astrid.sdk.timeline.commands": "/home/user/work/wt/rt-Agent-D100-security-review-1803/astrid/sdk/timeline/commands.py",
+      "astrid.sdk.timeline.commit": "/home/user/work/wt/rt-Agent-D100-security-review-1803/astrid/sdk/timeline/commit.py",
+      "runtime_protocol.service": "/home/user/work/wt/rt-pin-ab1e4f61/runtime_protocol/service.py",
+      "runtime_protocol.timeline_commit_auth": "/home/user/work/wt/rt-pin-ab1e4f61/runtime_protocol/timeline_commit_auth.py",
+      "runtime_protocol.timeline_commit_store": "/home/user/work/wt/rt-pin-ab1e4f61/runtime_protocol/timeline_commit_store.py"
+    }
+  },
+  "security_findings": [],
+  "reviewed_controls": {
+    "authenticated_physical_source": "The source branch requires the exact runtime-document shot/revision/internal identities and content digests, plus an empty item_id_map; bundle_from_document revalidates the immutable closure.",
+    "physical_item_birth": "Only unique, non-empty string item IDs are admitted for the unchanged physical source image; mapping is identity-only and source_mapping is not allocation authority.",
+    "copied_correspondence": "Copied/remapped placements retain the pre-existing exact mapping and membership checks; the new physical-source branch does not relax that path.",
+    "refusal_no_write": "Existing previous-value, wrong source, wrong revision/digest, duplicate/empty ID, and malformed closure guards remain fail-closed before mutation.",
+    "production_route": "commands.execute -> doc.patch handler -> State.set -> State.project_shot_items / State.shot_item_map was traced; Runtime provider/auth/store files were read-only and unchanged."
+  },
+  "behavior": {
+    "status": "NOTRUN",
+    "reason": "Fresh free space was 4926775296 bytes, below the mandatory 5000000000-byte light floor; no bypass or waiting-floor run was attempted.",
+    "requested_command": "/home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 tests/sdk/test_d100_item_birth_boundary.py",
+    "parent_red": "NOTRUN",
+    "candidate_green": "NOTRUN",
+    "app_own9": "NOTRUN_APP_OWNED"
+  },
+  "author_evidence": {
+    "source_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-Agent-D100-item-birth-sol-1742/evidence/source-manifest.json",
+    "guard_map": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-Agent-D100-item-birth-sol-1742/evidence/guard-map.json",
+    "red_green": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-Agent-D100-item-birth-sol-1742/evidence/red-green.json",
+    "validation": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-Agent-D100-item-birth-sol-1742/evidence/validation.md",
+    "peer_report": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/peer-agent-to-runtime-app-20261025T1742Z-D100-provider-source-ready.md"
+  }
+}

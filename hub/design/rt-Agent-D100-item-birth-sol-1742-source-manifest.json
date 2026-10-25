@@ -1,0 +1,86 @@
+{
+  "worker": "rt-Agent-D100-item-birth-sol-1742",
+  "timestamp_utc": "2026-10-25T18:00:57.594028+00:00",
+  "status": "SOURCE_REVIEW_PASS_BEHAVIOR_NOTRUN",
+  "agent": {
+    "path": "/home/user/work/wt/rt-Agent-D100-item-birth-sol-1742",
+    "branch": "tl/rt-Agent-D100-item-birth-sol-1742",
+    "base_commit": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb",
+    "base_tree": "6abf383217363d08fe0cf00558b010f5a9dd506f",
+    "candidate_tree_computed": "0919e511bd28b3d3af76bb18155efda12c3e94f6",
+    "candidate_tree_note": "Computed from complete HEAD tree plus two final files; no Git object/ref written. Harness commit pending.",
+    "files": {
+      "astrid/sdk/timeline/_command_state.py": {
+        "sha256": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+        "git_blob_computed": "09cbeeddefdc6375ba7d026406c95fb35bafda40",
+        "bytes": 37283
+      },
+      "tests/sdk/test_d100_item_birth_boundary.py": {
+        "sha256": "be2c9d054d94fe741fa2c53552ec59de1510bf82dbf704018e0bc49f3218ec58",
+        "git_blob_computed": "68f0999397aa301607128f7747def12001b73a6e",
+        "bytes": 10358
+      }
+    },
+    "changed_product_methods": [
+      "shot_item_map",
+      "_item_ids",
+      "project_shot_items"
+    ]
+  },
+  "runtime": {
+    "path": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+    "clean": true,
+    "lock_source_commit": "ab1e4f6141987706132916e2da16477f5a019464",
+    "normal_existing_receipt": "design/rt-Agent-R2-original-True-after-ab1e-1713-manifest.json"
+  },
+  "python": {
+    "executable": "/home/user/work/venv-agent/bin/python",
+    "version": "3.13.16 (main, Oct  1 2026, 15:40:24) [GCC 13.3.0]",
+    "compile_executable": "/usr/bin/python3.11",
+    "compile_version": "3.11.17"
+  },
+  "module_origins": {
+    "astrid.sdk.timeline._command_state": "/home/user/work/wt/rt-Agent-D100-item-birth-sol-1742/astrid/sdk/timeline/_command_state.py",
+    "astrid.sdk.timeline.commit": "/home/user/work/wt/rt-Agent-D100-item-birth-sol-1742/astrid/sdk/timeline/commit.py",
+    "runtime_protocol.service": "/home/user/work/wt/rt-pin-ab1e4f61/runtime_protocol/service.py",
+    "runtime_protocol.timeline_commit_auth": "/home/user/work/wt/rt-pin-ab1e4f61/runtime_protocol/timeline_commit_auth.py",
+    "runtime_protocol.timeline_commit_store": "/home/user/work/wt/rt-pin-ab1e4f61/runtime_protocol/timeline_commit_store.py"
+  },
+  "admission": {
+    "worker_meta_model": "gpt-6.1-sol",
+    "worker_meta_effort": "high",
+    "worker_meta_heavy": 0,
+    "initial_free_bytes": 4958633984,
+    "fresh_free_bytes": 4946288640,
+    "light_floor_bytes": 5000000000,
+    "source_floor_bytes": 4600000000,
+    "behavior_admitted": false,
+    "decision": "source-only; no behavior, full suite, socket, browser, or App own9 run"
+  },
+  "independent_review": {
+    "reviewer": "/root/core_security_review",
+    "result": "PASS_SOURCE",
+    "findings": [],
+    "reviewed_files": {
+      "astrid/sdk/timeline/_command_state.py": "018f174004bf9b9c275aa23ef6ceb432ce9d7294d71e3024f96353c25fa808a3",
+      "tests/sdk/test_d100_item_birth_boundary.py": "be2c9d054d94fe741fa2c53552ec59de1510bf82dbf704018e0bc49f3218ec58"
+    },
+    "scope": "Read-only source/security; no behavioral qualification"
+  },
+  "coordination": {
+    "for_lanes": [
+      "Agent R1/D100",
+      "App own9"
+    ],
+    "carrier": "/home/user/work/wt/rt-Agent-D100-item-birth-sol-1742",
+    "reviewed_fixture": "f53b016900c99e46998268e36c7c431ac0eec61e",
+    "app_own9": "App-owned, NOTRUN here; no fixture modification",
+    "product_merge_release": "HELD"
+  },
+  "tool_errors": [
+    "First independent-review spawn with fork_turns=all failed: invalid thread-store request, no rollout found. No agent started; fork_turns=none successfully started the single independent reviewer."
+  ],
+  "sandbox_safety_denials": []
+}

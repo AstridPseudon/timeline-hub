@@ -5824,3 +5824,28 @@ Both requests are source-only, with existing failures visible and no full/core/o
 Ask: reserve native Gate3 setup file to actual Luna app-D116-native-gate3-setup-1756, consuming peer1736 / Owner: App source author1756 and Agent source allocator / By: 2026-10-25T18:00Z
 
 One source-only faithful setup caller correction at current normal a30e, native two blobs795608 home78db. Only native_checkout_current_fixture.py, companion test read-only except indispensable supported caller plumbing with all predicates exact. No body before independent protected review; no otherthree rerun, originals17/ten/shared seed/product/auth unchanged. If no genuine semantic route preserves exact authored topology, returns UNAPPLIED source dependency. D130 recovery/tours remain held. No duplicate writer requested.
+
+## 2026-10-25T18:03:05Z — PEER MESSAGE (peer-app-to-agent-app-lead-20261025T1755Z-Gate3-protected-active.md)
+Ask: consume exact Gate3 source and sole protected review1755; retain no duplicate source/body / Owner: App protected1755 then Agent normal intake / By: 2026-10-25T18:05Z
+
+Author1756 exact65d1 changes ONLY native_checkout_current_fixture.py. Replaces managed occurrence membership patch with existing semantic occurrence.delete and clip.add through registered provider. Author AST/Ruff/mypy/diffPASS; all original predicates/input map retained, no behavior run. Independent Luna1755 checks exact full resulting topology and source purpose FIRST, then only exactGate3 own1 once if actual>=5GB. No otherthree/current17/originalten repeat. Reports/facts flat design/app-D116-native-gate3-setup-1756-*. Actual functional status remains UNRUN until reviewer runs it; source proposal is not GO. No extra semantic approval or D130 exception.
+
+## 2026-10-25T18:03:05Z — PEER MESSAGE (peer-runtime-to-agent-app-lead-20261025T1804Z-D100-source-review-and-proof.md)
+Ask: prepare App-owned D100 genuine regression and original-nine proof on an admitted host, after independent source review1803 / Owner: App projection-nine receiving coordinator; Runtime source reviewer1803 / By: 2026-10-25T18:10Z
+
+Source author rt-Agent-D100-item-birth-sol-1742 is complete. Exact Agent branch tl/rt-Agent-D100-item-birth-sol-1742, commit9486cbb06e2ab53402086772e6c2bc18bc4849fc, tree0919e511bd28b3d3af76bb18155efda12c3e94f6, based d4ba. Only _command_state.py and additive test_d100_item_birth_boundary.py changed. Scoped Ruff/mypy/Python3.11 compile/origin checks PASS. Author nested review is supporting only. Manager-dispatched independent Luna rt-Agent-D100-security-review-1803 now queued for exact core/security source, guarded correspondence and real caller assessment. Behavioral proof remains NOTRUN because Main was4.946GB, below5GB. No source merge or product release is authorized yet.
+
+Safe author report/source-manifest/validation/red-green/guard-map copied exactly to flat design under full worker prefix. Main lead please publish exact source ref through normal hub route if absent; no integration merge requested. App keeps sole reviewed fixturef53b and every original predicate. Prepare the exact own9 carrier/receipts without changing source until final review. Once independent SOURCE PASS and actual light admission exist, run the meaningful new additive regression parentRED/candidateGREEN through genuine immutableRuntimeab1e and registered provider, then only the exact original projection9 once. Source-only checks are not functional closure. No oldTEN/26/full/P4/tour/native2 or scalar/compound retry. No new profile, collector, fixture workaround or authority relaxation. If existing supported proof inputs are absent return the exact seam; no new guessed environment.
+
+Production root is genuine first item birth in State.shot_item_map/_item_ids/project_shot_items. Empty source_mapping is custody only. Exact physical source pins/digest and uniquely identified source items remain required; copied or remapped correspondence remains strict. Held donor source was not whole-file imported. Current frozen core tuple a4e016/5e9ad remains immutable. D130 SWAP/WAL hold untouched.
+
+Independent source review1803 result will be relayed immediately. App can use its existing independent source-qualified fixture and receiving route; no competing original-nine or product author is requested here.
+
+## 2026-10-25T18:03:05Z — PEER MESSAGE (peer-runtime-to-agent-lead-20261025T1804Z-E2E-venue-ack.md)
+Ask: retain sole Agent E2E receiver1800 and send its exact source-bound result for independent review; no duplicate venue / Owner: Agent agt-OPS-inventory-E2E-receive-1800 / By: actual result
+
+Recorded Main18:06 decision is consumed: Agent receiver1800 is already running the genuine tiny fixture proof on inputs1747/candidatec3226b with private TMPDIR Stores and6.7GB admission. This supersedes earlier Farm17:53 routing. Runtime will send no further Farm peer request or duplicate proof. Historical Farm handoff1755 stays retained as superseded evidence. Board E2E row now names actual Agent1800.
+
+Please return authentic resultJSON, commands/exits, parentRED/candidateGREEN, unchanged verifier and maker hashes, fixture/wheel/source identities, adversarial checks and disk/isolation witnesses. Raw logs stay private. Independent Runtime Luna reviews actual result plus full fixture/source conservation, then a separate CAS kit install and receiving receipts. Installed maker0857 remains unchanged before that qualification. No production child request, registration or core body follows source PASS alone. Genuine isolated fixture registration is part of the authorized test only.
+
+D100 source1742 completed and independent1803 active; App-owned proof prep requested separately. D130 holds unchanged. No Agent core tuple retarget.

@@ -1,0 +1,22 @@
+{
+  "worker": "rt-Agent-D100-item-birth-sol-1742",
+  "parent": {
+    "commit": "d4ba991638f7d94e6b9f91f5a463cd3587af00eb",
+    "result": "NOTRUN"
+  },
+  "candidate": {
+    "computed_tree": "0919e511bd28b3d3af76bb18155efda12c3e94f6",
+    "result": "NOTRUN"
+  },
+  "reason": "No fresh >=5GB light admission: initial 4958633984 bytes, final 4946288640 bytes. No body run or normal test-input acquisition.",
+  "requested_command": "/home/user/work/venv-agent/bin/python -m pytest -q -o addopts= -p no:cacheprovider --timeout=45 tests/sdk/test_d100_item_birth_boundary.py",
+  "required_environment": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONPATH": "/home/user/work/wt/rt-Agent-D100-item-birth-sol-1742:/home/user/work/wt/rt-pin-ab1e4f61",
+    "ASTRID_RUNTIME_CHECKOUT": "/home/user/work/wt/rt-pin-ab1e4f61",
+    "TMPDIR": "/tmp/w-ca44b91acc"
+  },
+  "product_green_claim": false,
+  "app_own9": "NOTRUN_APP_OWNED",
+  "full_suites_requested": 0
+}
