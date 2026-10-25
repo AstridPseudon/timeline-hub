@@ -1,0 +1,73 @@
+{
+  "schema": "timeline.agent.d73.review_correction.v1",
+  "task": "agt-OPS-D73-review-correction-2240",
+  "base": {
+    "task": "agt-OPS-D73-receiving-review-2232",
+    "ref": "refs/heads/tl/agt-OPS-D73-receiving-review-2232",
+    "commit": "ccf60580d29a0826d3efd8f90386d009ad3f834a",
+    "artifact": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-OPS-D73-receiving-review-2232/evidence/review.json"
+  },
+  "author_inputs": {
+    "task": "agt-OPS-D73-receiving-inputs-2227",
+    "receiving_inputs": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-OPS-D73-receiving-inputs-2227/evidence/receiving-inputs.json",
+    "missing_inputs": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-OPS-D73-receiving-inputs-2227/evidence/missing-inputs.json",
+    "source_manifest": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-OPS-D73-receiving-inputs-2227/evidence/source-manifest.json"
+  },
+  "decision": {
+    "evidence_integrity": "FAIL",
+    "receiving": "NOT_READY",
+    "functional_credit": "NONE",
+    "basis": "one confirmed prior-review Agent-tree error; unsupported candidate SHA-typo finding removed; central digest timing left unresolved; no missing receipt gate changed"
+  },
+  "changes": [
+    {
+      "id": "D73-REV-002",
+      "action": "retract",
+      "reason": "The 2232 JSON has identical claimed and observed SHA-256 values, and Git blob 3a5fe1c93afdac1c95891c72058a92d15dfc7c19 hashes to ddf8d6d20e9dbadbb4f23716726695b662c053f6d449c8d6e7df3d2d80d2f3c5.",
+      "source": "/home/user/work/wt/agt-OPS-D73-review-correction-2240/evidence/source-manifest.json"
+    },
+    {
+      "id": "D73-REV-003",
+      "action": "confirm_and_correct",
+      "reason": "The consumed 2209 review records Agent tree 888c16e3dbbff2d6827e7ffcfea64208b0e5a4, but author input and actual 2eca object record 888c16e3dbbff2d6827e7ffcfea64208b0e2a5e4.",
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/design/rt-D73-source-review-2209-review.json"
+    },
+    {
+      "id": "D73-REV-004",
+      "action": "reclassify",
+      "reason": "The author-recorded and current central suites.conf hashes differ, but no capture time exists; do not infer later mutation or contemporaneous inaccuracy. Current exact rows remain absent and block receiving.",
+      "source": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/suites.conf"
+    }
+  ],
+  "exact_git_objects": {
+    "composition": {
+      "repository": "/home/user/work/wt/agt-OPS-D73-review-correction-2240",
+      "commit": "afda6c66a11608d8cb012df1a54bf2489d8c20b3",
+      "tree": "67bd2d4ee1d50bd95ebb8b0de55d4d1ed1e3e87f",
+      "parent": "ff6498859bb2a72b1b7d52d807dd04d3852fc055"
+    },
+    "agent": {
+      "repository": "/home/user/peteromallet/astrid-agent",
+      "commit": "2eca9a1da94eb35bb969540e150192ff920ce326",
+      "tree": "888c16e3dbbff2d6827e7ffcfea64208b0e2a5e4",
+      "parents": ["d066e3b7a82a1e7853963ea357510ccef0c0aa34", "cbdc731789d0d6ebe1c0935ca722ef83a30c1979"]
+    },
+    "runtime": {
+      "repository": "/home/user/banodoco/banodoco-workspace-runtime",
+      "commit": "ab1e4f6141987706132916e2da16477f5a019464",
+      "tree": "7d8e77b2f5a4af79305c9212ce5174d3ea9fd657",
+      "parents": ["00ede8c3fac7f607a14a1bf74182e87a3dcb523a", "a5fc9ddf3ac7c9e120e22df5b3c4093d60759f3b"]
+    }
+  },
+  "current_receiving_conclusion": {
+    "status": "NOT_READY",
+    "unchanged": true,
+    "evidence": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/agt-OPS-D73-receiving-inputs-2227/evidence/missing-inputs.json"
+  },
+  "outputs": {
+    "review": "/home/user/work/wt/agt-OPS-D73-review-correction-2240/evidence/review.json",
+    "source_manifest": "/home/user/work/wt/agt-OPS-D73-review-correction-2240/evidence/source-manifest.json",
+    "validation": "/home/user/work/wt/agt-OPS-D73-review-correction-2240/evidence/validation.md",
+    "progress": "/home/user/work/wt/agt-OPS-D73-review-correction-2240/evidence/progress.md"
+  }
+}
