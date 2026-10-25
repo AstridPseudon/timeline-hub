@@ -1,1 +1,1 @@
-08:29Z app-lead: daemons up (uptime 2789m), 1 worker, disk ~5.5-6.0G, core open 3 (SWAP/element/placement); blocked:orchestrator 1 (placement modal dismissal, reported); no refusals, no restart
+08:41Z app-lead: daemons up (uptime 2801m), 0 workers, disk 5.6G, 1 wt dir, codex unchanged (th 1648238592, state 362328064, sessions 849044K); D113 merged dc8c809cd9, no blocked:orchestrator, no refusals; core open 3 (SWAP/element/placement) awaiting Runtime D111a/D112 then full P2

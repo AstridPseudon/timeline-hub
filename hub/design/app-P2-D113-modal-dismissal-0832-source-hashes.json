@@ -1,0 +1,37 @@
+{
+  "base_commit": "04beedcd18b8abb49502f65cd3facaafbe93db4e",
+  "base_tree": "300d186a45d3d0b96ef2ae39582f1e9b4a760e7d",
+  "target": {
+    "path": "tests/e2e/local/three-products.p2-elements-assets.spec.ts",
+    "sha256_before": "9b8791e6e3b71155daab01440466987de406b23e2b6269dcc67872cc75c807c7",
+    "sha256_after": "777966e38459f13dec60a180253f3ed88e83995eee3fdbf81570a86946e78e7e",
+    "diff_sha256": "ae060c2a1c1a3c49df20f37d8f54127b4ccdd585a045572b75c73372481a038b",
+    "insertions": 2,
+    "deletions": 0
+  },
+  "protected_specs_sha256_after": {
+    "tests/e2e/local/three-products.p1-chain.spec.ts": "50960dd2efadc8350b8647a1f7e88a6cad2b44907bf36a7108832ee0ea9ebf17",
+    "tests/e2e/local/three-products.p2-popup.spec.ts": "09f5e2c2ea2a207575534a88adf2847d68cdd389caa5d145580100f21302b2b9",
+    "tests/e2e/local/three-products.p2-elements-assets.spec.ts": "777966e38459f13dec60a180253f3ed88e83995eee3fdbf81570a86946e78e7e",
+    "tests/e2e/local/three-products.spec.ts": "93c2bf4c72ac3c91442a1a52174e36311113751ab9d8b7e0f52e4a958559a64b",
+    "tests/e2e/local/three-products.mounted-readiness.spec.ts": "2b9723db262978ebbb410d5925163fe61c4a83f05f3b44fbbd524bc9df301593",
+    "tests/e2e/local/three-products.p2-tour.spec.ts": "54ea18f3f3fa8fef2eb31cc0a05809ede76099f9f3bee9bf0511824e652a85f7"
+  },
+  "d69_frozen_upstream": {
+    "commit": "3881e9440688f774878e18806da2dc5c993a9b00",
+    "dialog_source_sha256": "78eb0cfe3e3c511279d4d0ce7f0435037dd530b94f2163ac337ab4856c79fa60",
+    "editor_source_sha256": "bea86bb573dd76dad202e373c151bf95cb3821b077a6356b66c85f24c4ec869b"
+  },
+  "d69_current_sources": {
+    "src/shared/components/ui/overlay/dialog.tsx": "78eb0cfe3e3c511279d4d0ce7f0435037dd530b94f2163ac337ab4856c79fa60",
+    "src/tools/video-editor/components/AstridTimelineEditor.tsx": "bea86bb573dd76dad202e373c151bf95cb3821b077a6356b66c85f24c4ec869b"
+  },
+  "contract_c0": {
+    "path": "/home/user/work/runtime/contract/commit-v2.md",
+    "sha256": "4581ea85aada0af405b1b1b9284e9938a6dba3ca4f6980b7c3c0be8f135f9bb7"
+  },
+  "authored_input": {
+    "path": "design/app-A2-placement19078-undo-sol-0819-proposal.patch",
+    "sha256": "ab3dd878853def648b60ffd340f0931fd6857277d0b30a1dd40e38addde04e33"
+  }
+}
