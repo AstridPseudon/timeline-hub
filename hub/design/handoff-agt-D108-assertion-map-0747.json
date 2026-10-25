@@ -1,0 +1,76 @@
+{
+  "schema": "timeline.agent.d108.changed-assertion-map.v1",
+  "task": "F-D108",
+  "mode": "read-only source accounting",
+  "result": "authoritative aggregate EXACTMISSING; no guessed mapping",
+  "authoritative_aggregate": {
+    "changed_bodies": 129,
+    "removed_assertion_fingerprints": 113,
+    "added_assertion_fingerprints": 287,
+    "status": "EXACTMISSING",
+    "reason": "The retained crosswalk records counts only. The named applied rehearsal manifest/audit and authentic selector/fingerprint artifact are absent at its recorded path, so complete finite membership cannot be promoted."
+  },
+  "source_identities": {
+    "captured_agent": "d6294843286c18e57af3c1874cf1996be42212d2",
+    "normal_agent": "b943270a9ed42bb968dbaeace7b296d9898ea21b",
+    "fresh_agent": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+    "upstream924": "92443771676ef2bbb547d0a103d708fa8bec4c63",
+    "applied_agent_d07": "c456b3281497653cecf44f61acd6fa30565d83c8",
+    "rehearsal_manifest": {
+      "path": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/workers/rt-F-D108-rehearsal-source-0645/evidence/d108-source-rehearsal-manifest.json",
+      "sha256": "37e559e6e176f4d9b4c20db27cdf6de8b4f5ef532b5abedf35533caffb2a4504",
+      "status": "EXACTMISSING"
+    }
+  },
+  "fallback_reconstruction": {
+    "status": "NOT_PROMOTED",
+    "comparison": {
+      "old": "d6294843286c18e57af3c1874cf1996be42212d2",
+      "current": "08e6b905114a3ee2b05c3e7980421f26b4abf15c",
+      "scope": "all modified Python test paths common to the two exact Git objects",
+      "changed_bodies": 189,
+      "removed_assertion_or_raise_fingerprints": 119,
+      "added_assertion_or_raise_fingerprints": 310,
+      "residue_vs_authoritative": {
+        "changed_bodies": 60,
+        "removed_assertion_or_raise_fingerprints": 6,
+        "added_assertion_or_raise_fingerprints": 23
+      }
+    },
+    "algorithm": [
+      "Read exact Git blobs with git cat-file and parse only with stdlib ast.",
+      "Index named path and qualified function; compare body ASTs.",
+      "Fingerprint ast.Assert.test and ast.Raise.exc as sha256(kind + NUL + ast.dump(node, include_attributes=False)).",
+      "Hash function bodies as sha256(ast.dump(function, include_attributes=False)); retain AST line and Git blob SHA-1.",
+      "Map only same path, qualified function, and exact fingerprint; never pair by ordinal, rename, operator count, or inferred meaning.",
+      "Record parameter AST and decorators/markers separately; changed markers or parameters never clear assertions."
+    ],
+    "limits": [
+      "pytest.raises contexts are not assertion fingerprints",
+      "body-only changes are not assertion equivalence",
+      "approved decisions are reusable only when captured file/function/body identity matches",
+      "the absent rehearsal membership remains EXACTMISSING"
+    ],
+    "observed_metric": "Not published as the authoritative 129/113/287 metric because the retained applied manifest is missing; no guessed residue is substituted."
+  },
+  "approval_inputs": {
+    "crosswalk": "design/handoff-rt-D108-python-0700-d108_citation_crosswalk.json",
+    "crosswalk_sha256": "37e559e6e176f4d9b4c20db27cdf6de8b4f5ef532b5abedf35533caffb2a4504",
+    "reuse_rule": "D69/D72/D82/D95/D103/D104/D107 reviews and ledger entries only when captured source identities match",
+    "d07": "handoff-agt-D108-D07-source-0724.json and handoff-agt-D108-D07-coverage-0732.json; SOURCE-QUALIFIED / BEHAVIOR-PENDING",
+    "windows0742": "handoff-agt-U2-D108-windows-review-0745.json; registration selector required and unqualified",
+    "d107": "crosswalk d107_legacy_ten; SEPARATE_LEGACY_ONLY_GAP"
+  },
+  "excluded_scopes": [
+    "D18 child-bridge census exclusion",
+    "missing-selector105 census is not repeated",
+    "Runtime/App/Composition audits are not performed"
+  ],
+  "verdicts": {
+    "exact_preserved": 0,
+    "equivalent_strength": 0,
+    "approved_retirement": 0,
+    "uncleared": "all unexpanded aggregate fingerprints",
+    "exactmissing": "authoritative membership and selector-level artifact"
+  }
+}
