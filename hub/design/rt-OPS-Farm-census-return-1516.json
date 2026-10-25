@@ -1,0 +1,527 @@
+{
+  "boundaries": [
+    {
+      "check": "read:maker",
+      "detail": "e62f89eaf226897a36bd4c7f715d43a7a1d4206ff371432296c01de6bdd52dc3",
+      "layer": "installed-source",
+      "reason": null,
+      "status": "visited"
+    },
+    {
+      "check": "read:bench_store",
+      "detail": "7d5870433a76b7a611703f47a385cba9584f7213fe4b8a27005317f27bf26495",
+      "layer": "installed-source",
+      "reason": null,
+      "status": "visited"
+    },
+    {
+      "check": "read:dependency_verifier",
+      "detail": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+      "layer": "installed-source",
+      "reason": null,
+      "status": "visited"
+    },
+    {
+      "check": "embedded-STORE_VERIFY-inventory",
+      "detail": {
+        "fail_sites": 46,
+        "functions": [
+          "committed_files",
+          "fail",
+          "fail_unowned_metadata",
+          "metadata_diagnostic_ref",
+          "owned_local_metadata",
+          "readonly"
+        ],
+        "source_sha256": "f7c7ebcc26221958ce24e36025faad167c6015a2889202752d267e03d5eda209"
+      },
+      "layer": "installed-source",
+      "reason": null,
+      "status": "visited"
+    },
+    {
+      "check": "maker-to-three-verifiers",
+      "detail": {
+        "all_required": true,
+        "found": {
+          "Store construction": true,
+          "Store ensure": true,
+          "dependency helper authentication": true,
+          "dependency installed verification": true,
+          "embedded STORE_VERIFY execution": true,
+          "embedded STORE_VERIFY staging execution": true,
+          "source carrier archive": true
+        }
+      },
+      "layer": "production-call-graph",
+      "reason": null,
+      "status": "visited"
+    },
+    {
+      "check": "bench_store-AST-inventory",
+      "detail": {
+        "check_calls": 121,
+        "count_matches_source": true,
+        "expected_check_calls": 121,
+        "store_methods": [
+          "__init__",
+          "_apply_projection",
+          "_checkpoint",
+          "_delete_owned",
+          "_entry_id",
+          "_evict",
+          "_failure_evidence",
+          "_failure_path",
+          "_finish_journal",
+          "_load",
+          "_lock",
+          "_name",
+          "_owned_dir",
+          "_projections",
+          "_read_report",
+          "_record_failure",
+          "_registration",
+          "_report",
+          "_report_changes",
+          "_report_path",
+          "_roll",
+          "_save_journal",
+          "_suite",
+          "_sync_payload",
+          "_validate_entry",
+          "_validate_index",
+          "_validate_transition",
+          "_verify_pending_reports",
+          "_verify_projection",
+          "acquire",
+          "ensure",
+          "initialize",
+          "mutex",
+          "names_for_suite",
+          "recover",
+          "registered",
+          "registration_entries",
+          "run"
+        ]
+      },
+      "layer": "installed-source",
+      "reason": null,
+      "status": "visited"
+    },
+    {
+      "check": "dependency-verifier-AST-inventory",
+      "detail": {
+        "caller_modes": [
+          "--bootstrap-identity",
+          "--committed-lock",
+          "--committed-lock",
+          "--installed",
+          "--installed",
+          "--verify-bootstrap",
+          "--verify-farm"
+        ],
+        "count_matches_source": true,
+        "expected_fail_calls": 143,
+        "fail_calls": 143
+      },
+      "layer": "installed-source",
+      "reason": null,
+      "status": "visited"
+    },
+    {
+      "check": "immutable-installed-source-hashes",
+      "detail": {
+        "bench_store": {
+          "check_calls": 121,
+          "count_matches_source": true,
+          "expected_check_calls": 121,
+          "store_methods": [
+            "__init__",
+            "_apply_projection",
+            "_checkpoint",
+            "_delete_owned",
+            "_entry_id",
+            "_evict",
+            "_failure_evidence",
+            "_failure_path",
+            "_finish_journal",
+            "_load",
+            "_lock",
+            "_name",
+            "_owned_dir",
+            "_projections",
+            "_read_report",
+            "_record_failure",
+            "_registration",
+            "_report",
+            "_report_changes",
+            "_report_path",
+            "_roll",
+            "_save_journal",
+            "_suite",
+            "_sync_payload",
+            "_validate_entry",
+            "_validate_index",
+            "_validate_transition",
+            "_verify_pending_reports",
+            "_verify_projection",
+            "acquire",
+            "ensure",
+            "initialize",
+            "mutex",
+            "names_for_suite",
+            "recover",
+            "registered",
+            "registration_entries",
+            "run"
+          ]
+        },
+        "call_graph": {
+          "all_required": true,
+          "found": {
+            "Store construction": true,
+            "Store ensure": true,
+            "dependency helper authentication": true,
+            "dependency installed verification": true,
+            "embedded STORE_VERIFY execution": true,
+            "embedded STORE_VERIFY staging execution": true,
+            "source carrier archive": true
+          }
+        },
+        "dependency_verifier": {
+          "caller_modes": [
+            "--bootstrap-identity",
+            "--committed-lock",
+            "--committed-lock",
+            "--installed",
+            "--installed",
+            "--verify-bootstrap",
+            "--verify-farm"
+          ],
+          "count_matches_source": true,
+          "expected_fail_calls": 143,
+          "fail_calls": 143
+        },
+        "hashes_after": {
+          "bench_store": "7d5870433a76b7a611703f47a385cba9584f7213fe4b8a27005317f27bf26495",
+          "dependency_verifier": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+          "maker": "e62f89eaf226897a36bd4c7f715d43a7a1d4206ff371432296c01de6bdd52dc3"
+        },
+        "hashes_after_final": {
+          "bench_store": "7d5870433a76b7a611703f47a385cba9584f7213fe4b8a27005317f27bf26495",
+          "dependency_verifier": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+          "maker": "e62f89eaf226897a36bd4c7f715d43a7a1d4206ff371432296c01de6bdd52dc3"
+        },
+        "hashes_before": {
+          "bench_store": "7d5870433a76b7a611703f47a385cba9584f7213fe4b8a27005317f27bf26495",
+          "dependency_verifier": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+          "maker": "e62f89eaf226897a36bd4c7f715d43a7a1d4206ff371432296c01de6bdd52dc3"
+        },
+        "hashes_unchanged": true,
+        "paths": {
+          "bench_store": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py",
+          "dependency_verifier": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/verify_dependency_seed.py",
+          "maker": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv"
+        }
+      },
+      "layer": "installed-source",
+      "reason": null,
+      "status": "visited"
+    },
+    {
+      "check": "prerequisite:Farm retained staged child root: /home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30",
+      "layer": "STORE_VERIFY",
+      "reason": "EXACTMISSING",
+      "status": "skipped"
+    },
+    {
+      "check": "retained-root",
+      "layer": "STORE_VERIFY",
+      "reason": "EXACTMISSING",
+      "status": "skipped"
+    },
+    {
+      "check": "prerequisite:bench-store root: /home/user/work/bench-store",
+      "layer": "bench_store",
+      "reason": "EXACTMISSING",
+      "status": "skipped"
+    },
+    {
+      "check": "store-root",
+      "layer": "bench_store",
+      "reason": "EXACTMISSING",
+      "status": "skipped"
+    },
+    {
+      "check": "prerequisite:dependency verifier child root: /home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30",
+      "layer": "verify_dependency_seed",
+      "reason": "EXACTMISSING",
+      "status": "skipped"
+    },
+    {
+      "check": "dependency-root",
+      "layer": "verify_dependency_seed",
+      "reason": "EXACTMISSING",
+      "status": "skipped"
+    },
+    {
+      "check": "simultaneous-hardlink-writable-symlink",
+      "detail": {
+        "dependency_missing": {
+          "path": "/tmp/w-f837174eeb/farm-census-1516-5ylu_q36/missing-wheelhouse",
+          "status": "EXACTMISSING"
+        },
+        "fixture_root": "/tmp/w-f837174eeb/farm-census-1516-5ylu_q36",
+        "multiple_failures": [
+          "hardlink",
+          "symlink",
+          "writable"
+        ],
+        "observed_violation_count": 11,
+        "status": "PASS_LIMITED"
+      },
+      "layer": "private-probe",
+      "reason": null,
+      "status": "visited"
+    },
+    {
+      "check": "missing-dependency-prerequisite",
+      "detail": {
+        "path": "/tmp/w-f837174eeb/farm-census-1516-5ylu_q36/missing-wheelhouse",
+        "status": "EXACTMISSING"
+      },
+      "layer": "private-probe",
+      "reason": null,
+      "status": "visited"
+    }
+  ],
+  "counts": {
+    "bytes": 474465,
+    "entries": 15,
+    "errors": 0,
+    "refused": 0,
+    "skipped": 6,
+    "visited": 10
+  },
+  "dependency_layer": {
+    "installed_verifier": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/verify_dependency_seed.py",
+    "production_modes": [
+      "--bootstrap-identity",
+      "--verify-bootstrap",
+      "wheelhouse",
+      "--installed",
+      "--verify-farm"
+    ],
+    "read_only": true
+  },
+  "diagnostic_fitness": "READY_FOR_REVIEW",
+  "errors": [],
+  "inputs": {
+    "agent_sha": "a4e016b6a9f91fbe372672bdcf382c630bf59186",
+    "farm_source": null,
+    "root": "/home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30",
+    "root_observed": false,
+    "runtime_sha": "5e9ad1c6f74241d8771d3284fdd2ce7a214fd344",
+    "staging": true,
+    "work_root": "/home/user/work"
+  },
+  "installed_source": {
+    "bench_store": {
+      "check_calls": 121,
+      "count_matches_source": true,
+      "expected_check_calls": 121,
+      "store_methods": [
+        "__init__",
+        "_apply_projection",
+        "_checkpoint",
+        "_delete_owned",
+        "_entry_id",
+        "_evict",
+        "_failure_evidence",
+        "_failure_path",
+        "_finish_journal",
+        "_load",
+        "_lock",
+        "_name",
+        "_owned_dir",
+        "_projections",
+        "_read_report",
+        "_record_failure",
+        "_registration",
+        "_report",
+        "_report_changes",
+        "_report_path",
+        "_roll",
+        "_save_journal",
+        "_suite",
+        "_sync_payload",
+        "_validate_entry",
+        "_validate_index",
+        "_validate_transition",
+        "_verify_pending_reports",
+        "_verify_projection",
+        "acquire",
+        "ensure",
+        "initialize",
+        "mutex",
+        "names_for_suite",
+        "recover",
+        "registered",
+        "registration_entries",
+        "run"
+      ]
+    },
+    "call_graph": {
+      "all_required": true,
+      "found": {
+        "Store construction": true,
+        "Store ensure": true,
+        "dependency helper authentication": true,
+        "dependency installed verification": true,
+        "embedded STORE_VERIFY execution": true,
+        "embedded STORE_VERIFY staging execution": true,
+        "source carrier archive": true
+      }
+    },
+    "dependency_verifier": {
+      "caller_modes": [
+        "--bootstrap-identity",
+        "--committed-lock",
+        "--committed-lock",
+        "--installed",
+        "--installed",
+        "--verify-bootstrap",
+        "--verify-farm"
+      ],
+      "count_matches_source": true,
+      "expected_fail_calls": 143,
+      "fail_calls": 143
+    },
+    "hashes_after": {
+      "bench_store": "7d5870433a76b7a611703f47a385cba9584f7213fe4b8a27005317f27bf26495",
+      "dependency_verifier": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+      "maker": "e62f89eaf226897a36bd4c7f715d43a7a1d4206ff371432296c01de6bdd52dc3"
+    },
+    "hashes_after_final": {
+      "bench_store": "7d5870433a76b7a611703f47a385cba9584f7213fe4b8a27005317f27bf26495",
+      "dependency_verifier": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+      "maker": "e62f89eaf226897a36bd4c7f715d43a7a1d4206ff371432296c01de6bdd52dc3"
+    },
+    "hashes_before": {
+      "bench_store": "7d5870433a76b7a611703f47a385cba9584f7213fe4b8a27005317f27bf26495",
+      "dependency_verifier": "116b4e6bcb791d08e6c3c548f7fb52c52e9225b9428d7e201c09b02160d7bfe2",
+      "maker": "e62f89eaf226897a36bd4c7f715d43a7a1d4206ff371432296c01de6bdd52dc3"
+    },
+    "hashes_unchanged": true,
+    "paths": {
+      "bench_store": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/bench_store.py",
+      "dependency_verifier": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/verify_dependency_seed.py",
+      "maker": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv"
+    }
+  },
+  "limits": {
+    "deadline_seconds": 1200,
+    "max_bytes": 536870912,
+    "max_entries": 100000,
+    "max_output_bytes": 8388608,
+    "no_heavy_or_network": true,
+    "stop_on_limit": "INCOMPLETE"
+  },
+  "missing": [
+    "Farm retained staged child root: /home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30",
+    "bench-store root: /home/user/work/bench-store",
+    "dependency verifier child root: /home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30"
+  ],
+  "mode": "independent-bounded-read-only",
+  "private_probe": {
+    "dependency_missing": {
+      "path": "/tmp/w-f837174eeb/farm-census-1516-5ylu_q36/missing-wheelhouse",
+      "status": "EXACTMISSING"
+    },
+    "fixture_root": "/tmp/w-f837174eeb/farm-census-1516-5ylu_q36",
+    "multiple_failures": [
+      "hardlink",
+      "symlink",
+      "writable"
+    ],
+    "observed_violation_count": 11,
+    "status": "PASS_LIMITED"
+  },
+  "production_caller": {
+    "installed_checks_unchanged": true,
+    "maker": "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/bin/make-child-venv",
+    "sequence": [
+      "source authentication",
+      "optional dependency/farm authority",
+      "Store(root, tests)",
+      "Store.ensure",
+      "embedded STORE_VERIFY",
+      "dependency --installed when seed-bound",
+      "registration/projection"
+    ]
+  },
+  "refusals": [],
+  "result": "EXACTMISSING",
+  "safety": {
+    "executed_installed_content": false,
+    "production_mutations": [],
+    "source_hashes_checked_before_after": true,
+    "writes_to_inputs": false
+  },
+  "skips": [
+    {
+      "check": "prerequisite:Farm retained staged child root: /home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30",
+      "layer": "STORE_VERIFY",
+      "reason": "EXACTMISSING"
+    },
+    {
+      "check": "retained-root",
+      "layer": "STORE_VERIFY",
+      "reason": "EXACTMISSING"
+    },
+    {
+      "check": "prerequisite:bench-store root: /home/user/work/bench-store",
+      "layer": "bench_store",
+      "reason": "EXACTMISSING"
+    },
+    {
+      "check": "store-root",
+      "layer": "bench_store",
+      "reason": "EXACTMISSING"
+    },
+    {
+      "check": "prerequisite:dependency verifier child root: /home/user/work/bench-store/entries/child-3e16336b6a5a2d8293a95a99c3665cbafbefb234b4b421fab53e17edde29af30",
+      "layer": "verify_dependency_seed",
+      "reason": "EXACTMISSING"
+    },
+    {
+      "check": "dependency-root",
+      "layer": "verify_dependency_seed",
+      "reason": "EXACTMISSING"
+    }
+  ],
+  "source_carrier_allowlist": {
+    "allowed": [
+      ".child-venv-source-*/agent|runtime|schema committed files",
+      ".source-inputs/agent|runtime|schema.tar"
+    ],
+    "directory_rule": "only authenticated manifest parent directories; no extra retained source directory",
+    "from_exact_e62f": true,
+    "proposed_fix": "none proved; the observed flat refusal has no path and the installed rule is already strict",
+    "required_for_review": "exact retained source tree plus authenticated source manifest"
+  },
+  "store_layer": {
+    "production_constructor": "Store(root, tests)",
+    "production_operations": [
+      "Store.__init__",
+      "ensure",
+      "_validate_index",
+      "_owned_dir",
+      "registration",
+      "projection"
+    ],
+    "store_root": "/home/user/work/bench-store",
+    "tests_root": "/home/user/work/tests"
+  },
+  "task": "rt-OPS-Farm-census-return-1516"
+}
